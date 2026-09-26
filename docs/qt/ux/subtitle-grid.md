@@ -30,6 +30,6 @@ The follow-up must design the accessible table/cell hierarchy, logical headers a
 
 ## Acceptance still required
 
-[Set measurable performance and resource budgets for the rewrite](https://github.com/altqx/hikari/issues/36) and [Choose the test strategy for the rewrite](https://github.com/altqx/hikari/issues/34) remain open. Use their eventual reference hardware, workloads, percentiles and gates for representative real ASS corpora, cold/warm load, scroll/jump, large selection, filter/sort, edits and long mixed-script rows. Measure input response, CPU/GPU costs, memory/cache growth, resizing and scaling on the supported Windows/Linux configurations.
+The [performance contract](../performance.md) and [test strategy](../testing.md) are accepted. Bind exact reference hosts and fixtures before applying the accepted workloads, percentiles and gates to representative ASS corpora, cold/warm load, scroll/jump, large selection, filter/sort, edits and long mixed-script rows. Measure input response, CPU/GPU costs, memory/cache growth, resizing and scaling on the supported Windows/Linux configurations.
 
 No real-corpus budget, native assistive-technology, CPU/GPU or memory pass is claimed here. The renderer choice is settled; those engineering and interaction obligations remain release evidence to produce, with failures resolved explicitly rather than excused by the chosen direction.

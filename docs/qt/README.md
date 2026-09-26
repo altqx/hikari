@@ -20,6 +20,8 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 | Distribution | Offline Windows installer/portable ZIP; Linux AppImage/recovery tar; notification-only updates; trusted stable Windows signing | [Distribution](distribution.md), [ADR](../adr/0012-distribution-and-updates.md) |
 | Document model | Ordered source-preserving records, stable Line IDs and core value types with external Qt adapters | [Document model](document-model.md), [ADR](../adr/0013-source-preserving-document-model.md) |
 | Time semantics | Signed microsecond values, rational media time and distinct interval/frame lookup operations; named fixes only | [Time semantics](time-semantics.md), [ADR](../adr/0014-typed-time-and-frame-semantics.md) |
+| Verification | CTest/GoogleTest, QtTest/Quick Test, test-only Spix, native accessibility/render/performance evidence; evidence-gated completion | [Testing](testing.md), [ADR](../adr/0015-behavioral-and-native-test-evidence.md) |
+| Translation/comparison layout | Stacked fields, bottom reference tray and independent navigation by default; remaining operation policies open | [Translation/comparison](ux/translation-comparison.md) |
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
@@ -29,4 +31,4 @@ The map remains the index of decisions and open dependencies. The [coverage ledg
 
 The reviewed [video](proposals/video-pipeline.md) and [audio](proposals/audio-pipeline.md) alternatives led to the accepted media direction above. Qt Multimedia is the first general-player candidate to verify; chapter/track, clock, rendering and deployment gates remain explicit.
 
-The [testing strategy](proposals/testing.md) and [settings/import contract](proposals/settings-import.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
+The [native docking contract](proposals/docking.md) and [settings/import contract](proposals/settings-import.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.

@@ -66,6 +66,6 @@ These demonstrations clarify the ownership model. They do not establish real fil
 
 ## Detailed surface work
 
-Comparison navigation/synchronization, text roles and the controls for changing editing/reference roles continue in the [translation/comparison prototype](https://github.com/altqx/hikari/issues/49). Detailed placement and interaction for the remaining surface families, including automation management and task results, need their own prototypes. These refine the accepted top-level structure rather than reopening workspace ownership, default arrangement or Classic shell placement.
+The [translation/comparison contract](translation-comparison.md) now accepts stacked fields, a bottom reference tray and independent navigation by default; draft, export and detailed matching behavior continue in its prototype ticket. Detailed placement and interaction for the remaining surface families, including automation management and task results, need their own prototypes. These refine the accepted top-level structure rather than reopening workspace ownership, default arrangement or Classic shell placement.
 
 The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.

@@ -1,6 +1,6 @@
 # Subtitle font identity and collection
 
-**Accepted contract, 2026-09-27:** the user chose **“Verify renderer/font-file agreement”** in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35). [ADR 0007](../adr/0007-renderer-verified-subtitle-fonts.md) records the tradeoff. This selects the correctness contract and the maintenance work it requires; no native agreement or collection-completeness test has passed yet.
+**Accepted contract, 2026-09-27:** the user chose **“Verify renderer/font-file agreement”** in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35). [ADR 0007](../adr/0007-renderer-verified-subtitle-fonts.md) records the tradeoff. A later Windows experiment establishes a bounded diagnostic seam; full collection completeness and cross-platform qualification remain unproved.
 
 ## Authority and ownership
 
@@ -18,7 +18,7 @@ Resolve all used styles and inline font/reset/weight/italic changes across the r
 
 Collection results must distinguish verified files/faces from unresolved requests. Unknown identity cannot receive a success/completeness claim. Report known fallback files and their role without presenting them as the originally requested font. Verify export/reimport in a clean font environment; a list of copied files alone is not agreement evidence.
 
-libass's existing internal selection logs and public message callback are inputs to feasibility work, not an assumed stable identity-export API. First prove that available diagnostics and provider metadata establish exact identity. If insufficient, maintain a narrow versioned diagnostic hook with pinned source and regression coverage. The user's choice accepts this potential maintenance cost; it does not select an unreviewed patch design.
+libass's existing internal selection logs and public message callback do not establish exact selected bytes in the observed stream-backed cases. The user accepted maintaining a narrow diagnostic hook that captures actual provider bytes and opened faces, with distinct captured, missing, fallback and incomplete statuses. Pin source and regression coverage; the production callback ABI, cache/lifetime handling and cross-platform integration still need qualification.
 
 ## Document environments and lifetime
 
@@ -31,5 +31,11 @@ Font installs/removals, attachment edits and provider/configuration changes crea
 Use licensed fixtures on Windows and Linux for aliases, vertical names, TTC/OTC faces, variable instances, simulated styles, CJK/RTL/combining text, missing glyphs, fallback and conflicting attachments. Record renderer-selected identities against collected hashes/face indices, refresh behavior, concurrent documents and cancellation. Report inconclusive cases. [Prototype renderer-verified font identities and collection diagnostics](https://github.com/altqx/hikari/issues/47) must establish the diagnostic mechanism before the final implementation plan can call this contract proved.
 
 Picker, preview, font-catalog and collector workflows still need runnable surface prototypes and user reactions. Choosing strict agreement does not approve their screen layout or remove any existing capability.
+
+## Reviewed Windows experiment
+
+The user accepted the diagnostic approach after reviewing the [native experiment](https://github.com/altqx/hikari/blob/0f776e446df085d463fc82c1073a868a7dd24c51/HikariSub/prototypes/font-identity/README.md). All 25 sampled stock/hook frames agreed; 17 of 18 captured-set reimports agreed. The multilingual reimport failed despite loading all three captured files because system fallback behavior was not reconstructed. Equal pixels can also reproduce a missing request or glyph; no whole-document completeness claim follows.
+
+The experiment discloses its Debug/archive provenance and guarded invalid source-version diagnostic. Linux/fontconfig, variable instances, fallback reconstruction, concurrent refresh/cancellation and a production hook ABI remain open in the native prototype ticket. This acceptance does not remove those gates or approve a collector UI.
 
 Evidence and reviewed alternatives: [font-resolution study](proposals/font-resolution.md), [completed source research](https://github.com/altqx/hikari/blob/aff69e6c950a1ab03d02eb837ece9d47b90d1dae/docs/research/fonts.md).
