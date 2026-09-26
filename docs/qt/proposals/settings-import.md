@@ -49,7 +49,7 @@ Automation uses host registration identity plus script provenance, with a legacy
 
 Pending user choices, with recommended answers:
 
-1. **Storage:** per-user writable profile by default, with explicitly selected portable profile, or executable-adjacent storage always? Recommend per-user plus explicit portable; discovery still reads legacy locations.
+1. **Storage is accepted:** per-user writable profile by default with explicit portable mode, through the distribution decision. Discovery still reads legacy locations; no repeat storage vote is needed.
 2. **Existing destination:** keep current choices unless individually replaced, or replace the whole profile? Recommend keep-current with reviewed per-item replacement and complete-generation rollback.
 3. **Shortcut shadowing:** allow intentional local/global overlap with explicit priority, or prohibit new overlap? Recommend allow with visible routing, retaining legacy cross-context reuse. Any changed legacy precedence needs named approval; unresolved old behavior awaits fixtures.
 
