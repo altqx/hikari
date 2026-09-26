@@ -40,6 +40,16 @@ The sample permits a deliberately pinned tool to apply to an inactive, unprotect
 
 **Home is optional**, with the workspace as the normal editing destination. Home provides recent-file and recovery entry points without discarding the open documents or shared arrangement. It is not a mandatory start screen. Actual startup/session restoration, file recovery and unsaved-close flows retain their data and lifecycle contracts.
 
+## Shell commands, properties and task grouping
+
+Accepted in the live follow-up on 2026-09-27: **Classic menus and local controls**, plus **the proposed tool/dialog grouping**. The [reviewed Classic shell](https://github.com/altqx/hikari/blob/ae07d2de29157c5a131cfed28fa207f70e778bac/docs/prototypes/shell-chrome.html) retains traditional top-level menus, controls attached to their owning panels, line properties beside the text editor and detailed media/status information across the bottom. A contextual right inspector and compact shared command strip are not the default. Individual commands remain discoverable through the shared action system and keyboard routing; the sample menu subset does not remove unshown commands.
+
+Styles, Search, Timing and History are persistent tools that can stay open while editing, following the accepted movable/floating and follow/pin rules. Timing here means shifting/postprocessing; it does not replace the Audio panel. History is document edit history. Search/find/replace/select-lines/results keep explicit scopes; Styles retains document styles and external catalogs as distinct collections. Their detailed workflows still need individual prototypes.
+
+Script properties, Resample, Font collector, MKV extraction, Preferences and script-created options use task dialogs. This grouping does not require long operations to block the UI: collection/extraction keep progress, cancellation and inspectable results. Script dialogs preserve their schema/API contract. Automation manager placement and other surface families remain separate detailed decisions; this acceptance does not adopt every row of the older placement worksheet.
+
+The [Classic capture](https://github.com/altqx/hikari/blob/ae07d2de29157c5a131cfed28fa207f70e778bac/docs/prototypes/shell-classic-preview.png) records the reviewed structure. Browser observations cover sample menu/dialog entry, Escape dismissal, context/tool switching, F6 from editor to Grid and the full-width Grid in both alternatives. Native menus, focus, accessibility, task lifetimes and full per-surface behavior remain future verification.
+
 ## Captured interaction evidence
 
 The HTML study demonstrates shared versus per-document layout retention, protected reference content while the editing target changes, panel restoration, recovery as a separate copy, a zero-document state, missing video while subtitle editing remains available, and save/discard/cancel close choices. Save and media relinking are simulated in memory. F6/Shift+F6 traverse the demonstrated major panels, including from text/grid focus.
@@ -50,6 +60,6 @@ These demonstrations clarify the ownership model. They do not establish real fil
 
 1. Optional Timing, Translation and Typesetting preset membership; the current-program Editing arrangement is the settled default, and the five legacy visibility combinations remain available.
 2. Comparison navigation/synchronization and the controls for changing editing/reference roles; detailed criteria and interaction can be resolved in its surface prototype.
-3. Final placement of menus, command toolbars, properties/inspector and the status/task area, plus which additional dialog families become panels or share a tool. The capability-placement worksheet is still a proposal; choosing movable tools did not approve every grouping.
+3. Detailed placement and interaction for remaining surface families, including automation management and task results, in their own prototypes. Classic shell placement and the named tool/dialog grouping above are settled.
 
 The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.

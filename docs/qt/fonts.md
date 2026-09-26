@@ -28,7 +28,7 @@ Font installs/removals, attachment edits and provider/configuration changes crea
 
 ## Required feasibility evidence and UI review
 
-Use licensed fixtures on Windows and Linux for aliases, vertical names, TTC/OTC faces, variable instances, simulated styles, CJK/RTL/combining text, missing glyphs, fallback and conflicting attachments. Record renderer-selected identities against collected hashes/face indices, refresh behavior, concurrent documents and cancellation. Report inconclusive cases. The native feasibility follow-up must establish the diagnostic mechanism before the final implementation plan can call this contract proved.
+Use licensed fixtures on Windows and Linux for aliases, vertical names, TTC/OTC faces, variable instances, simulated styles, CJK/RTL/combining text, missing glyphs, fallback and conflicting attachments. Record renderer-selected identities against collected hashes/face indices, refresh behavior, concurrent documents and cancellation. Report inconclusive cases. [Prototype renderer-verified font identities and collection diagnostics](https://github.com/altqx/hikari/issues/47) must establish the diagnostic mechanism before the final implementation plan can call this contract proved.
 
 Picker, preview, font-catalog and collector workflows still need runnable surface prototypes and user reactions. Choosing strict agreement does not approve their screen layout or remove any existing capability.
 

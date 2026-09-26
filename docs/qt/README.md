@@ -14,6 +14,7 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 | Qt and platform support | Qt 6.11.2 now, verified 6.12 adoption, then newer Qt with explicit Windows 10 retirement later | [Platform policy](platform-policy.md), [ADR](../adr/0004-qt-baseline-and-platform-support.md) |
 | Automation boundary | Separate process for Lua; helper lifetime, IPC feasibility and UI details remain open | [Automation](automation.md), [ADR](../adr/0006-isolated-lua-automation-host.md) |
 | Subtitle fonts | libass-authoritative previews and verified renderer/font-file agreement | [Fonts](fonts.md), [ADR](../adr/0007-renderer-verified-subtitle-fonts.md); native feasibility remains required |
+| Build mechanism | Pinned vcpkg/overlays and official Qt provisioning through CMake workflow presets | [Build](build.md), [ADR](../adr/0008-stateless-cmake-workflow.md); clean reconstruction remains unproved |
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
@@ -23,4 +24,4 @@ The map remains the index of decisions and open dependencies. The [coverage ledg
 
 The [video pipeline](proposals/video-pipeline.md) and [audio pipeline](proposals/audio-pipeline.md) are review proposals based on completed research. Their engine and clock choices have not been accepted.
 
-The [stateless build](proposals/stateless-build.md) and [performance budgets](proposals/performance-budgets.md) await decisions. The retained [compatibility review ledger](proposals/compatibility-policy.md) lists candidate defects whose individual dispositions remain unapproved; accepting the policy did not accept those fixes.
+The [performance budgets](proposals/performance-budgets.md) await decisions. The retained [compatibility review ledger](proposals/compatibility-policy.md) lists candidate defects whose individual dispositions remain unapproved; accepting the policy did not accept those fixes.

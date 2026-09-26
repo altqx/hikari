@@ -1,6 +1,6 @@
 # Stateless CMake build proposal
 
-**Proposal for [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24), awaiting acceptance.** Based on the [completed build research](https://github.com/altqx/hikari/blob/38f8c1434a51e335eed57cdf058fb9dc2ccee62b/docs/research/stateless-build.md) and accepted [platform policy](../platform-policy.md). No provisioning, dependency build or clean-machine result is claimed.
+**Accepted mechanism on 2026-09-27 in [Choose the dependency and build strategy for the stateless CMake build](https://github.com/altqx/hikari/issues/24).** The authoritative [build contract](../build.md) records the selected workflow, prerequisite and provisioning approach; this retained artifact contains the alternatives. Based on the [completed build research](https://github.com/altqx/hikari/blob/38f8c1434a51e335eed57cdf058fb9dc2ccee62b/docs/research/stateless-build.md) and accepted [platform policy](../platform-policy.md). No provisioning, dependency build or clean-machine result is claimed.
 
 ## Recommended contract
 
