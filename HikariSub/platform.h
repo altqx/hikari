@@ -1492,6 +1492,9 @@ inline long RegDeleteTree(HKEY hKey, LPCWSTR subKey) {
     if (removed) hikarisub_save_registry_store();
     return removed ? ERROR_SUCCESS : ERROR_FILE_NOT_FOUND;
 }
+inline long RegDeleteTreeW(HKEY hKey, LPCWSTR subKey) {
+    return RegDeleteTree(hKey, subKey);
+}
 constexpr long SHCNE_ASSOCCHANGED = 0x08000000L;
 constexpr unsigned SHCNF_IDLIST = 0;
 inline void SHChangeNotify(long, unsigned, const void*, const void*) {}
