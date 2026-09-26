@@ -58,4 +58,3 @@ The existing archive passes pointer `1` to its source-version `%s` log, consiste
 The hook demonstrates a feasible Windows identity seam and the public-log gap. Production work still needs a reviewed callback/lifetime contract, cache-aware provenance, environment/fallback reconstruction, coverage across supported platforms, and regression coverage. **Human review remains open:** are the distinctions between captured identity, known fallback, missing request/glyph and incomplete reimport understandable, and is this narrowly maintained diagnostic seam acceptable? This artifact makes no new architecture decision.
 
 Context: [accepted font contract](https://github.com/altqx/hikari/blob/5feb8b301e4f9d8a0dde1a7cf1ced47357ff8e1b/docs/qt/fonts.md), [completed font research](https://github.com/altqx/hikari/blob/aff69e6c950a1ab03d02eb837ece9d47b90d1dae/docs/research/fonts.md).
-

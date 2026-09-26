@@ -15,14 +15,14 @@ python -m http.server 8765 --bind 127.0.0.1 --directory docs/prototypes
 
 ## Default Editing and optional presets
 
-Editing is the normal starting workspace, following the requested current-program geometry. The other named presets are optional proposals, not forced defaults. Every panel/tool remains freely showable or hideable. The five legacy visibility equivalents preserve their broad combinations; **subtitles means Editor + Grid**.
+Editing is the normal starting workspace, following the requested current-program geometry. The other named presets are accepted optional presets, not forced defaults. Every panel/tool remains freely showable or hideable. The five legacy visibility equivalents preserve their broad combinations; **subtitles means Editor + Grid**.
 
 | Preset | Visible core panels | Open tools | Optional additions |
 |---|---|---|---|
 | **Editing — default** | **Video left; Audio above Editor right; Grid full width below** | **None** | Any auxiliary tool; protected comparison |
-| Timing — optional proposal | Editor, Audio, Grid | Timing, History | Video |
-| Translation — optional proposal | Video, Editor, Grid | Search | Audio; protected comparison |
-| Typesetting — optional proposal | Video, Editor, Grid | Styles | Audio |
+| Timing — optional preset | Editor, Audio, Grid | Timing, History | Video |
+| Translation — optional preset | Video, Editor, Grid | Search | Audio; protected comparison |
+| Typesetting — optional preset | Video, Editor, Grid | Styles | Audio |
 | All | Video, Editor, Audio, Grid | Styles, Search, Timing, History | Protected comparison |
 | Video + subtitles | Video, Editor, Grid | None | Any tool or Audio |
 | Audio + subtitles | Editor, Audio, Grid | None | Any tool or Video |
