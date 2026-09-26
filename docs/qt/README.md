@@ -24,4 +24,4 @@ The map remains the index of decisions and open dependencies. The [coverage ledg
 
 The [video pipeline](proposals/video-pipeline.md) and [audio pipeline](proposals/audio-pipeline.md) are review proposals based on completed research. Their engine and clock choices have not been accepted.
 
-The [performance budgets](proposals/performance-budgets.md) await decisions. The retained [compatibility review ledger](proposals/compatibility-policy.md) lists candidate defects whose individual dispositions remain unapproved; accepting the policy did not accept those fixes.
+The [performance budgets](proposals/performance-budgets.md), [document model](proposals/document-model.md) and [time semantics](proposals/time-semantics.md) await decisions. The retained [compatibility review ledger](proposals/compatibility-policy.md) lists candidate defects whose individual dispositions remain unapproved; accepting the policy did not accept those fixes.
