@@ -15,7 +15,7 @@ Only the active mode owns playback audio and timing. This does not require routi
 
 For a mode switch, stop and flush the old transport, invalidate its generation and clock estimates, map the media identity and requested position, and acknowledge the destination presentation before resuming. Indexed destinations acknowledge the requested frame identity; a general player's acknowledgement must describe its actual position/accuracy, without pretending a time seek is an exact indexed step. Device-buffer tails and handoff latency need measurement. Handoff does not rewrite Document timing.
 
-This accepts **clock ownership**, not the still-proposed canonical units, interval boundaries, frame rounding or format conversions in [Set time and frame semantics for editing and playback](https://github.com/altqx/hikari/issues/42). The backend implements that eventual core contract; renderer timestamps and global FPS cannot become authoritative Document state.
+Clock ownership and the [accepted time contract](time-semantics.md) are separate responsibilities. Backends implement its canonical units, interval boundaries and preserved rounding rules, including the named approved departures; renderer timestamps and global FPS cannot become authoritative Document state. Native time conversion and acknowledgement evidence remains required.
 
 ## Video, subtitles and visual tools
 
