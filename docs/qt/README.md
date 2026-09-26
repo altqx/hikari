@@ -6,7 +6,7 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 | --- | --- | --- |
 | Application foundation | Hikari-owned Qt layer; no wholesale Muse framework adoption | [Architecture](architecture.md), [ADR](../adr/0001-hikari-owned-qt-layer.md) |
 | Localisation | Full TS authoring migration with QM runtime | [Localisation](localisation.md), [ADR](../adr/0002-ts-localisation.md) |
-| Visual language | Approved Compact Studio: C compactness with A layout | [Visual language](ux/visual-language.md) |
+| Visual language | Compact Studio styling; current-program default panel arrangement | [Visual language](ux/visual-language.md) |
 | Workspace ownership | Shared workspace; optional protected comparison and Home; movable/floating tools with follow/pin targets | [Workspaces](ux/workspaces.md); remaining IA choices are explicit |
 | Subtitle grid | Custom-painted renderer | [Grid contract](ux/subtitle-grid.md), [ADR](../adr/0003-painted-subtitle-grid.md) |
 | Vocabulary | The settled workspace/editing/reference/tool-target terms | [Root glossary](../../CONTEXT.md); broader domain glossary still open |
