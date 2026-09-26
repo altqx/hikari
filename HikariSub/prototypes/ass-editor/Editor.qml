@@ -17,9 +17,11 @@ ApplicationWindow {
     property int initialView: 0
     property string currentMode: "Raw + preview"
     function inspect() {
-        if (ready)
-            probeState = bridge.inspect(raw.text, raw.cursorPosition, raw.selectionStart, raw.selectionEnd,
-                           raw.inputMethodComposing, raw.preeditText)
+        if (ready) {
+            const snapshot = bridge.inspect(raw.text, raw.cursorPosition, raw.selectionStart, raw.selectionEnd,
+                                            raw.inputMethodComposing, raw.preeditText)
+            probeState = JSON.parse(JSON.stringify(snapshot))
+        }
     }
     function commitLine() {
         bridge.commit(raw.text, raw.inputMethodComposing)
@@ -172,8 +174,7 @@ ApplicationWindow {
         }
         Label {
             Layout.fillWidth: true; wrapMode: Text.WordWrap; color: "#9a5629"; font.pixelSize: 12
-            text: root.probeState.problemsText || ""
-            visible: text.length > 0
+            text: root.probeState.problemsText || "Projection only: hidden tags are never deleted from raw source."
         }
         Rectangle {
             Layout.fillWidth: true; Layout.preferredHeight: 71; color: "#e2dbe9"; radius: 7
