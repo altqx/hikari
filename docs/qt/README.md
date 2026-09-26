@@ -25,10 +25,10 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
-The map remains the index of decisions and open dependencies. The [coverage ledger](coverage.md) checks the full destination and each inventory surface against actual accepted evidence. Outstanding work includes command/undo and lifecycle design, native build/backend feasibility, detailed surface UX, test and cutover strategy, and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
+The map remains the index of decisions and open dependencies. The [coverage ledger](coverage.md) checks the full destination and each inventory surface against actual accepted evidence. Outstanding work includes command/undo and lifecycle design, native build/backend feasibility, detailed surface UX, cutover strategy, and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
 
 ## Proposals awaiting decisions
 
 The reviewed [video](proposals/video-pipeline.md) and [audio](proposals/audio-pipeline.md) alternatives led to the accepted media direction above. Qt Multimedia is the first general-player candidate to verify; chapter/track, clock, rendering and deployment gates remain explicit.
 
-The [native docking contract](proposals/docking.md) and [settings/import contract](proposals/settings-import.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
+The [native docking contract](proposals/docking.md), [settings/import contract](proposals/settings-import.md) and [edit/undo transaction contract](proposals/edit-transactions.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
