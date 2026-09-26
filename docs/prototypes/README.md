@@ -44,3 +44,5 @@ The pure state reducer drives all controls. Guided experiments cover switching d
 Browser checks exercised shared versus document-owned preset retention, read-only reference text during editing, panel restoration, and recovery-copy creation. Appearance is provisional, not an approved design. This does not prove native docking, screen-reader support, decoding or file compatibility.
 
 Review: Should layouts belong to the application or the document? Should comparison be an optional protected reference view? Which panels should be visible for Timing, Translation and Typesetting, and should Home be optional?
+
+The [capability placement worksheet](ia-capability-placement.md) maps the complete legacy UI families to proposed panels, dialogs and menu entries. It covers the placement questions beyond the runnable sample and explicitly marks unresolved decisions; it is not an approved information architecture.
