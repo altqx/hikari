@@ -13,8 +13,10 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
-The map remains the index of decisions and open dependencies. Outstanding work includes the remaining information architecture, core/data/time/undo/thread design, build/platform and backend choices, per-surface UX, compatibility/performance/test gates, release policy and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
+The map remains the index of decisions and open dependencies. The [coverage ledger](coverage.md) checks the full destination and each inventory surface against actual accepted evidence. Outstanding work includes the remaining information architecture, core/data/time/undo/thread design, build/platform and backend choices, per-surface UX, compatibility/performance/test gates, release policy and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
 
 ## Proposals awaiting decisions
 
 The [video pipeline](proposals/video-pipeline.md) and [audio pipeline](proposals/audio-pipeline.md) are review proposals based on completed research. Their engine and clock choices have not been accepted.
+
+The [domain vocabulary](proposals/domain-vocabulary.md), [compatibility and defect policy](proposals/compatibility-policy.md), and [Qt/Windows 10 support policy](proposals/qt-support-policy.md) also await decisions. Candidate terminology, defect dispositions and platform policy must not be treated as settled requirements.

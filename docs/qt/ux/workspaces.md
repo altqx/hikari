@@ -50,5 +50,6 @@ These demonstrations clarify the ownership model. They do not establish real fil
 
 1. Optional Timing, Translation and Typesetting preset membership; the current-program Editing arrangement is the settled default, and the five legacy visibility combinations remain available.
 2. Comparison navigation/synchronization and the controls for changing editing/reference roles; detailed criteria and interaction can be resolved in its surface prototype.
+3. Final placement of menus, command toolbars, properties/inspector and the status/task area, plus which additional dialog families become panels or share a tool. The capability-placement worksheet is still a proposal; choosing movable tools did not approve every grouping.
 
 The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.
