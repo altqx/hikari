@@ -1,6 +1,6 @@
 # Qt baseline and Windows 10 support proposal
 
-**Status: proposal for [Set the Qt baseline and Windows 10 maintenance policy](https://github.com/altqx/hikari/issues/37), awaiting the user's policy choice.** Checked 2026-09-27 against official Qt sources and the [completed survey](https://github.com/altqx/hikari/blob/3c1e557af5deb52a4fcfdc3f169b9da7afa67776/docs/research/qt6.md). No upgrade or platform qualification has been performed here.
+**Status: reviewed alternatives for [Set the Qt baseline and Windows 10 maintenance policy](https://github.com/altqx/hikari/issues/37). The user accepted the baseline and chose C on 2026-09-27: advance Qt and explicitly retire Windows 10 later.** The authoritative [platform policy](../platform-policy.md) records this choice; the recommendation of A below was not selected. Checked 2026-09-27 against official Qt sources and the [completed survey](https://github.com/altqx/hikari/blob/3c1e557af5deb52a4fcfdc3f169b9da7afa67776/docs/research/qt6.md). No upgrade or platform qualification has been performed here.
 
 ## Immediate baseline
 

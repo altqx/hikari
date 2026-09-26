@@ -9,7 +9,9 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 | Visual language | Compact Studio styling; current-program default panel arrangement | [Visual language](ux/visual-language.md) |
 | Workspace ownership | Shared workspace; optional protected comparison and Home; movable/floating tools with follow/pin targets | [Workspaces](ux/workspaces.md); remaining IA choices are explicit |
 | Subtitle grid | Custom-painted renderer | [Grid contract](ux/subtitle-grid.md), [ADR](../adr/0003-painted-subtitle-grid.md) |
-| Vocabulary | The settled workspace/editing/reference/tool-target terms | [Root glossary](../../CONTEXT.md); broader domain glossary still open |
+| Vocabulary | Shared domain vocabulary, including Line, Document/Session, Line group and Unconfirmed | [Root glossary](../../CONTEXT.md) |
+| Compatibility | Named approval for departures; individually approved defect fixes become default | [Compatibility](compatibility.md), [ADR](../adr/0005-observable-compatibility-and-defect-approval.md) |
+| Qt and platform support | Qt 6.11.2 now, verified 6.12 adoption, then newer Qt with explicit Windows 10 retirement later | [Platform policy](platform-policy.md), [ADR](../adr/0004-qt-baseline-and-platform-support.md) |
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
@@ -19,4 +21,4 @@ The map remains the index of decisions and open dependencies. The [coverage ledg
 
 The [video pipeline](proposals/video-pipeline.md) and [audio pipeline](proposals/audio-pipeline.md) are review proposals based on completed research. Their engine and clock choices have not been accepted.
 
-The [domain vocabulary](proposals/domain-vocabulary.md), [compatibility and defect policy](proposals/compatibility-policy.md), and [Qt/Windows 10 support policy](proposals/qt-support-policy.md) also await decisions. Candidate terminology, defect dispositions and platform policy must not be treated as settled requirements.
+The [automation host](proposals/automation-host.md) and [font resolution](proposals/font-resolution.md) proposals await decisions. The retained [compatibility review ledger](proposals/compatibility-policy.md) lists candidate defects whose individual dispositions remain unapproved; accepting the policy did not accept those fixes.

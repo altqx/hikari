@@ -6,7 +6,7 @@ Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](../adr
 
 | Module / planned source home | Owns | Boundary |
 | --- | --- | --- |
-| Core / `src/core` | Authoritative subtitle content, styles, script metadata, time/frame values, editing operations and their invariants | No QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Whether individual Qt Core value types are appropriate remains part of core interface design. |
+| Core / `src/core` | Authoritative subtitle content, styles, script properties, time/frame values, editing operations and their invariants | No QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Whether individual Qt Core value types are appropriate remains part of core interface design. |
 | Application / `src/application` | Document/session lifetime, editing target and selection, command dispatch, undo transactions, action metadata, settings/shortcuts, workspace/navigation policy and task coordination | Depends on core and explicit backend ports. No duplicated subtitle model in controls and no implicit access through process-wide service lookup. |
 | Backend adapters / `src/backends` | FFMS2/libass integration, audio/general playback, automation runtime, font/file/platform services and their resource lifetime | Implement the ports consumed by application services. Backend-specific handles stay inside their adapters. Renderer, A/V clock and thread contracts are separate decisions. |
 | Qt Quick UI / `src/ui` | QML shell, reusable controls, panels, model adapters/presenters, focus and accessibility representation | Observes application state and submits commands. It does not become another authoritative document store or make native backend calls from delegates. |
@@ -40,7 +40,7 @@ Workers return results tagged to their request/document revision; the applicatio
 
 - Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.
 - Navigation: predictable panel traversal and focus restoration, native input/IME ownership, and semantic representations for custom views.
-- Workspaces: one shared application layout and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Docking/floating and tool-target policy remain open there.
+- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Native docking architecture and remaining menu/control placement still need their decisions.
 - Appearance: reusable Qt Quick Controls styled through the [accepted Compact Studio visual language](ux/visual-language.md). UI appearance never changes ASS style data.
 - Settings: explicit scopes, stable persisted identities and a one-shot legacy importer. Legacy theme files and theme selection are excluded from import.
 - Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
@@ -56,8 +56,10 @@ FFMS2 and libass remain required by the map. Cross-platform adapters are the def
 
 No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [docking research](https://github.com/altqx/hikari/issues/16) remains an input to the workspace decision, not a selected dependency.
 
+The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts 6.12 after release and verification, and advances Qt with explicit Windows 10 retirement later. The [compatibility contract](compatibility.md) requires named approval for behavioral departures; an individually approved defect fix becomes the default.
+
 ## Open design and verification
 
-The document representation, lossless/legacy compatibility policy, time/frame semantics, command/undo granularity and scheduler contracts still require their core design decisions. Build/dependency strategy, exact media/audio/font backends and release gates remain the corresponding map tickets. This accepted foundation must not be presented as those decisions having been made.
+The document representation, per-format preservation/loss rules and individual defect dispositions, time/frame semantics, command/undo granularity and scheduler contracts still require their core design decisions. Build/dependency strategy, exact media/audio/font backends and release gates remain the corresponding map tickets. This accepted foundation must not be presented as those decisions having been made.
 
 Implementation must verify dependency direction, command/selection behavior through filtering and undo, late/cancelled worker results, script transactions, native focus/IME/screen-reader behavior and lifecycle cleanup. There is no implementation or benchmark pass attached to this ADR; the completed research and throwaway prototypes are evidence for planning.

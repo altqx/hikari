@@ -1,6 +1,6 @@
 # Proposed domain vocabulary
 
-For [Settle the domain glossary for the rewrite](https://github.com/altqx/hikari/issues/30). **Draft for human decision; not yet canonical.** This proposes names, not new capabilities or parity decisions. Underlined terms are proposed label changes or disambiguations.
+For [Settle the domain glossary for the rewrite](https://github.com/altqx/hikari/issues/30). **Accepted in the live review on 2026-09-27, including Unconfirmed.** The canonical concise definitions now live in [CONTEXT.md](../../../CONTEXT.md). This retained review artifact explains the evidence and distinctions; it does not authorize new capabilities or behavioral changes. Underlined terms identify the reviewed label changes or disambiguations.
 
 The four accepted terms in [CONTEXT.md](../../../CONTEXT.md)—**Workspace**, **Editing target**, **Protected reference**, **Tool target**—remain unchanged. Accepted layout, movable panels, optional Home, follow/pin targeting and technical choices are not reopened.
 
@@ -36,12 +36,12 @@ Evidence: [core inventory][core], [UI inventory][ui], [data inventory][data]. Se
 2. **One translated sign, two visual wraps.** It is one Line with original/translated text; it need not contain spoken dialogue. Its Unconfirmed flag is independent of dirty/saved state. Two wraps do not create two Lines.
 3. **“Filter this group.”** Specify Grid filter for visibility, ASS override tag for presentation, or Automation macro for a script command. Collapsing a Line group neither deletes its members nor guarantees every later command skips them.
 
-## Minimum decisions
+## Accepted review scope
 
 1. Accept this vocabulary, particularly **Line**, **Document / Document tab / Session**, and the underlined **Script properties / Line group / Grid filter** distinctions; retain format-specific names where discussing ASS or compatibility.
 2. Use **Unconfirmed** for the existing translation flag instead of “Doubtful,” without expanding its meaning to saving, committing edits or general approval.
 
-After acceptance, only concise definitions and avoided synonyms belong in CONTEXT.md; evidence, scenarios and implementation caveats stay here.
+Only concise definitions and avoided synonyms belong in CONTEXT.md; evidence, scenarios and implementation caveats stay here. Acceptance names the automation export-filter concept without approving implementation of the existing API stub.
 
 [core]: https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md
 [ui]: https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md
