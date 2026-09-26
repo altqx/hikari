@@ -16,12 +16,12 @@
 #pragma once
 
 //#include <wx/wx.h>
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 wxDECLARE_EVENT(NUMBER_CHANGED, wxCommandEvent);
 
 wxString getdouble(double num);
 
-class NumCtrl : public KaiTextCtrl
+class NumCtrl : public HikariTextCtrl
 {
 public:
 	NumCtrl(wxWindow *parent, long id, wxString text, int rangefrom, int rangeto, bool intonly,

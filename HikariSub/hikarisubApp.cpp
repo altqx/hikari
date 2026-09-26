@@ -27,7 +27,7 @@
 #include "ListControls.h"
 #include "OpennWrite.h"
 #include "Hotkeys.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "FontEnumerator.h"
 #include "SubsGrid.h"
 #include "VideoBox.h"
@@ -72,17 +72,17 @@ wxString JoinOpenPaths(const wxArrayString& openPaths)
 
 void QueueOpenPaths(const wxString& packedPaths)
 {
-	hikarisubApp *Kai = (hikarisubApp *)wxTheApp;
-	if (!Kai){ return; }
+	hikarisubApp *Hikari = (hikarisubApp *)wxTheApp;
+	if (!Hikari){ return; }
 	wxStringTokenizer tkn(packedPaths, L"|");
 	while (tkn.HasMoreTokens()){
 		wxString path = tkn.NextToken();
 		if (!path.empty()){
-			Kai->paths.Add(path);
+			Hikari->paths.Add(path);
 		}
 	}
-	if (!Kai->paths.empty()){
-		Kai->openTimer.Start(400, true);
+	if (!Hikari->paths.empty()){
+		Hikari->openTimer.Start(400, true);
 	}
 }
 
@@ -230,7 +230,7 @@ void hikarisubApp::OnOutofMemory()
 
 	if (tab->grid->file->HistorySize() > 4){
 		tab->grid->file->DropOldestHistory(2);
-		KaiLog(_("Not enough RAM. History partially deleted"));
+		HikariLog(_("Not enough RAM. History partially deleted"));
 		return;
 	}
 	else if (Notebook::GetTabs()->Size() > 1){
@@ -239,7 +239,7 @@ void hikarisubApp::OnOutofMemory()
 			if (i != Notebook::GetTabs()->GetSelection()){
 				if (Notebook::GetTabs()->Page(i)->grid->file->HistorySize() > 4){
 					Notebook::GetTabs()->Page(i)->grid->file->DropOldestHistory(2);
-					KaiLog(_("Not enough RAM. History partially deleted"));
+					HikariLog(_("Not enough RAM. History partially deleted"));
 					return;
 				}
 			}
@@ -270,7 +270,7 @@ bool hikarisubApp::OnInit()
 		if (!m_ipcServer->Create(HikariSubIpcServiceName())){
 			delete m_ipcServer;
 			m_ipcServer = nullptr;
-			KaiLogSilent(L"Cannot create HikariSub IPC server for opening files in a running instance");
+			HikariLogSilent(L"Cannot create HikariSub IPC server for opening files in a running instance");
 		}
 #endif
 
@@ -317,7 +317,7 @@ bool hikarisubApp::OnInit()
 		//wxHandleFatalExceptions(true);
 		//0 - failed, 1 - succeeded, 2 - no config
 		int isGood = Options.LoadOptions();
-		if (!isGood){ KaiMessageBox(_("Cannot read settings.\nThe program will be terminated."), _("Warning")); return false; }
+		if (!isGood){ HikariMessageBox(_("Cannot read settings.\nThe program will be terminated."), _("Warning")); return false; }
 		//0x0415 	Polish (pl) 	0x15 	LANG_POLISH 	Poland (PL) 	0x01 	SUBLANG_POLISH_POLAND
 		if (isGood == 2 && GetSystemDefaultUILanguage() == 0x415){
 			Options.SetString(PROGRAM_LANGUAGE, L"pl");
@@ -344,12 +344,12 @@ bool hikarisubApp::OnInit()
 			locale = new wxLocale();
 			const  wxLanguageInfo * li = locale->FindLanguageInfo(lang);
 			if (!li){
-				KaiMessageBox(_("Cannot find language, language change failed"));
+				HikariMessageBox(_("Cannot find language, language change failed"));
 			}
 			else{
 #ifdef _WIN32
 				if (!locale->Init(li->Language, wxLOCALE_DONT_LOAD_DEFAULT)){
-					KaiMessageBox(_("wxLocale cannot initialize, language change failed"));
+					HikariMessageBox(_("wxLocale cannot initialize, language change failed"));
 				}
 #else
 				{
@@ -363,7 +363,7 @@ bool hikarisubApp::OnInit()
 #endif
 				if (!locale->AddCatalog(HIKARISUB_CATALOG_DOMAIN, wxLANGUAGE_ENGLISH, L"UTF-8")){
 #ifdef _WIN32
-					KaiMessageBox(_("Cannot find translation, language change failed"));
+					HikariMessageBox(_("Cannot find translation, language change failed"));
 #endif
 				}
 			}
@@ -379,7 +379,7 @@ bool hikarisubApp::OnInit()
 		setlocale(LC_NUMERIC, "C");
 
 		if (!Hkeys.LoadHkeys()){
-			KaiMessageBox(_("Cannot read hotkeys.\nThe program will be terminated."), _("Warning"));
+			HikariMessageBox(_("Cannot read hotkeys.\nThe program will be terminated."), _("Warning"));
 			wxDELETE(locale); return false;
 		}
 
@@ -413,7 +413,7 @@ bool hikarisubApp::OnInit()
 				Options.GetCoords(MONITOR_POSITION, &mposx, &mposy);
 				Options.GetCoords(VIDEO_WINDOW_SIZE, &vsizex, &vsizey);
 				int audioHeight = Options.GetInt(AUDIO_BOX_HEIGHT);
-				KaiLogSilent(wxString::Format(L"Audio Height %d", audioHeight));
+				HikariLogSilent(wxString::Format(L"Audio Height %d", audioHeight));
 				float scalex = (float)rt.width / (float)msizex;
 				float scaley = (float)rt.height / (float)msizey;
 				//program position
@@ -441,7 +441,7 @@ bool hikarisubApp::OnInit()
 				Options.SetCoords(MONITOR_SIZE, rt.width, rt.height);
 				Options.SetCoords(MONITOR_POSITION, rt.x, rt.y);
 				Options.SetInt(AUDIO_BOX_HEIGHT, audioHeight);
-				KaiLogSilent(wxString::Format(L"Audio Height scaled %d", audioHeight));
+				HikariLogSilent(wxString::Format(L"Audio Height scaled %d", audioHeight));
 			}
 			if (sizex > rt.width) {
 				sizex = rt.width;
@@ -507,13 +507,13 @@ bool hikarisubApp::OnInit()
 		int session = Options.GetInt(LAST_SESSION_CONFIG);
 		bool loadSession = (session == 2 || Options.HasCrashed()) && !hasPaths;
 		if (session == 1 && !hasPaths){
-			if (KaiMessageBox(_("Load last session?"), _("Prompt"), wxYES_NO, Frame) == wxYES){
+			if (HikariMessageBox(_("Load last session?"), _("Prompt"), wxYES_NO, Frame) == wxYES){
 				loadSession = true;
 			}
 		}
 		//Check if program was bad close or crashed
 		if (!hasPaths && !loadSession && Notebook::CheckLastSession() == 2) {
-			if (KaiMessageBox(_("The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?"), _("Prompt"), wxYES_NO, Frame) == wxYES) {
+			if (HikariMessageBox(_("The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?"), _("Prompt"), wxYES_NO, Frame) == wxYES) {
 				loadCrashSession = loadSession = true;
 			}
 		}
@@ -535,10 +535,10 @@ bool hikarisubApp::OnInit()
 			Bind(wxEVT_TIMER, [this](wxTimerEvent &evt){
 				for (wxWindowList::compatibility_iterator node = wxTopLevelWindows.GetFirst(); node; node = node->GetNext()){
 					wxWindow* window = node->GetData();
-					KaiDialog* kaiDialog = (window && window->IsKindOf(CLASSINFO(KaiDialog))) ? static_cast<KaiDialog*>(window) : nullptr;
-					if (kaiDialog && kaiDialog->IsShown() && kaiDialog->IsModal()){
-						int escapeId = kaiDialog->GetEscapeId();
-						kaiDialog->EndModal(escapeId != wxID_NONE ? escapeId : wxID_CANCEL);
+					HikariDialog* hikariDialog = (window && window->IsKindOf(CLASSINFO(HikariDialog))) ? static_cast<HikariDialog*>(window) : nullptr;
+					if (hikariDialog && hikariDialog->IsShown() && hikariDialog->IsModal()){
+						int escapeId = hikariDialog->GetEscapeId();
+						hikariDialog->EndModal(escapeId != wxID_NONE ? escapeId : wxID_CANCEL);
 						automationExitTimer.Start(250, true);
 						return;
 					}
@@ -588,7 +588,7 @@ bool hikarisubApp::OnInit()
 			return false;
 #ifndef _WIN32
 		if (!SendOpenPathsToRunningInstance(subs)){
-			KaiLogSilent(wxString::Format(L"Cannot pass files to an already running instance on this platform: %s", subs));
+			HikariLogSilent(wxString::Format(L"Cannot pass files to an already running instance on this platform: %s", subs));
 		}
 		return false;
 #else
@@ -598,7 +598,7 @@ bool hikarisubApp::OnInit()
 		while (!hWnd){
 			//prevent to total dedlock, when main HikariSub is crashed or closed
 			if (count > 100){
-				KaiLogSilent(wxString::Format(L"Cannot open: %s", subs));
+				HikariLogSilent(wxString::Format(L"Cannot open: %s", subs));
 				return false;
 			}
 
@@ -720,7 +720,7 @@ void hikarisubApp::OnFatalException()
 	//op.FileWrite(Options.pathfull+"\\recover.txt",recover);
 	//Options.SaveOptions();
 
-	//KaiMessageBox(_T("Ups, HikariSub się skraszował w przyszłości będzie można wznowić sesję po tym kraszu"), "Krasz", wxOK | wxICON_ERROR);
+	//HikariMessageBox(_T("Ups, HikariSub się skraszował w przyszłości będzie można wznowić sesję po tym kraszu"), "Krasz", wxOK | wxICON_ERROR);
 }
 void hikarisubApp::OnOpen(wxTimerEvent &evt)
 {
@@ -740,7 +740,7 @@ bool hikarisubApp::IsBusy()
 	wxWindowList children = Frame->GetChildren();
 	for (wxWindowList::compatibility_iterator node = children.GetFirst(); node; node = node->GetNext()) {
 		wxWindow *current = (wxWindow *)node->GetData();
-		if ((current->IsKindOf(CLASSINFO(KaiDialog)) && ((KaiDialog*)current)->IsModal()) ||
+		if ((current->IsKindOf(CLASSINFO(HikariDialog)) && ((HikariDialog*)current)->IsModal()) ||
 			(current->IsKindOf(CLASSINFO(wxDialog)) && ((wxDialog*)current)->IsModal()) || current->GetId() == 31555)
 		{
 			return true;

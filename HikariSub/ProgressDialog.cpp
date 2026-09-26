@@ -18,8 +18,8 @@
 #include "ProgressDialog.h"
 //#include "hikarisubApp.h"
 #include "SubsTime.h"
-#include "KaiStaticText.h"
-#include "KaiGauge.h"
+#include "HikariStaticText.h"
+#include "HikariGauge.h"
 #include "HikariSubFrame.h"
 //#include <wx/gauge.h>
 #include <ShObjIdl.h>
@@ -38,9 +38,9 @@ ProgresDialog::ProgresDialog(wxWindow *_parent, const wxString &title, const wxP
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
 	SetFont(*Options.GetFont());
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
-	text = new KaiStaticText(this, -1, title);
-	gauge = new KaiGauge(this, -1, wxDefaultPosition, wxSize(300, 20), wxGA_HORIZONTAL);
-	text1 = new KaiStaticText(this, -1, _("Time elapsed: 00:00:00.00"));
+	text = new HikariStaticText(this, -1, title);
+	gauge = new HikariGauge(this, -1, wxDefaultPosition, wxSize(300, 20), wxGA_HORIZONTAL);
+	text1 = new HikariStaticText(this, -1, _("Time elapsed: 00:00:00.00"));
 	cancel = new MappedButton(this, 23333, _("Cancel"));
 	sizer->Add(text, 0, wxALIGN_CENTER | wxALL, 3);//wxALIGN_CENTER|
 	sizer->Add(gauge, 0, wxALIGN_CENTER | wxALL, 3);

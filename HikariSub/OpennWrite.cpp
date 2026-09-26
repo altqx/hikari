@@ -36,13 +36,13 @@ OpenWrite::OpenWrite(const wxString &fileName, bool clear)
 {
 	wxFileName fname;
 	fname.Assign(fileName);
-	if (!fname.DirExists()){ wxFileName::Mkdir(KaiPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
+	if (!fname.DirExists()){ wxFileName::Mkdir(HikariPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
 	if (fname.FileExists() && !fname.IsFileReadable()){ return; }
 	if (!file.Exists(fileName)){
-		if (!file.Create(fileName, false, wxS_DEFAULT)){ KaiLog(_("Cannot create file.")); }
+		if (!file.Create(fileName, false, wxS_DEFAULT)){ HikariLog(_("Cannot create file.")); }
 	}
 	else{
-		if (!file.Open(fileName, (clear) ? wxFile::write : wxFile::write_append, wxS_DEFAULT)){ KaiLog(_("Cannot open file.")); };
+		if (!file.Open(fileName, (clear) ? wxFile::write : wxFile::write_append, wxS_DEFAULT)){ HikariLog(_("Cannot open file.")); };
 	}
 	isfirst = clear;
 }
@@ -114,9 +114,9 @@ void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 
 	wxFileName fname;
 	fname.Assign(fileName);
-	if (!fname.DirExists()){ wxFileName::Mkdir(KaiPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
+	if (!fname.DirExists()){ wxFileName::Mkdir(HikariPathDir(fileName), 511, wxPATH_MKDIR_FULL); }
 	if (fname.FileExists() && !fname.IsFileReadable()){
-		KaiLog(_("Cannot read the file."));
+		HikariLog(_("Cannot read the file."));
 		return;
 	}
 
@@ -139,14 +139,14 @@ void OpenWrite::FileWrite(const wxString &fileName, const wxString &textfile, bo
 }
 void OpenWrite::PartFileWrite(const wxString &parttext)
 {
-	if (!file.IsOpened()){ KaiLog(_("The file was not opened.")); return; }
+	if (!file.IsOpened()){ HikariLog(_("The file was not opened.")); return; }
 	if (isfirst){
 		wchar_t bom = 0xFEFF;
-		if (!file.Write(wxString(bom) + parttext/*,wxConvUTF8*/)){ KaiLog(_("Cannot save to file.")); };
+		if (!file.Write(wxString(bom) + parttext/*,wxConvUTF8*/)){ HikariLog(_("Cannot save to file.")); };
 		isfirst = false;
 		return;
 	}
-	if (!file.Write(parttext/*,wxConvUTF8*/)){ KaiLog(_("Cannot save to file.")); };
+	if (!file.Write(parttext/*,wxConvUTF8*/)){ HikariLog(_("Cannot save to file.")); };
 }
 
 void OpenWrite::CloseFile()

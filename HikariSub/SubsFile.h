@@ -18,7 +18,7 @@
 
 #include "styles.h"
 #include "SubsDialogue.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "UndoHistory.h"
 #include <vector>
 #include <set>
@@ -248,7 +248,7 @@ public:
 	wxMutex *historyGuard = nullptr;
 };
 
-class HistoryDialog : public KaiDialog
+class HistoryDialog : public HikariDialog
 {
 public:
 	HistoryDialog(wxWindow *parent, SubsFile *file, std::function<void(int)> functionAfterChangeHistory );

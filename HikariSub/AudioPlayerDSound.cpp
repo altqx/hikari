@@ -42,8 +42,8 @@ namespace {
 	{
 		static std::once_flag once;
 		std::call_once(once, [] {
-#ifdef KAI_GST_PLUGIN_DIR
-			g_setenv("GST_PLUGIN_PATH_1_0", KAI_GST_PLUGIN_DIR, FALSE);
+#ifdef HIKARISUB_GST_PLUGIN_DIR
+			g_setenv("GST_PLUGIN_PATH_1_0", HIKARISUB_GST_PLUGIN_DIR, FALSE);
 #endif
 			gst_init_check(nullptr, nullptr, nullptr);
 		});
@@ -77,7 +77,7 @@ void DirectSoundPlayer2Thread::Run()
 	EnsureAudioGstInit();
 
 	auto fail = [this](const wxString &msg) {
-		KaiLog(msg);
+		HikariLog(msg);
 		std::lock_guard<std::mutex> lock(linuxState->mutex);
 		linuxState->failMessage = msg;
 		linuxState->failed = true;
@@ -482,7 +482,7 @@ void DirectSoundPlayer2Thread::Run()
 
 	hr = DirectSoundCreate8(&DSDEVID_DefaultPlayback, &defaultPlayback, 0);
 	if (!defaultPlayback) {
-		KaiLog("Cannot create DirectSound object");
+		HikariLog("Cannot create DirectSound object");
 		SetEvent(error_happened);
 		return;
 	}
@@ -490,7 +490,7 @@ void DirectSoundPlayer2Thread::Run()
 	// Ensure we can get interesting wave formats (unless we have PRIORITY we can only use a standard 8 bit format)
 	hr = defaultPlayback->SetCooperativeLevel(HikariSubFrame::Get()->GetHWND(), DSSCL_PRIORITY);
 	if (hr != DS_OK) {
-		KaiLog("Cannot create set cooperativeLevel");
+		HikariLog("Cannot create set cooperativeLevel");
 		defaultPlayback->Release();
 		SetEvent(error_happened);
 		return;
@@ -522,7 +522,7 @@ void DirectSoundPlayer2Thread::Run()
 	// And then create the buffer
 	IDirectSoundBuffer *audioBuffer7 = 0;
 	if FAILED(defaultPlayback->CreateSoundBuffer(&desc, &audioBuffer7, 0)) {
-		KaiLog("Could not create buffer");
+		HikariLog("Could not create buffer");
 		defaultPlayback->Release();
 		SetEvent(error_happened);
 		return;
@@ -530,7 +530,7 @@ void DirectSoundPlayer2Thread::Run()
 		// But it's an old version interface we get, query it for the DSound8 interface
 	IDirectSoundBuffer8 * audioBuffer = nullptr;
 	if (FAILED(audioBuffer7->QueryInterface(IID_IDirectSoundBuffer8, (LPVOID*)&audioBuffer)))
-		KaiLog("Buffer doesn't support version 8 interface");
+		HikariLog("Buffer doesn't support version 8 interface");
 
 	audioBuffer7->Release();
 	audioBuffer7 = nullptr;
@@ -587,14 +587,14 @@ void DirectSoundPlayer2Thread::Run()
 				buffer_offset = 0;
 
 				if (FAILED(audioBuffer->SetCurrentPosition(0)))
-					KaiLogSilent("Could not reset playback buffer cursor before filling first buffer.");
+					HikariLogSilent("Could not reset playback buffer cursor before filling first buffer.");
 
 				HRESULT res = audioBuffer->Lock(buffer_offset, 0, (void **) &buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
 				if (res == DSERR_BUFFERLOST && SUCCEEDED(audioBuffer->Restore()))
 					res = audioBuffer->Lock(buffer_offset, 0, (void **)&buf, &buf_size, 0, 0, DSBLOCK_ENTIREBUFFER);
 				if (FAILED(res))
 				{
-					KaiLogSilent("Could not lock buffer for playback.");
+					HikariLogSilent("Could not lock buffer for playback.");
 					SetStopped();
 					playback_should_be_running = false;
 					break;
@@ -608,7 +608,7 @@ void DirectSoundPlayer2Thread::Run()
 				if (buffer_offset >= bufSize) buffer_offset -= bufSize;
 
 				if (FAILED(audioBuffer->SetCurrentPosition(0)))
-					KaiLogSilent("Could not reset playback buffer cursor before playback.");
+					HikariLogSilent("Could not reset playback buffer cursor before playback.");
 
 					if (bytes_filled < wanted_latency_bytes)
 					{
@@ -616,14 +616,14 @@ void DirectSoundPlayer2Thread::Run()
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
 						current_latency = (bytes_filled * 1000) / waveFormat.nAvgBytesPerSec;
 						if (FAILED(audioBuffer->Play(0, 0, 0)))
-							KaiLogSilent("Could not start single-buffer playback.");
+							HikariLogSilent("Could not start single-buffer playback.");
 					}
 					else
 					{
 						// We filled the entire buffer so there's reason to do streaming playback
 						current_latency = wanted_latency;
 						if (FAILED(audioBuffer->Play(0, 0, DSBPLAY_LOOPING)))
-							KaiLogSilent("Could not start looping playback.");
+							HikariLogSilent("Could not start looping playback.");
 					}
 
 					SetWritten(next_input_frame, buffer_offset, bytes_filled >= wanted_latency_bytes, true);
@@ -690,7 +690,7 @@ do_fill_buffer:
 
 				DWORD status;
 				if (FAILED(audioBuffer->GetStatus(&status)))
-					KaiLogDebug("Could not get playback buffer status");
+					HikariLogDebug("Could not get playback buffer status");
 
 					if (!(status & DSBSTATUS_LOOPING))
 					{
@@ -704,7 +704,7 @@ do_fill_buffer:
 
 					DWORD play_cursor;
 					if (FAILED(audioBuffer->GetCurrentPosition(&play_cursor, 0)))
-						KaiLogDebug("Could not get play cursor position for filling buffer.");
+						HikariLogDebug("Could not get play cursor position for filling buffer.");
 
 						int bytes_needed = (int)play_cursor - (int)buffer_offset;
 					if (bytes_needed < 0) bytes_needed += (int)bufSize;
@@ -735,7 +735,7 @@ do_fill_buffer:
 					}
 					if (FAILED(res))
 					{
-						KaiLogDebug(wxString::Format(L"Could not lock the playback buffer (0x%08X).", (unsigned)res));
+						HikariLogDebug(wxString::Format(L"Could not lock the playback buffer (0x%08X).", (unsigned)res));
 						break;
 					}
 
@@ -765,7 +765,7 @@ do_fill_buffer:
 			}
 
 		default:
-			KaiLogDebug("Something bad happened while waiting on events in playback loop,"\
+			HikariLogDebug("Something bad happened while waiting on events in playback loop,"\
 				"either the wait failed or an event object was abandoned.");
 				break;
 		}
@@ -1145,7 +1145,7 @@ void DirectSoundPlayer2::OpenStream()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		thread = 0;
 	}
 }
@@ -1161,7 +1161,7 @@ void DirectSoundPlayer2::CloseStream()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 	thread = 0;
 }
@@ -1180,7 +1180,7 @@ void DirectSoundPlayer2::SetProvider(Provider *_provider)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1198,7 +1198,7 @@ void DirectSoundPlayer2::Play(long long start, long long count)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1215,7 +1215,7 @@ void DirectSoundPlayer2::Stop(bool timerToo)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1229,7 +1229,7 @@ bool DirectSoundPlayer2::IsPlaying()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return false;
 	}
 }
@@ -1244,7 +1244,7 @@ long long DirectSoundPlayer2::GetStartPosition()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return 0;
 	}
 }
@@ -1259,7 +1259,7 @@ long long DirectSoundPlayer2::GetEndPosition()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return 0;
 	}
 }
@@ -1274,7 +1274,7 @@ long long DirectSoundPlayer2::GetCurrentPosition()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return 0;
 	}
 }
@@ -1288,7 +1288,7 @@ int DirectSoundPlayer2::GetCurPositionMS()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return 0;
 	}
 }
@@ -1302,7 +1302,7 @@ void DirectSoundPlayer2::SetEndPosition(long long pos)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1320,7 +1320,7 @@ void DirectSoundPlayer2::SetCurrentPosition(long long pos)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1333,7 +1333,7 @@ void DirectSoundPlayer2::SetVolume(double vol)
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 	}
 }
 
@@ -1347,7 +1347,7 @@ double DirectSoundPlayer2::GetVolume()
 	}
 	catch (const wxChar *msg)
 	{
-		KaiLog(msg);
+		HikariLog(msg);
 		return 0;
 	}
 }

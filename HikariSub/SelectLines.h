@@ -16,16 +16,16 @@
 #pragma once
 
 #include "ListControls.h"
-#include "KaiTextCtrl.h"
-#include "KaiRadioButton.h"
+#include "HikariTextCtrl.h"
+#include "HikariRadioButton.h"
 #include "MappedButton.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
 class HikariSubFrame;
 class TabPanel;
 
 
-class SelectLines: public KaiDialog
+class SelectLines: public HikariDialog
 {
 public:
 
@@ -33,23 +33,23 @@ public:
 	virtual ~SelectLines(){};
 	void SaveOptions();
 
-	HikariSubFrame* Kai;
+	HikariSubFrame* Hikari;
 
-	KaiRadioButton* Contains;
-	KaiRadioButton* NotContains;
-	KaiRadioButton* CollumnText;
-	KaiRadioButton* CollumnStyle;
-	KaiRadioButton* CollumnActor;
-	KaiRadioButton* CollumnEffect;
-	KaiRadioButton* CollumnStartTime;
-	KaiRadioButton* CollumnEndTime;
-	KaiRadioBox *Actions;
-	KaiRadioBox *Selections;
-	KaiChoice* FindText;
-	KaiCheckBox* MatchCase;
-	KaiCheckBox* RegEx;
-	KaiCheckBox* Dialogues;
-	KaiCheckBox* Comments;
+	HikariRadioButton* Contains;
+	HikariRadioButton* NotContains;
+	HikariRadioButton* CollumnText;
+	HikariRadioButton* CollumnStyle;
+	HikariRadioButton* CollumnActor;
+	HikariRadioButton* CollumnEffect;
+	HikariRadioButton* CollumnStartTime;
+	HikariRadioButton* CollumnEndTime;
+	HikariRadioBox *Actions;
+	HikariRadioBox *Selections;
+	HikariChoice* FindText;
+	HikariCheckBox* MatchCase;
+	HikariCheckBox* RegEx;
+	HikariCheckBox* Dialogues;
+	HikariCheckBox* Comments;
 	MappedButton *ChooseStyles;
 	MappedButton *Select;
 	MappedButton *Close;

@@ -16,11 +16,11 @@
 
 #include "UpdateChecker.h"
 #include "JsonValue.h"
-#include "KaiCheckBox.h"
-#include "KaiDialog.h"
-#include "KaiMessageBox.h"
-#include "KaiStaticText.h"
-#include "KaiTextCtrl.h"
+#include "HikariCheckBox.h"
+#include "HikariDialog.h"
+#include "HikariMessageBox.h"
+#include "HikariStaticText.h"
+#include "HikariTextCtrl.h"
 #include "MappedButton.h"
 #include "SemVer.h"
 #include "VersionHikariSub.h"
@@ -81,36 +81,36 @@ namespace
 		return false;
 	}
 
-	class UpdateAvailableDialog : public KaiDialog
+	class UpdateAvailableDialog : public HikariDialog
 	{
 	public:
 		UpdateAvailableDialog(wxWindow *parent, const ReleaseInfo &release)
-			: KaiDialog(parent, -1, _("A new version is available"))
+			: HikariDialog(parent, -1, _("A new version is available"))
 		{
 			wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 
-			KaiStaticText *title = new KaiStaticText(this, -1, release.name);
+			HikariStaticText *title = new HikariStaticText(this, -1, release.name);
 			title->SetFont(title->GetFont().Bold());
 			sizer->Add(title, 0, wxEXPAND | wxALL, 4);
 
-			sizer->Add(new KaiStaticText(this, -1,
+			sizer->Add(new HikariStaticText(this, -1,
 				wxString::Format(_("You have version %s; version %s is available"),
 					VersionHikariSub, release.tag)),
 				0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 4);
 
-			KaiTextCtrl *notes = new KaiTextCtrl(this, -1, release.notes,
+			HikariTextCtrl *notes = new HikariTextCtrl(this, -1, release.notes,
 				wxDefaultPosition, wxSize(460, 220),
 				wxTE_MULTILINE | wxTE_READONLY | wxTE_BESTWRAP);
 			sizer->Add(notes, 1, wxEXPAND | wxALL, 4);
 
-			sizer->Add(new KaiStaticText(this, -1, release.url),
+			sizer->Add(new HikariStaticText(this, -1, release.url),
 				0, wxEXPAND | wxLEFT | wxRIGHT, 4);
 
-			autoCheck = new KaiCheckBox(this, -1, _("Check for updates automatically"));
+			autoCheck = new HikariCheckBox(this, -1, _("Check for updates automatically"));
 			autoCheck->SetValue(Options.GetBool(UPDATER_AUTO_CHECK));
 			sizer->Add(autoCheck, 0, wxEXPAND | wxALL, 4);
 
-			stableOnly = new KaiCheckBox(this, -1, _("Stable versions only"));
+			stableOnly = new HikariCheckBox(this, -1, _("Stable versions only"));
 			stableOnly->SetValue(Options.GetBool(UPDATER_CHECK_FOR_STABLE));
 			sizer->Add(stableOnly, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 4);
 
@@ -150,8 +150,8 @@ namespace
 		}
 
 	private:
-		KaiCheckBox *autoCheck;
-		KaiCheckBox *stableOnly;
+		HikariCheckBox *autoCheck;
+		HikariCheckBox *stableOnly;
 		wxString url;
 	};
 
@@ -160,7 +160,7 @@ namespace
 		wxWebRequest request = wxWebSession::GetDefault().CreateRequest(parent, kReleasesUrl);
 		if (!request.IsOk()) {
 			if (interactive)
-				KaiMessageBox(_("Cannot check for updates"), _("Update"));
+				HikariMessageBox(_("Cannot check for updates"), _("Update"));
 			return;
 		}
 
@@ -181,7 +181,7 @@ namespace
 
 			if (evt.GetState() != wxWebRequest::State_Completed) {
 				if (interactive)
-					KaiMessageBox(_("Cannot check for updates"), _("Update"));
+					HikariMessageBox(_("Cannot check for updates"), _("Update"));
 				return;
 			}
 
@@ -190,7 +190,7 @@ namespace
 					Options.GetBool(UPDATER_CHECK_FOR_STABLE), &release))
 			{
 				if (interactive)
-					KaiMessageBox(_("You already have the latest version"), _("Update"));
+					HikariMessageBox(_("You already have the latest version"), _("Update"));
 				return;
 			}
 

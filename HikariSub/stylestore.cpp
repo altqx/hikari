@@ -18,7 +18,7 @@
 
 #include "stylestore.h"
 #include "HikariSubFrame.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "config.h"
 #include "SubsGrid.h"
 #include "Notebook.h"
@@ -34,12 +34,12 @@
 #include <wx/string.h>
 #include <wx/filedlg.h>
 #include "StyleChange.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "FontEnumerator.h"
 
 
 StyleStore::StyleStore(wxWindow* parent, const wxPoint& pos)
-	: KaiDialog(parent, -1, _("Style manager"), pos, wxSize(400, -1), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Style manager"), pos, wxSize(400, -1), wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, stayOnTop(false)
 {
 	bool isDetached = detachedEtit = Options.GetBool(STYLE_MANAGER_DETACH_EDIT_WINDOW);
@@ -65,8 +65,8 @@ StyleStore::StyleStore(wxWindow* parent, const wxPoint& pos)
 	wxBoxSizer *Mainsm = new wxBoxSizer(wxVERTICAL);
 	Mainall = new DialogSizer(wxHORIZONTAL);
 
-	KaiStaticBoxSizer *catalogSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Catalog:"));
-	catalogList = new KaiChoice(this, ID_CATALOG, wxDefaultPosition, wxDefaultSize, Options.dirs);
+	HikariStaticBoxSizer *catalogSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Catalog:"));
+	catalogList = new HikariChoice(this, ID_CATALOG, wxDefaultPosition, wxDefaultSize, Options.dirs);
 	int chc = catalogList->FindString(Options.actualStyleDir);
 	catalogList->SetSelection(chc);
 	newCatalog = new MappedButton(this, ID_NEWCAT, _("New"));
@@ -77,7 +77,7 @@ StyleStore::StyleStore(wxWindow* parent, const wxPoint& pos)
 	catalogSizer->Add(deleteCatalog, 0, wxEXPAND | wxALL, 2);
 
 
-	KaiStaticBoxSizer *catalogStylesSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Styles stored:"));
+	HikariStaticBoxSizer *catalogStylesSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Styles stored:"));
 	wxBoxSizer *catalogButtonsSizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *catalogMainSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *catalogMoveButtonsSizer = new wxBoxSizer(wxVERTICAL);
@@ -129,7 +129,7 @@ StyleStore::StyleStore(wxWindow* parent, const wxPoint& pos)
 	addToButtons->Add(addToAss, 1, wxEXPAND | wxALL, 5);
 	//addToButtons->AddStretchSpacer(3);
 
-	KaiStaticBoxSizer *ASSStylesSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Styles in ASS file:"));
+	HikariStaticBoxSizer *ASSStylesSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Styles in ASS file:"));
 	wxBoxSizer *ASSButtonsSizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *ASSMainSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *ASSMoveButtonsSizer = new wxBoxSizer(wxVERTICAL);
@@ -286,7 +286,7 @@ void StyleStore::OnAddToStore(wxCommandEvent& event)
 		int found = Options.FindStyle(stylc->Name);
 		if (found != -1){
 			if (prompt != wxYES_TO_ALL){
-				prompt = KaiMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
+				prompt = HikariMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
 					stylc->Name), _("Confirmation"), wxYES_TO_ALL | wxYES | wxNO | wxCANCEL, this);
 				if (prompt == wxCANCEL){ 
 					delete stylc;
@@ -318,7 +318,7 @@ void StyleStore::OnAddToAss(wxCommandEvent& event)
 		int found = grid->file->FindStyle(stylc->Name);
 		if (found != -1){
 			if (prompt != wxYES_TO_ALL){
-				prompt = KaiMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
+				prompt = HikariMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
 					stylc->Name), _("Confirmation"), wxYES_TO_ALL | wxYES | wxNO | wxCANCEL, this);
 				if (prompt == wxCANCEL){
 					delete stylc;
@@ -338,7 +338,7 @@ void StyleStore::OnAddToAss(wxCommandEvent& event)
 void StyleStore::OnAddToAssInAllTabs(wxCommandEvent& event)
 {
 	Notebook *tabs = Notebook::GetTabs();
-	HikariSubFrame *Kai = (HikariSubFrame*)tabs->GetParent();
+	HikariSubFrame *Hikari = (HikariSubFrame*)tabs->GetParent();
 	wxArrayInt sels;
 	int numSelections = Store->GetSelections(sels);
 	if (numSelections < 1){ wxBell(); return; }
@@ -350,14 +350,14 @@ void StyleStore::OnAddToAssInAllTabs(wxCommandEvent& event)
 		if (grid->subsFormat != ASS)
 			continue;
 
-		bool isActive = (k == Kai->Tabs->iter);
+		bool isActive = (k == Hikari->Tabs->iter);
 
 		for (int i = 0; i < numSelections; i++){
 			Styles *stylc = Options.GetStyle(sels[i])->Copy();
 			int found = grid->file->FindStyle(stylc->Name);
 			if (found != -1){
 				if (prompt != wxYES_TO_ALL && prompt != wxCANCEL){
-					prompt = KaiMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
+					prompt = HikariMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
 						stylc->Name), _("Confirmation"), wxYES_TO_ALL | wxYES | wxNO | wxCANCEL, this);
 				}
 				if (prompt == wxYES || prompt == wxYES_TO_ALL){
@@ -379,7 +379,7 @@ void StyleStore::OnAddToAssInAllTabs(wxCommandEvent& event)
 		grid->Refresh(false);
 		if (isActive)
 			ASSList->SetArray(grid->file->GetStyleTable());
-		Kai->Label(tab->grid->file->GetActualHistoryIter(), false, k, !isActive);
+		Hikari->Label(tab->grid->file->GetActualHistoryIter(), false, k, !isActive);
 	}
 }
 
@@ -444,7 +444,7 @@ bool StyleStore::ChangeStyle(Styles *changedStyle, int cellsToChange /*= -1*/)
 	if (foundStyle != -1 && dummy || (multiplication > 1 || multiplication == 1 && oldname != changedStyle->Name) && !dummy)
 	{
 		Mainall->Fit(this);
-		KaiMessageBox(wxString::Format(_("Style named \"%s\" already exists."), changedStyle->Name));
+		HikariMessageBox(wxString::Format(_("Style named \"%s\" already exists."), changedStyle->Name));
 		delete changedStyle;
 		return false;
 	}
@@ -506,7 +506,7 @@ bool StyleStore::ChangeStyle(Styles *changedStyle, int cellsToChange /*= -1*/)
 	Mainall->Fit(this);
 	bool refreshActiveLine = false;
 	if (oldname != changedStyle->Name && ASSStyle && !dummy){
-		int res = KaiMessageBox(_("Style name modified. Do you want to change all instances to the new name?"), _("Confirmation"), wxYES_NO);
+		int res = HikariMessageBox(_("Style name modified. Do you want to change all instances to the new name?"), _("Confirmation"), wxYES_NO);
 		if (res == wxYES){
 			for (size_t i = 0; i < grid->file->GetCount(); i++){
 				if (grid->file->GetDialogue(i)->Style == oldname)
@@ -565,7 +565,7 @@ void StyleStore::OnDeleteCatalog(wxCommandEvent& event)
 	if (cat == -1){ return; }
 	wxString Cat = catalogList->GetString(cat);
 	if (Cat == L"Default"){ wxBell(); return; }
-	if (KaiMessageBox(wxString::Format((L"Naprawdę chcesz usunąć katalog o nazwie \"%s\"?"), Cat), _("Prompt"),
+	if (HikariMessageBox(wxString::Format((L"Naprawdę chcesz usunąć katalog o nazwie \"%s\"?"), Cat), _("Prompt"),
 		wxYES_NO, nullptr, wxDefaultPosition, wxNO) == wxNO)
 		return;
 
@@ -610,7 +610,7 @@ void StyleStore::LoadStylesS(bool isass)
 {
 	SubsGrid* grid = Notebook::GetTab()->grid;
 	wxFileDialog *openFileDialog = new wxFileDialog(this, _("Choose ASS file"),
-		KaiPathDir(Notebook::GetTab()->SubsPath), L"*.ass", _("ASS subtitle files(*.ass)|*.ass"),
+		HikariPathDir(Notebook::GetTab()->SubsPath), L"*.ass", _("ASS subtitle files(*.ass)|*.ass"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (openFileDialog->ShowModal() == wxID_OK){
 		OpenWrite op;
@@ -649,7 +649,7 @@ void StyleStore::LoadStylesS(bool isass)
 					}
 					else{
 						if (prompt != wxYES_TO_ALL && prompt != wxCANCEL){
-							prompt = KaiMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
+							prompt = HikariMessageBox(wxString::Format(_("Style named \"%s\" already exists. Replace?"),
 								stl.CheckListBox->GetItem(v, 0)->name), _("Confirmation"), 
 								wxYES_TO_ALL | wxYES | wxNO | wxCANCEL, this);
 							//if(prompt == wxID_CANCEL){return;}
@@ -771,7 +771,7 @@ void StyleStore::OnCleanStyles(wxCommandEvent& event)
 	if (existsStyles.IsEmpty()){ existsStyles = _("None"); }
 	if (delStyles.IsEmpty()){ delStyles = _("None"); }
 	wxWindow *parent = (tab->video->IsFullScreen()) ? (wxWindow*)tab->video->GetFullScreenWindow() : nullptr;
-	KaiMessageBox(wxString::Format(_("Styles used:\n%s\nStyles deleted:\n%s"), existsStyles, delStyles),
+	HikariMessageBox(wxString::Format(_("Styles used:\n%s\nStyles deleted:\n%s"), existsStyles, delStyles),
 		_("Status of deleted styles"), 4L, parent);
 }
 

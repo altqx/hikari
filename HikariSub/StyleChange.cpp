@@ -19,8 +19,8 @@
 #include "FontEnumerator.h"
 #include "config.h" 
 #include "ColorPicker.h"
-#include "KaiStaticBoxSizer.h"
-#include "KaiMessageBox.h"
+#include "HikariStaticBoxSizer.h"
+#include "HikariMessageBox.h"
 #include "FontCatalogList.h"
 
 
@@ -43,7 +43,7 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	wxBoxSizer *Main2 = nullptr;
 	wxBoxSizer *Main3 = nullptr;
 	if (!window){
-		SCD = new KaiDialog(parent->GetParent(), -1, _("Style editing"), pos, wxDefaultSize, wxRESIZE_BORDER);
+		SCD = new HikariDialog(parent->GetParent(), -1, _("Style editing"), pos, wxDefaultSize, wxRESIZE_BORDER);
 		Create(SCD, -1);
 		ds = new DialogSizer(wxHORIZONTAL);
 		Main1 = new wxBoxSizer(wxVERTICAL);
@@ -60,23 +60,23 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 
 	wxBoxSizer *Main = new wxBoxSizer(wxVERTICAL);
 
-	KaiStaticBoxSizer *stylename = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Style name:"));
+	HikariStaticBoxSizer *stylename = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Style name:"));
 	wxTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	valid.SetCharExcludes(L",");
-	styleName = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, valid);
+	styleName = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, valid);
 	styleName->SetMaxLength(500);
 	stylename->Add(styleName, 1, wxEXPAND | wxALL, 2);
 
-	KaiStaticBoxSizer *stylefont = new KaiStaticBoxSizer(wxVERTICAL, this, _("Font and size:"));
+	HikariStaticBoxSizer *stylefont = new HikariStaticBoxSizer(wxVERTICAL, this, _("Font and size:"));
 	wxBoxSizer *fntsizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *filtersizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *biussizer = new wxBoxSizer(wxHORIZONTAL);
 	fontFilterText = Options.GetString(STYLE_EDIT_FILTER_TEXT);
 	bool fontFilterOn = Options.GetBool(STYLE_EDIT_FILTER_TEXT_ON);
-	styleFont = new KaiChoice(this, ID_FONTNAME, emptyString, wxDefaultPosition, wxDefaultSize, wxArrayString(), KAI_FONT_LIST);
+	styleFont = new HikariChoice(this, ID_FONTNAME, emptyString, wxDefaultPosition, wxDefaultSize, wxArrayString(), HIKARI_FONT_LIST);
 	fontSize = new NumCtrl(this, ID_TOUTLINE, L"32", 1, 10000, false, wxDefaultPosition, wxSize(66, -1), wxTE_PROCESS_ENTER);
 	FCManagement.LoadCatalogs();
-	fontCatalog = new KaiChoice(this, ID_FONT_CATALOG_LIST, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
+	fontCatalog = new HikariChoice(this, ID_FONT_CATALOG_LIST, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
 	fontCatalog->Insert(_("All fonts"), 0);
 	fontCatalog->Insert(_("Without catalog"), 1);
 	fontCatalog->SetSelection(0);
@@ -117,10 +117,10 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 		ChangeCatalog();
 	}, ID_FONT_CATALOG_LIST);
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &StyleChange::OnCatalogAdd, this, ID_CATALOG_ADD);
-	textBold = new KaiCheckBox(this, ID_CBOLD, _("Bold"));
-	textItalic = new KaiCheckBox(this, ID_CBOLD, _("Italic"));
-	textUnderline = new KaiCheckBox(this, ID_CBOLD, _("Underline"));
-	textStrikeout = new KaiCheckBox(this, ID_CBOLD, _("Strikethrough"));
+	textBold = new HikariCheckBox(this, ID_CBOLD, _("Bold"));
+	textItalic = new HikariCheckBox(this, ID_CBOLD, _("Italic"));
+	textUnderline = new HikariCheckBox(this, ID_CBOLD, _("Underline"));
+	textStrikeout = new HikariCheckBox(this, ID_CBOLD, _("Strikethrough"));
 
 	fntsizer->Add(styleFont, 4, wxEXPAND | wxALL, 2);
 	fntsizer->Add(fontSize, 1, wxEXPAND | wxALL, 2);
@@ -138,7 +138,7 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	stylefont->Add(filtersizer, 0, wxEXPAND, 0);
 	stylefont->Add(biussizer, 0, wxEXPAND /*| wxALIGN_CENTER*/, 0);
 
-	KaiStaticBoxSizer *stylekol = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Colors and transparency:"));
+	HikariStaticBoxSizer *stylekol = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Colors and transparency:"));
 
 	wxGridSizer *kolgrid = new wxGridSizer(4, 2, 2);
 
@@ -169,7 +169,7 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	stylekol->Add(kolgrid, 1, wxEXPAND | wxALL, 2);
 
 	wxString labels[] = { _("Border:"), _("Shadow:"), _("Scale X:"), _("Scale Y:") };
-	KaiStaticBoxSizer *styleattr = new KaiStaticBoxSizer(wxHORIZONTAL, this, 4, labels);
+	HikariStaticBoxSizer *styleattr = new HikariStaticBoxSizer(wxHORIZONTAL, this, 4, labels);
 
 	outline = new NumCtrl(this, ID_TOUTLINE, emptyString, 0, 1000, false, wxDefaultPosition, wxSize(83, -1), wxTE_PROCESS_ENTER);
 	shadow = new NumCtrl(this, ID_TOUTLINE, emptyString, 0, 1000000, false, wxDefaultPosition, wxSize(83, -1), wxTE_PROCESS_ENTER);
@@ -184,17 +184,17 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	wxBoxSizer *sizer1 = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *sizer2 = new wxBoxSizer(wxHORIZONTAL);
 	wxString labels1[] = { _("Angle:"), _("Spacing:"), _("Border type:") };
-	KaiStaticBoxSizer *styleattr1 = new KaiStaticBoxSizer(wxHORIZONTAL, this, 3, labels1);
+	HikariStaticBoxSizer *styleattr1 = new HikariStaticBoxSizer(wxHORIZONTAL, this, 3, labels1);
 
 	angle = new NumCtrl(this, ID_TOUTLINE, emptyString, -1000000, 1000000, false, wxDefaultPosition, wxSize(65, -1), wxTE_PROCESS_ENTER);
 	spacing = new NumCtrl(this, ID_TOUTLINE, emptyString, -1000000, 1000000, false, wxDefaultPosition, wxSize(65, -1), wxTE_PROCESS_ENTER);
-	borderStyle = new KaiCheckBox(this, ID_CBOLD, _("Opaque box"));
+	borderStyle = new HikariCheckBox(this, ID_CBOLD, _("Opaque box"));
 
 	styleattr1->Add(angle, 1, wxEXPAND | wxALL, 2);
 	styleattr1->Add(spacing, 1, wxEXPAND | wxALL, 2);
 	styleattr1->Add(borderStyle, 1, wxEXPAND | wxALL, 2);
 	wxString labels2[] = { _("Left margin:"), _("Right:"), _("Vertical:") };
-	KaiStaticBoxSizer *stylemargs = new KaiStaticBoxSizer(wxHORIZONTAL, this, 3, labels2);
+	HikariStaticBoxSizer *stylemargs = new HikariStaticBoxSizer(wxHORIZONTAL, this, 3, labels2);
 
 	leftMargin = new NumCtrl(this, ID_TOUTLINE, emptyString, 0, 9999, true, wxDefaultPosition, wxSize(65, -1), wxTE_PROCESS_ENTER);
 	rightMargin = new NumCtrl(this, ID_TOUTLINE, emptyString, 0, 9999, true, wxDefaultPosition, wxSize(65, -1), wxTE_PROCESS_ENTER);
@@ -207,19 +207,19 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	sizer1->Add(styleattr1, 0, wxEXPAND, 0);
 	sizer1->Add(stylemargs, 0, wxEXPAND, 0);
 
-	KaiStaticBoxSizer *stylean = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Alignment:"));
+	HikariStaticBoxSizer *stylean = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Alignment:"));
 
 	wxGridSizer *angrid = new wxGridSizer(3, 5, 2);
 
-	alignment7 = new KaiRadioButton(this, ID_RAN7, L"7", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	alignment8 = new KaiRadioButton(this, ID_RAN8, L"8");
-	alignment9 = new KaiRadioButton(this, ID_RAN9, L"9");
-	alignment4 = new KaiRadioButton(this, ID_RAN4, L"4");
-	alignment5 = new KaiRadioButton(this, ID_RAN5, L"5");
-	alignment6 = new KaiRadioButton(this, ID_RAN6, L"6");
-	alignment1 = new KaiRadioButton(this, ID_RAN1, L"1");
-	alignment2 = new KaiRadioButton(this, ID_RAN2, L"2");
-	alignment3 = new KaiRadioButton(this, ID_RAN3, L"3");
+	alignment7 = new HikariRadioButton(this, ID_RAN7, L"7", wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	alignment8 = new HikariRadioButton(this, ID_RAN8, L"8");
+	alignment9 = new HikariRadioButton(this, ID_RAN9, L"9");
+	alignment4 = new HikariRadioButton(this, ID_RAN4, L"4");
+	alignment5 = new HikariRadioButton(this, ID_RAN5, L"5");
+	alignment6 = new HikariRadioButton(this, ID_RAN6, L"6");
+	alignment1 = new HikariRadioButton(this, ID_RAN1, L"1");
+	alignment2 = new HikariRadioButton(this, ID_RAN2, L"2");
+	alignment3 = new HikariRadioButton(this, ID_RAN3, L"3");
 
 	angrid->Add(alignment7, 1, wxEXPAND | wxALL, 2);
 	angrid->Add(alignment8, 1, wxEXPAND | wxALL, 2);
@@ -257,11 +257,11 @@ StyleChange::StyleChange(wxWindow* parent, bool window, const wxPoint& pos)
 	encs.Add(_("238 - Central European (Polish)"));
 	encs.Add(_("255 - OEM"));
 
-	KaiStaticBoxSizer *styleenc = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Text encoding:"));
-	textEncoding = new KaiChoice(this, ID_CENCODING, wxDefaultPosition, wxDefaultSize, encs);
+	HikariStaticBoxSizer *styleenc = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Text encoding:"));
+	textEncoding = new HikariChoice(this, ID_CENCODING, wxDefaultPosition, wxDefaultSize, encs);
 	styleenc->Add(textEncoding, 1, wxEXPAND | wxALL, 2);
 
-	KaiStaticBoxSizer *styleprev = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Style preview:"));
+	HikariStaticBoxSizer *styleprev = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Style preview:"));
 	Preview = new StylePreview(this, -1, wxDefaultPosition, wxSize(-1, 100));
 	styleprev->Add(Preview, 1, wxEXPAND | wxALL, 2);
 
@@ -459,7 +459,7 @@ void StyleChange::CommitChange(bool close)
 	int changes = -1;
 	if (allowMultiEdition && CompareStyle && SS->HaveMultiEdition()){
 		changes = CompareStyle->Compare(updateStyle);
-		if (changes && KaiMessageBox(_("Change all selected styles?"), _("Prompt"), wxYES_NO, this) == wxYES)
+		if (changes && HikariMessageBox(_("Change all selected styles?"), _("Prompt"), wxYES_NO, this) == wxYES)
 		{/*nothing to do*/}
 		else
 			changes = -1;

@@ -65,7 +65,7 @@ void Registry::SetStringValue(const wxString &strKey, const wxString &value)
 	const wchar_t *data = value.wc_str();
 	long nError = RegSetValueExW(regHKey, (strKey != emptyString)? strKey.wc_str() : 0, 0, REG_SZ, (LPBYTE)data, (wcslen(data) + 1) * 2);
 	if (nError){
-		KaiLog(wxString::Format(L"cannot create key %s", strKey));
+		HikariLog(wxString::Format(L"cannot create key %s", strKey));
 	}
 }
 
@@ -87,7 +87,7 @@ bool Registry::AddFileAssociation(const wxString &extension, const wxString &ext
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	wxString pathfull = paths.GetExecutablePath();
-	wxString progName = KaiPathName(pathfull).BeforeFirst(L'.');
+	wxString progName = HikariPathName(pathfull).BeforeFirst(L'.');
 	wxString mainPath = L"Software\\Classes\\";
 	bool success = false;//HKEY_CURRENT_USER//HKEY_LOCAL_MACHINE
 	Registry reg(HKEY_CURRENT_USER, mainPath + extension, success, true);
@@ -95,13 +95,13 @@ bool Registry::AddFileAssociation(const wxString &extension, const wxString &ext
 		reg.SetStringValue(emptyString, progName + extension);
 		reg.CloseRegistry();
 	}
-	else{ KaiLog(wxString::Format(L"Can not create extension %s", extension)); return false; }
+	else{ HikariLog(wxString::Format(L"Can not create extension %s", extension)); return false; }
 	if (reg.OpenNewRegistry(HKEY_CURRENT_USER, mainPath + progName + extension, true)){
 		reg.SetStringValue(emptyString, extName);
 		reg.CloseRegistry();
 	}
 	else{
-		KaiLog(L"Can not open extension class"); return false;
+		HikariLog(L"Can not open extension class"); return false;
 	}
 	if (reg.OpenNewRegistry(HKEY_CURRENT_USER, mainPath + progName + extension + L"\\DefaultIcon", true)){
 		// Negative index = resource id rather than position, so reordering
@@ -110,14 +110,14 @@ bool Registry::AddFileAssociation(const wxString &extension, const wxString &ext
 		reg.CloseRegistry();
 	}
 	else{
-		KaiLog(L"Can not add icon"); return false;
+		HikariLog(L"Can not add icon"); return false;
 	}
 	if (reg.OpenNewRegistry(HKEY_CURRENT_USER, mainPath + progName + extension + L"\\Shell\\Open\\Command", true)){
 		reg.SetStringValue(emptyString, L"\""+pathfull + L"\" \"%1\"");
 		reg.CloseRegistry();
 	}
 	else{
-		KaiLog(wxString::Format(L"Can not add open with %s", progName)); return false;
+		HikariLog(wxString::Format(L"Can not add open with %s", progName)); return false;
 	}
 	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
 	return true;
@@ -132,7 +132,7 @@ bool Registry::RemoveFileAssociation(const wxString &extension)
 		reg.SetStringValue(emptyString, emptyString);
 		reg.CloseRegistry();
 	}
-	else{ KaiLog(wxString::Format(L"Can not remove extension %s", extension)); return false; }
+	else{ HikariLog(wxString::Format(L"Can not remove extension %s", extension)); return false; }
 	SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, nullptr, nullptr);
 	return true;
 }
@@ -150,7 +150,7 @@ void Registry::MigrateFileAssociations()
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	wxString pathfull = paths.GetExecutablePath();
-	wxString progName = KaiPathName(pathfull).BeforeFirst(L'.');
+	wxString progName = HikariPathName(pathfull).BeforeFirst(L'.');
 	wxString mainPath = L"Software\\Classes\\";
 	bool changedAny = false;
 
@@ -209,7 +209,7 @@ void Registry::CheckFileAssociation(const wxString *extensions, int numExt, std:
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	wxString pathfull = paths.GetExecutablePath();
-	wxString progName = KaiPathName(pathfull).BeforeFirst(L'.');
+	wxString progName = HikariPathName(pathfull).BeforeFirst(L'.');
 	wxString mainPath = L"Software\\Classes\\";
 	for (int i = 0; i < numExt; i++){
 		bool success = false;

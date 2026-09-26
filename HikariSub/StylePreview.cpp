@@ -145,7 +145,7 @@ void StylePreview::OnMouseEvent(wxMouseEvent& event)
 		}
 		else{
 			wxSize siz = GetClientSize();
-			PrevText = new KaiTextCtrl(this, -1, Options.GetString(STYLE_PREVIEW_TEXT), wxPoint(0, 0), wxSize(siz.x, -1));
+			PrevText = new HikariTextCtrl(this, -1, Options.GetString(STYLE_PREVIEW_TEXT), wxPoint(0, 0), wxSize(siz.x, -1));
 			PrevText->Show();
 		}
 

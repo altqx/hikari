@@ -18,8 +18,8 @@
 //#include "HikariSubFrame.h"
 #include "VideoBox.h"
 #include "Menu.h"
-#include "KaiMessageBox.h"
-#include "KaiStaticText.h"
+#include "HikariMessageBox.h"
+#include "HikariStaticText.h"
 #ifdef _WIN32
 #include "RendererDirectShow.h"
 #else
@@ -27,7 +27,7 @@
 #endif
 #include "RendererFFMS2.h"
 #include "Notebook.h"
-#include "KaiSlider.h"
+#include "HikariSlider.h"
 #include "AudioBox.h"
 #include "KeyframesLoader.h"
 //#include "EditBox.h"
@@ -92,25 +92,25 @@ int CRecycleFile::Recycle(const wchar_t *pszPath, BOOL bDelete)
 
 }
 
-class AspectRatioDialog : public KaiDialog
+class AspectRatioDialog : public HikariDialog
 {
 public:
 	AspectRatioDialog(VideoBox *parent, float AspectRatio);
 	virtual ~AspectRatioDialog(){};
 
-	KaiSlider *slider;
-	KaiStaticText *actual;
+	HikariSlider *slider;
+	HikariStaticText *actual;
 	void OnSlider(wxCommandEvent &event);
 	VideoBox *_parent;
 };
 
 AspectRatioDialog::AspectRatioDialog(VideoBox *parent, float AspectRatio)
-	: KaiDialog(parent->GetMessageWindowParent(), -1, emptyString, wxDefaultPosition, wxDefaultSize)
+	: HikariDialog(parent->GetMessageWindowParent(), -1, emptyString, wxDefaultPosition, wxDefaultSize)
 {
 	_parent = parent;
 	DialogSizer *sizer = new DialogSizer(wxVERTICAL);
-	actual = new KaiStaticText(this, -1, wxString::Format(_("Aspect ratio: %5.3f"), 1.f / AspectRatio));
-	slider = new KaiSlider(this, 7767, AspectRatio * 700000, 100000, 1000000, 
+	actual = new HikariStaticText(this, -1, wxString::Format(_("Aspect ratio: %5.3f"), 1.f / AspectRatio));
+	slider = new HikariSlider(this, 7767, AspectRatio * 700000, 100000, 1000000, 
 		wxDefaultPosition, wxSize(400, -1), wxHORIZONTAL | wxSL_INVERSE);
 	Connect(7767, wxEVT_SCROLL_THUMBTRACK, (wxObjectEventFunction)&AspectRatioDialog::OnSlider);
 	sizer->Add(actual, 0, wxALL, 3);
@@ -165,7 +165,7 @@ VideoBox::VideoBox(wxWindow *parent, const wxSize &size)
 		VIDEO_NEXT_FILE, _("Next file"), wxPoint(145, m_ToolBarHeight - 6), wxSize(26, 26));
 
 	m_VolumeSlider = new VolSlider(m_VideoPanel, ID_VOL, Options.GetInt(VIDEO_VOLUME), wxPoint(size.x - 110, m_ToolBarHeight - 5), wxSize(110, 25));
-	m_TimesTextField = new KaiTextCtrl(m_VideoPanel, -1, emptyString, wxPoint(180, m_ToolBarHeight - 6), wxSize(360, 25), wxTE_READONLY);
+	m_TimesTextField = new HikariTextCtrl(m_VideoPanel, -1, emptyString, wxPoint(180, m_ToolBarHeight - 6), wxSize(360, 25), wxTE_READONLY);
 	m_TimesTextField->SetWindowStyle(wxBORDER_NONE);
 	m_TimesTextField->SetCursor(wxCURSOR_ARROW);
 	m_TimesTextField->SetBackgroundColour(WINDOW_BACKGROUND);
@@ -183,8 +183,8 @@ VideoBox::VideoBox(wxWindow *parent, const wxSize &size)
 		RefreshTime();
 	}, ID_REFRESH_TIME);
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=](wxCommandEvent& evt) {
-		HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-		Kai->OnMenuSelected1(evt);
+		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		Hikari->OnMenuSelected1(evt);
 		}, GLOBAL_PLAY_ACTUAL_LINE);
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, 
 		&VideoBox::OnAccelerator, this, VIDEO_PREVIOUS_FILE, VIDEO_NEXT_FILE);
@@ -237,8 +237,8 @@ bool VideoBox::Pause(bool skipWhenOnEnd)
 	wxMutexLocker lock(vbmutex);
 
 	if (!renderer){
-		HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-		MenuItem *index = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		MenuItem *index = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 		if (index->IsChecked() && index->IsEnabled()){
 			EditBox *eb = tab->edit;
 			if (eb->ABox){
@@ -247,7 +247,7 @@ bool VideoBox::Pause(bool skipWhenOnEnd)
 			}
 			return false;
 		}
-		LoadVideo(Kai->videorec[Kai->videorec.size() - 1], CLOSE_SUBTITLES);
+		LoadVideo(Hikari->videorec[Hikari->videorec.size() - 1], CLOSE_SUBTITLES);
 		return true;
 	}
 	if (renderer->GetCurrentPosition() >= renderer->GetDuration() && skipWhenOnEnd){ return false; }
@@ -287,17 +287,17 @@ bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= 
 	prevchap = -1;
 	bool curentFFMS2 = !m_IsDirectShow;
 	bool byFFMS2;
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 	if (customFFMS2 == -1){
 #ifdef _WIN32
-		MenuItem *index = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+		MenuItem *index = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 		byFFMS2 = index->IsChecked() && index->IsEnabled() && !fulls/* && !isFullscreen*/;
 #else
 		// On Linux the general-playback path is GStreamer (RendererGStreamer),
 		// the analogue of the Windows DirectShow path.  Honour the same indexing
 		// toggle: checked => FFMS2 (frame-accurate, for typesetting), unchecked
 		// (or fullscreen) => GStreamer playback.
-		MenuItem *index = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+		MenuItem *index = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 		byFFMS2 = !index || (index->IsChecked() && index->IsEnabled() && !fulls);
 #endif
 	}
@@ -327,7 +327,7 @@ bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= 
 	renderer->m_BlockResize = true;
 	if (!renderer->OpenFile(fileName, subsFlag, !tab->editor, changeAudio)){
 		renderer->m_BlockResize = false;
-		if (!byFFMS2){ KaiMessageBox(_("The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing"), _("Warning")); }
+		if (!byFFMS2){ HikariMessageBox(_("The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing"), _("Warning")); }
 		DeleteRenderer();
 		return false;
 	}
@@ -364,7 +364,7 @@ bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= 
 		renderer->UpdateVideoWindow();
 		wxSize size; 
 		renderer->GetVideoSize(&size.x, &size.y);
-		Kai->SetVideoResolution(size.x, size.y, !Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
+		Hikari->SetVideoResolution(size.x, size.y, !Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
 	}
 	//renderer->m_BlockResize = false;
 	if (m_IsDirectShow){
@@ -391,18 +391,18 @@ bool VideoBox::LoadVideo(const wxString& fileName, int subsFlag, bool fulls /*= 
 	}
 	//SetFocus();
 	tab->VideoPath = fileName;
-	tab->VideoName = KaiPathName(fileName);
-	Kai->SetStatusText(tab->VideoName, 8);
+	tab->VideoName = HikariPathName(fileName);
+	Hikari->SetStatusText(tab->VideoName, 8);
 	if (m_FullScreenWindow){ m_FullScreenWindow->Videolabel->SetLabelText(tab->VideoName); }
-	if (!tab->editor){ Kai->Label(0, true); }
-	Kai->SetStatusText(getfloat(m_FPS) + L" FPS", 4);
+	if (!tab->editor){ Hikari->Label(0, true); }
+	Hikari->SetStatusText(getfloat(m_FPS) + L" FPS", 4);
 	wxString tar;
 	tar << m_AspectRatioX << L" : " << m_AspectRatioY;
-	Kai->SetStatusText(tar, 6);
+	Hikari->SetStatusText(tar, 6);
 	SubsTime duration;
 	duration.mstime = renderer->GetDuration();
-	Kai->SetStatusText(duration.raw(SRT), 3);
-	Kai->SetRecent(1);
+	Hikari->SetStatusText(duration.raw(SRT), 3);
+	Hikari->SetRecent(1);
 
 	if (tab->editor && (!m_IsFullscreen || IsShown()) &&
 		tab->SubsPath != emptyString && Options.GetBool(OPEN_VIDEO_AT_ACTIVE_LINE)){
@@ -644,11 +644,11 @@ void VideoBox::OnKeyPress(wxKeyEvent& event)
 		}
 		if (key == L'B'){
 			if (GetState() == Playing){ Pause(); }
-			HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+			HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 #ifndef _WIN32
-			Kai->Iconize(true);
+			Hikari->Iconize(true);
 #else
-			ShowWindow(Kai->GetHWND(), SW_SHOWMINNOACTIVE);
+			ShowWindow(Hikari->GetHWND(), SW_SHOWMINNOACTIVE);
 #endif
 		}
 	}
@@ -683,12 +683,12 @@ void VideoBox::NextFile(bool next)
 {
 	wxMutexLocker lock(nextmutex);
 	wxString path;
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 	if (tab->VideoPath != emptyString){
 		path = tab->VideoPath;
 	}
 	
-	else{ path = Kai->videorec[Kai->videorec.size() - 1]; }
+	else{ path = Hikari->videorec[Hikari->videorec.size() - 1]; }
 	wxFileName videoFileName(path);
 	wxString pathwn = videoFileName.GetPath();
 	wxDir kat(pathwn);
@@ -723,7 +723,7 @@ void VideoBox::NextFile(bool next)
 			ext == L"ts" || ext == L"m2ts" || ext == L"mpg" || ext == L"mpeg"){
 
 
-			bool isload = Kai->OpenFile(files[k]);
+			bool isload = Hikari->OpenFile(files[k]);
 			if (isload){
 				actualFile = k;
 				if (m_IsFullscreen){ SetFocus(); }
@@ -744,7 +744,7 @@ void VideoBox::SetFullscreen(int monitor)
 		return;
 	//wxMutexLocker lock(vbmutex);
 	m_IsFullscreen = !m_IsFullscreen;
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 	//turn off full screen
 	if (!m_IsFullscreen){
 
@@ -786,7 +786,7 @@ void VideoBox::SetFullscreen(int monitor)
 		GetSize(&sizex, &sizey);
 		Options.SetCoords(VIDEO_WINDOW_SIZE, sizex, sizey);
 		if (wxWindow::HasCapture()){ wxWindow::ReleaseMouse(); }
-		wxRect rt = GetMonitorRect1(monitor, &MonRects, Kai->GetRect());
+		wxRect rt = GetMonitorRect1(monitor, &MonRects, Hikari->GetRect());
 		if (!m_FullScreenWindow){
 			m_FullScreenWindow = new Fullscreen(this, rt.GetPosition(), rt.GetSize());
 			m_FullScreenWindow->Videolabel->SetLabelText(tab->VideoName);
@@ -825,8 +825,8 @@ void VideoBox::SetFullscreen(int monitor)
 		m_FullScreenWindow->CallAfter([this, monitor]() {
 			if (!m_IsFullscreen || !m_FullScreenWindow || !renderer)
 				return;
-			HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-			wxRect lateRt = GetMonitorRect1(monitor, &MonRects, Kai->GetRect());
+			HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+			wxRect lateRt = GetMonitorRect1(monitor, &MonRects, Hikari->GetRect());
 			m_FullScreenWindow->SetPosition(lateRt.GetPosition());
 			m_FullScreenWindow->SetSize(lateRt.GetSize());
 			m_FullScreenWindow->OnSize();
@@ -861,9 +861,9 @@ bool VideoBox::CalcSize(int *width, int *height, int wwidth, int wheight, bool s
 {
 	wxSize size;
 	renderer->GetVideoSize(&size.x, &size.y);
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 	if (setstatus){
-		Kai->SetVideoResolution(size.x, size.y, !Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
+		Hikari->SetVideoResolution(size.x, size.y, !Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
 	}
 	if (wheight == 0){//width can normally have 0 when editbox have 0
 		GetClientSize(&wwidth, &wheight);
@@ -888,11 +888,11 @@ bool VideoBox::CalcSize(int *width, int *height, int wwidth, int wheight, bool s
 
 void VideoBox::OnPrew()
 {
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	MenuItem *index = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	MenuItem *index = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 	if (index->IsChecked() && index->IsEnabled()/* && !isFullscreen*/){
-		if (KaiMessageBox(_("Are you sure you want to index the previous video?"), _("Confirmation"),
-			wxYES_NO, (m_IsFullscreen) ? (wxWindow*)m_FullScreenWindow : Kai) == wxNO) return;
+		if (HikariMessageBox(_("Are you sure you want to index the previous video?"), _("Confirmation"),
+			wxYES_NO, (m_IsFullscreen) ? (wxWindow*)m_FullScreenWindow : Hikari) == wxNO) return;
 	}
 	NextFile(false);
 }
@@ -900,11 +900,11 @@ void VideoBox::OnPrew()
 
 void VideoBox::OnNext()
 {
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	MenuItem *index = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	MenuItem *index = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 	if (index->IsChecked() && index->IsEnabled()/* && !isFullscreen*/){
-		if (KaiMessageBox(_("Are you sure you want to index the next video?"), _("Confirmation"),
-			wxYES_NO, (m_IsFullscreen)? (wxWindow*)m_FullScreenWindow : Kai) == wxNO) return;
+		if (HikariMessageBox(_("Are you sure you want to index the next video?"), _("Confirmation"),
+			wxYES_NO, (m_IsFullscreen)? (wxWindow*)m_FullScreenWindow : Hikari) == wxNO) return;
 	}
 	NextFile();
 }
@@ -937,8 +937,8 @@ void VideoBox::ContextMenu(const wxPoint &pos)
 	else{ txt1 = _("Exit full screen\tEscape"); }
 	MenuItem *Item = menu->SetAccMenu(VIDEO_FULL_SCREEN, txt1);
 	Item->Enable(GetState() != None);
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	GetMonitorRect1(-1, &MonRects, Kai->GetRect());
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	GetMonitorRect1(-1, &MonRects, Hikari->GetRect());
 	for (size_t i = 1; i < MonRects.size(); i++)
 	{
 		wxString txt2;
@@ -952,13 +952,13 @@ void VideoBox::ContextMenu(const wxPoint &pos)
 	Menu* menu2 = new Menu();
 	for (size_t i = 0; i < 20; i++)
 	{
-		if (i < Kai->subsrec.size()){
-			if (!wxFileExists(Kai->subsrec[i])){ continue; }
-			menu1->Append(30000 + i, KaiPathName(Kai->subsrec[i]));
+		if (i < Hikari->subsrec.size()){
+			if (!wxFileExists(Hikari->subsrec[i])){ continue; }
+			menu1->Append(30000 + i, HikariPathName(Hikari->subsrec[i]));
 		}
-		if (i < Kai->videorec.size()){
-			if (!wxFileExists(Kai->videorec[i])){ continue; }
-			menu2->Append(30020 + i, KaiPathName(Kai->videorec[i]));
+		if (i < Hikari->videorec.size()){
+			if (!wxFileExists(Hikari->videorec[i])){ continue; }
+			menu2->Append(30020 + i, HikariPathName(Hikari->videorec[i]));
 		}
 
 	}
@@ -1037,8 +1037,8 @@ void VideoBox::ContextMenu(const wxPoint &pos)
 		wxCommandEvent evt(wxEVT_COMMAND_MENU_SELECTED, id);
 		OnAccelerator(evt);
 	}
-	else if (id >= 30000 && id < 30020){ Kai->OpenFile(Kai->subsrec[id - 30000]); }
-	else if (id >= 30020 && id < 30040){ Kai->OpenFile(Kai->videorec[id - 30020]); }
+	else if (id >= 30000 && id < 30020){ Hikari->OpenFile(Hikari->subsrec[id - 30000]); }
+	else if (id >= 30020 && id < 30040){ Hikari->OpenFile(Hikari->videorec[id - 30020]); }
 	else if (id >= MENU_STREAMS && id < MENU_STREAMS + (int)streams.size()){
 		int wstream = id - MENU_STREAMS;
 		renderer->EnableStream((long)wstream);
@@ -1075,7 +1075,7 @@ void VideoBox::OnDeleteVideo()
 {
 	wxString path = tab->VideoPath;
 	if (path == emptyString){ return; }
-	if (KaiMessageBox(_("Are you sure you want to move loaded video to recycle bin?"), _("Deleting"), wxYES_NO) == wxNO){ return; }
+	if (HikariMessageBox(_("Are you sure you want to move loaded video to recycle bin?"), _("Deleting"), wxYES_NO) == wxNO){ return; }
 	NextFile();
 	CRecycleFile x;
 	x.Recycle(path.data());
@@ -1083,31 +1083,31 @@ void VideoBox::OnDeleteVideo()
 
 void VideoBox::OnOpVideo()
 {
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
 	wxFileDialog* FileDialog2 = new wxFileDialog(m_IsFullscreen ? m_FullScreenWindow : 
-		(wxWindow *)Kai, _("Choose video file"),
-		(tab->SubsPath != emptyString) ? KaiPathDir(tab->SubsPath) :
-		(Kai->videorec.size() > 0) ? KaiPathDir(Kai->videorec[Kai->videorec.size() - 1]) : emptyString,
+		(wxWindow *)Hikari, _("Choose video file"),
+		(tab->SubsPath != emptyString) ? HikariPathDir(tab->SubsPath) :
+		(Hikari->videorec.size() > 0) ? HikariPathDir(Hikari->videorec[Hikari->videorec.size() - 1]) : emptyString,
 		emptyString, _("Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (FileDialog2->ShowModal() == wxID_OK){
-		Kai->OpenFile(FileDialog2->GetPath());
+		Hikari->OpenFile(FileDialog2->GetPath());
 	}
 	FileDialog2->Destroy();
 }
 
 void VideoBox::OnOpSubs()
 {
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	if (Kai->SavePrompt(2)){ return; }
-	wxFileDialog* FileDialog = new wxFileDialog(m_IsFullscreen ? m_FullScreenWindow : (wxWindow *)Kai, _("Choose subtitle file"),
-		(tab->VideoPath != emptyString) ? KaiPathDir(tab->VideoPath) :
-		(Kai->subsrec.size() > 0) ? KaiPathDir(Kai->subsrec[Kai->subsrec.size() - 1]) : emptyString, emptyString,
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	if (Hikari->SavePrompt(2)){ return; }
+	wxFileDialog* FileDialog = new wxFileDialog(m_IsFullscreen ? m_FullScreenWindow : (wxWindow *)Hikari, _("Choose subtitle file"),
+		(tab->VideoPath != emptyString) ? HikariPathDir(tab->VideoPath) :
+		(Hikari->subsrec.size() > 0) ? HikariPathDir(Hikari->subsrec[Hikari->subsrec.size() - 1]) : emptyString, emptyString,
 		_("Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 
 	if (FileDialog->ShowModal() == wxID_OK){
-		Kai->OpenFile(FileDialog->GetPath());
+		Hikari->OpenFile(FileDialog->GetPath());
 	}
 	FileDialog->Destroy();
 }
@@ -1123,8 +1123,8 @@ void VideoBox::OpenEditor(bool esc)
 		}
 
 		SetFullscreen();
-		HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-		if (!esc){ ShowWindow(Kai->GetHWND(), SW_MINIMIZE); }
+		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		if (!esc){ ShowWindow(Hikari->GetHWND(), SW_MINIMIZE); }
 	}
 
 }
@@ -1172,8 +1172,8 @@ void VideoBox::OnAccelerator(wxCommandEvent& event)
 		renderer->SaveFrame(id);
 	}
 	else {
-		HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-		Kai->OnMenuSelected(event);
+		HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		Hikari->OnMenuSelected(event);
 	}
 }
 
@@ -1306,12 +1306,12 @@ void VideoBox::SetScaleAndZoom()
 	wxString scale;
 	wxSize wsize = GetSize();
 	scale << (int)((wsize.x / (float)renderer->m_Width) * 100) << L"%";
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	Kai->SetStatusText(scale, 1);
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	Hikari->SetStatusText(scale, 1);
 	wxString zoom;
 	zoom << (int)(renderer->m_ZoomPercent * 100) << L"%";
 	
-	Kai->SetStatusText(zoom, 2);
+	Hikari->SetStatusText(zoom, 2);
 }
 
 void VideoBox::ChangeOnScreenResolution(TabPanel *tab)
@@ -1330,7 +1330,7 @@ void VideoBox::ChangeOnScreenResolution(TabPanel *tab)
 }
 
 //time; frame; frames from the active line start; ms from its start and end
-void VideoBox::ShowTimes(SubsTime &videoTime, KaiTextCtrl *field)
+void VideoBox::ShowTimes(SubsTime &videoTime, HikariTextCtrl *field)
 {
 	wxString times;
 	times << videoTime.raw(SRT) << L";  ";
@@ -1734,7 +1734,7 @@ void VideoBox::OpenKeyframes(const wxString &filename)
 	//filename can be m_KeyframesFileName itself, so clear it only now
 	m_KeyframesFileName.Empty();
 	if (keyframes.empty()) {
-		KaiMessageBox(_("Invalid keyframes format"), _("Error"), 4L, this);
+		HikariMessageBox(_("Invalid keyframes format"), _("Error"), 4L, this);
 		return;
 	}
 	m_Timebase.SetKeyframes(std::move(keyframes));
@@ -1764,8 +1764,8 @@ void VideoBox::DeleteAudioCache()
 }
 wxWindow *VideoBox::GetMessageWindowParent()
 {
-	HikariSubFrame* Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-	return (m_IsFullscreen && m_FullScreenWindow) ? (wxWindow*)m_FullScreenWindow : Kai;
+	HikariSubFrame* Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+	return (m_IsFullscreen && m_FullScreenWindow) ? (wxWindow*)m_FullScreenWindow : Hikari;
 }
 bool VideoBox::IsFullScreen()
 {
@@ -1882,7 +1882,7 @@ void VideoBox::FlushLater()
 		break;
 	case LATER_OWN_TEXT:
 		if (!renderer->OpenSubs(OPEN_HAS_OWN_TEXT, true, text))
-			KaiLog(_("Cannot open subtitle file"));
+			HikariLog(_("Cannot open subtitle file"));
 		if (m_LaterRedraw)
 			renderer->Render();
 		break;

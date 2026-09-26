@@ -19,7 +19,7 @@
 
 
 // Headers
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 
 #include "AudioDisplay.h"
 #include "EditBox.h"
@@ -313,7 +313,7 @@ bool AudioDisplay::InitDX(const wxSize &size)
 		d3dDevice = SharedD3D9Device::Acquire(SharedDeviceKind::Audio, &deviceGeneration);
 		sharedDevice = d3dDevice != nullptr;
 		if (!sharedDevice && !CreateD3D9Device(hwnd, &d3dpp, D3DCREATE_MULTITHREADED, &d3dObject, &d3dDevice)){
-			KaiLog(_("Cannot create D3D9 device"));
+			HikariLog(_("Cannot create D3D9 device"));
 			return false;
 		}
 	}
@@ -384,7 +384,7 @@ void AudioDisplay::DoUpdateImage(bool weak) {
 		if (!InitDX(wxSize(w, displayH))){
 			ClearDX();
 			if (!InitDX(wxSize(w, displayH))){
-				KaiLogSilent(L"Audio: " + _("Cannot reset Direct3D"));
+				HikariLogSilent(L"Audio: " + _("Cannot reset Direct3D"));
 				needToReset = true;
 				return;
 			}
@@ -1109,7 +1109,7 @@ void AudioDisplay::DrawSpectrum(bool weak) {
 
 	RECT rc = { screenRect.x, screenRect.y, screenRect.width - screenRect.x, screenRect.height - screenRect.y };
 	if (FAILED(d3dDevice->StretchRect(spectrumSurface, &rc, staticSurface, &rc, D3DTEXF_LINEAR))){
-		KaiLogSilent(_("Cannot blit spectrum surfaces"));
+		HikariLogSilent(_("Cannot blit spectrum surfaces"));
 	}
 
 }
@@ -1422,7 +1422,7 @@ void AudioDisplay::SetFile(wxString file, bool fromvideo) {
 		catch (wxString &err) {
 			if (player) { delete player; player = 0; }
 			if (provider) { delete provider; provider = 0; }
-			KaiMessageBox(err, _T("Error loading audio"), wxICON_ERROR | wxOK);
+			HikariMessageBox(err, _T("Error loading audio"), wxICON_ERROR | wxOK);
 		}
 		catch (...) {
 			if (player) { delete player; player = 0; }

@@ -361,14 +361,14 @@ bool RendererVideo::InitDX()
 		m_SharedDevice = m_D3DDevice != nullptr;
 		if (!m_SharedDevice && !CreateD3D9Device(m_HWND, &d3dpp, D3DCREATE_MULTITHREADED | D3DCREATE_FPU_PRESERVE,
 			&m_D3DObject, &m_D3DDevice)){
-			KaiLog(_("Cannot create D3D9 device"));
+			HikariLog(_("Cannot create D3D9 device"));
 			return false;
 		}
 	}
 	else if (!m_SharedDevice){
 		hr = m_D3DDevice->Reset(&d3dpp);
 		if (FAILED(hr)){
-			KaiLogSilent(L"Video: " + _("Cannot reset Direct3D"));
+			HikariLogSilent(L"Video: " + _("Cannot reset Direct3D"));
 			return false;
 		}
 	}
@@ -1228,8 +1228,8 @@ void RendererVideo::SaveFrame(int id)
 		wxString path;
 		int num = 1;
 		wxArrayString paths;
-		wxString filespec = KaiPathName(tab->VideoPath);
-		wxString dirpath = KaiPathDir(tab->VideoPath);
+		wxString filespec = HikariPathName(tab->VideoPath);
+		wxString dirpath = HikariPathDir(tab->VideoPath);
 		wxDir kat(dirpath);
 		path = tab->VideoPath;
 		if (kat.IsOpened()) {

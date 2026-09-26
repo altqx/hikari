@@ -23,12 +23,12 @@
 #include <wx/object.h>
 #include "config.h"
 
-class KaiTextCtrl;
-class KaiScrollbar;
+class HikariTextCtrl;
+class HikariScrollbar;
 enum COLOR : int;
 
 class PopupList : public wxPopupWindow{
-	friend class KaiChoice;
+	friend class HikariChoice;
 public:
 
 	PopupList(wxWindow *DialogParent, wxArrayString *list, std::map<int, bool> *disabled);
@@ -67,32 +67,32 @@ protected:
 	wxWindow *Parent;
 	int orgY;
 	int height = 18;
-	KaiScrollbar *scroll;
+	HikariScrollbar *scroll;
 	wxPoint originalPosition;
 	wxTimer dismissTimer;
 	static PopupList *activePopup;
 	DECLARE_EVENT_TABLE()
 };
 
-class KaiChoice :public wxWindow
+class HikariChoice :public wxWindow
 {
 	friend class PopupList;
 public:
 	//normal list wxString[]
-	KaiChoice(wxWindow *parent, int id, const wxPoint& pos = wxDefaultPosition,
+	HikariChoice(wxWindow *parent, int id, const wxPoint& pos = wxDefaultPosition,
 		const wxSize& size = wxDefaultSize, int n = 0, const wxString choices[] = nullptr,
 		long style = 0, const wxValidator& validator = wxDefaultValidator);
 	//normal list wxArrayString
-	KaiChoice(wxWindow *parent, int id, const wxPoint& pos,
+	HikariChoice(wxWindow *parent, int id, const wxPoint& pos,
 		const wxSize& size, const wxArrayString &choices,
 		long style = 0, const wxValidator& validator = wxDefaultValidator);
 
 	//combobox
-	KaiChoice(wxWindow *parent, int id, const wxString &comboBoxText, const wxPoint& pos,
+	HikariChoice(wxWindow *parent, int id, const wxString &comboBoxText, const wxPoint& pos,
 		const wxSize& size, const wxArrayString &choices,
 		long style = 0, const wxValidator& validator = wxDefaultValidator);
 
-	virtual ~KaiChoice();
+	virtual ~HikariChoice();
 	void SetSelection(int sel, bool changeText = true);
 	void SetTextSelection(long start, long end);
 	void Clear();
@@ -128,7 +128,7 @@ public:
 	bool IsModified();
 	void SetModified(bool modified);
 protected:
-	KaiTextCtrl* choiceText;
+	HikariTextCtrl* choiceText;
 private:
 	void OnSize(wxSizeEvent& event);
 	void OnPaint(wxPaintEvent& event);
@@ -156,13 +156,13 @@ private:
 	wxString txtchoice;
 	COLOR foreground;
 
-	wxDECLARE_ABSTRACT_CLASS(KaiChoice);
+	wxDECLARE_ABSTRACT_CLASS(HikariChoice);
 	DECLARE_EVENT_TABLE()
 };
 
 enum{
-	KAI_COMBO_BOX = 1,
-	KAI_SCROLL_ON_FOCUS,
-	KAI_FONT_LIST = 4
+	HIKARI_COMBO_BOX = 1,
+	HIKARI_SCROLL_ON_FOCUS,
+	HIKARI_FONT_LIST = 4
 };
 

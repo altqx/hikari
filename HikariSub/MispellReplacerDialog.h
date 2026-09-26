@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
 #include "MappedButton.h"
 
 
@@ -40,10 +40,10 @@ public:
 		modified = true;
 	}
 	virtual ~ReplacerResultsHeader(){};
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new ReplacerResultsHeader(*this); }
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 private:
 	int positionInTable = 0;
 	bool isVisible = true;
@@ -70,10 +70,10 @@ public:
 	int keyLine;
 	int numOfRule;
 	wxPoint findPosition;
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 private:
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new ReplacerSeekResults(*this); }
 	int OnVisibilityChange(int mode){
 		if (mode == 1)
@@ -86,7 +86,7 @@ private:
 
 class MisspellReplacer;
 
-class FindResultDialog : public KaiDialog
+class FindResultDialog : public HikariDialog
 {
 public:
 	FindResultDialog(wxWindow *parent, MisspellReplacer *MR);
@@ -96,7 +96,7 @@ public:
 	void ClearList();
 	void CheckUncheckAll(bool check = true);
 	void FilterList();
-	KaiListCtrl *ResultsList;
+	HikariListCtrl *ResultsList;
 private:
 	int resultsCounter = 0;
 	MisspellReplacer *MR;

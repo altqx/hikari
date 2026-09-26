@@ -21,8 +21,8 @@
 #include "StylePreview.h"
 #include "stylestore.h"
 #include "NumCtrl.h"
-#include "KaiRadioButton.h"
-#include "KaiDialog.h"
+#include "HikariRadioButton.h"
+#include "HikariDialog.h"
 
 #include "Provider.h"
 
@@ -35,26 +35,26 @@ public:
 	StyleChange(wxWindow* parent, bool window = true, const wxPoint& pos = wxDefaultPosition);
 	virtual ~StyleChange();
 
-	KaiCheckBox* borderStyle;
-	KaiRadioButton* alignment1;
-	KaiRadioButton* alignment2;
-	KaiRadioButton* alignment3;
-	KaiRadioButton* alignment4;
-	KaiRadioButton* alignment5;
-	KaiRadioButton* alignment6;
-	KaiRadioButton* alignment7;
-	KaiRadioButton* alignment8;
-	KaiRadioButton* alignment9;
-	KaiCheckBox* textItalic;
+	HikariCheckBox* borderStyle;
+	HikariRadioButton* alignment1;
+	HikariRadioButton* alignment2;
+	HikariRadioButton* alignment3;
+	HikariRadioButton* alignment4;
+	HikariRadioButton* alignment5;
+	HikariRadioButton* alignment6;
+	HikariRadioButton* alignment7;
+	HikariRadioButton* alignment8;
+	HikariRadioButton* alignment9;
+	HikariCheckBox* textItalic;
 	MappedButton* btnOk;
-	KaiTextCtrl* styleName;
+	HikariTextCtrl* styleName;
 	MappedButton* color2;
 	MappedButton* color3;
 	NumCtrl* fontSize;
 	MappedButton* btnCommit;
 	MappedButton* btnCancel;
-	KaiChoice* styleFont;
-	KaiChoice* fontCatalog;
+	HikariChoice* styleFont;
+	HikariChoice* fontCatalog;
 	ToggleButton *Filter;
 	MappedButton* CatalogManage;
 	MappedButton* CatalogAdd;
@@ -70,10 +70,10 @@ public:
 	NumCtrl* spacing;
 	MappedButton* color4;
 	MappedButton* color1;
-	KaiCheckBox* textStrikeout;
-	KaiCheckBox* textUnderline;
-	KaiCheckBox* textBold;
-	KaiChoice* textEncoding;
+	HikariCheckBox* textStrikeout;
+	HikariCheckBox* textUnderline;
+	HikariCheckBox* textBold;
+	HikariChoice* textEncoding;
 	NumCtrl* rightMargin;
 	NumCtrl* verticalMargin;
 	NumCtrl* leftMargin;
@@ -124,7 +124,7 @@ private:
 	AssColor lastColor;
 	wxArrayString encs;
 	wxString fontFilterText;
-	KaiDialog *SCD;
+	HikariDialog *SCD;
 	FontCatalogList* FCL = nullptr;
 };
 

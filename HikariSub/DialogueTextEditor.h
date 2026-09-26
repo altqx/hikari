@@ -20,7 +20,7 @@
 #include <wx/dcmemory.h>
 #include <wx/dcclient.h>
 #include <wx/window.h>
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "TextEditorTagList.h"
 #include <map>
 #include <memory>
@@ -112,7 +112,7 @@ protected:
 	int m_CanvasFailures = 0;
 	GraphicsCanvas *Canvas();
 	bool PresentScene(int w, int h);
-	KaiScrollbar *scroll;
+	HikariScrollbar *scroll;
 	PopupTagList *tagList = nullptr;
 	wxFont font;
 	std::vector<MisspellData> misspells;

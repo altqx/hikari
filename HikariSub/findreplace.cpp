@@ -18,7 +18,7 @@
 #include "FindReplace.h"
 #include "config.h"
 #include "HikariSubFrame.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "FindReplaceDialog.h"
 #include "FindReplaceResultsDialog.h"
 #include "OpennWrite.h"
@@ -33,7 +33,7 @@
 FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 	:FRD(_FRD)
 {
-	Kai = kfparent;
+	Hikari = kfparent;
 	lastActive = reprow = linePosition = 0;
 	textPosition = 0;
 	findstart = -1;
@@ -70,11 +70,11 @@ FindReplace::FindReplace(HikariSubFrame* kfparent, FindReplaceDialog *_FRD)
 void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text)
 {
 	if (tab){
-		for (size_t i = 0; i < Kai->Tabs->Size(); i++){
-			if (Kai->Tabs->Page(i) == tab){
+		for (size_t i = 0; i < Hikari->Tabs->Size(); i++){
+			if (Hikari->Tabs->Page(i) == tab){
 				if (keyLine < tab->grid->file->GetCount()){
-					if (i != Kai->Tabs->iter)
-						Kai->Tabs->ChangePage(i);
+					if (i != Hikari->Tabs->iter)
+						Hikari->Tabs->ChangePage(i);
 					//check if it's not out of range
 					if (keyLine < tab->grid->file->GetCount()){
 						tab->edit->SetLine(keyLine);
@@ -89,19 +89,19 @@ void FindReplace::ShowResult(TabPanel *tab, const wxString &path, int keyLine, c
 	}
 	else if(wxFileExists(path)){
 		bool foundSubs = false;
-		for (size_t i = 0; i < Kai->Tabs->Size(); i++){
-			if (Kai->Tabs->Page(i)->SubsPath == path){
-				Kai->Tabs->ChangePage(i);
+		for (size_t i = 0; i < Hikari->Tabs->Size(); i++){
+			if (Hikari->Tabs->Page(i)->SubsPath == path){
+				Hikari->Tabs->ChangePage(i);
 				foundSubs = true;
 			}
 		}
 		if (!foundSubs){
-			if (!Kai->GetTab()->SubsPath.empty())
-				Kai->InsertTab();
+			if (!Hikari->GetTab()->SubsPath.empty())
+				Hikari->InsertTab();
 
-			Kai->OpenFile(path);
+			Hikari->OpenFile(path);
 		}
-		TabPanel *ntab = Kai->GetTab();
+		TabPanel *ntab = Hikari->GetTab();
 		if (keyLine < ntab->grid->file->GetCount()){
 			ntab->edit->SetLine(keyLine);
 			ntab->grid->SelectRow(keyLine);
@@ -130,7 +130,7 @@ void FindReplace::ReplaceChecked()
 	}
 	bool plainText = false;
 
-	KaiListCtrl *List = FRRD->resultsList;
+	HikariListCtrl *List = FRRD->resultsList;
 	int replacementDiff = 0;
 
 	if (FRRD->findInFiles){
@@ -182,8 +182,8 @@ void FindReplace::ReplaceChecked()
 
 			SeekResults *SeekResult = (SeekResults *)item;
 			TabPanel *resultTab = SeekResult->tab;
-			if (!resultTab || !Kai || !Kai->Tabs ||
-				Kai->Tabs->FindPanel(resultTab, false) == -1 || !resultTab->grid)
+			if (!resultTab || !Hikari || !Hikari->Tabs ||
+				Hikari->Tabs->FindPanel(resultTab, false) == -1 || !resultTab->grid)
 				continue;
 			tab = resultTab;
 			if (tab != oldtab){
@@ -200,7 +200,7 @@ void FindReplace::ReplaceChecked()
 			if (oldKeyLine != SeekResult->keyLine || SeekResult->isTextTL != lastIsTextTl){
 				replacementDiff = 0;
 				if (lineText != SeekResult->name){
-					KaiLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
+					HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
 						SeekResult->idLine));
 					skipLine = true;
 					continue;
@@ -252,10 +252,10 @@ int FindReplace::ReplaceCheckedLine(wxString *line, const wxPoint &pos, int *rep
 void FindReplace::Find(TabWindow *window)
 {
 	if (window && window->windowType == WINDOW_FIND_IN_SUBS){
-		KaiLogDebug(L"chujnia replace all wywołane z okna find in subs");
+		HikariLogDebug(L"chujnia replace all wywołane z okna find in subs");
 		return;
 	}
-	TabPanel *tab = Kai->GetTab();
+	TabPanel *tab = Hikari->GetTab();
 	if (window && UpdateValues(window))
 		return;
 
@@ -393,14 +393,14 @@ seekFromStart:
 		linePosition = 0;
 		fromstart = true;
 		if (!wasResetToStart){
-			if (KaiMessageBox(_("Reached end. Search from the beginning?"), _("Confirmation"),
+			if (HikariMessageBox(_("Reached end. Search from the beginning?"), _("Confirmation"),
 				wxICON_QUESTION | wxYES_NO, FRD) == wxYES){
 				wasResetToStart = true;
 				goto seekFromStart;
 			}
 		}
 		else{
-			KaiMessageBox(_("Could not find the specified phrase \"") + findString + L"\".", _("Confirmation"));
+			HikariMessageBox(_("Could not find the specified phrase \"") + findString + L"\".", _("Confirmation"));
 			wasResetToStart = false;
 		}
 	}
@@ -434,7 +434,7 @@ unsigned long FindReplace::FindAllInTab(void *data)
 	long dialogueColumn = fr->dialogueColumn;
 	
 	wxString txt;
-	Notebook *tabs = fr->Kai->Tabs;
+	Notebook *tabs = fr->Hikari->Tabs;
 	//<= for range from 1 to 1 
 	for (int i = tabRange.x; i <= tabRange.y; i++){
 		TabPanel *tab = tabs->Page(i);
@@ -478,20 +478,20 @@ unsigned long FindReplace::FindAllInTab(void *data)
 void FindReplace::FindInAllOpenedSubs(TabWindow *window)
 {
 	if (!FRRD)
-		FRRD = new FindReplaceResultsDialog(Kai, this);
+		FRRD = new FindReplaceResultsDialog(Hikari, this);
 	else
 		FRRD->ClearList();
 
-	if (CheckStyles(window, Kai->GetTab()))
+	if (CheckStyles(window, Hikari->GetTab()))
 		return;
 
 	if (UpdateValues(window))
 		return;
 
-	int sizeOfTabs = Kai->Tabs->Size();
+	int sizeOfTabs = Hikari->Tabs->Size();
 
 	/*for (size_t i = 0; i < sizeOfTabs; i++){
-		if (FindAllInTab(Kai->Tabs->Page(i), window)){
+		if (FindAllInTab(Hikari->Tabs->Page(i), window)){
 			return;
 		}
 	}*/
@@ -528,11 +528,11 @@ void FindReplace::FindInAllOpenedSubs(TabWindow *window)
 void FindReplace::FindAllInCurrentSubs(TabWindow *window)
 {
 	if (!FRRD)
-		FRRD = new FindReplaceResultsDialog(Kai, this);
+		FRRD = new FindReplaceResultsDialog(Hikari, this);
 	else
 		FRRD->ClearList();
 
-	TabPanel *tab = Kai->GetTab();
+	TabPanel *tab = Hikari->GetTab();
 	if (CheckStyles(window, tab))
 		return;
 
@@ -544,7 +544,7 @@ void FindReplace::FindAllInCurrentSubs(TabWindow *window)
 	/*if (FindAllInTab(tab, window)){
 		return;
 	}*/
-	int iter = Kai->Tabs->iter;
+	int iter = Hikari->Tabs->iter;
 	std::tuple<FindReplace*, wxPoint, TabWindow*, int> *data =
 		new std::tuple<FindReplace *, wxPoint, TabWindow*, int>(this, wxPoint(iter, iter), window, 0);
 
@@ -722,7 +722,7 @@ unsigned long FindReplace::FindReplaceInFiles(void *data)
 			token.clear();
 		}//while
 		if (SubsAllReplacements){
-			wxCopyFile(subsPath, KaiPathJoin(fr->CopyPath, KaiPathName(subsPath)));
+			wxCopyFile(subsPath, HikariPathJoin(fr->CopyPath, HikariPathName(subsPath)));
 			ow.FileWrite(subsPath, replacedText);
 			fr->AllReplacements.fetch_add(SubsAllReplacements);
 		}
@@ -782,7 +782,7 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 
 	if (find){
 		if (!FRRD)
-			FRRD = new FindReplaceResultsDialog(Kai, this, true);
+			FRRD = new FindReplaceResultsDialog(Hikari, this, true);
 		else{
 			FRRD->findInFiles = true;
 			FRRD->ClearList();
@@ -809,7 +809,7 @@ void FindReplace::FindReplaceInSubs(TabWindow *window)
 
 	if (!find && AllReplacements.load()){
 		blockTextChange = true;
-		KaiMessageBox(wxString::Format(_("Replaced %i times."), AllReplacements.load()), _("Find and Replace"));
+		HikariMessageBox(wxString::Format(_("Replaced %i times."), AllReplacements.load()), _("Find and Replace"));
 		AddRecent(window);
 		findTextReset = true;
 	}
@@ -999,10 +999,10 @@ int FindReplace::ReplaceInSubsLine(wxString *onlyString)
 void FindReplace::Replace(TabWindow *window)
 {
 	if (window->windowType != WINDOW_REPLACE){
-		KaiLog(L"chujnia replace all wywołane nie z okna replace");
+		HikariLog(L"chujnia replace all wywołane nie z okna replace");
 		return;
 	}
-	TabPanel *tab = Kai->GetTab();
+	TabPanel *tab = Hikari->GetTab();
 	if (lastActive != tab->grid->currentLine){ Find(window); }
 	long wrep = TXT;
 	if (window->CollumnStyle->GetValue()){ wrep = STYLE; }
@@ -1098,11 +1098,11 @@ int FindReplace::ReplaceAllInTab(TabPanel *tab, TabWindow *window)
 void FindReplace::ReplaceAll(TabWindow *window)
 {
 	if (window->windowType != WINDOW_REPLACE){
-		KaiLogDebug(L"chujnia replace all wywołane nie z okna replace");
+		HikariLogDebug(L"chujnia replace all wywołane nie z okna replace");
 		return;
 	}
 
-	TabPanel *tab = Kai->GetTab();
+	TabPanel *tab = Hikari->GetTab();
 	if (UpdateValues(window))
 		return;
 
@@ -1121,7 +1121,7 @@ void FindReplace::ReplaceAll(TabWindow *window)
 			tab->grid->Refresh(false);
 	}
 	blockTextChange = true;
-	KaiMessageBox(wxString::Format(_("Replaced %i times."), allReplacements), _("Find and Replace"));
+	HikariMessageBox(wxString::Format(_("Replaced %i times."), allReplacements), _("Find and Replace"));
 	AddRecent(window);
 	findTextReset = true;
 }
@@ -1130,16 +1130,16 @@ void FindReplace::ReplaceAll(TabWindow *window)
 void FindReplace::ReplaceInAllOpenedSubs(TabWindow *window)
 {
 	if (window->windowType != WINDOW_REPLACE){
-		KaiLogDebug(L"Ups, replace all on subs called from window replace");
+		HikariLogDebug(L"Ups, replace all on subs called from window replace");
 		return;
 	}
 
-	if (CheckStyles(window, Kai->GetTab()))
+	if (CheckStyles(window, Hikari->GetTab()))
 		return;
 
 	int allTabsReplacements = 0;
-	for (size_t i = 0; i < Kai->Tabs->Size(); i++){
-		TabPanel *tab = Kai->Tabs->Page(i);
+	for (size_t i = 0; i < Hikari->Tabs->Size(); i++){
+		TabPanel *tab = Hikari->Tabs->Page(i);
 		if (UpdateValues(window))
 			return;
 
@@ -1155,20 +1155,20 @@ void FindReplace::ReplaceInAllOpenedSubs(TabWindow *window)
 			else{
 				tab->grid->Refresh(false);
 			}
-			Kai->Label(tab->grid->file->GetActualHistoryIter(), false, i, i != Kai->Tabs->iter);
+			Hikari->Label(tab->grid->file->GetActualHistoryIter(), false, i, i != Hikari->Tabs->iter);
 			allTabsReplacements += allReplacements;
 		}
 	}
 	
 	blockTextChange = true;
-	KaiMessageBox(wxString::Format(_("Replaced %i times."), allTabsReplacements), _("Find and Replace"));
+	HikariMessageBox(wxString::Format(_("Replaced %i times."), allTabsReplacements), _("Find and Replace"));
 	AddRecent(window);
 	findTextReset = true;
 }
 
 void FindReplace::ReplaceInSubs(TabWindow *window)
 {
-	int result = KaiMessageBox(_("Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder."), _("Info"), wxYES_NO, FRD);
+	int result = HikariMessageBox(_("Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder."), _("Info"), wxYES_NO, FRD);
 	if (result == wxYES){
 		find = false;
 		FindReplaceInSubs(window);
@@ -1286,7 +1286,7 @@ void FindReplace::GetFolderFiles(const wxString &path, const wxString &filters, 
 		}
 	}
 	else{
-		KaiMessageBox(_("Search path is invalid"));
+		HikariMessageBox(_("Search path is invalid"));
 	}
 }
 
@@ -1313,13 +1313,13 @@ bool FindReplace::CheckStyles(TabWindow *window, TabPanel *tab)
 	}
 	if ((!notFoundStyles.empty() && !wasIngored) || foundStyles.empty()){
 		notFoundStyles.RemoveLast();
-		KaiMessageDialog *KMD;
+		HikariMessageDialog *KMD;
 		if (foundStyles.empty()){
-			KMD = new KaiMessageDialog(FRD, _("None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?"), _("Confirmation"), wxYES | wxCANCEL);
+			KMD = new HikariMessageDialog(FRD, _("None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?"), _("Confirmation"), wxYES | wxCANCEL);
 			KMD->SetYesLabel(_("Remove styles"));
 		}
 		else{
-			KMD = new KaiMessageDialog(FRD, wxString::Format(_("Styles named \"%s\" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?"), notFoundStyles), _("Confirmation"), wxOK | wxYES_NO | wxCANCEL);
+			KMD = new HikariMessageDialog(FRD, wxString::Format(_("Styles named \"%s\" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?"), notFoundStyles), _("Confirmation"), wxOK | wxYES_NO | wxCANCEL);
 			KMD->SetOkLabel(_("Remove nonexistent styles"));
 			KMD->SetYesLabel(_("Remove styles"));
 			KMD->SetNoLabel(_("Ignore"));
@@ -1572,7 +1572,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 		replacementDiff = 0;
 		//need checks
 		if (dialtxt != SeekResult->name){
-			KaiLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
+			HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
 				SeekResult->idLine));
 			continue;
 		}
@@ -1602,7 +1602,7 @@ int FindReplace::ReplaceCheckedInSubs(std::vector<SeekResults *> &results, const
 	}
 
 	if (numOfChanges){
-		wxCopyFile(path, KaiPathJoin(copyPath, KaiPathName(path)));
+		wxCopyFile(path, HikariPathJoin(copyPath, HikariPathName(path)));
 		ow.FileWrite(path, replacedText);
 	}
 

@@ -15,14 +15,14 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "NumCtrl.h"
 #include "ListControls.h"
 #include "MappedButton.h"
-#include "KaiRadioButton.h"
+#include "HikariRadioButton.h"
 
 
-class SubsResampleDialog : public KaiDialog
+class SubsResampleDialog : public HikariDialog
 {
 public:
 	SubsResampleDialog(wxWindow *parent, const wxSize &subsSize, const wxSize &videoSize, const wxString &subsMatrix, const wxString &videoMatrix);
@@ -32,16 +32,16 @@ public:
 	NumCtrl *destinedResolutionX;
 	NumCtrl *destinedResolutionY;
 #ifdef whithMatrix
-	KaiChoice *subsMatrix;
-	KaiChoice *destinedMatrix;
+	HikariChoice *subsMatrix;
+	HikariChoice *destinedMatrix;
 #endif
-	KaiRadioBox *resamplingOptions;
+	HikariRadioBox *resamplingOptions;
 };
 
-class SubsMismatchResolutionDialog : public KaiDialog
+class SubsMismatchResolutionDialog : public HikariDialog
 {
 public:
 	SubsMismatchResolutionDialog(wxWindow *parent, const wxSize &subsSize, const wxSize &videoSize);
 	~SubsMismatchResolutionDialog(){}
-	KaiRadioBox *resamplingOptions;
+	HikariRadioBox *resamplingOptions;
 };

@@ -17,14 +17,14 @@
 #include "Notebook.h"
 #include "FontCatalogList.h"
 #include "config.h"
-#include "KaiCheckBox.h"
-#include "KaiStaticText.h"
+#include "HikariCheckBox.h"
+#include "HikariStaticText.h"
 #include "FontEnumerator.h"
 #include "OpennWrite.h"
 #include "StylePreview.h"
 #include "Menu.h"
-#include "KaiMessageBox.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariMessageBox.h"
+#include "HikariStaticBoxSizer.h"
 #include "LogHandler.h"
 
 
@@ -35,7 +35,7 @@ PopupList* CatalogList::floatingList = nullptr;
 wxString FontSample::previewText;
 FontCatalogList* FontCatalogList::This = nullptr;
 
-class CatalogEdition : public KaiDialog
+class CatalogEdition : public HikariDialog
 {
 public:
 	CatalogEdition(wxWindow* parent, wxArrayString* catalogs, const wxPoint& pos, int selectCatalog);
@@ -48,23 +48,23 @@ public:
 	};
 private:
 	void OnOKClick(wxCommandEvent& evt);
-	KaiChoice* currentCatalog;
-	KaiTextCtrl* newCatalog;
+	HikariChoice* currentCatalog;
+	HikariTextCtrl* newCatalog;
 	wxArrayString * catalogNames;
 	wxPoint dialogPos;
 };
 
 CatalogEdition::CatalogEdition(wxWindow* parent, wxArrayString* catalogs, const wxPoint& pos, int selectCatalog)
-	:KaiDialog(parent, -1, _("Select the name of the profile"), pos)
+	:HikariDialog(parent, -1, _("Select the name of the profile"), pos)
 	, catalogNames(catalogs)
 {
 	DialogSizer* dSizer = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer* descriptionSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Choose new catalog name"));
-	currentCatalog = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
+	HikariStaticBoxSizer* descriptionSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Choose new catalog name"));
+	currentCatalog = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
 	currentCatalog->SetSelection(selectCatalog != -1? selectCatalog : 0);
-	newCatalog = new KaiTextCtrl(this, -1, emptyString);
+	newCatalog = new HikariTextCtrl(this, -1, emptyString);
 	descriptionSizer->Add(currentCatalog, 1, wxALL | wxEXPAND, 2);
-	descriptionSizer->Add(new KaiStaticText(this, -1, _("Replace with:")), 0, wxALL | wxEXPAND, 2);
+	descriptionSizer->Add(new HikariStaticText(this, -1, _("Replace with:")), 0, wxALL | wxEXPAND, 2);
 	descriptionSizer->Add(newCatalog, 1, wxALL | wxEXPAND, 2);
 	wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
 	MappedButton* OK = new MappedButton(this, wxID_OK, L"OK");
@@ -82,7 +82,7 @@ CatalogEdition::CatalogEdition(wxWindow* parent, wxArrayString* catalogs, const 
 void CatalogEdition::OnOKClick(wxCommandEvent& evt)
 {
 	if (newCatalog->GetValue().empty()) {
-		KaiMessageBox(_("Enter a name for the new catalog"), _("Info"), wxOK, this);
+		HikariMessageBox(_("Enter a name for the new catalog"), _("Info"), wxOK, this);
 		return;
 	}
 
@@ -92,11 +92,11 @@ void CatalogEdition::OnOKClick(wxCommandEvent& evt)
 }
 
 FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
-	: KaiDialog(parent, -1, _("Manage font catalogs"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Manage font catalogs"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	This = this;
 	DialogSizer* main = new DialogSizer(wxVERTICAL);
-	fontList = new KaiListCtrl(this, ID_FONT_LIST, wxDefaultPosition, wxSize(700, 300));
+	fontList = new HikariListCtrl(this, ID_FONT_LIST, wxDefaultPosition, wxSize(700, 300));
 	fontList->SetFont(*Options.GetFont(4));
 	fontList->InsertColumn(0, _("Font name"), TYPE_TEXT, 290);
 	fontList->InsertColumn(1, _("Catalog"), TYPE_LIST, 140);
@@ -111,10 +111,10 @@ FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
 	MappedButton* loadCatalogs = new MappedButton(this, ID_LOAD_CATALOGS, _("Load"));
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &FontCatalogList::OnLoadCatalogs, this, ID_LOAD_CATALOGS);
 	wxArrayString* catalogList = FCManagement.GetCatalogNames();
-	catalog = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, *catalogList);
-	fontSeek = new KaiTextCtrl(this, ID_FONT_SEEK, emptyString, wxDefaultPosition);
+	catalog = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, *catalogList);
+	fontSeek = new HikariTextCtrl(this, ID_FONT_SEEK, emptyString, wxDefaultPosition);
 	wxString fontFilterText = Options.GetString(STYLE_EDIT_FILTER_TEXT);
-	fontFilter = new KaiTextCtrl(this, -1, fontFilterText);
+	fontFilter = new HikariTextCtrl(this, -1, fontFilterText);
 	MappedButton* saveFilter = new MappedButton(this, ID_SAVE_FILTER, _("Save filter"));
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=, this](wxCommandEvent& evt) {
 		wxString ctlg = catalog->GetValue();
@@ -141,7 +141,7 @@ FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
 		wxString ctlg = catalog->GetValue();
 		int ctlgIndex = catalog->FindString(ctlg);
 		if (!ctlg.empty() && ctlgIndex != -1) {
-			if (KaiMessageBox(_("Are you sure you want to delete this catalog?"), _("Prompt"), wxYES_NO, this) == wxYES) {
+			if (HikariMessageBox(_("Are you sure you want to delete this catalog?"), _("Prompt"), wxYES_NO, this) == wxYES) {
 				FCManagement.RemoveCatalog(ctlg);
 				catalog->Delete(ctlgIndex);
 				catalog->SetValue(L"");
@@ -163,12 +163,12 @@ FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
 		}, ID_SAVE_FILTER);
 
 	preview = new StylePreview(this, -1, wxDefaultPosition, wxSize(-1, 220));
-	status = new KaiStatusBar(this);
+	status = new HikariStatusBar(this);
 	int fields[2] = { -11, -21 };
 	status->SetFieldsCount(2, fields);
 	status->SetLabelText(1, _("The catalog list has autosave; files are stored in the \"Config\" folder."));
 
-	buttonsSizer->Add(new KaiStaticText(this, -1, _("Catalogs:")), 1, wxALL | wxEXPAND, 2);
+	buttonsSizer->Add(new HikariStaticText(this, -1, _("Catalogs:")), 1, wxALL | wxEXPAND, 2);
 	buttonsSizer->Add(catalog, 3, wxALL | wxEXPAND, 2); 
 	buttonsSizer->Add(addCatalog, 1, wxALL, 2);
 	buttonsSizer->Add(editCatalog, 1, wxALL, 2);
@@ -176,7 +176,7 @@ FontCatalogList::FontCatalogList(wxWindow* parent, const wxString& styleFont)
 	buttonsSizer->Add(loadCatalogs, 1, wxALL, 2);
 	//buttonsSizer->Add(replaceChecked, 1, wxALL, 2);
 	wxBoxSizer* textCtrlsSizer = new wxBoxSizer(wxHORIZONTAL);
-	textCtrlsSizer->Add(new KaiStaticText(this, -1, _("Find:")), 1, wxEXPAND | wxALL, 2);
+	textCtrlsSizer->Add(new HikariStaticText(this, -1, _("Find:")), 1, wxEXPAND | wxALL, 2);
 	textCtrlsSizer->Add(fontSeek, 3, wxEXPAND | wxALL, 2);
 	textCtrlsSizer->Add(fontFilter, 3, wxEXPAND | wxALL, 2);
 	textCtrlsSizer->Add(saveFilter, 1, wxEXPAND | wxALL, 2);
@@ -334,7 +334,7 @@ void FontCatalogList::RefreshList(bool catalogListToo)
 			catalogItem->name = catalog;
 		}
 		else {
-			KaiLog(_("Cannot find elements of line %i"));
+			HikariLog(_("Cannot find elements of line %i"));
 		}
 	}
 	if(catalogListToo)
@@ -359,7 +359,7 @@ void FontCatalogList::StartEditionTimer(int ms)
 		This->autoSaveTimer.Start(ms, true);
 }
 
-void CatalogList::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void CatalogList::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool click = event.LeftUp();
 	if(isMenuShown && event.LeftDown())
@@ -440,7 +440,7 @@ void CatalogList::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, Kai
 	}
 }
 
-void CatalogList::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void CatalogList::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	dc->SetBrush(wxBrush(Options.GetColour((enter && !clicked) ? BUTTON_BACKGROUND_HOVER :
 		(clicked) ? BUTTON_BACKGROUND_PUSHED : BUTTON_BACKGROUND)));
@@ -464,7 +464,7 @@ void CatalogList::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, K
 	lastHeight = height;
 }
 
-wxSize CatalogList::GetTextExtents(KaiListCtrl *theList){
+wxSize CatalogList::GetTextExtents(HikariListCtrl *theList){
 	wxSize size = theList->GetTextExtent(name);
 	size.x += 28;
 	size.y += 4;
@@ -476,7 +476,7 @@ void CatalogList::RefreshCatalogList()
 	catalogList = FCManagement.GetCatalogNames();
 }
 
-void FontItem::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void FontItem::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool isOnCheckbox = event.GetX() < 23;
 	if ((_enter && isOnCheckbox) || (!enter && isOnCheckbox && !leave)){
@@ -522,7 +522,7 @@ void FontItem::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiLis
 	
 }
 
-void FontItem::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void FontItem::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxSize ex = theList->GetTextExtent(name);
 	wxString bitmapName = (modified) ? L"checkbox_selected" : L"checkbox";
@@ -537,14 +537,14 @@ void FontItem::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiL
 	dc->DestroyClippingRegion();
 }
 
-wxSize FontItem::GetTextExtents(KaiListCtrl *theList){
+wxSize FontItem::GetTextExtents(HikariListCtrl *theList){
 	wxSize size = theList->GetTextExtent(name);
 	size.x += 32;
 	size.y += 4;
 	return size;
 }
 
-void FontSample::OnPaint(wxMemoryDC* dc, int x, int y, int width, int height, KaiListCtrl* theList)
+void FontSample::OnPaint(wxMemoryDC* dc, int x, int y, int width, int height, HikariListCtrl* theList)
 {
 	wxRect cur(x, y, width - 8, height);
 	wxFont font = dc->GetFont();
@@ -601,7 +601,7 @@ void FontCatalogManagement::LoadCatalogs(const wxString& external)
 					}
 					else
 					{
-						KaiLog(wxString::Format(_("Cannot add font \"%s\"."), token));
+						HikariLog(wxString::Format(_("Cannot add font \"%s\"."), token));
 					}
 				}
 				continue;
@@ -675,7 +675,7 @@ bool FontCatalogManagement::IsFontInCatalog(const wxString& catalog, const wxStr
 wxString FontCatalogManagement::AddToCatalog(const wxString& font, const wxPoint& pos, wxWindow *parent)
 {
 	if (!fontCatalogsNames.GetCount()) {
-		KaiLog(_("For adding fonts to catalog,\nclick \"Manage\" button first,\nto create new catalog."));
+		HikariLog(_("For adding fonts to catalog,\nclick \"Manage\" button first,\nto create new catalog."));
 		return L"";
 	}
 	Menu menuList;
@@ -741,7 +741,7 @@ bool FontCatalogManagement::ChangeCatalogName(wxWindow* messagesParent, const wx
 	wxArrayString* fontTable = nullptr;
 	auto itn = fontCatalogs.find(newCatalog);
 	if (itn != fontCatalogs.end()) {
-		KaiMessageDialog dlg(messagesParent, wxString::Format(_("Catalog named \"%s\" already exists. What to do?"), newCatalog), _("Prompt"), wxYES_NO | wxCANCEL);
+		HikariMessageDialog dlg(messagesParent, wxString::Format(_("Catalog named \"%s\" already exists. What to do?"), newCatalog), _("Prompt"), wxYES_NO | wxCANCEL);
 		dlg.SetYesLabel(_("Merge"));
 		dlg.SetNoLabel(_("Delete"));
 		int result = dlg.ShowModal();
@@ -837,16 +837,16 @@ void FontCatalogManagement::ReplaceCatalogFonts(const wxString& catalog, const w
 	FontCatalogList::StartEditionTimer(saveInterval);
 }
 
-class GetFontsFromASSDialog : public KaiDialog 
+class GetFontsFromASSDialog : public HikariDialog 
 {
 public:
 	GetFontsFromASSDialog(wxWindow *parent, wxArrayString *catalogs)
-		: KaiDialog(parent, -1, _("Add fonts from subtitles"))
+		: HikariDialog(parent, -1, _("Add fonts from subtitles"))
 	{
 		DialogSizer* main = new DialogSizer(wxVERTICAL);
 		wxBoxSizer* bsizer = new wxBoxSizer(wxHORIZONTAL);
 
-		catalog = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, *catalogs);
+		catalog = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, *catalogs);
 		catalog->SetSelection(0);
 		MappedButton* add = new MappedButton(this, 2998, _("Add"));
 		Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=, this](wxCommandEvent& evt) {
@@ -857,12 +857,12 @@ public:
 			}
 			}, 2998);
 
-		bsizer->Add(new KaiStaticText(this, -1, _("Catalogs:")), 1, wxALL | wxEXPAND, 2);
+		bsizer->Add(new HikariStaticText(this, -1, _("Catalogs:")), 1, wxALL | wxEXPAND, 2);
 		bsizer->Add(catalog, 4, wxALL | wxEXPAND, 4);
 		bsizer->Add(add, 1, wxALL, 4);
 
-		emptyCatalog = new KaiCheckBox(this, -1, _("Remove all contents of catalog"));
-		allSubs = new KaiCheckBox(this, -1, _("Add fonts from all open subtitles"));
+		emptyCatalog = new HikariCheckBox(this, -1, _("Remove all contents of catalog"));
+		allSubs = new HikariCheckBox(this, -1, _("Add fonts from all open subtitles"));
 
 		wxBoxSizer* buttonsizer = new wxBoxSizer(wxHORIZONTAL);
 		MappedButton* Buttonok = new MappedButton(this, wxID_OK, L"OK");
@@ -882,9 +882,9 @@ public:
 	}
 	~GetFontsFromASSDialog(){}
 
-	KaiChoice* catalog;
-	KaiCheckBox* emptyCatalog;
-	KaiCheckBox* allSubs;
+	HikariChoice* catalog;
+	HikariCheckBox* emptyCatalog;
+	HikariCheckBox* allSubs;
 };
 
 wxString FontCatalogManagement::ShowGetFromAssDialog(wxWindow *parent)

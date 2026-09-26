@@ -21,10 +21,10 @@
 
 DragnDrop::DragnDrop(HikariSubFrame* kfparent)
 {
-	Kai = kfparent;
+	Hikari = kfparent;
 	int timerId = 8989;
-	timer.SetOwner(Kai, timerId);
-	Kai->Bind(wxEVT_TIMER, [=, this](wxTimerEvent &evt) { OnDropTimer(evt); }, timerId);
+	timer.SetOwner(Hikari, timerId);
+	Hikari->Bind(wxEVT_TIMER, [=, this](wxTimerEvent &evt) { OnDropTimer(evt); }, timerId);
 }
 
 bool DragnDrop::OnDropFiles(wxCoord posx, wxCoord posy, const wxArrayString& filenames)
@@ -39,25 +39,25 @@ bool DragnDrop::OnDropFiles(wxCoord posx, wxCoord posy, const wxArrayString& fil
 void DragnDrop::OnDropTimer(wxTimerEvent & evt)
 {
 	if (files.size() > 1) {
-		Kai->OpenFiles(files);
+		Hikari->OpenFiles(files);
 	}
 	else if (files.size() > 0) {
 		wxString ext = files[0].AfterLast(L'.').Lower();
 		bool isLuaScript = ext == L"lua" || ext == L"moon";
 		int w, h;
-		Kai->Tabs->GetClientSize(&w, &h);
+		Hikari->Tabs->GetClientSize(&w, &h);
 		if (!isLuaScript) {
-			if (y >= h - Kai->Tabs->GetHeight()) {
+			if (y >= h - Hikari->Tabs->GetHeight()) {
 				int pixels;
-				int tab = Kai->Tabs->FindTab(x, &pixels);
-				if (tab < 0) { Kai->InsertTab(); }
-				else if (Kai->Tabs->iter != tab) { Kai->Tabs->ChangePage(tab); }
+				int tab = Hikari->Tabs->FindTab(x, &pixels);
+				if (tab < 0) { Hikari->InsertTab(); }
+				else if (Hikari->Tabs->iter != tab) { Hikari->Tabs->ChangePage(tab); }
 			}
 			else {
-				int tabByPos = Kai->Tabs->GetIterByPos(wxPoint(x, y));
-				if (Kai->Tabs->iter != tabByPos) { Kai->Tabs->ChangePage(tabByPos); }
+				int tabByPos = Hikari->Tabs->GetIterByPos(wxPoint(x, y));
+				if (Hikari->Tabs->iter != tabByPos) { Hikari->Tabs->ChangePage(tabByPos); }
 			}
 		}
-		Kai->OpenFile(files[0]);
+		Hikari->OpenFile(files[0]);
 	}
 }

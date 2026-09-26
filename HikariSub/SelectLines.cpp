@@ -16,10 +16,10 @@
 
 
 #include "HikariSubFrame.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "Stylelistbox.h"
 #include "SelectLines.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "config.h"
 #include "Notebook.h"
 #include "TabPanel.h"
@@ -30,17 +30,17 @@
 #include <wx/clipbrd.h>
 
 SelectLines::SelectLines(HikariSubFrame* kfparent)
-	: KaiDialog((wxWindow*)kfparent, -1, _("Select"))
+	: HikariDialog((wxWindow*)kfparent, -1, _("Select"))
 {
-	Kai = kfparent;
+	Hikari = kfparent;
 	Options.GetTable(SELECT_LINES_RECENT_SELECTIONS, selsRecent, wxTOKEN_RET_EMPTY_ALL);
 	int options = Options.GetInt(SELECT_LINES_OPTIONS);
 	if (selsRecent.size() > 20){ selsRecent.RemoveAt(20, selsRecent.size() - 20); }
 
 	DialogSizer *slsizer = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *slrbsizer = new wxBoxSizer(wxHORIZONTAL);
-	Contains = new KaiRadioButton(this, -1, _("With"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	NotContains = new KaiRadioButton(this, -1, _("Without"));
+	Contains = new HikariRadioButton(this, -1, _("With"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	NotContains = new HikariRadioButton(this, -1, _("Without"));
 	if (options & NOT_CONTAINS)
 		NotContains->SetValue(true);
 	else
@@ -49,18 +49,18 @@ SelectLines::SelectLines(HikariSubFrame* kfparent)
 	slrbsizer->Add(Contains, 1, wxALL | wxEXPAND, 3);
 	slrbsizer->Add(NotContains, 1, wxALL | wxEXPAND, 3);
 
-	KaiStaticBoxSizer* slsbsizer = new KaiStaticBoxSizer(wxVERTICAL, this, _("Find"));
+	HikariStaticBoxSizer* slsbsizer = new HikariStaticBoxSizer(wxVERTICAL, this, _("Find"));
 	wxBoxSizer *sltpsizer = new wxBoxSizer(wxHORIZONTAL);
-	FindText = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxSize(-1, -1), selsRecent);
+	FindText = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxSize(-1, -1), selsRecent);
 	FindText->SetToolTip(_("Search text:"));
 	FindText->SetMaxLength(MAXINT);
 	ChooseStyles = new MappedButton(this, ID_CHOOSE_STYLES, L"+", -1/*, wxDefaultPosition, wxSize(-1, -1)*/);
 	sltpsizer->Add(FindText, 1, wxALL | wxEXPAND, 3);
 	sltpsizer->Add(ChooseStyles, 0, wxALL, 3);
 
-	MatchCase = new KaiCheckBox(this, -1, _("Match case"));
+	MatchCase = new HikariCheckBox(this, -1, _("Match case"));
 	MatchCase->SetValue((options & MATCH_CASE) > 0);
-	RegEx = new KaiCheckBox(this, -1, _("Regular expressions"));
+	RegEx = new HikariCheckBox(this, -1, _("Regular expressions"));
 	RegEx->SetValue((options & REGULAR_EXPRESSIONS) > 0);
 
 	slsbsizer->Add(slrbsizer, 0, wxEXPAND, 0);
@@ -68,15 +68,15 @@ SelectLines::SelectLines(HikariSubFrame* kfparent)
 	slsbsizer->Add(MatchCase, 0, wxALL, 3);
 	slsbsizer->Add(RegEx, 0, wxALL, 3);
 
-	KaiStaticBoxSizer* slsbsizer1 = new KaiStaticBoxSizer(wxVERTICAL, this, _("In field"));
+	HikariStaticBoxSizer* slsbsizer1 = new HikariStaticBoxSizer(wxVERTICAL, this, _("In field"));
 	wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *sizer1 = new wxBoxSizer(wxHORIZONTAL);
-	CollumnText = new KaiRadioButton(this, -1, _("Text"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	CollumnStyle = new KaiRadioButton(this, -1, _("Styles"));
-	CollumnActor = new KaiRadioButton(this, -1, _("Actor"));
-	CollumnEffect = new KaiRadioButton(this, -1, _("Effect"));
-	CollumnStartTime = new KaiRadioButton(this, -1, _("Start time"));
-	CollumnEndTime = new KaiRadioButton(this, -1, _("End time"));
+	CollumnText = new HikariRadioButton(this, -1, _("Text"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	CollumnStyle = new HikariRadioButton(this, -1, _("Styles"));
+	CollumnActor = new HikariRadioButton(this, -1, _("Actor"));
+	CollumnEffect = new HikariRadioButton(this, -1, _("Effect"));
+	CollumnStartTime = new HikariRadioButton(this, -1, _("Start time"));
+	CollumnEndTime = new HikariRadioButton(this, -1, _("End time"));
 	//catch first options, when there is more options it means that I did a bug or sameone change options
 	if (options & FIELD_TEXT)
 		CollumnText->SetValue(true);
@@ -99,11 +99,11 @@ SelectLines::SelectLines(HikariSubFrame* kfparent)
 	sizer1->Add(CollumnEndTime, 1, wxALL | wxEXPAND, 3);
 	slsbsizer1->Add(sizer, 1, wxEXPAND);
 	slsbsizer1->Add(sizer1, 1, wxEXPAND);
-	KaiStaticBoxSizer* slsbsizer2 = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Dialogue / comments"));
+	HikariStaticBoxSizer* slsbsizer2 = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Dialogue / comments"));
 
-	Dialogues = new KaiCheckBox(this, -1, _("Dialogue"));
+	Dialogues = new HikariCheckBox(this, -1, _("Dialogue"));
 	Dialogues->SetValue(options & DIALOGUES || !(options & COMMENTS));
-	Comments = new KaiCheckBox(this, -1, _("Comments"));
+	Comments = new HikariCheckBox(this, -1, _("Comments"));
 	Comments->SetValue((options & COMMENTS) > 0);
 
 	slsbsizer2->Add(Dialogues, 0, wxALL, 3);
@@ -114,7 +114,7 @@ SelectLines::SelectLines(HikariSubFrame* kfparent)
 	sels.Add(_("Add to selection"));
 	sels.Add(_("Deselect"));
 
-	Selections = new KaiRadioBox(this, -1, _("Selection"), wxDefaultPosition, wxDefaultSize, sels, 2);
+	Selections = new HikariRadioBox(this, -1, _("Selection"), wxDefaultPosition, wxDefaultSize, sels, 2);
 	int SelettionsOption = options & ADD_TO_SELECTION ? 1 : options & DESELECT ? 2 : 0;
 	Selections->SetSelection(SelettionsOption);
 
@@ -127,7 +127,7 @@ SelectLines::SelectLines(HikariSubFrame* kfparent)
 	action.Add(_("Set as comment"));
 	action.Add(_("Delete"));
 
-	Actions = new KaiRadioBox(this, -1, _("Action"), wxDefaultPosition, wxDefaultSize, action, 2);
+	Actions = new HikariRadioBox(this, -1, _("Action"), wxDefaultPosition, wxDefaultSize, action, 2);
 	int ActionsOption = options & DO_COPY ? 1 :
 		options & DO_CUT ? 2 :
 		options & DO_MOVE_ON_START ? 3 :
@@ -226,14 +226,14 @@ void SelectLines::OnSelect(wxCommandEvent & evt)
 	selectOptions = Selections->GetSelection();
 	action = Actions->GetSelection();
 
-	TabPanel *tab = Kai->GetTab();
+	TabPanel *tab = Hikari->GetTab();
 	bool refreshTabLabel = false;
 	int allSelections = SelectOnTab(tab, &refreshTabLabel);
 
 	wxString messagetxt = (selectOptions == 0) ? wxString::Format(_("%i lines selected."), allSelections) :
 		(selectOptions == 1) ? wxString::Format(_("%i lines added to selection."), allSelections) :
 		wxString::Format(_("%i lines deselected."), allSelections);
-	KaiMessageDialog dlg(this, messagetxt, _("Select"), wxYES_NO);
+	HikariMessageDialog dlg(this, messagetxt, _("Select"), wxYES_NO);
 	dlg.SetYesLabel(_("Close"));
 	dlg.SetNoLabel(L"Ok");
 	int result = dlg.ShowModal();
@@ -264,18 +264,18 @@ void SelectLines::OnSelectInAllTabs(wxCommandEvent& event)
 	action = Actions->GetSelection();
 	int selectionsOnAllTabs = 0;
 
-	for (size_t i = 0; i < Kai->Tabs->Size(); i++){
-		TabPanel *tab = Kai->Tabs->Page(i);
+	for (size_t i = 0; i < Hikari->Tabs->Size(); i++){
+		TabPanel *tab = Hikari->Tabs->Page(i);
 		bool refreshTabLabel = false;
 		selectionsOnAllTabs += SelectOnTab(tab, &refreshTabLabel);
 		if (refreshTabLabel)
-			Kai->Label(tab->grid->file->GetActualHistoryIter(), false, i, i != Kai->Tabs->iter);
+			Hikari->Label(tab->grid->file->GetActualHistoryIter(), false, i, i != Hikari->Tabs->iter);
 	}
 
 	wxString messagetxt = (selectOptions == 0) ? wxString::Format(_("%i lines selected."), selectionsOnAllTabs) :
 		(selectOptions == 1) ? wxString::Format(_("%i lines added to selection."), selectionsOnAllTabs) :
 		wxString::Format(_("%i lines deselected."), selectionsOnAllTabs);
-	KaiMessageDialog dlg(this, messagetxt, _("Select"), wxYES_NO);
+	HikariMessageDialog dlg(this, messagetxt, _("Select"), wxYES_NO);
 	dlg.SetYesLabel(_("Close"));
 	dlg.SetNoLabel(L"Ok");
 	int result = dlg.ShowModal();
@@ -452,7 +452,7 @@ void SelectLines::AddRecent(){
 
 void SelectLines::OnChooseStyles(wxCommandEvent& event)
 {
-	wxString styles = GetCheckedElements(Kai);
+	wxString styles = GetCheckedElements(Hikari);
 	styles.Replace(L"\\", L"\\\\");
 	styles.Replace(L"|", L"\\|");
 	int numreps = styles.Replace(L",", L"|");

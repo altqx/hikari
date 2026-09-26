@@ -16,21 +16,21 @@
 
 
 #include "SubsResampleDialog.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "HikariSubFrame.h"
 #include "SubsGrid.h"
 #include "Notebook.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "TabPanel.h"
 
 SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize, const wxSize &videoSize, const wxString &subsMatrix, const wxString &videoMatrix)
-	: KaiDialog(parent, -1, _("Change resolution"))
+	: HikariDialog(parent, -1, _("Change resolution"))
 {
 	DialogSizer *mainSizer = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *subsResolutionSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *videoResolutionSizer = new wxBoxSizer(wxHORIZONTAL);
-	KaiStaticBoxSizer *subsResolutionStaticSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Subtitles resolution"));
-	KaiStaticBoxSizer *videoResolutionStaticSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Target resolution"));
+	HikariStaticBoxSizer *subsResolutionStaticSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Subtitles resolution"));
+	HikariStaticBoxSizer *videoResolutionStaticSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Target resolution"));
 
 	subsResolutionX = new NumCtrl(this, 26543, std::to_wstring(subsSize.x), 100, 13000, true, wxDefaultPosition, wxSize(60, -1));
 	subsResolutionY = new NumCtrl(this, 26544, std::to_wstring(subsSize.y), 100, 10000, true, wxDefaultPosition, wxSize(60, -1));
@@ -39,10 +39,10 @@ SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize,
 
 #ifdef whithMatrix	
 	wxString matrices[] = {L"TV.601", L"PC.601", L"TV.709", L"PC.709", L"TV.FCC", L"PC.FCC", L"TV.240M", L"PC.240M"};
-	subsMatrix = new KaiChoice(this, -1 , wxDefaultPosition, wxSize(160,-1), 8, matrices);
+	subsMatrix = new HikariChoice(this, -1 , wxDefaultPosition, wxSize(160,-1), 8, matrices);
 #endif
 	subsResolutionSizer->Add(subsResolutionX, 0, wxALL, 2);
-	subsResolutionSizer->Add(new KaiStaticText(this, -1, L" x "), 0, wxALL | wxALIGN_CENTER, 2);
+	subsResolutionSizer->Add(new HikariStaticText(this, -1, L" x "), 0, wxALL | wxALIGN_CENTER, 2);
 	subsResolutionSizer->Add(subsResolutionY, 0, wxALL, 2);
 	subsResolutionSizer->Add(fromSubs, 1, wxALL | wxEXPAND, 2);
 	subsResolutionStaticSizer->Add(subsResolutionSizer, 1, wxEXPAND);
@@ -56,10 +56,10 @@ SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize,
 	fromVideo->Enable(false);
 
 #ifdef whithMatrix	
-	destinedMatrix = new KaiChoice(this, -1 , wxDefaultPosition, wxSize(160,-1), 8, matrices);
+	destinedMatrix = new HikariChoice(this, -1 , wxDefaultPosition, wxSize(160,-1), 8, matrices);
 #endif
 	videoResolutionSizer->Add(destinedResolutionX, 0, wxALL, 2);
-	videoResolutionSizer->Add(new KaiStaticText(this, -1, L" x "), 0, wxALL | wxALIGN_CENTER, 2);
+	videoResolutionSizer->Add(new HikariStaticText(this, -1, L" x "), 0, wxALL | wxALIGN_CENTER, 2);
 	videoResolutionSizer->Add(destinedResolutionY, 0, wxALL, 2);
 	videoResolutionSizer->Add(fromVideo, 1, wxALL | wxEXPAND, 2);
 	videoResolutionStaticSizer->Add(videoResolutionSizer, 1, wxEXPAND);
@@ -70,7 +70,7 @@ SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize,
 	wxArrayString options;
 	options.Add(_("No stretch"));
 	options.Add(_("Stretch"));
-	resamplingOptions = new KaiRadioBox(this, -1, _("Resample options"), wxDefaultPosition, wxDefaultSize, options);
+	resamplingOptions = new HikariRadioBox(this, -1, _("Resample options"), wxDefaultPosition, wxDefaultSize, options);
 	resamplingOptions->Enable((videoSize.x / (float)subsSize.x) != (videoSize.y / (float)subsSize.y));
 	auto OnChangedResolution = [=, this](wxCommandEvent &evt)->void{
 		int subsSizeX = subsResolutionX->GetInt();
@@ -166,7 +166,7 @@ SubsResampleDialog::SubsResampleDialog(wxWindow *parent, const wxSize &subsSize,
 
 
 SubsMismatchResolutionDialog::SubsMismatchResolutionDialog(wxWindow *parent, const wxSize &subsSize, const wxSize &videoSize)
-	: KaiDialog(parent, -1, _("Incompatible resolution"))
+	: HikariDialog(parent, -1, _("Incompatible resolution"))
 {
 	DialogSizer *mainSizer = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -180,7 +180,7 @@ SubsMismatchResolutionDialog::SubsMismatchResolutionDialog(wxWindow *parent, con
 	if (resizeX != resizeY){
 		options.Add(_("Resample subtitles (stretch)"));
 	}
-	resamplingOptions = new KaiRadioBox(this, -1, _("Resample options"), wxDefaultPosition, wxSize(160, -1), options);
+	resamplingOptions = new HikariRadioBox(this, -1, _("Resample options"), wxDefaultPosition, wxSize(160, -1), options);
 	resamplingOptions->SetSelection(1);
 	MappedButton *OK = new MappedButton(this, 26548, _("Change"));
 	/*Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=](wxCommandEvent &evt){
@@ -213,7 +213,7 @@ SubsMismatchResolutionDialog::SubsMismatchResolutionDialog(wxWindow *parent, con
 		EndModal(0);
 	}, 26549);
 
-	mainSizer->Add(new KaiStaticText(this, -1, info), 0, wxALL, 5);
+	mainSizer->Add(new HikariStaticText(this, -1, info), 0, wxALL, 5);
 	mainSizer->Add(resamplingOptions, 0, wxALL, 2);
 	mainSizer->Add(buttonSizer, 0, wxALL | wxCENTER, 2);
 	SetSizerAndFit(mainSizer);

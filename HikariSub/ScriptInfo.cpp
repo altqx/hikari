@@ -17,12 +17,12 @@
 #include "ScriptInfo.h"
 #include "config.h"
 //#include "Utils.h"
-#include "KaiStaticBoxSizer.h"
-#include "KaiStaticText.h"
+#include "HikariStaticBoxSizer.h"
+#include "HikariStaticText.h"
 #include <wx/sizer.h>
 
 ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
-	:KaiDialog(parent, -1, _("ASS subtitle properties"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE)
+	:HikariDialog(parent, -1, _("ASS subtitle properties"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE)
 {
 	SetForegroundColour(Options.GetColour(WINDOW_TEXT));
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
@@ -31,7 +31,7 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 	icn.CopyFromBitmap(CreateBitmapFromPngResource(L"ASSPROPS"));
 	SetIcon(icn);
 	DialogSizer *mainsizer = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer *StaticBox1 = new KaiStaticBoxSizer(wxVERTICAL, this, _("Subtitle information"));
+	HikariStaticBoxSizer *StaticBox1 = new HikariStaticBoxSizer(wxVERTICAL, this, _("Subtitle information"));
 	//wxGridSizer *GridSizer = new wxGridSizer(2, 5, 5);
 	wxBoxSizer* bxsizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* bxsizer1 = new wxBoxSizer(wxHORIZONTAL);
@@ -40,24 +40,24 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 	wxBoxSizer* bxsizer4 = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* bxsizer5 = new wxBoxSizer(wxHORIZONTAL);
 
-	title = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	script = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	translation = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	editing = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	timing = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	update = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	title = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	script = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	translation = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	editing = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	timing = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	update = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 
-	bxsizer->Add(new KaiStaticText(this, -1, _("Title")), 1, wxEXPAND );
+	bxsizer->Add(new HikariStaticText(this, -1, _("Title")), 1, wxEXPAND );
 	bxsizer->Add(title, 2, wxEXPAND);
-	bxsizer1->Add(new KaiStaticText(this, -1, _("Author")), 1, wxEXPAND);
+	bxsizer1->Add(new HikariStaticText(this, -1, _("Author")), 1, wxEXPAND);
 	bxsizer1->Add(script, 2, wxEXPAND);
-	bxsizer2->Add(new KaiStaticText(this, -1, _("Translator")), 1, wxEXPAND);
+	bxsizer2->Add(new HikariStaticText(this, -1, _("Translator")), 1, wxEXPAND);
 	bxsizer2->Add(translation, 2, wxEXPAND);
-	bxsizer3->Add(new KaiStaticText(this, -1, _("Proofreading")), 1, wxEXPAND);
+	bxsizer3->Add(new HikariStaticText(this, -1, _("Proofreading")), 1, wxEXPAND);
 	bxsizer3->Add(editing, 2, wxEXPAND);
-	bxsizer4->Add(new KaiStaticText(this, -1, _("Timer")), 1, wxEXPAND);
+	bxsizer4->Add(new HikariStaticText(this, -1, _("Timer")), 1, wxEXPAND);
 	bxsizer4->Add(timing, 2, wxEXPAND);
-	bxsizer5->Add(new KaiStaticText(this, -1, _("Editing")), 1, wxEXPAND);
+	bxsizer5->Add(new HikariStaticText(this, -1, _("Editing")), 1, wxEXPAND);
 	bxsizer5->Add(update, 2, wxEXPAND);
 
 	StaticBox1->Add(bxsizer, 0, wxEXPAND | wxALL, 5);
@@ -67,7 +67,7 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 	StaticBox1->Add(bxsizer4, 0, wxEXPAND | wxALL, 5);
 	StaticBox1->Add(bxsizer5, 0, wxEXPAND | wxALL, 5);
 
-	KaiStaticBoxSizer *StaticBox2 = new KaiStaticBoxSizer(wxVERTICAL, this, _("Resolution"));
+	HikariStaticBoxSizer *StaticBox2 = new HikariStaticBoxSizer(wxVERTICAL, this, _("Resolution"));
 	wxBoxSizer *boxsizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* boxsizer3 = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* boxsizer4 = new wxBoxSizer(wxVERTICAL);
@@ -97,15 +97,15 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 		layoutFromVideo->Enable(false);
 	}
 
-	boxsizer->Add(new KaiStaticText(this, -1, _("Subtitles"), wxDefaultPosition, wxSize(-1, -1)), 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	boxsizer->Add(new HikariStaticText(this, -1, _("Subtitles"), wxDefaultPosition, wxSize(-1, -1)), 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 	boxsizer->Add(width, 1, wxALL, 5);
-	boxsizer->Add(new KaiStaticText(this, -1, L"  X  ", wxDefaultPosition, wxSize(-1, -1)), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	boxsizer->Add(new HikariStaticText(this, -1, L"  X  ", wxDefaultPosition, wxSize(-1, -1)), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 	boxsizer->Add(height, 1, wxALL, 5);
 	boxsizer->Add(resolutionFromVideo, 2, wxALL, 5);
 
-	boxsizer3->Add(new KaiStaticText(this, -1, _("Layout"), wxDefaultPosition, wxSize(-1, -1)), 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	boxsizer3->Add(new HikariStaticText(this, -1, _("Layout"), wxDefaultPosition, wxSize(-1, -1)), 1, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 	boxsizer3->Add(layoutWidth, 1, wxALL, 5);
-	boxsizer3->Add(new KaiStaticText(this, -1, L"  X  ", wxDefaultPosition, wxSize(-1, -1)), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
+	boxsizer3->Add(new HikariStaticText(this, -1, L"  X  ", wxDefaultPosition, wxSize(-1, -1)), 0, wxALL | wxALIGN_CENTER_VERTICAL, 5);
 	boxsizer3->Add(layoutHeight, 1, wxALL, 5);
 	boxsizer3->Add(layoutFromVideo, 2, wxALL, 5);
 
@@ -115,7 +115,7 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 	boxsizer5->Add(linkResolutions, 0, wxTOP | wxBOTTOM | wxRIGHT | wxEXPAND, 5);
 	StaticBox2->Add(boxsizer5, 0, wxEXPAND);
 
-	matrix = new KaiChoice(this, -1, wxDefaultPosition, wxSize(160, -1));
+	matrix = new HikariChoice(this, -1, wxDefaultPosition, wxSize(160, -1));
 	matrix->SetSelection(matrix->Append(_("None")));
 	matrix->Append("TV.601");
 	matrix->Append("PC.601");
@@ -126,30 +126,30 @@ ScriptInfo::ScriptInfo(wxWindow* parent, int w, int h)
 	matrix->Append("TV.240M");
 	matrix->Append("PC.240M");
 	wxBoxSizer *boxsizer2 = new wxBoxSizer(wxHORIZONTAL);
-	boxsizer2->Add(new KaiStaticText(this, -1, _("YCbCr matrix"), wxDefaultPosition), 1);
+	boxsizer2->Add(new HikariStaticText(this, -1, _("YCbCr matrix"), wxDefaultPosition), 1);
 	boxsizer2->Add(matrix, 2, wxLEFT, 3);
 	StaticBox2->Add(boxsizer2, 1, wxEXPAND | wxALL, 5);
 
-	KaiStaticBoxSizer *StaticBox3 = new KaiStaticBoxSizer(wxVERTICAL, this, _("Options"));
+	HikariStaticBoxSizer *StaticBox3 = new HikariStaticBoxSizer(wxVERTICAL, this, _("Options"));
 	wxBoxSizer* boxsizer6 = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* boxsizer7 = new wxBoxSizer(wxHORIZONTAL);
 	//wxGridSizer *GridSizer1 = new wxGridSizer(2, 5, 5);
 
-	wrapstyle = new KaiChoice(this, -1/*, wxDefaultPosition, wxSize(160,-1)*/);
+	wrapstyle = new HikariChoice(this, -1/*, wxDefaultPosition, wxSize(160,-1)*/);
 	wrapstyle->SetSelection(wrapstyle->Append(_("0: Auto, top line wider")));
 	wrapstyle->Append(_("1: End-of-line wrapping, only \\N breaks"));
 	wrapstyle->Append(_("2: No wrapping, both \\n and \\N break"));
 	wrapstyle->Append(_("3: Auto, bottom line wider"));
-	collision = new KaiChoice(this, -1);
+	collision = new HikariChoice(this, -1);
 	collision->SetSelection(collision->Append(_("Normal")));
 	collision->Append(_("Reversed"));
 
-	boxsizer6->Add(new KaiStaticText(this, -1, _("Wrap style")), 1, wxEXPAND | wxLEFT, 5);
+	boxsizer6->Add(new HikariStaticText(this, -1, _("Wrap style")), 1, wxEXPAND | wxLEFT, 5);
 	boxsizer6->Add(wrapstyle, 2, wxEXPAND | wxALL, 5);
-	boxsizer7->Add(new KaiStaticText(this, -1, _("Colliding lines")), 1, wxEXPAND | wxLEFT, 5);
+	boxsizer7->Add(new HikariStaticText(this, -1, _("Colliding lines")), 1, wxEXPAND | wxLEFT, 5);
 	boxsizer7->Add(collision, 2, wxEXPAND | wxALL, 5);
 
-	scaleBorderAndShadow = new KaiCheckBox(this, -1, _("Scale border and shadow"));
+	scaleBorderAndShadow = new HikariCheckBox(this, -1, _("Scale border and shadow"));
 	scaleBorderAndShadow->SetValue(true);
 
 	StaticBox3->Add(boxsizer6, 1, wxEXPAND);

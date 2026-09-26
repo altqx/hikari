@@ -27,7 +27,7 @@ msgstr ""
 "X-Poedit-SearchPathExcluded-13: resource.rc\n"
 "X-Poedit-SearchPathExcluded-14: CsriMod.cpp\n"
 "X-Poedit-SearchPathExcluded-15: UpdateChecker.cpp\n"
-"X-Poedit-SearchPathExcluded-16: KaiTextValidator.cpp\n"
+"X-Poedit-SearchPathExcluded-16: HikariTextValidator.cpp\n"
 "X-Poedit-SearchPathExcluded-2: include\n"
 "X-Poedit-SearchPathExcluded-3: Win32\n"
 "X-Poedit-SearchPathExcluded-4: x64\n"
@@ -275,7 +275,7 @@ msgstr "เปิด"
 #: HikariSub/ColorPicker.cpp:1410 HikariSub/DummyVideo.cpp:102
 #: HikariSub/EditBox.cpp:94 HikariSub/EditBox.cpp:1750
 #: HikariSub/FontCatalogList.cpp:70 HikariSub/FontCatalogList.cpp:868
-#: HikariSub/FontDialog.cpp:410 HikariSub/KaiMessageBox.cpp:79
+#: HikariSub/FontDialog.cpp:410 HikariSub/HikariMessageBox.cpp:79
 #: HikariSub/MappedButton.cpp:39 HikariSub/NewCatalog.cpp:42
 #: HikariSub/OptionsDialog.cpp:1022 HikariSub/ProgressDialog.cpp:43
 #: HikariSub/ScriptInfo.cpp:160 HikariSub/ShiftTimes.cpp:67
@@ -795,17 +795,17 @@ msgstr "กำลังอ่านคำบรรยายจากแฟ้ม
 msgid "Fix suggestions"
 msgstr "คำแนะนำการแก้ไข"
 
-#: HikariSub/DialogueTextEditor.cpp:2265 HikariSub/KaiListCtrl.cpp:117
-#: HikariSub/KaiTextCtrl.cpp:1474
+#: HikariSub/DialogueTextEditor.cpp:2265 HikariSub/HikariListCtrl.cpp:117
+#: HikariSub/HikariTextCtrl.cpp:1474
 msgid "&Copy"
 msgstr "&คัดลอก"
 
-#: HikariSub/DialogueTextEditor.cpp:2266 HikariSub/KaiTextCtrl.cpp:1475
+#: HikariSub/DialogueTextEditor.cpp:2266 HikariSub/HikariTextCtrl.cpp:1475
 msgid "Cu&t"
 msgstr "ตั&ด"
 
-#: HikariSub/DialogueTextEditor.cpp:2267 HikariSub/KaiListCtrl.cpp:118
-#: HikariSub/KaiTextCtrl.cpp:1476
+#: HikariSub/DialogueTextEditor.cpp:2267 HikariSub/HikariListCtrl.cpp:118
+#: HikariSub/HikariTextCtrl.cpp:1476
 msgid "&Paste"
 msgstr "&วาง"
 
@@ -817,7 +817,7 @@ msgstr "ค้นหาคำแปลใน ling.pl"
 msgid "Search word translation on pl.ba.bla"
 msgstr "ค้นหาคำแปลใน pl.ba.bla"
 
-#: HikariSub/DialogueTextEditor.cpp:2272 HikariSub/KaiTextCtrl.cpp:1481
+#: HikariSub/DialogueTextEditor.cpp:2272 HikariSub/HikariTextCtrl.cpp:1481
 msgid "Search for the selected phrase on Google"
 msgstr "ค้นหาวลีที่เลือกใน Google"
 
@@ -838,7 +838,7 @@ msgstr "ภาษาที่ติดตั้งไว้"
 msgid "&Add word \"%s\" to dictionary"
 msgstr "&เพิ่มคำว่า \"%s\" ไปยังพจนานุกรม"
 
-#: HikariSub/DialogueTextEditor.cpp:2296 HikariSub/KaiTextCtrl.cpp:1483
+#: HikariSub/DialogueTextEditor.cpp:2296 HikariSub/HikariTextCtrl.cpp:1483
 msgid "&Delete"
 msgstr "&ลบ"
 
@@ -2833,24 +2833,24 @@ msgstr "เต็มหน้าจอ"
 msgid "Save frame with subtitles as PNG"
 msgstr "บันทึกเฟรมพร้อมคำบรรยายเป็น PNG"
 
-#: HikariSub/KaiMessageBox.cpp:38
+#: HikariSub/HikariMessageBox.cpp:38
 msgid "Apply to All"
 msgstr "นำไปใช้ทั้งหมด"
 
-#: HikariSub/KaiMessageBox.cpp:53
+#: HikariSub/HikariMessageBox.cpp:53
 msgid "Yes to all"
 msgstr "ใช่ทั้งหมด"
 
-#: HikariSub/KaiMessageBox.cpp:62 HikariSub/MappedButton.cpp:41
+#: HikariSub/HikariMessageBox.cpp:62 HikariSub/MappedButton.cpp:41
 #: HikariSub/Notebook.cpp:1216
 msgid "Yes"
 msgstr "ใช่"
 
-#: HikariSub/KaiMessageBox.cpp:71 HikariSub/MappedButton.cpp:42
+#: HikariSub/HikariMessageBox.cpp:71 HikariSub/MappedButton.cpp:42
 msgid "No"
 msgstr "ไม่"
 
-#: HikariSub/KaiMessageBox.cpp:87
+#: HikariSub/HikariMessageBox.cpp:87
 msgid "Help"
 msgstr "ช่วยเหลือ"
 

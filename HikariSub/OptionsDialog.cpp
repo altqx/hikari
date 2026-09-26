@@ -23,11 +23,11 @@
 #include "Hotkeys.h"
 #include "NumCtrl.h"
 #include "ColorPicker.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "FontDialog.h"
 #include "OpennWrite.h"
-#include "KaiMessageBox.h"
-#include "KaiStaticText.h"
+#include "HikariMessageBox.h"
+#include "HikariStaticText.h"
 #include "OptionsPanels.h"
 #include "StyleChange.h"
 #include "SubtitlesProviderManager.h"
@@ -37,7 +37,7 @@
 #include "Notebook.h"
 #include "SubsGrid.h"
 #include "AudioBox.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "FontEnumerator.h"
 #include <wx/dir.h>
 #include <wx/dirdlg.h>
@@ -45,7 +45,7 @@
 //config have Windows trash
 #include "config.h"
 
-void ItemHotkey::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void ItemHotkey::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxSize ex = dc->GetTextExtent(accel);
 
@@ -60,7 +60,7 @@ void ItemHotkey::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, Ka
 	dc->DestroyClippingRegion();
 }
 
-void ItemHotkey::OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed)
+void ItemHotkey::OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed)
 {
 	if (enter){
 		if (needTooltip)
@@ -70,7 +70,7 @@ void ItemHotkey::OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiLi
 	}
 }
 
-void ItemHotkey::OnMapHotkey(KaiListCtrl *theList, int y)
+void ItemHotkey::OnMapHotkey(HikariListCtrl *theList, int y)
 {
 	HkeysDialog hkd(theList, name, hotkeyId.Type, !name.StartsWith("Script"));
 
@@ -114,7 +114,7 @@ void ItemHotkey::OnMapHotkey(KaiListCtrl *theList, int y)
 
 			int result = wxCANCEL;
 			if (doubledHotkey){
-				KaiMessageDialog msg(theList,
+				HikariMessageDialog msg(theList,
 					wxString::Format(_("This hotkey already exists for \"%s\".\nWhat to do?"),
 					doubledHkName), _("Warning"), wxYES | wxOK | wxCANCEL);
 				msg.SetOkLabel(_("Switch hotkeys"));
@@ -123,7 +123,7 @@ void ItemHotkey::OnMapHotkey(KaiListCtrl *theList, int y)
 			}
 			else{
 				int buttonFlag = (idtypes.size() < 2) ? wxOK : 0;
-				KaiMessageDialog msg(theList,
+				HikariMessageDialog msg(theList,
 					wxString::Format(_("This shortcut already exists in %s as a shortcut for \"%s\".\nWhat would you like to do?"),
 					(idtypes.size() > 1) ? _("other windows") : _("another window"), doubledHkName), _("Warning"), wxYES_NO | buttonFlag | wxCANCEL);
 				if (idtypes.size() < 2)
@@ -197,7 +197,7 @@ void ItemHotkey::OnMapHotkey(KaiListCtrl *theList, int y)
 	}
 }
 
-void ItemHotkey::OnResetHotkey(KaiListCtrl *theList, int y)
+void ItemHotkey::OnResetHotkey(HikariListCtrl *theList, int y)
 {
 	if (OptionsDialog::hotkeysCopy.size() == 0)
 		OptionsDialog::hotkeysCopy = std::map<idAndType, hdata>(Hkeys.GetHotkeysMap());
@@ -213,7 +213,7 @@ void ItemHotkey::OnResetHotkey(KaiListCtrl *theList, int y)
 	OptionsDialog::hotkeysCopy[hotkeyId] = hdata(name, defKet);
 }
 
-void ItemHotkey::OnDeleteHotkey(KaiListCtrl *theList, int y)
+void ItemHotkey::OnDeleteHotkey(HikariListCtrl *theList, int y)
 {
 	if (OptionsDialog::hotkeysCopy.size() == 0)
 		OptionsDialog::hotkeysCopy = std::map<idAndType, hdata>(Hkeys.GetHotkeysMap());
@@ -266,10 +266,10 @@ wxString *OptionsDialog::windowNames = nullptr;
 std::map<idAndType, hdata> OptionsDialog::hotkeysCopy;
 
 OptionsDialog::OptionsDialog(wxWindow* parent)
-	: KaiDialog(parent, -1, _("Options"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxFULL_REPAINT_ON_RESIZE)
+	: HikariDialog(parent, -1, _("Options"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER | wxFULL_REPAINT_ON_RESIZE)
 {
 	windowNames = new wxString[5]{ _("Global"), _("Subtitles"), _("Editor"), _("Video"), _("Audio") };
-	OptionsTree = new KaiTreebook(this, -1);
+	OptionsTree = new HikariTreebook(this, -1);
 
 	Stylelist = nullptr;
 	Katlist = nullptr;
@@ -290,7 +290,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 	wxWindow* SubsProps = new SubtitlesProperties(OptionsTree, this);
 
 	hkeymodif = 0;
-	if (!Options.AudioOpts && !Options.LoadAudioOpts()) { KaiMessageBox(_("Cannot load audio configuration"), _("Error")); }
+	if (!Options.AudioOpts && !Options.LoadAudioOpts()) { HikariMessageBox(_("Cannot load audio configuration"), _("Error")); }
 
 	//Main
 	{
@@ -331,8 +331,8 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 			programLanguages.push_back(tags[i]);
 			langs.Add(Options.FindLanguage(tags[i]));
 		}
-		KaiStaticBoxSizer* langSizer = new KaiStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Language (program restart required)"));
-		KaiChoice* programLanguage = new KaiChoice(GLOBAL_EDITOR, ID_PROGRAM_LANGUAGE, wxDefaultPosition, wxDefaultSize, langs);
+		HikariStaticBoxSizer* langSizer = new HikariStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Language (program restart required)"));
+		HikariChoice* programLanguage = new HikariChoice(GLOBAL_EDITOR, ID_PROGRAM_LANGUAGE, wxDefaultPosition, wxDefaultSize, langs);
 		int sel = programLanguage->FindString(Options.FindLanguage(Options.GetString(PROGRAM_LANGUAGE)));
 		if (sel < 0)
 			sel = 0;
@@ -344,9 +344,9 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		wxArrayString dictionaries;
 		SpellChecker::AvailableDics(dictionaries, dictionaryLanguagesSymbols);
 		if (dictionaries.size() == 0) { dictionaries.Add(_("Put files .dic and .aff to \"Dictionary\" folder")); }
-		KaiStaticBoxSizer* dicSizer = new KaiStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Spell checker language (\"Dictionary\" folder)"));
+		HikariStaticBoxSizer* dicSizer = new HikariStaticBoxSizer(wxVERTICAL, GLOBAL_EDITOR, _("Spell checker language (\"Dictionary\" folder)"));
 
-		KaiChoice* dic = new KaiChoice(GLOBAL_EDITOR, ID_DICTIONARY_LANGUAGE, wxDefaultPosition, wxDefaultSize, dictionaries);
+		HikariChoice* dic = new HikariChoice(GLOBAL_EDITOR, ID_DICTIONARY_LANGUAGE, wxDefaultPosition, wxDefaultSize, dictionaries);
 
 		dic->SetSelection(dic->FindString(Options.FindLanguage(Options.GetString(DICTIONARY_LANGUAGE))));
 		ConOpt(dic, DICTIONARY_LANGUAGE);
@@ -355,7 +355,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 
 		for (int i = 0; i < optsSize; i++)
 		{
-			KaiCheckBox* opt = new KaiCheckBox(GLOBAL_EDITOR, -1, labels[i]);
+			HikariCheckBox* opt = new HikariCheckBox(GLOBAL_EDITOR, -1, labels[i]);
 			opt->SetValue(Options.GetBool(opts[i]));
 			ConOpt(opt, opts[i]);
 			MainSizer->Add(opt, 0, wxALL, 2);
@@ -378,7 +378,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		NumCtrl* ltl = new NumCtrl(EditorAdvanced, ID_NUMBER_CONTROL, Options.GetString(AUTOMATION_TRACE_LEVEL), 0, 5, true, wxDefaultPosition, wxSize(120, -1), wxTE_PROCESS_ENTER);
 		NumCtrl* sc = new NumCtrl(EditorAdvanced, ID_NUMBER_CONTROL, Options.GetString(GRID_INSERT_START_OFFSET), -100000, 100000, true, wxDefaultPosition, wxSize(120, -1), wxTE_PROCESS_ENTER);
 		NumCtrl* sc1 = new NumCtrl(EditorAdvanced, ID_NUMBER_CONTROL, Options.GetString(GRID_INSERT_END_OFFSET), -100000, 100000, true, wxDefaultPosition, wxSize(120, -1), wxTE_PROCESS_ENTER);
-		KaiTextCtrl* sc2 = new KaiTextCtrl(EditorAdvanced, ID_TAGS_SWAP_CHARACTER, Options.GetString(GRID_TAGS_SWAP_CHARACTER), wxDefaultPosition, wxSize(120, -1), wxTE_PROCESS_ENTER);
+		HikariTextCtrl* sc2 = new HikariTextCtrl(EditorAdvanced, ID_TAGS_SWAP_CHARACTER, Options.GetString(GRID_TAGS_SWAP_CHARACTER), wxDefaultPosition, wxSize(120, -1), wxTE_PROCESS_ENTER);
 
 		ConOpt(gridSaveAfter, GRID_SAVE_AFTER_CHARACTER_COUNT);
 		ConOpt(autoSaveMax, AUTOSAVE_MAX_FILES);
@@ -388,25 +388,25 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(sc1, GRID_INSERT_END_OFFSET);
 		ConOpt(sc2, GRID_TAGS_SWAP_CHARACTER);
 		wxBoxSizer* MainSizer2 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer2->Add(new KaiStaticText(EditorAdvanced, -1, _("Number of edits to save")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, wxEXPAND);
+		MainSizer2->Add(new HikariStaticText(EditorAdvanced, -1, _("Number of edits to save")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, wxEXPAND);
 		MainSizer2->Add(gridSaveAfter, 0, wxEXPAND);
 		wxBoxSizer* MainSizer3 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer3->Add(new KaiStaticText(EditorAdvanced, -1, _("Maximum number of autosave files")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer3->Add(new HikariStaticText(EditorAdvanced, -1, _("Maximum number of autosave files")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer3->Add(autoSaveMax, 0, wxEXPAND);
 		wxBoxSizer* MainSizer4 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer4->Add(new KaiStaticText(EditorAdvanced, -1, _("Start frame offset in ms:")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer4->Add(new HikariStaticText(EditorAdvanced, -1, _("Start frame offset in ms:")/*, wxDefaultPosition, wxSize(256, -1)*/), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer4->Add(sc, 0, wxEXPAND);
 		wxBoxSizer* MainSizer5 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer5->Add(new KaiStaticText(EditorAdvanced, -1, _("End frame offset in ms:")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer5->Add(new HikariStaticText(EditorAdvanced, -1, _("End frame offset in ms:")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer5->Add(sc1, 0, wxEXPAND);
 		wxBoxSizer* MainSizer6 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer6->Add(new KaiStaticText(EditorAdvanced, -1, _("ASS tag replacement:")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer6->Add(new HikariStaticText(EditorAdvanced, -1, _("ASS tag replacement:")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer6->Add(sc2, 0, wxEXPAND);
 		wxBoxSizer* MainSizer7 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer7->Add(new KaiStaticText(EditorAdvanced, -1, _("Number of tab name characters")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer7->Add(new HikariStaticText(EditorAdvanced, -1, _("Number of tab name characters")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer7->Add(maxTabChars, 0, wxEXPAND);
 		wxBoxSizer* MainSizer8 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer8->Add(new KaiStaticText(EditorAdvanced, -1, _("LUA scripts tracking level")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
+		MainSizer8->Add(new HikariStaticText(EditorAdvanced, -1, _("LUA scripts tracking level")), 5, /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND);
 		MainSizer8->Add(ltl, 0, wxEXPAND);
 
 		//MainSizer->Add(MainSizer2,0,wxLEFT|wxTOP,2);
@@ -415,33 +415,33 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(optf, GRID_FONT);
 		optf->SetMinSize(ltl->GetMinSize());
 		wxBoxSizer* MainSizer9 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer9->Add(new KaiStaticText(EditorAdvanced, -1, _("Subtitle grid font:")), 5, wxRIGHT | /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND, 10);
+		MainSizer9->Add(new HikariStaticText(EditorAdvanced, -1, _("Subtitle grid font:")), 5, wxRIGHT | /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND, 10);
 		MainSizer9->Add(optf, 0, wxEXPAND);
 
 		FontPickerButton* programFont = new FontPickerButton(EditorAdvanced, -1, wxFont(Options.GetInt(PROGRAM_FONT_SIZE), wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, Options.GetString(PROGRAM_FONT)));
 		ConOpt(programFont, PROGRAM_FONT);
 		programFont->SetMinSize(ltl->GetMinSize());
 		wxBoxSizer* MainSizer10 = new wxBoxSizer(wxHORIZONTAL);
-		MainSizer10->Add(new KaiStaticText(EditorAdvanced, -1, _("Program font:")), 5, wxRIGHT | /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND, 10);
+		MainSizer10->Add(new HikariStaticText(EditorAdvanced, -1, _("Program font:")), 5, wxRIGHT | /*wxALIGN_CENTRE_VERTICAL | */wxEXPAND, 10);
 		MainSizer10->Add(programFont, 0, wxEXPAND);
 
-		KaiCheckBox* allCharWraps = new KaiCheckBox(EditorAdvanced, -1, _("Calculate spaces and punctation characters for wraps"));
+		HikariCheckBox* allCharWraps = new HikariCheckBox(EditorAdvanced, -1, _("Calculate spaces and punctation characters for wraps"));
 		allCharWraps->SetValue(Options.GetBool(CALC_SPACES_AND_PUNCTATION_FOR_WRAPS));
 		ConOpt(allCharWraps, CALC_SPACES_AND_PUNCTATION_FOR_WRAPS);
-		KaiCheckBox* allCharCPS = new KaiCheckBox(EditorAdvanced, -1, _("Calculate spaces and punctation characters for CPS"));
+		HikariCheckBox* allCharCPS = new HikariCheckBox(EditorAdvanced, -1, _("Calculate spaces and punctation characters for CPS"));
 		allCharCPS->SetValue(Options.GetBool(CALC_SPACES_AND_PUNCTATION_FOR_CPS));
 		ConOpt(allCharCPS, CALC_SPACES_AND_PUNCTATION_FOR_CPS);
 		
 
-		KaiStaticBoxSizer* alm = new KaiStaticBoxSizer(wxHORIZONTAL, EditorAdvanced, _("Autoload loading method"));
+		HikariStaticBoxSizer* alm = new HikariStaticBoxSizer(wxHORIZONTAL, EditorAdvanced, _("Autoload loading method"));
 		wxString methods[] = { _("After program start asynchronously"), _("After program start"), _("After open menu asynchronously"), _("After open menu") };
-		KaiChoice* cmb = new KaiChoice(EditorAdvanced, ID_KAI_CHOICE, wxDefaultPosition, wxSize(200, -1), 4, methods, wxTE_PROCESS_ENTER);
+		HikariChoice* cmb = new HikariChoice(EditorAdvanced, ID_HIKARI_CHOICE, wxDefaultPosition, wxSize(200, -1), 4, methods, wxTE_PROCESS_ENTER);
 		cmb->SetSelection(Options.GetInt(AUTOMATION_LOADING_METHOD));
 		ConOpt(cmb, AUTOMATION_LOADING_METHOD);
 		alm->Add(cmb, 1, wxCENTER | wxEXPAND | wxALL, 2);
 
-		KaiStaticBoxSizer* fontsPath = new KaiStaticBoxSizer(wxHORIZONTAL, EditorAdvanced, _("Folder with external fonts"));
-		KaiTextCtrl* path = new KaiTextCtrl(EditorAdvanced, ID_EXTERNAL_FONTS_FOLDER, Options.GetString(EXTERNAL_FONTS_DIRECTORY));
+		HikariStaticBoxSizer* fontsPath = new HikariStaticBoxSizer(wxHORIZONTAL, EditorAdvanced, _("Folder with external fonts"));
+		HikariTextCtrl* path = new HikariTextCtrl(EditorAdvanced, ID_EXTERNAL_FONTS_FOLDER, Options.GetString(EXTERNAL_FONTS_DIRECTORY));
 		ConOpt(path, EXTERNAL_FONTS_DIRECTORY);
 		MappedButton* choosePath = new MappedButton(EditorAdvanced, ID_EXTERNAL_FONTS_CHOOSE_FOLDER, _("Choose"));
 		Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=, this](wxCommandEvent& event) {
@@ -474,12 +474,12 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 	{
 		wxBoxSizer* ConvOptSizer1 = new wxBoxSizer(wxVERTICAL);
 
-		KaiStaticBoxSizer* obr = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose catalog"));
-		KaiStaticBoxSizer* obr0 = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose style"));
-		KaiStaticBoxSizer* obr1 = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose FPS"));
-		KaiStaticBoxSizer* obr2 = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Time for one letter in milliseconds"));
-		KaiStaticBoxSizer* obr3 = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Tags to paste at the beginning of every ASS line"));
-		KaiStaticBoxSizer* obr4 = new KaiStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Resolution when converting to ASS"));
+		HikariStaticBoxSizer* obr = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose catalog"));
+		HikariStaticBoxSizer* obr0 = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose style"));
+		HikariStaticBoxSizer* obr1 = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Choose FPS"));
+		HikariStaticBoxSizer* obr2 = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Time for one letter in milliseconds"));
+		HikariStaticBoxSizer* obr3 = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Tags to paste at the beginning of every ASS line"));
+		HikariStaticBoxSizer* obr4 = new HikariStaticBoxSizer(wxHORIZONTAL, ConvOpt, _("Resolution when converting to ASS"));
 		wxArrayString styles;
 		wxArrayString FPSes;
 
@@ -494,7 +494,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 					styles.Add(Options.GetStyle(i)->Name);
 				}
 			}
-			KaiChoice* cmb = new KaiChoice(ConvOpt,
+			HikariChoice* cmb = new HikariChoice(ConvOpt,
 				(i == 0) ? ID_CONVERSION_STYLE_CATALOG : ID_CONVERSION_STYLE,
 				wxDefaultPosition, wxSize(200, -1), (i == 0) ? Options.dirs : styles, wxTE_PROCESS_ENTER);
 
@@ -510,7 +510,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 				if (i == 0) { sel = cmb->FindString(Options.actualStyleDir); }
 				cmb->SetSelection(MAX(0, sel));
 				wxString what = (i == 0) ? _("catalog for style") : _("style");
-				KaiMessageBox(wxString::Format(_("The selected %s for conversion does not exist\nand will be changed to the default"), what), _("Warning"));
+				HikariMessageBox(wxString::Format(_("The selected %s for conversion does not exist\nand will be changed to the default"), what), _("Warning"));
 			}
 
 			ConOpt(cmb, (i == 0) ? CONVERT_STYLE_CATALOG : CONVERT_STYLE);
@@ -527,7 +527,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 			}
 		}
 		const wxString& convFPS = Options.GetString(CONVERT_FPS);
-		KaiChoice* cmb = new KaiChoice(ConvOpt, -1, convFPS, wxDefaultPosition, wxSize(200, -1), FPSes, wxTE_PROCESS_ENTER);
+		HikariChoice* cmb = new HikariChoice(ConvOpt, -1, convFPS, wxDefaultPosition, wxSize(200, -1), FPSes, wxTE_PROCESS_ENTER);
 		int sel = cmb->FindString(convFPS);
 		if (sel >= 0) { cmb->SetSelection(sel); }
 		else { cmb->SetValue(convFPS); }
@@ -539,7 +539,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 
 		for (int i = 0; i < 3; i++)
 		{
-			KaiCheckBox* opt = new KaiCheckBox(ConvOpt, -1, (i == 0) ? _("FPS from video") :
+			HikariCheckBox* opt = new HikariCheckBox(ConvOpt, -1, (i == 0) ? _("FPS from video") :
 				(i == 1) ? _("New end times") : _("Show window before conversion"));
 			CONFIG optname = (i == 0) ? CONVERT_FPS_FROM_VIDEO : (i == 1) ? CONVERT_NEW_END_TIMES : CONVERT_SHOW_SETTINGS;
 			opt->SetValue(Options.GetBool(optname));
@@ -558,7 +558,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(sc, CONVERT_RESOLUTION_WIDTH);
 		obr4->Add(sc, 1, wxALL /*| wxALIGN_CENTER*/ | wxEXPAND, 2);
 
-		KaiStaticText* txt = new KaiStaticText(ConvOpt, -1, L" X ");
+		HikariStaticText* txt = new HikariStaticText(ConvOpt, -1, L" X ");
 		obr4->Add(txt, 0, wxTOP, 5);
 
 		sc = new NumCtrl(ConvOpt, ID_NUMBER_CONTROL, Options.GetString(CONVERT_RESOLUTION_HEIGHT), 1, 3000, true, wxDefaultPosition, wxSize(115, -1), wxTE_PROCESS_ENTER);
@@ -566,7 +566,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		obr4->Add(sc, 1, wxALL /*| wxALIGN_CENTER*/ | wxEXPAND, 2);
 		ConvOptSizer1->Add(obr4, 0, wxRIGHT | wxEXPAND, 5);
 
-		KaiTextCtrl* tc = new KaiTextCtrl(ConvOpt, -1, Options.GetString(CONVERT_ASS_TAGS_TO_INSERT_IN_LINE), wxDefaultPosition, wxSize(250, -1), wxTE_PROCESS_ENTER);
+		HikariTextCtrl* tc = new HikariTextCtrl(ConvOpt, -1, Options.GetString(CONVERT_ASS_TAGS_TO_INSERT_IN_LINE), wxDefaultPosition, wxSize(250, -1), wxTE_PROCESS_ENTER);
 		ConOpt(tc, CONVERT_ASS_TAGS_TO_INSERT_IN_LINE);
 		obr3->Add(tc, 1, wxALL /*| wxALIGN_CENTER*/ | wxEXPAND, 2);
 		ConvOptSizer1->Add(obr3, 0, wxRIGHT | wxEXPAND, 5);
@@ -585,22 +585,22 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		wxBoxSizer *MainSizer = new wxBoxSizer(wxVERTICAL);
 		for (int i = 0; i < 4; i++)
 		{
-			KaiCheckBox *opt = new KaiCheckBox(video, -1, voptspl[i]);
+			HikariCheckBox *opt = new HikariCheckBox(video, -1, voptspl[i]);
 			opt->SetValue(Options.GetBool(vopts[i]));
 			ConOpt(opt, vopts[i]);
 			MainSizer->Add(opt, 0, wxALL, 2);
 		}
-		KaiStaticBoxSizer *prefaudio = new KaiStaticBoxSizer(wxHORIZONTAL, video, voptspl[4]);
-		KaiTextCtrl *tc = new KaiTextCtrl(video, -1, Options.GetString(vopts[4]),
+		HikariStaticBoxSizer *prefaudio = new HikariStaticBoxSizer(wxHORIZONTAL, video, voptspl[4]);
+		HikariTextCtrl *tc = new HikariTextCtrl(video, -1, Options.GetString(vopts[4]),
 			wxDefaultPosition, wxSize(250, -1), wxTE_PROCESS_ENTER);
 		ConOpt(tc, vopts[4]);
 		prefaudio->Add(tc, 1, wxALL | wxEXPAND, 2);
 		MainSizer->Add(prefaudio, 0, wxRIGHT | wxEXPAND, 5);
-		KaiStaticBoxSizer *seekingsizer = new KaiStaticBoxSizer(wxHORIZONTAL, video, voptspl[5]);
+		HikariStaticBoxSizer *seekingsizer = new HikariStaticBoxSizer(wxHORIZONTAL, video, voptspl[5]);
 
 		wxString seekingOpts[] = { _("Linear"), _("Normal"), 
 			_("Unsafe (always fast)"), _("Aggressive (fast in rewind)") };
-		KaiChoice *sopts = new KaiChoice(video, ID_KAI_CHOICE, 
+		HikariChoice *sopts = new HikariChoice(video, ID_HIKARI_CHOICE, 
 			wxDefaultPosition, wxSize(200, -1), 4, seekingOpts, wxTE_PROCESS_ENTER);
 		int selection = Options.GetInt(vopts[5]);
 		if (selection < 0 || selection > 3) {
@@ -613,10 +613,10 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		MainSizer->Add(seekingsizer, 0, wxRIGHT | wxEXPAND, 5);
 		ConOpt(sopts, vopts[5]);
 
-		KaiStaticBoxSizer *filtersizer = new KaiStaticBoxSizer(wxHORIZONTAL, video, voptspl[6]);
+		HikariStaticBoxSizer *filtersizer = new HikariStaticBoxSizer(wxHORIZONTAL, video, voptspl[6]);
 		wxArrayString vsfilters;
 		SubtitlesProviderManager::GetProviders(&vsfilters);
-		KaiChoice *vsfiltersList = new KaiChoice(video, ID_VSFILTER_PROVIDER, 
+		HikariChoice *vsfiltersList = new HikariChoice(video, ID_VSFILTER_PROVIDER, 
 			wxDefaultPosition, wxSize(200, -1), vsfilters, wxTE_PROCESS_ENTER);
 		wxString name = Options.GetString(vopts[6]);
 		int result = vsfilters.Index(name);
@@ -626,7 +626,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		filtersizer->Add(vsfiltersList, 1, wxALL | wxEXPAND, 2);
 		MainSizer->Add(filtersizer, 0, wxRIGHT | wxEXPAND, 5);
 
-		KaiStaticBoxSizer* zoomsizer = new KaiStaticBoxSizer(wxHORIZONTAL, video, voptspl[7]);
+		HikariStaticBoxSizer* zoomsizer = new HikariStaticBoxSizer(wxHORIZONTAL, video, voptspl[7]);
 		int percent = Options.GetInt(vopts[7]);
 		if (percent < 100 || percent > 1100)
 			percent = 200;
@@ -641,10 +641,10 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 	//Hotkeys
 	{
 		wxBoxSizer *HkeysSizer = new wxBoxSizer(wxVERTICAL);
-		KaiStaticBoxSizer *filterMode = new KaiStaticBoxSizer(wxHORIZONTAL, Hotkeyss, _("Choose filtering"));
+		HikariStaticBoxSizer *filterMode = new HikariStaticBoxSizer(wxHORIZONTAL, Hotkeyss, _("Choose filtering"));
 		wxString filteringModes[] = { _("All"), _("Set shortcuts"), _("Global shortcuts"),
 			_("Subtitle shortcuts"), _("Editor shortcuts"), _("Video shortcuts"), _("Audio Shortcuts"), };
-		KaiChoice *filterList = new KaiChoice(Hotkeyss, 14568, wxDefaultPosition, wxDefaultSize, 7, filteringModes);
+		HikariChoice *filterList = new HikariChoice(Hotkeyss, 14568, wxDefaultPosition, wxDefaultSize, 7, filteringModes);
 		filterList->SetSelection(0);
 		filterList->SetToolTip(_("Filtering mode:"));
 
@@ -656,14 +656,14 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		GetTextExtent(mesureText, &fw, &fh);
 		GetTextExtent(mesureText2, &fww, &fh);
 
-		Shortcuts = new KaiListCtrl(Hotkeyss, 26667, wxDefaultPosition);
+		Shortcuts = new HikariListCtrl(Hotkeyss, 26667, wxDefaultPosition);
 		Shortcuts->InsertColumn(0, _("Function"), TYPE_TEXT, (fw < 275)? 275 : fw);
 		Shortcuts->InsertColumn(1, _("Hotkey"), TYPE_TEXT, (fww < 80)? 80 : fww);
 		Connect(26667, LIST_ITEM_DOUBLECLICKED, (wxObjectEventFunction)&OptionsDialog::OnMapHkey);
 		//Connect(26667,LIST_ITEM_RIGHT_CLICK,(wxObjectEventFunction)&OptionsDialog::OnResetHkey);
 
 		if (!Hkeys.AudioKeys && !Hkeys.LoadHkeys(true)){ 
-			KaiMessageBox(_("Cannot load audio hotkeys"), _("Error"));
+			HikariMessageBox(_("Cannot load audio hotkeys"), _("Error"));
 		}
 
 		AddHotkeysOnList();
@@ -707,7 +707,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 
 		for (int i = 0; i < numOfElements; i++)
 		{
-			KaiCheckBox *opt = new KaiCheckBox(AudioMain, -1, names[i]);
+			HikariCheckBox *opt = new HikariCheckBox(AudioMain, -1, names[i]);
 			opt->SetValue(Options.GetBool(opts[i]));
 			ConOpt(opt, opts[i]);
 			audio->Add(opt, 0, wxALL, 2);
@@ -728,7 +728,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		NumCtrl *leadOutTime = new NumCtrl(AudioSecond, ID_NUMBER_CONTROL, Options.GetString(opts1[6]), 0, 10000, true, wxDefaultPosition, wxSize(120, -1), 0);
 		audioCacheFilesLimit->SetToolTip(_("Range from 0 to 10000, where 0 turns off\nremoving audio cache files."));
 		wxString inact[3] = { _("None"), _("Before and after the active"), _("All visible") };
-		KaiChoice *displayNonActiveLines = new KaiChoice(AudioSecond, ID_KAI_CHOICE, wxDefaultPosition, wxSize(300, -1), 3, inact);
+		HikariChoice *displayNonActiveLines = new HikariChoice(AudioSecond, ID_HIKARI_CHOICE, wxDefaultPosition, wxSize(300, -1), 3, inact);
 		displayNonActiveLines->SetSelection(Options.GetInt(opts1[2]));
 		ConOpt(Delay, opts1[0]);
 		ConOpt(markPlayTime, opts1[1]);
@@ -737,13 +737,13 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		ConOpt(audioCacheFilesLimit, opts1[4]);
 		ConOpt(leadInTime, opts1[5]);
 		ConOpt(leadOutTime, opts1[6]);
-		KaiStaticBoxSizer *DelaySizer = new KaiStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio delay in milliseconds"));
-		KaiStaticBoxSizer *markPlayTimeSizer = new KaiStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio to play before and after the marker in milliseconds"));
+		HikariStaticBoxSizer *DelaySizer = new HikariStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio delay in milliseconds"));
+		HikariStaticBoxSizer *markPlayTimeSizer = new HikariStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio to play before and after the marker in milliseconds"));
 		wxString elems[] = { _("Lead-in"), _("Lead-out") };
-		KaiStaticBoxSizer *leadInAndOut = new KaiStaticBoxSizer(wxHORIZONTAL, AudioSecond, 2, elems);
-		KaiStaticBoxSizer *lineThicknessSizer = new KaiStaticBoxSizer(wxVERTICAL, AudioSecond, _("Line boundaries thickness"));
-		KaiStaticBoxSizer *audioCacheFilesLimitSizer = new KaiStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio cache files limit"));
-		KaiStaticBoxSizer *displayNonActiveLinesSizer = new KaiStaticBoxSizer(wxVERTICAL, AudioSecond, _("The way to display inactive lines"));
+		HikariStaticBoxSizer *leadInAndOut = new HikariStaticBoxSizer(wxHORIZONTAL, AudioSecond, 2, elems);
+		HikariStaticBoxSizer *lineThicknessSizer = new HikariStaticBoxSizer(wxVERTICAL, AudioSecond, _("Line boundaries thickness"));
+		HikariStaticBoxSizer *audioCacheFilesLimitSizer = new HikariStaticBoxSizer(wxVERTICAL, AudioSecond, _("Audio cache files limit"));
+		HikariStaticBoxSizer *displayNonActiveLinesSizer = new HikariStaticBoxSizer(wxVERTICAL, AudioSecond, _("The way to display inactive lines"));
 		DelaySizer->Add(Delay, 1, wxALL | wxEXPAND, 2);
 		markPlayTimeSizer->Add(markPlayTime, 1, wxALL | wxEXPAND, 2);
 		leadInAndOut->Add(leadInTime, 1, wxALL | wxEXPAND, 2);
@@ -843,7 +843,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 			kat.GetAllFiles(pathwn, &files, L"*.txt", wxDIR_FILES);
 		}
 		for (size_t i = 0; i < files.size(); i++){
-			choices.Add(KaiPathName(files[i]).BeforeLast(L'.'));
+			choices.Add(HikariPathName(files[i]).BeforeLast(L'.'));
 		}
 		if (choices.Index(L"DarkSentro", false) == -1){
 			choices.Insert(L"DarkSentro", 0);
@@ -851,10 +851,10 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		if (choices.Index(L"LightSentro", false) == -1){
 			choices.Insert(L"LightSentro", 1);
 		}
-		KaiChoice *themeList = new KaiChoice(Themes, 14567, wxDefaultPosition, wxDefaultSize, choices);
+		HikariChoice *themeList = new HikariChoice(Themes, 14567, wxDefaultPosition, wxDefaultSize, choices);
 		themeList->SetSelection(themeList->FindString(programTheme));
 		themeList->SetToolTip(_("Theme name:"));
-		KaiTextCtrl *newTheme = new KaiTextCtrl(Themes, -1, emptyString);
+		HikariTextCtrl *newTheme = new HikariTextCtrl(Themes, -1, emptyString);
 		newTheme->SetToolTip(_("Name of the copied theme.\nDefault themes, DarkSentro and LightSentro,\ncannot be edited and must be copied."));
 		MappedButton *copyTheme = new MappedButton(Themes, 14566, _("Copy"));
 
@@ -865,7 +865,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		sizer1->Add(copyTheme, 0, wxLEFT | wxTOP | wxBOTTOM, 2);
 		sizer->Add(sizer1, 0, wxALL | wxEXPAND, 2);
 
-		KaiStaticText *warning = new KaiStaticText(Themes, -1, _("Warning! Transparency works only on the audio spectrum,\ntext field, and subtitle grid."));
+		HikariStaticText *warning = new HikariStaticText(Themes, -1, _("Warning! Transparency works only on the audio spectrum,\ntext field, and subtitle grid."));
 		sizer->Add(warning, 0, wxALL | wxEXPAND, 2);
 
 		wxString mesureText = _("Text field inactive window selection");
@@ -874,7 +874,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		GetTextExtent(mesureText, &fw, &fh);
 		GetTextExtent(mesureText2, &fww, &fh);
 
-		KaiListCtrl *List = new KaiListCtrl(Themes, -1, wxDefaultPosition, wxSize(300, -1));
+		HikariListCtrl *List = new HikariListCtrl(Themes, -1, wxDefaultPosition, wxSize(300, -1));
 		List->InsertColumn(0, _("Name"), TYPE_TEXT, fw < 240 ? 240 : fw);
 		List->InsertColumn(1, _("Color"), TYPE_COLOR, fww < 120 ? 120 : fww);
 		for (int i = 0; i < numColors; i++)
@@ -968,7 +968,7 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		Registry::CheckFileAssociation(extensions, numExtensions, registeredExts);
 
 		wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-		KaiListCtrl *CheckListBox = new KaiListCtrl(Assocs, -1, numExtensions, extensionsDesc);
+		HikariListCtrl *CheckListBox = new HikariListCtrl(Assocs, -1, numExtensions, extensionsDesc);
 		for (int i = 0; i < numExtensions; i++){
 			CheckListBox->GetItem(i, 0)->modified = registeredExts[i];
 		}
@@ -1039,10 +1039,10 @@ OptionsDialog::~OptionsDialog()
 {
 	/*if(GetReturnCode ()==wxID_OK){
 		SetOptions();
-		if(hkeymodif==1){Hkeys.SaveHkeys();Kai->SetAccels();}
+		if(hkeymodif==1){Hkeys.SaveHkeys();Hikari->SetAccels();}
 		else if(hkeymodif==2){
 		Hkeys.SaveHkeys(true);
-		if(Kai->GetTab()->edit->ABox){Kai->GetTab()->edit->ABox->SetAccels();}
+		if(Hikari->GetTab()->edit->ABox){Hikari->GetTab()->edit->ABox->SetAccels();}
 		}
 		}*/
 	delete[] windowNames;
@@ -1060,10 +1060,10 @@ void OptionsDialog::ConOpt(wxWindow *ctrl, CONFIG option)
 void OptionsDialog::OnSaveClick(wxCommandEvent& event)
 {
 	SetOptions(false);
-	/*if(hkeymodif==1){Hkeys.SaveHkeys();Kai->SetAccels();}
+	/*if(hkeymodif==1){Hkeys.SaveHkeys();Hikari->SetAccels();}
 	else if(hkeymodif==2){
 	Hkeys.SaveHkeys(true);
-	if(Kai->GetTab()->edit->ABox){Kai->GetTab()->edit->ABox->SetAccels();}
+	if(Hikari->GetTab()->edit->ABox){Hikari->GetTab()->edit->ABox->SetAccels();}
 	}*/
 	if (event.GetId() == wxID_OK){ EndModal(wxID_OK); }
 }
@@ -1077,8 +1077,8 @@ void OptionsDialog::SetOptions(bool saveall)
 	{
 		OptionsBind OB = handles[i];
 
-		if (OB.ctrl->IsKindOf(CLASSINFO(KaiCheckBox))){
-			KaiCheckBox *cb = (KaiCheckBox*)OB.ctrl;
+		if (OB.ctrl->IsKindOf(CLASSINFO(HikariCheckBox))){
+			HikariCheckBox *cb = (HikariCheckBox*)OB.ctrl;
 			bool value = cb->GetValue();
 			if (Options.GetBool(OB.option) != value){
 				Options.SetBool(OB.option, value);
@@ -1104,23 +1104,23 @@ void OptionsDialog::SetOptions(bool saveall)
 			}
 			if (OB.option == PROGRAM_FONT && fontmod) {
 				Options.FontsClear();
-				HikariSubFrame* Kai =
+				HikariSubFrame* Hikari =
 					/*wxDynamicCast<*/(HikariSubFrame*)Notebook::GetTabs()->GetParent();//>
-				Kai->SetAccels();
-				Kai->DestroyDialogs();
-				Kai->SetFont(*Options.GetFont());
-				Kai->Layout();
+				Hikari->SetAccels();
+				Hikari->DestroyDialogs();
+				Hikari->SetFont(*Options.GetFont());
+				Hikari->Layout();
 			}
 		}
-		else if (OB.ctrl->IsKindOf(CLASSINFO(KaiChoice))) {
-			KaiChoice* cbx = (KaiChoice*)OB.ctrl;
-			if (cbx->GetWindowStyle() & KAI_COMBO_BOX) {
+		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariChoice))) {
+			HikariChoice* cbx = (HikariChoice*)OB.ctrl;
+			if (cbx->GetWindowStyle() & HIKARI_COMBO_BOX) {
 				wxString color = cbx->GetValue();
 				if (Options.GetString(OB.option) != color) {
 					Options.SetString(OB.option, color);
 				}
 			}
-			else if (cbx->GetId() != ID_KAI_CHOICE) {
+			else if (cbx->GetId() != ID_HIKARI_CHOICE) {
 				//dictionary language
 				if (cbx->GetId() == ID_DICTIONARY_LANGUAGE) {
 					int sel = cbx->GetSelection();
@@ -1164,17 +1164,17 @@ void OptionsDialog::SetOptions(bool saveall)
 			}
 			if (config::IsAudioOption(OB.option)) { audio = true; }
 		}
-		else if (OB.ctrl->IsKindOf(CLASSINFO(KaiTextCtrl))) {
+		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariTextCtrl))) {
 
 			if (OB.ctrl->GetId() != ID_NUMBER_CONTROL) {
-				KaiTextCtrl* sc = (KaiTextCtrl*)OB.ctrl;
+				HikariTextCtrl* sc = (HikariTextCtrl*)OB.ctrl;
 				wxString str = sc->GetValue();
 				if (Options.GetString(OB.option) != str) {
 					//we need to call function before set a new path
 					//to remove loaded fonts from last folder
 					if (OB.option == EXTERNAL_FONTS_DIRECTORY) {
 						wxString separator(wxFileName::GetPathSeparator());
-						str = KaiNormalizePath(str);
+						str = HikariNormalizePath(str);
 						if (!str.empty() && !str.EndsWith(separator))
 							str << separator;
 
@@ -1202,8 +1202,8 @@ void OptionsDialog::SetOptions(bool saveall)
 			}
 			if (config::IsAudioOption(OB.option)) { audio = true; }
 		}
-		else if (OB.ctrl->IsKindOf(CLASSINFO(KaiListCtrl))){
-			KaiListCtrl *list = (KaiListCtrl*)OB.ctrl;
+		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariListCtrl))){
+			HikariListCtrl *list = (HikariListCtrl*)OB.ctrl;
 			if (list->GetModified()){
 
 				if (OB.option == (CONFIG)ID_COLOR_CONFIG){
@@ -1217,9 +1217,9 @@ void OptionsDialog::SetOptions(bool saveall)
 						Hkeys.SetHotkeysMap(hotkeysCopy);
 						Hkeys.SaveHkeys();
 						Hkeys.SaveHkeys(true);
-						HikariSubFrame* Kai =
+						HikariSubFrame* Hikari =
 							/*wxDynamicCast<*/(HikariSubFrame*)Notebook::GetTabs()->GetParent();//>
-						Kai->SetAccels();
+						Hikari->SetAccels();
 					}
 				}
 				else{
@@ -1326,16 +1326,16 @@ void OptionsDialog::ResetDefault()
 	for (size_t i = 0; i < handles.size(); i++)
 	{
 		const OptionsBind &OB = handles[i];
-		if (OB.ctrl->IsKindOf(CLASSINFO(KaiCheckBox))){
-			KaiCheckBox *cb = (KaiCheckBox*)OB.ctrl;
+		if (OB.ctrl->IsKindOf(CLASSINFO(HikariCheckBox))){
+			HikariCheckBox *cb = (HikariCheckBox*)OB.ctrl;
 			cb->SetValue(Options.GetBool(OB.option));
 		}
-		else if (OB.ctrl->IsKindOf(CLASSINFO(KaiChoice))){
-			KaiChoice *cbx = (KaiChoice*)OB.ctrl;
-			if (cbx->GetWindowStyle() & KAI_COMBO_BOX){
+		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariChoice))){
+			HikariChoice *cbx = (HikariChoice*)OB.ctrl;
+			if (cbx->GetWindowStyle() & HIKARI_COMBO_BOX){
 				cbx->SetValue(Options.GetString(OB.option));
 			}
-			else if (cbx->GetId() != ID_KAI_CHOICE){
+			else if (cbx->GetId() != ID_HIKARI_CHOICE){
 				cbx->SetSelection(Options.GetInt(OB.option));
 			}//dictionary language            vobsub                   program language dont change that
 			else if (cbx->GetId() != ID_DICTIONARY_LANGUAGE || cbx->GetId() != ID_VSFILTER_PROVIDER || cbx->GetId() != ID_PROGRAM_LANGUAGE){
@@ -1348,9 +1348,9 @@ void OptionsDialog::ResetDefault()
 				wxFONTFAMILY_SWISS, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, Options.GetString(OB.option));
 			fpc->ChangeFont(font);
 		}
-		else if (OB.ctrl->IsKindOf(CLASSINFO(KaiTextCtrl))){
+		else if (OB.ctrl->IsKindOf(CLASSINFO(HikariTextCtrl))){
 			if (OB.ctrl->GetId() != ID_NUMBER_CONTROL){
-				KaiTextCtrl *sc = (KaiTextCtrl*)OB.ctrl;
+				HikariTextCtrl *sc = (HikariTextCtrl*)OB.ctrl;
 				sc->SetValue(Options.GetString(OB.option));
 			}
 			else{

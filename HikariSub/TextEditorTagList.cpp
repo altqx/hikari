@@ -15,7 +15,7 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "TextEditorTagList.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "Menu.h"
 #include <wx/dc.h>
 #include <wx/dcmemory.h>
@@ -169,8 +169,8 @@ void PopupWindow::OnPaint(wxPaintEvent &event)
 	if (itemsize > maxVisible){
 		maxsize = maxVisible;
 		if (!scroll){
-			int thickness = KaiScrollbar::CalculateThickness(this);
-			scroll = new KaiScrollbar(this, -1, wxPoint(w - thickness - 1, 1), wxSize(thickness, h - 2), wxVERTICAL);
+			int thickness = HikariScrollbar::CalculateThickness(this);
+			scroll = new HikariScrollbar(this, -1, wxPoint(w - thickness - 1, 1), wxSize(thickness, h - 2), wxVERTICAL);
 			scroll->SetScrollRate(3);
 		}
 		scroll->SetScrollbar(scrollPositionV, maxVisible, itemsize, maxVisible - 1);

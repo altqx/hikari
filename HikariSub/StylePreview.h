@@ -18,7 +18,7 @@
 
 //#include <wx/wx.h>
 #include "styles.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include <vector>
 #include "SubtitlesProviderManager.h"
 
@@ -40,7 +40,7 @@ class StylePreview : public wxWindow
 		
 
 		wxBitmap *bmpframe = nullptr;
-		KaiTextCtrl *PrevText = nullptr;
+		HikariTextCtrl *PrevText = nullptr;
 		Styles *previewStyle;
 
 		void OnPaint(wxPaintEvent& event);

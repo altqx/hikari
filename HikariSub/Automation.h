@@ -156,7 +156,7 @@ namespace Auto {
 
 		wxString GetFilename() const { return filename; }
 		/// The script's file name without path
-		wxString GetPrettyFilename() const { return KaiPathName(filename); }
+		wxString GetPrettyFilename() const { return HikariPathName(filename); }
 		/// The script's name. Not required to be unique.
 
 		void RegisterCommand(LuaCommand* command);

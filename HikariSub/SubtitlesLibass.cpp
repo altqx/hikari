@@ -43,13 +43,13 @@ void MessageCallback(int level, const char *fmt, va_list args, void *) {
 
 	if (level < 2) // warning/error
 #if _DEBUG
-		KaiLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
+		HikariLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
 #else
-		KaiLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
+		HikariLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
 #endif
 #if _DEBUG
 	else // verbose
-		KaiLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
+		HikariLogSilent(L"Libass: " + wxString(buf, wxConvUTF8));
 #endif
 }
 
@@ -167,7 +167,7 @@ bool SubtitlesLibass::Open(wxString *text)
 	if (!m_IsReady || !m_HasParameters) {
 		SAFE_DELETE(text);
 		if (!m_HasParameters)
-			KaiLog(_("Libass works only with FFMS2"));//Libass only works with with FFMS2
+			HikariLog(_("Libass works only with FFMS2"));//Libass only works with with FFMS2
 	
 		return false;
 	}
@@ -178,7 +178,7 @@ bool SubtitlesLibass::Open(wxString *text)
 	}
 
 	if (!ReadTrack(text)){
-		KaiLog(_("Libass only opens ASS and SSA subtitles"));//Libass only works with ASS and SSA subtiltes
+		HikariLog(_("Libass only opens ASS and SSA subtitles"));//Libass only works with ASS and SSA subtiltes
 		return false;
 	}
 	return true;
@@ -227,7 +227,7 @@ bool SubtitlesLibass::OpenString(wxString *text)
 
 	m_AssTrack = nullptr;
 	if (!ReadTrack(text)){
-		KaiLog(_("Cannot open subtitles in Libass"));
+		HikariLog(_("Cannot open subtitles in Libass"));
 		return false;
 	}
 	return true;
@@ -256,7 +256,7 @@ void SubtitlesLibass::ReloadLibraries(bool destroyExisted)
 {
 	wxMutexLocker lock(openMutex);
 	if (destroyExisted) {
-		//KaiLog("Libass release");
+		//HikariLog("Libass release");
 		m_IsReady.store(false);
 		// tracks belong to the library, in every tab
 		for (SubtitlesLibass *instance : s_Instances)

@@ -17,9 +17,9 @@
 
 #include "VideoSlider.h"
 #include "BitmapButton.h"
-#include "KaiTextCtrl.h"
-#include "KaiStaticText.h"
-#include "KaiCheckBox.h"
+#include "HikariTextCtrl.h"
+#include "HikariStaticText.h"
+#include "HikariCheckBox.h"
 #include "VideoToolbar.h"
 #include <wx/panel.h>
 #include <wx/frame.h>
@@ -37,13 +37,13 @@ public:
 	BitmapButton* bstop;
 	BitmapButton* bnext;
 	BitmapButton* bpline;
-	KaiTextCtrl* mstimes;
-	KaiStaticText *Videolabel;
+	HikariTextCtrl* mstimes;
+	HikariStaticText *Videolabel;
 	VideoSlider* vslider;
 	VolSlider* volslider;
 	wxPanel* panel;
 	VideoToolbar *vToolbar;
-	KaiCheckBox *showToolbar;
+	HikariCheckBox *showToolbar;
 	void OnSize();	
 	void HideToolbar(bool hide);
 	int panelsize;

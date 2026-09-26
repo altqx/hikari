@@ -35,11 +35,11 @@
 #include "AutomationDialog.h"
 #include "AutomationUtils.h"
 #include "ListControls.h"
-#include "KaiCheckBox.h"
-#include "KaiTextCtrl.h"
+#include "HikariCheckBox.h"
+#include "HikariTextCtrl.h"
 #include "config.h"
 
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include <wx/gbsizer.h>
 #include <wx/tokenzr.h>
 
@@ -152,7 +152,7 @@ namespace Auto{
 		Label(lua_State *L) : LuaDialogControl(L), label(get_field(L, "label")) { }
 
 		wxWindow *Create(wxWindow *parent) {
-			return new KaiStaticText(parent, -1, wxString(label));
+			return new HikariStaticText(parent, -1, wxString(label));
 		}
 
 		int GetSizerFlags() const { return wxALIGN_CENTRE_VERTICAL | wxALIGN_LEFT; }
@@ -167,7 +167,7 @@ namespace Auto{
 	class Edit : public LuaDialogControl {
 	protected:
 		wxString text;
-		KaiTextCtrl *cw;
+		HikariTextCtrl *cw;
 
 	public:
 		Edit(lua_State *L)
@@ -185,14 +185,14 @@ namespace Auto{
 		void UnserialiseValue(const wxString &serialised) { text = inline_string_decode(serialised); }
 
 		wxWindow *Create(wxWindow *parent) {
-			cw = new KaiTextCtrl(parent, -1, text);
+			cw = new HikariTextCtrl(parent, -1, text);
 			cw->SetMaxLength(0);
 			cw->SetToolTip(wxString(hint));
 			return cw;
 		}
 
 		void LuaReadBack(lua_State *L) {
-			text = ((KaiTextCtrl*)cw)->GetValue();
+			text = ((HikariTextCtrl*)cw)->GetValue();
 			lua_pushstring(L, text.utf8_str().data());
 		}
 	};
@@ -236,7 +236,7 @@ namespace Auto{
 
 		// Same serialisation interface as single-line edit
 		wxWindow *Create(wxWindow *parent) {
-			cw = new KaiTextCtrl(parent, -1, text, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+			cw = new HikariTextCtrl(parent, -1, text, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 			cw->SetMinSize(wxSize(0, 30));
 			cw->SetToolTip(wxString(hint));
 			return cw;
@@ -324,7 +324,7 @@ namespace Auto{
 	class Dropdown : public LuaDialogControl {
 		wxArrayString items;
 		wxString value;
-		KaiChoice *cw;
+		HikariChoice *cw;
 
 	public:
 		Dropdown(lua_State *L)
@@ -340,13 +340,13 @@ namespace Auto{
 		void UnserialiseValue(const wxString &serialised) { value = inline_string_decode(serialised); }
 
 		wxWindow *Create(wxWindow *parent) {
-			cw = new KaiChoice(parent, -1, wxString(value), wxDefaultPosition, wxDefaultSize, items, wxCB_READONLY);
+			cw = new HikariChoice(parent, -1, wxString(value), wxDefaultPosition, wxDefaultSize, items, wxCB_READONLY);
 			cw->SetToolTip(wxString(hint));
 			return cw;
 		}
 
 		void LuaReadBack(lua_State *L) {
-			value = ((KaiChoice*)cw)->GetValue();
+			value = ((HikariChoice*)cw)->GetValue();
 			lua_pushstring(L, value.utf8_str().data());
 		}
 	};
@@ -354,7 +354,7 @@ namespace Auto{
 	class Checkbox : public LuaDialogControl {
 		wxString label;
 		bool value;
-		KaiCheckBox *cw;
+		HikariCheckBox *cw;
 
 	public:
 		Checkbox(lua_State *L)
@@ -369,14 +369,14 @@ namespace Auto{
 		void UnserialiseValue(const wxString &serialised) { value = serialised != L"0"; }
 
 		wxWindow *Create(wxWindow *parent) {
-			cw = new KaiCheckBox(parent, -1, wxString(label));
+			cw = new HikariCheckBox(parent, -1, wxString(label));
 			cw->SetToolTip(wxString(hint));
 			cw->SetValue(value);
 			return cw;
 		}
 
 		void LuaReadBack(lua_State *L) {
-			value = ((KaiCheckBox*)cw)->GetValue();
+			value = ((HikariCheckBox*)cw)->GetValue();
 			lua_pushboolean(L, value);
 		}
 	};
@@ -456,8 +456,8 @@ namespace Auto{
 		}
 	}
 
-	KaiDialog* LuaDialog::CreateWindow(wxWindow *parent, wxString name) {
-		window = new KaiDialog(parent, -1, name);
+	HikariDialog* LuaDialog::CreateWindow(wxWindow *parent, wxString name) {
+		window = new HikariDialog(parent, -1, name);
 		window->SetForegroundColour(Options.GetColour(WINDOW_TEXT));
 		window->SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
 		auto ms = new DialogSizer(wxVERTICAL);

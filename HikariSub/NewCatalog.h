@@ -15,11 +15,11 @@
 
 #pragma once
 
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "MappedButton.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
-class NewCatalog: public KaiDialog
+class NewCatalog: public HikariDialog
 {
 	public:
 
@@ -29,7 +29,7 @@ class NewCatalog: public KaiDialog
 		
 		MappedButton* Button1;
 		MappedButton* Button2;
-		KaiTextCtrl* TextCtrl1;
+		HikariTextCtrl* TextCtrl1;
 		
 };
 

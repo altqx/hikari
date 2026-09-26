@@ -1,0 +1,66 @@
+//  Copyright (c) 2016 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include <wx/defs.h>
+#include <wx/object.h>
+#include <wx/window.h>
+#include "config.h"
+
+class HikariCheckBox : public wxWindow
+{
+public:
+	HikariCheckBox(wxWindow *parent, int id, const wxString& label,
+		const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style = 0);
+	virtual ~HikariCheckBox(){};
+	//return false if not enabled
+	bool GetValue(){ return value; }
+	bool GetRealValue(){ return value; }
+	void SetValue(bool _value){ value = _value; Refresh(false); }
+	bool SetBackgroundColour(COLOR bgcolor){
+		background = bgcolor;
+		Refresh(false);
+		return true;
+	}
+	bool SetForegroundColour(COLOR fgcolor){
+		foreground = fgcolor;
+		Refresh(false);
+		return true;
+	}
+	bool Enable(bool enable = true);
+	// this don't layout do it after changing font
+	bool SetFont(const wxFont &font);
+	bool isCheckBox;
+	bool value;
+	bool enter;
+	bool clicked;
+private:
+	void OnSize(wxSizeEvent& evt);
+	void OnPaint(wxPaintEvent& evt);
+	void OnMouseEvent(wxMouseEvent &evt);
+	void OnKeyPress(wxKeyEvent &evt);
+	void OnEraseBackground(wxEraseEvent &event){}
+	void OnKillFocus(wxFocusEvent& event);
+	void OnSetFocus(wxFocusEvent& event);
+	wxString label;
+	int fontHeight;
+	COLOR background;
+	COLOR foreground;
+	wxDECLARE_ABSTRACT_CLASS(HikariCheckBox);
+};
+
+void BlueUp(wxBitmap *bmp);

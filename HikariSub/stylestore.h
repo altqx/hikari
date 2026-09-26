@@ -20,12 +20,12 @@
 #include "styles.h"
 #include "MappedButton.h"
 #include "ListControls.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
 class StyleChange;
 
 
-class StyleStore : public KaiDialog
+class StyleStore : public HikariDialog
 {
 public:
 
@@ -50,7 +50,7 @@ public:
 	MappedButton* SClean;
 	ToggleButton* detachEnable;
 	StyleList* Store;
-	KaiChoice* catalogList;
+	HikariChoice* catalogList;
 	StyleList* ASSList;
 	DialogSizer *Mainall;
 	StyleChange* cc;

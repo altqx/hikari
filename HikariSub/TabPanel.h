@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "KaiPanel.h"
+#include "HikariPanel.h"
 //#include "ShiftTimes.h"
 #include "VideoBox.h"
 #include "HikariSubFrame.h"
 #include "TabPanel.h"
-#include "KaiWindowResizer.h"
+#include "HikariWindowResizer.h"
 #include "SubsGrid.h"
 #include "EditBox.h"
 #include "WinUndef.h"
@@ -29,10 +29,10 @@
 
 class ShiftTimes;
 
-class TabPanel : public KaiPanel
+class TabPanel : public HikariPanel
 {
 public:
-	TabPanel(wxWindow *parent, HikariSubFrame *kai, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
+	TabPanel(wxWindow *parent, HikariSubFrame *hikari, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
 	virtual ~TabPanel();
 	bool Hide();
 	
@@ -64,7 +64,7 @@ public:
 	wxString AudioPath;
 	wxString KeyframesPath;
 	int lastFocusedWindowId = 0;
-	KaiWindowResizer* windowResizer;
+	HikariWindowResizer* windowResizer;
 private:
 
 	bool holding;

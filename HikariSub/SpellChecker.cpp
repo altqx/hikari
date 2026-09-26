@@ -35,7 +35,7 @@
 #include <wx/filename.h>
 #include <wx/log.h>
 #include "OpennWrite.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "BidiConversion.h"
 #include <boost/locale/boundary/index.hpp>
 #include <boost/locale/boundary/segment.hpp>
@@ -120,7 +120,7 @@ bool SpellChecker::Initialize()
 	if (!wxFileExists(dic) || !wxFileExists(aff))
 	{
 		Options.SetBool(SPELLCHECKER_ON, false);
-		KaiMessageBox(wxString::Format(_("No dictionary files were found in the \"%s\\Dictionary\" folder.\nSpell checking will be disabled"), Options.pathfull));
+		HikariMessageBox(wxString::Format(_("No dictionary files were found in the \"%s\\Dictionary\" folder.\nSpell checking will be disabled"), Options.pathfull));
 		return false;
 	}
 	// Load
@@ -128,7 +128,7 @@ bool SpellChecker::Initialize()
 
 	if (hunspell) {
 		conv = new wxCSConv(wxString(hunspell->get_dic_encoding(), wxConvUTF8));
-		if (!conv){ KaiMessageBox(_("Unable to read the dictionary conversion format.")); }
+		if (!conv){ HikariMessageBox(_("Unable to read the dictionary conversion format.")); }
 		// Load user dictionary
 		//wxString userpath = pathhh + L"UserDic.udic";
 		if (wxFileExists(userDictionaryPath)) {
@@ -150,7 +150,7 @@ bool SpellChecker::Initialize()
 
 		return true;
 	}
-	else{ KaiMessageBox(_("Failed to initialize spell checker.")); }
+	else{ HikariMessageBox(_("Failed to initialize spell checker.")); }
 	return false;
 }
 
@@ -319,7 +319,7 @@ inline void SpellChecker::Check(std::wstring &checkText, TextData *errs, std::ve
 		}
 	}
 	else {
-		KaiLog(L"text offset size != text size not spellchecking");
+		HikariLog(L"text offset size != text size not spellchecking");
 	}
 	errs->chars += allCPSChars ? fullTextLen : charCounter;
 	int wrapsCharCounter = allWrapsChars ? fullTextLen : charCounter;
@@ -598,7 +598,7 @@ void SpellChecker::CheckText(const wxString &text, std::vector<MisspellData> *er
 		}
 	}
 	else {
-		KaiLog(L"text offset size != text size no spellchecking");
+		HikariLog(L"text offset size != text size no spellchecking");
 	}
 }
 
@@ -688,7 +688,7 @@ bool SpellChecker::FindMisspells(const wxString & text, const wxString &textToFi
 		}
 	}
 	else {
-		KaiLog(L"text offset size != text size no spellchecking");
+		HikariLog(L"text offset size != text size no spellchecking");
 		return false;
 	}
 	return found;

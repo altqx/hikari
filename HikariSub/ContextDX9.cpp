@@ -193,7 +193,7 @@ int ContextDX9::CreateFont(const wxString &fontName, int height, bool bold, bool
 		OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY, DEFAULT_PITCH | FF_DONTCARE, fontName.wc_str(), &D3DFont);
 
 	if (FAILED(hr)) {
-		KaiLogSilent(_("Cannot create D3DX font"));
+		HikariLogSilent(_("Cannot create D3DX font"));
 		return size - 1;
 	}
 	m_D3DFonts.push_back(D3DFont);
@@ -202,7 +202,7 @@ int ContextDX9::CreateFont(const wxString &fontName, int height, bool bold, bool
 void  ContextDX9::DrawOutlinedText(int fontIndex, const wxString &text, RECT textRect, unsigned int textAlign, unsigned int color)
 { 
 	if (fontIndex >= m_D3DFonts.size()) {
-		KaiLogDebug(L"Font index not exist");
+		HikariLogDebug(L"Font index not exist");
 	}
 	LPD3DXFONT font = m_D3DFonts[fontIndex];
 	RECT tmpr = textRect;
@@ -219,7 +219,7 @@ void  ContextDX9::DrawOutlinedText(int fontIndex, const wxString &text, RECT tex
 void  ContextDX9::DrawNormalText(int fontIndex, const wxString &text, RECT textRect, unsigned int textAlign, unsigned int color)
 { 
 	if (fontIndex >= m_D3DFonts.size()) {
-		KaiLogDebug(L"Font index not exist");
+		HikariLogDebug(L"Font index not exist");
 	}
 	LPD3DXFONT font = m_D3DFonts[fontIndex];
 	font->DrawTextW(nullptr, text.wchar_str(), -1, &textRect, textAlign, color);

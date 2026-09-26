@@ -17,10 +17,10 @@
 
 #include "MisspellReplacer.h"
 #include "OpennWrite.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "Notebook.h"
 #include "HikariSubFrame.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "SubsGrid.h"
 #include "TabPanel.h"
 #include "EditBox.h"
@@ -28,34 +28,34 @@
 
 
 MisspellReplacer::MisspellReplacer(wxWindow *parent)
-	: KaiDialog(parent, -1, _("Multireplacer"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Multireplacer"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 	, resultDialog(nullptr)
 {
 	DialogSizer *MainSizer = new DialogSizer(wxHORIZONTAL);
 	wxBoxSizer *ListSizer = new wxBoxSizer(wxVERTICAL);
-	//PutWordBoundary = new KaiCheckBox(this, ID_PUT_WORD_BOUNDARY, _("Wstawiaj automatycznie granice\npoczątku słowa \\m i końca słowa \\M"));
-	//ShowBuiltInRules = new KaiCheckBox(this, ID_SHOW_BUILT_IN_RULES, _("Pokaż wbudowane zasady"));
+	//PutWordBoundary = new HikariCheckBox(this, ID_PUT_WORD_BOUNDARY, _("Wstawiaj automatycznie granice\npoczątku słowa \\m i końca słowa \\M"));
+	//ShowBuiltInRules = new HikariCheckBox(this, ID_SHOW_BUILT_IN_RULES, _("Pokaż wbudowane zasady"));
 
-	KaiStaticBoxSizer *RuleEdition = new KaiStaticBoxSizer(wxVERTICAL, this, _("Rule editing"));
+	HikariStaticBoxSizer *RuleEdition = new HikariStaticBoxSizer(wxVERTICAL, this, _("Rule editing"));
 	wxBoxSizer *PhrasesDescriptionSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *PhrasesSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *PhrasesOptionsSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *PhrasesOptionsSizer1 = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *PhrasesOptionsSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	RuleDescription = new KaiTextCtrl(this, ID_RULE_DESCRIPTION);
-	PhraseToFind = new KaiTextCtrl(this, ID_PHRASE_TO_FIND);
+	RuleDescription = new HikariTextCtrl(this, ID_RULE_DESCRIPTION);
+	PhraseToFind = new HikariTextCtrl(this, ID_PHRASE_TO_FIND);
 	PhraseToFind->SetMaxLength(MAXINT);
-	PhraseToReplace = new KaiTextCtrl(this, ID_PHRASE_TO_REPLACE);
+	PhraseToReplace = new HikariTextCtrl(this, ID_PHRASE_TO_REPLACE);
 	PhraseToReplace->SetMaxLength(MAXINT);
-	MatchCase = new KaiCheckBox(this, ID_MATCH_CASE, _("Match case"));
-	ReplaceAsLower = new KaiCheckBox(this, ID_REPLACE_LOWER, _("Change to lower case"));
-	ReplaceAsUpper = new KaiCheckBox(this, ID_REPLACE_UPPER, _("Change to upper case"));
-	ReplaceWithUnchangedCase = new KaiCheckBox(this, ID_REPLACE_UPPER, _("Dont change case"));
-	ReplaceOnlyTags = new KaiCheckBox(this, ID_REPLACE_ONLY_TAGS, _("Replace only in tags"));
-	ReplaceOnlyText = new KaiCheckBox(this, ID_REPLACE_ONLY_TEXT, _("Replace only in text"));
+	MatchCase = new HikariCheckBox(this, ID_MATCH_CASE, _("Match case"));
+	ReplaceAsLower = new HikariCheckBox(this, ID_REPLACE_LOWER, _("Change to lower case"));
+	ReplaceAsUpper = new HikariCheckBox(this, ID_REPLACE_UPPER, _("Change to upper case"));
+	ReplaceWithUnchangedCase = new HikariCheckBox(this, ID_REPLACE_UPPER, _("Dont change case"));
+	ReplaceOnlyTags = new HikariCheckBox(this, ID_REPLACE_ONLY_TAGS, _("Replace only in tags"));
+	ReplaceOnlyText = new HikariCheckBox(this, ID_REPLACE_ONLY_TEXT, _("Replace only in text"));
 
-	PhrasesDescriptionSizer->Add(new KaiStaticText(this, -1, _("Search phrase (regular expresions)")), 1, wxALL | wxEXPAND, 2);
-	PhrasesDescriptionSizer->Add(new KaiStaticText(this, -1, _("Replace phrase")), 1, wxALL | wxEXPAND, 2);
+	PhrasesDescriptionSizer->Add(new HikariStaticText(this, -1, _("Search phrase (regular expresions)")), 1, wxALL | wxEXPAND, 2);
+	PhrasesDescriptionSizer->Add(new HikariStaticText(this, -1, _("Replace phrase")), 1, wxALL | wxEXPAND, 2);
 	PhrasesSizer->Add(PhraseToFind, 1, wxALL | wxEXPAND, 2);
 	PhrasesSizer->Add(PhraseToReplace, 1, wxALL | wxEXPAND, 2);
 	PhrasesOptionsSizer->Add(MatchCase, 1, wxALL | wxEXPAND, 2);
@@ -64,14 +64,14 @@ MisspellReplacer::MisspellReplacer(wxWindow *parent)
 	PhrasesOptionsSizer1->Add(ReplaceWithUnchangedCase, 1, wxALL | wxEXPAND, 2);
 	PhrasesOptionsSizer2->Add(ReplaceOnlyTags, 1, wxALL | wxEXPAND, 2);
 	PhrasesOptionsSizer2->Add(ReplaceOnlyText, 1, wxALL | wxEXPAND, 2);
-	RuleEdition->Add(new KaiStaticText(this, -1, _("Rule description")), 0, wxLEFT | wxBOTTOM | wxEXPAND, 2);
+	RuleEdition->Add(new HikariStaticText(this, -1, _("Rule description")), 0, wxLEFT | wxBOTTOM | wxEXPAND, 2);
 	RuleEdition->Add(RuleDescription, 0, wxALL | wxEXPAND, 2);
 	RuleEdition->Add(PhrasesDescriptionSizer, 0, wxEXPAND);
 	RuleEdition->Add(PhrasesSizer, 0, wxEXPAND);
 	RuleEdition->Add(PhrasesOptionsSizer, 0, wxEXPAND);
 	RuleEdition->Add(PhrasesOptionsSizer1, 0, wxEXPAND);
 	RuleEdition->Add(PhrasesOptionsSizer2, 0, wxEXPAND);
-	RulesList = new KaiListCtrl(this, ID_RULES_LIST, wxDefaultPosition, wxSize(320, 300));
+	RulesList = new HikariListCtrl(this, ID_RULES_LIST, wxDefaultPosition, wxSize(320, 300));
 	RulesList->InsertColumn(0, emptyString, TYPE_CHECKBOX, 20);
 	RulesList->InsertColumn(1, _("Description"), TYPE_TEXT, 290);
 	RulesList->InsertColumn(2, _("Rule find"), TYPE_TEXT, 100);
@@ -100,14 +100,14 @@ MisspellReplacer::MisspellReplacer(wxWindow *parent)
 	//ListSizer->Add(PutWordBoundary, 0, wxALL, 2);
 	//ListSizer->Add(ShowBuiltInRules, 0, wxALL, 2);
 
-	KaiStaticBoxSizer *WhichLinesSizer = new KaiStaticBoxSizer(wxVERTICAL, this, _("Which lines"));
+	HikariStaticBoxSizer *WhichLinesSizer = new HikariStaticBoxSizer(wxVERTICAL, this, _("Which lines"));
 	wxString choices[] = { _("All lines"), _("Selected lines"), _("From the selected line"), _("According to the selected styles") };
-	WhichLines = new KaiChoice(this, ID_WHICH_LINES_LIST, wxDefaultPosition, wxDefaultSize, 4, choices);
+	WhichLines = new HikariChoice(this, ID_WHICH_LINES_LIST, wxDefaultPosition, wxDefaultSize, 4, choices);
 	WhichLines->SetSelection(0);
 	wxBoxSizer *styleChooseSizer = new wxBoxSizer(wxHORIZONTAL);
 	MappedButton *ChooseStylesButton = new MappedButton(this, ID_STYLES_CHOOSE, L"+");
 
-	ChoosenStyles = new KaiTextCtrl(this, -1);
+	ChoosenStyles = new HikariTextCtrl(this, -1);
 	styleChooseSizer->Add(ChooseStylesButton, 0, wxRIGHT, 2);
 	styleChooseSizer->Add(ChoosenStyles, 1, wxEXPAND);
 
@@ -171,7 +171,7 @@ void MisspellReplacer::ReplaceChecked()
 
 		wxRegEx *rule = new wxRegEx(rules[i].findRule, flags);
 		if (!rule->IsValid()){
-			//KaiLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
+			//HikariLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
 			delete rule;
 			continue;
 		}
@@ -179,7 +179,7 @@ void MisspellReplacer::ReplaceChecked()
 	}
 
 
-	KaiListCtrl *List = resultDialog->ResultsList;
+	HikariListCtrl *List = resultDialog->ResultsList;
 	TabPanel *oldtab = nullptr;
 	TabPanel *tab = nullptr;
 	Notebook * tabs = Notebook::GetTabs();
@@ -286,12 +286,12 @@ void MisspellReplacer::FillRulesList()
 void MisspellReplacer::EditRule()
 {
 	if (resultDialog && resultDialog->IsShown()){
-		KaiLog(_("Cannot change rules\nwhen find results window is open"));
+		HikariLog(_("Cannot change rules\nwhen find results window is open"));
 		return;
 	}
 	int sel = RulesList->GetSelection();
 	if (sel < 0 || sel >= rules.size()){
-		KaiLog(wxString::Format(L"edit rule - bad selection of rule %i - %llu", sel, (unsigned long long)rules.size()));
+		HikariLog(wxString::Format(L"edit rule - bad selection of rule %i - %llu", sel, (unsigned long long)rules.size()));
 		return;
 	}
 
@@ -311,7 +311,7 @@ void MisspellReplacer::EditRule()
 void MisspellReplacer::AddRule()
 {
 	if (resultDialog && resultDialog->IsShown()){
-		KaiLog(_("Cannot change rules\nwhen find results window is open"));
+		HikariLog(_("Cannot change rules\nwhen find results window is open"));
 		return;
 	}
 	wxString phraseToFind = PhraseToFind->GetValue();
@@ -330,12 +330,12 @@ void MisspellReplacer::AddRule()
 void MisspellReplacer::RemoveRule()
 {
 	if (resultDialog && resultDialog->IsShown()){
-		KaiLog(_("Cannot change rules\nwhen find results window is open"));
+		HikariLog(_("Cannot change rules\nwhen find results window is open"));
 		return;
 	}
 	int sel = RulesList->GetSelection();
 	if (sel < 0 || sel >= rules.size()){
-		KaiLog(wxString::Format(L"edit rule - bad selection of rule %i - %llu", sel, (unsigned long long)rules.size()));
+		HikariLog(wxString::Format(L"edit rule - bad selection of rule %i - %llu", sel, (unsigned long long)rules.size()));
 		return;
 	}
 	rules.erase(rules.begin() + sel);
@@ -365,7 +365,7 @@ void MisspellReplacer::SeekOnTab(TabPanel *tab)
 
 		wxRegEx *rule = new wxRegEx(actualRule.findRule, flags);
 		if (!rule->IsValid()){
-			//KaiLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
+			//HikariLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
 			delete rule;
 			continue;
 		}
@@ -490,7 +490,7 @@ void MisspellReplacer::ReplaceOnTab(TabPanel *tab)
 
 		wxRegEx *rule = new wxRegEx(rules[checkedRules[i]].findRule, flags);
 		if (!rule->IsValid()){
-			//KaiLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
+			//HikariLog(wxString::Format("Szablon wyrażeń regularnych \"%s\" jest nieprawidłowy", rules[checkedRules[i]].first));
 			delete rule;
 			continue;
 		}
@@ -599,7 +599,7 @@ bool MisspellReplacer::ReplaceBlock(std::vector<ReplacerSeekResults *> &results,
 	//one of it should be changed.
 	//It means that dialogue will be changed and no need to read and change if needed
 	if (lineText != results[0]->name){
-		KaiLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
+		HikariLog(wxString::Format(_("Line %i cannot be replaced,\ncause it was edited."),
 			results[0]->idLine));
 		return false;
 	}
@@ -620,7 +620,7 @@ bool MisspellReplacer::ReplaceBlock(std::vector<ReplacerSeekResults *> &results,
 			somethingChanged = true;
 		}
 		else{
-			KaiLog(wxString::Format(_("Cannot replace \"%s\" to \"%s\", with rule \"%s\" in line %i."),
+			HikariLog(wxString::Format(_("Cannot replace \"%s\" to \"%s\", with rule \"%s\" in line %i."),
 				matchResult, actualrule.replaceRule, actualrule.findRule, SeekResult->idLine));
 		}
 	}
@@ -765,5 +765,5 @@ Rule::Rule(const wxString & stringRule)
 	return;
 
 fail:
-	KaiLog(wxString::Format(_("Rule \"%s\" is invalid."), stringRule));
+	HikariLog(wxString::Format(_("Rule \"%s\" is invalid."), stringRule));
 }

@@ -24,7 +24,7 @@
 #include "VisualDrawingShapes.h"
 #include "VisualClips.h"
 #include "Visuals.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "TabPanel.h"
 #include "stylestore.h"
 #include "Notebook.h"
@@ -35,7 +35,7 @@
 
 
 ComboBoxCtrl::ComboBoxCtrl(wxWindow *parent, int id, const wxSize &size, const wxString &desc, const wxValidator &validator)
-	:KaiChoice(parent, id, emptyString, wxDefaultPosition, size, wxArrayString(), 0, validator)
+	:HikariChoice(parent, id, emptyString, wxDefaultPosition, size, wxArrayString(), 0, validator)
 {
 	description = desc;
 	choiceText->Bind(wxEVT_SET_FOCUS, &ComboBoxCtrl::OnFocus, this);
@@ -75,21 +75,21 @@ void ComboBoxCtrl::OnKillFocus(wxFocusEvent &evt)
 
 
 TagButtonDialog::TagButtonDialog(wxWindow *parent, int id, const wxString &txtt, const wxString &_name, int _type)
-	:KaiDialog(parent, id, _("Enter ASS tag"))
+	:HikariDialog(parent, id, _("Enter ASS tag"))
 {
 	DialogSizer *siz = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *siz1 = new wxBoxSizer(wxHORIZONTAL);
 	wxString types[3] = { _("Tag inserted in place of cursor"), _("Insert Tag at text beginning"), _("Plain text") };
-	type = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, 3, types);
+	type = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, 3, types);
 	type->SetSelection(_type);
-	name = new KaiTextCtrl(this, -1, _name, wxDefaultPosition, wxSize(150, 25), wxTE_PROCESS_ENTER);
-	txt = new KaiTextCtrl(this, -1, txtt, wxDefaultPosition, wxSize(150, 25), wxTE_PROCESS_ENTER);
+	name = new HikariTextCtrl(this, -1, _name, wxDefaultPosition, wxSize(150, 25), wxTE_PROCESS_ENTER);
+	txt = new HikariTextCtrl(this, -1, txtt, wxDefaultPosition, wxSize(150, 25), wxTE_PROCESS_ENTER);
 	txt->SetSelection(0, txtt.length());
 	txt->SetFocus();
 	siz->Add(type, 0, wxEXPAND | wxALL, 4);
-	siz->Add(new KaiStaticText(this, -1, _("Button name")), 0, wxEXPAND | wxALL, 4);
+	siz->Add(new HikariStaticText(this, -1, _("Button name")), 0, wxEXPAND | wxALL, 4);
 	siz->Add(name, 0, wxEXPAND | wxLEFT | wxRIGHT, 4);
-	siz->Add(new KaiStaticText(this, -1, _("Button tag")), 0, wxEXPAND | wxALL, 4);
+	siz->Add(new HikariStaticText(this, -1, _("Button tag")), 0, wxEXPAND | wxALL, 4);
 	siz->Add(txt, 0, wxEXPAND | wxLEFT | wxRIGHT, 4);
 	siz1->Add(new MappedButton(this, wxID_OK, _("Save tag")), 0, wxEXPAND | wxALL, 4);
 	siz1->Add(new MappedButton(this, wxID_CANCEL, _("Cancel")), 0, wxEXPAND | wxALL, 4);
@@ -139,7 +139,7 @@ void TagButton::OnMouseEvent(wxMouseEvent& event)
 
 
 EditBox::EditBox(wxWindow *parent, int idd)
-	: KaiPanel(parent, idd)
+	: HikariPanel(parent, idd)
 	, EditCounter(1)
 	, ABox(nullptr)
 	, line(nullptr)
@@ -195,7 +195,7 @@ EditBox::EditBox(wxWindow *parent, int idd)
 	Bcol4->SetBitmap(wxBITMAP_PNG(L"Kolor4"));
 	Bcol4->Bind(wxEVT_RIGHT_UP, &EditBox::OnColorRightClick, this);
 	
-	Ban = new KaiChoice(this, ID_AN, wxDefaultPosition, wxDefaultSize, 9, alignments);
+	Ban = new HikariChoice(this, ID_AN, wxDefaultPosition, wxDefaultSize, 9, alignments);
 	Ban->Select(1);
 
 	BoxSizer4 = new wxBoxSizer(wxHORIZONTAL);
@@ -212,17 +212,17 @@ EditBox::EditBox(wxWindow *parent, int idd)
 	
 	SetTagButtons();
 
-	TlMode = new KaiCheckBox(this, ID_TLMODE, _("Translator mode"));
+	TlMode = new HikariCheckBox(this, ID_TLMODE, _("Translator mode"));
 	TlMode->SetValue(false);
 	TlMode->Enable(false);
-	LineNumber = new KaiStaticText(this, -1, _("Line: 0"));
-	Chars = new KaiStaticText(this, -1, _("Wraps: 0/86"));
-	Chtime = new KaiStaticText(this, -1, _("Characters per second: 0<=15"));
+	LineNumber = new HikariStaticText(this, -1, _("Line: 0"));
+	Chars = new HikariStaticText(this, -1, _("Wraps: 0/86"));
+	Chtime = new HikariStaticText(this, -1, _("Characters per second: 0<=15"));
 	bool asFrames = Options.GetBool(EDITBOX_TIMES_TO_FRAMES_SWITCH);
-	Times = new KaiRadioButton(this, ID_TIMES_FRAMES, _("Time"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	Times = new HikariRadioButton(this, ID_TIMES_FRAMES, _("Time"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	Times->SetValue(!asFrames);
 	Times->Enable(false);
-	Frames = new KaiRadioButton(this, ID_TIMES_FRAMES, _("Frames"));
+	Frames = new HikariRadioButton(this, ID_TIMES_FRAMES, _("Frames"));
 	Frames->Enable(false);
 	if (asFrames){
 		Frames->SetValue(asFrames);
@@ -265,7 +265,7 @@ EditBox::EditBox(wxWindow *parent, int idd)
 	TextEditOrig->EB = this;
 	
 	TextEditOrig->Hide();
-	Comment = new KaiCheckBox(this, ID_COMMENT, _("Comment")/*, wxDefaultPosition, wxSize(82, -1)*/);
+	Comment = new HikariCheckBox(this, ID_COMMENT, _("Comment")/*, wxDefaultPosition, wxSize(82, -1)*/);
 	Comment->SetValue(false);
 	LayerEdit = new NumCtrl(this, ID_NUM_CONTROL, emptyString, -10000000, 10000000, true, wxDefaultPosition, wxSize(50, -1));
 	int fw, fh;
@@ -276,7 +276,7 @@ EditBox::EditBox(wxWindow *parent, int idd)
 	DurEdit = new TimeCtrl(this, ID_NUM_CONTROL, emptyString, wxDefaultPosition, wxSize(fw, -1), wxTE_CENTRE);
 	wxArrayString styles;
 	styles.Add(L"Default");
-	StyleChoice = new KaiChoice(this, ID_STYLE, wxDefaultPosition, wxSize(100, -1), styles);//wxSize(145,-1)
+	StyleChoice = new HikariChoice(this, ID_STYLE, wxDefaultPosition, wxSize(100, -1), styles);//wxSize(145,-1)
 	StyleEdit = new MappedButton(this, ID_EDIT_STYLE, _("Edit"), EDITBOX_HOTKEY/*, wxDefaultPosition, wxSize(45, -1)*/);
 	//second line
 	wxTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
@@ -1145,8 +1145,8 @@ void EditBox::SetTlMode(bool tl, bool dummyTlMode /*= false*/)
 	BoxSizer1->Layout();
 	if (!dummyTlMode){
 		if (TlMode->GetValue() != tl){ TlMode->SetValue(tl); }
-		HikariSubFrame *Kai = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
-		Kai->Toolbar->UpdateId(GLOBAL_SAVE_TRANSLATION, tl);
+		HikariSubFrame *Hikari = (HikariSubFrame*)Notebook::GetTabs()->GetParent();
+		Hikari->Toolbar->UpdateId(GLOBAL_SAVE_TRANSLATION, tl);
 	}
 }
 
@@ -1409,7 +1409,7 @@ void EditBox::OnSize(wxSizeEvent& event)
 		if ((h - aboxSize.y) < minEBSize){
 			ABox->SetMinSize(wxSize(-1, h - minEBSize));
 			Options.SetInt(AUDIO_BOX_HEIGHT, h - minEBSize);
-			KaiLogSilent(wxString::Format(L"Audio Height on size %d", h - minEBSize));
+			HikariLogSilent(wxString::Format(L"Audio Height on size %d", h - minEBSize));
 		}
 	}
 
@@ -1738,11 +1738,11 @@ void EditBox::OnButtonTag(wxCommandEvent& event)
 
 }
 
-class NumTagButtons : public KaiDialog
+class NumTagButtons : public HikariDialog
 {
 public:
 	NumTagButtons(wxWindow *parent)
-		:KaiDialog(parent, -1, _("Change number of buttons"))
+		:HikariDialog(parent, -1, _("Change number of buttons"))
 	{
 		DialogSizer *sizer = new DialogSizer(wxVERTICAL);
 		wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -1978,7 +1978,7 @@ SeekDoubtful:
 			return;
 		}
 	}
-	if (CurrentDoubtful == 0){ KaiMessageBox(_("No unconfirmed lines found")); return; }
+	if (CurrentDoubtful == 0){ HikariMessageBox(_("No unconfirmed lines found")); return; }
 	CurrentDoubtful = 0;
 	goto SeekDoubtful;
 }
@@ -2000,7 +2000,7 @@ SeekUntranslated:
 			return;
 		}
 	}
-	if (CurrentUntranslated == 0){ KaiMessageBox(_("No untranslated lines found")); return; }
+	if (CurrentUntranslated == 0){ HikariMessageBox(_("No untranslated lines found")); return; }
 	CurrentUntranslated = 0;
 	goto SeekUntranslated;
 }
@@ -2128,7 +2128,7 @@ bool EditBox::LoadAudio(const wxString &audioFileName, bool fromVideo)
 		ABox->SetFile(audioFileName, fromVideo);
 
 		if (ABox->audioDisplay->loaded){
-			windowResizer = new KaiWindowResizer(this,
+			windowResizer = new HikariWindowResizer(this,
 				[&](int newpos){//canSize
 				wxSize size = GetClientSize();
 				int minEBSize = (TextEditOrig->IsShown()) ? 200 : 150;
@@ -2139,7 +2139,7 @@ bool EditBox::LoadAudio(const wxString &audioFileName, bool fromVideo)
 				TextEdit->Refresh(false);
 				TlMode->Refresh(false);
 				Options.SetInt(AUDIO_BOX_HEIGHT, newpos);
-				KaiLogSilent(wxString::Format(L"Audio Height resize by bar %d", newpos));
+				HikariLogSilent(wxString::Format(L"Audio Height resize by bar %d", newpos));
 			});
 			BoxSizer1->Prepend(windowResizer, 0, wxEXPAND);
 			BoxSizer1->Prepend(ABox, 0, wxLEFT | wxRIGHT | wxEXPAND, 4);

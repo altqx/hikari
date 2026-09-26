@@ -15,17 +15,17 @@
 
 #pragma once
 
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "MappedButton.h"
-#include "KaiCheckBox.h"
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
+#include "HikariCheckBox.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
 #include "LineParse.h"
 
 class HikariSubFrame;
 class TabPanel;
 
-class SpellCheckerDialog : public KaiDialog
+class SpellCheckerDialog : public HikariDialog
 {
 public:
 	SpellCheckerDialog(HikariSubFrame *parent);
@@ -46,10 +46,10 @@ private:
 	bool IsAllUpperCase(const wxString &word);
 	void LoadAddedMisspels(wxArrayString &addedMisspels);
 
-	KaiTextCtrl *misSpell;
-	KaiTextCtrl *replaceWord;
-	KaiCheckBox *ignoreComments;
-	KaiCheckBox *ignoreUpper;
+	HikariTextCtrl *misSpell;
+	HikariTextCtrl *replaceWord;
+	HikariCheckBox *ignoreComments;
+	HikariCheckBox *ignoreUpper;
 	MappedButton *replace;
 	MappedButton *replaceAll;
 	MappedButton *ignore;
@@ -57,7 +57,7 @@ private:
 	MappedButton *addWord;
 	MappedButton *removeWord;
 	MappedButton *close;
-	KaiListCtrl *suggestionsList;
+	HikariListCtrl *suggestionsList;
 
 	int lastLine;
 	int lastMisspell;
@@ -66,7 +66,7 @@ private:
 	wxArrayString ignored;
 	std::vector<MisspellData> errors;
 	wxString lastText;
-	HikariSubFrame *Kai;
+	HikariSubFrame *Hikari;
 	TabPanel *tab;
 };
 

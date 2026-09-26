@@ -66,7 +66,7 @@ void Cross::OnMouseEvent(wxMouseEvent &event)
 
 	if (event.Entering()){
 		//tab->video->SetCursor(wxCURSOR_BLANK);
-		//KaiLog(L"Cross blank");
+		//HikariLog(L"Cross blank");
 		cross = true;
 		int nx = 0, ny = 0;
 		int w = 0, h = 0;

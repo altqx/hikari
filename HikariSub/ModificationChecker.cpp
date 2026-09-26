@@ -73,14 +73,14 @@ int LastModificationChecker::NeedReload(const wxString& fullpath, SYSTEMTIME* la
 		return -1;
 
 	if (!GetFileTime(ffile, 0, 0, &ft)) {
-		KaiLogSilent(L"Could not get subtitles modification time");
+		HikariLogSilent(L"Could not get subtitles modification time");
 		CloseHandle(ffile);
 		return 0;
 	}
 	CloseHandle(ffile);
 	SYSTEMTIME st;
 	if (!FileTimeToSystemTime(&ft, &st)) {
-		KaiLogSilent(L"Could not convert time from file time to system time");
+		HikariLogSilent(L"Could not convert time from file time to system time");
 		return 0;
 	}
 	if (CheckDate(lastSaveTime, &st)) {

@@ -17,11 +17,11 @@
 
 
 #include "TLDialog.h"
-#include "KaiStaticBoxSizer.h"
-#include "KaiStaticText.h"
+#include "HikariStaticBoxSizer.h"
+#include "HikariStaticText.h"
 
 TLDialog::TLDialog(wxWindow *parent, SubsGrid *subsgrid)
-	: KaiDialog(parent, -1, _("Translation matching options"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE)
+	: HikariDialog(parent, -1, _("Translation matching options"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE)
 {
 	Sbsgrid = subsgrid;
 	DialogSizer *sizer = new DialogSizer(wxVERTICAL);
@@ -41,8 +41,8 @@ TLDialog::TLDialog(wxWindow *parent, SubsGrid *subsgrid)
 	UpExt = new MappedButton(this, 29993, _("Add line"));
 	UpExt->SetToolTip(_("Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed."));
 
-	sizer2->Add(new KaiStaticText(this, -1, _("Original")), 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
-	sizer2->Add(new KaiStaticText(this, -1, _("Translation")), 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
+	sizer2->Add(new HikariStaticText(this, -1, _("Original")), 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
+	sizer2->Add(new HikariStaticText(this, -1, _("Translation")), 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
 
 	sizer1->Add(UpExt, 0, wxALL | wxEXPAND, 5);
 	sizer1->Add(Down, 0, wxALL | wxEXPAND, 5);
@@ -53,7 +53,7 @@ TLDialog::TLDialog(wxWindow *parent, SubsGrid *subsgrid)
 
 	sizer->Add(sizer2, 0, wxEXPAND | wxTOP, 5);
 	sizer->Add(sizer1, 0, wxEXPAND);
-	sizer->Add(new KaiStaticText(this, -1, _("Description:\nOriginal - subtitle text with correct timing, used\nto compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")), 0, wxEXPAND | wxALL, 5);
+	sizer->Add(new HikariStaticText(this, -1, _("Description:\nOriginal - subtitle text with correct timing, used\nto compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")), 0, wxEXPAND | wxALL, 5);
 	SetSizerAndFit(sizer);
 	CenterOnParent();
 

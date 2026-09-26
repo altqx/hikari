@@ -60,12 +60,12 @@ public:
 	bool enabled;
 };
 
-class KaiToolbar :public wxWindow
+class HikariToolbar :public wxWindow
 {
 	friend class ToolbarMenu;
 public:
-	KaiToolbar(wxWindow *Parent, MenuBar *mainm, int id);
-	virtual ~KaiToolbar();
+	HikariToolbar(wxWindow *Parent, MenuBar *mainm, int id);
+	virtual ~HikariToolbar();
 	bool HasToolTips() const { return GetToolTip() != nullptr; }
 
 	void AddItem(int id, const wxString &label, wxBitmap *normal, bool enable, byte type = 0, bool toggled = false);
@@ -106,9 +106,9 @@ private:
 
 class ToolbarMenu :public wxDialog
 {
-	friend class KaiToolbar;
+	friend class HikariToolbar;
 public:
-	ToolbarMenu(KaiToolbar *parent, const wxPoint &pos, const wxSize &size, int _height);
+	ToolbarMenu(HikariToolbar *parent, const wxPoint &pos, const wxSize &size, int _height);
 	virtual ~ToolbarMenu(){ DropMouse(); wxDELETE(bmp); };
 private:
 	void OnMouseEvent(wxMouseEvent &evt);
@@ -119,10 +119,10 @@ private:
 	void GrabMouse();
 	void DropMouse();
 	bool hasCapture = false;
-	KaiToolbar *parent;
+	HikariToolbar *parent;
 	wxBitmap *bmp;
-	KaiScrollbar *scroll;
-	KaiChoice *alignments;
+	HikariScrollbar *scroll;
+	HikariChoice *alignments;
 	int sel;
 	int fh;
 	int scPos;

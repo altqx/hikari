@@ -17,19 +17,19 @@
 #include "Stylelistbox.h"
 #include "config.h"
 #include "HikariSubFrame.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "Notebook.h"
 #include "TabPanel.h"
 #include "SubsGrid.h"
 
 
 Stylelistbox::Stylelistbox(wxWindow* parent, bool styles, int numelem, wxString *arr, const wxPoint& pos, int style)
-	: KaiDialog(parent, -1, (styles) ? _("Choose styles") : _("Choose columns"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, (styles) ? _("Choose styles") : _("Choose columns"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	DialogSizer *Main = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer *sizer1 = new KaiStaticBoxSizer(wxVERTICAL, this, (styles) ? _("Choose styles") : _("Select columns"));
+	HikariStaticBoxSizer *sizer1 = new HikariStaticBoxSizer(wxVERTICAL, this, (styles) ? _("Choose styles") : _("Select columns"));
 	wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-	CheckListBox = new KaiListCtrl(this, -1, numelem, arr, wxDefaultPosition, wxSize(200, 300), style);
+	CheckListBox = new HikariListCtrl(this, -1, numelem, arr, wxDefaultPosition, wxSize(200, 300), style);
 	OK = new MappedButton(this, wxID_OK, L"OK");
 	Cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
 	sizer->Add(OK, 1, wxALL, 2);
@@ -42,17 +42,17 @@ Stylelistbox::Stylelistbox(wxWindow* parent, bool styles, int numelem, wxString 
 }
 
 Stylelistbox::Stylelistbox(wxWindow* parent, const wxArrayString& arr, bool styles, const wxPoint& pos, int style)
-	: KaiDialog(parent, -1, (styles) ? _("Choose styles") : _("Choose columns"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, (styles) ? _("Choose styles") : _("Choose columns"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	DialogSizer* Main = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer* sizer1 = new KaiStaticBoxSizer(wxVERTICAL, this, (styles) ? _("Choose styles") : _("Select columns"));
+	HikariStaticBoxSizer* sizer1 = new HikariStaticBoxSizer(wxVERTICAL, this, (styles) ? _("Choose styles") : _("Select columns"));
 	wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
 	size_t arrsize = arr.size();
 	wxString* theList = new wxString[arrsize];
 	for (size_t i = 0; i < arrsize; i++) {
 		theList[i] = arr[i];
 	}
-	CheckListBox = new KaiListCtrl(this, -1, arr.size(), theList, wxDefaultPosition, wxSize(200, 300), style);
+	CheckListBox = new HikariListCtrl(this, -1, arr.size(), theList, wxDefaultPosition, wxSize(200, 300), style);
 	delete[] theList;
 	OK = new MappedButton(this, wxID_OK, L"OK");
 	Cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
@@ -96,17 +96,17 @@ wxString GetCheckedElements(wxWindow *parent)
 }
 
 CustomCheckListBox::CustomCheckListBox(wxWindow* parent, const wxArrayString &listElems, const wxString &title, const wxPoint& pos, int style)
-	: KaiDialog(parent, -1, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	DialogSizer *Main = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer *sizer1 = new KaiStaticBoxSizer(wxVERTICAL, this, title);
+	HikariStaticBoxSizer *sizer1 = new HikariStaticBoxSizer(wxVERTICAL, this, title);
 	wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
 	size_t numelem = listElems.size();
 	wxString *arr = new wxString[numelem];
 	for (size_t i = 0; i < numelem; i++){
 		arr[i] = listElems[i];
 	}
-	CheckListBox = new KaiListCtrl(this, -1, numelem, arr, wxDefaultPosition, wxSize(200, 300), style);
+	CheckListBox = new HikariListCtrl(this, -1, numelem, arr, wxDefaultPosition, wxSize(200, 300), style);
 	delete[] arr;
 	OK = new MappedButton(this, wxID_OK, L"Ok");
 	Cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
@@ -135,13 +135,13 @@ void CustomCheckListBox::GetCheckedElements(wxArrayString &checkedElements)
 }
 
 
-KaiListBox::KaiListBox(wxWindow *parent, const wxArrayString &items, const wxString &title, bool centerOnParent)
-	: KaiDialog(parent, -1, title, wxDefaultPosition)
+HikariListBox::HikariListBox(wxWindow *parent, const wxArrayString &items, const wxString &title, bool centerOnParent)
+	: HikariDialog(parent, -1, title, wxDefaultPosition)
 	, selection(0)
 {
 	DialogSizer *sizer = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-	list = new KaiListCtrl(this, 29886, items, wxDefaultPosition, wxSize(220, 160));
+	list = new HikariListCtrl(this, 29886, items, wxDefaultPosition, wxSize(220, 160));
 	list->SetSelection(0);
 	MappedButton *OK = new MappedButton(this, 8888, L"OK");
 	MappedButton *Cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
@@ -152,22 +152,22 @@ KaiListBox::KaiListBox(wxWindow *parent, const wxArrayString &items, const wxStr
 	SetSizerAndFit(sizer);
 	SetEnterId(8888);
 
-	Connect(29886, LIST_ITEM_DOUBLECLICKED, (wxObjectEventFunction)&KaiListBox::OnDoubleClick);
-	Connect(8888, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&KaiListBox::OnOKClick);
+	Connect(29886, LIST_ITEM_DOUBLECLICKED, (wxObjectEventFunction)&HikariListBox::OnDoubleClick);
+	Connect(8888, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&HikariListBox::OnOKClick);
 	if (centerOnParent){ CenterOnParent();/*parent->Raise();*/ }
 	else{
 		MoveToMousePosition(this);
 	}
 }
 
-void KaiListBox::OnDoubleClick(wxCommandEvent& evt)
+void HikariListBox::OnDoubleClick(wxCommandEvent& evt)
 {
 	selection = evt.GetInt();
 	result = list->GetItem(selection, 0)->name;
 	EndModal(wxID_OK);
 }
 
-void KaiListBox::OnOKClick(wxCommandEvent& evt)
+void HikariListBox::OnOKClick(wxCommandEvent& evt)
 {
 	selection = list->GetSelection();
 	if (selection < 0){ selection = 0; }

@@ -127,7 +127,7 @@ bool RendererDirectShow::InitRendererDX()
 	HRESULT hr;
 	for (UINT i = 0; i < count; i++){
 		hr = m_DXVAService->GetVideoProcessorRenderTargets(guids[i], &videoDesc, &count1, &formats);
-		if (FAILED(hr)){ KaiLog(_("Cannot enumerate DXVA formats")); continue; }
+		if (FAILED(hr)){ HikariLog(_("Cannot enumerate DXVA formats")); continue; }
 		for (UINT j = 0; j < count1; j++)
 		{
 			if (formats[j] == D3DFMT_X8R8G8B8)
@@ -138,11 +138,11 @@ bool RendererDirectShow::InitRendererDX()
 		}
 
 		CoTaskMemFree(formats);
-		if (!isgood){ KaiLog(_("This format is not supported by DXVA")); continue; }
+		if (!isgood){ HikariLog(_("This format is not supported by DXVA")); continue; }
 		isgood = false;
 
 		hr = m_DXVAService->GetVideoProcessorCaps(guids[i], &videoDesc, D3DFMT_X8R8G8B8, &DXVAcaps);
-		if (FAILED(hr)){ KaiLog(_("GetVideoProcessorCaps failed")); continue; }
+		if (FAILED(hr)){ HikariLog(_("GetVideoProcessorCaps failed")); continue; }
 		if (DXVAcaps.NumForwardRefSamples > 0 || DXVAcaps.NumBackwardRefSamples > 0){
 			continue;
 		}
@@ -150,10 +150,10 @@ bool RendererDirectShow::InitRendererDX()
 		//if(DXVAcaps.DeviceCaps!=4){continue;}//DXVAcaps.InputPool
 		hr = m_DXVAService->CreateSurface(m_Width, m_Height, 0, m_D3DFormat, D3DPOOL_DEFAULT, 0,
 			DXVA2_VideoSoftwareRenderTarget, &m_MainSurface, nullptr);
-		if (FAILED(hr)){ KaiLog(wxString::Format(_("Cannot create DXVA surface %i"), (int)i)); continue; }
+		if (FAILED(hr)){ HikariLog(wxString::Format(_("Cannot create DXVA surface %i"), (int)i)); continue; }
 
 		hr = m_DXVAService->CreateVideoProcessor(guids[i], &videoDesc, D3DFMT_X8R8G8B8, 0, &m_DXVAProcessor);
-		if (FAILED(hr)){ KaiLog(_("Cannot create DXVA processor")); continue; }
+		if (FAILED(hr)){ HikariLog(_("Cannot create DXVA processor")); continue; }
 		dxvaGuid = guids[i]; isgood = true;
 		break;
 	}
@@ -215,7 +215,7 @@ bool RendererDirectShow::DrawTexture(byte *nframe, bool copy)
 		}
 	}
 	else {
-		KaiLog(_("No frame buffer")); return false;
+		HikariLog(_("No frame buffer")); return false;
 	}
 	// only what changed is cleared, drawn and uploaded
 	wxRect full(0, 0, m_WindowWidth, m_WindowHeight);
@@ -298,7 +298,7 @@ bool RendererDirectShow::DrawTexture(byte *nframe, bool copy)
 
 	}
 	else {
-		KaiLog(wxString::Format(L"bad pitch diff %i pitch %i dxpitch %i", diff, m_Pitch, d3dlr.Pitch));
+		HikariLog(wxString::Format(L"bad pitch diff %i pitch %i dxpitch %i", diff, m_Pitch, d3dlr.Pitch));
 	}
 
 	HR(m_MainSurface->UnlockRect(), _("Cannot unlock texture buffer"));
@@ -403,7 +403,7 @@ void RendererDirectShow::Render(bool redrawSubsOnFrame, bool wait)
 	
 
 	/*hr = m_D3DDevice->StretchRect(m_MainSurface, &m_MainStreamRect, m_BlackBarsSurface, &m_BackBufferRect, D3DTEXF_LINEAR);
-	if (FAILED(hr)) { KaiLog(_("Nie można nałożyć powierzchni na siebie")); }*/
+	if (FAILED(hr)) { HikariLog(_("Nie można nałożyć powierzchni na siebie")); }*/
 	
 	hr = m_D3DDevice->BeginScene();
 
@@ -675,7 +675,7 @@ void RendererDirectShow::EnableStream(long index)
 		m_DirectShowSeeking = true;
 		auto hr = m_DirectShowPlayer->stream->Enable(index, AMSTREAMSELECTENABLE_ENABLE);
 		if (FAILED(hr)){
-			KaiLog(L"Cannot change stream");
+			HikariLog(L"Cannot change stream");
 		}
 	}
 }
@@ -736,7 +736,7 @@ byte *RendererDirectShow::GetFrameWithSubs(bool subs, bool *del)
 		DXVA2_VideoProcessorRenderTarget, &tmp, nullptr);
 	
 	if (FAILED(hr) || !tmp) {
-		KaiLog(_("Cannot create plain surface"));
+		HikariLog(_("Cannot create plain surface"));
 		return nullptr;
 	}
 
@@ -795,7 +795,7 @@ byte *RendererDirectShow::GetFrameWithSubs(bool subs, bool *del)
 
 	hr = m_DXVAProcessor->VideoProcessBlt(tmp, &blt, &samples, 1, nullptr);
 	if (FAILED(hr)) {
-		KaiLog(_("Cannot overlay surfaces"));
+		HikariLog(_("Cannot overlay surfaces"));
 		SAFE_RELEASE(tmp);
 		return nullptr;
 	}
@@ -804,7 +804,7 @@ byte *RendererDirectShow::GetFrameWithSubs(bool subs, bool *del)
 	RECT dirty = { 0, 0, m_Width, m_Height };
 
 	if (FAILED(tmp->LockRect(&d3dlr, &dirty, 0))) {
-		KaiLog(_("Cannot lock texture buffer"));
+		HikariLog(_("Cannot lock texture buffer"));
 		SAFE_RELEASE(tmp);
 		return nullptr;
 	}

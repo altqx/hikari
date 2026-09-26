@@ -46,7 +46,7 @@ public:
 	~FindReplace(){};
 	void ShowResult(TabPanel *tab, const wxString &path, int keyLine, const wxPoint &pos, const wxString & text);
 	void ReplaceChecked();
-	HikariSubFrame *Kai;
+	HikariSubFrame *Hikari;
 	int linePosition;
 	int reprow;
 	int textPosition;

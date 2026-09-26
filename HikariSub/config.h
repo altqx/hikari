@@ -35,7 +35,7 @@
 
 const wxString emptyString;
 
-inline wxString KaiNormalizePath(const wxString& path)
+inline wxString HikariNormalizePath(const wxString& path)
 {
 	wxString normalized(path);
 #ifndef _WIN32
@@ -44,22 +44,22 @@ inline wxString KaiNormalizePath(const wxString& path)
 	return normalized;
 }
 
-inline wxString KaiPathDir(const wxString& path, int flags = wxPATH_GET_VOLUME)
+inline wxString HikariPathDir(const wxString& path, int flags = wxPATH_GET_VOLUME)
 {
-	wxFileName filename(KaiNormalizePath(path));
+	wxFileName filename(HikariNormalizePath(path));
 	return filename.GetPath(flags);
 }
 
-inline wxString KaiPathName(const wxString& path)
+inline wxString HikariPathName(const wxString& path)
 {
-	wxFileName filename(KaiNormalizePath(path));
+	wxFileName filename(HikariNormalizePath(path));
 	wxString name = filename.GetFullName();
-	return name.empty() ? KaiNormalizePath(path) : name;
+	return name.empty() ? HikariNormalizePath(path) : name;
 }
 
-inline wxString KaiPathJoin(const wxString& dir, const wxString& name)
+inline wxString HikariPathJoin(const wxString& dir, const wxString& name)
 {
-	wxFileName filename(KaiNormalizePath(dir), name);
+	wxFileName filename(HikariNormalizePath(dir), name);
 	return filename.GetFullPath();
 }
 
@@ -533,19 +533,19 @@ public:
 
 
 #ifndef PTR
-#define PTR(what,err) if(!what) {KaiLogSilent(err); return false;}
+#define PTR(what,err) if(!what) {HikariLogSilent(err); return false;}
 #endif
 
 #ifndef PTR1
-#define PTR1(what,err) if(!what) {KaiLogSilent(err); return;}
+#define PTR1(what,err) if(!what) {HikariLogSilent(err); return;}
 #endif
 
 #ifndef HR
-#define HR(what,err) if(FAILED(what)) {KaiLogSilent(err); return false;}
+#define HR(what,err) if(FAILED(what)) {HikariLogSilent(err); return false;}
 #endif
 
 #ifndef HRN
-#define HRN(what,err) if(FAILED(what)) {KaiLogSilent(err); return;}
+#define HRN(what,err) if(FAILED(what)) {HikariLogSilent(err); return;}
 #endif
 
 #ifndef MIN

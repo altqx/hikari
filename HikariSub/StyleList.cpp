@@ -29,7 +29,7 @@ wxDEFINE_EVENT(SELECTION_CHANGED, wxCommandEvent);
 bool sortf(int i, int j){ return (i < j); }
 
 StyleList::StyleList(wxWindow *parent, long id, std::vector<Styles*> *stylearray, const wxPoint &pos, const wxSize &size, long style)
-	:KaiScrolledWindow(parent, id, pos, size, style | wxVERTICAL)
+	:HikariScrolledWindow(parent, id, pos, size, style | wxVERTICAL)
 {
 
 	stylenames = stylearray;
@@ -448,7 +448,7 @@ bool StyleList::SetFont(const wxFont &_font)
 	return true;
 }
 
-BEGIN_EVENT_TABLE(StyleList, KaiScrolledWindow)
+BEGIN_EVENT_TABLE(StyleList, HikariScrolledWindow)
 EVT_PAINT(StyleList::OnPaint)
 EVT_SIZE(StyleList::OnSize)
 EVT_SCROLLWIN(StyleList::OnScroll)

@@ -14,12 +14,12 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
 #include "Automation.h"
 #include "Hotkeys.h"
 
-class AutomationHotkeysDialog : public KaiDialog
+class AutomationHotkeysDialog : public HikariDialog
 {
 public:
 	AutomationHotkeysDialog(wxWindow *parent, Auto::Automation *Auto);
@@ -31,7 +31,7 @@ private:
 	void OnDeleteHkey(wxCommandEvent &evt);
 	void ChangeHotkey(int row, int id, const wxString &hotkey);
 	Auto::Automation *automation;
-	KaiListCtrl *hotkeysList;
+	HikariListCtrl *hotkeysList;
 	int lastScriptId = 30100;
 };
 

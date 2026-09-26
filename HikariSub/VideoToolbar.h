@@ -20,7 +20,7 @@
 
 
 #include "ListControls.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 #include "MappedButton.h"
 #include "Visuals.h"
 #include "VisualAllTagsEdition.h"
@@ -129,7 +129,7 @@ public:
 	bool isNormalButton = false;
 	bool isDrawing = false;
 	static const int ID_SHAPE_LIST = 6789;
-	KaiChoice* shapeList = nullptr;
+	HikariChoice* shapeList = nullptr;
 	int shapeListWidth = 0;
 	int shapeListSelection = 0;
 };
@@ -159,8 +159,8 @@ public:
 	void ShowContols(VideoToolbar* vt) override;
 	void OnSize(VideoToolbar* vt) override;
 private:
-	KaiChoice* tagList = nullptr;
-	KaiChoice* options = nullptr;
+	HikariChoice* tagList = nullptr;
+	HikariChoice* options = nullptr;
 	MappedButton* edition = nullptr;
 	int maxWidth = -1;
 	int selection = 0;
@@ -243,7 +243,7 @@ private:
 	static const int numIcons = 3;
 	bool Toggled[numIcons] = { false, true, true };
 	int an = 0;
-	KaiChoice* alignment = nullptr;
+	HikariChoice* alignment = nullptr;
 };
 
 class MoveItem :public VisualItem
@@ -355,8 +355,8 @@ public:
 	void SetHeight(int height);
 	int GetEndDrawPos() { return endDrawPos; };
 	bool HasToolTips() const { return GetToolTip() != nullptr; }
-	KaiChoice *videoSeekAfter;
-	KaiChoice *videoPlayAfter;
+	HikariChoice *videoSeekAfter;
+	HikariChoice *videoPlayAfter;
 	static std::vector<itemdata*> icons;
 	bool blockScroll;
 

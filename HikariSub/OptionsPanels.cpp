@@ -17,16 +17,16 @@
 #include "OptionsPanels.h"
 //#include "Hotkeys.h"
 #include "OptionsDialog.h"
-#include "KaiStaticBoxSizer.h"
-#include "KaiStaticText.h"
-#include "KaiTextCtrl.h"
-#include "KaiCheckBox.h"
+#include "HikariStaticBoxSizer.h"
+#include "HikariStaticText.h"
+#include "HikariTextCtrl.h"
+#include "HikariCheckBox.h"
 
 SubtitlesProperties::SubtitlesProperties(wxWindow *parent, OptionsDialog *optionsDialog)
 	: wxWindow(parent, -1)
 {
 	wxBoxSizer *main = new wxBoxSizer(wxVERTICAL);
-	KaiStaticBoxSizer *StaticBox1 = new KaiStaticBoxSizer(wxVERTICAL, this, _("Subtitle information"));
+	HikariStaticBoxSizer *StaticBox1 = new HikariStaticBoxSizer(wxVERTICAL, this, _("Subtitle information"));
 	//wxFlexGridSizer *GridSizer=new wxFlexGridSizer(3,5,5);
 	const int numFields = 6;
 	wxString fieldNames[numFields] = { _("Title"), _("Author"), _("Translator"), _("Proofreading"), _("Timer"), _("Editing") };
@@ -36,11 +36,11 @@ SubtitlesProperties::SubtitlesProperties(wxWindow *parent, OptionsDialog *option
 		ASS_PROPERTIES_EDITING_ON, ASS_PROPERTIES_TIMING_ON, ASS_PROPERTIES_UPDATE_ON };
 
 	for (int i = 0; i < numFields; i++){
-		KaiTextCtrl *field = new KaiTextCtrl(this, -1, Options.GetString(fieldValues[i]), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-		KaiCheckBox *fieldOn = new KaiCheckBox(this, -1, emptyString, wxDefaultPosition, wxSize(18, -1));
+		HikariTextCtrl *field = new HikariTextCtrl(this, -1, Options.GetString(fieldValues[i]), wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+		HikariCheckBox *fieldOn = new HikariCheckBox(this, -1, emptyString, wxDefaultPosition, wxSize(18, -1));
 		fieldOn->SetValue(Options.GetBool(fieldOnValues[i]));
 		wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
-		sizer->Add(new KaiStaticText(this, -1, fieldNames[i]), 2, wxEXPAND);
+		sizer->Add(new HikariStaticText(this, -1, fieldNames[i]), 2, wxEXPAND);
 		sizer->Add(field, 5, wxEXPAND);
 		sizer->Add(fieldOn, 0, wxEXPAND | wxLEFT, 4);
 		StaticBox1->Add(sizer, 0, wxEXPAND | wxALL, 5);
@@ -52,7 +52,7 @@ SubtitlesProperties::SubtitlesProperties(wxWindow *parent, OptionsDialog *option
 	main->Add(StaticBox1, 0, wxEXPAND, 0);
 	const int numCheckbox = 3;
 
-	KaiCheckBox *option = new KaiCheckBox(this, -1, _("Always ask before changing subtitle information"), wxDefaultPosition, wxSize(18, -1));
+	HikariCheckBox *option = new HikariCheckBox(this, -1, _("Always ask before changing subtitle information"), wxDefaultPosition, wxSize(18, -1));
 	option->SetValue(Options.GetBool(ASS_PROPERTIES_ASK_FOR_CHANGE));
 	main->Add(option, 0, wxEXPAND | wxALL, 5);
 	optionsDialog->ConOpt(option, ASS_PROPERTIES_ASK_FOR_CHANGE);

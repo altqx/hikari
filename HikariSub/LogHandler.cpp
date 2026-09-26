@@ -14,15 +14,15 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "LogHandler.h"
-#include "KaiDialog.h"
-#include "KaiStaticText.h"
-#include "KaiTextCtrl.h"
+#include "HikariDialog.h"
+#include "HikariStaticText.h"
+#include "HikariTextCtrl.h"
 #include "MappedButton.h"
 
 wxDEFINE_EVENT(EVT_DO_LOG, wxThreadEvent);
 wxDEFINE_EVENT(EVT_DO_CREATE_LOG_WINDOW, wxThreadEvent);
 
-class LogWindow : public KaiDialog
+class LogWindow : public HikariDialog
 {
 	friend class LogHandler;
 public:
@@ -32,20 +32,20 @@ public:
 private:
 	void OnGetLog(wxThreadEvent &evt);
 	LogHandler *handler;
-	KaiTextCtrl *logText;
-	KaiStaticText *lastLogText;
+	HikariTextCtrl *logText;
+	HikariStaticText *lastLogText;
 	DialogSizer *sizer;
 	bool hiddenLastLog = false;
 };
 
 LogWindow::LogWindow(wxWindow *parent, LogHandler *_handler)
-	: KaiDialog(parent, -1, _("Log window"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Log window"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, handler(_handler)
 {
 	sizer = new DialogSizer(wxVERTICAL);
-	lastLogText = new KaiStaticText(this, -1, emptyString, wxDefaultPosition, wxSize(500, -1));
+	lastLogText = new HikariStaticText(this, -1, emptyString, wxDefaultPosition, wxSize(500, -1));
 	//MappedButton *collapse = new MappedButton(this, 12456, _("Pokaż resztę logów"));
-	logText = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 300), wxTE_MULTILINE);
+	logText = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 300), wxTE_MULTILINE);
 	logText->Show(false);
 	MappedButton *OK = new MappedButton(this, 12457, _("Close"));
 	sizer->Add(lastLogText, 0, wxALIGN_CENTER | wxALL, 10);

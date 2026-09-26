@@ -20,7 +20,7 @@
 
 #include "SubtitlesProviderManager.h"
 #include "Menu.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "OpennWrite.h"
 #include "VideoBox.h"
 
@@ -35,7 +35,7 @@
 
 Notebook::Notebook(wxWindow *parent, int id)
 	: wxWindow(parent, id)
-	, Kai((HikariSubFrame*)parent)
+	, Hikari((HikariSubFrame*)parent)
 {
 	firstVisibleTab = olditer = iter = 0;
 	splitline = splititer = 0;
@@ -157,7 +157,7 @@ void Notebook::AddPage(bool refresh, bool saveLastSession)
 	int w, h;
 	GetClientSize(&w, &h);
 	if(refresh){Freeze();}
-	Pages.push_back(new TabPanel(this, Kai, wxPoint(0, 0), wxSize(0, 0)));
+	Pages.push_back(new TabPanel(this, Hikari, wxPoint(0, 0), wxSize(0, 0)));
 	olditer = iter;
 	iter = Size() - 1;
 	if (refresh){
@@ -174,7 +174,7 @@ void Notebook::AddPage(bool refresh, bool saveLastSession)
 	CalcSizes(true);
 	if (refresh){
 		if (!Options.GetBool(EDITOR_ON)){ 
-			Kai->HideEditor(false); 
+			Hikari->HideEditor(false); 
 		}
 		wxCommandEvent choiceSelectedEvent(wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		AddPendingEvent(choiceSelectedEvent);
@@ -224,13 +224,13 @@ void Notebook::DeletePage(int page)
 {
 	wxMutexLocker lock(closeTabMutex);
 	if (page < 0 || page >= Pages.size()) {
-		KaiLog("You try to delete not existing tab");
+		HikariLog("You try to delete not existing tab");
 		return;
 	}
 
 	Freeze();
 	block = true;
-	if (Kai->SavePrompt(1, page)){
+	if (Hikari->SavePrompt(1, page)){
 		block = false;
 		wxSize siz = GetClientSize();
 		RefreshRect(wxRect(0, siz.y - TabHeight, siz.x, TabHeight), false);
@@ -283,7 +283,7 @@ void Notebook::DeletePage(int page)
 
 
 	if (Size() < 1){
-		Pages.push_back(new TabPanel(this, Kai));
+		Pages.push_back(new TabPanel(this, Hikari));
 		wxString name = Pages[0]->SubsName;
 		tabNames.Add(name);
 		int w, h;
@@ -352,7 +352,7 @@ void Notebook::CalcSizes(bool makeActiveVisible)
 			if (tabsWidth > w - 22){
 				firstVisibleTab = tabScrollDestination = i - 1;
 				if (firstVisibleTab < 0) {
-					//KaiLog(L"firstVisibleTab < 0");
+					//HikariLog(L"firstVisibleTab < 0");
 					firstVisibleTab = tabScrollDestination = 0;
 				}
 				break;
@@ -977,8 +977,8 @@ void Notebook::OnTabSel(int id)
 		Split(wtab);
 	}
 	else if (wtab < 0){
-		if (KaiMessageBox(_("All tabs will be closed, continue?"), _("Prompt"),
-			wxYES_NO, Kai, wxDefaultPosition, wxNO) == wxNO)
+		if (HikariMessageBox(_("All tabs will be closed, continue?"), _("Prompt"),
+			wxYES_NO, Hikari, wxDefaultPosition, wxNO) == wxNO)
 			return;
 
 		int tmpiter = iter;
@@ -986,7 +986,7 @@ void Notebook::OnTabSel(int id)
 		for (int i = (int)Pages.size() - 1; i >= 0; i--)
 		{
 			iter = i;
-			if (Kai->SavePrompt()){ break; }
+			if (Hikari->SavePrompt()){ break; }
 			SubsGrid::RemoveComparison();
 			Pages[i]->Destroy();
 			Pages.pop_back();
@@ -1001,7 +1001,7 @@ void Notebook::OnTabSel(int id)
 		firstVisibleTab = tabScrollDestination = 0;
 		int w = -1, h = -1;
 		if (pagesSize < 1){
-			Pages.push_back(new TabPanel(this, Kai));
+			Pages.push_back(new TabPanel(this, Hikari));
 			wxString name = Pages[0]->SubsName;
 			tabNames.Add(name);
 			GetClientSize(&w, &h);
@@ -1141,7 +1141,7 @@ bool Notebook::LoadSubtitles(TabPanel *tab, const wxString & path, int active /*
 
 	tab->SubsPath = path;
 	if (ext == L"ssa"){ ext = L"ass"; }
-	tab->SubsName = KaiPathName(tab->SubsPath);
+	tab->SubsName = HikariPathName(tab->SubsPath);
 	tab->video->DisableVisuals(ext != L"ass");
 	if (active != -1 && active != tab->grid->currentLine && active < tab->grid->file->GetCount()){
 		tab->grid->SetActive(active);
@@ -1165,7 +1165,7 @@ int Notebook::LoadVideo(TabPanel *tab, const wxString & path,
 
 	if (hasEditor) {
 		wxString subsPath = (path.empty()) ?
-			KaiPathDir(tab->SubsPath, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) : KaiPathDir(path, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
+			HikariPathDir(tab->SubsPath, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR) : HikariPathDir(path, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR);
 		audiopath = tab->grid->file->GetSInfo(L"Audio File");
 		keyframespath = tab->grid->file->GetSInfo(L"Keyframes File");
 
@@ -1203,13 +1203,13 @@ int Notebook::LoadVideo(TabPanel *tab, const wxString & path,
 				if (!path.empty()) {
 					if (tab->VideoPath != path) {
 						if (!prompt.empty()) { prompt += L"\n"; }
-						prompt += _("Video from directory:\n") + KaiPathName(path); flags |= wxYES;
+						prompt += _("Video from directory:\n") + HikariPathName(path); flags |= wxYES;
 					}
 					else
 						return -1;
 				}
 				if (!prompt.empty()) {
-					KaiMessageDialog dlg(this, prompt, _("Confirmation"), flags);
+					HikariMessageDialog dlg(this, prompt, _("Confirmation"), flags);
 					if (flags & wxYES && flags & wxOK) {
 						dlg.SetOkLabel(_("Load associated"));
 						dlg.SetYesLabel(_("Load from directory"));
@@ -1228,25 +1228,25 @@ int Notebook::LoadVideo(TabPanel *tab, const wxString & path,
 			else if (result & wxOK) {
 				if (!audiopath.empty()) {
 					if (hasAudioPath && !sameAudioPath) {
-						audiopath = KaiNormalizePath(audiopath);
+						audiopath = HikariNormalizePath(audiopath);
 					}
 					if (hasVideoPath) {
-						MenuItem *item = Kai->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
+						MenuItem *item = Hikari->Menubar->FindItem(GLOBAL_VIDEO_INDEXING);
 						if (item) item->Check();
-						toolitem *titem = Kai->Toolbar->FindItem(GLOBAL_VIDEO_INDEXING);
+						toolitem *titem = Hikari->Toolbar->FindItem(GLOBAL_VIDEO_INDEXING);
 						if (titem) {
 							titem->toggled = true;
-							Kai->Toolbar->Refresh(false);
+							Hikari->Toolbar->Refresh(false);
 						}
-						toolitem *etitem = Kai->Toolbar->FindItem(GLOBAL_EDITOR);
+						toolitem *etitem = Hikari->Toolbar->FindItem(GLOBAL_EDITOR);
 						if (etitem) {
 							etitem->Enable(false);
-							Kai->Toolbar->Refresh(false);
+							Hikari->Toolbar->Refresh(false);
 						}
 					}
 				}
 				if (hasVideoPath) {
-					videopath = KaiNormalizePath(videopath);
+					videopath = HikariNormalizePath(videopath);
 					found = true;
 				}
 			}
@@ -1269,8 +1269,8 @@ int Notebook::LoadVideo(TabPanel *tab, const wxString & path,
 	}
 	if (hasEditor) {
 		if (hasAudioPath) {
-			audiopath = KaiNormalizePath(audiopath);
-			Kai->OpenAudioInTab(tab, 30040, audiopath);
+			audiopath = HikariNormalizePath(audiopath);
+			Hikari->OpenAudioInTab(tab, 30040, audiopath);
 		}
 
 		if (hasKeyframePath) {
@@ -1293,12 +1293,12 @@ int Notebook::LoadVideo(TabPanel *tab, const wxString & path,
 void Notebook::OnSave(int id)
 {
 	id -= MENU_SAVE;
-	HikariSubFrame *Kai = (HikariSubFrame*)GetParent();
+	HikariSubFrame *Hikari = (HikariSubFrame*)GetParent();
 	if (id < 0){
-		Kai->SaveAll();
+		Hikari->SaveAll();
 	}
 	else{
-		Kai->Save(false, id);
+		Hikari->Save(false, id);
 	}
 }
 
@@ -1314,7 +1314,7 @@ TabPanel *Notebook::GetTab()
 	if(sthis->iter < sthis->Size())
 		return sthis->Pages[sthis->iter];
 	else {
-		KaiLogDebug(wxString::Format(L"bad iter %i / %i crash", sthis->iter, (int)sthis->Size()));
+		HikariLogDebug(wxString::Format(L"bad iter %i / %i crash", sthis->iter, (int)sthis->Size()));
 		//Sleep(5000);
 		return nullptr;
 	}
@@ -1372,7 +1372,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		wxStringTokenizer tokenizer(riddenSession, L"\n", wxTOKEN_STRTOK);
 		wxString header = tokenizer.GetNextToken();
 		if (!header.StartsWith(L"[HikariSub")){
-			KaiLog(_("Session file is corrupt"));
+			HikariLog(_("Session file is corrupt"));
 			return;
 		}
 
@@ -1441,14 +1441,14 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 							sthis->LoadSubtitles(tab, subtitles);
 							if (orgSubtitles != subtitles) {
 								tab->SubsPath = orgSubtitles;
-								tab->SubsName = KaiPathName(tab->SubsPath);
+								tab->SubsName = HikariPathName(tab->SubsPath);
 								tab->grid->file->RemoveLastIterSave();
 								tab->grid->UpdateUR(true);
 							}
 						}else
 							sthis->LoadSubtitles(tab, subtitles, activeLine, scrollPosition);
 
-						sthis->Kai->SetRecent();
+						sthis->Hikari->SetRecent();
 					}
 					if (!keyframes.empty()) {
 						tab->video->OpenKeyframes(keyframes);
@@ -1456,15 +1456,15 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 					}
 					if (!video.empty()){
 						if (!hasEditor)
-							sthis->Kai->HideEditor();
+							sthis->Hikari->HideEditor();
 	
 						sthis->LoadVideo(tab, video, videoPosition, isFFMS2, hasEditor, false, false, audio != emptyString);
 					}
 					if (!audio.empty()) {
-						sthis->Kai->OpenAudioInTab(tab, 30040, audio);
+						sthis->Hikari->OpenAudioInTab(tab, 30040, audio);
 					}
 					
-					sthis->Kai->Label();
+					sthis->Hikari->Label();
 					tab->shiftTimes->Contents();
 					video = emptyString;
 					videoPosition = 0;
@@ -1486,8 +1486,8 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 		TabPanel *tab = sthis->GetTab();
 		tab->Show();
 		tab->video->DeleteAudioCache();
-		sthis->Kai->SetSubsResolution(false);
-		sthis->Kai->UpdateToolbar();
+		sthis->Hikari->SetSubsResolution(false);
+		sthis->Hikari->UpdateToolbar();
 		Options.SaveOptions(true, false);
 		SaveLastSession();
 	}
@@ -1495,7 +1495,7 @@ void Notebook::LoadLastSession(bool loadCrashSession, const wxString &externalPa
 
 void Notebook::FindAutoSaveSubstitute(wxString* path, int tab)
 {
-	wxString seekpath = KaiPathName(*path);
+	wxString seekpath = HikariPathName(*path);
 	wxString seekPathWithoutExt = seekpath. BeforeLast(L'.');
 	if (seekPathWithoutExt.empty())
 		seekPathWithoutExt = seekpath;

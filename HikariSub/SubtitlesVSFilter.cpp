@@ -187,7 +187,7 @@ csri_inst *SubtitlesVSFilter::ParseInstance(wxString *text)
 	csri_rend *vobsub = GetVSFilter();
 	if (!vobsub){
 		delete text;
-		KaiLogSilent(_("Cannot initialize CSRI."));
+		HikariLogSilent(_("Cannot initialize CSRI."));
 		return nullptr;
 	}
 
@@ -196,7 +196,7 @@ csri_inst *SubtitlesVSFilter::ParseInstance(wxString *text)
 	csri_inst *instance = csri_open_mem(vobsub, buffer, strlen(buffer), nullptr);
 	delete text;
 	if (!instance){
-		KaiLogSilent(_("Cannot create CSRI instance."));
+		HikariLogSilent(_("Cannot create CSRI instance."));
 		return nullptr;
 	}
 	if (!m_CsriFormat || csri_request_fmt(instance, m_CsriFormat)) {
@@ -205,7 +205,7 @@ csri_inst *SubtitlesVSFilter::ParseInstance(wxString *text)
 			if (!csri_request_fmt(instance, m_CsriFormat))
 				return instance;
 		}
-		KaiLogSilent(_("CSRI does not support this format."));
+		HikariLogSilent(_("CSRI does not support this format."));
 		csri_close(instance);
 		return nullptr;
 	}
@@ -310,7 +310,7 @@ void SubtitlesVSFilter::SetVideoParameters(const wxSize & size, unsigned char fo
 			if (!csri_request_fmt(m_CsriInstance, m_CsriFormat))
 				return;
 		}
-		KaiLog(_("CSRI does not support this format."));
+		HikariLog(_("CSRI does not support this format."));
 		m_Instances.Remove(m_CsriInstance);
 		m_CsriInstance = nullptr;
 	}

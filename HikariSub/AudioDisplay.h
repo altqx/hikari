@@ -24,7 +24,7 @@
 #include "AudioPlayerDSound.h"
 #include "SubsDialogue.h"
 #include "KaraokeSplitting.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "SubsGrid.h"
 //#include "AudioBox.h"
 #include "EditBox.h"
@@ -237,7 +237,7 @@ public:
 	int w1 = 500;
 	wxRect screenRect;
 	AudioBox *box = nullptr;
-	KaiScrollbar *ScrollBar = nullptr;
+	HikariScrollbar *ScrollBar = nullptr;
 	wxTimer ProgressTimer;
 #ifndef _WIN32
 	wxTimer LinuxPlaybackTimer;

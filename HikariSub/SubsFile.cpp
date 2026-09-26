@@ -16,18 +16,18 @@
 
 
 #include "SubsFile.h"
-#include "KaiListCtrl.h"
+#include "HikariListCtrl.h"
 #include "MappedButton.h"
 #include "config.h"
 #include <unordered_set>
 
 
 HistoryDialog::HistoryDialog(wxWindow *parent, SubsFile *file, std::function<void(int)> func)
-	: KaiDialog(parent, -1, _("History"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("History"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	wxArrayString history;
 	file->GetHistoryTable(&history);
-	KaiListCtrl *HistoryList = new KaiListCtrl(this, ID_HISTORY_LIST, history);
+	HikariListCtrl *HistoryList = new HikariListCtrl(this, ID_HISTORY_LIST, history);
 	//HistoryList->ScrollTo(file->Iter()-2);
 	Bind(LIST_ITEM_DOUBLECLICKED, [=](wxCommandEvent &evt){
 		func(HistoryList->GetSelection());

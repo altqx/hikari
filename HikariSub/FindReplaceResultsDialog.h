@@ -15,8 +15,8 @@
 
 #pragma once
 
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
 #include "HikariSubFrame.h"
 #include "MispellReplacerDialog.h"
 #include "FindReplace.h"
@@ -34,10 +34,10 @@ public:
 		modified = true;
 	}
 	virtual ~ResultsHeader(){};
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new ResultsHeader(*this); }
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 private:
 	int positionInTable = 0;
 	bool isVisible = true;
@@ -65,11 +65,11 @@ public:
 	int idLine;
 	bool isTextTL;
 	wxPoint findPosition;
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 private:
 	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, 
-		KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+		HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new SeekResults(*this); }
 	void OnCheckUncheckAll(wxCommandEvent& event);
 	int OnVisibilityChange(int mode){
@@ -83,7 +83,7 @@ private:
 
 class FindReplaceDialog;
 
-class FindReplaceResultsDialog : public KaiDialog
+class FindReplaceResultsDialog : public HikariDialog
 {
 public:
 	FindReplaceResultsDialog(wxWindow *parent, FindReplace *FR, bool findInFiles = false);
@@ -111,10 +111,10 @@ public:
 		findString = _findString;
 	}
 	void GetReplaceString(wxString *replaceString);
-	KaiListCtrl *resultsList;
+	HikariListCtrl *resultsList;
 	bool findInFiles = false;
 private:
-	KaiChoice* ReplaceText;
+	HikariChoice* ReplaceText;
 	MappedButton *replaceChecked;
 	//int resultsCounter = 0;
 	//config for replace

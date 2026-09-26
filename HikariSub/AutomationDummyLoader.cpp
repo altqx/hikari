@@ -27,7 +27,7 @@ namespace Auto {
 		wxDir dir;
 
 		if (!dir.Open(AutoloadPath)) {
-			KaiLog(wxString::Format(L"Failed to open a directory in the Automation autoload path: %s", 
+			HikariLog(wxString::Format(L"Failed to open a directory in the Automation autoload path: %s", 
 				AutoloadPath.wc_str()));
 			return;
 		}
@@ -49,7 +49,7 @@ namespace Auto {
 				}
 				size_t result = FindFilename(fullpath);
 				if(result == -1){
-					KaiLogSilent(L"Not added script " + fullpath);
+					HikariLogSilent(L"Not added script " + fullpath);
 					if (!((Automation*)this)->Add(fullpath, false, true)) {
 						more = dir.GetNext(&fn);
 						continue;
@@ -143,62 +143,62 @@ namespace Auto {
 		value.Trim(false);
 		if (label == L"macros") {
 			parseMacro = true;
-			KaiLogSilent(L"parseMacro = true");
+			HikariLogSilent(L"parseMacro = true");
 		}
 		else if (parseMacro) {
 			if (label == L"name") {
 				macros.push_back(value);
-				KaiLogSilent(L"name = " + value);
+				HikariLogSilent(L"name = " + value);
 			}
 			else if (label == L"help") {
 				macros.push_back(value);
-				KaiLogSilent(L"help = " + value);
+				HikariLogSilent(L"help = " + value);
 			}
 			else if (input == L"}") {
 				parseMacro = false;
-				KaiLogSilent(L"parseMacro = false");
+				HikariLogSilent(L"parseMacro = false");
 			}
 			else {
 				if ((lastLabel == L"name" || lastLabel == L"help") && macros.size()) {
 					macros[macros.size() - 1] << L"\n" << input;
-					KaiLogSilent(lastLabel + L" = " + macros[macros.size() - 1]);
+					HikariLogSilent(lastLabel + L" = " + macros[macros.size() - 1]);
 					return;
 				}
 			}
 		}
 		else if (label == L"name") {
 			name = value;
-			KaiLogSilent(L"name = " + value);
+			HikariLogSilent(L"name = " + value);
 		}
 		else if (label == L"description") {
 			description = value;
-			KaiLogSilent(L"description = " + value);
+			HikariLogSilent(L"description = " + value);
 		}
 		else if (label == L"lowTime") {
 			value.ToULong(&lowTime);
-			KaiLogSilent(L"lowTime = " + value);
+			HikariLogSilent(L"lowTime = " + value);
 		}
 		else if (label == L"highTime") {
 			value.ToULong(&highTime);
-			KaiLogSilent(L"highTime = " + value);
+			HikariLogSilent(L"highTime = " + value);
 		}
 		else if(value == L"{") {
 			filename = label;
-			KaiLogSilent(L"filename = " + label);
+			HikariLogSilent(L"filename = " + label);
 		}
 		else if (input == L"}") {
-			KaiLogSilent(L"add dummy");
+			HikariLogSilent(L"add dummy");
 			AddDummy(filename, name, description, macros, lowTime, highTime);
 			macros.clear();
 		}
 		else {
 			if (lastLabel == L"name") {
 				name << L"\n" << input;
-				KaiLogSilent(L"name = " + name);
+				HikariLogSilent(L"name = " + name);
 			}
 			else if (lastLabel == L"description") {
 				description << L"\n" << input;
-				KaiLogSilent(L"description = " + description);
+				HikariLogSilent(L"description = " + description);
 			}
 
 			return;

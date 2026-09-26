@@ -43,7 +43,7 @@
 
 #include "AutomationUtils.h"
 #include "AutomationScriptReader.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "AutomationHotkeysDialog.h"
 #include "Notebook.h"
 #include "VideoBox.h"
@@ -200,20 +200,20 @@ namespace Auto{
 	{
 		wxString path = check_string(L, 1);
 		TabPanel *tab = Notebook::GetTab();
-		path = KaiNormalizePath(path);
+		path = HikariNormalizePath(path);
 #ifdef _WIN32
 		path.Replace(L'/', L'\\');
 #endif
-		wxString firstAutomation = KaiPathJoin(Options.pathfull, L"Automation");
+		wxString firstAutomation = HikariPathJoin(Options.pathfull, L"Automation");
 		if (path[0] == L'?'){
-			if (path[1] == L'a' && path[4] == L'i') path.replace(0, 6, (tab) ? KaiPathDir(tab->AudioPath) : wxString(L""));
+			if (path[1] == L'a' && path[4] == L'i') path.replace(0, 6, (tab) ? HikariPathDir(tab->AudioPath) : wxString(L""));
 			else if (path[1] == L'd' && path[4] == L'a') path.replace(0, 5, firstAutomation);
-			else if (path[1] == L'd' && path[4] == L't') path.replace(0, 11, KaiPathJoin(Options.pathfull, L"Dictionary"));
+			else if (path[1] == L'd' && path[4] == L't') path.replace(0, 11, HikariPathJoin(Options.pathfull, L"Dictionary"));
 			else if (path[1] == L'l' && path[4] == L'a') path.replace(0, 6, firstAutomation);
-			else if (path[1] == L's' && path[4] == L'i') path.replace(0, 7, (tab) ? KaiPathDir(tab->SubsPath) : wxString(L""));
-			else if (path[1] == L't' && path[4] == L'p') path.replace(0, 5, KaiPathJoin(firstAutomation, L"temp"));
+			else if (path[1] == L's' && path[4] == L'i') path.replace(0, 7, (tab) ? HikariPathDir(tab->SubsPath) : wxString(L""));
+			else if (path[1] == L't' && path[4] == L'p') path.replace(0, 5, HikariPathJoin(firstAutomation, L"temp"));
 			else if (path[1] == L'u' && path[4] == L'r') path.replace(0, 5, firstAutomation);
-			else if (path[1] == L'v' && path[4] == L'e') path.replace(0, 6, (tab) ? KaiPathDir(tab->VideoPath) : wxString(L""));
+			else if (path[1] == L'v' && path[4] == L'e') path.replace(0, 6, (tab) ? HikariPathDir(tab->VideoPath) : wxString(L""));
 		}
 		push_value(L, path);
 		return 1;
@@ -507,8 +507,8 @@ namespace Auto{
 	LuaScript::LuaScript(wxString const& filename)
 		: filename(filename)
 	{
-		include_path.push_back(KaiPathDir(filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
-		include_path.push_back(KaiPathJoin(KaiPathJoin(KaiPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
+		include_path.push_back(HikariPathDir(filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
+		include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
 		Create();
 	}
 
@@ -520,8 +520,8 @@ namespace Auto{
 		, LowTime(_lowTime)
 		, HighTime(_highTime)
 	{
-		include_path.push_back(KaiPathDir(_filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
-		include_path.push_back(KaiPathJoin(KaiPathJoin(KaiPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
+		include_path.push_back(HikariPathDir(_filename, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR));
+		include_path.push_back(HikariPathJoin(HikariPathJoin(HikariPathJoin(Options.pathfull, L"Automation"), L"automation"), L"Include") + wxFileName::GetPathSeparator());
 		size_t i = 0;
 		size_t macrosSize = _macros.size();
 		if (macrosSize) {
@@ -722,9 +722,9 @@ namespace Auto{
 			fullpath = true;
 		}
 		if (!wxFileExists(*filepath)) { // Plain filename
-			if (fullpath){ *filepath = KaiPathName(*filepath); }
+			if (fullpath){ *filepath = HikariPathName(*filepath); }
 			for (auto const& dir : s->include_path) {
-				*filepath = KaiPathJoin(dir, *filename);
+				*filepath = HikariPathJoin(dir, *filename);
 				if (wxFileExists(*filepath))
 					break;
 			}
@@ -950,7 +950,7 @@ namespace Auto{
 		SAFE_DELETE(subsobj);
 
 		if (err) {
-			KaiLog(wxString::Format("Runtime error in Lua macro validation function:\n%s", get_string(L, -1)));
+			HikariLog(wxString::Format("Runtime error in Lua macro validation function:\n%s", get_string(L, -1)));
 			lua_pop(L, 2);
 			return false;
 		}
@@ -1016,7 +1016,7 @@ namespace Auto{
 		if (lua_isnumber(L, -1)) {
 			active_idx = lua_tointeger(L, -1) - original_offset;
 			if (active_idx < 0 || active_idx >= dialsCount) {
-				KaiLog(wxString::Format("Active row %d is out of bounds (must be 1-%u)", active_idx, dialsCount));
+				HikariLog(wxString::Format("Active row %d is out of bounds (must be 1-%u)", active_idx, dialsCount));
 				active_idx = original_active;
 			}
 			else
@@ -1034,7 +1034,7 @@ namespace Auto{
 					return;
 				int cur = lua_tointeger(L, -1) - original_offset;
 				if (cur < 0 || cur >= dialsCount) {
-					KaiLog(wxString::Format("Selected row %d is out of bounds (must be 1-%u)", cur, dialsCount));
+					HikariLog(wxString::Format("Selected row %d is out of bounds (must be 1-%u)", cur, dialsCount));
 					throw LuaForEachBreak();
 				}
 				if (active_idx == -1)
@@ -1079,7 +1079,7 @@ namespace Auto{
 
 		bool result = false;
 		if (err)
-			KaiLog(wxString::Format("Runtime error in Lua macro IsActive function:\n%s", get_string(L, -1)));
+			HikariLog(wxString::Format("Runtime error in Lua macro IsActive function:\n%s", get_string(L, -1)));
 		else
 			result = !!lua_toboolean(L, -1);
 
@@ -1250,23 +1250,23 @@ namespace Auto{
 			}
 			catch (const wchar_t *e) {
 				error_count++;
-				KaiLog(wxString::Format(_("Error loading Lua script: %s\n%s"), fn.wc_str(), e));
+				HikariLog(wxString::Format(_("Error loading Lua script: %s\n%s"), fn.wc_str(), e));
 			}
 			catch (...) {
 				error_count++;
-				KaiLog(wxString::Format(_("Unknown error loading Lua script: %s."), fn.wc_str()));
+				HikariLog(wxString::Format(_("Unknown error loading Lua script: %s."), fn.wc_str()));
 			}
 
 			more = dir.GetNext(&fn);
 		}
 
 		if (error_count > 0) {
-			KaiLog(_("One or more autoload scripts contain errors.\nSee the script descriptions for more information."));
+			HikariLog(_("One or more autoload scripts contain errors.\nSee the script descriptions for more information."));
 		}
 
 
 		//STime countTime(sw.Time());
-		//KaiLog("Upłynęło %sms",countTime.GetFormatted(SRT));
+		//HikariLog("Upłynęło %sms",countTime.GetFormatted(SRT));
 		finished = true;
 	}
 
@@ -1292,15 +1292,15 @@ namespace Auto{
 			}
 			catch (const wchar_t *e) {
 				error_count++;
-				KaiLog(wxString::Format(_("Error loading Lua script: %s\n%s"), onepath.c_str(), e));
+				HikariLog(wxString::Format(_("Error loading Lua script: %s\n%s"), onepath.c_str(), e));
 			}
 			catch (...) {
 				error_count++;
-				KaiLog(wxString::Format(_("Unknown error loading Lua script: %s."), onepath.c_str()));
+				HikariLog(wxString::Format(_("Unknown error loading Lua script: %s."), onepath.c_str()));
 			}
 		}
 		if (error_count > 0) {
-			KaiLog(_("At least one script in the subtitle file contains errors.\nSee the script descriptions for more information."));
+			HikariLog(_("At least one script in the subtitle file contains errors.\nSee the script descriptions for more information."));
 		}
 		scriptpaths = paths;
 		return true;
@@ -1323,7 +1323,7 @@ namespace Auto{
 		long res = wxExecute(cmdline);
 
 		if (!res) {
-			KaiMessageBox(_("Cannot start editor."), _("Automation error"), wxOK | wxICON_ERROR);
+			HikariMessageBox(_("Cannot start editor."), _("Automation error"), wxOK | wxICON_ERROR);
 		}
 	}
 
@@ -1342,7 +1342,7 @@ namespace Auto{
 		if (!c)
 			return;
 
-		HikariSubFrame *Kai = (HikariSubFrame*)c->GetGrandParent();
+		HikariSubFrame *Hikari = (HikariSubFrame*)c->GetGrandParent();
 		for (int j = (*bar)->GetMenuItemCount() - 1; j >= 4; j--){
 			(*bar)->Delete(j);
 		}
@@ -1373,9 +1373,9 @@ namespace Auto{
 				text << L"Script " << script->GetFilename() << L"-" << p;
 				MenuItem *mi = submenu->SetAccMenu(new MenuItem(start, macro->StrDisplay(), macro->StrHelp()), text);
 				mi->Enable(macro->IsEmpty()? true : macro->Validate(c));
-				Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+				Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 					if (evt.GetInt() == wxMOD_SHIFT){
-						Hkeys.OnMapHkey(-1, text, Kai, GLOBAL_HOTKEY, false);
+						Hkeys.OnMapHkey(-1, text, Hikari, GLOBAL_HOTKEY, false);
 					}
 					else{
 						//after reload the script menu will be untact but, 
@@ -1400,19 +1400,19 @@ namespace Auto{
 				strippedbug.Replace(L"\n", L"");
 				if (strippedbug.Len() > 100){ strippedbug = strippedbug.SubString(0, 100) + L"..."; }
 				submenu->Append(start, strippedbug, _("Error"));
-				Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
-					KaiMessageBox(script->GetDescription(), _("Full Lua error description"));
+				Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+					HikariMessageBox(script->GetDescription(), _("Full Lua error description"));
 				}, start);
 				start++;
 			}
 			submenu->AppendSeparator();
 			submenu->Append(start, _("Edit"), _("Edit"));
-			Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+			Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 				Automation::OnEdit(script->GetFilename());
 			}, start);
 			start++;
 			submenu->Append(start, _("Refresh"), _("Refresh"));
-			Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+			Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 				script->Reload();
 			}, start);
 			start++;
@@ -1432,9 +1432,9 @@ namespace Auto{
 				wxString text; text << L"Script " << script->GetFilename() << L"-" << p;
 				MenuItem *mi = submenu->SetAccMenu(new MenuItem(start, macro->StrDisplay(), macro->StrHelp()), text);
 				mi->Enable(macro->Validate(c));
-				Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+				Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 					if (evt.GetInt() == wxMOD_SHIFT){
-						Hkeys.OnMapHkey(-1, text, Kai, GLOBAL_HOTKEY, false);
+						Hkeys.OnMapHkey(-1, text, Hikari, GLOBAL_HOTKEY, false);
 					}
 					else{
 						macro->RunScript();
@@ -1447,19 +1447,19 @@ namespace Auto{
 				strippedbug.Replace(L"\n", L"");
 				if (strippedbug.Len() > 100){ strippedbug = strippedbug.SubString(0, 100) + L"..."; }
 				submenu->Append(start, strippedbug, _("Error"));
-				Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
-					KaiMessageBox(script->GetDescription(), _("Full Lua error description"));
+				Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+					HikariMessageBox(script->GetDescription(), _("Full Lua error description"));
 				}, start);
 				start++;
 			}
 			submenu->AppendSeparator();
 			submenu->Append(start, _("Edit"), _("Edit"));
-			Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+			Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 				Automation::OnEdit(script->GetFilename());
 			}, start);
 			start++;
 			submenu->Append(start, _("Refresh"), _("Refresh"));
-			Kai->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
+			Hikari->Bind(wxEVT_COMMAND_MENU_SELECTED, [=](wxCommandEvent &evt) {
 				script->Reload();
 			}, start);
 			start++;

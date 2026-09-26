@@ -25,7 +25,7 @@
 #include "Menu.h"
 #include <wx/regex.h>
 #include <wx/clipbrd.h>
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "Stylelistbox.h"
 #include "SubsFile.h"
 #include <regex>
@@ -113,7 +113,7 @@ TextEditor::TextEditor(wxWindow *parent, int id, bool _spell, const wxPoint& pos
 	int fw, fh;
 	GetTextExtent(L"#TWFfGH", &fw, &fh, nullptr, nullptr, &font);
 	fontHeight = fh;
-	scroll = new KaiScrollbar(this, 3333, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
+	scroll = new HikariScrollbar(this, 3333, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
 	scroll->SetCursor(wxCURSOR_DEFAULT);
 	scroll->SetScrollRate(30);
 	statusBarHeight = (Options.GetBool(TEXT_EDITOR_HIDE_STATUS_BAR)) ? 0 : fontHeight + 8;
@@ -859,7 +859,7 @@ void TextEditor::OnMouseEvent(wxMouseEvent& event)
 			wxArrayString suggs;
 			SpellChecker::Get()->Suggestions(err, suggs);
 
-			KaiListBox lw(this, suggs, _("Fix suggestions"));
+			HikariListBox lw(this, suggs, _("Fix suggestions"));
 			if (lw.ShowModal() == wxID_OK)
 			{
 				wxString suggestion = lw.GetSelection();
@@ -2393,7 +2393,7 @@ void TextEditor::ContextMenu(wxPoint mpos, int error)
 	}
 	else if (id == TEXTM_ADD && !err.IsEmpty()){
 		bool succ = SpellChecker::Get()->AddWord(err);
-		if (!succ){ KaiMessageBox(wxString::Format(_("Error. Word \"%s\" was not added."), err)); }
+		if (!succ){ HikariMessageBox(wxString::Format(_("Error. Word \"%s\" was not added."), err)); }
 		else{ CheckText(); EB->ClearErrs(); Refresh(false); }
 	}
 	else if (id >= TEXTM_SEEKWORDL && id <= TEXTM_SEEKWORDS){

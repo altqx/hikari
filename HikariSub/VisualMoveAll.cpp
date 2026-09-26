@@ -405,7 +405,7 @@ void MoveAll::ChangeInLines(bool all)
 			SAFE_DELETE(dummytext);
 			dummytext = tab->grid->GetVisible(&visible, 0, &selPositions);
 			if (selPositions.size() != sels.size()){
-				//KaiLog(L"Sizes mismatch");
+				//HikariLog(L"Sizes mismatch");
 				return;
 			}
 		}

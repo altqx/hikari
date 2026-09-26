@@ -16,9 +16,9 @@
 #pragma once
 #include "VisualClipPoint.h"
 #include "VisualClips.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "TabPanel.h"
 
 //#include "VisualDrawingShapes.h"
@@ -63,7 +63,7 @@ public:
 	};
 };
 
-class ShapesEdition : public KaiDialog
+class ShapesEdition : public HikariDialog
 {
 public:
 	ShapesEdition(TabPanel *_tab, const wxPoint& pos, std::vector<ShapesSetting>* _shapes, int curShape);
@@ -90,12 +90,12 @@ private:
 		ID_BUTTON_RESET_DEFAULT,
 		ID_BUTTON_GET_SHAPE_FROM_LINE
 	};
-	KaiChoice* shapeList;
-	KaiChoice* mode;
-	KaiChoice* scalingMode;
-	KaiTextCtrl* newShapeName;
-	KaiTextCtrl* shapeName;
-	KaiTextCtrl* shapeAsASS;
+	HikariChoice* shapeList;
+	HikariChoice* mode;
+	HikariChoice* scalingMode;
+	HikariTextCtrl* newShapeName;
+	HikariTextCtrl* shapeName;
+	HikariTextCtrl* shapeAsASS;
 	std::vector<ShapesSetting> shapes;
 	ShapesSetting currentShape;
 	int selection = 0;

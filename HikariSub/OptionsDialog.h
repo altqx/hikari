@@ -17,9 +17,9 @@
 
 #include "ListControls.h"
 #include "MappedButton.h"
-#include "KaiTreebook.h"
-#include "KaiListCtrl.h"
-#include "KaiDialog.h"
+#include "HikariTreebook.h"
+#include "HikariListCtrl.h"
+#include "HikariDialog.h"
 #include "TabPanel.h"
 
 #include <vector>
@@ -30,12 +30,12 @@ public:
 	ItemHotkey(const wxString &txt, const wxString &_accel, const idAndType &Id) : Item(){ name = txt; accel = _accel; hotkeyId = Id; }
 	virtual ~ItemHotkey(){
 	}
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed = nullptr);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed = nullptr);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	wxString GetName(){ return name; }
-	void OnMapHotkey(KaiListCtrl *theList, int y);
-	void OnResetHotkey(KaiListCtrl *theList, int y);
-	void OnDeleteHotkey(KaiListCtrl *theList, int y);
+	void OnMapHotkey(HikariListCtrl *theList, int y);
+	void OnResetHotkey(HikariListCtrl *theList, int y);
+	void OnDeleteHotkey(HikariListCtrl *theList, int y);
 	void Save();
 	void OnChangeHistory();
 	int OnVisibilityChange(int mode);
@@ -51,15 +51,15 @@ public:
 };
 
 
-class OptionsDialog : public KaiDialog
+class OptionsDialog : public HikariDialog
 {
 public:
 	OptionsDialog(wxWindow *parent);
 	virtual ~OptionsDialog();
-	KaiTreebook *OptionsTree;
-	KaiListCtrl *Shortcuts;
-	KaiChoice* Stylelist;
-	KaiChoice* Katlist;
+	HikariTreebook *OptionsTree;
+	HikariListCtrl *Shortcuts;
+	HikariChoice* Stylelist;
+	HikariChoice* Katlist;
 	MappedButton *okok;
 	void ConOpt(wxWindow *ctrl, CONFIG option);
 	static wxString *windowNames;
@@ -88,7 +88,7 @@ private:
 enum{
 	ID_COLOR_CONFIG = 1000,
 	ID_HOTKEYS_CONFIG = 2000,
-	ID_KAI_CHOICE = 10000,
+	ID_HIKARI_CHOICE = 10000,
 	ID_DICTIONARY_LANGUAGE,
 	ID_VSFILTER_PROVIDER,
 	ID_CONVERSION_STYLE,

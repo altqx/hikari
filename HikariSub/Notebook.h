@@ -121,7 +121,7 @@ private:
 	wxArrayString tabNames;
 	wxTimer tabsScroll;
 	HHOOK Hook;
-	HikariSubFrame *Kai;
+	HikariSubFrame *Hikari;
 	wxMutex closeTabMutex;
 
 	static LRESULT __stdcall PauseOnMinimalize(int code, WPARAM wParam, LPARAM lParam);

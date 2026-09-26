@@ -18,7 +18,7 @@
 
 #include "Demux.h"
 #include "LogHandler.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "Stylelistbox.h"
 #include "SubsGrid.h"
 #include "ProgressDialog.h"
@@ -43,7 +43,7 @@ bool Demux::Open(const wxString& filename)
 
 	indexer = FFMS_CreateIndexer(filename.utf8_str(), &errInfo);
 	if (!indexer) {
-		KaiLog(wxString::Format(_("Indexing error occurred: %s"), errInfo.Buffer)); return false;
+		HikariLog(wxString::Format(_("Indexing error occurred: %s"), errInfo.Buffer)); return false;
 	}
 	return true;
 }
@@ -84,7 +84,7 @@ bool Demux::GetSubtitles(SubsGrid* target)
 	// No tracks found
 	if (trackList.Count() == 0) {
 		Close();
-		KaiMessageBox(_("The file does not contain any subtitle tracks."));
+		HikariMessageBox(_("The file does not contain any subtitle tracks."));
 		return false;
 	}
 
@@ -95,7 +95,7 @@ bool Demux::GetSubtitles(SubsGrid* target)
 
 	// Pick a track
 	else {
-		KaiListBox tracks(target->GetParent(), trackNameList, _("Choose subtitle track"), true);
+		HikariListBox tracks(target->GetParent(), trackNameList, _("Choose subtitle track"), true);
 		//int choice = wxGetSingleChoiceIndex(_("Wybierz ścieżkę do wczytania:"), _("Znaleziono kilka ścieżek z napisami"), tracksNames);
 		if (tracks.ShowModal() != wxID_OK) {
 			Close();
@@ -177,7 +177,7 @@ bool Demux::GetSubtitles(SubsGrid* target)
 
 // Matroska wants attachment names in UTF-8, but muxers do write the local
 // code page instead. wxConvUTF8 rejects those bytes and hands back an empty
-// string, which KaiPathJoin and KaiPathName then turn back into the output
+// string, which HikariPathJoin and HikariPathName then turn back into the output
 // directory, so the font is stored under the directory path with no extension
 // left on it. Latin-1 cannot fail, so falling back to it keeps the bytes and
 // the extension when the name turns out not to be UTF-8 after all.
@@ -235,7 +235,7 @@ bool Demux::SaveFont(int i, const wxString& path, wxZipOutputStream* zip)
 	bool isgood = true;
 
 	if (zip) {
-		wxString fn = KaiPathName(path);
+		wxString fn = HikariPathName(path);
 		try {
 			isgood = zip->PutNextEntry(new Utf8ZipEntry(fn));
 			zip->Write((void*)attachment->Data, attachment->DataSize);

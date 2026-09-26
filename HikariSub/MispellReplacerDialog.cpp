@@ -21,7 +21,7 @@
 
 
 // header element of the results list
-void ReplacerResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void ReplacerResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool isOnCheckbox = event.GetX() < 19;
 	if ((_enter && isOnCheckbox) || (!enter && isOnCheckbox)){
@@ -56,7 +56,7 @@ void ReplacerResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool 
 	}
 }
 
-void ReplacerResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void ReplacerResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxSize ex = theList->GetTextExtent(name);
 	wxString bitmapName = (modified) ? L"checkbox_selected" : L"checkbox";
@@ -75,7 +75,7 @@ void ReplacerResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int
 	dc->SetBackgroundMode(wxTRANSPARENT);
 }
 
-wxSize ReplacerResultsHeader::GetTextExtents(KaiListCtrl *theList){
+wxSize ReplacerResultsHeader::GetTextExtents(HikariListCtrl *theList){
 	wxSize size = theList->GetTextExtent(name);
 	size.x += 28;
 	size.y += 4;
@@ -84,7 +84,7 @@ wxSize ReplacerResultsHeader::GetTextExtents(KaiListCtrl *theList){
 
 
 // Seek results element
-void ReplacerSeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void ReplacerSeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool isOnCheckbox = event.GetX() < 19;
 	if ((_enter && isOnCheckbox) || (!enter && isOnCheckbox)){
@@ -134,7 +134,7 @@ void ReplacerSeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool le
 	}
 }
 
-void ReplacerSeekResults::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void ReplacerSeekResults::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxString lineNum = wxString::Format(_("Line %i: "), idLine);
 	wxString lineAndNum = lineNum + name;
@@ -178,7 +178,7 @@ void ReplacerSeekResults::OnPaint(wxMemoryDC *dc, int x, int y, int width, int h
 	dc->SetTextForeground(Options.GetColour(theList->IsThisEnabled() ? WINDOW_TEXT : WINDOW_TEXT_INACTIVE));
 }
 
-wxSize ReplacerSeekResults::GetTextExtents(KaiListCtrl *theList){
+wxSize ReplacerSeekResults::GetTextExtents(HikariListCtrl *theList){
 	wxString lineNum = wxString::Format(_("Line %i: "), idLine);
 	wxString lineAndNum = lineNum + name;
 	wxSize size = theList->GetTextExtent(lineAndNum);
@@ -189,11 +189,11 @@ wxSize ReplacerSeekResults::GetTextExtents(KaiListCtrl *theList){
 
 
 FindResultDialog::FindResultDialog(wxWindow *parent, MisspellReplacer *_MR)
-	: KaiDialog(parent, -1, _("Search results"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Search results"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 	, MR(_MR)
 {
 	DialogSizer * main = new DialogSizer(wxVERTICAL);
-	ResultsList = new KaiListCtrl(this, 23323, wxDefaultPosition, wxSize(700, 300));
+	ResultsList = new HikariListCtrl(this, 23323, wxDefaultPosition, wxSize(700, 300));
 	ResultsList->InsertColumn(0, emptyString, TYPE_TEXT, -1);
 	ResultsList->SetHeaderHeight(0);
 	main->Add(ResultsList, 1, wxEXPAND | wxALL, 2);
@@ -201,7 +201,7 @@ FindResultDialog::FindResultDialog(wxWindow *parent, MisspellReplacer *_MR)
 	Bind(CHOOSE_RESULT, [=, this](wxCommandEvent &evt){
 		ReplacerSeekResults *results = (ReplacerSeekResults*)evt.GetClientData();
 		if (!results){
-			KaiLogDebug("Ups, seek results disappeared");
+			HikariLogDebug("Ups, seek results disappeared");
 			return;
 		}
 		//maybe some day I will add changing in folder

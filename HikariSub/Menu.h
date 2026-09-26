@@ -27,8 +27,8 @@
 
 class MenuEvent;
 class Menu;
-class KaiToolbar;
-class KaiScrollbar;
+class HikariToolbar;
+class HikariScrollbar;
 
 wxDECLARE_EVENT(EVT_MENU_OPENED, MenuEvent);
 
@@ -154,7 +154,7 @@ private:
 protected:
 	wxBitmap *bmp;
 	Menu *parent;
-	KaiScrollbar *scroll;
+	HikariScrollbar *scroll;
 	bool subMenuIsShown;
 	static MenuDialog* ParentMenu;
 	static MenuDialog* lastActiveMenu;
@@ -186,7 +186,7 @@ public:
 	virtual ~Menu(){
 		Clear();
 	};
-	MenuItem *AppendTool(KaiToolbar *ktb, int id, wxString text, wxString help,
+	MenuItem *AppendTool(HikariToolbar *ktb, int id, wxString text, wxString help,
 		wxBitmap *bitmap, bool enable = true, Menu *SubMenu = 0);
 	MenuItem *Append(int _id, const wxString& _label, const wxString& _help = emptyString,
 		bool _enable = true, wxBitmap *_icon = nullptr, Menu* Submenu = nullptr, byte _type = 0);

@@ -317,7 +317,7 @@ namespace Auto{
 			return strndup(boost::locale::to_upper(str));
 		}
 		catch (std::exception const& e) {
-			KaiLog(wxString::Format("uppercase error: " + wxString(e.what())));
+			HikariLog(wxString::Format("uppercase error: " + wxString(e.what())));
 			*err = _strdup(e.what());
 			return nullptr;
 		}
@@ -328,7 +328,7 @@ namespace Auto{
 			return strndup(boost::locale::to_lower(str));
 		}
 		catch (std::exception const& e) {
-			KaiLog(wxString::Format("lowercase error: " + wxString(e.what())));
+			HikariLog(wxString::Format("lowercase error: " + wxString(e.what())));
 			*err = _strdup(e.what());
 			return nullptr;
 		}
@@ -338,7 +338,7 @@ namespace Auto{
 			return strndup(boost::locale::fold_case(str));
 		}
 		catch (std::exception const& e) {
-			KaiLog(wxString::Format("foldcase error: " + wxString(e.what())));
+			HikariLog(wxString::Format("foldcase error: " + wxString(e.what())));
 			*err = _strdup(e.what());
 			return nullptr;
 		}

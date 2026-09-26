@@ -28,7 +28,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{180DEA91-88AF-4FEB-8B82-7F3716E118BB}</ProjectGuid>
-    <RootNamespace>Kaiplayer</RootNamespace>
+    <RootNamespace>HikariSub</RootNamespace>
     <ProjectName>HikariSub</ProjectName>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -356,8 +356,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     </ClCompile>
     <ClCompile Include="DummyVideo.cpp" />
     <ClCompile Include="FontCatalogList.cpp" />
-    <ClCompile Include="KaiGauge.cpp" />
-    <ClCompile Include="KaiPanel.cpp" />
+    <ClCompile Include="HikariGauge.cpp" />
+    <ClCompile Include="HikariPanel.cpp" />
     <ClCompile Include="LineParse.cpp" />
     <ClCompile Include="AssBlend.cpp" />
     <ClCompile Include="D3D9Device.cpp" />
@@ -381,23 +381,23 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClCompile Include="FontEnumerator.cpp" />
     <ClCompile Include="GraphicsD2D.cpp" />
     <ClCompile Include="HotkeysNaming.cpp" />
-    <ClCompile Include="KaiCheckBox.cpp" />
-    <ClCompile Include="KaiDialog.cpp" />
-    <ClCompile Include="KaiFrame.cpp" />
-    <ClCompile Include="KaiListCtrl.cpp" />
-    <ClCompile Include="KaiMessageBox.cpp" />
+    <ClCompile Include="HikariCheckBox.cpp" />
+    <ClCompile Include="HikariDialog.cpp" />
+    <ClCompile Include="HikariFrame.cpp" />
+    <ClCompile Include="HikariListCtrl.cpp" />
+    <ClCompile Include="HikariMessageBox.cpp" />
     <ClCompile Include="HikariSubApp.cpp" />
-    <ClCompile Include="KaiRadioButton.cpp" />
-    <ClCompile Include="KaiScrollbar.cpp" />
-    <ClCompile Include="KaiSlider.cpp" />
-    <ClCompile Include="KaiStaticBoxSizer.cpp" />
-    <ClCompile Include="KaiStaticText.cpp" />
-    <ClCompile Include="KaiStatusBar.cpp" />
-    <ClCompile Include="KaiTabBar.cpp" />
-    <ClCompile Include="KaiTextCtrl.cpp" />
-    <ClCompile Include="KaiTextValidator.cpp" />
-    <ClCompile Include="KaiTreeBook.cpp" />
-    <ClCompile Include="KaiWindowResizer.cpp" />
+    <ClCompile Include="HikariRadioButton.cpp" />
+    <ClCompile Include="HikariScrollbar.cpp" />
+    <ClCompile Include="HikariSlider.cpp" />
+    <ClCompile Include="HikariStaticBoxSizer.cpp" />
+    <ClCompile Include="HikariStaticText.cpp" />
+    <ClCompile Include="HikariStatusBar.cpp" />
+    <ClCompile Include="HikariTabBar.cpp" />
+    <ClCompile Include="HikariTextCtrl.cpp" />
+    <ClCompile Include="HikariTextValidator.cpp" />
+    <ClCompile Include="HikariTreeBook.cpp" />
+    <ClCompile Include="HikariWindowResizer.cpp" />
     <ClCompile Include="KeyframesLoader.cpp" />
     <ClCompile Include="ListControls.cpp" />
     <ClCompile Include="LogHandler.cpp" />
@@ -524,9 +524,9 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="DummyVideo.h" />
     <ClInclude Include="ModificationChecker.h" />
     <ClInclude Include="FontCatalogList.h" />
-    <ClInclude Include="KaiGauge.h" />
+    <ClInclude Include="HikariGauge.h" />
     <ClInclude Include="HikariSubFrame.h" />
-    <ClInclude Include="KaiPanel.h" />
+    <ClInclude Include="HikariPanel.h" />
     <ClInclude Include="LineParse.h" />
     <ClInclude Include="Notebook.h" />
     <ClInclude Include="AssBlend.h" />
@@ -551,25 +551,25 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <ClInclude Include="FindReplaceResultsDialog.h" />
     <ClInclude Include="FontEnumerator.h" />
     <ClInclude Include="GraphicsD2D.h" />
-    <ClInclude Include="KaiWindowResizer.h" />
+    <ClInclude Include="HikariWindowResizer.h" />
     <ClInclude Include="KeyframesLoader.h" />
     <ClInclude Include="HotkeysNaming.h" />
-    <ClInclude Include="KaiCheckBox.h" />
-    <ClInclude Include="KaiDialog.h" />
-    <ClInclude Include="KaiFrame.h" />
-    <ClInclude Include="KaiListCtrl.h" />
-    <ClInclude Include="KaiMessageBox.h" />
+    <ClInclude Include="HikariCheckBox.h" />
+    <ClInclude Include="HikariDialog.h" />
+    <ClInclude Include="HikariFrame.h" />
+    <ClInclude Include="HikariListCtrl.h" />
+    <ClInclude Include="HikariMessageBox.h" />
     <ClInclude Include="HikariSubApp.h" />
-    <ClInclude Include="KaiRadioButton.h" />
-    <ClInclude Include="KaiScrollbar.h" />
-    <ClInclude Include="KaiSlider.h" />
-    <ClInclude Include="KaiStaticBoxSizer.h" />
-    <ClInclude Include="KaiStaticText.h" />
-    <ClInclude Include="KaiStatusBar.h" />
-    <ClInclude Include="KaiTabBar.h" />
-    <ClInclude Include="KaiTextCtrl.h" />
-    <ClInclude Include="KaiTextValidator.h" />
-    <ClInclude Include="KaiTreebook.h" />
+    <ClInclude Include="HikariRadioButton.h" />
+    <ClInclude Include="HikariScrollbar.h" />
+    <ClInclude Include="HikariSlider.h" />
+    <ClInclude Include="HikariStaticBoxSizer.h" />
+    <ClInclude Include="HikariStaticText.h" />
+    <ClInclude Include="HikariStatusBar.h" />
+    <ClInclude Include="HikariTabBar.h" />
+    <ClInclude Include="HikariTextCtrl.h" />
+    <ClInclude Include="HikariTextValidator.h" />
+    <ClInclude Include="HikariTreebook.h" />
     <ClInclude Include="ListControls.h" />
     <ClInclude Include="LogHandler.h" />
     <ClInclude Include="MappedButton.h" />
@@ -648,7 +648,6 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File "$(SolutionDir)Thirdparty\gen-gitp
     <None Include="Bitmaps\button_link.bmp" />
     <None Include="Bitmaps\eyedropper.cur" />
     <None Include="bitmaps\rcdata1.bin" />
-    <None Include="kai.ico" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Thirdparty\Build\Boost\Boost.vcxproj">

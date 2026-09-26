@@ -15,11 +15,11 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
 
 
-class AutoSavesRemoving : public KaiDialog 
+class AutoSavesRemoving : public HikariDialog 
 {
 public:
 	AutoSavesRemoving(wxWindow *parent);
@@ -32,9 +32,9 @@ private:
 	void ClearAll(int id);
 	void ClearByDate(int id);
 
-	KaiChoice* day;
-	KaiChoice* month;
-	KaiChoice* year;
+	HikariChoice* day;
+	HikariChoice* month;
+	HikariChoice* year;
 
 	enum {
 		ID_REMOVE_SELECTED_AUTO_SAVES = 12341,

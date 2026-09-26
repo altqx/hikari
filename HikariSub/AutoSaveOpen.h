@@ -15,10 +15,10 @@
 
 #pragma once
 
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
-#include "KaiTextCtrl.h"
-#include "KaiCheckBox.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
+#include "HikariTextCtrl.h"
+#include "HikariCheckBox.h"
 #include "MappedButton.h"
 #include <map>
 
@@ -53,10 +53,10 @@ public:
 	} // returns x>y
 };
 
-class AutoSaveOpen : public KaiDialog 
+class AutoSaveOpen : public HikariDialog 
 {
 public:
-	AutoSaveOpen(HikariSubFrame *_Kai);
+	AutoSaveOpen(HikariSubFrame *_Hikari);
 	virtual ~AutoSaveOpen();
 private:
 	void FindFiles();
@@ -66,13 +66,13 @@ private:
 	void OnOkClick(wxCommandEvent& evt);
 	void OnListClick(wxCommandEvent& evt);
 	void OnEnter(wxCommandEvent& evt);
-	KaiListCtrl *filesList;
-	KaiListCtrl *versionList;
-	KaiTextCtrl* seekingText;
-	KaiCheckBox* seekAllWords;
+	HikariListCtrl *filesList;
+	HikariListCtrl *versionList;
+	HikariTextCtrl* seekingText;
+	HikariCheckBox* seekAllWords;
 	MappedButton* filterList;
 	MappedButton* open;
-	HikariSubFrame* Kai;
+	HikariSubFrame* Hikari;
 	typedef std::map<wxString, wxString, DateCompare> versionMap;
 	std::vector<versionMap*> versions;
 	wxArrayString paths;

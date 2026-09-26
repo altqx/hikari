@@ -16,10 +16,10 @@
 #pragma once
 
 
-#include "KaiRadioButton.h"
+#include "HikariRadioButton.h"
 #include "MappedButton.h"
-#include "KaiTextCtrl.h"
-#include "KaiDialog.h"
+#include "HikariTextCtrl.h"
+#include "HikariDialog.h"
 #include <vector>
 #include <map>
 #include <set>
@@ -108,23 +108,23 @@ public:
 };
 
 
-class FontCollectorDialog : public KaiDialog
+class FontCollectorDialog : public HikariDialog
 {
 	friend class FontCollector;
 public:
 	FontCollectorDialog(wxWindow *parent, FontCollector *_fc);
 	virtual ~FontCollectorDialog();
 	
-	KaiTextCtrl *path;
+	HikariTextCtrl *path;
 	MappedButton *choosepath;
-	KaiRadioBox *opts;
-	KaiTextCtrl *console;
+	HikariRadioBox *opts;
+	HikariTextCtrl *console;
 	MappedButton *bok;
 	MappedButton *bStartOnAllTabs;
 	MappedButton *bOpenFontFolder;
 	MappedButton *bClose;
-	KaiCheckBox *fromMKV;
-	KaiCheckBox *subsdir;
+	HikariCheckBox *fromMKV;
+	HikariCheckBox *subsdir;
 	wxString destdir;
 	wxString copypath;
 	wxColour warning;

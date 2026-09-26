@@ -15,15 +15,15 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 #include "NumCtrl.h"
 #include "ColorPicker.h"
 #include "TimeCtrl.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 
-class DummyVideo : public KaiDialog
+class DummyVideo : public HikariDialog
 {
 public:
 	DummyVideo(wxWindow* parent);
@@ -31,14 +31,14 @@ public:
 	wxString GetDummyText();
 private:
 	void OnResolutionChoose(wxCommandEvent& evt);
-	KaiChoice* videoResolution;
+	HikariChoice* videoResolution;
 	NumCtrl* videoResolutionWidth;
 	NumCtrl* videoResolutionHeight;
 	ButtonColorPicker* color;
-	KaiCheckBox* pattern;
-	KaiChoice* frameRate;
+	HikariCheckBox* pattern;
+	HikariChoice* frameRate;
 	TimeCtrl* duration;
-	KaiStaticText* frameDuration;
+	HikariStaticText* frameDuration;
 
 	enum {
 		ID_VIDEO_RESOLUTION = 5678

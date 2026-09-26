@@ -187,61 +187,61 @@
     <ClCompile Include="HotkeysNaming.cpp">
       <Filter>H</Filter>
     </ClCompile>
-    <ClCompile Include="KaiCheckBox.cpp">
+    <ClCompile Include="HikariCheckBox.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiDialog.cpp">
+    <ClCompile Include="HikariDialog.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiFrame.cpp">
+    <ClCompile Include="HikariFrame.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiGauge.cpp">
+    <ClCompile Include="HikariGauge.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiListCtrl.cpp">
+    <ClCompile Include="HikariListCtrl.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiMessageBox.cpp">
+    <ClCompile Include="HikariMessageBox.cpp">
       <Filter>K</Filter>
     </ClCompile>
     <ClCompile Include="HikariSubApp.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiPanel.cpp">
+    <ClCompile Include="HikariPanel.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiRadioButton.cpp">
+    <ClCompile Include="HikariRadioButton.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiScrollbar.cpp">
+    <ClCompile Include="HikariScrollbar.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiSlider.cpp">
+    <ClCompile Include="HikariSlider.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiStaticBoxSizer.cpp">
+    <ClCompile Include="HikariStaticBoxSizer.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiStaticText.cpp">
+    <ClCompile Include="HikariStaticText.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiStatusBar.cpp">
+    <ClCompile Include="HikariStatusBar.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiTabBar.cpp">
+    <ClCompile Include="HikariTabBar.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiTextCtrl.cpp">
+    <ClCompile Include="HikariTextCtrl.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiTextValidator.cpp">
+    <ClCompile Include="HikariTextValidator.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiTreeBook.cpp">
+    <ClCompile Include="HikariTreeBook.cpp">
       <Filter>K</Filter>
     </ClCompile>
-    <ClCompile Include="KaiWindowResizer.cpp">
+    <ClCompile Include="HikariWindowResizer.cpp">
       <Filter>K</Filter>
     </ClCompile>
     <ClCompile Include="KaraokeSplitting.cpp">
@@ -627,61 +627,61 @@
     <ClInclude Include="HotkeysNaming.h">
       <Filter>H</Filter>
     </ClInclude>
-    <ClInclude Include="KaiCheckBox.h">
+    <ClInclude Include="HikariCheckBox.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiDialog.h">
+    <ClInclude Include="HikariDialog.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiFrame.h">
+    <ClInclude Include="HikariFrame.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiGauge.h">
+    <ClInclude Include="HikariGauge.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiListCtrl.h">
+    <ClInclude Include="HikariListCtrl.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiMessageBox.h">
+    <ClInclude Include="HikariMessageBox.h">
       <Filter>K</Filter>
     </ClInclude>
     <ClInclude Include="HikariSubApp.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiPanel.h">
+    <ClInclude Include="HikariPanel.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiRadioButton.h">
+    <ClInclude Include="HikariRadioButton.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiScrollbar.h">
+    <ClInclude Include="HikariScrollbar.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiSlider.h">
+    <ClInclude Include="HikariSlider.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiStaticBoxSizer.h">
+    <ClInclude Include="HikariStaticBoxSizer.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiStaticText.h">
+    <ClInclude Include="HikariStaticText.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiStatusBar.h">
+    <ClInclude Include="HikariStatusBar.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiTabBar.h">
+    <ClInclude Include="HikariTabBar.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiTextCtrl.h">
+    <ClInclude Include="HikariTextCtrl.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiTextValidator.h">
+    <ClInclude Include="HikariTextValidator.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiTreebook.h">
+    <ClInclude Include="HikariTreebook.h">
       <Filter>K</Filter>
     </ClInclude>
-    <ClInclude Include="KaiWindowResizer.h">
+    <ClInclude Include="HikariWindowResizer.h">
       <Filter>K</Filter>
     </ClInclude>
     <ClInclude Include="KaraokeSplitting.h">
@@ -928,9 +928,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="kai.ico">
-      <Filter>Resource Files</Filter>
-    </None>
     <None Include="Bitmaps\blank.cur">
       <Filter>Resource Files</Filter>
     </None>

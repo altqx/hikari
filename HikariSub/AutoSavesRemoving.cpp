@@ -17,7 +17,7 @@
 #include "AutoSavesRemoving.h"
 //#include "config.h"
 #include "MappedButton.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 //#include "Notebook.h"
 //#include "LogHandler.h"
 #include <ctime>
@@ -26,31 +26,31 @@
 
 
 AutoSavesRemoving::AutoSavesRemoving(wxWindow* parent)
-	: KaiDialog(parent, -1, _("Remove temporary files"))
+	: HikariDialog(parent, -1, _("Remove temporary files"))
 {
 	std::time_t t = std::time(0);
 	std::tm* now = std::localtime(&t);
 
 	DialogSizer* main = new DialogSizer(wxVERTICAL);
 	//date
-	KaiStaticBoxSizer* date = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Remove files older than"));
+	HikariStaticBoxSizer* date = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Remove files older than"));
 	wxBoxSizer* dateAndRemoveAll = new wxBoxSizer(wxHORIZONTAL);
 	wxArrayString days;
 	for (int i = 1; i < 32; i++) {
 		days.Add(std::to_wstring(i));
 	}
-	day = new KaiChoice(this, ID_DATE_DAY_LIST, wxDefaultPosition, wxDefaultSize, days);
+	day = new HikariChoice(this, ID_DATE_DAY_LIST, wxDefaultPosition, wxDefaultSize, days);
 	day->SetSelection(now->tm_mday - 1);
 	wxString months[] = { _("January"), _("February"), _("March"), _("April"),
 		_("May"), _("June"), _("July"), _("August"), _("September"),
 		_("October"), _("November"), _("December") };
-	month = new KaiChoice(this, ID_DATE_MONTH_LIST, wxDefaultPosition, wxDefaultSize, 12, months);
+	month = new HikariChoice(this, ID_DATE_MONTH_LIST, wxDefaultPosition, wxDefaultSize, 12, months);
 	
 	wxArrayString years;
 	for (int i = 2012; i <= now->tm_year + 1900; i++) {
 		years.Add(std::to_wstring(i));
 	}
-	year = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, years);
+	year = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, years);
 
 	Bind(wxEVT_COMMAND_CHOICE_SELECTED, [=, this](wxCommandEvent& evt) {
 		int sely = year->GetSelection();
@@ -85,7 +85,7 @@ AutoSavesRemoving::AutoSavesRemoving(wxWindow* parent)
 	date->Add(year, 0, wxALL, 3);
 
 	//remove all
-	KaiStaticBoxSizer* removeAll = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Remove from all folders"));
+	HikariStaticBoxSizer* removeAll = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Remove from all folders"));
 	MappedButton* removeAllTemporary =
 		new MappedButton(this, ID_REMOVE_ALL, _("Remove all files"));
 	MappedButton* removeAllTemporaryByDate =
@@ -98,7 +98,7 @@ AutoSavesRemoving::AutoSavesRemoving(wxWindow* parent)
 	dateAndRemoveAll->Add(removeAll, 1, wxEXPAND, 0);
 
 	//auto saves
-	KaiStaticBoxSizer* autoSaves = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Auto save"));
+	HikariStaticBoxSizer* autoSaves = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Auto save"));
 	MappedButton* removeSelectedAutoSaves =
 		new MappedButton(this, ID_REMOVE_SELECTED_AUTO_SAVES, _("Remove selected autosave files"));
 	MappedButton* removeAllAutoSaves =
@@ -111,7 +111,7 @@ AutoSavesRemoving::AutoSavesRemoving(wxWindow* parent)
 	autoSaves->Add(removeAutoSavesByDate, 1, wxALL | wxEXPAND, 3);
 
 	//indices
-	KaiStaticBoxSizer* indices = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("FFMS2 index"));
+	HikariStaticBoxSizer* indices = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("FFMS2 index"));
 	MappedButton* removeSelectedIndices =
 		new MappedButton(this, ID_REMOVE_SELECTED_INDICES, _("Remove selected index files"));
 	MappedButton* removeAllIndices =
@@ -124,7 +124,7 @@ AutoSavesRemoving::AutoSavesRemoving(wxWindow* parent)
 	indices->Add(removeIndicesByDate, 1, wxALL | wxEXPAND, 3);
 
 	//audio cache
-	KaiStaticBoxSizer* audioCache = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Audio cache"));
+	HikariStaticBoxSizer* audioCache = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Audio cache"));
 	MappedButton* removeSelectedAudioCache =
 		new MappedButton(this, ID_REMOVE_SELECTED_AUDIO_CACHES, _("Remove selected audio cache files"));
 	MappedButton* removeAllAudioCache =
@@ -208,7 +208,7 @@ void AutoSavesRemoving::ClearAll(int id)
 		}
 		return;
 	}
-	KaiLog(_("Cannot open temporary files folder"));
+	HikariLog(_("Cannot open temporary files folder"));
 }
 
 void AutoSavesRemoving::ClearByDate(int id)
@@ -236,7 +236,7 @@ void AutoSavesRemoving::ClearByDate(int id)
 	HANDLE h = FindFirstFileW(findPath.wc_str(), &data);
 	if (h == INVALID_HANDLE_VALUE)
 	{
-		KaiLog(_("Cannot open temporary files folder"));
+		HikariLog(_("Cannot open temporary files folder"));
 		return;
 	}
 

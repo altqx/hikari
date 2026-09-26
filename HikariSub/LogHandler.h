@@ -44,19 +44,19 @@ public:
 	//void LogMessage1(const wxString &format, ...);
 };
 
-static void KaiLog(const wxString &text){
+static void HikariLog(const wxString &text){
 	LogHandler * handler = LogHandler::Get();
 	if (handler)
 		handler->LogMessage(text);
 }
 
-static void KaiLogSilent(const wxString &text) {
+static void HikariLogSilent(const wxString &text) {
 	LogHandler * handler = LogHandler::Get();
 	if (handler)
 		handler->LogMessage(text, false);
 }
 
-static void KaiLogDebug(const wxString &text){
+static void HikariLogDebug(const wxString &text){
 #if _DEBUG
 	LogHandler * handler = LogHandler::Get();
 	if (handler)

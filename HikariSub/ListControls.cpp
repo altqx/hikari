@@ -16,7 +16,7 @@
 
 #include "ListControls.h"
 #include "config.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "HikariSubFrame.h"
 #include <wx/msw/private.h>
 #include "config.h"
@@ -39,7 +39,7 @@
 //	return wxBitmap(img);
 //}
 
-void KaiChoice::CalcMaxWidth(wxSize *result, bool changex, bool changey){
+void HikariChoice::CalcMaxWidth(wxSize *result, bool changex, bool changey){
 	int tx = 0, ty = 0;
 	size_t isize = list->size();
 	for (size_t i = 0; i < isize; i++){
@@ -65,7 +65,7 @@ void KaiChoice::CalcMaxWidth(wxSize *result, bool changex, bool changey){
 }
 
 
-KaiChoice::KaiChoice(wxWindow *parent, int id, const wxPoint& pos,
+HikariChoice::HikariChoice(wxWindow *parent, int id, const wxPoint& pos,
 	const wxSize& size, int n, const wxString choices[],
 	long style, const wxValidator& validator)
 	:wxWindow(parent, id, pos, size, style/* | wxWANTS_CHARS*/)
@@ -94,10 +94,10 @@ KaiChoice::KaiChoice(wxWindow *parent, int id, const wxPoint& pos,
 	entries[1].Set(wxACCEL_NORMAL, WXK_DOWN, 7866);
 	wxAcceleratorTable accel(2, entries);
 	SetAcceleratorTable(accel);
-	//Bind(wxEVT_CHAR_HOOK, &KaiChoice::OnKeyHook, this);
+	//Bind(wxEVT_CHAR_HOOK, &HikariChoice::OnKeyHook, this);
 }
 
-KaiChoice::KaiChoice(wxWindow *parent, int id, const wxPoint& pos,
+HikariChoice::HikariChoice(wxWindow *parent, int id, const wxPoint& pos,
 	const wxSize& size, const wxArrayString &choices,
 	long style, const wxValidator& validator)
 	:wxWindow(parent, id, pos, size, style/* | wxWANTS_CHARS*/)
@@ -127,13 +127,13 @@ KaiChoice::KaiChoice(wxWindow *parent, int id, const wxPoint& pos,
 	entries[1].Set(wxACCEL_NORMAL, WXK_DOWN, 7866);
 	wxAcceleratorTable accel(2, entries);
 	SetAcceleratorTable(accel);
-	//Bind(wxEVT_CHAR_HOOK, &KaiChoice::OnKeyHook, this);
+	//Bind(wxEVT_CHAR_HOOK, &HikariChoice::OnKeyHook, this);
 }
 
-KaiChoice::KaiChoice(wxWindow *parent, int id, const wxString &comboBoxText, const wxPoint& pos,
+HikariChoice::HikariChoice(wxWindow *parent, int id, const wxString &comboBoxText, const wxPoint& pos,
 	const wxSize& size, const wxArrayString &choices,
 	long style, const wxValidator& validator)
-	:wxWindow(parent, id, pos, size, style | KAI_COMBO_BOX /*| wxWANTS_CHARS*/)
+	:wxWindow(parent, id, pos, size, style | HIKARI_COMBO_BOX /*| wxWANTS_CHARS*/)
 	, bmp(nullptr)
 	, list(nullptr)
 	, itemList(nullptr)
@@ -160,11 +160,11 @@ KaiChoice::KaiChoice(wxWindow *parent, int id, const wxString &comboBoxText, con
 		choice = FindString(comboBoxText);
 		return;
 	}
-	choiceText = new KaiTextCtrl(this, 27789, comboBoxText, wxPoint(1, 1),
+	choiceText = new HikariTextCtrl(this, 27789, comboBoxText, wxPoint(1, 1),
 		wxSize(newSize.x - 22, newSize.y - 2), wxBORDER_NONE | wxTE_PROCESS_ENTER | wxTE_NOHIDESEL, validator);
-	choiceText->Bind(wxEVT_ENTER_WINDOW, &KaiChoice::OnMouseEvent, this, 27789);
-	choiceText->Bind(wxEVT_LEAVE_WINDOW, &KaiChoice::OnMouseEvent, this, 27789);
-	choiceText->Bind(wxEVT_MOUSEWHEEL, &KaiChoice::OnMouseEvent, this, 27789);
+	choiceText->Bind(wxEVT_ENTER_WINDOW, &HikariChoice::OnMouseEvent, this, 27789);
+	choiceText->Bind(wxEVT_LEAVE_WINDOW, &HikariChoice::OnMouseEvent, this, 27789);
+	choiceText->Bind(wxEVT_MOUSEWHEEL, &HikariChoice::OnMouseEvent, this, 27789);
 	choiceText->Bind(wxEVT_SET_FOCUS, [this](wxFocusEvent &evt){
 		Refresh(false); evt.Skip();
 	}, 27789);
@@ -185,7 +185,7 @@ KaiChoice::KaiChoice(wxWindow *parent, int id, const wxString &comboBoxText, con
 	Bind(wxEVT_COMMAND_TEXT_UPDATED, [this](wxCommandEvent &evt){
 		SetSelectionByPartialName(choiceText->GetValue());
 	}, 27789);
-	//Connect(ID_TDEL,ID_TRETURN,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&KaiTextCtrl::OnAccelerator);
+	//Connect(ID_TDEL,ID_TRETURN,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&HikariTextCtrl::OnAccelerator);
 	choiceText->Bind(wxEVT_COMMAND_MENU_SELECTED, [this](wxCommandEvent &evt){
 		wxKeyEvent kevt;
 		kevt.m_keyCode = WXK_UP;
@@ -212,18 +212,18 @@ KaiChoice::KaiChoice(wxWindow *parent, int id, const wxString &comboBoxText, con
 	entries[1].Set(wxACCEL_NORMAL, WXK_DOWN, 7866);
 	wxAcceleratorTable accel(2, entries);
 	SetAcceleratorTable(accel);
-	choiceText->Bind(wxEVT_KEY_DOWN, &KaiChoice::OnKeyHook, this);
-	//Bind(wxEVT_CHAR_HOOK, &KaiChoice::OnKeyHook, this);
+	choiceText->Bind(wxEVT_KEY_DOWN, &HikariChoice::OnKeyHook, this);
+	//Bind(wxEVT_CHAR_HOOK, &HikariChoice::OnKeyHook, this);
 }
 
-KaiChoice::~KaiChoice()
+HikariChoice::~HikariChoice()
 {
 	delete list;
 	delete disabled;
 	delete bmp;
 }
 
-void KaiChoice::SetToolTip(const wxString &tooltip)
+void HikariChoice::SetToolTip(const wxString &tooltip)
 {
 	if (tooltip != emptyString){ toolTip = tooltip; }
 	wxString tt = (choice >= 0 || (choiceText && !choiceText->GetValue().empty())) ?
@@ -235,20 +235,20 @@ void KaiChoice::SetToolTip(const wxString &tooltip)
 	if (choiceText){ choiceText->SetToolTip(tt); }
 }
 
-bool KaiChoice::SetBackgroundColour(COLOR col)
+bool HikariChoice::SetBackgroundColour(COLOR col)
 {
 	if (choiceText){ choiceText->SetBackgroundColour(col); }
 	return true;
 }
 
-bool KaiChoice::SetForegroundColour(COLOR col)
+bool HikariChoice::SetForegroundColour(COLOR col)
 {
 	if (choiceText){ choiceText->SetForegroundColour(col); }
 	foreground = col;
 	return true;
 }
 
-void KaiChoice::OnSize(wxSizeEvent& event)
+void HikariChoice::OnSize(wxSizeEvent& event)
 {
 	wxSize newSize = GetClientSize();
 	if (choiceText){
@@ -261,7 +261,7 @@ void KaiChoice::OnSize(wxSizeEvent& event)
 	Refresh(false);
 }
 
-void KaiChoice::OnPaint(wxPaintEvent& event)
+void HikariChoice::OnPaint(wxPaintEvent& event)
 {
 	//wxColour background = GetParent()->GetBackgroundColour();
 	int w = 0;
@@ -282,7 +282,7 @@ void KaiChoice::OnPaint(wxPaintEvent& event)
 	}
 	tdc.SetBrush(wxBrush((enter && !clicked) ? Options.GetColour(BUTTON_BACKGROUND_HOVER) :
 		(clicked) ? Options.GetColour(BUTTON_BACKGROUND_PUSHED) :
-		(enabled) ? Options.GetColour((GetWindowStyle() &KAI_COMBO_BOX) ? TEXT_FIELD_BACKGROUND :
+		(enabled) ? Options.GetColour((GetWindowStyle() &HIKARI_COMBO_BOX) ? TEXT_FIELD_BACKGROUND :
 		(HasFocus()) ? BUTTON_BACKGROUND_ON_FOCUS : BUTTON_BACKGROUND) :
 		Options.GetColour(WINDOW_BACKGROUND_INACTIVE)));
 	tdc.SetPen(wxPen((enter && !clicked) ? Options.GetColour(BUTTON_BORDER_HOVER) :
@@ -327,7 +327,7 @@ void KaiChoice::OnPaint(wxPaintEvent& event)
 	dc.Blit(0, 0, w, h, &tdc, 0, 0);
 }
 
-void KaiChoice::OnMouseEvent(wxMouseEvent &event)
+void HikariChoice::OnMouseEvent(wxMouseEvent &event)
 {
 	if (!listIsShown){
 		if (event.LeftDown() && list->size() > 0){
@@ -366,7 +366,7 @@ void KaiChoice::OnMouseEvent(wxMouseEvent &event)
 		}
 	}
 	if (event.GetWheelRotation() != 0) {
-		if (HasFlag(KAI_SCROLL_ON_FOCUS) && !HasFocus() && !(choiceText && choiceText->HasFocus())){
+		if (HasFlag(HIKARI_SCROLL_ON_FOCUS) && !HasFocus() && !(choiceText && choiceText->HasFocus())){
 			event.Skip(); return;
 		}
 		if (list->size() < 1){ event.Skip(); return; }
@@ -383,7 +383,7 @@ void KaiChoice::OnMouseEvent(wxMouseEvent &event)
 }
 
 
-void KaiChoice::OnKeyPress(wxKeyEvent &event)
+void HikariChoice::OnKeyPress(wxKeyEvent &event)
 {
 	int key = event.GetKeyCode();
 	/*if (key == WXK_TAB) {
@@ -408,12 +408,12 @@ void KaiChoice::OnKeyPress(wxKeyEvent &event)
 	}
 }
 
-void KaiChoice::OnKeyHook(wxKeyEvent &event)
+void HikariChoice::OnKeyHook(wxKeyEvent &event)
 {
 	if (event.GetKeyCode() == WXK_RETURN && itemList && itemList->IsShown()){
 
 		itemList->EndPartialModal(itemList->sel);
-		wxCommandEvent evt((HasFlag(KAI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		wxCommandEvent evt((HasFlag(HIKARI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		this->ProcessEvent(evt);
 		return;
 	}
@@ -425,7 +425,7 @@ void KaiChoice::OnKeyHook(wxKeyEvent &event)
 	event.Skip();
 }
 
-void KaiChoice::OnArrow(wxCommandEvent &evt)
+void HikariChoice::OnArrow(wxCommandEvent &evt)
 {
 	int id = evt.GetId();
 
@@ -443,7 +443,7 @@ void KaiChoice::OnArrow(wxCommandEvent &evt)
 	SetTextSelection(0, -1);
 }
 
-void KaiChoice::ShowList()
+void HikariChoice::ShowList()
 {
 	listIsShown = true;
 	wxSize listSize = GetSize();
@@ -454,7 +454,7 @@ void KaiChoice::ShowList()
 }
 
 
-void KaiChoice::SetSelection(int sel, bool changeText)
+void HikariChoice::SetSelection(int sel, bool changeText)
 {
 	if (sel >= (int)list->size()){ return; }
 	choice = sel;
@@ -473,29 +473,29 @@ void KaiChoice::SetSelection(int sel, bool changeText)
 	else{ SetToolTip(toolTip); }
 }
 
-void KaiChoice::SetTextSelection(long start, long end)
+void HikariChoice::SetTextSelection(long start, long end)
 {
 	if (choiceText)
 		choiceText->SetSelection(start, end);
 }
 
-void KaiChoice::Clear()
+void HikariChoice::Clear()
 {
 	list->Clear();
 }
 
-int KaiChoice::Append(const wxString &what)
+int HikariChoice::Append(const wxString &what)
 {
 	list->Add(what);
 	return list->size() - 1;
 }
 
-void KaiChoice::Append(const wxArrayString &itemsArray)
+void HikariChoice::Append(const wxArrayString &itemsArray)
 {
 	list->insert(list->end(), itemsArray.begin(), itemsArray.end());
 }
 
-void KaiChoice::PutArray(wxArrayString *arr)
+void HikariChoice::PutArray(wxArrayString *arr)
 {
 	if (!arr)
 		return;
@@ -519,12 +519,12 @@ void KaiChoice::PutArray(wxArrayString *arr)
 	Refresh(false);
 }
 
-int KaiChoice::GetCount()
+int HikariChoice::GetCount()
 {
 	return list->size();
 }
 
-void KaiChoice::EnableItem(int numItem, bool enable)
+void HikariChoice::EnableItem(int numItem, bool enable)
 {
 	auto disabledResult = disabled->find(numItem);
 	if (enable && disabledResult != disabled->end()){
@@ -536,7 +536,7 @@ void KaiChoice::EnableItem(int numItem, bool enable)
 
 }
 
-int KaiChoice::FindString(const wxString &text, bool caseSensitive)
+int HikariChoice::FindString(const wxString &text, bool caseSensitive)
 {
 	if (text.empty())
 		return -1;
@@ -544,12 +544,12 @@ int KaiChoice::FindString(const wxString &text, bool caseSensitive)
 	return list->Index(text, caseSensitive);
 }
 
-void KaiChoice::Delete(int num, int nRemove/*=1*/)
+void HikariChoice::Delete(int num, int nRemove/*=1*/)
 {
 	list->RemoveAt(num);
 }
 
-void KaiChoice::SendEvent(int _choice)
+void HikariChoice::SendEvent(int _choice)
 {
 	enter = false;
 	clicked = false;
@@ -557,7 +557,7 @@ void KaiChoice::SendEvent(int _choice)
 		//choice = _choice; //Refresh(false);
 		if (choiceText){ choiceText->SetModified(true); }
 		SetSelection(_choice);
-		wxCommandEvent evt((HasFlag(KAI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		wxCommandEvent evt((HasFlag(HIKARI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		this->ProcessEvent(evt);
 	}
 	else{
@@ -568,7 +568,7 @@ void KaiChoice::SendEvent(int _choice)
 
 }
 
-void KaiChoice::SetSelectionByPartialName(const wxString &PartialName, bool setText/* = false*/, bool selectOnList/*=false*/)
+void HikariChoice::SetSelectionByPartialName(const wxString &PartialName, bool setText/* = false*/, bool selectOnList/*=false*/)
 {
 	wxCommandEvent evt(wxEVT_COMMAND_COMBOBOX_SELECTED, GetId());
 	this->ProcessEvent(evt);
@@ -624,20 +624,20 @@ done:
 	Refresh(false);
 }
 
-void KaiChoice::SetValue(const wxString &text){
+void HikariChoice::SetValue(const wxString &text){
 	if (choiceText){ choiceText->SetValue(text); }
 	else{ txtchoice = text; }
 	choice = -1;
 }
 
-wxString KaiChoice::GetValue(){
+wxString HikariChoice::GetValue(){
 	if (choiceText){
 		return choiceText->GetValue();
 	}
 	return txtchoice;
 }
 
-void KaiChoice::ChangeListElementName(int position, const wxString& newElementName)
+void HikariChoice::ChangeListElementName(int position, const wxString& newElementName)
 {
 	if (position < 0 || position >= list->size())
 		return;
@@ -651,7 +651,7 @@ void KaiChoice::ChangeListElementName(int position, const wxString& newElementNa
 		Refresh(false);
 }
 
-void KaiChoice::SelectChoice(int _choice, bool select, bool sendEvent){
+void HikariChoice::SelectChoice(int _choice, bool select, bool sendEvent){
 	choice = _choice;
 	txtchoice = (*list)[choice];
 	if (choiceText){
@@ -665,14 +665,14 @@ void KaiChoice::SelectChoice(int _choice, bool select, bool sendEvent){
 		Refresh(false);
 	}
 	if (sendEvent){
-		wxCommandEvent evt((HasFlag(KAI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		wxCommandEvent evt((HasFlag(HIKARI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		this->ProcessEvent(evt);
 	}
 	if (choice >= 0){ SetToolTip(); }
 	else{ SetToolTip(toolTip); }
 }
 
-wxString KaiChoice::GetString(int pos){
+wxString HikariChoice::GetString(int pos){
 	if (choiceText){
 		return choiceText->GetValue();
 	}
@@ -682,12 +682,12 @@ wxString KaiChoice::GetString(int pos){
 	return (*list)[pos];
 }
 
-void KaiChoice::Insert(const wxString &what, int position){
+void HikariChoice::Insert(const wxString &what, int position){
 	int pos = MID(0, position, (int)list->size() - 1);
 	list->Insert(what, pos);
 }
 
-void KaiChoice::Sort()
+void HikariChoice::Sort()
 {
 	list->Sort([](const wxString &first, const wxString &second){
 		const std::collate<wchar_t>& f = std::use_facet<std::collate<wchar_t>>(HikariSubFrame::GetLocale());
@@ -700,17 +700,17 @@ void KaiChoice::Sort()
 	);
 }
 
-void KaiChoice::OnActivate(wxFocusEvent &evt)
+void HikariChoice::OnActivate(wxFocusEvent &evt)
 {
 	Refresh(false);
 }
 
-bool KaiChoice::HasFocus()
+bool HikariChoice::HasFocus()
 {
 	return (wxWindow::HasFocus() || (choiceText && choiceText->HasFocus()));
 }
 
-void KaiChoice::SetFocus()
+void HikariChoice::SetFocus()
 {
 	if (choiceText) { 
 		choiceText->SetFocus();
@@ -719,12 +719,12 @@ void KaiChoice::SetFocus()
 	else{ wxWindow::SetFocus(); }
 }
 
-void KaiChoice::SetMaxLength(int maxLen)
+void HikariChoice::SetMaxLength(int maxLen)
 {
 	if (choiceText){ choiceText->SetMaxLength(maxLen); }
 }
 
-bool KaiChoice::SetFont(const wxFont &font)
+bool HikariChoice::SetFont(const wxFont &font)
 {
 	wxWindow::SetFont(font);
 	if (choiceText){
@@ -738,7 +738,7 @@ bool KaiChoice::SetFont(const wxFont &font)
 	return true;
 }
 
-bool KaiChoice::IsModified()
+bool HikariChoice::IsModified()
 {
 	if (choiceText && choiceText->IsModified())
 		return true;
@@ -746,24 +746,24 @@ bool KaiChoice::IsModified()
 	return false;
 }
 
-void KaiChoice::SetModified(bool modified)
+void HikariChoice::SetModified(bool modified)
 {
 	if (choiceText) {
 		choiceText->SetModified(modified);
 	}
 }
 
-wxIMPLEMENT_ABSTRACT_CLASS(KaiChoice, wxWindow);
+wxIMPLEMENT_ABSTRACT_CLASS(HikariChoice, wxWindow);
 
-BEGIN_EVENT_TABLE(KaiChoice, wxWindow)
-EVT_MOUSE_EVENTS(KaiChoice::OnMouseEvent)
-EVT_PAINT(KaiChoice::OnPaint)
-EVT_SIZE(KaiChoice::OnSize)
-EVT_ERASE_BACKGROUND(KaiChoice::OnEraseBackground)
-EVT_SET_FOCUS(KaiChoice::OnActivate)
-EVT_KILL_FOCUS(KaiChoice::OnActivate)
-EVT_KEY_UP(KaiChoice::OnKeyPress)
-EVT_MENU_RANGE(7865, 7866, KaiChoice::OnArrow)
+BEGIN_EVENT_TABLE(HikariChoice, wxWindow)
+EVT_MOUSE_EVENTS(HikariChoice::OnMouseEvent)
+EVT_PAINT(HikariChoice::OnPaint)
+EVT_SIZE(HikariChoice::OnSize)
+EVT_ERASE_BACKGROUND(HikariChoice::OnEraseBackground)
+EVT_SET_FOCUS(HikariChoice::OnActivate)
+EVT_KILL_FOCUS(HikariChoice::OnActivate)
+EVT_KEY_UP(HikariChoice::OnKeyPress)
+EVT_MENU_RANGE(7865, 7866, HikariChoice::OnArrow)
 END_EVENT_TABLE()
 
 static int maxVisible = 20;
@@ -782,7 +782,7 @@ PopupList::PopupList(wxWindow *DialogParent, wxArrayString *list, std::map<int, 
 , dismissTimer(this, 27798)
 {
 	int fw = 0;
-	bool isFontList = (Parent->GetWindowStyle() & KAI_FONT_LIST) != 0;
+	bool isFontList = (Parent->GetWindowStyle() & HIKARI_FONT_LIST) != 0;
 	if (isFontList) {
 		wxFont parentFont = DialogParent->GetFont();
 		int fsize = parentFont.GetPointSize();
@@ -905,7 +905,7 @@ void PopupList::OnMouseEvent(wxMouseEvent &evt)
 	wxSize sz = GetClientSize();
 	if (leftdown || evt.LeftUp()){
 		if (!GetScreenRect().Contains(wxGetMousePosition())){
-			// KaiChoice opens the list on the button *down*, so the matching
+			// HikariChoice opens the list on the button *down*, so the matching
 			// up arrives here, over the control rather than over the list.
 			// Dismissing on it closed the list as fast as it opened.
 			if (evt.LeftUp() && openingClick){
@@ -947,7 +947,7 @@ void PopupList::OnMouseEvent(wxMouseEvent &evt)
 void PopupList::OnPaint(wxPaintEvent &event)
 {
 	wxString previewText;
-	bool isFontList = (Parent->GetWindowStyle() & KAI_FONT_LIST) != 0;
+	bool isFontList = (Parent->GetWindowStyle() & HIKARI_FONT_LIST) != 0;
 	if(isFontList)
 		previewText = Options.GetString(STYLE_PREVIEW_TEXT);
 
@@ -963,8 +963,8 @@ void PopupList::OnPaint(wxPaintEvent &event)
 	if (itemsize > maxVisible){
 		maxsize = maxVisible;
 		if (!scroll){
-			int thickness = KaiScrollbar::CalculateThickness(this);
-			scroll = new KaiScrollbar(this, -1, wxPoint(wxMax(0, w - thickness - 1), 1), wxSize(thickness, wxMax(0, h - 2)), wxVERTICAL);
+			int thickness = HikariScrollbar::CalculateThickness(this);
+			scroll = new HikariScrollbar(this, -1, wxPoint(wxMax(0, w - thickness - 1), 1), wxSize(thickness, wxMax(0, h - 2)), wxVERTICAL);
 			scroll->SetScrollRate(3);
 		}
 		scroll->SetScrollbar(scPos, maxVisible, itemsize, maxVisible - 1);
@@ -1087,8 +1087,8 @@ void PopupList::EndPartialModal(int ReturnId)
 	DropMouse();
 	if (activePopup == this){ activePopup = nullptr; }
 	Hide();
-	((KaiChoice*)Parent)->SetFocus();
-	((KaiChoice*)Parent)->SendEvent(ReturnId);
+	((HikariChoice*)Parent)->SetFocus();
+	((HikariChoice*)Parent)->SendEvent(ReturnId);
 }
 
 void PopupList::OnDismissTimer(wxTimerEvent& event)
@@ -1109,12 +1109,12 @@ void PopupList::OnKeyPress(wxKeyEvent &event)
 {
 	/*if (event.GetKeyCode() == WXK_RETURN){
 		EndPartialModal(sel);
-		wxCommandEvent evt((HasFlag(KAI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
+		wxCommandEvent evt((HasFlag(HIKARI_COMBO_BOX)) ? wxEVT_COMMAND_COMBOBOX_SELECTED : wxEVT_COMMAND_CHOICE_SELECTED, GetId());
 		this->ProcessEvent(evt);
 		}
 		else if (event.GetKeyCode() == WXK_ESCAPE){
 		EndPartialModal(-3);
-		((KaiChoice*)Parent)->listIsShown = false;
+		((HikariChoice*)Parent)->listIsShown = false;
 		}
 		else */if (event.GetKeyCode() == WXK_UP || event.GetKeyCode() == WXK_DOWN){
 			int step = (event.GetKeyCode() == WXK_DOWN) ? 1 : -1;
@@ -1133,7 +1133,7 @@ void PopupList::OnKeyPress(wxKeyEvent &event)
 				sel = itemsList->size() - 1;
 				scPos = sel;
 			}
-			((KaiChoice*)Parent)->SelectChoice(sel, true, false);
+			((HikariChoice*)Parent)->SelectChoice(sel, true, false);
 			Refresh(false);
 		}
 }

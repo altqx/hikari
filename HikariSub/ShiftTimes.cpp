@@ -20,16 +20,16 @@
 #include "Stylelistbox.h"
 #include "HikariSubFrame.h"
 #include "EditBox.h"
-#include "KaiDialog.h"
-#include "KaiMessageBox.h"
-#include "KaiPanel.h"
+#include "HikariDialog.h"
+#include "HikariMessageBox.h"
+#include "HikariPanel.h"
 #include "TabPanel.h"
 #include "SubsGrid.h"
 #include "VideoBox.h"
 #include "Provider.h"
 #include "AudioBox.h"
 
-class ProfileEdition : public KaiDialog
+class ProfileEdition : public HikariDialog
 {
 public:
 	ProfileEdition(wxWindow* parent, const wxArrayString &profiles, const wxPoint &pos);
@@ -41,19 +41,19 @@ public:
 	};
 private:
 	void OnOKClick(wxCommandEvent &evt);
-	KaiChoice *profilesList;
+	HikariChoice *profilesList;
 	const wxArrayString &profilesNames;
 	bool overwrite = false;
 	wxPoint dialogPos;
 };
 
 ProfileEdition::ProfileEdition(wxWindow* parent, const wxArrayString &profiles, const wxPoint &pos)
-	:KaiDialog(parent, -1, _("Select the name of the profile"), pos)
+	:HikariDialog(parent, -1, _("Select the name of the profile"), pos)
 	, profilesNames(profiles)
 {
 	DialogSizer *dSizer = new DialogSizer(wxVERTICAL);
-	KaiStaticText *description = new KaiStaticText(this, -1, _("Write the name of the profile\nor select existing profile to overwrite"));
-	KaiTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
+	HikariStaticText *description = new HikariStaticText(this, -1, _("Write the name of the profile\nor select existing profile to overwrite"));
+	HikariTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	wxArrayString excludes;
 	excludes.Add(L"\\");
 	excludes.Add(L"/");
@@ -61,7 +61,7 @@ ProfileEdition::ProfileEdition(wxWindow* parent, const wxArrayString &profiles, 
 	excludes.Add(L"|");
 	excludes.Add(L"\f");
 	valid.SetExcludes(excludes);
-	profilesList = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, profiles, 0, valid);
+	profilesList = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, profiles, 0, valid);
 	profilesList->SetMaxLength(25);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
 	MappedButton *OK = new MappedButton(this, wxID_OK, L"OK");
@@ -82,7 +82,7 @@ void ProfileEdition::OnOKClick(wxCommandEvent &evt)
 	wxString thisName = profilesList->GetValue();
 	for (auto name : profilesNames){
 		if (name == thisName){
-			int result = KaiMessageBox(wxString::Format(_("Do you want to overwrite profile of name %s"),
+			int result = HikariMessageBox(wxString::Format(_("Do you want to overwrite profile of name %s"),
 				profilesList->GetString(profilesList->GetSelection())), _("Info"), wxYES_NO, GetParent(), dialogPos);
 			if (result != wxYES)
 				return;
@@ -99,15 +99,15 @@ void ProfileEdition::OnOKClick(wxCommandEvent &evt)
 
 
 ShiftTimes::ShiftTimes(wxWindow* parent, HikariSubFrame* kfparent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
-	: KaiPanel(parent, id, pos, size, style/* | wxVERTICAL*/)
+	: HikariPanel(parent, id, pos, size, style/* | wxVERTICAL*/)
 {
-	Kai = kfparent;
+	Hikari = kfparent;
 	tab = (TabPanel *)parent;
 	form = ASS;
-	panel = new KaiPanel(this, -1);
+	panel = new HikariPanel(this, -1);
 	SetForegroundColour(Options.GetColour(WINDOW_TEXT));
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
-	scroll = new KaiScrollbar(this, 5558, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
+	scroll = new HikariScrollbar(this, 5558, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
 	scroll->Hide();
 	scroll->SetScrollRate(30);
 	isscrollbar = false;
@@ -201,7 +201,7 @@ void ShiftTimes::Contents(bool addopts)
 
 void ShiftTimes::OnAddStyles(wxCommandEvent& event)
 {
-	wxString result = GetCheckedElements(Kai);
+	wxString result = GetCheckedElements(Hikari);
 	Stylestext->SetValue(result);
 	if (result != emptyString){ 
 		WhichLines->SetSelection(5); 
@@ -264,18 +264,18 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 	Main->Add(coll, 0, wxEXPAND | wxLEFT | wxRIGHT, 6);
 
 	wxArrayString choices;
-	KaiStaticBoxSizer *linesizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Which lines"));
+	HikariStaticBoxSizer *linesizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Which lines"));
 	choices.Add(_("All lines"));
 	choices.Add(_("Selected lines"));
 	choices.Add(_("From the selected line"));
 	choices.Add(_("All times higher and equal"));
 	choices.Add(_("All times lower and equal"));
 	choices.Add(_("According to the selected styles"));
-	WhichLines = new KaiChoice(panel, 22888, wxDefaultPosition, wxDefaultSize, choices, KAI_SCROLL_ON_FOCUS);
+	WhichLines = new HikariChoice(panel, 22888, wxDefaultPosition, wxDefaultSize, choices, HIKARI_SCROLL_ON_FOCUS);
 
 	wxBoxSizer *stylesizer = new wxBoxSizer(wxHORIZONTAL);
 	AddStyles = new MappedButton(panel, ID_BSTYLE, L"+", emptyString, wxDefaultPosition, wxDefaultSize, -1, MAKE_SQUARE_BUTTON);
-	Stylestext = new KaiTextCtrl(panel, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+	Stylestext = new HikariTextCtrl(panel, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	stylesizer->Add(AddStyles, 0, wxALL, 2);
 	stylesizer->Add(Stylestext, 1, wxEXPAND | wxBOTTOM | wxTOP | wxRIGHT, 2);
 
@@ -284,7 +284,7 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 	
 	if (normal){
 		//profiles
-		profileSizer = new KaiStaticBoxSizer(wxHORIZONTAL, panel, _("Profile editing"));
+		profileSizer = new HikariStaticBoxSizer(wxHORIZONTAL, panel, _("Profile editing"));
 		NewProfile = new MappedButton(panel, 31229, L"+", _("Adding and editing profiles"),
 			wxDefaultPosition, wxDefaultSize, -1, MAKE_SQUARE_BUTTON);
 		Bind(wxEVT_COMMAND_BUTTON_CLICKED, &ShiftTimes::OnAddProfile, this, 31229);
@@ -294,12 +294,12 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		wxArrayString profileList;
 		GetProfilesNames(profileList);
 #ifdef _WIN32
-		ProfilesList = new KaiChoice(panel, 31231, wxDefaultPosition, wxDefaultSize, profileList);
+		ProfilesList = new HikariChoice(panel, 31231, wxDefaultPosition, wxDefaultSize, profileList);
 #else
-		// wxGTK can mis-size an empty KaiChoice from wxDefaultSize in this compact
+		// wxGTK can mis-size an empty HikariChoice from wxDefaultSize in this compact
 		// horizontal sizer.  Match the adjacent profile buttons so the empty profile
 		// choice stays Windows-compact instead of using GTK's taller text extent.
-		ProfilesList = new KaiChoice(panel, 31231, wxDefaultPosition,
+		ProfilesList = new HikariChoice(panel, 31231, wxDefaultPosition,
 			wxSize(100, NewProfile->GetMinSize().GetHeight()), profileList);
 #endif
 		Bind(wxEVT_COMMAND_CHOICE_SELECTED, &ShiftTimes::OnChangeProfile, this, 31231);
@@ -307,14 +307,14 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		profileSizer->Add(RemoveProfile, 0, wxALIGN_CENTER_VERTICAL | wxBOTTOM | wxTOP | wxRIGHT, 2);
 		profileSizer->Add(ProfilesList, 1, wxALIGN_CENTER_VERTICAL | wxBOTTOM | wxTOP | wxRIGHT, 2);
 		//time frame
-		KaiStaticBoxSizer *timesizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Time"));
+		HikariStaticBoxSizer *timesizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Time"));
 		wxGridSizer *timegrid = new wxGridSizer(2, 0, 0);
 		MoveTime = new MappedButton(panel, GLOBAL_SHIFT_TIMES, _("Shift"), _("Shift subtitle times"), wxDefaultPosition, wxSize(60, -1), GLOBAL_HOTKEY);
 		TimeText = new TimeCtrl(panel, 22890, L"0:00:00.00", wxDefaultPosition, wxSize(60, -1), wxALIGN_CENTER | wxTE_PROCESS_ENTER);
-		Forward = new KaiRadioButton(panel, 22891, _("Forward"));
-		Backward = new KaiRadioButton(panel, 22891, _("Backward"));
-		DisplayFrames = new KaiCheckBox(panel, 31221, _("Frames"));
-		MoveTagTimes = new KaiCheckBox(panel, 22889, _("Tag times"));
+		Forward = new HikariRadioButton(panel, 22891, _("Forward"));
+		Backward = new HikariRadioButton(panel, 22891, _("Backward"));
+		DisplayFrames = new HikariCheckBox(panel, 31221, _("Frames"));
+		MoveTagTimes = new HikariCheckBox(panel, 22889, _("Tag times"));
 		Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &ShiftTimes::OnChangeDisplayUnits, this, 31221);
 		Bind(NUMBER_CHANGED, &ShiftTimes::OnEdition, this, 22890);
 		timegrid->Add(TimeText, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
@@ -328,20 +328,20 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 
 
 		//ramka przesuwania wg audio / wideo
-		KaiStaticBoxSizer *VAtiming = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Shift by video / audio"));
+		HikariStaticBoxSizer *VAtiming = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Shift by video / audio"));
 
 		wxBoxSizer *SE = new wxBoxSizer(wxHORIZONTAL);
-		StartVAtime = new KaiRadioButton(panel, 22891, _("Beginning"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-		EndVAtime = new KaiRadioButton(panel, 22891, _("End"));
+		StartVAtime = new HikariRadioButton(panel, 22891, _("Beginning"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+		EndVAtime = new HikariRadioButton(panel, 22891, _("End"));
 
 		SE->Add(StartVAtime, 1, wxEXPAND | wxLEFT | wxRIGHT, 2);
 		SE->Add(EndVAtime, 1, wxEXPAND | wxRIGHT, 2);
 
-		MoveToVideoTime = new KaiCheckBox(panel, ID_VIDEO, _("Move the marker\nto video time"));
+		MoveToVideoTime = new HikariCheckBox(panel, ID_VIDEO, _("Move the marker\nto video time"));
 		MoveToVideoTime->SetForegroundColour(WINDOW_WARNING_ELEMENTS);
 		MoveToVideoTime->Enable(false);
 
-		MoveToAudioTime = new KaiCheckBox(panel, ID_AUDIO, _("Move the marker\nto audio time"));
+		MoveToAudioTime = new HikariCheckBox(panel, ID_AUDIO, _("Move the marker\nto audio time"));
 		MoveToAudioTime->SetForegroundColour(WINDOW_WARNING_ELEMENTS);
 		MoveToAudioTime->Enable(false);
 
@@ -352,23 +352,23 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		VAtiming->Add(MoveToAudioTime, 1, wxEXPAND | wxLEFT, 2);
 		//VAtiming->Add(picker,0,wxEXPAND|wxLEFT,2);
 
-		KaiStaticBoxSizer *timessizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("A method of time shift"));
+		HikariStaticBoxSizer *timessizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("A method of time shift"));
 		choices.clear();
 		choices.Add(_("Both times"));
 		choices.Add(_("The starting time"));
 		choices.Add(_("End time"));
 
-		WhichTimes = new KaiChoice(panel, 22888, wxDefaultPosition, wxDefaultSize, choices, KAI_SCROLL_ON_FOCUS);
+		WhichTimes = new HikariChoice(panel, 22888, wxDefaultPosition, wxDefaultSize, choices, HIKARI_SCROLL_ON_FOCUS);
 		WhichTimes->Enable(form != TMP);
 
 		timessizer->Add(WhichTimes, 0, wxEXPAND | wxRIGHT | wxTOP | wxLEFT, 2);
 
-		KaiStaticBoxSizer *cesizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Correction end times"));
+		HikariStaticBoxSizer *cesizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Correction end times"));
 		choices.clear();
 		choices.Add(_("Leave unchanged"));
 		choices.Add(_("Adjust overlapping times"));
 		choices.Add(_("New times"));
-		EndTimeCorrection = new KaiChoice(panel, 22888, wxDefaultPosition, wxSize(130, -1), choices, KAI_SCROLL_ON_FOCUS);
+		EndTimeCorrection = new HikariChoice(panel, 22888, wxDefaultPosition, wxSize(130, -1), choices, HIKARI_SCROLL_ON_FOCUS);
 		EndTimeCorrection->SetSelection(0);
 		cesizer->Add(EndTimeCorrection, 0, wxEXPAND | wxLEFT | wxRIGHT, 2);
 
@@ -388,15 +388,15 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 	}
 	else{
 		int pe = Options.GetInt(POSTPROCESSOR_ON);
-		liosizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Lead-in/lead-out"));
+		liosizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Lead-in/lead-out"));
 		MoveTime = new MappedButton(panel, GLOBAL_SHIFT_TIMES, _("Run post processor"), _("Run post processor"), wxDefaultPosition, wxDefaultSize, GLOBAL_HOTKEY);
 		Main->Add(MoveTime, 0, wxEXPAND | wxTOP | wxLEFT | wxRIGHT, 6);
 		wxBoxSizer *leadinSizer = new wxBoxSizer(wxHORIZONTAL);
 		wxBoxSizer *leadoutSizer = new wxBoxSizer(wxHORIZONTAL);
-		LeadIn = new KaiCheckBox(panel, -1, _("Lead-in"), wxDefaultPosition, wxSize(-1, -1));
+		LeadIn = new HikariCheckBox(panel, -1, _("Lead-in"), wxDefaultPosition, wxSize(-1, -1));
 		LeadIn->SetValue((pe & 1) > 0);
 		LITime = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_LEAD_IN), -10000, 10000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
-		LeadOut = new KaiCheckBox(panel, -1, _("Lead-out"), wxDefaultPosition, wxSize(-1, -1));
+		LeadOut = new HikariCheckBox(panel, -1, _("Lead-out"), wxDefaultPosition, wxSize(-1, -1));
 		LeadOut->SetValue((pe & 2) > 0);
 		LOTime = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_LEAD_OUT), -10000, 10000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
 
@@ -408,8 +408,8 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		liosizer->Add(leadinSizer, 1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 2);
 		liosizer->Add(leadoutSizer, 1, wxEXPAND | wxLEFT | wxRIGHT, 2);
 
-		consizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Set times as continuous"));
-		Continous = new KaiCheckBox(panel, -1, _("Enable"));
+		consizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Set times as continuous"));
+		Continous = new HikariCheckBox(panel, -1, _("Enable"));
 		Continous->SetValue((pe & 4) > 0);
 
 		consizer->Add(Continous, 0, wxEXPAND | wxALL, 2);
@@ -419,16 +419,16 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		ThresStart = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_THRESHOLD_START), 0, 10000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
 		ThresEnd = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_THRESHOLD_END), 0, 10000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
 
-		ThresStartSizer->Add(new KaiStaticText(panel, -1, _("Start time threshold"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		ThresStartSizer->Add(new HikariStaticText(panel, -1, _("Start time threshold"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		ThresStartSizer->Add(ThresStart, 0);
-		ThresEndSizer->Add(new KaiStaticText(panel, -1, _("End time threshold"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		ThresEndSizer->Add(new HikariStaticText(panel, -1, _("End time threshold"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		ThresEndSizer->Add(ThresEnd, 0);
 
 		consizer->Add(ThresStartSizer, 1, wxEXPAND | wxBOTTOM | wxRIGHT, 2);
 		consizer->Add(ThresEndSizer, 1, wxEXPAND | wxBOTTOM | wxRIGHT, 2);
 
-		snapsizer = new KaiStaticBoxSizer(wxVERTICAL, panel, _("Snap to keyframes"));
-		SnapKF = new KaiCheckBox(panel, -1, _("Enable"));
+		snapsizer = new HikariStaticBoxSizer(wxVERTICAL, panel, _("Snap to keyframes"));
+		SnapKF = new HikariCheckBox(panel, -1, _("Enable"));
 		SnapKF->Enable(false);
 		SnapKF->SetValue((pe & 8) > 0);
 		snapsizer->Add(SnapKF, 0, wxEXPAND | wxALL, 2);
@@ -442,13 +442,13 @@ void ShiftTimes::CreateControls(bool normal /*= true*/)
 		BeforeEnd = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_KEYFRAME_BEFORE_END), 0, 1000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
 		AfterEnd = new NumCtrl(panel, -1, Options.GetString(POSTPROCESSOR_KEYFRAME_AFTER_END), 0, 1000, true, wxDefaultPosition, wxSize(40, -1), SCROLL_ON_FOCUS);
 
-		BeforeStartSizer->Add(new KaiStaticText(panel, -1, _("Before the start of time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		BeforeStartSizer->Add(new HikariStaticText(panel, -1, _("Before the start of time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		BeforeStartSizer->Add(BeforeStart, 0);
-		AfterStartSizer->Add(new KaiStaticText(panel, -1, _("After the start time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		AfterStartSizer->Add(new HikariStaticText(panel, -1, _("After the start time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		AfterStartSizer->Add(AfterStart, 0);
-		BeforeEndSizer->Add(new KaiStaticText(panel, -1, _("Before the end time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		BeforeEndSizer->Add(new HikariStaticText(panel, -1, _("Before the end time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		BeforeEndSizer->Add(BeforeEnd, 0);
-		AfterEndSizer->Add(new KaiStaticText(panel, -1, _("After the end time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
+		AfterEndSizer->Add(new HikariStaticText(panel, -1, _("After the end time"), wxDefaultPosition, wxSize(-1, -1)), 1, wxEXPAND | wxLEFT, 4);
 		AfterEndSizer->Add(AfterEnd, 0);
 
 		snapsizer->Add(BeforeStartSizer, 1, wxEXPAND | wxBOTTOM | wxRIGHT, 2);
@@ -674,7 +674,7 @@ void ShiftTimes::CollapsePane(wxCommandEvent &event)
 	Freeze();
 	panel->Destroy();
 	LeadIn = nullptr;
-	panel = new KaiPanel(this, -1);
+	panel = new HikariPanel(this, -1);
 	CreateControls(!collapsed);
 	Thaw();
 	if (collapsed){
@@ -970,12 +970,12 @@ void ShiftTimes::OnRemoveProfile(wxCommandEvent& event)
 	plPos = ClientToScreen(plPos);
 	//here it's possible rather it needs info
 	if (selectedProfile < 0){
-		KaiMessageBox(_("There is no selected profile to remove"),
+		HikariMessageBox(_("There is no selected profile to remove"),
 			_("Info"), wxOK, this, wxPoint(0, plPos.y + plSize.y));
 		return;
 	}
 	wxString profileName = ProfilesList->GetString(selectedProfile);
-	int result = KaiMessageBox(wxString::Format(_("Do you want to remove profile of name \"%s\""), profileName),
+	int result = HikariMessageBox(wxString::Format(_("Do you want to remove profile of name \"%s\""), profileName),
 		_("Info"), wxYES_NO, this, wxPoint(0, plPos.y + plSize.y));
 	if (result != wxYES){
 		return;
@@ -1030,7 +1030,7 @@ bool ShiftTimes::SetFont(const wxFont &font)
 	bool normal = LeadIn == nullptr;
 	panel->Destroy();
 	LeadIn = nullptr;
-	panel = new KaiPanel(this, -1);
+	panel = new HikariPanel(this, -1);
 	CreateControls(normal);
 	Thaw();
 	//isscrollbar = false;

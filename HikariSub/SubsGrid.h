@@ -22,7 +22,7 @@
 
 #include "styles.h"
 #include "SubsDialogue.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "LineParse.h"
 #include "SubsFile.h"
 #include <vector>
@@ -80,7 +80,7 @@ private:
 // The subtitle grid: draws a subtitle file and edits it. Its methods are
 // spread over SubsGridBase.cpp (editing), SubsGridWindow.cpp (drawing and
 // input) and SubsGrid.cpp (menu commands).
-class SubsGrid : public KaiScrolledWindow
+class SubsGrid : public HikariScrolledWindow
 {
 	friend class SubsGridPreview;
 public:
@@ -266,7 +266,7 @@ private:
 	int scrollPositionId = 0;
 	int scHor = 0;
 	int GridHeight = 0;
-	HikariSubFrame* Kai;
+	HikariSubFrame* Hikari;
 	std::vector<bool> visibleLines;
 	wxTimer timer;
 	wxTimer nullifyTimer;

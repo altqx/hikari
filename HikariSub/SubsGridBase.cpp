@@ -25,7 +25,7 @@
 #include "OpennWrite.h"
 #include "OptionsDialog.h"
 #include "AudioBox.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "stylestore.h"
 #include "Toolbar.h"
 #include "TabPanel.h"
@@ -199,7 +199,7 @@ void SubsGrid::ChangeCell(long cells, size_t wline, Dialogue *what)
 void SubsGrid::Convert(char type)
 {
 	if (Options.GetBool(CONVERT_SHOW_SETTINGS)){
-		OptionsDialog od(Kai);
+		OptionsDialog od(Hikari);
 		od.OptionsTree->ChangeSelection(1);
 		od.okok->SetFocus();
 		if (od.ShowModal() == wxID_CANCEL){
@@ -207,9 +207,9 @@ void SubsGrid::Convert(char type)
 		}
 	}
 	if (Options.GetBool(CONVERT_FPS_FROM_VIDEO) && tab->VideoPath != emptyString){
-		Options.SetString(CONVERT_FPS, Kai->GetStatusText(4).BeforeFirst(L' '));
+		Options.SetString(CONVERT_FPS, Hikari->GetStatusText(4).BeforeFirst(L' '));
 	}
-	if (Options.GetFloat(CONVERT_FPS) < 1){ KaiMessageBox(_("Invalid FPS. Correct it in options and try again.")); return; }
+	if (Options.GetFloat(CONVERT_FPS) < 1){ HikariMessageBox(_("Invalid FPS. Correct it in options and try again.")); return; }
 
 	bool newendtimes = Options.GetBool(CONVERT_NEW_END_TIMES);
 	int endt = Options.GetInt(CONVERT_TIME_PER_CHARACTER);
@@ -296,7 +296,7 @@ void SubsGrid::Convert(char type)
 	char oldSubsFormat = subsFormat;
 	subsFormat = type;
 	if (type == ASS || oldSubsFormat == ASS){
-		Kai->SetSubsResolution();
+		Hikari->SetSubsResolution();
 	}
 	edit->SetLine((currentLine < file->GetCount()) ? currentLine : 0);
 	edit->ResizeTimeControls(subsFormat);
@@ -455,7 +455,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 	bool hasFFMS2 = tab->video->GetTimebase().IsExact();
 	const Timebase &timebase = tab->video->GetTimebase();
 	if (byFrame && !hasFFMS2){ 
-		KaiLog(_("Video was not loaded using FFMS2")); return; }
+		HikariLog(_("Video was not loaded using FFMS2")); return; }
 	//1 forward / backward, 2 Start Time For V/A Timing, 4 Move to video time, 8 Move to audio time;
 	int moveTimeOptions = settings.options;
 
@@ -484,7 +484,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 	}
 	wxString styles = settings.styles;
 	if (styles.empty() && whichLines == 5){
-		KaiMessageBox(_("No styles selected for time shifting"), _("Warning"));
+		HikariMessageBox(_("No styles selected for time shifting"), _("Warning"));
 		return;
 	}
 	else{
@@ -502,7 +502,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 	std::multimap<Dialogue *, int, compare> tmpmap;
 
 	if (whichTimes != 0 && !PostprocessorOptions){
-		int answer = KaiMessageBox(wxString::Format(_("Do you really want to shift only %s times?"),
+		int answer = HikariMessageBox(wxString::Format(_("Do you really want to shift only %s times?"),
 			(whichTimes == 1) ? _("start") : _("end")), _("Confirmation"), wxYES_NO);
 		if (answer == wxNO){ return; }
 	}
@@ -513,7 +513,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 
 	size_t firstSelection = file->FirstSelection();
 	if (firstSelection == -1 && whichLines != 0 && whichLines != 4){
-		KaiMessageBox(_("No lines selected for shifting"), _("Warning")); return;
+		HikariMessageBox(_("No lines selected for shifting"), _("Warning")); return;
 	}
 
 	int difftime = (VAS) ? file->GetDialogue(markedLine)->Start.mstime : file->GetDialogue(markedLine)->End.mstime;
@@ -614,7 +614,7 @@ void SubsGrid::ChangeTimes(const ShiftTimesSettings &settings, bool byFrame)
 		bool previousIsKeyFrame = true;
 		bool isPreviousEndEdited = false;
 		if (!hasFFMS2) {
-			KaiLog(_("Video was not loaded using FFMS2"));
+			HikariLog(_("Video was not loaded using FFMS2"));
 			return;
 		}
 
@@ -938,16 +938,16 @@ void SubsGrid::UpdateUR(bool toolbar)
 {
 	bool undo = false, _redo = false;
 	file->GetURStatus(&undo, &_redo);
-	Kai->Menubar->Enable(GLOBAL_UNDO, undo);
-	Kai->Menubar->Enable(GLOBAL_REDO, _redo);
-	Kai->Menubar->Enable(GLOBAL_UNDO_TO_LAST_SAVE, file->GetActualHistoryIter() != 0 && file->GetLastSaveIter() != -1);
-	Kai->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
+	Hikari->Menubar->Enable(GLOBAL_UNDO, undo);
+	Hikari->Menubar->Enable(GLOBAL_REDO, _redo);
+	Hikari->Menubar->Enable(GLOBAL_UNDO_TO_LAST_SAVE, file->GetActualHistoryIter() != 0 && file->GetLastSaveIter() != -1);
+	Hikari->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
 	if (toolbar){
-		Kai->Toolbar->UpdateId(GLOBAL_UNDO, undo);
-		Kai->Toolbar->UpdateId(GLOBAL_REDO, _redo);
-		Kai->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
+		Hikari->Toolbar->UpdateId(GLOBAL_UNDO, undo);
+		Hikari->Toolbar->UpdateId(GLOBAL_REDO, _redo);
+		Hikari->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
 		int iter = file->Iter();
-		Kai->Toolbar->UpdateId(GLOBAL_HISTORY, iter > 0);
+		Hikari->Toolbar->UpdateId(GLOBAL_HISTORY, iter > 0);
 	}
 }
 
@@ -968,7 +968,7 @@ void SubsGrid::DoUndo(bool redo, int iter)
 
 	UpdateUR();
 
-	Kai->Label(file->GetActualHistoryIter());
+	Hikari->Label(file->GetActualHistoryIter());
 
 
 	char oldformat = subsFormat;
@@ -976,7 +976,7 @@ void SubsGrid::DoUndo(bool redo, int iter)
 	if (oldformat != subsFormat){
 		tab->shiftTimes->Contents();
 		tab->edit->HideControls();
-		Kai->UpdateToolbar();
+		Hikari->UpdateToolbar();
 		if (oldformat == ASS || subsFormat == ASS){
 			tab->video->DisableVisuals(subsFormat != ASS);
 		}
@@ -1017,7 +1017,7 @@ void SubsGrid::DoUndo(bool redo, int iter)
 
 	const wxString &newResolution = file->GetSInfo(L"PlayResX") + L" x " + file->GetSInfo(L"PlayResY");
 	if (resolution != newResolution){
-		Kai->SetSubsResolution();
+		Hikari->SetSubsResolution();
 		vb->ChangeOnScreenResolution(tab);
 	}
 	const wxString &newmatrix = file->GetSInfo(L"YCbCr Matrix");
@@ -1048,7 +1048,7 @@ void SubsGrid::DummyUndo(int newIter)
 	edit->SetLine(currentLine, false, false);
 	RefreshColumns();
 	UpdateUR();
-	Kai->Label(file->GetActualHistoryIter());
+	Hikari->Label(file->GetActualHistoryIter());
 	VideoBox *vb = tab->video;
 	if (vb->GetState() != None){
 		vb->OpenSubs(OPEN_DUMMY);
@@ -1130,8 +1130,8 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 			SpellErrors.clear();
 		//wxMutexLocker lock(editionMutex);
 		if (!file->IsModified()){
-			Kai->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
-			Kai->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
+			Hikari->Toolbar->UpdateId(GLOBAL_SAVE_SUBS, true);
+			Hikari->Menubar->Enable(GLOBAL_SAVE_SUBS, true);
 		}
 		if (Comparison){
 			SubsComparison();
@@ -1144,7 +1144,7 @@ void SubsGrid::SetModified(unsigned char editionType, bool redit, bool dummy, in
 			ShowEditedLine(SetEditBoxLine, Scroll);
 
 		file->SaveUndo(editionType, currentLine, markedLine);
-		Kai->Label(file->GetActualHistoryIter(), false, Kai->Tabs->FindPanel(tab));
+		Hikari->Label(file->GetActualHistoryIter(), false, Hikari->Tabs->FindPanel(tab));
 		if (!dummy)
 			ShowEditOnVideo(false);
 
@@ -1209,7 +1209,7 @@ void SubsGrid::LoadSubtitles(const wxString &str, wxString &ext)
 
 	if (oldHasTlMode != hasTLMode){
 		edit->SetTlMode(hasTLMode);
-		Kai->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, hasTLMode);
+		Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, hasTLMode);
 	}
 	if (hasTLMode && (file->GetSInfo(L"TLMode Showtl") == L"Yes" || Options.GetBool(TL_MODE_SHOW_ORIGINAL))){ 
 		showOriginal = true; 
@@ -1329,11 +1329,11 @@ bool SubsGrid::SetTlMode(bool mode, bool dontShowDialog/* = false*/)
 		file->AddSInfo(L"TLMode", L"Yes");
 		hasTLMode = true;
 		if (Options.GetBool(TL_MODE_SHOW_ORIGINAL)){ showOriginal = true; }
-		Kai->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, true);
+		Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, true);
 
 	}
 	else{
-		if (!dontShowDialog && KaiMessageBox(_("Are you sure you want to turn off translation mode?\nForeign language text will be deleted."),
+		if (!dontShowDialog && HikariMessageBox(_("Are you sure you want to turn off translation mode?\nForeign language text will be deleted."),
 			_("Confirmation"), wxYES_NO, nullptr, wxDefaultPosition, wxNO) == wxNO){
 			return true;
 		}
@@ -1369,7 +1369,7 @@ bool SubsGrid::SetTlMode(bool mode, bool dontShowDialog/* = false*/)
 
 		hasTLMode = false;
 		showOriginal = false;
-		Kai->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
+		Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false);
 	}
 	edit->RefreshStyle();
 	Refresh(false);
@@ -1468,20 +1468,20 @@ void SubsGrid::GetAssHeader(wxString* header, bool forFile, bool translated, boo
 {
 	if (forFile) {
 		file->AddSInfo(L"Active Line", std::to_wstring(currentLine), false);
-		wxString subsPath = KaiPathDir(tab->SubsPath);
+		wxString subsPath = HikariPathDir(tab->SubsPath);
 		if (edit->ABox) {
 			wxString path = (edit->ABox->audioName.StartsWith(subsPath) && normalSave) ?
-				KaiPathName(edit->ABox->audioName) : edit->ABox->audioName;
+				HikariPathName(edit->ABox->audioName) : edit->ABox->audioName;
 			file->AddSInfo(L"Audio File", path, false);
 		}
 		if (!tab->VideoPath.empty()) {
 			wxString path = (tab->VideoPath.StartsWith(subsPath) && normalSave) ?
-				KaiPathName(tab->VideoPath) : tab->VideoPath;
+				HikariPathName(tab->VideoPath) : tab->VideoPath;
 			file->AddSInfo(L"Video File", path, false);
 		}
 		if (!tab->KeyframesPath.empty()) {
 			wxString path = (tab->KeyframesPath.StartsWith(subsPath) && normalSave) ?
-				KaiPathName(tab->KeyframesPath) : tab->KeyframesPath;
+				HikariPathName(tab->KeyframesPath) : tab->KeyframesPath;
 			file->AddSInfo(L"Keyframes File", path, false);
 		}
 	}
@@ -1635,7 +1635,7 @@ bool SubsGrid::IsLineVisible(bool visibleOnPlay/* = true*/)
 
 void SubsGrid::OnBackupTimer(wxTimerEvent &event)
 {
-	Kai->SetStatusText(_("Autosave"), 0);
+	Hikari->SetStatusText(_("Autosave"), 0);
 	wxString path;
 	wxString ext = (subsFormat < SRT) ? L"ass" : (subsFormat == SRT) ? L"srt" : L"txt";
 
@@ -1807,7 +1807,7 @@ void SubsGrid::CompareTexts(compareData &firstCompare, compareData &secondCompar
 	size_t l1 = first.length(), l2 = second.length();
 	if (l1 == std::numeric_limits<size_t>::max() || l2 == std::numeric_limits<size_t>::max() ||
 		(l1 + 1) > std::numeric_limits<size_t>::max() / (l2 + 1)) {
-		KaiLog(L"text comparison is too large");
+		HikariLog(L"text comparison is too large");
 		return;
 	}
 	size_t cellCount = (l1 + 1) * (l2 + 1);
@@ -1815,14 +1815,14 @@ void SubsGrid::CompareTexts(compareData &firstCompare, compareData &secondCompar
 	size_t i1, i2;
 	std::vector<size_t> dpt;
 	if (cellCount > dpt.max_size()) {
-		KaiLog(L"memory allocation failed");
+		HikariLog(L"memory allocation failed");
 		return;
 	}
 	try {
 		dpt.assign(cellCount, 0);
 	}
 	catch (const std::bad_alloc&) {
-		KaiLog(L"memory allocation failed");
+		HikariLog(L"memory allocation failed");
 		return;
 	}
 

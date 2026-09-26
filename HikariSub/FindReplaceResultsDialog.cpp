@@ -19,24 +19,24 @@
 #include "FindReplaceResultsDialog.h"
 #include "FindReplace.h"
 #include "MappedButton.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 #include "ShiftTimes.h"
 
 
 wxDEFINE_EVENT(CHOOSE_RESULT, wxCommandEvent);
 
 FindReplaceResultsDialog::FindReplaceResultsDialog(wxWindow *parent, FindReplace *FR, bool _findInFiles)
-	: KaiDialog(parent, -1, _("Search results"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Search results"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER)
 {
 	DialogSizer * main = new DialogSizer(wxVERTICAL);
-	resultsList = new KaiListCtrl(this, 23323, wxDefaultPosition, wxSize(800, 500));
+	resultsList = new HikariListCtrl(this, 23323, wxDefaultPosition, wxSize(800, 500));
 	resultsList->InsertColumn(0, emptyString, TYPE_TEXT, -1);
 	resultsList->SetHeaderHeight(0);
 	main->Add(resultsList, 1, wxEXPAND | wxALL, 2);
 	Bind(CHOOSE_RESULT, [=](wxCommandEvent &evt){
 		SeekResults *results = (SeekResults*)evt.GetClientData();
 		if (!results){
-			KaiLogDebug("Ups, seek results disappeared");
+			HikariLogDebug("Ups, seek results disappeared");
 			return;
 		}
 
@@ -47,7 +47,7 @@ FindReplaceResultsDialog::FindReplaceResultsDialog(wxWindow *parent, FindReplace
 	MappedButton *checkAll = new MappedButton(this, ID_CHECK_ALL, _("Check all"), -1);
 	MappedButton *unCheckAll = new MappedButton(this, ID_UNCHECK_ALL, _("Uncheck all"));
 	replaceChecked = new MappedButton(this, ID_REPLACE_CHECKED, _("Replace"), -1);
-	ReplaceText = new KaiChoice(this, -1, FR->actualReplace, wxDefaultPosition, wxDefaultSize, FR->replaceRecent);
+	ReplaceText = new HikariChoice(this, -1, FR->actualReplace, wxDefaultPosition, wxDefaultSize, FR->replaceRecent);
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=, this](wxCommandEvent &evt){
 		CheckUncheckAll(true);
 	}, ID_CHECK_ALL);
@@ -136,7 +136,7 @@ void FindReplaceResultsDialog::GetReplaceString(wxString *replaceString)
 	*replaceString = ReplaceText->GetValue();
 }
 
-void ResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void ResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool isOnCheckbox = event.GetX() < 19;
 	if ((_enter && isOnCheckbox) || (!enter && isOnCheckbox)){
@@ -173,7 +173,7 @@ void ResultsHeader::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, K
 	}
 }
 
-void ResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void ResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxSize ex = theList->GetTextExtent(name);
 	wxString bitmapName = (modified) ? L"checkbox_selected" : L"checkbox";
@@ -192,14 +192,14 @@ void ResultsHeader::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height,
 	dc->SetBackgroundMode(wxTRANSPARENT);
 }
 
-wxSize ResultsHeader::GetTextExtents(KaiListCtrl *theList){
+wxSize ResultsHeader::GetTextExtents(HikariListCtrl *theList){
 	wxSize size = theList->GetTextExtent(name);
 	size.x += 28;
 	size.y += 4;
 	return size;
 }
 
-void SeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */)
+void SeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */)
 {
 	bool isOnCheckbox = event.GetX() < 19;
 	if ((_enter && isOnCheckbox) || (!enter && isOnCheckbox && !leave)){
@@ -249,7 +249,7 @@ void SeekResults::OnMouseEvent(wxMouseEvent &event, bool _enter, bool leave, Kai
 	}
 }
 
-void SeekResults::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+void SeekResults::OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 {
 	wxString lineNum = wxString::Format(_("Line %i: "), idLine);
 	wxString lineAndNum = lineNum + name;
@@ -299,7 +299,7 @@ void SeekResults::OnCheckUncheckAll(wxCommandEvent& event)
 
 }
 
-wxSize SeekResults::GetTextExtents(KaiListCtrl *theList){
+wxSize SeekResults::GetTextExtents(HikariListCtrl *theList){
 	wxString lineNum = wxString::Format(_("Line %i: "), idLine);
 	wxString lineAndNum = lineNum + name;
 	wxSize size = theList->GetTextExtent(lineAndNum);

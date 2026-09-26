@@ -26,7 +26,7 @@
 #include "SubsGrid.h"
 #include "stylestore.h"
 #include "ShiftTimes.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "ZipEntryUtf8.h"
 //#include "UtilsWindows.h"
 #include "WinUndef.h"
@@ -132,7 +132,7 @@ void FontLogContent::DoLog(FontCollector *fc){
 }
 
 FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
-	: KaiDialog(parent, -1, _("Font collector"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Font collector"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, fc(_fc)
 {
 	warning = Options.GetColour(WINDOW_WARNING_ELEMENTS);
@@ -144,7 +144,7 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 	icn.CopyFromBitmap(CreateBitmapFromPngResource(L"fontcollector"));
 	SetIcon(icn);
 
-	KaiTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	wxArrayString excludes;
 	excludes.Add(L"/");
 	excludes.Add(L"*");
@@ -154,7 +154,7 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 	excludes.Add(L">");
 	excludes.Add(L"|");
 	valid.SetExcludes(excludes);
-	path = new KaiTextCtrl(this, -1, Options.GetString(FONT_COLLECTOR_DIRECTORY), wxDefaultPosition, wxSize(150, -1), 0, valid);
+	path = new HikariTextCtrl(this, -1, Options.GetString(FONT_COLLECTOR_DIRECTORY), wxDefaultPosition, wxSize(150, -1), 0, valid);
 	path->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
 	choosepath = new MappedButton(this, 8799, _("Select a folder"));
 	choosepath->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
@@ -168,22 +168,22 @@ FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
 	choices.Add(_("Copy to selected folder"));
 	choices.Add(_("Zip"));
 	//choices.Add(_("Wmuxuj napisy w wideo (wymagany MKVToolnix)"));
-	opts = new KaiRadioBox(this, 9987, _("Options"), wxDefaultPosition, wxDefaultSize, choices, 0, wxRA_SPECIFY_ROWS);
+	opts = new HikariRadioBox(this, 9987, _("Options"), wxDefaultPosition, wxDefaultSize, choices, 0, wxRA_SPECIFY_ROWS);
 	opts->SetSelection(Options.GetInt(FONT_COLLECTOR_ACTION));
 	Connect(9987, wxEVT_COMMAND_RADIOBOX_SELECTED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
 
-	subsdir = new KaiCheckBox(this, 7998, _("Save to video / subtitles folder."));
+	subsdir = new HikariCheckBox(this, 7998, _("Save to video / subtitles folder."));
 	subsdir->SetToolTip(_("Saves to the video folder\nwhen demuxing fonts from an MKV file."));
 	subsdir->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
 	subsdir->SetValue(Options.GetBool(FONT_COLLECTOR_USE_SUBS_DIRECTORY));
 
 
-	fromMKV = new KaiCheckBox(this, 7991, _("Demux fonts from loaded MKV file"));
+	fromMKV = new HikariCheckBox(this, 7991, _("Demux fonts from loaded MKV file"));
 	fromMKV->Enable(Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
 	fromMKV->SetValue(Options.GetBool(FONT_COLLECTOR_FROM_MKV));
 
 	Connect(7998, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
-	console = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 400), wxTE_MULTILINE | wxTE_READONLY);
+	console = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 400), wxTE_MULTILINE | wxTE_READONLY);
 	console->Bind(wxEVT_LEFT_DCLICK, &FontCollectorDialog::OnConsoleDoubleClick, this);
 	//console->SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
 	bok = new MappedButton(this, 9879, _("Start"));
@@ -423,8 +423,8 @@ void FontCollectorDialog::OnButtonPath(wxCommandEvent &event)
 	}
 	else{
 		destdir = wxFileSelector(_("Select the name of the archive"), (path->GetValue().EndsWith(L"zip")) ?
-			KaiPathDir(path->GetValue()) : path->GetValue(),
-			(path->GetValue().EndsWith(L"zip")) ? KaiPathName(path->GetValue()) : emptyString,
+			HikariPathDir(path->GetValue()) : path->GetValue(),
+			(path->GetValue().EndsWith(L"zip")) ? HikariPathName(path->GetValue()) : emptyString,
 			L"zip", _("Archive files (*.zip)|*.zip"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	}
 	Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir);
@@ -454,33 +454,33 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		bool subsDirectory = subsdir->GetValue();
 		Options.SetString(FONT_COLLECTOR_DIRECTORY, path->GetValue());
 		if (opts->GetSelection() == 3 && (Notebook::GetTab()->VideoPath == emptyString || Notebook::GetTab()->SubsPath == emptyString)){
-			KaiMessageBox(_("No video or subtitles loaded"), emptyString, 4L, this);
+			HikariMessageBox(_("No video or subtitles loaded"), emptyString, 4L, this);
 			EnableControls();
 			return;
 		}
 		if (path->GetValue() == emptyString && !subsDirectory){
-			KaiMessageBox(_("Select the folder where you want to copy fonts"), emptyString, 4L, this);
+			HikariMessageBox(_("Select the folder where you want to copy fonts"), emptyString, 4L, this);
 			EnableControls();
 			path->SetFocus();
 			return;
 		}
 		if (!subsfromMkv && subsDirectory && Notebook::GetTab()->SubsPath == emptyString){
-			KaiMessageBox(_("No subtitles loaded. Load subtitles or deselect this option."), emptyString, 4L, this);
+			HikariMessageBox(_("No subtitles loaded. Load subtitles or deselect this option."), emptyString, 4L, this);
 			EnableControls();
 			return;
 		}
-		wxString pathValue = KaiNormalizePath(path->GetValue());
+		wxString pathValue = HikariNormalizePath(path->GetValue());
 		if (opts->GetSelection() == 2 && wxDirExists(pathValue) && !subsdir->GetValue()){
-			KaiMessageBox(_("Choose a name for the archive"), emptyString, 4L, this);
+			HikariMessageBox(_("Choose a name for the archive"), emptyString, 4L, this);
 			EnableControls();
 			path->SetFocus();
 			return;
 		}
 		if (subsDirectory){
 			wxString sourcePath = (subsfromMkv) ? Notebook::GetTab()->VideoPath : Notebook::GetTab()->SubsPath;
-			wxString rest = KaiPathName(sourcePath);
-			wxString fontDir = KaiPathJoin(KaiPathDir(sourcePath), L"Czcionki");
-			copypath = (opts->GetSelection() == 2) ? KaiPathJoin(fontDir, rest.BeforeLast(L'.') + L".zip") : fontDir + wxFileName::GetPathSeparator();
+			wxString rest = HikariPathName(sourcePath);
+			wxString fontDir = HikariPathJoin(HikariPathDir(sourcePath), L"Czcionki");
+			copypath = (opts->GetSelection() == 2) ? HikariPathJoin(fontDir, rest.BeforeLast(L'.') + L".zip") : fontDir + wxFileName::GetPathSeparator();
 		}
 		else{
 			copypath = pathValue;
@@ -490,7 +490,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 				|| fname.GetVolume().length() != 1
 #endif
 				){
-				KaiMessageBox(_("The save path is not valid."), emptyString, 4L, this);
+				HikariMessageBox(_("The save path is not valid."), emptyString, 4L, this);
 				EnableControls();
 				return;
 			}
@@ -500,10 +500,10 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		}
 		if (opts->GetSelection() != 2){
 			wxString extt = copypath.Right(4).Lower();
-			if (extt == L".zip"){ copypath = KaiPathDir(copypath, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR); }
+			if (extt == L".zip"){ copypath = HikariPathDir(copypath, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR); }
 			/*if (!wxDir::Exists(copypath)){
 				if (!wxDir::Make(copypath, 511, wxPATH_MKDIR_FULL)){
-					KaiMessageBox(_("Nie można utworzyć folderu."), emptyString, 4L, this);
+					HikariMessageBox(_("Nie można utworzyć folderu."), emptyString, 4L, this);
 					EnableControls();
 					return;
 				}
@@ -511,7 +511,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 		}
 		else{
 			if (wxFileExists(copypath)){
-				if (KaiMessageBox(_("The zip file already exists, delete it?"), _("Confirmation"), wxYES_NO, this) == wxYES){
+				if (HikariMessageBox(_("The zip file already exists, delete it?"), _("Confirmation"), wxYES_NO, this) == wxYES){
 					if (!wxRemoveFile(copypath)){
 						EnableControls();
 						return;
@@ -529,7 +529,7 @@ void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
 				wxFileDialog *fd = new wxFileDialog(this, _("Wybierz plik mkvmerge.exe"), L"C:\\Program Files", L"mkvmerge.exe", _("Programy (.exe)|*.exe"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 				if (fd->ShowModal() != wxID_OK){
 					EnableControls();
-					KaiMessageBox(_("Muxowanie zostało anulowane, bo nie wybrano mkvmerge.exe")); fd->Destroy();
+					HikariMessageBox(_("Muxowanie zostało anulowane, bo nie wybrano mkvmerge.exe")); fd->Destroy();
 					return;
 				}
 				fc->muxerpath = fd->GetPath();
@@ -876,7 +876,7 @@ void FontCollector::CheckOrCopyFonts()
 
 bool FontCollector::SaveFont(const wxString &fontPath, FontLogContent *flc)
 {
-	wxString fn = KaiPathName(fontPath);
+	wxString fn = HikariPathName(fontPath);
 	if (zip){
 		wxFFileInputStream in(fontPath);
 		bool isgood = in.IsOk();
@@ -898,7 +898,7 @@ bool FontCollector::SaveFont(const wxString &fontPath, FontLogContent *flc)
 		return isgood;
 	}
 	else{
-		if (wxCopyFile(fontPath, KaiPathJoin(fcd->copypath, fn))){
+		if (wxCopyFile(fontPath, HikariPathJoin(fcd->copypath, fn))){
 			flc->AppendInfo(wxString::Format(_("Copied font \"%s\"."), fn));
 			return true;
 		}
@@ -959,7 +959,7 @@ void FontCollector::CopyMKVFontsFromTab(const wxString &mkvpath)
 
 	for (size_t k = 0; k < list.size(); k++) {
 		wxString name = list[k];
-		if (dmx.SaveFont(k, KaiPathJoin(KaiPathDir(fcd->copypath), name), zip))
+		if (dmx.SaveFont(k, HikariPathJoin(HikariPathDir(fcd->copypath), name), zip))
 		{
 			SendMessageD(_("Saved a font named \"") + name + L"\".\n \n", fcd->normal);
 		}
@@ -999,7 +999,7 @@ void FontCollector::ClearTables()
 
 bool FontCollector::MakeDirectory(bool isZip)
 {
-	wxString path = isZip ? KaiPathDir(fcd->copypath) : fcd->copypath;
+	wxString path = isZip ? HikariPathDir(fcd->copypath) : fcd->copypath;
 	if (!wxDir::Exists(path)) {
 		if (!wxDir::Make(path, 511, wxPATH_MKDIR_FULL)) {
 			SendMessageD(wxString::Format(_("Cannot create folder.")), fcd->warning);
@@ -1260,13 +1260,13 @@ void FontCollector::MuxVideoWithSubs()
 		L"(", tab->SubsPath, L")"
 	};
 	for (size_t i = 0; i < fontnames.size(); i++){
-		wxString name = KaiPathName(fontnames[i]);
+		wxString name = HikariPathName(fontnames[i]);
 		arguments.push_back(L"--attachment-name");
 		arguments.push_back(name);
 		arguments.push_back(L"--attachment-mime-type");
 		arguments.push_back(L"application/x-truetype-font");
 		arguments.push_back(L"--attach-file");
-		arguments.push_back(KaiPathJoin(fcd->copypath, name));
+		arguments.push_back(HikariPathJoin(fcd->copypath, name));
 	}
 	arguments.push_back(L"--track-order");
 	arguments.push_back(L"0:0,0:1,1:0");
@@ -1278,7 +1278,7 @@ void FontCollector::MuxVideoWithSubs()
 	argv.push_back(nullptr);
 
 	if (wxExecute(argv.data(), wxEXEC_ASYNC) == 0){
-		KaiLog(_("Could not create process. Muxing canceled"));
+		HikariLog(_("Could not create process. Muxing canceled"));
 	}
 }
 

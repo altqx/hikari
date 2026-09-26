@@ -15,23 +15,23 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
-#include "KaiTextCtrl.h"
-#include "KaiCheckBox.h"
+#include "HikariTextCtrl.h"
+#include "HikariCheckBox.h"
 
-class FPSDialog : public KaiDialog
+class FPSDialog : public HikariDialog
 {
 public:
 	FPSDialog(wxWindow *parent);
 	virtual ~FPSDialog(){};
 	void OkClick(wxCommandEvent &evt);
 	double ofps, nfps;
-	KaiChoice *oldfps;
-	KaiChoice *newfps;
+	HikariChoice *oldfps;
+	HikariChoice *newfps;
 };
 
-class TreeDialog : public KaiDialog
+class TreeDialog : public HikariDialog
 {
 public:
 	TreeDialog(wxWindow *parent, const wxString & currentName);
@@ -40,10 +40,10 @@ public:
 
 private:
 	void OkClick(wxCommandEvent &evt);
-	KaiTextCtrl *treeDescription;
+	HikariTextCtrl *treeDescription;
 };
 
-class SwapPropertiesDialog :public KaiDialog
+class SwapPropertiesDialog :public HikariDialog
 {
 public:
 	SwapPropertiesDialog(wxWindow* parent);
@@ -51,5 +51,5 @@ public:
 	void SaveValues();
 
 private:
-	KaiCheckBox* fields[6];
+	HikariCheckBox* fields[6];
 };

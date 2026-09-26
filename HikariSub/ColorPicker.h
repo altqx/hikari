@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include <wx/colour.h>
 #include <wx/bitmap.h>
 #include <wx/statbmp.h>
@@ -39,7 +39,7 @@
 #include "NumCtrl.h"
 #include "styles.h"
 #include "MappedButton.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 
 class ColorPickerSpectrum : public wxWindow {
 private:
@@ -163,7 +163,7 @@ private:
 	AssColor color;
 };
 
-class DialogColorPicker : public KaiDialog {
+class DialogColorPicker : public HikariDialog {
 private:
 	wxColour cur_color;
 	bool updating_controls;
@@ -192,8 +192,8 @@ private:
 	wxPoint eyedropper_grab_point;
 	bool eyedropper_is_grabbed;
 
-	KaiTextCtrl *ass_input;		// ASS hex format input
-	KaiTextCtrl *html_input;		// HTML hex format input
+	HikariTextCtrl *ass_input;		// ASS hex format input
+	HikariTextCtrl *html_input;		// HTML hex format input
 	NumCtrl *alpha_input;
 
 	//wxWindow *preview_box;
@@ -202,7 +202,7 @@ private:
 	ColorPickerRecent *recent_box;
 	ColorPickerScreenDropper *screen_dropper;
 	wxStaticBitmap *screen_dropper_icon;
-	KaiChoice *colorType;
+	HikariChoice *colorType;
 
 	void UpdateFromRGB(bool SendVideoEvent = true);			// Update all other controls as a result of modifying an RGB control
 	void UpdateFromHSL();			// Update all other controls as a result of modifying an HSL control
@@ -273,15 +273,15 @@ typedef ButtonColorPicker ColorButton;
 //	AssColor color;
 //};
 
-class SimpleColorPickerDialog : public KaiDialog
+class SimpleColorPickerDialog : public HikariDialog
 {
 public:
 	SimpleColorPickerDialog(wxWindow *parent, const AssColor &actualColor, int colorType = -1);
 	~SimpleColorPickerDialog(){ if (HasCapture()) ReleaseMouse(); }
-	KaiChoice *colorType;
-	KaiTextCtrl *HexColor;
+	HikariChoice *colorType;
+	HikariTextCtrl *HexColor;
 	ColorPickerScreenDropper *dropper;
-	KaiCheckBox *moveWindowToMousePosition;
+	HikariCheckBox *moveWindowToMousePosition;
 	const AssColor &GetColor(){ return color; };
 	int GetColorType();
 	void SetColor(const AssColor &color);

@@ -22,7 +22,7 @@
 #include "config.h"
 //#include "Utils.h"
 #include "SubsGrid.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "FontCatalogList.h"
 
 wxDEFINE_EVENT(FONT_CHANGED, wxCommandEvent);
@@ -32,7 +32,7 @@ FontList::FontList(wxWindow *parent, long id, const wxPoint &pos, const wxSize &
 	:wxWindow(parent, id, pos, size)
 {
 	fonts = new wxArrayString();
-	scrollBar = new KaiScrollbar(this, ID_SCROLL1, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
+	scrollBar = new HikariScrollbar(this, ID_SCROLL1, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
 	scrollBar->SetScrollbar(0, 10, 100, 10);
 
 	font = *Options.GetFont(4);
@@ -372,7 +372,7 @@ END_EVENT_TABLE()
 FontDialog *FontDialog::FDialog = nullptr;
 
 FontDialog::FontDialog(wxWindow *parent, Styles *acst, bool changePointToPixel)
-	: KaiDialog(parent, -1, _("Select a font"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	: HikariDialog(parent, -1, _("Select a font"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
 	, pointToPixel(changePointToPixel)
 {
 	editedStyle = acst;
@@ -388,22 +388,22 @@ FontDialog::FontDialog(wxWindow *parent, Styles *acst, bool changePointToPixel)
 
 
 	DialogSizer *Main = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer *Cfont = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Font"));
-	KaiStaticBoxSizer *prev = new KaiStaticBoxSizer(wxVERTICAL, this, _("Preview"));
+	HikariStaticBoxSizer *Cfont = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Font"));
+	HikariStaticBoxSizer *prev = new HikariStaticBoxSizer(wxVERTICAL, this, _("Preview"));
 	wxBoxSizer *Fattr = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *Bsizer = new wxBoxSizer(wxHORIZONTAL);
 	
 	Fonts = new FontList(this, ID_FONTLIST, wxDefaultPosition, wxSize(250, 200));
 
-	FontName = new KaiTextCtrl(this, ID_FONT_NAME, acst->Fontname, wxDefaultPosition, wxSize(150, -1), wxTE_PROCESS_ENTER);
+	FontName = new HikariTextCtrl(this, ID_FONT_NAME, acst->Fontname, wxDefaultPosition, wxSize(150, -1), wxTE_PROCESS_ENTER);
 	FontSize = new NumCtrl(this, ID_FONTSIZE1, acst->Fontsize, 1, 10000, false, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-	Bold = new KaiCheckBox(this, ID_FONTATTR, _("Bold"));
+	Bold = new HikariCheckBox(this, ID_FONTATTR, _("Bold"));
 	Bold->SetValue(acst->Bold);
-	Italic = new KaiCheckBox(this, ID_FONTATTR, _("Italic"));
+	Italic = new HikariCheckBox(this, ID_FONTATTR, _("Italic"));
 	Italic->SetValue(acst->Italic);
-	Underl = new KaiCheckBox(this, ID_FONTATTR, _("Underline"));
+	Underl = new HikariCheckBox(this, ID_FONTATTR, _("Underline"));
 	Underl->SetValue(acst->Underline);
-	Strike = new KaiCheckBox(this, ID_FONTATTR, _("Strikethrough"));
+	Strike = new HikariCheckBox(this, ID_FONTATTR, _("Strikethrough"));
 	Strike->SetValue(acst->StrikeOut);
 	Preview = new StylePreview(this, -1, wxDefaultPosition, wxSize(-1, 180));
 	Preview->DrawPreview(acst);
@@ -420,7 +420,7 @@ FontDialog::FontDialog(wxWindow *parent, Styles *acst, bool changePointToPixel)
 	Cfont->Add(Fonts, 1, wxEXPAND);
 	Cfont->Add(Fattr, 0, wxEXPAND);
 	FCManagement.LoadCatalogs();
-	fontCatalog = new KaiChoice(this, ID_FONT_CATALOG_LIST1, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
+	fontCatalog = new HikariChoice(this, ID_FONT_CATALOG_LIST1, wxDefaultPosition, wxDefaultSize, *FCManagement.GetCatalogNames());
 	fontCatalog->Insert(_("All fonts"), 0);
 	fontCatalog->Insert(_("Without catalog"), 1);
 	fontCatalog->SetSelection(0);
@@ -451,7 +451,7 @@ FontDialog::FontDialog(wxWindow *parent, Styles *acst, bool changePointToPixel)
 	ChangeCatalog();
 
 	Fonts->SetSelectionByName(acst->Fontname);
-	KaiStaticBoxSizer* filtersizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Filtering and font catalogs"));
+	HikariStaticBoxSizer* filtersizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Filtering and font catalogs"));
 	filtersizer->Add(fontCatalog, 3, wxEXPAND | wxALL, 2);
 	filtersizer->Add(CatalogAdd, 1, wxEXPAND | wxALL, 2);
 	filtersizer->Add(CatalogManage, 1, wxEXPAND | wxALL, 2);

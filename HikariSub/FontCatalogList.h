@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include "KaiDialog.h"
-#include "KaiListCtrl.h"
+#include "HikariDialog.h"
+#include "HikariListCtrl.h"
 #include "ListControls.h"
 #include "MappedButton.h"
 #include "styles.h"
-#include "KaiStatusBar.h"
+#include "HikariStatusBar.h"
 #include "WinUndef.h"
 #include <wx/timer.h>
 #include <wx/tokenzr.h>
@@ -56,10 +56,10 @@ public:
 	}
 	virtual ~CatalogList(){
 	};
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new CatalogList(*this); }
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 	static void RefreshCatalogList();
 private:
 	bool enter = false;
@@ -81,10 +81,10 @@ public:
 		modified = false;
 	}
 	virtual ~FontItem(){};
-	wxSize GetTextExtents(KaiListCtrl *theList);
+	wxSize GetTextExtents(HikariListCtrl *theList);
 private:
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /* = nullptr */);
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList);
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /* = nullptr */);
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList);
 	Item* Copy(){ return new FontItem(*this); }
 	bool enter = false;
 };
@@ -99,13 +99,13 @@ public:
 	virtual ~FontSample() {};
 	static void SetPreviewText(const wxString& text) { previewText = text; };
 private:
-	void OnPaint(wxMemoryDC* dc, int x, int y, int width, int height, KaiListCtrl* theList);
+	void OnPaint(wxMemoryDC* dc, int x, int y, int width, int height, HikariListCtrl* theList);
 	Item* Copy() { return new FontSample(*this); }
 	static wxString previewText;
 };
 
 
-class FontCatalogList : public KaiDialog
+class FontCatalogList : public HikariDialog
 {
 public:
 	FontCatalogList(wxWindow *parent, const wxString &styleFont);
@@ -119,12 +119,12 @@ public:
 	void SetStyleFont(const wxString& styleFont);
 	static void StartEditionTimer(int ms);
 private:
-	KaiChoice* catalog;
-	KaiTextCtrl* fontSeek;
-	KaiTextCtrl* fontFilter;
-	KaiListCtrl* fontList;
+	HikariChoice* catalog;
+	HikariTextCtrl* fontSeek;
+	HikariTextCtrl* fontFilter;
+	HikariListCtrl* fontList;
 	StylePreview* preview;
-	KaiStatusBar* status;
+	HikariStatusBar* status;
 	Styles fontStyle;
 	wxTimer autoSaveTimer;
 	wxTimer autoSaveTimerRemove;

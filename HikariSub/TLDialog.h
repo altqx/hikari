@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "MappedButton.h"
 
 #include "SubsGrid.h"
 
-class TLDialog  : public KaiDialog
+class TLDialog  : public HikariDialog
 {
 public:
 	TLDialog(wxWindow *parent, SubsGrid *subsgrid);

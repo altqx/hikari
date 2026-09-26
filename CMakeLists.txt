@@ -124,8 +124,8 @@ add_executable(hikarisub
     HikariSub/DshowRenderer.cpp
     HikariSub/DummyVideo.cpp
     HikariSub/FontCatalogList.cpp
-    HikariSub/KaiGauge.cpp
-    HikariSub/KaiPanel.cpp
+    HikariSub/HikariGauge.cpp
+    HikariSub/HikariPanel.cpp
     HikariSub/LineParse.cpp
     HikariSub/AssBlend.cpp
     HikariSub/FrameQueue.cpp
@@ -153,23 +153,23 @@ add_executable(hikarisub
     HikariSub/GFFT/GFFT.cpp
     HikariSub/GraphicsD2D.cpp
     HikariSub/HotkeysNaming.cpp
-    HikariSub/KaiCheckBox.cpp
-    HikariSub/KaiDialog.cpp
-    HikariSub/KaiFrame.cpp
-    HikariSub/KaiListCtrl.cpp
-    HikariSub/KaiMessageBox.cpp
+    HikariSub/HikariCheckBox.cpp
+    HikariSub/HikariDialog.cpp
+    HikariSub/HikariFrame.cpp
+    HikariSub/HikariListCtrl.cpp
+    HikariSub/HikariMessageBox.cpp
     HikariSub/hikarisubApp.cpp
-    HikariSub/KaiRadioButton.cpp
-    HikariSub/KaiScrollbar.cpp
-    HikariSub/KaiSlider.cpp
-    HikariSub/KaiStaticBoxSizer.cpp
-    HikariSub/KaiStaticText.cpp
-    HikariSub/KaiStatusBar.cpp
-    HikariSub/KaiTabBar.cpp
-    HikariSub/KaiTextCtrl.cpp
-    HikariSub/KaiTextValidator.cpp
-    HikariSub/KaiTreeBook.cpp
-    HikariSub/KaiWindowResizer.cpp
+    HikariSub/HikariRadioButton.cpp
+    HikariSub/HikariScrollbar.cpp
+    HikariSub/HikariSlider.cpp
+    HikariSub/HikariStaticBoxSizer.cpp
+    HikariSub/HikariStaticText.cpp
+    HikariSub/HikariStatusBar.cpp
+    HikariSub/HikariTabBar.cpp
+    HikariSub/HikariTextCtrl.cpp
+    HikariSub/HikariTextValidator.cpp
+    HikariSub/HikariTreeBook.cpp
+    HikariSub/HikariWindowResizer.cpp
     HikariSub/KeyframesLoader.cpp
     HikariSub/ListControls.cpp
     HikariSub/LogHandler.cpp

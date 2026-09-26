@@ -65,13 +65,13 @@ Fullscreen::Fullscreen(wxWindow* parent, const wxPoint& pos, const wxSize &size)
 	bnext = new BitmapButton(panel, CreateBitmapFromPngResource(L"forward"), CreateBitmapFromPngResource(L"forward1"), 
 		VIDEO_NEXT_FILE, _("Next file"), wxPoint(145, toolBarHeight - 6), wxSize(26, 26));
 	volslider = new VolSlider(panel, ID_VOL, Options.GetInt(VIDEO_VOLUME), wxPoint(size.x - 110, toolBarHeight - 5), wxSize(110, 25));
-	showToolbar = new KaiCheckBox(panel, 7777, _("Show toolbar"), wxPoint(180, toolBarHeight - 4), wxSize(-1, -1));
+	showToolbar = new HikariCheckBox(panel, 7777, _("Show toolbar"), wxPoint(180, toolBarHeight - 4), wxSize(-1, -1));
 	showToolbar->SetValue(!vc->IsDirectShow());
-	mstimes = new KaiTextCtrl(panel, -1, emptyString, wxPoint(340, toolBarHeight - 6), wxSize(300, 26), wxTE_READONLY);
+	mstimes = new HikariTextCtrl(panel, -1, emptyString, wxPoint(340, toolBarHeight - 6), wxSize(300, 26), wxTE_READONLY);
 	mstimes->SetWindowStyle(wxBORDER_NONE);
 	mstimes->SetCursor(wxCURSOR_ARROW);
 	mstimes->SetBackgroundColour(WINDOW_BACKGROUND);
-	Videolabel = new KaiStaticText(panel, -1, emptyString, wxPoint(644, toolBarHeight - 6), wxSize(1200, 26));
+	Videolabel = new HikariStaticText(panel, -1, emptyString, wxPoint(644, toolBarHeight - 6), wxSize(1200, 26));
 	Videolabel->Bind(wxEVT_LEFT_DOWN, [=, this](wxMouseEvent &evt){
 		panel->SetFocus();
 		evt.Skip();
@@ -131,7 +131,7 @@ void Fullscreen::OnSize()
 	buttonSection = (toolBarHeight * 2) - 8;
 	if (vToolbar->IsShown())
 		panelsize = buttonSection + toolBarHeight;
-	//KaiLog(wxString::Format(L"panelsize %i", panelsize));
+	//HikariLog(wxString::Format(L"panelsize %i", panelsize));
 	panel->SetSize(0, asize.y - panelsize, asize.x, panelsize);
 
 	wxSize toolbarSize = showToolbar->GetMinSize();
@@ -221,8 +221,8 @@ void Fullscreen::OnClose(wxCloseEvent& evt)
 
 void Fullscreen::SetAccels()
 {
-	HikariSubFrame* Kai = HikariSubFrame::Get();
-	if (!Kai)
+	HikariSubFrame* Hikari = HikariSubFrame::Get();
+	if (!Hikari)
 		return;
 
 	std::vector<wxAcceleratorEntry> entries;

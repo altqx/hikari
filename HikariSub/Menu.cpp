@@ -20,7 +20,7 @@
 #include "config.h"
 #include "UtilsWindows.h"
 #include "Toolbar.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "wx/msw/private.h"
 #include "WinUndef.h"
 #include <wx/dc.h>
@@ -176,7 +176,7 @@ void Menu::CalcPosAndSize(wxWindow *parent, wxPoint *pos, wxSize *size, bool cli
 	h = workArea.height + workArea.y;
 	//It was probably the last bug of this element or maybe there are some wonder monitors combination
 	//that make it failed in the future
-	//KaiLog(wxString::Format("workarea x %i %i y %i %i pos %i, size %i", workArea.x, workArea.width, workArea.y, workArea.height, pos->x + size->x, pos->y));
+	//HikariLog(wxString::Format("workarea x %i %i y %i %i pos %i, size %i", workArea.x, workArea.width, workArea.y, workArea.height, pos->x + size->x, pos->y));
 	if (size->y > workArea.height){
 		size->y = workArea.height;
 		maxVisible = size->y / height;
@@ -221,7 +221,7 @@ void Menu::SetMinWidth(int width)
 	minWidth = width;
 }
 
-MenuItem *Menu::AppendTool(KaiToolbar *ktb, int id, wxString text, wxString help, wxBitmap *bitmap, bool enable, Menu *SubMenu)
+MenuItem *Menu::AppendTool(HikariToolbar *ktb, int id, wxString text, wxString help, wxBitmap *bitmap, bool enable, Menu *SubMenu)
 {
 	if (bitmap && bitmap->IsOk()){ ktb->AddID(id); }
 	return Append(id, text, help, enable, bitmap, SubMenu);
@@ -700,8 +700,8 @@ void MenuDialog::OnPaint(wxPaintEvent &event)
 	if (itemsize > parent->maxVisible){
 		maxsize = parent->maxVisible;
 		if (!scroll){
-			int thickness = KaiScrollbar::CalculateThickness(this);
-			scroll = new KaiScrollbar(this, -1, wxPoint(w - thickness - 1, 1), wxSize(thickness, h - 2), wxVERTICAL);
+			int thickness = HikariScrollbar::CalculateThickness(this);
+			scroll = new HikariScrollbar(this, -1, wxPoint(w - thickness - 1, 1), wxSize(thickness, h - 2), wxVERTICAL);
 			scroll->SetScrollRate(3);
 		}
 		scroll->SetScrollbar(scPos, parent->maxVisible, itemsize, parent->maxVisible - 1);
@@ -1159,7 +1159,7 @@ void MenuBar::Enable(int id, bool enable)
 {
 	MenuItem * item = FindItem(id);
 	if (item){ item->Enable(enable); }
-	else{ KaiLog(wxString::Format(L"Cannot enable item with id %i", id)); }
+	else{ HikariLog(wxString::Format(L"Cannot enable item with id %i", id)); }
 }
 
 //void MenuBar::AppendAccelerators(std::vector <wxAcceleratorEntry> *entries)

@@ -16,7 +16,7 @@
 
 #include "AutomationHotkeysDialog.h"
 #include "MappedButton.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "HikariSubFrame.h"
 #include "Toolbar.h"
 #include <map>
@@ -37,7 +37,7 @@ public:
 		AutomationHotkeysDialog::allHotkeys[idAndType(id, GLOBAL_HOTKEY)] = hdata(name, accelerator);
 		//modified = true;
 	}
-	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, KaiListCtrl *theList, Item **changed /*= NULL*/)
+	void OnMouseEvent(wxMouseEvent &event, bool enter, bool leave, HikariListCtrl *theList, Item **changed /*= NULL*/)
 	{
 		if (enter){
 			if (needTooltip)
@@ -46,7 +46,7 @@ public:
 				theList->UnsetToolTip();
 		}
 	}
-	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, KaiListCtrl *theList)
+	void OnPaint(wxMemoryDC *dc, int x, int y, int width, int height, HikariListCtrl *theList)
 	{
 		wxSize ex = dc->GetTextExtent(accelerator);
 
@@ -65,11 +65,11 @@ public:
 std::map<idAndType, hdata> AutomationHotkeysDialog::allHotkeys;
 
 AutomationHotkeysDialog::AutomationHotkeysDialog(wxWindow *parent, Auto::Automation *Auto)
-	: KaiDialog(parent, -1, _("List of automation shortcuts"))
+	: HikariDialog(parent, -1, _("List of automation shortcuts"))
 	, automation(Auto)
 {
 	DialogSizer *mainSizer = new DialogSizer(wxVERTICAL);
-	hotkeysList = new KaiListCtrl(this, ID_HOTKEYS_LIST, wxDefaultPosition, wxSize(800, 300));
+	hotkeysList = new HikariListCtrl(this, ID_HOTKEYS_LIST, wxDefaultPosition, wxSize(800, 300));
 	hotkeysList->InsertColumn(1, _("Path and script name"), TYPE_TEXT, 400);
 	hotkeysList->InsertColumn(2, _("Macro"), TYPE_TEXT, 300);
 	hotkeysList->InsertColumn(3, _("Hotkey"), TYPE_TEXT, 80);
@@ -236,7 +236,7 @@ void AutomationHotkeysDialog::OnMapHkey(wxCommandEvent &evt)
 
 			int result = wxCANCEL;
 			if (doubledHotkey){
-				KaiMessageDialog msg(this,
+				HikariMessageDialog msg(this,
 					wxString::Format(_("This hotkey already exists for \"%s\".\nWhat to do?"),
 					doubledHkName), _("Warning"), wxYES | wxOK | wxCANCEL);
 				msg.SetOkLabel(_("Switch hotkeys"));
@@ -245,7 +245,7 @@ void AutomationHotkeysDialog::OnMapHkey(wxCommandEvent &evt)
 			}
 			else{
 				int buttonFlag = (idtypes.size() < 2) ? wxOK : 0;
-				KaiMessageDialog msg(this,
+				HikariMessageDialog msg(this,
 					wxString::Format(_("This shortcut already exists in %s as a shortcut for \"%s\".\nWhat would you like to do?"),
 					(idtypes.size() > 1) ? _("other windows") : _("another window"), doubledHkName), _("Warning"), wxYES_NO | buttonFlag | wxCANCEL);
 				if (idtypes.size() < 2)

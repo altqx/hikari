@@ -17,7 +17,7 @@
 
 #include "SubsGrid.h"
 #include "config.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "SubsGridFiltering.h"
 #include "SubsGridPreview.h"
 #include "VisualDrawingShapes.h"
@@ -2088,7 +2088,7 @@ bool SubsGrid::ShowPreviewWindow(SubsGrid *previewGrid,
 	int previewHeight = (((h / 3) / realGridHeight) * realGridHeight) + realGridHeight + 4;
 	if (previewHeight < 100)
 		previewHeight = ((100 / realGridHeight) * realGridHeight) + realGridHeight + 4;
-	if (h < 150){ KaiMessageBox(_("Cannot show preview cause grid height is too low")); return false; }
+	if (h < 150){ HikariMessageBox(_("Cannot show preview cause grid height is too low")); return false; }
 	int previewPosition = (diffPosition + 2) * realGridHeight;
 	if (previewPosition + previewHeight > h || previewPosition < 20){
 		int newLine = (((h - previewHeight) / 2) / realGridHeight);

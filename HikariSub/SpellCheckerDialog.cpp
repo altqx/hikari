@@ -17,10 +17,10 @@
 
 #include "SpellCheckerDialog.h"
 #include "SubsGrid.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "SpellChecker.h"
 #include "HikariSubFrame.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "OpennWrite.h"
 #include "Stylelistbox.h"
 #include "TabPanel.h"
@@ -30,8 +30,8 @@
 #include <wx/regex.h>
 
 SpellCheckerDialog::SpellCheckerDialog(HikariSubFrame *parent)
-	:KaiDialog((wxWindow*)parent, -1, _("Spellchecker"))
-	, Kai(parent)
+	:HikariDialog((wxWindow*)parent, -1, _("Spellchecker"))
+	, Hikari(parent)
 	, lastLine(0)
 	, lastMisspell(0)
 	, lastActiveLine(-1)
@@ -41,18 +41,18 @@ SpellCheckerDialog::SpellCheckerDialog(HikariSubFrame *parent)
 	wxBoxSizer *replaceSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer *listSizer = new wxBoxSizer(wxHORIZONTAL);
-	ignoreComments = new KaiCheckBox(this, -1, _("Ignore comments"));
-	ignoreUpper = new KaiCheckBox(this, -1, _("Ignore words written entirely\nin uppercase"));
+	ignoreComments = new HikariCheckBox(this, -1, _("Ignore comments"));
+	ignoreUpper = new HikariCheckBox(this, -1, _("Ignore words written entirely\nin uppercase"));
 	//wxString misspellWord = FindNextMisspell();
-	misSpell = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
-	replaceWord = new KaiTextCtrl(this, -1);
+	misSpell = new HikariTextCtrl(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, wxTE_READONLY);
+	replaceWord = new HikariTextCtrl(this, -1);
 
-	misspellSizer->Add(new KaiStaticText(this, -1, _("Misspell word:")), 1, wxEXPAND | wxALL, 2);
+	misspellSizer->Add(new HikariStaticText(this, -1, _("Misspell word:")), 1, wxEXPAND | wxALL, 2);
 	misspellSizer->Add(misSpell, 4, wxEXPAND | wxALL, 2);
-	replaceSizer->Add(new KaiStaticText(this, -1, _("Replace to:")), 1, wxEXPAND | wxALL, 2);
+	replaceSizer->Add(new HikariStaticText(this, -1, _("Replace to:")), 1, wxEXPAND | wxALL, 2);
 	replaceSizer->Add(replaceWord, 4, wxEXPAND | wxALL, 2);
 
-	suggestionsList = new KaiListCtrl(this, ID_SUGGESTIONS_LIST, wxArrayString());
+	suggestionsList = new HikariListCtrl(this, ID_SUGGESTIONS_LIST, wxArrayString());
 	replace = new MappedButton(this, ID_REPLACE, _("Replace"));
 	replaceAll = new MappedButton(this, ID_REPLACE_ALL, _("Replace all"));
 	ignore = new MappedButton(this, ID_IGNORE, _("Ignore"));
@@ -106,7 +106,7 @@ wxString SpellCheckerDialog::FindNextMisspell()
 	bool noComments = ignoreComments->GetValue();
 	bool ignoreUpperCase = ignoreUpper->GetValue();
 
-	tab = Kai->GetTab();
+	tab = Hikari->GetTab();
 	if (lastActiveLine != tab->grid->currentLine){
 		lastLine = lastActiveLine = tab->grid->currentLine;
 		lastMisspell = 0;
@@ -145,7 +145,7 @@ void SpellCheckerDialog::SetNextMisspell()
 		suggestionsList->SetTextArray(wxArrayString());
 		blockOnActive = true;
 		replaceWord->SetValue(emptyString, true);
-		KaiMessageBox(_("No spelling errors were found"), _("Warning"), wxOK, this);
+		HikariMessageBox(_("No spelling errors were found"), _("Warning"), wxOK, this);
 		return;
 	}
 	else{
@@ -154,7 +154,7 @@ void SpellCheckerDialog::SetNextMisspell()
 		suggestionsList->SetTextArray(suggestions);
 		replaceWord->SetValue((suggestions.GetCount()) ? suggestions[0] : emptyString, true);
 	}
-	tab = Kai->GetTab();
+	tab = Hikari->GetTab();
 	if (lastActiveLine != lastLine){
 		tab->grid->SelectRow(lastLine, false, true, true);
 		tab->grid->ScrollTo(lastLine, true);
@@ -180,7 +180,7 @@ void SpellCheckerDialog::Replace(wxCommandEvent &evt)
 	}
 	wxString replaceTxt = replaceWord->GetValue();
 	if (replaceTxt.IsEmpty() || !errors.size()){ return; }
-	tab = Kai->GetTab();
+	tab = Hikari->GetTab();
 	Dialogue *Dial = tab->grid->CopyDialogue(lastLine);
 	wxString &Text = Dial->Text.CheckTlRef(Dial->TextTl, tab->grid->hasTLMode);
 	SpellChecker::Get()->ReplaceMisspell(errors[lastMisspell].misspell, replaceTxt, 
@@ -200,7 +200,7 @@ void SpellCheckerDialog::ReplaceAll(wxCommandEvent &evt)
 	wxString misspellTxt = misSpell->GetValue();
 	wxString misspellTxtLower = misspellTxt.Lower();
 	if (replaceTxt.IsEmpty() || misspellTxt.IsEmpty()){ return; }
-	tab = Kai->GetTab();
+	tab = Hikari->GetTab();
 	bool noComments = ignoreComments->GetValue();
 
 	wxString text;
@@ -331,7 +331,7 @@ void SpellCheckerDialog::OnActive(wxActivateEvent &evt)
 {
 	if (evt.GetActive()){
 		if (blockOnActive){ blockOnActive = false; return; }
-		TabPanel *tab1 = Kai->GetTab();
+		TabPanel *tab1 = Hikari->GetTab();
 		wxString &ActualText = 
 			tab1->edit->line->Text.CheckTlRef(tab1->edit->line->TextTl, tab->grid->hasTLMode);
 		if (tab != tab1 || lastActiveLine != tab1->grid->currentLine || lastText != ActualText){

@@ -23,7 +23,7 @@
 #include "RendererVideo.h"
 //#include "VideoFullscreen.h"
 
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "VideoBox.h"
 #include "Provider.h"
 #include "TabPanel.h"
@@ -172,7 +172,7 @@ public:
 	void GetWindowSize(int* x, int* y, bool withTabPanel = true);
 	PlaybackState GetState();
 private:
-	void ShowTimes(SubsTime &videoTime, KaiTextCtrl *field);
+	void ShowTimes(SubsTime &videoTime, HikariTextCtrl *field);
 	void QueueLater(int kind);
 	void FlushLater();
 	void DropLater();
@@ -203,7 +203,7 @@ private:
 	wxMutex vbmutex;
 	wxMutex nextmutex;
 	wxTimer m_VideoTimeTimer;
-	KaiTextCtrl* m_TimesTextField;
+	HikariTextCtrl* m_TimesTextField;
 	VolSlider* m_VolumeSlider;
 	VideoToolbar *m_VideoToolbar;
 	int actualFile;

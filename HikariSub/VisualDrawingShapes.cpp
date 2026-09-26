@@ -17,12 +17,12 @@
 
 
 #include "VisualDrawingShapes.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include "MappedButton.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "config.h"
 #include "OpennWrite.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "TabPanel.h"
 #include "EditBox.h"
 #include "VideoBox.h"
@@ -41,7 +41,7 @@ enum {
 };
 
 ShapesEdition::ShapesEdition(TabPanel* _tab, const wxPoint& pos, std::vector<ShapesSetting>* _shapes, int curShape)
-	: KaiDialog(_tab, -1, _("Vector shape editing"), pos)
+	: HikariDialog(_tab, -1, _("Vector shape editing"), pos)
 	, tab(_tab)
 {
 	if (curShape < 0 || curShape >= _shapes->size())
@@ -53,11 +53,11 @@ ShapesEdition::ShapesEdition(TabPanel* _tab, const wxPoint& pos, std::vector<Sha
 	wxArrayString list;
 	GetNames(&shapes, &list);
 	DialogSizer* main = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer* shapeSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Edited shape"));
-	shapeList = new KaiChoice(this, ID_SHAPE_LIST, wxDefaultPosition, wxDefaultSize, list);
+	HikariStaticBoxSizer* shapeSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Edited shape"));
+	shapeList = new HikariChoice(this, ID_SHAPE_LIST, wxDefaultPosition, wxDefaultSize, list);
 	shapeList->SetSelection(selection);
 	Bind(wxEVT_COMMAND_CHOICE_SELECTED, &ShapesEdition::OnListChanged, this, ID_SHAPE_LIST);
-	newShapeName = new KaiTextCtrl(this, -1);
+	newShapeName = new HikariTextCtrl(this, -1);
 	MappedButton* addShape = new MappedButton(this, ID_BUTTON_ADD_SHAPE, _("Add shape"));
 	MappedButton* removeShape = new MappedButton(this, ID_BUTTON_REMOVE_SHAPE, _("Delete shape"));
 	Bind(wxEVT_COMMAND_BUTTON_CLICKED, &ShapesEdition::OnAddShape, this, ID_BUTTON_ADD_SHAPE);
@@ -66,25 +66,25 @@ ShapesEdition::ShapesEdition(TabPanel* _tab, const wxPoint& pos, std::vector<Sha
 	shapeSizer->Add(newShapeName, 1, wxALL | wxEXPAND, 4);
 	shapeSizer->Add(addShape, 1, wxALL | wxEXPAND, 4);
 	shapeSizer->Add(removeShape, 1, wxALL | wxEXPAND, 4);
-	KaiStaticBoxSizer* editionSizer = new KaiStaticBoxSizer(wxVERTICAL, this, _("Editing"));
+	HikariStaticBoxSizer* editionSizer = new HikariStaticBoxSizer(wxVERTICAL, this, _("Editing"));
 	wxBoxSizer* nameSizer = new wxBoxSizer(wxHORIZONTAL);
-	shapeName = new KaiTextCtrl(this, -1, currentShape.name);
+	shapeName = new HikariTextCtrl(this, -1, currentShape.name);
 	shapeName->SetMaxLength(20);
-	shapeAsASS = new KaiTextCtrl(this, -1, currentShape.shape, wxDefaultPosition, wxSize(-1, 300), wxTE_MULTILINE);
+	shapeAsASS = new HikariTextCtrl(this, -1, currentShape.shape, wxDefaultPosition, wxSize(-1, 300), wxTE_MULTILINE);
 	wxBoxSizer* modeSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* scalingModeSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxString modes[] = { _("Changed width and height"), _("Preserve aspect ratio"), _("Changed is only width") };
-	mode = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, 3, modes);
+	mode = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, 3, modes);
 	mode->SetSelection(currentShape.mode);
 	wxString scalingModes[] = { _("Changing only drawing coordinates"), _("Changing scale") };
-	scalingMode = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, 2, scalingModes);
+	scalingMode = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, 2, scalingModes);
 	scalingMode->SetSelection(currentShape.scalingMode);
 	scalingMode->Enable(false);
-	nameSizer->Add(new KaiStaticText(this, -1, _("Name:")), 1, wxALL | wxEXPAND, 4);
+	nameSizer->Add(new HikariStaticText(this, -1, _("Name:")), 1, wxALL | wxEXPAND, 4);
 	nameSizer->Add(shapeName, 1, wxALL | wxEXPAND, 4);
-	modeSizer->Add(new KaiStaticText(this, -1, _("Scaling relative to cursor:")), 1, wxALL | wxEXPAND, 4);
+	modeSizer->Add(new HikariStaticText(this, -1, _("Scaling relative to cursor:")), 1, wxALL | wxEXPAND, 4);
 	modeSizer->Add(mode, 1, wxALL | wxEXPAND, 4);
-	scalingModeSizer->Add(new KaiStaticText(this, -1, _("Scaling mode:")), 1, wxALL | wxEXPAND, 4);
+	scalingModeSizer->Add(new HikariStaticText(this, -1, _("Scaling mode:")), 1, wxALL | wxEXPAND, 4);
 	scalingModeSizer->Add(scalingMode, 1, wxALL | wxEXPAND, 4);
 
 	wxBoxSizer* shapeButtonSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -93,7 +93,7 @@ ShapesEdition::ShapesEdition(TabPanel* _tab, const wxPoint& pos, std::vector<Sha
 	editionSizer->Add(nameSizer, 1, wxALL | wxEXPAND, 2);
 	editionSizer->Add(modeSizer, 1, wxALL | wxEXPAND, 2);
 	editionSizer->Add(scalingModeSizer, 1, wxALL | wxEXPAND, 2);
-	shapeButtonSizer->Add(new KaiStaticText(this, -1, _("Shape:")), 1, wxALL | wxEXPAND, 4);
+	shapeButtonSizer->Add(new HikariStaticText(this, -1, _("Shape:")), 1, wxALL | wxEXPAND, 4);
 	shapeButtonSizer->Add(getShapeFromLine, 1, wxALL | wxEXPAND, 4);
 	editionSizer->Add(shapeButtonSizer, 1, wxALL | wxEXPAND, 2);
 	editionSizer->Add(shapeAsASS, 0, wxALL | wxEXPAND, 6);
@@ -125,7 +125,7 @@ void ShapesEdition::OnSave(wxCommandEvent& evt)
 
 void ShapesEdition::OnResetDefault(wxCommandEvent& evt)
 {
-	if (KaiMessageBox(_("Are you sure you want to reset to default?"),
+	if (HikariMessageBox(_("Are you sure you want to reset to default?"),
 		_("Confirmation"), wxYES_NO, this) == wxYES) {
 		wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
 		_wremove(path.wc_str());
@@ -142,11 +142,11 @@ void ShapesEdition::OnAddShape(wxCommandEvent& evt)
 {
 	wxString newShapeNameStr = newShapeName->GetValue();
 	if (newShapeNameStr.empty()) {
-		KaiMessageBox(_("Enter a name for the new shape."), _("Error"), wxOK, this);
+		HikariMessageBox(_("Enter a name for the new shape."), _("Error"), wxOK, this);
 		return;
 	}
 	if (shapeList->FindString(newShapeNameStr) != -1) {
-		KaiMessageBox(_("New shape name already exists, enter another name."), _("Error"), wxOK, this);
+		HikariMessageBox(_("New shape name already exists, enter another name."), _("Error"), wxOK, this);
 		return;
 	}
 	currentShape = ShapesSetting(newShapeNameStr);
@@ -160,11 +160,11 @@ void ShapesEdition::OnAddShape(wxCommandEvent& evt)
 void ShapesEdition::OnRemoveShape(wxCommandEvent& evt)
 {
 	if (selection < 0 || selection >= shapes.size()) {
-		KaiMessageBox(L"Selected shape is out of range of shapeList.", L"Error", wxOK, this);
+		HikariMessageBox(L"Selected shape is out of range of shapeList.", L"Error", wxOK, this);
 		return;
 	}
 	if (shapes.size() <= 1) {
-		KaiMessageBox(_("Cannot remove all shapes from the list"), _("Error"), wxOK, this);
+		HikariMessageBox(_("Cannot remove all shapes from the list"), _("Error"), wxOK, this);
 		return;
 	}
 	shapes.erase(shapes.begin() + selection);
@@ -189,7 +189,7 @@ void ShapesEdition::OnRemoveShape(wxCommandEvent& evt)
 void ShapesEdition::OnListChanged(wxCommandEvent& evt)
 {
 	if (CheckModified()) {
-		if (KaiMessageBox(wxString::Format(_("Save changes to shape \"%s\"?"),
+		if (HikariMessageBox(wxString::Format(_("Save changes to shape \"%s\"?"),
 			currentShape.shape), _("Confirmation"), wxYES_NO, this) == wxYES) {
 			Save(ID_BUTTON_COMMIT);
 		}
@@ -268,7 +268,7 @@ void ShapesEdition::Save(int id)
 {
 	UpdateShape();
 	if (currentShape.shape.empty()) {
-		KaiMessageBox(_("Field \"shape\" cannot be empty."), _("Error"), wxOK, this);
+		HikariMessageBox(_("Field \"shape\" cannot be empty."), _("Error"), wxOK, this);
 		return;
 	}
 	if (currentShape.name.empty()) {
@@ -276,7 +276,7 @@ void ShapesEdition::Save(int id)
 		shapeName->SetValue(currentShape.name);
 	}
 	if (selection < 0 || selection >= shapes.size()) {
-		KaiMessageBox(L"Selected shape is out of range of shapeList.", L"Error", wxOK, this);
+		HikariMessageBox(L"Selected shape is out of range of shapeList.", L"Error", wxOK, this);
 		return;
 	}
 	shapes[selection] = currentShape;

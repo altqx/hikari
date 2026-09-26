@@ -19,7 +19,7 @@
 #include <wx/msw/popupwin.h>
 #include <vector>
 
-class KaiScrollbar;
+class HikariScrollbar;
 
 enum{
 	TYPE_NORMAL = 0,
@@ -94,7 +94,7 @@ private:
 protected:
 	wxBitmap *bmp;
 	int height;
-	KaiScrollbar *scroll;
+	HikariScrollbar *scroll;
 	bool blockMouseEvent = true;
 	PopupTagList *parent;
 };

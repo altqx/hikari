@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "KaiFrame.h"
+#include "HikariFrame.h"
 #include "FontCollector.h"
-#include "KaiStatusBar.h"
+#include "HikariStatusBar.h"
 #include "Automation.h"
 #include <wx/timer.h>
 #include <wx/window.h>
@@ -38,14 +38,14 @@ class Automation;
 class Notebook;
 class Menu;
 class MenuBar;
-class KaiToolbar;
+class HikariToolbar;
 class TabPanel;
 class MenuEvent;
 struct ITaskbarList3;
 
 
 
-class HikariSubFrame : public KaiFrame
+class HikariSubFrame : public HikariFrame
 {
 public:
 	HikariSubFrame(const wxPoint &pos, const wxSize &size);
@@ -71,8 +71,8 @@ public:
 	Menu* KeyframesRecentMenu;
 	MenuBar* Menubar;
 
-	KaiStatusBar* StatusBar;
-	KaiToolbar *Toolbar;
+	HikariStatusBar* StatusBar;
+	HikariToolbar *Toolbar;
 	wxArrayString subsrec;
 	wxArrayString videorec;
 	wxArrayString audsrec;

@@ -18,7 +18,7 @@
 #include "VisualClips.h"
 #include "TabPanel.h"
 #include "SubsGrid.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "EditBox.h"
 #include "VideoBox.h"
 #include "Provider.h"
@@ -27,7 +27,7 @@
 #include <wx/tokenzr.h>
 #include <wx/regex.h>
 #include <math.h> 
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 
 
 
@@ -383,7 +383,7 @@ void DrawingAndClip::SetClip(bool dummy, bool redraw, bool changeEditorText)
 			selPositions.clear();
 			dummytext = grid->GetVisible(&visible, 0, &selPositions);
 			if (selPositions.size() != sels.size()) {
-				//KaiLog(L"Sizes mismatch");
+				//HikariLog(L"Sizes mismatch");
 				return;
 			}
 		}
@@ -1000,7 +1000,7 @@ void DrawingAndClip::OnMouseEvent(wxMouseEvent &event)
 				}
 				AddCurve(xy, pos, L"s"); break;//bspline
 			default:
-				KaiLog(wxString::Format(L"Bad tool %i", tool));
+				HikariLog(wxString::Format(L"Bad tool %i", tool));
 			}
 			SetClip(true);
 			return;
@@ -1011,7 +1011,7 @@ void DrawingAndClip::OnMouseEvent(wxMouseEvent &event)
 		{
 			int pos = CheckPos(xy, true);
 			if (psize > 0 && Points[(pos == (int)psize) ? psize - 1 : pos].type == L"m"){
-				KaiMessageBox(_("Double \"m\" was blocked because of Vsfilter bug"),
+				HikariMessageBox(_("Double \"m\" was blocked because of Vsfilter bug"),
 					_("Warning"));
 				return;
 			}

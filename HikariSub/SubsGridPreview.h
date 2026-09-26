@@ -14,8 +14,8 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include "KaiScrollbar.h"
-#include "KaiListCtrl.h"
+#include "HikariScrollbar.h"
+#include "HikariListCtrl.h"
 //#include "SubsGrid.h"
 //#include "TabPanel.h"
 #include <vector>
@@ -73,8 +73,8 @@ private:
 	bool holding = false;
 	bool onX = false;
 	bool pushedX = false;
-	KaiScrollbar *scrollbar=nullptr;
-	KaiListCtrl *occurencesList = nullptr;
+	HikariScrollbar *scrollbar=nullptr;
+	HikariListCtrl *occurencesList = nullptr;
 	std::vector<MultiPreviewData> previewData;
 	MultiPreviewData lastData;
 };

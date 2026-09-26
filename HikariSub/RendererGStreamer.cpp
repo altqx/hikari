@@ -44,22 +44,22 @@
 namespace {
 	// GstPlayFlags (the playbin "flags" GFlags) — not exported in a public header.
 	enum {
-		KAI_PLAY_FLAG_VIDEO       = (1 << 0),
-		KAI_PLAY_FLAG_AUDIO       = (1 << 1),
-		KAI_PLAY_FLAG_TEXT        = (1 << 2),
-		KAI_PLAY_FLAG_SOFT_VOLUME = (1 << 4),
+		HIKARI_PLAY_FLAG_VIDEO       = (1 << 0),
+		HIKARI_PLAY_FLAG_AUDIO       = (1 << 1),
+		HIKARI_PLAY_FLAG_TEXT        = (1 << 2),
+		HIKARI_PLAY_FLAG_SOFT_VOLUME = (1 << 4),
 	};
 
 	void EnsureGstInit()
 	{
 		static std::once_flag once;
 		std::call_once(once, [] {
-#ifdef KAI_GST_PLUGIN_DIR
-			g_setenv("GST_PLUGIN_PATH_1_0", KAI_GST_PLUGIN_DIR, FALSE);
+#ifdef HIKARISUB_GST_PLUGIN_DIR
+			g_setenv("GST_PLUGIN_PATH_1_0", HIKARISUB_GST_PLUGIN_DIR, FALSE);
 #endif
 			GError *err = nullptr;
 			if (!gst_init_check(nullptr, nullptr, &err)) {
-				KaiLog(wxString::Format(L"GStreamer init failed: %s",
+				HikariLog(wxString::Format(L"GStreamer init failed: %s",
 					wxString::FromUTF8(err ? err->message : "unknown")));
 			}
 			if (err) g_error_free(err);
@@ -67,7 +67,7 @@ namespace {
 	}
 
 	// appsink delivery trampolines -> RendererGStreamer::HandleSample.
-	GstFlowReturn kai_new_sample(GstElement *sink, gpointer user)
+	GstFlowReturn hikari_new_sample(GstElement *sink, gpointer user)
 	{
 		GstSample *s = gst_app_sink_pull_sample(GST_APP_SINK(sink));
 		if (s) {
@@ -76,7 +76,7 @@ namespace {
 		}
 		return GST_FLOW_OK;
 	}
-	GstFlowReturn kai_new_preroll(GstElement *sink, gpointer user)
+	GstFlowReturn hikari_new_preroll(GstElement *sink, gpointer user)
 	{
 		GstSample *s = gst_app_sink_pull_preroll(GST_APP_SINK(sink));
 		if (s) {
@@ -193,7 +193,7 @@ bool RendererGStreamer::QueryVideoInfo()
 	GstPad *pad = nullptr;
 	g_signal_emit_by_name(m_Pipeline, "get-video-pad", 0, &pad);
 	if (!pad) {
-		KaiLog(_("Video file does not contain a video stream"));
+		HikariLog(_("Video file does not contain a video stream"));
 		return false;
 	}
 	GstCaps *caps = gst_pad_get_current_caps(pad);
@@ -275,7 +275,7 @@ bool RendererGStreamer::OpenFile(const wxString &fname, int subsFlag, bool vobsu
 
 	m_Pipeline = gst_element_factory_make("playbin", "hikarisub-playbin");
 	if (!m_Pipeline) {
-		KaiLog(_("Cannot create GStreamer pipeline (playbin)"));
+		HikariLog(_("Cannot create GStreamer pipeline (playbin)"));
 		return false;
 	}
 
@@ -305,7 +305,7 @@ bool RendererGStreamer::OpenFile(const wxString &fname, int subsFlag, bool vobsu
 		if (sink) gst_object_unref(sink);
 		if (conv) gst_object_unref(conv);
 		if (vbin) gst_object_unref(vbin);
-		KaiLog(_("Cannot create GStreamer video display module"));
+		HikariLog(_("Cannot create GStreamer video display module"));
 		TearDown();
 		return false;
 	}
@@ -315,8 +315,8 @@ bool RendererGStreamer::OpenFile(const wxString &fname, int subsFlag, bool vobsu
 	gst_app_sink_set_max_buffers(GST_APP_SINK(sink), 2);
 	gst_app_sink_set_drop(GST_APP_SINK(sink), TRUE);
 	g_object_set(sink, "sync", TRUE, "emit-signals", TRUE, nullptr);
-	g_signal_connect(sink, "new-sample", G_CALLBACK(kai_new_sample), this);
-	g_signal_connect(sink, "new-preroll", G_CALLBACK(kai_new_preroll), this);
+	g_signal_connect(sink, "new-sample", G_CALLBACK(hikari_new_sample), this);
+	g_signal_connect(sink, "new-preroll", G_CALLBACK(hikari_new_preroll), this);
 	gst_bin_add_many(GST_BIN(vbin), conv, sink, nullptr);
 	gst_element_link(conv, sink);
 	{
@@ -330,14 +330,14 @@ bool RendererGStreamer::OpenFile(const wxString &fname, int subsFlag, bool vobsu
 	// We composite subtitles ourselves; disable playbin's own text rendering.
 	gint flags = 0;
 	g_object_get(m_Pipeline, "flags", &flags, nullptr);
-	flags |= KAI_PLAY_FLAG_VIDEO | KAI_PLAY_FLAG_AUDIO | KAI_PLAY_FLAG_SOFT_VOLUME;
-	flags &= ~KAI_PLAY_FLAG_TEXT;
+	flags |= HIKARI_PLAY_FLAG_VIDEO | HIKARI_PLAY_FLAG_AUDIO | HIKARI_PLAY_FLAG_SOFT_VOLUME;
+	flags &= ~HIKARI_PLAY_FLAG_TEXT;
 	g_object_set(m_Pipeline, "flags", flags, nullptr);
 
 	SetVolumeInternal();
 
 	if (gst_element_set_state(m_Pipeline, GST_STATE_PAUSED) == GST_STATE_CHANGE_FAILURE || !WaitPreroll()) {
-		KaiLog(wxString::Format(_("Cannot open video file: %s"), fname));
+		HikariLog(wxString::Format(_("Cannot open video file: %s"), fname));
 		TearDown();
 		return false;
 	}
@@ -515,7 +515,7 @@ void RendererGStreamer::BusLoop()
 		case GST_MESSAGE_ERROR: {
 			GError *err = nullptr; gchar *dbg = nullptr;
 			gst_message_parse_error(msg, &err, &dbg);
-			KaiLog(wxString::Format(L"GStreamer: %s", wxString::FromUTF8(err ? err->message : "error")));
+			HikariLog(wxString::Format(L"GStreamer: %s", wxString::FromUTF8(err ? err->message : "error")));
 			if (err) g_error_free(err);
 			g_free(dbg);
 			// m_State is UI-owned.

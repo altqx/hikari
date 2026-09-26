@@ -46,7 +46,7 @@ bool TransformBidiText(wxString* text,
 
 	const wxScopedCharBuffer utf8 = text->utf8_str();
 	if (!utf8.data() || utf8.length() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
-		KaiLog(L"Cannot convert bidi text to UTF-8");
+		HikariLog(L"Cannot convert bidi text to UTF-8");
 		return false;
 	}
 
@@ -54,11 +54,11 @@ bool TransformBidiText(wxString* text,
 	int32_t inputLength = 0;
 	u_strFromUTF8(nullptr, 0, &inputLength, utf8.data(), static_cast<int32_t>(utf8.length()), &errorCode);
 	if (errorCode != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(errorCode)) {
-		KaiLog(L"Cannot convert bidi text to UTF-16: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot convert bidi text to UTF-16: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 	if (inputLength > (std::numeric_limits<int32_t>::max() - 1) / 2) {
-		KaiLog(L"Bidi conversion text is too large");
+		HikariLog(L"Bidi conversion text is too large");
 		return false;
 	}
 
@@ -67,13 +67,13 @@ bool TransformBidiText(wxString* text,
 	u_strFromUTF8(input.data(), static_cast<int32_t>(input.size()), &inputLength,
 		utf8.data(), static_cast<int32_t>(utf8.length()), &errorCode);
 	if (U_FAILURE(errorCode)) {
-		KaiLog(L"Cannot convert bidi text to UTF-16: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot convert bidi text to UTF-16: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 
 	UBiDiTransform* transform = ubiditransform_open(&errorCode);
 	if (U_FAILURE(errorCode) || !transform) {
-		KaiLog(L"Cannot initialize bidi conversion: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot initialize bidi conversion: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 
@@ -86,7 +86,7 @@ bool TransformBidiText(wxString* text,
 		UBIDI_MIRRORING_OFF, shapingOptions, &errorCode);
 	ubiditransform_close(transform);
 	if (U_FAILURE(errorCode) || outputLength > static_cast<uint32_t>(outputCapacity)) {
-		KaiLog(L"Cannot transform bidi text: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot transform bidi text: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 
@@ -94,7 +94,7 @@ bool TransformBidiText(wxString* text,
 	errorCode = U_ZERO_ERROR;
 	u_strToUTF8(nullptr, 0, &resultLength, output.data(), static_cast<int32_t>(outputLength), &errorCode);
 	if (errorCode != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(errorCode)) {
-		KaiLog(L"Cannot convert transformed bidi text to UTF-8: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot convert transformed bidi text to UTF-8: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 
@@ -103,7 +103,7 @@ bool TransformBidiText(wxString* text,
 	u_strToUTF8(result.data(), static_cast<int32_t>(result.size()), &resultLength,
 		output.data(), static_cast<int32_t>(outputLength), &errorCode);
 	if (U_FAILURE(errorCode)) {
-		KaiLog(L"Cannot convert transformed bidi text to UTF-8: " + wxString::FromUTF8(u_errorName(errorCode)));
+		HikariLog(L"Cannot convert transformed bidi text to UTF-8: " + wxString::FromUTF8(u_errorName(errorCode)));
 		return false;
 	}
 

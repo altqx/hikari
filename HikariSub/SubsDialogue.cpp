@@ -255,7 +255,7 @@ void Dialogue::GetTextStripped(wxString* textStripped, const wxString& text, boo
 	else {
 		wxRegEx re(L"{[^}]*}", wxRE_ADVANCED | wxRE_ICASE);
 		if (!re.IsValid()) {
-			KaiLogSilent(L"Text stripped regex is not valid");
+			HikariLogSilent(L"Text stripped regex is not valid");
 			return;
 		}
 		*textStripped = txt;
@@ -310,7 +310,7 @@ void Dialogue::MergeTagBlocks(wxString* output, const wxString& blockToMerge)
 			re.Compile(L"(\\\\" + tag + L"[^\\\\}]*)", wxRE_ADVANCED | wxRE_ICASE);
 
 		if (!re.IsValid()) {
-			KaiLogSilent("Regex tag seeking is invalid '\\\\" + tag + L"([^\\}]*)'");
+			HikariLogSilent("Regex tag seeking is invalid '\\\\" + tag + L"([^\\}]*)'");
 			continue;
 		}//wxRegEx replace, replaceall sux
 		if (re.Matches(*output)) {

@@ -225,7 +225,7 @@ bool RendererFFMS2::DrawTexture(unsigned char *nframe, bool copy)
 
 	}
 	else {
-		KaiLog(wxString::Format(L"bad pitch diff %i pitch %i dxpitch %i", diff, m_Pitch, d3dlr.Pitch));
+		HikariLog(wxString::Format(L"bad pitch diff %i pitch %i dxpitch %i", diff, m_Pitch, d3dlr.Pitch));
 	}
 
 	HR(upload->UnlockRect(), _("Cannot unlock texture buffer"));
@@ -380,7 +380,7 @@ void RendererFFMS2::Render(bool redrawSubsOnFrame, bool wait)
 		BlitNv12();
 	else {
 		hr = m_D3DDevice->StretchRect(m_MainSurface, &m_MainStreamRect, m_BlackBarsSurface, &m_BackBufferRect, D3DTEXF_LINEAR);
-		if (FAILED(hr)){ KaiLog(_("Cannot overlay surfaces")); }
+		if (FAILED(hr)){ HikariLog(_("Cannot overlay surfaces")); }
 	}
 
 
@@ -839,7 +839,7 @@ void RendererFFMS2::BlitNv12()
 	sample.DstRect = m_BackBufferRect;
 	sample.PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
 	if (FAILED(m_DXVAProcessor->VideoProcessBlt(m_BlackBarsSurface, &blt, &sample, 1, nullptr)))
-		KaiLog(_("Cannot overlay surfaces"));
+		HikariLog(_("Cannot overlay surfaces"));
 #endif
 }
 

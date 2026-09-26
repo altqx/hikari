@@ -16,22 +16,22 @@
 
 #include "AutoSaveOpen.h"
 #include "HikariSubFrame.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
 
-AutoSaveOpen::AutoSaveOpen(HikariSubFrame* _Kai)
-	: KaiDialog(_Kai, -1, _("Open auto save file"),
+AutoSaveOpen::AutoSaveOpen(HikariSubFrame* _Hikari)
+	: HikariDialog(_Hikari, -1, _("Open auto save file"),
 		wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
-	, Kai(_Kai)
+	, Hikari(_Hikari)
 {
 
 	DialogSizer* mainSizer = new DialogSizer(wxVERTICAL);
-	KaiStaticBoxSizer* seekingSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Find files"));
-	seekingText = new KaiTextCtrl(this, ID_AUTO_SAVE_SEEKING_TEXT, emptyString, 
+	HikariStaticBoxSizer* seekingSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Find files"));
+	seekingText = new HikariTextCtrl(this, ID_AUTO_SAVE_SEEKING_TEXT, emptyString, 
 		wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	filterList = new MappedButton(this, ID_AUTO_SAVE_FILTER, _("Filter list"));
-	seekAllWords = new KaiCheckBox(this, -1, _("All words"));
+	seekAllWords = new HikariCheckBox(this, -1, _("All words"));
 	seekAllWords->SetValue(true);
 
 	seekingSizer->Add(seekingText, 4, wxALL | wxEXPAND, 4);
@@ -40,13 +40,13 @@ AutoSaveOpen::AutoSaveOpen(HikariSubFrame* _Kai)
 
 	GenerateList();
 	wxBoxSizer* listsSizer = new wxBoxSizer(wxHORIZONTAL);
-	KaiStaticBoxSizer* filesSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Files"));
-	filesList = new KaiListCtrl(this, ID_AUTO_SAVE_LIST, paths, wxDefaultPosition, wxSize(300,400));
+	HikariStaticBoxSizer* filesSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Files"));
+	filesList = new HikariListCtrl(this, ID_AUTO_SAVE_LIST, paths, wxDefaultPosition, wxSize(300,400));
 
 	filesSizer->Add(filesList, 1, wxALL | wxEXPAND, 2);
 
-	KaiStaticBoxSizer* versionSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Versions"));
-	versionList = new KaiListCtrl(this, -1, wxArrayString(), wxDefaultPosition, wxSize(100, 400));
+	HikariStaticBoxSizer* versionSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Versions"));
+	versionList = new HikariListCtrl(this, -1, wxArrayString(), wxDefaultPosition, wxSize(100, 400));
 
 	versionSizer->Add(versionList, 1, wxALL | wxEXPAND, 2);
 
@@ -131,7 +131,7 @@ void AutoSaveOpen::GenerateList()
 	HANDLE h = FindFirstFileW(path.wc_str(), &data);
 	if (h == INVALID_HANDLE_VALUE)
 	{
-		KaiLog(_("Cannot open auto save folder"));
+		HikariLog(_("Cannot open auto save folder"));
 		return;
 	}
 
@@ -178,7 +178,7 @@ void AutoSaveOpen::GenerateList()
 	} while (FindNextFile(h, &data));
 	FindClose(h);
 	if (!paths.GetCount()) {
-		KaiLog(_("Auto save folder is empty"));
+		HikariLog(_("Auto save folder is empty"));
 		return;
 	}
 }
@@ -237,12 +237,12 @@ void AutoSaveOpen::OnOkClick(wxCommandEvent& evt)
 	auto it = verList->find(item->name);
 	if (it != verList->end()) {
 		wxString filePath = Options.pathfull + L"/Subs/" + it->second;
-		Kai->OpenFile(filePath);
+		Hikari->OpenFile(filePath);
 		EndModal(wxOK);
 		return;
 	}
 
-	KaiLog(_("Failed to load autosave"));
+	HikariLog(_("Failed to load autosave"));
 }
 
 void AutoSaveOpen::OnListClick(wxCommandEvent& evt)

@@ -18,7 +18,7 @@
 #include "SemVer.h"
 #include "VersionHikariSub.h"
 #include "OpennWrite.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include <wx/settings.h>
 #include <wx/stdpaths.h>
 #include <wx/dir.h>
@@ -629,7 +629,7 @@ void config::LoadColors(const wxString &_themeName){
 			if (g > 10){
 				if (colors[0].IsOk() || g < STYLE_PREVIEW_COLOR2){
 					LoadMissingColours(path);
-					KaiMessageBox(wxString::Format(_("Some colors were absent from theme \"%s\" and were loaded from the default theme."), themeName));
+					HikariMessageBox(wxString::Format(_("Some colors were absent from theme \"%s\" and were loaded from the default theme."), themeName));
 				}
 				return;
 			}
@@ -639,7 +639,7 @@ void config::LoadColors(const wxString &_themeName){
 	LoadDefaultColors(themeName != L"LightSentro");
 	if (failed){
 		Options.SetString(PROGRAM_THEME, L"DarkSentro");
-		KaiMessageBox(_("Cannot load theme, reset to default"));
+		HikariMessageBox(_("Cannot load theme, reset to default"));
 	}
 }
 

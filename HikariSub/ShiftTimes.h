@@ -16,52 +16,52 @@
 #pragma once
 
 
-#include "KaiPanel.h"
+#include "HikariPanel.h"
 #include "TabPanel.h"
 #include "MappedButton.h"
 #include "NumCtrl.h"
 #include "ListControls.h"
 #include "Notebook.h"
 #include "HikariSubFrame.h"
-#include "KaiRadioButton.h"
-#include "KaiCheckBox.h"
+#include "HikariRadioButton.h"
+#include "HikariCheckBox.h"
 #include "TimeCtrl.h"
-#include "KaiScrollbar.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariScrollbar.h"
+#include "HikariStaticBoxSizer.h"
 #include "WinUndef.h"
 //#undef GetProfileString
 
-class ShiftTimes: public KaiPanel
+class ShiftTimes: public HikariPanel
 {
 public:
 	
 	ShiftTimes(wxWindow* parent, HikariSubFrame* kfparent, wxWindowID id = -1, 
 		const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize, long style=0);
 	virtual ~ShiftTimes();
-	KaiRadioButton* StartVAtime;
-	KaiRadioButton* EndVAtime;
-	KaiChoice *WhichLines;
-	KaiChoice *WhichTimes;
-	KaiChoice *ProfilesList;
-	KaiRadioButton* Forward;
-	KaiRadioButton* Backward;
-	KaiCheckBox* DisplayFrames;
-	KaiCheckBox* MoveTagTimes;
+	HikariRadioButton* StartVAtime;
+	HikariRadioButton* EndVAtime;
+	HikariChoice *WhichLines;
+	HikariChoice *WhichTimes;
+	HikariChoice *ProfilesList;
+	HikariRadioButton* Forward;
+	HikariRadioButton* Backward;
+	HikariCheckBox* DisplayFrames;
+	HikariCheckBox* MoveTagTimes;
 
 	MappedButton* AddStyles;
 	MappedButton* MoveTime;
 	MappedButton* NewProfile;
 	MappedButton* RemoveProfile;
 	TimeCtrl* TimeText;
-	KaiTextCtrl* Stylestext;
-	KaiCheckBox* MoveToVideoTime;
-	KaiCheckBox* MoveToAudioTime;
-	KaiChoice* EndTimeCorrection;
+	HikariTextCtrl* Stylestext;
+	HikariCheckBox* MoveToVideoTime;
+	HikariCheckBox* MoveToAudioTime;
+	HikariChoice* EndTimeCorrection;
 	//postprocessor controls
-	KaiCheckBox* LeadIn;
-	KaiCheckBox* LeadOut;
-	KaiCheckBox* Continous;
-	KaiCheckBox* SnapKF;
+	HikariCheckBox* LeadIn;
+	HikariCheckBox* LeadOut;
+	HikariCheckBox* Continous;
+	HikariCheckBox* SnapKF;
 	NumCtrl* LITime;
 	NumCtrl* LOTime;
 	NumCtrl* ThresStart;
@@ -71,11 +71,11 @@ public:
 	NumCtrl* BeforeEnd;
 	NumCtrl* AfterEnd;
 
-	KaiStaticBoxSizer *liosizer;
-	KaiStaticBoxSizer *consizer;
-	KaiStaticBoxSizer *snapsizer;
-	KaiStaticBoxSizer *profileSizer;
-	KaiScrollbar *scroll;
+	HikariStaticBoxSizer *liosizer;
+	HikariStaticBoxSizer *consizer;
+	HikariStaticBoxSizer *snapsizer;
+	HikariStaticBoxSizer *profileSizer;
+	HikariScrollbar *scroll;
 	wxWindow *panel; 
 
 	void Contents(bool addopts = true);
@@ -89,7 +89,7 @@ public:
 private:
 
 	char form;
-	HikariSubFrame* Kai;
+	HikariSubFrame* Hikari;
 	bool isscrollbar;
 	bool resizing;
 	int scPos;

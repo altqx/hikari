@@ -41,7 +41,7 @@ SubsGridPreview::SubsGridPreview(SubsGrid *_previewGrid, SubsGrid *windowToDraw,
 	else{
 		previewGrid->thisPreview = this;
 	}
-	scrollbar = new KaiScrollbar(this, 5432, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
+	scrollbar = new HikariScrollbar(this, 5432, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
 	Bind(wxEVT_PAINT, &SubsGridPreview::OnPaint, this);
 	Bind(wxEVT_SIZE, &SubsGridPreview::OnSize, this);
 	Bind(wxEVT_ERASE_BACKGROUND, [=](wxEraseEvent &evt){});

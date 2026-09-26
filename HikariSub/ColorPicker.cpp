@@ -42,11 +42,11 @@
 #include <wx/dcmemory.h>
 #include <wx/dcscreen.h>
 #include <wx/settings.h>
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "ColorPicker.h"
 #include "colorspace.h"
 #include "hikarisubApp.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 
 #include <stdio.h>
 #include "config.h"
@@ -472,7 +472,7 @@ wxDEFINE_EVENT(COLOR_CHANGED, ColorEvent);
 
 // Constructor
 DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, int colorNum)
-	: KaiDialog(parent, ID_COLOR_PICKER_DIALOG, _("Choose color"), wxDefaultPosition, wxDefaultSize)
+	: HikariDialog(parent, ID_COLOR_PICKER_DIALOG, _("Choose color"), wxDefaultPosition, wxDefaultSize)
 {
 	SetForegroundColour(Options.GetColour(WINDOW_TEXT));
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
@@ -504,7 +504,7 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 	hsv_slider = new wxBitmap(sliderimg);
 
 	// Create the controls for the dialog
-	wxSizer *spectrum_box = new KaiStaticBoxSizer(wxVERTICAL, this, _("Spectrum color"));
+	wxSizer *spectrum_box = new HikariStaticBoxSizer(wxVERTICAL, this, _("Spectrum color"));
 	spectrum = new ColorPickerSpectrum(this, SELECTOR_SPECTRUM, 0, -1, -1, false, wxSize(256, 256));
 	slider = new ColorPickerSpectrum(this, SELECTOR_SLIDER, 0, -1, -1, true, wxSize(slider_width, 256));
 	alphaslider = new ColorPickerSpectrum(this, SELECTOR_ALPHA_SLIDER, 0, -1, -1, true, wxSize(slider_width, 256));
@@ -514,23 +514,23 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 	wxSize colorinput_labelsize(70, -1);
 	wxSize textinput_labelsize(45, -1);
 
-	wxSizer *rgb_box = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("RGB color"));
+	wxSizer *rgb_box = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("RGB color"));
 	rgb_input[0] = new NumCtrl(this, SELECTOR_RGB_R, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	rgb_input[1] = new NumCtrl(this, SELECTOR_RGB_G, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	rgb_input[2] = new NumCtrl(this, SELECTOR_RGB_B, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 
-	wxSizer *hsl_box = new KaiStaticBoxSizer(wxVERTICAL, this, _("HSL color"));
+	wxSizer *hsl_box = new HikariStaticBoxSizer(wxVERTICAL, this, _("HSL color"));
 	hsl_input[0] = new NumCtrl(this, SELECTOR_HSL_H, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	hsl_input[1] = new NumCtrl(this, SELECTOR_HSL_S, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	hsl_input[2] = new NumCtrl(this, SELECTOR_HSL_L, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 
-	wxSizer *hsv_box = new KaiStaticBoxSizer(wxVERTICAL, this, _("HSV color"));
+	wxSizer *hsv_box = new HikariStaticBoxSizer(wxVERTICAL, this, _("HSV color"));
 	hsv_input[0] = new NumCtrl(this, SELECTOR_HSV_H, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	hsv_input[1] = new NumCtrl(this, SELECTOR_HSV_S, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 	hsv_input[2] = new NumCtrl(this, SELECTOR_HSV_V, emptyString, 0, 255, true, wxDefaultPosition, colorinput_size);
 
-	ass_input = new KaiTextCtrl(this, SELECTOR_ASS_INPUT, emptyString, wxDefaultPosition, textinput_size);
-	html_input = new KaiTextCtrl(this, SELECTOR_HTML_INPUT, emptyString, wxDefaultPosition, textinput_size);
+	ass_input = new HikariTextCtrl(this, SELECTOR_ASS_INPUT, emptyString, wxDefaultPosition, textinput_size);
+	html_input = new HikariTextCtrl(this, SELECTOR_HTML_INPUT, emptyString, wxDefaultPosition, textinput_size);
 	alpha_input = new NumCtrl(this, SELECTOR_ALPHA_INPUT, emptyString, 0, 255, true, wxDefaultPosition, textinput_size);
 
 	preview_bitmap = wxBitmap(40, 40, 24);
@@ -545,7 +545,7 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 	screen_dropper = new ColorPickerScreenDropper(this, SELECTOR_DROPPER_PICK, 7, 7, 8, false);
 
 	wxString types[] = { _("Primary color"), _("Secondary color"), _("Border color"), _("Shadow color") };
-	colorType = new KaiChoice(this, 9766, wxDefaultPosition, wxSize(-1, -1), 4, types);
+	colorType = new HikariChoice(this, 9766, wxDefaultPosition, wxSize(-1, -1), 4, types);
 	if (colorNum == -1)
 		colorType->Enable(false);
 	else
@@ -560,7 +560,7 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 		ProcessEvent(ctcevt);
 	}, 9766);
 
-	KaiCheckBox *SwitchClicks = new KaiCheckBox(this, 9456, _("Swap shortcuts between the color picker\nand the color selection window"));
+	HikariCheckBox *SwitchClicks = new HikariCheckBox(this, 9456, _("Swap shortcuts between the color picker\nand the color selection window"));
 	SwitchClicks->SetValue(Options.GetBool(COLORPICKER_SWITCH_CLICKS));
 	SwitchClicks->SetToolTip(_("Checking this option opens the color picker on left-click,\nand the color selection window on right-click."));
 	if (colorNum == -1)
@@ -572,7 +572,7 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 	// Arrange the controls in a nice way
 	wxSizer *spectop_sizer = new wxBoxSizer(wxHORIZONTAL);
 	spectop_sizer->Add(colorType, 1, /*wxALIGN_CENTER_VERTICAL | */wxLEFT | wxEXPAND, 2);
-	spectop_sizer->Add(new KaiStaticText(this, -1, _("Selected color:")), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 17);
+	spectop_sizer->Add(new HikariStaticText(this, -1, _("Selected color:")), 0, wxALIGN_CENTER_VERTICAL | wxLEFT, 17);
 	spectop_sizer->Add(preview_box, 0, wxLEFT, 4);
 	wxSizer *spectrum_sizer = new wxBoxSizer(wxHORIZONTAL);
 	//spectrum_sizer->Add(spectop_sizer, wxALIGN_CENTER_HORIZONTAL);
@@ -584,42 +584,42 @@ DialogColorPicker::DialogColorPicker(wxWindow *parent, AssColor initial_color, i
 	spectrum_box->Add(spectrum_sizer, 0, wxALL, 3);
 
 	wxFlexGridSizer *rgb_sizer = new wxFlexGridSizer(2, 5, 5);
-	rgb_sizer->Add(new KaiStaticText(this, -1, _("Red:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	rgb_sizer->Add(new HikariStaticText(this, -1, _("Red:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	rgb_sizer->Add(rgb_input[0], 0);
-	rgb_sizer->Add(new KaiStaticText(this, -1, _("Green:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	rgb_sizer->Add(new HikariStaticText(this, -1, _("Green:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	rgb_sizer->Add(rgb_input[1], 0);
-	rgb_sizer->Add(new KaiStaticText(this, -1, _("Blue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	rgb_sizer->Add(new HikariStaticText(this, -1, _("Blue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	rgb_sizer->Add(rgb_input[2], 0);
 	rgb_sizer->AddGrowableCol(0, 1);
 	rgb_box->Add(rgb_sizer, 1, wxEXPAND | wxALL /*| wxALIGN_CENTER_VERTICAL*/, 3);
 
 	wxFlexGridSizer *ass_input_sizer = new wxFlexGridSizer(2, 5, 5);
-	ass_input_sizer->Add(new KaiStaticText(this, -1, L"ASS:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	ass_input_sizer->Add(new HikariStaticText(this, -1, L"ASS:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	ass_input_sizer->Add(ass_input, 0);
-	ass_input_sizer->Add(new KaiStaticText(this, -1, L"HTML:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	ass_input_sizer->Add(new HikariStaticText(this, -1, L"HTML:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	ass_input_sizer->Add(html_input, 0);
-	ass_input_sizer->Add(new KaiStaticText(this, -1, L"Alpha:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	ass_input_sizer->Add(new HikariStaticText(this, -1, L"Alpha:", wxDefaultPosition, textinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	ass_input_sizer->Add(alpha_input, 0);
 	//ass_input_sizer->AddStretchSpacer();
 	ass_input_sizer->AddGrowableCol(0, 1);
 	rgb_box->Add(ass_input_sizer, 0, wxALL | /*wxALIGN_CENTER_VERTICAL | */wxEXPAND, 3);
 
 	wxFlexGridSizer *hsl_sizer = new wxFlexGridSizer(2, 5, 5);
-	hsl_sizer->Add(new KaiStaticText(this, -1, _("Hue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsl_sizer->Add(new HikariStaticText(this, -1, _("Hue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsl_sizer->Add(hsl_input[0], 0);
-	hsl_sizer->Add(new KaiStaticText(this, -1, _("Saturation:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsl_sizer->Add(new HikariStaticText(this, -1, _("Saturation:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsl_sizer->Add(hsl_input[1], 0);
-	hsl_sizer->Add(new KaiStaticText(this, -1, _("Lightness:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsl_sizer->Add(new HikariStaticText(this, -1, _("Lightness:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsl_sizer->Add(hsl_input[2], 0);
 	hsl_sizer->AddGrowableCol(0, 1);
 	hsl_box->Add(hsl_sizer, 0, wxALL | /*wxALIGN_CENTER_VERTICAL |*/ wxEXPAND, 3);
 
 	wxFlexGridSizer *hsv_sizer = new wxFlexGridSizer(2, 5, 5);
-	hsv_sizer->Add(new KaiStaticText(this, -1, _("Hue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsv_sizer->Add(new HikariStaticText(this, -1, _("Hue:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsv_sizer->Add(hsv_input[0], 0);
-	hsv_sizer->Add(new KaiStaticText(this, -1, _("Saturation:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsv_sizer->Add(new HikariStaticText(this, -1, _("Saturation:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsv_sizer->Add(hsv_input[1], 0);
-	hsv_sizer->Add(new KaiStaticText(this, -1, _("Value:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
+	hsv_sizer->Add(new HikariStaticText(this, -1, _("Value:"), wxDefaultPosition, colorinput_labelsize), 1, wxALIGN_CENTER_VERTICAL);
 	hsv_sizer->Add(hsv_input[2], 0);
 	hsv_sizer->AddGrowableCol(0, 1);
 	hsv_box->Add(hsv_sizer, 0, wxALL | /*wxALIGN_CENTER_VERTICAL |*/ wxEXPAND, 3);
@@ -1023,7 +1023,7 @@ wxBitmap *DialogColorPicker::MakeAlphaSlider()
 
 
 
-BEGIN_EVENT_TABLE(DialogColorPicker, KaiDialog)
+BEGIN_EVENT_TABLE(DialogColorPicker, HikariDialog)
 EVT_TEXT(SELECTOR_ASS_INPUT, DialogColorPicker::OnChangeASS)
 EVT_TEXT(SELECTOR_HTML_INPUT, DialogColorPicker::OnChangeHTML)
 EVT_COMMAND(SELECTOR_SPECTRUM, wxSPECTRUM_CHANGE, DialogColorPicker::OnSpectrumChange)
@@ -1372,12 +1372,12 @@ void ButtonColorPicker::OnClick(wxCommandEvent &event)
 //}
 
 SimpleColorPickerDialog::SimpleColorPickerDialog(wxWindow *parent, const AssColor &actualColor, int colorNum)
-	: KaiDialog(parent, -1, _("Color picker"))
+	: HikariDialog(parent, -1, _("Color picker"))
 	, color(actualColor)
 {
 	DialogSizer *ds = new DialogSizer(wxVERTICAL);
 	wxString types[] = { _("Primary color"), _("Secondary color"), _("Border color"), _("Shadow color") };
-	colorType = new KaiChoice(this, 9764, wxDefaultPosition, wxDefaultSize, 4, types);
+	colorType = new HikariChoice(this, 9764, wxDefaultPosition, wxDefaultSize, 4, types);
 	if (colorNum == -1)
 		colorType->Enable(false);
 	else
@@ -1390,7 +1390,7 @@ SimpleColorPickerDialog::SimpleColorPickerDialog(wxWindow *parent, const AssColo
 		ProcessEvent(ctcevt);
 	}, 9764);
 
-	HexColor = new KaiTextCtrl(this, -1, actualColor.GetAss(false, false));
+	HexColor = new HikariTextCtrl(this, -1, actualColor.GetAss(false, false));
 	dropper = new ColorPickerScreenDropper(this, 9765, 7, 7, 8, false, true);
 	Bind(wxEVT_MOUSE_CAPTURE_LOST, [=, this](wxMouseCaptureLostEvent &evt){ 
 		ReleaseMouse(); 
@@ -1404,7 +1404,7 @@ SimpleColorPickerDialog::SimpleColorPickerDialog(wxWindow *parent, const AssColo
 		ColorEvent colorevt(COLOR_CHANGED, GetId(), color, colorType->GetSelection() + 1);
 		AddPendingEvent(colorevt);
 	}, 9765);
-	moveWindowToMousePosition = new KaiCheckBox(this, -1, _("Move the window\nto the color selection location"));
+	moveWindowToMousePosition = new HikariCheckBox(this, -1, _("Move the window\nto the color selection location"));
 	moveWindowToMousePosition->SetValue(true);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
 	MappedButton *OK = new MappedButton(this, wxID_OK, L"OK");

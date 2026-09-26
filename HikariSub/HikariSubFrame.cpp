@@ -33,8 +33,8 @@
 #include "Hotkeys.h"
 #include "FontCollector.h"
 #include "Menu.h"
-#include "KaiTextCtrl.h"
-#include "KaiMessageBox.h"
+#include "HikariTextCtrl.h"
+#include "HikariMessageBox.h"
 #include "SubsResampleDialog.h"
 #include "SpellCheckerDialog.h"
 #include "SpellChecker.h"
@@ -43,7 +43,7 @@
 #include "DummyVideo.h"
 #include "Notebook.h"
 #include "Toolbar.h"
-#include "KaiStatusBar.h"
+#include "HikariStatusBar.h"
 #include "stylestore.h"
 
 #include "SubsGrid.h"
@@ -54,7 +54,7 @@
 #include "TabPanel.h"
 #include "ShiftTimes.h"
 #include "Menu.h"
-#include "KaiFrame.h"
+#include "HikariFrame.h"
 #include "SubtitlesProviderManager.h"
 #include "VideoToolbar.h"
 #include "AudioBox.h"
@@ -104,7 +104,7 @@ HikariSubFrame* HikariSubFrame::This = nullptr;
 std::locale HikariSubFrame::locale = std::locale();
 
 HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
-	: KaiFrame(0, -1, _("Untitled - ") + Options.progname + L" " + wxString(INSTRUCTIONS), 
+	: HikariFrame(0, -1, _("Untitled - ") + Options.progname + L" " + wxString(INSTRUCTIONS), 
 	pos, size, wxDEFAULT_FRAME_STYLE, L"HikariSub_main_window")
 	, badResolution(false)
 {
@@ -123,17 +123,17 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	SetFont(*Options.GetFont());
 #ifdef _WIN32
 	// "#1" is IDI_HIKARISUB_APP; the bundle lets wx pick the size per monitor.
-	wxIconBundle kaiIcons(L"#1", wxGetInstance());
-	if (kaiIcons.GetIconCount())
-		SetIcons(kaiIcons);
+	wxIconBundle hikariIcons(L"#1", wxGetInstance());
+	if (hikariIcons.GetIconCount())
+		SetIcons(hikariIcons);
 
 	Registry::MigrateFileAssociations();
 #else
 	wxString iconPath = Options.pathfull + wxFileName::GetPathSeparator() + L"HikariSub" +
-		wxFileName::GetPathSeparator() + L"Bitmaps" + wxFileName::GetPathSeparator() + L"KaiSmallIcon.ico";
-	wxIcon KaiIcon(iconPath, wxBITMAP_TYPE_ICO);
-	if (KaiIcon.IsOk()){
-		SetIcon(KaiIcon);
+		wxFileName::GetPathSeparator() + L"Bitmaps" + wxFileName::GetPathSeparator() + L"HikariSmallIcon.ico";
+	wxIcon HikariIcon(iconPath, wxBITMAP_TYPE_ICO);
+	if (HikariIcon.IsOk()){
+		SetIcon(HikariIcon);
 	}
 #endif
 
@@ -145,9 +145,9 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	
 
 	Tabs = new Notebook(this, ID_TABS);
-	Toolbar = new KaiToolbar(this, Menubar, -1);
+	Toolbar = new HikariToolbar(this, Menubar, -1);
 
-	StatusBar = new KaiStatusBar(this, ID_STATUS_BAR);
+	StatusBar = new HikariStatusBar(this, ID_STATUS_BAR);
 	int StatusBarWidths[9] = { -12, 0, 0, 0, 0, 0, 0, 0, -22 };
 	StatusBar->SetFieldsCount(9, StatusBarWidths);
 	wxString tooltips[] = { emptyString, _("Video scale"), _("Video zoom"), _("Video duration"),
@@ -903,7 +903,7 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 			emptyString, _("Script files (*.lua),(*.moon)|*.lua;*.moon;"), wxFD_OPEN);
 		if (FileDialog1->ShowModal() == wxID_OK){
 			wxString file = FileDialog1->GetPath();
-			Options.SetString(AUTOMATION_RECENT_FILES, KaiPathName(file));
+			Options.SetString(AUTOMATION_RECENT_FILES, HikariPathName(file));
 			//if(Auto->Add(file)){Auto->BuildMenu(&m_AutoMenu);}
 			Auto->Add(file);
 		}
@@ -917,7 +917,7 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 		if (Auto->ASSScripts.size() < 1)
 			Auto->AddFromSubs();
 		int size = Auto->ASSScripts.size();
-		if (!size){ KaiMessageBox(_("This subtitle file does not have any scripts added"), _("Info"), wxOK, this); return; }
+		if (!size){ HikariMessageBox(_("This subtitle file does not have any scripts added"), _("Info"), wxOK, this); return; }
 		auto script = Auto->ASSScripts[size - 1];
 		if (script->CheckLastModified(true)){ script->Reload(); }
 		auto macro = script->GetMacro(0);
@@ -926,11 +926,11 @@ void HikariSubFrame::OnMenuSelected(wxCommandEvent& event)
 				macro->Run(tab);
 			}
 			else{
-				KaiMessageBox(wxString::Format(_("Validation Lua script '%s' failed"), script->GetPrettyFilename()), _("Error"), wxOK, this);
+				HikariMessageBox(wxString::Format(_("Validation Lua script '%s' failed"), script->GetPrettyFilename()), _("Error"), wxOK, this);
 			}
 		}
 		else{
-			KaiMessageBox(wxString::Format(_("Error loading Lua script: %s\n%s"), script->GetPrettyFilename(), script->GetDescription()), _("Error"), wxOK, this);
+			HikariMessageBox(wxString::Format(_("Error loading Lua script: %s\n%s"), script->GetPrettyFilename(), script->GetDescription()), _("Error"), wxOK, this);
 			Auto->OnEdit(script->GetFilename());
 		}
 	}
@@ -1008,8 +1008,8 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	if (id == GLOBAL_OPEN_SUBS){
 
 		wxFileDialog *FileDialog1 = new wxFileDialog(this, _("Choose subtitle file"),
-			(tab->VideoPath != emptyString) ? KaiPathDir(tab->VideoPath) :
-			(subsrec.size() > 0) ? KaiPathDir(subsrec[0]) : emptyString,
+			(tab->VideoPath != emptyString) ? HikariPathDir(tab->VideoPath) :
+			(subsrec.size() > 0) ? HikariPathDir(subsrec[0]) : emptyString,
 			emptyString, _("Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm"),
 			wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 		if (FileDialog1->ShowModal() == wxID_OK){
@@ -1038,8 +1038,8 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	}
 	else if (id == GLOBAL_OPEN_VIDEO){
 		wxFileDialog* FileDialog2 = new wxFileDialog(this, _("Choose video file"),
-			(tab->SubsPath != emptyString) ? KaiPathDir(tab->SubsPath) :
-			(videorec.size() > 0) ? KaiPathDir(videorec[0]) : emptyString,
+			(tab->SubsPath != emptyString) ? HikariPathDir(tab->SubsPath) :
+			(videorec.size() > 0) ? HikariPathDir(videorec[0]) : emptyString,
 			emptyString, _("Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*"),
 			wxFD_OPEN | wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
 		if (FileDialog2->ShowModal() == wxID_OK){
@@ -1054,8 +1054,8 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	}
 	else if (id == GLOBAL_OPEN_KEYFRAMES){
 		wxFileDialog* FileDialog2 = new wxFileDialog(this, _("Choose video file"),
-			tab->VideoPath != emptyString ? KaiPathDir(tab->VideoPath) :
-			(keyframesRecent.size() > 0) ? KaiPathDir(keyframesRecent[0]) : emptyString,
+			tab->VideoPath != emptyString ? HikariPathDir(tab->VideoPath) :
+			(keyframesRecent.size() > 0) ? HikariPathDir(keyframesRecent[0]) : emptyString,
 			emptyString, _("Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*"),
 			wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 		if (FileDialog2->ShowModal() == wxID_OK){
@@ -1111,7 +1111,7 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 		UpdateChecker::CheckNow(this);
 	}
 	else if (id == GLOBAL_ABOUT){
-		KaiMessageBox(wxString::Format(_("HikariSub subtitle editor by altqx,\nversion %s from %s"),
+		HikariMessageBox(wxString::Format(_("HikariSub subtitle editor by altqx,\nversion %s from %s"),
 			Options.progname.AfterFirst(L'v'), Options.GetReleaseDate()) + " \n\n" +
 			_("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
 			_("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
@@ -1148,7 +1148,7 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 			_("- labrie75 (Korean translation).\n") +
 			_("- Niskala5570 (Malay translation).\n") +
 			_("Thanks to other HikariSub users who reported bugs:\n");
-		KaiMessageBox(Credits + Testers, _("Credits"));
+		HikariMessageBox(Credits + Testers, _("Credits"));
 
 	}
 	else if (id == GLOBAL_HELP || id == GLOBAL_ANSI){
@@ -1274,8 +1274,8 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 		else{ extens += L"(*.txt, *.sub)|*.txt;*.sub"; };
 
 		wxString path = (atab->VideoPath != emptyString && Options.GetBool(SUBS_AUTONAMING)) ? atab->VideoPath : atab->SubsPath;
-		wxString name = wxFileName(KaiNormalizePath(path)).GetName();
-		path = KaiPathDir(path);
+		wxString name = wxFileName(HikariNormalizePath(path)).GetName();
+		path = HikariPathDir(path);
 
 		wxFileDialog saveFileDialog(atab->video->GetMessageWindowParent(), _("Save subtitle file"),
 			path, name, extens, wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
@@ -1284,14 +1284,14 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 			wxString path = saveFileDialog.GetPath();
 			DWORD attributes = ::GetFileAttributesW(path.wc_str());
 			if (attributes != -1 && attributes & FILE_ATTRIBUTE_READONLY){
-				KaiMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
+				HikariMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
 				goto repeatOpening;
 			}
 
 			atab->SubsPath = path;
 			wxString ext = (atab->grid->subsFormat < SRT) ? L"ass" : (atab->grid->subsFormat == SRT) ? L"srt" : L"txt";
 			if (!atab->SubsPath.EndsWith(ext)){ atab->SubsPath << L"." << ext; }
-			atab->SubsName = KaiPathName(atab->SubsPath);
+			atab->SubsName = HikariPathName(atab->SubsPath);
 			nameWasChanged = true;
 			SetRecent(0, tabToSave);
 		}
@@ -1300,7 +1300,7 @@ void HikariSubFrame::Save(bool showDialog, int tabToSave, bool changeLabel)
 	else{
 		DWORD attributes = ::GetFileAttributesW(atab->SubsPath.wc_str());
 		if (attributes != -1 && attributes & FILE_ATTRIBUTE_READONLY){
-			KaiMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
+			HikariMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
 			goto repeatOpening;
 		}
 	}
@@ -1350,7 +1350,7 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 		found = FindFile(filename, secondFileName, issubs);
 		if (!issubs && found && !fulls && !tab->video->IsFullScreen()){
 			if (tab->SubsPath == secondFileName || 
-				KaiMessageBox(wxString::Format(_("Load subtitles named \"%s\"?"), KaiPathName(secondFileName)),
+				HikariMessageBox(wxString::Format(_("Load subtitles named \"%s\"?"), HikariPathName(secondFileName)),
 				_("Confirmation"), wxICON_QUESTION | wxYES_NO, this) == wxNO){
 				found = false;
 			}
@@ -1414,7 +1414,7 @@ bool HikariSubFrame::OpenFile(const wxString &filename, bool fulls/*=false*/, bo
 	if (isload == -1 && tab->video->GetState() != None) {
 		//open subs and disable visuals when needed
 		bool isgood = tab->video->OpenSubs((tab->editor) ? OPEN_DUMMY : CLOSE_SUBTITLES, true, true);
-		if (!isgood) { KaiMessageBox(_("Cannot open subtitle file"), _("Warning")); }
+		if (!isgood) { HikariMessageBox(_("Cannot open subtitle file"), _("Warning")); }
 		//set color space	
 		if (tab->grid->subsFormat == ASS) {
 			tab->video->SetColorSpace(tab->grid->file->GetSInfo(L"YCbCr Matrix"));
@@ -1572,7 +1572,7 @@ void HikariSubFrame::AppendRecent(short what, Menu *_Menu)
 			changedRecent = true;
 			continue;
 		}
-		MenuItem* MI = new MenuItem(idd + i, wxString::Format(L"%d %s", i + 1, KaiPathName(recs[i])), _("Open") + L" " + recs[i]);
+		MenuItem* MI = new MenuItem(idd + i, wxString::Format(L"%d %s", i + 1, HikariPathName(recs[i])), _("Open") + L" " + recs[i]);
 		wmenu->Append(MI);
 		i++;
 	}
@@ -1738,7 +1738,7 @@ void HikariSubFrame::Label(int iter/*=0*/, bool video/*=false*/, int wtab/*=-1*/
 {
 	TabPanel* atab = (wtab < 0) ? GetTab() : Tabs->Page(wtab);
 	if (!atab) {
-		KaiLog(wxString::Format(L"cannot get tab %i/%i, label not set", wtab, (int)Tabs->Size()));
+		HikariLog(wxString::Format(L"cannot get tab %i/%i, label not set", wtab, (int)Tabs->Size()));
 		return;
 	}
 	wxString whiter;
@@ -1762,7 +1762,7 @@ void HikariSubFrame::SetAccels(bool _all)
 		bool emptyAccel = cur->second.Accel == emptyString;
 		if (id >= 5000 && id < 5150){
 			MenuItem *item = Menubar->FindItem(id);
-			if (!item){ /*KaiLog(wxString::Format("no id %i", id));*/ continue; }
+			if (!item){ /*HikariLog(wxString::Format("no id %i", id));*/ continue; }
 			if (emptyAccel){
 				item->SetAccel(nullptr);
 				continue;
@@ -2128,7 +2128,7 @@ bool HikariSubFrame::SavePrompt(char mode, int wtab)
 		wxString subsPath = (ext != subsExt && !(ext == L"txt" && subsExt == L"sub")) ?
 			subsName + L"." + ext : atab->SubsName;
 
-		int answer = KaiMessageBox(wxString::Format(_("Save subtitles named \"%s\" before %s?"),
+		int answer = HikariMessageBox(wxString::Format(_("Save subtitles named \"%s\" before %s?"),
 			subsPath, (mode == 0) ? _("exiting program") :
 			(mode == 1) ? _("closing tab") :
 			(mode == 2) ? _("loading new subtitles") :
@@ -2168,14 +2168,14 @@ void HikariSubFrame::OpenAudioInTab(TabPanel *tab, int id, const wxString &path)
 	}
 	else{
 
-		if (!Hkeys.AudioKeys && !Hkeys.LoadHkeys(true)){ KaiMessageBox(_("Cannot load audio hotkeys"), _("Error")); return; }
-		if (!Options.AudioOpts && !Options.LoadAudioOpts()){ KaiMessageBox(_("Cannot load audio configuration"), _("Error")); return; }
+		if (!Hkeys.AudioKeys && !Hkeys.LoadHkeys(true)){ HikariMessageBox(_("Cannot load audio hotkeys"), _("Error")); return; }
+		if (!Options.AudioOpts && !Options.LoadAudioOpts()){ HikariMessageBox(_("Cannot load audio configuration"), _("Error")); return; }
 
 		wxString audioPath;
 		if (id == GLOBAL_OPEN_AUDIO){
 			wxFileDialog *FileDialog1 = new wxFileDialog(this, _("Choose audio file"),
-				(tab->VideoPath != emptyString) ? KaiPathDir(tab->VideoPath) :
-				(videorec.size() > 0) ? KaiPathDir(videorec[0]) : emptyString, emptyString,
+				(tab->VideoPath != emptyString) ? HikariPathDir(tab->VideoPath) :
+				(videorec.size() > 0) ? HikariPathDir(videorec[0]) : emptyString, emptyString,
 				_("Audio and video files") +
 				L" (*.wav),(*.w64),(*.flac),(*.ac3),(*.aac),(*.ogg),(*.mp3),(*.mp4),(*.m4a),(*.mkv),(*.avi)|*.wav;*.w64;*.flac;*.ac3;*.aac;*.ogg;*.mp3;*.mp4;*.m4a;*.mkv;*.avi|" +
 				_("All files") + L" |*.*", wxFD_OPEN);
@@ -2516,7 +2516,7 @@ void HikariSubFrame::OnExternalSession(int id)
 			wxString path = saveFileDialog.GetPath();
 			DWORD attributes = ::GetFileAttributesW(path.wc_str());
 			if (attributes != -1 && attributes & FILE_ATTRIBUTE_READONLY) {
-				KaiMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
+				HikariMessageBox(_("Chosen file is read only,\nplease save with different name or change file attribute."), _("Warning"), 4L, this);
 				goto repeatOpening;
 			}
 			Tabs->SaveLastSession(false, false, path);
@@ -2612,7 +2612,7 @@ void HikariSubFrame::OnRunScript(wxCommandEvent& event)
 	//else 
 	if (Auto->Scripts.size() < 1){ Auto->ReloadScripts(true); }
 	wxString name = Hkeys.GetName(idAndType(event.GetId()));
-	if (!name.StartsWith(L"Script ")){ KaiMessageBox(wxString::Format(_("Hotkey \"%s\" it's not script hotkey.")), _("Error")); return; }
+	if (!name.StartsWith(L"Script ")){ HikariMessageBox(wxString::Format(_("Hotkey \"%s\" it's not script hotkey.")), _("Error")); return; }
 	else{ name = name.Mid(7); }
 	wxString path = name.BeforeLast(L'-');
 	int wmacro = 0;
@@ -2638,11 +2638,11 @@ void HikariSubFrame::OnRunScript(wxCommandEvent& event)
 			macro->Run(pan);
 		}
 		else{
-			KaiMessageBox(wxString::Format(_("Validation Lua script '%s' failed"), script->GetPrettyFilename()), _("Error"));
+			HikariMessageBox(wxString::Format(_("Validation Lua script '%s' failed"), script->GetPrettyFilename()), _("Error"));
 		}
 	}
 	else{
-		KaiMessageBox(wxString::Format(_("Error loading Lua script: %s\n%s"), script->GetPrettyFilename(), script->GetDescription()), _("Error"));
+		HikariMessageBox(wxString::Format(_("Error loading Lua script: %s\n%s"), script->GetPrettyFilename(), script->GetDescription()), _("Error"));
 		Auto->OnEdit(script->GetFilename());
 	}
 }

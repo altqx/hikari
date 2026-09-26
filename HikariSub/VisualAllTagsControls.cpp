@@ -32,7 +32,7 @@ void AllTagsSlider::OnMouseEvent(wxMouseEvent& evt)
 {
 	float range = parent->actualTag.rangeMax - parent->actualTag.rangeMin;
 	if (range <= 0) {
-		KaiLog(L"Bad range");
+		HikariLog(L"Bad range");
 		return;
 	}
 	float thumbposdiff = -parent->actualTag.rangeMin;

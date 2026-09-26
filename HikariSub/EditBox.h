@@ -23,13 +23,13 @@
 #include "ListControls.h"
 //#include "AudioBox.h"
 #include "MappedButton.h"
-#include "KaiRadioButton.h"
-#include "KaiDialog.h"
-#include "KaiStaticText.h"
+#include "HikariRadioButton.h"
+#include "HikariDialog.h"
+#include "HikariStaticText.h"
 #include "MenuButton.h"
 #include "ColorPicker.h"
-#include "KaiWindowResizer.h"
-#include "KaiPanel.h"
+#include "HikariWindowResizer.h"
+#include "HikariPanel.h"
 #include "TagFindReplace.h"
 //#include "SubsGrid.h"
 
@@ -39,7 +39,7 @@ class TabPanel;
 class AudioBox;
 
 
-class ComboBoxCtrl : public KaiChoice
+class ComboBoxCtrl : public HikariChoice
 {
 public:
 	ComboBoxCtrl(wxWindow *parent, int id, const wxSize &size, const wxString &desc, const wxValidator &validator = wxDefaultValidator);
@@ -52,12 +52,12 @@ private:
 
 };
 
-class TagButtonDialog :public KaiDialog
+class TagButtonDialog :public HikariDialog
 {
 public:
-	KaiTextCtrl *txt;
-	KaiTextCtrl *name;
-	KaiChoice *type;
+	HikariTextCtrl *txt;
+	HikariTextCtrl *name;
+	HikariChoice *type;
 	TagButtonDialog(wxWindow *parent, int id, const wxString &txtt, const wxString &_name, int type);
 	virtual ~TagButtonDialog(){};
 };
@@ -77,7 +77,7 @@ private:
 };
 
 
-class EditBox : public KaiPanel, TagFindReplace
+class EditBox : public HikariPanel, TagFindReplace
 {
 public:
 	EditBox(wxWindow *parent, int idd);
@@ -93,23 +93,23 @@ public:
 	AudioBox* ABox = nullptr;
 	TextEditor* TextEdit = nullptr;
 	TextEditor* TextEditOrig = nullptr;
-	KaiCheckBox* TlMode = nullptr;
-	KaiRadioButton* Times = nullptr;
-	KaiRadioButton* Frames = nullptr;
-	KaiCheckBox* Comment = nullptr;
+	HikariCheckBox* TlMode = nullptr;
+	HikariRadioButton* Times = nullptr;
+	HikariRadioButton* Frames = nullptr;
+	HikariCheckBox* Comment = nullptr;
 	NumCtrl* LayerEdit = nullptr;
 	TimeCtrl* StartEdit;
 	TimeCtrl* EndEdit;
 	TimeCtrl* DurEdit;
-	KaiChoice* StyleChoice;
+	HikariChoice* StyleChoice;
 	ComboBoxCtrl* ActorEdit;
 	NumCtrl* MarginLEdit;
 	NumCtrl* MarginREdit;
 	NumCtrl* MarginVEdit;
 	ComboBoxCtrl* EffectEdit;
-	KaiStaticText *LineNumber;
-	KaiStaticText *Chars;
-	KaiStaticText *Chtime;
+	HikariStaticText *LineNumber;
+	HikariStaticText *Chars;
+	HikariStaticText *Chtime;
 	MappedButton* StyleEdit;
 	MappedButton* Bfont;
 	MappedButton* Bcol1;
@@ -126,7 +126,7 @@ public:
 	MenuButton* TagButtonManager;
 	ToggleButton* DoubtfulTL;
 	ToggleButton* AutoMoveTags;
-	KaiChoice* Ban;
+	HikariChoice* Ban;
 
 	//set text and needed tags from original and right position of cursor
 	void SetTextWithTags(bool RefreshVideo = false);
@@ -155,7 +155,7 @@ public:
 	bool lastVisible;
 	int Visual;
 	int EditCounter;
-	KaiWindowResizer *windowResizer;
+	HikariWindowResizer *windowResizer;
 private:
 	
 	wxBoxSizer* BoxSizer2 = nullptr;

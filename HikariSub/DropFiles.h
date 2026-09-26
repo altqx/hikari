@@ -25,7 +25,7 @@ class HikariSubFrame;
 class DragnDrop : public wxFileDropTarget
 {
 	private:
-	HikariSubFrame* Kai;
+	HikariSubFrame* Hikari;
 	wxTimer timer;
 	wxArrayString files;
 	int x, y;

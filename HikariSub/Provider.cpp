@@ -20,7 +20,7 @@
 #include "RendererFFMS2.h"
 #include "ProviderDummy.h"
 #include "ProviderFFMS2.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "AudioBox.h"
 #include "VisualDrawingShapes.h"
 #include "Notebook.h"

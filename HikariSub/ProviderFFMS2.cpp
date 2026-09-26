@@ -81,7 +81,7 @@ ProviderFFMS2::ProviderFFMS2(const wxString& filename, RendererFFMS2* renderer,
 {
 	if (!Options.AudioOpts && !Options.LoadAudioOpts()) 
 	{ 
-		KaiLogSilent(_("Cannot load audio configuration"));
+		HikariLogSilent(_("Cannot load audio configuration"));
 	}
 
 	m_discCache = !Options.GetBool(AUDIO_RAM_CACHE);
@@ -113,7 +113,7 @@ bool ProviderFFMS2::FetchPlaybackFrame(int frame, unsigned char* buffer)
 {
 	if (CopyFrame(frame, buffer, true))
 		return true;
-	KaiLogDebug(wxString::Format(_("Cannot get frame %i: %s"),
+	HikariLogDebug(wxString::Format(_("Cannot get frame %i: %s"),
 		frame, wxString::FromUTF8(m_errInfo.Buffer)));
 	return false;
 }
@@ -136,7 +136,7 @@ void ProviderFFMS2::Processing()
 	}
 	const long long framePlane = static_cast<long long>(m_height) * static_cast<long long>(m_width) * 4;
 	if (framePlane > std::numeric_limits<int>::max()) {
-		KaiLog(_("Video frame size is too large"));
+		HikariLog(_("Video frame size is too large"));
 		m_success = false;
 		SetEvent(m_eventComplete);
 		return;
@@ -161,7 +161,7 @@ int ProviderFFMS2::Init()
 
 	FFMS_Indexer* Indexer = FFMS_CreateIndexer(m_filename.utf8_str(), &m_errInfo);
 	if (!Indexer) {
-		KaiLogDebug(wxString::Format(_("Indexing error occurred: %s"), wxString::FromUTF8(m_errInfo.Buffer))); return 0;
+		HikariLogDebug(wxString::Format(_("Indexing error occurred: %s"), wxString::FromUTF8(m_errInfo.Buffer))); return 0;
 	}
 
 	int NumTracks = FFMS_GetNumTracksI(Indexer);
@@ -249,7 +249,7 @@ int ProviderFFMS2::Init()
 		}
 		
 		audiotrack = progress->ShowSecondaryDialog([=]() {
-			KaiListBox tracks1(HikariSubFrame::Get(), tracks, _("Choose the track"), true);
+			HikariListBox tracks1(HikariSubFrame::Get(), tracks, _("Choose the track"), true);
 			if (tracks1.ShowModal() == wxID_OK) {
 				int result = wxAtoi(tracks1.GetSelection().BeforeFirst(':'));
 				return result;
@@ -304,10 +304,10 @@ done:
 		if (m_index == nullptr) {
 			if (wxString::FromUTF8(m_errInfo.Buffer).StartsWith(L"Cancelled")) {
 				//No need spam user that he clicked cancel button
-				//KaiLog(_("Indeksowanie anulowane przez użytkownika"));
+				//HikariLog(_("Indeksowanie anulowane przez użytkownika"));
 			}
 			else {
-				KaiLog(wxString::Format(_("Indexing error occurred: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
+				HikariLog(wxString::Format(_("Indexing error occurred: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
 			}
 			//FFMS_CancelIndexing(Indexer);
 			return 0;
@@ -319,7 +319,7 @@ done:
 		}
 		if (FFMS_WriteIndex(m_indexPath.utf8_str(), m_index, &m_errInfo))
 		{
-			KaiLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));
+			HikariLogDebug(wxString::Format(_("Cannot save index, error %s occurred"), wxString::FromUTF8(m_errInfo.Buffer)));
 			//FFMS_DestroyIndex(index);
 			//FFMS_CancelIndexing(Indexer);
 			//return 0;
@@ -346,7 +346,7 @@ done:
 
 		if (m_videoSource == nullptr) {
 			if (audiotrack == -1) {
-				KaiLog(_("Cannot create VideoSource."));
+				HikariLog(_("Cannot create VideoSource."));
 				return 0;
 			}
 			else
@@ -385,7 +385,7 @@ done:
 		pixfmt[1] = -1;
 
 		if (FFMS_SetOutputFormatV2(m_videoSource, pixfmt, m_width, m_height, FFMS_RESIZER_BILINEAR, &m_errInfo)) {
-			KaiLog(_("Cannot convert video to RGBA"));
+			HikariLog(_("Cannot convert video to RGBA"));
 			return 0;
 		}
 
@@ -399,13 +399,13 @@ done:
 			m_colorSpace = m_realColorSpace = ColorMatrixDescription(m_CS, m_CR);
 			if (m_CS == FFMS_CS_BT709 && colormatrix == L"TV.709") {
 				if (FFMS_SetInputFormatV(m_videoSource, FFMS_CS_BT709, m_CR, FFMS_GetPixFmt(""), &m_errInfo)) {
-					KaiLog(_("Cannot change YCbCr matrix"));
+					HikariLog(_("Cannot change YCbCr matrix"));
 				}
 			}
 			if (colormatrix == L"TV.601") {
 				m_colorSpace = ColorMatrixDescription(FFMS_CS_BT470BG, m_CR);
 				if (FFMS_SetInputFormatV(m_videoSource, FFMS_CS_BT470BG, m_CR, FFMS_GetPixFmt(""), &m_errInfo)) {
-					KaiLog(_("Cannot change YCbCr matrix"));
+					HikariLog(_("Cannot change YCbCr matrix"));
 				}
 			}
 			else if (colormatrix == L"TV.709") {
@@ -423,12 +423,12 @@ done:
 
 		FFMS_Track* FrameData = FFMS_GetTrackFromVideo(m_videoSource);
 		if (FrameData == nullptr) {
-			KaiLog(_("You cannot load the video track"));
+			HikariLog(_("You cannot load the video track"));
 			return 0;
 		}
 		const FFMS_TrackTimeBase* TimeBase = FFMS_GetTimeBase(FrameData);
 		if (TimeBase == nullptr) {
-			KaiLog(_("You cannot get information about the video"));
+			HikariLog(_("You cannot get information about the video"));
 			return 0;
 		}
 
@@ -458,7 +458,7 @@ audio:
 	if (audiotrack != -1) {
 		m_audioSource = FFMS_CreateAudioSource(m_filename.utf8_str(), audiotrack, m_index, FFMS_DELAY_FIRST_VIDEO_TRACK, &m_errInfo);
 		if (m_audioSource == nullptr) {
-			KaiLog(wxString::Format(_("An error occurred when creating audio source: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
+			HikariLog(wxString::Format(_("An error occurred when creating audio source: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
 			return 0;
 		}
 
@@ -469,7 +469,7 @@ audio:
 		resopts->SampleFormat = FFMS_FMT_S16;
 
 		if (FFMS_SetOutputFormatA(m_audioSource, resopts, &m_errInfo)) {
-			KaiLog(wxString::Format(_("An error occurred when converting audio: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
+			HikariLog(wxString::Format(_("An error occurred when converting audio: %s"), wxString::FromUTF8(m_errInfo.Buffer)));
 			FFMS_DestroyResampleOptions(resopts);
 			FFMS_DestroyAudioSource(m_audioSource);
 			m_audioSource = nullptr;
@@ -485,7 +485,7 @@ audio:
 		m_channels = stereo ? 2 : 1;
 
 		if (llabs(m_delayFrames) >= m_numSamples) {
-			KaiLog(_("Delay failed, it's longer than audio duration time"));
+			HikariLog(_("Delay failed, it's longer than audio duration time"));
 			m_delayFrames = 0;
 		}
 		m_audioLoadThread = new std::thread(AudioLoad, this, newIndex, audiotrack);
@@ -581,7 +581,7 @@ void ProviderFFMS2::GetFrame(int frame, unsigned char* buff)
 	const FFMS_Frame *ffmsframe = FFMS_GetFrame(m_videoSource, frame, &m_errInfo);
 	CopyBgraFrameToBuffer(ffmsframe, buff, m_width, m_height);
 	if (m_nv12 && !SetOutputFormat(true))
-		KaiLogSilent(_("Cannot convert video to RGBA"));
+		HikariLogSilent(_("Cannot convert video to RGBA"));
 	m_refreshFrame = true;
 }
 
@@ -675,7 +675,7 @@ void ProviderFFMS2::GetAudio(void* buf, long long start, long long count)
 	}
 	wxCriticalSectionLocker lock(m_blockAudio);
 	if (FFMS_GetAudio(m_audioSource, buf, start, count, &m_errInfo)) {
-		KaiLogDebug(L"error audio" + wxString::FromUTF8(m_errInfo.Buffer));
+		HikariLogDebug(L"error audio" + wxString::FromUTF8(m_errInfo.Buffer));
 	}
 
 }
@@ -976,7 +976,7 @@ void ProviderFFMS2::SetColorSpace(const wxString& matrix)
 		}
 	}
 	if (failed)
-		KaiLog(_("Cannot change YCbCr matrix"));
+		HikariLog(_("Cannot change YCbCr matrix"));
 
 }
 

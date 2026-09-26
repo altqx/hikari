@@ -15,11 +15,11 @@
 
 #include "DummyVideo.h"
 //#include "SubsDialogue.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "MappedButton.h"
 
 DummyVideo::DummyVideo(wxWindow* parent)
-	:KaiDialog(parent, -1, _("Dummy video options"))
+	:HikariDialog(parent, -1, _("Dummy video options"))
 {
 	DialogSizer* main = new DialogSizer(wxVERTICAL);
 	wxBoxSizer* resolutionSizer = new wxBoxSizer(wxHORIZONTAL);
@@ -36,31 +36,31 @@ DummyVideo::DummyVideo(wxWindow* parent)
 	resolutions.Add(L"3840x2160 (4K)");
 	wxBoxSizer* resolutionSizer1 = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* resolutionSizer2 = new wxBoxSizer(wxHORIZONTAL);
-	videoResolution = new KaiChoice(this, ID_VIDEO_RESOLUTION, wxDefaultPosition, wxDefaultSize, resolutions);
+	videoResolution = new HikariChoice(this, ID_VIDEO_RESOLUTION, wxDefaultPosition, wxDefaultSize, resolutions);
 	videoResolution->SetSelection(8);
 	Bind(wxEVT_COMMAND_CHOICE_SELECTED, &DummyVideo::OnResolutionChoose, this, ID_VIDEO_RESOLUTION);
 	videoResolutionWidth = new NumCtrl(this, -1, L"1920", 300, 8000, true);
 	videoResolutionHeight = new NumCtrl(this, -1, L"1080", 200, 4500, true);
 	resolutionSizer2->Add(videoResolutionWidth, 1, wxRIGHT | wxEXPAND, 4);
-	resolutionSizer2->Add(new KaiStaticText(this, -1, L"x"), 0, wxRIGHT | wxALIGN_BOTTOM, 4);
+	resolutionSizer2->Add(new HikariStaticText(this, -1, L"x"), 0, wxRIGHT | wxALIGN_BOTTOM, 4);
 	resolutionSizer2->Add(videoResolutionHeight, 1, wxEXPAND, 0);
 	resolutionSizer1->Add(videoResolution, 0, wxBOTTOM | wxEXPAND, 8);
 	resolutionSizer1->Add(resolutionSizer2, 0, wxEXPAND, 0);
-	resolutionSizer->Add(new KaiStaticText(this, -1, _("Video resolution:")), 1, wxALL | wxEXPAND, 4);
+	resolutionSizer->Add(new HikariStaticText(this, -1, _("Video resolution:")), 1, wxALL | wxEXPAND, 4);
 	resolutionSizer->Add(resolutionSizer1, 2, wxALL | wxEXPAND, 4);
 
 	wxBoxSizer* colorSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* colorSizer1 = new wxBoxSizer(wxHORIZONTAL);
 
 	color = new ButtonColorPicker(this, AssColor(wxString(L"&HFEA32F&")), wxSize(100, -1));
-	pattern = new KaiCheckBox(this, -1, _("Checkerboard pattern"));
+	pattern = new HikariCheckBox(this, -1, _("Checkerboard pattern"));
 	colorSizer1->Add(color, 1, wxRIGHT | wxEXPAND, 4);
 	colorSizer1->Add(pattern, 1, wxEXPAND, 0);
-	colorSizer->Add(new KaiStaticText(this, -1, _("Color:")), 1, wxALL | wxEXPAND, 4);
+	colorSizer->Add(new HikariStaticText(this, -1, _("Color:")), 1, wxALL | wxEXPAND, 4);
 	colorSizer->Add(colorSizer1, 2, wxALL | wxEXPAND, 4);
 
 	wxBoxSizer* FPSSizer = new wxBoxSizer(wxHORIZONTAL);
-	KaiTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
 	wxArrayString includes;
 	includes.Add(_T("0"));
 	includes.Add(_T("1"));
@@ -83,8 +83,8 @@ DummyVideo::DummyVideo(wxWindow* parent)
 	FPSes.Add(L"29.97"); 
 	FPSes.Add(L"30"); 
 	FPSes.Add(L"60");
-	frameRate = new KaiChoice(this, -1, L"23.976", wxDefaultPosition, wxDefaultSize, FPSes, 0, valid);
-	FPSSizer->Add(new KaiStaticText(this, -1, _("Frames per second:")), 1, wxALL | wxEXPAND, 4);
+	frameRate = new HikariChoice(this, -1, L"23.976", wxDefaultPosition, wxDefaultSize, FPSes, 0, valid);
+	FPSSizer->Add(new HikariStaticText(this, -1, _("Frames per second:")), 1, wxALL | wxEXPAND, 4);
 	FPSSizer->Add(frameRate, 2, wxALL | wxEXPAND, 4);
 	wxBoxSizer* durationSizer = new wxBoxSizer(wxHORIZONTAL);
 	wxBoxSizer* durationSizer2 = new wxBoxSizer(wxVERTICAL);
@@ -92,10 +92,10 @@ DummyVideo::DummyVideo(wxWindow* parent)
 	//duration in ms 1 500 000
 	float frametime = 1000.f / 23.976f;
 	int frames = 1500000.f / frametime;
-	frameDuration = new KaiStaticText(this, -1, wxString::Format(_("This gives %i frames"), frames));
+	frameDuration = new HikariStaticText(this, -1, wxString::Format(_("This gives %i frames"), frames));
 	durationSizer2->Add(duration, 1, wxEXPAND, 0);
 	durationSizer2->Add(frameDuration, 1, wxEXPAND, 0);
-	durationSizer->Add(new KaiStaticText(this, -1, _("Duration:")), 1, wxALL | wxEXPAND, 4);
+	durationSizer->Add(new HikariStaticText(this, -1, _("Duration:")), 1, wxALL | wxEXPAND, 4);
 	durationSizer->Add(durationSizer2, 2, wxALL | wxEXPAND, 4);
 	wxBoxSizer* buttonSizer = new wxBoxSizer(wxHORIZONTAL);
 	MappedButton* OK = new MappedButton(this, wxID_OK, L"OK", -1, wxDefaultPosition, wxSize(100, -1));
@@ -117,11 +117,11 @@ wxString DummyVideo::GetDummyText()
 	wxString strFPS = frameRate->GetValue();
 	double fps = 0;
 	if (!strFPS.ToCDouble(&fps)) {
-		KaiMessageBox(_("Invalid FPS value."));
+		HikariMessageBox(_("Invalid FPS value."));
 		return wxString();
 	}
 	if (fps < 15 || fps > 120) {
-		KaiMessageBox(_("Invalid FPS value."));
+		HikariMessageBox(_("Invalid FPS value."));
 		return wxString();
 	}
 	SubsTime dur = duration->GetTime();

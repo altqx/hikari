@@ -16,14 +16,14 @@
 #pragma once
 
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "NumCtrl.h"
 #include "MappedButton.h"
 #include "ListControls.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 
 
-class ScriptInfo : public KaiDialog
+class ScriptInfo : public HikariDialog
 {
 public:
 
@@ -32,20 +32,20 @@ public:
 
 	NumCtrl* height;
 	NumCtrl* layoutHeight;
-	KaiTextCtrl* script;
+	HikariTextCtrl* script;
 	NumCtrl* width;
 	NumCtrl* layoutWidth;
-	KaiTextCtrl* update;
+	HikariTextCtrl* update;
 	MappedButton* save;
-	KaiChoice* wrapstyle;
-	KaiChoice* matrix;
-	KaiCheckBox* scaleBorderAndShadow;
-	KaiChoice* collision;
-	KaiTextCtrl* editing;
-	KaiTextCtrl* title;
+	HikariChoice* wrapstyle;
+	HikariChoice* matrix;
+	HikariCheckBox* scaleBorderAndShadow;
+	HikariChoice* collision;
+	HikariTextCtrl* editing;
+	HikariTextCtrl* title;
 	MappedButton* cancel;
-	KaiTextCtrl* timing;
-	KaiTextCtrl* translation;
+	HikariTextCtrl* timing;
+	HikariTextCtrl* translation;
 	MappedButton* resolutionFromVideo;
 	MappedButton* layoutFromVideo;
 	ToggleButton* linkResolutions;

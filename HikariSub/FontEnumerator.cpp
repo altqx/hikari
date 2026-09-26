@@ -385,7 +385,7 @@ DWORD WINAPI FontEnumerator::CheckFontsProc(void* threadNumber)
 			//do not inform on system older than Windows 10 1909 that 
 			//cannot create notification of folder that they do not have
 			//without checking of system version it's impossible to check when it should be shown
-			KaiLog(_("Cannot create notification handler for fonts folder."));
+			HikariLog(_("Cannot create notification handler for fonts folder."));
 		}
 #endif
 		//delete num threads to not make memory leaks
@@ -464,7 +464,7 @@ DWORD WINAPI FontEnumerator::CheckFontsProc(void* threadNumber)
 				!fontrealpath.empty() && !wxDirExists(fontrealpath);
 #endif
 			if(FindNextChangeNotification( hDir ) == 0){
-				KaiLog(_("Cannot create next notification handler for fonts folder."));
+				HikariLog(_("Cannot create next notification handler for fonts folder."));
 				FindCloseChangeNotification(hDir);
 				delete threadNum;
 				return 0;
@@ -610,7 +610,7 @@ bool FontEnumerator::LoadExternalFontsToProcess(const wxString& fontsPath)
 	HANDLE h = FindFirstFileW(seekpath.wc_str(), &data);
 	if (h == INVALID_HANDLE_VALUE)
 	{
-		KaiLog(_("Cannot load external font folder"));
+		HikariLog(_("Cannot load external font folder"));
 		return false;
 	}
 	int fontAdded = 0;
@@ -636,7 +636,7 @@ bool FontEnumerator::LoadExternalFontsToProcess(const wxString& fontsPath)
 		wxString pathAndFile = fontsPath + file;
 		int addResult = AddFontResourceExW(pathAndFile.wc_str(), FR_PRIVATE, nullptr);
 		if (addResult == 0)
-			KaiLogSilent(L"Cannot add external font file " + file + L".\n");
+			HikariLogSilent(L"Cannot add external font file " + file + L".\n");
 		else {
 			fontAdded += addResult;
 			ExternalFonts.Add(file);
@@ -644,7 +644,7 @@ bool FontEnumerator::LoadExternalFontsToProcess(const wxString& fontsPath)
 				progress->Progress(((i + 1) / (float)size) * 100);
 		}
 	}
-	//KaiLogSilent(L"Loaded external font files " + std::to_wstring(fontAdded) + L".\n");
+	//HikariLogSilent(L"Loaded external font files " + std::to_wstring(fontAdded) + L".\n");
 	if (fontAdded)
 		hasExternalFontsLoaded = true;
 
@@ -690,7 +690,7 @@ void FontEnumerator::RemoveExternalFontsFromProcess(const wxString& fontsPath)
 			remainingFonts.Add(ExternalFonts[i]);
 	}
 		
-	//KaiLogSilent(L"Removed " + std::to_wstring(fontRemoved) + L" fonts.\n");
+	//HikariLogSilent(L"Removed " + std::to_wstring(fontRemoved) + L" fonts.\n");
 	ExternalFonts = remainingFonts;
 	hasExternalFontsLoaded = !ExternalFonts.empty();
 

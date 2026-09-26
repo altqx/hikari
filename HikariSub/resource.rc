@@ -15,8 +15,8 @@ LANGUAGE LANG_POLISH, SUBLANG_DEFAULT
 //
 
 // The app icon must keep the lowest id; see FileTypeIcons.h.
-IDI_HIKARISUB_APP         ICON                    "Bitmaps/KaiLargeIcon.ico"
-IDI_HIKARISUB_SMALL       ICON                    "Bitmaps/KaiSmallIcon.ico"
+IDI_HIKARISUB_APP         ICON                    "Bitmaps/HikariLargeIcon.ico"
+IDI_HIKARISUB_SMALL       ICON                    "Bitmaps/HikariSmallIcon.ico"
 
 // Shell icons for the file types HikariSub can associate itself with,
 // previously a separate Icons.dll.

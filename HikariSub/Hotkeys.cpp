@@ -22,10 +22,10 @@
 #include "config.h"
 #include "OpennWrite.h"
 
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "ConfigConverter.h"
 #include "TabPanel.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "Notebook.h"
 #include <wx/regex.h>
 #include <wx/log.h>
@@ -268,7 +268,7 @@ int Hotkeys::LoadHkeys(bool Audio)
 		}
 	}
 	if (!checkVer){
-		KaiMessageBox(_("The shortcuts file is outdated and will be replaced with the default one"));
+		HikariMessageBox(_("The shortcuts file is outdated and will be replaced with the default one"));
 		LoadDefault(hkeys, Audio);
 		SaveHkeys(Audio);
 		return 1;
@@ -371,7 +371,7 @@ wxAcceleratorEntry Hotkeys::GetHKey(const idAndType itype, const hdata *data)
 
 	if (key == 0 && akey.length() < 2){ key = static_cast<int>(akey[0]); }
 	else if (key == 0){
-		KaiLog(wxString::Format(_("Shortcut \"%s\" is invalid"), akey));
+		HikariLog(wxString::Format(_("Shortcut \"%s\" is invalid"), akey));
 	}
 	accelkey.Set(modif, key, (itype.id < AUDIO_COMMIT) ? itype.id + 10 : itype.id);
 
@@ -402,7 +402,7 @@ void Hotkeys::ResetKey(const idAndType *itype, int id, char type)
 		hkeys[tmpitype] = it->second;
 	}
 	else{
-		KaiLog(wxString::Format(_("This setting does not have a default hotkey with id %i to revert to"), tmpitype.id));
+		HikariLog(wxString::Format(_("This setting does not have a default hotkey with id %i to revert to"), tmpitype.id));
 	}
 }
 
@@ -473,7 +473,7 @@ void Hotkeys::OnMapHkey(int id, wxString name, wxWindow *parent, char hotkeyWind
 			}
 			int result = wxCANCEL;
 			if (doubledHotkey){
-				KaiMessageDialog msg(parent,
+				HikariMessageDialog msg(parent,
 					wxString::Format(_("This hotkey already exists for \"%s\".\nWhat to do?"),
 					doubledHkName), _("Warning"), wxYES | wxOK | wxCANCEL);
 				msg.SetOkLabel(_("Switch hotkeys"));
@@ -482,7 +482,7 @@ void Hotkeys::OnMapHkey(int id, wxString name, wxWindow *parent, char hotkeyWind
 			}
 			else{
 				int buttonFlag = (idtypes.size() < 2) ? wxOK : 0;
-				KaiMessageDialog msg(parent,
+				HikariMessageDialog msg(parent,
 					wxString::Format(_("This shortcut already exists in %s as a shortcut for \"%s\".\nWhat would you like to do?"),
 					(idtypes.size() > 1) ? _("other windows") : _("another window"), doubledHkName),
 					_("Warning"), wxYES_NO | buttonFlag | wxCANCEL);
@@ -592,7 +592,7 @@ int Hotkeys::GetModifier(const wxString& accel)
 //Dialog window catching keyboard shortcuts
 //blocking also access to options
 HkeysDialog::HkeysDialog(wxWindow *parent, wxString name, char hotkeyWindow, bool showWindowSelection)
-	: KaiDialog(parent, -1, _("Hotkey mapping"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxWANTS_CHARS | wxCLOSE_BOX)
+	: HikariDialog(parent, -1, _("Hotkey mapping"), wxDefaultPosition, wxDefaultSize, wxCAPTION | wxWANTS_CHARS | wxCLOSE_BOX)
 {
 	SetForegroundColour(Options.GetColour(WINDOW_TEXT));
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
@@ -601,11 +601,11 @@ HkeysDialog::HkeysDialog(wxWindow *parent, wxString name, char hotkeyWindow, boo
 	wxString windows[elems] = { _("Global hotkey"), _("Subtitle grid hotkey"),
 		_("Edit box hotkey"), _("Video hotkey"), _("Audio hotkey") };
 	if (showWindowSelection /*&& hotkeyWindow == GLOBAL_HOTKEY*/){
-		global = new KaiChoice(this, -1, wxDefaultPosition, wxDefaultSize, elems, windows, wxWANTS_CHARS);
+		global = new HikariChoice(this, -1, wxDefaultPosition, wxDefaultSize, elems, windows, wxWANTS_CHARS);
 		global->SetSelection(hotkeyWindow);
 		global->Connect(wxEVT_KEY_DOWN, (wxObjectEventFunction)&HkeysDialog::OnKeyPress, 0, this);
 	}
-	KaiStaticText *txt = new KaiStaticText(this, -1, 
+	HikariStaticText *txt = new HikariStaticText(this, -1, 
 		wxString::Format(_("Please enter a hotkey for \"%s\"."), name),
 		wxDefaultPosition, wxDefaultSize, wxWANTS_CHARS);
 	txt->Connect(wxEVT_KEY_DOWN, (wxObjectEventFunction)&HkeysDialog::OnKeyPress, 0, this);
@@ -639,13 +639,13 @@ void HkeysDialog::OnKeyPress(wxKeyEvent& event)
 
 		if (hotkey == emptyString && (type == GLOBAL_HOTKEY || type == EDITBOX_HOTKEY) && (key > 30 && key < 127 /*|| key>313 && key<318*/))
 		{
-			KaiMessageBox(_("Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).")); return;
+			HikariMessageBox(_("Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).")); return;
 		}
 		else if (event.GetModifiers() == wxMOD_CONTROL && (key == L'V' || key == L'C' || key == L'X' || key == L'Z')){
-			KaiMessageBox(_("You cannot use shortcuts for copying, cutting, and pasting.")); return;
+			HikariMessageBox(_("You cannot use shortcuts for copying, cutting, and pasting.")); return;
 		}
 		else if (event.AltDown() && !event.ControlDown() && key == WXK_F4){
-			KaiMessageBox(_("You cannot use the program exit shortcut.")); return;
+			HikariMessageBox(_("You cannot use the program exit shortcut.")); return;
 		}
 
 		wxString keytxt = Hkeys.keys[key];

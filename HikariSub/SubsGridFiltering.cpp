@@ -123,7 +123,7 @@ void SubsGridFiltering::FilterPartial(int from)
 	}
 	//if (!changed){
 		//keyTo = grid->file->GetCount() - 1;
-		//KaiLogDebug("Something went wrong with partially hiding it is better to check it for potencial bugs.");
+		//HikariLogDebug("Something went wrong with partially hiding it is better to check it for potencial bugs.");
 	//}
 	grid->RefreshSubsOnVideo(activeLine, false);
 	grid->RefreshColumns();

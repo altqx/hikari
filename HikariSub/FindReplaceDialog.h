@@ -15,13 +15,13 @@
 
 #pragma once
 
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
-#include "KaiTextCtrl.h"
-#include "KaiRadioButton.h"
+#include "HikariTextCtrl.h"
+#include "HikariRadioButton.h"
 #include "MappedButton.h"
-#include "KaiTabBar.h"
-#include "KaiStaticText.h"
+#include "HikariTabBar.h"
+#include "HikariStaticText.h"
 
 class FindReplace;
 class HikariSubFrame;
@@ -38,36 +38,36 @@ public:
 	void OnRecheck(wxCommandEvent& event);
 	void Reset(wxCommandEvent& evt);
 	void OnStylesChoose(wxCommandEvent& event);
-	KaiChoice* FindText;
-	KaiChoice* ReplaceText = nullptr;
-	KaiChoice* FindInSubsPattern = nullptr;
-	KaiChoice* FindInSubsPath = nullptr;
-	KaiRadioButton* CollumnText;
-	KaiRadioButton* CollumnStyle;
-	KaiRadioButton* CollumnActor;
-	KaiRadioButton* CollumnEffect;
-	KaiRadioButton* AllLines = nullptr;
-	KaiRadioButton* SelectedLines = nullptr;
-	KaiRadioButton* FromSelection = nullptr;
-	KaiTextCtrl *ChoosenStyleText = nullptr;
-	KaiCheckBox* MatchCase;
-	KaiCheckBox* RegEx;
-	KaiCheckBox* StartLine;
-	KaiCheckBox* EndLine;
-	KaiCheckBox* UseComments;
-	KaiCheckBox* OnlyText;
-	KaiCheckBox* OnlyTags;
-	KaiCheckBox *SeekInSubFolders = nullptr;
-	KaiCheckBox *SeekInHiddenFolders = nullptr;
+	HikariChoice* FindText;
+	HikariChoice* ReplaceText = nullptr;
+	HikariChoice* FindInSubsPattern = nullptr;
+	HikariChoice* FindInSubsPath = nullptr;
+	HikariRadioButton* CollumnText;
+	HikariRadioButton* CollumnStyle;
+	HikariRadioButton* CollumnActor;
+	HikariRadioButton* CollumnEffect;
+	HikariRadioButton* AllLines = nullptr;
+	HikariRadioButton* SelectedLines = nullptr;
+	HikariRadioButton* FromSelection = nullptr;
+	HikariTextCtrl *ChoosenStyleText = nullptr;
+	HikariCheckBox* MatchCase;
+	HikariCheckBox* RegEx;
+	HikariCheckBox* StartLine;
+	HikariCheckBox* EndLine;
+	HikariCheckBox* UseComments;
+	HikariCheckBox* OnlyText;
+	HikariCheckBox* OnlyTags;
+	HikariCheckBox *SeekInSubFolders = nullptr;
+	HikariCheckBox *SeekInHiddenFolders = nullptr;
 	FindReplace *FR;
 	int windowType = 0;
 };
 
-class FindReplaceDialog : public KaiDialog
+class FindReplaceDialog : public HikariDialog
 {
 	friend class FindReplace;
 public:
-	FindReplaceDialog(HikariSubFrame *Kai, int whichWindow);
+	FindReplaceDialog(HikariSubFrame *Hikari, int whichWindow);
 	virtual ~FindReplaceDialog();
 	void ShowDialog(int whichWindow);
 	void SaveOptions();
@@ -79,8 +79,8 @@ private:
 	void OnEnterConfirm(wxCommandEvent& event);
 	void SetSelection(TabWindow *tab);
 	FindReplace *FR = nullptr;
-	HikariSubFrame *Kai = nullptr;
-	KaiTabBar * findReplaceTabs = nullptr;
+	HikariSubFrame *Hikari = nullptr;
+	HikariTabBar * findReplaceTabs = nullptr;
 	int lastFocusedId = -1;
 };
 

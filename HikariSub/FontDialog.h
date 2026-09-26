@@ -16,12 +16,12 @@
 #pragma once
 
 #include "NumCtrl.h"
-#include "KaiCheckBox.h"
+#include "HikariCheckBox.h"
 #include "MappedButton.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "ListControls.h"
 #include "StylePreview.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
 wxDECLARE_EVENT(FONT_CHANGED, wxCommandEvent);
 
@@ -60,7 +60,7 @@ private:
 	bool holding;
 	wxArrayString *fonts;
 
-	KaiScrollbar *scrollBar;
+	HikariScrollbar *scrollBar;
 	wxBitmap *bmp;
 	wxFont font;
 
@@ -68,7 +68,7 @@ private:
 };
 
 //for realtime change connect with event FONT_CHANGED
-class FontDialog : public KaiDialog
+class FontDialog : public HikariDialog
 {
 public:
 	virtual ~FontDialog();
@@ -88,15 +88,15 @@ private:
 	FontList *Fonts;
 	StylePreview *Preview;
 	NumCtrl *FontSize;
-	KaiCheckBox *Bold;
-	KaiCheckBox *Italic;
-	KaiCheckBox *Underl;
-	KaiCheckBox *Strike;
+	HikariCheckBox *Bold;
+	HikariCheckBox *Italic;
+	HikariCheckBox *Underl;
+	HikariCheckBox *Strike;
 	MappedButton *Buttok;
 	MappedButton *Buttcancel;
-	KaiTextCtrl *FontName;
+	HikariTextCtrl *FontName;
 	ToggleButton* Filter;
-	KaiChoice* fontCatalog;
+	HikariChoice* fontCatalog;
 	Styles *editedStyle = nullptr;
 	Styles *resultStyle = nullptr;
 	wxTimer fontChangedTimer;

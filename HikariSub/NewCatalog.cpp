@@ -14,14 +14,14 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "NewCatalog.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariStaticBoxSizer.h"
 
 
 
 NewCatalog::NewCatalog(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
-	:KaiDialog(parent, id, _("Choose folder name"), wxDefaultPosition, wxSize(300,-1), wxDEFAULT_DIALOG_STYLE)
+	:HikariDialog(parent, id, _("Choose folder name"), wxDefaultPosition, wxSize(300,-1), wxDEFAULT_DIALOG_STYLE)
 {
-	KaiTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
 	wxArrayString excludes;
 	excludes.Add(L"\\");
 	excludes.Add(L"/");
@@ -33,8 +33,8 @@ NewCatalog::NewCatalog(wxWindow* parent, wxWindowID id, const wxPoint& pos, cons
 	excludes.Add(L">");
 	excludes.Add(L"|");
 	valid.SetExcludes(excludes);
-	TextCtrl1 = new KaiTextCtrl(this, -1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, valid);
-	KaiStaticBoxSizer *StaticBox1 = new KaiStaticBoxSizer(wxVERTICAL, this, _("Enter a name for the new folder"));
+	TextCtrl1 = new HikariTextCtrl(this, -1, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER, valid);
+	HikariStaticBoxSizer *StaticBox1 = new HikariStaticBoxSizer(wxVERTICAL, this, _("Enter a name for the new folder"));
 	StaticBox1->Add(TextCtrl1, 0, wxEXPAND | wxALL, 2);
 	wxBoxSizer *sizer = new wxBoxSizer(wxHORIZONTAL);
 	DialogSizer *sizer1 = new DialogSizer(wxVERTICAL);

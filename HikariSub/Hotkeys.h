@@ -19,7 +19,7 @@
 #include "HotkeysNaming.h"
 #include "ListControls.h"
 #include "EnumFactory.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
 //After change VIDEO_PLAY_PAUSE edit this list 
 
@@ -326,14 +326,14 @@ public:
 	wxString Accel;
 };
 
-class HkeysDialog : public KaiDialog
+class HkeysDialog : public HikariDialog
 {
 public:
 	HkeysDialog(wxWindow *parent, wxString name, char hotkeyWindow = GLOBAL_HOTKEY, bool showWindowSelection = true);
 	virtual ~HkeysDialog();
 	wxString hotkey;
 	wxString hkname;
-	KaiChoice *global;
+	HikariChoice *global;
 	char type;
 
 private:

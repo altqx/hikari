@@ -53,7 +53,7 @@ void Karaoke::Split()
 	textlow = textlow.Lower();
 	wxRegEx re(L"{([^}]*)\\\\kf?o?[0-9]([^}]*)}", wxRE_ADVANCED);
 	if (!re.IsValid())
-		KaiLogSilent(L"Karaoke regex not valid");
+		HikariLogSilent(L"Karaoke regex not valid");
 
 	if (re.Matches(textlow)) {
 		Text << L"{";

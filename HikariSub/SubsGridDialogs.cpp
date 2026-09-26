@@ -15,13 +15,13 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "SubsGridDialogs.h"
-#include "KaiStaticText.h"
+#include "HikariStaticText.h"
 #include "MappedButton.h"
-#include "KaiMessageBox.h"
-#include "KaiStaticBoxSizer.h"
+#include "HikariMessageBox.h"
+#include "HikariStaticBoxSizer.h"
 
 FPSDialog::FPSDialog(wxWindow *parent)
-	:KaiDialog(parent, -1, _("Choose new FPS"))
+	:HikariDialog(parent, -1, _("Choose new FPS"))
 {
 	DialogSizer* siz = new DialogSizer(wxHORIZONTAL);
 	wxFlexGridSizer *sizer = new wxFlexGridSizer(2, 2, 2);
@@ -42,13 +42,13 @@ FPSDialog::FPSDialog(wxWindow *parent)
 	valid.SetIncludes(includes);
 
 	fpsy.Add(L"23.976"); fpsy.Add(L"24"); fpsy.Add(L"25"); fpsy.Add(L"29.97"); fpsy.Add(L"30"); fpsy.Add(L"60");
-	oldfps = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, fpsy, 0, valid);
+	oldfps = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, fpsy, 0, valid);
 	oldfps->SetSelection(0);
-	newfps = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxSize(80, -1), fpsy, 0, valid);
+	newfps = new HikariChoice(this, -1, emptyString, wxDefaultPosition, wxSize(80, -1), fpsy, 0, valid);
 	newfps->SetSelection(2);
-	sizer->Add(new KaiStaticText(this, -1, _("Subtitles FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+	sizer->Add(new HikariStaticText(this, -1, _("Subtitles FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
 	sizer->Add(oldfps, 0, wxEXPAND | wxALL, 4);
-	sizer->Add(new KaiStaticText(this, -1, _("New FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+	sizer->Add(new HikariStaticText(this, -1, _("New FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
 	sizer->Add(newfps, 0, wxEXPAND | wxALL, 4);
 	MappedButton *ok = new MappedButton(this, 15555, _("Change FPS"));
 	Connect(15555, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&FPSDialog::OkClick);
@@ -67,16 +67,16 @@ void FPSDialog::OkClick(wxCommandEvent &evt)
 	if (oldfps->GetValue().ToDouble(&ofps) && newfps->GetValue().ToDouble(&nfps)){
 		EndModal(1);
 	}
-	else{ KaiMessageBox(_("Incorrect FPS")); }
+	else{ HikariMessageBox(_("Incorrect FPS")); }
 }
 
 TreeDialog::TreeDialog(wxWindow *parent, const wxString & currentName)
-	:KaiDialog(parent, -1, _("Tree description"))
+	:HikariDialog(parent, -1, _("Tree description"))
 {
 	DialogSizer *mainSizer = new DialogSizer(wxVERTICAL);
 	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-	KaiStaticBoxSizer *descriptionSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Tree description"));
-	treeDescription = new KaiTextCtrl(this, -1, currentName, wxDefaultPosition, wxSize(400, -1));
+	HikariStaticBoxSizer *descriptionSizer = new HikariStaticBoxSizer(wxHORIZONTAL, this, _("Tree description"));
+	treeDescription = new HikariTextCtrl(this, -1, currentName, wxDefaultPosition, wxSize(400, -1));
 	treeDescription->SetSelection(0, currentName.Len());
 	treeDescription->SetMaxLength(500);
 	descriptionSizer->Add(treeDescription, 0, wxEXPAND);
@@ -106,7 +106,7 @@ void TreeDialog::OkClick(wxCommandEvent &evt)
 
 
 SwapPropertiesDialog::SwapPropertiesDialog(wxWindow* parent)
-	:KaiDialog(parent, -1, _("Confirmation"))
+	:HikariDialog(parent, -1, _("Confirmation"))
 {
 	DialogSizer* main = new DialogSizer(wxVERTICAL);
 	const int numFields = 6;
@@ -114,7 +114,7 @@ SwapPropertiesDialog::SwapPropertiesDialog(wxWindow* parent)
 	CONFIG fieldOnValues[numFields] = { ASS_PROPERTIES_TITLE_ON, ASS_PROPERTIES_SCRIPT_ON, ASS_PROPERTIES_TRANSLATION_ON,
 		ASS_PROPERTIES_EDITING_ON, ASS_PROPERTIES_TIMING_ON, ASS_PROPERTIES_UPDATE_ON };
 	for (int i = 0; i < numFields; i++) {
-		fields[i] = new KaiCheckBox(this, -1, fieldNames[i]);
+		fields[i] = new HikariCheckBox(this, -1, fieldNames[i]);
 		fields[i]->SetValue(Options.GetBool(fieldOnValues[i]));
 		main->Add(fields[i], 0, wxEXPAND | wxALL, 3);
 	}

@@ -251,7 +251,7 @@ msgstr ""
 #: HikariSub/ColorPicker.cpp:1410 HikariSub/DummyVideo.cpp:102
 #: HikariSub/EditBox.cpp:94 HikariSub/EditBox.cpp:1750
 #: HikariSub/FontCatalogList.cpp:70 HikariSub/FontCatalogList.cpp:868
-#: HikariSub/FontDialog.cpp:410 HikariSub/KaiMessageBox.cpp:79
+#: HikariSub/FontDialog.cpp:410 HikariSub/HikariMessageBox.cpp:79
 #: HikariSub/MappedButton.cpp:39 HikariSub/NewCatalog.cpp:42
 #: HikariSub/OptionsDialog.cpp:1022 HikariSub/ProgressDialog.cpp:43
 #: HikariSub/ScriptInfo.cpp:160 HikariSub/ShiftTimes.cpp:67
@@ -760,17 +760,17 @@ msgstr ""
 msgid "Fix suggestions"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2265 HikariSub/KaiListCtrl.cpp:117
-#: HikariSub/KaiTextCtrl.cpp:1474
+#: HikariSub/DialogueTextEditor.cpp:2265 HikariSub/HikariListCtrl.cpp:117
+#: HikariSub/HikariTextCtrl.cpp:1474
 msgid "&Copy"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2266 HikariSub/KaiTextCtrl.cpp:1475
+#: HikariSub/DialogueTextEditor.cpp:2266 HikariSub/HikariTextCtrl.cpp:1475
 msgid "Cu&t"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2267 HikariSub/KaiListCtrl.cpp:118
-#: HikariSub/KaiTextCtrl.cpp:1476
+#: HikariSub/DialogueTextEditor.cpp:2267 HikariSub/HikariListCtrl.cpp:118
+#: HikariSub/HikariTextCtrl.cpp:1476
 msgid "&Paste"
 msgstr ""
 
@@ -782,7 +782,7 @@ msgstr ""
 msgid "Search word translation on pl.ba.bla"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2272 HikariSub/KaiTextCtrl.cpp:1481
+#: HikariSub/DialogueTextEditor.cpp:2272 HikariSub/HikariTextCtrl.cpp:1481
 msgid "Search for the selected phrase on Google"
 msgstr ""
 
@@ -803,7 +803,7 @@ msgstr ""
 msgid "&Add word \"%s\" to dictionary"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2296 HikariSub/KaiTextCtrl.cpp:1483
+#: HikariSub/DialogueTextEditor.cpp:2296 HikariSub/HikariTextCtrl.cpp:1483
 msgid "&Delete"
 msgstr ""
 
@@ -2776,24 +2776,24 @@ msgstr ""
 msgid "Save frame with subtitles as PNG"
 msgstr ""
 
-#: HikariSub/KaiMessageBox.cpp:38
+#: HikariSub/HikariMessageBox.cpp:38
 msgid "Apply to All"
 msgstr ""
 
-#: HikariSub/KaiMessageBox.cpp:53
+#: HikariSub/HikariMessageBox.cpp:53
 msgid "Yes to all"
 msgstr ""
 
-#: HikariSub/KaiMessageBox.cpp:62 HikariSub/MappedButton.cpp:41
+#: HikariSub/HikariMessageBox.cpp:62 HikariSub/MappedButton.cpp:41
 #: HikariSub/Notebook.cpp:1216
 msgid "Yes"
 msgstr ""
 
-#: HikariSub/KaiMessageBox.cpp:71 HikariSub/MappedButton.cpp:42
+#: HikariSub/HikariMessageBox.cpp:71 HikariSub/MappedButton.cpp:42
 msgid "No"
 msgstr ""
 
-#: HikariSub/KaiMessageBox.cpp:87
+#: HikariSub/HikariMessageBox.cpp:87
 msgid "Help"
 msgstr ""
 

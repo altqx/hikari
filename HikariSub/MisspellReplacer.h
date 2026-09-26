@@ -15,11 +15,11 @@
 
 #pragma once
 
-#include "KaiDialog.h"
-#include "KaiCheckBox.h"
+#include "HikariDialog.h"
+#include "HikariCheckBox.h"
 #include "MappedButton.h"
-#include "KaiListCtrl.h"
-#include "KaiTextCtrl.h"
+#include "HikariListCtrl.h"
+#include "HikariTextCtrl.h"
 #include "ListControls.h"
 #include "MispellReplacerDialog.h"
 #include "Stylelistbox.h"
@@ -54,7 +54,7 @@ public:
 	int options;
 };
 
-class MisspellReplacer : public KaiDialog
+class MisspellReplacer : public HikariDialog
 {
 public:
 	MisspellReplacer(wxWindow *parent);
@@ -83,20 +83,20 @@ private:
 	int GetRuleOptions();
 	void FillWithDefaultRules(wxString &rules);
 	bool KeepFinding(const wxString &text, int textPos, int options);
-	//KaiCheckBox *PutWordBoundary;
-	//KaiCheckBox *ShowBuiltInRules;
-	KaiCheckBox *MatchCase;
-	KaiCheckBox *ReplaceAsLower;
-	KaiCheckBox *ReplaceAsUpper;
-	KaiCheckBox *ReplaceWithUnchangedCase;
-	KaiCheckBox *ReplaceOnlyTags;
-	KaiCheckBox *ReplaceOnlyText;
-	KaiTextCtrl *RuleDescription;
-	KaiTextCtrl *PhraseToFind;
-	KaiTextCtrl *PhraseToReplace;
-	KaiTextCtrl *ChoosenStyles;
-	KaiChoice *WhichLines;
-	KaiListCtrl *RulesList;
+	//HikariCheckBox *PutWordBoundary;
+	//HikariCheckBox *ShowBuiltInRules;
+	HikariCheckBox *MatchCase;
+	HikariCheckBox *ReplaceAsLower;
+	HikariCheckBox *ReplaceAsUpper;
+	HikariCheckBox *ReplaceWithUnchangedCase;
+	HikariCheckBox *ReplaceOnlyTags;
+	HikariCheckBox *ReplaceOnlyText;
+	HikariTextCtrl *RuleDescription;
+	HikariTextCtrl *PhraseToFind;
+	HikariTextCtrl *PhraseToReplace;
+	HikariTextCtrl *ChoosenStyles;
+	HikariChoice *WhichLines;
+	HikariListCtrl *RulesList;
 
 	FindResultDialog *resultDialog;
 	std::vector<Rule> rules;

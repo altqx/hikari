@@ -43,8 +43,8 @@
 #include "AudioDisplay.h"
 
 class SubsGrid;
-#include "KaiPanel.h"
-#include "KaiSlider.h"
+#include "HikariPanel.h"
+#include "HikariSlider.h"
 
 #include <wx/sizer.h>
 #include <wx/string.h>
@@ -62,14 +62,14 @@ float PlaybackVolumeFromSlider(int position);
 
 ///////////////////
 // Audio box class
-class AudioBox : public KaiPanel {
+class AudioBox : public HikariPanel {
 	friend class AudioDisplay;
 
 private:
-	KaiScrollbar *audioScroll;
-	KaiSlider *HorizontalZoom;
-	KaiSlider *VerticalZoom;
-	KaiSlider *VolumeBar;
+	HikariScrollbar *audioScroll;
+	HikariSlider *HorizontalZoom;
+	HikariSlider *VerticalZoom;
+	HikariSlider *VolumeBar;
 	wxSizer *MainSizer;
 	wxSizer *TopSizer;
 	wxSizer *sashSizer;

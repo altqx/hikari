@@ -15,12 +15,12 @@
 
 #pragma once
 
-#include "KaiListCtrl.h"
+#include "HikariListCtrl.h"
 #include "MappedButton.h"
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 
 
-class Stylelistbox: public KaiDialog
+class Stylelistbox: public HikariDialog
 {
 	public:
 
@@ -32,12 +32,12 @@ class Stylelistbox: public KaiDialog
 
 		
 		MappedButton* OK;
-		KaiListCtrl* CheckListBox;
+		HikariListCtrl* CheckListBox;
 		MappedButton* Cancel;
 		
 };
 
-class CustomCheckListBox : public KaiDialog
+class CustomCheckListBox : public HikariDialog
 {
 public:
 
@@ -48,19 +48,19 @@ public:
 	void GetCheckedElements(wxArrayString &checkedElements);
 
 	MappedButton* OK;
-	KaiListCtrl* CheckListBox;
+	HikariListCtrl* CheckListBox;
 	MappedButton* Cancel;
 
 };
 
 wxString GetCheckedElements(wxWindow *parent);
 
-class KaiListBox : public KaiDialog
+class HikariListBox : public HikariDialog
 {
 public:
-	KaiListBox(wxWindow *parent, const wxArrayString &list, const wxString &title, bool centerOnParent = false);
-	virtual ~KaiListBox(){};
-	KaiListCtrl *list;
+	HikariListBox(wxWindow *parent, const wxArrayString &list, const wxString &title, bool centerOnParent = false);
+	virtual ~HikariListBox(){};
+	HikariListCtrl *list;
 	wxString GetSelection() const{return result;};
 	int GetIntSelection() {return selection;}
 private:

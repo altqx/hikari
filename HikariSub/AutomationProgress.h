@@ -33,10 +33,10 @@
 #include <wx/dialog.h>
 #include "AutomationDialog.h"
 #include "MappedButton.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include <utility>
-#include "KaiStaticText.h"
-#include "KaiGauge.h"
+#include "HikariStaticText.h"
+#include "HikariGauge.h"
 
 
 
@@ -48,10 +48,10 @@ namespace Auto{
 		LuaProgressDialog(wxWindow *parent, lua_State *L);
 		virtual ~LuaProgressDialog();
 		wxBoxSizer *sizer;
-		KaiGauge *progress_display;
-		KaiStaticText *title_display;
-		KaiStaticText *task_display;
-		KaiTextCtrl *debug_output;
+		HikariGauge *progress_display;
+		HikariStaticText *title_display;
+		HikariStaticText *task_display;
+		HikariTextCtrl *debug_output;
 		MappedButton *cancel_button;
 		wxMutex data_mutex;
 		//float progress;

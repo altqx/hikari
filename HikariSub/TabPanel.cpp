@@ -18,7 +18,7 @@
 #include "TabPanel.h"
 
 #include "Notebook.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "HikariSubFrame.h"
 #include "config.h"
 #include "Hotkeys.h"
@@ -29,8 +29,8 @@
 #include "OpennWrite.h"
 
 
-TabPanel::TabPanel(wxWindow *parent, HikariSubFrame *kai, const wxPoint &pos, const wxSize &size)
-	: KaiPanel(parent, -1, pos, size)
+TabPanel::TabPanel(wxWindow *parent, HikariSubFrame *hikari, const wxPoint &pos, const wxSize &size)
+	: HikariPanel(parent, -1, pos, size)
 	, windowResizer(nullptr)
 	, editor(true)
 	, holding(false)
@@ -46,10 +46,10 @@ TabPanel::TabPanel(wxWindow *parent, HikariSubFrame *kai, const wxPoint &pos, co
 	edit = new EditBox(this, -1);
 
 	GridShiftTimesSizer = new wxBoxSizer(wxHORIZONTAL);
-	grid = new SubsGrid(this, kai, -1, wxDefaultPosition, wxSize(400, 200), wxWANTS_CHARS);
+	grid = new SubsGrid(this, hikari, -1, wxDefaultPosition, wxSize(400, 200), wxWANTS_CHARS);
 	edit->SetGrid1(grid);
 
-	shiftTimes = new ShiftTimes(this, kai, -1);
+	shiftTimes = new ShiftTimes(this, hikari, -1);
 	shiftTimes->Show(Options.GetBool(SHIFT_TIMES_ON));
 	GridShiftTimesSizer->Add(grid, 1, wxEXPAND, 0);
 	GridShiftTimesSizer->Add(shiftTimes, 0, wxEXPAND, 0);
@@ -63,7 +63,7 @@ TabPanel::TabPanel(wxWindow *parent, HikariSubFrame *kai, const wxPoint &pos, co
 	edit->SetMinSize(wxSize(-1, 200));
 	edit->SetLine(0);
 
-	windowResizer = new KaiWindowResizer(this, [=, this](int newpos){
+	windowResizer = new HikariWindowResizer(this, [=, this](int newpos){
 		int mw, mh;
 		GetClientSize(&mw, &mh);
 		int limit = (video->GetState() != None && video->IsShown()) ? 350 : 150;
@@ -334,7 +334,7 @@ void TabPanel::ReloadSubsIfModified()
 
 	int needReload = ModifChecker.NeedReload(SubsPath, &lastSave);
 	if (needReload == 1) {
-		int result = KaiMessageBox(_("Subtitles were modified by another program. Reload?"), _("Reloading"), wxYES | wxNO);
+		int result = HikariMessageBox(_("Subtitles were modified by another program. Reload?"), _("Reloading"), wxYES | wxNO);
 		if (result == wxYES) {
 			wxString ext = SubsPath.AfterLast(L'.');
 			OpenWrite ow;
@@ -384,7 +384,7 @@ void TabPanel::OnSize(wxSizeEvent & evt)
 //	wxWindow* focused = FindFocus();
 //	wxWindow* focusedParent = focused->GetParent();
 //	bool nextWindowWasNULL = false;
-//	if (focusedParent->IsKindOf(CLASSINFO(KaiChoice))) {
+//	if (focusedParent->IsKindOf(CLASSINFO(HikariChoice))) {
 //		focused = focusedParent;
 //		focusedParent = focusedParent->GetParent();
 //	}

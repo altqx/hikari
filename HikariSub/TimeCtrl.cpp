@@ -28,10 +28,10 @@
 
 
 TimeCtrl::TimeCtrl(wxWindow* parent, const long int id, const wxString& val, const wxPoint& pos, const wxSize& size, long style, const wxValidator& validator, const wxString& name)
-	: KaiTextCtrl(parent, id, val, pos, size, style)
+	: HikariTextCtrl(parent, id, val, pos, size, style)
 	, timeUnchanged(true)
 {
-	KaiTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
 	wxArrayString includes;
 	includes.Add(_T("0"));
 	includes.Add(_T("1"));
@@ -306,7 +306,7 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 		if (absy >= absx){
 			if (absy >= 8){
 				mstime = (oldposy < posy) ? mstime - grad : mstime + grad;
-				//KaiLog(wxString::Format("nval+-1: %f", (float)nval));
+				//HikariLog(wxString::Format("nval+-1: %f", (float)nval));
 				oldposy = posy;
 				//reset oldposx cause next time it will change it by 10 
 				//even if it's still moved in one direction
@@ -385,7 +385,7 @@ void TimeCtrl::OnMouseEvent(wxMouseEvent &event) {
 }
 
 
-BEGIN_EVENT_TABLE(TimeCtrl, KaiTextCtrl)
+BEGIN_EVENT_TABLE(TimeCtrl, HikariTextCtrl)
 EVT_MOUSE_CAPTURE_LOST(TimeCtrl::OnMouseLost)
 END_EVENT_TABLE()
 

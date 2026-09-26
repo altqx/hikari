@@ -66,7 +66,7 @@ chapters(nullptr)
 	parent = _parent;
 
 	HRESULT hr = CoInitialize(nullptr);
-	if (FAILED(hr)){ KaiLog(_("Cannot initialize COM")); }
+	if (FAILED(hr)){ HikariLog(_("Cannot initialize COM")); }
 }
 
 
@@ -108,11 +108,11 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 	/*wxArrayString arr;
 	EnumerateAudioDevices(&arr);
 	if (arr.GetCount() == 0) {
-		KaiLog("No audio devices");
+		HikariLog("No audio devices");
 	}
 	else {
 		if (!GetGuid(arr[0], IID_IBaseFilter, CLSCTX_INPROC, (LPVOID*)&pAudioRenderer.obj)) {
-			KaiLog("Can't get audio device, load default");
+			HikariLog("Can't get audio device, load default");
 			HR(CoCreateInstance(CLSID_DSoundRender, nullptr, CLSCTX_INPROC, IID_IBaseFilter, (LPVOID*)&pAudioRenderer.obj), _("Nie można utworzyć instancji renderera dźwięku"));
 		}
 	}*/
@@ -263,7 +263,7 @@ bool DShowPlayer::OpenFile(wxString sFileName, bool vobsub)
 		if (FAILED(pinfo.pFilter->QueryInterface(IID_IAMStreamSelect, (void**)&stream)))
 		{
 			//No need to inform cause it will spam on avi/wmv
-			//KaiLog(_("Błąd interfejsu wyboru ścieżek"));
+			//HikariLog(_("Błąd interfejsu wyboru ścieżek"));
 		}
 	}
 	hr = pSource->QueryInterface(IID_IAMExtendedSeeking, (void**)&chapters);
@@ -464,7 +464,7 @@ void DShowPlayer::SetVolume(long volume)
 	if (m_pBA)
 	{
 		hr = m_pBA->put_Volume(volume);
-		if (FAILED(hr)){ KaiLogSilent(L"Set volume dont working!"); }
+		if (FAILED(hr)){ HikariLogSilent(L"Set volume dont working!"); }
 	}
 
 }
@@ -476,7 +476,7 @@ long DShowPlayer::GetVolume()
 	if (m_pBA)
 	{
 		hr = m_pBA->get_Volume(&volume);
-		if (FAILED(hr)){ KaiLogSilent(L"Get volume dont working!"); }
+		if (FAILED(hr)){ HikariLogSilent(L"Get volume dont working!"); }
 	}
 	return volume;
 }

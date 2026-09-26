@@ -31,7 +31,7 @@
 #pragma once
 
 //#include <wx/wx.h>
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include <memory>
 #include <vector>
 extern "C" {
@@ -89,7 +89,7 @@ namespace Auto{
 		/// Id of the button pushed (once a button has been pushed)
 		int button_pushed;
 
-		KaiDialog *window;
+		HikariDialog *window;
 
 	public:
 		LuaDialog(lua_State *L, bool include_buttons);
@@ -105,7 +105,7 @@ namespace Auto{
 		bool IsCancelled(){ return (button_pushed < 0); };
 
 		// ScriptDialog implementation
-		KaiDialog* CreateWindow(wxWindow *parent, wxString name);
+		HikariDialog* CreateWindow(wxWindow *parent, wxString name);
 		wxString Serialise();
 		void Unserialise(const wxString &serialised);
 	};

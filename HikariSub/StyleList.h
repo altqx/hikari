@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "styles.h"
 #include "ListControls.h"
 #include <vector>
@@ -23,7 +23,7 @@
 
 wxDECLARE_EVENT(SELECTION_CHANGED, wxCommandEvent);
 
-class StyleList : public KaiScrolledWindow
+class StyleList : public HikariScrolledWindow
 {
 public:
 	StyleList(wxWindow *parent, long id, std::vector<Styles*> *stylearray,

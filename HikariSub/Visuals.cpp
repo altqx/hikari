@@ -746,7 +746,7 @@ void Visuals::SetVisual(bool dummy)
 			SAFE_DELETE(dummytext);
 			dummytext = grid->GetVisible(&visible, 0, &selPositions);
 			if (selPositions.size() != selsSize){
-				//KaiLog(L"Sizes mismatch");
+				//HikariLog(L"Sizes mismatch");
 				return;
 			}
 		}
@@ -1077,7 +1077,7 @@ D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* st
 						}
 					}
 					else {
-						KaiLog("Cannot measure text: " + tag->value.Mid(g, i - g));
+						HikariLog("Cannot measure text: " + tag->value.Mid(g, i - g));
 					}
 					g = i + 2;
 				}
@@ -1085,7 +1085,7 @@ D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* st
 		}//assign to style
 		else {
 			if (!TagValueToStyle(measuringStyle, tag->tagName, tag->value))
-				KaiLog(L"Cannot assign style to tag: " + tag->tagName + " with value: " + tag->value);
+				HikariLog(L"Cannot assign style to tag: " + tag->tagName + " with value: " + tag->value);
 		}
 	}
 	if (!drawingText.empty()) {

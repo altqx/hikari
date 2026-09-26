@@ -132,11 +132,11 @@ VideoToolbar::VideoToolbar(wxWindow *parent, const wxPoint &pos, const wxSize &s
 		_("Editing line when paused"), _("Editing") };
 	wxString playopts[4] = { _("Nothing"), _("Audio to the line end time"), _("Video and audio to the line end time"),
 		_("Video and audio to the next line start time") };
-	videoSeekAfter = new KaiChoice(this, ID_SEEK_AFTER, wxPoint(2, 1), wxDefaultSize, 6, movopts);
+	videoSeekAfter = new HikariChoice(this, ID_SEEK_AFTER, wxPoint(2, 1), wxDefaultSize, 6, movopts);
 	videoSeekAfter->SetSelection(Options.GetInt(MOVE_VIDEO_TO_ACTIVE_LINE));
 	videoSeekAfter->SetToolTip(_("Move video to selected line on:"));
 	wxSize seekMinSize = videoSeekAfter->GetMinSize();
-	videoPlayAfter = new KaiChoice(this, ID_PLAY_AFTER, wxPoint(seekMinSize.GetWidth() + 2, 1), wxDefaultSize, 4, playopts);
+	videoPlayAfter = new HikariChoice(this, ID_PLAY_AFTER, wxPoint(seekMinSize.GetWidth() + 2, 1), wxDefaultSize, 4, playopts);
 	videoPlayAfter->SetSelection(Options.GetInt(VIDEO_PLAY_AFTER_SELECTION));
 	videoPlayAfter->SetToolTip(_("On moving to another line play:"));
 	//wxSize playMinSize = videoPlayAfter->GetMinSize();
@@ -508,7 +508,7 @@ void VectorItem::ShowContols(VideoToolbar* vt)
 		GetNames(shapes, &list);
 		list.Insert(_("Choose"), 0);
 		list.Add(_("Edit"));
-		shapeList = new KaiChoice(vt, ID_SHAPE_LIST, wxDefaultPosition, wxDefaultSize, list);
+		shapeList = new HikariChoice(vt, ID_SHAPE_LIST, wxDefaultPosition, wxDefaultSize, list);
 		shapeList->SetFont(*Options.GetFont(-1));
 		shapeList->SetToolTip(_("List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n place\nof start of drawing and click left mouse button and drag."));
 		shapeList->SetSelection(shapeListSelection);
@@ -678,7 +678,7 @@ void AllTagsItem::Synchronize(VisualItem* item)
 		options->SetSelection(mode);
 	}
 	else {
-		KaiLog(L"Hydra no sychronization, pointers released");
+		HikariLog(L"Hydra no sychronization, pointers released");
 	}
 }
 
@@ -742,13 +742,13 @@ void AllTagsItem::ShowContols(VideoToolbar* vtoolbar)
 	auto tags = VideoToolbar::GetTagsSettings();
 	wxArrayString list;
 	GetNames(tags, &list);
-	tagList = new KaiChoice(vtoolbar, ID_TAG_LIST, wxDefaultPosition, wxDefaultSize, list);
+	tagList = new HikariChoice(vtoolbar, ID_TAG_LIST, wxDefaultPosition, wxDefaultSize, list);
 	tagList->SetToolTip(_("List of tags that can edit visual tool"));
 	tagList->SetSelection(selection);
 	wxString optionsList[] = { _("Add"), _("Insert"), _("Multiply"), _("Multiply+"), _("Gradient text increasing"),
 		_("Gradient text decreasing"), _("Gradient line increasing"), _("Gradient line decreasing") };
 	wxSize wsize = vtoolbar->GetTextExtent(_("Multiply+"));
-	options = new KaiChoice(vtoolbar, ID_OPTIONS, wxDefaultPosition, wxSize(wsize.x + 26, -1), 8, optionsList);
+	options = new HikariChoice(vtoolbar, ID_OPTIONS, wxDefaultPosition, wxSize(wsize.x + 26, -1), 8, optionsList);
 	options->SetToolTip(_("Tag change options:\nAdd - changes all tags by adding the slider value.\n"\
 		"Insert - inserts the tag at the cursor position for one line,\n"\
 		"or at the start for multiple lines.\n"\
@@ -1102,7 +1102,7 @@ void PositionItem::ShowContols(VideoToolbar* vt)
 		_("Left-above"), _("Center-above"), _("Right-above"),
 		_("Before-top"), _("Before-center"), _("Before-bottom"),
 		_("After-top"), _("After-center"), _("After-bottom") };
-	alignment = new KaiChoice(vt, ID_ALIGNMENT, wxDefaultPosition, wxDefaultSize, 21, alignments);
+	alignment = new HikariChoice(vt, ID_ALIGNMENT, wxDefaultPosition, wxDefaultSize, 21, alignments);
 	vt->Bind(wxEVT_COMMAND_CHOICE_SELECTED, [=, this](wxCommandEvent& evt) {
 		wxCommandEvent* evt1 = new wxCommandEvent(wxEVT_COMMAND_MENU_SELECTED, ID_MOVE_TOOLBAR_EVENT);
 		an = alignment->GetSelection();

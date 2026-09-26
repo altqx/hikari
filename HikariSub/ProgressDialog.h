@@ -23,15 +23,15 @@
 
 
 //struct ITaskbarList3;
-class KaiGauge;
-class KaiStaticText;
+class HikariGauge;
+class HikariStaticText;
 
 class ProgresDialog : public wxDialog
 {
 private:
-	KaiGauge *gauge;
-	KaiStaticText *text;
-	KaiStaticText *text1;
+	HikariGauge *gauge;
+	HikariStaticText *text;
+	HikariStaticText *text1;
 
 	bool canceled;
 	bool progressEnded = false;

@@ -36,7 +36,7 @@ wxString getdouble(double num)
 
 NumCtrl::NumCtrl(wxWindow *parent, long id, wxString text, int rangefrom, int rangeto, 
 	bool intonly, const wxPoint &pos, const wxSize &size, long style)
-	:KaiTextCtrl(parent, id, text, pos, size, style)
+	:HikariTextCtrl(parent, id, text, pos, size, style)
 {
 
 	rfrom = rangefrom;
@@ -49,7 +49,7 @@ NumCtrl::NumCtrl(wxWindow *parent, long id, wxString text, int rangefrom, int ra
 	holding = false;
 	SetString(text);
 
-	KaiTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
 	wxArrayString includes;
 	includes.Add(_T("0"));
 	includes.Add(_T("1"));
@@ -81,7 +81,7 @@ NumCtrl::NumCtrl(wxWindow *parent, long id, wxString text, int rangefrom, int ra
 }
 
 NumCtrl::NumCtrl(wxWindow *parent, long id, double _value, double rangefrom, double rangeto, bool intonly, const wxPoint &pos, const wxSize &size, long style)
-	:KaiTextCtrl(parent, id, "", pos, size, style)
+	:HikariTextCtrl(parent, id, "", pos, size, style)
 	, value(0)
 {
 
@@ -94,7 +94,7 @@ NumCtrl::NumCtrl(wxWindow *parent, long id, double _value, double rangefrom, dou
 	holding = false;
 	SetDouble(_value);
 
-	KaiTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
+	HikariTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
 	wxArrayString includes;
 	includes.Add(_T("0"));
 	includes.Add(_T("1"));
@@ -154,7 +154,7 @@ void NumCtrl::SetString(wxString val)
 	}
 	if (val.IsEmpty()){ val = getdouble(value); }
 	oldval = val;
-	KaiTextCtrl::SetValue(val, false);
+	HikariTextCtrl::SetValue(val, false);
 }
 
 void NumCtrl::SetInt(int val)
@@ -164,7 +164,7 @@ void NumCtrl::SetInt(int val)
 	value = (double)val;
 	wxString kkk;
 	oldval = kkk << val;
-	KaiTextCtrl::SetValue(kkk, false);
+	HikariTextCtrl::SetValue(kkk, false);
 }
 
 void NumCtrl::SetDouble(double val)
@@ -173,9 +173,9 @@ void NumCtrl::SetDouble(double val)
 	else if (val < rfrom){ val = rfrom; }
 	value = val;
 	oldval = getdouble(val);
-	KaiTextCtrl::SetValue(oldval, false);
+	HikariTextCtrl::SetValue(oldval, false);
 }
-// function to block setvalue from kaitextctrl
+// function to block setvalue from HikariTextCtrl
 void NumCtrl::SetValue(const wxString &text, bool modif/* =false */, bool newSel /* = true */)
 {
 	SetString(text);
@@ -229,8 +229,8 @@ void NumCtrl::OnNumWrite(wxCommandEvent& event)
 	wxString val = GetValue();
 	val.Replace(L",", L".");
 	if (val == L"-" || val == emptyString){}
-	else if (val.EndsWith(L".")){ if (val.Replace(L".", emptyString) > 1){ KaiTextCtrl::SetValue(oldval); wxBell(); } }
-	else if (val.StartsWith(L".")){ if (val.Replace(L".", emptyString) > 1){ KaiTextCtrl::SetValue(oldval); wxBell(); } }
+	else if (val.EndsWith(L".")){ if (val.Replace(L".", emptyString) > 1){ HikariTextCtrl::SetValue(oldval); wxBell(); } }
+	else if (val.StartsWith(L".")){ if (val.Replace(L".", emptyString) > 1){ HikariTextCtrl::SetValue(oldval); wxBell(); } }
 	else if (!val.ToCDouble(&value) || value > rto || value < rfrom){
 		/*SetValue(oldval);wxBell();*/
 		//if(!isbad){SetForegroundColour(*wxRED);isbad=true;}
@@ -264,7 +264,7 @@ void NumCtrl::OnMouseEvent(wxMouseEvent &event)
 			if (absy >= 8){
 				double nval = (oldposy < posy) ? value - 1 : value + 1;
 				if (nval < rfrom || nval > rto){ return; }
-				KaiTextCtrl::SetValue(getdouble(nval), true, false);
+				HikariTextCtrl::SetValue(getdouble(nval), true, false);
 				oldposy = posy;
 				//reset oldposx cause next time it will change it by 10 
 				//even if it's still moved in one direction
@@ -279,7 +279,7 @@ void NumCtrl::OnMouseEvent(wxMouseEvent &event)
 				if ((value == rfrom && nval < rfrom) || (value == rto && nval > rto)){ return; }
 				else if (nval < rfrom){ nval = rfrom; }
 				else if (nval > rto){ nval = rto; }
-				KaiTextCtrl::SetValue(getdouble(nval), true, false);
+				HikariTextCtrl::SetValue(getdouble(nval), true, false);
 				oldposx = posx;
 				//reset oldposx cause next time it will change it by 1
 				//even if it's still moved in one direction
@@ -310,7 +310,7 @@ void NumCtrl::OnMouseEvent(wxMouseEvent &event)
 		int step = event.GetWheelRotation() / event.GetWheelDelta();
 		value += step;
 		if (value < rfrom || value > rto){ return; }
-		KaiTextCtrl::SetValue(getdouble(value), true, false);//MarkDirty();
+		HikariTextCtrl::SetValue(getdouble(value), true, false);//MarkDirty();
 		if (IsModified()){ wxCommandEvent evt2(NUMBER_CHANGED, GetId()); AddPendingEvent(evt2); }
 		return;
 	}
@@ -354,7 +354,7 @@ void NumCtrl::OnPaste(wxCommandEvent& event)
 }
 
 
-BEGIN_EVENT_TABLE(NumCtrl, KaiTextCtrl)
+BEGIN_EVENT_TABLE(NumCtrl, HikariTextCtrl)
 //EVT_MOUSE_EVENTS(NumCtrl::OnMouseEvent)
 EVT_MOUSE_CAPTURE_LOST(NumCtrl::OnMouseLost)
 END_EVENT_TABLE()

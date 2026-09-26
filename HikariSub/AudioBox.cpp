@@ -43,8 +43,8 @@
 //#include "HikariSubFrame.h"
 #include "Notebook.h"
 #include "MappedButton.h"
-#include "KaiMessageBox.h"
-#include "KaiSlider.h"
+#include "HikariMessageBox.h"
+#include "HikariSlider.h"
 #include "EditBox.h"
 //#include "Visuals.h"
 //#include "VisualDrawingShapes.h"
@@ -77,7 +77,7 @@ float PlaybackVolumeFromSlider(int position)
 
 
 AudioBox::AudioBox(wxWindow *parent, SubsGrid *grid) :
-	KaiPanel(parent, -1, wxDefaultPosition, wxSize(0, 0))
+	HikariPanel(parent, -1, wxDefaultPosition, wxSize(0, 0))
 {
 	// Setup
 	loaded = false;
@@ -87,8 +87,8 @@ AudioBox::AudioBox(wxWindow *parent, SubsGrid *grid) :
 	SetMinSize(wxSize(-1, height));
 	SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
 	// Display
-	int thickness = KaiScrollbar::CalculateThickness(this);
-	audioScroll = new KaiScrollbar(this, Audio_Scrollbar, 
+	int thickness = HikariScrollbar::CalculateThickness(this);
+	audioScroll = new HikariScrollbar(this, Audio_Scrollbar, 
 		wxPoint(0, height - thickness), wxSize(100, thickness));
 	audioScroll->SetToolTip(_("Search bar"));
 
@@ -102,16 +102,16 @@ AudioBox::AudioBox(wxWindow *parent, SubsGrid *grid) :
 	// Zoom
 	int zoom = Options.GetInt(AUDIO_HORIZONTAL_ZOOM);
 	audioDisplay->SetSamplesPercent(zoom, false);
-	HorizontalZoom = new KaiSlider(this, Audio_Horizontal_Zoom, 
+	HorizontalZoom = new HikariSlider(this, Audio_Horizontal_Zoom, 
 		zoom, 0, 100, wxDefaultPosition, wxSize(-1, 20), wxSL_VERTICAL | wxSL_BOTH);
 	HorizontalZoom->SetToolTip(_("Horizontal stretching"));
 	int pos = Options.GetInt(AUDIO_VERTICAL_ZOOM);
 	float value = AudioDisplayScaleFromSlider(pos);
 	audioDisplay->SetScale(value);
-	VerticalZoom = new KaiSlider(this, Audio_Vertical_Zoom, pos, 1, 100, 
+	VerticalZoom = new HikariSlider(this, Audio_Vertical_Zoom, pos, 1, 100, 
 		wxDefaultPosition, wxSize(-1, 20), wxSL_VERTICAL | wxSL_BOTH | wxSL_INVERSE);
 	VerticalZoom->SetToolTip(_("Vertical stretching"));
-	VolumeBar = new KaiSlider(this, Audio_Volume, Options.GetInt(AUDIO_VOLUME), 1, 100, wxDefaultPosition, wxSize(-1, 20), wxSL_VERTICAL | wxSL_BOTH | wxSL_INVERSE);
+	VolumeBar = new HikariSlider(this, Audio_Volume, Options.GetInt(AUDIO_VOLUME), 1, 100, wxDefaultPosition, wxSize(-1, 20), wxSL_VERTICAL | wxSL_BOTH | wxSL_INVERSE);
 	VolumeBar->SetToolTip(_("Volume"));
 	bool link = Options.GetBool(AUDIO_LINK);
 	if (link) {
@@ -610,8 +610,8 @@ void AudioBox::SetAccels()
 		}
 		/*else{
 			Notebook *nt = Notebook::GetTabs();
-			HikariSubFrame *Kai = (HikariSubFrame *)nt->GetParent();
-			Bind(wxEVT_COMMAND_MENU_SELECTED, &HikariSubFrame::OnMenuSelected, Kai, itype.id);
+			HikariSubFrame *Hikari = (HikariSubFrame *)nt->GetParent();
+			Bind(wxEVT_COMMAND_MENU_SELECTED, &HikariSubFrame::OnMenuSelected, Hikari, itype.id);
 		}*/
 		
 		entries.push_back(Hkeys.GetHKey(itype));

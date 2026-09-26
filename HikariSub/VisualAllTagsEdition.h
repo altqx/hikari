@@ -14,13 +14,13 @@
 //  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
-#include "KaiDialog.h"
+#include "HikariDialog.h"
 #include "ListControls.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 #include "MappedButton.h"
-#include "KaiStaticBoxSizer.h"
-#include "KaiStaticText.h"
-#include "KaiCheckBox.h"
+#include "HikariStaticBoxSizer.h"
+#include "HikariStaticText.h"
+#include "HikariCheckBox.h"
 #include "NumCtrl.h"
 #include "VisualAllTagsEdition.h"
 #include <vector>
@@ -79,7 +79,7 @@ public:
 	int tagMode = 0;
 };
 
-class AllTagsEdition : public KaiDialog
+class AllTagsEdition : public HikariDialog
 {
 public:
 	AllTagsEdition(wxWindow* parent, const wxPoint& pos, std::vector<AllTagsSetting>* _tags, int curTag);
@@ -106,18 +106,18 @@ private:
 		ID_BUTTON_COMMIT,
 		ID_BUTTON_RESET_DEFAULT
 	};
-	KaiChoice* tagList;
-	KaiTextCtrl* newTagName;
-	KaiTextCtrl* tagName;
-	KaiTextCtrl* tagWithoutSlash;
+	HikariChoice* tagList;
+	HikariTextCtrl* newTagName;
+	HikariTextCtrl* tagName;
+	HikariTextCtrl* tagWithoutSlash;
 	NumCtrl* minValue;
 	NumCtrl* maxValue;
 	NumCtrl* step;
-	KaiChoice* mode;
+	HikariChoice* mode;
 	NumCtrl* digitAfterDot;
 	NumCtrl* values[4] = { nullptr, nullptr, nullptr, nullptr };
-	KaiChoice* numOfValues;
-	KaiChoice* tagInsertMode;
+	HikariChoice* numOfValues;
+	HikariChoice* tagInsertMode;
 	std::vector<AllTagsSetting> tags;
 	AllTagsSetting currentTag;
 	int selection = 0;

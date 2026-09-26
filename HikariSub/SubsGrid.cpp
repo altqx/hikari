@@ -20,7 +20,7 @@
 #include "OpennWrite.h"
 #include "TLDialog.h"
 #include "Demux.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "SubsGridFiltering.h"
 #include "SubsGridDialogs.h"
 #include "ShiftTimes.h"
@@ -38,7 +38,7 @@
 #include "GraphicsD2D.h"
 
 SubsGrid::SubsGrid(wxWindow* parent, HikariSubFrame* kfparent, wxWindowID id, const wxPoint& pos, const wxSize& size, long style)
-	: KaiScrolledWindow(parent, id, pos, size, style | wxVERTICAL)
+	: HikariScrolledWindow(parent, id, pos, size, style | wxVERTICAL)
 	, file(new SubsFile())
 {
 	file->SetMutex(&editionMutex);
@@ -53,7 +53,7 @@ SubsGrid::SubsGrid(wxWindow* parent, HikariSubFrame* kfparent, wxWindowID id, co
 	//reset autosave on statusbar
 	nullifyTimer.SetOwner(this, 27890);
 	Bind(wxEVT_TIMER, [=, this](wxTimerEvent &evt){
-		Kai->SetStatusText(emptyString, 0);
+		Hikari->SetStatusText(emptyString, 0);
 	}, 27890);
 
 	visibleColumns = Options.GetInt(GRID_HIDE_COLUMNS);
@@ -80,7 +80,7 @@ SubsGrid::SubsGrid(wxWindow* parent, HikariSubFrame* kfparent, wxWindowID id, co
 
 	tab = (TabPanel*)parent;
 	edit = tab->edit;
-	Kai = kfparent;
+	Hikari = kfparent;
 	//Editbox here exists
 
 	ignoreFiltered = Options.GetBool(GRID_IGNORE_FILTERING);
@@ -808,7 +808,7 @@ void SubsGrid::OnAccelerator(wxCommandEvent &event)
 	int id = event.GetId();
 
 	if (id >= 5000 && id != GLOBAL_REMOVE_LINES && id != GLOBAL_REMOVE_TEXT){
-		Kai->OnMenuSelected(event);
+		Hikari->OnMenuSelected(event);
 		return;
 	}
 	else if (id >= 1000 && id < 1700 && edit->ABox){
@@ -945,7 +945,7 @@ void SubsGrid::OnAccelerator(wxCommandEvent &event)
 void SubsGrid::OnPasteTextTl()
 {
 	wxFileDialog *FileDialog1 = new wxFileDialog(this, _("Choose subtitle file"),
-		KaiPathDir(tab->SubsPath), emptyString,
+		HikariPathDir(tab->SubsPath), emptyString,
 		_("Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt"),
 		wxFD_OPEN | wxFD_FILE_MUST_EXIST);
 	if (FileDialog1->ShowModal() == wxID_OK){
@@ -1135,9 +1135,9 @@ void SubsGrid::OnMkvSubs(wxCommandEvent &event)
 {
 	int idd = event.GetId();
 	if (file->IsModified()){
-		int wbutton = KaiMessageBox(_("Save the file before loading subtitles from the MKV?"),
+		int wbutton = HikariMessageBox(_("Save the file before loading subtitles from the MKV?"),
 			_("Confirmation"), wxICON_QUESTION | wxYES_NO | wxCANCEL, this);
-		if (wbutton == wxYES){ Kai->Save(false); }
+		if (wbutton == wxYES){ Hikari->Save(false); }
 		else if (wbutton == wxCANCEL){ return; }
 	}
 	wxString mkvpath = (idd == GRID_SUBS_FROM_MKV) ? tab->VideoPath : event.GetString();
@@ -1152,7 +1152,7 @@ void SubsGrid::OnMkvSubs(wxCommandEvent &event)
 			edit->SetTlMode(false); 
 			hasTLMode = false; 
 			showOriginal = false; 
-			Kai->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false); 
+			Hikari->Menubar->Enable(GLOBAL_SAVE_TRANSLATION, false); 
 		}
 		SetSubsFormat();
 		wxString ext = (subsFormat < SRT) ? L"ass" : L"srt";
@@ -1166,16 +1166,16 @@ void SubsGrid::OnMkvSubs(wxCommandEvent &event)
 		}
 
 		tab->SubsPath = mkvpath.BeforeLast(L'.') + L"." + ext;
-		tab->SubsName = KaiPathName(tab->SubsPath);
-		//Kai->SetRecent();
-		Kai->UpdateToolbar();
+		tab->SubsName = HikariPathName(tab->SubsPath);
+		//Hikari->SetRecent();
+		Hikari->UpdateToolbar();
 		edit->RefreshStyle(true);
 
-		Kai->Label();
+		Hikari->Label();
 		//LoadStyleCatalog();
 		if (tab->video->GetState() != None){
 			tab->video->OpenSubs(OPEN_WHOLE_SUBTITLES, true);
-			if (!isgood){ KaiMessageBox(_("Failed to open subtitles"), _("Warning")); }
+			if (!isgood){ HikariMessageBox(_("Failed to open subtitles"), _("Warning")); }
 			//pause when changing matrix to avoid crash on slow computers
 			if (tab->video->GetState() == Playing){ 
 				tab->video->Pause();//Render(); 
@@ -1184,13 +1184,13 @@ void SubsGrid::OnMkvSubs(wxCommandEvent &event)
 			tab->video->DisableVisuals(subsFormat == SRT);
 		}
 
-		if (!tab->editor && !tab->video->IsFullScreen()){ Kai->HideEditor(); }
+		if (!tab->editor && !tab->video->IsFullScreen()){ Hikari->HideEditor(); }
 		tab->shiftTimes->Contents();
 		file->InsertSelection(currentLine);
 		RefreshColumns();
 		edit->HideControls();
 		if (StyleStore::HasStore() && subsFormat == ASS){ StyleStore::Get()->LoadAssStyles(); }
-		Kai->SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
+		Hikari->SetSubsResolution(!Options.GetBool(DONT_ASK_FOR_BAD_RESOLUTION));
 	}
 
 }
@@ -1310,7 +1310,7 @@ void SubsGrid::ResizeSubs(float xnsize, float ynsize, bool stretch)
 							resizedTag << getfloat(tagValue) << lastC << L" ";
 						}
 						else{
-							KaiLog(wxString::Format(_("In line %i, value '%s' cannot be scaled\nin tag '%s'"),
+							HikariLog(wxString::Format(_("In line %i, value '%s' cannot be scaled\nin tag '%s'"),
 								i + 1, tkn, tag->tagName));
 							resizedTag << tkn << lastC << L" ";
 						}
@@ -1339,7 +1339,7 @@ void SubsGrid::ResizeSubs(float xnsize, float ynsize, bool stretch)
 					else
 					{
 						if (ii < 4){
-							KaiLog(wxString::Format(
+							HikariLog(wxString::Format(
 								_("In line %i, value '%s' cannot be scaled\nin tag '%s'"),
 								i + 1, tkn, tag->tagName));
 						}
@@ -1359,7 +1359,7 @@ void SubsGrid::ResizeSubs(float xnsize, float ynsize, bool stretch)
 					resizedTag = getfloat(tagValue);
 				}
 				else{
-					KaiLog(wxString::Format(
+					HikariLog(wxString::Format(
 						_("In line %i, value '%s' cannot be scaled\nin tag '%s'"),
 						i + 1, tag->value, tag->tagName));
 					resizedTag = tag->value;
@@ -1486,7 +1486,7 @@ bool SubsGrid::SwapAssProperties()
 			}
 		}
 		if (!hasSomethingToChange){ return false; }
-		SwapPropertiesDialog SPD(Kai);
+		SwapPropertiesDialog SPD(Hikari);
 		int id = SPD.ShowModal();
 		if (id == wxID_OK){
 			SPD.SaveValues();
@@ -1642,7 +1642,7 @@ void SubsGrid::Split(int id)
 					wxString wrapText = wrapsTable[m];
 					wrapText.Trim();
 					if (!dialc->GetTaggedTextExtents(stylec, wrapText, &size.x, &size.y, nullptr, nullptr, false)) {
-						KaiLogSilent(L"Could not get split text extents of \'" + wrapText + "\'");
+						HikariLogSilent(L"Could not get split text extents of \'" + wrapText + "\'");
 					}
 					sizes.push_back(size);
 					fullHeight += size.y;
@@ -1699,7 +1699,7 @@ void SubsGrid::Split(int id)
 							hasWrap = true;
 						}
 						if (!dialc->GetTaggedTextExtents(stylec, splitTable[j], &w, &h, nullptr, nullptr, false)) {
-							KaiLogSilent(L"Could not get split text extents of \'" + splitTable[j] + "\'");
+							HikariLogSilent(L"Could not get split text extents of \'" + splitTable[j] + "\'");
 						}
 						txt.Trim();
 
@@ -1919,7 +1919,7 @@ void SubsGrid::RefreshSubsOnVideo(int newActiveLineKey, bool scroll)
 }
 
 
-BEGIN_EVENT_TABLE(SubsGrid, KaiScrolledWindow)
+BEGIN_EVENT_TABLE(SubsGrid, HikariScrolledWindow)
 EVT_MENU(GRID_CUT, SubsGrid::OnAccelerator)
 EVT_MENU(GRID_COPY, SubsGrid::OnAccelerator)
 EVT_MENU(GRID_PASTE, SubsGrid::OnAccelerator)

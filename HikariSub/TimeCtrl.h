@@ -17,12 +17,12 @@
 #include "WinUndef.h"
 #include <wx/window.h>
 #include "SubsTime.h"
-#include "KaiTextCtrl.h"
+#include "HikariTextCtrl.h"
 //#include "VideoBox.h"
 
 class VideoBox;
 
-class TimeCtrl : public KaiTextCtrl
+class TimeCtrl : public HikariTextCtrl
 {
 public:
 	TimeCtrl(wxWindow* parent, const long int id, const wxString& val = L"0:00:00.00", 

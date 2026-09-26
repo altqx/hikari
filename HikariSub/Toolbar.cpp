@@ -19,7 +19,7 @@
 #include "Hotkeys.h"
 #include "hikarisubApp.h"
 #include "Toolbar.h"
-#include "KaiScrollbar.h"
+#include "HikariScrollbar.h"
 #include "Notebook.h"
 #include "wx/utils.h"
 #include "wx/dc.h"
@@ -28,7 +28,7 @@
 #include "config.h"
 
 
-KaiToolbar::KaiToolbar(wxWindow *Parent, MenuBar *mainm, int id)
+HikariToolbar::HikariToolbar(wxWindow *Parent, MenuBar *mainm, int id)
 	:wxWindow(Parent, -1, wxDefaultPosition, wxSize(24, -1))
 	, alignment(0)
 	, Clicked(false)
@@ -45,7 +45,7 @@ KaiToolbar::KaiToolbar(wxWindow *Parent, MenuBar *mainm, int id)
 	thickness = toolbarSize = fh + 8;
 }
 
-KaiToolbar::~KaiToolbar()
+HikariToolbar::~HikariToolbar()
 {
 	wxArrayString names;
 	wxDELETE(bmp);
@@ -59,7 +59,7 @@ KaiToolbar::~KaiToolbar()
 	ids.clear();
 }
 
-void KaiToolbar::InitToolbar()
+void HikariToolbar::InitToolbar()
 {
 	wxArrayInt IDS; 
 	wxArrayString stringIDs;
@@ -83,7 +83,7 @@ void KaiToolbar::InitToolbar()
 	for (size_t i = 0; i < IDS.size(); i++)
 	{
 		MenuItem *item = mb->FindItem(IDS[i]);
-		if (!item){ KaiLog(wxString::Format(_("Cannot find element with id %i"), IDS[i])); continue; }
+		if (!item){ HikariLog(wxString::Format(_("Cannot find element with id %i"), IDS[i])); continue; }
 		wxString desc = item->GetLabelText();
 		bool isToogleButton = item->type == ITEM_CHECK;
 		AddItem(IDS[i], desc, item->icon, item->IsEnabled(), (isToogleButton) ? 2 :
@@ -95,7 +95,7 @@ void KaiToolbar::InitToolbar()
 }
 
 
-void KaiToolbar::AddItem(int id, const wxString &label, wxBitmap *normal, bool enable, byte type, bool toggled)
+void HikariToolbar::AddItem(int id, const wxString &label, wxBitmap *normal, bool enable, byte type, bool toggled)
 {
 	size_t toolsSize = tools.size();
 	if (toolsSize > 0 && tools[toolsSize - 1]->GetType() == 3){
@@ -106,21 +106,21 @@ void KaiToolbar::AddItem(int id, const wxString &label, wxBitmap *normal, bool e
 	tools.push_back(new toolitem(normal, label, id, enable, type, toggled));
 }
 
-void KaiToolbar::InsertItem(int id, int index, const wxString &label, wxBitmap *normal, bool enable, byte type, bool toggled)
+void HikariToolbar::InsertItem(int id, int index, const wxString &label, wxBitmap *normal, bool enable, byte type, bool toggled)
 {
 	tools.insert(tools.begin() + index, new toolitem(normal, label, id, enable, type, toggled));
 }
 
-void KaiToolbar::AddSpacer()
+void HikariToolbar::AddSpacer()
 {
 	tools.push_back(new toolitem(3, 12));
 }
-void KaiToolbar::InsertSpacer(int index)
+void HikariToolbar::InsertSpacer(int index)
 {
 	tools.insert(tools.begin() + index, new toolitem(3, 12));
 }
 
-toolitem * KaiToolbar::FindItem(int id)
+toolitem * HikariToolbar::FindItem(int id)
 {
 	for (auto i = tools.begin(); i != tools.end(); i++)
 	{
@@ -132,7 +132,7 @@ toolitem * KaiToolbar::FindItem(int id)
 	return nullptr;
 }
 
-void KaiToolbar::UpdateId(int id, bool enable)
+void HikariToolbar::UpdateId(int id, bool enable)
 {
 	for (auto i = tools.begin(); i != tools.end(); i++)
 	{
@@ -147,12 +147,12 @@ void KaiToolbar::UpdateId(int id, bool enable)
 
 }
 
-void KaiToolbar::AddID(int id)
+void HikariToolbar::AddID(int id)
 {
 	ids.Add(id);
 }
 
-void KaiToolbar::OnMouseEvent(wxMouseEvent &event)
+void HikariToolbar::OnMouseEvent(wxMouseEvent &event)
 {
 	bool leftdown = event.LeftDown();
 
@@ -218,9 +218,9 @@ void KaiToolbar::OnMouseEvent(wxMouseEvent &event)
 				Menu * smenu = item->GetSubMenu();
 				//Menu * shmenu;
 				if (tools[elem]->id != GLOBAL_SORT_LINES && tools[elem]->id != GLOBAL_SORT_SELECTED_LINES){
-					HikariSubFrame *Kai = (HikariSubFrame*)GetParent();
-					int what = (smenu == Kai->SubsRecMenu) ? 0 : (smenu == Kai->VidsRecMenu) ? 1 : 2;
-					Kai->AppendRecent(what, smenu);
+					HikariSubFrame *Hikari = (HikariSubFrame*)GetParent();
+					int what = (smenu == Hikari->SubsRecMenu) ? 0 : (smenu == Hikari->VidsRecMenu) ? 1 : 2;
+					Hikari->AppendRecent(what, smenu);
 				}
 				/*for(int i=0; i<(int)smenu->GetMenuItemCount(); i++)
 				{
@@ -242,7 +242,7 @@ void KaiToolbar::OnMouseEvent(wxMouseEvent &event)
 }
 
 
-void KaiToolbar::OnPaint(wxPaintEvent &event)
+void HikariToolbar::OnPaint(wxPaintEvent &event)
 {
 	int w = 0;
 	int h = 0;
@@ -313,7 +313,7 @@ void KaiToolbar::OnPaint(wxPaintEvent &event)
 	wxPaintDC dc(this);
 	dc.Blit(0, 0, w, h, &tdc, 0, 0);
 }
-void KaiToolbar::OnSize(wxSizeEvent &evt)
+void HikariToolbar::OnSize(wxSizeEvent &evt)
 {
 	int w = 0;
 	int h = 0;
@@ -331,16 +331,16 @@ void KaiToolbar::OnSize(wxSizeEvent &evt)
 		else
 			SetSize(wxSize(-1, wh));
 
-		HikariSubFrame *Kai = (HikariSubFrame*)GetParent();
-		//Kai->Layout();
+		HikariSubFrame *Hikari = (HikariSubFrame*)GetParent();
+		//Hikari->Layout();
 		wxSizeEvent evt;
-		Kai->OnSize(evt);
+		Hikari->OnSize(evt);
 	}
 
 	Refresh(false);
 }
 
-wxPoint KaiToolbar::FindElem(wxPoint pos)
+wxPoint HikariToolbar::FindElem(wxPoint pos)
 {
 	int w = 0;
 	int h = 0;
@@ -369,7 +369,7 @@ wxPoint KaiToolbar::FindElem(wxPoint pos)
 	return res;
 }
 
-bool KaiToolbar::Updatetoolbar()
+bool HikariToolbar::Updatetoolbar()
 {
 	bool changes = false;
 	for (int i = 0; i < (int)tools.size() - 1; i++)
@@ -383,7 +383,7 @@ bool KaiToolbar::Updatetoolbar()
 	return false;
 }
 
-void KaiToolbar::OnToolbarOpts(wxCommandEvent &event)
+void HikariToolbar::OnToolbarOpts(wxCommandEvent &event)
 {
 	wxPoint point = GetPosition();
 	point = GetParent()->ClientToScreen(point);
@@ -434,7 +434,7 @@ void KaiToolbar::OnToolbarOpts(wxCommandEvent &event)
 
 }
 
-bool KaiToolbar::SetFont(const wxFont &font)
+bool HikariToolbar::SetFont(const wxFont &font)
 {
 	wxWindow::SetFont(font);
 	//write rest when add custom size
@@ -456,15 +456,15 @@ bool KaiToolbar::SetFont(const wxFont &font)
 	return true;
 }
 
-BEGIN_EVENT_TABLE(KaiToolbar, wxWindow)
-EVT_MOUSE_EVENTS(KaiToolbar::OnMouseEvent)
-EVT_PAINT(KaiToolbar::OnPaint)
-EVT_SIZE(KaiToolbar::OnSize)
-EVT_MENU(32566, KaiToolbar::OnToolbarOpts)
-//EVT_ERASE_BACKGROUND(KaiToolbar::OnEraseBackground)
+BEGIN_EVENT_TABLE(HikariToolbar, wxWindow)
+EVT_MOUSE_EVENTS(HikariToolbar::OnMouseEvent)
+EVT_PAINT(HikariToolbar::OnPaint)
+EVT_SIZE(HikariToolbar::OnSize)
+EVT_MENU(32566, HikariToolbar::OnToolbarOpts)
+//EVT_ERASE_BACKGROUND(HikariToolbar::OnEraseBackground)
 END_EVENT_TABLE()
 
-ToolbarMenu::ToolbarMenu(KaiToolbar*_parent, const wxPoint &pos, const wxSize &size, int height)
+ToolbarMenu::ToolbarMenu(HikariToolbar*_parent, const wxPoint &pos, const wxSize &size, int height)
 	: wxDialog(_parent, -1, emptyString, pos, size, wxBORDER_NONE)
 	, sel(-1)
 	, scPos(0)
@@ -473,10 +473,10 @@ ToolbarMenu::ToolbarMenu(KaiToolbar*_parent, const wxPoint &pos, const wxSize &s
 {
 	fh = height;
 	SetFont(parent->GetFont());
-	scroll = new KaiScrollbar(this, -1, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
+	scroll = new HikariScrollbar(this, -1, wxDefaultPosition, wxDefaultSize, wxVERTICAL);
 	Bind(wxEVT_IDLE, &ToolbarMenu::OnIdle, this);
 	wxString ans[] = { _("On the left"), _("On top"), _("On right"), _("At bottom") };
-	alignments = new KaiChoice(this, 32213, wxPoint(4, 4), wxSize(size.x - 8, fh), 4, ans);
+	alignments = new HikariChoice(this, 32213, wxPoint(4, 4), wxSize(size.x - 8, fh), 4, ans);
 	if (parent->alignment > 3 || parent->alignment < 0)
 		parent->alignment = 0;
 	alignments->SetSelection(parent->alignment);

@@ -19,7 +19,7 @@
 
 #include "SubsLoader.h"
 #include "SubsGrid.h"
-#include "KaiMessageBox.h"
+#include "HikariMessageBox.h"
 #include "config.h"
 #include <wx/tokenzr.h>
 
@@ -71,7 +71,7 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 			if (!succeeded){
 				grid->LoadDefault(false, false, false);
 				succeeded = LoadTXT(text);
-				KaiMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
+				HikariMessageBox(_("This subtitle file is plain text and will be opened as ASS subtitles"));
 			}
 		}
 		else{ validFormat = true; }
@@ -80,7 +80,7 @@ SubsLoader::SubsLoader(SubsGrid *_grid, const wxString &text, wxString &ext)
 	//text helper class will crash when gets nullptr in = operator
 	if (!succeeded){ 
 		grid->LoadDefault(); 
-		KaiMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
+		HikariMessageBox(_("Invalid format (file may be corrupted or contain errors)"));
 		grid->subsFormat = ASS; 
 		ext = "ass"; 
 	}
