@@ -45,7 +45,7 @@ The pure state reducer drives all controls. Guided experiments cover switching d
 
 Browser checks exercised shared versus document-owned preset retention, read-only reference text during editing, panel restoration, recovery-copy creation, the empty/missing-media flow, all three close choices and closing the last document. F6/Shift+F6 traverse major panels even from text or grid focus. The [close-decision capture](workspace-close-preview.png) records the concrete dialog. The ownership study is a behavioral reference; Compact Studio supplies the accepted visual baseline. This does not prove native docking, screen-reader support, decoding or file compatibility.
 
-Accepted: [shared workspace with optional protected comparison](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). Per-document ownership is not the selected default. Remaining review concerns panel membership, docking/floating, tool targets, Home and comparison navigation.
+Accepted: [shared workspace with optional protected comparison](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). Per-document ownership is not the selected default. Movable/floating tools, follow-editing with optional pinning, and optional Home are also accepted. Remaining review concerns preset membership and comparison navigation.
 
 The [capability placement worksheet](ia-capability-placement.md) maps the complete legacy UI families to proposed panels, dialogs and menu entries. It covers the placement questions beyond the runnable sample and explicitly marks unresolved decisions; it is not an approved information architecture.
 
@@ -55,4 +55,4 @@ The [capability placement worksheet](ia-capability-placement.md) maps the comple
 
 ## Tool placement follow-up
 
-Open [workspace-tools.html](workspace-tools.html?variant=A) and compare constrained right/bottom zones with movable panels and simulated floating. [Review notes](workspace-tools-notes.md) explain the follow/pin targets, protection, Preview/Apply and limits. Shared ownership and optional protected comparison are retained in both variants. The question concerns placement and targeting, not a repeat ownership decision.
+Open [workspace-tools.html](workspace-tools.html?variant=B). B movable/floating panels is accepted; A remains a comparison reference. Review the proposed panel/tool defaults in Timing, Translation, Typesetting and five legacy visibility equivalents. [Review notes](workspace-tools-notes.md) explain the follow/pin targets, protection, Preview/Apply and limits. Shared ownership and optional protected comparison are retained in both variants. Follow-editing with optional pinning and optional Home are accepted. The remaining question concerns preset contents and comparison navigation.

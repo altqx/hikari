@@ -1,8 +1,8 @@
-# Workspace tools: placement follow-up (throwaway)
+# Workspace panels and presets follow-up (throwaway)
 
 Issue: [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
 
-Question: where should Styles, Search, Timing and History live within the accepted **shared workspace**, and should each tool follow editing or stay pinned to a document? Compact Studio D supplies the existing visual treatment. Hikari-owned Qt, shared layout ownership, optional protected comparison and the accepted visual direction are not reopened here.
+**Accepted:** B movable/floating tool panels, the shared application workspace, optional protected comparison, Compact Studio D and the Hikari-owned Qt direction. Tools follow the editing document by default with optional pinning. Home is optional; the workspace is the normal editing destination. B is now the default; A remains a historical constrained-zone reference. This follow-up asks only about **preset panel/tool membership and comparison navigation**. Those remaining details are proposed, not approved.
 
 Open `workspace-tools.html` directly, or reuse the prototype server:
 
@@ -10,30 +10,53 @@ Open `workspace-tools.html` directly, or reuse the prototype server:
 python -m http.server 8765 --bind 127.0.0.1 --directory docs/prototypes
 ```
 
-- [A — constrained preset zones](http://127.0.0.1:8765/workspace-tools.html?variant=A): tools share a tabbed right zone or bottom drawer. Width/height sliders resize the zones. Presets constrain placement to those two zones.
-- [B — movable tool panels](http://127.0.0.1:8765/workspace-tools.html?variant=B): tools are independent cards with explicit Left, Right, Bottom and Float placement choices. Floating is an overlay **inside this HTML page**, not a native detached window or proof of KDDockWidgets, multi-monitor handling, saved geometry, accessibility or performance.
+- [B — accepted movable panels](http://127.0.0.1:8765/workspace-tools.html?variant=B): independent tools can occupy Left, Right, Bottom or Float. Empty tool zones collapse; when there are no docked tools, the editing panels use the available width. Floating is simulated **inside this HTML page**. This does not establish native detached windows, docking-library selection, multi-monitor behavior, persisted geometry or native accessibility/performance.
+- [A — constrained reference](http://127.0.0.1:8765/workspace-tools.html?variant=A): tabbed right/bottom zones with size controls remain available for comparison; this is not a request to reopen the accepted B decision.
 
-The floating bottom switcher changes the URL's variant parameter. Arrow keys outside editable controls/table rows switch variants; F6/Shift+F6 traverse displayed editing/reference/tool regions. Alt+1 through Alt+4 open Styles, Search, Timing and History. Native select controls provide keyboard placement and target-mode choices; no dragging is required. Grid rows support Up/Down. Responsive fallback stacks regions on narrow windows; this is a desktop placement study, not a mobile design.
+## Proposed preset membership
+
+Every panel/tool remains freely showable or hideable after selecting a preset. The five legacy visibility equivalents preserve their broad combinations; **subtitles means Editor + Grid**. These rows are proposals for review, including the tool defaults.
+
+| Preset | Visible core panels | Open tools | Optional additions |
+|---|---|---|---|
+| Timing | Editor, Audio, Grid | Timing, History | Video |
+| Translation | Video, Editor, Grid | Search | Audio; protected comparison |
+| Typesetting | Video, Editor, Grid | Styles | Audio |
+| All | Video, Editor, Audio, Grid | Styles, Search, Timing, History | Protected comparison |
+| Video + subtitles | Video, Editor, Grid | None | Any tool or Audio |
+| Audio + subtitles | Editor, Audio, Grid | None | Any tool or Video |
+| Video only | Video | None | Any panel/tool |
+| Subtitles only | Editor, Grid | None | Any tool, Video or Audio |
+
+Comparison is independent of presets: choosing or restoring a preset does not enable or disable it. Home remains the accepted independent optional view; the workspace opens normally. Presets do not change the accepted follow-editing default or remove optional pinning.
 
 ## What to try
 
-1. Open **All tools**. In A, switch the right/bottom tabs and resize both zones. In B, move Search from Float to Bottom and Timing from Left to Right. Which arrangement leaves enough room for subtitle text?
-2. On Styles, choose **Preview**, inspect the named document/line, then **Apply**. Search performs literal case-sensitive replacement on the selected line only; Timing shifts its synthetic start time; History can preview/apply undo of sample changes. These are deliberately tiny examples to make tool placement concrete.
-3. Select **Follow editing document**, preview, then switch document tabs. The layout stays shared and previews clear; the target label changes. Preview again before applying.
-4. Select **Pin current document**, switch tabs, and inspect the fixed target label. Pinned tools can affect an inactive document while comparison is off, so the target remains prominent. Enable **Protected comparison**: the pinned reference can be previewed but Apply is disabled. The reference selection has its own Next button. Switching to the reference tab explicitly swaps which document is editing versus protected.
-5. Hide a tool and reopen it from the toolbar or keyboard. Restore a preset; this restores placements, visibility and zone sizes while preserving tool target bindings, tool inputs, previews and document edits. Variant switches similarly reset the arrangement while preserving those inputs/context. Optional Home keeps everything in memory.
+1. Switch Timing, Translation and Typesetting, then each legacy visibility equivalent. Use the panel toolbar or panel-header Hide buttons for Video, Editor, Audio and Grid. A compact hidden-panel strip offers Show controls; hiding every core panel presents a recoverable placeholder. Document contents, selection, revisions and undo samples remain unchanged when visibility changes.
+2. Open tools from the toolbar. Move Search from Float to Bottom, hide History, then reopen it. Empty B zones disappear rather than reserving blank columns or rows. Main panel visibility and tool placement belong to the shared application workspace and remain in place across document switches.
+3. On Styles, choose **Preview**, inspect the named document/line, then **Apply**. Search performs literal case-sensitive replacement on the selected line only; Timing shifts its synthetic start time; History previews/applies undo of sample changes. These deliberately small examples make placement and targeting concrete.
+4. Select **Follow editing document**, preview, then switch tabs. The target label changes and previews clear. Preview again before applying. Select **Pin current document**, switch tabs, and inspect the fixed label. With comparison off a pinned tool can change an inactive editable document; with comparison enabled the protected reference can be previewed but Apply is disabled. Follow-editing with optional pinning is accepted. The specific comparison-navigation interaction shown here remains available for reaction.
+5. Restore a preset. Main panel visibility, tool visibility/placement and zone sizes reset to the proposed membership. Tool bindings, inputs, pending previews, document contents, selections and history are preserved. Variant changes similarly restore that preset while keeping document/tool context. Optional Home keeps everything in memory.
 
-Every action updates the event line and the full state inspector: shared layout, active zone tabs, panel visibility/placement, follow/pin bindings, pending previews with document/line/revision, editing/reference roles, document selections, history and contents. Target, selection or document mutations invalidate previews so Apply cannot use an old editing target. Reload resets all sample state except the URL-selected variant; there is no persistence.
+Keyboard controls:
+
+- Alt+1–4 open Styles, Search, Timing and History.
+- Alt+5–8 open Video, Editor, Audio and Grid, respectively. These shortcuts show panels rather than toggling an already visible panel off.
+- Alt+R restores the current proposed preset and returns from Home.
+- F6/Shift+F6 traverse visible core panels, reference and tools; Tab reaches their controls. Up/Down selects grid rows. Native select controls operate placement and target binding without dragging.
+- The floating switcher or Left/Right outside editable controls/table rows changes `?variant=A|B`. B is the default after reload without a parameter.
+
+The event line and full state inspector expose variant, proposed preset, core-panel visibility, shared tool placement, active zone tabs, target bindings, preview document/line/revision, editing/reference roles, selections and sample document/history content. Target, selection or document mutations invalidate previews, preserving the existing operation safety. Visibility changes do not retarget operations. Reload resets in-memory state except the URL-selected variant.
 
 ## Feedback still needed
 
-- Which tools should be permanently visible, tabbed together, in the bottom drawer, or opened as dialogs?
-- Are constrained zones enough, or is the extra freedom of movable/floating panels valuable?
-- Which presets should open Styles, Search, Timing and History by default?
-- Is per-tool Follow/Pin understandable, including applying to an inactive editable document? Should some tools always follow editing instead?
-- Does the target label give enough confidence before Preview/Apply, including when comparison is protected?
-- Should Home remain an optional view?
+- Are the three task-preset memberships useful? Which optional panels/tools should be on by default?
+- Do the five legacy visibility equivalents retain the combinations you need?
+- When selecting the protected reference document tab, is swapping editing/reference roles clear enough, or would an explicit swap action be easier?
+- Can you tell which document is editing and which stays protected while navigating the comparison?
 
-These are review questions, not assertions of approval. The sample intentionally omits a complete style editor, full search scopes, postprocessing algorithms, a real undo engine, file I/O, media decoding, docking persistence and native Qt validation. Figma Starter remains optional for occasional handoff; this artifact is the review surface.
+Movable panels, shared ownership, follow-editing with optional pinning, optional Home and the accepted visual direction are not reopened. The prototype omits complete style/search/timing editors, real undo and file/media engines, docking persistence and native Qt validation. Figma Starter remains optional for occasional handoff.
 
-Validation: inline JavaScript parsed with `node --check`; source diff checked for whitespace. Browser checks exercised pinned versus following targets, protected-reference Apply blocking, stale-preview invalidation on document switch, applying only to the named document, both variants, placement changes, hide/reopen retention, Home return and keyboard zone resizing. These HTML checks do not establish native Qt docking or screen-reader behavior. [Constrained-zone capture](workspace-tools-preview.png) and [simulated-floating capture](workspace-tools-floating-preview.png) show the review artifact.
+Validation: inline JavaScript parses with `node --check`; source whitespace checked. An in-memory probe confirmed all eight preset memberships, unchanged sample documents across preset changes, and collapsed empty B tool zones. Parent browser checks of the previous version exercised follow/pin targets, protected-reference Apply blocking, stale-preview invalidation, named-document-only changes, placement, hide/reopen, Home and keyboard zone sizing. Those checks predate the new visibility/preset controls; fresh browser QA for this update remains with the parent agent. No native claim follows from HTML checks. Previous captures: [constrained zones](workspace-tools-preview.png), [simulated floating](workspace-tools-floating-preview.png).
+
+Browser follow-up checked all eight preset memberships, grid hide/restore retaining the selected line, and explicit editing/reference role swap with the other document protected. Native docking remains unverified.

@@ -1,10 +1,10 @@
 # Workspace review: where existing capabilities belong
 
-Companion to [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31). **Proposal for reaction, not accepted UX.** The runnable `workspace-model.html` explores document/layout ownership. This worksheet makes the remaining placement question concrete without pretending its small sample implements every tool.
+Companion to [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31). **Capability-placement proposal; accepted workspace choices are noted below.** The runnable `workspace-model.html` explores document/layout ownership. This worksheet makes the remaining placement question concrete without pretending its small sample implements every tool.
 
 Source baseline: [complete wx UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md). Current capability names identify what must survive; they do not fix future menu wording. No capability is dropped by this proposal.
 
-The visual preference—C's compact treatment with A's placement—sets a starting composition. It does not yet choose docking, per-document layout ownership, or which dialogs become panels.
+The visual preference—C's compact treatment with A's placement—sets a starting composition. Shared workspace ownership, optional protected comparison, movable/floating tools, follow-editing with optional pinning and optional Home have since been accepted. Detailed capability grouping remains a proposal.
 
 ## Proposed placement
 
@@ -12,7 +12,7 @@ The visual preference—C's compact treatment with A's placement—sets a starti
 | --- | --- | --- |
 | Open/save/save as/save translation; recents; encodings; drag/drop | File menu and document tabs; native pickers; explicit save/discard/cancel dialogs | Keep filename, modified state and editing target visible. A save-translation operation remains distinct from saving the document. |
 | Sessions, startup restore, external sessions | File menu plus optional Home entries | Home must remain escapable and preserve open documents. Missing media and external changes need recovery choices, not silent omission. |
-| Five legacy visibility arrangements and new workspaces | View/Workspace selector; show/hide panel actions; restore preset | Retain equivalents of All, Video + subtitles, Audio + subtitles, Video only and Subtitles only. Timing/Translation/Typesetting presets supplement them. Free docking versus constrained arrangements is still undecided. |
+| Five legacy visibility arrangements and new workspaces | View/Workspace selector; show/hide panel actions; restore preset | Retain equivalents of All, Video + subtitles, Audio + subtitles, Video only and Subtitles only. Timing/Translation/Typesetting presets supplement them. Movable/floating panels are accepted; preset memberships are under review. |
 | Grid selection, columns, tags, metadata and row operations | Subtitle grid; header/context menus; Edit/Subtitles menu actions | Keep keyboard routes to insert/split/join/duplicate/swap, clipboard columns and paste special, selected/all sorting, preview and timing operations. Compactness must not make context-only actions undiscoverable. |
 | Grid filters, hidden rows and grouping/tree operations | Grid filter strip plus expanded selection/filter controls | Show hidden-selection counts and action scope. Filtering visibility must not silently redefine the editing target. Tree/group behavior needs its own prototype. |
 | Text, metadata, times, tag buttons, completion, font/color/style | Edit panel plus optional line properties; contextual pickers | Text and essential timing stay close. Decide which less-used metadata belongs in collapsible properties. Keep all 20 configurable tag-button actions discoverable. |
@@ -44,4 +44,4 @@ The visual preference—C's compact treatment with A's placement—sets a starti
 
 ## Remaining reaction
 
-The first decision is shared versus document-owned layouts and the protected-reference model. Then review the proposed persistent tools: Styles, Search, Timing and History. Keep any of them as dialogs if that matches the actual workflow better. The final information-architecture outcome must state panel membership, floating/docking expectations, Home behavior, document targeting and capability grouping before the per-surface UX tickets can be signed off.
+Ownership, protected comparison, movable/floating panels, default following with optional pinning, and optional Home are settled. Review preset membership and comparison navigation in workspace-tools.html. The detailed groupings above remain inputs to focused per-surface prototype tickets, where no capability may disappear without an explicit decision.
