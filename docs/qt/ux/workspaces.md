@@ -1,6 +1,6 @@
 # Shared workspace and protected comparison
 
-Accepted on 2026-09-27: [“shared workspace with optional protected comparison is fine”](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). This settles layout ownership and the comparison model. The subsequent live review chose movable/floating panels (B). Tools follow the editing document by default with optional pinning, and Home is optional. The default Editing layout follows the current program: video left, audio above the editor on the right, and the subtitle grid across the bottom. Optional task-preset membership and comparison navigation remain open in [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
+Accepted on 2026-09-27: [“shared workspace with optional protected comparison is fine”](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). Subsequent live reviews chose movable/floating panels (B), follow-editing tools with optional pinning, optional Home, Classic menus/local controls/status, and the named tool/dialog grouping. The default Editing layout follows the current program: video left, audio above the editor on the right, and the subtitle grid across the bottom. Timing, Translation and Typesetting are accepted optional presets. This settles the top-level [information architecture](https://github.com/altqx/hikari/issues/31); detailed comparison navigation continues in [Prototype translation mode and protected comparison navigation](https://github.com/altqx/hikari/issues/49).
 
 The accepted model combines the shared-layout behavior demonstrated by A with an optional protected reference demonstrated by C in the [reviewed prototype](https://github.com/altqx/hikari/blob/163faf7c699c81a12338b04acea9433f356f0814/docs/prototypes/workspace-model.html). The visual baseline is [Compact Studio](visual-language.md). Per-document layouts and always-on comparison are not the chosen defaults.
 
@@ -12,7 +12,15 @@ The default **Editing** preset shows Video, Audio, Editor and Grid together. Sta
 
 Styles, Search, Timing and History remain available movable/floating tools and start closed in this default, leaving the core editing arrangement unobstructed. Hiding/showing or rearranging a panel preserves document state. Keep the accepted Compact Studio appearance, shared ownership, follow/pin targets and optional Home/protected comparison.
 
-Timing, Translation and Typesetting may remain optional presets for later review; none replaces Editing as the default. The five legacy visibility combinations remain available. Their exact optional tool defaults are still proposals, and the earlier question about making task-preset defaults the primary experience is superseded by this correction.
+Timing, Translation and Typesetting were subsequently accepted as optional presets; none replaces Editing as the default. The five legacy visibility combinations remain available. The earlier question about making task-preset defaults the primary experience is superseded by the default-layout correction.
+
+| Optional task preset | Visible core panels | Initially open auxiliary tools |
+| --- | --- | --- |
+| Timing | Audio, Editor, Grid; Video can be opened | Timing, History |
+| Translation | Video, Editor, Grid; Audio/comparison can be opened | Search |
+| Typesetting | Video, Editor, Grid; Audio can be opened | Styles |
+
+These are starting arrangements, retaining the accepted hide/show/rearrange/restore behavior and document state. Selecting Translation as a layout does not by itself convert document text or create a protected comparison reference.
 
 Runnable references for this correction: [Editing workspace](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74d4b3356082c55566b30/docs/prototypes/workspace-tools.html), [run/review notes](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74d4b3356082c55566b30/docs/prototypes/workspace-tools-notes.md) and [capture](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74d4b3356082c55566b30/docs/prototypes/workspace-tools-preview.png). Browser checks confirmed the full-width grid, panel recovery retaining selection, and Video → Audio keyboard traversal; native docking remains a separate gate.
 
@@ -56,10 +64,8 @@ The HTML study demonstrates shared versus per-document layout retention, protect
 
 These demonstrations clarify the ownership model. They do not establish real file/session compatibility, native docking, screen-reader behavior, decoding, persisted workspaces or a final save policy.
 
-## Remaining information-architecture choices
+## Detailed surface work
 
-1. Optional Timing, Translation and Typesetting preset membership; the current-program Editing arrangement is the settled default, and the five legacy visibility combinations remain available.
-2. Comparison navigation/synchronization and the controls for changing editing/reference roles; detailed criteria and interaction can be resolved in its surface prototype.
-3. Detailed placement and interaction for remaining surface families, including automation management and task results, in their own prototypes. Classic shell placement and the named tool/dialog grouping above are settled.
+Comparison navigation/synchronization, text roles and the controls for changing editing/reference roles continue in the [translation/comparison prototype](https://github.com/altqx/hikari/issues/49). Detailed placement and interaction for the remaining surface families, including automation management and task results, need their own prototypes. These refine the accepted top-level structure rather than reopening workspace ownership, default arrangement or Classic shell placement.
 
 The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.

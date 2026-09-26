@@ -1,6 +1,6 @@
 # Proposed compatibility and legacy-defect policy
 
-For [Define observable compatibility and the legacy-defect policy](https://github.com/altqx/hikari/issues/38). **Policy accepted on 2026-09-27: individually approved fixes become default. Candidate defect dispositions below remain unapproved.** The authoritative [compatibility contract](../compatibility.md) records the accepted rule; this retained review artifact supplies its candidate ledger. Evidence: corrected [core inventory](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md), [data inventory](https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md), [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) and [Lua-host research](https://github.com/altqx/hikari/blob/a99a2470e958437290de73dd2451ee57cc763336/docs/research/lua-automation-host.md). These are static findings and characterization plans, not executed parity results. Their recommendations do not authorize departures.
+For [Define observable compatibility and the legacy-defect policy](https://github.com/altqx/hikari/issues/38). **Policy accepted on 2026-09-27: individually approved fixes become default. Only the subcases in the [approved-departure ledger](../compatibility-decisions.md) have subsequent approval.** The authoritative [compatibility contract](../compatibility.md) records the accepted rule; this retained review artifact supplies its candidate ledger. Evidence: corrected [core inventory](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md), [data inventory](https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md), [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) and [Lua-host research](https://github.com/altqx/hikari/blob/a99a2470e958437290de73dd2451ee57cc763336/docs/research/lua-automation-host.md). These are static findings and characterization plans, not executed parity results. Their recommendations do not authorize departures.
 
 ## Commitments and proposed approval rule
 
@@ -19,7 +19,7 @@ An unexplained difference fails parity review. Suspected crashes or data loss ar
 
 ## Candidate ledger
 
-All classifications below are **proposals**. Fixtures describe evidence to produce; none was executed for this document.
+The exact document/timing subcases in the [approved-departure ledger](../compatibility-decisions.md) were accepted on 2026-09-27. All other classifications below remain **proposals**. Fixtures describe evidence to produce; none was executed for this document. A broad candidate row can contain both accepted and unapproved subcases.
 
 | ID / observable evidence | Candidate treatment and fixture validation |
 | --- | --- |

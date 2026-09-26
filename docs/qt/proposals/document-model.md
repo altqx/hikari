@@ -1,6 +1,6 @@
 # Proposed subtitle document model
 
-Draft for [Design the subtitle document model and format boundaries](https://github.com/altqx/hikari/issues/41). Uses accepted [vocabulary](../../../CONTEXT.md), [architecture](../architecture.md), [compatibility](../compatibility.md) and [isolated Lua boundary](../automation.md). **No behavior departure is approved here.** Evidence is static: [core](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md), [corrected data](https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md), [UI](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md). No parser, fixture or round-trip result is claimed.
+Draft for [Design the subtitle document model and format boundaries](https://github.com/altqx/hikari/issues/41). Uses accepted [vocabulary](../../../CONTEXT.md), [architecture](../architecture.md), [compatibility](../compatibility.md) and [isolated Lua boundary](../automation.md). **The three named product outcomes at the end are accepted; the broader record/interface design remains under review.** Evidence is static: [core](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md), [corrected data](https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md), [UI](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md). No parser, fixture or round-trip result is claimed.
 
 ## Authoritative records
 
@@ -56,12 +56,12 @@ Retaining Format declarations does not approve replacing legacy positional parsi
 2. One Line has original “Gate”, empty translation and Unconfirmed. Preserve all three; translated export states its fallback role. ASS→SRT preflight lists tag/style/group loss, row deletion/deduplication and synthesized timing separately (**C02**).
 3. Session A has Audio; B omits it. Store each association's provenance; correcting B's inherited Audio requires **C05**, not a structural-model shortcut.
 
-## Minimum product decisions
+## Accepted product outcomes; model still under review
 
-All pending, with old/new fixtures required:
+The user approved these three named outcomes on 2026-09-27. The [approved-departure ledger](../compatibility-decisions.md) records their scope. Old/new fixtures remain required; the surrounding record/interface design is still a proposal.
 
-1. **C03 preservation:** approve retaining unknown sections/unchanged raw content on save, replacing legacy structural loss?
-2. **C02 loss handling:** approve revision-bound conversion preview and explicit acceptance of listed losses, retaining the source Document? Individual conversion/parser fixes still need named outcomes.
-3. **C05 omitted Audio:** approve resolving B from its own media context or none, never a preceding tab? Catalog/recovery behaviors remain unchanged pending their own dispositions.
+1. **C03 preservation:** retain unknown sections/unchanged raw content on save, replacing legacy structural loss.
+2. **C02 loss handling:** use revision-bound conversion preview and explicit acceptance of listed losses, retaining the source Document. Individual conversion/parser fixes still need named outcomes.
+3. **C05 omitted Audio:** resolve B from its own media context or none, never a preceding tab. Catalog/recovery behaviors remain unchanged pending their own dispositions.
 
-Approving record structure alone approves none of these departures.
+The named outcome approvals do not approve every parser change or demonstrate byte/semantic round-trip correctness.

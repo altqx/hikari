@@ -42,10 +42,12 @@ Postprocessing retains affected-row ordering, lead-in/out → keyframes → cont
 
 FFMS2 receives a validated frame index and generation; exact requests acknowledge that same index or error. Recommend [FFMS_SEEK_NORMAL](https://github.com/altqx/ffms2/blob/45d5f72100d88c52acdd54bfedcc0315a44c735d/doc/ffms2-api.md#ffms_seekmode) for exact requests; unsafe mode can guess without error. Playback reports estimated position, clock domain, generation and uncertainty; it may drop frames. Source-audio `[a,b)` plays exactly `b-a` frames before silence; retain legacy nonnegative time-to-sample truncation. At 44.1 kHz, 1–2 ms maps to `[44,88)`. Device latency and resampling tails need separate measurement.
 
-## Three explicit decisions
+## Three accepted fixes; broader time contract still under review
 
-1. **C01 equality:** recommend correcting equal-time `>=`/`<=` from false to true; audit callers and retain old/new fixtures. This does not approve all C01 changes.
-2. **C01 FPS isolation:** replace shared 23.976/default-25 fallback state with an explicit per-Document rational MicroDVD rate; preserve raw frames while unknown. Recommend this departure.
-3. **T42-A audio frame alignment:** old code maps `target−anchor` as a timestamp; recommend subtracting their frame indices. For the VFR example, anchor 40 → target 81 ms changes offset from 2 frames to 1.
+The user approved this named batch on 2026-09-27; exact scope is in the [approved-departure ledger](../compatibility-decisions.md). The surrounding typed-time, lookup and command contract remains a review proposal.
+
+1. **C01 equality:** correct equal-time `>=`/`<=` from false to true; audit callers and retain old/new fixtures. This does not approve all C01 changes.
+2. **C01 FPS isolation:** replace shared 23.976/default-25 fallback state with an explicit per-Document rational MicroDVD rate; preserve raw frames while unknown.
+3. **T42-A audio frame alignment:** old code maps `target−anchor` as a timestamp; instead subtract their frame indices. For the VFR example, anchor 40 → target 81 ms changes offset from 2 frames to 1.
 
 Required fixtures cover these decisions, serialization, negative/overflow boundaries, short/invalid VFR intervals, two Documents with different rates, karaoke, unchanged Lua conversions, exact seeks and source-sample ranges. No parity or timing-accuracy pass is claimed.

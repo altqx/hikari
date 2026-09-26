@@ -1,6 +1,6 @@
 # Audio output and waveform proposal
 
-**Status: proposal for [Choose the audio output backend and waveform renderer](https://github.com/altqx/hikari/issues/26); no audio engine or renderer has been accepted.** This draws on [Audio output, scrubbing and waveform/spectrum rendering in Qt Quick](https://github.com/altqx/hikari/blob/7e1aad3ba4f7ac217b9bb467a297035bc0639abd/docs/research/audio.md), not new benchmarks.
+**Status: PortAudio editor output, an audio-derived clock, QSG waveform and cached spectrum tiles were accepted on 2026-09-27 in [Choose the audio output backend and waveform renderer](https://github.com/altqx/hikari/issues/26).** The [media contract](../media.md) records the direction and remaining native gates; this retained artifact supplies alternatives from [Audio output, scrubbing and waveform/spectrum rendering in Qt Quick](https://github.com/altqx/hikari/blob/7e1aad3ba4f7ac217b9bb467a297035bc0639abd/docs/research/audio.md), not new benchmarks.
 
 ## Decision requested
 

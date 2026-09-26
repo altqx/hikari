@@ -1,17 +1,14 @@
-# Proposed performance and resource budgets
+# Performance and resource reference contract
 
-For [Set measurable performance and resource budgets for the rewrite](https://github.com/altqx/hikari/issues/36). **Accepted starting gates with the lower hardware baseline on 2026-09-27; unverified in implementation.** The authoritative [performance contract](../performance.md) preserves the exact thresholds/conditions and requires concrete reference-machine bindings. This artifact retains the reviewed alternatives.
+**Accepted starting gates, 2026-09-27.** In the live review, altqx chose **“Accept gates with lower hardware baseline”** for [Set measurable performance and resource budgets for the rewrite](https://github.com/altqx/hikari/issues/36). [ADR 0011](../adr/0011-performance-reference-contract.md) records the decision. The release thresholds, percentiles, workloads, cache conditions and memory metrics from the [reviewed proposal](proposals/performance-budgets.md) are unchanged. They are initial hard acceptance gates; stretch targets are aspirational. Changing a gate, workload, condition or reference baseline requires an explicit decision, not a silent adjustment after a failure.
 
-## Evidence and reference-machine choice
+## Reference class and binding
 
-The [d99b429e grid sample](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/README.md) records Windows 11 build 26200, Ryzen 5 5600, GTX 1070 Ti, Qt/PySide6 6.11.2, Python 3.12.14, D3D11 and 1420×860 at DPR 1. Its [painted p95 interval of 17.31 ms](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/evidence/windows-d3d11.json) measures Python-delivered frame signals, **not GPU duration or input-to-photon latency**. Both renderers remained allocated; no comparative memory conclusion follows.
+The accepted reference class is **four physical CPU cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display**. No actual Windows or Linux reference machine has been selected or qualified. This is not a guarantee that every computer meeting those broad characteristics performs identically, an approved hardware purchase or an external service-level promise.
 
-Reference options, neither selected:
+Before qualifying measurements, bind named Windows/Linux reference machines or documented equivalents to a recorded inventory: CPU model, core/thread configuration, RAM, storage, GPU and driver, display, OS/build, Linux compositor and Wayland/X11 session, graphics/audio backend and device, power settings and the pinned software build. Establish the measurement tooling and calibration alongside fixture hashes. A hardware description without those bindings is insufficient to claim a pass. A Windows result cannot certify Linux or macOS.
 
-* **Lower baseline, recommended:** four physical CPU cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display. This is a proposed class, not verified hardware.
-* **Current-machine class:** the recorded Ryzen/GTX machine; inventory RAM, storage, drivers and power settings before qualification. Those details were not recorded in the sample.
-
-Apply the same gates to Windows and Linux on the chosen hardware or documented equivalents. Name OS/build, Linux compositor and Wayland/X11 session, graphics/audio backend and device. No Linux performance result exists here. A Windows pass cannot certify Linux or macOS.
+The [d99b429e grid sample](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/README.md) records Windows 11 build 26200, Ryzen 5 5600, GTX 1070 Ti, Qt/PySide6 6.11.2, Python 3.12.14, D3D11 and 1420×860 at DPR 1. Its [painted p95 interval of 17.31 ms](https://github.com/altqx/hikari/blob/d99b429e7a6e16107fa6d6bf80cc5fba04a6264d/HikariSub/prototypes/qml-grid/evidence/windows-d3d11.json) measures Python-delivered frame signals, **not GPU duration or input-to-photon latency**. Both renderers remained allocated; no comparative memory conclusion follows. That sample is not a native performance pass against this contract or evidence for the newly selected hardware class.
 
 ## Fixtures and conditions
 
@@ -23,9 +20,9 @@ Use 20 independent C/W startup/open samples. Other latency workloads use five re
 
 Fixtures: **G**, pinned 50,000-row ASS generator plus hashed real-script cases up to 50,000 rows; mixed scripts/tags, long lines, raw/hidden tags, selection/filter/sort. **E**, G with 10,000-character lines and native Japanese composition, Arabic and Thai input. **V**, generated ten-minute 1080p H.264/B-frame CFR and VFR media, two-second maximum GOP, pinned frame identities and matching subtitles. **A**, one-hour 48 kHz stereo PCM with impulses/tones, plus 44.1 kHz resampling; fixture-only 2048-point FFT, rectangular window, 512-sample hop, pinned zoom sequence. Fixtures need packaging/verification.
 
-## Proposed thresholds
+## Accepted thresholds
 
-Release thresholds would block acceptance on the chosen reference. Stretch targets are aspirational. Unless specified otherwise, values are p95; latency p99 must remain within twice the listed bound. Startup/open use p95 only.
+Release thresholds block acceptance on the qualified reference. Stretch targets are aspirational. Unless specified otherwise, values are p95; latency p99 must remain within twice the listed bound. Startup/open use p95 only.
 
 | Operation / endpoint | Release | Stretch |
 | --- | --- | --- |
@@ -44,6 +41,8 @@ IME latency starts when its event reaches the app; separately record candidate-w
 
 For memory, report Windows private bytes/Linux PSS separately, acknowledging differing accounting, plus GPU allocation tracking. After five priming open/edit/zoom/close cycles, measure 30 cycles with identical bounded cache policy and five seconds quiescence each. Release: final idle growth ≤32 MiB CPU/16 MiB GPU; fitted growth over the last ten cycles ≤0.5/0.25 MiB per cycle. Stretch: halve these bounds. Zero growth is not assumed; report disk-cache size/eviction separately.
 
-Measurement boundaries follow completed [video](https://github.com/altqx/hikari/blob/26d7ac2a940c9f0edf2c6e65f5b1db05ea1a2507/docs/research/qtquick-video.md), [audio](https://github.com/altqx/hikari/blob/7e1aad3ba4f7ac217b9bb467a297035bc0639abd/docs/research/audio.md) and [testing](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) research. Native tools and corpus coverage still require implementation; nothing here was benchmarked.
+## Evidence still required
 
-**Two decisions:** accept these starting release/stretch budgets, or name adjustments? Use the lower baseline class (**recommended**) or current-machine class, then identify the actual Windows/Linux reference machines?
+Reference-host binding, fixture packaging/hashes, native instrumentation and calibration must precede qualifying measurements. Preserve raw traces, per-run statistics, memory accounting and environment details with every result. Record failed or inconclusive gates explicitly; prototype observations and average timing do not substitute for the required endpoints or percentiles.
+
+Measurement boundaries follow completed [video](https://github.com/altqx/hikari/blob/26d7ac2a940c9f0edf2c6e65f5b1db05ea1a2507/docs/research/qtquick-video.md), [audio](https://github.com/altqx/hikari/blob/7e1aad3ba4f7ac217b9bb467a297035bc0639abd/docs/research/audio.md) and [testing](https://github.com/altqx/hikari/blob/ee59a12872f3d9e0ddeb203e5fa3c09566b158ce/docs/research/qml-testing.md) research. Acceptance establishes the targets and lower hardware class only. No reference machine, fixture suite, calibration or performance gate is claimed qualified or passed here.

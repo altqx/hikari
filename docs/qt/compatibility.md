@@ -42,7 +42,7 @@ Every proposed departure needs a stable ID, source commit and evidence classific
 
 Preserve both old characterization and the approved new expectation. Do not replace an old oracle without retaining the explanation for the change. Track unexecuted, inconclusive, failed and passed observations distinctly; no invented coverage counts or blanket platform success follows from one fixture.
 
-The [candidate ledger C01–C08](proposals/compatibility-policy.md#candidate-ledger) remains **unresolved and unapproved**. Its preparation document retains the policy rationale and candidate dispositions; the accepted rule does not accept those dispositions. It covers timing/equality, format loss, unknown sections, migration paths, sessions/catalogs/recovery and Lua differences. Some rows contain several independent proposed changes and may need finer IDs before approval.
+The [approved-departure ledger](compatibility-decisions.md) records the subsequently accepted document and timing batches: C03 preservation, C02 loss preview, C05 audio association, C01 equality and FPS isolation, and T42-A audio frame alignment. These approvals select outcomes, not passing implementations. The [candidate ledger C01–C08](proposals/compatibility-policy.md#candidate-ledger) retains the broader evidence and unresolved subcases; no blanket acceptance applies to an entire mixed row.
 
 In particular, the current `set_undo_point` and `register_filter` stubs, mutable validation behavior, late command rejection and truncated dialog button-ID arguments await their own named decisions. Do not silently substitute upstream Aegisub behavior. The unchanged-script commitment and explicit-departure review apply even when an upstream behavior appears preferable.
 
