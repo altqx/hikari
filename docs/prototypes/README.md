@@ -2,6 +2,8 @@
 
 These assets answer Wayfinder questions. They are not production code or approved UX.
 
+Start at `index.html` (or `http://127.0.0.1:8765/` when serving this directory) for the four-prototype review desk. It links the HTML studies, immutable native-QML run guides and their review tickets. The native preview images are copied unchanged from the commits credited there.
+
 ## Visual language
 
 Ticket: [Prototype the HikariSub visual language and component set in QML or HTML](https://github.com/altqx/hikari/issues/32).
