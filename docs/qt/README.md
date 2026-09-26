@@ -17,13 +17,16 @@ This is the accumulating specification for [Wayfinder: rewrite HikariSub on Qt 6
 | Build mechanism | Pinned vcpkg/overlays and official Qt provisioning through CMake workflow presets | [Build](build.md), [ADR](../adr/0008-stateless-cmake-workflow.md); clean reconstruction remains unproved |
 | Media/audio direction | Active playback mode owns audio/clock; PortAudio editor output, QSG waveform and spectrum tiles | [Media](media.md), [transport ADR](../adr/0009-active-mode-media-transport.md), [audio ADR](../adr/0010-portaudio-editor-output.md); player/presenter native feasibility remains open |
 | Performance | Starting release/stretch gates on the lower hardware class | [Performance](performance.md), [ADR](../adr/0011-performance-reference-contract.md); hosts/fixtures must be bound before qualification |
+| Distribution | Offline Windows installer/portable ZIP; Linux AppImage/recovery tar; notification-only updates; trusted stable Windows signing | [Distribution](distribution.md), [ADR](../adr/0012-distribution-and-updates.md) |
+| Document model | Ordered source-preserving records, stable Line IDs and core value types with external Qt adapters | [Document model](document-model.md), [ADR](../adr/0013-source-preserving-document-model.md) |
+| Time semantics | Signed microsecond values, rational media time and distinct interval/frame lookup operations; named fixes only | [Time semantics](time-semantics.md), [ADR](../adr/0014-typed-time-and-frame-semantics.md) |
 
 Figma stays on Starter and is reserved for occasional handoff. UX decisions use runnable QML/HTML prototype tickets and actual user reactions. Native correctness, performance and accessibility must be verified in Qt even when the design was reviewed in HTML.
 
-The map remains the index of decisions and open dependencies. The [coverage ledger](coverage.md) checks the full destination and each inventory surface against actual accepted evidence. Outstanding work includes the remaining information architecture, core/data/time/undo/thread design, build/platform and backend choices, per-surface UX, compatibility/performance/test gates, release policy and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
+The map remains the index of decisions and open dependencies. The [coverage ledger](coverage.md) checks the full destination and each inventory surface against actual accepted evidence. Outstanding work includes command/undo and lifecycle design, native build/backend feasibility, detailed surface UX, test and cutover strategy, and the final agent-sized implementation plan. Accepted decisions above should not be asked again unless new evidence requires explicitly reopening them.
 
 ## Proposals awaiting decisions
 
 The reviewed [video](proposals/video-pipeline.md) and [audio](proposals/audio-pipeline.md) alternatives led to the accepted media direction above. Qt Multimedia is the first general-player candidate to verify; chapter/track, clock, rendering and deployment gates remain explicit.
 
-The broader [document model](proposals/document-model.md), [time semantics](proposals/time-semantics.md) and [distribution policy](proposals/distribution.md) await decisions. Six exact outcomes from the document/timing batches are already captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
+The [testing strategy](proposals/testing.md) and [settings/import contract](proposals/settings-import.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.

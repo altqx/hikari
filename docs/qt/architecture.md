@@ -6,7 +6,7 @@ Accepted foundation, 2026-09-27: [Own the HikariSub Qt application layer](../adr
 
 | Module / planned source home | Owns | Boundary |
 | --- | --- | --- |
-| Core / `src/core` | Authoritative subtitle content, styles, script properties, time/frame values, editing operations and their invariants | No QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Whether individual Qt Core value types are appropriate remains part of core interface design. |
+| Core / `src/core` | Authoritative subtitle content, styles, script properties, time/frame values, editing operations and their invariants | Standard C++ value records; no QML/Qt Quick, window, renderer, device, global UI settings or service-container dependency. Qt conversions belong to adapters. |
 | Application / `src/application` | Document/session lifetime, editing target and selection, command dispatch, undo transactions, action metadata, settings/shortcuts, workspace/navigation policy and task coordination | Depends on core and explicit backend ports. No duplicated subtitle model in controls and no implicit access through process-wide service lookup. |
 | Backend adapters / `src/backends` | FFMS2/libass integration, audio/general playback, automation runtime, font/file/platform services and their resource lifetime | Implement the ports consumed by application services. Backend-specific handles stay inside their adapters. Renderer, A/V clock and thread contracts are separate decisions. |
 | Qt Quick UI / `src/ui` | QML shell, reusable controls, panels, model adapters/presenters, focus and accessibility representation | Observes application state and submits commands. It does not become another authoritative document store or make native backend calls from delegates. |
@@ -28,7 +28,7 @@ The adapter arrow denotes implementation of port contracts, not an application d
 
 ## State and command ownership
 
-Each open document has one authoritative content state. A UI projection can cache presentation data, but writes pass through an application command and the core's invariants. Stable identity connects selection and model updates; its exact encoding and persistence are left to the document-model decision.
+Each open document has one authoritative content state. A UI projection can cache presentation data, but writes pass through an application command and the core's invariants. The accepted [document model](document-model.md) uses ordered source-preserving records and stable Line IDs through edits and undo; IDs are not serialized ASS row numbers. [Time semantics](time-semantics.md) defines distinct document times, deltas, frame indices and rational media timestamps.
 
 An action has a stable identity, user-facing metadata, enabled state and explicit scope. Menus, toolbar buttons, shortcuts and automation entry points route through the same command boundary where they represent the same operation. Focus selects an input context; it must not silently turn a protected comparison reference into the editing target. The shortcut-conflict policy and complete legacy action mapping remain settings/hotkey design work.
 
@@ -40,7 +40,7 @@ Workers return results tagged to their request/document revision; the applicatio
 
 - Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.
 - Navigation: predictable panel traversal and focus restoration, native input/IME ownership, and semantic representations for custom views.
-- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Native docking architecture and remaining menu/control placement still need their decisions.
+- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Classic menus/local controls and optional task presets are accepted; native docking and detailed surface flows remain open.
 - Appearance: reusable Qt Quick Controls styled through the [accepted Compact Studio visual language](ux/visual-language.md). UI appearance never changes ASS style data.
 - Settings: explicit scopes, stable persisted identities and a one-shot legacy importer. Legacy theme files and theme selection are excluded from import.
 - Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
@@ -60,6 +60,6 @@ The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts
 
 ## Open design and verification
 
-The document representation, per-format preservation/loss rules and individual defect dispositions, time/frame semantics, command/undo granularity and scheduler contracts still require their core design decisions. Build/dependency strategy, media/audio backends and release gates remain the corresponding map tickets. The [isolated automation boundary](automation.md) and [verified font contract](fonts.md) are accepted directions with explicit feasibility and detailed-design obligations. This foundation must not be presented as those remaining decisions having been made.
+The document and time contracts are accepted; command/undo granularity, session/recovery and scheduler contracts remain open. The [build mechanism](build.md), [media/audio direction](media.md), [performance gates](performance.md) and [distribution policy](distribution.md) are accepted with native feasibility and release evidence still required. The [isolated automation boundary](automation.md) and [verified font contract](fonts.md) retain explicit detailed-design obligations. Unlisted legacy defects still require named disposition.
 
 Implementation must verify dependency direction, command/selection behavior through filtering and undo, late/cancelled worker results, script transactions, native focus/IME/screen-reader behavior and lifecycle cleanup. There is no implementation or benchmark pass attached to this ADR; the completed research and throwaway prototypes are evidence for planning.

@@ -1,14 +1,14 @@
-# Time and frame semantics proposal
+# Typed time and frame semantics
 
-**Accepted on 2026-09-27:** the full typed-time/frame contract, including the earlier named timing fixes. The authoritative [time-semantics specification](../time-semantics.md) and [ADR 0014](../../adr/0014-typed-time-and-frame-semantics.md) capture the result of [Set time and frame semantics for editing and playback](https://github.com/altqx/hikari/issues/42). This retained proposal is review history; pre-acceptance status wording below is superseded by that specification. No implementation or timing-accuracy pass is implied.
+**Accepted on 2026-09-27 in the live Wayfinder review:** the full typed-time, precision, lookup and command contract below, following the earlier three named fixes. [ADR 0014](../adr/0014-typed-time-and-frame-semantics.md) records the decision for [Set time and frame semantics for editing and playback](https://github.com/altqx/hikari/issues/42). The [core inventory](https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md#3-timing-frames-keyframes-and-post-processing) and pinned source establish legacy evidence; [compatibility policy](compatibility.md) still requires named approval for unlisted departures. The accepted [media contract](media.md) owns transport/backend lifetimes. Core owns deterministic Document timing; renderer and playback clock positions do not replace it. This decision records a design, not measured accuracy or implementation.
 
 ## Typed values and precision
 
-Recommend signed 64-bit **microsecond DocumentTime and TimeDelta**, checked arithmetic across their full integer range, and distinct integral VideoFrameIndex and AudioSampleFrame types. An audio sample frame contains every channel at one sample position. No sentinel timestamp represents unknown/invalid data. Parsing and overflow return diagnostics; retain original malformed input for recovery. Wider integer storage does not promise microsecond source accuracy.
+Use signed 64-bit **microsecond DocumentTime and TimeDelta**, checked arithmetic across their full integer range, and distinct integral VideoFrameIndex and AudioSampleFrame types. An audio sample frame contains every channel at one sample position. No sentinel timestamp represents unknown/invalid data. Parsing and overflow return diagnostics; retain original malformed input for recovery. Wider integer storage does not promise microsecond source accuracy.
 
 Preserve media PTS as integer ticks plus its declared rational timebase/unit and timeline origin; retain stream offsets and audio delay explicitly. Compare rational values before any rounding. Conversion to DocumentTime uses nearest microsecond, ties away from zero, reporting loss; display-only conversion never edits content. Keep source frame integers authoritative for frame-based formats. Fractions outside representable arithmetic bounds fail rather than wrap.
 
-Each Document's media context owns a positive rational CFR rate or indexed VFR timing, with exact/estimated/unknown provenance. `24000/1001` remains that fraction, not `23.976` substituted silently. Attaching media does not reinterpret existing authored times without an explicit operation. MicroDVD rate choice is decision 2 below.
+Each Document's media context owns a positive rational CFR rate or indexed VFR timing, with exact/estimated/unknown provenance. `24000/1001` remains that fraction, not `23.976` substituted silently. Attaching media does not reinterpret existing authored times without an explicit operation. The accepted per-Document MicroDVD rate outcome is recorded below.
 
 ## Intervals and frame lookup
 
@@ -40,14 +40,14 @@ Timing requests identify Document/revision, affected Line IDs/filter policy, sta
 
 Postprocessing retains affected-row ordering, lead-in/out → keyframes → continuity. Inputs include separate before/after windows and continuity thresholds in milliseconds; outputs identify changed endpoints and reasons. Preserve keyframe candidate traversal/protection and strict `duration >600 ms`. Continuity closes eligible positive gaps using the existing threshold-weighted, centisecond-truncated split: a 100-ms gap with end/start thresholds 40/60 extends the preceding end by 40 ms, absent keyframe protection. Equality/tie/selected-neighbor cases require fixtures; this does not approve C07's separate late-rejection fix.
 
-FFMS2 receives a validated frame index and generation; exact requests acknowledge that same index or error. Recommend [FFMS_SEEK_NORMAL](https://github.com/altqx/ffms2/blob/45d5f72100d88c52acdd54bfedcc0315a44c735d/doc/ffms2-api.md#ffms_seekmode) for exact requests; unsafe mode can guess without error. Playback reports estimated position, clock domain, generation and uncertainty; it may drop frames. Source-audio `[a,b)` plays exactly `b-a` frames before silence; retain legacy nonnegative time-to-sample truncation. At 44.1 kHz, 1–2 ms maps to `[44,88)`. Device latency and resampling tails need separate measurement.
+FFMS2 receives a validated frame index and generation; exact requests acknowledge that same index or error. Use [FFMS_SEEK_NORMAL](https://github.com/altqx/ffms2/blob/45d5f72100d88c52acdd54bfedcc0315a44c735d/doc/ffms2-api.md#ffms_seekmode) for exact requests; unsafe mode can guess without error. Playback reports estimated position, clock domain, generation and uncertainty; it may drop frames. Source-audio `[a,b)` plays exactly `b-a` frames before silence; retain legacy nonnegative time-to-sample truncation. At 44.1 kHz, 1–2 ms maps to `[44,88)`. Device latency and resampling tails need separate measurement.
 
-## Three accepted fixes; broader time contract still under review
+## Accepted compatibility outcomes
 
-The user approved this named batch on 2026-09-27; exact scope is in the [approved-departure ledger](../compatibility-decisions.md). The surrounding typed-time, lookup and command contract remains a review proposal.
+The user approved this named batch and subsequently the full typed-time contract on 2026-09-27. Exact defect scope remains in the [approved-departure ledger](compatibility-decisions.md); this acceptance does not settle unrelated C07 late-rejection or Lua behavior changes.
 
-1. **C01 equality:** correct equal-time `>=`/`<=` from false to true; audit callers and retain old/new fixtures. This does not approve all C01 changes.
-2. **C01 FPS isolation:** replace shared 23.976/default-25 fallback state with an explicit per-Document rational MicroDVD rate; preserve raw frames while unknown.
+1. **C01-equality:** correct equal-time `>=`/`<=` from false to true; audit callers and retain old/new fixtures. This does not approve all C01 changes.
+2. **C01-fps-isolation:** replace shared 23.976/default-25 fallback state with an explicit per-Document rational MicroDVD rate; preserve raw frames while unknown.
 3. **T42-A audio frame alignment:** old code maps `target−anchor` as a timestamp; instead subtract their frame indices. For the VFR example, anchor 40 → target 81 ms changes offset from 2 frames to 1.
 
 Required fixtures cover these decisions, serialization, negative/overflow boundaries, short/invalid VFR intervals, two Documents with different rates, karaoke, unchanged Lua conversions, exact seeks and source-sample ranges. No parity or timing-accuracy pass is claimed.
