@@ -132,6 +132,14 @@ class Rows(QAbstractTableModel):
         self.select(row, modifiers)
         self.visible.emit(row)
 
+    @Slot(bool, int)
+    def boundary(self, end, modifiers=0):
+        if not self.order:
+            return
+        row = len(self.order) - 1 if end else 0
+        self.select(row, modifiers)
+        self.visible.emit(row)
+
     @Slot(int)
     def jump(self, ident):
         if ident - 1 in self.positions:

@@ -12,7 +12,7 @@ On this workstation, from the repository checkout:
 
 Elsewhere: install `PySide6-Essentials==6.11.2` in a disposable Python 3.12 virtual environment, then `python HikariSub/prototypes/qml-grid/main.py`. No app build, external media or persistence is required. The Python binding is a prototype convenience, not a product language decision.
 
-Use the renderer switcher, tag-hiding toggle, filter (try `RTL`, `Warning`, `Song`), and sort menu. Click, Ctrl-click and Shift-click select; arrows and PageUp/PageDown move/extend the current selection; Home/End jump to source IDs. The inspector always shows original ASS source. Selected IDs survive a filter that hides them and sorting that changes their row numbers. State colors have explicit text labels. No editing is persisted.
+Use the renderer switcher, tag-hiding toggle, filter (try `RTL`, `Warning`, `Song`), and sort menu. Click, Ctrl-click and Shift-click select; arrows and PageUp/PageDown move/extend the current selection; Home/End move to the first/last displayed row after filtering and sorting. Shift+Home/End extend from the same selection anchor as the arrow keys. An empty filter result leaves the selection unchanged. The inspector always shows original ASS source. Selected IDs survive a filter that hides them and sorting that changes their row numbers. State colors have explicit text labels. No editing is persisted.
 
 For a reproducible local probe and screenshots:
 
@@ -46,13 +46,15 @@ The Python slot receives `frameSwapped`; these intervals measure delivered signa
 
 The smoke observations confirmed a real Down key event selected the next row; selection survived sorting and a hidden filter; Shift selection extended; and hiding tags removed fixture override blocks. Both screenshots were visually checked for content, column alignment and readable controls. The initial synchronous screenshot attempt stalled after model reset; asynchronous `grabToImage()` resolved it, and that path is the checked-in implementation.
 
+A focused Home/End follow-up on the same Windows/Qt/D3D11 runtime used 120 fixture rows and posted native `QKeyEvent` press/release pairs to the QML window. All 28 observations matched across both renderers: filtered reverse/style order, first/last displayed destinations, Shift range extension with a stable source-ID anchor, a subsequent Shift+Up, empty-result no-ops, and source-ID selection retention after reordering. See [keyboard observations](evidence/keyboard-boundaries-windows.json). This checks key routing and selection state; it does not rerun or update the performance measurements. To review manually, filter `RTL`, choose Reverse order, click a middle row, and compare Home/End with Shift+Home/End; repeat with Group by style and with a filter that has no matches.
+
 ![TableView screenshot](evidence/tableview.png)
 
 ![Painted screenshot](evidence/painted.png)
 
 ## What remains for the decision
 
-- User reaction: density, scrolling/flick feel, multi-selection after filter changes, source versus hidden-tag display, Arabic/mixed-direction legibility and keyboard focus. Source-ID Home/End is deliberately simple and should be reconsidered for a sorted view.
+- User reaction: density, scrolling/flick feel, multi-selection after filter changes, source versus hidden-tag display, Arabic/mixed-direction legibility and keyboard focus. Shift selection uses the displayed range; when filtering hides its anchor, the destination becomes the temporary range anchor, consistent with the arrow keys.
 - Accessibility: TableView cells expose names/roles/selection through `Accessible`, but neither NVDA/Orca behavior nor a complete virtual table interface has been verified. Painted has no row-level accessibility adapter; its current-source inspector is only a fallback. This gap is part of the cost comparison, not an accessibility success claim.
 - Measure representative real scripts, cold start, random jumps, tag-hidden scrolling, filter/sort stalls, editing and large selections. Add memory/input latency/GPU measurements and fractional DPI/4K. Validate Linux Wayland/X11 and target hardware before choosing.
 - The sample supports keeping TableView as a serious candidate; it does not prove the performance bar or justify a custom renderer. Do not close #27 until the user reacts and the resulting conclusion is recorded. This code remains on `codex/qml-grid-prototype`, outside main.

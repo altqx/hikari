@@ -1,0 +1,587 @@
+{
+  "date": "2026-09-27",
+  "scope": "Native QML key delivery only; no scroll benchmark, GPU timing or screen-reader check.",
+  "setup": "120 generated rows; filter/sort supplied to model; Home/End/Shift/Up delivered as posted QKeyEvent press/release pairs to the QQuickWindow.",
+  "runtime": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "qt": "6.11.2",
+    "pyside": "6.11.2",
+    "backend": "GraphicsApi.Direct3D11",
+    "width": 1420,
+    "height": 860
+  },
+  "observations": [
+    {
+      "scenario": "TableView/filtered-reverse/Home",
+      "current_source_id": 118,
+      "selected_source_ids": [
+        118
+      ],
+      "anchor_source_id": 118,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/End",
+      "current_source_id": 4,
+      "selected_source_ids": [
+        4
+      ],
+      "anchor_source_id": 4,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/Shift+Home",
+      "current_source_id": 118,
+      "selected_source_ids": [
+        58,
+        64,
+        70,
+        76,
+        82,
+        88,
+        94,
+        100,
+        106,
+        112,
+        118
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/Shift+End",
+      "current_source_id": 4,
+      "selected_source_ids": [
+        4,
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/Shift+Up-after-End",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/empty-result",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true,
+      "no_invalid_reveal": true
+    },
+    {
+      "scenario": "TableView/filtered-reverse/selection-survives-reorder",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/Home",
+      "current_source_id": 1,
+      "selected_source_ids": [
+        1
+      ],
+      "anchor_source_id": 1,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/End",
+      "current_source_id": 120,
+      "selected_source_ids": [
+        120
+      ],
+      "anchor_source_id": 120,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/Shift+Home",
+      "current_source_id": 1,
+      "selected_source_ids": [
+        1,
+        10,
+        11,
+        13,
+        14,
+        16,
+        17,
+        19,
+        100,
+        101,
+        103,
+        104,
+        106,
+        109,
+        112,
+        115,
+        118
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/Shift+End",
+      "current_source_id": 120,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119,
+        120
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/Shift+Up-after-End",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/empty-result",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true,
+      "no_invalid_reveal": true
+    },
+    {
+      "scenario": "TableView/filtered-style-groups/selection-survives-reorder",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/Home",
+      "current_source_id": 118,
+      "selected_source_ids": [
+        118
+      ],
+      "anchor_source_id": 118,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/End",
+      "current_source_id": 4,
+      "selected_source_ids": [
+        4
+      ],
+      "anchor_source_id": 4,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/Shift+Home",
+      "current_source_id": 118,
+      "selected_source_ids": [
+        58,
+        64,
+        70,
+        76,
+        82,
+        88,
+        94,
+        100,
+        106,
+        112,
+        118
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/Shift+End",
+      "current_source_id": 4,
+      "selected_source_ids": [
+        4,
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/Shift+Up-after-End",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/empty-result",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true,
+      "no_invalid_reveal": true
+    },
+    {
+      "scenario": "Painted/filtered-reverse/selection-survives-reorder",
+      "current_source_id": 10,
+      "selected_source_ids": [
+        10,
+        16,
+        22,
+        28,
+        34,
+        40,
+        46,
+        52,
+        58
+      ],
+      "anchor_source_id": 58,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/Home",
+      "current_source_id": 1,
+      "selected_source_ids": [
+        1
+      ],
+      "anchor_source_id": 1,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/End",
+      "current_source_id": 120,
+      "selected_source_ids": [
+        120
+      ],
+      "anchor_source_id": 120,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/Shift+Home",
+      "current_source_id": 1,
+      "selected_source_ids": [
+        1,
+        10,
+        11,
+        13,
+        14,
+        16,
+        17,
+        19,
+        100,
+        101,
+        103,
+        104,
+        106,
+        109,
+        112,
+        115,
+        118
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/Shift+End",
+      "current_source_id": 120,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119,
+        120
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/Shift+Up-after-End",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/empty-result",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true,
+      "no_invalid_reveal": true
+    },
+    {
+      "scenario": "Painted/filtered-style-groups/selection-survives-reorder",
+      "current_source_id": 117,
+      "selected_source_ids": [
+        12,
+        15,
+        18,
+        102,
+        104,
+        105,
+        107,
+        108,
+        110,
+        111,
+        113,
+        114,
+        116,
+        117,
+        119
+      ],
+      "anchor_source_id": 104,
+      "current_matches": true,
+      "selection_matches": true,
+      "anchor_matches": true,
+      "reveal_matches": true
+    }
+  ]
+}

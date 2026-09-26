@@ -103,8 +103,8 @@ ApplicationWindow {
             Keys.onPressed: function(event) {
                 var step = event.key === Qt.Key_Down ? 1 : event.key === Qt.Key_Up ? -1 : event.key === Qt.Key_PageDown ? 20 : event.key === Qt.Key_PageUp ? -20 : 0
                 if (step !== 0) { gridModel.move(step, event.modifiers); event.accepted = true }
-                else if (event.key === Qt.Key_Home) { gridModel.jump(1); event.accepted = true }
-                else if (event.key === Qt.Key_End) { gridModel.jump(gridModel.total); event.accepted = true }
+                else if (event.key === Qt.Key_Home) { gridModel.boundary(false, event.modifiers); event.accepted = true }
+                else if (event.key === Qt.Key_End) { gridModel.boundary(true, event.modifiers); event.accepted = true }
             }
             TableView {
                 id: table
