@@ -49,6 +49,14 @@ Accepted: [shared workspace with optional protected comparison](https://github.c
 
 The [capability placement worksheet](ia-capability-placement.md) maps the complete legacy UI families to proposed panels, dialogs and menu entries. It covers the placement questions beyond the runnable sample and explicitly marks unresolved decisions; it is not an approved information architecture.
 
+## Shell controls follow-up
+
+Open [shell-chrome.html](shell-chrome.html?variant=classic) directly or through the same server. `?variant=classic` uses traditional menus, panel-local controls and line properties, and detailed bottom media status. `?variant=inspector` uses a shared command strip and contextual right inspector while retaining the accepted video-left / audio-editor-right / full-width-grid composition. The bottom switcher retains shareable variant URLs.
+
+Try Subtitles (or Commands) → Script properties, close with Escape, focus Video and Line, open Styles and switch its follow/pin target, or inspect the proposed grouping table. Sample task dialogs expose draft/preview state; they perform no real operation. The persistent-tool versus task-dialog grouping, menu/property/status placement and inspector remain proposals. Neither variant reopens shared ownership, movable/floating capability, optional Home or the default Editing geometry.
+
+Browser checks exercised menu-to-dialog entry, Escape dismissal, context switching, tool opening and full-width grid geometry. HTML still cannot prove native docking, screen-reader support, real file/media behavior or complete workflow parity. Every unshown capability remains in scope. This is a follow-up to [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
+
 ## Native grid direction
 
 [Use painted grid](https://github.com/altqx/hikari/issues/27#issuecomment-5849499565) is accepted. The linked native spike remains evidence, including its 28 posted-key observations. Native accessibility and performance against agreed budgets remain follow-up work; the Python drawing path is not a production API decision.
