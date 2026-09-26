@@ -1,6 +1,6 @@
 # Shared workspace and protected comparison
 
-Accepted on 2026-09-27: [“shared workspace with optional protected comparison is fine”](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). This settles layout ownership and the comparison model. Detailed panel membership, Home/startup policy, docking/floating and tool-target behavior remain open in [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
+Accepted on 2026-09-27: [“shared workspace with optional protected comparison is fine”](https://github.com/altqx/hikari/issues/31#issuecomment-5849397748). This settles layout ownership and the comparison model. The subsequent live review chose movable/floating panels (B). Tools follow the editing document by default with optional pinning, and Home is optional. Detailed preset membership and comparison navigation remain open in [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
 
 The accepted model combines the shared-layout behavior demonstrated by A with an optional protected reference demonstrated by C in the [reviewed prototype](https://github.com/altqx/hikari/blob/163faf7c699c81a12338b04acea9433f356f0814/docs/prototypes/workspace-model.html). The visual baseline is [Compact Studio](visual-language.md). Per-document layouts and always-on comparison are not the chosen defaults.
 
@@ -14,6 +14,20 @@ Comparison is optional. Its protected reference can be read, selected and copied
 
 Translation mode remains a document capability with original/translated text and confirmation semantics. It is not replaced by opening a second document for comparison. Existing comparison criteria—time, visibility, selection and styles—remain capabilities to design; the ownership decision does not drop them.
 
+## Movable and floating panels
+
+Accepted in the live tool-placement review: **B / movable and floating panels**. Tools can be rearranged, hidden, restored and detached from the main workspace. Preserve keyboard-accessible placement actions alongside pointer interactions. A shared workspace keeps the chosen arrangement when the editing document changes.
+
+The [reviewed HTML follow-up](https://github.com/altqx/hikari/blob/9781b3cb51fb87d9640366a9619b9c5589ff1e26/docs/prototypes/workspace-tools.html) illustrates Left/Right/Bottom and Float positions. Its floating cards stay inside the browser page; this acceptance chooses the UX capability, not that simulation as a native implementation. Native docking dependency, accessible cross-window focus, multi-monitor geometry recovery and versioned layout persistence are covered by [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46) and Qt verification.
+
+## Persistent tools and Home
+
+Accepted in the live review: Styles, Search, Timing and History **follow the editing document by default**, with an **optional Pin current document** control. A pinned tool retains its named document across editing-tab changes. When that document is a protected comparison reference, content-changing Apply remains unavailable. A tool must expose its document and scope; a preview must not silently retarget when the document or selection changes.
+
+The sample permits a deliberately pinned tool to apply to an inactive, unprotected document after showing that target in Preview. Treat a tool's explicit target separately from the application's editing target; general editing shortcuts still use the editing target. Review detailed per-tool scope, confirmation and stale-preview rules in their surface tickets.
+
+**Home is optional**, with the workspace as the normal editing destination. Home provides recent-file and recovery entry points without discarding the open documents or shared arrangement. It is not a mandatory start screen. Actual startup/session restoration, file recovery and unsaved-close flows retain their data and lifecycle contracts.
+
 ## Captured interaction evidence
 
 The HTML study demonstrates shared versus per-document layout retention, protected reference content while the editing target changes, panel restoration, recovery as a separate copy, a zero-document state, missing video while subtitle editing remains available, and save/discard/cancel close choices. Save and media relinking are simulated in memory. F6/Shift+F6 traverse the demonstrated major panels, including from text/grid focus.
@@ -22,10 +36,7 @@ These demonstrations clarify the ownership model. They do not establish real fil
 
 ## Remaining information-architecture choices
 
-1. Constrained resizable presets versus arbitrary docking/floating, including multiple monitors and recovery of off-screen panels.
-2. Final panel membership and default visibility in Timing, Translation and Typesetting; equivalents of the five legacy visibility arrangements must remain available.
-3. Whether Styles, Search, Timing and History become persistent tools, and whether each follows the editing target or can pin a document. Preview/apply must never silently change its target.
-4. Home/startup behavior and the exact session/recovery entry points.
-5. Comparison navigation/synchronization and the controls for changing editing/reference roles.
+1. Final panel membership and default visibility in Timing, Translation and Typesetting; equivalents of the five legacy visibility arrangements must remain available.
+2. Comparison navigation/synchronization and the controls for changing editing/reference roles; detailed criteria and interaction can be resolved in its surface prototype.
 
 The [capability-placement worksheet](https://github.com/altqx/hikari/blob/12bb79bba302f0ccbb6558f2ab508b46ce111685/docs/prototypes/ia-capability-placement.md) is still a proposal for these remaining choices. It is not adopted wholesale by the narrower ownership answer. Subsequent prototype tickets must preserve the accepted shared/protected model and ask only about the unresolved behavior.
