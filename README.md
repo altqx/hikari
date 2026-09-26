@@ -2,32 +2,103 @@
 
 HikariSub is a fork of [Kainote](https://github.com/bjakja/Kainote) by Marcin Drob, continued as a separate project from Kainote commit `6e1bbb15`. It is distributed under the same GNU GPL v3 license, and the original copyright notices are kept in the source.
 
-HikariSub is a powerful subtitle editor designed for a wide range of tasks. It utilizes **FFMS2** for high-precision work like typesetting, timing, and advanced editing, and **DirectShow** for general video playback and minor subtitle adjustments.
+HikariSub is a subtitle editor and player for everything from quick fixes to full typesetting. It has a built-in video player, with **FFMS2** for frame-accurate typesetting and timing, **DirectShow** for ordinary playback on Windows, and **GStreamer** on Linux.
 
 ## Features
 
-* **Comprehensive Format Support**: Natively handles ASS, SRT, MPL2, MDVD, and TMP formats. SSA files are automatically converted to ASS upon loading.
-* **Versatile Format Conversion**: Easily convert subtitles between any of the supported formats.
-* **Translation Mode**: A dedicated mode that displays the original text alongside the translation field, streamlining the localization process.
-* **Efficient Navigation**: Quickly seek to lines that have not yet been translated or committed to final.
-* **Bulk Tagging**: Apply ASS tags to multiple selected lines simultaneously.
-* **Visual Tools**: Visually adjust tags like `\pos`, `\move`, `\org`, `\clip`, `\iclip`, and vector drawings (`\p`) directly on the video frame.
-* **Precision Zoom**: Zoom in on the video, even in fullscreen mode, to create highly accurate vector clips and drawings.
-* **Integrated Time Shifting**: Adjust subtitle timing directly within the main grid and sync changes with the current audio/video position.
-* **Advanced Audio Tools**: Visualize audio as a spectrum or waveform display. Includes an auto-splitting tool perfect for timing karaoke lyrics.
-* **Automation 4 Support**: Supported Automation 4 scripts with [DependencyControl](https://github.com/TypesettingTools/DependencyControl).
-* **Subtitle Comparison**: Compare two different subtitle files side-by-side in separate tabs.
-* **Advanced Subtitle Filtering**: Filter the subtitle view to hide unnecessary lines and focus on your work.
+### Formats
 
-## Beta Builds
+* **Native formats**: opens and saves ASS, SRT, MicroDVD, MPL2 and TMPlayer. SSA is converted to ASS on load.
+* **Conversion**: converts between any of the supported formats, with a chosen script resolution when converting to ASS.
+* **MKV**: loads subtitle tracks straight from MKV files and extracts their attached fonts.
+* **Right-to-left text**: handles RTL text in the grid, the editor and the spellchecker.
 
-You can download the latest beta version of HikariSub from the link below.
+### Workspace
 
-[**Download HikariSub Beta**](https://github.com/altqx/hikari/actions/workflows/build.yml?query=branch%3Amaster)
+* **Tabs**: opens any number of subtitle files in tabs, each with its own video and audio.
+* **Subtitle comparison**: compares two tabs side by side by times, styles, selected styles, selections or visible lines, and highlights matching and mismatched lines.
+* **Sessions and autosave**: restores the last session or a saved session file. Autosaves keep a configurable number of copies and have their own browser.
+* **Layouts**: switches between all panes, video and subtitles, audio and subtitles, video only or subtitles only.
+* **History**: undo and redo, a browsable history window, and undo back to the last save.
+* **Hotkeys**: every action can be remapped, with separate global, grid, editor, audio and video scopes, and automation macros can have hotkeys too.
+* **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
+* **Localisation**: the interface is translated into 15 languages.
+* **Windows integration**: registers file associations for subtitle and video types, and checks for updates.
 
-The Automation 4 library and the themes are tracked in this repository; everything else the package needs is either built here or fetched from pinned sources at build time. Builds are produced by CI on every push to `master`. Open the newest run and download the package for your platform — **`hikarisub-windows-x64`** (a zip holding `HikariSub_x64\` with the executables, the Automation 4 library, dictionaries, translations, the CSRI renderers and the runtimes Windows does not always have) or **`hikarisub-linux-x86_64`** (a tarball and checksum for the Linux runtime). Both builds use the pinned wxWidgets 3.3.3 source. GitHub asks you to sign in before it hands over an artifact, and keeps artifacts for 90 days.
+### Subtitle grid
 
-**Please Note**: Beta builds are unstable and intended for testing purposes. Features may be incomplete or contain bugs. If you encounter issues or have feedback, please open an issue at https://github.com/altqx/hikari/issues.
+* **Filtering**: hides comments, selected lines or chosen styles, or shows only unconfirmed or untranslated lines, or only lines visible on the current frame. Filters can be inverted and applied automatically on load.
+* **Trees**: groups lines into named trees with descriptions that can be selected and copied as a unit.
+* **Columns**: any column can be hidden, and a characters-per-second column is available.
+* **Sorting**: sorts all or selected lines by start time, end time, style, actor, effect or layer.
+* **Line operations**: insert before or after at the video time or frame, duplicate, join (keeping the first or last text), merge with the neighbouring line, swap, and copy or paste individual columns.
+* **Splitting**: splits a line at the video time, or into frames, characters, words or line wraps.
+* **Select lines**: selects by text or regular expression in any field, then copies, cuts, deletes or moves the matches.
+* **Find and replace**: searches with regular expressions in chosen fields, in the current file, in all open tabs, or in every subtitle file in a folder, with a results window.
+* **Clean-up**: fixes common minor errors and removes unused styles.
+
+### Editing and translation
+
+* **Editor**: ASS tags, karaoke templates, brackets and misspelled words are highlighted, and there are up to 20 configurable tag buttons.
+* **Bulk tagging**: applies tags and changes to many selected lines at once.
+* **Translation mode**: shows the original text next to the translation, can show the original on the video, and jumps to the next untranslated or unconfirmed line.
+* **Translation alignment**: when pasting a translation over a timed original, lines can be added, deleted or joined on either side until the two match.
+* **Confirmation workflow**: lines stay unconfirmed until you commit them, and there are shortcuts to jump between them.
+* **Spellchecking**: Hunspell with inline suggestions and a spellcheck dialog, plus a replacer for common mistakes that lists each match for review.
+* **Styles**: a style manager with reusable style catalogs, a live preview and font catalogs.
+* **Script tools**: resamples subtitles with or without stretching, warns when the script and video resolutions differ, edits ASS file properties, and can hide tags for plain-text reading.
+
+### Timing
+
+* **Time shifting**: shifts by time or frames, forwards or backwards, on all lines, selected lines, lines from the selection onwards, or chosen styles. It can move start times, end times or both, supports profiles, and can stay in sync across tabs.
+* **Post-processor**: adds lead-in and lead-out, corrects overlapping or improper end times, extends short gaps, and snaps to keyframes.
+* **Keyframes**: loads keyframe files, jumps between keyframes, and snaps start and end times to the nearest one.
+* **Quick timing**: makes a line's times continuous with the next or previous line, takes start and end times from the video, and changes the FPS.
+
+### Audio
+
+* **Displays**: waveform or spectrum, with optional speech-frequency enhancement, keyframe and second markers, and a time readout next to the cursor.
+* **Playback controls**: plays before or after the markers, the first or last 500 ms, to the end, or the active line, and can follow the audio during playback.
+* **Sources**: loads audio files or audio from a video, optionally into RAM, with an audio delay setting, a disk cache, and a blank 2h30m track for timing without audio.
+* **Snapping**: snaps to keyframes and to other lines, with linked volume and horizontal stretch sliders.
+* **Karaoke**: splits syllables automatically and edits them on the waveform.
+
+### Video
+
+* **Player**: frame-accurate FFMS2 playback with optional GPU colour conversion, DirectShow on Windows and GStreamer on Linux.
+* **Subtitle renderers**: libass, or xy-VSFilter through CSRI.
+* **Zoom**: zooms into the video, including in fullscreen, for precise clips and drawings.
+* **Fullscreen player**: chapters, next and previous file, volume, aspect ratio and a progress bar.
+* **Frames**: saves a frame as PNG or copies it to the clipboard, with or without subtitles.
+* **Line sync**: seeks the video when you click or edit a line, and can play the line afterwards. When to seek and what to play are both configurable.
+* **Dummy video**: a placeholder video for typesetting without the real source.
+
+### Visual typesetting
+
+* **Position**: drags `\pos` with an alignment pointer, or places the text inside a drawn rectangle.
+* **Movement**: edits `\move` directly, or sets it from two points on different frames.
+* **Rotation**: Z and X/Y rotation around `\org`, including an angle taken from two points, and can keep drawings in place.
+* **Scaling**: scales by dragging or by drawing a rectangle, optionally keeping proportions.
+* **Clips**: rectangular and vector `\clip`/`\iclip` built from lines, B-splines and separate points, with inversion.
+* **Vector drawings**: edits `\p` drawings, with a library of reusable ASS drawings.
+* **Move all**: moves positions, `\move` points, `\org`, clips and drawings together across lines.
+* **All tags (Hydra)**: edits any listed tag visually, with gradients and multiply modes for text and lines.
+* **Shifters**: the position shifter and the scale-and-rotation shifter apply one adjustment across many lines.
+
+### Fonts
+
+* **Font collector**: checks that every used font is installed, copies the fonts to a folder, packs them into a ZIP or muxes them into an MKV with mkvmerge.
+* **Font sources**: extracts fonts from a loaded MKV and can use an external fonts folder.
+
+### Automation
+
+* **Automation 4**: runs Automation 4 Lua scripts on LuaJIT, ships the Aegisub automation library, and works with [DependencyControl](https://github.com/TypesettingTools/DependencyControl).
+* **Script management**: autoloads scripts, maps macro hotkeys, reruns the last script, and has a compatibility mode for older scripts.
+
+### Platforms
+
+* **Windows x64**: the full-featured build, including DirectShow, DirectSound and Direct3D 9.
+* **Linux**: built on wxGTK and GStreamer.
 
 ## Building from Source
 
