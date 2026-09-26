@@ -32,5 +32,5 @@
 // git tag v1.x.x-rc.1
 // git push origin v1.x.x-rc.1
 
-#define VersionHikariSub "1.1.0-rc.1"
-#define NumVersionHikariSub 1,1,0,0
+#define VersionHikariSub "0.0.1"
+#define NumVersionHikariSub 0,0,1,0
