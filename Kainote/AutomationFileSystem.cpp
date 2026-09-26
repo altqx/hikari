@@ -1,5 +1,6 @@
 // Copyright (c) 2014, Thomas Goyne <plorkyeran@aegisub.org>
 // Copyright (c) 2016 - 2026, Marcin Drob
+// Copyright (c) 2026, altqx
 //
 // Permission to use, copy, modify, and distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above

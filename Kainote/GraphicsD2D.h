@@ -5,6 +5,7 @@
 // Modified by:
 // Created:
 // Copyright:   (c) Stefan Csomor
+//              (c) 2026 altqx
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 

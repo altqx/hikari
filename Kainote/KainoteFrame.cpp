@@ -1,5 +1,6 @@
 ﻿/***************************************************************
 * Copyright (c) 2012 - 2026, Marcin Drob
+* Copyright (c) 2026, altqx
 * Name:      kainoteMain.cpp
 * Purpose:   Subtitles editor and player
 * Author:    Bjakja (bjakja@op.pl)

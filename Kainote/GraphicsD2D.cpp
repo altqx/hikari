@@ -4,6 +4,7 @@
 // Author:      Pana Alexandru <astronothing@gmail.com>
 // Created:     2014-05-20
 // Copyright:   (c) 2014 wxWidgets development team
+//              (c) 2026 altqx
 // Licence:     wxWindows licence
 /////////////////////////////////////////////////////////////////////////////
 
