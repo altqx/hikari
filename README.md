@@ -4,6 +4,12 @@ HikariSub is a fork of [Kainote](https://github.com/bjakja/Kainote) by Marcin Dr
 
 HikariSub is a subtitle editor and player for everything from quick fixes to full typesetting. It has a built-in video player, with **FFMS2** for frame-accurate typesetting and timing, **DirectShow** for ordinary playback on Windows, and **GStreamer** on Linux.
 
+## Why a fork?
+
+My work on Kainote was housekeeping, not new features: I updated every dependency to a current release, reworked the build and CI workflow, and refactored and optimised existing code. That changed the project more than the original maintainer wanted, and it wasn't the direction they had in mind for Kainote. We disagreed about it and decided to part ways. HikariSub is where that work continues.
+
+HikariSub will stay actively maintained rather than go dormant, and its dependencies will be kept up to date. It will also gain new features I want that Kainote doesn't have.
+
 ## Features
 
 ### Formats
