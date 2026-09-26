@@ -137,9 +137,16 @@ bool Registry::RemoveFileAssociation(const wxString &extension)
 	return true;
 }
 
+// Video types are no longer offered and their icons are gone from the exe.
+static const wchar_t *const kRetiredExtensions[] = {
+	L".mkv", L".mp4", L".avi", L".ogm", L".wmv", L".asf", L".rmvb",
+	L".rm", L".3gp", L".mpg", L".mpeg", L".ts", L".m2ts",
+};
+
 // Associations written against the old Icons.dll would render blank now that
-// it is gone. Cheap enough to fix on every start.
-void Registry::MigrateFileAssociationIcons()
+// it is gone, and retired video associations would too. Cheap enough to fix on
+// every start.
+void Registry::MigrateFileAssociations()
 {
 	wxStandardPathsBase &paths = wxStandardPaths::Get();
 	wxString pathfull = paths.GetExecutablePath();
@@ -170,6 +177,28 @@ void Registry::MigrateFileAssociationIcons()
 			reg.CloseRegistry();
 			changedAny = true;
 		}
+	}
+
+	for (const wchar_t *extension : kRetiredExtensions){
+		bool success = false;
+		Registry reg(HKEY_CURRENT_USER, mainPath + extension, success, false);
+		if (!success)
+			continue;
+
+		wxString current;
+		reg.GetStringValue(emptyString, current);
+		reg.CloseRegistry();
+
+		// Leave it alone unless it still points at us.
+		if (current != progName + extension)
+			continue;
+
+		if (reg.OpenNewRegistry(HKEY_CURRENT_USER, mainPath + extension, true)){
+			reg.SetStringValue(emptyString, emptyString);
+			reg.CloseRegistry();
+		}
+		RegDeleteTreeW(HKEY_CURRENT_USER, (mainPath + progName + extension).wc_str());
+		changedAny = true;
 	}
 
 	if (changedAny)

@@ -127,7 +127,7 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	if (kaiIcons.GetIconCount())
 		SetIcons(kaiIcons);
 
-	Registry::MigrateFileAssociationIcons();
+	Registry::MigrateFileAssociations();
 #else
 	wxString iconPath = Options.pathfull + wxFileName::GetPathSeparator() + L"HikariSub" +
 		wxFileName::GetPathSeparator() + L"Bitmaps" + wxFileName::GetPathSeparator() + L"KaiSmallIcon.ico";

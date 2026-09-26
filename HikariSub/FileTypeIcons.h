@@ -25,6 +25,7 @@
 // The file type ids go into the registry (negated, as resource ids) by
 // Registry::AddFileAssociation, so they are part of the on-disk format:
 // append, never renumber. They match the ids the retired Icons_dll used.
+// 114-126 were the dropped video types; do not reuse them.
 
 #pragma once
 
@@ -38,18 +39,5 @@
 #define IDI_FILETYPE_SRT       111
 #define IDI_FILETYPE_SUB       112
 #define IDI_FILETYPE_TXT       113
-#define IDI_FILETYPE_MKV       114
-#define IDI_FILETYPE_MP4       115
-#define IDI_FILETYPE_AVI       116
-#define IDI_FILETYPE_OGM       117
-#define IDI_FILETYPE_WMV       118
-#define IDI_FILETYPE_ASF       119
-#define IDI_FILETYPE_RMVB      120
-#define IDI_FILETYPE_RM        121
-#define IDI_FILETYPE_3GP       122
-#define IDI_FILETYPE_MPG       123
-#define IDI_FILETYPE_MPEG      124
-#define IDI_FILETYPE_TS        125
-#define IDI_FILETYPE_M2TS      126
 
-#define IDI_FILETYPE_LAST      126
+#define IDI_FILETYPE_LAST      113

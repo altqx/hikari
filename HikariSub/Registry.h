@@ -35,7 +35,7 @@ public:
 	static void CheckFileAssociation(const wxString *extensions, int numExt, std::vector<bool> &output);
 	//  Repoints any association still naming the retired Icons.dll at the
 	//  executable's own icons. Safe to call on every start.
-	static void MigrateFileAssociationIcons();
+	static void MigrateFileAssociations();
 	static void RefreshRegistry();
 private:
 	HKEY regHKey = NULL;

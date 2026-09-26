@@ -28,12 +28,6 @@
 #include <cstddef>
 #include <iterator>
 
-enum class HikariSubFileKind
-{
-	Subtitle,
-	Video,
-};
-
 struct HikariSubFileType
 {
 	// Extension, dot included.
@@ -46,38 +40,21 @@ struct HikariSubFileType
 	// Untranslated; call HikariSubFileTypeDescription(), which has to run after
 	// wxLocale is up.
 	const wchar_t   *description;
-	HikariSubFileKind  kind;
 };
 
-constexpr size_t kHikariSubFileTypeCount = 18;
+constexpr size_t kHikariSubFileTypeCount = 5;
 
 // Order drives the list in the options page; it no longer reaches the
-// registry. Mime types are what shared-mime-info actually resolves these to,
-// not the spellings you might expect (video/matroska, video/vnd.avi,
-// application/vnd.ms-asf). .txt has none on purpose: it is text/plain, and
-// claiming that would make HikariSub a handler for every text file.
+// registry. .txt has no mime type on purpose: it is text/plain, and claiming
+// that would make HikariSub a handler for every text file.
 
 inline constexpr HikariSubFileType kHikariSubFileTypes[] =
 {
-	{ L".ass",  IDI_FILETYPE_ASS,  "text/x-ssa",                    wxTRANSLATE(L"ASS subtitles"),  HikariSubFileKind::Subtitle },
-	{ L".ssa",  IDI_FILETYPE_SSA,  "text/x-ssa",                    wxTRANSLATE(L"SSA subtitles"),  HikariSubFileKind::Subtitle },
-	{ L".srt",  IDI_FILETYPE_SRT,  "application/x-subrip",          wxTRANSLATE(L"SRT subtitles"),  HikariSubFileKind::Subtitle },
-	{ L".sub",  IDI_FILETYPE_SUB,  "text/x-microdvd",               wxTRANSLATE(L"SUB subtitles"),  HikariSubFileKind::Subtitle },
-	{ L".txt",  IDI_FILETYPE_TXT,  nullptr,                         wxTRANSLATE(L"TXT subtitles"),  HikariSubFileKind::Subtitle },
-	{ L".mkv",  IDI_FILETYPE_MKV,  "video/matroska",                wxTRANSLATE(L"Video MKV"),   HikariSubFileKind::Video    },
-	{ L".mp4",  IDI_FILETYPE_MP4,  "video/mp4",                     wxTRANSLATE(L"Video MP4"),   HikariSubFileKind::Video    },
-	{ L".avi",  IDI_FILETYPE_AVI,  "video/vnd.avi",                 wxTRANSLATE(L"Video AVI"),   HikariSubFileKind::Video    },
-	{ L".ogm",  IDI_FILETYPE_OGM,  "video/x-ogm+ogg",               wxTRANSLATE(L"Video OGM"),   HikariSubFileKind::Video    },
-	{ L".wmv",  IDI_FILETYPE_WMV,  "video/x-ms-wmv",                wxTRANSLATE(L"Video WMV"),   HikariSubFileKind::Video    },
-	{ L".asf",  IDI_FILETYPE_ASF,  "application/vnd.ms-asf",        wxTRANSLATE(L"Video ASF"),   HikariSubFileKind::Video    },
-	{ L".rmvb", IDI_FILETYPE_RMVB, "application/vnd.rn-realmedia",  wxTRANSLATE(L"Video RMVB"),  HikariSubFileKind::Video    },
-	{ L".rm",   IDI_FILETYPE_RM,   "application/vnd.rn-realmedia",  wxTRANSLATE(L"Video RM"),    HikariSubFileKind::Video    },
-	{ L".3gp",  IDI_FILETYPE_3GP,  "video/3gpp",                    wxTRANSLATE(L"Video 3GP"),   HikariSubFileKind::Video    },
-	{ L".mpg",  IDI_FILETYPE_MPG,  "video/mpeg",                    wxTRANSLATE(L"Video MPG"),   HikariSubFileKind::Video    },
-	{ L".mpeg", IDI_FILETYPE_MPEG, "video/mpeg",                    wxTRANSLATE(L"Video MPEG"),  HikariSubFileKind::Video    },
-	// .ts collides with Qt Linguist and TypeScript at the same glob weight.
-	{ L".ts",   IDI_FILETYPE_TS,   "video/mp2t",                    wxTRANSLATE(L"Video TS"),    HikariSubFileKind::Video    },
-	{ L".m2ts", IDI_FILETYPE_M2TS, "video/mp2t",                    wxTRANSLATE(L"Video M2TS"),  HikariSubFileKind::Video    },
+	{ L".ass",  IDI_FILETYPE_ASS,  "text/x-ssa",            wxTRANSLATE(L"ASS subtitles") },
+	{ L".ssa",  IDI_FILETYPE_SSA,  "text/x-ssa",            wxTRANSLATE(L"SSA subtitles") },
+	{ L".srt",  IDI_FILETYPE_SRT,  "application/x-subrip",  wxTRANSLATE(L"SRT subtitles") },
+	{ L".sub",  IDI_FILETYPE_SUB,  "text/x-microdvd",       wxTRANSLATE(L"SUB subtitles") },
+	{ L".txt",  IDI_FILETYPE_TXT,  nullptr,                 wxTRANSLATE(L"TXT subtitles") },
 };
 
 // The compiler cannot see resource.rc, so check what it can: ids contiguous

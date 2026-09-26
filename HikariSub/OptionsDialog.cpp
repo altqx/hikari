@@ -968,41 +968,28 @@ OptionsDialog::OptionsDialog(wxWindow* parent)
 		Registry::CheckFileAssociation(extensions, numExtensions, registeredExts);
 
 		wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
-		KaiStaticText *warning = new KaiStaticText(Assocs, -1, 
-			_("WARNING! Behavior differs on each Windows version.\nFor example, on Windows 7 WMP blocked\nthe ability to change video associations."));
-		sizer->Add(warning, 0, wxEXPAND | wxALL, 4);
 		KaiListCtrl *CheckListBox = new KaiListCtrl(Assocs, -1, numExtensions, extensionsDesc);
 		for (int i = 0; i < numExtensions; i++){
 			CheckListBox->GetItem(i, 0)->modified = registeredExts[i];
 		}
-		//type 1 = select all, 2 = select subs, 3 = select video, 4 = deselect all, 
+		//17777 = select all, 17778 = deselect all
 		auto changeSelections = [=](wxCommandEvent &evt){
-			int type = evt.GetId() - 17776;
+			bool select = evt.GetId() == 17777;
 			for (int i = 0; i < numExtensions; i++){
-				// Was "i < 4", which skipped .txt.
-				const HikariSubFileKind kind = kHikariSubFileTypes[i].kind;
-				CheckListBox->GetItem(i, 0)->modified =
-					(type == 1 ||
-					 (type == 2 && kind == HikariSubFileKind::Subtitle) ||
-					 (type == 3 && kind == HikariSubFileKind::Video));
+				CheckListBox->GetItem(i, 0)->modified = select;
 			}
 			CheckListBox->SetModified(true);
 			CheckListBox->Refresh(false);
 		};
 		wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
-		wxBoxSizer *buttonSizer1 = new wxBoxSizer(wxHORIZONTAL);
-		wxString buttonTexts[] = { _("Select all"), _("Select subtitles"), _("Select video"), _("Deselect all") };
-		for (int i = 0; i < 4; i++){
+		wxString buttonTexts[] = { _("Select all"), _("Deselect all") };
+		for (int i = 0; i < 2; i++){
 			MappedButton *btn = new MappedButton(Assocs, 17777 + i, buttonTexts[i]);
-			if (i < 2)
-				buttonSizer->Add(btn, 1, wxALL, 2);
-			else
-				buttonSizer1->Add(btn, 1, wxALL, 2);
+			buttonSizer->Add(btn, 1, wxALL, 2);
 		}
-		Bind(wxEVT_COMMAND_BUTTON_CLICKED, changeSelections, 17777, 17780);
+		Bind(wxEVT_COMMAND_BUTTON_CLICKED, changeSelections, 17777, 17778);
 		sizer->Add(CheckListBox, 1, wxEXPAND | wxALL, 4);
 		sizer->Add(buttonSizer, 0, wxEXPAND /*| wxALIGN_CENTER_VERTICAL*/ | wxALL,2);
-		sizer->Add(buttonSizer1, 0, wxEXPAND /*| wxALIGN_CENTER_VERTICAL*/ | wxALL, 2);
 		ConOpt(CheckListBox, (CONFIG)3000);
 		Assocs->SetSizerAndFit(sizer);
 	}
