@@ -27,3 +27,19 @@ Review: Which direction is the best starting point? What controls, density or co
 Research: [UX patterns](https://github.com/altqx/hikari/blob/4be444f9fc097a9220c59014c973d79083e12bcf/docs/research/ux-patterns.md), [Qt accessibility](https://github.com/altqx/hikari/blob/fb2413d7e98732fe38859268e33f8c0c2eb6eb2e/docs/research/qml-accessibility.md).
 
 Figma Starter is optional for occasional handoff. Human reaction is required before the ticket closes.
+
+## Workspace behavior
+
+Ticket: [Prototype the information architecture: panels, workspaces, home screen](https://github.com/altqx/hikari/issues/31).
+
+Open `workspace-model.html` directly, or use the same server and visit `http://127.0.0.1:8765/workspace-model.html?variant=A`.
+
+- **A / Shared panels:** one application workspace follows the active document's content, selection and media.
+- **B / Document-owned layouts:** each document retains its own panel arrangement.
+- **C / Editing + pinned reference:** a protected comparison view with explicit editing ownership and independent reference selection.
+
+The pure state reducer drives all controls. Guided experiments cover switching documents, protecting reference text, restoring a hidden panel and opening a sample autosave as a separate copy. Presets, saved arrangements, media positions, dirty state and selections stay in memory. Switching model or starting a walkthrough resets the sample. Home is an optional navigation view; it keeps the open documents.
+
+Browser checks exercised shared versus document-owned preset retention, read-only reference text during editing, panel restoration, and recovery-copy creation. Appearance is provisional, not an approved design. This does not prove native docking, screen-reader support, decoding or file compatibility.
+
+Review: Should layouts belong to the application or the document? Should comparison be an optional protected reference view? Which panels should be visible for Timing, Translation and Typesetting, and should Home be optional?
