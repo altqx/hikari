@@ -51,7 +51,7 @@ std::locale create_calendar(std::locale const& in, cdata const& cd) {
 }
 
 // install_message_facet is implemented per backend (std, win32, posix); none is
-// enabled here, and Kainote's messages are its own gettext .mo files.
+// enabled here, and HikariSub's messages are its own gettext .mo files.
 namespace detail {
 std::locale install_message_facet(std::locale const& in, char_facet_t /*type*/,
         util::locale_data const& /*data*/,

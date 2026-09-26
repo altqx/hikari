@@ -8,11 +8,11 @@
       1. git submodule update --init --recursive  (unless -SkipSubmodules)
       2. hydrate.ps1        -- the dependencies that are archives, not submodules
       3. build-wxwidgets.ps1 -- wxWidgets, via the solution wxWidgets itself ships
-      4. gen-gitparams.ps1  -- Kainote/gitparams.h
+      4. gen-gitparams.ps1  -- HikariSub/gitparams.h
 
-    After this, Kainote.sln builds without further setup:
+    After this, HikariSub.sln builds without further setup:
 
-      msbuild Kainote.sln /m /p:Configuration=Release /p:Platform=x64
+      msbuild HikariSub.sln /m /p:Configuration=Release /p:Platform=x64
 
     Every step is safe to re-run: hydrate skips what is already extracted and
     the wxWidgets build is incremental.
@@ -72,6 +72,6 @@ Write-Host ''
 Write-Host 'Ready. Build with:' -ForegroundColor Green
 foreach ($p in $Platform) {
     foreach ($c in $Configuration) {
-        Write-Host ("  msbuild Kainote.sln /m /p:Configuration={0} /p:Platform={1}" -f $c, $p)
+        Write-Host ("  msbuild HikariSub.sln /m /p:Configuration={0} /p:Platform={1}" -f $c, $p)
     }
 }

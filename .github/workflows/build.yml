@@ -60,7 +60,7 @@ jobs:
       # src/YASM.{props,targets,xml} -- that one calls yasm from PATH.  The
       # chocolatey package provides the assembler itself: yasm publishes its
       # Windows build as yasm-1.2.0-win64.exe, not as an installer.
-      # msgfmt compiles Locale/*.po into the .mo files Kainote loads at run time;
+      # msgfmt compiles Locale/*.po into the .mo files HikariSub loads at run time;
       # the pre-build event skips that when msgfmt is missing.  Non-fatal, so a
       # package hiccup costs the artifact its translations, not the build.
       - name: Install gettext
@@ -94,7 +94,7 @@ jobs:
       # which no Windows SDK replaced and no runner image carries.  Its
       # installer fails on modern images (error S1023) because a newer VC++
       # 2010 redistributable is already present, so extract the payload
-      # instead: only Include and Lib are needed.  Kainote.vcxproj reads
+      # instead: only Include and Lib are needed.  HikariSub.vcxproj reads
       # DXSDK_DIR.
       - name: Cache DirectX SDK
         id: dxsdk-cache
@@ -183,7 +183,7 @@ jobs:
 
       - name: Build
         timeout-minutes: 90
-        run: msbuild Kainote.sln /m /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
+        run: msbuild HikariSub.sln /m /v:minimal /p:Configuration=${{ matrix.configuration }} /p:Platform=x64
 
       # The package ships both executables.  The AVX configuration is built here
       # rather than as a solution configuration: MSBuild's mapping of Rel_AVX512
@@ -194,7 +194,7 @@ jobs:
       - name: Build the AVX configuration
         if: matrix.configuration == 'Release'
         timeout-minutes: 60
-        run: msbuild Kainote.sln /m /v:minimal /t:Kainote /p:Configuration=Rel_AVX512 /p:Platform=x64 /p:BuildProjectReferences=false
+        run: msbuild HikariSub.sln /m /v:minimal /t:HikariSub /p:Configuration=Rel_AVX512 /p:Platform=x64 /p:BuildProjectReferences=false
 
 
       # actions/cache only saves when the job succeeds (post-if: success()), and
@@ -237,7 +237,7 @@ jobs:
 
       - name: Check the executable exists
         run: |
-          $exe = "x64\${{ matrix.configuration }}\Kainote.exe"
+          $exe = "x64\${{ matrix.configuration }}\HikariSub.exe"
           if (-not (Test-Path $exe)) { throw "not built: $exe" }
           Get-Item $exe | Format-List Name, Length, LastWriteTime
 
@@ -247,13 +247,13 @@ jobs:
       # from pinned public repositories -- see runtime-assets.json.
       - name: Package the runtime
         if: matrix.configuration == 'Release'
-        run: python .github/scripts/package.py --platform windows --build-dir x64/Release --stage "dist/Kainote_x64" --no-archive
+        run: python .github/scripts/package.py --platform windows --build-dir x64/Release --stage "dist/HikariSub_x64" --no-archive
 
       - name: Upload the package
         if: matrix.configuration == 'Release'
         uses: actions/upload-artifact@v4
         with:
-          name: kainote-windows-x64
+          name: hikarisub-windows-x64
           path: dist
           if-no-files-found: error
 
@@ -333,45 +333,45 @@ jobs:
         run: |
           sudo apt-get install -y --no-install-recommends desktop-file-utils appstream libxml2-utils
           cmake --install build --prefix "$PWD/stage"
-          desktop-file-validate stage/share/applications/io.github.bjakja.Kainote.desktop
-          appstreamcli validate --no-net stage/share/metainfo/io.github.bjakja.Kainote.metainfo.xml
-          xmllint --noout stage/share/mime/packages/kainote.xml
+          desktop-file-validate stage/share/applications/io.github.altqx.HikariSub.desktop
+          appstreamcli validate --no-net stage/share/metainfo/io.github.altqx.HikariSub.metainfo.xml
+          xmllint --noout stage/share/mime/packages/hikarisub.xml
           # Icon= must actually resolve, or the launcher shows a blank tile.
           for size in 16x16 32x32 48x48 64x64 128x128 256x256; do
-            test -f "stage/share/icons/hicolor/$size/apps/kainote.png"
+            test -f "stage/share/icons/hicolor/$size/apps/hikarisub.png"
           done
 
       - name: Check the executable exists
-        run: test -x build/kainote && ls -l build/kainote
+        run: test -x build/hikarisub && ls -l build/hikarisub
 
       - name: Package the runtime
         if: matrix.build_type == 'Release'
         run: |
-          cmake --build build --target kainote_linux_package
+          cmake --build build --target hikarisub_linux_package
           mkdir -p build/package-check
-          tar -xzf build/dist/kainote-linux-x86_64.tar.gz -C build/package-check
-          package=build/package-check/kainote-linux-x86_64
-          test -x "$package/kainote"
+          tar -xzf build/dist/hikarisub-linux-x86_64.tar.gz -C build/package-check
+          package=build/package-check/hikarisub-linux-x86_64
+          test -x "$package/hikarisub"
           test -f "$package/libwx_gtk3u_core-3.3.so.3"
-          test -f "$package/Kainote/Bitmaps/HideTags.png"
+          test -f "$package/HikariSub/Bitmaps/HideTags.png"
           test -f "$package/Automation/automation/Autoload/strip-tags.lua"
           test -f "$package/Themes/DeepDark.txt"
           (cd "$package" && sha256sum -c SHA256SUMS)
-          (cd build/dist && sha256sum -c kainote-linux-x86_64.tar.gz.sha256)
-          spaced_package="build/package-check/kainote with spaces"
+          (cd build/dist && sha256sum -c hikarisub-linux-x86_64.tar.gz.sha256)
+          spaced_package="build/package-check/hikarisub with spaces"
           mv "$package" "$spaced_package"
           XDG_DATA_HOME="$PWD/build/package-check/desktop data" \
             "$spaced_package/install-desktop-integration.sh"
-          desktop="build/package-check/desktop data/applications/io.github.bjakja.Kainote.desktop"
+          desktop="build/package-check/desktop data/applications/io.github.altqx.HikariSub.desktop"
           desktop-file-validate "$desktop"
-          grep -Fx "Exec=\"$PWD/$spaced_package/kainote\" %f" "$desktop"
+          grep -Fx "Exec=\"$PWD/$spaced_package/hikarisub\" %f" "$desktop"
 
       - name: Upload the package
         if: matrix.build_type == 'Release'
         uses: actions/upload-artifact@v4
         with:
-          name: kainote-linux-x86_64
-          path: build/dist/kainote-linux-x86_64.tar.gz*
+          name: hikarisub-linux-x86_64
+          path: build/dist/hikarisub-linux-x86_64.tar.gz*
           if-no-files-found: error
 
   # Runs alongside the builds so a tag that does not match the source fails
@@ -386,12 +386,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Match the tag against VersionKainote
+      - name: Match the tag against VersionHikariSub
         id: version
         run: |
-          version=$(sed -n 's/^#define[[:space:]]*VersionKainote[[:space:]]*"\(.*\)".*/\1/p' Kainote/VersionKainote.h)
+          version=$(sed -n 's/^#define[[:space:]]*VersionHikariSub[[:space:]]*"\(.*\)".*/\1/p' HikariSub/VersionHikariSub.h)
           if [[ "v$version" != "$GITHUB_REF_NAME" ]]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match VersionKainote \"$version\"; tag v$version instead."
+            echo "::error::Tag $GITHUB_REF_NAME does not match VersionHikariSub \"$version\"; tag v$version instead."
             exit 1
           fi
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -415,8 +415,8 @@ jobs:
       - name: Assemble the release files
         run: |
           mkdir release
-          (cd artifacts/kainote-windows-x64 && zip -qr "$OLDPWD/release/Kainote-$VERSION-windows-x64.zip" Kainote_x64)
-          cp artifacts/kainote-linux-x86_64/kainote-linux-x86_64.tar.gz "release/kainote-$VERSION-linux-x86_64.tar.gz"
+          (cd artifacts/hikarisub-windows-x64 && zip -qr "$OLDPWD/release/HikariSub-$VERSION-windows-x64.zip" HikariSub_x64)
+          cp artifacts/hikarisub-linux-x86_64/hikarisub-linux-x86_64.tar.gz "release/hikarisub-$VERSION-linux-x86_64.tar.gz"
           (cd release && sha256sum * > SHA256SUMS && cat SHA256SUMS)
 
       - name: Publish the release

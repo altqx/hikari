@@ -34,7 +34,7 @@ extern "C" {
 #include <windows.h>
 #include <xstring>
 
-//#include "H:\Kainote\Kaiplayer\LogHandler.h"
+//#include "H:\HikariSub\Kaiplayer\LogHandler.h"
 
 #define U_IS_SURROGATE(c) (((c)&0xfffff800)==0xd800)
 

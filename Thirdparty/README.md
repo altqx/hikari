@@ -1,19 +1,19 @@
 # Thirdparty
 
-How Kainote gets its third-party code, and why each library is where it is.
+How HikariSub gets its third-party code, and why each library is where it is.
 
 The two builds source dependencies very differently:
 
 - **Linux** (`CMakeLists.txt`) resolves everything through `pkg-config` against the
   distribution's packages. It reads nothing here except `luabins`,
   `DependencyControl` and the `ffms2` headers.
-- **Windows** (`Kainote.sln`) builds its dependencies from source, using the MSVC
+- **Windows** (`HikariSub.sln`) builds its dependencies from source, using the MSVC
   project files under `Thirdparty/Build/`.
 
 ## First checkout
 
 ```sh
-git clone --recurse-submodules https://github.com/bjakja/Kainote.git
+git clone --recurse-submodules https://github.com/altqx/hikari.git
 # or, in an existing clone:
 git submodule update --init --recursive
 ```
@@ -30,17 +30,17 @@ pwsh -File Thirdparty\bootstrap.ps1
 |---|---|
 | `hydrate.ps1` | Downloads and verifies the dependencies that are archives |
 | `build-wxwidgets.ps1` | Builds wxWidgets with the solution it ships |
-| `gen-gitparams.ps1` | Writes `Kainote/gitparams.h` |
+| `gen-gitparams.ps1` | Writes `HikariSub/gitparams.h` |
 
 Each can also be run on its own.
 
 `build-wxwidgets.ps1` runs `Thirdparty\wxWidgets\build\msw\wx_vc17.sln`, the
 solution wxWidgets itself ships, and leaves the static libraries in
-`lib\vc_x64_lib` (x64) or `lib\vc_lib` (Win32). Kainote does not maintain
+`lib\vc_x64_lib` (x64) or `lib\vc_lib` (Win32). HikariSub does not maintain
 project files for wxWidgets and does not customise its `setup.h`; the stock
 configuration is used.
 
-`Kainote.vcxproj` puts `Thirdparty\wxWidgets\include\msvc` on the include path
+`HikariSub.vcxproj` puts `Thirdparty\wxWidgets\include\msvc` on the include path
 ahead of `include`, so `<wx/setup.h>` resolves to wxWidgets' MSVC helper header.
 That header locates the built `setup.h` for the current platform and emits
 `#pragma comment(lib, ...)` for every wxWidgets library, which is why no wx
@@ -55,12 +55,12 @@ libraries are listed in `AdditionalDependencies`.
 | `libass` | [libass/libass](https://github.com/libass/libass) | `0.17.5` |
 | `Hunspell` | [hunspell/hunspell](https://github.com/hunspell/hunspell) | `v1.7.3` |
 | `wxWidgets` | [wxWidgets/wxWidgets](https://github.com/wxWidgets/wxWidgets) | `v3.3.3` |
-| `ffms2` | **[altqx/ffms2](https://github.com/altqx/ffms2)** | branch `kainote` |
-| `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `kainote` |
+| `ffms2` | **[altqx/ffms2](https://github.com/altqx/ffms2)** | branch `hikarisub` |
+| `xy-VSFilter-xy_sub_filter_rc5` | **[altqx/xy-VSFilter](https://github.com/altqx/xy-VSFilter)** | branch `hikarisub` |
 
 The first five are stock upstream at a release tag, so they point straight at
-upstream. The last two carry Kainote's own changes, so they point at forks whose
-`kainote` branch is upstream plus those changes — see [`PATCHES.md`](PATCHES.md).
+upstream. The last two carry HikariSub's own changes, so they point at forks whose
+`hikarisub` branch is upstream plus those changes — see [`PATCHES.md`](PATCHES.md).
 
 All seven are marked `shallow = true` in `.gitmodules`, so `--recurse-submodules`
 fetches depth-1 rather than full history.
@@ -97,7 +97,7 @@ because a submodule would not work or would not pay:
 | `ffmpeg` | 7.1.1 | **Not source at all: a prebuilt developer package.** Building FFmpeg for MSVC from source needs MSYS2 and a full compile; this is headers, import libraries and DLLs. |
 
 FFmpeg is a *shared* GPL build, so `avcodec-61.dll` and friends are copied next
-to `Kainote.exe` by a post-build step and have to ship with the application.
+to `HikariSub.exe` by a post-build step and have to ship with the application.
 The Linux build already links the distribution's shared FFmpeg, so the two
 platforms now agree. A 32-bit build needs its own package at
 `Thirdparty/ffmpegx32`; `hydrate.ps1` does not fetch one.
@@ -108,7 +108,7 @@ re-extract or `-Only <names>` for a subset.
 
 ## Build glue that lives here
 
-The `Thirdparty/Build/<Name>/` project files are Kainote's own work, not
+The `Thirdparty/Build/<Name>/` project files are HikariSub's own work, not
 upstream's, and are tracked. A few carry configuration upstream would normally
 generate:
 
@@ -133,7 +133,7 @@ generate:
 | Directory | Why |
 |---|---|
 | `luabins` | Three small fixes for modern LuaJIT (`luaL_reg` → `luaL_Reg`, `LUA_LIB`, `LUAI_BITSINT`); upstream is unmaintained |
-| `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models Kainote compiles; pinning the release would lose them |
+| `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models HikariSub compiles; pinning the release would lose them |
 | `BaseClasses` | DirectShow base classes from the Windows SDK samples, locally patched |
 | `DirectX9`, `karahelper`, `DependencyControl`, `LuaJIT`/`luajit` | Windows-only support code |
 

@@ -32,8 +32,8 @@ $ProgressPreference    = 'SilentlyContinue'
 
 # How long any single extractor gets before it is killed and the next one is
 # tried.  Overridable so the fallback path can be exercised in a test.
-$script:ExtractTimeoutSec = if ($env:KAINOTE_EXTRACT_TIMEOUT_SEC) {
-    [int] $env:KAINOTE_EXTRACT_TIMEOUT_SEC
+$script:ExtractTimeoutSec = if ($env:HIKARISUB_EXTRACT_TIMEOUT_SEC) {
+    [int] $env:HIKARISUB_EXTRACT_TIMEOUT_SEC
 } else { 300 }
 
 function Write-Section([string] $Message) {
@@ -149,7 +149,7 @@ function Expand-Tarball {
 
     # 7-Zip needs two passes for .tar.xz: decompress, then untar.
     foreach ($sevenZip in (Get-SevenZipCandidate)) {
-        $mid = Join-Path ([IO.Path]::GetTempPath()) ("kainote-xz-" + [Guid]::NewGuid().ToString('N'))
+        $mid = Join-Path ([IO.Path]::GetTempPath()) ("hikarisub-xz-" + [Guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Force -Path $mid | Out-Null
         try {
             $first = Invoke-Native -FilePath $sevenZip -Arguments @('x', '-y', "-o$mid", $Archive)
@@ -194,7 +194,7 @@ function Expand-Any {
         [int] $Strip = 0
     )
 
-    $staging = Join-Path ([IO.Path]::GetTempPath()) ("kainote-hydrate-" + [Guid]::NewGuid().ToString('N'))
+    $staging = Join-Path ([IO.Path]::GetTempPath()) ("hikarisub-hydrate-" + [Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Force -Path $staging | Out-Null
     try {
         if ($Archive -like '*.zip') {

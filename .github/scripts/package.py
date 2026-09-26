@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Assemble a runnable Kainote package from a build tree.
+"""Assemble a runnable HikariSub package from a build tree.
 
 Used by .github/workflows/build.yml for Windows. Linux packages are built by
-the CMake kainote_linux_package target so runtime libraries and bitmap assets
+the CMake hikarisub_linux_package target so runtime libraries and bitmap assets
 are included. The Automation 4 library and the themes are tracked in this
 repository (see Automation/README.md)
 and copied from the source tree; the dictionaries and the VSFiltermod renderer
@@ -33,8 +33,8 @@ HERE = Path(__file__).resolve().parent
 MANIFEST = HERE / "runtime-assets.json"
 
 # what the build tree calls the CSRI renderer -> what the package calls it
-CSRI_RENDERERS = {"xy-Vsfilter.dll": "xy-VSFilter_kainote.dll"}
-# Kainote's DependencyControl modules: DLL name -> package subdirectory.  The
+CSRI_RENDERERS = {"xy-Vsfilter.dll": "xy-VSFilter_hikarisub.dll"}
+# HikariSub's DependencyControl modules: DLL name -> package subdirectory.  The
 # subdirectory has to match the name requireffi is given ("PT.PreciseTimer.
 # PreciseTimer" -> PT/PreciseTimer/PreciseTimer.dll), or the module is not found.
 LOCAL_MODULES = {"BadMutex.dll": "BM/BadMutex",
@@ -109,7 +109,7 @@ def copy_automation(repo_root: Path, stage: Path) -> int:
 def find_output(build_dir: Path, name: str) -> Path | None:
     """Locate a build output, wherever its project puts it.
 
-    The projects disagree about OutDir: Kainote writes into the platform folder,
+    The projects disagree about OutDir: HikariSub writes into the platform folder,
     the CSRI renderer into a csri subfolder, and the DependencyControl modules
     into Automation/automation/Include/<module>/<name>. Searching keeps the
     packaging independent of that.
@@ -131,10 +131,10 @@ def copy_binaries(platform: str, build_dir: Path, stage: Path) -> tuple[list[str
     taken: list[str] = []
     missing: list[str] = []
     if platform == "windows":
-        wanted = ["KaiNote.exe", "KaiNote.pdb", "ffms2.dll",
-                  "KaiNote_AVX.exe", "KaiNote_AVX.pdb"]
+        wanted = ["HikariSub.exe", "HikariSub.pdb", "ffms2.dll",
+                  "HikariSub_AVX.exe", "HikariSub_AVX.pdb"]
     else:
-        wanted = ["kainote"]
+        wanted = ["hikarisub"]
     for name in wanted:
         src = find_output(build_dir, name)
         if src:
@@ -229,7 +229,7 @@ def copy_dictionaries(repo_root: Path, stage: Path) -> int:
 
 
 def compile_locales(repo_root: Path, stage: Path) -> int:
-    """Locale/*.po -> Locale/<lang>/LC_MESSAGES/kainote.mo via tools/compile_catalogs.py."""
+    """Locale/*.po -> Locale/<lang>/LC_MESSAGES/hikarisub.mo via tools/compile_catalogs.py."""
     sys.path.insert(0, str(repo_root / "tools"))
     try:
         from compile_catalogs import compile_catalogs
@@ -321,7 +321,7 @@ def copy_runtimes(repo_root: Path, stage: Path) -> tuple[list[str], list[str]]:
 def write_notices(repo_root: Path, stage: Path) -> Path:
     """List where every non-built file in the package came from."""
     data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-    lines = ["Kainote runtime data and where it comes from.", ""]
+    lines = ["HikariSub runtime data and where it comes from.", ""]
     lines.append("Automation 4 library and themes: tracked in this repository,")
     lines.append("  assembled from the upstream revisions named in Automation/README.md.")
     lines.append("")
@@ -331,7 +331,7 @@ def write_notices(repo_root: Path, stage: Path) -> Path:
     if (stage / "Csri").is_dir():
         lines.append("")
         lines.append("CSRI renderers:")
-        lines.append("  Csri/xy-VSFilter_kainote.dll - built from this repository's VSFilter")
+        lines.append("  Csri/xy-VSFilter_hikarisub.dll - built from this repository's VSFilter")
         for entry in data["external_binaries"]:
             lines.append(f"  {entry['dest']} - {entry['source']}")
     shipped_ffmpeg = sorted(p.name for lib in FFMPEG_LIBS for p in stage.glob(f"{lib}-*.dll"))
@@ -387,7 +387,7 @@ def main() -> int:
     ap.add_argument("--no-archive", action="store_true")
     args = ap.parse_args()
     if args.platform == "linux":
-        ap.error("Linux packages use: cmake --build <build-dir> --target kainote_linux_package")
+        ap.error("Linux packages use: cmake --build <build-dir> --target hikarisub_linux_package")
 
     repo_root = Path(args.repo_root).resolve()
     build_dir = Path(args.build_dir).resolve()

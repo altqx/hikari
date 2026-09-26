@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Generates Kainote/gitparams.h with the current git commit and branch.
+    Generates HikariSub/gitparams.h with the current git commit and branch.
 
 .DESCRIPTION
     config.cpp consumes GIT_CUR_COMMIT / GIT_BRANCH (guarded by #ifdef
@@ -44,7 +44,7 @@ if ([string]::IsNullOrEmpty($commit)) {
     $content = "#pragma once`n#define GIT_BRANCH $branch`n#define GIT_CUR_COMMIT $commit`n"
 }
 
-$out = Join-Path $SourceRoot 'Kainote\gitparams.h'
+$out = Join-Path $SourceRoot 'HikariSub\gitparams.h'
 $existing = ''
 if (Test-Path -LiteralPath $out) {
     $existing = [System.IO.File]::ReadAllText($out)

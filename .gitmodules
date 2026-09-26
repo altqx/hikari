@@ -18,10 +18,12 @@
 	path = Thirdparty/ffms2
 	url = https://github.com/altqx/ffms2.git
 	shallow = true
+	branch = hikarisub
 [submodule "Thirdparty/xy-VSFilter-xy_sub_filter_rc5"]
 	path = Thirdparty/xy-VSFilter-xy_sub_filter_rc5
 	url = https://github.com/altqx/xy-VSFilter.git
 	shallow = true
+	branch = hikarisub
 [submodule "Thirdparty/wxWidgets"]
 	path = Thirdparty/wxWidgets
 	url = https://github.com/wxWidgets/wxWidgets.git

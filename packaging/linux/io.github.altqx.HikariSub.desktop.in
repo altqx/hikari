@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=HikariSub
+GenericName=Subtitle Editor
+GenericName[pl]=Edytor napisów
+Comment=Edit and time subtitles
+Comment[pl]=Edycja i synchronizacja napisów
+Exec=@HIKARISUB_DESKTOP_EXEC@ %f
+Icon=hikarisub
+Terminal=false
+Categories=AudioVideo;AudioVideoEditing;
+Keywords=subtitle;subtitles;ass;ssa;srt;typesetting;karaoke;
+MimeType=@HIKARISUB_DESKTOP_MIMETYPES@
+StartupNotify=true
+StartupWMClass=HikariSub

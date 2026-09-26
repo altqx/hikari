@@ -1,6 +1,6 @@
 {
   "comment": [
-    "Third-party sources the Windows (Kainote.sln) build fetches as archives.",
+    "Third-party sources the Windows (HikariSub.sln) build fetches as archives.",
     "",
     "Most third-party code is a git submodule instead -- see Thirdparty/README.md.",
     "These stay archives because a submodule would not work or would not pay:",
@@ -85,7 +85,7 @@
       "strip": 1,
       "marker": "include/libavcodec/avcodec.h",
       "license": "GPL-3.0-or-later",
-      "note": "Prebuilt shared GPL build: include/ headers, lib/*.lib MSVC import libraries, bin/*.dll runtime. ffms2.vcxproj links avcodec/avformat/avutil/swscale/swresample from lib/, and Kainote copies bin/*.dll next to the executable. A GPL build is required: Kainote is GPL-3."
+      "note": "Prebuilt shared GPL build: include/ headers, lib/*.lib MSVC import libraries, bin/*.dll runtime. ffms2.vcxproj links avcodec/avformat/avutil/swscale/swresample from lib/, and HikariSub copies bin/*.dll next to the executable. A GPL build is required: HikariSub is GPL-3."
     }
   ]
 }

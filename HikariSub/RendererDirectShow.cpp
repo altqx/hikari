@@ -1,0 +1,841 @@
+﻿//  Copyright (c) 2020 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+
+#include "config.h"
+#include "RendererVideo.h"
+#include "D3D9Device.h"
+#include "RendererDirectShow.h"
+#ifndef _WIN32
+
+RendererDirectShow::RendererDirectShow(VideoBox *control, bool visualDisabled)
+	: RendererVideo(control, visualDisabled)
+	, m_DirectShowPlayer(nullptr)
+{
+}
+
+RendererDirectShow::~RendererDirectShow()
+{
+	if (m_SubtitlesBuffer)
+		delete[] m_SubtitlesBuffer;
+}
+
+bool RendererDirectShow::OpenFile(const wxString&, int, bool, bool) { return false; }
+bool RendererDirectShow::OpenSubs(int, bool, wxString*, bool) { return false; }
+void RendererDirectShow::StartStream() {}
+void RendererDirectShow::PauseStream() {}
+void RendererDirectShow::StopStream() {}
+void RendererDirectShow::SetPosition(int, bool, int) {}
+int RendererDirectShow::GetDuration() { return 0; }
+int RendererDirectShow::GetVolume() { return 0; }
+void RendererDirectShow::GetVideoSize(int *width, int *height) { if (width) *width = 0; if (height) *height = 0; }
+void RendererDirectShow::GetFpsnRatio(float *fps, long *arx, long *ary) { if (fps) *fps = 0; if (arx) *arx = 0; if (ary) *ary = 0; }
+void RendererDirectShow::SetVolume(int) {}
+bool RendererDirectShow::DrawTexture(byte*, bool) { return false; }
+void RendererDirectShow::Render(bool, bool) {}
+void RendererDirectShow::RecreateSurface() {}
+void RendererDirectShow::EnableStream(long) {}
+void RendererDirectShow::ChangeVobsub(bool) {}
+wxArrayString RendererDirectShow::GetStreams() { return {}; }
+byte *RendererDirectShow::GetFrameWithSubs(bool, bool *del) { if (del) *del = false; return nullptr; }
+bool RendererDirectShow::EnumFilters(Menu*) { return false; }
+bool RendererDirectShow::FilterConfig(wxString, int, wxPoint) { return false; }
+bool RendererDirectShow::InitRendererDX() { return false; }
+void RendererDirectShow::ClearObject() {}
+void RendererDirectShow::SetupVertices() {}
+void RendererDirectShow::ZoomChanged() {}
+void RendererDirectShow::WindowResized() {}
+
+#else
+#include "VisualDrawingShapes.h"
+#include "SubtitlesProviderManager.h"
+#include "dshowplayer.h"
+#include "Visuals.h"
+#include "DshowRenderer.h"
+#include "hikarisubApp.h"
+#include "CsriMod.h"
+#include "OpennWrite.h"
+#include "Notebook.h"
+#include "SubsGrid.h"
+#include "VideoFullscreen.h"
+
+
+const IID IID_IDirectXVideoProcessorService = { 0xfc51a552, 0xd5e7, 0x11d9, { 0xaf, 0x55, 0x00, 0x05, 0x4e, 0x43, 0xff, 0x02 }};
+
+
+RendererDirectShow::RendererDirectShow(VideoBox *control, bool visualDisabled)
+	: RendererVideo(control, visualDisabled)
+	, m_DirectShowPlayer(nullptr)
+{
+
+}
+
+RendererDirectShow::~RendererDirectShow()
+{
+	Stop();
+
+	m_State = None;
+	SAFE_DELETE(m_DirectShowPlayer);
+	if (m_SubtitlesBuffer)
+		delete[] m_SubtitlesBuffer;
+
+	
+}
+
+bool RendererDirectShow::InitRendererDX()
+{
+	HR(GetBackBuffer(&m_BlackBarsSurface), _("Cannot create surface"));
+	HR(DXVA2CreateVideoService(m_D3DDevice, IID_IDirectXVideoProcessorService, (VOID**)&m_DXVAService),
+		_("Cannot create DXVA processor service"));
+	DXVA2_VideoDesc videoDesc;
+	videoDesc.SampleWidth = m_Width;
+	videoDesc.SampleHeight = m_Height;
+	videoDesc.SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+	videoDesc.SampleFormat.NominalRange = DXVA2_NominalRange_0_255;
+	videoDesc.SampleFormat.VideoTransferMatrix = m_VideoMatrix;
+	videoDesc.SampleFormat.VideoLighting = DXVA2_VideoLighting_dark;
+	videoDesc.SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+	videoDesc.SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+	videoDesc.SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+	videoDesc.Format = D3DFMT_X8R8G8B8;
+	videoDesc.InputSampleFreq.Numerator = 60;
+	videoDesc.InputSampleFreq.Denominator = 1;
+	videoDesc.OutputFrameFreq.Numerator = 60;
+	videoDesc.OutputFrameFreq.Denominator = 1;
+
+	UINT count, count1;
+	GUID* guids = nullptr;
+
+	HR(m_DXVAService->GetVideoProcessorDeviceGuids(&videoDesc, &count, &guids), _("Cannot get DXVA GUIDs"));
+	D3DFORMAT* formats = nullptr;
+	bool isgood = false;
+	GUID dxvaGuid;
+	DXVA2_VideoProcessorCaps DXVAcaps;
+	HRESULT hr;
+	for (UINT i = 0; i < count; i++){
+		hr = m_DXVAService->GetVideoProcessorRenderTargets(guids[i], &videoDesc, &count1, &formats);
+		if (FAILED(hr)){ KaiLog(_("Cannot enumerate DXVA formats")); continue; }
+		for (UINT j = 0; j < count1; j++)
+		{
+			if (formats[j] == D3DFMT_X8R8G8B8)
+			{
+				isgood = true; //break;
+			}
+
+		}
+
+		CoTaskMemFree(formats);
+		if (!isgood){ KaiLog(_("This format is not supported by DXVA")); continue; }
+		isgood = false;
+
+		hr = m_DXVAService->GetVideoProcessorCaps(guids[i], &videoDesc, D3DFMT_X8R8G8B8, &DXVAcaps);
+		if (FAILED(hr)){ KaiLog(_("GetVideoProcessorCaps failed")); continue; }
+		if (DXVAcaps.NumForwardRefSamples > 0 || DXVAcaps.NumBackwardRefSamples > 0){
+			continue;
+		}
+
+		//if(DXVAcaps.DeviceCaps!=4){continue;}//DXVAcaps.InputPool
+		hr = m_DXVAService->CreateSurface(m_Width, m_Height, 0, m_D3DFormat, D3DPOOL_DEFAULT, 0,
+			DXVA2_VideoSoftwareRenderTarget, &m_MainSurface, nullptr);
+		if (FAILED(hr)){ KaiLog(wxString::Format(_("Cannot create DXVA surface %i"), (int)i)); continue; }
+
+		hr = m_DXVAService->CreateVideoProcessor(guids[i], &videoDesc, D3DFMT_X8R8G8B8, 0, &m_DXVAProcessor);
+		if (FAILED(hr)){ KaiLog(_("Cannot create DXVA processor")); continue; }
+		dxvaGuid = guids[i]; isgood = true;
+		break;
+	}
+	CoTaskMemFree(guids);
+	PTR(isgood, L"Nie ma żadnych guidów");
+
+
+	HR(hr, _("One of the DirectX vertices settings failed"));
+
+
+	int windowWidth = m_BackBufferRect.right- m_BackBufferRect.left;
+	int windowHeight = m_BackBufferRect.bottom - m_BackBufferRect.top;
+	m_WindowWidth = m_Width;//windowWidth;//
+	m_WindowHeight = m_Height;//windowHeight;//
+	filtering = (windowWidth == m_Width && windowHeight == m_Height) ? D3DTEXF_POINT : D3DTEXF_LINEAR;
+
+	m_LastBufferSize = m_WindowWidth * m_WindowHeight * 4;
+	if (m_SubtitlesBuffer)
+		delete[] m_SubtitlesBuffer;
+	m_SubtitlesBuffer = new unsigned char[m_LastBufferSize];
+	m_SubtitlesUploadAll = true;
+	
+	
+	m_SubsProvider->SetVideoParameters(wxSize(m_WindowWidth, m_WindowHeight), ARGB32, m_SwapFrame);
+
+	
+
+	SetupVertices();
+
+	
+	HR(m_D3DDevice->CreateTexture(m_WindowWidth, m_WindowHeight, 1,
+		D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &m_SubtitlesTexture, nullptr),
+		_("Cannot create subtitle texture"));
+
+	HR(m_D3DDevice->CreateTexture(m_WindowWidth, m_WindowHeight, 1,
+		D3DUSAGE_DYNAMIC, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &m_BlitTexture, nullptr),
+		_("Cannot create subtitle texture"));
+
+	
+	return true;
+}
+
+bool RendererDirectShow::DrawTexture(byte *nframe, bool copy)
+{
+
+	wxCriticalSectionLocker lock(m_MutexRendering);
+	byte *fdata = nullptr;
+	byte *texbuf;
+	byte bytes = (m_Format == RGB32) ? 4 : (m_Format == YUY2) ? 2 : 1;
+
+	D3DLOCKED_RECT d3dlr;
+	D3DLOCKED_RECT d3dSubslr;
+
+	if (nframe) {
+		fdata = nframe;
+		if (copy) {
+			byte *cpy = m_FrameBuffer;
+			memcpy(cpy, fdata, m_Height * m_Pitch);
+		}
+	}
+	else {
+		KaiLog(_("No frame buffer")); return false;
+	}
+	// only what changed is cleared, drawn and uploaded
+	wxRect full(0, 0, m_WindowWidth, m_WindowHeight);
+	wxRect changedRect;
+	bool changed = m_SubsProvider->DrawOverlay(m_SubtitlesBuffer, m_Time, &changedRect);
+	if (m_SubtitlesUploadAll) {
+		changedRect = full;
+		changed = true;
+		m_SubtitlesUploadAll = false;
+	}
+	changedRect.Intersect(full);
+	if (changed && !changedRect.IsEmpty()) {
+		const wxRect &dirty = changedRect;
+		RECT dirtySubs = { dirty.x, dirty.y, dirty.x + dirty.width, dirty.y + dirty.height };
+		HR(m_SubtitlesTexture->LockRect(0, &d3dSubslr, &dirtySubs, 0), _("Cannot lock texture buffer"));
+		int pitch = m_WindowWidth * 4;
+		const unsigned char *src = m_SubtitlesBuffer + dirty.y * pitch + dirty.x * 4;
+		unsigned char *dst = static_cast<unsigned char*>(d3dSubslr.pBits);
+		for (int y = 0; y < dirty.height; y++)
+			memcpy(dst + y * d3dSubslr.Pitch, src + y * pitch, dirty.width * 4);
+		HR(m_SubtitlesTexture->UnlockRect(0), _("Cannot unlock subtitle texture buffer"));
+		HR(m_D3DDevice->UpdateTexture(m_SubtitlesTexture, m_BlitTexture), L"Cannot update subtitles texture");
+	}
+
+	RECT dirty = { 0, 0, m_Width, m_Height };
+#ifdef byvertices
+	HR(m_MainSurface->LockRect(&d3dlr, 0, 0), _("Cannot lock texture buffer"));//D3DLOCK_NOSYSLOCK
+#else
+	HR(m_MainSurface->LockRect(&d3dlr, &dirty, 0/*D3DLOCK_NOSYSLOCK*/), _("Cannot lock texture buffer"));
+#endif
+	texbuf = static_cast<byte *>(d3dlr.pBits);
+
+	diff = d3dlr.Pitch - (m_Width*bytes);
+	if (m_SwapFrame) {
+		int framePitch = m_Width * bytes;
+		byte * reversebyte = fdata + (framePitch * m_Height) - framePitch;
+		for (int j = 0; j < m_Height; ++j) {
+			memcpy(texbuf, reversebyte, framePitch);
+			texbuf += framePitch + diff;
+			reversebyte -= framePitch;
+		}
+	}
+	else if (!diff) {
+		memcpy(texbuf, fdata, (m_Height * m_Pitch));
+	}
+	else if (diff > 0) {
+
+		if (m_Format >= YV12) {
+			for (int i = 0; i < m_Height; ++i) {
+				memcpy(texbuf, fdata, m_Width);
+				texbuf += (m_Width + diff);
+				fdata += m_Width;
+			}
+			int hheight = m_Height / 2;
+			int fwidth = (m_Format == NV12) ? m_Width : m_Width / 2;
+			int fdiff = (m_Format == NV12) ? diff : diff / 2;
+
+			for (int i = 0; i < hheight; i++) {
+				memcpy(texbuf, fdata, fwidth);
+				texbuf += (fwidth + fdiff);
+				fdata += fwidth;
+			}
+			if (m_Format < NV12) {
+				for (int i = 0; i < hheight; ++i) {
+					memcpy(texbuf, fdata, fwidth);
+					texbuf += (fwidth + fdiff);
+					fdata += fwidth;
+				}
+			}
+		}
+		else
+		{
+			int fwidth = m_Width * bytes;
+			for (int i = 0; i < m_Height; i++) {
+				memcpy(texbuf, fdata, fwidth);
+				texbuf += (fwidth + diff);
+				fdata += fwidth;
+			}
+		}
+
+	}
+	else {
+		KaiLog(wxString::Format(L"bad pitch diff %i pitch %i dxpitch %i", diff, m_Pitch, d3dlr.Pitch));
+	}
+
+	HR(m_MainSurface->UnlockRect(), _("Cannot unlock texture buffer"));
+
+	return true;
+}
+
+void RendererDirectShow::Render(bool redrawSubsOnFrame, bool wait)
+{
+	wxCriticalSectionLocker lock(m_MutexRendering);
+	m_VideoResized = false;
+	HRESULT hr = S_OK;
+
+	if (m_DeviceLost)
+	{
+		if (m_D3DDevice)
+			hr = m_D3DDevice->TestCooperativeLevel();
+		if (m_D3DDevice && FAILED(hr) && D3DERR_DEVICENOTRESET != hr)
+			return;
+		if (!m_D3DDevice || FAILED(hr))
+		{
+			{
+				Clear(true);
+				// try again at the next render rather than stalling this one
+				if (!InitDX())
+					return;
+				RecreateSurface();
+				if (m_Visual){
+					m_Visual->SizeChanged(wxRect(m_BackBufferRect.left, m_BackBufferRect.top,
+						m_BackBufferRect.right, m_BackBufferRect.bottom), m_D3DLine, m_D3DFont, m_D3DDevice);
+				}
+				m_DeviceLost = false;
+				Render(true, false);
+				return;
+			}
+			return;
+		}
+		m_DeviceLost = false;
+	}
+
+	if (!BeginFrame()){
+		Render(true, false);
+		return;
+	}
+	bool isLibass = m_SubsProvider->IsLibass();
+	hr = m_D3DDevice->Clear(0, nullptr, D3DCLEAR_TARGET, D3DCOLOR_XRGB(0, 0, 0), 1.0f, 0);
+
+	DXVA2_VideoProcessBltParams blt = { 0 };
+	DXVA2_VideoSample samples = { 0 };
+	LONGLONG start_100ns = m_Time * 10000;
+	LONGLONG end_100ns = start_100ns + 170000;
+	blt.TargetFrame = start_100ns;
+	blt.TargetRect = m_WindowRect;
+
+	// DXVA2_VideoProcess_Constriction
+	blt.ConstrictionSize.cx = m_WindowRect.right - m_WindowRect.left;
+	blt.ConstrictionSize.cy = m_WindowRect.bottom - m_WindowRect.top;
+	DXVA2_AYUVSample16 color;
+
+	color.Cr = 0x8000;
+	color.Cb = 0x8000;
+	color.Y = 0x0F00;
+	color.Alpha = 0xFFFF;
+	blt.BackgroundColor = color;
+
+	// DXVA2_VideoProcess_YUV2RGBExtended
+	blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+	//big wtf looks like bad enumerator name and it used video range
+	blt.DestFormat.NominalRange = DXVA2_NominalRange_0_255/*DXVA2_NominalRange_16_235*/;
+	blt.DestFormat.VideoTransferMatrix = m_VideoMatrix;
+	blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dark;
+	blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+	blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+	blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+	// Initialize main stream video sample.
+	//
+	samples.Start = start_100ns;
+	samples.End = end_100ns;
+
+	// DXVA2_VideoProcess_YUV2RGBExtended
+	samples.SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_MPEG2;
+	//big wtf looks like bad enumerator name and it used video range
+	samples.SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
+	samples.SampleFormat.VideoTransferMatrix = m_VideoMatrix;
+	samples.SampleFormat.VideoLighting = DXVA2_VideoLighting_dark;
+	samples.SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+	samples.SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+	samples.SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+	samples.SrcSurface = m_MainSurface;
+
+	samples.SrcRect = m_MainStreamRect;
+
+	samples.DstRect = m_BackBufferRect;
+
+	// DXVA2_VideoProcess_PlanarAlpha
+	samples.PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
+
+	hr = m_DXVAProcessor->VideoProcessBlt(m_BlackBarsSurface, &blt, &samples, 1, nullptr);
+	
+
+	/*hr = m_D3DDevice->StretchRect(m_MainSurface, &m_MainStreamRect, m_BlackBarsSurface, &m_BackBufferRect, D3DTEXF_LINEAR);
+	if (FAILED(hr)) { KaiLog(_("Nie można nałożyć powierzchni na siebie")); }*/
+	
+	hr = m_D3DDevice->BeginScene();
+
+	
+	//hr = m_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_MIRROR);
+	//hr = m_D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_MIRROR);
+	hr = m_D3DDevice->SetSamplerState(0, D3DSAMP_MINFILTER, filtering);
+	hr = m_D3DDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, filtering);
+
+	hr = m_D3DDevice->SetTexture(0, m_BlitTexture);
+	if (isLibass)
+		hr = m_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_ONE);
+	hr = m_D3DDevice->SetFVF(D3DFVF_CUSTOMVERTEX);
+	hr = m_D3DDevice->SetStreamSource(0, m_D3DVertex, 0, sizeof(CUSTOMVERTEX));
+	hr = m_D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+	// blend alpha for visuals it's changed for libass
+	hr = m_D3DDevice->SetRenderState(D3DRS_SRCBLEND, D3DBLEND_SRCALPHA);
+	// set texture to null to show visuals primitive
+	hr = m_D3DDevice->SetTexture(0, nullptr);
+	hr = m_D3DDevice->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE);
+	
+#if byvertices
+
+
+	// Render the vertex buffer contents
+	hr = m_D3DDevice->SetStreamSource(0, vertex, 0, sizeof(CUSTOMVERTEX));
+	hr = m_D3DDevice->SetVertexShader(nullptr);
+	hr = m_D3DDevice->SetFVF(D3DFVF_CUSTOMVERTEX);
+	hr = m_D3DDevice->SetTexture(0, texture);
+	hr = m_D3DDevice->DrawPrimitive(D3DPT_TRIANGLEFAN, 0, 2);
+#endif
+
+	if (m_Visual && !m_HasZoom){ m_Visual->Draw(m_Time); }
+
+	if (videoControl->m_FullScreenProgressBar){
+		DRAWOUTTEXT(m_D3DFont, m_ProgressBarTime, m_ProgressBarRect, DT_LEFT | DT_TOP, 0xFFFFFFFF)
+			hr = m_D3DLine->SetWidth(1);
+		hr = m_D3DLine->Begin();
+		hr = m_D3DLine->Draw(&vectors[0], 5, 0xFF000000);
+		hr = m_D3DLine->Draw(&vectors[5], 5, 0xFFFFFFFF);
+		hr = m_D3DLine->End();
+		hr = m_D3DLine->SetWidth(m_ProgressBarLineWidth);
+		hr = m_D3DLine->Begin();
+		hr = m_D3DLine->Draw(&vectors[10], 2, 0xFFFFFFFF);
+		hr = m_D3DLine->End();
+	}
+	if (m_HasZoom){ DrawZoom(); }
+	// End the scene
+	hr = m_D3DDevice->EndScene();
+	hr = PresentFrame();
+	if (D3DERR_DEVICELOST == hr || IsD3D9DeviceRemoved(hr) ||
+		D3DERR_DRIVERINTERNALERROR == hr){
+		if (!m_DeviceLost){
+			m_DeviceLost = true;
+		}
+		Render(true, false);
+	}
+
+}
+
+void RendererDirectShow::RecreateSurface()
+{
+	DrawTexture(m_FrameBuffer);
+}
+
+bool RendererDirectShow::OpenFile(const wxString &fname, int subsFlag, bool vobsub, bool changeAudio)
+{
+	wxMutexLocker lock(m_MutexOpen);
+	if (m_State == Playing){ videoControl->Stop(); }
+
+	if (m_State != None){
+		m_VideoResized = m_DirectShowSeeking = videoControl->m_FullScreenProgressBar = false;
+		m_State = None;
+		Clear();
+	}
+	m_Time = 0;
+	m_Frame = 0;
+
+
+	if (!m_DirectShowPlayer){ m_DirectShowPlayer = new DShowPlayer(videoControl, this); }
+
+	if (!m_DirectShowPlayer->OpenFile(fname, vobsub)){
+		return false;
+	}
+	wxSize videoSize = m_DirectShowPlayer->GetVideoSize();
+	m_Width = videoSize.x; m_Height = videoSize.y;
+	if (m_Width % 2 != 0){ m_Width++; }
+
+	m_Pitch = m_Width * m_DirectShowPlayer->inf.bytes;
+	videoControl->m_FPS = m_DirectShowPlayer->inf.fps;
+	m_Format = m_DirectShowPlayer->inf.CT;
+	videoControl->m_AspectRatioX = m_DirectShowPlayer->inf.ARatioX;
+	videoControl->m_AspectRatioY = m_DirectShowPlayer->inf.ARatioY;
+	m_D3DFormat = (m_Format == NV12) ? D3DFORMAT('21VN') : (m_Format == YV12) ? D3DFORMAT('21VY') :
+		(m_Format == YUY2) ? D3DFMT_YUY2 : D3DFMT_X8R8G8B8;
+
+	m_SwapFrame = (m_Format == RGB32 && !m_DirectShowPlayer->HasVobsub());
+	HikariSubFrame::Get()->OpenAudioInTab(tab, GLOBAL_CLOSE_AUDIO, emptyString);
+
+	diff = 0;
+	m_FrameDuration = (1000.0f / videoControl->m_FPS);
+	videoControl->SetVideoTimebase(Timebase::Estimated(videoControl->m_FPS, (int)(GetDuration() * videoControl->m_FPS / 1000.f)));
+	if (videoControl->m_AspectRatioY == 0 || videoControl->m_AspectRatioX == 0){ videoControl->m_AspectRatio = 0.0f; }
+	else{ videoControl->m_AspectRatio = (float)videoControl->m_AspectRatioY / (float)videoControl->m_AspectRatioX; }
+
+	m_MainStreamRect.bottom = m_Height;
+	m_MainStreamRect.right = m_Width;
+	m_MainStreamRect.left = 0;
+	m_MainStreamRect.top = 0;
+	if (m_FrameBuffer ){ delete[] m_FrameBuffer; m_FrameBuffer = nullptr; }
+	m_FrameBuffer = new byte[m_Height * m_Pitch];
+	
+	UpdateRects();
+
+	if (!InitDX()){ return false; }
+	
+	if (vobsub)
+		subsFlag = CLOSE_SUBTITLES;
+	else {
+		SetColorSpace(tab->grid->file->GetSInfo(L"YCbCr Matrix"), false);
+	}
+
+	OpenSubs(subsFlag, false, nullptr, true);
+
+	m_State = Stopped;
+	m_DirectShowPlayer->GetChapters(&m_Chapters);
+
+	if (m_Visual){
+		m_Visual->SizeChanged(wxRect(m_BackBufferRect.left, m_BackBufferRect.top,
+			m_BackBufferRect.right, m_BackBufferRect.bottom), m_D3DLine, m_D3DFont, m_D3DDevice);
+	}
+	return true;
+}
+
+bool RendererDirectShow::OpenSubs(int flag, bool redraw, wxString *text, bool resetParameters)
+{
+	wxCriticalSectionLocker lock(m_MutexRendering);
+	if (resetParameters)
+		m_SubsProvider->SetVideoParameters(wxSize(m_WindowWidth, m_WindowHeight), ARGB32, m_SwapFrame);
+
+	bool result = m_SubsProvider->Open(flag, SubtitlesText(flag, text));
+
+	if (redraw && m_State != None && m_FrameBuffer){
+		RecreateSurface();
+	}
+
+	return result;
+}
+
+
+void RendererDirectShow::StartStream()
+{
+	if (m_Time < GetDuration() - m_FrameDuration) 
+		m_DirectShowPlayer->Play(); 
+}
+
+void RendererDirectShow::PauseStream()
+{
+	m_DirectShowPlayer->Pause();
+}
+
+void RendererDirectShow::StopStream()
+{
+	m_DirectShowPlayer->Stop();
+}
+
+void RendererDirectShow::SetPosition(int time, bool startTime, int flags)
+{
+	bool playing = m_State == Playing;
+	m_Time = SeekTarget(time, startTime, flags);
+	m_PlayEndTime = 0;
+	m_DirectShowSeeking = true;
+	m_DirectShowPlayer->SetPosition(m_Time);
+	ReopenSubsAfterSeek(playing);
+}
+
+int RendererDirectShow::GetDuration()
+{
+	return m_DirectShowPlayer->GetDuration();
+}
+
+void RendererDirectShow::ClearObject()
+{
+	SAFE_RELEASE(m_SubtitlesTexture);
+	SAFE_RELEASE(m_BlitTexture);
+	SAFE_RELEASE(m_D3DVertex);
+}
+
+void RendererDirectShow::SetupVertices()
+{
+	float width = m_Width;
+	float height = m_Height;
+	int windowWidth = m_BackBufferRect.right - m_BackBufferRect.left;
+	int windowHeight = m_BackBufferRect.bottom - m_BackBufferRect.top;
+
+	HRN(m_D3DDevice->CreateVertexBuffer(4 * sizeof(CUSTOMVERTEX), D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_CUSTOMVERTEX, D3DPOOL_DEFAULT, &m_D3DVertex, nullptr),
+		L"Nie można utworzyć bufora wertex")
+	CUSTOMVERTEX* pVertices;
+	HRESULT hr;
+	HRN(hr = m_D3DVertex->Lock(0, 0, (void**)&pVertices, 0), L"nie można zablokować bufora vertex");
+	// looks like it places 1px border that's position is moved by 1
+	//m_MainStreamRect.top
+	pVertices[0].position = D3DXVECTOR3(m_BackBufferRect.left, m_BackBufferRect.top, 0.0f);
+	pVertices[0].tu = m_MainStreamRect.left / width;
+	pVertices[0].tv = m_MainStreamRect.top / height;
+	pVertices[1].position = D3DXVECTOR3(windowWidth + m_BackBufferRect.left, m_BackBufferRect.top, 0.0f);
+	pVertices[1].tu = (m_MainStreamRect.right) / width;//1.0f;
+	pVertices[1].tv = m_MainStreamRect.top / height;//0.2f;
+	pVertices[2].position = D3DXVECTOR3(windowWidth + m_BackBufferRect.left, windowHeight + m_BackBufferRect.top, 0.0f);
+	pVertices[2].tu = (m_MainStreamRect.right) / width;//1.0f;
+	pVertices[2].tv = (m_MainStreamRect.bottom) / height;//1.0f;
+	pVertices[3].position = D3DXVECTOR3(m_BackBufferRect.left, windowHeight + m_BackBufferRect.top, 0.0f);
+	pVertices[3].tu = m_MainStreamRect.left / width;//0.2f;
+	pVertices[3].tv = (m_MainStreamRect.bottom) / height;//1.0f;
+	pVertices[4].position = D3DXVECTOR3(m_BackBufferRect.left, m_BackBufferRect.top, 0.0f);
+	pVertices[4].tu = m_MainStreamRect.left / width;//0.2f;
+	pVertices[4].tv = m_MainStreamRect.top / height;//0.2f;
+
+	HRN(hr = m_D3DVertex->Unlock(), "Canot unlock vertex buffer");
+}
+
+void RendererDirectShow::WindowResized()
+{
+	int windowWidth = m_BackBufferRect.right - m_BackBufferRect.left;
+	int windowHeight = m_BackBufferRect.bottom - m_BackBufferRect.top;
+	filtering = (windowWidth == m_Width && windowHeight == m_Height) ? D3DTEXF_POINT : D3DTEXF_LINEAR;
+	ZoomChanged();
+}
+
+void RendererDirectShow::ZoomChanged()
+{
+	SAFE_RELEASE(m_D3DVertex);
+	SetupVertices();
+}
+
+
+void RendererDirectShow::GetFpsnRatio(float *fps, long *arx, long *ary)
+{
+	m_DirectShowPlayer->GetFpsnRatio(fps, arx, ary);
+}
+
+void RendererDirectShow::GetVideoSize(int *width, int *height)
+{
+	wxSize sz = m_DirectShowPlayer->GetVideoSize();
+	*width = sz.x;
+	*height = sz.y;
+}
+
+void RendererDirectShow::SetVolume(int vol)
+{
+	if (m_State == None){ return; }
+	m_DirectShowPlayer->SetVolume(vol);
+}
+
+int RendererDirectShow::GetVolume()
+{
+	if (m_State == None){ return 0; }
+	return m_DirectShowPlayer->GetVolume();
+}
+
+wxArrayString RendererDirectShow::GetStreams()
+{
+	return m_DirectShowPlayer->GetStreams();
+}
+
+void RendererDirectShow::EnableStream(long index)
+{
+	if (m_DirectShowPlayer->stream){
+		m_DirectShowSeeking = true;
+		auto hr = m_DirectShowPlayer->stream->Enable(index, AMSTREAMSELECTENABLE_ENABLE);
+		if (FAILED(hr)){
+			KaiLog(L"Cannot change stream");
+		}
+	}
+}
+
+
+
+void RendererDirectShow::ChangeVobsub(bool vobsub)
+{
+	if (!m_DirectShowPlayer){ return; }
+	int tmptime = m_Time;
+	OpenSubs((vobsub) ? CLOSE_SUBTITLES : OPEN_WHOLE_SUBTITLES, true);
+	m_DirectShowPlayer->OpenFile(tab->VideoPath, vobsub);
+	m_Format = m_DirectShowPlayer->inf.CT;
+	D3DFORMAT tmpd3dformat = (m_Format == 5) ? D3DFORMAT('21VN') : (m_Format == 3) ? D3DFORMAT('21VY') :
+		(m_Format == 2) ? D3DFMT_YUY2 : D3DFMT_X8R8G8B8;
+	m_SwapFrame = (m_Format == 0 && !m_DirectShowPlayer->HasVobsub());
+	if (tmpd3dformat != m_D3DFormat){
+		m_D3DFormat = tmpd3dformat;
+		int tmppitch = m_Width * m_DirectShowPlayer->inf.bytes;
+		if (tmppitch != m_Pitch){
+			m_Pitch = tmppitch;
+			if (m_FrameBuffer){ delete[] m_FrameBuffer; m_FrameBuffer = nullptr; }
+			m_FrameBuffer = new byte[m_Height * m_Pitch];
+		}
+		UpdateVideoWindow();
+	}
+	SetPosition(tmptime);
+	if (m_State == Paused){ m_DirectShowPlayer->Play(); m_DirectShowPlayer->Pause(); }
+	else if (m_State == Playing){ m_DirectShowPlayer->Play(); }
+	int pos = tab->video->m_VolumeSlider->GetValue();
+	SetVolume(-(pos * pos));
+	tab->video->ChangeStream();
+}
+
+bool RendererDirectShow::EnumFilters(Menu *menu)
+{
+	return m_DirectShowPlayer->EnumFilters(menu); 
+}
+
+bool RendererDirectShow::FilterConfig(wxString name, int idx, wxPoint pos)
+{
+	return m_DirectShowPlayer->FilterConfig(name, idx, pos);
+}
+
+byte *RendererDirectShow::GetFrameWithSubs(bool subs, bool *del)
+{
+	bool dssubs = (videoControl->m_IsDirectShow && subs && Notebook::GetTab()->editor);
+	if (!m_D3DDevice) {
+		if (InitDX()) {
+			RecreateSurface();
+		}
+		else {
+			return nullptr;
+		}
+	}
+	LPDIRECT3DSURFACE9 tmp = nullptr;
+	HRESULT hr = m_DXVAService->CreateSurface(m_Width, m_Height, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, 0,
+		DXVA2_VideoProcessorRenderTarget, &tmp, nullptr);
+	
+	if (FAILED(hr) || !tmp) {
+		KaiLog(_("Cannot create plain surface"));
+		return nullptr;
+	}
+
+	DXVA2_VideoProcessBltParams blt = { 0 };
+	DXVA2_VideoSample samples = { 0 };
+	LONGLONG start_100ns = m_Time * 10000;
+	LONGLONG end_100ns = start_100ns + 170000;
+	blt.TargetFrame = start_100ns;
+	blt.TargetRect = m_MainStreamRect;
+
+	// DXVA2_VideoProcess_Constriction
+	blt.ConstrictionSize.cx = m_MainStreamRect.right - m_MainStreamRect.left;
+	blt.ConstrictionSize.cy = m_MainStreamRect.bottom - m_MainStreamRect.top;
+	DXVA2_AYUVSample16 color;
+
+	color.Cr = 0x8000;
+	color.Cb = 0x8000;
+	color.Y = 0x0F00;
+	color.Alpha = 0xFFFF;
+	blt.BackgroundColor = color;
+
+	// DXVA2_VideoProcess_YUV2RGBExtended
+	blt.DestFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+	//big wtf looks like bad enumerator name and it used video range
+	blt.DestFormat.NominalRange = DXVA2_NominalRange_0_255/*DXVA2_NominalRange_16_235*/;
+	blt.DestFormat.VideoTransferMatrix = m_VideoMatrix;
+	blt.DestFormat.VideoLighting = DXVA2_VideoLighting_dark;
+	blt.DestFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+	blt.DestFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+	blt.DestFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+	// Initialize main stream video sample.
+	//
+	samples.Start = start_100ns;
+	samples.End = end_100ns;
+
+	// DXVA2_VideoProcess_YUV2RGBExtended
+	samples.SampleFormat.VideoChromaSubsampling = DXVA2_VideoChromaSubsampling_Unknown;
+	//big wtf looks like bad enumerator name and it used video range
+	samples.SampleFormat.NominalRange = DXVA2_NominalRange_16_235;
+	samples.SampleFormat.VideoTransferMatrix = m_VideoMatrix;
+	samples.SampleFormat.VideoLighting = DXVA2_VideoLighting_dark;
+	samples.SampleFormat.VideoPrimaries = DXVA2_VideoPrimaries_BT709;
+	samples.SampleFormat.VideoTransferFunction = DXVA2_VideoTransFunc_709;
+
+	samples.SampleFormat.SampleFormat = DXVA2_SampleProgressiveFrame;
+
+	samples.SrcSurface = m_MainSurface;
+
+	samples.SrcRect = m_MainStreamRect;
+
+	samples.DstRect = m_MainStreamRect;
+
+	// DXVA2_VideoProcess_PlanarAlpha
+	samples.PlanarAlpha = DXVA2_Fixed32OpaqueAlpha();
+
+	hr = m_DXVAProcessor->VideoProcessBlt(tmp, &blt, &samples, 1, nullptr);
+	if (FAILED(hr)) {
+		KaiLog(_("Cannot overlay surfaces"));
+		SAFE_RELEASE(tmp);
+		return nullptr;
+	}
+
+	D3DLOCKED_RECT d3dlr;
+	RECT dirty = { 0, 0, m_Width, m_Height };
+
+	if (FAILED(tmp->LockRect(&d3dlr, &dirty, 0))) {
+		KaiLog(_("Cannot lock texture buffer"));
+		SAFE_RELEASE(tmp);
+		return nullptr;
+	}
+	int buffsize = m_Width * m_Height * 4;
+	byte* cpy = new byte[buffsize];
+	byte* texbuf = static_cast<byte*>(d3dlr.pBits);
+	int fwidth = m_Width * 4;
+	if (d3dlr.Pitch == fwidth) {
+		memcpy(cpy, texbuf, buffsize);
+	}
+	else {
+		int widthdiff = d3dlr.Pitch - fwidth;
+		byte* cpy1 = cpy;
+		for (int i = 0; i < m_Height; i++) {
+			memcpy(cpy1, texbuf, fwidth);
+			texbuf += (fwidth + widthdiff);
+			cpy1 += fwidth;
+		}
+	}
+	tmp->UnlockRect();
+	SAFE_RELEASE(tmp);
+	if (dssubs){
+		m_SubsProvider->SetVideoParameters(wxSize(m_Width, m_Height), RGB32, m_SwapFrame);
+		m_SubsProvider->Draw(cpy, m_Time);
+		//set parameters as was before
+		m_SubsProvider->SetVideoParameters(wxSize(m_WindowWidth, m_WindowHeight), ARGB32, m_SwapFrame);
+		*del = true;
+		return cpy;
+	}
+	*del = true;
+	return cpy;
+}
+#endif // _WIN32
+

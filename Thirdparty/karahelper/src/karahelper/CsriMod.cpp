@@ -188,7 +188,7 @@ void csrilib_os_init()
 	*slash = L'\0';
 	wcsncpy(slash, L"Csri", filename + MAX_PATH - slash);
 	csrilib_enum_dir(filename);
-	//csrilib_do_load(L"vsfilter_kainote.dll");
+	//csrilib_do_load(L"vsfilter_hikarisub.dll");
 }
 
 struct csri_wrap_rend *wraprends = NULL;

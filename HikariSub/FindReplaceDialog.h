@@ -1,0 +1,109 @@
+//  Copyright (c) 2018-2026, Marcin Drob
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include "KaiDialog.h"
+#include "ListControls.h"
+#include "KaiTextCtrl.h"
+#include "KaiRadioButton.h"
+#include "MappedButton.h"
+#include "KaiTabBar.h"
+#include "KaiStaticText.h"
+
+class FindReplace;
+class HikariSubFrame;
+
+class TabWindow : public wxWindow
+{
+	friend class FindReplace;
+public:
+	TabWindow(wxWindow *parent, int id, int tabNum, FindReplace * FR);
+	virtual ~TabWindow(){};
+	void SaveValues();
+	void SetValues();
+
+	void OnRecheck(wxCommandEvent& event);
+	void Reset(wxCommandEvent& evt);
+	void OnStylesChoose(wxCommandEvent& event);
+	KaiChoice* FindText;
+	KaiChoice* ReplaceText = nullptr;
+	KaiChoice* FindInSubsPattern = nullptr;
+	KaiChoice* FindInSubsPath = nullptr;
+	KaiRadioButton* CollumnText;
+	KaiRadioButton* CollumnStyle;
+	KaiRadioButton* CollumnActor;
+	KaiRadioButton* CollumnEffect;
+	KaiRadioButton* AllLines = nullptr;
+	KaiRadioButton* SelectedLines = nullptr;
+	KaiRadioButton* FromSelection = nullptr;
+	KaiTextCtrl *ChoosenStyleText = nullptr;
+	KaiCheckBox* MatchCase;
+	KaiCheckBox* RegEx;
+	KaiCheckBox* StartLine;
+	KaiCheckBox* EndLine;
+	KaiCheckBox* UseComments;
+	KaiCheckBox* OnlyText;
+	KaiCheckBox* OnlyTags;
+	KaiCheckBox *SeekInSubFolders = nullptr;
+	KaiCheckBox *SeekInHiddenFolders = nullptr;
+	FindReplace *FR;
+	int windowType = 0;
+};
+
+class FindReplaceDialog : public KaiDialog
+{
+	friend class FindReplace;
+public:
+	FindReplaceDialog(HikariSubFrame *Kai, int whichWindow);
+	virtual ~FindReplaceDialog();
+	void ShowDialog(int whichWindow);
+	void SaveOptions();
+	void Reset();
+	TabWindow *GetTab();
+	void FindNext();
+private:
+	void OnActivate(wxActivateEvent& event);
+	void OnEnterConfirm(wxCommandEvent& event);
+	void SetSelection(TabWindow *tab);
+	FindReplace *FR = nullptr;
+	HikariSubFrame *Kai = nullptr;
+	KaiTabBar * findReplaceTabs = nullptr;
+	int lastFocusedId = -1;
+};
+
+enum{
+	WINDOW_FIND = 0,
+	WINDOW_REPLACE,
+	WINDOW_FIND_IN_SUBS,
+	ID_BUTTON_REPLACE = 13737,
+	ID_BUTTON_REPLACE_ALL,
+	ID_BUTTON_REPLACE_IN_ALL_OPENED_SUBS,
+	ID_BUTTON_FIND,
+	ID_BUTTON_FIND_IN_ALL_OPENED_SUBS,
+	ID_BUTTON_FIND_ALL_IN_CURRENT_SUBS,
+	ID_BUTTON_FIND_IN_SUBS,
+	ID_BUTTON_REPLACE_IN_SUBS,
+	ID_BUTTON_CLOSE,
+	ID_BUTTON_CHOOSE_STYLE,
+	ID_CHOOSEN_STYLE_TEXT,
+	ID_FIND_TEXT,
+	ID_REPLACE_TEXT,
+	ID_START_OF_LINE,
+	ID_END_OF_LINE,
+	ID_ONLY_TEXT,
+	ID_ONLY_TAGS,
+	ID_ENTER_CONFIRM
+};

@@ -1,4 +1,4 @@
-# Generates Kainote/gitparams.h with the current git commit + branch.
+# Generates HikariSub/gitparams.h with the current git commit + branch.
 # config.cpp consumes GIT_CUR_COMMIT / GIT_BRANCH (guarded by #ifdef
 # GIT_CUR_COMMIT) and stringifies them via ADD_QUOTES for the title-bar version.
 # The file is gitignored; on Windows the AutoVersioning tool emits it instead.
@@ -24,7 +24,7 @@ else()
     set(CONTENT "#pragma once\n#define GIT_BRANCH ${GIT_BRANCH}\n#define GIT_CUR_COMMIT ${GIT_COMMIT}\n")
 endif()
 
-set(OUT "${SRC}/Kainote/gitparams.h")
+set(OUT "${SRC}/HikariSub/gitparams.h")
 set(EXISTING "")
 if(EXISTS "${OUT}")
     file(READ "${OUT}" EXISTING)

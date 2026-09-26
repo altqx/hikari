@@ -1,0 +1,262 @@
+//  Copyright (c) 2016 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#pragma once
+
+#include "styles.h"
+#include "SubsDialogue.h"
+#include "KaiDialog.h"
+#include "UndoHistory.h"
+#include <vector>
+#include <set>
+#include <functional>
+
+enum{
+	OPEN_SUBTITLES = 1,
+	NEW_SUBTITLES,
+	EDITBOX_LINE_EDITION,
+	EDITBOX_MULTILINE_EDITION,
+	EDITBOX_SPELL_CHECKER,
+	GRID_DUPLICATE,
+	GRID_JOIN,
+	GRID_JOIN_WITH_PREVIOUS,
+	GRID_JOIN_WITH_NEXT,
+	GRID_JOIN_TO_FIRST,
+	GRID_JOIN_TO_LAST,
+	GRID_PASTE_LINES,
+	GRID_PASTE_DIALOGUE_COLUMNS,
+	GRID_PASTE_TRANSLATION_TO_SUBS,
+	GRID_TRANSLATION_TEXT_MOVE,
+	GRID_MAKE_LINES_CONTINUES,
+	GRID_SET_VIDEO_FPS,
+	GRID_SET_CUSTOM_FPS,
+	GRID_SWAP,
+	GRID_CONVERT,
+	GRID_SORT_LINES,
+	GRID_DELETE_LINES,
+	GRID_DELETE_TEXT,
+	GRID_SET_START_TIME,
+	GRID_SET_END_TIME,
+	GRID_TURN_ON_TLMODE,
+	GRID_TURN_OFF_TLMODE,
+	GRID_APPEND_LINE,
+	GRID_INSERT_ROW,
+	AUDIO_CHANGE_TIME,
+	SNAP_TO_KEYFRAME_OR_LINE_TIME,
+	ASS_PROPERTIES,
+	SELECT_LINES,
+	SHIFT_TIMES,
+	SPELL_CHECKER,
+	STYLE_MANAGER,
+	SUBTITLES_RESAMPLE,
+	VISUAL_POSITION,
+	VISUAL_MOVE,
+	VISUAL_SCALE,
+	VISUAL_ROTATION_Z,
+	VISUAL_ROTATION_X_Y,
+	VISUAL_RECT_CLIP,
+	VISUAL_VECTOR_CLIP,
+	VISUAL_DRAWING,
+	VISUAL_POSITION_SHIFTER,
+	VISUAL_SCALE_ROTATION_SHIFTER,
+	VISUAL_ALL_TAGS,
+	REPLACE_SINGLE,
+	REPLACE_ALL,
+	REPLACED_BY_MISSPELL_REPLACER,
+	TREE_ADD,
+	TREE_SET_DESCRIPTION,
+	TREE_ADD_LINES,
+	TREE_REMOVE,
+	AUTOMATION_SCRIPT,
+	FILTERING_CHANGE,
+	FILTERING_REMOVE,
+	GRID_SPLIT_LINES,
+};
+
+//Filtering is treated as keys, every dialogue get/set functions use keys, ids are only for paint or mouse using
+
+class File
+{
+public:
+	std::vector<Dialogue*> dialogues;
+	std::vector<Styles*> styles;
+	std::vector<SInfo*> sinfo;
+	std::vector<Dialogue*> deleteDialogues;
+	std::vector<Styles*> deleteStyles;
+	std::vector<SInfo*> deleteSinfo;
+	std::set<int> Selections;
+
+	unsigned char editionType;
+	int activeLine;
+	int markerLine = 0;
+	int scrollPosition = 0;
+	bool isFiltered = false;
+	File();
+	~File();
+	void Clear();
+	File *Copy(bool copySelections = true);
+};
+
+class SubsFile
+{
+private:
+	UndoHistory<File> m_history;
+	File *subs;
+	// changed since the last recorded step; every change below sets it
+	bool edited = false;
+	// bumped whenever the lines or the working copy change
+	size_t version = 0;
+	void MarkEdited() { edited = true; ++version; }
+	// Row ids are positions among the visible lines. Rebuilt when the lines
+	// or any line's visibility change, instead of counting on every paint.
+	struct VisibleRows {
+		size_t version = (size_t)-1;
+		unsigned epoch = 0;
+		File *file = nullptr;
+		std::vector<size_t> keyOfId;
+		// visible lines before each key
+		std::vector<size_t> idOfKey;
+	} visibleRows;
+	const VisibleRows &GetVisibleRows();
+	wxString embeddedSections;
+	// the edit box commits while the user types; those steps merge into one
+	bool typing = false;
+	bool lastStepTyping = false;
+	void LoadCurrentStep();
+
+public:
+	SubsFile();
+	virtual ~SubsFile();
+	void Clear(bool setup = true);
+	void Create();
+	void SetMutex(wxMutex* editionGuard);
+	void SaveUndo(unsigned char editionType, int activeLine, int markerLine);
+	// set around a commit made by typing rather than by the user
+	void SetTyping(bool isTyping) { typing = isTyping; }
+	// typing after this starts a new step even on the same line
+	void EndTypingRun() { lastStepTyping = false; }
+	bool Redo();
+	bool Undo();
+	void DummyUndoF();
+	void DummyUndoF(int newIter);
+	void EndLoad(unsigned char editionType, int activeLine, bool initialSave = false);
+	size_t GetCount();
+	size_t GetIdCount();
+	// GetIdCount and, like SubsGrid::GetDialoguePosition, the dialogue number of key, in one pass
+	size_t CountLines(size_t key, size_t *dialogueNumber);
+	void AddLine(Dialogue *dial);
+	//check if exceeds tabe or if dialogue is not visible can return null
+	Dialogue *CopyVisibleDialogue(size_t i, bool push = true, bool keepstate = false);
+	Dialogue *CopyDialogueF(size_t i, bool push = true, bool keepstate = false);
+	//check if exceeds tabe or if dialogue is not visible can return null
+	Dialogue *GetVisibleDialogue(size_t i);
+	Dialogue *GetDialogue(size_t i);
+	void SetDialogue(size_t i, Dialogue *dial, bool addToDestroyer = false);
+	void DeleteDialogues(size_t from, size_t to);
+	void DeleteSelectedDialogues();
+	//Warning!! Adding the same dialogue pointer to destroyer cause crash
+	//not adding it when needed cause memory leaks.
+	void InsertRowsF(int Row, const std::vector<Dialogue *> &RowsTable, bool AddToDestroy);
+	//Warning!! Adding the same dialogue pointer to destroyer cause crash
+	//not adding it when needed cause memory leaks.
+	void InsertRowsF(int Row, int NumRows, Dialogue *Dialog, bool AddToDestroy);
+	void SwapRowsF(int frst, int scnd);
+	void SortAll(bool func(Dialogue *i, Dialogue *j));
+	void SortSelected(bool func(Dialogue *i, Dialogue *j));
+	Styles *CopyStyle(size_t i, bool push = true);
+	SInfo *CopySinfo(size_t i, bool push = true);
+	void AddStyle(Styles *nstyl);
+	void ChangeStyle(Styles *nstyl, size_t i);
+	size_t StylesSize();
+	Styles *GetStyle(size_t i, const wxString &name = emptyString);
+	std::vector<Styles*> *GetStyleTable();
+	void InsertStyle(size_t i, Styles *style);
+	void MoveStyle(size_t from, size_t to);
+	void SortStyles(bool func(Styles *i, Styles *j));
+
+	//multiplication must be set to 0
+	size_t FindStyle(const wxString &name, int *multip = nullptr);
+	//this function is safe, do not return nullptr, when failed returns i
+	void GetStyles(wxString &stylesText, bool addTlModeStyle = false);
+	void DeleteStyle(size_t i);
+	const wxString & GetSInfo(const wxString &key, int *ii = 0);
+	SInfo *GetSInfoP(const wxString &key, int *ii);
+	void DeleteSInfo(size_t i);
+	SInfo *GetSInfoAt(size_t i);
+	void SetSInfoAt(size_t i, SInfo *info);
+	void InsertSInfo(size_t i, SInfo *info);
+	void AddSInfo(const wxString &SI, wxString val = emptyString, bool save = true);
+	void GetSInfos(wxString &textSinfo, bool addTlMode = false);
+	size_t SInfoSize();
+	void SaveSelectionsF(bool clear, int currentLine, int markedLine, int scrollPos);
+	size_t FirstSelection(size_t *id = nullptr);
+	void GetSelections(wxArrayInt &selections, bool deselect=false, bool checkVisible = true);
+	const std::set<int> & GetSelectionsAsKeys(){ return subs->Selections; };
+	void InsertSelection(size_t i);
+	void InsertSelections(size_t from, size_t to, bool deselect = false, bool skipHidden = true);
+	void EraseSelection(size_t i);
+	size_t FindVisibleKey(size_t key, int *corrected = nullptr);
+	bool IsSelected(size_t i);
+	size_t SelectionsSize();
+	int GetActiveLine(){ return subs->activeLine; }
+	int GetMarkerLine(){ return subs->markerLine; }
+	int GetScrollPosition(){ return subs->scrollPosition; }
+	void ClearSelections();
+	size_t GetElementById(size_t Id);
+	size_t GetElementByKey(size_t Key);
+	unsigned char CheckIfHasHiddenBlock(int i, bool firstLine = false);
+	
+	size_t GetKeyFromPos(size_t position, size_t numOfLines);
+	bool CheckIfIsTree(size_t i);
+	int FindEndOfTree(size_t i);
+	int OpenCloseTree(size_t i);
+	void GetURStatus(bool *_undo, bool *_redo);
+	// something changed since the last recorded step
+	bool HasChangesToRecord() const { return edited; }
+	int HistorySize() const { return m_history.Size(); }
+	int Iter();
+	void DropOldestHistory(int num);
+	void ShowHistory(wxWindow *parent, std::function<void(int)> functionAfterChangeHistory);
+	void GetHistoryTable(wxArrayString *history);
+	bool SetHistory(int iter);
+	void SetLastSave();
+	int GetActualHistoryIter();
+	int GetLastSaveIter(){ return m_history.SavedStep(); }
+	bool IsModified(){ return m_history.IsModified(); }
+	void RemoveLastIterSave() { m_history.ForgetSaved(); }
+	const wxString &GetUndoName();
+	const wxString &GetRedoName();
+	bool IsFiltered();
+	// [Fonts] and [Graphics] as they were read, written back unchanged after the events
+	const wxString &GetEmbeddedSections() const { return embeddedSections; }
+	void AddEmbeddedSectionLine(const wxString &line);
+	void SetFiltered(bool filtered = true);
+	wxString *historyNames = nullptr;
+	wxMutex *historyGuard = nullptr;
+};
+
+class HistoryDialog : public KaiDialog
+{
+public:
+	HistoryDialog(wxWindow *parent, SubsFile *file, std::function<void(int)> functionAfterChangeHistory );
+	virtual ~HistoryDialog(){};
+};
+
+enum{
+	ID_HISTORY_LIST = 777,
+	ID_SET_HISTORY,
+	ID_SET_HISTORY_AND_CLOSE,
+};

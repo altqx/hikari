@@ -1,0 +1,1344 @@
+﻿//  Copyright (c) 2016 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+
+
+#include "FontCollector.h"
+#include "hikarisubApp.h"
+#include "config.h"
+#include "Demux.h"
+#include "FontEnumerator.h"
+#include "Notebook.h"
+#include "TabPanel.h"
+#include "SubsGrid.h"
+#include "stylestore.h"
+#include "ShiftTimes.h"
+#include "KaiMessageBox.h"
+#include "ZipEntryUtf8.h"
+//#include "UtilsWindows.h"
+#include "WinUndef.h"
+#include <wx/dirdlg.h>
+#include <wx/filedlg.h>
+#include <wx/wfstream.h>
+#include <wx/dir.h>
+#include <wx/regex.h>
+#include <wx/utils.h>
+#include <ShlObj.h>
+
+wxDEFINE_EVENT(EVT_APPEND_MESSAGE, wxThreadEvent);
+wxDEFINE_EVENT(EVT_ENABLE_BUTTONS, wxThreadEvent);
+wxDEFINE_EVENT(EVT_ENABLE_OPEN_FOLDER, wxThreadEvent);
+
+SubsFont::SubsFont(const wxString &_name, const LOGFONTW &_logFont, int _bold, bool _italic){
+	name = _name;
+	logFont = _logFont;
+	fakeBold = false;
+	fakeItalic = false;
+	fakeNormal = false;
+	fakeBoldItalic = false;
+	italic = _italic ? -1 : 0;
+	bold = _bold == 1 ? 700 : _bold == 0 ? 400 : _bold;
+}
+
+LOGFONTW &SubsFont::GetLogFont(HDC dc)
+{
+	if (logFont.lfItalic != italic || logFont.lfWeight != bold){
+		std::vector<LOGFONTW> logFonts;
+		EnumFontFamiliesEx(dc, &logFont, (FONTENUMPROCW)[](const LOGFONT *lf, const TEXTMETRIC *mt, DWORD style, LPARAM lParam) -> int {
+			std::vector<LOGFONTW>* fonts = reinterpret_cast<std::vector<LOGFONTW>*>(lParam);
+			fonts->push_back(*lf);
+			return 1;
+		}, (LPARAM)&logFonts, 0);
+		size_t lfssize = logFonts.size();
+		bool BoldItalic = false;
+		bool Bold = false;
+		bool Italic = false;
+		bool Normal = false;
+		for (size_t i = 0; i < lfssize; i++){
+			if ((logFonts[i].lfWeight >= 700) && (0 != logFonts[i].lfItalic)){
+				BoldItalic = true;
+			}
+			else if (logFonts[i].lfWeight >= 700){
+				Bold = true;
+			}
+			else if (0 != logFonts[i].lfItalic){
+				Italic = true;
+			}
+			else{
+				Normal = true;
+			}
+		}
+		fakeBoldItalic = (bold >= 700 && italic != 0) ? !BoldItalic : false;
+		fakeBold = (bold >= 700 && italic != 0) ? !BoldItalic : (bold >= 700) ? !Bold : false;
+		fakeItalic = (italic != 0) ? !Italic : false;
+		fakeNormal = (italic == 0 && bold < 700) ? !Normal : false;
+		logFont.lfItalic = italic;
+		logFont.lfWeight = bold;
+	}
+
+	return logFont;
+}
+
+void FontLogContent::DoLog(FontCollector *fc){
+	fc->SendMessageD(info, (notFound) ? fc->fcd->warning : fc->fcd->normal);
+	
+	wxString messageText;
+	if (styles.size())
+		messageText << _("In styles:\n");
+	stylesArea.x = fc->currentTextPosition + messageText.length();
+	for (std::map<wxString, wxArrayInt>::iterator cur = styles.begin(); cur != styles.end(); cur++) {
+		messageText << L" - " << cur->first;
+		//if (cur->second.GetCount() > 1){
+			messageText << _(" tabs: ");
+			for (auto & tab : cur->second)
+				messageText << (tab + 1) << L", ";
+			messageText.RemoveLast(2);
+		//}
+		messageText << L"\n";
+	}
+	stylesArea.y = fc->currentTextPosition + messageText.length();
+	if (lines.size())
+		messageText << _("In lines: ");
+	linesArea.x = fc->currentTextPosition + messageText.length();
+	for (std::map<int, wxArrayInt>::iterator cur = lines.begin(); cur != lines.end(); cur++){
+		messageText << (cur->first + 1) << L", ";
+	}
+	if (lines.size()){
+		messageText.RemoveLast(2);
+		messageText << L"\n";
+	}
+	linesArea.y = fc->currentTextPosition + messageText.length();
+	if (warnings.empty())
+		messageText << L"\n";
+	else
+		warnings << L"\n";
+
+	fc->SendMessageD(messageText, (notFound) ? fc->fcd->warning : fc->fcd->normal);
+	fc->SendMessageD(warnings, fc->fcd->warning);
+
+}
+
+FontCollectorDialog::FontCollectorDialog(wxWindow *parent, FontCollector *_fc)
+	: KaiDialog(parent, -1, _("Font collector"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER)
+	, fc(_fc)
+{
+	warning = Options.GetColour(WINDOW_WARNING_ELEMENTS);
+	normal = Options.GetColour(WINDOW_TEXT);
+	DialogSizer *Main = new DialogSizer(wxVERTICAL);
+	wxBoxSizer *Pathc = new wxBoxSizer(wxHORIZONTAL);
+	wxBoxSizer *Buttons = new wxBoxSizer(wxHORIZONTAL);
+	wxIcon icn;
+	icn.CopyFromBitmap(CreateBitmapFromPngResource(L"fontcollector"));
+	SetIcon(icn);
+
+	KaiTextValidator valid(wxFILTER_EXCLUDE_CHAR_LIST);
+	wxArrayString excludes;
+	excludes.Add(L"/");
+	excludes.Add(L"*");
+	excludes.Add(L"?");
+	excludes.Add(L"\"");
+	excludes.Add(L"<");
+	excludes.Add(L">");
+	excludes.Add(L"|");
+	valid.SetExcludes(excludes);
+	path = new KaiTextCtrl(this, -1, Options.GetString(FONT_COLLECTOR_DIRECTORY), wxDefaultPosition, wxSize(150, -1), 0, valid);
+	path->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
+	choosepath = new MappedButton(this, 8799, _("Select a folder"));
+	choosepath->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
+	Connect(8799, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnButtonPath);
+
+	Pathc->Add(path, 1, wxEXPAND | wxALL, 3);
+	Pathc->Add(choosepath, 0, wxBOTTOM | wxTOP | wxRIGHT, 3);
+
+	wxArrayString choices;
+	choices.Add(_("Check availability of fonts"));
+	choices.Add(_("Copy to selected folder"));
+	choices.Add(_("Zip"));
+	//choices.Add(_("Wmuxuj napisy w wideo (wymagany MKVToolnix)"));
+	opts = new KaiRadioBox(this, 9987, _("Options"), wxDefaultPosition, wxDefaultSize, choices, 0, wxRA_SPECIFY_ROWS);
+	opts->SetSelection(Options.GetInt(FONT_COLLECTOR_ACTION));
+	Connect(9987, wxEVT_COMMAND_RADIOBOX_SELECTED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
+
+	subsdir = new KaiCheckBox(this, 7998, _("Save to video / subtitles folder."));
+	subsdir->SetToolTip(_("Saves to the video folder\nwhen demuxing fonts from an MKV file."));
+	subsdir->Enable(Options.GetInt(FONT_COLLECTOR_ACTION) != 0);
+	subsdir->SetValue(Options.GetBool(FONT_COLLECTOR_USE_SUBS_DIRECTORY));
+
+
+	fromMKV = new KaiCheckBox(this, 7991, _("Demux fonts from loaded MKV file"));
+	fromMKV->Enable(Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
+	fromMKV->SetValue(Options.GetBool(FONT_COLLECTOR_FROM_MKV));
+
+	Connect(7998, wxEVT_COMMAND_CHECKBOX_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnChangeOpt);
+	console = new KaiTextCtrl(this, -1, emptyString, wxDefaultPosition, wxSize(500, 400), wxTE_MULTILINE | wxTE_READONLY);
+	console->Bind(wxEVT_LEFT_DCLICK, &FontCollectorDialog::OnConsoleDoubleClick, this);
+	//console->SetBackgroundColour(Options.GetColour(WINDOW_BACKGROUND));
+	bok = new MappedButton(this, 9879, _("Start"));
+	bok->SetFocus();
+	bStartOnAllTabs = new MappedButton(this, 9880, _("Start on tabs"));
+	bOpenFontFolder = new MappedButton(this, 9877, _("Save folder"));
+	bOpenFontFolder->Enable(false);
+	bClose = new MappedButton(this, 9881, _("Close"));
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &evt){
+		fc->fcd = nullptr;
+		Destroy();
+	}, 9881);
+	Connect(9879, 9880, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&FontCollectorDialog::OnButtonStart);
+	Buttons->Add(bok, 0, wxALL, 5);
+	Buttons->Add(bStartOnAllTabs, 0, wxTOP | wxBOTTOM, 5);
+	Buttons->Add(bOpenFontFolder, 0, wxTOP | wxBOTTOM | wxLEFT, 5);
+	Buttons->Add(bClose, 0, wxBOTTOM | wxTOP | wxLEFT, 5);
+
+	Main->Add(Pathc, 0, wxEXPAND | wxALL, 1);
+	Main->Add(opts, 0, wxEXPAND);
+	Main->Add(subsdir, 0, wxALL | wxEXPAND, 4);
+	Main->Add(fromMKV, 0, wxALL | wxEXPAND, 4);
+	Main->Add(console, 1, wxLEFT | wxRIGHT | wxEXPAND, 4);
+	Main->Add(Buttons, 0, wxALIGN_CENTER);
+
+	Bind(EVT_APPEND_MESSAGE, [this](wxThreadEvent evt){
+		std::pair<wxString, wxColour> *data = evt.GetPayload<std::pair<wxString, wxColour>*>();
+		//console->SetDefaultStyle(wxTextAttr(data->second));
+		console->AppendTextWithStyle(data->first, data->second);
+		delete data;
+	});
+	Bind(EVT_ENABLE_BUTTONS, [this](wxThreadEvent evt){
+		EnableControls();
+	});
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent evt){
+		
+		/*CoInitialize(0);
+		ITEMIDLIST *pidl = ILCreateFromPathW(copypath.wc_str());
+		if (pidl) {
+			SHOpenFolderAndSelectItems(pidl, 0, 0, 0);
+			ILFree(pidl);
+		}
+		CoUninitialize();*/
+		SelectInFolder(copypath);
+	}, 9877);
+	Bind(EVT_ENABLE_OPEN_FOLDER, [this](wxThreadEvent evt){
+		bOpenFontFolder->Enable();
+	});
+	SetSizerAndFit(Main);
+	CenterOnParent();
+	SetEscapeId(9881);
+	SetEnterId(9879);
+}
+
+FontCollectorDialog::~FontCollectorDialog()
+{
+	fc->ClearTables();
+};
+
+void FontCollectorDialog::EnableControls(bool enable)
+{
+	if (enable){
+		if (disabler){
+			delete disabler;
+			disabler = nullptr;
+		}
+	}
+	else{
+		disabler = new wxWindowDisabler(this);
+	}
+	opts->Enable(enable);
+	bool enablePathChoose = enable && (opts->GetSelection() != 0);
+	path->Enable(enablePathChoose);
+	choosepath->Enable(enablePathChoose);
+	subsdir->Enable(enablePathChoose);
+	bok->Enable(enable);
+	bStartOnAllTabs->Enable(enable);
+	bClose->Enable(enable);
+	if(enable)
+		bClose->SetFocus();
+}
+
+void FontCollectorDialog::OnConsoleDoubleClick(wxMouseEvent &evt)
+{
+	auto flc = fc->findFontsLog;
+	auto nflc = fc->notFindFontsLog;
+	bool isStyle = false;
+	wxPoint ht;
+	console->HitTest(evt.GetPosition(), &ht);
+	for (auto cur = flc.begin(); cur != flc.end(); cur++){
+		if (!cur->second)
+			continue;
+
+		if (cur->second->CheckPosition(ht.x, &isStyle)){
+			ParseDoubleClickResults(cur->second, ht.x, isStyle);
+			return;
+		}
+	}
+	for (auto cur = nflc.begin(); cur != nflc.end(); cur++){
+		if (!cur->second)
+			continue;
+
+		if (cur->second->CheckPosition(ht.x, &isStyle)){
+			ParseDoubleClickResults(cur->second, ht.x, isStyle);
+			return;
+		}
+	}
+	
+	evt.Skip();
+}
+
+void FontCollectorDialog::ParseDoubleClickResults(FontLogContent *flc, int cursorPos, bool isStyle)
+{
+	wxString text = console->GetValue();
+	wxString delim = L" \n,";
+	int start = 0, end = 0;
+	for (size_t i = cursorPos; i > 0; i--){
+		if (delim.find(text[i]) != -1){
+			start = i + 1;
+			break;
+		}
+	}
+	for (size_t i = cursorPos; i < text.length(); i++){
+		if (delim.find(text[i]) != -1){
+			end = i - 1;
+			if (end < start)
+				end = start - 1;
+			break;
+		}
+	}
+
+	wxString word = text.Mid(start, end - start + 1);
+	//need to write own find word between space or \n
+	
+	if (word.IsNumber()){
+		if (isStyle){
+			//find style name
+			//it's on start of line
+			wxString line = text.Mid(0, end).AfterLast(L'\n');
+			wxString styleName;
+			if (line.StartsWith(L" - ", &styleName)){
+				int result = styleName.find(_(" tabs: "));
+				if (result == -1)
+					return;
+
+				styleName = styleName.Mid(0, result);
+
+				auto cur = flc->styles.find(styleName);
+				if (cur != flc->styles.end() && cur->second.size()){
+					//wonder if it's possible that this table was empty
+					//better to check
+					int numtab = atoi(word) - 1;
+					//we have style and tab number, now only open it
+					OpenStyle(numtab, styleName);
+				}
+			}
+			// else wtf?
+			else{
+				bool thisIsBad = true;
+			}
+		}
+		else{
+			//line number
+			//line in text field is increased
+			int line = atoi(word) - 1;
+			auto cur = flc->lines.find(line);
+			if (cur != flc->lines.end() && cur->second.size()){
+				int tab = cur->second[0];
+				SetLine(tab, line);
+			}
+		}
+	}
+	else if(!word.empty()){
+		//style name or shit like tabs: or - maybe even ,
+		//auto cur = flc->styles.find(word);
+		//if (cur != flc->styles.end() && cur->second.size()){
+		//	//wonder if it's possible that this table was empty
+		//	//better to check
+		//	int tab = cur->second[0];
+		//	//we have style and tab number, now only open it
+		//	OpenStyle(tab, word);
+		//}
+		//else{ 
+			wxString lineFromStart = text.Mid(0, end).AfterLast(L'\n');
+			wxString lineFromEnd = text.Mid(end).BeforeFirst(L'\n');
+			wxString line = lineFromStart + lineFromEnd;
+			wxString styleName;
+			if (line.StartsWith(L" - ", &styleName)){
+				size_t result = styleName.find(_(" tabs: "));
+				if (result != -1){
+					styleName = styleName.Mid(0, result);
+				}
+
+				auto cur = flc->styles.find(styleName);
+				if (cur != flc->styles.end() && cur->second.size()){
+					int tab = cur->second[0];
+					//we have style and tab number, now only open it
+					OpenStyle(tab, styleName);
+				}
+			}
+		//}
+	}
+}
+
+void FontCollectorDialog::OpenStyle(int numtab, const wxString &style)
+{
+	Notebook * tabs = Notebook::GetTabs();
+	tabs->ChangePage(numtab, true);
+	TabPanel *tab = tabs->GetTab();
+	SubsGrid *grid = tab->grid;
+	bool lineSet = false;
+	for (size_t i = 0; i < grid->file->GetCount(); i++){
+		Dialogue *dial = grid->file->GetDialogue(i);
+		if (dial->Style == style){
+			grid->ChangeActiveLine(i, true, true);
+			lineSet = true;
+			break;
+		}
+	}
+
+	StyleStore::ShowStyleEdit(style);
+}
+
+void FontCollectorDialog::SetLine(int numtab, int line)
+{
+	Notebook * tabs = Notebook::GetTabs();
+	tabs->ChangePage(numtab, true);
+	TabPanel *tab = tabs->GetTab();
+	tab->grid->ChangeActiveLine(line, true, true);
+}
+
+void FontCollectorDialog::OnButtonPath(wxCommandEvent &event)
+{
+
+	if (opts->GetSelection() == 1){
+		destdir = wxDirSelector(_("Choose save folder"), path->GetValue(), 0, wxDefaultPosition, this);
+	}
+	else{
+		destdir = wxFileSelector(_("Select the name of the archive"), (path->GetValue().EndsWith(L"zip")) ?
+			KaiPathDir(path->GetValue()) : path->GetValue(),
+			(path->GetValue().EndsWith(L"zip")) ? KaiPathName(path->GetValue()) : emptyString,
+			L"zip", _("Archive files (*.zip)|*.zip"), wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	}
+	Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir);
+	Options.SaveOptions(true, false);
+	path->SetValue(destdir);
+}
+
+void FontCollectorDialog::OnButtonStart(wxCommandEvent &event)
+{
+	console->SetValue(emptyString);
+	EnableControls(false);
+	
+	int operation = (fromMKV->GetValue() && fromMKV->IsEnabled()) ? FontCollector::COPY_MKV_FONTS :
+		/*(opts->GetSelection() == 3) ? FontCollector::MUX_VIDEO_WITH_SUBS : */
+		(opts->GetSelection() == 0) ? FontCollector::CHECK_FONTS: FontCollector::COPY_FONTS;
+	if (event.GetId() == 9880){
+		operation |= FontCollector::ON_ALL_TABS;
+	}
+	if (opts->GetSelection() == 0)
+		fc->StartCollect(operation);
+	else
+	{
+		if (bOpenFontFolder->IsEnabled())
+			bOpenFontFolder->Enable(false);
+
+		bool subsfromMkv = fromMKV->GetValue();
+		bool subsDirectory = subsdir->GetValue();
+		Options.SetString(FONT_COLLECTOR_DIRECTORY, path->GetValue());
+		if (opts->GetSelection() == 3 && (Notebook::GetTab()->VideoPath == emptyString || Notebook::GetTab()->SubsPath == emptyString)){
+			KaiMessageBox(_("No video or subtitles loaded"), emptyString, 4L, this);
+			EnableControls();
+			return;
+		}
+		if (path->GetValue() == emptyString && !subsDirectory){
+			KaiMessageBox(_("Select the folder where you want to copy fonts"), emptyString, 4L, this);
+			EnableControls();
+			path->SetFocus();
+			return;
+		}
+		if (!subsfromMkv && subsDirectory && Notebook::GetTab()->SubsPath == emptyString){
+			KaiMessageBox(_("No subtitles loaded. Load subtitles or deselect this option."), emptyString, 4L, this);
+			EnableControls();
+			return;
+		}
+		wxString pathValue = KaiNormalizePath(path->GetValue());
+		if (opts->GetSelection() == 2 && wxDirExists(pathValue) && !subsdir->GetValue()){
+			KaiMessageBox(_("Choose a name for the archive"), emptyString, 4L, this);
+			EnableControls();
+			path->SetFocus();
+			return;
+		}
+		if (subsDirectory){
+			wxString sourcePath = (subsfromMkv) ? Notebook::GetTab()->VideoPath : Notebook::GetTab()->SubsPath;
+			wxString rest = KaiPathName(sourcePath);
+			wxString fontDir = KaiPathJoin(KaiPathDir(sourcePath), L"Czcionki");
+			copypath = (opts->GetSelection() == 2) ? KaiPathJoin(fontDir, rest.BeforeLast(L'.') + L".zip") : fontDir + wxFileName::GetPathSeparator();
+		}
+		else{
+			copypath = pathValue;
+			wxFileName fname(copypath);
+			if (!fname.IsOk()
+#ifdef _WIN32
+				|| fname.GetVolume().length() != 1
+#endif
+				){
+				KaiMessageBox(_("The save path is not valid."), emptyString, 4L, this);
+				EnableControls();
+				return;
+			}
+			wxString separator(wxFileName::GetPathSeparator());
+			if (opts->GetSelection() != 2 && !copypath.EndsWith(separator)){ copypath << separator; }
+			else if (opts->GetSelection() == 2 && !copypath.EndsWith(L".zip")){ copypath << L".zip"; }
+		}
+		if (opts->GetSelection() != 2){
+			wxString extt = copypath.Right(4).Lower();
+			if (extt == L".zip"){ copypath = KaiPathDir(copypath, wxPATH_GET_VOLUME | wxPATH_GET_SEPARATOR); }
+			/*if (!wxDir::Exists(copypath)){
+				if (!wxDir::Make(copypath, 511, wxPATH_MKDIR_FULL)){
+					KaiMessageBox(_("Nie można utworzyć folderu."), emptyString, 4L, this);
+					EnableControls();
+					return;
+				}
+			}*/
+		}
+		else{
+			if (wxFileExists(copypath)){
+				if (KaiMessageBox(_("The zip file already exists, delete it?"), _("Confirmation"), wxYES_NO, this) == wxYES){
+					if (!wxRemoveFile(copypath)){
+						EnableControls();
+						return;
+					}
+				}
+			}
+		}
+
+
+		if (opts->GetSelection() == 2){ operation |= FontCollector::AS_ZIP; }
+		
+		/*if (opts->GetSelection() == 3){
+			fc->muxerpath = L"C:\\Program Files\\MKVtoolnix\\mkvmerge.exe";
+			if (!wxFileExists(fc->muxerpath)){
+				wxFileDialog *fd = new wxFileDialog(this, _("Wybierz plik mkvmerge.exe"), L"C:\\Program Files", L"mkvmerge.exe", _("Programy (.exe)|*.exe"), wxFD_OPEN | wxFD_FILE_MUST_EXIST);
+				if (fd->ShowModal() != wxID_OK){
+					EnableControls();
+					KaiMessageBox(_("Muxowanie zostało anulowane, bo nie wybrano mkvmerge.exe")); fd->Destroy();
+					return;
+				}
+				fc->muxerpath = fd->GetPath();
+				fd->Destroy();
+			}
+		}*/
+		fc->StartCollect(operation);
+	}
+}
+
+void FontCollectorDialog::OnChangeOpt(wxCommandEvent &event)
+{
+	path->Enable(opts->GetSelection() != 0);
+	choosepath->Enable(opts->GetSelection() != 0);
+	subsdir->Enable(opts->GetSelection() != 0);
+
+	fromMKV->Enable(opts->GetSelection() != 0 && Notebook::GetTab()->VideoPath.Lower().EndsWith(L".mkv"));
+	Options.SetInt(FONT_COLLECTOR_ACTION, opts->GetSelection());
+	Options.SetBool(FONT_COLLECTOR_USE_SUBS_DIRECTORY, subsdir->GetValue());
+	Options.SaveOptions(true, false);
+}
+
+FontCollector::FontCollector(wxWindow *parent)
+	:zip(nullptr)
+	, fcd(nullptr)
+	, reloadFonts(false)
+	, fontObserverClient(parent)
+{
+	FontEnum.AddClient(parent, [this](){reloadFonts = true; });
+}
+
+FontCollector::~FontCollector()
+{
+	FontEnum.RemoveClient(fontObserverClient);
+	//test if it not crash nothing
+	if (fcd)
+		fcd->Destroy();
+};
+
+void FontCollector::GetAssFonts(SubsFile *subs, int tab)
+{
+	std::map<wxString, Styles*> stylesfonts;
+
+	std::vector<Styles*> * styles = subs->GetStyleTable();
+
+	for (size_t i = 0; i < styles->size(); i++)
+	{
+		Styles *style = (*styles)[i];
+		wxString fn = style->Fontname;
+		bool bold = style->Bold;
+		bool italic = style->Italic;
+		wxString fnl = fn.Lower() << (int)bold << (int)italic;
+		int iresult = facenames.Index(fn, false);
+		if (iresult == -1){
+			FontLogContent *nflc = notFindFontsLog[fn];
+			if (!nflc){
+				nflc = new FontLogContent(_("Font not found \"") + fn + L"\".\n", true);
+				notFindFontsLog[fn] = nflc;
+			}
+			nflc->SetStyle(tab, style->Name);
+			//continue;
+		}
+		else
+		{
+			if (!(foundFonts.find(fnl) != foundFonts.end())){
+				foundFonts[fnl] = new SubsFont(fn, logFonts[iresult], (int)bold, italic);
+			}
+			FontLogContent *flc = findFontsLog[fn];
+			if (!flc){
+				flc = new FontLogContent(wxString::Format(_("Found font \"%s\"\n"), fn));
+				findFontsLog[fn] = flc;
+			}
+			flc->SetStyle(tab, style->Name);
+		}
+		stylesfonts[style->Name] = style;
+
+	}
+
+	wxString tags[] = { L"fn", L"b", L"i", L"p" };
+
+	for (size_t i = 0; i < subs->GetCount(); i++)
+	{
+		Dialogue *dial = subs->GetDialogue(i);
+		if (dial->IsComment){ continue; }
+		ParseData* pdata = dial->ParseTags(tags, 4, true);
+		if (!pdata){ continue; }
+
+		const wxString &text = dial->GetTextNoCopy();
+
+		Styles *lstyle = stylesfonts[dial->Style];
+
+		wxString ifont = (lstyle) ? lstyle->Fontname : emptyString;
+		int bold = (lstyle) ? (int)lstyle->Bold : 0;
+		int italic = (lstyle) ? (int)lstyle->Italic : 0;
+		bool newFont = false;
+		bool lastPlain = false;
+		wxString textHavingFont;
+		size_t tagsSize = pdata->tags.size();
+
+		for (size_t j = 0; j < tagsSize; j++)
+		{
+			TagData *tag = pdata->tags[j];
+			if (tag->tagName == L"p" || tag->tagName == L"pvector"){ continue; }
+
+			if (tag->tagName == L"plain"){
+				textHavingFont += tag->value;
+				if ((lastPlain && j < tagsSize - 1) || ifont.IsEmpty()){ continue; }
+				lastPlain = true;
+				wxString fnl = ifont.Lower() << bold << italic;
+				int iresult = facenames.Index(ifont, false);
+				if (iresult == -1){
+					FontLogContent *nflc = notFindFontsLog[ifont];
+					if (!nflc){
+						nflc = new FontLogContent(_("Font not found \"") + ifont + L"\".\n", true);
+						notFindFontsLog[ifont] = nflc;
+					}
+					if (newFont){
+						nflc->SetLine(tab, i);
+					}
+				}
+				else
+				{
+					if (!(foundFonts.find(fnl) != foundFonts.end())){
+						foundFonts[fnl] = new SubsFont(ifont, logFonts[iresult], bold, (italic != 0));
+					}
+					if (newFont){
+						FontLogContent *flc = findFontsLog[ifont];
+						if (!flc){
+							flc = new FontLogContent(wxString::Format(_("Found font \"%s\"\n"), ifont));
+							findFontsLog[ifont] = flc;
+						}
+						flc->SetLine(tab, i);
+						newFont = false;
+					}
+				}
+				//we add all texts to check if even not found font is even needed
+				//when is not needed leave only info cause not inform on the end.
+				textHavingFont.Replace(L"\\N", emptyString);
+				textHavingFont.Replace(L"\\n", emptyString);
+				textHavingFont.Replace(L"\\h", L" ");
+				PutChars(textHavingFont, ifont);
+				textHavingFont.clear();
+			}
+			else{
+				if (tag->tagName == L"fn"){
+					ifont = tag->value;
+					newFont = true;
+				}
+				else if (tag->tagName == L"b"){
+					bold = wxAtoi(tag->value);
+				}
+				else if (tag->tagName == L"i"){
+					italic = wxAtoi(tag->value);
+				}
+				lastPlain = false;
+			}
+
+
+		}
+		dial->ClearParse();
+	}
+
+}
+
+bool FontCollector::AddFont(const wxString &string)
+{
+#ifndef _WIN32
+	return AddFontResourceExW(string.wc_str(), FR_PRIVATE, nullptr) > 0;
+#else
+	return true;
+#endif
+}
+
+void FontCollector::CheckOrCopyFonts()
+{
+	if (!(operation & CHECK_FONTS) && (fontSizes.size() < 1 || reloadFonts)){
+		fontSizes.clear();
+		hasExternalFolder = false;
+#ifndef _WIN32
+		// Linux does not have a single Windows-style Fonts directory.  Use
+		// fontconfig as the source of truth and store absolute paths directly in
+		// fontSizes; the later lookup code prepends fontfolder, which is kept empty
+		// on this platform.
+		fontfolder.clear();
+		fontFolderLocal.clear();
+		fontFolderExternal.clear();
+		for (const auto& fontPath : hikarisub_linux_collect_font_files()){
+			std::error_code ec;
+			auto size = std::filesystem::file_size(fontPath, ec);
+			if (ec || size == 0 || size > static_cast<std::uintmax_t>(std::numeric_limits<long>::max()))
+				continue;
+			fontSizes.insert(std::pair<long, wxString>(static_cast<long>(size), wxString::FromUTF8(fontPath.c_str())));
+		}
+		if (fontSizes.empty()){
+			SendMessageD(_("Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n"), fcd->warning);
+			return;
+		}
+		SubsTime processTime(sw.Time());
+		SendMessageD(wxString::Format(_("Retrieved sizes and names of %i fonts, elapsed time %sms.\n\n"), (int)fontSizes.size(), processTime.GetFormatted(SRT)), fcd->normal);
+#else
+		fontfolder = wxGetOSDirectory() + L"\\fonts\\";
+		wxString seekpath = fontfolder + L"*";
+
+		WIN32_FIND_DATAW data;
+		HANDLE h = FindFirstFileW(seekpath.wc_str(), &data);
+		if (h == INVALID_HANDLE_VALUE){
+			SendMessageD(_("Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n"), fcd->warning);
+			return;
+		}
+		//first file is "." second ".." after there are a font files
+		//fontSizes.insert(std::pair<long, wxString>(data.nFileSizeLow, wxString(data.cFileName)));
+		while (1){
+			int result = FindNextFile(h, &data);
+			if (result == ERROR_NO_MORE_FILES || result == 0){ break; }
+			else if (data.nFileSizeLow == 0){ continue; }
+			fontSizes.insert(std::pair<long, wxString>(data.nFileSizeLow, wxString(data.cFileName)));
+		}
+		FindClose(h);
+
+		WCHAR appDataPath[MAX_PATH];
+		
+		if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_LOCAL_APPDATA | CSIDL_FLAG_CREATE, nullptr, 0, appDataPath))){
+			fontFolderLocal = wxString(appDataPath) + L"\\Microsoft\\Windows\\Fonts\\";
+			wxString localPath = fontFolderLocal + L"*";
+			WIN32_FIND_DATAW data1;
+			HANDLE h1 = FindFirstFileW(localPath.wc_str(), &data1);
+			if (h1 != INVALID_HANDLE_VALUE){
+				//fontSizes.insert(std::pair<long, wxString>(data1.nFileSizeLow, wxString(data1.cFileName)));
+				while (1){
+					int result = FindNextFile(h1, &data1);
+					if (result == ERROR_NO_MORE_FILES || result == 0){ break; }
+					else if (data1.nFileSizeLow == 0){ continue; }
+					fontSizes.insert(std::pair<long, wxString>(data1.nFileSizeLow, wxString(data1.cFileName)));
+				}
+				FindClose(h1);
+			}
+		}
+		fontFolderExternal = Options.GetString(EXTERNAL_FONTS_DIRECTORY);
+		if (!fontFolderExternal.empty()) {
+			WIN32_FIND_DATAW data2;
+			wxString seekpath = fontFolderExternal + L"*";
+			HANDLE h2 = FindFirstFileW(seekpath.wc_str(), &data2);
+			if (h2 != INVALID_HANDLE_VALUE){
+				//first file is "." second ".." after there are a font files
+				while (1) {
+					int result = FindNextFile(h2, &data2);
+					if (result == ERROR_NO_MORE_FILES || result == 0) { break; }
+					else if (data2.nFileSizeLow == 0) { continue; }
+					fontSizes.insert(std::pair<long, wxString>(data2.nFileSizeLow, wxString(data2.cFileName)));
+				}
+				FindClose(h2);
+				hasExternalFolder = true;
+			}
+		}
+		SubsTime processTime(sw.Time());
+		SendMessageD(wxString::Format(_("Retrieved sizes and names of %i fonts, elapsed time %sms.\n\n"), (int)fontSizes.size() - 2, processTime.GetFormatted(SRT)), fcd->normal);
+#endif
+	}
+	
+	zip = nullptr;
+	int found = 0;
+	int notFound = 0;
+	int notCopied = 0;
+
+	if (facenames.size() < 1 || reloadFonts){ EnumerateFonts(); }
+	
+
+	if (operation & ON_ALL_TABS){
+		Notebook * tabs = Notebook::GetTabs();
+		size_t tabsSize = tabs->Size();
+		//HANDLE *threads = new HANDLE[tabsSize];
+
+		for (size_t i = 0; i < tabsSize; i++){
+			GetAssFonts(tabs->Page(i)->grid->file, i);
+			//std::tuple<FontCollector*, SubsFile*, int*> *data = 
+				//new std::tuple<FontCollector *, SubsFile *, int*>(this, tabs->Page(i)->grid->file, new int(i));
+			
+			//threads[i] = CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)ThreadFunction, data, 0, 0);
+			
+		}
+		//WaitForMultipleObjects(tabsSize, threads, TRUE, INFINITE);
+		//delete[] threads;
+	}
+	else{
+		GetAssFonts(Notebook::GetTab()->grid->file, Notebook::GetTabs()->iter);
+	}
+
+	bool allglyphs = CheckPathAndGlyphs(&found, &notFound, &notCopied);
+	if (notFound == -1) {
+		SendMessageD(_("Path is not available"), fcd->warning);
+		return;
+	}
+
+	//checking glyphs not work on not existed fonts, 
+	notFound += notFindFontsLog.size();
+	for (auto cur = findFontsLog.begin(); cur != findFontsLog.end(); cur++){
+		cur->second->DoLog(this);
+	}
+	for (auto cur = notFindFontsLog.begin(); cur != notFindFontsLog.end(); cur++){
+		CharMap &ch = FontMap[cur->first];
+		if (!ch.size()){
+			cur->second->AppendWarnings(
+				wxString::Format(_("Font \"%s\" belongs to a style\nthat is not used."),
+				cur->first));
+			notFound--;
+		}
+		cur->second->DoLog(this);
+	}
+	
+	CloseZip();
+
+	wxString noglyphs = (allglyphs) ? emptyString : _("Some fonts do not contain all glyphs used in the text.\n");
+
+	bool checkFonts = (operation & CHECK_FONTS);
+
+	if (notFound || !allglyphs){
+		wxString message;
+		
+		message += L"\n" + wxString::Format(_("Finished, %s %s.\n"), (checkFonts) ? _("found") : _("copied"),
+			wxString::Format(wxGETTEXT_IN_CONTEXT_PLURAL("found or copied",
+				"%d font", "%d fonts", found), found));
+		if (notFound){
+			message += wxString::Format(_("Not found %s.\n"),
+				wxString::Format(wxGETTEXT_IN_CONTEXT_PLURAL("not found or not copied",
+					"%d font", "%d fonts", notFound), notFound));
+		}
+		if (notCopied){
+			message += wxString::Format(_("Cannot copy %s.\n"),
+				wxString::Format(wxGETTEXT_IN_CONTEXT_PLURAL("not found or not copied",
+					"%d font", "%d fonts", notCopied), notCopied));
+		}
+		
+		message += noglyphs;
+		SendMessageD(message, fcd->warning);
+	}
+	else{
+		SendMessageD(L"\n" + wxString::Format(_("Completed Successfully, %s %s.\n"),
+			(checkFonts) ? _("found") : _("copied"),
+			wxString::Format(wxGETTEXT_IN_CONTEXT_PLURAL("found or copied",
+				"%d font", "%d fonts", found), found)), wxColour("#008000"));
+	}
+	fontnames.clear();
+}
+
+bool FontCollector::SaveFont(const wxString &fontPath, FontLogContent *flc)
+{
+	wxString fn = KaiPathName(fontPath);
+	if (zip){
+		wxFFileInputStream in(fontPath);
+		bool isgood = in.IsOk();
+		if (isgood){
+			try {
+				zip->PutNextEntry(new Utf8ZipEntry(fn));
+				zip->Write(in);
+				flc->AppendInfo(wxString::Format(_("Added font \"%s\" to the archive."), fn));
+			}
+			catch (...) {
+				isgood = false;
+			}
+
+		}
+
+		if (!isgood){
+			flc->AppendWarnings(wxString::Format(_("Cannot zip font \"%s\"."), fn));
+		}
+		return isgood;
+	}
+	else{
+		if (wxCopyFile(fontPath, KaiPathJoin(fcd->copypath, fn))){
+			flc->AppendInfo(wxString::Format(_("Copied font \"%s\"."), fn));
+			return true;
+		}
+		else
+		{
+			flc->AppendWarnings(wxString::Format(_("Cannot copy font \"%s\"."), fn));
+			return false;
+		}
+	}
+}
+
+void FontCollector::CopyMKVFonts()
+{
+	zip = nullptr;
+	
+	if (operation & ON_ALL_TABS){
+		Notebook *tabs = Notebook::GetTabs();
+		for (size_t i = 0; i < tabs->Size(); i++){
+			wxString mkvpath = tabs->Page(i)->VideoPath;
+			SendMessageD(wxString::Format(_("Video: %s\n\n"), mkvpath), fcd->normal);
+			CopyMKVFontsFromTab(mkvpath);
+		}
+	}
+	else{
+		wxString mkvpath = Notebook::GetTab()->VideoPath;
+		CopyMKVFontsFromTab(mkvpath);
+	}
+
+	CloseZip();
+}
+
+void FontCollector::CopyMKVFontsFromTab(const wxString &mkvpath)
+{
+	wxString ext = mkvpath.AfterLast(L'.').Lower();
+	
+	if (ext != L"mkv"){
+		SendMessageD(_("This video is not an MKV file."), fcd->warning);
+		return;
+	}
+	Demux dmx;
+	if (!dmx.Open(mkvpath)) {
+		SendMessageD(_("Cannot open MKV file"), fcd->warning);
+		return;
+	}
+	wxArrayString list;
+	dmx.GetFontList(&list);
+	if (list.size() < 1){
+		SendMessageD(_("Loaded MKV file does not have any fonts."), fcd->warning);
+		return;
+	}
+
+	size_t cpfonts = list.size();
+	if (cpfonts) {
+		if (!MakeDirectory(operation & AS_ZIP)) {
+			return;
+		}
+	}
+
+	for (size_t k = 0; k < list.size(); k++) {
+		wxString name = list[k];
+		if (dmx.SaveFont(k, KaiPathJoin(KaiPathDir(fcd->copypath), name), zip))
+		{
+			SendMessageD(_("Saved a font named \"") + name + L"\".\n \n", fcd->normal);
+		}
+		else
+		{
+			SendMessageD(_("Cannot save font named \"") + name + L"\".\n \n", fcd->warning);
+			cpfonts--;
+		}
+	}
+
+	if (cpfonts < list.size()){
+		SendMessageD(wxString::Format(_("Completed, copied %i fonts.\nFailed to copy %i fonts."),
+			(int)cpfonts, (int)(list.size() - cpfonts)), fcd->warning);
+	}
+	else{
+		SendMessageD(wxString::Format(_("Completed successfully and copied %i fonts."), (int)cpfonts), wxColour(L"#008000"));
+	}
+
+	dmx.Close();
+}
+
+
+void FontCollector::ClearTables()
+{
+	currentTextPosition = 0;
+	FontMap.clear();
+	for (auto cur = notFindFontsLog.begin(); cur != notFindFontsLog.end(); cur++)
+		delete cur->second;
+	notFindFontsLog.clear();
+	for (auto cur = findFontsLog.begin(); cur != findFontsLog.end(); cur++)
+		delete cur->second;
+	findFontsLog.clear();
+	for (auto cur = foundFonts.begin(); cur != foundFonts.end(); cur++)
+		delete cur->second;
+	foundFonts.clear();
+}
+
+bool FontCollector::MakeDirectory(bool isZip)
+{
+	wxString path = isZip ? KaiPathDir(fcd->copypath) : fcd->copypath;
+	if (!wxDir::Exists(path)) {
+		if (!wxDir::Make(path, 511, wxPATH_MKDIR_FULL)) {
+			SendMessageD(wxString::Format(_("Cannot create folder.")), fcd->warning);
+			return false;
+		}
+	}
+	if (isZip && !zip) {
+		if (!CreateZip()) {
+			return false;
+		}
+	}
+	return true;
+}
+
+bool FontCollector::CreateZip()
+{
+	wxFFileOutputStream *out = new wxFFileOutputStream(fcd->copypath);
+	if (out->IsOk()) {
+		zip = new wxZipOutputStream(out, 9, wxConvUTF8);
+		return true;
+	}
+	else {
+		delete out;
+		return false;
+	}
+	return false;
+}
+
+void FontCollector::CloseZip()
+{
+	if (zip){
+		zip->Close();
+		delete zip;
+		zip = nullptr;
+	}
+}
+
+void FontCollector::PutChars(const wxString &txt, const wxString &fn)
+{
+	CharMap &ch = FontMap[fn];
+
+	for (size_t i = 0; i < txt.length(); i++){
+		if (!(ch.find(txt[i]) != ch.end())){
+			ch.insert(txt[i]);
+		}
+	}
+}
+
+void FontCollector::EnumerateFonts()
+{
+	facenames.clear();
+	logFonts.clear();
+	LOGFONTW lf = {};
+	lf.lfCharSet = DEFAULT_CHARSET;
+	lf.lfPitchAndFamily = 0;
+	HDC dc = ::CreateCompatibleDC(nullptr);
+	EnumFontFamiliesEx(dc, &lf, (FONTENUMPROCW)[](const LOGFONT *lf, const TEXTMETRIC *mt, DWORD style, LPARAM lParam) -> int {
+		FontCollector * fc = reinterpret_cast<FontCollector*>(lParam);
+		fc->facenames.push_back(lf->lfFaceName);
+		fc->logFonts.push_back(*lf);
+		return 1;
+	}, (LPARAM)this, 0);
+	::DeleteDC(dc);
+}
+
+bool FontCollector::CheckPathAndGlyphs(int *found, int *notFound, int *notCopied)
+{
+	bool allfound = true;
+	bool needInit = true;
+	bool copyFonts = !(operation & CHECK_FONTS);
+	HDC dc = ::CreateCompatibleDC(nullptr);
+	if (!dc)
+		return false;
+	auto it = foundFonts.begin();
+	wxString lastfn;
+	for (size_t k = 0; k < foundFonts.size(); k++){
+		// reference can a bit make it faster, when create indirect font
+		// not release it
+		LOGFONTW mlf = it->second->GetLogFont(dc);
+		wxString fn = it->second->name;
+		bool isNewFont = lastfn != fn;
+		lastfn = fn;
+		SubsFont *font = it->second;
+		FontLogContent *flc = findFontsLog[fn];
+		if (!flc){
+			flc = new FontLogContent(wxString::Format(_("Found font \"%s\"."), fn));
+			findFontsLog[fn] = flc;
+		}
+		it++;
+		//skip not used font before it make any other messages
+		CharMap &ch = FontMap[fn];
+		if (!ch.size()){
+			if(isNewFont)
+				flc->AppendWarnings(wxString::Format(_("Font \"%s\" belongs to a style\nthat is not used.%s"), fn, (copyFonts) ? _("\nWill not be copied.") : emptyString));
+			
+			continue;
+			//no goto cause font is not created yet
+		}
+		auto hfont = CreateFontIndirectW(&mlf);
+		HGDIOBJ oldFont = SelectObject(dc, hfont);
+		if (font->fakeNormal){
+			flc->AppendWarnings(wxString::Format(_("Font \"%s\" is missing normal style."), fn));
+		}
+		else if (font->fakeBoldItalic){
+			flc->AppendWarnings(wxString::Format(_("Font \"%s\" is missing bold italics."), fn));
+		}
+		else if (font->fakeBold){
+			flc->AppendWarnings(wxString::Format(_("Font \"%s\" is missing bold."), fn));
+		}
+		else if (font->fakeItalic){
+			flc->AppendWarnings(wxString::Format(_("Font \"%s\" is missing italics."), fn));
+		}
+		if (isNewFont){
+			wxString text;
+			wxString missing;
+			
+			for (auto character = ch.begin(); character != ch.end(); character++)
+			{
+				const auto &achar = (*character);
+				if (achar != 65279)
+					text << achar;
+			}
+			if (!FontEnum.CheckGlyphsExists(dc, text, missing))
+			{
+				flc->AppendWarnings(wxString::Format(_("Cannot check the characters in font \"%s\"."), fn));
+			}
+			if (missing.length() > 0){
+				allfound = false;
+				flc->AppendWarnings(wxString::Format(_("Font \"%s\" does not contain characters: \"%s\"."), fn, missing));
+			}
+		}
+		
+		if (copyFonts){
+			DWORD ttcf = 0x66637474;
+			auto size = GetFontData(dc, ttcf, 0, nullptr, 0);
+			if (size == GDI_ERROR) {
+				ttcf = 0;
+				size = GetFontData(dc, 0, 0, nullptr, 0);
+			}
+			if (size == GDI_ERROR || size == 0){
+				flc->AppendWarnings(wxString::Format(_("Cannot get the contents of font \"%s\"."), fn));
+				if (isNewFont)
+					(*notFound)++;
+
+				goto done;
+			}
+			std::string buffer;
+			buffer.resize(size);
+			GetFontData(dc, ttcf, 0, &buffer[0], (int)size);
+			std::string file_buffer;
+			file_buffer.resize(size);
+			bool succeeded = false;
+
+			for (auto fontSize = fontSizes.equal_range(size).first; fontSize != fontSizes.equal_range(size).second; ++fontSize){
+				wxString fullpath = fontfolder + fontSize->second;
+				FILE *fp = _wfopen(fullpath.wc_str(), L"rb");
+				if (!fp){
+					fullpath = fontFolderLocal + fontSize->second;
+					fp = _wfopen(fullpath.wc_str(), L"rb");
+				}
+				if (!fp && hasExternalFolder) {
+					fullpath = fontFolderExternal + fontSize->second;
+					fp = _wfopen(fullpath.wc_str(), L"rb");
+				}
+				if (!fp){ 
+					flc->AppendWarnings(wxString::Format(_("Cannot open file \"%s\"."), fontSize->second));
+					//goto done; 
+					continue;
+				}
+				fseek(fp, 0, SEEK_END);
+				long lSize = ftell(fp);
+				rewind(fp);
+				if (lSize != size){
+					flc->AppendWarnings(wxString::Format(_("Size of font \"%s\" is different."), fn));
+					fclose(fp);
+					//goto done;
+					continue;
+				}
+				int result = fread(&file_buffer[0], 1, size, fp);
+				if (result != size){
+					flc->AppendWarnings(wxString::Format(_("Could not read \"%s\" font from the Fonts folder."), fn));
+				}
+				fclose(fp);
+				if (memcmp(&file_buffer[0], &buffer[0], size) == 0) {
+					if (fontnames.Index(fullpath, true) == -1){
+						fontnames.Add(fullpath);
+						flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), fullpath));
+						if (needInit) {
+							if (operation & COPY_FONTS && !MakeDirectory(operation & AS_ZIP)) {
+								*notFound = -1;
+								SelectObject(dc, oldFont);
+								DeleteObject(hfont);
+								::DeleteDC(dc);
+								return true;
+							}
+							needInit = false;
+						}
+						if (operation & COPY_FONTS){ 
+							if (!SaveFont(fullpath, flc))
+								(*notCopied)++;
+							else
+								(*found)++;
+						}
+						wxString ext = fontSize->second.AfterLast(L'.').Lower();
+						if (ext == L"pfm" || ext == L"pfb"){
+							wxString repl = (ext == L"pfm") ? L"pfb" : L"pfm";
+							if (fullpath[fullpath.length() - 1] < L'Z'){ repl = repl.Upper(); }
+							wxString secondPath = fullpath.RemoveLast(3) + repl;
+							fontnames.Add(secondPath);
+							flc->AppendInfo(wxString::Format(_("Found \"%s\" font file."), secondPath));
+							if (operation & COPY_FONTS){
+								if (!SaveFont(fullpath, flc))
+									(*notCopied)++;
+								else
+									(*found)++;
+							}
+						}
+					}
+					//fake italic/bold font when another normal is added
+					//must succeed but not add a path
+
+					succeeded = true;
+					break;
+				}
+			}
+			if (!succeeded){
+				flc->AppendWarnings(wxString::Format(_("Cannot find \"%s\" font in Fonts folder."), fn));
+				(*notFound)++;
+				(*found)--;
+			}
+				
+		} else if (isNewFont)
+			(*found)++;
+		//rest fonts it's just bold/italic version not count it
+	done:
+
+		SelectObject(dc, oldFont);
+		DeleteObject(hfont);
+	}
+	::DeleteDC(dc);
+	return allfound;
+}
+
+void FontCollector::MuxVideoWithSubs()
+{
+	TabPanel* tab = Notebook::GetTab();
+	if (!tab)
+		return;
+
+	std::vector<wxString> arguments{
+		muxerpath,
+		L"--ui-language", L"pl",
+		L"--output", tab->VideoPath.BeforeLast(L'.') + L" (1).mkv",
+		L"--language", L"0:und",
+		L"--language", L"1:und",
+		L"(", tab->VideoPath, L")",
+		L"--language", L"0:und",
+		L"(", tab->SubsPath, L")"
+	};
+	for (size_t i = 0; i < fontnames.size(); i++){
+		wxString name = KaiPathName(fontnames[i]);
+		arguments.push_back(L"--attachment-name");
+		arguments.push_back(name);
+		arguments.push_back(L"--attachment-mime-type");
+		arguments.push_back(L"application/x-truetype-font");
+		arguments.push_back(L"--attach-file");
+		arguments.push_back(KaiPathJoin(fcd->copypath, name));
+	}
+	arguments.push_back(L"--track-order");
+	arguments.push_back(L"0:0,0:1,1:0");
+
+	std::vector<const wchar_t*> argv;
+	argv.reserve(arguments.size() + 1);
+	for (const auto& argument : arguments)
+		argv.push_back(argument.wc_str());
+	argv.push_back(nullptr);
+
+	if (wxExecute(argv.data(), wxEXEC_ASYNC) == 0){
+		KaiLog(_("Could not create process. Muxing canceled"));
+	}
+}
+
+void FontCollector::ShowDialog(wxWindow *parent)
+{
+	if (fcd)
+		return;
+
+	fcd = new FontCollectorDialog(parent, this);
+	fcd->Show();
+}
+
+void FontCollector::StartCollect(int _operation)
+{
+	operation = _operation;
+	FontCollectorThread *ft = new FontCollectorThread(this);
+}
+
+void FontCollector::SendMessageD(const wxString &string, const wxColour &col)
+{
+	wxThreadEvent *evt = new wxThreadEvent(EVT_APPEND_MESSAGE, fcd->GetId());
+	evt->SetPayload(new std::pair<wxString, wxColour>(string, col));
+	currentTextPosition += string.length();
+	wxQueueEvent(fcd, evt);
+}
+
+FontCollectorThread::FontCollectorThread(FontCollector *_fc)
+	:wxThread(wxTHREAD_DETACHED)
+{
+	fc = _fc;
+	Create();
+	Run();
+}
+
+wxThread::ExitCode FontCollectorThread::Entry()
+{
+	fc->sw.Start();
+	fc->ClearTables();
+	if (fc->operation &FontCollector::CHECK_FONTS || fc->operation &FontCollector::COPY_FONTS){
+		fc->CheckOrCopyFonts();
+	}
+	else if (fc->operation &FontCollector::COPY_MKV_FONTS){
+		fc->CopyMKVFonts();
+	}
+	else if (fc->operation &FontCollector::MUX_VIDEO_WITH_SUBS){
+		fc->CheckOrCopyFonts();
+		fc->MuxVideoWithSubs();
+	}
+	else{
+		fc->sw.Pause(); return 0;
+	}
+
+	wxThreadEvent *evt = new wxThreadEvent(EVT_ENABLE_BUTTONS, fc->fcd->GetId());
+	SubsTime processTime(fc->sw.Time());
+	fc->SendMessageD(wxString::Format(_("\nFinished in %sms"), processTime.GetFormatted(SRT)), fc->fcd->normal);
+	fc->sw.Pause();
+	wxQueueEvent(fc->fcd, evt);
+	if (fc->operation & FontCollector::COPY_FONTS || fc->operation & FontCollector::COPY_MKV_FONTS){
+		wxThreadEvent *evtof = new wxThreadEvent(EVT_ENABLE_OPEN_FOLDER, fc->fcd->GetId());
+		wxQueueEvent(fc->fcd, evtof);
+	}
+	return 0;
+}

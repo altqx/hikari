@@ -58,6 +58,6 @@
   "Automation/automation/Include/SubInspector/Inspector/SubInspector.dll",
   "Automation/automation/packages/karahelper.dll",
   "Themes/{AegiMode,DeepDark,DeepLight,MyDeepDark}.txt",
-  "KaiNote_AVX.exe (needs the Rel_AVX512 configuration)"
+  "HikariSub_AVX.exe (needs the Rel_AVX512 configuration)"
  ]
 }

@@ -1,5 +1,5 @@
 foreach(required_var IN ITEMS
-        KAINOTE_EXE RUNTIME_DIR SOURCE_DIR BINARY_DIR STAGING_PARENT
+        HIKARISUB_EXE RUNTIME_DIR SOURCE_DIR BINARY_DIR STAGING_PARENT
         PACKAGE_BASENAME ARCHIVE_PATH MSGFMT_EXECUTABLE Python3_EXECUTABLE
         TAR_EXECUTABLE GZIP_EXECUTABLE PACKAGING_DIR DESKTOP_GEN_DIR)
     if(NOT DEFINED ${required_var} OR "${${required_var}}" STREQUAL "")
@@ -37,22 +37,22 @@ if(NOT staging_prefix_pos EQUAL 0)
         "${staging_parent_abs}")
 endif()
 
-if(NOT EXISTS "${KAINOTE_EXE}")
-    message(FATAL_ERROR "Kainote executable is missing: ${KAINOTE_EXE}")
+if(NOT EXISTS "${HIKARISUB_EXE}")
+    message(FATAL_ERROR "HikariSub executable is missing: ${HIKARISUB_EXE}")
 endif()
 
-set(runtime_manifest "${RUNTIME_DIR}/.kainote-runtime-dependencies")
+set(runtime_manifest "${RUNTIME_DIR}/.hikarisub-runtime-dependencies")
 if(NOT EXISTS "${runtime_manifest}")
     message(FATAL_ERROR
-        "Runtime dependency manifest is missing. Build the kainote target first: "
+        "Runtime dependency manifest is missing. Build the hikarisub target first: "
         "${runtime_manifest}")
 endif()
 
 set(package_root "${staging_parent_abs}/${PACKAGE_BASENAME}")
 file(REMOVE_RECURSE "${package_root}")
-file(MAKE_DIRECTORY "${package_root}" "${package_root}/Kainote")
+file(MAKE_DIRECTORY "${package_root}" "${package_root}/HikariSub")
 
-file(COPY_FILE "${KAINOTE_EXE}" "${package_root}/kainote")
+file(COPY_FILE "${HIKARISUB_EXE}" "${package_root}/hikarisub")
 
 # Copy only manifest-listed runtime libraries.
 file(STRINGS "${runtime_manifest}" runtime_deps)
@@ -71,16 +71,16 @@ foreach(dep_name IN LISTS runtime_deps)
         "${package_root}/${dep_name}")
 endforeach()
 file(COPY_FILE "${runtime_manifest}"
-               "${package_root}/.kainote-runtime-dependencies")
+               "${package_root}/.hikarisub-runtime-dependencies")
 
-if(NOT EXISTS "${SOURCE_DIR}/Kainote/resource.rc" OR
-   NOT IS_DIRECTORY "${SOURCE_DIR}/Kainote/Bitmaps")
+if(NOT EXISTS "${SOURCE_DIR}/HikariSub/resource.rc" OR
+   NOT IS_DIRECTORY "${SOURCE_DIR}/HikariSub/Bitmaps")
     message(FATAL_ERROR "Required Linux bitmap resources are missing from the source tree")
 endif()
-file(COPY_FILE "${SOURCE_DIR}/Kainote/resource.rc"
-               "${package_root}/Kainote/resource.rc")
-file(COPY "${SOURCE_DIR}/Kainote/Bitmaps"
-     DESTINATION "${package_root}/Kainote")
+file(COPY_FILE "${SOURCE_DIR}/HikariSub/resource.rc"
+               "${package_root}/HikariSub/resource.rc")
+file(COPY "${SOURCE_DIR}/HikariSub/Bitmaps"
+     DESTINATION "${package_root}/HikariSub")
 
 # Both directories are read relative to the executable at runtime.
 foreach(runtime_data_dir IN ITEMS Automation Themes)
@@ -95,8 +95,8 @@ endforeach()
 # ships every locale or none.
 set(SOURCE_LOCALE_DIR "${SOURCE_DIR}/Locale")
 set(RUNTIME_LOCALE_DIR "${package_root}/Locale")
-set(KAINOTE_STRICT_LOCALES TRUE)
-set(KAINOTE_SOURCE_DIR "${SOURCE_DIR}")
+set(HIKARISUB_STRICT_LOCALES TRUE)
+set(HIKARISUB_SOURCE_DIR "${SOURCE_DIR}")
 include("${SOURCE_DIR}/cmake/CopyLocaleCatalogs.cmake")
 
 # Prefer the repository dictionary, then the configured en_US pair.
@@ -124,9 +124,9 @@ endif()
 # Desktop integration, laid out as it would be under a prefix so
 # install-desktop-integration.sh can copy it straight into XDG_DATA_HOME.
 foreach(desktop_input IN ITEMS
-        "${DESKTOP_GEN_DIR}/io.github.bjakja.Kainote.desktop"
-        "${DESKTOP_GEN_DIR}/io.github.bjakja.Kainote.metainfo.xml"
-        "${PACKAGING_DIR}/mime/kainote.xml"
+        "${DESKTOP_GEN_DIR}/io.github.altqx.HikariSub.desktop"
+        "${DESKTOP_GEN_DIR}/io.github.altqx.HikariSub.metainfo.xml"
+        "${PACKAGING_DIR}/mime/hikarisub.xml"
         "${PACKAGING_DIR}/install-desktop-integration.sh")
     if(NOT EXISTS "${desktop_input}")
         message(FATAL_ERROR "missing desktop integration input: ${desktop_input}")
@@ -138,12 +138,12 @@ file(MAKE_DIRECTORY
      "${package_root}/share/metainfo"
      "${package_root}/share/mime/packages"
      "${package_root}/share/icons")
-file(COPY_FILE "${DESKTOP_GEN_DIR}/io.github.bjakja.Kainote.desktop"
-               "${package_root}/share/applications/io.github.bjakja.Kainote.desktop")
-file(COPY_FILE "${DESKTOP_GEN_DIR}/io.github.bjakja.Kainote.metainfo.xml"
-               "${package_root}/share/metainfo/io.github.bjakja.Kainote.metainfo.xml")
-file(COPY_FILE "${PACKAGING_DIR}/mime/kainote.xml"
-               "${package_root}/share/mime/packages/kainote.xml")
+file(COPY_FILE "${DESKTOP_GEN_DIR}/io.github.altqx.HikariSub.desktop"
+               "${package_root}/share/applications/io.github.altqx.HikariSub.desktop")
+file(COPY_FILE "${DESKTOP_GEN_DIR}/io.github.altqx.HikariSub.metainfo.xml"
+               "${package_root}/share/metainfo/io.github.altqx.HikariSub.metainfo.xml")
+file(COPY_FILE "${PACKAGING_DIR}/mime/hikarisub.xml"
+               "${package_root}/share/mime/packages/hikarisub.xml")
 file(COPY "${PACKAGING_DIR}/icons/hicolor"
      DESTINATION "${package_root}/share/icons"
      FILES_MATCHING PATTERN "*.png")
@@ -171,7 +171,7 @@ file(CHMOD "${package_root}"
         OWNER_READ OWNER_WRITE OWNER_EXECUTE
         GROUP_READ GROUP_EXECUTE
         WORLD_READ WORLD_EXECUTE)
-file(CHMOD "${package_root}/kainote"
+file(CHMOD "${package_root}/hikarisub"
     PERMISSIONS
         OWNER_READ OWNER_WRITE OWNER_EXECUTE
         GROUP_READ GROUP_EXECUTE

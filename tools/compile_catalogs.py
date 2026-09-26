@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Compile Locale/*.po into the layout wxWidgets loads.
 
-Output is <out>/<lang>/LC_MESSAGES/kainote.mo.  wx searches <prefix>/<lang>/
+Output is <out>/<lang>/LC_MESSAGES/hikarisub.mo.  wx searches <prefix>/<lang>/
 LC_MESSAGES and <prefix>/<lang> and nothing else, and enumerates the available
 translations by walking directories, so a flat <out>/<lang>.mo is invisible to
 it -- which is how the Windows packages came to ship catalogues that could not
@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import sys
 
-DOMAIN = "kainote"
+DOMAIN = "hikarisub"
 
 
 def compile_catalogs(po_dir, out_dir, strict=False, msgfmt=None):

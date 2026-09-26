@@ -1,0 +1,297 @@
+﻿//  Copyright (c) 2016 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+
+#include "config.h"
+#include "VisualDrawingShapes.h"
+#include "VisualClips.h"
+#include "Visuals.h"
+#include "HikariSubFrame.h"
+#include "RendererVideo.h"
+#include "TabPanel.h"
+#include "VideoBox.h"
+#include "SubsGrid.h"
+#include "EditBox.h"
+#include "Provider.h"
+#include "VideoFullscreen.h"
+#include <wx/dc.h>
+
+
+Cross::Cross()
+{
+
+}
+
+Cross::~Cross()
+{
+	SAFE_RELEASE(calcfont);
+}
+
+void Cross::OnMouseEvent(wxMouseEvent &event)
+{
+	if ((tab->video->IsFullScreen() && tab->video->GetFullScreenWindow() &&
+		!tab->video->GetFullScreenWindow()->showToolbar->GetValue()) || event.RightUp() || tab->video->IsMenuShown()){
+		if (cross){
+			tab->video->SetCursor(wxCURSOR_ARROW);
+			cross = false;
+			tab->video->Render(false);
+		}
+		return;
+	}
+	
+	int x = event.GetX();
+	int y = event.GetY();
+
+	if (event.Leaving()){
+		if (cross){
+			cross = false;
+			tab->video->SetCursor(wxCURSOR_ARROW); 
+			tab->video->RedrawPaused();
+		}
+		return;
+	}
+
+	if (event.Entering()){
+		//tab->video->SetCursor(wxCURSOR_BLANK);
+		//KaiLog(L"Cross blank");
+		cross = true;
+		int nx = 0, ny = 0;
+		int w = 0, h = 0;
+		int diffW = 1, diffH = 1;
+		if (tab->video->HasVideo()){
+			RECT videoRect = tab->video->GetVideoRect();
+			diffX = videoRect.left;
+			diffY = videoRect.top;
+			w = videoRect.right - diffX;
+			h = videoRect.bottom - diffY;
+			if (diffX)
+				diffW = 0;
+			if (diffY)
+				diffH = 0;
+		}
+		else{
+			tab->video->GetClientSize(&w, &h);
+			diffX = diffY = 0;
+			h -= tab->video->GetPanelHeight();
+		}
+		tab->grid->GetASSRes(&nx, &ny);
+		coeffX = (float)nx / (float)(w - diffW);
+		coeffY = (float)ny / (float)(h - diffH);
+	}
+	float zx = (x / zoomScale.x) + zoomMove.x;
+	float zy = (y / zoomScale.y) + zoomMove.y;
+	int posx = (float)zx * coeffX;
+	int posy = (float)zy * coeffY;
+	coords = emptyString;
+	coords << posx << L", " << posy;
+	DrawLines(wxPoint(x, y));
+
+	if (event.MiddleDown() || (event.LeftDown() && event.ControlDown())){
+		Dialogue *aline = tab->edit->line;
+		bool istl = (tab->grid->hasTLMode && aline->TextTl != emptyString);
+		wxString ltext = (istl) ? aline->TextTl : aline->Text;
+		wxRegEx posmov(L"\\\\(pos|move)([^\\\\}]+)", wxRE_ADVANCED);
+		posmov.ReplaceAll(&ltext, emptyString);
+
+		wxString postxt;
+		float zx = (x / zoomScale.x) + zoomMove.x;
+		float zy = (y / zoomScale.y) + zoomMove.y;
+		float posx = (float)zx * coeffX;
+		float posy = (float)zy * coeffY;
+		postxt = L"\\pos(" + getfloat(posx) + L"," + getfloat(posy) + L")";
+		if (ltext.StartsWith(L"{")){
+			ltext.insert(1, postxt);
+		}
+		else{
+			ltext = L"{" + postxt + L"}" + ltext;
+		}
+		if (istl){ aline->TextTl = ltext; }
+		else{ aline->Text = ltext; }
+		tab->grid->ChangeCell((istl) ? TXTTL : TXT, tab->grid->currentLine, aline);
+		tab->grid->Refresh(false);
+		tab->grid->SetModified(VISUAL_POSITION);
+	}
+}
+
+void Cross::Draw(int time)
+{
+	if (cross && isOnVideo){
+		HRESULT hr;
+		if (font) {
+			DRAWOUTTEXT(font, coords, crossRect, (crossRect.left < vectors[0].x) ? 10 : 8, 0xFFFFFFFF);
+		}
+		if (line) {
+			hr = line->SetWidth(3);
+			hr = line->Begin();
+			hr = line->Draw(&vectors[0], 2, 0xFF000000);
+			hr = line->Draw(&vectors[2], 2, 0xFF000000);
+			hr = line->End();
+			hr = line->SetWidth(1);
+		}
+		D3DXVECTOR2 v1[4];
+		v1[0] = vectors[0];
+		v1[0].x += 0.5f;
+		v1[1] = vectors[1];
+		v1[1].x += 0.5f;
+		v1[2] = vectors[2];
+		v1[2].y += 0.5f;
+		v1[3] = vectors[3];
+		v1[3].y += 0.5f;
+		if (line) {
+			hr = line->Begin();
+			hr = line->Draw(&v1[0], 2, 0xFFFFFFFF);
+			hr = line->Draw(&v1[2], 2, 0xFFFFFFFF);
+			hr = line->End();
+		}
+	}
+}
+
+void Cross::DrawWx(wxDC& dc, int time)
+{
+	if (!cross || !isOnVideo)
+		return;
+
+	const wxPoint verticalTop((int)vectors[0].x, (int)vectors[0].y);
+	const wxPoint verticalBottom((int)vectors[1].x, (int)vectors[1].y);
+	const wxPoint horizontalLeft((int)vectors[2].x, (int)vectors[2].y);
+	const wxPoint horizontalRight((int)vectors[3].x, (int)vectors[3].y);
+
+	dc.SetPen(wxPen(*wxBLACK, 3));
+	dc.DrawLine(verticalTop, verticalBottom);
+	dc.DrawLine(horizontalLeft, horizontalRight);
+	dc.SetPen(wxPen(*wxWHITE, 1));
+	dc.DrawLine(verticalTop, verticalBottom);
+	dc.DrawLine(horizontalLeft, horizontalRight);
+
+	wxFont* font4 = Options.GetFont(4);
+	if (font4)
+		dc.SetFont(*font4);
+	dc.SetTextForeground(*wxBLACK);
+	dc.DrawText(coords, crossRect.left + 1, crossRect.top + 1);
+	dc.SetTextForeground(*wxWHITE);
+	dc.DrawText(coords, crossRect.left, crossRect.top);
+}
+
+void Cross::DrawLines(wxPoint point)
+{
+	if (!tab->video->HasVideo())
+		return;
+
+	//without this mutex it crash maybe only slowing something else and blocking crash in that way
+	wxMutexLocker lock(m_MutexCrossLines);
+	
+	RECT videoRect = tab->video->GetVideoRect();
+	if (point.y < videoRect.top || point.x < videoRect.left ||
+		point.y > videoRect.bottom || point.x > videoRect.right) {
+		isOnVideo = false;
+		goto done;
+	}
+	else
+		isOnVideo = true;
+
+	{
+		int w, h, fw, fh;
+		tab->video->GetWindowSize(&w, &h);
+		RECT rcRect = { 0, 0, 0, 0 };
+		if (calcfont && calcfont->DrawTextW(nullptr, coords.wc_str(), -1, &rcRect, DT_CALCRECT, 0xFFFFFFFF)) {
+			fw = rcRect.right - rcRect.left;
+			fh = rcRect.bottom - rcRect.top;
+		}
+		else {
+			tab->video->GetTextExtent(coords, &fw, &fh, nullptr, nullptr, Options.GetFont(4));
+		}
+		int margin = fh * 0.25f;
+		w /= 2; h /= 2;
+		crossRect.top = (h > point.y) ? point.y - (margin * 2) - 2 : point.y - (margin * 2) - 2 - fh;
+		crossRect.bottom = (h > point.y) ? point.y + fh : point.y - margin;
+		crossRect.left = (w < point.x) ? point.x - fw - margin : point.x + margin;
+		crossRect.right = (w < point.x) ? point.x - margin : point.x + fw + margin;
+
+		vectors[0].x = point.x;
+		vectors[0].y = videoRect.top;
+		vectors[1].x = point.x;
+		vectors[1].y = videoRect.bottom;
+		vectors[2].x = videoRect.left;
+		vectors[2].y = point.y;
+		vectors[3].x = videoRect.right;
+		vectors[3].y = point.y;
+		cross = true;
+	}
+	done:
+	//play and pause
+	if (tab->video->RedrawPaused()){
+#ifndef _WIN32
+		wxWindow* renderWindow = (tab->video->IsFullScreen() && tab->video->GetFullScreenWindow()) ?
+			static_cast<wxWindow*>(tab->video->GetFullScreenWindow()) : static_cast<wxWindow*>(tab->video);
+		renderWindow->Refresh(false);
+#endif
+	}
+}
+
+void Cross::SetCurVisual()
+{
+	if ((tab->video->IsFullScreen() && tab->video->GetFullScreenWindow() && 
+		!tab->video->GetFullScreenWindow()->showToolbar->GetValue()) || 
+		tab->video->IsMenuShown()){
+		if (cross){
+			tab->video->SetCursor(wxCURSOR_ARROW);
+			cross = false;
+			tab->video->Render(false);
+		}
+		return;
+	}
+	else {
+		cross = false;
+	}
+
+	int nx = 0, ny = 0;
+	int w = 0, h = 0;
+	int diffW = 1, diffH = 1;
+	if (tab->video->HasVideo()){
+		RECT videoRect = tab->video->GetVideoRect();
+		diffX = videoRect.left;
+		diffY = videoRect.top;
+		w = videoRect.right - diffX;
+		h = videoRect.bottom - diffY;
+		if (diffX)
+			diffW = 0;
+		if (diffY)
+			diffH = 0;
+	}
+	else{
+		tab->video->GetClientSize(&w, &h);
+		h -= tab->video->GetPanelHeight();
+		diffX = diffY = 0;
+	}
+	tab->grid->GetASSRes(&nx, &ny);
+	coeffX = (float)nx / (float)(w - diffW);
+	coeffY = (float)ny / (float)(h - diffH);
+}
+
+void Cross::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)
+{
+	Visuals::SizeChanged(wsize, _line, _font, _device);
+	wxFont* font12 = Options.GetFont(4);
+	wxSize pixelSize = font12->GetPixelSize();
+	SAFE_RELEASE(calcfont);
+	if (pixelSize.x == 0 || pixelSize.y == 0) { return; }
+	HRN(D3DXCreateFontW(device, pixelSize.y, 0, FW_BOLD, 0, FALSE, 
+		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLEARTYPE_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE, L"Tahoma", &calcfont), 
+		_("Cannot create D3DX font"));
+	
+}
+

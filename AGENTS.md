@@ -2,7 +2,7 @@
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues for bjakja/Kainote (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues for altqx/hikari (via the `gh` CLI). See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

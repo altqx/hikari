@@ -1,9 +1,9 @@
-if(NOT DEFINED KAINOTE_EXE OR NOT DEFINED RUNTIME_DIR)
-    message(FATAL_ERROR "KAINOTE_EXE and RUNTIME_DIR are required")
+if(NOT DEFINED HIKARISUB_EXE OR NOT DEFINED RUNTIME_DIR)
+    message(FATAL_ERROR "HIKARISUB_EXE and RUNTIME_DIR are required")
 endif()
 
 # Remove previously manifested libraries before rescanning $ORIGIN.
-set(runtime_manifest "${RUNTIME_DIR}/.kainote-runtime-dependencies")
+set(runtime_manifest "${RUNTIME_DIR}/.hikarisub-runtime-dependencies")
 if(EXISTS "${runtime_manifest}")
     file(STRINGS "${runtime_manifest}" previous_runtime_deps)
     foreach(dep_name IN LISTS previous_runtime_deps)
@@ -13,17 +13,17 @@ if(EXISTS "${runtime_manifest}")
             message(WARNING "Ignoring invalid runtime manifest entry: ${dep_name}")
         endif()
     endforeach()
-elseif(DEFINED KAINOTE_BUILD_DIR)
+elseif(DEFINED HIKARISUB_BUILD_DIR)
     # Clean pre-manifest files only in the verified CMake build directory.
     file(REAL_PATH "${RUNTIME_DIR}" runtime_dir_real)
-    file(REAL_PATH "${KAINOTE_BUILD_DIR}" build_dir_real)
+    file(REAL_PATH "${HIKARISUB_BUILD_DIR}" build_dir_real)
     if(runtime_dir_real STREQUAL build_dir_real AND
        EXISTS "${build_dir_real}/CMakeCache.txt")
         # RUNTIME_DIR is the build root, so a bare lib*.so glob would also delete
         # hand-staged libraries. Probe the stale $ORIGIN copies and remove only
         # the ones the executable actually links.
         file(GET_RUNTIME_DEPENDENCIES
-            EXECUTABLES "${KAINOTE_EXE}"
+            EXECUTABLES "${HIKARISUB_EXE}"
             RESOLVED_DEPENDENCIES_VAR probe_runtime_deps
         )
         set(legacy_runtime_deps)
@@ -46,7 +46,7 @@ elseif(DEFINED KAINOTE_BUILD_DIR)
 endif()
 
 file(GET_RUNTIME_DEPENDENCIES
-    EXECUTABLES "${KAINOTE_EXE}"
+    EXECUTABLES "${HIKARISUB_EXE}"
     RESOLVED_DEPENDENCIES_VAR resolved_deps
     UNRESOLVED_DEPENDENCIES_VAR unresolved_deps
 )

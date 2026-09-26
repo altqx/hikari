@@ -1,10 +1,8 @@
-| Download | Help Us Translate! | Join Discord Server |
-| :---: | :---: | :---: |
-| [![release](https://img.shields.io/github/v/release/bjakja/Kainote.svg?maxAge=3600&label=download)](https://github.com/bjakja/Kainote/releases) | [![Translation status](https://hosted.weblate.org/widgets/kainote/-/svg-badge.svg)](https://hosted.weblate.org/engage/kainote/?utm_source=widget) | [![Discord](https://img.shields.io/discord/961361569269293077.svg?label=discord&labelColor=7289da&color=2c2f33&style=flat)](https://discord.gg/9WacFTtK6q) |
+# HikariSub
 
-# Kainote
+HikariSub is a fork of [Kainote](https://github.com/bjakja/Kainote) by Marcin Drob, continued as a separate project from Kainote commit `6e1bbb15`. It is distributed under the same GNU GPL v3 license, and the original copyright notices are kept in the source.
 
-Kainote is a powerful subtitle editor designed for a wide range of tasks. It utilizes **FFMS2** for high-precision work like typesetting, timing, and advanced editing, and **DirectShow** for general video playback and minor subtitle adjustments.
+HikariSub is a powerful subtitle editor designed for a wide range of tasks. It utilizes **FFMS2** for high-precision work like typesetting, timing, and advanced editing, and **DirectShow** for general video playback and minor subtitle adjustments.
 
 ## Features
 
@@ -23,43 +21,27 @@ Kainote is a powerful subtitle editor designed for a wide range of tasks. It uti
 
 ## Beta Builds
 
-You can download the latest beta version of Kainote from the link below.
+You can download the latest beta version of HikariSub from the link below.
 
-[**Download Kainote Beta**](https://github.com/bjakja/Kainote/actions/workflows/build.yml?query=branch%3Amaster)
+[**Download HikariSub Beta**](https://github.com/altqx/hikari/actions/workflows/build.yml?query=branch%3Amaster)
 
-The Automation 4 library and the themes are tracked in this repository; everything else the package needs is either built here or fetched from pinned sources at build time. Builds are produced by CI on every push to `master`. Open the newest run and download the package for your platform — **`kainote-windows-x64`** (a zip holding `Kainote_x64\` with the executables, the Automation 4 library, dictionaries, translations, the CSRI renderers and the runtimes Windows does not always have) or **`kainote-linux-x86_64`** (a tarball and checksum for the Linux runtime). Both builds use the pinned wxWidgets 3.3.3 source. GitHub asks you to sign in before it hands over an artifact, and keeps artifacts for 90 days.
+The Automation 4 library and the themes are tracked in this repository; everything else the package needs is either built here or fetched from pinned sources at build time. Builds are produced by CI on every push to `master`. Open the newest run and download the package for your platform — **`hikarisub-windows-x64`** (a zip holding `HikariSub_x64\` with the executables, the Automation 4 library, dictionaries, translations, the CSRI renderers and the runtimes Windows does not always have) or **`hikarisub-linux-x86_64`** (a tarball and checksum for the Linux runtime). Both builds use the pinned wxWidgets 3.3.3 source. GitHub asks you to sign in before it hands over an artifact, and keeps artifacts for 90 days.
 
-**Please Note**: Beta builds are unstable and intended for testing purposes. Features may be incomplete or contain bugs. If you encounter issues or have feedback, please join our Discord server.
-
-## Contributing
-
-### Translations
-
-Want to see Kainote in your native language? You can help us by contributing translations on Weblate, a user-friendly platform for localization.
-
-[Help Translate Kainote on Weblate](https://hosted.weblate.org/engage/kainote/?utm_source=widget)
-
-[![Translation status](https://hosted.weblate.org/widget/kainote/287x66-grey.png)](https://hosted.weblate.org/engage/kainote/)
-
-### Support & Community
-
-For questions, help, or to join the community, find us on Discord!
-
-[**Join the Kainote Discord Server**](https://discord.gg/8kNAxDFgwj)
+**Please Note**: Beta builds are unstable and intended for testing purposes. Features may be incomplete or contain bugs. If you encounter issues or have feedback, please open an issue at https://github.com/altqx/hikari/issues.
 
 ## Building from Source
 
-Kainote currently has two supported source-build paths:
+HikariSub currently has two supported source-build paths:
 
-- **Windows**: the upstream Visual Studio solution (`Kainote.sln`). This is the full-featured build that uses DirectShow, DirectSound, Direct3D 9/D3DX9, and the Windows COM/Shell APIs.
+- **Windows**: the upstream Visual Studio solution (`HikariSub.sln`). This is the full-featured build that uses DirectShow, DirectSound, Direct3D 9/D3DX9, and the Windows COM/Shell APIs.
 - **Linux**: This build uses wxGTK and system packages where possible. Some Windows-only runtime backends are still compatibility layers or partial ports, but the project can be configured, compiled, linked, and smoke-tested on Linux.
 
 Both start from a recursive clone -- most third-party code is a git submodule,
 and wxWidgets keeps its own dependencies in nested submodules:
 
 ```bash
-git clone --recurse-submodules https://github.com/bjakja/Kainote.git
-cd Kainote
+git clone --recurse-submodules https://github.com/altqx/hikari.git
+cd HikariSub
 ```
 
 ---
@@ -68,10 +50,10 @@ cd Kainote
 
 ```powershell
 pwsh -File Thirdparty\bootstrap.ps1
-msbuild Kainote.sln /m /p:Configuration=Release /p:Platform=x64
+msbuild HikariSub.sln /m /p:Configuration=Release /p:Platform=x64
 ```
 
-`Kainote.exe` is written to `x64\Release`.
+`HikariSub.exe` is written to `x64\Release`.
 
 If the clone was not recursive, run `git submodule update --init --recursive`
 first -- `bootstrap.ps1` does this too, but a non-recursive checkout otherwise
@@ -88,7 +70,7 @@ fails inside the wxWidgets build on empty directories.
 | **DirectX SDK (June 2010)** | D3DX9. Expected at `C:\Program Files (x86)\Microsoft DirectX SDK (June 2010)` |
 
 Optionally **gettext** for `msgfmt` and **Python 3**, which together compile
-`Locale\*.po` into the `Locale\<lang>\LC_MESSAGES\kainote.mo` files the program
+`Locale\*.po` into the `Locale\<lang>\LC_MESSAGES\hikarisub.mo` files the program
 loads. Without either the step prints a notice and is skipped, and the build
 has no translations.
 
@@ -101,7 +83,7 @@ has no translations.
    and refusing to continue on a mismatch
 3. `build-wxwidgets.ps1` — builds wxWidgets 3.3.3 using `wx_vc17.sln`, the
    solution wxWidgets itself ships
-4. `gen-gitparams.ps1` — writes `Kainote/gitparams.h`
+4. `gen-gitparams.ps1` — writes `HikariSub/gitparams.h`
 
 Every step is re-runnable: hydrate skips what is already extracted, and the
 wxWidgets build is incremental. Pass `-Force` to re-extract, or
@@ -111,7 +93,7 @@ For a Debug build, wxWidgets needs its Debug libraries too:
 
 ```powershell
 pwsh -File Thirdparty\bootstrap.ps1 -Configuration Debug
-msbuild Kainote.sln /m /p:Configuration=Debug /p:Platform=x64
+msbuild HikariSub.sln /m /p:Configuration=Debug /p:Platform=x64
 ```
 
 #### Where the dependencies come from
@@ -123,7 +105,7 @@ explains why each one is where it is.
 FFmpeg is a prebuilt developer package — headers, MSVC import libraries and
 runtime DLLs. Building it from source previously required MSYS2 and a
 from-scratch FFmpeg compile; that is no longer part of the build. The DLLs are
-copied next to `Kainote.exe` by a post-build step, so they must ship with the
+copied next to `HikariSub.exe` by a post-build step, so they must ship with the
 application.
 
 > **32-bit.** `Release|Win32` exists but is not exercised. It needs a 32-bit
@@ -135,7 +117,7 @@ application.
 
 Check that `bootstrap.ps1` completed — most failures are a step that was
 skipped or a submodule that was not checked out. Beyond that, the include and
-library directories live in `Kainote\Kainote.vcxproj` under
+library directories live in `HikariSub\HikariSub.vcxproj` under
 **C/C++ > General > Additional Include Directories** and
 **Linker > General > Additional Library Directories**.
 
@@ -243,11 +225,11 @@ sudo pacman -S --needed \
   gstreamer gst-plugins-base gst-plugins-good gettext
 ```
 
-Kainote requires LuaJIT rather than the standard Lua interpreter: its Automation subsystem uses LuaJIT's FFI as well as Lua 5.1 APIs. The CMake configuration therefore checks for the `luajit` pkg-config module.
+HikariSub requires LuaJIT rather than the standard Lua interpreter: its Automation subsystem uses LuaJIT's FFI as well as Lua 5.1 APIs. The CMake configuration therefore checks for the `luajit` pkg-config module.
 
 #### 3. Verify dependency discovery
 
-Before configuring Kainote, confirm that pkg-config can find the required libraries:
+Before configuring HikariSub, confirm that pkg-config can find the required libraries:
 
 ```bash
 pkg-config --modversion \
@@ -276,10 +258,10 @@ build-wx-linux/prefix/bin/wx-config --version
 build-wx-linux/prefix/bin/wx-config --libs core,base,adv,aui,html,xml,gl,stc,net
 ```
 
-The version must be 3.3.3. Kainote's CMake configure uses this private `wx-config` by default and rejects a different wxWidgets version. If a command fails, install the missing `-dev`/`-devel` package or adjust `PKG_CONFIG_PATH` so that pkg-config can locate the corresponding `.pc` file.
+The version must be 3.3.3. HikariSub's CMake configure uses this private `wx-config` by default and rejects a different wxWidgets version. If a command fails, install the missing `-dev`/`-devel` package or adjust `PKG_CONFIG_PATH` so that pkg-config can locate the corresponding `.pc` file.
 
 For a Debug build, run `Thirdparty/build-wxwidgets-linux.sh --debug` and
-configure Kainote with `-DCMAKE_BUILD_TYPE=Debug`. The Debug build uses its
+configure HikariSub with `-DCMAKE_BUILD_TYPE=Debug`. The Debug build uses its
 own wxWidgets libraries under `build-wx-linux-debug/prefix`.
 
 #### 4. Configure and build
@@ -292,13 +274,13 @@ cmake --build build-linux -j$(nproc)
 The executable is created at:
 
 ```text
-build-linux/kainote
+build-linux/hikarisub
 ```
 
 To create a clean Linux runtime archive after building:
 
 ```bash
-cmake --build build-linux --target kainote_linux_package
+cmake --build build-linux --target hikarisub_linux_package
 ```
 
 The archive and its SHA-256 file are written under `build-linux/dist/`. The
@@ -310,18 +292,18 @@ Automation, or Themes files created by local runs. Host graphics/windowing
 libraries, codec libraries excluded for licensing reasons, and GStreamer
 plugins remain system requirements; this archive is not a universal AppImage.
 
-#### 5. Run Kainote
+#### 5. Run HikariSub
 
 On a normal desktop session:
 
 ```bash
-./build-linux/kainote
+./build-linux/hikarisub
 ```
 
 For a headless smoke test, use Xvfb and a timeout:
 
 ```bash
-timeout 8s xvfb-run -a ./build-linux/kainote
+timeout 8s xvfb-run -a ./build-linux/hikarisub
 ```
 
 Exit code `124` from the command above is expected when `timeout` stops an otherwise running GUI application after 8 seconds.
@@ -358,7 +340,7 @@ Media backends (Windows uses DirectShow / DirectSound / Direct3D):
   is no DirectSound path.
 - GStreamer discovers plugins from the runtime system registry and standard
   plugin paths. The base and good plugin sets (and an audio sink) must be
-  installed on the machine that runs Kainote.
+  installed on the machine that runs HikariSub.
 
 Other Linux differences:
 
@@ -368,7 +350,7 @@ Other Linux differences:
   `./install-desktop-integration.sh` from the extracted archive to register the menu
   entry, icons and file types under `~/.local/share`; `--uninstall` removes them. A
   prefix install (`cmake --install`) installs the same data, but not the executable:
-  Kainote still locates its resources relative to the binary, so it has to run from its
+  HikariSub still locates its resources relative to the binary, so it has to run from its
   own directory.
 
 Under Wayland specifically (these work normally on X11):

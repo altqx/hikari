@@ -8,8 +8,8 @@ case "${1-}" in
     --debug) build_type=Debug; default_build="$repo_root/build-wx-linux-debug" ;;
     *) echo "usage: $0 [--debug]" >&2; exit 2 ;;
 esac
-wx_build="${KAINOTE_WX_BUILD_DIR:-$default_build}"
-wx_prefix="${KAINOTE_WX_PREFIX:-$wx_build/prefix}"
+wx_build="${HIKARISUB_WX_BUILD_DIR:-$default_build}"
+wx_prefix="${HIKARISUB_WX_PREFIX:-$wx_build/prefix}"
 
 if [[ ! -f "$wx_source/src/zlib/zlib.h" ]]; then
     echo 'wxWidgets submodules are missing; run git submodule update --init --recursive' >&2
@@ -27,6 +27,6 @@ cmake -S "$wx_source" -B "$wx_build" -G Ninja \
     -DwxBUILD_PRECOMP=OFF \
     -DwxUSE_MEDIACTRL=OFF \
     -DwxUSE_WEBVIEW=OFF
-cmake --build "$wx_build" --parallel "${KAINOTE_WX_JOBS:-4}"
+cmake --build "$wx_build" --parallel "${HIKARISUB_WX_JOBS:-4}"
 cmake --install "$wx_build"
 "$wx_prefix/bin/wx-config" --version

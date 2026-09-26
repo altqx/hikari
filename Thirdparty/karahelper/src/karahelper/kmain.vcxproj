@@ -173,7 +173,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>L:/Kainote/thirdparty/luajit\include\;../libpng;$(SolutionDir)Thirdparty\zlib;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>L:/HikariSub/thirdparty/luajit\include\;../libpng;$(SolutionDir)Thirdparty\zlib;</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_USRDLL;KMAIN_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>

@@ -1,0 +1,145 @@
+﻿//  Copyright (c) 2018 - 2026, Marcin Drob
+//  Copyright (c) 2026, altqx
+
+//  HikariSub is free software: you can redistribute it and/or modify
+//  it under the terms of the GNU General Public License as published by
+//  the Free Software Foundation, either version 3 of the License, or
+//  (at your option) any later version.
+
+//  HikariSub is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//  GNU General Public License for more details.
+
+//  You should have received a copy of the GNU General Public License
+//  along with HikariSub.  If not, see <http://www.gnu.org/licenses/>.
+
+#include "SubsGridDialogs.h"
+#include "KaiStaticText.h"
+#include "MappedButton.h"
+#include "KaiMessageBox.h"
+#include "KaiStaticBoxSizer.h"
+
+FPSDialog::FPSDialog(wxWindow *parent)
+	:KaiDialog(parent, -1, _("Choose new FPS"))
+{
+	DialogSizer* siz = new DialogSizer(wxHORIZONTAL);
+	wxFlexGridSizer *sizer = new wxFlexGridSizer(2, 2, 2);
+	wxArrayString fpsy;
+	wxTextValidator valid(wxFILTER_INCLUDE_CHAR_LIST);
+	wxArrayString includes;
+	includes.Add(L"0");
+	includes.Add(L"1");
+	includes.Add(L"2");
+	includes.Add(L"3");
+	includes.Add(L"4");
+	includes.Add(L"5");
+	includes.Add(L"6");
+	includes.Add(L"7");
+	includes.Add(L"8");
+	includes.Add(L"9");
+	includes.Add(L".");
+	valid.SetIncludes(includes);
+
+	fpsy.Add(L"23.976"); fpsy.Add(L"24"); fpsy.Add(L"25"); fpsy.Add(L"29.97"); fpsy.Add(L"30"); fpsy.Add(L"60");
+	oldfps = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxDefaultSize, fpsy, 0, valid);
+	oldfps->SetSelection(0);
+	newfps = new KaiChoice(this, -1, emptyString, wxDefaultPosition, wxSize(80, -1), fpsy, 0, valid);
+	newfps->SetSelection(2);
+	sizer->Add(new KaiStaticText(this, -1, _("Subtitles FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+	sizer->Add(oldfps, 0, wxEXPAND | wxALL, 4);
+	sizer->Add(new KaiStaticText(this, -1, _("New FPS")), 0, wxALIGN_CENTER_VERTICAL | wxALL, 4);
+	sizer->Add(newfps, 0, wxEXPAND | wxALL, 4);
+	MappedButton *ok = new MappedButton(this, 15555, _("Change FPS"));
+	Connect(15555, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&FPSDialog::OkClick);
+	MappedButton *cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
+	sizer->Add(ok, 0, wxEXPAND | wxALL, 4);
+	sizer->Add(cancel, 0, wxEXPAND | wxALL, 4);
+	siz->Add(sizer, 0, wxEXPAND);
+	SetSizerAndFit(siz);
+	CenterOnParent();
+	SetEnterId(15555);
+}
+
+void FPSDialog::OkClick(wxCommandEvent &evt)
+{
+
+	if (oldfps->GetValue().ToDouble(&ofps) && newfps->GetValue().ToDouble(&nfps)){
+		EndModal(1);
+	}
+	else{ KaiMessageBox(_("Incorrect FPS")); }
+}
+
+TreeDialog::TreeDialog(wxWindow *parent, const wxString & currentName)
+	:KaiDialog(parent, -1, _("Tree description"))
+{
+	DialogSizer *mainSizer = new DialogSizer(wxVERTICAL);
+	wxBoxSizer *buttonSizer = new wxBoxSizer(wxHORIZONTAL);
+	KaiStaticBoxSizer *descriptionSizer = new KaiStaticBoxSizer(wxHORIZONTAL, this, _("Tree description"));
+	treeDescription = new KaiTextCtrl(this, -1, currentName, wxDefaultPosition, wxSize(400, -1));
+	treeDescription->SetSelection(0, currentName.Len());
+	treeDescription->SetMaxLength(500);
+	descriptionSizer->Add(treeDescription, 0, wxEXPAND);
+	mainSizer->Add(descriptionSizer, 0, wxEXPAND | wxALL, 2);
+	MappedButton *ok = new MappedButton(this, 15555, currentName.empty() ? _("Set tree name") : _("Change tree name"));
+	Connect(15555, wxEVT_COMMAND_BUTTON_CLICKED, (wxObjectEventFunction)&TreeDialog::OkClick);
+	MappedButton *cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
+	buttonSizer->Add(ok, 0, wxALL, 4);
+	buttonSizer->Add(cancel, 0, wxALL, 4);
+	mainSizer->Add(buttonSizer, 0, wxCENTER);
+	SetSizerAndFit(mainSizer);
+	CenterOnScreen();
+	SetEnterId(15555);
+}
+
+wxString TreeDialog::GetDescription()
+{
+	return treeDescription->GetValue();
+}
+
+void TreeDialog::OkClick(wxCommandEvent &evt)
+{
+	wxString newName = treeDescription->GetValue();
+	if (!newName.empty())
+		EndModal(wxID_OK);
+}
+
+
+SwapPropertiesDialog::SwapPropertiesDialog(wxWindow* parent)
+	:KaiDialog(parent, -1, _("Confirmation"))
+{
+	DialogSizer* main = new DialogSizer(wxVERTICAL);
+	const int numFields = 6;
+	wxString fieldNames[numFields] = { _("Title"), _("Author"), _("Translator"), _("Proofreading"), _("Timer"), _("Editing") };
+	CONFIG fieldOnValues[numFields] = { ASS_PROPERTIES_TITLE_ON, ASS_PROPERTIES_SCRIPT_ON, ASS_PROPERTIES_TRANSLATION_ON,
+		ASS_PROPERTIES_EDITING_ON, ASS_PROPERTIES_TIMING_ON, ASS_PROPERTIES_UPDATE_ON };
+	for (int i = 0; i < numFields; i++) {
+		fields[i] = new KaiCheckBox(this, -1, fieldNames[i]);
+		fields[i]->SetValue(Options.GetBool(fieldOnValues[i]));
+		main->Add(fields[i], 0, wxEXPAND | wxALL, 3);
+	}
+	wxBoxSizer* buttons = new wxBoxSizer(wxHORIZONTAL);
+	MappedButton* Ok = new MappedButton(this, wxID_OK, L"OK");
+	MappedButton* Cancel = new MappedButton(this, wxID_CANCEL, _("Cancel"));
+	MappedButton* TurnOf = new MappedButton(this, 19921, _("Disable confirmation"));
+	Bind(wxEVT_COMMAND_BUTTON_CLICKED, [=, this](wxCommandEvent& evt) {
+		Options.SetBool(ASS_PROPERTIES_ASK_FOR_CHANGE, false);
+		Options.SaveOptions(true, false);
+		EndModal(19921);
+		}, 19921);
+	buttons->Add(Ok, 1, wxALL, 4);
+	buttons->Add(Cancel, 1, wxALL, 4);
+	buttons->Add(TurnOf, 0, wxALL, 4);
+	main->Add(buttons);
+	SetSizerAndFit(main);
+	CenterOnParent();
+}
+	
+void SwapPropertiesDialog::SaveValues() {
+	const int numFields = 6;
+	CONFIG fieldOnValues[numFields] = { ASS_PROPERTIES_TITLE_ON, ASS_PROPERTIES_SCRIPT_ON, ASS_PROPERTIES_TRANSLATION_ON,
+		ASS_PROPERTIES_EDITING_ON, ASS_PROPERTIES_TIMING_ON, ASS_PROPERTIES_UPDATE_ON };
+	for (int i = 0; i < numFields; i++) {
+		Options.SetBool(fieldOnValues[i], fields[i]->GetValue());
+	}
+}

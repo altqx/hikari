@@ -1,12 +1,12 @@
 # Automation 4 library
 
-This is Kainote's copy of the Aegisub automation library, tracked here rather
+This is HikariSub's copy of the Aegisub automation library, tracked here rather
 than fetched at build time: the upstream repositories do not publish several of
 these files (the karaoke template helpers, the `json/` library, `effector`,
 `karahelper`, Yutils, ASSFoundation's `Common.lua`), and the files they do
-publish differ from what Kainote ships.
+publish differ from what HikariSub ships.
 
-It was assembled from these revisions, then Kainote's own files were laid over
+It was assembled from these revisions, then HikariSub's own files were laid over
 them; `git log` on this directory is the history from there on:
 
 | Source | Revision |
@@ -21,7 +21,7 @@ them; `git log` on this directory is the history from there on:
 | `TypesettingTools/lyger-Aegisub-Scripts` (`modules/LibLyger.moon`) | `f07033106376` |
 | `torque/ffi-experiments` (`DMv0.4.0-rqffiv0.1.2`: BadMutex, PreciseTimer, DownloadManager, requireffi) | `691b128703ba` |
 
-Files the released Kainote package carries over upstream, and the changes it
+Files the released HikariSub package carries over upstream, and the changes it
 makes to the ones upstream has too, came from that package; the noteworthy ones:
 
 - `automation/include/aegisub/lfs.moon` wraps each `err_arg_to_multiple_return`
@@ -33,7 +33,7 @@ makes to the ones upstream has too, came from that package; the noteworthy ones:
   before use.
 - The `a-mo/*.moon` modules carry the version numbers DependencyControl
   substitutes into `##__X_VERSION__##` placeholders.
-- `BM/`, `DM/`, `PT/` are Kainote's DependencyControl modules; their `.lua` is
+- `BM/`, `DM/`, `PT/` are HikariSub's DependencyControl modules; their `.lua` is
   what the released package ships and their DLLs are built from this repository
   (`Thirdparty/DependencyControl/`) and installed into those directories by
   `.github/scripts/package.py`.

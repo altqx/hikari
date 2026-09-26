@@ -3,9 +3,9 @@
     Builds the bundled wxWidgets submodule with the solution wxWidgets ships.
 
 .DESCRIPTION
-    Kainote links wxWidgets statically. Rather than maintaining our own project
+    HikariSub links wxWidgets statically. Rather than maintaining our own project
     files for it, this builds Thirdparty/wxWidgets/build/msw/wx_vc17.sln, which
-    is upstream's own solution, and leaves the libraries where Kainote.vcxproj
+    is upstream's own solution, and leaves the libraries where HikariSub.vcxproj
     expects them (lib\vc_x64_lib for x64, lib\vc_lib for Win32).
 
     Run this once after checking out the submodules, and again after the

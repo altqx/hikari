@@ -15,33 +15,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\Kainote\GFFT\AssocVector.cpp">
+    <ClCompile Include="..\..\..\HikariSub\GFFT\AssocVector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\Kainote\GFFT\GFFT.cpp">
+    <ClCompile Include="..\..\..\HikariSub\GFFT\GFFT.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\Kainote\GFFT\AssocVector.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\AssocVector.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\Factory.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\Factory.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\GFFT.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\GFFT.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\LokiTypeInfo.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\LokiTypeInfo.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\NullType.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\NullType.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\Typelist.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\Typelist.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Kainote\GFFT\TypeManip.h">
+    <ClInclude Include="..\..\..\HikariSub\GFFT\TypeManip.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

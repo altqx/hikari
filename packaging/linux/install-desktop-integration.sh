@@ -1,16 +1,16 @@
 #!/bin/sh
-# Registers this Kainote directory with the desktop: menu entry, file
+# Registers this HikariSub directory with the desktop: menu entry, file
 # associations and icons, all under $XDG_DATA_HOME. No root needed, and
 # nothing outside that directory is touched.
 #
 # The tarball is a portable tree, so Exec= has to name this copy's absolute
-# path rather than expecting kainote on PATH.
+# path rather than expecting hikarisub on PATH.
 
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
 data_home=${XDG_DATA_HOME:-$HOME/.local/share}
-app_id=io.github.bjakja.Kainote
+app_id=io.github.altqx.HikariSub
 
 usage()
 {
@@ -33,13 +33,13 @@ uninstall()
 {
 	rm -f "$data_home/applications/$app_id.desktop"
 	rm -f "$data_home/metainfo/$app_id.metainfo.xml"
-	rm -f "$data_home/mime/packages/kainote.xml"
-	find "$data_home/icons/hicolor" -name 'kainote.png' -delete 2>/dev/null || true
+	rm -f "$data_home/mime/packages/hikarisub.xml"
+	find "$data_home/icons/hicolor" -name 'hikarisub.png' -delete 2>/dev/null || true
 	for name in text-x-ssa application-x-subrip text-x-microdvd; do
 		find "$data_home/icons/hicolor" -name "$name.png" -delete 2>/dev/null || true
 	done
 	refresh
-	echo "Removed Kainote desktop integration from $data_home"
+	echo "Removed HikariSub desktop integration from $data_home"
 }
 
 case "${1-}" in
@@ -48,8 +48,8 @@ case "${1-}" in
 	*) usage ;;
 esac
 
-if [ ! -x "$here/kainote" ]; then
-	echo "error: no kainote executable next to $0" >&2
+if [ ! -x "$here/hikarisub" ]; then
+	echo "error: no hikarisub executable next to $0" >&2
 	exit 1
 fi
 
@@ -58,7 +58,7 @@ mkdir -p "$data_home/applications" "$data_home/metainfo" \
 
 # Desktop entry Exec= splits unquoted spaces into arguments. Quote the path and
 # escape characters that are special inside its quoted argument.
-exec_path=$(printf '%s' "$here/kainote" |
+exec_path=$(printf '%s' "$here/hikarisub" |
 	sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\$/\\$/g' -e 's/`/\\`/g')
 while IFS= read -r line || [ -n "$line" ]; do
 	case "$line" in
@@ -69,10 +69,10 @@ done < "$here/share/applications/$app_id.desktop" \
 	> "$data_home/applications/$app_id.desktop"
 
 cp "$here/share/metainfo/$app_id.metainfo.xml" "$data_home/metainfo/"
-cp "$here/share/mime/packages/kainote.xml" "$data_home/mime/packages/"
+cp "$here/share/mime/packages/hikarisub.xml" "$data_home/mime/packages/"
 cp -r "$here/share/icons/hicolor" "$data_home/icons/"
 
 refresh
 
-echo "Installed Kainote desktop integration into $data_home"
+echo "Installed HikariSub desktop integration into $data_home"
 echo "Run '$0 --uninstall' to remove it."
