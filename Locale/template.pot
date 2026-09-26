@@ -1,5 +1,6 @@
 # HikariSub, a subtitle editor.
 # Copyright (C) 2026 Marcin Drob
+# Copyright (C) 2026 altqx
 # This file is distributed under the GNU General Public License v3.0.
 #
 msgid ""
@@ -2024,7 +2025,7 @@ msgid "Select line at current video position"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:176
-msgid "Help (not available in English)"
+msgid "HikariSub website"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:112
@@ -2527,7 +2528,7 @@ msgid "About"
 msgstr ""
 
 #: HikariSub/HotkeysNaming.cpp:161
-msgid "Forum thread on animesub.info (Polish)"
+msgid "Report an issue"
 msgstr ""
 
 #: HikariSub/HotkeysNaming.cpp:167 HikariSub/HikariSubFrame.cpp:297
@@ -3247,19 +3248,19 @@ msgid "Au&tomation"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:358
-msgid "&Help (English version is not yet available)"
+msgid "HikariSub &website"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:359
-msgid "Opens help in default browser"
+msgid "Opens the HikariSub website in the default browser"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:360
-msgid "&Forum thread on animesub.info (Polish)"
+msgid "&Report an issue"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:361
-msgid "Opens forum thread on animesub.info (Polish)"
+msgid "Opens the HikariSub issue tracker"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:362
@@ -3334,22 +3335,20 @@ msgstr ""
 #: HikariSub/HikariSubFrame.cpp:1107
 #, c-format
 msgid ""
-"Subtitle editor by Marcin Drob aka Bakura or Bjakja (bjakja7@gmail.com),\n"
+"HikariSub subtitle editor by altqx,\n"
 "version %s from %s"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:1109
 msgid ""
-"I wrote this program to replace two programs: Bestplayer and Aegisub.\n"
+"Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:1110
 msgid ""
-"If you have noticed any bugs or have any suggestions for changes or new "
-"features,\n"
-"you can write about it in: Discord https://discord.gg/9WacFTtK6q, Github, or "
-"by email.\n"
+"If you have noticed any bugs or have any suggestions for changes or new features,\n"
+"open an issue at https://github.com/altqx/hikari/issues.\n"
 "\n"
 msgstr ""
 

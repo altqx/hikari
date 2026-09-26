@@ -169,7 +169,7 @@ void Hotkeys::LoadDefault(std::map<idAndType, hdata> &_hkeys, bool Audio)
 		_hkeys[idAndType(GLOBAL_NEXT_TAB, GLOBAL_HOTKEY)] = hdata(_("Next tab"), L"Ctrl-PgDn");
 		_hkeys[idAndType(GLOBAL_PREVIOUS_TAB, GLOBAL_HOTKEY)] = hdata(_("Previous tab"), L"Ctrl-PgUp");
 		_hkeys[idAndType(GLOBAL_SELECT_FROM_VIDEO, GLOBAL_HOTKEY)] = hdata(_("Select line at current video position"), L"F2");
-		_hkeys[idAndType(GLOBAL_HELP, GLOBAL_HOTKEY)] = hdata(_("Help (not available in English)"), L"F1");
+		_hkeys[idAndType(GLOBAL_HELP, GLOBAL_HOTKEY)] = hdata(_("HikariSub website"), L"F1");
 		_hkeys[idAndType(GRID_DUPLICATE_LINES, GRID_HOTKEY)] = hdata(_("Duplicate lines"), L"Ctrl-D");
 		_hkeys[idAndType(GRID_COPY_COLUMNS, GRID_HOTKEY)] = hdata(_("Copy columns"), L"Ctrl-Shift-C");
 		_hkeys[idAndType(GRID_PASTE_COLUMNS, GRID_HOTKEY)] = hdata(_("Paste columns"), L"Ctrl-Shift-V");

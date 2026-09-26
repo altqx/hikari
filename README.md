@@ -22,7 +22,7 @@ HikariSub is a subtitle editor and player for everything from quick fixes to ful
 * **History**: undo and redo, a browsable history window, and undo back to the last save.
 * **Hotkeys**: every action can be remapped, with separate global, grid, editor, audio and video scopes, and automation macros can have hotkeys too.
 * **Themes**: every colour in the interface can be themed. The bundled themes can be copied and edited in the settings.
-* **Localisation**: the interface is translated into 15 languages.
+* **Localisation**: the interface is available in English, Polish, Korean, Thai and Tamil.
 * **Windows integration**: registers file associations for subtitle and video types, and checks for updates.
 
 ### Subtitle grid

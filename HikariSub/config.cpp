@@ -1012,22 +1012,11 @@ wxString config::FindLanguage(const wxString & symbol)
 	// So the shipped list is curated and wx answers for everything else, which in
 	// practice means a Hunspell dictionary the user dropped in themselves.
 	static const std::map<wxString, wxString> shipped = {
-		{ L"de",      L"Deutsch" },
 		{ L"en",      L"English" },
-		{ L"es",      L"Español" },
-		{ L"id",      L"Bahasa Indonesia" },
-		{ L"it",      L"Italiano" },
 		{ L"ko",      L"한국어" },
-		{ L"ms",      L"Melayu" },
-		{ L"nb",      L"Norsk bokmål" },
 		{ L"pl",      L"Polski" },
-		{ L"pt_BR",   L"Português (do Brasil)" },
-		{ L"pt",      L"Português" },
-		{ L"ru",      L"Русский" },
 		{ L"ta",      L"தமிழ்" },
 		{ L"th",      L"ไทย" },
-		{ L"zh_Hans", L"中文 (简体)" },
-		{ L"zh_Hant", L"正體中文 (繁體)" },
 	};
 
 	auto it = shipped.find(symbol);

@@ -357,10 +357,10 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	Menubar->Append(m_AutoMenu, _("Au&tomation"));
 
 	HelpMenu = new Menu();
-	HelpMenu->AppendTool(Toolbar, GLOBAL_HELP, _("&Help (English version is not yet available)"), 
-		_("Opens help in default browser"), PTR_BITMAP_PNG(L"help"));
-	HelpMenu->AppendTool(Toolbar, GLOBAL_ANSI, _("&Forum thread on animesub.info (Polish)"),
-		_("Opens forum thread on animesub.info (Polish)"), PTR_BITMAP_PNG(L"ansi"));
+	HelpMenu->AppendTool(Toolbar, GLOBAL_HELP, _("HikariSub &website"), 
+		_("Opens the HikariSub website in the default browser"), PTR_BITMAP_PNG(L"help"));
+	HelpMenu->AppendTool(Toolbar, GLOBAL_ANSI, _("&Report an issue"),
+		_("Opens the HikariSub issue tracker"), PTR_BITMAP_PNG(L"ansi"));
 	HelpMenu->AppendTool(Toolbar, GLOBAL_CHECK_FOR_UPDATES, _("Check for &updates"),
 		_("Checks whether a newer version is available"), PTR_BITMAP_PNG(L"about"));
 	HelpMenu->AppendTool(Toolbar, GLOBAL_ABOUT, _("&About"), 
@@ -1113,7 +1113,7 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	else if (id == GLOBAL_ABOUT){
 		KaiMessageBox(wxString::Format(_("HikariSub subtitle editor by altqx,\nversion %s from %s"),
 			Options.progname.AfterFirst(L'v'), Options.GetReleaseDate()) + " \n\n" +
-			_("Based on Kainote by Marcin Drob aka Bakura or Bjakja (bjakja7@gmail.com).\n\n") +
+			_("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
 			_("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
 			_("HikariSub includes parts of the following projects:\n") +
 			L"wxWidgets - Copyright © Julian Smart, Robert Roebling et al.\n" +
@@ -1152,7 +1152,7 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 
 	}
 	else if (id == GLOBAL_HELP || id == GLOBAL_ANSI){
-		wxString url = (id == GLOBAL_HELP) ? L"https://bjakja.github.io/index.html" : L"http://animesub.info/forum/viewtopic.php?id=258715";
+		wxString url = (id == GLOBAL_HELP) ? L"https://altqx.com" : L"https://github.com/altqx/hikari/issues";
 		OpenInBrowser(url);
 	}
 

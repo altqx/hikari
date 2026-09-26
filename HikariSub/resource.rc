@@ -250,13 +250,13 @@ BEGIN
         BLOCK "041504b0"
         BEGIN
             VALUE "Comments", "Edytor napisów"
-            VALUE "CompanyName", "Marcin Drob"
-            VALUE "FileDescription", "HikariSub edytor napisów"
+            VALUE "CompanyName", "altqx"
+            VALUE "FileDescription", "HikariSub subtitle editor"
             VALUE "FileVersion", VersionHikariSub
             VALUE "InternalName", "HikariSub"
-            VALUE "LegalCopyright", "Copyright Marcin Drob (C) 2012-2021"
+            VALUE "LegalCopyright", "Copyright (C) 2012-2026 Marcin Drob, 2026 altqx"
             VALUE "OriginalFilename", "HikariSub.EXE"
-            VALUE "ProductName", "HikariSub edytor napisów"
+            VALUE "ProductName", "HikariSub"
             VALUE "ProductVersion", VersionHikariSub
         END
     END

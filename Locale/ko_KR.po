@@ -6,11 +6,11 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
-"Report-Msgid-Bugs-To: \n"
+"Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
 "POT-Creation-Date: 2026-09-18 02:02+0700\n"
-"PO-Revision-Date: 2026-03-10 12:10+0000\n"
-"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
-"Language-Team: Korean <https://hosted.weblate.org/projects/kainote/kainote/ko/>\n"
+"PO-Revision-Date: 2026-09-26 19:00+0700\n"
+"Last-Translator: altqx <al@altqx.com>\n"
+"Language-Team: Korean\n"
 "Language: ko_KR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -2104,8 +2104,8 @@ msgid "Select line at current video position"
 msgstr "현재 영상지점으로 줄 이동"
 
 #: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:176
-msgid "Help (not available in English)"
-msgstr "도움말 (영어 아님)"
+msgid "HikariSub website"
+msgstr "HikariSub 웹사이트"
 
 #: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:112
 msgid "Duplicate lines"
@@ -2611,8 +2611,8 @@ msgid "About"
 msgstr "프로그램 정보"
 
 #: HikariSub/HotkeysNaming.cpp:161
-msgid "Forum thread on animesub.info (Polish)"
-msgstr "포럼 animesub.info (폴란드어)"
+msgid "Report an issue"
+msgstr "문제 보고"
 
 #: HikariSub/HotkeysNaming.cpp:167 HikariSub/HikariSubFrame.cpp:297
 msgid "Open audio from video"
@@ -3333,20 +3333,20 @@ msgid "Au&tomation"
 msgstr "자동화[&A]"
 
 #: HikariSub/HikariSubFrame.cpp:358
-msgid "&Help (English version is not yet available)"
-msgstr "도움말[&H] [폴란드어]"
+msgid "HikariSub &website"
+msgstr "HikariSub 웹사이트[&W]"
 
 #: HikariSub/HikariSubFrame.cpp:359
-msgid "Opens help in default browser"
-msgstr "기본 브라우저에서 도움말 열기"
+msgid "Opens the HikariSub website in the default browser"
+msgstr "기본 브라우저에서 HikariSub 웹사이트를 엽니다"
 
 #: HikariSub/HikariSubFrame.cpp:360
-msgid "&Forum thread on animesub.info (Polish)"
-msgstr "포럼[&F] animesub.info [폴란드어]"
+msgid "&Report an issue"
+msgstr "문제 보고[&R]"
 
 #: HikariSub/HikariSubFrame.cpp:361
-msgid "Opens forum thread on animesub.info (Polish)"
-msgstr "포럼 게시판을 엽니다 animesub.info[폴란드어]"
+msgid "Opens the HikariSub issue tracker"
+msgstr "HikariSub 이슈 트래커를 엽니다"
 
 #: HikariSub/HikariSubFrame.cpp:362
 msgid "&About"
@@ -3411,28 +3411,28 @@ msgstr "키 프레임 파일 (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.s
 #: HikariSub/HikariSubFrame.cpp:1107
 #, c-format
 msgid ""
-"Subtitle editor by Marcin Drob aka Bakura or Bjakja (bjakja7@gmail.com),\n"
+"HikariSub subtitle editor by altqx,\n"
 "version %s from %s"
 msgstr ""
-"\"Marcin Drob aka Bakura\" 또는 \"Bjakja\"의 자막 편집기 (bjakja7@gmail.com),\n"
-"버전 %s, 업데이트 %s"
+"altqx가 만든 HikariSub 자막 편집기,\n"
+"버전 %s (%s)"
 
 #: HikariSub/HikariSubFrame.cpp:1109
 msgid ""
-"I wrote this program to replace two programs: Bestplayer and Aegisub.\n"
+"Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
 msgstr ""
-"두 프로그램을 대체하기 위해이 프로그램을 작성했습니다.: Bestplayer와 Aegisub.\n"
+"Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.\n"
 "\n"
 
 #: HikariSub/HikariSubFrame.cpp:1110
 msgid ""
 "If you have noticed any bugs or have any suggestions for changes or new features,\n"
-"you can write about it in: Discord https://discord.gg/9WacFTtK6q, Github, or by email.\n"
+"open an issue at https://github.com/altqx/hikari/issues.\n"
 "\n"
 msgstr ""
-"버그를 발견했거나 변경 사항이나 새로운 기능에 대한 제안 사항이 있는 경우,\n"
-"Discord https://discord.gg/9WacFTtK6q, Github 또는 이메일로 이에 대해 작성할 수 있습니다.\n"
+"버그를 발견했거나 변경 사항 또는 새 기능에 대한 제안이 있다면\n"
+"https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.\n"
 "\n"
 
 #: HikariSub/HikariSubFrame.cpp:1111

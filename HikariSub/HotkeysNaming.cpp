@@ -160,7 +160,7 @@ void HotkeysNaming::CreateNamesMap()
 	names[GLOBAL_OPEN_ASS_PROPERTIES] = _("ASS file properties");
 	names[GLOBAL_CHECK_FOR_UPDATES] = _("Check for updates");
 	names[GLOBAL_ABOUT] = _("About");
-	names[GLOBAL_ANSI] = _("Forum thread on animesub.info (Polish)");
+	names[GLOBAL_ANSI] = _("Report an issue");
 	names[GLOBAL_CONVERT_TO_ASS] = _("Convert to ASS");
 	names[GLOBAL_CONVERT_TO_SRT] = _("Convert to SRT");
 	names[GLOBAL_CONVERT_TO_MDVD] = _("Convert to MDVD");
@@ -175,7 +175,7 @@ void HotkeysNaming::CreateNamesMap()
 	names[GLOBAL_EDITOR] = _("Enable / Disable editor");
 	names[GLOBAL_FIND_REPLACE] = _("Find and replace");
 	names[GLOBAL_OPEN_FONT_COLLECTOR] = _("Font collector");
-	names[GLOBAL_HELP] = _("Help (not available in English)");
+	names[GLOBAL_HELP] = _("HikariSub website");
 	names[GLOBAL_HELPERS] = _("Credits");
 	names[GLOBAL_HIDE_TAGS] = _("Hide tags");
 	names[GLOBAL_HISTORY] = _("History");
