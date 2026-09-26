@@ -81,4 +81,3 @@ The dependency engine documents source pins, patch recipes, an immutable prebuil
 ## Decision and validation still needed
 
 Choose dependency manager and Qt provisioning separately in #24. Then implement one clean-machine Windows/Linux build slice with libass plus the complete FFMS2 fork; prove warm-cache and empty-cache behavior and runtime deployment. Pin actual versions after that slice, then test arm64 as a separate acceptance gate. The comparative question is answered; no build-success or cache-duration result is claimed.
-
