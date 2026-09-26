@@ -60,6 +60,6 @@ The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts
 
 ## Open design and verification
 
-The document representation, per-format preservation/loss rules and individual defect dispositions, time/frame semantics, command/undo granularity and scheduler contracts still require their core design decisions. Build/dependency strategy, exact media/audio/font backends and release gates remain the corresponding map tickets. This accepted foundation must not be presented as those decisions having been made.
+The document representation, per-format preservation/loss rules and individual defect dispositions, time/frame semantics, command/undo granularity and scheduler contracts still require their core design decisions. Build/dependency strategy, media/audio backends and release gates remain the corresponding map tickets. The [isolated automation boundary](automation.md) and [verified font contract](fonts.md) are accepted directions with explicit feasibility and detailed-design obligations. This foundation must not be presented as those remaining decisions having been made.
 
 Implementation must verify dependency direction, command/selection behavior through filtering and undo, late/cancelled worker results, script transactions, native focus/IME/screen-reader behavior and lifecycle cleanup. There is no implementation or benchmark pass attached to this ADR; the completed research and throwaway prototypes are evidence for planning.

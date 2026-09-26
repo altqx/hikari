@@ -1,0 +1,35 @@
+# Subtitle font identity and collection
+
+**Accepted contract, 2026-09-27:** the user chose **“Verify renderer/font-file agreement”** in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35). [ADR 0007](../adr/0007-renderer-verified-subtitle-fonts.md) records the tradeoff. This selects the correctness contract and the maintenance work it requires; no native agreement or collection-completeness test has passed yet.
+
+## Authority and ownership
+
+Qt supplies application typography and presents the subtitle picker. The subtitle-font service supplies provider-aware names and identities. An optional Qt-rendered sample must be labelled as such; it is not proof of ASS output. Exact ASS previews use the document's pinned libass build, selected font provider, attachments, configuration and render context.
+
+The collector must verify the actual font bytes, collection faces, fallback and simulations used by that rendering environment. A family-name match in Qt is insufficient. On Windows, use GDI-compatible DirectWrite metadata/resolution; on Linux, align fontconfig configuration with the selected libass provider. Record the provider and version instead of assuming one from the OS. A future CoreText adapter must fit the same boundary.
+
+Preserve authored ASS names and weight/italic requests. Localized labels, aliases, legacy/typographic family names and full/PostScript names are searchable metadata, not replacements to write into the document. Requested and resolved identities remain distinct. Equivalent behavior across platforms does not mean identical fonts or pixels on different installations. Optional CSRI/VSFilter output needs its own agreement evidence.
+
+## Identity and collection contract
+
+Resolved identity includes source bytes/hash, path or attachment identity, collection face index, known variation/named-instance coordinates, provider/configuration generation and fallback provenance. Do not collapse TTC/OTC faces, or pretend every variable-font instance is interchangeable. Unverified instance support must be reported explicitly; no new ASS axis syntax is implied.
+
+Resolve all used styles and inline font/reset/weight/italic changes across the relevant original/translated text. Drawing commands do not require glyphs. A single preview trace cannot certify a whole document. Distinguish an absent requested font, a missing glyph, a known alias, synthetic style and actual fallback. Export original attachment bytes when the font has no local file.
+
+Collection results must distinguish verified files/faces from unresolved requests. Unknown identity cannot receive a success/completeness claim. Report known fallback files and their role without presenting them as the originally requested font. Verify export/reimport in a clean font environment; a list of copied files alone is not agreement evidence.
+
+libass's existing internal selection logs and public message callback are inputs to feasibility work, not an assumed stable identity-export API. First prove that available diagnostics and provider metadata establish exact identity. If insufficient, maintain a narrow versioned diagnostic hook with pinned source and regression coverage. The user's choice accepts this potential maintenance cost; it does not select an unreviewed patch design.
+
+## Document environments and lifetime
+
+Keep attachment bytes/name/hash and document ownership independent of filesystem paths. Separate document font environments so equal attachment names cannot leak between documents. Characterize duplicate attachment/system precedence; do not invent an attachment-always-wins rule. Avoid process-wide Qt registration merely to populate picker labels.
+
+Font installs/removals, attachment edits and provider/configuration changes create new environment generations and invalidate affected resolutions, previews and collection reports. Provide explicit refresh as well as debounced notifications. Qt refresh does not refresh libass's caches. Recreate affected libass contexts through their owner and retain source bytes until all consumers finish. Pinned tools use their own target document's environment.
+
+## Required feasibility evidence and UI review
+
+Use licensed fixtures on Windows and Linux for aliases, vertical names, TTC/OTC faces, variable instances, simulated styles, CJK/RTL/combining text, missing glyphs, fallback and conflicting attachments. Record renderer-selected identities against collected hashes/face indices, refresh behavior, concurrent documents and cancellation. Report inconclusive cases. The native feasibility follow-up must establish the diagnostic mechanism before the final implementation plan can call this contract proved.
+
+Picker, preview, font-catalog and collector workflows still need runnable surface prototypes and user reactions. Choosing strict agreement does not approve their screen layout or remove any existing capability.
+
+Evidence and reviewed alternatives: [font-resolution study](proposals/font-resolution.md), [completed source research](https://github.com/altqx/hikari/blob/aff69e6c950a1ab03d02eb837ece9d47b90d1dae/docs/research/fonts.md).

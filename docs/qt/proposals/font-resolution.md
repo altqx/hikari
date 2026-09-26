@@ -1,6 +1,6 @@
 # Font resolution proposal
 
-**Status: proposal for [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35); not an accepted decision or verified implementation.** Based on [completed font research](https://github.com/altqx/hikari/blob/aff69e6c950a1ab03d02eb837ece9d47b90d1dae/docs/research/fonts.md), the [Hikari-owned architecture](../architecture.md) and [video proposal](video-pipeline.md).
+**Status: the user chose verified renderer/font-file agreement on 2026-09-27 in [Choose font enumeration and matching strategy](https://github.com/altqx/hikari/issues/35).** The accepted [font contract](../fonts.md) is authoritative; this retained review artifact holds the alternatives and evidence. No verified implementation is claimed. Based on [completed font research](https://github.com/altqx/hikari/blob/aff69e6c950a1ab03d02eb837ece9d47b90d1dae/docs/research/fonts.md), the [Hikari-owned architecture](../architecture.md) and [video proposal](video-pipeline.md).
 
 ## Human choice
 
