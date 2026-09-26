@@ -47,6 +47,10 @@ WASAPI and a Linux desktop-compatible PortAudio route are initial verification c
 
 ## Lifecycle and verification obligations
 
+The [bounded Windows transport continuation](https://github.com/altqx/hikari/blob/4012f2ecf6cbf2ba267753c8c0f8417d2ca1f33a/HikariSub/prototypes/media-transport/README.md) records actual Qt audio/subtitle track selection, decoded frame events, FFMS2 owned frames, offscreen software presentation and 19,968 zero-filled PortAudio device frames. It supports continuing the Qt Multimedia candidate; it does not certify the pipeline. A CFR 1000-ms seek first delivered frame 24 before frame 25, and VFR 1035 ms delivered the following frame rather than its containing frame. Product acknowledgement must use delivered-frame evidence with explicitly chosen seek semantics; the probe's near-window sampling rule is not that policy.
+
+The controlled CFR handoff rejected an intentionally delayed old-generation completion and observed software frame presentation, silent callbacks and stop/close. It did not acknowledge Qt device-buffer flushing or measure acoustic continuity. Qt and FFMS2 loaded different same-named FFmpeg DLLs in separate processes, leaving shared-process coexistence and production process boundaries unresolved. Real source-PCM output, resampling, GPU/libass integration, device changes, Linux and calibrated performance remain required. The earlier missing-prerequisite report remains historical evidence, not the current runtime state.
+
 Serialize access to each decoder/renderer through its owner. Tag asynchronous results with source generation and relevant Document/font/configuration revisions, reject stale completions and bound queues. Define cancellation, error reporting and shutdown ordering; release graphics resources on their owning thread during window recreation/device loss. Media errors preserve subtitle editing and expose a recovery path.
 
 Native prototypes must verify labelled controls, F6/Shift+F6 panel traversal, focus recovery, keyboard/numeric editing and screen-reader access to custom timeline state. HTML workspace observations do not establish native media accessibility.

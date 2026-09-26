@@ -31,4 +31,4 @@ The map remains the index of decisions and open dependencies. The [coverage ledg
 
 The reviewed [video](proposals/video-pipeline.md) and [audio](proposals/audio-pipeline.md) alternatives led to the accepted media direction above. Qt Multimedia is the first general-player candidate to verify; chapter/track, clock, rendering and deployment gates remain explicit.
 
-The [native docking contract](proposals/docking.md), [settings/import contract](proposals/settings-import.md) and [edit/undo transaction contract](proposals/edit-transactions.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
+The [native docking contract](proposals/docking.md), [settings/import contract](proposals/settings-import.md), [edit/undo transaction contract](proposals/edit-transactions.md) and [Document/Session lifecycle](proposals/application-lifecycle.md) await decisions. Six exact outcomes from the document/timing batches are captured in the [approved-departure ledger](compatibility-decisions.md); other compatibility subcases remain open.
