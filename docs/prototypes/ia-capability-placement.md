@@ -4,7 +4,7 @@ Companion to [Prototype the information architecture: panels, workspaces, home s
 
 Source baseline: [complete wx UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md). Current capability names identify what must survive; they do not fix future menu wording. No capability is dropped by this proposal.
 
-The visual preference—C's compact treatment with A's placement—sets a starting composition. Shared workspace ownership, optional protected comparison, movable/floating tools, follow-editing with optional pinning and optional Home have since been accepted. Detailed capability grouping remains a proposal.
+Compact Studio supplies the accepted appearance; the latest default arrangement follows the current program (video left, audio above editor right, grid below). Shared workspace ownership, optional protected comparison, movable/floating tools, follow-editing with optional pinning and optional Home have since been accepted. Detailed capability grouping remains a proposal.
 
 ## Proposed placement
 
