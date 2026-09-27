@@ -1,0 +1,61 @@
+{
+  "recordedUtc": "2026-09-27T06:12:48.6174940Z",
+  "status": "Installed SDK prerequisite observation; no compile or clean-build pass",
+  "qtVersion": "6.11.2",
+  "qtKit": "C:/Qt/6.11.2/msvc2022_64",
+  "maintenanceTool": "C:/Qt/MaintenanceTool.exe",
+  "maintenanceToolSha256": "69da5d6c3269c8cc89618dec2a6c4ad55ccc587c22c977b9d9bdc5d47fead8a5",
+  "command": [
+    "C:/Qt/MaintenanceTool.exe",
+    "install",
+    "qt.qt6.6112.win64_msvc2022_64"
+  ],
+  "exitCode": 0,
+  "diskRequirementReported": "2.91 GB installed; 312.36 MB temporary",
+  "interaction": "Existing account reused internally by official tool; install-size Yes confirmation; no new license prompt or acceptance flags",
+  "compilerDirection": "Latest installed MSVC19.51; actual matching-kit compile/link/runtime still to be observed",
+  "packages": [
+    {
+      "name": "qt.qt6.6112.addons.qtcharts.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.addons.qtquick3d.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.addons.qtquicktimeline.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.addons.qttasktree.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    },
+    {
+      "name": "qt.qt6.6112.win64_msvc2022_64",
+      "version": "6.11.2-0-202608131011"
+    }
+  ],
+  "selectedSdkHashes": {
+    "bin/qmake.exe": "f28be48b9161d59785ee831ad30ac70371dfd0c075f0e7e686d0becec5aa1e9c",
+    "bin/Qt6Core.dll": "22c113a5644b875b2c85482723cd5d2e6a3a4029169778fcc78adde08ef3b6aa",
+    "bin/Qt6Gui.dll": "19265a4e76efc12ef5f5bcf59be6c6a5b9b59ec4c89660797738bd2da7f719cc",
+    "bin/Qt6Quick.dll": "ed2917b9905a5b867ecc192fa4429170494af0dcdaacc68053fe88948319cd08",
+    "lib/Qt6Gui.lib": "747febbe4b17c764fc5f9cde6f535b87af2a6b20cf336262ad746c7d4077238c",
+    "lib/cmake/Qt6/Qt6Config.cmake": "bd13e76b5062397a4986b3066afb981c30559048b85bbe7fe7a77924e0160a6b"
+  },
+  "limits": [
+    "Existing installation, not an empty-cache CMake provisioning proof",
+    "No credentials or raw account-bearing installer logs copied",
+    "Package names do not prove compiler ABI/runtime qualification",
+    "Linux CI provisioning is separate; no authorized workstation credentials exported"
+  ]
+}

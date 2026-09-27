@@ -1,5 +1,7 @@
 # Pinned CMake workflow — prerequisite audit
 
+**Follow-up on 2026-09-27:** altqx selected latest MSVC and GitHub Actions for Linux. Both official Qt 6.11.2 MinGW and MSVC kits are now installed locally. The MSVC kit was added through the existing authorized MaintenanceTool, with exit code 0 and no new license prompt; see the sanitized [installed-SDK observation](windows-sdk-observed.json). This removes the missing local SDK prerequisite but does not prove clean CMake provisioning. The [Linux CI preflight](linux-ci/README.md) records host versions and compares pinned public Qt metadata without running an installer or building dependencies. The audit below preserves what was observed before these changes.
+
 **2026-09-27; read-only feasibility notes for [Prove pinned CMake workflow provisioning on Windows and Linux](https://github.com/altqx/hikari/issues/48). No build/provisioning pass.** This is preparation for a throwaway slice under the [accepted contract](https://github.com/altqx/hikari/blob/c2258a7a7b100a68d0a22f932c087b9b334ee411/docs/qt/build.md), not an alternative dependency strategy. Only this README is created in this audit. No installers, license acceptance, account access, dependency installation, large artifact downloads or CI jobs were run.
 
 ## Local prerequisites actually inspected

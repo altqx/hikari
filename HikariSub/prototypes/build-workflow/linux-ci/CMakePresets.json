@@ -1,0 +1,40 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "linux-ci-preflight",
+      "displayName": "Throwaway Linux host and public metadata preflight",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_out/linux-ci-preflight",
+      "cacheVariables": { "HIKARI_REQUIRE_LINUX": "ON" }
+    },
+    {
+      "name": "metadata-only-preflight",
+      "displayName": "Public metadata inspection; not Linux validation",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/_out/metadata-only-preflight",
+      "cacheVariables": { "HIKARI_REQUIRE_LINUX": "OFF" }
+    }
+  ],
+  "buildPresets": [
+    { "name": "linux-ci-preflight", "configurePreset": "linux-ci-preflight", "targets": ["preflight-report"] },
+    { "name": "metadata-only-preflight", "configurePreset": "metadata-only-preflight", "targets": ["preflight-report"] }
+  ],
+  "workflowPresets": [
+    {
+      "name": "linux-ci-preflight",
+      "steps": [
+        { "type": "configure", "name": "linux-ci-preflight" },
+        { "type": "build", "name": "linux-ci-preflight" }
+      ]
+    },
+    {
+      "name": "metadata-only-preflight",
+      "steps": [
+        { "type": "configure", "name": "metadata-only-preflight" },
+        { "type": "build", "name": "metadata-only-preflight" }
+      ]
+    }
+  ]
+}

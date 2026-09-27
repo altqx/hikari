@@ -1,0 +1,54 @@
+name: Qt dependency feasibility — preflight only
+
+on:
+  push:
+    branches: [codex/qt-design-prototypes]
+    paths:
+      - HikariSub/prototypes/build-workflow/linux-ci/**
+      - .github/workflows/qt-dependency-feasibility.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qt-dependency-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-preflight:
+    name: Ubuntu host and public metadata; no dependency build
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: HikariSub/prototypes/build-workflow/linux-ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Capture host and public Qt metadata through the CMake workflow
+        env:
+          # Presence only. Never inject, print, cache or upload the token itself.
+          HIKARI_QT_AUTH_DECLARED: ${{ secrets.QT_INSTALLER_JWT_TOKEN != '' }}
+        run: cmake --workflow --preset linux-ci-preflight
+
+      - name: Publish explicit preflight boundary
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f _out/linux-ci-preflight/evidence/report.md ]]; then
+            cat _out/linux-ci-preflight/evidence/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '%s\n' 'Preflight did not produce a report. No dependency build or provisioning pass.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Preserve only sanitized preflight evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qt-linux-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: HikariSub/prototypes/build-workflow/linux-ci/_out/linux-ci-preflight/evidence/
+          if-no-files-found: warn
+          retention-days: 7
