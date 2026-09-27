@@ -1,0 +1,44 @@
+# Grid operations and History
+
+**Accepted UX resolution, 2026-09-27.** For [Prototype Grid selection, row operations, filters, Line groups and History](https://github.com/altqx/hikari/issues/56): [Toolbar + task review](https://github.com/altqx/hikari/issues/56#issuecomment-5853245325), the existing identity/target contract, and the live review's explicit **G56-contiguity** and **J56-selected-only-join** approvals. The [reviewed boundary companion](https://github.com/altqx/hikari/blob/4b1631c2e7c2ab5c58d899e7ae098021d0e1766b/docs/prototypes/grid-boundary-review-notes.md) makes those narrow outcomes concrete. Approval selects behavior; it does not establish implementation or native parity.
+
+## Placement, target and selection
+
+Keep the full-width bottom Grid in [Classic](workspaces.md). Commands remain reachable through the Grid toolbar, applicable context/header menus and shortcuts. Detailed scope/change review uses a task dialog; this does **not** mandate a preview or confirmation for every simple operation. History is a persistent tool following the Editing target by default, with optional pinning and a visible Document name.
+
+Use Document-owned stable Line IDs; keep current, selected set, anchor, marked Line and keyboard focus distinct. Reorder/filter/collapse must not transfer an identity to an unrelated row. Retain hidden selected IDs and show their count; each command uses its characterized eligibility and names the affected scope. Selection in a Protected reference permits inspection/copying, never mutation. Focus does not retarget a prepared command or pinned History.
+
+**Range interpretation:** arrows/Page/Home/End choose destinations in displayed order. Shift membership preserves the inclusive **Document-order interval** between anchor and destination, including hidden Lines; mouse Ctrl+Shift adds that interval. A hidden anchor retains its ID and needs no destination/current fallback. Preserve the existing active-on-selection setting's distinction between moving current and moving the extent. Empty results retain selection without invalid seeking. This combines source range membership with the already accepted retained-selection rule; it does not restore legacy filtering's selection clearing. Displayed-only range membership, fallback alternatives and independent display-only sorting from the HTML are retired optional proposals, not new defaults. [Characterization and fixtures](../proposals/grid-selection-group-rules.md).
+
+## Two approved command outcomes
+
+**G56-contiguity:** valid within-group edits, including ordinary member duplication, remain allowed. If a structural edit would actually break a valid contiguous group, reject before mutation and identify the affected description/members. Offer Cancel or explicit **Remove group**, showing that it deletes the description Line and leaves surviving members ungrouped/revealed. After removal, rebuild/revalidate the original operation; do not execute it silently. C07-atomic-rejection preserves content, selection, dirty state and history on rejection. Automatic group movement, splitting, annotation loss or retaining the description as a comment are not approved alternatives. Preserve malformed imported flags as provenance/diagnostic data; this approval does not permit rejecting legacy files or silently repairing imports.
+
+**J56-selected-only-join:** change only Join's deletion set: remove the participating selected records other than the retained record, preserving intervening unselected Lines. With A/B/C selected in `A,B,X,C`, X survives unchanged. The two-selected `A,X,B` control already preserves X in legacy. Preserve each Join variant's text contributors, original/translated roles, separator, timing, property source, survivor and eligibility; “keep last” does not acquire a new identity or timing meaning. The first retained record keeps its stable ID. This applies to the affected Join paths, not an approval of unrelated split/clipboard/group fixes.
+
+Both corrected outcomes become defaults under the [compatibility policy](../compatibility.md), with no per-fix opt-in. G56 governs resulting group validity as well; J56 does not authorize a group-breaking Join.
+
+## Operation and evidence obligations
+
+The [complete UI inventory][ui] and [core inventory][core] remain the preserved baseline, including context-only commands and settings. Implement these families with their source behavior except for explicitly accepted departures; incomplete sample controls do not remove capabilities.
+
+| Family | Required implementation / characterization |
+| --- | --- |
+| Navigation and state | Modifier/range/drag selection, autoscroll, current/marked navigation, reveal, numbering, line/subtitle preview, video-visible selection and existing click/seek actions. Verify hidden/disjoint selections and empty results without changing targets. |
+| Columns and display | Visibility, width/fitting, layer/times/style/actor/margins/effect, both text roles, CPS/wraps, comments/state cues and tag-hidden display. Preserve values and character metrics; native shaping, scaling and accessible cues follow the painted-Grid contract. |
+| Clipboard | Row/column Copy/Cut/Paste and paste-special field choice; actual serialization, row-count/mapping behavior, text roles, format conversion and command-specific hidden eligibility. No blanket adoption of the sample's repeat-one-row or count-matching rule. |
+| Structural edits | Before/after insertion, video/time/frame insertion, duplicate, delete/text-clear, move/swap; preserve field inheritance, selection options and timing prerequisites. New copies receive new IDs; retained records keep theirs. Validate actual group effects under G56. |
+| Split / Join / timing | Time/frame/character/word/wrap splitting; Join/keep-first/keep-last/previous/next; previous/next continuity and FPS controls. Use [accepted time semantics](../time-semantics.md), preserve exact tag/translation/property behavior and apply J56's deletion change only. Even-time sample splitting is not a new algorithm. |
+| Sort and filters | Preserve all/selected stable sort keys and selected-slot permutation; style/selection/comment/Unconfirmed/untranslated predicates, invert, add/do-not-reset, filter-after-load, ignore-filtered-in-actions, hide/reveal/off and partial hidden-block reveal. Compare truth tables and persistence; no universal hidden-scope substitution. |
+| Line groups | Create from eligible runs, description edit, expand/collapse, add/copy/select/remove members and groups; preserve supported legacy markers and empty-description data. Exercise adjacent groups, EOF/single members, hidden gaps, structural edits, save/load and Undo. Cross-hidden creation must not silently manufacture a malformed group; characterize its exact eligibility/result before implementing it under G56. |
+| History | Document Undo/Redo, history inspection/jump/rewind and last-save navigation; identify the target and any lost redo/future entries. Preserve the initial 500-state capacity and accepted C43 exact saved-content identity through pruning/branching. Do not invent a restorable saved entry after its content leaves retained history. |
+
+## Shared decisions and qualification
+
+[Edit drafts, commands and undo](https://github.com/altqx/hikari/issues/43) owns remaining draft navigation/reconciliation, command/typing/gesture grouping, Save inclusion, restored editing context, and filter/view-history/dirty treatment. Its [partial decisions](../proposals/edit-transactions.md) already accept C07 and C43. This Grid resolution does not approve the sample's view-history policy, mandatory draft-commit/rebuild sequence, silent redo truncation, or a new Lua transaction policy. Keep characterized legacy behavior where compatible; expose destructive History consequences, and resolve shared boundaries there rather than inventing per-surface defaults.
+
+[Painted-Grid accessibility and performance](https://github.com/altqx/hikari/issues/45) retains native table/cell/focus/selection semantics, real keyboard and assistive-technology checks, shaping/scaling and representative performance qualification from [Subtitle grid](subtitle-grid.md). Complete command/clipboard/filter/group fixtures belong to implementation validation under [Testing](../testing.md); the existing [UndoHistory tests][tests] cover the helper, not whole-Grid parity. Preserve old/new evidence for G56 and J56, including the two-selected Join control. Source reading, HTML walkthroughs and C++ in-process observations do not substitute for those results.
+
+[ui]: https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md
+[core]: https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md
+[tests]: https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/tests/UndoHistoryTests.cpp

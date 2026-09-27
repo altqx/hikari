@@ -14,7 +14,9 @@ Document-owned stable line IDs identify commands and selection. A displayed row 
 
 Keep three states distinct: the selected set for batch operations, the current line used for inspection/editing, and keyboard focus indicating where input goes. Focus changes do not change the document's **editing target**. A **protected reference** remains read-only even when its grid has focus or selection.
 
-Arrow and page navigation operate on displayed order. Home/End reach its first/last row; Shift extends from the selection anchor using the same range semantics as arrows. Empty results leave retained selection intact without seeking an invalid row. Keep Ctrl selection and reveal-current behavior coherent with those rules. The spike falls back to the destination when filtering hides its range anchor; the production hidden-anchor policy still needs an explicit interaction fixture and review. Keyboard focus must remain reachable after filtering or group collapse, including when the current line is hidden.
+Arrow and page navigation operate on displayed order. Home/End reach its first/last row. The [detailed Grid outcome](grid-operations.md) preserves characterized legacy range membership: Shift selects the inclusive Document-order interval between the stable anchor and displayed destination, including hidden Lines; Ctrl+Shift adds that interval. A hidden anchor retains its identity, so the spike's destination fallback is not adopted. Empty results leave retained selection intact without seeking an invalid row. Keep Ctrl selection and reveal-current behavior coherent with those rules. Keyboard focus must remain reachable after filtering or group collapse, including when the current Line is hidden.
+
+The detailed outcome also records approved G56-contiguity and J56-selected-only-join, preserving valid within-group operations and unselected intervening Lines. Shared draft/history policy remains with its own decision; native evidence below is not implied by this UX resolution.
 
 ## Text and visible state
 
