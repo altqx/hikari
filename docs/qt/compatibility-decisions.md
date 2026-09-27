@@ -15,4 +15,6 @@ The suffixes refine the broader candidate rows so approval cannot be mistaken fo
 
 For each implementation, add source/fixture hashes, runtime/platform, reproduction steps, old observations, the approved expected result and actual comparison evidence. Keep unexecuted or inconclusive results explicit. The user approved the intended changes from source-backed examples; no legacy runtime characterization was performed during that approval.
 
+An [initial synthetic fixture pack](fixtures/approved-departures/README.md) now supplies hashed inputs and explicit comparison/observation fields for these six outcomes, plus limited TLMode and precision supplements. Its legacy and rewrite runtime fields remain unexecuted; input integrity is not behavioral qualification.
+
 All other candidate dispositions remain open, including Lua undo/export-filter stubs, mutable validation, dialog argument/coercion differences, late rejection, and unlisted parser/conversion/rounding changes. Upstream Aegisub behavior is not a substitute for a named decision.

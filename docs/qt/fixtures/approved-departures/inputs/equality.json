@@ -1,0 +1,75 @@
+{
+  "unit": "microseconds",
+  "integer_encoding": "Decimal strings for exact fixture interchange; not a production IPC decision.",
+  "legacy_representable_cases": [
+    {
+      "lhs": "0",
+      "rhs": "0",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    },
+    {
+      "lhs": "1000",
+      "rhs": "1000",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    },
+    {
+      "lhs": "1123000",
+      "rhs": "1123000",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    }
+  ],
+  "new_typed_range_cases": [
+    {
+      "lhs": "-9223372036854775808",
+      "rhs": "-9223372036854775808",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    },
+    {
+      "lhs": "-1",
+      "rhs": "-1",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    },
+    {
+      "lhs": "9223372036854775807",
+      "rhs": "9223372036854775807",
+      "expected": {
+        "ge": true,
+        "le": true,
+        "eq": true,
+        "gt": false,
+        "lt": false
+      }
+    }
+  ],
+  "note": "Typed-range cases do not imply the legacy millisecond type can represent these values."
+}

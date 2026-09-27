@@ -1,0 +1,64 @@
+{
+  "raw_start_frame": 24,
+  "raw_end_frame": 48,
+  "steps": [
+    {
+      "document": "A",
+      "rate": {
+        "numerator": 24,
+        "denominator": 1
+      },
+      "expected_exact_seconds": {
+        "start": [
+          1,
+          1
+        ],
+        "end": [
+          2,
+          1
+        ]
+      }
+    },
+    {
+      "document": "B",
+      "rate": {
+        "numerator": 24000,
+        "denominator": 1001
+      },
+      "expected_exact_seconds": {
+        "start": [
+          1001,
+          1000
+        ],
+        "end": [
+          1001,
+          500
+        ]
+      }
+    },
+    {
+      "document": "B",
+      "rate": null,
+      "expected": "B raw frames remain 24/48; B time unresolved; A remains 1/2 seconds."
+    },
+    {
+      "document": "B",
+      "rate": {
+        "numerator": 25,
+        "denominator": 1
+      },
+      "expected_exact_seconds": {
+        "start": [
+          24,
+          25
+        ],
+        "end": [
+          48,
+          25
+        ]
+      },
+      "expected_A": "unchanged"
+    }
+  ],
+  "constraints": "Rate changes are explicit fixture operations, never automatic effects of attaching media. Frame range/end-inclusive export details are outside this case."
+}

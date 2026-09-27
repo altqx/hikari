@@ -1,0 +1,63 @@
+{
+  "unit": "microseconds",
+  "lookup": "frameAtOrAfter",
+  "cases": [
+    {
+      "starts": [
+        0,
+        40000,
+        81000,
+        120000
+      ],
+      "anchor": 40000,
+      "target": 81000,
+      "expected_offset": 1,
+      "source_predicted_old_offset": 2
+    },
+    {
+      "starts": [
+        0,
+        40000,
+        81000,
+        120000
+      ],
+      "anchor": 81000,
+      "target": 40000,
+      "expected_offset": -1
+    },
+    {
+      "starts": [
+        1000000,
+        1040000,
+        1081000,
+        1120000
+      ],
+      "anchor": 1040000,
+      "target": 1081000,
+      "expected_offset": 1
+    },
+    {
+      "starts": [
+        0,
+        40000,
+        80000,
+        120000
+      ],
+      "anchor": 40000,
+      "target": 80000,
+      "expected_offset": 1
+    },
+    {
+      "starts": [
+        0,
+        40000,
+        81000,
+        120000
+      ],
+      "anchor": 41000,
+      "target": 81000,
+      "expected_offset": 0
+    }
+  ],
+  "note": "Only index offset is specified. Legacy endpoint representatives and serialization are separate accepted contracts; no exact seek/device claim."
+}

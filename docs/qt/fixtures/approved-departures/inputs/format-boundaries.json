@@ -1,0 +1,25 @@
+{
+  "input": "precision.srt",
+  "authored_microseconds": [
+    1009000,
+    2009000
+  ],
+  "expected_export_microseconds": {
+    "ASS": [
+      1000000,
+      2000000
+    ],
+    "SRT": [
+      1009000,
+      2009000
+    ],
+    "MPL2": [
+      1100000,
+      2100000
+    ],
+    "TMPlayer_start_only": [
+      1000000
+    ]
+  },
+  "constraints": "Comparison is the accepted nonnegative precision contract, not full converter output. Source authored times stay unchanged; loss review remains required. MicroDVD mapping needs its own explicit rational rate."
+}

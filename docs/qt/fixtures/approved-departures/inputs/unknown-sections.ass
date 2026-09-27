@@ -1,0 +1,27 @@
+﻿[Script Info]
+Title: PROTOTYPE compatibility specimen
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+YCbCr Matrix: TV.601
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,24,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,10,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Gate
+
+[Hikari Synthetic Opaque]
+; Preserve order and exact whitespace
+Token:  first:second  
+raw-without-colon
+
+[Fonts]
+fontname: PROTOTYPE-NOT-A-VALID-FONT.ttf
+Opaque!!payload,not-a-font
+
+[Hikari Synthetic Opaque]
+Token: repeated-section
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,港 — ميناء
