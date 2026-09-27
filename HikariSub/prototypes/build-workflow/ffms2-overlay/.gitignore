@@ -1,0 +1,5 @@
+_audit/
+_work/
+out/
+vcpkg_installed/
+CMakeUserPresets.json

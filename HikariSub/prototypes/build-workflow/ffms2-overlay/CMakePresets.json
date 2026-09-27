@@ -1,0 +1,33 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 28, "patch": 0},
+  "configurePresets": [
+    {
+      "name": "common",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/out/${presetName}",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{HIKARI_PROTOTYPE_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_OVERLAY_PORTS": "${sourceDir}/ports",
+        "VCPKG_OVERLAY_TRIPLETS": "${sourceDir}/triplets",
+        "VCPKG_INSTALLED_DIR": "${sourceDir}/out/${presetName}/vcpkg_installed"
+      }
+    },
+    {"name": "windows-overlay", "inherits": "common", "cacheVariables": {"VCPKG_TARGET_TRIPLET": "x64-hikari-windows-release"}},
+    {"name": "linux-overlay", "inherits": "common", "cacheVariables": {"VCPKG_TARGET_TRIPLET": "x64-hikari-linux-release"}}
+  ],
+  "buildPresets": [
+    {"name": "windows-overlay", "configurePreset": "windows-overlay", "jobs": 2},
+    {"name": "linux-overlay", "configurePreset": "linux-overlay", "jobs": 2}
+  ],
+  "testPresets": [
+    {"name": "windows-overlay", "configurePreset": "windows-overlay", "output": {"outputOnFailure": true}},
+    {"name": "linux-overlay", "configurePreset": "linux-overlay", "output": {"outputOnFailure": true}}
+  ],
+  "workflowPresets": [
+    {"name": "windows-overlay", "steps": [{"type": "configure", "name": "windows-overlay"}, {"type": "build", "name": "windows-overlay"}, {"type": "test", "name": "windows-overlay"}]},
+    {"name": "linux-overlay", "steps": [{"type": "configure", "name": "linux-overlay"}, {"type": "build", "name": "linux-overlay"}, {"type": "test", "name": "linux-overlay"}]}
+  ]
+}

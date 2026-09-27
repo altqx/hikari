@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.28)
+# This isolated consumer expects the caller's already verified vcpkg checkout/tool.
+# It is not the full Task48 pre-project provisioning implementation.
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE OR NOT EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+    message(FATAL_ERROR "Supply the verified pinned vcpkg toolchain; no bootstrap or system-library fallback")
+endif()
+project(HikariFFMS2OverlayProbe LANGUAGES CXX)
+find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
+find_package(FFMPEG REQUIRED)
+add_executable(ffms2_overlay_probe probe.cpp)
+target_compile_features(ffms2_overlay_probe PRIVATE cxx_std_17)
+target_include_directories(ffms2_overlay_probe PRIVATE ${FFMPEG_INCLUDE_DIRS})
+target_link_libraries(ffms2_overlay_probe PRIVATE HikariFFMS2::ffms2 ${FFMPEG_LIBRARIES})
+include(CTest)
+add_test(NAME private_api_and_frames COMMAND ffms2_overlay_probe "${CMAKE_CURRENT_BINARY_DIR}/authored-fixture.mkv")

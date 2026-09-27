@@ -1,0 +1,22 @@
+{
+  "COPYING": "321c1b9fbed050f434128289c4ae7319901b5aa4b57053b3dbe3a4e334af57bd",
+  "include/ffms.h": "a6038e247364dca507dba678e418cd075ed03d07f1f56b1a5f5ffcfffcc746f4",
+  "include/ffmscompat.h": "378083107566670c99fc9e311e4191f21cce3f4d7a33211896081e79750ce44d",
+  "src/core/audiosource.cpp": "5e864f86f06565eeaec8d8ea0d53c444fc1459ab462cd087db9b06462f3147bd",
+  "src/core/audiosource.h": "d7c857feed78aeba03a562bd3a1567569c7151d0c7b18c2afcebe86c31dce1c6",
+  "src/core/ffms.cpp": "a85fdeee23df59a63287ed3e2eeef62635eaf50677cccd81d17b91c3929d83a3",
+  "src/core/filehandle.cpp": "967a7b1661fb93cde34d90e6a136feb9b922842d97a514d22790138b8103d8a5",
+  "src/core/filehandle.h": "93534a6610483fed16e21113804738fefb9f76869411ae258e344f6d16e1d5f2",
+  "src/core/indexing.cpp": "f2c23f5fa126a1228540156ad007fc947e1a53298ac2dc1e76e142d0b5d66a6e",
+  "src/core/indexing.h": "43dcce972b0227cb949deca2782eaf1064a0409d7f3d7eaf3ea3a303ed2173da",
+  "src/core/track.cpp": "a323f896a27159f47e5a4d492b6302f9e2107a736a55b9c78f3567565502e313",
+  "src/core/track.h": "27f38dd85e8493f0287fc29b1ceb2ef6b55a7d42474e8c6ce867f3170d96bf80",
+  "src/core/utils.cpp": "ccbf2d409c3e7199efba49d3e6729c56c97ecee1c0286e653791f6af4d7292e3",
+  "src/core/utils.h": "6cffa88830f38adffc13822b1ec0305a02f4345fb072d668fc9e9599589addad",
+  "src/core/videosource.cpp": "1746b60be0300d177c8da5102a5f64da727b86717af7e09ac99ca007b28b2257",
+  "src/core/videosource.h": "8c8c8b84f745cb6bcb38734c39d58a267c35ae3ce930732011531979ef13b450",
+  "src/core/videoutils.cpp": "54838a5fa78a6b5fb904a0ce796378e047c09ae5015773f7d110b2669f671bda",
+  "src/core/videoutils.h": "0a43ff33a800ea12bafeaa41674a69d112945ffb31ba3faf2d389120169326c2",
+  "src/core/zipfile.cpp": "97602a31448a49d68506c1633155a3520f933cc82101fc6798a1e6f0becb1e27",
+  "src/core/zipfile.h": "bd076da4780f15b41a4082e097b2ff89d398f6d2300fe7575f379f5a0824da80"
+}
