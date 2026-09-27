@@ -13,3 +13,7 @@ Altqx subsequently accepted the full [typed-time and frame contract](../qt/time-
 ## Addendum — backend acceptance on 2026-09-27
 
 The subsequent [backend decision](0016-backend-values-and-isolated-ffms2.md) selects qualifying isolated FFMS2 first, with Qt general playback in the application process. This selects the architectural direction that the earlier experiment left open; transfer, recovery, packaging, performance and output-quiescence evidence still must pass.
+
+## Addendum — full pipeline proposal accepted on 2026-09-27
+
+[Altqx approved the current video proposal](https://github.com/altqx/hikari/issues/25#issuecomment-5853349062): retain FFMS2 indexed decoding, qualify Qt Multimedia first for general playback, start from owned CPU frames and a CPU-BGRA/libass reference, then verify the Qt Quick scene-graph presenter with separate visual overlays. Optional DirectShow and xy-VSFilter/CSRI adapters stay behind the cross-platform ports. This settles the pipeline architecture; the existing native media follow-up retains seek acknowledgement, chapter/track parity, acoustic handoff, GPU/color and supported-platform qualification gates.

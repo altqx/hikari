@@ -1,12 +1,10 @@
-# Native docking and workspace persistence proposal
+# Native docking and workspace persistence
 
-**Historical proposal; accepted on 2026-09-27.** See the current [docking contract](../docking.md) and [ADR 0017](../../adr/0017-owned-native-docking.md). Native qualification remains required.
-
-For [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46). Movable/floating panels, shared layout, tool targets and the familiar Editing preset are already [accepted](../ux/workspaces.md). This proposal chooses their implementation boundary; it does not reopen constrained-versus-floating UX or claim a native docking pass.
+Accepted on 2026-09-27 by [altqx’s approval](https://github.com/altqx/hikari/issues/46#issuecomment-5853318062) of [Choose native docking and workspace persistence architecture](https://github.com/altqx/hikari/issues/46). This contract implements the already accepted [movable/floating shared workspace](ux/workspaces.md). [ADR 0017](../adr/0017-owned-native-docking.md) records the engine and ownership choice. Native qualification remains required.
 
 ## Engine and dependency
 
-Recommend **KDDockWidgets 2.4.1, QtQuick frontend only**, behind a Hikari-owned WorkspaceLayout service. Resolve the release to commit `c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8`; pin the source digest, recipe and options in the accepted vcpkg/overlay graph before qualification. Use the [documented public entry points](https://docs.kdab.com/kddockwidgets-manual/latest/private_api.html): QtQuick DockWidget/MainWindow views plus Config, LayoutSaver and KDDockWidgets headers. Other Core headers are private; isolate and qualify any unavoidable private dependency inside the adapter. No Muse framework import or direct library access from document services.
+Use **KDDockWidgets 2.4.1, QtQuick frontend only**, behind a Hikari-owned WorkspaceLayout service. Resolve the release to commit `c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8`; pin the source digest, recipe and options in the accepted vcpkg/overlay graph before qualification. Use the [documented public entry points](https://docs.kdab.com/kddockwidgets-manual/latest/private_api.html): QtQuick DockWidget/MainWindow views plus Config, LayoutSaver and KDDockWidgets headers. Other Core headers are private; isolate and qualify any unavoidable private dependency inside the adapter. No Muse framework import or direct library access from document services.
 
 The [upstream release](https://github.com/KDAB/KDDockWidgets/releases/tag/v2.4.1) supplies the candidate version. Its [QtQuick guide](https://github.com/KDAB/KDDockWidgets/blob/c1d28d25ef5ba077915bcb2b6fa9e14df2a361f8/README-QtQuick.md) documents the QtQuick-only option and cross-window effects caveat. Documented [engine features](https://github.com/KDAB/KDDockWidgets) cover nested splits, tab groups and floating groups. These match the accepted requirement more directly than implementing those mechanics over SplitView. A QWidget shell would alter the chosen Qt Quick shell boundary. A custom docking engine remains a fallback only after a concrete incompatibility, not an automatic scope expansion.
 
@@ -14,7 +12,7 @@ Use the dependency's [GPLv3 option](https://docs.kdab.com/kddockwidgets-manual/l
 
 ## Hikari-owned identities and state
 
-| Record | Proposed responsibility |
+| Record | Responsibility |
 | --- | --- |
 | WorkspaceLayout | One shared versioned arrangement: dock tree/library payload, open panels, selected panel tabs, split ratios, floating groups and placement hints. It contains no subtitle content, undo history or media decoder. |
 | PanelId | Stable untranslated role/instance identity, such as core Video/Audio/Editor/Grid or tool Styles/Search/Timing/History. Recreating a QML view never creates a second authoritative document. |
@@ -43,4 +41,4 @@ On Windows/X11, intersect saved placement with available screens, constrain mini
 
 A focused Qt/C++ experiment must qualify the pinned engine with Qt 6.11.2: default arrangement, split/tab/float/redock, keyboard-only equivalents, NVDA/Orca, mixed DPI, monitor removal, GNOME/KWin Wayland, fullscreen coexistence, Video resource recreation, retained drafts/targets, unknown panels and corrupt/older/newer layouts. Record actual Qt/backend/engine revisions and observed failures. The HTML study and desktop documentation cannot pass these checks. The official SDK/toolchain prerequisites identified by the build audit also apply here.
 
-**Requested decision:** adopt KDDockWidgets behind this owned adapter and persistence/focus contract, with the native gate required before treating docking implementation as qualified. Engine upgrades require a layout migration/restore matrix; if qualification reveals an incompatible requirement, reopen this choice explicitly.
+**Accepted decision:** adopt KDDockWidgets behind this owned adapter and persistence/focus contract, with the native gate required before treating docking implementation as qualified. Engine upgrades require a layout migration/restore matrix; if qualification reveals an incompatible requirement, reopen this choice explicitly.

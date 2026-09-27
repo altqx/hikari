@@ -42,7 +42,7 @@ The accepted [backend contract](backends.md) now supplies the value/capability/g
 
 - Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.
 - Navigation: predictable panel traversal and focus restoration, native input/IME ownership, and semantic representations for custom views.
-- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Classic menus/local controls and optional task presets are accepted; native docking and detailed surface flows remain open.
+- Workspaces: one shared application layout, movable/floating panels, follow/pin tool targets and optional protected comparison, as [accepted in the workspace review](ux/workspaces.md). Classic menus/local controls and optional task presets are accepted; the [KDDockWidgets adapter/persistence contract](docking.md) is accepted; native qualification and detailed surface behavior remain required.
 - Appearance: reusable Qt Quick Controls styled through the [accepted Compact Studio visual language](ux/visual-language.md). UI appearance never changes ASS style data.
 - Settings: explicit scopes, stable persisted identities and a one-shot legacy importer. Legacy theme files and theme selection are excluded from import.
 - Tasks/dialogs: owned progress/cancellation and errors; synchronous script-dialog semantics are implemented without allowing a worker to manipulate QML directly.
@@ -56,7 +56,7 @@ Use Qt Quick Controls as the ordinary input/control foundation. Share HikariSub-
 
 FFMS2 and libass remain required by the map. Cross-platform adapters are the default; optional Windows-only backend adapters may be selected behind the same application boundary. The map's exclusion of a general plugin ecosystem does not remove those explicitly allowed backend extensions. Do not expose platform-specific types to the core or make a later macOS adapter impossible.
 
-No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [docking research](https://github.com/altqx/hikari/issues/16) remains an input to the workspace decision, not a selected dependency.
+No Muse module is imported by default. Selective future reuse needs a recorded source revision, licence/notices, dependency closure and maintenance owner; UI similarity is not itself a reason to adopt framework code. The [accepted docking contract](docking.md) selects pinned KDDockWidgets QtQuick behind Hikari’s layout adapter; it does not import a separate application framework.
 
 The accepted [platform policy](platform-policy.md) starts from Qt 6.11.2, adopts 6.12 after release and verification, and advances Qt with explicit Windows 10 retirement later. The [compatibility contract](compatibility.md) requires named approval for behavioral departures; an individually approved defect fix becomes the default.
 

@@ -1,6 +1,6 @@
 # Isolated Lua automation host
 
-**Partially accepted, 2026-09-27.** The user chose **“Separate process; prioritize isolation”** in the live Wayfinder review. [ADR 0006](../adr/0006-isolated-lua-automation-host.md) records that process boundary. It supersedes the in-process recommendation in the [preparation proposal](proposals/automation-host.md); it does not approve every lifetime, transaction or UI detail below. [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) remains partially accepted pending manager placement, compatibility decisions and native feasibility evidence.
+**Partially accepted, 2026-09-27.** The user chose **“Separate process; prioritize isolation”** in the live Wayfinder review. [ADR 0006](../adr/0006-isolated-lua-automation-host.md) records that process boundary. It supersedes the in-process recommendation in the [preparation proposal](proposals/automation-host.md); it does not approve every lifetime, transaction or UI detail below. [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) remains partially accepted pending helper/concurrency and compatibility decisions plus native feasibility evidence; persistent manager placement is now accepted.
 
 ## Accepted boundary and compatibility
 
@@ -57,6 +57,10 @@ This is feasibility evidence only. The experimental persistent state, timeouts, 
 
 ## Remaining decisions and required proof
 
-Automation menu/manager placement remains a concrete UI decision: the proposed task window versus persistent tool panel has not been chosen. Preserve load/reload, macro discovery, enabled/active state, script errors/editing, rerun-last and shortcut management while reviewing that surface. Process isolation does not decide shell grouping.
+Automation manager placement is accepted as a persistent tool. Preserve load/reload, macro discovery, enabled/active state, script errors/editing, rerun-last and shortcut management; detailed dialog, progress and failure behavior still require qualification. Helper grouping and application-wide concurrency remain separate choices.
 
 Before accepting the complete host, demonstrate unchanged bundled scripts, long-lived globals, native modules/FFI and the shipped DependencyControl; all dialog classes/spans, Unicode/IME, keyboard and assistive access; media/frame/audio/font/clipboard IPC with correct units and lifetime; target/revision races and validation side effects; cooperative cancel, stuck native calls, crash/restart and shutdown while a dialog waits; malformed/truncated/oversized IPC, stdout/log floods and resource cleanup; and document/selection/undo outcomes under the approved compatibility ledger. Measure helper startup, transfer cost and memory growth separately. **The bounded experiment above is not production host, full compatibility, accessibility or performance qualification.**
+
+## Manager placement accepted on 2026-09-27
+
+[Altqx selected the persistent manager tool](https://github.com/altqx/hikari/issues/51#issuecomment-5853291607). Keep script loading, registered macros and run status in a movable/floating workspace tool; script-created option dialogs remain task dialogs. This settles manager placement, while helper grouping/concurrency, cancellation escalation, complete dialog compatibility and Document transactions retain their separate decisions. See [reviewed surface layouts](ux/reviewed-surface-layouts.md).

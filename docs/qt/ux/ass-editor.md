@@ -1,0 +1,11 @@
+# ASS editor
+
+The [mapped editable prototype](https://github.com/altqx/hikari/blob/616d2f0bfb0bfe28f0dcd792c043e7034ee1606e/HikariSub/prototypes/ass-editor-mapped/README.md) received [altqx's “lgtm”](https://github.com/altqx/hikari/issues/28#issuecomment-5853343345) on 2026-09-27. This accepts the implementation approach: native Qt Quick text input with Hikari's ASS highlighting/spelling and an editable hidden-tag projection, with Raw ASS authoritative. Enter commits and advances outside active IME composition; candidate confirmation remains with the input method. A read-only clean preview alone does not meet the requirement.
+
+The hidden view maps UTF-16/grapheme spans to source offsets, retains untouched ASS tokens, and preserves attempted text when an ambiguous operation needs Raw recovery. Drawing and malformed spans need explicit handling without a silent capability loss. Production grammar, Style-aware restoration and history integration must extend the representative prototype rather than adopt its fixture guards as permanent feature limits.
+
+The prototype opens with insertion **after** hidden boundary tags and **retention of exact intervening tokens** during cross-tag replacement. Both are selectable proposals, and the review also offers before-tag insertion and refusing cross-tag replacement. The general approval does not name either policy pair. The approach is accepted; the final policy defaults and draft/transaction contract remain explicit follow-up questions, not another implementation-choice review.
+
+Bounded evidence comprises 26 mapping fixtures and 11 native offscreen observations, including synthetic input-method events. Actual OS IME/candidate behavior, RTL editing and shaping, assistive technology, Linux, complete ASS/shortcut coverage, production undo and calibrated performance still require evidence. The [native editor ticket](https://github.com/altqx/hikari/issues/28) retains those qualification and policy gaps.
+
+The surrounding controls use the accepted **local inspector** in the [reviewed surface layouts](reviewed-surface-layouts.md), within the familiar right-hand Editor panel. This does not replace the Classic shell with a global inspector or change the accepted stacked Original/Translated fields.
