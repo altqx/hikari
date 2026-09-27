@@ -11,7 +11,7 @@
 </style>
 </head>
 <body><main>
-<header class="intro"><div class="eyebrow">Throwaway prototype · Three narrow outcomes · Memory only</div><h1>Grid boundary review</h1><p>Compare hidden-row selection, Line-group boundaries and which Lines Join deletes. <strong>Proposed changes remain unapproved.</strong></p></header>
+<header class="intro"><div class="eyebrow">Throwaway prototype · Three narrow outcomes · Memory only</div><h1>Grid boundary review</h1><p>Compare hidden-row selection, Line-group boundaries and which Lines Join deletes. <strong>Group-break handling and selected-only Join accepted · 27 Sep 2026.</strong></p></header>
 <nav class="cases row" aria-label="Guided cases"><button data-case="range">1 · Hidden row in a range</button><button data-case="group">2 · Group boundary</button><button data-case="join">3 · Join and unselected rows</button><span class="grow"></span><button data-action="reset">Reset this case</button><button data-action="undo" id="undoButton">Undo last apply</button></nav>
 <section class="caseguide" id="guide" aria-label="Case guide"></section>
 <section class="app" aria-label="Compact Studio editing workspace">
@@ -61,13 +61,13 @@ const GridBoundary = (() => {
     } else if(action==='move') {
       const at=next.rows.findIndex(r=>r.id==='A'), [a]=next.rows.splice(at,1); next.rows.push(a);
       p.blocked=s.rows.some(r=>r.flag==='description'); p.title='Move A after C';
-      p.basis=p.blocked?'Proposed guard: keep A from separating from the other group members.':'Group already explicitly removed. This move can now proceed.';
+      p.basis=p.blocked?'Accepted G56 guard: keep A from separating from the other group members.':'Group already explicitly removed. This move can now proceed.';
       p.effect=p.blocked?'Would leave A outside the contiguous group. Apply rejects and keeps the current state. Explicit Remove group deletes D; review that operation separately.':'Move A after C, preserving every remaining Line. The former group no longer exists.';
     } else if(action==='remove') {
       if(!next.rows.some(r=>r.id==='D')) return null;
       next.rows=next.rows.filter(r=>r.id!=='D').map(r=>({...r,flag:'ordinary',hidden:false}));
       p.title='Explicit Remove group'; p.basis='Source-derived removal outcome: clear member flags, reveal members and delete the description.';
-      p.effect='D — “Platform announcements” — will be deleted. A, B and any A-copy remain unchanged as ordinary Lines. This does not also execute the proposed move; review it again afterwards.';
+      p.effect='D — “Platform announcements” — will be deleted. A, B and any A-copy remain unchanged as ordinary Lines. This does not also execute the requested move; review it again afterwards.';
       p.ack='I have reviewed that description Line D will be deleted.';
     } else if(action==='join') {
       const indices=s.selected.map(id=>s.rows.findIndex(r=>r.id===id)).sort((a,b)=>a-b), first=indices[0];
@@ -75,7 +75,7 @@ const GridBoundary = (() => {
       next.rows=next.rows.filter(r=>!deleted.includes(r.id)); const kept=next.rows.find(r=>r.id===s.rows[first].id);
       kept.text=used.map(r=>r.text).join('\\N'); kept.start=Math.min(...used.map(r=>r.start)); kept.end=Math.max(...used.map(r=>r.end)); next.selected=[kept.id];next.current=kept.id;next.anchor=kept.id;
       p.title=mode==='source'?'Join using source deletion interval':'Join only selected Lines';
-      p.basis=mode==='source'?'Source-derived: concatenate selected text; delete the physical interval from second to last selected row.':'Proposed change: concatenate the same selected text; delete only the selected rows after the first.';
+      p.basis=mode==='source'?'Source-derived: concatenate selected text; delete the physical interval from second to last selected row.':'Accepted J56 change: concatenate the same selected text; delete only the selected rows after the first.';
       p.effect=`Text contributors: ${used.map(r=>r.id).join(', ')}. Deleted: ${deleted.join(', ')}. ${deleted.includes('X')?'X is unselected and its text is NOT added to A.':'X survives with its original text and timing.'} A keeps the joined text and spanning time. Other fields/translation variants are outside this fixture.`;
       if(deleted.includes('X')) p.ack='I understand that unselected Line X disappears in this source-derived simulation.';
     } else return null;
@@ -83,7 +83,7 @@ const GridBoundary = (() => {
   }
   function apply(s,p,ack=false) {
     if(!p||p.revision!==s.revision) return {...clone(s),event:'Review is stale. Prepare it again.'};
-    if(p.blocked) return {...clone(s),event:'Rejected proposed move: group would break. No content, selection, revision or Undo change.'};
+    if(p.blocked) return {...clone(s),event:'Rejected move: group would break. No content, selection, revision or Undo change.'};
     if(p.ack&&!ack) return {...clone(s),event:'Review the named deletion before applying.'};
     const out=clone(s);out.history.push(snapshot(s));Object.assign(out,clone(p.next));out.revision=s.revision+1;out.event=`Applied in memory: ${p.title}. ${p.action==='remove'?'D deleted; review Move A after C again.':''}`;return out;
   }
@@ -101,15 +101,15 @@ let state=GridBoundary.initial(validCases.includes(initialCase)?initialCase:'ran
 const time=n=>`${(n/1000).toFixed(3)} s`;
 const guides={
   range:['A → H (hidden) → B','1. Preview inclusive membership. 2. Apply and inspect the hidden-selection count. 3. Reset and compare displayed-only selection.','Source rule: extending A to B includes H. Displayed-only is an optional change shown for comparison, not a required new decision.'],
-  group:['D → A → B, then ordinary C','1. Duplicate A: the group remains valid. 2. Review Move A after C and try Apply. 3. Review explicit Remove group, then retry the move. Undo each step.','Allow valid within-group changes. For an actual break, reject and require explicit Remove group (which deletes D), or request a different concrete outcome? The guard is proposed.'],
-  join:['Join input and deletion are separate','Compare both modes. In the two-selected control case A/X/B, X survives both. With A/B/C selected in A/B/X/C, the source interval deletes X; the selected-only proposal keeps it.','For the three-selected case, should Join preserve unselected X? This is a narrow proposed behavior change, not approval of every Join field, translation or grouping rule.']
+  group:['D → A → B, then ordinary C','1. Duplicate A: the group remains valid. 2. Review Move A after C and try Apply. 3. Review explicit Remove group, then retry the move. Undo each step.','Accepted G56: valid duplication stays grouped. Reject an actual break; offer Cancel or explicit Remove group, which deletes D, then review the command again.'],
+  join:['Join input and deletion are separate','Compare both modes. In the two-selected control case A/X/B, X survives both. With A/B/C selected in A/B/X/C, the source interval deletes X; the accepted selected-only outcome keeps it.','Accepted J56: preserve unselected X. Only the deletion set changes; existing text, timing, translation, properties and command eligibility stay the same.']
 };
 function render(){
   document.querySelectorAll('[data-case]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.case===state.caseId));
   const g=guides[state.caseId];$('guide').innerHTML=`<h2>${g[0]}</h2><p>${g[1]}</p>`;$('question').textContent=g[2];
   $('toolbar').innerHTML=state.caseId==='range'?'<strong>Grid · Range</strong><button data-preview="range" data-mode="source">Preview inclusive · source</button><button data-preview="range" data-mode="visible">Preview visible only · proposal</button>'
     :state.caseId==='group'?`<strong>Grid · Line group</strong><button data-preview="duplicate" ${state.rows.some(r=>r.id==='A-copy')?'disabled':''}>Preview duplicate A</button><button data-preview="move">Preview Move A after C</button><button data-preview="remove" ${!state.rows.some(r=>r.id==='D')?'disabled':''}>Review Remove group…</button>`
-    :`<strong>Grid · Join</strong><label>Fixture <select id="joinCount"><option value="3" ${state.joinCount===3?'selected':''}>3 selected · exposes deletion</option><option value="2" ${state.joinCount===2?'selected':''}>2 selected · control case</option></select></label><button data-preview="join" data-mode="source" ${state.selected.length<2?'disabled':''}>Preview source interval</button><button data-preview="join" data-mode="selected" ${state.selected.length<2?'disabled':''}>Preview selected only · proposal</button>`;
+    :`<strong>Grid · Join</strong><label>Fixture <select id="joinCount"><option value="3" ${state.joinCount===3?'selected':''}>3 selected · exposes deletion</option><option value="2" ${state.joinCount===2?'selected':''}>2 selected · control case</option></select></label><button data-preview="join" data-mode="source" ${state.selected.length<2?'disabled':''}>Preview source interval</button><button data-preview="join" data-mode="selected" ${state.selected.length<2?'disabled':''}>Preview selected only · accepted</button>`;
   $('gridRows').innerHTML=state.rows.filter(r=>!r.hidden).map(r=>`<tr class="${state.selected.includes(r.id)?'selected':''}"><td>${r.id}</td><td>${time(r.start)}</td><td>${time(r.end)}</td><td>${r.flag==='description'?'Comment':'Default'}</td><td class="text">${esc(r.text)}</td><td class="flags">${[state.current===r.id?'Current':'',state.selected.includes(r.id)?'Selected':'',r.flag!=='ordinary'?r.flag:''].filter(Boolean).join(' · ')||'Unselected'}</td></tr>`).join('');
   const current=state.rows.find(r=>r.id===state.current);$('editorLine').textContent=state.current;$('editorText').value=current?.text||'';$('status').textContent=state.event;
   const hidden=state.rows.filter(r=>r.hidden&&state.selected.includes(r.id)).map(r=>r.id);
@@ -118,7 +118,7 @@ function render(){
   $('audit').innerHTML=state.rows.map(r=>`<article class="${r.hidden?'hidden ':''}${state.selected.includes(r.id)?'selected':''}"><strong>${r.id}</strong><small>${r.hidden?'Hidden':'Displayed'} · ${state.selected.includes(r.id)?'selected':'unselected'}</small><small>${esc(r.text)}</small><small>${r.flag}</small></article>`).join('');$('undoButton').disabled=!state.history.length;
 }
 function list(snapshot){return snapshot.rows.map(r=>`<li><strong>${r.id}</strong> · ${esc(r.text)}<small>${snapshot.selected.includes(r.id)?'Selected':'Unselected'} · ${r.hidden?'hidden':'displayed'} · ${r.flag} · ${time(r.start)}–${time(r.end)}</small></li>`).join('');}
-function openReview(action,mode){review=GridBoundary.plan(state,action,mode);if(!review)return;$('reviewTitle').textContent=review.title;$('reviewBasis').textContent=review.basis;$('beforeList').innerHTML=list(review.before);$('afterList').innerHTML=list(review.next);$('afterTitle').textContent=review.blocked?'Would break the group — not applied':'After Apply';$('effect').textContent=review.effect;$('ackLabel').hidden=!review.ack;$('ackText').textContent=review.ack;$('acknowledge').checked=false;$('rejection').textContent='';$('removeInstead').hidden=!review.blocked;$('applyButton').textContent=review.blocked?'Try Apply · proposed rejection':'Apply in memory';$('applyButton').disabled=!!review.ack;if(!$('reviewDialog').open)$('reviewDialog').showModal();}
+function openReview(action,mode){review=GridBoundary.plan(state,action,mode);if(!review)return;$('reviewTitle').textContent=review.title;$('reviewBasis').textContent=review.basis;$('beforeList').innerHTML=list(review.before);$('afterList').innerHTML=list(review.next);$('afterTitle').textContent=review.blocked?'Would break the group — not applied':'After Apply';$('effect').textContent=review.effect;$('ackLabel').hidden=!review.ack;$('ackText').textContent=review.ack;$('acknowledge').checked=false;$('rejection').textContent='';$('removeInstead').hidden=!review.blocked;$('applyButton').textContent=review.blocked?'Try Apply · accepted rejection':'Apply in memory';$('applyButton').disabled=!!review.ack;if(!$('reviewDialog').open)$('reviewDialog').showModal();}
 function closeReview(){review=null;$('reviewDialog').close();}
 function reset(caseId=state.caseId,joinCount=state.joinCount){closeReview();state=GridBoundary.initial(caseId,joinCount);const u=new URL(location.href);u.searchParams.set('case',caseId);history.replaceState(null,'',u);render();}
 document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.case){reset(b.dataset.case);return}if(b.dataset.preview){openReview(b.dataset.preview,b.dataset.mode);return}switch(b.dataset.action){case'reset':reset();break;case'undo':state=GridBoundary.undo(state);render();break;case'cancel':closeReview();break;case'removeInstead':openReview('remove');break;case'apply':{const beforeRevision=state.revision;state=GridBoundary.apply(state,review,$('acknowledge').checked);if(state.revision===beforeRevision){$('rejection').textContent=state.event;render();}else{closeReview();render();}break;}}});
