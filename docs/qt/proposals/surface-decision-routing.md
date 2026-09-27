@@ -18,9 +18,9 @@ A prototype's closure record should name its accepted layout, A rules, B owners,
 | Owner | Decision consumed by surfaces |
 | --- | --- |
 | [Define edit drafts, commands and undo transactions](https://github.com/altqx/hikari/issues/43) | C07 atomic rejection and C43 saved identity are now accepted A rules. Draft ownership/navigation, overlapping-command reconciliation, Save inclusion, typing/gesture/command boundaries and Undo context remain shared decisions. Existing pending draft-navigation questions are not repeated here. |
-| [Design settings, shortcuts and the one-shot importer](https://github.com/altqx/hikari/issues/44) | Import conflicts/rollback, C04, unresolved records and any changed shortcut precedence. Actual legacy routes, units and aliases are facts to characterize. |
+| [Design settings, shortcuts and the one-shot importer](https://github.com/altqx/hikari/issues/44) | Keep-current/reviewed replacements, preserved sources, no-op repeat import, complete-profile rollback and C04-short-file are accepted. Remaining routing/unresolved mapping policy belongs here; actual legacy routes, units and aliases are facts to characterize. |
 | [Design Document and Session lifetime, recovery and background work](https://github.com/altqx/hikari/issues/58) | L58 acknowledged write-before-close, old-state retention on failed/cancelled replacement and recovery-copy are now accepted A rules. Destination collisions, detailed close/partial Session behavior, closed pins and cleanup/retention remain shared decisions. |
-| [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) | Helper grouping/concurrency, cancellation/restart consequences and C06–C08. Separate-process execution and separate persistent state per loaded script are already accepted. |
+| [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) | One persistent process/state per loaded script, one active macro application-wide and explicit restart without rerun are accepted. Cancellation escalation, transactions and remaining Lua C06–C08 subcases belong here. |
 | [Set beta readiness, rollback and Qt branch cutover policy](https://github.com/altqx/hikari/issues/64) | Beta gate applicability, profile/package rollback and candidate cutover. It does not own ordinary Save or importer conflict behavior. |
 | [Prove ASS-aware editing in a QML text area](https://github.com/altqx/hikari/issues/28) | Remaining mapped-boundary policy and design-critical native input feasibility. Editable hidden tags, Raw authority and Enter commit/advance outside composition are already required; do not repeat the implementation-approach vote. |
 
@@ -36,14 +36,14 @@ A prototype's closure record should name its accepted layout, A rules, B owners,
 ### Automation manager, script dialogs and cancellation
 
 - **A:** persistent manager, schema-driven task dialogs, unchanged synchronous Lua API, per-script persistent state and ordinary OS permissions are authoritative. Preserve return/coercion/button-ID quirks until their named disposition.
-- **B:** helper grouping/concurrency/escalation belongs to the automation host; Document publication/undo to edit transactions; task shutdown to lifecycle.
+- **B:** remaining cancellation escalation belongs to the automation host; Document publication/undo to edit transactions; task shutdown to lifecycle. Per-script helper grouping, one active macro and explicit restart/no rerun are accepted.
 - **C:** none independently required for manager placement. The sample's one active macro, reserved target and manual staged Apply must not become defaults from the layout answer.
 - **D / closure:** assign unchanged-script/native-module/FFI/DependencyControl, typed replies, cancellation/crash/restart and old-generation rejection fixtures to host integration. Close the manager UX question by consuming shared outcomes, without claiming the bounded Windows helper proved the whole API or Linux.
 
 ### Preferences, shortcut conflicts and import review
 
 - **A:** page task dialog, per-user/explicit-portable storage, preserved inputs, theme exclusion, authored-resource preservation and existing switch/replace/unbind/cancel/cross-context reuse capabilities are settled.
-- **B:** all remaining conflict, generation rollback, C04 and precedence decisions belong to settings/import. The exhaustive [migration worksheet](settings-migration-map.md) owns proposed destinations, unresolved aliases and routing exceptions.
+- **B:** remaining precedence and unresolved mapping decisions belong to settings/import. Keep-current/reviewed replacement, complete-profile rollback and C04-short-file are already accepted. The exhaustive [migration worksheet](settings-migration-map.md) owns proposed destinations, unresolved aliases and routing exceptions.
 - **C:** no separate surface vote is needed for each setting, macro alias, packed field or platform path. Do not approve a new routing winner merely to finish this mockup.
 - **D / closure:** bind every registry row to a real control/import disposition; verify units, fixed handlers, focus/modal/IME routes, source hashes, repeated import, interruption and rollback. Capture the accepted importer outcome once and close this UX dependency against it; native routing/durability remain implementation evidence.
 

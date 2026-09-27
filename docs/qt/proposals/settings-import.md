@@ -1,6 +1,6 @@
-# Proposed settings, shortcuts and preserved-input importer
+# Settings, shortcuts and preserved-input importer: partial decisions
 
-Draft for [Design settings, shortcuts and the one-shot importer](https://github.com/altqx/hikari/issues/44), using accepted [vocabulary](../../../CONTEXT.md), [architecture](../architecture.md), [compatibility](../compatibility.md), [automation](../automation.md) and [media ownership](../media.md). Settings/import UI review follows in a separate prototype. No implementation or compatibility pass is claimed.
+For [Design settings, shortcuts and the one-shot importer](https://github.com/altqx/hikari/issues/44), using accepted [vocabulary](../../../CONTEXT.md), [architecture](../architecture.md), [compatibility](../compatibility.md), [automation](../automation.md) and [media ownership](../media.md). **Partially accepted, 2026-09-27:** keep current Qt settings unless the user reviews individual replacements; preview changes, preserve legacy inputs, make repeated identical import a no-op and support rollback to the previous complete profile. **C04-short-file** is also approved as defined below. The page task-dialog placement is accepted separately. Shortcut precedence and remaining mappings still require characterization/decisions; no implementation or compatibility pass is claimed.
 
 ## Evidence before choices
 
@@ -43,14 +43,14 @@ Automation uses host registration identity plus script provenance, with a legacy
 
 ## Concrete cases and decision frontier
 
-- A four-binding file must remain preserved. Importing those bindings instead of the old count-triggered defaults is **C04-short-file**, requiring its named outcome/fixtures; non-destructive input handling is already mandated.
+- **Accepted C04-short-file:** import valid bindings from a short legacy hotkey file instead of replacing them with defaults because the record count is small. Preserve unknown/invalid records as visibly unresolved. The corrected outcome becomes default under the compatibility policy; it does not change shortcut precedence. A four-binding file is a concrete characterization fixture, not an executed pass.
 - Ctrl+Space in Audio and Grid is not automatically a duplicate to delete; actual eligible routes must be shown. Two different same-basename scripts cannot silently receive one imported macro binding.
 - Missing D:\\media remains an unresolved path; a second import neither duplicates recents nor “repairs” the original file.
 
 Pending user choices, with recommended answers:
 
 1. **Storage is accepted:** per-user writable profile by default with explicit portable mode, through the distribution decision. Discovery still reads legacy locations; no repeat storage vote is needed.
-2. **Existing destination:** keep current choices unless individually replaced, or replace the whole profile? Recommend keep-current with reviewed per-item replacement and complete-generation rollback.
+2. **Existing destination is accepted:** keep current choices unless individually replaced after preview/review, with complete-profile rollback, unchanged legacy inputs and no-op repeat import. Do not repeat that vote.
 3. **Shortcut shadowing:** allow intentional local/global overlap with explicit priority, or prohibit new overlap? Recommend allow with visible routing, retaining legacy cross-context reuse. Any changed legacy precedence needs named approval; unresolved old behavior awaits fixtures.
 
-These answers do not approve C04-short-file, other candidate fixes or capability removals. Follow-up UI prototypes demonstrate review, mapping and recovery; implementation fixtures verify source hashes, repeat import, interrupted activation, rollback and actual routing.
+These answers approve only the named importer policies and C04-short-file, not other candidate fixes, changed shortcut precedence or capability removals. Implementation fixtures must verify source hashes, repeat import, interrupted activation, rollback and actual routing.
