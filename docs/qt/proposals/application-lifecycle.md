@@ -1,6 +1,8 @@
-# Proposed Document and Session lifetime
+# Document and Session lifetime: partial decisions
 
-For [Design Document and Session lifetime, recovery and background work](https://github.com/altqx/hikari/issues/58). **Proposal for review, not an accepted lifecycle policy or tested implementation.** It extends the accepted [architecture](../architecture.md), [document model](../document-model.md), [media ownership](../media.md) and [Workspace](../ux/workspaces.md). The [draft/transaction proposal](edit-transactions.md) remains unaccepted; its navigation, save inclusion and undo choices are not settled here.
+For [Design Document and Session lifetime, recovery and background work](https://github.com/altqx/hikari/issues/58). **Partially accepted, 2026-09-27:** the live review explicitly approved all three named outcomes **L58-write-close**, **L58-staged-replacement** and **L58-recovery-copy**, defined below. They become the default when implemented and validated under the [compatibility policy](../compatibility.md). This is not approval of the entire lifecycle proposal or a native qualification claim.
+
+The document extends the accepted [architecture](../architecture.md), [document model](../document-model.md), [media ownership](../media.md) and [Workspace](../ux/workspaces.md). [Edit transactions](edit-transactions.md) now separately accepts C07 atomic rejection and C43 saved identity; its remaining draft navigation, Save inclusion, grouping and Undo-context choices are not settled here. Other lifecycle choices, including destination collisions, retention/cleanup and partial Session/closed-pin behavior, remain pending.
 
 ## Source boundary
 
@@ -28,7 +30,7 @@ Conceptual ports:
 - requestClose(ids) → ClosePlan; resolve(plan, choices) → cancelled / waiting / closed.
 - startJob(inputSnapshot, dependencyTokens) → JobId; cancel(JobId) requests cancellation; completion carries identities and outcome.
 
-Standard C++ immutable value snapshots cross core boundaries; Qt adapters marshal them. The GUI/application thread serializes state publication and permissions. Dedicated owners serialize decoder/renderer access; bounded workers parse/index/encode. Render-thread resources stay with their presenter; audio callbacks consume prepared buffers. No worker captures a QML object, active-tab pointer or mutable core reference as its target. Lua keeps its accepted isolated process and versioned value IPC; this proposal does not settle C06–C08.
+Standard C++ immutable value snapshots cross core boundaries; Qt adapters marshal them. The GUI/application thread serializes state publication and permissions. Dedicated owners serialize decoder/renderer access; bounded workers parse/index/encode. Render-thread resources stay with their presenter; audio callbacks consume prepared buffers. No worker captures a QML object, active-tab pointer or mutable core reference as its target. Lua keeps its accepted isolated process and versioned value IPC; this proposal does not settle the Lua API subcases of C06–C08.
 
 ## Open, save and replacement
 
@@ -52,7 +54,7 @@ New recovery bundles are versioned application data, **not a changed legacy subt
 
 Write and verify a bundle before atomically activating its manifest entry. Keep the preceding valid generation until activation succeeds; reject incomplete/corrupt generations and report the fallback. Retention runs afterwards, never removing the last valid or actively referenced generation. Preserve configurable legacy autosave capacity as an input; its 0/1 edge behavior and new retention limits require explicit disposition. Legacy readers scan the selected old Subs/Recovery and Session files without modifying them or inventing a manifest.
 
-Recommend recovery as a new unsaved copy carrying provenance, with original and recovery files untouched. Restoring drafts refers to that copy's committed base. Restoring to the original destination requires an explicit subsequent save/overwrite decision. Original-path rebinding in legacy crash restore makes this **L58-recovery-copy**, a proposed departure, not an already accepted consequence of C05.
+**Accepted L58-recovery-copy, 2026-09-27:** recover as a new unsaved copy carrying provenance, with original and recovery files untouched. Restore committed content and recoverable drafts separately; drafts refer to that copy's committed base and remain pending. Restoring to the original destination requires an explicit subsequent save/overwrite decision. This named approval changes the legacy original-path rebinding outcome; it is separate from C05 and does not approve retention/cleanup defaults or promise recovery of transient native IME preedit.
 
 ## Cancellation, close and shutdown
 
@@ -60,7 +62,11 @@ Every result names DocumentId, lifetime generation, JobId and relevant content/r
 
 Cancel/close and replacement are ordered by the file coordinator. Before replacement authorization, cancellation revokes the permit; afterwards it waits for the actual outcome and cannot promise “nothing was written.” A newer save cannot finish before an older same-destination write and then be overwritten by it. Retain temporary-resource ownership until cleanup completes.
 
-ClosePlan names committed changes, drafts, active writes/jobs, roles and pinned tools. Save closes only after affirmative write success covering the resolved scope; Discard authorizes that scope; Cancel preserves Documents and drafts. A quit review must resolve all Documents before destroying any; earlier completed saves are not undone if a later choice cancels quit. Proposed **L58-write-close** corrects the legacy cancellation/failure propagation risk. Proposed **L58-staged-replacement** preserves existing work when open/reload/Session replacement fails.
+**Accepted L58-write-close, 2026-09-27:** closing through Save requires affirmative write success for the resolved save scope. A cancelled or failed save cannot authorize close or discard the existing work. This corrects the source-observed legacy cancellation/failure propagation risk; it does not choose which drafts Save includes.
+
+**Accepted L58-staged-replacement, 2026-09-27:** retain existing work when open or reload fails or is cancelled. Prepare a replacement before publishing it; failure must not destroy the old Document. This does not normalize parser fallback behavior or approve a new Session format. Partial Session replacement and failure handling remain separate proposed policies.
+
+The proposed ClosePlan names committed changes, drafts, active writes/jobs, roles and pinned tools. Discard authorizes its named scope; Cancel preserves Documents and drafts. The proposed multi-Document quit review resolves all Documents before destroying any; earlier completed saves are not undone if a later choice cancels quit. Its grouping and the remaining close/draft mechanics are not blanket-approved by the three named outcomes.
 
 Each close choice captures Document lifetime/content revision and the draft revision/set it covers. Revalidate immediately before final destruction. If content or drafts changed after Save/Discard approval, the old choice cannot discard that new work: refresh the review or keep the Document open. The application serializes this final permission check with edit publication, rather than relying only on stale-result rejection.
 
@@ -68,11 +74,16 @@ After approval, stop new commands, invalidate targets, cancel jobs, stop the act
 
 Recommend a closed pinned target remain explicitly unavailable until unpinned/retargeted, rather than silently following another Document. Closing a protected reference removes that role; it does not promote it or another Document into an editing target. Session restoration stages entries, offers recoverable per-entry failures, restores protected/pinned identities only when resolved and never inherits media across entries.
 
-## Decisions for review and later proof
+## Accepted outcomes, remaining review and later proof
 
-1. Approve **L58-write-close** and **L58-staged-replacement**: success-acknowledged close plus retain-old-state on failed/cancelled replacement? Recommended. This does not approve automatic draft commit or parser changes.
-2. Approve **L58-recovery-copy**, with committed content and drafts recovered separately? Recommended; retain completed generations after normal close until the chosen retention/dismissal policy removes them. Exact count/size/age defaults and discard-versus-recovery cleanup need the recovery-browser review.
-3. On partial Session restoration and closed pinned targets, keep failed entries/targets visibly unresolved for retry? Recommended; the alternative is explicit user-approved omission/retargeting, never silent substitution.
+**The three named outcomes are settled:** acknowledged successful writing before Save-close, old-state retention after failed/cancelled replacement, and recovery into a separate unsaved copy with drafts kept pending. Do not ask for them again. Their approved defaults still require characterization and implementation evidence.
+
+Remaining choices:
+
+1. Draft navigation/reconciliation, Save inclusion, saving an older snapshot while newer edits continue, and Undo grouping remain with edit transactions; this batch does not approve automatic draft commit.
+2. Destination collisions, multi-Document quit grouping and related close mechanics remain explicit lifecycle choices. Internal permit/state representation is an engineering choice, not another approval of the named outcomes.
+3. Retaining completed generations after normal close, exact count/size/age defaults, capacity 0/1 behavior and discard-versus-recovery cleanup still need their defined policy. Recovery-copy approval does not authorize deletion.
+4. On partial Session restoration and closed pinned targets, keeping failed entries/targets visibly unresolved for retry remains recommended; the alternative is explicit user-approved omission/retargeting, never silent substitution.
 
 Implementation must exercise short writes, disk full, denied/remote paths, external changes, crash points around activation, stale saves, cancel-at-replacement, reload/close during decode, missing Session entries and pinned protected targets. Native filesystem durability, close/crash behavior and shutdown have **not** been tested by this document.
 
