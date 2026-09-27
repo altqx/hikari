@@ -1,0 +1,56 @@
+UTC=2026-09-27T07:05:52+00:00
+commit=fd917555fce0bd3afc7d39577b75e182f201a747
+run=36302050812
+attempt=1
+ImageOS=ubuntu26
+ImageVersion=20260920.143.1
+PRETTY_NAME="Ubuntu 26.04.1 LTS"
+NAME="Ubuntu"
+VERSION_ID="26.04"
+VERSION="26.04.1 LTS (Resolute Raccoon)"
+VERSION_CODENAME=resolute
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=resolute
+LOGO=ubuntu-logo
+Linux runnervmlx9pb 7.0.0-1012-azure #12-Ubuntu SMP PREEMPT Thu Aug  6 19:23:26 UTC 2026 x86_64 GNU/Linux
+glibc 2.43
+4
+               total        used        free      shared  buff/cache   available
+Mem:           15983         956       12895          79        2529       15027
+Swap:           3071           0        3071
+Filesystem        1B-blocks        Used   Available Use% Mounted on
+/dev/root      154993672192 56861028352 98115866624  37% /
+/usr/bin/git
+git version 2.55.0
+/usr/local/bin/cmake
+cmake version 4.4.3
+/usr/local/bin/ninja
+1.13.2
+/usr/bin/gcc
+gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+/usr/bin/g++
+g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0
+/usr/bin/make
+GNU Make 4.4.1
+/usr/bin/pkg-config
+2.5.1
+/usr/bin/autoconf
+autoconf (GNU Autoconf) 2.72
+/usr/bin/automake
+automake (GNU automake) 1.18.1
+/usr/bin/python3
+Python 3.14.4
+/usr/bin/curl
+curl 8.18.0 (x86_64-pc-linux-gnu) libcurl/8.18.0 OpenSSL/3.5.5 zlib/1.3.1 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.8 libpsl/0.21.2 libssh2/1.11.1 nghttp2/1.68.0 librtmp/2.3 mit-krb5/1.22.1 OpenLDAP/2.6.10
+/usr/bin/tar
+tar (GNU tar) 1.35
+/usr/bin/zip
+Copyright (c) 1990-2008 Info-ZIP - Type 'zip "-L"' for software license.
+/usr/bin/unzip
+UnZip 6.00 of 20 April 2009, by Debian. Original by Info-ZIP.
+

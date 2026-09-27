@@ -1,0 +1,109 @@
+Package: vcpkg-cmake
+Version: 2025-08-07
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 76b98f28369f280773db698428d437da28ae81f5849ed904f9fb45845fae532f
+Status: install ok installed
+
+Package: vcpkg-cmake-get-vars
+Version: 2025-05-29
+Depends: vcpkg-cmake
+Architecture: x64-linux
+Multi-Arch: same
+Abi: d871542f0f90a1b22dbbc0494851c30742fb0a4b3dae3a4b9f8e6f2656da1f2d
+Status: install ok installed
+
+Package: vcpkg-tool-meson
+Version: 1.9.0
+Port-Version: 10
+Depends: vcpkg-cmake-get-vars
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 948dc3da472dcd9edaeec1899fcc886e1a1204bbc14074376351b5739703db37
+Description: Meson build system
+Status: install ok installed
+
+Package: pkgconf
+Version: 3.0.3
+Port-Version: 1
+Depends: vcpkg-tool-meson
+Architecture: x64-linux
+Multi-Arch: same
+Abi: 999b83712c115a53ff22ff62e413a67d3edd3b51721dadbfa5db1acd177da9a6
+Description: pkgconf is a program which helps to configure compiler and linker flags for development libraries. It is similar to pkg-config from freedesktop.org.
+Status: install ok installed
+
+Package: vcpkg-pkgconfig-get-modules
+Version: 2024-04-03
+Depends: pkgconf
+Architecture: x64-linux
+Multi-Arch: same
+Abi: b9e82539c64075325fcdf682311475b16a311b5b72adde1a24910f327380ce21
+Status: install ok installed
+
+Package: ffmpeg
+Version: 7.1.2
+Port-Version: 5
+Depends: vcpkg-cmake-get-vars:x64-linux, vcpkg-pkgconfig-get-modules:x64-linux
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Abi: 57f2dda3cf594a9687cfa1af5fe47c2c5c6b52cb4b970c3830f3c9f2eb7b8a13
+Description: A library to decode, encode, transcode, mux, demux, stream, filter and play pretty much anything that humans and machines have created.
+    FFmpeg is the leading multimedia framework, able to decode, encode, transcode, mux, demux, stream, filter and play pretty much anything that humans and machines have created. It supports the most obscure ancient formats up to the cutting edge. No matter if they were designed by some standards committee, the community or a corporation. It is also highly portable: FFmpeg compiles, runs, and passes our testing infrastructure FATE across Linux, Mac OS X, Microsoft Windows, the BSDs, Solaris, etc. under a wide variety of build environments, machine architectures, and configurations.
+Default-Features: avcodec, avdevice, avfilter, avformat, swresample, swscale
+Status: install ok installed
+
+Package: ffmpeg
+Feature: avcodec
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Description: Build the avcodec library
+Status: install ok installed
+
+Package: ffmpeg
+Feature: avformat
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Description: Build the avformat library
+Status: install ok installed
+
+Package: ffmpeg
+Feature: swresample
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Description: Build the swresample library
+Status: install ok installed
+
+Package: ffmpeg
+Feature: swscale
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Description: Build the swscale library
+Status: install ok installed
+
+Package: vcpkg-cmake-config
+Version: 2026-07-21
+Architecture: x64-linux
+Multi-Arch: same
+Abi: fde20457edb6b40e438a0c2255c1d5982427084bb9ed3ad6c765aad7e17163e2
+Status: install ok installed
+
+Package: zlib
+Version: 1.3.2
+Port-Version: 2
+Depends: vcpkg-cmake:x64-linux, vcpkg-cmake-config:x64-linux
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Abi: 66cab7b69788c020691186e57ba0c0b4d453864b72b9543acb12102f5938e57b
+Description: A compression library
+Status: install ok installed
+
+Package: hikari-ffms2
+Version: 5.1.0-hikari-45d5f721
+Depends: ffmpeg, vcpkg-cmake:x64-linux, vcpkg-cmake-config:x64-linux, zlib
+Architecture: x64-hikari-linux-release
+Multi-Arch: same
+Abi: e303ecd58d32e05f8458a4cf44a9d3237aebae91fb8f2fb37cb5186d38092206
+Description: Throwaway source-matched FFMS2 core plus Hikari private API feasibility port
+Status: install ok installed
+

@@ -1,6 +1,6 @@
 # Linux FFMS2 source-slice execution draft
 
-**Throwaway workflow prepared for root review; no Linux dependency build has run from this draft.** It extends the [published source recipe](https://github.com/altqx/hikari/blob/43b2b9845addfe94c2c8141c27934f1402568bec/HikariSub/prototypes/build-workflow/ffms2-overlay/README.md) for [Prove pinned CMake workflow provisioning on Windows and Linux](https://github.com/altqx/hikari/issues/48). It does not acquire Qt or libass and requires no Qt credentials or terms action.
+**Throwaway workflow executed successfully on 2026-09-27; see the [retained run report](ci-run-notes.md) for exact scope.** It extends the [published source recipe](https://github.com/altqx/hikari/blob/43b2b9845addfe94c2c8141c27934f1402568bec/HikariSub/prototypes/build-workflow/ffms2-overlay/README.md) for [Prove pinned CMake workflow provisioning on Windows and Linux](https://github.com/altqx/hikari/issues/48). It does not acquire Qt or libass and requires no Qt credentials or terms action.
 
 ## Reviewed process to run
 
@@ -21,4 +21,4 @@ The CMake driver is this isolated feasibility harness, not the production full-g
 
 ## Source validation before publication
 
-Local CMake 4.3.1 parsed all configure/build/workflow presets; all three inline Bash blocks passed `bash -n` without execution. A Windows configure stopped at the explicit Linux-only guard before Git or download commands. An independent source review found no concrete sequencing/failure-status blocker. This is source validation, not a Linux dependency run; the network-enabled workflow has not been executed. Parent overlay files and Windows evidence remain owned by the media agent; this folder and the new workflow are the Linux agent's only changes.
+Before execution, local CMake 4.3.1 parsed all configure/build/workflow presets; all three inline Bash blocks passed `bash -n`. A Windows configure stopped at the explicit Linux-only guard before Git or download commands. Independent source review found no concrete sequencing/failure-status blocker. Root then published commit `fd917555fce0bd3afc7d39577b75e182f201a747` with the top-level FFmpeg default-feature correction found by Windows resolution. The linked run report records actual Linux evidence separately from those source checks.

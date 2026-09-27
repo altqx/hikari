@@ -1,0 +1,256 @@
+Executing workflow step 1 of 3: configure preset "linux-overlay"
+
+-- Running vcpkg install
+Detecting compiler hash for triplet x64-linux...
+Compiler found: /usr/bin/c++
+Detecting compiler hash for triplet x64-hikari-linux-release...
+Compiler found: /usr/bin/c++
+The following packages will be built and installed:
+    ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-linux-release@7.1.2#5
+    hikari-ffms2:x64-hikari-linux-release@5.1.0-hikari-45d5f721 -- /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/ports/hikari-ffms2
+  * pkgconf:x64-linux@3.0.3#1
+  * vcpkg-cmake:x64-linux@2025-08-07
+  * vcpkg-cmake-config:x64-linux@2026-07-21
+  * vcpkg-cmake-get-vars:x64-linux@2025-05-29
+  * vcpkg-pkgconfig-get-modules:x64-linux@2024-04-03
+  * vcpkg-tool-meson:x64-linux@1.9.0#10
+  * zlib:x64-hikari-linux-release@1.3.2#2
+Additional packages (*) will be modified to complete this operation.
+Installing 1/9 vcpkg-cmake:x64-linux@2025-08-07...
+vcpkg-cmake:x64-linux@2025-08-07 package ABI: 76b98f28369f280773db698428d437da28ae81f5849ed904f9fb45845fae532f
+Building vcpkg-cmake:x64-linux@2025-08-07...
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake_x64-linux/share/vcpkg-cmake/vcpkg_cmake_configure.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake_x64-linux/share/vcpkg-cmake/vcpkg_cmake_build.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake_x64-linux/share/vcpkg-cmake/vcpkg_cmake_install.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake_x64-linux/share/vcpkg-cmake/vcpkg-port-config.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake_x64-linux/share/vcpkg-cmake/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-cmake:x64-linux: 18.6 ms
+Installing 2/9 vcpkg-cmake-get-vars:x64-linux@2025-05-29...
+vcpkg-cmake-get-vars:x64-linux@2025-05-29 package ABI: d871542f0f90a1b22dbbc0494851c30742fb0a4b3dae3a4b9f8e6f2656da1f2d
+Building vcpkg-cmake-get-vars:x64-linux@2025-05-29...
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/vcpkg_cmake_get_vars.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/cmake_get_vars
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/cmake_get_vars/CMakeLists.txt
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/cmake-get-vars.cmake.in
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/vcpkg-port-config.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-get-vars_x64-linux/share/vcpkg-cmake-get-vars/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-cmake-get-vars:x64-linux: 19.6 ms
+Installing 3/9 vcpkg-tool-meson:x64-linux@1.9.0#10...
+vcpkg-tool-meson:x64-linux@1.9.0#10 package ABI: 948dc3da472dcd9edaeec1899fcc886e1a1204bbc14074376351b5739703db37
+Building vcpkg-tool-meson:x64-linux@1.9.0#10...
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/copyright
+Downloading https://github.com/mesonbuild/meson/archive/1.9.0.tar.gz -> meson-1.9.0.tar.gz
+Successfully downloaded meson-1.9.0.tar.gz
+-- Applying patch /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/meson-intl.patch
+-- Applying patch /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/adjust-python-dep.patch
+-- Applying patch /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/adjust-args.patch
+-- Applying patch /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/remove-pkgconfig-specialization.patch
+-- Applying patch /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-tool-meson_x64-linux/share/vcpkg-tool-meson/meson-56879d5.diff
+-- Found Python version '3.14.4 at /usr/bin/python3'
+-- Using meson: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/tools/meson-1.9.0-633807/meson.py
+-- Performing post-build validation
+Elapsed time to handle vcpkg-tool-meson:x64-linux: 530 ms
+Installing 4/9 pkgconf:x64-linux@3.0.3#1...
+pkgconf:x64-linux@3.0.3#1 package ABI: 999b83712c115a53ff22ff62e413a67d3edd3b51721dadbfa5db1acd177da9a6
+Building pkgconf:x64-linux@3.0.3#1...
+-- Found Python version '3.14.4 at /usr/bin/python3'
+-- Using meson: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/tools/meson-1.9.0-633807/meson.py
+Downloading https://github.com/pkgconf/pkgconf/archive/pkgconf-3.0.3.tar.gz -> pkgconf-pkgconf-pkgconf-3.0.3.tar.gz
+Successfully downloaded pkgconf-pkgconf-pkgconf-3.0.3.tar.gz
+-- Extracting source /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/pkgconf-pkgconf-pkgconf-3.0.3.tar.gz
+-- Using source at /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/pkgconf/src/conf-3.0.3-bff6744efe.clean
+-- Configuring x64-linux-dbg
+-- Getting CMake variables for x64-linux
+-- Loading CMake variables from /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/pkgconf/cmake-get-vars_C_CXX-x64-linux.cmake.log
+-- Configuring x64-linux-dbg done
+-- Configuring x64-linux-rel
+-- Configuring x64-linux-rel done
+-- Package x64-linux-dbg
+-- Package x64-linux-rel
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/lib/pkgconfig/libpkgconf.pc
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/debug/lib/pkgconfig/libpkgconf.pc
+-- Adjusted RPATH of '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/tools/pkgconf/bomtool' (From '' -> To '$ORIGIN:$ORIGIN/../../lib')
+-- Adjusted RPATH of '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/tools/pkgconf/pccritic' (From '' -> To '$ORIGIN:$ORIGIN/../../lib')
+-- Adjusted RPATH of '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/tools/pkgconf/pkgconf' (From '' -> To '$ORIGIN:$ORIGIN/../../lib')
+-- Adjusted RPATH of '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/pkgconf_x64-linux/tools/pkgconf/spdxtool' (From '' -> To '$ORIGIN:$ORIGIN/../../lib')
+-- Performing post-build validation
+Elapsed time to handle pkgconf:x64-linux: 7.9 s
+Installing 5/9 vcpkg-pkgconfig-get-modules:x64-linux@2024-04-03...
+vcpkg-pkgconfig-get-modules:x64-linux@2024-04-03 package ABI: b9e82539c64075325fcdf682311475b16a311b5b72adde1a24910f327380ce21
+Building vcpkg-pkgconfig-get-modules:x64-linux@2024-04-03...
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-pkgconfig-get-modules_x64-linux/share/vcpkg-pkgconfig-get-modules/copyright
+-- Performing post-build validation
+Elapsed time to handle vcpkg-pkgconfig-get-modules:x64-linux: 18.1 ms
+Installing 6/9 ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-linux-release@7.1.2#5...
+ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-linux-release@7.1.2#5 package ABI: 57f2dda3cf594a9687cfa1af5fe47c2c5c6b52cb4b970c3830f3c9f2eb7b8a13
+Building ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-linux-release@7.1.2#5...
+/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/triplets/x64-hikari-linux-release.cmake: info: loaded overlay triplet from here
+Downloading https://github.com/ffmpeg/ffmpeg/archive/n7.1.2.tar.gz -> ffmpeg-ffmpeg-n7.1.2.tar.gz
+Successfully downloaded ffmpeg-ffmpeg-n7.1.2.tar.gz
+-- Extracting source /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/ffmpeg-ffmpeg-n7.1.2.tar.gz
+-- Applying patch 0001-create-lib-libraries.patch
+-- Applying patch 0002-fix-msvc-link.patch
+-- Applying patch 0003-fix-windowsinclude.patch
+-- Applying patch 0004-dependencies.patch
+-- Applying patch 0005-fix-nasm.patch
+-- Applying patch 0007-fix-lib-naming.patch
+-- Applying patch 0013-define-WINVER.patch
+-- Applying patch 0020-fix-aarch64-libswscale.patch
+-- Applying patch 0024-fix-osx-host-c11.patch
+-- Applying patch 0040-ffmpeg-add-av_stream_get_first_dts-for-chromium.patch
+-- Applying patch 0041-add-const-for-opengl-definition.patch
+-- Applying patch 0043-fix-miss-head.patch
+-- Applying patch 0044-fix-vulkan-debug-callback-abi.patch
+-- Using source at /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/ffmpeg/src/n7.1.2-a0bd95c46c.clean
+-- Getting CMake variables for x64-hikari-linux-release
+-- Loading CMake variables from /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/ffmpeg/cmake-get-vars_C_CXX-x64-hikari-linux-release.cmake.log
+-- Building Options: --enable-pic --disable-doc --enable-debug --enable-runtime-cpudetect --disable-autodetect --target-os=linux --enable-pthreads --cc=cc --host_cc=cc --cxx=c++ --nm=nm --ar='ar' --ranlib=ranlib --strip=strip --disable-ffmpeg --disable-ffplay --disable-ffprobe --enable-avcodec --disable-avdevice --enable-avformat --disable-avfilter --disable-postproc --enable-swresample --enable-swscale --disable-alsa --disable-amf --disable-libaom --disable-libass --disable-avisynth --disable-bzlib --disable-libdav1d --disable-libfdk-aac --disable-libfontconfig --disable-libharfbuzz --disable-libfreetype --disable-libfribidi --disable-iconv --disable-libilbc --disable-lzma --disable-libmp3lame --disable-libmodplug --disable-cuda --disable-nvenc --disable-nvdec  --disable-cuvid --disable-ffnvcodec --disable-opencl --disable-opengl --disable-libopenh264 --disable-libopenjpeg --disable-libopenmpt --disable-openssl --disable-libopus --disable-sdl2 --disable-libsnappy --disable-libsoxr --disable-libspeex --disable-libssh --disable-libtensorflow --disable-libtesseract --disable-libtheora --disable-libvorbis --disable-libvpx --disable-vulkan --disable-libwebp --disable-libx264 --disable-libx265 --disable-libxml2 --disable-zlib --disable-libsrt --disable-libmfx --disable-vaapi --disable-libzmq --disable-librubberband --enable-cross-compile --pkg-config="/bin/pkg-config" --pkg-config-flags=--static
+-- Building Release Options: --enable-optimizations --extra-ldflags=-L"/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib"
+-- Building ffmpeg for Release
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/lib/pkgconfig/libavcodec.pc
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/lib/pkgconfig/libavformat.pc
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/lib/pkgconfig/libavutil.pc
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/lib/pkgconfig/libswresample.pc
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/lib/pkgconfig/libswscale.pc
+-- Dependencies (release): -pthread;m;atomic
+-- Dependencies (debug):   
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/share/ffmpeg/usage
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/ffmpeg_x64-hikari-linux-release/share/ffmpeg/copyright
+-- Performing post-build validation
+Elapsed time to handle ffmpeg:x64-hikari-linux-release: 6.1 min
+Installing 7/9 vcpkg-cmake-config:x64-linux@2026-07-21...
+vcpkg-cmake-config:x64-linux@2026-07-21 package ABI: fde20457edb6b40e438a0c2255c1d5982427084bb9ed3ad6c765aad7e17163e2
+Building vcpkg-cmake-config:x64-linux@2026-07-21...
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-config_x64-linux/share/vcpkg-cmake-config/vcpkg_cmake_config_fixup.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-config_x64-linux/share/vcpkg-cmake-config/vcpkg-port-config.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/vcpkg-cmake-config_x64-linux/share/vcpkg-cmake-config/copyright
+-- Skipping post-build validation due to VCPKG_POLICY_EMPTY_PACKAGE
+Elapsed time to handle vcpkg-cmake-config:x64-linux: 18.6 ms
+Installing 8/9 zlib:x64-hikari-linux-release@1.3.2#2...
+zlib:x64-hikari-linux-release@1.3.2#2 package ABI: 66cab7b69788c020691186e57ba0c0b4d453864b72b9543acb12102f5938e57b
+Building zlib:x64-hikari-linux-release@1.3.2#2...
+/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/triplets/x64-hikari-linux-release.cmake: info: loaded overlay triplet from here
+Downloading https://github.com/madler/zlib/archive/v1.3.2.tar.gz -> madler-zlib-v1.3.2.tar.gz
+Successfully downloaded madler-zlib-v1.3.2.tar.gz
+-- Extracting source /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/madler-zlib-v1.3.2.tar.gz
+-- Applying patch 0001-no-version-script-on-ohos.patch
+-- Using source at /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/zlib/src/v1.3.2-c19a0bfd23.clean
+-- Configuring x64-hikari-linux-release
+-- Building x64-hikari-linux-release-rel
+-- Fixing pkgconfig file: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/zlib_x64-hikari-linux-release/lib/pkgconfig/zlib.pc
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/zlib_x64-hikari-linux-release/share/zlib/vcpkg-cmake-wrapper.cmake
+-- Installing: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/packages/zlib_x64-hikari-linux-release/share/zlib/copyright
+-- Performing post-build validation
+Elapsed time to handle zlib:x64-hikari-linux-release: 2.8 s
+Installing 9/9 hikari-ffms2:x64-hikari-linux-release@5.1.0-hikari-45d5f721...
+hikari-ffms2:x64-hikari-linux-release@5.1.0-hikari-45d5f721 package ABI: e303ecd58d32e05f8458a4cf44a9d3237aebae91fb8f2fb37cb5186d38092206
+Building hikari-ffms2:x64-hikari-linux-release@5.1.0-hikari-45d5f721...
+/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/triplets/x64-hikari-linux-release.cmake: info: loaded overlay triplet from here
+/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/ports/hikari-ffms2: info: installing overlay port from here
+-- Fetching https://github.com/altqx/ffms2.git 45d5f72100d88c52acdd54bfedcc0315a44c735d...
+-- Extracting source /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/downloads/hikari-ffms2-45d5f72100d88c52acdd54bfedcc0315a44c735d.tar.gz
+-- Using source at /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_work/vcpkg/buildtrees/hikari-ffms2/src/15a44c735d-1f3d1b5813.clean
+Downloading https://raw.githubusercontent.com/altqx/hikari/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/Thirdparty/Build/FFMS2/indexing_additional.cpp -> hikari-indexing_additional-20d647c4.cpp
+Successfully downloaded hikari-indexing_additional-20d647c4.cpp
+-- Configuring x64-hikari-linux-release
+-- Building x64-hikari-linux-release-rel
+-- Performing post-build validation
+Elapsed time to handle hikari-ffms2:x64-hikari-linux-release: 5 s
+Installed contents are licensed to you by owners. Microsoft is not responsible for, nor does it grant any licenses to, third-party packages.
+Some packages did not declare an SPDX license. Check the `copyright` file for each package for more information about their licensing.
+Packages installed in this vcpkg installation declare the following licenses:
+Apache-2.0
+MIT
+Zlib
+ffmpeg provides CMake integration:
+
+  find_package(FFMPEG REQUIRED)
+  target_include_directories(main PRIVATE ${FFMPEG_INCLUDE_DIRS})
+  target_link_directories(main PRIVATE ${FFMPEG_LIBRARY_DIRS})
+  target_link_libraries(main PRIVATE ${FFMPEG_LIBRARIES})
+
+ffmpeg provides pkg-config modules:
+
+  # FFmpeg codec library
+  libavcodec
+
+  # FFmpeg device handling library
+  libavdevice
+
+  # FFmpeg audio/video filtering library
+  libavfilter
+
+  # FFmpeg container format library
+  libavformat
+
+  # FFmpeg utility library
+  libavutil
+
+  # FFmpeg audio resampling library
+  libswresample
+
+  # FFmpeg image rescaling library
+  libswscale
+
+To use the static libraries to build your own shared library,
+you may need to add the following link option for your library:
+
+  -Wl,-Bsymbolic
+
+hikari-ffms2 provides CMake targets:
+
+  # this is heuristically generated, and may not be correct
+  find_package(HikariFFMS2 CONFIG REQUIRED)
+  target_link_libraries(main PRIVATE HikariFFMS2::ffms2)
+
+All requested installations completed successfully in: 6.3 min
+-- Running vcpkg install - done
+-- The CXX compiler identification is GNU 15.2.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Warning (author) at out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/share/ffmpeg/FindFFMPEG.cmake:45 (cmake_parse_arguments):
+  The NAMES keyword was followed by an empty string or no value at all.
+  Policy CMP0174 is not set, so cmake_parse_arguments() will unset the
+  arg_NAMES variable rather than setting it to an empty string.
+Call Stack (most recent call first):
+  out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/share/ffmpeg/FindFFMPEG.cmake:148 (append_dependencies)
+  out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/share/ffmpeg/vcpkg-cmake-wrapper.cmake:27 (_find_package)
+  linux-ci/_work/vcpkg/scripts/buildsystems/vcpkg.cmake:893 (include)
+  /usr/local/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:93 (find_package)
+  /usr/local/share/cmake-4.4/Modules/CMakeFindDependencyMacro.cmake:125 (__find_dependency_common)
+  out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/share/HikariFFMS2/HikariFFMS2Config.cmake:27 (find_dependency)
+  linux-ci/_work/vcpkg/scripts/buildsystems/vcpkg.cmake:939 (_find_package)
+  CMakeLists.txt:8 (find_package)
+This warning is for project developers.  Use -Wno-author to suppress it.
+
+-- Found FFMPEG: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libavformat.a;/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libavcodec.a;/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libswresample.a;/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libswscale.a;/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libavutil.a;-pthread;m;atomic
+-- Found ZLIB: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay/vcpkg_installed/x64-hikari-linux-release/lib/libz.a (found version "1.3.2")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE
+-- Found PkgConfig: /usr/bin/pkg-config (found version "2.5.1")
+-- Checking for module 'libavcodec'
+--   Found libavcodec, version 61.19.101
+-- Configuring done (381.6s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay
+
+Executing workflow step 2 of 3: build preset "linux-overlay"
+
+[1/2] Building CXX object CMakeFiles/ffms2_overlay_probe.dir/probe.cpp.o
+[2/2] Linking CXX executable ffms2_overlay_probe
+
+Executing workflow step 3 of 3: test preset "linux-overlay"
+
+Test project /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/ffms2-overlay/out/linux-overlay
+    Start 1: private_api_and_frames
+1/1 Test #1: private_api_and_frames ...........   Passed    0.00 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   0.01 sec
