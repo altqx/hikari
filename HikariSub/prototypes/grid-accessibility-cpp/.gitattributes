@@ -1,0 +1,6 @@
+# Preserve the recorded bytes for hashed source and captured artifacts.
+main.cpp text eol=lf
+Main.qml text eol=lf
+CMakeLists.txt text eol=lf
+run.py text eol=lf
+evidence/** -text whitespace=cr-at-eol

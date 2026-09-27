@@ -1,0 +1,33 @@
+{
+  "utc": "20260927T061549Z",
+  "kit": "msvc",
+  "qt_prefix": "C:\\Qt\\6.11.2\\msvc2022_64",
+  "compiler": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+  "compiler_sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+  "cmake": "C:\\Qt\\Tools\\CMake_64\\bin\\cmake.exe",
+  "cmake_sha256": "8c846b65810ba32a5197d0abc9748355b17508c7f887f7c43d273e46d9888c69",
+  "ninja": "C:\\Qt\\Tools\\Ninja\\ninja.exe",
+  "ninja_sha256": "68865c3276d449d746cea5065fdec2baf755d7813e161ab04205b0907b2629b8",
+  "configure_command": [
+    "C:\\Qt\\Tools\\CMake_64\\bin\\cmake.exe",
+    "-S",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\grid-accessibility-cpp",
+    "-B",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\grid-accessibility-cpp\\_build\\msvc",
+    "-G",
+    "Ninja",
+    "-DCMAKE_BUILD_TYPE=Release",
+    "-DCMAKE_CXX_COMPILER=C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+    "-DCMAKE_MAKE_PROGRAM=C:\\Qt\\Tools\\Ninja\\ninja.exe",
+    "-DCMAKE_PREFIX_PATH=C:\\Qt\\6.11.2\\msvc2022_64"
+  ],
+  "source_sha256": {
+    "main.cpp": "a7f78fb02a9bb4d8fad1f9f058b4f0ebd54608e2c01e533931d6fdf3b152a52c",
+    "Main.qml": "31acd02367eec57fb3fc85c60496f810f211f13a28b19998e0b0516c7687c82a",
+    "CMakeLists.txt": "065fa971eef5aae9923c021d21548f0216231997b2d25fb7a9d190c4f1fb2ddc",
+    "run.py": "bd65d681b8cf13ac49a4a732533d33f16f8648cbe055a08f422692c263b1fb2f"
+  },
+  "executable_sha256": "7de9f502681149c18e897d009d6f6b61e1ac7648aaa8eb60c7281976cda534e1",
+  "qt_config_sha256": "bd13e76b5062397a4986b3066afb981c30559048b85bbe7fe7a77924e0160a6b",
+  "scope": "Installed-kit feasibility only; not stateless provisioning, native OS AT or performance proof"
+}
