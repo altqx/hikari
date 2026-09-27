@@ -1,0 +1,3 @@
+# Preserve the downloaded evidence bytes referenced by provenance.json.
+run-*/** -text -whitespace
+provenance.json text eol=lf

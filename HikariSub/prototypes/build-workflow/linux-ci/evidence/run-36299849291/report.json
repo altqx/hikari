@@ -1,0 +1,292 @@
+{
+  "dependency_build_status" : "blocked_not_attempted",
+  "observations" : 
+  {
+    "archive_0" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 0f86f13b161141e77b1d056b54e2b6fc40fb16f243e71123346f9fb35d418027\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_0_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: c52ba9dc2f3609e10f6fb94c0e1e8e21ebc9ca25f180208a58c6b4b07153b888",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_1" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 939fe0e5d49d11d6d3eceea0184219703c25a1f8dc75f45e99071ca244824a0d\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_1_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: 8e7a0a8163525e5bee7b7f34e73537f0144fe601478b2c5b693a54f4ed90cf5a",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_2" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 5f0ce87c077f749723dbb6e923142adb860c146ecaf93c68197feda5307f22dd\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_2_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: bade06947da553e054a5010f39abad3bf7c70a46c714391c5e47c21856f4cd43",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_3" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 0f4cad1f99bdcbe8c12540fbc195be64b5010c83e184315bd19614905f114600\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_3_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: b79803a6f7180f084e316a59dbeb98b6d09e7b8f34cdb975d08c13975eab72da",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_4" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 42d5f3dbfc25647d9d95ef8b64401dc7e3ef7c83a39a29b548dfa0985f71c0ca\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_4_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: 66d200e3727ed5b4a8d6b82de576db94609b377d4e91c82962d295dd9d8a29ce",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_5" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: fcef8e3f3a76367523ed68cc2f6e46ff80cedd41b3a8d6ad464515d237c7777e\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_5_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: cce7d3fb35d5aad458ed4e1b467a77bdda31c1a15d83a7cffa2ab9230b493583",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_6" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z\nDeclared binary SHA-256: 7a541f8d36f93a1e337e6d3fc040537c04fc70a65a04b6078738dd0f59ddf83d\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_6_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha256\nMetadata SHA-256: 5c13c63b947a80870c04fb906a6d6e9c3d3d62b0b9b328555b7da87ae9fb00a2",
+      "status" : "public_metadata_fetched"
+    },
+    "archive_7" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018icu-linux-Rhel8.6-x86_64.7z\nDeclared binary SHA-256: 111bdae30a66fff6ef65620e95766170fa5a6f425c360ea33b79cb2ec7e2fd86\nArchive not downloaded or installed.",
+      "status" : "declared_sha256_matches"
+    },
+    "archive_7_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/qt.qt6.6112.linux_gcc_64/6.11.2-0-202608131018icu-linux-Rhel8.6-x86_64.7z.sha256\nMetadata SHA-256: 264d4dc8aaff79c208d4dcdb17799c567d1e75ed1458599709e02f2d8eeb12cd",
+      "status" : "public_metadata_fetched"
+    },
+    "artifact_closure" : 
+    {
+      "detail" : "Eight base SDK archive identities are candidate-pinned. Parent/license/package scripts, Creator/docs/examples dependencies, repository redirects, retention and enforcement of the installer's actual consumed bytes remain unproved.",
+      "status" : "incomplete"
+    },
+    "capture" : 
+    {
+      "detail" : "UTC: 2026-09-27T06:21:30Z\nCMake: 4.4.3\nHost: Linux \nCandidate lock SHA-256: 3a03191e8be9b8e2989f1f2739b39f8a3961989aadcede676020b1773f7235b7\nRuns before project(); project languages remain NONE.",
+      "status" : "preflight_only"
+    },
+    "ci_GITHUB_RUN_ATTEMPT" : 
+    {
+      "detail" : "1",
+      "status" : "observed"
+    },
+    "ci_GITHUB_RUN_ID" : 
+    {
+      "detail" : "36299849291",
+      "status" : "observed"
+    },
+    "ci_GITHUB_SHA" : 
+    {
+      "detail" : "4959243fefdf0737e655985e300ff9f20e12d9ac",
+      "status" : "observed"
+    },
+    "ci_ImageOS" : 
+    {
+      "detail" : "ubuntu26",
+      "status" : "observed"
+    },
+    "ci_ImageVersion" : 
+    {
+      "detail" : "20260920.143.1",
+      "status" : "observed"
+    },
+    "ci_RUNNER_ARCH" : 
+    {
+      "detail" : "X64",
+      "status" : "observed"
+    },
+    "ci_RUNNER_OS" : 
+    {
+      "detail" : "Linux",
+      "status" : "observed"
+    },
+    "disk_free" : 
+    {
+      "detail" : "Filesystem     1024-blocks     Used Available Capacity Mounted on\n/dev/root        151361008 55527452  95817172      37% /",
+      "status" : "observed"
+    },
+    "distribution" : 
+    {
+      "detail" : "PRETTY_NAME=\"Ubuntu 26.04.1 LTS\"\nVERSION_ID=\"26.04\"\nID=ubuntu",
+      "status" : "observed_not_immutable"
+    },
+    "ffms2_private_abi" : 
+    {
+      "detail" : "Required fork 45d5f72100d88c52acdd54bfedcc0315a44c735d plus indexing_additional.cpp blob be378044fff07bac704f04dc57caa4fc5f95691e need one owned recipe and compatible FFmpeg selection. No distro-library substitute.",
+      "status" : "not_built"
+    },
+    "glibc" : 
+    {
+      "detail" : "glibc 2.43",
+      "status" : "observed"
+    },
+    "host_packages" : 
+    {
+      "detail" : "Exit: 1\nautoconf\t2.72-3.1ubuntu2\nautomake\t1:1.18.1-3build1\ncurl\t8.18.0-1ubuntu2.5\ng++\t4:15.2.0-5ubuntu1\ngcc\t4:15.2.0-5ubuntu1\ngit\t1:2.55.0-0ppa1~ubuntu26.04.2\nlibatspi2.0-0t64:amd64\t2.60.4-0ubuntu0.1\nlibc6:amd64\t2.43-2ubuntu2.4\nlibdbus-1-3:amd64\t1.16.2-2ubuntu4\nlibfontconfig1:amd64\t2.17.1-3ubuntu1\nlibfreetype6:amd64\t2.14.2+dfsg-1ubuntu0.1\nlibgl1:amd64\t1.7.0-3\nlibstdc++6:amd64\t16-20260322-1ubuntu1\nlibtool\t2.5.4-9\nlibwayland-client0:amd64\t1.24.0-2\nlibx11-6:amd64\t2:1.8.13-1\nlibx11-xcb1:amd64\t2:1.8.13-1\nlibxcb-randr0:amd64\t1.17.0-2ubuntu1\nlibxcb1:amd64\t1.17.0-2ubuntu1\nlibxkbcommon0:amd64\t1.13.1-1\npkg-config:amd64\t2.5.1-4\ntar\t1.35+dfsg-4ubuntu0.4\nunzip\t6.0-29ubuntu1\nxvfb\t2:21.1.22-1ubuntu1\nzip\t3.0-15ubuntu3",
+      "status" : "unavailable_or_partial"
+    },
+    "host_resources" : 
+    {
+      "detail" : "Logical processors: 4; total physical memory: 15983 MiB. Not a performance reference host or capacity guarantee.",
+      "status" : "snapshot_only"
+    },
+    "installer_checksum" : 
+    {
+      "detail" : "URL: https://download.qt.io/archive/online_installers/4.11/qt-online-installer-linux-x64-4.11.0.run.sha256\nMetadata SHA-256: c51e1990f31446777c57ba8e06929982e506acba6081db23e27bd35036156ea8",
+      "status" : "public_metadata_fetched"
+    },
+    "installer_identity" : 
+    {
+      "detail" : "Versioned URL: https://download.qt.io/archive/online_installers/4.11/qt-online-installer-linux-x64-4.11.0.run\nDeclared binary SHA-256: 40b76bdf74f6a396341efb70ae2e754fcd878474babb6cd9d7f07eff12a85c62\nBinary not downloaded or executed; digest is publisher metadata, not a local binary verification.",
+      "status" : "declared_sha256_matches"
+    },
+    "kernel" : 
+    {
+      "detail" : "Linux 7.0.0-1012-azure x86_64 GNU/Linux",
+      "status" : "observed"
+    },
+    "public_metadata_validation" : 
+    {
+      "detail" : "Repository metadata and nine published binary checksum declarations match the candidate. Actual binary content and installer enforcement are unverified.",
+      "status" : "passed_metadata_only"
+    },
+    "qt_auth" : 
+    {
+      "detail" : "No CI secret-presence signal. An authorized installer account is required for the future provisioner. No account files read.",
+      "status" : "missing_or_not_declared"
+    },
+    "qt_package" : 
+    {
+      "detail" : "Package: qt.qt6.6112.linux_gcc_64\nVersion: 6.11.2-0-202608131018\nDeclared dependencies: qt.tools.qtcreator, qt.qt6.6112.doc, qt.qt6.6112.examples\nThis locks one metadata snapshot, not the full installer dependency closure or upstream retention.",
+      "status" : "exact_metadata_snapshot_matches"
+    },
+    "qt_repository_metadata" : 
+    {
+      "detail" : "URL: https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/Updates.xml\nMetadata SHA-256: 5cc522ccfe18d76a6e703bfb33704cdfff3ed24695ca3d449c4d710bc6385e32",
+      "status" : "public_metadata_fetched"
+    },
+    "qt_terms" : 
+    {
+      "detail" : "This preflight has no license/obligation acceptance scope. It cannot execute an installer even when an account is available.",
+      "status" : "not_authorized_by_this_probe"
+    },
+    "qualification" : 
+    {
+      "detail" : "No C++ SDK compile/link, Quick scene, Linguist round-trip, FFMS2 private extension, libass render, cold/warm reconstruction, deployment, corruption case, Fedora/Wayland/a11y or performance pass. Host image and tool versions are observed, not an immutable build environment.",
+      "status" : "not_attempted"
+    },
+    "tool_autoconf" : 
+    {
+      "detail" : "autoconf (GNU Autoconf) 2.72\nCopyright (C) 2023 Free Software Foundation, Inc.\nLicense GPLv3+/Autoconf: GNU GPL version 3 or later\n<https://gnu.org/licenses/gpl.html>, <https://gnu.org/licenses/exceptions.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by David J. MacKenzie and Akim Demaille.",
+      "status" : "observed"
+    },
+    "tool_automake" : 
+    {
+      "detail" : "automake (GNU automake) 1.18.1\nFeatures: subsecond-mtime\n\nCopyright (C) 2025 Free Software Foundation, Inc.\nLicense GPLv2+: GNU GPL version 2 or later\n  <https://gnu.org/licenses/gpl-2.0.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by Tom Tromey <tromey@redhat.com>\n       and Alexandre Duret-Lutz <adl@gnu.org>.",
+      "status" : "observed"
+    },
+    "tool_curl" : 
+    {
+      "detail" : "curl 8.18.0 (x86_64-pc-linux-gnu) libcurl/8.18.0 OpenSSL/3.5.5 zlib/1.3.1 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.8 libpsl/0.21.2 libssh2/1.11.1 nghttp2/1.68.0 librtmp/2.3 mit-krb5/1.22.1 OpenLDAP/2.6.10\nRelease-Date: 2026-01-07, security patched: 8.18.0-1ubuntu2.5\nProtocols: dict file ftp ftps gopher gophers http https imap imaps ipfs ipns ldap ldaps mqtt pop3 pop3s rtmp rtsp scp sftp smb smbs smtp smtps telnet tftp ws wss\nFeatures: alt-svc AsynchDNS brotli GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz NTLM PSL SPNEGO SSL threadsafe TLS-SRP UnixSockets zstd",
+      "status" : "observed"
+    },
+    "tool_g++" : 
+    {
+      "detail" : "g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "status" : "observed"
+    },
+    "tool_gcc" : 
+    {
+      "detail" : "gcc (Ubuntu 15.2.0-16ubuntu1) 15.2.0\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
+      "status" : "observed"
+    },
+    "tool_git" : 
+    {
+      "detail" : "git version 2.55.0",
+      "status" : "observed"
+    },
+    "tool_libtool" : 
+    {
+      "detail" : "Not found on PATH; no installation attempted.",
+      "status" : "missing"
+    },
+    "tool_make" : 
+    {
+      "detail" : "GNU Make 4.4.1\nBuilt for x86_64-pc-linux-gnu\nCopyright (C) 1988-2023 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.",
+      "status" : "observed"
+    },
+    "tool_meson" : 
+    {
+      "detail" : "Not found on PATH; no installation attempted.",
+      "status" : "missing"
+    },
+    "tool_nasm" : 
+    {
+      "detail" : "Not found on PATH; no installation attempted.",
+      "status" : "missing"
+    },
+    "tool_ninja" : 
+    {
+      "detail" : "1.13.2",
+      "status" : "observed"
+    },
+    "tool_pkg-config" : 
+    {
+      "detail" : "2.5.1",
+      "status" : "observed"
+    },
+    "tool_python3" : 
+    {
+      "detail" : "Python 3.14.4",
+      "status" : "observed"
+    },
+    "tool_tar" : 
+    {
+      "detail" : "tar (GNU tar) 1.35\nCopyright (C) 2023 Free Software Foundation, Inc.\nLicense GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\nThis is free software: you are free to change and redistribute it.\nThere is NO WARRANTY, to the extent permitted by law.\n\nWritten by John Gilmore and Jay Fenlason.",
+      "status" : "observed"
+    },
+    "tool_unzip" : 
+    {
+      "detail" : "Exit: 10\n",
+      "status" : "unavailable_or_partial"
+    },
+    "tool_zip" : 
+    {
+      "detail" : "Copyright (c) 1990-2008 Info-ZIP - Type 'zip \"-L\"' for software license.\nThis is Zip 3.0 (July 5th 2008), by Info-ZIP.\nCurrently maintained by E. Gordon.  Please send bug reports to\nthe authors using the web page at www.info-zip.org; see README for details.\n\nLatest sources and executables are at ftp://ftp.info-zip.org/pub/infozip,\nas of above date; see http://www.info-zip.org/ for other sites.\n\nCompiled with gcc 15.2.0 for Unix (Linux ELF).\n\nZip special compilation options:\n\tUSE_EF_UT_TIME       (store Universal Time)\n\tBZIP2_SUPPORT        (bzip2 library version 1.0.8, 13-Jul-2019)\n\t    bzip2 code and library copyright (c) Julian R Seward\n\t    (See the bzip2 license for terms of use)\n\tSYMLINK_SUPPORT      (symbolic links supported)\n\tLARGE_FILE_SUPPORT   (can read and write large files on file system)\n\tZIP64_SUPPORT        (use Zip64 to store large files in archives)\n\tUNICODE_SUPPORT      (store and read UTF-8 Unicode paths)\n\tSTORE_UNIX_UIDs_GIDs (store UID/GID sizes/values using new extra field)\n\tUIDGID_NOT_16BIT     (old Unix 16-bit UID/GID extra field not used)\n\t[encryption, version 2.91 of 05 Jan 2007] (modified for Zip 3)\n\nEncryption notice:\n\tThe encryption code of this program is not copyrighted and is\n\tput in the public domain.  It was originally written in Europe\n\tand, to the best of our knowledge, can be freely distributed\n\tin both source and object forms from any country, including\n\tthe USA under License Exception TSU of the U.S. Export\n\tAdministration Regulations (section 740.13(e)) of 6 June 2002.\n\nZip environment options:\n             ZIP:  [none]\n          ZIPOPT:  [none]",
+      "status" : "observed"
+    },
+    "vcpkg_graph" : 
+    {
+      "detail" : "Candidate research registry ee6a47dac031930715bea2e6dfb9ad60caaa5d83; no complete tool/registry/overlay lock is supplied here. No vcpkg executable invoked. Qt remains outside its graph.",
+      "status" : "not_provisioned"
+    }
+  },
+  "schema" : 1
+}
