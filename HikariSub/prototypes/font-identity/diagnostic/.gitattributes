@@ -1,0 +1,3 @@
+# Keep the diagnostic's hashed inputs byte-stable across checkouts.
+run.py text eol=lf
+probe.cpp text eol=lf

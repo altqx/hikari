@@ -1,0 +1,2991 @@
+{
+  "utc": "2026-09-27T01:28:11.797736+00:00",
+  "run_directory": "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14",
+  "libass_source_commit": "4a05d8127f525943ebf45fdc6497c9e665947f0d",
+  "original_evidence_sha256": "618a44e2b8f7facf26792e0476e4ece94913af8416d095974ff8a4b3a2e82112",
+  "original_evidence_unchanged": true,
+  "original_report_sha256": "8d1514c29001a9a553d182e10ee27f4b6e9814099f9734bbc7539079f8c402b5",
+  "original_report_unchanged": true,
+  "command": [
+    "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.exe",
+    "/nologo",
+    "/std:c++17",
+    "/EHsc",
+    "/utf-8",
+    "/MDd",
+    "/Od",
+    "/IC:\\Work\\Kainote\\Thirdparty\\libass\\libass",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\probe.cpp",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\_run\\20260926T215219440218Z\\hook_selector.obj",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\_run\\20260926T215219440218Z\\hook_font.obj",
+    "/FoC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\diagnostic.obj",
+    "/FdC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\compile.pdb",
+    "/FeC:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\diagnostic.exe",
+    "/link",
+    "/LIBPATH:C:\\Work\\Kainote\\bin\\x64\\Debug",
+    "Libass.lib",
+    "FreeType2.lib",
+    "Fribidi.lib",
+    "HarfBuzz.lib",
+    "Zlib.lib",
+    "dwrite.lib",
+    "gdi32.lib",
+    "user32.lib",
+    "ole32.lib",
+    "advapi32.lib",
+    "usp10.lib",
+    "/PDB:C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\_run\\20260927T012728839625Z\\link.pdb"
+  ],
+  "compiler_sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+  "executable_sha256": "77cf39428e46ed4b51c5b6f5f46fc0874218ac3448030294adead2e3a3059368",
+  "source_sha256": {
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\run.py": "7daf80335b3970aa3fddf0b375f46be3613d0d214635554e33e5c5b5789e6c77",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\diagnostic\\probe.cpp": "19c53128a93c438926eb4ebd476de9499ccb618741122c1f209a2623b00a7af1",
+    "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\font-identity\\probe.cpp": "6326ccfcd21b3aa514fe7b74f93078091b51b0c2c3c36ad40d226a15d794c148"
+  },
+  "reused_objects_sha256": {
+    "hook_selector.obj": "e2028534017fda2b2d6d7f6a77f5d855aafee626b6f0a1def38e8fc1e362ba21",
+    "hook_font.obj": "543dc4dca2fb3ebce71d33126e8f05519615236ae60b77e6bff22de4507d3e9c"
+  },
+  "libraries_sha256": {
+    "Libass.lib": "16d1b42b0fcd00537a8d99bb23667b728d04bdf79d7bfb522346c2e556223be2",
+    "FreeType2.lib": "af8f84e06c1bdad90aee3ed25dae99e36a2ff4df6b2db4d083f963fb1ab3cdd2",
+    "Fribidi.lib": "84fea16c046d7fe3fa1f8cf60b0f1cf68325544c6f76545addd1c997fd9c2b0d",
+    "HarfBuzz.lib": "b3af8239ce33047d5b037f1ae674be0d8a193d55b13464a571e926d6acc6007a",
+    "Zlib.lib": "191ecd3de1f613fed36fdc89cc0e77c064ef920aef600b1e4b80e4c48e0398f1"
+  },
+  "input_fonts": [
+    {
+      "case": "system_multilingual",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/system_multilingual-17.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+      "matching_fixture_names": [],
+      "byte_count": 1045720
+    },
+    {
+      "case": "system_multilingual",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 29,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/system_multilingual-18.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2",
+      "matching_fixture_names": [],
+      "byte_count": 14729372
+    },
+    {
+      "case": "system_multilingual",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 30,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/system_multilingual-19.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c",
+      "matching_fixture_names": [],
+      "byte_count": 12934920
+    }
+  ],
+  "records": [
+    {
+      "case": "full_directwrite",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BB41060] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite-0.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 29,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite-1.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 29,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 30,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite-2.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 30,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "full_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 29,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 30,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "a2bf8a3aa1825faf",
+      "file": "renders/full_directwrite.ppm",
+      "sha256": "b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5"
+    },
+    {
+      "case": "full_none",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_none",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BAB5220] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_none",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none-3.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_none",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "c8f410668fb19a0b",
+      "file": "renders/full_none.ppm",
+      "sha256": "b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "request",
+      "family": "Arial",
+      "text": "A",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BAB5CB0] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/ascii_directwrite-4.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "ascii_directwrite",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "aed81fb170977d4",
+      "file": "renders/ascii_directwrite.ppm",
+      "sha256": "30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae"
+    },
+    {
+      "case": "ascii_none",
+      "event": "request",
+      "family": "Arial",
+      "text": "A",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "ascii_none",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BAB4EE0] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "ascii_none",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/ascii_none-5.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "ascii_none",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "ascii_none",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "ascii_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "ascii_none",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "aed81fb170977d4",
+      "file": "renders/ascii_none.ppm",
+      "sha256": "30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "request",
+      "family": "Arial",
+      "text": "中",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FA850] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_directwrite-6.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 29,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_directwrite-7.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 29,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 29,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "cjk_directwrite",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "1c4d6e61c3d2376b",
+      "file": "renders/cjk_directwrite.ppm",
+      "sha256": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf"
+    },
+    {
+      "case": "cjk_none",
+      "event": "request",
+      "family": "Arial",
+      "text": "中",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "cjk_none",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FAD30] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "cjk_none",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_none-8.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "cjk_none",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "cjk_none",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "cjk_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "cjk_none",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "7c3e0b72b4066b30",
+      "file": "renders/cjk_none.ppm",
+      "sha256": "474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "request",
+      "family": "Arial",
+      "text": "😀",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D6F6A70] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_directwrite-9.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 29,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_directwrite-10.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 29,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 29,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "emoji_directwrite",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "93d07764ade40d1c",
+      "file": "renders/emoji_directwrite.ppm",
+      "sha256": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f"
+    },
+    {
+      "case": "emoji_none",
+      "event": "request",
+      "family": "Arial",
+      "text": "😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "emoji_none",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D6F71C0] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "emoji_none",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_none-11.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "emoji_none",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "emoji_none",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "emoji_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "emoji_none",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "7c3e0b72b4066b30",
+      "file": "renders/emoji_none.ppm",
+      "sha256": "474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "request",
+      "family": "Arial",
+      "text": "ع́",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D9F3E10] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/arabic_combining_directwrite-12.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "arabic_combining_directwrite",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "79628c0d040e017",
+      "file": "renders/arabic_combining_directwrite.ppm",
+      "sha256": "26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "request",
+      "family": "Arial",
+      "text": "ع́",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D9F4A40] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/arabic_combining_none-13.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "arabic_combining_none",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "79628c0d040e017",
+      "file": "renders/arabic_combining_none.ppm",
+      "sha256": "26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FB140] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_reverse-14.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_reverse",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "c8f410668fb19a0b",
+      "file": "renders/full_none_reverse.ppm",
+      "sha256": "b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 4,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "Using font provider directwrite (with GDI)"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FB480] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite_captured-15.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 4,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite_captured-16.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "opened_face_v1",
+      "uid_local": 4,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_directwrite_captured-17.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "glyph_simulation_v1",
+      "uid_local": 4,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_directwrite_captured",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "a2bf8a3aa1825faf",
+      "file": "renders/full_directwrite_captured.ppm",
+      "sha256": "b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "request",
+      "family": "Arial",
+      "text": "中",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FAB90] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_none_default_yu-18.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 4,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_none_default_yu-19.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: Using default font family: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "opened_face_v1",
+      "uid_local": 4,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 4,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "cjk_none_default_yu",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "1c4d6e61c3d2376b",
+      "file": "renders/cjk_none_default_yu.ppm",
+      "sha256": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "request",
+      "family": "Arial",
+      "text": "😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FB210] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_none_default_segoe-20.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_none_default_segoe-21.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: Using default font family: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "emoji_none_default_segoe",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "93d07764ade40d1c",
+      "file": "renders/emoji_none_default_segoe.ppm",
+      "sha256": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "request",
+      "family": "Yu Gothic UI Semibold",
+      "text": "中",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FB140] Style: Default,Yu Gothic UI Semibold,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 4,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/cjk_none_explicit_yu-22.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Yu Gothic UI Semibold, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "opened_face_v1",
+      "uid_local": 4,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 4,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "cjk_none_explicit_yu",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "1c4d6e61c3d2376b",
+      "file": "renders/cjk_none_explicit_yu.ppm",
+      "sha256": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "request",
+      "family": "Segoe UI Emoji",
+      "text": "😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FB2E0] Style: Default,Segoe UI Emoji,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/emoji_none_explicit_segoe-23.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Segoe UI Emoji, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "emoji_none_explicit_segoe",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "93d07764ade40d1c",
+      "file": "renders/emoji_none_explicit_segoe.ppm",
+      "sha256": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9D5FAE00] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_default_yu-24.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 4,
+      "codepoint": 20013,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_default_yu-25.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: Using default font family: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "opened_face_v1",
+      "uid_local": 4,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x1F600 for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 4,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_yu",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "d0a3ca0f3537bc1b",
+      "file": "renders/full_none_default_yu.ppm",
+      "sha256": "171fdb3e59a2021f5ae505cc6b479d19cdd4df86fd9e4874791995eaa9352264"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "request",
+      "family": "Arial",
+      "text": "A中ع́😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BB75F20] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_default_segoe-26.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x4E2D not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: failed to find any fallback with glyph 0x4E2D for font: (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "Glyph 0x1F600 not found, selecting one more font for (Arial, 400, 0)"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 128512,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_default_segoe-27.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 2,
+      "text": "fontselect: Using default font family: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 0,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_default_segoe",
+      "event": "render",
+      "images": 1,
+      "fnv1a64": "81ebf098cca9ad84",
+      "file": "renders/full_none_default_segoe.ppm",
+      "sha256": "16973040d1b2d49957126c4036b7b31caa9cb819eaad2695fde259823bfff6e9"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "request",
+      "family": "Arial",
+      "text": "A{\\fnYu Gothic UI Semibold}中{\\fnArial}ع́{\\fnSegoe UI Emoji}😀",
+      "provider_requested": 0,
+      "bold": 0,
+      "italic": 0
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "libass API version: 0x1705000"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "archive_source_label_invalid",
+      "pointer_value": 1
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 6,
+      "text": "Raster: FreeType 2.14.3"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "Shaper: FriBidi 1.0.16 (SIMPLE) HarfBuzz-ng 14.4.0 (COMPLEX)"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 6,
+      "text": "Initialized"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 7,
+      "text": "Style format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 6,
+      "text": "[000001DC9BB7A330] Style: Default,Arial,60,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,5,0,0,0,1"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 7,
+      "text": "Event format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "Added subtitle file: <memory> (2 styles, 1 events)"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "selected_v1",
+      "display": "ArialMT",
+      "postscript": "ArialMT",
+      "face": 0,
+      "uid_local": 1,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_authored_families-28.font",
+      "size": 1045720,
+      "failure": "",
+      "sha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Arial, 400, 0) -> ArialMT, 0, ArialMT"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "opened_face_v1",
+      "uid_local": 1,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "ArialMT"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "selected_v1",
+      "display": "YuGothicUI-Semibold",
+      "postscript": "YuGothicUI-Semibold",
+      "face": 2,
+      "uid_local": 4,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_authored_families-29.font",
+      "size": 14729372,
+      "failure": "",
+      "sha256": "d923a57f781f06198167da4f58287be7ac64a954a47aff4295e078a42b4b68b2"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Yu Gothic UI Semibold, 400, 0) -> YuGothicUI-Semibold, 2, YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "opened_face_v1",
+      "uid_local": 4,
+      "face": 2,
+      "face_count": 3,
+      "postscript": "YuGothicUI-Semibold"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "selected_v1",
+      "display": "SegoeUIEmoji",
+      "postscript": "SegoeUIEmoji",
+      "face": 0,
+      "uid_local": 5,
+      "codepoint": 0,
+      "weight": 400,
+      "italic_request": 0,
+      "file": "selected/full_none_authored_families-30.font",
+      "size": 12934920,
+      "failure": "",
+      "sha256": "451df9bb5546055af625ff86aa72695df43e8e170b4c6c1316fe44e9c7a22f7c"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "log",
+      "level": 4,
+      "text": "fontselect: (Segoe UI Emoji, 400, 0) -> SegoeUIEmoji, 0, SegoeUIEmoji"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "opened_face_v1",
+      "uid_local": 5,
+      "face": 0,
+      "face_count": 1,
+      "postscript": "SegoeUIEmoji"
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 36,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "glyph_simulation_v1",
+      "uid_local": 4,
+      "glyph": 2982,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 1171,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "glyph_simulation_v1",
+      "uid_local": 1,
+      "glyph": 969,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "glyph_simulation_v1",
+      "uid_local": 5,
+      "glyph": 2317,
+      "embolden": false,
+      "italicize": false
+    },
+    {
+      "case": "full_none_authored_families",
+      "event": "render",
+      "images": 4,
+      "fnv1a64": "57a8df3814b5cd7d",
+      "file": "renders/full_none_authored_families.ppm",
+      "sha256": "0e54190138a3fc8565d84cb5a0e6954d979543347a972ad8f6ba661309d02ff2"
+    }
+  ],
+  "provider_pair_same_pixels": {
+    "full": false,
+    "ascii": true,
+    "cjk": false,
+    "emoji": false,
+    "arabic_combining": true
+  },
+  "variation_same_pixels": {
+    "full_none_reverse": true,
+    "full_directwrite_captured": true,
+    "cjk_none_default_yu": true,
+    "emoji_none_default_segoe": true,
+    "cjk_none_explicit_yu": true,
+    "emoji_none_explicit_segoe": true,
+    "full_none_default_yu": false,
+    "full_none_default_segoe": false,
+    "full_none_authored_families": false
+  },
+  "variation_reference_cases": {
+    "full_none_reverse": "full_none",
+    "full_directwrite_captured": "full_directwrite",
+    "cjk_none_default_yu": "cjk_directwrite",
+    "emoji_none_default_segoe": "emoji_directwrite",
+    "cjk_none_explicit_yu": "cjk_directwrite",
+    "emoji_none_explicit_segoe": "emoji_directwrite",
+    "full_none_default_yu": "full_directwrite",
+    "full_none_default_segoe": "full_directwrite",
+    "full_none_authored_families": "full_directwrite"
+  },
+  "repeat_frame_sha256": {
+    "full_directwrite": "b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5",
+    "full_none": "b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790",
+    "ascii_directwrite": "30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae",
+    "ascii_none": "30f588e3b9774da7ce7a4b941632af06d65933a4611ba30a547fd8bd2c3f41ae",
+    "cjk_directwrite": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf",
+    "cjk_none": "474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1",
+    "emoji_directwrite": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f",
+    "emoji_none": "474b26d7715b82d414badcc1fe120db37942a4c2a8c4907e5b04bc43a94cc6d1",
+    "arabic_combining_directwrite": "26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57",
+    "arabic_combining_none": "26aca33bfe4a7c7c1a5814ed9b224de387388cf9f8633ac7ef914238153ccb57",
+    "full_none_reverse": "b0b1d571712be645e7f49ad1508014d8e745f480d948030a522622f45e6cd790",
+    "full_directwrite_captured": "b07438461e219bd5c61506a2561c2d2913727e6cfb128d5f16a8297bf628dad5",
+    "cjk_none_default_yu": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf",
+    "emoji_none_default_segoe": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f",
+    "cjk_none_explicit_yu": "1b27da87d2e915bed4607de966ac5c2b1a2cb7a0751fea6ce7f7b7d6b0f672bf",
+    "emoji_none_explicit_segoe": "52fe75d94d71025d4950564754c9295830227a5cfbe300457bb1cdd6030ae00f",
+    "full_none_default_yu": "171fdb3e59a2021f5ae505cc6b479d19cdd4df86fd9e4874791995eaa9352264",
+    "full_none_default_segoe": "16973040d1b2d49957126c4036b7b31caa9cb819eaad2695fde259823bfff6e9",
+    "full_none_authored_families": "0e54190138a3fc8565d84cb5a0e6954d979543347a972ad8f6ba661309d02ff2"
+  },
+  "repeat_all_frames_agree": true,
+  "original_baseline_frames_agree": {
+    "full_directwrite": true,
+    "full_none": true
+  },
+  "limits": "Windows existing Debug archives and original hook objects; no dependency rebuild, production patch, Linux or full-document qualification."
+}
