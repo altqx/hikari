@@ -1,0 +1,13 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 28, "patch": 0},
+  "configurePresets": [{
+    "name": "linux-ci-source", "generator": "Ninja",
+    "binaryDir": "${sourceDir}/_work/driver"
+  }],
+  "buildPresets": [{"name": "linux-ci-source", "configurePreset": "linux-ci-source", "jobs": 2}],
+  "workflowPresets": [{"name": "linux-ci-source", "steps": [
+    {"type": "configure", "name": "linux-ci-source"},
+    {"type": "build", "name": "linux-ci-source"}
+  ]}]
+}

@@ -1,0 +1,120 @@
+name: FFMS2 overlay feasibility — Linux source slice
+
+on:
+  push:
+    branches: [codex/qt-design-prototypes]
+    paths:
+      - HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/**
+      - .github/workflows/ffms2-overlay-feasibility.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ffms2-linux-source-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux-source-slice:
+    name: Ubuntu26.04 source-matched FFMS2 and three-frame specimen
+    runs-on: ubuntu-26.04
+    timeout-minutes: 65
+    defaults:
+      run:
+        shell: bash
+        working-directory: HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Record host; provision NASM only in disposable CI
+        timeout-minutes: 10
+        run: |
+          mkdir -p _evidence _work ../out/linux-overlay
+          {
+            printf 'UTC='; date --utc --iso-8601=seconds
+            printf 'commit=%s\nrun=%s\nattempt=%s\nImageOS=%s\nImageVersion=%s\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT" "$ImageOS" "$ImageVersion"
+            cat /etc/os-release
+            uname -a
+            getconf GNU_LIBC_VERSION
+            nproc
+            free -m
+            df -B1 .
+            for tool in git cmake ninja gcc g++ make pkg-config autoconf automake python3 curl tar zip; do
+              command -v "$tool"
+              "$tool" --version | sed -n '1p'
+            done
+            command -v unzip
+            unzip -v | sed -n '1,2p'
+          } > _evidence/host.txt
+          sudo apt-get -o Acquire::Retries=0 update 2>&1 | tee _evidence/apt-update.log
+          sudo apt-get --simulate --no-install-recommends install nasm 2>&1 | tee _evidence/apt-plan.log
+          sudo apt-get -y --no-install-recommends -o Acquire::Retries=0 install nasm 2>&1 | tee _evidence/apt-install.log
+          {
+            nasm -v
+            package_result=0
+            dpkg-query -W -f='${binary:Package}\t${Version}\n' nasm gcc g++ libc6 libc6-dev make ninja-build cmake git autoconf automake pkgconf python3 curl unzip zip || package_result=$?
+            printf 'package_query_exit=%s (PATH tools may be outside dpkg)\n' "$package_result"
+          } > _evidence/distro-packages.txt
+
+      - name: CMake acquisition and unchanged overlay workflow with sampled resource stops
+        timeout-minutes: 52
+        run: |
+          # CI process supervision only. All dependency acquisition/build orchestration is CMake.
+          # No secret variables, installer, credentials, binary caches or Qt are supplied.
+          rx_bytes() { awk 'NR>2 {gsub(":","",$1); if($1!="lo") n+=$2} END {printf "%.0f\n",n}' /proc/net/dev; }
+          base_rx=$(rx_bytes)
+          printf 'elapsed_seconds\treceived_bytes\tscratch_bytes\tfree_bytes\n' > _evidence/resources.tsv
+          setsid timeout --signal=TERM --kill-after=30s 50m cmake --workflow --preset linux-ci-source > _evidence/driver.log 2>&1 &
+          driver=$!
+          trap 'kill -TERM -- "-$driver" 2>/dev/null || true' EXIT
+          started=$SECONDS
+          stopped=0
+          while kill -0 "$driver" 2>/dev/null; do
+            received=$(( $(rx_bytes) - base_rx ))
+            scratch=$(du -sb _work _evidence ../out/linux-overlay | awk '{n+=$1} END {printf "%.0f\n",n}')
+            available=$(df -B1 --output=avail . | tail -n 1 | tr -d ' ')
+            elapsed=$(( SECONDS - started ))
+            printf '%s\t%s\t%s\t%s\n' "$elapsed" "$received" "$scratch" "$available" >> _evidence/resources.tsv
+            if (( received > 1932735283 || scratch > 8053063680 || available < 10737418240 )); then
+              printf 'RESOURCE_STOP: received=%s scratch=%s free=%s; no build pass\n' "$received" "$scratch" "$available" | tee _evidence/resource-stop.txt
+              kill -TERM -- "-$driver" 2>/dev/null || true
+              sleep 5
+              kill -KILL -- "-$driver" 2>/dev/null || true
+              stopped=1
+              break
+            fi
+            if (( elapsed % 60 < 2 )); then printf 'CMake slice running: %ss, receive=%s, scratch=%s\n' "$elapsed" "$received" "$scratch"; fi
+            sleep 2
+          done
+          result=0
+          wait "$driver" || result=$?
+          printf 'driver_exit=%s\nresource_stop=%s\n' "$result" "$stopped" > _evidence/process-result.txt
+          cat _evidence/status.txt 2>/dev/null || true
+          if (( stopped != 0 )); then exit 125; fi
+          exit "$result"
+
+      - name: Collect scoped text logs and artifact provenance
+        if: always()
+        timeout-minutes: 3
+        run: |
+          cmake -P collect.cmake
+          {
+            printf '## FFMS2 Linux source-slice observation\n\n'
+            cat _evidence/status.txt
+            printf '\n'
+            cat _evidence/process-result.txt 2>/dev/null || true
+            cat _evidence/resource-stop.txt 2>/dev/null || true
+            printf '\nThis is one FFMS2/FFmpeg specimen, not complete Qt/libass provisioning, shipping capability, standalone static-export closure or cold/warm qualification. See retained logs.\n'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Retain scoped logs and hashes; no binaries or caches
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ffms2-linux-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: HikariSub/prototypes/build-workflow/ffms2-overlay/linux-ci/_evidence/
+          if-no-files-found: warn
+          retention-days: 7

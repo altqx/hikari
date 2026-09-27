@@ -2,7 +2,10 @@
   "name": "hikari-ffms2-overlay-probe",
   "version-string": "0.0.1-prototype",
   "builtin-baseline": "ee6a47dac031930715bea2e6dfb9ad60caaa5d83",
-  "dependencies": ["hikari-ffms2"],
+  "dependencies": [
+    "hikari-ffms2",
+    {"name": "ffmpeg", "default-features": false, "features": ["avcodec", "avformat", "swresample", "swscale"]}
+  ],
   "overrides": [
     {"name": "ffmpeg", "version": "7.1.2", "port-version": 5}
   ]
