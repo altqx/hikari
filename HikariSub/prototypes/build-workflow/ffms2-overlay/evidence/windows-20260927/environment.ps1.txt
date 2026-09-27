@@ -1,0 +1,23 @@
+$ErrorActionPreference='Stop'
+$ownedRoot=Split-Path -Parent $PSScriptRoot
+Import-Module 'C:/Program Files/Microsoft Visual Studio/18/Community/Common7/Tools/Microsoft.VisualStudio.DevShell.dll'
+Enter-VsDevShell -VsInstallPath 'C:/Program Files/Microsoft Visual Studio/18/Community' -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
+$env:VCPKG_ROOT=Join-Path $PSScriptRoot 'vcpkg'
+$env:HIKARI_PROTOTYPE_VCPKG_ROOT=$env:VCPKG_ROOT
+$env:VCPKG_DISABLE_METRICS='1'
+$env:VCPKG_MAX_CONCURRENCY='2'
+$env:CMAKE_BUILD_PARALLEL_LEVEL='2'
+$env:VCPKG_BINARY_SOURCES='clear'
+$env:X_VCPKG_ASSET_SOURCES='clear'
+$env:VCPKG_DOWNLOADS=Join-Path $PSScriptRoot 'downloads'
+$env:X_VCPKG_REGISTRIES_CACHE=Join-Path $PSScriptRoot 'registries'
+$env:VCPKG_DEFAULT_BINARY_CACHE=Join-Path $PSScriptRoot 'binary-cache'
+$env:VCPKG_VISUAL_STUDIO_PATH='C:/Program Files/Microsoft Visual Studio/18/Community'
+$env:GIT_TERMINAL_PROMPT='0'
+$env:GIT_CONFIG_COUNT='1'
+$env:GIT_CONFIG_KEY_0='core.autocrlf'
+$env:GIT_CONFIG_VALUE_0='false'
+$env:TEMP=Join-Path $PSScriptRoot 'temp'
+$env:TMP=$env:TEMP
+foreach($path in @($env:VCPKG_DOWNLOADS,$env:X_VCPKG_REGISTRIES_CACHE,$env:VCPKG_DEFAULT_BINARY_CACHE,$env:TEMP)) { New-Item -ItemType Directory -Path $path -Force | Out-Null }
+Set-Location -LiteralPath $ownedRoot

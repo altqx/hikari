@@ -1,0 +1,59 @@
+param([Parameter(Mandatory=$true)][string]$TaskScript,[Parameter(Mandatory=$true)][string]$Name)
+$ErrorActionPreference='Stop'
+$ownedRoot=Split-Path -Parent $PSScriptRoot
+$resolvedTask=(Resolve-Path -LiteralPath $TaskScript).Path
+if (-not $resolvedTask.StartsWith($PSScriptRoot,[StringComparison]::OrdinalIgnoreCase)) { throw 'Task outside owned scratch' }
+$statePath=Join-Path $PSScriptRoot 'budget-baseline.json'
+if (-not (Test-Path -LiteralPath $statePath)) {
+    $baseline=[ordered]@{startedUtc=[DateTime]::UtcNow.ToString('o'); adapters=@(Get-NetAdapterStatistics | Select-Object Name,ReceivedBytes); initialFreeBytes=(Get-PSDrive -Name C).Free}
+    $baseline | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $statePath -Encoding utf8
+}
+$baseline=Get-Content -Raw -LiteralPath $statePath | ConvertFrom-Json
+$log=Join-Path $PSScriptRoot ($Name+'.stdout.log')
+$errlog=Join-Path $PSScriptRoot ($Name+'.stderr.log')
+$process=Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList @('-NoProfile','-File',$resolvedTask) -WorkingDirectory $ownedRoot -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $errlog -PassThru
+$stopped=$false
+try { do {
+    Start-Sleep -Seconds 3
+    $process.Refresh()
+    $scratchBytes=0L
+    foreach($sub in @('_work','out')) {
+        $path=Join-Path $ownedRoot $sub
+        if(Test-Path -LiteralPath $path) { $size=(Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum; $scratchBytes += [long]$size }
+    }
+    $shortRoot='C:/Work/HikariF48'
+    if(Test-Path -LiteralPath $shortRoot) {
+        if(-not (Test-Path -LiteralPath (Join-Path $shortRoot 'OWNED-FFMS2-PROTOTYPE.txt'))) { throw 'Short scratch ownership marker missing' }
+        $size=(Get-ChildItem -LiteralPath $shortRoot -Recurse -File -Force -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+        $scratchBytes += [long]$size
+    }
+    $rx=0L
+    foreach($adapter in Get-NetAdapterStatistics) {
+        $old=$baseline.adapters | Where-Object Name -eq $adapter.Name
+        if($old) {
+            if([long]$adapter.ReceivedBytes -lt [long]$old.ReceivedBytes) { throw 'Network counter reset: cannot retain conservative acquisition bound' }
+            $rx += [long]$adapter.ReceivedBytes-[long]$old.ReceivedBytes
+        } else { $rx += [long]$adapter.ReceivedBytes }
+    }
+    $free=(Get-PSDrive -Name C).Free
+    $sample=[ordered]@{utc=[DateTime]::UtcNow.ToString('o');task=$Name;pid=$process.Id;wholeHostReceivedDelta=$rx;scratchBytes=$scratchBytes;freeBytes=$free}
+    $sample | ConvertTo-Json -Compress | Add-Content -LiteralPath (Join-Path $PSScriptRoot 'budget-samples.jsonl') -Encoding utf8
+    # Conservative guard margins below the approved hard bounds; all host traffic counts.
+    if($rx -gt 1.8GB -or $scratchBytes -gt 7.5GB -or $free -lt 26GB) {
+        if(-not $process.HasExited) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
+        $stopped=$true
+        Write-Output ('BUDGET_STOP '+($sample | ConvertTo-Json -Compress))
+        break
+    }
+} while(-not $process.HasExited)
+} catch {
+    $process.Refresh()
+    if(-not $process.HasExited) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
+    throw
+}
+$process.WaitForExit()
+Get-Content -LiteralPath $log -Tail 25
+Get-Content -LiteralPath $errlog -Tail 15
+Write-Output ('RESOURCE_FINAL '+($sample | ConvertTo-Json -Compress))
+if($stopped) { exit 90 }
+exit $process.ExitCode

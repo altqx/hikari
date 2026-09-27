@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-27T06:55:30.4108007Z",
+  "compiler": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.exe",
+  "linker": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\link.exe",
+  "windowsSdkVersion": "10.0.26100.0\\",
+  "windowsSdkDir": "C:\\Program Files (x86)\\Windows Kits\\10\\",
+  "vcToolsVersion": "14.51.36231",
+  "vsVersion": "18.0",
+  "cmake": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\CMake\\bin\\cmake.exe",
+  "ninja": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\Common7\\IDE\\CommonExtensions\\Microsoft\\CMake\\Ninja\\ninja.exe",
+  "vcpkgRoot": "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\build-workflow\\ffms2-overlay\\_work\\vcpkg",
+  "registryCache": "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\build-workflow\\ffms2-overlay\\_work\\registries",
+  "downloads": "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\build-workflow\\ffms2-overlay\\_work\\downloads",
+  "binarySources": "clear",
+  "maxConcurrency": "2"
+}

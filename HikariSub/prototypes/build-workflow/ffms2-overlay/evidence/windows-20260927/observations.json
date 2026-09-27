@@ -1,0 +1,487 @@
+{
+  "status": "PASS for the bounded Windows source-build and authored-media/FFMS-only specimens, not full Task48 qualification.",
+  "captured_utc": "2026-09-27T07:33:31.345174+00:00",
+  "pins": {
+    "vcpkg_registry": "ee6a47dac031930715bea2e6dfb9ad60caaa5d83",
+    "vcpkg_tool": "2026-07-27-98d7cb0cf1f4686a3e43aa5672b6230c1d56bce8",
+    "ffmpeg": "7.1.2#5",
+    "ffmpeg_port_tree": "bf414f1e4f2a63ff7410444dc4eabb5b392f6d16",
+    "ffms2_commit": "45d5f72100d88c52acdd54bfedcc0315a44c735d",
+    "additional_git_blob": "be378044fff07bac704f04dc57caa4fc5f95691e"
+  },
+  "build_host": {
+    "os": "Windows 11 Pro10.0.26200 x64",
+    "cpu": "AMD Ryzen5 5600,6cores/12logical",
+    "physical_memory_bytes": 34276634624,
+    "msvc_compiler": "19.51.36260",
+    "vc_tools_directory": "14.51.36231",
+    "windows_sdk": "10.0.26100.0",
+    "cmake": "4.4.3",
+    "ninja": "1.13.2",
+    "build_jobs": 2
+  },
+  "combined_consumer": {
+    "private_track_title": true,
+    "private_track_language": true,
+    "frames_checked": 3,
+    "request_order": [
+      2,
+      0,
+      1
+    ],
+    "ffms_version": 83951616,
+    "ffmpeg_version": "7.1.2"
+  },
+  "independent_ffms_only_consumer": {
+    "ffms_only_target_link": true,
+    "authored_frame0_pixel0": 40
+  },
+  "strict_source_integrity": {
+    "canonical_files": [
+      {
+        "path": "COPYING",
+        "sha256": "321c1b9fbed050f434128289c4ae7319901b5aa4b57053b3dbe3a4e334af57bd",
+        "bytes": 1481,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "include/ffms.h",
+        "sha256": "a6038e247364dca507dba678e418cd075ed03d07f1f56b1a5f5ffcfffcc746f4",
+        "bytes": 22130,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "include/ffmscompat.h",
+        "sha256": "378083107566670c99fc9e311e4191f21cce3f4d7a33211896081e79750ce44d",
+        "bytes": 1305,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/audiosource.cpp",
+        "sha256": "5e864f86f06565eeaec8d8ea0d53c444fc1459ab462cd087db9b06462f3147bd",
+        "bytes": 23212,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/audiosource.h",
+        "sha256": "d7c857feed78aeba03a562bd3a1567569c7151d0c7b18c2afcebe86c31dce1c6",
+        "bytes": 5137,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/ffms.cpp",
+        "sha256": "a85fdeee23df59a63287ed3e2eeef62635eaf50677cccd81d17b91c3929d83a3",
+        "bytes": 12772,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/filehandle.cpp",
+        "sha256": "967a7b1661fb93cde34d90e6a136feb9b922842d97a514d22790138b8103d8a5",
+        "bytes": 4375,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/filehandle.h",
+        "sha256": "93534a6610483fed16e21113804738fefb9f76869411ae258e344f6d16e1d5f2",
+        "bytes": 1780,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/indexing.cpp",
+        "sha256": "f2c23f5fa126a1228540156ad007fc947e1a53298ac2dc1e76e142d0b5d66a6e",
+        "bytes": 25380,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/indexing.h",
+        "sha256": "43dcce972b0227cb949deca2782eaf1064a0409d7f3d7eaf3ea3a303ed2173da",
+        "bytes": 4333,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/track.cpp",
+        "sha256": "a323f896a27159f47e5a4d492b6302f9e2107a736a55b9c78f3567565502e313",
+        "bytes": 16640,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/track.h",
+        "sha256": "27f38dd85e8493f0287fc29b1ceb2ef6b55a7d42474e8c6ce867f3170d96bf80",
+        "bytes": 4514,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/utils.cpp",
+        "sha256": "ccbf2d409c3e7199efba49d3e6729c56c97ecee1c0286e653791f6af4d7292e3",
+        "bytes": 6200,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/utils.h",
+        "sha256": "6cffa88830f38adffc13822b1ec0305a02f4345fb072d668fc9e9599589addad",
+        "bytes": 4697,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/videosource.cpp",
+        "sha256": "1746b60be0300d177c8da5102a5f64da727b86717af7e09ac99ca007b28b2257",
+        "bytes": 45469,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/videosource.h",
+        "sha256": "8c8c8b84f745cb6bcb38734c39d58a267c35ae3ce930732011531979ef13b450",
+        "bytes": 4948,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/videoutils.cpp",
+        "sha256": "54838a5fa78a6b5fb904a0ce796378e047c09ae5015773f7d110b2669f671bda",
+        "bytes": 10722,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/videoutils.h",
+        "sha256": "0a43ff33a800ea12bafeaa41674a69d112945ffb31ba3faf2d389120169326c2",
+        "bytes": 2229,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/zipfile.cpp",
+        "sha256": "97602a31448a49d68506c1633155a3520f933cc82101fc6798a1e6f0becb1e27",
+        "bytes": 5035,
+        "crlf_count": 0,
+        "canonical_match": true
+      },
+      {
+        "path": "src/core/zipfile.h",
+        "sha256": "bd076da4780f15b41a4082e097b2ff89d398f6d2300fe7575f379f5a0824da80",
+        "bytes": 1990,
+        "crlf_count": 0,
+        "canonical_match": true
+      }
+    ],
+    "additional_input": {
+      "path": "C:\\Users\\altqx\\.codex\\worktrees\\qt-design-prototypes\\Kainote\\HikariSub\\prototypes\\build-workflow\\ffms2-overlay\\_work\\downloads\\hikari-indexing_additional-20d647c4.cpp",
+      "bytes": 5578,
+      "sha256": "71675964eedc00c1493e6d833ca41ffed6a79e9b33199928cd2b807ec9451cf3"
+    },
+    "additional_sha512_match": true,
+    "generated_include_relocation": {
+      "path": "C:\\Work\\HikariF48\\b\\hikari-ffms2\\x64-hikari-windows-release-rel\\indexing_additional.cpp",
+      "bytes": 5713,
+      "sha256": "8e7f887c6adcd9018c817e23168731beecf26d287e56579bc7f6ed32d9e8462e"
+    },
+    "corruption_fixture": {
+      "nonLineEndingCorruptionRejected": true,
+      "configureExitCode": 1,
+      "diagnostic": "Pinned fork source bytes changed: COPYING",
+      "corruptInputHashBefore": "137E84C09D4998EE3E0943BEB666B24D1B39DEFB72DCF30B35E4D7E342349452",
+      "corruptInputHashAfter": "137E84C09D4998EE3E0943BEB666B24D1B39DEFB72DCF30B35E4D7E342349452",
+      "inputPreserved": true
+    }
+  },
+  "recipe_raw_identities_after_fixes": [
+    {
+      "path": ".gitignore",
+      "actual_raw_sha256": "3b2e99678d154b28acb250b37f34081586c4f05e92dd9fcf4c04c6cdf9a3ba1d",
+      "crlf_count": 0
+    },
+    {
+      "path": "README.md",
+      "actual_raw_sha256": "7c01a51b59210b8b65d225ac9c4c53d987c71e8309ff34a699d4139129927270",
+      "crlf_count": 0
+    },
+    {
+      "path": "inputs.lock.json",
+      "actual_raw_sha256": "ff3ef50b2ae23038a1847f8449a6dfdba93d273f10d18744a26d2910f34994f0",
+      "crlf_count": 0
+    },
+    {
+      "path": "dependency-plan.json",
+      "actual_raw_sha256": "a91c7c32808793b402652eb7ecbbbfe1a7b5b870f56cd0bb97272777a2153390",
+      "crlf_count": 627
+    },
+    {
+      "path": "CMakeLists.txt",
+      "actual_raw_sha256": "0fb15a444b6dd020c75f74d6c4c570564449ef7a81711c6a28b207d2701b6143",
+      "crlf_count": 0
+    },
+    {
+      "path": "CMakePresets.json",
+      "actual_raw_sha256": "c22b1ed2148a9a81bf8ceb84ca6d7a570c93be182a534a87590cc8890f7b51b5",
+      "crlf_count": 0
+    },
+    {
+      "path": "probe.cpp",
+      "actual_raw_sha256": "46293c5ac6657178312b517f8cc1dc0a88d4f1e346b1c8489d582ed8766df78a",
+      "crlf_count": 0
+    },
+    {
+      "path": "vcpkg.json",
+      "actual_raw_sha256": "db5ad73bf0ad8059bc03ed3ea25348e7b5de918955823e7669512fe368dd5f77",
+      "crlf_count": 0
+    },
+    {
+      "path": "vcpkg-configuration.json",
+      "actual_raw_sha256": "c3e253e9c32db34acbbda6cbe22ba6908a258188fe1ca06efa2fbab91952bc60",
+      "crlf_count": 0
+    },
+    {
+      "path": "triplets/x64-hikari-windows-release.cmake",
+      "actual_raw_sha256": "54e6cbf8e867f4841a09875f7a2e19b71070507b1501ff754660990a6ede9da9",
+      "crlf_count": 0
+    },
+    {
+      "path": "triplets/x64-hikari-linux-release.cmake",
+      "actual_raw_sha256": "f72b7e6dbaa6f4c65119cce188f17990a2684b39154a40ca4db93ee997218d73",
+      "crlf_count": 0
+    },
+    {
+      "path": "ports/hikari-ffms2/vcpkg.json",
+      "actual_raw_sha256": "fcaba9cde2b23c3a27b99e1122ed39fd32ff80b91efaace7406440fac4770227",
+      "crlf_count": 0
+    },
+    {
+      "path": "ports/hikari-ffms2/portfile.cmake",
+      "actual_raw_sha256": "16235c62a635b5848b87c217c88f0485696ebeeb291a8d6bcf09b5e9e6983395",
+      "crlf_count": 0
+    },
+    {
+      "path": "ports/hikari-ffms2/CMakeLists.txt",
+      "actual_raw_sha256": "92224ae1723109d3b76cac061b9f3cfcad47b5e0cdac2ba2552fc267912a180e",
+      "crlf_count": 0
+    },
+    {
+      "path": "ports/hikari-ffms2/HikariFFMS2Config.cmake.in",
+      "actual_raw_sha256": "4fc548651fba150182f20069de5d50d418b8fc16c7b68c13e88b447330d487dc",
+      "crlf_count": 0
+    },
+    {
+      "path": "ports/hikari-ffms2/source-sha256.json",
+      "actual_raw_sha256": "31995cce268b83d703a66c3a96dafc792c2601eb6cb08cb223cf29b2bb61f3a9",
+      "crlf_count": 22
+    }
+  ],
+  "local_artifacts_not_committed": [
+    {
+      "path": "C:\\Work\\HikariF48\\out\\ffms2_overlay_probe.exe",
+      "bytes": 17572864,
+      "sha256": "e54b0273a8deb26ff45c6e4d3d5fccb39a18363435ed063b551a92c1aa1f7e7e"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\out\\authored-fixture.mkv",
+      "bytes": 817,
+      "sha256": "fcb90d5b9a7bd07c804c5f4cdba2bad9a23d30a6eb1f204e67943060bb2aa4ed"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\ffms-only\\ffms_only_probe.exe",
+      "bytes": 17564672,
+      "sha256": "7ea8bfbc72220b7e36a4f00a1baafc6ea0622dd45f7e0e1620964dc6531241ad"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\avcodec.lib",
+      "bytes": 132370224,
+      "sha256": "872cf7c2677a9aceefa476669e52a76907aa8c68a8d73668a8dc6c01a25d3f72"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\avformat.lib",
+      "bytes": 46756302,
+      "sha256": "f95616455dd8ba3f572557057ffec7681f625356f5e81873e7367d0581597c2a"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\avutil.lib",
+      "bytes": 6878500,
+      "sha256": "5734e431db1395deab74a8b6126049c6f985b93ac292a40bf877feccc2fc9699"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\hikari-ffms2.lib",
+      "bytes": 7565332,
+      "sha256": "a74141ed36c841208e29f30f9f83d6d29d3d4a3e622f7e25d500a3022a105ac3"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\swresample.lib",
+      "bytes": 1006400,
+      "sha256": "3c4562761aa6530df49f21513872786b8aa09a8eb67e199e3ff982f31d5c7e63"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\swscale.lib",
+      "bytes": 4584056,
+      "sha256": "31deff0332625765122404d46898396e99859dbaa5828af8ff9412ab59741bb6"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\lib\\zs.lib",
+      "bytes": 487122,
+      "sha256": "7382594743788a1245e1a782d6cdb62a7ac6b0579663b9f3f38da68706ce99b1"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\share\\HikariFFMS2\\HikariFFMS2Config.cmake",
+      "bytes": 1238,
+      "sha256": "488f68d77cc65d05e10e37320d7d05f266da671ac87fb63100f4b93a3c5e858d"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\share\\HikariFFMS2\\HikariFFMS2ConfigVersion.cmake",
+      "bytes": 3360,
+      "sha256": "bfb1a7a4ca8783ee2e2add28fed7ea2902dbd5aada06b84cc5c3f3d89e7fbae2"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\share\\HikariFFMS2\\HikariFFMS2Targets-release.cmake",
+      "bytes": 892,
+      "sha256": "d2b8a8cf3f43c45f788085c19921225dad113d7017faea8e8848502a8b73ed38"
+    },
+    {
+      "path": "C:\\Work\\HikariF48\\installed\\x64-hikari-windows-release\\share\\HikariFFMS2\\HikariFFMS2Targets.cmake",
+      "bytes": 4372,
+      "sha256": "66688b986d205a49e9f856ca992f55eddc388e98efc41ba113ccbc295dca11fb"
+    }
+  ],
+  "resources": {
+    "approved_downloaded_payload_limit": 2147483648,
+    "approved_new_scratch_limit": 8589934592,
+    "required_min_free": 26843545600,
+    "guard_note": "Counts all host adapter received traffic conservatively, including unrelated traffic; sampled about every3seconds with lower stop thresholds1.8GiB/7.5GiB/26GiB. No network counter reset observed. Both scratch roots included. Not a package-only wire measurement or installed-size estimate.",
+    "max_whole_host_received_delta": 797789562,
+    "max_sampled_scratch_bytes": 1601586865,
+    "min_sampled_free_bytes": 40675135488,
+    "phases": [
+      {
+        "name": "01-acquire",
+        "first_sample_utc": "2026-09-27T06:51:10.9693972Z",
+        "last_sample_utc": "2026-09-27T06:51:31.7734388Z",
+        "max_scratch_bytes": 99479872,
+        "last_whole_host_received_delta": 64687989
+      },
+      {
+        "name": "02-resolve",
+        "first_sample_utc": "2026-09-27T06:53:25.6275583Z",
+        "last_sample_utc": "2026-09-27T06:53:29.4148334Z",
+        "max_scratch_bytes": 99753590,
+        "last_whole_host_received_delta": 67791925
+      },
+      {
+        "name": "02-resolve-retry",
+        "first_sample_utc": "2026-09-27T06:54:15.8853772Z",
+        "last_sample_utc": "2026-09-27T06:54:19.6404990Z",
+        "max_scratch_bytes": 99756797,
+        "last_whole_host_received_delta": 69601100
+      },
+      {
+        "name": "03-prefetch-port",
+        "first_sample_utc": "2026-09-27T06:55:04.1212209Z",
+        "last_sample_utc": "2026-09-27T06:55:04.1212209Z",
+        "max_scratch_bytes": 99890526,
+        "last_whole_host_received_delta": 70293760
+      },
+      {
+        "name": "04-resolve-hydrated",
+        "first_sample_utc": "2026-09-27T06:55:17.4890123Z",
+        "last_sample_utc": "2026-09-27T06:55:17.4890123Z",
+        "max_scratch_bytes": 99986573,
+        "last_whole_host_received_delta": 70552296
+      },
+      {
+        "name": "05-resolve-longpaths",
+        "first_sample_utc": "2026-09-27T06:55:33.5957159Z",
+        "last_sample_utc": "2026-09-27T06:55:53.8413848Z",
+        "max_scratch_bytes": 310428513,
+        "last_whole_host_received_delta": 131531079
+      },
+      {
+        "name": "06-feature-probe",
+        "first_sample_utc": "2026-09-27T06:59:35.9576967Z",
+        "last_sample_utc": "2026-09-27T06:59:39.8157885Z",
+        "max_scratch_bytes": 310433138,
+        "last_whole_host_received_delta": 136775695
+      },
+      {
+        "name": "07-build",
+        "first_sample_utc": "2026-09-27T07:02:00.2962764Z",
+        "last_sample_utc": "2026-09-27T07:02:35.8612045Z",
+        "max_scratch_bytes": 463764626,
+        "last_whole_host_received_delta": 165969404
+      },
+      {
+        "name": "08-build-short",
+        "first_sample_utc": "2026-09-27T07:05:41.3821986Z",
+        "last_sample_utc": "2026-09-27T07:17:52.6116847Z",
+        "max_scratch_bytes": 1529039929,
+        "last_whole_host_received_delta": 498751618
+      },
+      {
+        "name": "10-corruption-guard",
+        "first_sample_utc": "2026-09-27T07:22:43.4618586Z",
+        "last_sample_utc": "2026-09-27T07:22:43.4618586Z",
+        "max_scratch_bytes": 1530781000,
+        "last_whole_host_received_delta": 571029329
+      },
+      {
+        "name": "11-build-normalized",
+        "first_sample_utc": "2026-09-27T07:23:06.0348287Z",
+        "last_sample_utc": "2026-09-27T07:23:10.8504025Z",
+        "max_scratch_bytes": 1530780341,
+        "last_whole_host_received_delta": 578634853
+      },
+      {
+        "name": "12-build-explicit-lf",
+        "first_sample_utc": "2026-09-27T07:25:52.2647243Z",
+        "last_sample_utc": "2026-09-27T07:26:07.1627498Z",
+        "max_scratch_bytes": 1581004762,
+        "last_whole_host_received_delta": 658091303
+      },
+      {
+        "name": "13-ffms-only",
+        "first_sample_utc": "2026-09-27T07:26:55.7276249Z",
+        "last_sample_utc": "2026-09-27T07:26:55.7276249Z",
+        "max_scratch_bytes": 1585601512,
+        "last_whole_host_received_delta": 743611353
+      },
+      {
+        "name": "14-corruption-final",
+        "first_sample_utc": "2026-09-27T07:27:42.5464186Z",
+        "last_sample_utc": "2026-09-27T07:27:42.5464186Z",
+        "max_scratch_bytes": 1601586865,
+        "last_whole_host_received_delta": 797789562
+      }
+    ]
+  },
+  "limits": [
+    "No Qt acquisition/composition, official pre-project bootstrap, app/helper IPC, deployment/signing/update proof.",
+    "No cold replay or missing/corrupt-tool acquisition matrix; corruption check covers only locked FFMS2 source handling.",
+    "No audio resampling, chapter/subtitle callback, attachment, long-GOP/VFR, hardware decode, playback-clock or broad format/performance qualification.",
+    "Build warnings retained; source API behaviors were not fixed.",
+    "Windows source build uses explicitly short scratch overrides, not an unmodified deep-root workflow pass.",
+    "No old bundled FFMS2/FFmpeg binary or existing user binary cache supplies these linked libraries."
+  ],
+  "independent_ffms_only_consumer_sources": [
+    {
+      "path": "ffms-only/CMakeLists.txt",
+      "sha256": "5ce50eafba44cdd7ad3952c1fefb068a59cb29a31c48baa60e2c554c30a93232",
+      "bytes": 245,
+      "identical_to_compiled_source": true
+    },
+    {
+      "path": "ffms-only/main.cpp",
+      "sha256": "9835826c13515b13f9313328302328b71606210017c4fd2148d919e7388d4857",
+      "bytes": 1115,
+      "identical_to_compiled_source": true
+    }
+  ]
+}

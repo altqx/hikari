@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.28)
+project(HikariFFMSOnlyLinkProbe LANGUAGES CXX)
+find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
+add_executable(ffms_only_probe main.cpp)
+target_link_libraries(ffms_only_probe PRIVATE HikariFFMS2::ffms2)

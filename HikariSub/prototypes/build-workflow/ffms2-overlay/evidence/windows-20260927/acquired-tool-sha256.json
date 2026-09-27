@@ -1,0 +1,39 @@
+[
+  {
+    "name": "cmake",
+    "version": "4.4.3",
+    "url": "https://github.com/Kitware/CMake/releases/download/v4.4.3/cmake-4.4.3-windows-x86_64.zip",
+    "path_relative": "_work/downloads/cmake-4.4.3-windows-x86_64.zip",
+    "bytes": 54408599,
+    "sha256": "4d52ebab7193a698651639ed80d8d04fd903358843572cf44c7fd234cb7c26ab",
+    "sha512": "5f8527e18bffdf5113a64238442093468fce80c8a5f99e1b5eb217e0d73796eb7a2a236ee0c522de3424cb87a1abb3153fcecdb20d8d338c8a607667c9b37c90",
+    "pinned_catalog_digest_match": true
+  },
+  {
+    "name": "7zip",
+    "version": "26.03",
+    "url": "https://github.com/ip7z/7zip/releases/download/26.03/7z2603-x64.exe",
+    "path_relative": "_work/downloads/7z2603-x64.7z.exe",
+    "bytes": 1661239,
+    "sha256": "0859c524b8a63551848f0c246abddcb1d0b7b656b0fbfe879f8d85e61a9e6edd",
+    "sha512": "50025bab628b69f8eb35a590900093814e540ce7ffef8c676a1198e2d2a3f1dcdc44f04f92c28ca89bf6ee869fad3710786e14073c7db36281e8f7a4c495ea7f",
+    "pinned_catalog_digest_match": true
+  },
+  {
+    "name": "7zr",
+    "version": "26.03",
+    "url": "https://github.com/ip7z/7zip/releases/download/26.03/7zr.exe",
+    "path_relative": "_work/downloads/tools/7zr-26.03-windows/7zr.exe",
+    "bytes": 602624,
+    "sha256": "ad4c82fadcbdf93c03b4fc440f300509c7d60c5c2f4d183e35d9d70d6957037d",
+    "sha512": "211a97487c573b8611dfe3acacbd361ffd41a888a9d63c69f2a7b52cbadc686a424ea08ec88c9566e4e1365c5d6caf1825865440f79f4a751fefb27fe9f0bea9",
+    "pinned_catalog_digest_match": true
+  },
+  {
+    "name": "vcpkg",
+    "path_relative": "_work/vcpkg/vcpkg.exe",
+    "bytes": 6745912,
+    "sha256": "13b8175e99a884c5ad34249218754b45541a1a63f216e92603aee57a285ac741",
+    "identity_source": "inputs.lock.json official release SHA256; copied after verification from installed VS bundle, which was read only"
+  }
+]

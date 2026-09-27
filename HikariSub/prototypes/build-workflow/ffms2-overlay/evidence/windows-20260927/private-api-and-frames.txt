@@ -1,0 +1,19 @@
+Start testing: Sep 27 14:26 SE Asia Standard Time
+----------------------------------------------------------
+1/1 Testing: private_api_and_frames
+1/1 Test: private_api_and_frames
+Command: "C:/Work/HikariF48/out/ffms2_overlay_probe.exe" "C:/Work/HikariF48/out/authored-fixture.mkv"
+Directory: C:/Work/HikariF48/out
+"private_api_and_frames" start time: Sep 27 14:26 SE Asia Standard Time
+Output:
+----------------------------------------------------------
+{"private_track_title":true,"private_track_language":true,"frames_checked":3,"request_order":[2,0,1],"ffms_version":83951616,"ffmpeg_version":"7.1.2"}
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Passed.
+"private_api_and_frames" end time: Sep 27 14:26 SE Asia Standard Time
+"private_api_and_frames" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Sep 27 14:26 SE Asia Standard Time

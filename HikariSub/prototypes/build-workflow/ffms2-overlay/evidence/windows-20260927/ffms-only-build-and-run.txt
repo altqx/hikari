@@ -1,0 +1,25 @@
+-- The CXX compiler identification is MSVC 19.51.36260.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found FFMPEG: C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avformat.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avcodec.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/swresample.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/swscale.lib;C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/avutil.lib;secur32;ws2_32;mfuuid;strmiids;ole32;user32;bcrypt
+-- Found ZLIB: C:/Work/HikariF48/installed/x64-hikari-windows-release/lib/zs.lib (found version "1.3.2")
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
+-- Configuring done (2.9s)
+-- Generating done (0.0s)
+-- Build files have been written to: C:/Work/HikariF48/ffms-only
+Change Dir: 'C:/Work/HikariF48/ffms-only'
+
+Run Build Command(s): C:/PROGRA~1/MICROS~1/18/COMMUN~1/Common7/IDE/COMMON~1/MICROS~1/CMake/Ninja/ninja.exe -v -j 2
+[1/2] "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe"  /nologo /TP -DFFMS_STATIC -external:IC:\Work\HikariF48\installed\x64-hikari-windows-release\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++17 -MD /showIncludes /FoCMakeFiles\ffms_only_probe.dir\main.cpp.obj /FdCMakeFiles\ffms_only_probe.dir\ /FS -c C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\ffms-only\main.cpp
+[2/2] C:\WINDOWS\system32\cmd.exe /C "cd . && C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\downloads\tools\cmake-4.4.3-windows\cmake-4.4.3-windows-x86_64\bin\cmake.exe -E vs_link_exe --msvc-ver=1951 --intdir=CMakeFiles\ffms_only_probe.dir --rc="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\rc.exe" --mt="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\mt.exe" --manifests  -- "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe" /nologo CMakeFiles\ffms_only_probe.dir\main.cpp.obj  /out:ffms_only_probe.exe /implib:ffms_only_probe.lib /pdb:ffms_only_probe.pdb /version:0.0 /machine:x64 /INCREMENTAL:NO /subsystem:console  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\hikari-ffms2.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\zs.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\avformat.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\avcodec.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\swresample.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\swscale.lib  C:\Work\HikariF48\installed\x64-hikari-windows-release\lib\avutil.lib  secur32.lib  ws2_32.lib  mfuuid.lib  strmiids.lib  ole32.lib  user32.lib  bcrypt.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Work\HikariF48\ffms-only && C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\vcpkg\vcpkg.exe z-applocal --target-binary=C:/Work/HikariF48/ffms-only/ffms_only_probe.exe --installed-bin-dir=C:/Work/HikariF48/installed/x64-hikari-windows-release/bin""
+
+{"ffms_only_target_link":true,"authored_frame0_pixel0":40}

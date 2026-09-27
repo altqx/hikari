@@ -1,0 +1,15 @@
+Detecting compiler hash for triplet x64-windows...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+Detecting compiler hash for triplet x64-hikari-windows-release...
+Compiler found: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+The following packages will be built and installed:
+    ffmpeg[avcodec,avformat,core,swresample,swscale]:x64-hikari-windows-release@7.1.2#5
+    hikari-ffms2:x64-hikari-windows-release@5.1.0-hikari-45d5f721 -- C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\ports\hikari-ffms2
+  * pkgconf:x64-windows@3.0.3#1
+  * vcpkg-cmake:x64-windows@2025-08-07
+  * vcpkg-cmake-config:x64-windows@2026-07-21
+  * vcpkg-cmake-get-vars:x64-windows@2025-05-29
+  * vcpkg-pkgconfig-get-modules:x64-windows@2024-04-03
+  * vcpkg-tool-meson:x64-windows@1.9.0#10
+  * zlib:x64-hikari-windows-release@1.3.2#2
+Additional packages (*) will be modified to complete this operation.

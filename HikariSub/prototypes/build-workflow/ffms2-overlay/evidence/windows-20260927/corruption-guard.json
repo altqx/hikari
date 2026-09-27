@@ -1,0 +1,8 @@
+{
+  "nonLineEndingCorruptionRejected": true,
+  "configureExitCode": 1,
+  "diagnostic": "Pinned fork source bytes changed: COPYING",
+  "corruptInputHashBefore": "137E84C09D4998EE3E0943BEB666B24D1B39DEFB72DCF30B35E4D7E342349452",
+  "corruptInputHashAfter": "137E84C09D4998EE3E0943BEB666B24D1B39DEFB72DCF30B35E4D7E342349452",
+  "inputPreserved": true
+}

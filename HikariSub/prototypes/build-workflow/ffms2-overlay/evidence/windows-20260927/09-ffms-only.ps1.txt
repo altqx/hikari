@@ -1,0 +1,13 @@
+. (Join-Path $PSScriptRoot 'environment.ps1')
+$shortRoot='C:/Work/HikariF48'
+if(-not (Test-Path -LiteralPath (Join-Path $shortRoot 'OWNED-FFMS2-PROTOTYPE.txt'))) { throw 'Owned short scratch marker absent' }
+$env:TEMP=Join-Path $shortRoot 'temp'
+$env:TMP=$env:TEMP
+$cmake=Join-Path $env:VCPKG_DOWNLOADS 'tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe'
+$build=Join-Path $shortRoot 'ffms-only'
+& $cmake -S (Join-Path $PSScriptRoot 'ffms-only') -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" -DVCPKG_MANIFEST_MODE=OFF -DVCPKG_TARGET_TRIPLET=x64-hikari-windows-release "-DVCPKG_OVERLAY_TRIPLETS=$ownedRoot/triplets" "-DVCPKG_INSTALLED_DIR=$shortRoot/installed"
+if($LASTEXITCODE -ne 0) { throw 'FFMS-only consumer configure failed' }
+& $cmake --build $build --parallel 2 --verbose
+if($LASTEXITCODE -ne 0) { throw 'FFMS-only consumer link failed' }
+& (Join-Path $build 'ffms_only_probe.exe') (Join-Path $shortRoot 'out/authored-fixture.mkv')
+if($LASTEXITCODE -ne 0) { throw 'FFMS-only consumer runtime failed' }

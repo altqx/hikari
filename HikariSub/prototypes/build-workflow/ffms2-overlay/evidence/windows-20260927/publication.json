@@ -1,0 +1,170 @@
+{
+  "scope": "Reviewable raw Windows evidence files; publication.json itself excluded. Evidence attributes preserve original bytes. No build outputs or dependency payloads included.",
+  "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 21,
+      "sha256": "44de1c400fbf981689257d46e4ff3fe6a7796292dd5551642680fb7822f2dd97"
+    },
+    {
+      "path": "08-build-short.ps1.txt",
+      "bytes": 1046,
+      "sha256": "a1adda7621a99c0c587940aa9331268ec1f629d4bcc258b77e69b5b9fa946593"
+    },
+    {
+      "path": "09-ffms-only.ps1.txt",
+      "bytes": 1099,
+      "sha256": "94af1761a953efe4247759174c12e373148fdb924e5cad5459c2b9c01336042b"
+    },
+    {
+      "path": "10-corruption-guard.ps1.txt",
+      "bytes": 2531,
+      "sha256": "a88b13a16165be7e058a0a07862456c1b5a4aba281d62816858b5fd2aa66b9a3"
+    },
+    {
+      "path": "acquired-files-final.json",
+      "bytes": 13388,
+      "sha256": "9e46359df4411128feef7c3909b68a60b7364386bfe22d17178c9bc389e492e6"
+    },
+    {
+      "path": "acquired-files-initial.json",
+      "bytes": 12714,
+      "sha256": "6ff213460c7be4d03c52b55aee4d3b808457cacfe53a029f50c71ee4fa517b49"
+    },
+    {
+      "path": "acquired-tool-sha256.json",
+      "bytes": 1851,
+      "sha256": "4d4303bcda7204cca2f7b443879498c306c6785934ab67ab340348bb6be5f689"
+    },
+    {
+      "path": "budget-baseline.json",
+      "bytes": 264,
+      "sha256": "87491141a2c5251cc4b16cc65e7df3c86e17d62508df183b3060b497d8b9ffc4"
+    },
+    {
+      "path": "budget-samples.jsonl",
+      "bytes": 28138,
+      "sha256": "6b630e846be991257df984c78e266bb205fa92d6c8c0c34baca77f36a129445c"
+    },
+    {
+      "path": "build-deep-path.txt",
+      "bytes": 14580,
+      "sha256": "610d4fba8d704d50fb4f432327a4d6199706492db4747f7fd46cf48640e12713"
+    },
+    {
+      "path": "build-final-warnings.txt",
+      "bytes": 1268,
+      "sha256": "6d11a1977b0950a973910cb412705ba7523e393a9de338d2df6cece70a61b546"
+    },
+    {
+      "path": "build-final.txt",
+      "bytes": 5602,
+      "sha256": "12367cb27daf792d308ed55276fce9f575753fe9869911ff0f6583aeac9bc021"
+    },
+    {
+      "path": "build-short-before-normalization.txt",
+      "bytes": 22476,
+      "sha256": "41e66b5934dd9f4832b5643f6c7790b3eac857170391593ed329ccca728a1afc"
+    },
+    {
+      "path": "corruption-guard-configure.txt",
+      "bytes": 2252,
+      "sha256": "61b9f48ccf0ee37333b9bd05ad24911a896f70897e1424a6d2529f7d9d7b7a9a"
+    },
+    {
+      "path": "corruption-guard.json",
+      "bytes": 358,
+      "sha256": "7c3e0ba385b2dc36885108cf3e61b34824a008846e19a95a8797a77ea228b643"
+    },
+    {
+      "path": "deep-path-compiler-failure.txt",
+      "bytes": 11842,
+      "sha256": "9ee3bbf5c3d44fad629e6ba36c25b463b88180a8bcc5a5f9f90e02b996e4ac8a"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 1299,
+      "sha256": "10cf6da7abb6299272fa48504086ba406a6bc326286c6c83e23a6bcc8fd9022d"
+    },
+    {
+      "path": "environment.ps1.txt",
+      "bytes": 1304,
+      "sha256": "5be02c2185ffeb579c8e7185334c52cc83db06c49222d5a305da18d8a39cf236"
+    },
+    {
+      "path": "ffms-only/CMakeLists.txt",
+      "bytes": 245,
+      "sha256": "5ce50eafba44cdd7ad3952c1fefb068a59cb29a31c48baa60e2c554c30a93232"
+    },
+    {
+      "path": "ffms-only/main.cpp",
+      "bytes": 1115,
+      "sha256": "9835826c13515b13f9313328302328b71606210017c4fd2148d919e7388d4857"
+    },
+    {
+      "path": "ffms-only-build-and-run.txt",
+      "bytes": 3903,
+      "sha256": "910800be3027af25a2309f2a96758ce29a99aed06d97e092e274e7f8c3657a4c"
+    },
+    {
+      "path": "git-archive-line-endings.json",
+      "bytes": 11169,
+      "sha256": "7cc2a9ec684ae361e4b3ee8f03b4e437cb049f028cb6752e45a06d77d197a056"
+    },
+    {
+      "path": "git-longpath-failure.txt",
+      "bytes": 2664,
+      "sha256": "5065e7d2a900984105a9ef38b4d1dc8271780665c736ad17f596dd306fff9f85"
+    },
+    {
+      "path": "initial-promisor-fetch-failure.txt",
+      "bytes": 2533,
+      "sha256": "58016ba3ac66e23a5c02a62f7d098f14df5a2d4da3502a2391aa49c71498945d"
+    },
+    {
+      "path": "observations.json",
+      "bytes": 18140,
+      "sha256": "54bf85d01cc023e761e1b31762145968d6523e7f61ec74c9535055f0d57a3a3a"
+    },
+    {
+      "path": "os.json",
+      "bytes": 133,
+      "sha256": "9adf19bddb99b0a30a42f6e13b47c21bbbe083ed31ddd3760acf2b9411e13546"
+    },
+    {
+      "path": "private-api-and-frames.txt",
+      "bytes": 959,
+      "sha256": "bc88b92fab10773b7e07b5736b78d780c26dee4a917befe1530f38bf286e823d"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7461,
+      "sha256": "7e5916de2b5e2f22b3dd29cc9966def400adf7bc0de39a0f3efc55dbc7b75e6d"
+    },
+    {
+      "path": "recipe-identity-at-build.json",
+      "bytes": 5692,
+      "sha256": "ef806d901f22d2382ab7180bb9d8404ff3ca20eaa5d9a62d5cf4783de5b5c12b"
+    },
+    {
+      "path": "resolution-corrected-scratch.txt",
+      "bytes": 1069,
+      "sha256": "b961b855a694c2152ccdbbe6e5fda18e218bcf0f20ac5bc9d00460a12f2f1ffb"
+    },
+    {
+      "path": "resolution-original.txt",
+      "bytes": 3165,
+      "sha256": "fc0bee5f66bcb4c188324935eb5bcc0a9f70451d88cbe4622000483af58b8f25"
+    },
+    {
+      "path": "Run-Bounded.ps1.txt",
+      "bytes": 3481,
+      "sha256": "afd68d0afa3e6d23138aa4b4ab211a6251156549dc9254ac26ae85503ea11f6f"
+    },
+    {
+      "path": "strict-source-hash-failure.txt",
+      "bytes": 7364,
+      "sha256": "4713e9940acb0dc0c045833ea1c1c42ea34765ffe517ad7af5aa5b9f34b40d62"
+    }
+  ]
+}

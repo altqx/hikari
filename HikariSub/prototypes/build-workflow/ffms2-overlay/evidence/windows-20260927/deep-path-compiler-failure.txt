@@ -1,0 +1,68 @@
+[1/1] "C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe" -E chdir ".." "C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe" "C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/out/windows-overlay/vcpkg_installed/x64-windows/share/vcpkg-cmake-get-vars/cmake_get_vars" "-G" "Ninja" "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_PREFIX=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/packages/ffmpeg_x64-hikari-windows-release" "-DFETCHCONTENT_FULLY_DISCONNECTED=ON" "-DVCPKG_LANGUAGES=C;CXX" "-DCMAKE_MAKE_PROGRAM=C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe" "-DBUILD_SHARED_LIBS=OFF" "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/scripts/toolchains/windows.cmake" "-DVCPKG_TARGET_TRIPLET=x64-hikari-windows-release" "-DVCPKG_SET_CHARSET_FLAG=ON" "-DVCPKG_PLATFORM_TOOLSET=v145" "-DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON" "-DCMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY=ON" "-DCMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY=ON" "-DCMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP=TRUE" "-DCMAKE_VERBOSE_MAKEFILE=ON" "-DVCPKG_APPLOCAL_DEPS=OFF" "-DCMAKE_TOOLCHAIN_FILE=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DCMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION=ON" "-DVCPKG_CXX_FLAGS=" "-DVCPKG_CXX_FLAGS_RELEASE=" "-DVCPKG_CXX_FLAGS_DEBUG=" "-DVCPKG_C_FLAGS=" "-DVCPKG_C_FLAGS_RELEASE=" "-DVCPKG_C_FLAGS_DEBUG=" "-DVCPKG_CRT_LINKAGE=dynamic" "-DVCPKG_LINKER_FLAGS=" "-DVCPKG_LINKER_FLAGS_RELEASE=" "-DVCPKG_LINKER_FLAGS_DEBUG=" "-DVCPKG_TARGET_ARCHITECTURE=x64" "-DCMAKE_INSTALL_LIBDIR:STRING=lib" "-DCMAKE_INSTALL_BINDIR:STRING=bin" "-D_VCPKG_ROOT_DIR=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg" "-D_VCPKG_INSTALLED_DIR=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/out/windows-overlay/vcpkg_installed" "-DVCPKG_MANIFEST_INSTALL=OFF" "-DVCPKG_OUTPUT_FILE:PATH=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/cmake-get-vars_C_CXX-x64-hikari-windows-release-rel.cmake.log"
+FAILED: [code=1] ../CMakeCache.txt 
+"C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe" -E chdir ".." "C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/bin/cmake.exe" "C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/out/windows-overlay/vcpkg_installed/x64-windows/share/vcpkg-cmake-get-vars/cmake_get_vars" "-G" "Ninja" "-DCMAKE_BUILD_TYPE=Release" "-DCMAKE_INSTALL_PREFIX=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/packages/ffmpeg_x64-hikari-windows-release" "-DFETCHCONTENT_FULLY_DISCONNECTED=ON" "-DVCPKG_LANGUAGES=C;CXX" "-DCMAKE_MAKE_PROGRAM=C:\Program Files\Microsoft Visual Studio\18\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja\ninja.exe" "-DBUILD_SHARED_LIBS=OFF" "-DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/scripts/toolchains/windows.cmake" "-DVCPKG_TARGET_TRIPLET=x64-hikari-windows-release" "-DVCPKG_SET_CHARSET_FLAG=ON" "-DVCPKG_PLATFORM_TOOLSET=v145" "-DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON" "-DCMAKE_FIND_PACKAGE_NO_PACKAGE_REGISTRY=ON" "-DCMAKE_FIND_PACKAGE_NO_SYSTEM_PACKAGE_REGISTRY=ON" "-DCMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP=TRUE" "-DCMAKE_VERBOSE_MAKEFILE=ON" "-DVCPKG_APPLOCAL_DEPS=OFF" "-DCMAKE_TOOLCHAIN_FILE=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DCMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION=ON" "-DVCPKG_CXX_FLAGS=" "-DVCPKG_CXX_FLAGS_RELEASE=" "-DVCPKG_CXX_FLAGS_DEBUG=" "-DVCPKG_C_FLAGS=" "-DVCPKG_C_FLAGS_RELEASE=" "-DVCPKG_C_FLAGS_DEBUG=" "-DVCPKG_CRT_LINKAGE=dynamic" "-DVCPKG_LINKER_FLAGS=" "-DVCPKG_LINKER_FLAGS_RELEASE=" "-DVCPKG_LINKER_FLAGS_DEBUG=" "-DVCPKG_TARGET_ARCHITECTURE=x64" "-DCMAKE_INSTALL_LIBDIR:STRING=lib" "-DCMAKE_INSTALL_BINDIR:STRING=bin" "-D_VCPKG_ROOT_DIR=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg" "-D_VCPKG_INSTALLED_DIR=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/out/windows-overlay/vcpkg_installed" "-DVCPKG_MANIFEST_INSTALL=OFF" "-DVCPKG_OUTPUT_FILE:PATH=C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/cmake-get-vars_C_CXX-x64-hikari-windows-release-rel.cmake.log"
+-- The C compiler identification is MSVC 19.51.36260.0
+-- The CXX compiler identification is MSVC 19.51.36260.0
+-- Detecting C compiler ABI info
+CMake Warning in C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/x64-hikari-windows-release-rel/CMakeFiles/CMakeScratch/TryCompile-szyoi0/CMakeLists.txt:
+  The object file directory
+
+    C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/x64-hikari-windows-release-rel/CMakeFiles/CMakeScratch/TryCompile-szyoi0/CMakeFiles/cmTC_b5c05.dir/./
+
+  has 242 characters.  The maximum full path to an object file is 250
+  characters (see CMAKE_OBJECT_PATH_MAX).  Object file
+
+    0da9df1c.obj
+
+  cannot be safely placed under this directory.  The build may not work
+  correctly.
+
+
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe
+CMake Warning in C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/x64-hikari-windows-release-rel/CMakeFiles/CMakeScratch/TryCompile-etmoxs/CMakeLists.txt:
+  The object file directory
+
+    C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/x64-hikari-windows-release-rel/CMakeFiles/CMakeScratch/TryCompile-etmoxs/CMakeFiles/cmTC_03ca3.dir/./
+
+  has 242 characters.  The maximum full path to an object file is 250
+  characters (see CMAKE_OBJECT_PATH_MAX).  Object file
+
+    9b49cb7c.obj
+
+  cannot be safely placed under this directory.  The build may not work
+  correctly.
+
+
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe - broken
+CMake Error at C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/downloads/tools/cmake-4.4.3-windows/cmake-4.4.3-windows-x86_64/share/cmake-4.4/Modules/CMakeTestCCompiler.cmake:65 (message):
+  The C compiler
+
+    "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: 'C:/Users/altqx/.codex/worktrees/qt-design-prototypes/Kainote/HikariSub/prototypes/build-workflow/ffms2-overlay/_work/vcpkg/buildtrees/ffmpeg/x64-hikari-windows-release-rel/CMakeFiles/CMakeScratch/TryCompile-etmoxs'
+    
+    Run Build Command(s): "C:/Program Files/Microsoft Visual Studio/18/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe" -v cmTC_03ca3
+    [1/2] "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\cl.exe"  /nologo -D_MBCS  /nologo /DWIN32 /D_WINDOWS /utf-8 /MP   /MDd /Z7 /Ob0 /Od /RTC1  -MDd /showIncludes /FoCMakeFiles\cmTC_03ca3.dir\testCCompiler.c.obj /FdCMakeFiles\cmTC_03ca3.dir\ /FS -c C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\vcpkg\buildtrees\ffmpeg\x64-hikari-windows-release-rel\CMakeFiles\CMakeScratch\TryCompile-etmoxs\testCCompiler.c
+    [2/2] C:\WINDOWS\system32\cmd.exe /C "cd . && C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\downloads\tools\cmake-4.4.3-windows\cmake-4.4.3-windows-x86_64\bin\cmake.exe -E vs_link_exe --msvc-ver=1951 --intdir=CMakeFiles\cmTC_03ca3.dir --rc="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\rc.exe" --mt="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\mt.exe" --manifests  -- "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe" /nologo CMakeFiles\cmTC_03ca3.dir\testCCompiler.c.obj  /out:cmTC_03ca3.exe /implib:cmTC_03ca3.lib /pdb:cmTC_03ca3.pdb /version:0.0 /machine:x64 /nologo /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+    FAILED: [code=4294967295] cmTC_03ca3.exe 
+    C:\WINDOWS\system32\cmd.exe /C "cd . && C:\Users\altqx\.codex\worktrees\qt-design-prototypes\Kainote\HikariSub\prototypes\build-workflow\ffms2-overlay\_work\downloads\tools\cmake-4.4.3-windows\cmake-4.4.3-windows-x86_64\bin\cmake.exe -E vs_link_exe --msvc-ver=1951 --intdir=CMakeFiles\cmTC_03ca3.dir --rc="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\rc.exe" --mt="C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\mt.exe" --manifests  -- "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe" /nologo CMakeFiles\cmTC_03ca3.dir\testCCompiler.c.obj  /out:cmTC_03ca3.exe /implib:cmTC_03ca3.lib /pdb:cmTC_03ca3.pdb /version:0.0 /machine:x64 /nologo /debug /INCREMENTAL /subsystem:console  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && cd ."
+    LINK Pass 1: command "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.51.36231\bin\Hostx64\x64\link.exe /nologo CMakeFiles\cmTC_03ca3.dir\testCCompiler.c.obj /out:cmTC_03ca3.exe /implib:cmTC_03ca3.lib /pdb:cmTC_03ca3.pdb /version:0.0 /machine:x64 /nologo /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\cmTC_03ca3.dir/intermediate.manifest CMakeFiles\cmTC_03ca3.dir/manifest.res" failed (exit code 1104) with the following output:
+    LINK : fatal error LNK1104: cannot open file 'CMakeFiles\cmTC_03ca3.dir/intermediate.manifest'
+    ninja: build stopped: subcommand failed.
+    
+    
+
+
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:15 (project)
+
+
+-- Configuring incomplete, errors occurred!
+ninja: build stopped: subcommand failed.

@@ -1,0 +1,14 @@
+{
+  "startedUtc": "2026-09-27T06:51:06.6440777Z",
+  "adapters": [
+    {
+      "Name": "Ethernet",
+      "ReceivedBytes": 24486168207
+    },
+    {
+      "Name": "Tailscale",
+      "ReceivedBytes": 123172
+    }
+  ],
+  "initialFreeBytes": 42240614400
+}
