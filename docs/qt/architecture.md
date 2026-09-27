@@ -36,6 +36,8 @@ Application services own document transactions and undo history. Native text inp
 
 Workers return results tagged to their request/document revision; the application decides whether they are still applicable before updating state. Each backend contract must specify cancellation, errors, resource ownership, callback thread and shutdown ordering. This establishes the required contract fields, not a chosen worker pool, threading framework or A/V clock.
 
+The accepted [backend contract](backends.md) now supplies the value/capability/generation, owned-buffer and native-owner boundaries, including isolated FFMS2 qualification first and distinct decode/presentation/device-drain evidence. It refines this foundation without approving the still-pending draft, history, lifecycle or Lua API policies.
+
 ## Application services HikariSub must provide
 
 - Actions and shortcuts: discoverable commands, contextual routing, disabled reasons, localisation and accessible labels.

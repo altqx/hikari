@@ -9,3 +9,7 @@ In the live review on 2026-09-27, altqx accepted general-player ownership of its
 ## Addendum — later time acceptance on 2026-09-27
 
 Altqx subsequently accepted the full [typed-time and frame contract](../qt/time-semantics.md), recorded in [ADR 0014](0014-typed-time-and-frame-semantics.md), including distinct Document/media/sample values, interval and frame lookup operations, retained conversion rules and the named timing departures. Core timing is therefore no longer pending, while transport clock ownership remains this ADR's separate responsibility: player positions cannot redefine authored Document times. Exact native seeks, presentation acknowledgements, output flushing/device tails and calibrated timing still require evidence; later bounded Windows observations in the [media contract](../qt/media.md#lifecycle-and-verification-obligations) do not qualify the complete pipeline or select a production media-process boundary.
+
+## Addendum — backend acceptance on 2026-09-27
+
+The subsequent [backend decision](0016-backend-values-and-isolated-ffms2.md) selects qualifying isolated FFMS2 first, with Qt general playback in the application process. This selects the architectural direction that the earlier experiment left open; transfer, recovery, packaging, performance and output-quiescence evidence still must pass.

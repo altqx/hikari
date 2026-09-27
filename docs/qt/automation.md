@@ -12,9 +12,11 @@ Preserve the LuaJIT-compatible runtime, native-module/FFI interface, module path
 
 The [compatibility contract](compatibility.md) still governs observable changes. C06–C08 remain unapproved: `set_undo_point` and `register_filter` stubs, mutable validation, callback invocation order/count, and truncated dialog button-ID arguments must not silently acquire upstream Aegisub semantics. Ignored float-step behavior and alpha-field interpretation also require characterization before change. Approved fixes become default only after their own named decisions.
 
-## Proposed helper lifetime and concurrency
+## Accepted script state; proposed helper grouping and concurrency
 
-Start with **one long-lived helper containing separate persistent Lua states for loaded scripts**, and one active macro application-wide. This is a recommendation to preserve script globals/module lifetime across invocations while keeping ordering tractable, not a lifetime or concurrency decision already made by choosing process isolation. Load, registration, validation, active-state callbacks and execution access each state through its serialized owner.
+In the follow-up review on 2026-09-27, altqx chose **“separate persistent state per loaded script.”** Each loaded script therefore retains its own Lua state and globals/module lifetime between invocations; it does not share another script's Lua globals or receive a fresh state for every macro call. Load, registration, validation, active-state callbacks and execution access each state through its serialized owner. This state decision does not approve changes to C06–C08 callback, validation, undo or return semantics.
+
+Recommend **one long-lived helper containing those separate states**, and one active macro application-wide, to keep ordering tractable. The user's state-lifetime answer does not explicitly select shared-versus-per-script helper processes or global concurrency; those details remain open. Separate-process execution outside the Qt application remains accepted in either case.
 
 A helper crash loses those in-memory states. Proposed recovery marks affected scripts unavailable and offers an explicit restart/reload; it never automatically reruns the interrupted macro. Reloading executes script top-level code, so it must be visible rather than disguised as continuation. Per-script helpers or different restart/lifetime policies remain alternatives to evaluate against unchanged scripts and resource measurements.
 

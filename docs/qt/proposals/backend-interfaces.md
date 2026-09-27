@@ -1,5 +1,7 @@
 # Proposed backend interfaces and resource ownership
 
+Historical review proposal. The follow-up live approval on 2026-09-27 is recorded in the current [accepted backend contract](../backends.md) and [ADR 0016](../../adr/0016-backend-values-and-isolated-ffms2.md). The original alternatives and review questions below are retained as decision provenance.
+
 For [Define backend interfaces, capabilities and resource ownership](https://github.com/altqx/hikari/issues/62). **Proposal, not an implementation or newly accepted backend/process policy.** Follow the accepted [architecture](../architecture.md), [typed time](../time-semantics.md), [media/audio](../media.md), [fonts](../fonts.md), [platform](../platform-policy.md) and [distribution](../distribution.md) contracts. The [lifecycle](application-lifecycle.md) and [transactions](edit-transactions.md) proposals remain proposals, including their named departures. Their draft, save, close and undo choices are not implicitly approved here.
 
 ## Shared value boundary

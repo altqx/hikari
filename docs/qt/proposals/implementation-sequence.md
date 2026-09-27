@@ -4,12 +4,12 @@ For [Sequence the Qt rewrite into evidence-gated implementation issues](https://
 
 ## Gate 0: finish the specification and feasibility decisions
 
-The planning ticket currently depends on 25 open design/native tickets. Preserve those tracker dependencies; do not shorten the graph merely because one card could compile independently.
+The planning ticket depends on the open design/native prerequisites recorded in GitHub. Accepted decisions close their own blockers; do not shorten the remaining graph merely because one card could compile independently.
 
 | Input group | What must be recorded before the final implementation graph becomes ready |
 | --- | --- |
 | Application policy | Accepted outcomes from [edit transactions](edit-transactions.md), [Document/Session lifecycle](application-lifecycle.md), [settings/import](settings-import.md) and [native docking](docking.md), including named departures, failure behavior and unresolved-input disposition. |
-| Backend/automation | Resolve [backend interfaces](backend-interfaces.md), remaining [video pipeline](video-pipeline.md) and [automation host](../automation.md) choices. Lua process isolation is accepted; media-process isolation, helper lifetime, transport details and several cancellation/API outcomes are not. |
+| Backend/automation | Follow the accepted [backend contract](../backends.md), including isolated FFMS2 qualification first. Resolve remaining [video pipeline](video-pipeline.md) and [automation host](../automation.md) choices. Lua process isolation and separate persistent state per loaded script are accepted; helper grouping/concurrency, transport details and several cancellation/API outcomes remain open. |
 | Surface reactions | Record actual reactions and written outcomes for translation/comparison, automation, preferences, audio, Styles, video/tools, Grid/History, Search/correction, timing, utilities/Conversion, file/recovery and detailed Line editor studies. A representative control is not complete inventory coverage. |
 | Native feasibility | Resolve the existing build, mapped-editor, painted-grid, font-identity and media-handoff tickets with their required evidence and explicit limits. Close design-critical gaps, or explicitly revise the affected design through its decision ticket; do not call them ordinary implementation details. |
 | Readiness policy | Resolve [beta/rollback/cutover](cutover-readiness.md), including whether bounded incomplete public betas are permitted. Publishing this plan cannot approve that new phase-applicability policy. |
@@ -50,7 +50,7 @@ These are concrete first-card candidates **after Gate 0**, not work to start now
 | E2 — one runner integration per tool/session | Separate cards wire CTest labels to GoogleTest, QtTest, Quick Test, Spix, accessibility, image comparison and calibrated performance infrastructure as needed. Depends on the relevant B2 slice; no production capability claim. | A controlled passing and failing observable case, bounded waits and retained artifacts; native UIA/AT-SPI and NVDA/Orca sessions are qualified separately from offscreen tools. Test hooks do not ship. |
 | B3 — module skeleton and minimal application | Construct accepted target boundaries and explicit composition; depends on B2 and initial runner cards. Exclude placeholder implementations of unresolved behavior. | Core builds without Qt; dependency-direction checks, QML lint/compile/load and a minimal supported-platform startup. |
 
-MSVC 2022/SDK, official Qt account/license authorization and declared Linux tools remain prerequisites, not tasks silently performed by CMake. No installed SDK or prototype runtime substitutes for reproducible inputs. Begin payload/license inventory in Phase 1; final installers come later.
+Latest MSVC/Windows SDK, official Qt account/license authorization and declared Linux tools remain prerequisites, not tasks silently performed by CMake. The follow-up build decision uses GitHub Actions for Linux validation and pins exact toolchain/runner inputs for qualifying runs. The installed MinGW Qt SDK supports bounded native experiments but does not provide the matching MSVC library kit or substitute for reproducible provisioning. Begin payload/license inventory in Phase 1; final installers come later.
 
 ## Phase 2: core and first complete editing workflow
 
