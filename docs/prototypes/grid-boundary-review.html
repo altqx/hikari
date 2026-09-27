@@ -1,0 +1,128 @@
+<!doctype html>
+<!-- Throwaway logic companion: three Grid boundary cases, memory only. No production validator. -->
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HikariSub · Grid boundary review</title>
+<style>
+:root{color-scheme:dark;font:12px "Segoe UI",Arial,sans-serif;--bg:#171b20;--panel:#20262d;--raised:#29313a;--field:#171d24;--text:#e8edf2;--muted:#a5b1bd;--line:#414b57;--accent:#9cdbc9;--select:#304c47;--warning:#f2ca86}
+*{box-sizing:border-box}body{margin:0;padding:14px;background:var(--bg);color:var(--text)}main{max-width:1280px;margin:auto}h1{font-size:19px;margin:4px 0}h2{font-size:14px;margin:0 0 7px}h3{font-size:12px;margin:0 0 6px}p{line-height:1.45;margin:6px 0}a{color:var(--accent)}button,select,textarea{font:inherit;color:inherit;background:var(--field);border:1px solid var(--line);border-radius:2px;padding:5px 8px;min-height:29px}button{background:var(--raised);cursor:pointer}button:hover:not(:disabled),button[aria-pressed=true]{border-color:var(--accent);background:var(--select)}button:disabled{opacity:.45;cursor:default}.primary{background:var(--accent);color:#102c24;font-weight:650}:focus-visible{outline:2px solid #f9d784;outline-offset:2px}.muted,small{color:var(--muted)}.warning{color:var(--warning)}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.1em;font-size:10px}.row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.grow{flex:1}.badge{border:1px solid var(--line);padding:2px 5px;font-size:10px}.intro{margin-bottom:10px}.cases{margin:10px 0}.caseguide{padding:9px 11px;border:1px solid var(--line);background:var(--panel);min-height:66px;margin-bottom:10px}.app{border:1px solid var(--line);background:var(--panel)}.bar{padding:6px 9px;border-bottom:1px solid var(--line)}.titlebar{background:var(--raised);font-weight:650}.menus{word-spacing:14px;color:var(--muted);font-size:11px}.core{display:grid;grid-template-columns:44fr 56fr;grid-template-rows:45px 91px;grid-template-areas:"video audio" "video editor";gap:3px;padding:3px;background:var(--bg)}.video,.audio,.editor{border:1px solid var(--line);min-width:0;overflow:hidden}.video{grid-area:video;padding:9px;background:linear-gradient(160deg,#344853,#172732);display:flex;flex-direction:column;justify-content:space-between}.audio{grid-area:audio;padding:5px 9px;background:repeating-linear-gradient(90deg,#202b32 0 12px,#537f7460 12px 15px)}.editor{grid-area:editor;padding:6px 9px}.editor textarea{width:100%;height:46px;min-height:0;resize:none;margin-top:3px}.toolbar{padding:7px 9px;display:flex;gap:7px;align-items:center;flex-wrap:wrap}.grid{overflow:auto;max-height:196px;min-height:110px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}th{background:var(--raised);font-weight:400;color:var(--muted);white-space:nowrap}tr.selected td{background:var(--select)}td.text{min-width:130px}td:first-child{width:44px}td.flags{width:160px}.status{padding:7px 9px;border-top:1px solid var(--line);min-height:31px}.state{margin-top:10px;display:grid;grid-template-columns:1fr 1.3fr;gap:10px}.state>section{padding:10px;border:1px solid var(--line);background:var(--panel);min-width:0}.state dl{display:grid;grid-template-columns:100px 1fr;margin:0;gap:5px}.state dt{color:var(--muted)}.state dd{margin:0;overflow-wrap:anywhere}.audit{display:flex;gap:6px;flex-wrap:wrap}.audit article{border:1px solid var(--line);padding:6px;min-width:90px;flex:1;background:var(--field)}.audit article.hidden{border-style:dashed}.audit article.selected{border-color:var(--accent)}.audit small{display:block;margin-top:3px}.reviewquestion{margin-top:8px;padding:7px 9px;background:#292a27;border-left:2px solid var(--warning)}footer{margin:10px 0;color:var(--muted);font-size:11px}dialog{color:var(--text);background:var(--panel);border:1px solid var(--line);padding:16px;width:min(790px,calc(100% - 28px));max-height:88vh;overflow:auto}dialog::backdrop{background:#000a}.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}.compare>section{min-width:0;background:var(--field);padding:9px;border:1px solid var(--line)}.compare ol{list-style:none;padding:0;margin:0}.compare li{border-bottom:1px solid var(--line);padding:6px 0;overflow-wrap:anywhere}.compare li:last-child{border:0}.compare small{display:block}.review-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;margin-top:13px}.effect{padding:8px;border:1px solid var(--line);line-height:1.45}.ack{display:flex;gap:7px;align-items:flex-start;margin:12px 0}.ack input{margin-top:2px}.rejected{color:var(--warning);min-height:18px}@media(max-width:720px){body{padding:8px}.state,.compare{grid-template-columns:1fr}.core{grid-template-columns:40fr 60fr}.toolbar{align-items:flex-start}.grid{max-height:240px}.state dl{grid-template-columns:90px 1fr}}
+[hidden]{display:none!important}
+</style>
+</head>
+<body><main>
+<header class="intro"><div class="eyebrow">Throwaway prototype · Three narrow outcomes · Memory only</div><h1>Grid boundary review</h1><p>Compare hidden-row selection, Line-group boundaries and which Lines Join deletes. <strong>Proposed changes remain unapproved.</strong></p></header>
+<nav class="cases row" aria-label="Guided cases"><button data-case="range">1 · Hidden row in a range</button><button data-case="group">2 · Group boundary</button><button data-case="join">3 · Join and unselected rows</button><span class="grow"></span><button data-action="reset">Reset this case</button><button data-action="undo" id="undoButton">Undo last apply</button></nav>
+<section class="caseguide" id="guide" aria-label="Case guide"></section>
+<section class="app" aria-label="Compact Studio editing workspace">
+<div class="bar titlebar row"><span>HikariSub · Harbor.ass</span><span class="grow"></span><span class="badge">Editing target: Harbor</span><span class="badge">No pending draft</span></div>
+<div class="bar menus" aria-label="Shell context, illustrative only">File Edit Subtitles Timing Video Audio Automation View Help</div>
+<div class="core"><section class="video" aria-label="Synthetic Video placeholder"><span class="muted">Video · synthetic fixture</span><div><span class="badge">Paused · 00:00:01.000</span><p>Harbor platform / no media loaded</p></div></section><section class="audio" aria-label="Synthetic Audio placeholder"><small>Audio · synthetic waveform placeholder</small></section><section class="editor"><label for="editorText">Original text · <span id="editorLine"></span></label><textarea id="editorText" readonly aria-label="Current Line original text, read only in this study"></textarea></section></div>
+<div class="toolbar" id="toolbar" aria-label="Grid command toolbar"></div>
+<div class="grid"><table aria-label="Displayed Lines"><thead><tr><th>ID</th><th>Start</th><th>End</th><th>Style</th><th>Original text</th><th>State</th></tr></thead><tbody id="gridRows"></tbody></table></div>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+</section>
+<div class="state"><section><h2>Relevant state</h2><dl id="stateFields"></dl></section><section><h2>All source Lines — includes hidden Lines</h2><div id="audit" class="audit"></div><p class="muted">This evidence strip is outside the Grid. Dashed = hidden; outlined green = selected. Nothing here unhides or edits a Line.</p></section></div>
+<p class="reviewquestion" id="question"></p>
+<footer><a href="grid-history.html?variant=A">Open the broader Grid study</a> · <a href="grid-boundary-review-notes.md">Guide, sources and limits</a> · Source-derived simulations, not a legacy runtime test. Reload discards all state.</footer>
+</main>
+<dialog id="reviewDialog" aria-labelledby="reviewTitle"><h2 id="reviewTitle"></h2><p id="reviewBasis" class="muted"></p><div class="compare"><section><h3>Before</h3><ol id="beforeList"></ol></section><section><h3 id="afterTitle">After Apply</h3><ol id="afterList"></ol></section></div><div class="effect" id="effect"></div><label class="ack" id="ackLabel" hidden><input type="checkbox" id="acknowledge"><span id="ackText"></span></label><p id="rejection" class="rejected" role="status"></p><div class="review-actions"><button data-action="cancel">Cancel / keep current state</button><button data-action="removeInstead" id="removeInstead" hidden>Review explicit Remove group…</button><button class="primary" data-action="apply" id="applyButton">Apply in memory</button></div></dialog>
+<script>
+// Pure fixture logic. No DOM, I/O, generic command framework or production validator.
+const GridBoundary = (() => {
+  const clone = value => JSON.parse(JSON.stringify(value));
+  const line = (id,text,extra={}) => ({id,text,hidden:false,flag:'ordinary',start:1000,end:2200,...extra});
+  function initial(caseId='range',joinCount=3) {
+    const rows = caseId==='range' ? [line('A','Boarding begins.'),line('H','Hidden stage direction.',{hidden:true,start:2300,end:2800}),line('B','Please stand back.',{start:3000,end:3800})]
+      : caseId==='group' ? [line('D','Platform announcements',{flag:'description',start:0,end:0}),line('A','Boarding begins.',{flag:'member'}),line('B','Please stand back.',{flag:'member',start:3000,end:3800}),line('C','Doors closing.',{start:5000,end:5800})]
+      : joinCount===2 ? [line('A','Boarding begins.'),line('X','Keep this unrelated Line.',{start:2300,end:2800}),line('B','Please stand back.',{start:3000,end:3800})]
+      : [line('A','Boarding begins.'),line('B','Please stand back.',{start:3000,end:3800}),line('X','Keep this unrelated Line.',{start:4200,end:4600}),line('C','Doors closing.',{start:5000,end:5800})];
+    return {caseId,joinCount,rows,selected:caseId==='join'?(joinCount===2?['A','B']:['A','B','C']):['A'],current:'A',anchor:'A',revision:0,history:[],event:'Fixture loaded. Preview an outcome before applying it.'};
+  }
+  function snapshot(s) { return clone({rows:s.rows,selected:s.selected,current:s.current,anchor:s.anchor,revision:s.revision}); }
+  function groupState(rows) {
+    const d=rows.findIndex(r=>r.flag==='description'), members=rows.map((r,i)=>r.flag==='member'?i:-1).filter(i=>i>=0);
+    if(d<0) return members.length?'Orphan member flags':'No group';
+    return members.every((i,n)=>i===d+n+1)?`D → ${members.map(i=>rows[i].id).join(', ') || '(no members)'}`:'Broken run: member flags are not all immediately after D';
+  }
+  function plan(s,action,mode='source') {
+    const next=snapshot(s), before=snapshot(s);
+    const p={revision:s.revision,action,mode,before,next,title:'',basis:'',effect:'',blocked:false,ack:''};
+    if(action==='range') {
+      next.selected=s.rows.filter(r=>mode==='source'||!r.hidden).map(r=>r.id); next.current='B';
+      p.title=mode==='source'?'Select A through B, including H':'Select displayed A and B only';
+      p.basis=mode==='source'?'Source-derived interval membership: hidden interior rows are included.':'Proposed change: omit hidden interior rows from this new range.';
+      p.effect=`Selected: ${next.selected.join(', ')}. H remains hidden. Anchor A is unchanged; current moves to B for this fixture.`;
+    } else if(action==='duplicate') {
+      if(s.rows.some(r=>r.id==='A-copy')) return null;
+      const at=next.rows.findIndex(r=>r.id==='A'); next.rows.splice(at+1,0,{...clone(next.rows[at]),id:'A-copy'});
+      p.title='Duplicate A inside the group'; p.basis='Source behavior: a copied member stays in the group.';
+      p.effect=`Result: ${groupState(next.rows)}. The group stays contiguous. No group removal is required; A stays current and selected in this study.`;
+    } else if(action==='move') {
+      const at=next.rows.findIndex(r=>r.id==='A'), [a]=next.rows.splice(at,1); next.rows.push(a);
+      p.blocked=s.rows.some(r=>r.flag==='description'); p.title='Move A after C';
+      p.basis=p.blocked?'Proposed guard: keep A from separating from the other group members.':'Group already explicitly removed. This move can now proceed.';
+      p.effect=p.blocked?'Would leave A outside the contiguous group. Apply rejects and keeps the current state. Explicit Remove group deletes D; review that operation separately.':'Move A after C, preserving every remaining Line. The former group no longer exists.';
+    } else if(action==='remove') {
+      if(!next.rows.some(r=>r.id==='D')) return null;
+      next.rows=next.rows.filter(r=>r.id!=='D').map(r=>({...r,flag:'ordinary',hidden:false}));
+      p.title='Explicit Remove group'; p.basis='Source-derived removal outcome: clear member flags, reveal members and delete the description.';
+      p.effect='D — “Platform announcements” — will be deleted. A, B and any A-copy remain unchanged as ordinary Lines. This does not also execute the proposed move; review it again afterwards.';
+      p.ack='I have reviewed that description Line D will be deleted.';
+    } else if(action==='join') {
+      const indices=s.selected.map(id=>s.rows.findIndex(r=>r.id===id)).sort((a,b)=>a-b), first=indices[0];
+      const used=indices.map(i=>s.rows[i]); const deleted=mode==='source'?s.rows.slice(indices[1],indices.at(-1)+1).map(r=>r.id):used.slice(1).map(r=>r.id);
+      next.rows=next.rows.filter(r=>!deleted.includes(r.id)); const kept=next.rows.find(r=>r.id===s.rows[first].id);
+      kept.text=used.map(r=>r.text).join('\\N'); kept.start=Math.min(...used.map(r=>r.start)); kept.end=Math.max(...used.map(r=>r.end)); next.selected=[kept.id];next.current=kept.id;next.anchor=kept.id;
+      p.title=mode==='source'?'Join using source deletion interval':'Join only selected Lines';
+      p.basis=mode==='source'?'Source-derived: concatenate selected text; delete the physical interval from second to last selected row.':'Proposed change: concatenate the same selected text; delete only the selected rows after the first.';
+      p.effect=`Text contributors: ${used.map(r=>r.id).join(', ')}. Deleted: ${deleted.join(', ')}. ${deleted.includes('X')?'X is unselected and its text is NOT added to A.':'X survives with its original text and timing.'} A keeps the joined text and spanning time. Other fields/translation variants are outside this fixture.`;
+      if(deleted.includes('X')) p.ack='I understand that unselected Line X disappears in this source-derived simulation.';
+    } else return null;
+    return p;
+  }
+  function apply(s,p,ack=false) {
+    if(!p||p.revision!==s.revision) return {...clone(s),event:'Review is stale. Prepare it again.'};
+    if(p.blocked) return {...clone(s),event:'Rejected proposed move: group would break. No content, selection, revision or Undo change.'};
+    if(p.ack&&!ack) return {...clone(s),event:'Review the named deletion before applying.'};
+    const out=clone(s);out.history.push(snapshot(s));Object.assign(out,clone(p.next));out.revision=s.revision+1;out.event=`Applied in memory: ${p.title}. ${p.action==='remove'?'D deleted; review Move A after C again.':''}`;return out;
+  }
+  function undo(s) {
+    if(!s.history.length) return {...clone(s),event:'Nothing to undo.'};
+    const out=clone(s), previous=out.history.pop(), revision=s.revision+1; Object.assign(out,previous);out.revision=revision;out.event='Undid one applied operation; prior content and selection restored.';return out;
+  }
+  return {initial,plan,apply,undo,groupState};
+})();
+</script>
+<script>
+const $=id=>document.getElementById(id), esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const validCases=['range','group','join'], initialCase=new URL(location.href).searchParams.get('case');
+let state=GridBoundary.initial(validCases.includes(initialCase)?initialCase:'range'), review=null;
+const time=n=>`${(n/1000).toFixed(3)} s`;
+const guides={
+  range:['A → H (hidden) → B','1. Preview inclusive membership. 2. Apply and inspect the hidden-selection count. 3. Reset and compare displayed-only selection.','Source rule: extending A to B includes H. Displayed-only is an optional change shown for comparison, not a required new decision.'],
+  group:['D → A → B, then ordinary C','1. Duplicate A: the group remains valid. 2. Review Move A after C and try Apply. 3. Review explicit Remove group, then retry the move. Undo each step.','Allow valid within-group changes. For an actual break, reject and require explicit Remove group (which deletes D), or request a different concrete outcome? The guard is proposed.'],
+  join:['Join input and deletion are separate','Compare both modes. In the two-selected control case A/X/B, X survives both. With A/B/C selected in A/B/X/C, the source interval deletes X; the selected-only proposal keeps it.','For the three-selected case, should Join preserve unselected X? This is a narrow proposed behavior change, not approval of every Join field, translation or grouping rule.']
+};
+function render(){
+  document.querySelectorAll('[data-case]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.case===state.caseId));
+  const g=guides[state.caseId];$('guide').innerHTML=`<h2>${g[0]}</h2><p>${g[1]}</p>`;$('question').textContent=g[2];
+  $('toolbar').innerHTML=state.caseId==='range'?'<strong>Grid · Range</strong><button data-preview="range" data-mode="source">Preview inclusive · source</button><button data-preview="range" data-mode="visible">Preview visible only · proposal</button>'
+    :state.caseId==='group'?`<strong>Grid · Line group</strong><button data-preview="duplicate" ${state.rows.some(r=>r.id==='A-copy')?'disabled':''}>Preview duplicate A</button><button data-preview="move">Preview Move A after C</button><button data-preview="remove" ${!state.rows.some(r=>r.id==='D')?'disabled':''}>Review Remove group…</button>`
+    :`<strong>Grid · Join</strong><label>Fixture <select id="joinCount"><option value="3" ${state.joinCount===3?'selected':''}>3 selected · exposes deletion</option><option value="2" ${state.joinCount===2?'selected':''}>2 selected · control case</option></select></label><button data-preview="join" data-mode="source" ${state.selected.length<2?'disabled':''}>Preview source interval</button><button data-preview="join" data-mode="selected" ${state.selected.length<2?'disabled':''}>Preview selected only · proposal</button>`;
+  $('gridRows').innerHTML=state.rows.filter(r=>!r.hidden).map(r=>`<tr class="${state.selected.includes(r.id)?'selected':''}"><td>${r.id}</td><td>${time(r.start)}</td><td>${time(r.end)}</td><td>${r.flag==='description'?'Comment':'Default'}</td><td class="text">${esc(r.text)}</td><td class="flags">${[state.current===r.id?'Current':'',state.selected.includes(r.id)?'Selected':'',r.flag!=='ordinary'?r.flag:''].filter(Boolean).join(' · ')||'Unselected'}</td></tr>`).join('');
+  const current=state.rows.find(r=>r.id===state.current);$('editorLine').textContent=state.current;$('editorText').value=current?.text||'';$('status').textContent=state.event;
+  const hidden=state.rows.filter(r=>r.hidden&&state.selected.includes(r.id)).map(r=>r.id);
+  const fields=[['Current / anchor',`${state.current} / ${state.anchor}`],['Selected IDs',state.selected.join(', ')||'None'],['Hidden selected',`${hidden.length}${hidden.length?' · '+hidden.join(', '):''}`],['Source order',state.rows.map(r=>r.id).join(' → ')],['Group',GridBoundary.groupState(state.rows)],['Revision / Undo',`${state.revision} / ${state.history.length} applied step(s)`]];
+  $('stateFields').innerHTML=fields.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+  $('audit').innerHTML=state.rows.map(r=>`<article class="${r.hidden?'hidden ':''}${state.selected.includes(r.id)?'selected':''}"><strong>${r.id}</strong><small>${r.hidden?'Hidden':'Displayed'} · ${state.selected.includes(r.id)?'selected':'unselected'}</small><small>${esc(r.text)}</small><small>${r.flag}</small></article>`).join('');$('undoButton').disabled=!state.history.length;
+}
+function list(snapshot){return snapshot.rows.map(r=>`<li><strong>${r.id}</strong> · ${esc(r.text)}<small>${snapshot.selected.includes(r.id)?'Selected':'Unselected'} · ${r.hidden?'hidden':'displayed'} · ${r.flag} · ${time(r.start)}–${time(r.end)}</small></li>`).join('');}
+function openReview(action,mode){review=GridBoundary.plan(state,action,mode);if(!review)return;$('reviewTitle').textContent=review.title;$('reviewBasis').textContent=review.basis;$('beforeList').innerHTML=list(review.before);$('afterList').innerHTML=list(review.next);$('afterTitle').textContent=review.blocked?'Would break the group — not applied':'After Apply';$('effect').textContent=review.effect;$('ackLabel').hidden=!review.ack;$('ackText').textContent=review.ack;$('acknowledge').checked=false;$('rejection').textContent='';$('removeInstead').hidden=!review.blocked;$('applyButton').textContent=review.blocked?'Try Apply · proposed rejection':'Apply in memory';$('applyButton').disabled=!!review.ack;if(!$('reviewDialog').open)$('reviewDialog').showModal();}
+function closeReview(){review=null;$('reviewDialog').close();}
+function reset(caseId=state.caseId,joinCount=state.joinCount){closeReview();state=GridBoundary.initial(caseId,joinCount);const u=new URL(location.href);u.searchParams.set('case',caseId);history.replaceState(null,'',u);render();}
+document.addEventListener('click',e=>{const b=e.target.closest('button');if(!b||b.disabled)return;if(b.dataset.case){reset(b.dataset.case);return}if(b.dataset.preview){openReview(b.dataset.preview,b.dataset.mode);return}switch(b.dataset.action){case'reset':reset();break;case'undo':state=GridBoundary.undo(state);render();break;case'cancel':closeReview();break;case'removeInstead':openReview('remove');break;case'apply':{const beforeRevision=state.revision;state=GridBoundary.apply(state,review,$('acknowledge').checked);if(state.revision===beforeRevision){$('rejection').textContent=state.event;render();}else{closeReview();render();}break;}}});
+document.addEventListener('change',e=>{if(e.target.id==='joinCount')reset('join',Number(e.target.value));if(e.target.id==='acknowledge')$('applyButton').disabled=!!review?.ack&&!e.target.checked;});
+$('reviewDialog').addEventListener('cancel',e=>{e.preventDefault();closeReview();});render();
+</script>
+</body></html>
