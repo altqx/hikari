@@ -14,6 +14,9 @@ import argparse, hashlib, json, os, platform, shutil, subprocess, sys, tarfile, 
 from pathlib import Path
 
 
+SUBTITLE_SUFFIXES = {".ass", ".ssa", ".srt", ".sub", ".txt", ".mpl"}
+
+
 def sha256(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
@@ -66,26 +69,51 @@ def x(cmd, display, timeout=30):
 def save_as(case, fixtures, package, display, workdir):
     obs = []
     for name in case["inputs"]:
+        if Path(name).suffix.lower() not in SUBTITLE_SUFFIXES:
+            continue  # descriptors (JSON) and Session templates are not files to open
         src = fixtures / "inputs" / name
         scratch = Path(tempfile.mkdtemp(prefix="cap-", dir=workdir))
         with tarfile.open(package) as t:
             t.extractall(scratch, filter="data")
         app = next(scratch.glob("*/hikarisub"))
+        # The app keeps its single-instance lock under HOME, so it must exist.
+        (scratch / "home").mkdir()
+        # Load/save does not involve automation; bundled autoload scripts raise a
+        # modal error in this environment, so this capture runs without them.
+        autoload = app.parent / "Automation" / "automation" / "Autoload"
+        removed = sorted(p.name for p in autoload.glob("*")) if autoload.is_dir() else []
+        for p in autoload.glob("*"):
+            if p.is_file():
+                p.unlink()
         doc = scratch / "doc" / name
         doc.parent.mkdir()
         shutil.copyfile(src, doc)
         out = scratch / "doc" / ("saved-" + name)
-        rec = {"input": name, "input_sha256": sha256(src), "status": "timeout"}
+        rec = {"input": name, "input_sha256": sha256(src), "status": "timeout",
+               "autoload_scripts_removed": removed, "dismissed_popups": []}
         proc = subprocess.Popen([str(app), str(doc)], cwd=app.parent,
                                 env={**os.environ, "DISPLAY": display, "HOME": str(scratch / "home")},
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         try:
-            win = x(["xdotool", "search", "--sync", "--onlyvisible", "--name", "HikariSub"], display, 90)
+            win = x(["xdotool", "search", "--sync", "--onlyvisible", "--name", "HikariSub v[0-9]"], display, 90)
             wid = win.stdout.split()[0] if win.stdout.split() else None
             if not wid:
                 rec["status"] = "no-main-window"
                 continue
-            time.sleep(5)  # let the document load and autoload scripts settle
+            time.sleep(5)  # let the document load settle
+            # Any other top-level window at this point is an unexpected popup.
+            # Record its title and dismiss it so the capture can continue.
+            listed = x(["xdotool", "search", "--onlyvisible", "--name", "."], display, 10).stdout.split()
+            for other in listed:
+                if other == wid:
+                    continue
+                title = x(["xdotool", "getwindowname", other], display, 5).stdout.strip()
+                if not title or "HikariSub v" in title:
+                    continue
+                rec["dismissed_popups"].append(title)
+                x(["xdotool", "windowactivate", "--sync", other], display, 10)
+                x(["xdotool", "key", "Return"], display, 5)
+                time.sleep(1)
             # Focus through the window manager, then click the grid's empty
             # area so keyboard focus is inside the frame that owns the hotkeys.
             x(["xdotool", "windowactivate", "--sync", wid], display)
