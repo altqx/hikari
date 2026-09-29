@@ -78,3 +78,17 @@ altqx closed [Prove pinned CMake workflow provisioning on Windows and Linux](htt
 - **B48-deploy:** deployment.
 
 A failure in any of them reopens the build decision rather than substituting another Qt source.
+
+## Production build inputs (B1, 2026-09-29)
+
+[B1](https://github.com/altqx/hikari/issues/67) promoted the proven slices into the `qt` root. Linux is first; Windows follows on a Windows host (B2-W).
+
+- **Entry:** `cmake --workflow --preset ubuntu-x64-release` (or `-verify` to add tests, `fedora-x64-*` on Fedora). The root `CMakeLists.txt` includes `cmake/provision/Provision.cmake` before `project()`. That include checks the declared host tools, then verifies or acquires the Qt mirror, installs Qt from it, provisions the pinned vcpkg checkout and tool, and sets the toolchain.
+- **Locks:** [`cmake/locks/qt-linux.lock.json`](../../cmake/locks/qt-linux.lock.json) (the lock proven in CI) and [`cmake/locks/vcpkg.lock.json`](../../cmake/locks/vcpkg.lock.json). `tools/qt-lock/make-lock.py` regenerates Qt locks; it now also resolves Windows, accepting duplicate empty grouping nodes. The Windows lock is not committed until B2-W.
+- **Dependencies:** the root [`vcpkg.json`](../../vcpkg.json) pins FFmpeg 7.1.2#5 (four features), libass 0.17.5 and the owned `ports/hikari-ffms2`, with release-only static `triplets/`. Qt never enters the vcpkg graph. `cmake/HikariDependencies.cmake` fails if `Qt6_DIR` is outside the provisioned prefix, and links libass through static pkg-config.
+- **SDK state:** `out/sdk` holds the Qt mirror, the Qt installation (stamped with the lock digest), the metadata cache and the vcpkg checkout. It is shared by presets, ignored, and reconstructible. A Qt installation from a different lock stops the configure instead of being reused.
+- **Authentication:** with `QT_INSTALLER_JWT_TOKEN` set, the installer runs under a private HOME that is deleted afterwards. Without it, the installer uses the developer's existing Qt Account login. The owner authorized local and CI installs under the locked license set on 2026-09-29.
+- **Isolation in CI:** `cmake --workflow --preset provision` is the only step given the secret. The credential-free `*-verify` workflow then reuses the stamped installation.
+- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip.
+
+Failure behavior exercised locally: a corrupted or stray Qt mirror object and a vcpkg checkout at another commit each stop the configure with the path named; a tampered vcpkg tool is replaced by the verified download. The wx Linux root build moved to `cmake/linux-compat/LegacyWxLinux.CMakeLists.txt` as reference.

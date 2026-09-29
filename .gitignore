@@ -269,3 +269,7 @@ obj/**/*.log
 *.lastbuildstate
 *.idb
 *.ilk
+
+# Qt rewrite: provisioned SDKs, vcpkg checkout and preset build trees
+/out/
+CMakeUserPresets.json
