@@ -20,7 +20,7 @@ endif()
 # front so a missing tool is named here, not deep inside a dependency build.
 if(HIKARI_PLATFORM STREQUAL "linux")
     set(_hikari_missing "")
-    foreach(tool git ninja cc c++ make pkg-config autoconf automake libtool nasm python3 curl tar zip unzip)
+    foreach(tool git ninja cc c++ make pkg-config autoconf automake libtoolize nasm python3 curl tar zip unzip)
         find_program(_hikari_tool_${tool} NAMES ${tool})
         if(NOT _hikari_tool_${tool})
             list(APPEND _hikari_missing ${tool})
