@@ -15,9 +15,16 @@ separate_arguments(wx_cflags UNIX_COMMAND "${wx_cflags}")
 separate_arguments(wx_libs UNIX_COMMAND "${wx_libs}")
 
 # Timebase is wx-free; SubsTime needs wx strings only for the operators used.
-add_executable(legacy_time_capture time_capture.cpp
+add_executable(legacy_time_capture time_capture.cpp log_stub.cpp
     "${LEGACY_SOURCE}/HikariSub/Timebase.cpp"
     "${LEGACY_SOURCE}/HikariSub/SubsTime.cpp")
-target_include_directories(legacy_time_capture PRIVATE "${LEGACY_SOURCE}/HikariSub")
-target_compile_options(legacy_time_capture PRIVATE ${wx_cflags})
+# Same Linux compatibility layer the legacy build uses (its root CMakeLists).
+target_include_directories(legacy_time_capture PRIVATE
+    "${LEGACY_SOURCE}/HikariSub" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_time_capture PRIVATE
+    _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT
+    LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_time_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_time_capture PRIVATE ${wx_libs})
