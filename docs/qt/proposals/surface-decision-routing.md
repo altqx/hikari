@@ -22,7 +22,7 @@ A prototype's closure record should name its accepted layout, A rules, B owners,
 | [Design Document and Session lifetime, recovery and background work](https://github.com/altqx/hikari/issues/58) | L58 acknowledged write-before-close, old-state retention on failed/cancelled replacement and recovery-copy are now accepted A rules. Destination collisions, detailed close/partial Session behavior, closed pins and cleanup/retention remain shared decisions. |
 | [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33) | One persistent process/state per loaded script, one active macro application-wide and explicit restart without rerun are accepted. Cancellation escalation, transactions and remaining Lua C06–C08 subcases belong here. |
 | [Set beta readiness, rollback and Qt branch cutover policy](https://github.com/altqx/hikari/issues/64) | Beta gate applicability, profile/package rollback and candidate cutover. It does not own ordinary Save or importer conflict behavior. |
-| [Prove ASS-aware editing in a QML text area](https://github.com/altqx/hikari/issues/28) | Remaining mapped-boundary policy and design-critical native input feasibility. Editable hidden tags, Raw authority and Enter commit/advance outside composition are already required; do not repeat the implementation-approach vote. |
+| [Prove ASS-aware editing in a QML text area](https://github.com/altqx/hikari/issues/28) | **Resolved 2026-09-29.** After-tag insertion and retained intervening tokens are the accepted defaults; bounded feasibility answered the design question and the E28 native obligations transferred to the implementation sequence. Draft/Undo boundaries route to edit transactions. |
 
 ## Per-surface closure route
 
