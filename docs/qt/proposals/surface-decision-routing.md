@@ -113,3 +113,11 @@ A prototype's closure record should name its accepted layout, A rules, B owners,
 ## Immediate use
 
 Replace stale “human reaction required” wording only for the already selected arrangements. Replace generic “review exact parser/regex/default behavior” with **characterize and preserve under the compatibility contract; propose a named departure only if changing it**. Keep source-only destructive findings explicitly unresolved. Collapse all repeated draft/history/write/helper questions into the shared owners above, then record the few retained C outcomes and attach D obligations to implementation planning. This is a closure route, not blanket approval of the twelve sample models.
+
+## Surfaces closed on 2026-09-29
+
+altqx closed these after the shared policies settled. Their chosen layouts plus the accepted transaction, lifecycle, import/shortcut and automation policies specify them. Native and runtime checks carry the named obligations.
+
+- [Prototype automation manager, script dialogs and cancellation](https://github.com/altqx/hikari/issues/51): persistent manager tool; script options stay task dialogs; cancel → Force stop after 3 s → explicit restart; read-only target; one-step apply. Evidence: A33-*.
+- [Prototype preferences, shortcut conflicts and import review](https://github.com/altqx/hikari/issues/52): page task dialog; keep-current importer with per-item review, rollback and no-op repeat; local-priority overlap with visible shadowing. Evidence: S44-*.
+- [Prototype file operations, Session restore and recovery review](https://github.com/altqx/hikari/issues/61): compact optional Home with task dialogs; blocked destination collisions, one quit review list, 3-generation recovery opened as a copy, unresolved restores kept visible. Evidence: L58-* and the F2 write cards.

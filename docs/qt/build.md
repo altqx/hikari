@@ -55,3 +55,26 @@ The [Windows report](https://github.com/altqx/hikari/blob/1ee21bbd5e3aed25ebb44a
 The original deep-root workflow failed in a compiler probe. Success used documented short-directory overrides with separate configure/build/CTest commands; it is not a bare `windows-overlay` or full one-command provisioning pass. Git's Windows archive line endings required an exact-digest-guarded LF restoration in the port; source content/API behavior and lock digests did not change. Both earlier failure evidence and sampled resource bounds are retained. Actual audio, wider private APIs/media corpus, deployment and reconstruction remain unproved.
 
 The [official Qt metadata/script audit](https://github.com/altqx/hikari/blob/6e2dcb7e82fd8bc37acd836e5b508703cb3f6325/docs/research/qt-provisioning-followup.md) inspected 27 hash-verified metadata archives without running scripts/installers or acquiring SDK payloads. Base documentation/example dependencies persist in the inspected scripts; the current `qt.tools.qtcreator` ID supplies SDKTool, with full Creator GUI separate. A frozen official repository snapshot consumed by the official installer is the candidate for complete content locking. Exact runtime-resolved closure, support scripts/conditional components, controller behavior, authorization and bounded acquisition still need a concrete execution plan and proof; the minimal-module preflight cannot stand in for them.
+
+## Official Qt provisioning proved on Linux (2026-09-29)
+
+With the owner's secret and license authorization, [run 36577045109](https://github.com/altqx/hikari/actions/runs/36577045109) ran the [frozen repository experiment](https://github.com/altqx/hikari/blob/f9e0cb999831b7b174631d4d29f5c282c86ef8c5/HikariSub/prototypes/build-workflow/qt-frozen/README.md) on Ubuntu 26.04. Its [evidence](https://github.com/altqx/hikari/blob/f9e0cb999831b7b174631d4d29f5c282c86ef8c5/HikariSub/prototypes/build-workflow/qt-frozen/evidence/run-36577045109/README.md) shows:
+
+- A CMake stage before `project()` acquired a script-resolved lock of 125 objects, verified them and rejected a corrupted one. A warm re-run refetched only that object.
+- Official installer 4.11.0 installed Qt 6.11.2 from the loopback mirror, reading exactly the locked objects and nothing outside them.
+- A credential-free Quick/Multimedia/ShaderTools/Linguist consumer built and passed offscreen and Xvfb/OpenGL render tests.
+
+The token reached only the install step. The earlier run showed that the installer skips virtual package IDs yet exits 0, so a closure check against the lock is mandatory.
+
+altqx closed [Prove pinned CMake workflow provisioning on Windows and Linux](https://github.com/altqx/hikari/issues/48) on this basis. The mechanism is viable. These obligations transfer by name to the B1/B2 build cards as required evidence, not passes:
+
+- **B48-win-qt:** the same frozen run for `win64_msvc2022_64` with latest MSVC.
+- **B48-libass:** an owned libass/fontconfig/harfbuzz recipe on both platforms.
+- **B48-combined:** one Qt + FFMS2 + libass slice per platform.
+- **B48-workflow:** a one-command user entry, with the installer still isolated from later build processes.
+- **B48-winpath:** the Windows deep-path compiler probe without manual short-directory overrides.
+- **B48-fedora:** a Fedora host.
+- **B48-offline:** offline prefetch and cold reconstruction on a clean non-CI machine.
+- **B48-deploy:** deployment.
+
+A failure in any of them reopens the build decision rather than substituting another Qt source.
