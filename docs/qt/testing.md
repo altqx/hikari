@@ -63,3 +63,22 @@ First infrastructure work must qualify the tool integrations, native sessions, f
 | Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
 
 Each runner has controls under `tests/runners/`, all labelled `control`: a case that must pass, and a deliberately failing case registered with `WILL_FAIL`. If a failing control is ever reported as a failure, the runner has stopped detecting failures. The Ubuntu CI job installs Xvfb, so the `xvfb` variants run there. The Fedora container runs offscreen only for now. Offscreen and Xvfb results are not native desktop, screen-reader or IME evidence; those stay separate human qualification cards.
+
+## Accessibility checks and screen-reader sessions (E2-a11y)
+
+**Automated tree checks.** `tests/support/a11y` (test-only) gives cards three helpers:
+- `accessibleTree()` walks Qt's accessibility tree from a window: role, name and state for each node.
+- `hasNode()` finds a node by role and name.
+- `tabOrder()` lists accessible names in keyboard focus order.
+
+Use `hikari_add_qttest(… LIBRARIES hikari_a11y_testing)` and the `a11y` label. The runner's control covers a text field, a button and a custom-drawn control that declares its own semantics; a failing twin asserts a name that does not exist. A tree check proves what Qt exposes in-process. It does not prove what a screen reader announces.
+
+**Human sessions.** A card that claims screen-reader behavior (for example Grid V1-A-Q or editor V2-E-at) needs a recorded session per platform:
+
+1. Build the exact commit with the platform's release preset and record its hash, OS version and screen-reader version.
+2. **Windows:** NVDA with speech viewer enabled. **Linux:** Orca in a real desktop session (GNOME or KDE), not Xvfb.
+3. Follow the card's scripted steps using only the keyboard. For each step, record the key pressed, the announced text (NVDA speech viewer or Orca's debug log) and whether it matches the card's expected announcement.
+4. Record failures verbatim and file them as blockers of the implementing card. Never reduce the expected behavior to match the observation.
+5. Attach the transcript to the card, and check off the matching obligation (for example G45-uia or E28-at).
+
+Offscreen and Xvfb runs never substitute for step 2.
