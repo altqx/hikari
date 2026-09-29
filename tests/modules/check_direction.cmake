@@ -1,0 +1,10 @@
+include("${CMAKE_CURRENT_LIST_DIR}/../../cmake/HikariModules.cmake")
+if(CASE STREQUAL "violation")
+    # hikari_core allows nothing; linking Qt or the UI must be reported.
+    hikari_module_violations("Qt6::Core;hikari_ui" "" bad)
+else()
+    hikari_module_violations("hikari_core;Qt6::Quick;$<LINK_ONLY:Qt6::Gui>" "hikari_core;Qt6::*" bad)
+endif()
+if(bad)
+    message(FATAL_ERROR "violations: ${bad}")
+endif()

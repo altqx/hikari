@@ -14,10 +14,14 @@ on:
       - cmake/provision/**
       - cmake/locks/**
       - cmake/HikariDependencies.cmake
+      - cmake/HikariTesting.cmake
+      - cmake/quicktest_main.cpp
       - ports/**
       - triplets/**
       - src/**
       - tests/dependency-load/**
+      - tests/runners/**
+      - tests/modules/**
       - .github/workflows/qt-linux.yml
   workflow_dispatch:
 
