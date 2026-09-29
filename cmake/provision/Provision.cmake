@@ -68,6 +68,7 @@ if(NOT HIKARI_QT_VERIFY_ONLY)
         set(_hikari_triplet x64-hikari-linux-release)
     endif()
     set(HIKARI_QT_PREFIX "${_hikari_qt_prefix}" CACHE INTERNAL "Provisioned Qt prefix")
+    set(ENV{HIKARI_QT_PREFIX} "${_hikari_qt_prefix}")
     set(CMAKE_TOOLCHAIN_FILE "${HIKARI_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH
         "Pinned vcpkg toolchain" FORCE)
     set(VCPKG_TARGET_TRIPLET "${_hikari_triplet}" CACHE STRING "Hikari-owned vcpkg triplet" FORCE)

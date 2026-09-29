@@ -51,3 +51,15 @@ Each implementation ticket must link its accepted behavior and affected inventor
 **Accepted rule: evidence-gated completion.** Code may merge into `qt` after its applicable merge checks while a named native/reference-runner follow-up is pending, but the affected implementation ticket and capability remain incomplete until required evidence passes. A merged change is not a completed capability when its required native, accessibility or performance observations are missing. Release gates remain mandatory.
 
 First infrastructure work must qualify the tool integrations, native sessions, fixture store and performance reference bindings. No coverage percentage or test-count quota substitutes for these observable contracts. Acceptance records the policy only: no new test framework integration, native session, fixture corpus, calibrated reference host or runtime gate is claimed qualified or passed.
+
+## Runner integration (E2, 2026-09-29)
+
+[`cmake/HikariTesting.cmake`](../../cmake/HikariTesting.cmake) registers every runner with CTest labels and a bounded run time. Select a family with `ctest --preset <preset> -L <label>`.
+
+| Runner | Helper | Labels | Modes |
+| --- | --- | --- | --- |
+| GoogleTest 1.18.0 (plain C++) | `hikari_add_gtest(target SOURCES … [LIBRARIES …] [LABELS …])`; each test case is its own CTest entry | `gtest` | none needed |
+| QtTest (C++ Qt) | `hikari_add_qttest(target SOURCES … [LIBRARIES …])` | `qttest` plus the mode | `offscreen` always; `xvfb` when `xvfb-run` exists |
+| Qt Quick Test (QML) | `hikari_add_quicktest(target QML_DIR dir)` over `tst_*.qml` | `quicktest` plus the mode | same |
+
+Each runner has controls under `tests/runners/`, all labelled `control`: a case that must pass, and a deliberately failing case registered with `WILL_FAIL`. If a failing control is ever reported as a failure, the runner has stopped detecting failures. The Ubuntu CI job installs Xvfb, so the `xvfb` variants run there. The Fedora container runs offscreen only for now. Offscreen and Xvfb results are not native desktop, screen-reader or IME evidence; those stay separate human qualification cards.

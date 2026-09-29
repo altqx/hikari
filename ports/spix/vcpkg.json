@@ -1,0 +1,14 @@
+{
+  "name": "spix",
+  "version": "0.14",
+  "port-version": 100,
+  "description": "Spix Qt Quick UI automation (Hikari-owned overlay: builds against the provisioned official Qt, never vcpkg's Qt)",
+  "homepage": "https://github.com/faaxm/spix",
+  "license": "MIT",
+  "supports": "!uwp",
+  "dependencies": [
+    "anyrpc",
+    {"name": "vcpkg-cmake", "host": true},
+    {"name": "vcpkg-cmake-config", "host": true}
+  ]
+}
