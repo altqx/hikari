@@ -1,8 +1,6 @@
 # Combined load of the provisioned Qt, FFMS2 and libass (B48-combined).
 add_executable(hikari_dependency_load main.cpp)
-target_include_directories(hikari_dependency_load PRIVATE ${FFMPEG_INCLUDE_DIRS})
-target_link_libraries(hikari_dependency_load PRIVATE
-    Qt6::Gui Qt6::Qml Qt6::Quick HikariFFMS2::ffms2 ${FFMPEG_LIBRARIES} Hikari::libass)
+target_link_libraries(hikari_dependency_load PRIVATE Qt6::Gui Qt6::Qml Qt6::Quick Hikari::media_deps)
 add_test(NAME dependency-load COMMAND hikari_dependency_load)
 set_tests_properties(dependency-load PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 60)
 if(WIN32)

@@ -22,3 +22,23 @@ pkg_check_modules(HIKARI_LIBASS REQUIRED IMPORTED_TARGET GLOBAL libass=0.17.5)
 if(NOT TARGET Hikari::libass)
     add_library(Hikari::libass ALIAS PkgConfig::HIKARI_LIBASS)
 endif()
+
+# The media stack links statically. Qt loads the system FreeType, HarfBuzz and
+# fontconfig, so our static copies must not be exported from the executable or
+# Qt's font code would bind to them instead.
+add_library(hikari_media_deps INTERFACE)
+target_include_directories(hikari_media_deps INTERFACE ${FFMPEG_INCLUDE_DIRS})
+target_link_libraries(hikari_media_deps INTERFACE HikariFFMS2::ffms2 ${FFMPEG_LIBRARIES} Hikari::libass)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_options(hikari_media_deps INTERFACE "LINKER:--exclude-libs,ALL")
+endif()
+add_library(Hikari::media_deps ALIAS hikari_media_deps)
+
+# Where each dependency actually resolved from, for build evidence.
+file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
+    "Qt6_DIR=${Qt6_DIR}\nQt6_VERSION=${Qt6_VERSION}\n"
+    "HikariFFMS2_DIR=${HikariFFMS2_DIR}\n"
+    "FFMPEG_LIBRARIES=${FFMPEG_LIBRARIES}\n"
+    "libass=${HIKARI_LIBASS_VERSION} ${HIKARI_LIBASS_LINK_LIBRARIES}\n"
+    "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"
+    "compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\n")

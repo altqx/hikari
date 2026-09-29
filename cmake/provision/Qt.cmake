@@ -254,6 +254,8 @@ function(hikari_qt_install platform)
         endif()
     endforeach()
     file(WRITE "${HIKARI_EVIDENCE_DIR}/qt-installer-excerpt.log" "${excerpt}")
+    # The raw log can name the account; only the sanitized excerpt survives.
+    file(REMOVE_RECURSE "${private}")
     if(NOT rc STREQUAL "0")
         message(FATAL_ERROR "Official Qt installer failed (${rc}); see ${HIKARI_EVIDENCE_DIR}/qt-installer-excerpt.log")
     endif()

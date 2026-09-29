@@ -1,0 +1,21 @@
+{
+  "name": "libass",
+  "version": "0.17.5",
+  "description": "libass subtitle renderer (Hikari-owned overlay: explicit font providers, no libunibreak)",
+  "homepage": "https://github.com/libass/libass",
+  "license": "ISC",
+  "dependencies": [
+    {
+      "name": "fontconfig",
+      "platform": "linux"
+    },
+    "freetype",
+    "fribidi",
+    "harfbuzz",
+    {
+      "name": "vcpkg-tool-meson",
+      "host": true
+    }
+  ],
+  "port-version": 100
+}

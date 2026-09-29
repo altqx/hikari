@@ -26,10 +26,6 @@
       "name": "ffmpeg",
       "version": "7.1.2",
       "port-version": 5
-    },
-    {
-      "name": "libass",
-      "version": "0.17.5"
     }
   ]
 }

@@ -58,11 +58,25 @@ jobs:
           QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
         run: cmake --workflow --preset provision
 
+      - name: Reject a corrupted mirror object, then repair it
+        run: |
+          set -euo pipefail
+          victim=$(python3 -c "import json;l=json.load(open('cmake/locks/qt-linux.lock.json'));print(next(o['path'] for o in l['objects'] if o['kind']=='payload' and o['package']=='qt.license.thirdparty'))")
+          printf 'x' >> "out/sdk/qt-mirror-linux/$victim"
+          if cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=ON > out/evidence/corrupt-verify.log 2>&1; then
+            echo "Corrupted object was accepted" >&2; exit 1
+          fi
+          grep -qF "$victim" out/build/provision/provision-evidence/qt-verify-rejections.tsv
+          cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=OFF > out/evidence/repair.log 2>&1
+          awk -F'\t' 'NR>1{c[$4]++} END{for(k in c) print k"\t"c[k]}' \
+            out/build/provision/provision-evidence/qt-acquired.tsv > out/evidence/repair-actions.tsv
+          cat out/evidence/repair-actions.tsv
+
       - name: Configure, build and test without credentials
         run: |
           set -euo pipefail
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
-          test ! -e out/sdk/qt-install-private/home
+          test ! -e out/sdk/qt-install-private
           cmake --workflow --preset ubuntu-x64-verify
 
       - name: Collect sanitized evidence
