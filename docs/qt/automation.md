@@ -64,3 +64,13 @@ Before accepting the complete host, demonstrate unchanged bundled scripts, long-
 ## Manager placement accepted on 2026-09-27
 
 [Altqx selected the persistent manager tool](https://github.com/altqx/hikari/issues/51#issuecomment-5853291607). Keep script loading, registered macros and run status in a movable/floating workspace tool; script-created option dialogs remain task dialogs. Cancellation escalation, complete dialog compatibility and Document transactions retain their separate decisions. See [reviewed surface layouts](ux/reviewed-surface-layouts.md).
+
+## Accepted cancellation and transaction policy (2026-09-29)
+
+altqx settled the remaining host choices in a live review, closing [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33).
+
+- **Cancellation.** Cancel latches the run and requests cooperative stop, resolving any open script dialog through its cancel path. If the helper has not stopped after **3 seconds**, a **Force stop** control appears. Only the user's choice kills that script's helper; there is no automatic kill while the user is present. On application quit, an unresponsive helper is terminated after **5 seconds**. Either way, staged edits are discarded and the script is marked for explicit restart, without rerunning the macro.
+- **Target reservation.** While a macro runs, its target Document is read-only; other Documents stay editable. A pending Line draft on the target is committed first, per [edit transactions](proposals/edit-transactions.md). A successful result applies atomically as **one undo step**, after the generation, Document and revision checks above.
+- **Lua compatibility unchanged.** `set_undo_point` and `register_filter` remain stubs. Validation mutability, callback order/count and dialog button-ID behavior keep their current observable results. No upstream Aegisub semantics are adopted; C06–C08 Lua subcases need no departure.
+
+Required proof is unchanged from the section above and is named for the implementation sequence: **A33-cancel** (grace, Force stop, quit deadline, stuck native calls), **A33-transaction** (read-only target, stale rejection, one-step apply), **A33-compat** (unchanged scripts, native modules, DependencyControl, stubs and button IDs), **A33-ipc** (framing, floods, helper loss) and **A33-resources** (per-script process cost).

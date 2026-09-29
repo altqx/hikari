@@ -87,6 +87,17 @@ Remaining choices:
 
 Implementation must exercise short writes, disk full, denied/remote paths, external changes, crash points around activation, stale saves, cancel-at-replacement, reload/close during decode, missing Session entries and pinned protected targets. Native filesystem durability, close/crash behavior and shutdown have **not** been tested by this document.
 
+## Accepted lifecycle choices (2026-09-29)
+
+altqx settled the remaining choices in a live review. With L58-write-close, L58-staged-replacement and L58-recovery-copy above, this closes [Design Document and Session lifetime, recovery and background work](https://github.com/altqx/hikari/issues/58). Draft handling follows [edit transactions](edit-transactions.md): Save and close commit the pending draft first.
+
+- **Destination collisions are blocked.** Save As or export to a file already associated with another open Document is refused until the user picks another destination or closes/resolves the other Document.
+- **One quit review.** Quitting with unsaved work shows one list of every affected Document, with Save/Discard per row plus Save all, Discard all and Cancel. Nothing is destroyed until every row is resolved. Cancel keeps all Documents open; saves already completed stay completed.
+- **Recovery retention.** Keep the last 3 recovery generations per open Document. A clean close after Save or an explicit Discard deletes that Document's recovery. After a crash, every generation is kept until the user recovers or dismisses it. Generations older than 30 days are pruned. Capacity 0 disables autosave for that profile; that is an explicit setting, not cleanup.
+- **Unresolved restores stay visible.** Missing Session entries and pinned tools whose target closed remain visibly unresolved, with Retry, Relink or Remove. Nothing is silently omitted or retargeted to another Document.
+
+Implementation evidence stays required: **L58-collision**, **L58-quit** (including cancel after partial saves), **L58-retention** (crash versus clean close, 3-generation rotation, 30-day pruning) and **L58-restore** (missing entries and orphaned pins), alongside the filesystem cases listed above.
+
 [data]: https://github.com/altqx/hikari/blob/1eea34cd5db8db276f2e71cdff3f43f345cefd5b/docs/research/data-inventory.md
 [core]: https://github.com/altqx/hikari/blob/5d392a10c98b97c9b2b92f4b3f9dc49cd429752c/docs/research/core-inventory.md
 [session]: https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/HikariSub/Notebook.cpp#L1323-L1564

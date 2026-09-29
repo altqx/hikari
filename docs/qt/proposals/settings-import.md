@@ -54,3 +54,9 @@ Pending user choices, with recommended answers:
 3. **Shortcut shadowing:** allow intentional local/global overlap with explicit priority, or prohibit new overlap? Recommend allow with visible routing, retaining legacy cross-context reuse. Any changed legacy precedence needs named approval; unresolved old behavior awaits fixtures.
 
 These answers approve only the named importer policies and C04-short-file, not other candidate fixes, changed shortcut precedence or capability removals. Implementation fixtures must verify source hashes, repeat import, interrupted activation, rollback and actual routing.
+
+## Accepted shortcut routing (2026-09-29)
+
+altqx chose **allow overlap, local wins**. A key may be bound both globally and in a local context. The focused context's binding takes priority, and the shortcut editor shows each shadowed binding and the route taken. Legacy cross-context reuse keeps working. This introduces no change to legacy precedence; any case where old routing differs still needs its fixture and named outcome. With the accepted importer policies and C04-short-file, this closes [Design settings, shortcuts and the one-shot importer](https://github.com/altqx/hikari/issues/44).
+
+Imported macro bindings use the host registration identity with the legacy filename+ordinal alias. Missing scripts, basename collisions or changed registration order stay visibly unresolved rather than binding to the nearest name. Implementation evidence stays required: **S44-routing** (focus/context eligibility and shadowing display), **S44-import** (source hashes, repeat no-op, interrupted activation, rollback) and **S44-macro-alias**.
