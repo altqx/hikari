@@ -68,7 +68,7 @@ These are **specified checks, not run results**. Use stable synthetic IDs in the
 | Create from A/B separated by hidden ordinary X; separately Join selected A/B/C in Document order A,B,X,C | Creation can leave B outside its description's inferred run; characterize it under G56 without automatic repair. Legacy three-selected Join deletes B/X/C while collecting only A/B/C; accepted J56 deletes B/C and preserves X unchanged. The two-selected A/X/B control preserves X in both versions. Keep both old evidence and approved new expectations. |
 | Remove group vs delete all members | Remove deletes D and opens/unflags members; deleting members leaves D. Keep those operations distinct, including Undo and original/translated text. |
 
-Native keyboard/accessibility qualification stays with [the painted-grid feasibility and performance work](https://github.com/altqx/hikari/issues/45). No source inference here proves screen-reader announcements, every shortcut, clipboard serialization or production performance.
+Native keyboard/accessibility qualification stays with the G45 obligations transferred from [the painted-grid feasibility and performance work](https://github.com/altqx/hikari/issues/45). No source inference here proves screen-reader announcements, every shortcut, clipboard serialization or production performance.
 
 [mouse]: https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/HikariSub/SubsGridWindow.cpp#L1685-L1713
 [keys]: https://github.com/altqx/hikari/blob/20d647c4c769ab7f5d383cf3c1c33f03876a94e9/HikariSub/SubsGridWindow.cpp#L1831-L1922
