@@ -56,7 +56,11 @@ def time_cases(case, fixtures, probe):
 
 
 def x(cmd, display, timeout=30):
-    return run(cmd, env={**os.environ, "DISPLAY": display}, timeout=timeout)
+    # A timed-out wait is an observation (empty result), not a harness crash.
+    try:
+        return run(cmd, env={**os.environ, "DISPLAY": display}, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(cmd, 124, "", "timeout")
 
 
 def save_as(case, fixtures, package, display, workdir):
@@ -82,7 +86,11 @@ def save_as(case, fixtures, package, display, workdir):
                 rec["status"] = "no-main-window"
                 continue
             time.sleep(5)  # let the document load and autoload scripts settle
+            # Focus through the window manager, then click the grid's empty
+            # area so keyboard focus is inside the frame that owns the hotkeys.
             x(["xdotool", "windowactivate", "--sync", wid], display)
+            x(["xdotool", "mousemove", "--window", wid, "400", "550", "click", "1"], display)
+            time.sleep(1)
             x(["xdotool", "key", "--clearmodifiers", "ctrl+shift+s"], display)
             dlg = x(["xdotool", "search", "--sync", "--onlyvisible", "--name", "Save subtitle file"], display, 30)
             if not dlg.stdout.split():
@@ -122,6 +130,7 @@ def save_as(case, fixtures, package, display, workdir):
                 log = ""
             rec["app_log_tail"] = (log or "")[-1500:]
             obs.append(rec)
+            shutil.rmtree(scratch, ignore_errors=True)  # keep only outputs and screenshots
     return obs
 
 
