@@ -15,6 +15,8 @@ Provisioning runs before `project()`, so no compiler is enabled. Each stage is i
 
 ## Lock
 
+The first CI run ([36575665976](https://github.com/altqx/hikari/actions/runs/36575665976)) requested the `linux_gcc_64` add-on leaves directly. They are virtual: the installer logged "Cannot install … Component is virtual", skipped both, exited 0, and the proof stage then found no Qt Multimedia. The lock now requests the add-on parents, whose leaves follow through `AutoDependOn`, and the install stage fails unless every selected package is actually installed.
+
 [`lock/qt-linux.lock.json`](lock/qt-linux.lock.json) resolves the requested IDs through XML `Dependencies`, `AutoDependOn` and the dependencies the packages' own install scripts add at runtime. The license nodes arrive that way: `qt.tools` adds `qt.license.lgpl` and `qt.license.thirdparty`. `mocwrapper` is added by the base script only if a repository offers it; none of the frozen roots do, so it is recorded as an absent optional dependency. Ancestor nodes the controller may also select (`qt`, `qt.qt6.6112`, the add-on parents and their docs/examples) are locked as **conditional**; the run records whether each was consumed.
 
 Qt publishes SHA-1 sidecars, not SHA-256. The lock generator streamed every object once, checked it against its publisher SHA-1 and recorded the SHA-256 it observed. That is trust on first verified acquisition over HTTPS, stated in the lock. The installer's SHA-256 matched the plan's declared value. License text digests are locked too: the install stage re-extracts them and refuses to run if they differ from the reviewed bytes.

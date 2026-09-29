@@ -29,8 +29,11 @@ PLATFORMS = {
         ],
         "packages": [
             "qt.qt6.6112.linux_gcc_64",
-            "qt.qt6.6112.addons.qtmultimedia.linux_gcc_64",
-            "qt.qt6.6112.addons.qtshadertools.linux_gcc_64",
+            # The linux_gcc_64 add-on leaves are virtual: the CLI refuses them
+            # ("Component is virtual") yet exits 0. Request the parents; the
+            # leaves follow through AutoDependOn (parent + base selected).
+            "qt.qt6.6112.addons.qtmultimedia",
+            "qt.qt6.6112.addons.qtshadertools",
         ],
         "installer": {
             "url": "https://download.qt.io/archive/online_installers/4.11/qt-online-installer-linux-x64-4.11.0.run",
@@ -41,15 +44,28 @@ PLATFORMS = {
 UA = {"User-Agent": "hikari-qt-frozen-lock/1"}
 
 
+def retry(fn, attempts=4):
+    for i in range(attempts):
+        try:
+            return fn()
+        except (OSError, TimeoutError):
+            if i == attempts - 1:
+                raise
+
+
 def fetch(url):
-    with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
-        return r.read()
+    def go():
+        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=120) as r:
+            return r.read()
+    return retry(go)
 
 
 def head_length(url):
-    req = urllib.request.Request(url, method="HEAD", headers=UA)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        return int(r.headers["Content-Length"])
+    def go():
+        req = urllib.request.Request(url, method="HEAD", headers=UA)
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return int(r.headers["Content-Length"])
+    return retry(go)
 
 
 def stream_hash(url, dest):
@@ -74,6 +90,7 @@ def main():
     ap.add_argument("--platform", default="linux", choices=PLATFORMS)
     ap.add_argument("--out", required=True)
     ap.add_argument("--hash-dir", help="stream objects here to compute SHA-256")
+    ap.add_argument("--previous", help="reuse digests from this lock when every root's Updates.xml is byte-identical")
     a = ap.parse_args()
     plat = PLATFORMS[a.platform]
 
@@ -189,7 +206,27 @@ def main():
         o["length"] = head_length(o["url"]); total += o["length"]
     installer["length"] = head_length(installer["url"])
 
-    if a.hash_dir:
+    reuse = None
+    if a.previous:
+        prev = json.load(open(a.previous))
+        same = {r["suffix"]: r["updates_xml"]["sha256"] for r in prev["roots"]} == \
+               {r["suffix"]: r["updates_xml"]["sha256"] for r in roots}
+        if not same or not prev.get("complete"):
+            sys.exit("previous lock does not match current metadata; run a full --hash-dir pass")
+        reuse = prev
+
+    if reuse:
+        known = {o["url"]: o for o in reuse["objects"]}
+        for o in objects:
+            k = known.get(o["url"])
+            if not k or k["length"] != o["length"]:
+                sys.exit(f"object not in previous lock: {o['path']}; run a full --hash-dir pass")
+            o["sha1"], o["sha256"] = k["sha1"], k["sha256"]
+        if reuse["installer"]["length"] != installer["length"]:
+            sys.exit("installer length changed")
+        installer.update(sha1=reuse["installer"]["sha1"], sha256=reuse["installer"]["sha256"])
+        lock_licenses = reuse["license_texts"]
+    elif a.hash_dir:
         os.makedirs(a.hash_dir, exist_ok=True)
         sidecars = {}
         for o in objects:
@@ -235,7 +272,7 @@ def main():
         "platform": a.platform,
         "base": BASE,
         "requested": plat["packages"],
-        "complete": bool(a.hash_dir) and not problems,
+        "complete": bool(a.hash_dir or reuse) and not problems,
         "problems": problems,
         "installer": installer,
         "roots": roots,
@@ -249,7 +286,8 @@ def main():
                            "unconditional_payload": sum(o["length"] for o in objects
                                                         if o["kind"] == "payload" and not o["conditional"])},
         "license_texts": lock_licenses,
-        "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition.",
+        "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition."
+                 + (" Digests reused from a lock whose repository metadata was byte-identical." if reuse else ""),
     }
     with open(a.out, "w") as f:
         json.dump(lock, f, indent=1)

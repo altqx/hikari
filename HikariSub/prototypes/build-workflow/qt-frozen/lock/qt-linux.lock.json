@@ -4,8 +4,8 @@
  "base": "https://download.qt.io/online/qtsdkrepository/",
  "requested": [
   "qt.qt6.6112.linux_gcc_64",
-  "qt.qt6.6112.addons.qtmultimedia.linux_gcc_64",
-  "qt.qt6.6112.addons.qtshadertools.linux_gcc_64"
+  "qt.qt6.6112.addons.qtmultimedia",
+  "qt.qt6.6112.addons.qtshadertools"
  ],
  "complete": true,
  "problems": [],
@@ -148,10 +148,15 @@
   "qt.license.acceptance",
   "qt.license.lgpl",
   "qt.license.thirdparty",
+  "qt.qt6.6112.addons.qtmultimedia",
   "qt.qt6.6112.addons.qtmultimedia.linux_gcc_64",
+  "qt.qt6.6112.addons.qtshadertools",
   "qt.qt6.6112.addons.qtshadertools.linux_gcc_64",
   "qt.qt6.6112.doc",
+  "qt.qt6.6112.doc.qtmultimedia",
+  "qt.qt6.6112.doc.qtshadertools",
   "qt.qt6.6112.examples",
+  "qt.qt6.6112.examples.qtmultimedia",
   "qt.qt6.6112.linux_gcc_64",
   "qt.tools",
   "qt.tools.qtcreator"
@@ -160,10 +165,15 @@
   "qt.license.acceptance": "dependency/auto",
   "qt.license.lgpl": "dependency/auto",
   "qt.license.thirdparty": "dependency/auto",
-  "qt.qt6.6112.addons.qtmultimedia.linux_gcc_64": "requested",
-  "qt.qt6.6112.addons.qtshadertools.linux_gcc_64": "requested",
+  "qt.qt6.6112.addons.qtmultimedia": "requested",
+  "qt.qt6.6112.addons.qtmultimedia.linux_gcc_64": "dependency/auto",
+  "qt.qt6.6112.addons.qtshadertools": "requested",
+  "qt.qt6.6112.addons.qtshadertools.linux_gcc_64": "dependency/auto",
   "qt.qt6.6112.doc": "dependency/auto",
+  "qt.qt6.6112.doc.qtmultimedia": "dependency/auto",
+  "qt.qt6.6112.doc.qtshadertools": "dependency/auto",
   "qt.qt6.6112.examples": "dependency/auto",
+  "qt.qt6.6112.examples.qtmultimedia": "dependency/auto",
   "qt.qt6.6112.linux_gcc_64": "requested",
   "qt.tools": "dependency/auto",
   "qt.tools.qtcreator": "dependency/auto"
@@ -171,12 +181,7 @@
  "conditional": [
   "qt",
   "qt.qt6.6112",
-  "qt.qt6.6112.addons",
-  "qt.qt6.6112.addons.qtmultimedia",
-  "qt.qt6.6112.addons.qtshadertools",
-  "qt.qt6.6112.doc.qtmultimedia",
-  "qt.qt6.6112.doc.qtshadertools",
-  "qt.qt6.6112.examples.qtmultimedia"
+  "qt.qt6.6112.addons"
  ],
  "absent_optional_script_dependencies": [
   "qt.qt6.6112.linux_gcc_64 -> mocwrapper"
@@ -1099,7 +1104,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.tar.xz",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.tar.xz",
    "package": "qt.qt6.6112.doc.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 4814904,
    "sha1": "82aeca88e03773ac6979f555a3c9afed001bee5e",
    "sha256": "4ab0493a57bdd6393419eee47fa7e73c88b5a377f78d78a2578d35f992bd0051"
@@ -1109,7 +1114,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.tar.xz.sha1",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.tar.xz.sha1",
    "package": "qt.qt6.6112.doc.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 40,
    "sha1": "29fc739e117c2625ef0044b0c83a0d526e47eb1f",
    "sha256": "3798d1093b9b0ff206c725298f47ad730eb83f8b63cd7210bfb6bbedeb274ecd"
@@ -1119,7 +1124,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz",
    "package": "qt.qt6.6112.doc.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 476932,
    "sha1": "5abb33e481ec8f2f53391326ab015bd17c9a0da7",
    "sha256": "b73e2e9fd8002a3ad50a69868ce5c36f9d751993b260e80dcb1a556db8a0cd64"
@@ -1129,7 +1134,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz.sha1",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz.sha1",
    "package": "qt.qt6.6112.doc.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 40,
    "sha1": "3ae468c7aed19ca4abb83583f65ebe3c3b36b9e4",
    "sha256": "5f97110609545ab489de2206763aff176694d93b63fb7bd3a9bd29b10b852eed"
@@ -1139,7 +1144,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.tar.xz",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.tar.xz",
    "package": "qt.qt6.6112.doc.qtshadertools",
-   "conditional": true,
+   "conditional": false,
    "length": 201680,
    "sha1": "76ceb88679fb07001a8a49d43ab18f7c9f8e5bed",
    "sha256": "7702c5fa48d2b5c98ca8dd2d58616e6b0e34b27bd2d3e4d4d955280ae815676c"
@@ -1149,7 +1154,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.tar.xz.sha1",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.tar.xz.sha1",
    "package": "qt.qt6.6112.doc.qtshadertools",
-   "conditional": true,
+   "conditional": false,
    "length": 40,
    "sha1": "a2062811e51921fb19f6601a37cb22838d6b07d5",
    "sha256": "e6ddeb80ae174a92e19ffb0f51e592834a5aa918bd7c46e0f044905dea574e2b"
@@ -1259,7 +1264,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z",
    "package": "qt.qt6.6112.examples.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 1588125,
    "sha1": "6a1840a90f779455edc2721c455fdc22a2a3188f",
    "sha256": "3e3bec310cd0a663127b9fd347cb7b80f84c23e7838dbd813ed08cc26bbe505b"
@@ -1269,7 +1274,7 @@
    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z.sha1",
    "path": "all_os/qt/qt6_6112_unix_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z.sha1",
    "package": "qt.qt6.6112.examples.qtmultimedia",
-   "conditional": true,
+   "conditional": false,
    "length": 40,
    "sha1": "22090a0d454d6b65b6a61427fabb2926bd388b4e",
    "sha256": "f072829bb2c0478ad7d68426703a536a7f4d3f7811ad67991a69b866b95506c6"
@@ -1458,7 +1463,7 @@
  "declared_bytes": {
   "objects": 406381710,
   "installer": 81242039,
-  "unconditional_payload": 399228466
+  "unconditional_payload": 406310107
  },
  "license_texts": [
   {
@@ -1478,5 +1483,5 @@
    "sha256": "55b63a0c2b6f353ed85ed2ec74e69f37cd419229936438b1796b645afd6eea5d"
   }
  ],
- "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition."
+ "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition. Digests reused from a lock whose repository metadata was byte-identical."
 }
