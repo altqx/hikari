@@ -1,0 +1,9 @@
+-- ACQUIRE: started; no Qt installation yet
+CMake Error at cmake/acquire.cmake:43 (message):
+  Mirror object missing or changed:
+  all_os/license_agreements/licenses/qt.license.thirdparty/1.0.0-1Licenses.7z
+Call Stack (most recent call first):
+  CMakeLists.txt:7 (include)
+
+
+-- Configuring incomplete, errors occurred!

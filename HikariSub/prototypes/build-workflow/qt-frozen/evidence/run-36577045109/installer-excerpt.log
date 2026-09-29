@@ -1,0 +1,305 @@
+[0] Arguments: /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/installer/qt-online-installer-linux-x64-4.11.0.run, --root, /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt, --cache-path, /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/metadata-cache, --set-temp-repository, http://127.0.0.1:8931/linux_x64/desktop/qt6_6112/qt6_6112/,http://127.0.0.1:8931/all_os/qt/qt6_6112_unix_line_endings_src/,http://127.0.0.1:8931/linux_x64/desktop/tools_generic/,http://127.0.0.1:8931/linux_x64/desktop/sdktool/,http://127.0.0.1:8931/all_os/license_agreements/licenses/,http://127.0.0.1:8931/all_os/qt_patchers/6112/,http://127.0.0.1:8931/all_os/unified_patching/,http://127.0.0.1:8931/all_os/dependencycheck/,http://127.0.0.1:8931/all_os/default_install/, --no-default-installations, --no-force-installations, --max-concurrent-operations, 2, --accept-licenses, --accept-obligations, --confirm-command, --auto-answer, telemetry-question=No,AssociateCommonFiletypes=No,OperationDoesNotExistError=Abort,OverwriteTargetDirectory=No,installationErrorWithCancel=Cancel,stopProcessesForUpdates=Cancel, --verbose, install, qt.qt6.6112.linux_gcc_64, qt.qt6.6112.addons.qtmultimedia, qt.qt6.6112.addons.qtshadertools
+[0]      :/translations/licensemanager_ru.qm
+[0]      :/translations/licensemanager_ar.qm
+[0]      :/translations/licensemanager_de.qm
+[0]      :/translations/licensemanager_fr.qm
+[0]      :/translations/licensemanager_en.qm
+[0]      :/translations/licensemanager_es.qm
+[0]      :/translations/licensemanager_ja.qm
+[0]      :/translations/licensemanager_ko.qm
+[0]      :/translations/licensemanager_pt_PT.qm
+[0]      :/translations/licensemanager_zh_CN.qm
+[0]      :/assets/warning.png
+[0]      :/assets/<email>
+[1]      :/warning.png
+[1]      :/<email>
+[5] Adding custom repository: "http://127.0.0.1:8931/linux_x64/desktop/qt6_6112/qt6_6112/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/qt/qt6_6112_unix_line_endings_src/"
+[5] Adding custom repository: "http://127.0.0.1:8931/linux_x64/desktop/tools_generic/"
+[5] Adding custom repository: "http://127.0.0.1:8931/linux_x64/desktop/sdktool/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/license_agreements/licenses/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/qt_patchers/6112/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/unified_patching/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/dependencycheck/"
+[5] Adding custom repository: "http://127.0.0.1:8931/all_os/default_install/"
+[5] Total number of licenses: 0
+[2267] Warning: No licenses found. Continuing open source installation.
+[2268] Saving licenses to file: "/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/private/home/.local/share/Qt/qtlicenses.ini"
+[3475] Open Source obligations accepted by user.
+[3475] Downloading 9 items to cache.
+[3501] Retrieving meta information from remote repository...
+[3507] Extracting meta information...
+[3550] Loading component scripts...
+[3597] Warning: Component qt.qt6.6112 depends on other components while having child components. This will not work properly.
+[3607] License "Qt Installer LGPL License Agreement" accepted by user.
+[3607] Loading component scripts...
+[3607] Warning: QFont::setPixelSize: Pixel size <= 0 (-1)
+[3607] Selected components without dependencies:
+Components added as dependency for "qt.license.lgpl":
+qt.license.acceptance 
+Components added as dependency for "qt.tools":
+qt.license.lgpl 
+qt.license.thirdparty 
+Components added as dependency for "qt.qt6.6112.doc":
+Components added as dependency for "qt.qt6.6112":
+Components that have resolved dependencies:
+Components added as dependency for "qt.qt6.6112.addons.qtmultimedia":
+Components that have resolved dependencies:
+Components added as dependency for "qt.qt6.6112.addons.qtshadertools":
+Components that have resolved dependencies:
+Components added as automatic dependencies:
+[3609] Done
+[3609] Done
+[3609] Preparing the installation...
+[3609] Install size: 18 components
+[3609] addDownloadable "Licenses.7z"
+[3609] Downloading packages...
+[3614] Archive "6.11.2-0-202608131018qt5-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3614] Archive "1.0.0-1Licenses.7z.sha1" downloaded for component Qt 3rd Party Licenses.
+[3614] Archive "6.11.2-0-202608131018qdoc-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3615] Archive "6.11.2-0-202608131018qmake-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3616] Archive "6.11.2-0-202608131018qtassistant-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3616] Archive "6.11.2-0-202608131018qtconcurrent-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3617] Archive "6.11.2-0-202608131018qtcore-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3617] Archive "6.11.2-0-202608131018qtcmake-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3618] Archive "6.11.2-0-202608131018qtdbus-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3618] Archive "6.11.2-0-202608131018qtdoc-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3618] Archive "6.11.2-0-202608131018qtdistancefieldgenerator-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3618] Archive "6.11.2-0-202608131018qtdesigner-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3619] Archive "6.11.2-0-202608131018qthelp-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3619] Archive "6.11.2-0-202608131018qtgui-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3620] Archive "6.11.2-0-202608131018qtjenny-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3620] Archive "6.11.2-0-202608131018qtlabsplatform-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3622] Archive "6.11.2-0-202608131018qtlinguist-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3622] Archive "6.11.2-0-202608131018qtlabsstylekit-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3623] Archive "6.11.2-0-202608131018qtopengl-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3623] Archive "6.11.2-0-202608131018qtnetwork-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3623] Archive "6.11.2-0-202608131018qtplatformintegration-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3626] Archive "6.11.2-0-202608131018qtqmlcore-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3626] Archive "6.11.2-0-202608131018qtprintsupport-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3627] Archive "6.11.2-0-202608131018qtqmltest-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3627] Archive "6.11.2-0-202608131018qtqml-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3628] Archive "6.11.2-0-202608131018qtqmlworkerscript-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3628] Archive "6.11.2-0-202608131018qtquick-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3628] Archive "6.11.2-0-202608131018qtqmlxmllistmodel-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3630] Archive "6.11.2-0-202608131018qtqmlmodels-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3630] Archive "6.11.2-0-202608131018qtquickdialogs-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3630] Archive "6.11.2-0-202608131018qtquickcontrols-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3631] Archive "6.11.2-0-202608131018qtxml-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3631] Archive "6.11.2-0-202608131018qtsvg-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3632] Archive "6.11.2-0-202608131018qtsql-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3632] Archive "6.11.2-0-202608131018qtbase-examples-6.11.2.7z.sha1" downloaded for component Qt 6.11.2 Examples.
+[3633] Archive "6.11.2-0-202608131018qtuitools-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3633] Archive "6.11.2-0-202608131018qtwidgets-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3634] Archive "6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z.sha1" downloaded for component Qt 6.11.2 Examples.
+[3634] Archive "6.11.2-0-202608131018qttestlib-documentation.tar.xz.sha1" downloaded for component Qt 6.11.2 Documentation.
+[3635] Archive "20.0.2-0-202609221200qtcreator_sdktool.7z.sha1" downloaded for component SDKTool.
+[3635] Archive "6.11.2-0-202608131018qtdoc-examples-6.11.2.7z.sha1" downloaded for component Qt 6.11.2 Examples.
+[3636] Archive "6.11.2-0-202608131018qttools-examples-6.11.2.7z.sha1" downloaded for component Qt 6.11.2 Examples.
+[3636] Archive "6.11.2-0-202608131018qtsvg-examples-6.11.2.7z.sha1" downloaded for component Qt 6.11.2 Examples.
+[3637] Archive "6.11.2-0-202608131018sha1s.txt.7z.sha1" downloaded for component Qt 6.11.2.
+[3638] Archive "6.11.2-0-202608131018qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3638] Archive "6.11.2-0-202608131018qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3639] Archive "6.11.2-0-202608131018qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3640] Archive "6.11.2-0-202608131018qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3641] Archive "6.11.2-0-202608131018qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3641] Archive "6.11.2-0-202608131018icu-linux-Rhel8.6-x86_64.7z.sha1" downloaded for component Desktop.
+[3642] Archive "6.11.2-0-202608131018qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3642] Archive "6.11.2-0-202608131018qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Desktop.
+[3642] Archive "6.11.2-0-202608131018qtmultimedia-documentation.tar.xz.sha1" downloaded for component Documentation for Qt Multimedia.
+[3643] Archive "6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz.sha1" downloaded for component Documentation for Qt Multimedia.
+[3643] Archive "6.11.2-0-202608131018qtshadertools-documentation.tar.xz.sha1" downloaded for component Documentation for Qt 6.11.2 Qt Shader Tools.
+[3644] Archive "6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z.sha1" downloaded for component Examples for Qt Multimedia.
+[3644] Archive "6.11.2-0-202608131018qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Qt Shader Tools for Linux 64.
+[3644] Archive "6.11.2-0-202608131018qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z.sha1" downloaded for component Qt Multimedia for Linux 64.
+[3649] Archive "6.11.2-0-202608131018qt5-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3649] Archive "1.0.0-1Licenses.7z" downloaded for component Qt 3rd Party Licenses.
+[3654] Archive "6.11.2-0-202608131018qdoc-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3654] Archive "6.11.2-0-202608131018qmake-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3654] Archive "6.11.2-0-202608131018qtassistant-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3654] Archive "6.11.2-0-202608131018qtconcurrent-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3656] Archive "6.11.2-0-202608131018qtdbus-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3656] Archive "6.11.2-0-202608131018qtcmake-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3692] Archive "6.11.2-0-202608131018qtcore-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3692] Archive "6.11.2-0-202608131018qtdesigner-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3693] Archive "6.11.2-0-202608131018qthelp-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3693] Archive "6.11.2-0-202608131018qtdistancefieldgenerator-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3749] Archive "6.11.2-0-202608131018qtlinguist-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3749] Archive "6.11.2-0-202608131018qtdoc-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3749] Archive "6.11.2-0-202608131018qtjenny-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3749] Archive "6.11.2-0-202608131018qtlabsstylekit-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3749] Archive "6.11.2-0-202608131018qtlabsplatform-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3765] Archive "6.11.2-0-202608131018qtgui-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtopengl-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtnetwork-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtplatformintegration-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtqmlcore-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtprintsupport-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3773] Archive "6.11.2-0-202608131018qtqmltest-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3774] Archive "6.11.2-0-202608131018qtqmlmodels-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3774] Archive "6.11.2-0-202608131018qtqmlworkerscript-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3775] Archive "6.11.2-0-202608131018qtqmlxmllistmodel-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3776] Archive "6.11.2-0-202608131018qtquickdialogs-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3800] Archive "6.11.2-0-202608131018qtqml-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3801] Archive "6.11.2-0-202608131018qtxml-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3801] Archive "6.11.2-0-202608131018qtsvg-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3801] Archive "6.11.2-0-202608131018qtquickcontrols-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3860] Archive "6.11.2-0-202608131018qtquick-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3863] Archive "6.11.2-0-202608131018qtuitools-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3863] Archive "6.11.2-0-202608131018qtsql-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3874] Archive "6.11.2-0-202608131018qtbase-examples-6.11.2.7z" downloaded for component Qt 6.11.2 Examples.
+[3874] Archive "6.11.2-0-202608131018qttestlib-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3907] Archive "20.0.2-0-202609221200qtcreator_sdktool.7z" downloaded for component SDKTool.
+[3907] Archive "6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z" downloaded for component Qt 6.11.2 Examples.
+[3910] Archive "6.11.2-0-202608131018qttools-examples-6.11.2.7z" downloaded for component Qt 6.11.2 Examples.
+[3910] Archive "6.11.2-0-202608131018qtsvg-examples-6.11.2.7z" downloaded for component Qt 6.11.2 Examples.
+[3950] Archive "6.11.2-0-202608131018sha1s.txt.7z" downloaded for component Qt 6.11.2.
+[3950] Archive "6.11.2-0-202608131018qtwidgets-documentation.tar.xz" downloaded for component Qt 6.11.2 Documentation.
+[3951] Archive "6.11.2-0-202608131018qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[3998] Archive "6.11.2-0-202608131018qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[3998] Archive "6.11.2-0-202608131018qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[4086] Archive "6.11.2-0-202608131018qtdoc-examples-6.11.2.7z" downloaded for component Qt 6.11.2 Examples.
+[4105] Archive "6.11.2-0-202608131018qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[4105] Archive "6.11.2-0-202608131018icu-linux-Rhel8.6-x86_64.7z" downloaded for component Desktop.
+[4109] Archive "6.11.2-0-202608131018qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[4166] Archive "6.11.2-0-202608131018qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[4166] Archive "6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz" downloaded for component Documentation for Qt Multimedia.
+[4166] Archive "6.11.2-0-202608131018qtshadertools-documentation.tar.xz" downloaded for component Documentation for Qt 6.11.2 Qt Shader Tools.
+[4178] Archive "6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z" downloaded for component Examples for Qt Multimedia.
+[4178] Archive "6.11.2-0-202608131018qtmultimedia-documentation.tar.xz" downloaded for component Documentation for Qt Multimedia.
+[4181] Archive "6.11.2-0-202608131018qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Qt Shader Tools for Linux 64.
+[4253] Archive "6.11.2-0-202608131018qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Qt Multimedia for Linux 64.
+[4499] Archive "6.11.2-0-202608131018qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z" downloaded for component Desktop.
+[4535] Preparing to unpack components...
+[4536] backup qt.license.thirdparty concurrent operation: Extract
+[4536] 	- arguments: installer://qt.license.thirdparty/1.0.0-1Licenses.7z, /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt
+[10962] Unpacking components...
+[10962] Extracting "6.11.2-0-202608131018qtdeclarative-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[10962] Extracting "6.11.2-0-202608131018qtdoc-examples-6.11.2.7z"
+[12369] Extracting "6.11.2-0-202608131018qtmultimedia-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[14484] Extracting "6.11.2-0-202608131018qttools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[15725] Extracting "6.11.2-0-202608131018qtquick-documentation.tar.xz"
+[16257] Extracting "6.11.2-0-202608131018qtbase-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[17601] Extracting "6.11.2-0-202608131018qtwidgets-documentation.tar.xz"
+[17634] Extracting "6.11.2-0-202608131018qtdoc-documentation.tar.xz"
+[18149] Extracting "6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z"
+[18264] Extracting "6.11.2-0-202608131018icu-linux-Rhel8.6-x86_64.7z"
+[18664] Extracting "6.11.2-0-202608131018qtquickcontrols-documentation.tar.xz"
+[18688] Extracting "6.11.2-0-202608131018qtcore-documentation.tar.xz"
+[18910] Extracting "6.11.2-0-202608131018qtgui-documentation.tar.xz"
+[19001] Extracting "6.11.2-0-202608131018qtmultimedia-documentation.tar.xz"
+[19143] Extracting "6.11.2-0-202608131018qtbase-examples-6.11.2.7z"
+[19167] Extracting "6.11.2-0-202608131018qtdesigner-documentation.tar.xz"
+[19269] Extracting "6.11.2-0-202608131018qttranslations-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[19386] Extracting "6.11.2-0-202608131018qtdoc-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[19400] Extracting "6.11.2-0-202608131018qtqml-documentation.tar.xz"
+[19469] Extracting "6.11.2-0-202608131018qtshadertools-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[19483] Extracting "6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z"
+[19550] Extracting "6.11.2-0-202608131018qtnetwork-documentation.tar.xz"
+[19556] Extracting "20.0.2-0-202609221200qtcreator_sdktool.7z"
+[19606] Extracting "6.11.2-0-202608131018qtopengl-documentation.tar.xz"
+[19608] Extracting "6.11.2-0-202608131018qtsql-documentation.tar.xz"
+[19645] Extracting "6.11.2-0-202608131018qtlinguist-documentation.tar.xz"
+[19648] Extracting "6.11.2-0-202608131018qtassistant-documentation.tar.xz"
+[19672] Extracting "6.11.2-0-202608131018qttools-examples-6.11.2.7z"
+[19677] Extracting "6.11.2-0-202608131018qtsvg-documentation.tar.xz"
+[19691] Extracting "6.11.2-0-202608131018qtsvg-examples-6.11.2.7z"
+[19713] Extracting "6.11.2-0-202608131018qtlabsplatform-documentation.tar.xz"
+[19713] Extracting "6.11.2-0-202608131018qtspatialaudio-documentation.tar.xz"
+[19734] Extracting "6.11.2-0-202608131018qtprintsupport-documentation.tar.xz"
+[19738] Extracting "6.11.2-0-202608131018qmake-documentation.tar.xz"
+[19748] Extracting "6.11.2-0-202608131018qtxml-documentation.tar.xz"
+[19751] Extracting "6.11.2-0-202608131018qtdbus-documentation.tar.xz"
+[19765] Extracting "6.11.2-0-202608131018qtquickdialogs-documentation.tar.xz"
+[19769] Extracting "6.11.2-0-202608131018qtlabsstylekit-documentation.tar.xz"
+[19776] Extracting "6.11.2-0-202608131018qdoc-documentation.tar.xz"
+[19784] Extracting "6.11.2-0-202608131018qthelp-documentation.tar.xz"
+[19798] Extracting "6.11.2-0-202608131018qtsvg-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[19807] Extracting "6.11.2-0-202608131018qttestlib-documentation.tar.xz"
+[19821] Extracting "6.11.2-0-202608131018qt5-documentation.tar.xz"
+[19823] Extracting "6.11.2-0-202608131018qtuitools-documentation.tar.xz"
+[19837] Extracting "6.11.2-0-202608131018qtshadertools-documentation.tar.xz"
+[19845] Extracting "6.11.2-0-202608131018qtqmlmodels-documentation.tar.xz"
+[19846] Extracting "6.11.2-0-202608131018qtconcurrent-documentation.tar.xz"
+[19860] Extracting "6.11.2-0-202608131018qtdistancefieldgenerator-documentation.tar.xz"
+[19861] Extracting "6.11.2-0-202608131018qtwayland-Linux-RHEL_9_6-GCC-Linux-RHEL_9_6-X86_64.7z"
+[19866] Extracting "6.11.2-0-202608131018qtcmake-documentation.tar.xz"
+[19872] Extracting "6.11.2-0-202608131018qtqmltest-documentation.tar.xz"
+[19872] Extracting "6.11.2-0-202608131018qtjenny-documentation.tar.xz"
+[19878] Extracting "6.11.2-0-202608131018qtqmlcore-documentation.tar.xz"
+[19878] Extracting "6.11.2-0-202608131018qtplatformintegration-documentation.tar.xz"
+[19882] Extracting "6.11.2-0-202608131018qtqmlxmllistmodel-documentation.tar.xz"
+[19884] Extracting "6.11.2-0-202608131018qtqmlworkerscript-documentation.tar.xz"
+[19887] perform qt.license.thirdparty concurrent operation: Extract
+[19887] 	- arguments: installer://qt.license.thirdparty/1.0.0-1Licenses.7z, /home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt
+[19887] Extracting "1.0.0-1Licenses.7z"
+[19887] Extracting "6.11.2-0-202608131018sha1s.txt.7z"
+[19888] Done
+[19888] Installing component Qt License LGPL
+[19889] backup qt.license.lgpl operation: License
+[19889] Done
+[19889] perform qt.license.lgpl operation: License
+[19889] Done
+[19889] Done
+[19890] Installing component Qt 6.11.2 Documentation
+[19890] Done
+[19894] Done
+[19895] Done
+[19895] Installing component Qt 6.11.2 Examples
+[19895] Done
+[19896] Done
+[19896] Done
+[19896] Installing component SDKTool
+[19896] Done
+[19897] Done
+[19897] Done
+[19898] Done
+[19899] Done
+[19901] Installing component Desktop
+[19901] Done
+[19905] Done
+[19905] Done
+[19908] Done
+[19908] Done
+[19915] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19915] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19916] Done
+[19916] Done
+[19936] Done
+[19936] Done
+[19938] Done
+[19938] Done
+[19939] Done
+[19939] Done
+[19940] Done
+[19940] Done
+[19941] Done
+[19941] Done
+[19942] Done
+[19942] Done
+[19943] Done
+[19943] Done
+[19945] Installing component Qt Multimedia for Linux 64
+[19945] Done
+[19950] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19950] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19951] Done
+[19951] Done
+[19953] Done
+[19953] Done
+[19953] Installing component Qt Shader Tools for Linux 64
+[19953] Done
+[19957] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19957] Done
+QT_VERSION:6.11.2"; test -n "$OUT" || exit 1; case "$OUT" in *QT_INSTALL_PREFIX:*) ;; *) exit 1;; esac, errormessage=Output from the command '/home/runner/work/hikari/hikari/HikariSub/prototypes/build-workflow/qt-frozen/_work/qt/6.11.2/gcc_64/bin/qmake -query' is invalid:
+[19958] Done
+[19959] Done
+[19959] Done
+[19959] Done
+[20312] Installation finished!
+[20312] Components installed successfully

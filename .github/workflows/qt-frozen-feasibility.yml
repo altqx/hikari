@@ -89,7 +89,10 @@ jobs:
           python3 - <<'PY'
           import json
           l = json.load(open('lock/qt-linux.lock.json'))
-          got = {line.split('\t')[0].lstrip('/') for line in open('_evidence/mirror-requests.tsv') if '\t200\t' in line}
+          import re
+          # The installer adds '//' and cache-busting '?n' queries; normalize before matching.
+          got = {re.sub('/+', '/', line.split('\t')[0].split('?')[0]).lstrip('/')
+                 for line in open('_evidence/mirror-requests.tsv') if '\t200\t' in line}
           rows = ['path\tkind\tpackage\tconditional\tserved']
           for o in l['objects']:
               rows.append(f"{o['path']}\t{o['kind']}\t{o['package']}\t{o['conditional']}\t{o['path'] in got}")
