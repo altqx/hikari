@@ -1,0 +1,25 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {"major": 3, "minor": 28, "patch": 0},
+  "configurePresets": [
+    {"name": "qt-frozen-linux-acquire", "generator": "Ninja", "binaryDir": "${sourceDir}/_work/driver-acquire",
+     "cacheVariables": {"HIKARI_QT_STAGE": "acquire"}},
+    {"name": "qt-frozen-linux-install", "generator": "Ninja", "binaryDir": "${sourceDir}/_work/driver-install",
+     "cacheVariables": {"HIKARI_QT_STAGE": "install"}},
+    {"name": "qt-frozen-linux-proof", "generator": "Ninja", "binaryDir": "${sourceDir}/_work/proof",
+     "cacheVariables": {"HIKARI_QT_STAGE": "proof", "CMAKE_BUILD_TYPE": "Release",
+       "CMAKE_PREFIX_PATH": "${sourceDir}/_work/qt/6.11.2/gcc_64", "CMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY": "OFF",
+       "CMAKE_FIND_USE_PACKAGE_REGISTRY": "OFF"}}
+  ],
+  "buildPresets": [{"name": "qt-frozen-linux-proof", "configurePreset": "qt-frozen-linux-proof", "jobs": 2}],
+  "testPresets": [{"name": "qt-frozen-linux-proof", "configurePreset": "qt-frozen-linux-proof",
+    "output": {"outputOnFailure": true}, "execution": {"timeout": 120}}],
+  "workflowPresets": [
+    {"name": "qt-frozen-linux-acquire", "steps": [{"type": "configure", "name": "qt-frozen-linux-acquire"}]},
+    {"name": "qt-frozen-linux-install", "steps": [{"type": "configure", "name": "qt-frozen-linux-install"}]},
+    {"name": "qt-frozen-linux-proof", "steps": [
+      {"type": "configure", "name": "qt-frozen-linux-proof"},
+      {"type": "build", "name": "qt-frozen-linux-proof"},
+      {"type": "test", "name": "qt-frozen-linux-proof"}]}
+  ]
+}

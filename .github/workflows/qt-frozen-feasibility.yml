@@ -1,0 +1,133 @@
+name: Qt frozen repository feasibility — isolated official installer run
+
+# Bounded experiment for altqx/hikari#48. Owner authorization for the pinned
+# open-source license/obligation set: issuecomment-5890780519. No PR trigger,
+# no caches, no SDK or binary publication; only sanitized evidence is kept.
+on:
+  push:
+    branches: [codex/qt-design-prototypes]
+    paths:
+      - HikariSub/prototypes/build-workflow/qt-frozen/**
+      - .github/workflows/qt-frozen-feasibility.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qt-frozen-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  linux:
+    name: Ubuntu, Qt 6.11.2 from a verified local mirror
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+        working-directory: HikariSub/prototypes/build-workflow/qt-frozen
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Declared host prerequisites (not provisioned by CMake)
+        run: |
+          set -euo pipefail
+          pkgs=(ninja-build libgl1-mesa-dev libgl1-mesa-dri libegl1 libxkbcommon0 libxkbcommon-x11-0
+                libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0
+                libxcb-randr0 libxcb-render-util0 libxcb-image0 libxcb-xkb1 xvfb libpulse0 libva2
+                libva-drm2 libva-x11-2 libvdpau1)
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends "${pkgs[@]}" > /dev/null
+          mkdir -p _evidence
+          dpkg-query -W -f='${Package}\t${Version}\n' "${pkgs[@]}" > _evidence/host-packages.tsv
+          { uname -srm; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release; echo "ImageVersion=${ImageVersion:-unknown}"
+            cmake --version | head -1; ninja --version; g++ --version | head -1; ldd --version | head -1
+            df -B1 --output=avail,size . | tail -1; } > _evidence/host.txt
+
+      - name: Acquire locked objects (cold, no credentials)
+        run: |
+          cmake --workflow --preset qt-frozen-linux-acquire
+          cp _evidence/acquired.tsv _evidence/acquired-cold.tsv
+
+      - name: Reject a corrupted object, then repair from a warm mirror
+        run: |
+          set -euo pipefail
+          victim=$(python3 -c "import json;l=json.load(open('lock/qt-linux.lock.json'));print(next(o['path'] for o in l['objects'] if o['kind']=='payload' and o['package']=='qt.license.thirdparty'))")
+          printf 'x' >> "_work/mirror/$victim"
+          if cmake --preset qt-frozen-linux-acquire -DHIKARI_QT_VERIFY_ONLY=ON > _evidence/corrupt-verify.log 2>&1; then
+            echo "Corrupted object was accepted" >&2; exit 1
+          fi
+          grep -qF "$victim" _evidence/verify-rejections.tsv
+          cmake --preset qt-frozen-linux-acquire -DHIKARI_QT_VERIFY_ONLY=OFF
+          cp _evidence/acquired.tsv _evidence/acquired-warm-repair.tsv
+          awk -F'\t' 'NR>1{c[$4]++} END{for(k in c) print k"\t"c[k]}' _evidence/acquired-warm-repair.tsv > _evidence/warm-repair-actions.tsv
+
+      - name: Serve the mirror on loopback with an access log
+        run: |
+          nohup python3 -m http.server 8931 --bind 127.0.0.1 --directory _work/mirror > _work/http.log 2>&1 &
+          echo $! > _work/http.pid
+          for i in $(seq 20); do curl -sf -o /dev/null http://127.0.0.1:8931/ && exit 0; sleep 0.5; done
+          echo "mirror server did not start" >&2; exit 1
+
+      - name: Official installer against the local mirror (only step with the secret)
+        env:
+          QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+        run: cmake --preset qt-frozen-linux-install -DHIKARI_QT_REPOSITORY_BASE=http://127.0.0.1:8931/
+
+      - name: Account consumed mirror objects
+        if: always()
+        run: |
+          set -euo pipefail
+          [[ -f _work/http.pid ]] && kill "$(cat _work/http.pid)" || true
+          [[ -f _work/http.log ]] || exit 0
+          grep -oE '"GET [^ ]+ HTTP/[0-9.]+" [0-9]+' _work/http.log | sed -E 's/"GET ([^ ]+) [^"]+" ([0-9]+)/\1\t\2/' | sort | uniq -c \
+            | awk '{print $2"\t"$3"\t"$1}' > _evidence/mirror-requests.tsv || true
+          python3 - <<'PY'
+          import json
+          l = json.load(open('lock/qt-linux.lock.json'))
+          got = {line.split('\t')[0].lstrip('/') for line in open('_evidence/mirror-requests.tsv') if '\t200\t' in line}
+          rows = ['path\tkind\tpackage\tconditional\tserved']
+          for o in l['objects']:
+              rows.append(f"{o['path']}\t{o['kind']}\t{o['package']}\t{o['conditional']}\t{o['path'] in got}")
+          open('_evidence/mirror-consumption.tsv', 'w').write('\n'.join(rows) + '\n')
+          PY
+          du -sb _work/qt 2>/dev/null | cut -f1 > _evidence/installed-bytes.txt || true
+
+      - name: Credential-free proof build and tests
+        run: |
+          set -euo pipefail
+          test -z "${QT_INSTALLER_JWT_TOKEN:-}"
+          test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
+          test ! -e _work/private/home
+          set +e
+          cmake --workflow --preset qt-frozen-linux-proof > _evidence/proof-workflow.log 2>&1
+          rc=$?
+          ctest --preset qt-frozen-linux-proof -V > _evidence/proof-tests-verbose.log 2>&1
+          cat _evidence/proof-workflow.log
+          if [[ $rc -eq 0 ]]; then echo "PROOF: frozen Qt configured, built and passed its tests" > _evidence/status.txt; fi
+          exit $rc
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "## Qt frozen repository feasibility"
+            echo; echo "Status: \`$(cat _evidence/status.txt 2>/dev/null || echo 'no status')\`"
+            echo; echo "Installer exit: \`$(cat _evidence/installer-exit.txt 2>/dev/null || echo 'not run')\`"
+            [[ -f _evidence/installed-components.tsv ]] && { echo; echo '```'; cat _evidence/installed-components.tsv; echo '```'; }
+            [[ -f _evidence/warm-repair-actions.tsv ]] && { echo; echo "Warm repair actions:"; echo '```'; cat _evidence/warm-repair-actions.tsv; echo '```'; }
+            echo; echo "Provisioning, installation and proof are separate gates. Headless CI does not qualify Fedora, native desktops, deployment or Windows."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve only sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qt-frozen-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: HikariSub/prototypes/build-workflow/qt-frozen/_evidence/
+          if-no-files-found: warn
+          retention-days: 7
