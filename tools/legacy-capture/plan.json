@@ -1,0 +1,14 @@
+{
+ "schema": 1,
+ "fixtures": "docs/qt/fixtures/approved-departures",
+ "routes": {
+  "C03-preservation": {"route": "save-as", "note": "Step 1 only: load and save unchanged. The edited-Line step needs grid interaction and is not captured yet."},
+  "supplement-TLMode": {"route": "save-as"},
+  "supplement-format-precision": {"route": "save-as", "note": "Same-format save of precision.srt; format-boundaries.json descriptors are not UI inputs."},
+  "C01-equality": {"route": "time"},
+  "T42-A": {"route": "time", "note": "Real legacy Timebase::FrameAt with the SubsGridBase.cpp:534 composition, FrameAt(target - anchor)."},
+  "C02-loss-preview": {"route": "none", "reason": "Needs the conversion dialog flow (cancel, then accept); not driven yet."},
+  "C05-audio-association": {"route": "none", "reason": "Needs Session restore with controlled audio resources bound to scratch paths."},
+  "C01-fps-isolation": {"route": "none", "reason": "Needs two open Documents and explicit frame-rate operations in the grid."}
+ }
+}
