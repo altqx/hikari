@@ -1,0 +1,88 @@
+name: Qt rewrite — Fedora
+
+# B2-F: reconstruct the pinned build on Fedora from an empty cache, in a
+# digest-pinned Fedora 44 container. Only the provisioning step receives the
+# Qt installer secret. No caches, no SDK or binary publication.
+on:
+  push:
+    branches: [qt]
+    paths:
+      - CMakeLists.txt
+      - CMakePresets.json
+      - vcpkg.json
+      - vcpkg-configuration.json
+      - cmake/provision/**
+      - cmake/locks/**
+      - cmake/HikariDependencies.cmake
+      - ports/**
+      - triplets/**
+      - src/**
+      - tests/dependency-load/**
+      - .github/workflows/qt-fedora.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qt-fedora-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fedora:
+    name: Fedora 44 x64 release, empty cache
+    runs-on: ubuntu-26.04
+    container:
+      image: fedora:44@sha256:43b29f65a41eb9c35e1cd5323e3bdf3b655c2357a9f4f1ff2f9c2798e5045d80
+    timeout-minutes: 120
+    steps:
+      - name: Declared host prerequisites
+        run: |
+          set -euo pipefail
+          pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive
+                automake libtool nasm python3 curl tar zip unzip xz bzip2 patch diffutils findutils
+                which file perl
+                mesa-libGL-devel mesa-libEGL libxkbcommon libxkbcommon-x11 fontconfig dbus-libs
+                xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-renderutil xcb-util-image)
+          dnf -y -q install "${pkgs[@]}"
+          mkdir -p /tmp/evidence
+          rpm -q --qf '%{NAME}\t%{VERSION}-%{RELEASE}\n' "${pkgs[@]}" > /tmp/evidence/host-packages.tsv
+          { uname -srm; grep -E '^(PRETTY_NAME|VERSION_ID)=' /etc/os-release
+            cmake --version | head -1; ninja --version; g++ --version | head -1; nasm -v; } > /tmp/evidence/host.txt
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Provision Qt and vcpkg (only step with the secret)
+        env:
+          QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+        run: cmake --workflow --preset provision
+
+      - name: Configure, build and test without credentials
+        run: |
+          set -euo pipefail
+          test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
+          test ! -e out/sdk/qt-install-private
+          cmake --workflow --preset fedora-x64-verify
+
+      - name: Collect sanitized evidence
+        if: always()
+        run: |
+          mkdir -p out/evidence
+          cp /tmp/evidence/* out/evidence/ 2>/dev/null || true
+          for d in out/build/provision/provision-evidence out/build/fedora-x64-release/provision-evidence; do
+            [ -d "$d" ] && cp -r "$d" "out/evidence/$(basename "$(dirname "$d")")" || true
+          done
+          [ -f out/build/fedora-x64-release/Testing/Temporary/LastTest.log ] &&
+            cp out/build/fedora-x64-release/Testing/Temporary/LastTest.log out/evidence/ || true
+          du -sb out/sdk/* 2>/dev/null > out/evidence/sdk-sizes.tsv || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qt-fedora-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/evidence/
+          if-no-files-found: warn
+          retention-days: 14
