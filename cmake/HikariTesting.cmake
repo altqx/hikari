@@ -22,23 +22,31 @@ find_program(HIKARI_XVFB_RUN xvfb-run)
 # Register one command in the platform modes available on this host: always
 # offscreen, plus a real X server through xvfb-run when it is installed.
 function(_hikari_add_qt_modes name label)
+    cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
+    set(ARGN ${mode_UNPARSED_ARGUMENTS})
     add_test(NAME ${name}.offscreen COMMAND ${ARGN})
     set_tests_properties(${name}.offscreen PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "${label};offscreen" TIMEOUT 60)
-    if(HIKARI_XVFB_RUN)
+    if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY)
         add_test(NAME ${name}.xvfb COMMAND "${HIKARI_XVFB_RUN}" -a ${ARGN})
         set_tests_properties(${name}.xvfb PROPERTIES
             ENVIRONMENT "QT_QPA_PLATFORM=xcb" LABELS "${label};xvfb" TIMEOUT 60)
     endif()
 endfunction()
 
-# hikari_add_qttest(<target> SOURCES <src>... [LIBRARIES <lib>...]) — C++ QtTest.
+# hikari_add_qttest(<target> SOURCES <src>... [LIBRARIES <lib>...] [OFFSCREEN_ONLY]) — C++ QtTest.
+# OFFSCREEN_ONLY suits rendered-image comparisons: a reference belongs to one
+# renderer, and offscreen uses the deterministic software rasterizer.
 function(hikari_add_qttest target)
-    cmake_parse_arguments(arg "" "" "SOURCES;LIBRARIES" ${ARGN})
+    cmake_parse_arguments(arg "OFFSCREEN_ONLY" "" "SOURCES;LIBRARIES" ${ARGN})
     add_executable(${target} ${arg_SOURCES})
     set_target_properties(${target} PROPERTIES AUTOMOC ON)
     target_link_libraries(${target} PRIVATE Qt6::Test ${arg_LIBRARIES})
-    _hikari_add_qt_modes(${target} qttest $<TARGET_FILE:${target}>)
+    if(arg_OFFSCREEN_ONLY)
+        _hikari_add_qt_modes(${target} qttest OFFSCREEN_ONLY $<TARGET_FILE:${target}>)
+    else()
+        _hikari_add_qt_modes(${target} qttest $<TARGET_FILE:${target}>)
+    endif()
 endfunction()
 
 # hikari_add_quicktest(<target> QML_DIR <dir>) — Qt Quick Test over tst_*.qml files.

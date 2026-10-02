@@ -1,7 +1,7 @@
 # Controls for image comparison against committed references.
 foreach(variant IN ITEMS controls failing_control)
     hikari_add_qttest(hikari_image_${variant} SOURCES image_control.cpp
-        LIBRARIES hikari_image_testing Hikari::media_deps Qt6::Qml Qt6::Quick)
+        LIBRARIES hikari_image_testing Hikari::media_deps Qt6::Qml Qt6::Quick OFFSCREEN_ONLY)
     set(failing 0)
     if(variant STREQUAL "failing_control")
         set(failing 1)

@@ -87,7 +87,7 @@ Offscreen and Xvfb runs never substitute for step 2.
 
 The test-only `tests/support/image` library compares a rendered `QImage` with `tests/references/<name>.png` under an `ImageTolerance`: the largest allowed per-channel difference, and the share of pixels allowed to exceed it. A mismatch writes `<name>-actual.png` and `<name>-diff.png` to the test's artifact directory. `HIKARI_UPDATE_REFERENCES=1` rewrites references from actual images; regenerated references are reviewed and committed like code.
 
-The runner's controls, labelled `image`:
+Image tests run offscreen only: a reference belongs to one renderer, and offscreen uses Qt's deterministic software rasterizer (an Xvfb/OpenGL run antialiased the same scene differently in CI). The runner's controls, labelled `image`:
 - a Qt Quick scene of shapes rendered offscreen;
 - an ASS vector drawing rendered by libass;
 - a tolerance case;
