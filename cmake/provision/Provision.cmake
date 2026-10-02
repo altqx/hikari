@@ -33,6 +33,13 @@ if(HIKARI_PLATFORM STREQUAL "linux")
             list(APPEND _hikari_missing "alsa (development files)")
         endif()
     endif()
+    # Qt Multimedia (general playback) links the system PulseAudio client
+    # library; the official Qt build needs it to link at all.
+    file(GLOB _hikari_pulse /usr/lib/libpulse.so.0 /usr/lib64/libpulse.so.0 /usr/lib/*/libpulse.so.0
+        /lib/*/libpulse.so.0)
+    if(NOT _hikari_pulse)
+        list(APPEND _hikari_missing "libpulse.so.0 (PulseAudio client library)")
+    endif()
     # autoconf-archive has no executable; vcpkg's autotools ports need its macros.
     if(_hikari_tool_automake)
         execute_process(COMMAND aclocal --print-ac-dir OUTPUT_VARIABLE _hikari_acdir
