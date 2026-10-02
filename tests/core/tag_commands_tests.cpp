@@ -1,6 +1,6 @@
 // Legacy Bold/Italic/Underline/Strikeout commands (V2-E-grammar). Expected
-// results are traced by hand through TagFindReplace::FindTag/PutTagInText at
-// 20d647c4; the legacy capture of the same cases is still to be recorded.
+// results were traced by hand through TagFindReplace::FindTag/PutTagInText at
+// 20d647c4; legacy capture run 37024532554 confirms the four Ctrl+B cases.
 
 #include "hikari/core/tag_commands.h"
 #include "hikari/core/text_projection.h"
@@ -70,4 +70,14 @@ TEST(TagCommands, FindBrackets)
     EXPECT_EQ(findBrackets(u"{\\i1}abc", 4), std::make_pair(0L, 4L));
     EXPECT_EQ(findBrackets(u"abc", 1), std::make_pair(-1L, -1L));
     EXPECT_EQ(findBrackets(u"a{\\b1", 3), std::make_pair(1L, 4L)); // unclosed: to the end
+}
+
+TEST(TagCommands, MatchTheLegacyCapture)
+{
+    // tests/fixtures/legacy-observations/run-37024532554: the old app's
+    // Lines after the key script, with the same caret and selection.
+    EXPECT_EQ(s8(run(u"abc", 0, 3, u'b').text), "{\\b1}abc{\\b0}");    // End, Shift+Home
+    EXPECT_EQ(s8(run(u"{\\b1}abc", 8, 8, u'b').text), "{\\b1}abc{\\b0}"); // End
+    EXPECT_EQ(s8(run(u"{\\i1}abc", 4, 4, u'b').text), "{\\b1\\i1}abc");    // Home, Right x4
+    EXPECT_EQ(s8(run(u"{\\b1}abc", 2, 2, u'b').text), "{\\b0}abc");         // Home, Right x2
 }

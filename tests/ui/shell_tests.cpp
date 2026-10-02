@@ -205,6 +205,25 @@ private slots:
         QVERIFY(!session->draftLine());
     }
 
+    void enterOnTheLastLineAppendsOne()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // the last Line, "second" at 0:00:03-0:00:04
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("second"));
+        text->forceActiveFocus();
+        press(Qt::Key_Return);
+        // Legacy SubsGrid::NextLine: a copy starting at its End, five seconds long.
+        auto *grid = item("editingGrid");
+        QTRY_COMPARE(grid->property("model").value<QAbstractItemModel *>()->rowCount(), 3);
+        QCOMPARE(text->property("text").toString(), QString());
+        QCOMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("0:00:04.00"));
+        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:09.00"));
+        press(Qt::Key_Z, Qt::ControlModifier); // its own undo step
+        QTRY_COMPARE(grid->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

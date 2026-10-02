@@ -255,3 +255,24 @@ TEST(AssLoad, CommentAfterAnOriginalIsNotItsTranslationC87)
         EXPECT_EQ(loadAss(saved).document.lines().size(), 2u);
     }
 }
+
+TEST(AssSave, InsertedLinesTakeTheNewlineStyleAroundThem)
+{
+    for (const std::string nl : {"\n", "\r\n"}) {
+        const std::string input = "[Events]" + nl + "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,a" + nl;
+        auto r = loadAss(bytesOf(input));
+        LineRecord added = *r.document.lines()[0];
+        added.text = u8"b";
+        ASSERT_TRUE(r.document.insertLineAfter(added.id, added));
+        EXPECT_EQ(text(encodeAss(r.document)), input + "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,b" + nl);
+        ASSERT_EQ(r.document.lines().size(), 2u);
+        EXPECT_TRUE(r.document.lines()[1]->inserted);
+    }
+    // At an open end (no final newline) the new Line starts on its own line.
+    auto r = loadAss(bytesOf("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,a"));
+    LineRecord added = *r.document.lines()[0];
+    added.text = u8"b";
+    ASSERT_TRUE(r.document.insertLineAfter(added.id, added));
+    EXPECT_EQ(text(encodeAss(r.document)), "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,a\n"
+                                           "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,b");
+}

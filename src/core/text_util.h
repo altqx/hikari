@@ -25,6 +25,28 @@ struct DocumentBuilder {
 
 namespace detail {
 
+// The newline style around an encoder's position, for Lines inserted in the
+// editor (they have no source bytes of their own).
+struct NewlineTracker {
+    std::u8string newline = u8"\n";
+    bool openEnd = false; // the last record ended the file without a newline
+
+    void see(const SourceSpan &span)
+    {
+        if (span.terminatorLength == 2)
+            newline = u8"\r\n";
+        else if (span.terminatorLength == 1)
+            newline = u8"\n";
+        if (span.length + span.terminatorLength > 0)
+            openEnd = span.terminatorLength == 0;
+    }
+    // An inserted record: newline-terminated, or newline-led at an open end.
+    std::u8string wrap(std::u8string_view body) const
+    {
+        return openEnd ? newline + std::u8string(body) : std::u8string(body) + newline;
+    }
+};
+
 using u8sv = std::u8string_view;
 
 inline bool isSpace(char8_t c)

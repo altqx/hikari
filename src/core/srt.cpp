@@ -236,10 +236,35 @@ std::vector<std::byte> encodeSrt(const Document &document)
     };
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
+    detail::NewlineTracker newlines;
+    std::optional<std::int64_t> lastNumber; // the previous cue's number
+    auto srtNumber = [](std::int64_t n) {
+        const std::string s = std::to_string(n);
+        return std::u8string(s.begin(), s.end());
+    };
     for (const auto &section : document.sections())
         for (const auto &record : section.records) {
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
             const auto *line = std::get_if<LineRecord>(&record);
+            if (line && line->inserted) {
+                // A new cue after the previous one: a blank separator, the next
+                // number, timing and text.
+                const std::u8string &nl = newlines.newline;
+                std::u8string cue = newlines.openEnd ? nl + nl : nl;
+                if (lastNumber)
+                    cue += srtNumber(++*lastNumber) + nl;
+                cue += legacy::srtTimeText(line->start.value.microseconds() / 1000) + u8" --> " +
+                       legacy::srtTimeText(line->end.value.microseconds() / 1000) + nl;
+                std::u8string text = line->text;
+                for (std::size_t p; (p = text.find(u8"\\N")) != std::u8string::npos;)
+                    text.replace(p, 2, nl);
+                append(cue + text + nl);
+                newlines.openEnd = false;
+                continue;
+            }
+            newlines.see(span);
+            if (line && line->cueNumber)
+                lastNumber = legacy::atoi(*line->cueNumber);
             if (!line || !line->edited) {
                 copy(span.offset, span.length + span.terminatorLength);
                 continue;

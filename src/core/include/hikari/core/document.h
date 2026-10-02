@@ -84,6 +84,9 @@ struct LineRecord {
     std::u8string text;     // legacy trims surrounding whitespace; raw bytes stay in the span
     SourceSpan span;        // where the record came from; its terminator is reused on save
     bool edited = false;    // the span no longer describes the record; regenerate on save
+    // Added in the editor: no source bytes (an empty span at its position).
+    // Saved in the legacy form with the newline style of the record before it.
+    bool inserted = false;
     std::optional<std::u8string> cueNumber; // SRT: the authored cue number line, if any
     // MicroDVD: authored frame numbers. start/end times stay unresolved (zero)
     // until the Document's own frame rate is set (C01-fps-isolation).
@@ -180,6 +183,9 @@ public:
     bool setLineUnconfirmed(LineId id, bool unconfirmed);
     // Changes any fields of one Line; the Line is then regenerated on save.
     bool editLine(LineId id, const std::function<void(LineRecord &)> &change);
+    // Inserts a new Line right after `after`, in the same section. Returns its
+    // id, or nullopt when `after` is unknown.
+    std::optional<LineId> insertLineAfter(LineId after, LineRecord line);
 
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;

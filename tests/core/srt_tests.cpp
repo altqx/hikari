@@ -139,3 +139,14 @@ TEST(SrtSave, EditedCueKeepsItsNumberNewlinesAndSeparator)
     EXPECT_EQ(text(encodeSrt(r.document)), "1\n00:00:01,000 --> 00:00:02,500\nChanged\ntwo lines\n\n"
                                            "2\n00:00:03,000 --> 00:00:04,000\nSecond\n");
 }
+
+TEST(SrtSave, InsertedCueGetsTheNextNumber)
+{
+    auto r = loadSrt(bytesOf(kLf));
+    LineRecord added = *r.document.lines()[1];
+    added.text = u8"Third";
+    added.start.value = DocumentTime(4'000'000);
+    added.end.value = DocumentTime(9'000'000);
+    ASSERT_TRUE(r.document.insertLineAfter(added.id, added));
+    EXPECT_EQ(text(encodeSrt(r.document)), std::string(kLf) + "\n3\n00:00:04,000 --> 00:00:09,000\nThird\n");
+}

@@ -254,32 +254,42 @@ std::vector<std::byte> encodeLineFormat(const Document &document)
     };
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
+    detail::NewlineTracker newlines;
     for (const auto &section : document.sections())
         for (const auto &record : section.records) {
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
             const auto *line = std::get_if<LineRecord>(&record);
             if (!line || !line->edited) {
                 copy(span.offset, span.length + span.terminatorLength);
+                newlines.see(span);
                 continue;
             }
             const std::int64_t startMs = line->start.value.microseconds() / 1000;
             const std::int64_t endMs = line->end.value.microseconds() / 1000;
+            std::u8string body;
             switch (document.format()) {
             case SubtitleFormat::MicroDvd:
-                append(u8"{" + number(line->startFrame.value_or(0)) + u8"}{" + number(line->endFrame.value_or(0)) +
-                       u8"}" + line->text);
+                body = u8"{" + number(line->startFrame.value_or(0)) + u8"}{" + number(line->endFrame.value_or(0)) +
+                       u8"}" + line->text;
                 break;
             case SubtitleFormat::Mpl2:
-                append(u8"[" + number(startMs / 100) + u8"][" + number(endMs / 100) + u8"]" + line->text);
+                body = u8"[" + number(startMs / 100) + u8"][" + number(endMs / 100) + u8"]" + line->text;
                 break;
             case SubtitleFormat::TMPlayer:
-                append(legacy::tmpTimeText(startMs) + u8":" + line->text);
+                body = legacy::tmpTimeText(startMs) + u8":" + line->text;
                 break;
             default:
-                append(line->text);
+                body = line->text;
                 break;
             }
+            if (line->inserted) {
+                append(newlines.wrap(body));
+                newlines.openEnd = false;
+                continue;
+            }
+            append(body);
             copy(span.offset + span.length, span.terminatorLength);
+            newlines.see(span);
         }
     return out;
 }

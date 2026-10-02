@@ -43,6 +43,24 @@ bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &chan
     return false;
 }
 
+std::optional<LineId> Document::insertLineAfter(LineId after, LineRecord line)
+{
+    for (auto &section : m_sections)
+        for (std::size_t i = 0; i < section.records.size(); ++i)
+            if (auto *prev = std::get_if<LineRecord>(&section.records[i]); prev && prev->id == after) {
+                line.id = LineId{m_nextLineId++};
+                line.inserted = true;
+                line.edited = true;
+                line.originalSpan.reset();
+                const SourceSpan &at = prev->span;
+                line.span = SourceSpan{at.offset + at.length + at.terminatorLength, 0, 0};
+                const LineId id = line.id;
+                section.records.insert(section.records.begin() + static_cast<std::ptrdiff_t>(i) + 1, std::move(line));
+                return id;
+            }
+    return std::nullopt;
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)

@@ -1,5 +1,7 @@
 #include "hikari/core/ass_save.h"
 
+#include "text_util.h"
+
 #include <cstdio>
 
 namespace hikari::core {
@@ -71,12 +73,21 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
     };
     if (document.source().encoding == TextEncoding::Utf8WithBom)
         copy(0, 3);
+    detail::NewlineTracker newlines;
     for (const auto &section : document.sections()) {
-        if (section.headerSpan)
+        if (section.headerSpan) {
             copy(section.headerSpan->offset, section.headerSpan->length + section.headerSpan->terminatorLength);
+            newlines.see(*section.headerSpan);
+        }
         for (const auto &record : section.records) {
             const auto *line = std::get_if<LineRecord>(&record);
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
+            if (line && line->inserted) {
+                append(newlines.wrap(legacy::assLineText(*line)));
+                newlines.openEnd = false;
+                continue;
+            }
+            newlines.see(span);
             if (line && line->edited && line->originalSpan && !tlMode.empty()) {
                 const bool hasTranslation = !line->translation.empty();
                 if (tlMode != u8"Translated" && (hasTranslation || line->unconfirmed)) {

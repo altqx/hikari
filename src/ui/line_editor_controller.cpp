@@ -335,8 +335,35 @@ bool LineEditorController::commitAndAdvance()
         return false;
     const auto lines = s->document().lines();
     const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
-    if (it == lines.end() || it + 1 == lines.end())
-        return commit(); // the last Line: commit and stay
+    if (it == lines.end())
+        return false;
+    if (it + 1 == lines.end()) {
+        // SubsGrid::NextLine on the last Line: commit, then append a copy of it
+        // starting at its End, five seconds long, with no text (its own step).
+        if (s->draftLine() && !s->commitDraft() && s->draftLine()) {
+            fail(problemText());
+            return false;
+        }
+        const core::LineRecord last = **(s->document().lines().end() - 1);
+        core::LineRecord next = last;
+        next.text.clear();
+        next.translation.clear();
+        next.start.value = last.end.value;
+        next.end.value = core::DocumentTime(last.end.value.microseconds() + 5'000'000);
+        std::optional<core::LineId> added;
+        const auto result = s->run(application::Command{
+            "Append Line", s->revision(), {last.id}, [&](core::Document &d) {
+                added = d.insertLineAfter(last.id, next);
+                return added.has_value();
+            }});
+        if (!result || !added)
+            return false;
+        committed();
+        if (!showLine(added->value))
+            return false;
+        emit lineChanged(added->value);
+        return true;
+    }
     if (!showLine((*(it + 1))->id.value))
         return false;
     emit lineChanged((*(it + 1))->id.value);
