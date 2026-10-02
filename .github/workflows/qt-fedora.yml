@@ -22,6 +22,9 @@ on:
       - tests/dependency-load/**
       - tests/runners/**
       - tests/modules/**
+      - tests/core/**
+      - tests/fixtures/**
+      - docs/qt/fixtures/**
       - .github/workflows/qt-fedora.yml
   workflow_dispatch:
 

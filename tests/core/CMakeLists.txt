@@ -1,0 +1,7 @@
+# Core behavior tests. Qt Core is used here only to read JSON fixtures; the
+# core library itself stays Qt-free (enforced by HikariModules).
+hikari_add_gtest(hikari_core_time_tests SOURCES time_tests.cpp
+    LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_time_tests PRIVATE
+    HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures"
+    HIKARI_LEGACY_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-36591631319/observations.json")
