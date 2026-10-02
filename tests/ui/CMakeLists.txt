@@ -13,3 +13,9 @@ target_compile_definitions(hikari_ui_automation_dialog_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
 add_dependencies(hikari_ui_automation_dialog_tests hikari_lua_helper)
+# N7: the scene-graph presenter against the CPU composite (start of M50-present).
+hikari_add_qttest(hikari_ui_presenter_tests SOURCES presenter_tests.cpp
+    LIBRARIES hikari_ui hikari_backends hikari_image_testing)
+target_compile_definitions(hikari_ui_presenter_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/presenter")
