@@ -12,6 +12,7 @@
 #include <windows.h>
 
 #include <chrono>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -51,7 +52,7 @@ struct WinPortTest : ::testing::Test {
     }
     void TearDown() override { fs::remove_all(dir); }
 
-    WinFilePort::Completion record()
+    backends::WinFilePort::Completion record()
     {
         return [this](PermitId p, WriteOutcome o) {
             std::lock_guard lock(mutex);
