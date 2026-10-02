@@ -144,6 +144,10 @@ function(hikari_provision_vcpkg platform)
         file(CHMOD "${tool}" PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
     endif()
 
+    # Built packages are cached with the rest of the reconstructible SDK
+    # state, not in the user profile, so one directory makes a run warm.
+    file(MAKE_DIRECTORY "${HIKARI_SDK_DIR}/vcpkg-archives")
+    set(ENV{VCPKG_DEFAULT_BINARY_CACHE} "${HIKARI_SDK_DIR}/vcpkg-archives")
     set(ENV{VCPKG_DISABLE_METRICS} "1")
     set(ENV{VCPKG_ROOT} "${root}")
     set(HIKARI_VCPKG_ROOT "${root}" PARENT_SCOPE)

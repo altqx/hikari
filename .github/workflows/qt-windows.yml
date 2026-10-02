@@ -85,6 +85,13 @@ jobs:
           QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
         run: cmake --workflow --preset provision
 
+      # The provisioned SDK (Qt mirror and installation, vcpkg checkout and
+      # built packages) for the warm job below; no credential is stored in it.
+      - uses: actions/cache/save@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: out/sdk
+          key: qt-windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+
       - name: Reject a corrupted mirror object, then repair it
         run: |
           $ErrorActionPreference = 'Stop'
@@ -125,6 +132,62 @@ jobs:
         if: always()
         with:
           name: qt-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/evidence/
+          if-no-files-found: warn
+          retention-days: 14
+
+  windows-warm:
+    name: Windows x64 release, warm SDK, no credentials
+    needs: windows
+    runs-on: windows-2025
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      - name: Latest MSVC developer environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
+          }
+
+      - uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
+        with:
+          path: out/sdk
+          key: qt-windows-sdk-${{ github.run_id }}-${{ github.run_attempt }}
+          fail-on-cache-miss: true
+
+      # No secret in this job: the stamped Qt installation and the built
+      # packages are reused, and the mirror is verified, not downloaded.
+      - name: Configure, build and test from the warm SDK
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force out/evidence | Out-Null
+          $start = Get-Date
+          cmake --workflow --preset windows-x64-verify
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "warm verify seconds`t$([int]((Get-Date) - $start).TotalSeconds)" | Out-File -Encoding utf8 out/evidence/warm-timing.tsv
+
+      - name: Collect sanitized evidence
+        if: always()
+        run: |
+          if (Test-Path out/build/windows-x64-release/provision-evidence) {
+            Copy-Item -Recurse out/build/windows-x64-release/provision-evidence out/evidence/windows-x64-release
+          }
+          Copy-Item out/build/windows-x64-release/Testing/Temporary/LastTest.log out/evidence/ -ErrorAction SilentlyContinue
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qt-windows-warm-${{ github.run_id }}-${{ github.run_attempt }}
           path: out/evidence/
           if-no-files-found: warn
           retention-days: 14
