@@ -14,6 +14,10 @@
 //                    eng and jpn, titled), a SubRip track with one cue
 //                    "Hello" from 0.5 s to 1.5 s, and two chapters (N5)
 //          unknown   the cfr video written as a live stream: no duration
+//          color601, color709, color709full
+//                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
+//                    tagged BT.601 limited, BT.709 limited and BT.709 full
+//                    range (I2: the decoder must convert with the tags)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -44,6 +48,22 @@ void drawIndex(AVFrame *f, int index)
             std::memset(f->data[p] + y * f->linesize[p], 128, kWidth / 2);
 }
 
+// Y', Cb, Cr per quadrant (top-left, top-right, bottom-left, bottom-right),
+// in the 8-bit code values of the tagged range.
+constexpr int kColorPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
+
+void drawColor(AVFrame *f)
+{
+    for (int y = 0; y < kHeight; ++y)
+        for (int x = 0; x < kWidth; ++x)
+            f->data[0][y * f->linesize[0] + x] = std::uint8_t(kColorPatches[(y >= kHeight / 2) * 2 + (x >= kWidth / 2)][0]);
+    for (int p = 1; p < 3; ++p)
+        for (int y = 0; y < kHeight / 2; ++y)
+            for (int x = 0; x < kWidth / 2; ++x)
+                f->data[p][y * f->linesize[p] + x] =
+                    std::uint8_t(kColorPatches[(y >= kHeight / 4) * 2 + (x >= kWidth / 4)][p]);
+}
+
 int fail(const char *what)
 {
     std::fprintf(stderr, "media_fixture: %s\n", what);
@@ -55,11 +75,12 @@ int fail(const char *what)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|tracks|unknown>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|tracks|unknown|color601|color709|color709full>");
     const std::string out = argv[1], kind = argv[2];
     const bool vfr = kind == "vfr";
     const bool tracks = kind == "tracks";
-    const int frames = kind == "longgop" ? 300 : 48;
+    const bool color = kind.starts_with("color");
+    const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
     if (avformat_alloc_output_context2(&fmt, nullptr, "matroska", out.c_str()) < 0)
@@ -76,6 +97,13 @@ int main(int argc, char **argv)
     enc->gop_size = kind == "longgop" ? 600 : 12; // 600 is MPEG-4's largest interval
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
     enc->bit_rate = 2'000'000;
+    if (color) {
+        enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
+        enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
+        enc->color_trc = kind == "color601" ? AVCOL_TRC_SMPTE170M : AVCOL_TRC_BT709;
+        enc->color_range = kind == "color709full" ? AVCOL_RANGE_JPEG : AVCOL_RANGE_MPEG;
+        enc->bit_rate = 8'000'000; // flat patches survive quantization
+    }
     if (fmt->oformat->flags & AVFMT_GLOBALHEADER)
         enc->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     if (avcodec_open2(enc, codec, nullptr) < 0)
@@ -151,7 +179,10 @@ int main(int argc, char **argv)
     std::int64_t pts = 0;
     for (int i = 0; i < frames; ++i) {
         av_frame_make_writable(frame);
-        drawIndex(frame, i);
+        if (color)
+            drawColor(frame);
+        else
+            drawIndex(frame, i);
         // VFR: durations cycle 30, 50, 70 ms, so frame boundaries are irregular.
         frame->pts = vfr ? pts : i;
         pts += 30 + 20 * (i % 3);

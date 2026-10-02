@@ -3,10 +3,12 @@
 // composited source-over), in the software renderer (offscreen) and the RHI
 // renderer of a real window (xvfb). Also: superseded and stale submissions,
 // resize placement, and invalid input. The start of M50-present.
+#include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
 #include "image_compare.h"
 #include "video_presenter.h"
 
+#include <QDir>
 #include <QFile>
 #include <QQuickWindow>
 #include <QtTest>
@@ -47,7 +49,7 @@ std::shared_ptr<application::IndexedFrame> quadrants(int w = kW, int h = kH)
     return f;
 }
 
-std::shared_ptr<const OverlayFrame> libassOverlay()
+std::shared_ptr<const OverlayFrame> libassOverlay(int width = kW, int height = kH)
 {
     QFile font(QStringLiteral(HIKARI_TEST_FONT));
     if (!font.open(QIODevice::ReadOnly))
@@ -67,7 +69,7 @@ std::shared_ptr<const OverlayFrame> libassOverlay()
     backends::LibassRenderer renderer;
     if (!renderer.prepare({bytesOfScript, {{"Titillium Web", bytes}}, "Titillium Web", false}))
         return nullptr;
-    auto frame = renderer.render(core::DocumentTime(1'000'000), kW, kH);
+    auto frame = renderer.render(core::DocumentTime(1'000'000), width, height);
     if (!frame)
         return nullptr;
     return std::make_shared<OverlayFrame>(std::move(*frame));
@@ -149,6 +151,42 @@ private slots:
                                       QStringLiteral(HIKARI_TEST_ARTIFACT_DIR), QStringLiteral(HIKARI_TEST_ARTIFACT_DIR),
                                       &message);
         QVERIFY2(match, "the presented frame and overlay differ from the CPU reference");
+    }
+
+    // I2 (M50-present): a decoded BT.709 frame from the media helper with a
+    // semi-transparent libass overlay presents as the CPU composite.
+    void decodedColourFrameWithOverlayMatchesTheCpuReference()
+    {
+        backends::FfmsIndexedSource source(QStringLiteral(HIKARI_MEDIA_HELPER));
+        std::optional<std::expected<application::SourceTimeline, application::SourceError>> opened;
+        source.open(std::string(HIKARI_MEDIA_FIXTURES) + "/color709.mkv", {}, [&](auto r) { opened = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return opened.has_value(); }, 10'000));
+        QVERIFY(opened->has_value());
+        std::optional<std::expected<application::IndexedFrame, application::SourceError>> decoded;
+        source.frame(3, [&](auto r) { decoded = std::move(r); });
+        QVERIFY(QTest::qWaitFor([&] { return decoded.has_value(); }, 10'000));
+        QVERIFY(decoded->has_value());
+        auto frame = std::make_shared<application::IndexedFrame>(std::move(**decoded));
+        const auto overlay = libassOverlay(frame->width, frame->height);
+        QVERIFY(overlay && !overlay->empty);
+        window->resize(frame->width, frame->height);
+        presenter->setSize(QSizeF(frame->width, frame->height));
+        const auto result = presentAndWait({frame->generation, frame, overlay, {}});
+        QVERIFY(result);
+        QCOMPARE(result->outcome, PresentOutcome::Accepted);
+        QVERIFY(QTest::qWaitFor([&] { return window->grabWindow().size() == QSize(frame->width, frame->height); },
+                                5'000));
+        const QImage grabbed = window->grabWindow().convertToFormat(QImage::Format_RGB32);
+        const auto comparison = testing::compareImages(grabbed, cpuReference(*frame, overlay.get()), {2, 0});
+        if (!comparison.withinTolerance) { // keep the evidence
+            QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+            grabbed.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/decoded-composite-actual.png"));
+            comparison.diff.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/decoded-composite-diff.png"));
+        }
+        QVERIFY2(comparison.withinTolerance,
+                 qPrintable(QStringLiteral("%1 pixels differ, max delta %2")
+                                .arg(comparison.differingPixels)
+                                .arg(comparison.maxChannelDelta)));
     }
 
     void newerSubmissionsSupersedeOlderOnes()

@@ -18,4 +18,7 @@ hikari_add_qttest(hikari_ui_presenter_tests SOURCES presenter_tests.cpp
     LIBRARIES hikari_ui hikari_backends hikari_image_testing)
 target_compile_definitions(hikari_ui_presenter_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
-    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/presenter")
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/presenter"
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_presenter_tests hikari_media_helper hikari_media_fixtures)

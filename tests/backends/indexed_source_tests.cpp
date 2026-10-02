@@ -273,6 +273,67 @@ TEST_F(Fixture, FrameTransferObservation)
     std::fprintf(stderr, "frame transfer: 48 frames, %zu bytes, %.1f ms (%.2f ms per frame)\n", bytes, ms, ms / 48);
 }
 
+// I2: the helper converts Y'CbCr to BGRA with the stream's own matrix and
+// range. Expected values follow the BT.601/BT.709 equations.
+struct ColorCase {
+    const char *kind;
+    double kr, kb;
+    bool full;
+};
+
+int colorError(Fixture &f, const ColorCase &c)
+{
+    static constexpr int kPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
+    if (!f.open(c.kind))
+        return 1000;
+    const auto frame = f.frame(5);
+    if (!frame)
+        return 1000;
+    int worst = 0;
+    for (int q = 0; q < 4; ++q) {
+        const double y = c.full ? kPatches[q][0] / 255.0 : (kPatches[q][0] - 16) / 219.0;
+        const double pb = (kPatches[q][1] - 128) / (c.full ? 255.0 : 224.0);
+        const double pr = (kPatches[q][2] - 128) / (c.full ? 255.0 : 224.0);
+        const double r = y + 2 * (1 - c.kr) * pr, b = y + 2 * (1 - c.kb) * pb;
+        const double g = (y - c.kr * r - c.kb * b) / (1 - c.kr - c.kb);
+        auto code = [](double v) { return int(std::lround(std::clamp(v, 0.0, 1.0) * 255)); };
+        const int x = (q % 2 ? 3 : 1) * frame->width / 4, yy = (q / 2 ? 3 : 1) * frame->height / 4;
+        const std::byte *p = frame->bgra.data() + std::size_t(yy) * frame->stride + std::size_t(x) * 4;
+        const int got[3] = {std::to_integer<int>(p[2]), std::to_integer<int>(p[1]), std::to_integer<int>(p[0])};
+        const int want[3] = {code(r), code(g), code(b)};
+        for (int k = 0; k < 3; ++k)
+            worst = std::max(worst, std::abs(got[k] - want[k]));
+        std::fprintf(stderr, "%s patch %d: got %3d %3d %3d, expected %3d %3d %3d\n", c.kind, q, got[0], got[1], got[2],
+                     want[0], want[1], want[2]);
+    }
+    return worst;
+}
+
+TEST_F(Fixture, Bt601LimitedRangeIsConvertedWithItsTags)
+{
+    EXPECT_LE(colorError(*this, {"color601", 0.299, 0.114, false}), 3);
+}
+
+TEST_F(Fixture, Bt709LimitedRangeIsConvertedWithItsTags)
+{
+    EXPECT_LE(colorError(*this, {"color709", 0.2126, 0.0722, false}), 3);
+}
+
+TEST_F(Fixture, Bt709FullRangeIsConvertedWithItsTags)
+{
+    EXPECT_LE(colorError(*this, {"color709full", 0.2126, 0.0722, true}), 3);
+}
+
+TEST_F(Fixture, ColorControlsDetectAWrongMatrixOrRange)
+{
+    // Controls: the same comparisons fail by a wide margin when the
+    // expectation uses the other matrix or range.
+    EXPECT_GT(colorError(*this, {"color709", 0.299, 0.114, false}), 20) << "BT.709 read as BT.601";
+    // Saturated patches clip, so a range error shows less than a matrix error;
+    // both stay well beyond the comparisons' tolerance of 3.
+    EXPECT_GT(colorError(*this, {"color709full", 0.2126, 0.0722, false}), 10) << "full range read as limited";
+}
+
 TEST_F(Fixture, UnreadableFilesFailExplicitly)
 {
     std::optional<std::expected<SourceTimeline, SourceError>> result;
