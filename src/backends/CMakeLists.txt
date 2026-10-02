@@ -1,5 +1,5 @@
 # Backend adapters implementing application ports (FFMS2/libass, audio, files).
-add_library(hikari_backends STATIC module.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>
     $<$<PLATFORM_ID:Windows>:win_file_port.cpp> $<$<PLATFORM_ID:Windows>:win_file_reader.cpp>
