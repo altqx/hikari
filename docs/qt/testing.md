@@ -82,3 +82,15 @@ Use `hikari_add_qttest(… LIBRARIES hikari_a11y_testing)` and the `a11y` label.
 5. Attach the transcript to the card, and check off the matching obligation (for example G45-uia or E28-at).
 
 Offscreen and Xvfb runs never substitute for step 2.
+
+## Rendered-image comparison (E2-img)
+
+The test-only `tests/support/image` library compares a rendered `QImage` with `tests/references/<name>.png` under an `ImageTolerance`: the largest allowed per-channel difference, and the share of pixels allowed to exceed it. A mismatch writes `<name>-actual.png` and `<name>-diff.png` to the test's artifact directory. `HIKARI_UPDATE_REFERENCES=1` rewrites references from actual images; regenerated references are reviewed and committed like code.
+
+The runner's controls, labelled `image`:
+- a Qt Quick scene of shapes rendered offscreen;
+- an ASS vector drawing rendered by libass;
+- a tolerance case;
+- a failing twin rendering a different scene against the same reference.
+
+The controls avoid host fonts. QML uses shapes only. libass, which needs one font even for drawings, gets Titillium Web (OFL) from the locked Qt examples as an in-memory font, with no system font provider. A guard asserts that the drawing actually paints pixels, so an empty render cannot match an empty reference.

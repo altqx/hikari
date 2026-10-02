@@ -21,6 +21,8 @@ on:
       - src/**
       - tests/dependency-load/**
       - tests/runners/**
+      - tests/support/**
+      - tests/references/**
       - tests/modules/**
       - tests/core/**
       - tests/application/**
