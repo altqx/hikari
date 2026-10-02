@@ -4,3 +4,5 @@ hikari_add_gtest(hikari_application_edit_tests SOURCES edit_session_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_workspace_tests SOURCES workspace_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_document_files_tests SOURCES document_files_tests.cpp
+    LIBRARIES hikari_application LABELS application)
