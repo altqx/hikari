@@ -23,6 +23,7 @@ on:
       - tests/runners/**
       - tests/modules/**
       - tests/core/**
+      - tests/application/**
       - tests/fixtures/**
       - docs/qt/fixtures/**
       - .github/workflows/qt-linux.yml
