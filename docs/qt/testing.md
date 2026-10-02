@@ -94,3 +94,11 @@ The runner's controls, labelled `image`:
 - a failing twin rendering a different scene against the same reference.
 
 The controls avoid host fonts. QML uses shapes only. libass, which needs one font even for drawings, gets Titillium Web (OFL) from the locked Qt examples as an in-memory font, with no system font provider. A guard asserts that the drawing actually paints pixels, so an empty render cannot match an empty reference.
+
+## Performance harness (E2-perf)
+
+`tests/support/perf` follows the [performance contract](performance.md)'s statistics: each benchmark runs independent repetitions (five by default), and nearest-rank p50/p95/p99, maximum and mean are reported per run, never pooled. The p95 spread across runs is reported alongside. Reports are JSON and carry the host's identity: CPU, logical cores, OS and compiler.
+
+A host counts as calibrated only when its fingerprint is listed in `tests/perf/reference-hosts.json`, which is empty until reference hosts are bound. Results from any other host are labelled observations, never budget passes. Perf tests carry the `perf` label: the `*-verify` presets exclude them, and `ctest --preset <platform>-x64-perf` runs them. The Ubuntu CI job runs them and keeps `perf-report-core.json`.
+
+First workloads: loading a generated 50,000-Line ASS script (5×4 samples, the G fixture size), and NTSC `frameAtOrAfter` lookups (5×2,000).

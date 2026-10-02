@@ -1,50 +1,253 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": {"major": 3, "minor": 28, "patch": 0},
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 28,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
       "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
-      "cacheVariables": {"CMAKE_BUILD_TYPE": "Release"}
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     },
-    {"name": "ubuntu-x64-release", "inherits": "base", "displayName": "Ubuntu x64 release",
-     "condition": {"type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"}},
-    {"name": "fedora-x64-release", "inherits": "base", "displayName": "Fedora x64 release",
-     "condition": {"type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux"}},
-    {"name": "windows-x64-release", "inherits": "base", "displayName": "Windows x64 release (latest MSVC)",
-     "condition": {"type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows"},
-     "cacheVariables": {"CMAKE_C_COMPILER": "cl", "CMAKE_CXX_COMPILER": "cl"}},
-    {"name": "provision", "inherits": "base", "displayName": "Provision locked dependencies only",
-     "cacheVariables": {"HIKARI_PROVISION_ONLY": "ON"}}
+    {
+      "name": "ubuntu-x64-release",
+      "inherits": "base",
+      "displayName": "Ubuntu x64 release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "fedora-x64-release",
+      "inherits": "base",
+      "displayName": "Fedora x64 release",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "inherits": "base",
+      "displayName": "Windows x64 release (latest MSVC)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
+      }
+    },
+    {
+      "name": "provision",
+      "inherits": "base",
+      "displayName": "Provision locked dependencies only",
+      "cacheVariables": {
+        "HIKARI_PROVISION_ONLY": "ON"
+      }
+    }
   ],
   "buildPresets": [
-    {"name": "ubuntu-x64-release", "configurePreset": "ubuntu-x64-release"},
-    {"name": "fedora-x64-release", "configurePreset": "fedora-x64-release"},
-    {"name": "windows-x64-release", "configurePreset": "windows-x64-release"}
+    {
+      "name": "ubuntu-x64-release",
+      "configurePreset": "ubuntu-x64-release"
+    },
+    {
+      "name": "fedora-x64-release",
+      "configurePreset": "fedora-x64-release"
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release"
+    }
   ],
   "testPresets": [
-    {"name": "ubuntu-x64-release", "configurePreset": "ubuntu-x64-release", "output": {"outputOnFailure": true}},
-    {"name": "fedora-x64-release", "configurePreset": "fedora-x64-release", "output": {"outputOnFailure": true}},
-    {"name": "windows-x64-release", "configurePreset": "windows-x64-release", "output": {"outputOnFailure": true}}
+    {
+      "name": "ubuntu-x64-release",
+      "configurePreset": "ubuntu-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      }
+    },
+    {
+      "name": "fedora-x64-release",
+      "configurePreset": "fedora-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      }
+    },
+    {
+      "name": "windows-x64-release",
+      "configurePreset": "windows-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      }
+    },
+    {
+      "name": "ubuntu-x64-perf",
+      "configurePreset": "ubuntu-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "fedora-x64-perf",
+      "configurePreset": "fedora-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    },
+    {
+      "name": "windows-x64-perf",
+      "configurePreset": "windows-x64-release",
+      "filter": {
+        "include": {
+          "label": "perf"
+        }
+      },
+      "output": {
+        "outputOnFailure": true,
+        "verbosity": "verbose"
+      }
+    }
   ],
   "workflowPresets": [
-    {"name": "ubuntu-x64-release", "steps": [
-      {"type": "configure", "name": "ubuntu-x64-release"}, {"type": "build", "name": "ubuntu-x64-release"}]},
-    {"name": "ubuntu-x64-verify", "steps": [
-      {"type": "configure", "name": "ubuntu-x64-release"}, {"type": "build", "name": "ubuntu-x64-release"},
-      {"type": "test", "name": "ubuntu-x64-release"}]},
-    {"name": "fedora-x64-release", "steps": [
-      {"type": "configure", "name": "fedora-x64-release"}, {"type": "build", "name": "fedora-x64-release"}]},
-    {"name": "fedora-x64-verify", "steps": [
-      {"type": "configure", "name": "fedora-x64-release"}, {"type": "build", "name": "fedora-x64-release"},
-      {"type": "test", "name": "fedora-x64-release"}]},
-    {"name": "windows-x64-release", "steps": [
-      {"type": "configure", "name": "windows-x64-release"}, {"type": "build", "name": "windows-x64-release"}]},
-    {"name": "windows-x64-verify", "steps": [
-      {"type": "configure", "name": "windows-x64-release"}, {"type": "build", "name": "windows-x64-release"},
-      {"type": "test", "name": "windows-x64-release"}]},
-    {"name": "provision", "steps": [{"type": "configure", "name": "provision"}]}
+    {
+      "name": "ubuntu-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "ubuntu-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "ubuntu-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "ubuntu-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "ubuntu-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "fedora-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "fedora-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "fedora-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "fedora-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "fedora-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-verify",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-release"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "provision",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "provision"
+        }
+      ]
+    }
   ]
 }

@@ -22,6 +22,7 @@ on:
       - tests/dependency-load/**
       - tests/runners/**
       - tests/support/**
+      - tests/perf/**
       - tests/references/**
       - tests/modules/**
       - tests/core/**
@@ -89,6 +90,11 @@ jobs:
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
           cmake --workflow --preset ubuntu-x64-verify
+
+      - name: Performance observations (uncalibrated host)
+        run: |
+          ctest --preset ubuntu-x64-perf
+          cp out/build/ubuntu-x64-release/perf-report-core.json out/evidence/ 2>/dev/null || true
 
       - name: Collect sanitized evidence
         if: always()
