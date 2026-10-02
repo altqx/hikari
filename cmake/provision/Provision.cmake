@@ -40,6 +40,22 @@ if(HIKARI_PLATFORM STREQUAL "linux")
     endif()
 endif()
 
+if(HIKARI_PLATFORM STREQUAL "windows")
+    # vcpkg fetches its own build tools; the provisioner itself needs git, and
+    # the build needs ninja and cl (the Visual Studio developer environment).
+    set(_hikari_missing "")
+    foreach(tool git ninja cl)
+        find_program(_hikari_tool_${tool} NAMES ${tool})
+        if(NOT _hikari_tool_${tool})
+            list(APPEND _hikari_missing ${tool})
+        endif()
+    endforeach()
+    if(_hikari_missing)
+        list(JOIN _hikari_missing " " _hikari_missing)
+        message(FATAL_ERROR "Missing declared host tools: ${_hikari_missing}. Run from a Visual Studio x64 developer environment with Git for Windows on PATH.")
+    endif()
+endif()
+
 set(HIKARI_LOCK_DIR "${CMAKE_CURRENT_LIST_DIR}/../locks")
 get_filename_component(HIKARI_LOCK_DIR "${HIKARI_LOCK_DIR}" ABSOLUTE)
 set(HIKARI_SDK_DIR "${CMAKE_SOURCE_DIR}/out/sdk" CACHE PATH
