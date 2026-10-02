@@ -15,3 +15,20 @@ if(WIN32)
     set_property(TEST dependency-load APPEND PROPERTY ENVIRONMENT_MODIFICATION
         "PATH=path_list_prepend:${HIKARI_QT_PREFIX}/bin")
 endif()
+
+# B4: each pinned Phase 3 input refuses a changed archive (offline, private
+# work directory). PortAudio comes from the owned overlay, LuaJIT from the
+# baseline port tree.
+cmake_path(GET CMAKE_TOOLCHAIN_FILE PARENT_PATH _hikari_vcpkg_buildsystems)
+cmake_path(GET _hikari_vcpkg_buildsystems PARENT_PATH _hikari_vcpkg_scripts)
+cmake_path(GET _hikari_vcpkg_scripts PARENT_PATH _hikari_vcpkg_root)
+foreach(_port_dir "${PROJECT_SOURCE_DIR}/ports/portaudio" "${_hikari_vcpkg_root}/ports/luajit")
+    cmake_path(GET _port_dir FILENAME _port)
+    add_test(NAME changed-input-${_port} COMMAND "${CMAKE_COMMAND}"
+        "-DVCPKG=${_hikari_vcpkg_root}/vcpkg${CMAKE_EXECUTABLE_SUFFIX}"
+        "-DPORT_DIR=${_port_dir}" "-DDOWNLOADS=${_hikari_vcpkg_root}/downloads"
+        "-DTRIPLETS=${PROJECT_SOURCE_DIR}/triplets" "-DTRIPLET=${VCPKG_TARGET_TRIPLET}"
+        "-DWORK=${CMAKE_CURRENT_BINARY_DIR}/changed-input-${_port}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/changed_input.cmake")
+    set_tests_properties(changed-input-${_port} PROPERTIES TIMEOUT 300 LABELS provisioning RUN_SERIAL TRUE)
+endforeach()

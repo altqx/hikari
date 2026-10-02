@@ -154,6 +154,52 @@ TEST_F(Fixture, ResultsFromAReplacedSourceAreStale)
     EXPECT_EQ((*reopened)->generation, source.generation());
 }
 
+TEST_F(Fixture, IndexingReportsProgressAndCanBeCancelled)
+{
+    std::vector<std::int64_t> progress;
+    ASSERT_TRUE(open("longgop", &progress));
+    EXPECT_FALSE(progress.empty()) << "indexing reports progress";
+    EXPECT_TRUE(std::ranges::is_sorted(progress));
+
+    // Cancel before the event loop runs: the Cancel follows the request.
+    std::optional<std::expected<SourceTimeline, SourceError>> result;
+    source.open(fixture("longgop"), {}, [&](auto r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return source.helperHost() && source.helperHost()->outstanding() > 0; }));
+    source.cancelOpen();
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_FALSE(*result);
+    EXPECT_EQ(result->error(), SourceError::Cancelled);
+    EXPECT_EQ(frame(0).error(), SourceError::NotOpen) << "a cancelled open leaves nothing open";
+    ASSERT_TRUE(open("cfr")) << "the helper still serves the next open";
+}
+
+TEST_F(Fixture, ASupersededOpenResolvesStale)
+{
+    std::optional<std::expected<SourceTimeline, SourceError>> first, second;
+    source.open(fixture("longgop"), {}, [&](auto r) { first = std::move(r); });
+    source.open(fixture("cfr"), {}, [&](auto r) { second = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return first.has_value() && second.has_value(); }));
+    EXPECT_EQ(first->error(), SourceError::Stale);
+    ASSERT_TRUE(*second);
+    EXPECT_EQ((*second)->pts.size(), 48u);
+}
+
+TEST_F(Fixture, CancelledReadsResolveOnceAndLateResultsAreDropped)
+{
+    ASSERT_TRUE(open("cfr"));
+    std::vector<std::expected<IndexedFrame, SourceError>> results;
+    source.frame(3, [&](auto r) { results.push_back(std::move(r)); });
+    source.frame(4, [&](auto r) { results.push_back(std::move(r)); });
+    source.cancelReads();
+    ASSERT_EQ(results.size(), 2u) << "resolved at once";
+    EXPECT_EQ(results[0].error(), SourceError::Cancelled);
+    EXPECT_EQ(results[1].error(), SourceError::Cancelled);
+    const auto next = frame(5); // the helper's late answers arrive first
+    ASSERT_TRUE(next);
+    EXPECT_EQ(barcode(*next), 5);
+    EXPECT_EQ(results.size(), 2u) << "late results are dropped";
+}
+
 TEST_F(Fixture, HelperLossIsReportedAndAReopenRecovers)
 {
     ASSERT_TRUE(open("cfr"));
@@ -258,6 +304,26 @@ TEST_F(AudioFixture, RangesEndAtTheSource)
     const auto empty = audio(10, 0);
     ASSERT_TRUE(empty);
     EXPECT_EQ(empty->count, 0);
+}
+
+TEST_F(AudioFixture, CancelledAndSupersededRangesNeverDeliverSamples)
+{
+    const auto t = open("audio");
+    ASSERT_TRUE(t);
+    ASSERT_TRUE(openAudio(t->firstAudioTrack));
+    std::optional<std::expected<AudioBlock, SourceError>> cancelled;
+    source.audio(0, 4800, [&](auto r) { cancelled = std::move(r); });
+    source.cancelReads();
+    ASSERT_TRUE(cancelled);
+    EXPECT_EQ(cancelled->error(), SourceError::Cancelled);
+
+    std::optional<std::expected<AudioBlock, SourceError>> stale;
+    source.audio(0, 4800, [&](auto r) { stale = std::move(r); });
+    std::optional<std::expected<SourceTimeline, SourceError>> reopened;
+    source.open(fixture("audio"), {}, [&](auto r) { reopened = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return stale.has_value() && reopened.has_value(); }));
+    EXPECT_EQ(stale->error(), SourceError::Stale);
+    EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen) << "the new source has no audio opened yet";
 }
 
 TEST_F(AudioFixture, SourcesWithoutAudioReportIt)

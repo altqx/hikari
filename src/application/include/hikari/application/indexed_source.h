@@ -91,6 +91,9 @@ public:
     virtual void openAudio(int track, AudioOpened done) = 0;
     // A half-open range [start, start + count) of sample frames.
     virtual void audio(std::int64_t start, std::int64_t count, AudioReady done) = 0;
+    // Resolves every outstanding frame and audio request as Cancelled now;
+    // the helper's late results are dropped.
+    virtual void cancelReads() = 0;
     virtual std::uint64_t generation() const = 0;
 };
 
