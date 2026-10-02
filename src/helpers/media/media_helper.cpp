@@ -11,6 +11,7 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <string>
@@ -26,11 +27,18 @@ struct IndexDeleter {
 struct VideoDeleter {
     void operator()(FFMS_VideoSource *v) const { FFMS_DestroyVideoSource(v); }
 };
+struct AudioDeleter {
+    void operator()(FFMS_AudioSource *a) const { FFMS_DestroyAudioSource(a); }
+};
 
 struct Source {
+    std::string path;
     std::unique_ptr<FFMS_Index, IndexDeleter> index;
     std::unique_ptr<FFMS_VideoSource, VideoDeleter> video;
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio;
     int frames = 0;
+    std::int64_t samples = 0;
+    int bytesPerFrame = 0; // one sample on every channel
 };
 
 std::string errorText(const FFMS_ErrorInfo &e)
@@ -62,6 +70,7 @@ void open(Source &source, Reader &in, Responder &r)
         return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
     Progress progress{&r};
     FFMS_SetProgressCallback(indexer, onProgress, &progress);
+    FFMS_TrackTypeIndexSettings(indexer, FFMS_TYPE_AUDIO, 1, 0); // audio is not indexed by default
     std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_ABORT, &err));
     if (!index)
         return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
@@ -87,6 +96,9 @@ void open(Source &source, Reader &in, Responder &r)
     out.i32(track).i64(props->FPSNumerator).i64(props->FPSDenominator).i64(tb->Num).i64(tb->Den).i32(props->NumFrames);
     for (int i = 0; i < props->NumFrames; ++i)
         out.i64(FFMS_GetFrameInfo(t, i)->PTS);
+    FFMS_ErrorInfo audioErr{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    out.i32(FFMS_GetFirstTrackOfType(index.get(), FFMS_TYPE_AUDIO, &audioErr)); // -1 when none
+    source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
     source.frames = props->NumFrames;
@@ -118,6 +130,53 @@ void frame(Source &source, Reader &in, Responder &r)
     r.terminal(Outcome::Ok, out.take());
 }
 
+void openAudio(Source &source, Reader &in, Responder &r)
+{
+    const int track = in.i32();
+    if (!in.ok() || !source.index)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not open"));
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    // FFMS_DELAY_NO_SHIFT: sample 0 is the first decoded sample; its time is
+    // reported as the origin instead of being shifted or padded.
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
+        FFMS_CreateAudioSource(source.path.c_str(), track, source.index.get(), FFMS_DELAY_NO_SHIFT, &err));
+    if (!audio)
+        return r.terminal(Outcome::Unsupported, bytesOf(errorText(err)));
+    const FFMS_AudioProperties *a = FFMS_GetAudioProperties(audio.get());
+    const int bytesPerSample = a->BitsPerSample / 8;
+    source.bytesPerFrame = bytesPerSample * a->Channels;
+    source.samples = a->NumSamples;
+    source.audio = std::move(audio);
+    r.terminal(Outcome::Ok, Writer()
+                                .i32(track)
+                                .i32(a->SampleFormat)
+                                .i32(a->SampleRate)
+                                .i32(a->BitsPerSample)
+                                .i32(a->Channels)
+                                .i64(a->ChannelLayout)
+                                .i64(a->NumSamples)
+                                .i64(static_cast<std::int64_t>(a->FirstTime * 1'000'000.0 + (a->FirstTime < 0 ? -0.5 : 0.5)))
+                                .take());
+}
+
+void audio(Source &source, Reader &in, Responder &r)
+{
+    const std::int64_t start = in.i64();
+    std::int64_t count = in.i64();
+    if (!in.ok() || !source.audio || count < 0)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not open"));
+    if (start < 0 || start >= source.samples)
+        return r.terminal(Outcome::InvalidInput, bytesOf("EOF"));
+    count = std::min(count, source.samples - start);
+    std::vector<std::byte> samples(static_cast<std::size_t>(count) * source.bytesPerFrame);
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (count > 0 && FFMS_GetAudio(source.audio.get(), samples.data(), start, count, &err) != 0)
+        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    r.terminal(Outcome::Ok, Writer().i64(start).i64(count).bytes(samples).take());
+}
+
 } // namespace
 
 int main()
@@ -131,6 +190,10 @@ int main()
             return open(source, in, r);
         case media::Command::Frame:
             return frame(source, in, r);
+        case media::Command::OpenAudio:
+            return openAudio(source, in, r);
+        case media::Command::Audio:
+            return audio(source, in, r);
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });

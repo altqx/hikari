@@ -32,3 +32,7 @@ tasks:
     # Backend adapter tests by name (a label filter on top of the preset's matched nothing).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LibassRenderer|WinPortTest|Reopen)[.]"
     timeoutSeconds: 600
+  media:
+    # The media helper tests with failure output (N1, N2).
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(Fixture|AudioFixture)[.]" --repeat until-fail:3
+    timeoutSeconds: 900

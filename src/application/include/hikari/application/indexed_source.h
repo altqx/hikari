@@ -37,6 +37,33 @@ struct SourceTimeline {
     // Seconds per PTS unit: pts * timeBaseNumerator / timeBaseDenominator seconds.
     std::int64_t timeBaseNumerator = 1, timeBaseDenominator = 1000;
     std::vector<std::int64_t> pts; // per frame, in the time base (rational PTS)
+    int firstAudioTrack = -1;      // -1: the source has no audio
+};
+
+// AudioDecode (N2): immutable PCM for a half-open source sample range.
+enum class SampleFormat { U8, S16, S32, Float, Double };
+
+struct AudioInfo {
+    std::uint64_t generation = 0;
+    int track = -1;
+    SampleFormat format = SampleFormat::S16;
+    int sampleRate = 0;
+    int bitsPerSample = 0;
+    int channels = 0;
+    std::int64_t channelLayout = 0; // FFmpeg channel mask
+    std::int64_t sampleCount = 0;   // sample frames (one sample on every channel)
+    // Source time of sample 0, in microseconds; samples are not shifted or
+    // padded to time zero.
+    std::int64_t originMicroseconds = 0;
+};
+
+struct AudioBlock {
+    std::uint64_t generation = 0;
+    std::int64_t start = 0;       // first sample frame
+    std::int64_t count = 0;       // sample frames (shortened at the end of the source)
+    SampleFormat format = SampleFormat::S16;
+    int channels = 0;
+    std::vector<std::byte> samples; // interleaved
 };
 
 struct IndexedFrame {
@@ -52,12 +79,18 @@ public:
     using Progress = std::function<void(std::int64_t done, std::int64_t total)>;
     using Opened = std::function<void(std::expected<SourceTimeline, SourceError>)>;
     using FrameReady = std::function<void(std::expected<IndexedFrame, SourceError>)>;
+    using AudioOpened = std::function<void(std::expected<AudioInfo, SourceError>)>;
+    using AudioReady = std::function<void(std::expected<AudioBlock, SourceError>)>;
 
     virtual ~IndexedSourcePort() = default;
     // Starts indexing; replaces any open source (its pending results go Stale).
     virtual std::uint64_t open(const std::string &path, Progress progress, Opened done) = 0;
     virtual void cancelOpen() = 0;
     virtual void frame(int index, FrameReady done) = 0;
+    // Opens an audio track of the open source (its timeline's firstAudioTrack).
+    virtual void openAudio(int track, AudioOpened done) = 0;
+    // A half-open range [start, start + count) of sample frames.
+    virtual void audio(std::int64_t start, std::int64_t count, AudioReady done) = 0;
     virtual std::uint64_t generation() const = 0;
 };
 

@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstring>
 #include <numeric>
 #include <random>
 
@@ -156,11 +157,19 @@ TEST_F(Fixture, ResultsFromAReplacedSourceAreStale)
 TEST_F(Fixture, HelperLossIsReportedAndAReopenRecovers)
 {
     ASSERT_TRUE(open("cfr"));
+    std::vector<std::string> calls;
     std::optional<std::expected<IndexedFrame, SourceError>> pending;
-    source.frame(5, [&](auto r) { pending = std::move(r); });
+    source.frame(5, [&](auto r) {
+        calls.push_back(r ? "frame " + std::to_string(r->index) : "error " + std::to_string(static_cast<int>(r.error())));
+        pending = std::move(r);
+    });
+    calls.push_back("stop");
     source.helperHost()->stop(); // the helper crashes
-    ASSERT_TRUE(pending.has_value());
-    EXPECT_EQ(pending->error(), SourceError::HelperLost);
+    std::string trace;
+    for (const auto &c : calls)
+        trace += c + "; ";
+    ASSERT_TRUE(pending.has_value()) << trace;
+    EXPECT_EQ(pending->error(), SourceError::HelperLost) << trace;
     ASSERT_TRUE(open("cfr")); // a fresh helper process
     EXPECT_EQ(barcode(*frame(5)), 5);
 }
@@ -171,4 +180,90 @@ TEST_F(Fixture, UnreadableFilesFailExplicitly)
     source.open(std::string(HIKARI_MEDIA_FIXTURES) + "/missing.mkv", {}, [&](auto r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_EQ(result->error(), SourceError::InvalidInput);
+}
+
+// N2: source PCM ranges. The audio fixture's left channel is the sample index
+// modulo 32768 and the right channel its negation; the generator writes 94
+// blocks of 1024 sample frames (96256 in total).
+
+namespace {
+
+std::int16_t left(const AudioBlock &b, std::int64_t i)
+{
+    std::int16_t v;
+    std::memcpy(&v, b.samples.data() + static_cast<std::size_t>(i) * 4, 2);
+    return v;
+}
+
+std::int16_t right(const AudioBlock &b, std::int64_t i)
+{
+    std::int16_t v;
+    std::memcpy(&v, b.samples.data() + static_cast<std::size_t>(i) * 4 + 2, 2);
+    return v;
+}
+
+} // namespace
+
+struct AudioFixture : Fixture {
+    std::expected<AudioInfo, SourceError> openAudio(int track)
+    {
+        std::optional<std::expected<AudioInfo, SourceError>> result;
+        source.openAudio(track, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+    std::expected<AudioBlock, SourceError> audio(std::int64_t start, std::int64_t count)
+    {
+        std::optional<std::expected<AudioBlock, SourceError>> result;
+        source.audio(start, count, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+};
+
+TEST_F(AudioFixture, PcmRangesAreExact)
+{
+    const auto t = open("audio");
+    ASSERT_TRUE(t);
+    ASSERT_GE(t->firstAudioTrack, 0);
+    const auto info = openAudio(t->firstAudioTrack);
+    ASSERT_TRUE(info);
+    EXPECT_EQ(info->sampleRate, 48000);
+    EXPECT_EQ(info->channels, 2);
+    EXPECT_EQ(info->format, SampleFormat::S16);
+    EXPECT_EQ(info->bitsPerSample, 16);
+    EXPECT_EQ(info->sampleCount, 96256);
+    EXPECT_EQ(info->originMicroseconds, 0);
+    for (std::int64_t start : {0, 1000, 32760, 50000}) {
+        const auto b = audio(start, 32);
+        ASSERT_TRUE(b) << start;
+        ASSERT_EQ(b->count, 32);
+        for (std::int64_t i = 0; i < 32; ++i) {
+            EXPECT_EQ(left(*b, i), static_cast<std::int16_t>((start + i) % 32768)) << start + i;
+            EXPECT_EQ(right(*b, i), static_cast<std::int16_t>(-((start + i) % 32768))) << start + i;
+        }
+    }
+}
+
+TEST_F(AudioFixture, RangesEndAtTheSource)
+{
+    ASSERT_TRUE(open("audio"));
+    EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen); // audio not opened yet
+    ASSERT_TRUE(openAudio(open("audio")->firstAudioTrack));
+    const auto tail = audio(96250, 100);
+    ASSERT_TRUE(tail);
+    EXPECT_EQ(tail->count, 6); // shortened at the end
+    EXPECT_EQ(left(*tail, 5), static_cast<std::int16_t>(96255 % 32768));
+    EXPECT_EQ(audio(96256, 10).error(), SourceError::EndOfStream);
+    const auto empty = audio(10, 0);
+    ASSERT_TRUE(empty);
+    EXPECT_EQ(empty->count, 0);
+}
+
+TEST_F(AudioFixture, SourcesWithoutAudioReportIt)
+{
+    const auto t = open("cfr");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->firstAudioTrack, -1);
+    EXPECT_EQ(openAudio(0).error(), SourceError::Unsupported); // track 0 is video
 }

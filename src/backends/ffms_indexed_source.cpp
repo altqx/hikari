@@ -63,6 +63,7 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
 {
     const std::uint64_t generation = ++m_generation;
     m_open = false;
+    m_audio.reset();
     ensureHelper([this, generation, path, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
         if (!ok)
             return done(std::unexpected(SourceError::MissingDependency));
@@ -101,6 +102,7 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
                 t.pts.reserve(static_cast<std::size_t>(std::max(count, 0)));
                 for (int i = 0; i < count; ++i)
                     t.pts.push_back(in.i64());
+                t.firstAudioTrack = in.i32();
                 if (!in.ok())
                     return done(std::unexpected(SourceError::BackendFailure));
                 m_open = true;
@@ -149,6 +151,78 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
                 f.bgra.size() != static_cast<std::size_t>(f.stride) * static_cast<std::size_t>(f.height))
                 return done(std::unexpected(SourceError::BackendFailure));
             done(std::move(f));
+        });
+    if (!request)
+        done(std::unexpected(errorOf(request.error())));
+}
+
+void FfmsIndexedSource::openAudio(int track, AudioOpened done)
+{
+    if (!m_open || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::OpenAudio)).i32(track).take(),
+        [this, generation, done](std::expected<Event, HostError> e) {
+            if (!e)
+                return done(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return done(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return done(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            application::AudioInfo a;
+            a.generation = generation;
+            a.track = in.i32();
+            const int format = in.i32();
+            a.sampleRate = in.i32();
+            a.bitsPerSample = in.i32();
+            a.channels = in.i32();
+            a.channelLayout = in.i64();
+            a.sampleCount = in.i64();
+            a.originMicroseconds = in.i64();
+            if (!in.ok() || format < 0 || format > 4 || a.channels <= 0 || a.bitsPerSample % 8 != 0)
+                return done(std::unexpected(SourceError::BackendFailure));
+            a.format = static_cast<application::SampleFormat>(format); // FFMS_FMT_* order
+            m_audio = a;
+            done(a);
+        });
+    if (!request)
+        done(std::unexpected(errorOf(request.error())));
+}
+
+void FfmsIndexedSource::audio(std::int64_t start, std::int64_t count, AudioReady done)
+{
+    if (!m_audio || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    const application::AudioInfo info = *m_audio;
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::Audio)).i64(start).i64(count).take(),
+        [this, generation, info, done](std::expected<Event, HostError> e) {
+            if (!e)
+                return done(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return done(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return done(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            application::AudioBlock b;
+            b.generation = generation;
+            b.start = in.i64();
+            b.count = in.i64();
+            b.format = info.format;
+            b.channels = info.channels;
+            b.samples = in.bytes();
+            const auto expected = static_cast<std::size_t>(b.count) * static_cast<std::size_t>(info.channels) *
+                                  static_cast<std::size_t>(info.bitsPerSample / 8);
+            if (!in.ok() || b.count < 0 || b.samples.size() != expected)
+                return done(std::unexpected(SourceError::BackendFailure));
+            done(std::move(b));
         });
     if (!request)
         done(std::unexpected(errorOf(request.error())));

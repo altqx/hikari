@@ -22,6 +22,8 @@ public:
     std::uint64_t open(const std::string &path, Progress progress, Opened done) override;
     void cancelOpen() override;
     void frame(int index, FrameReady done) override;
+    void openAudio(int track, AudioOpened done) override;
+    void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     std::uint64_t generation() const override { return m_generation; }
 
     // Tests: the helper process currently in use (null before the first open).
@@ -34,6 +36,7 @@ private:
     std::unique_ptr<helper::HelperHost> m_host;
     std::uint64_t m_generation = 0;
     bool m_open = false;
+    std::optional<application::AudioInfo> m_audio;
     std::optional<std::uint64_t> m_openRequest;
 };
 
