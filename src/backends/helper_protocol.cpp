@@ -78,6 +78,82 @@ std::optional<Frame> Decoder::next()
     return f;
 }
 
+Writer &Writer::u8(std::uint8_t v)
+{
+    put<std::uint8_t>(m_out, v);
+    return *this;
+}
+Writer &Writer::i32(std::int32_t v)
+{
+    put<std::uint32_t>(m_out, static_cast<std::uint32_t>(v));
+    return *this;
+}
+Writer &Writer::i64(std::int64_t v)
+{
+    put<std::uint64_t>(m_out, static_cast<std::uint64_t>(v));
+    return *this;
+}
+Writer &Writer::raw(const void *data, std::size_t size)
+{
+    put<std::uint32_t>(m_out, static_cast<std::uint32_t>(size));
+    const auto *b = static_cast<const std::byte *>(data);
+    m_out.insert(m_out.end(), b, b + size);
+    return *this;
+}
+Writer &Writer::str(const std::string &v)
+{
+    return raw(v.data(), v.size());
+}
+Writer &Writer::bytes(const std::vector<std::byte> &v)
+{
+    return raw(v.data(), v.size());
+}
+
+bool Reader::need(std::size_t n)
+{
+    if (!m_ok || m_in.size() - m_pos < n) {
+        m_ok = false;
+        return false;
+    }
+    return true;
+}
+std::uint8_t Reader::u8()
+{
+    if (!need(1))
+        return 0;
+    return get<std::uint8_t>(m_in.data() + m_pos++);
+}
+std::int32_t Reader::i32()
+{
+    if (!need(4))
+        return 0;
+    const auto v = static_cast<std::int32_t>(get<std::uint32_t>(m_in.data() + m_pos));
+    m_pos += 4;
+    return v;
+}
+std::int64_t Reader::i64()
+{
+    if (!need(8))
+        return 0;
+    const auto v = static_cast<std::int64_t>(get<std::uint64_t>(m_in.data() + m_pos));
+    m_pos += 8;
+    return v;
+}
+std::vector<std::byte> Reader::bytes()
+{
+    const auto n = static_cast<std::uint32_t>(i32());
+    if (!need(n))
+        return {};
+    std::vector<std::byte> out(m_in.begin() + static_cast<std::ptrdiff_t>(m_pos),
+                               m_in.begin() + static_cast<std::ptrdiff_t>(m_pos + n));
+    m_pos += n;
+    return out;
+}
+std::string Reader::str()
+{
+    return textOf(bytes());
+}
+
 std::vector<std::byte> bytesOf(const std::string &text)
 {
     std::vector<std::byte> out(text.size());

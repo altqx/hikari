@@ -7,7 +7,8 @@ hikari_module(hikari_helper_endpoint ALLOW)
 
 # Backend adapters implementing application ports (FFMS2/libass, audio, files,
 # helper processes).
-add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cpp
+add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cpp ffms_indexed_source.cpp
+    include/hikari/backends/ffms_indexed_source.h
     include/hikari/backends/helper_host.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>

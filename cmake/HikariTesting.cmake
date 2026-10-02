@@ -8,12 +8,12 @@ include(GoogleTest)
 # hikari_add_gtest(<target> SOURCES <src>... [LIBRARIES <lib>...] [LABELS <label>...])
 # Plain-C++ tests; each test case becomes its own CTest entry labelled "gtest".
 function(hikari_add_gtest target)
-    cmake_parse_arguments(arg "" "" "SOURCES;LIBRARIES;LABELS" ${ARGN})
+    cmake_parse_arguments(arg "" "" "SOURCES;LIBRARIES;LABELS;PROPERTIES" ${ARGN})
     add_executable(${target} ${arg_SOURCES})
     target_link_libraries(${target} PRIVATE GTest::gtest_main ${arg_LIBRARIES})
     gtest_discover_tests(${target}
         DISCOVERY_MODE PRE_TEST
-        PROPERTIES LABELS "gtest;${arg_LABELS}" TIMEOUT 60)
+        PROPERTIES LABELS "gtest;${arg_LABELS}" TIMEOUT 60 ${arg_PROPERTIES})
 endfunction()
 
 find_package(Qt6 REQUIRED COMPONENTS Test QuickTest)

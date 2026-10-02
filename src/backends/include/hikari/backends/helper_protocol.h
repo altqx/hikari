@@ -55,6 +55,40 @@ private:
     bool m_failed = false;
 };
 
+// Payload fields: little-endian integers, length-prefixed strings and bytes.
+class Writer {
+public:
+    Writer &u8(std::uint8_t v);
+    Writer &i32(std::int32_t v);
+    Writer &i64(std::int64_t v);
+    Writer &str(const std::string &v);
+    Writer &bytes(const std::vector<std::byte> &v);
+    Writer &raw(const void *data, std::size_t size); // u32 length + bytes
+    std::vector<std::byte> take() { return std::move(m_out); }
+
+private:
+    std::vector<std::byte> m_out;
+};
+
+// Reads fields in order; a short or malformed payload sets ok() to false and
+// yields zero values from then on.
+class Reader {
+public:
+    explicit Reader(const std::vector<std::byte> &payload) : m_in(payload) {}
+    std::uint8_t u8();
+    std::int32_t i32();
+    std::int64_t i64();
+    std::string str();
+    std::vector<std::byte> bytes();
+    bool ok() const { return m_ok; }
+
+private:
+    bool need(std::size_t n);
+    const std::vector<std::byte> &m_in;
+    std::size_t m_pos = 0;
+    bool m_ok = true;
+};
+
 std::vector<std::byte> bytesOf(const std::string &text);
 std::string textOf(const std::vector<std::byte> &bytes);
 
