@@ -128,8 +128,7 @@ TEST(AssLoad, EventFieldsArePositionalLikeTheLegacyLoader)
     const auto result = loadAss(bytesOf("[Events]\n"
                                         "Comment: 3,0:00:05.50,0:00:06.00,Sign, Narrator ,10,20,30, fx ,  a, b,c  \n"
                                         "Dialogue: Marked=0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n"
-                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,\n"
-                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0\n"));
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,\n"));
     const auto lines = result.document.lines();
     ASSERT_EQ(lines.size(), 3u);
     const LineRecord &c = *lines[0];
@@ -144,18 +143,61 @@ TEST(AssLoad, EventFieldsArePositionalLikeTheLegacyLoader)
     EXPECT_EQ(c.text, u8"a, b,c");          // commas kept; surrounding whitespace trimmed
     EXPECT_EQ(lines[1]->layer.lexeme, u8"0"); // "Marked=0" form
     EXPECT_EQ(lines[2]->text, u8"");          // exactly 9 fields: empty text
-    // Fewer than 9 fields stays opaque, with a diagnostic.
-    EXPECT_TRUE(hasDiagnostic(result, Diagnostic::Kind::MalformedEvent));
-    EXPECT_TRUE(std::holds_alternative<OpaqueRecord>(result.document.sections()[0].records.back()));
+    EXPECT_TRUE(result.diagnostics.empty());
 }
 
-TEST(AssLoad, LegacyCommentPrefixQuirkIsPreserved)
+TEST(AssLoad, UnreadableEventsBecomePlainTextLines)
 {
-    // The legacy loader accepts any "Dial"/"Comm" prefix and treats everything
-    // not starting with "Dialogue" as a comment.
-    const auto result = loadAss(bytesOf("[Events]\nDialog: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,t\n"));
-    ASSERT_EQ(result.document.lines().size(), 1u);
-    EXPECT_TRUE(result.document.lines()[0]->comment);
+    // LoadASS takes every "Dial"/"Comm" line, but SetRaw reads it as an event
+    // only with a full "Dialogue"/"Comment" prefix and 9 fields. Anything else
+    // is a visible Line whose text is the whole line, timed 0, Default style.
+    const auto result = loadAss(bytesOf("[Events]\n"
+                                        "Dialog: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,t\n"
+                                        "Commentary: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,c\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0  \r\n"));
+    const auto lines = result.document.lines();
+    ASSERT_EQ(lines.size(), 3u);
+    EXPECT_TRUE(lines[0]->unparsed);
+    EXPECT_FALSE(lines[0]->comment);
+    EXPECT_EQ(lines[0]->text, u8"Dialog: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,t");
+    EXPECT_EQ(lines[0]->style, u8"Default");
+    EXPECT_EQ(lines[0]->start.value, DocumentTime(0));
+    // "Commentary" starts with "Comment": a parsed comment event.
+    EXPECT_FALSE(lines[1]->unparsed);
+    EXPECT_TRUE(lines[1]->comment);
+    EXPECT_TRUE(lines[2]->unparsed);
+    EXPECT_EQ(lines[2]->text, u8"Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0"); // right-trimmed
+    EXPECT_TRUE(hasDiagnostic(result, Diagnostic::Kind::MalformedEvent));
+}
+
+TEST(AssLoad, ActorMarkersFollowLegacyPrecedence)
+{
+    const auto result = loadAss(bytesOf("[Events]\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[bookmark]Ann,0,0,0,,a\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[hidden][bookmark]Bob,0,0,0,,b\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[bookmark]A[bookmark]B,0,0,0,,c\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_closed]G,0,0,0,,d\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[visible] Cat ,0,0,0,,e\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,X[hidden],0,0,0,,f\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D, [hidden],0,0,0,,g\n"
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_description],0,0,0,,h\n"));
+    const auto l = result.document.lines();
+    ASSERT_EQ(l.size(), 8u);
+    EXPECT_TRUE(l[0]->bookmark);
+    EXPECT_EQ(l[0]->actor, u8"Ann");
+    // Only the first matching kind is removed: [hidden] stays as actor text.
+    EXPECT_TRUE(l[1]->bookmark);
+    EXPECT_EQ(l[1]->visibility, LineVisibility::Visible);
+    EXPECT_EQ(l[1]->actor, u8"[hidden]Bob");
+    EXPECT_EQ(l[2]->actor, u8"AB"); // every occurrence of the kind
+    EXPECT_EQ(l[3]->group, GroupMarker::Closed);
+    EXPECT_EQ(l[3]->visibility, LineVisibility::Hidden);
+    EXPECT_EQ(l[4]->visibility, LineVisibility::VisibleBlock);
+    EXPECT_EQ(l[4]->actor, u8"Cat");
+    EXPECT_EQ(l[5]->actor, u8"X[hidden]"); // the field must start with '['
+    EXPECT_EQ(l[6]->actor, u8"[hidden]");  // leading space: not examined, then trimmed
+    EXPECT_EQ(l[7]->group, GroupMarker::Description);
+    EXPECT_EQ(l[7]->actor, u8"");
 }
 
 TEST(AssLoad, InvalidUtf8LinesStayAsBytes)

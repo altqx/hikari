@@ -68,7 +68,8 @@ struct Rig {
             lines.setSelection({core::LineId{id}, lines.selection().selected}, core::LineId{id});
         });
         window.show();
-        QTest::qWaitForWindowExposed(&window);
+        if (!QTest::qWaitForWindowExposed(&window))
+            qFatal("grid window was not exposed");
     }
     QAccessibleTableInterface *table() const
     {

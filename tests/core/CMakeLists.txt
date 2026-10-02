@@ -26,3 +26,7 @@ target_compile_definitions(hikari_core_srt_tests PRIVATE
 hikari_add_gtest(hikari_core_line_format_tests SOURCES line_formats_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
 target_compile_definitions(hikari_core_line_format_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+
+hikari_add_gtest(hikari_core_style_tests SOURCES style_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_style_tests PRIVATE
+    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")

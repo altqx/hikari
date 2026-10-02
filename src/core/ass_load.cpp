@@ -20,6 +20,29 @@ std::vector<const LineRecord *> Document::lines() const
     return out;
 }
 
+std::optional<std::u8string> Document::scriptInfo(std::u8string_view key) const
+{
+    std::optional<std::u8string> value;
+    for (const auto &section : m_sections)
+        if (section.kind == SectionKind::ScriptInfo)
+            for (const auto &record : section.records)
+                if (const auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                    value = p->value; // AddSInfo replaces: the last one wins
+    return value;
+}
+
+bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
+{
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                line->unconfirmed = unconfirmed;
+                line->edited = true;
+                return true;
+            }
+    return false;
+}
+
 bool Document::setLineText(LineId id, std::u8string text)
 {
     for (auto &section : m_sections)
@@ -72,6 +95,38 @@ std::u8string str(u8sv s)
     return std::u8string(s);
 }
 
+// Removes every occurrence of marker; true when there was one (wxString::Replace).
+bool replaceAll(std::u8string &text, u8sv marker)
+{
+    bool found = false;
+    for (std::size_t p; (p = text.find(marker)) != std::u8string::npos; found = true)
+        text.erase(p, marker.size());
+    return found;
+}
+
+// Dialogue::SetRaw's Actor handling: one marker kind, legacy order, then trim.
+std::u8string actorMarkers(u8sv field, LineRecord &line)
+{
+    std::u8string actor(field);
+    if (!actor.empty() && actor.front() == u8'[') {
+        if (replaceAll(actor, u8"[bookmark]")) {
+            line.bookmark = true;
+        } else if (replaceAll(actor, u8"[hidden]")) {
+            line.visibility = LineVisibility::Hidden;
+        } else if (replaceAll(actor, u8"[visible]")) {
+            line.visibility = LineVisibility::VisibleBlock;
+        } else if (replaceAll(actor, u8"[tree_closed]")) {
+            line.group = GroupMarker::Closed;
+            line.visibility = LineVisibility::Hidden;
+        } else if (replaceAll(actor, u8"[tree_opened]")) {
+            line.group = GroupMarker::Opened;
+        } else if (replaceAll(actor, u8"[tree_description]")) {
+            line.group = GroupMarker::Description;
+        }
+    }
+    return str(trim(actor));
+}
+
 class Loader {
 public:
     explicit Loader(std::span<const std::byte> bytes)
@@ -103,9 +158,13 @@ public:
                 span.length -= 1;
                 span.terminatorLength = 2;
             }
-            line(span);
+            m_spans.push_back(span);
             pos = end < b.size() ? end + 1 : end;
         }
+        // A TLMode pair consumes the line after its original, so lines are
+        // visited by index.
+        for (m_next = 0; m_next < m_spans.size();)
+            line(m_spans[m_next++]);
         return std::move(m_result);
     }
 
@@ -196,6 +255,14 @@ private:
         }
         if (kind == SectionKind::SsaStyles)
             addDiagnostic(Diagnostic::Severity::Info, Diagnostic::Kind::SsaStyles, span.offset, text);
+        if (kind == SectionKind::Events) {
+            // Evaluated at every "[Eve" header, from the Script Info read so far.
+            const auto mode = m_result.document.scriptInfo(u8"TLMode");
+            const auto style = m_result.document.scriptInfo(u8"TLMode Style");
+            m_tlStyle.reset();
+            if (mode == u8"Yes" && style && !style->empty())
+                m_tlStyle = style;
+        }
         DocumentBuilder::sections(m_result.document).push_back(Section{kind, str(text), span, {}});
     }
 
@@ -209,17 +276,35 @@ private:
 
     void event(u8sv view, const SourceSpan &span)
     {
-        // Legacy: wxStringTokenizer(",", RET_EMPTY_ALL) needs at least 9 tokens;
-        // the text is everything after the 9th token's comma.
-        const auto parts = splitAll(view, u8',');
-        if (parts.size() < 9) {
+        LineRecord line = parseEvent(view, span);
+        if (line.unparsed)
             addDiagnostic(Diagnostic::Severity::Warning, Diagnostic::Kind::MalformedEvent, span.offset, view);
-            current().records.push_back(OpaqueRecord{span});
+        if (m_tlStyle && line.style == *m_tlStyle) {
+            pair(std::move(line));
             return;
         }
-        LineRecord line;
         line.id = DocumentBuilder::nextLineId(m_result.document);
+        current().records.push_back(std::move(line));
+    }
+
+    // Dialogue::SetRaw. LoadASS takes any "Dial"/"Comm" line, but SetRaw reads
+    // it as an event only with a "Dialogue"/"Comment" prefix and at least 9
+    // comma tokens (wxStringTokenizer RET_EMPTY_ALL). Otherwise it falls
+    // through to the plain-text form: the whole line is the text. (Such a
+    // line containing " --> " would be read as an SRT cue; not reproduced.)
+    LineRecord parseEvent(u8sv view, const SourceSpan &span)
+    {
+        LineRecord line;
         line.span = span;
+        const auto parts = splitAll(view, u8',');
+        if (parts.size() < 9 || !(startsWith(view, u8"Dialogue") || startsWith(view, u8"Comment"))) {
+            line.unparsed = true;
+            line.style = u8"Default";
+            for (char8_t c : trimRight(view))
+                if (c != u8'\r')
+                    line.text += c;
+            return line;
+        }
         const u8sv first = parts[0];
         line.comment = !startsWith(first, u8"Dialogue");
         u8sv layerLexeme;
@@ -233,7 +318,7 @@ private:
         line.start = time(parts[1], span.offset);
         line.end = time(parts[2], span.offset);
         line.style = str(parts[3]);
-        line.actor = str(trim(parts[4]));
+        line.actor = actorMarkers(parts[4], line);
         line.marginLeft = {str(parts[5]), legacy::atoi(parts[5])};
         line.marginRight = {str(parts[6]), legacy::atoi(parts[6])};
         line.marginVertical = {str(parts[7]), legacy::atoi(parts[7])};
@@ -242,11 +327,50 @@ private:
         for (std::size_t i = 0; i < 9; ++i)
             consumed += parts[i].size() + 1;
         line.text = consumed <= view.size() ? str(trim(view.substr(consumed))) : std::u8string{};
-        current().records.push_back(std::move(line));
+        return line;
+    }
+
+    // SubsLoader::LoadASS in TLMode: the next token, whatever it is, is the
+    // translation line. Zero-length lines are not tokens; a CRLF blank line
+    // ("\r") is. The translation line is read without left trimming.
+    void pair(LineRecord original)
+    {
+        const auto &b = DocumentBuilder::source(m_result.document).bytes;
+        std::size_t j = m_next;
+        while (j < m_spans.size() && m_spans[j].length == 0 && m_spans[j].terminatorLength != 2)
+            ++j;
+        LineRecord merged;
+        if (j < m_spans.size() && validUtf8(b.data() + m_spans[j].offset, m_spans[j].length)) {
+            const SourceSpan &ps = m_spans[j];
+            merged = parseEvent(u8sv(reinterpret_cast<const char8_t *>(b.data() + ps.offset), ps.length), ps);
+            merged.span = SourceSpan{original.span.offset, ps.offset + ps.length - original.span.offset,
+                                     ps.terminatorLength};
+            m_next = j + 1;
+        } else {
+            // No translation line: legacy pairs with an empty plain-text line.
+            // (An undecodable one is left in place here.)
+            merged.unparsed = true;
+            merged.style = u8"Default";
+            merged.span = original.span;
+        }
+        if (merged.unparsed)
+            addDiagnostic(Diagnostic::Severity::Warning, Diagnostic::Kind::MalformedPair, original.span.offset,
+                          original.text);
+        merged.id = DocumentBuilder::nextLineId(m_result.document);
+        merged.originalSpan = original.span;
+        merged.translation = std::move(merged.text);
+        merged.text = std::move(original.text);
+        // Legacy compares the original's trimmed Effect with "\f" "D"; the
+        // trim removes the form feed, as wxString::Trim does.
+        merged.unconfirmed = original.effect == u8"\fD";
+        current().records.push_back(std::move(merged));
     }
 
     LoadResult m_result;
     std::set<SectionKind> m_seenKinds;
+    std::vector<SourceSpan> m_spans;
+    std::size_t m_next = 0;
+    std::optional<std::u8string> m_tlStyle; // set while TLMode pairing is on
 };
 
 } // namespace

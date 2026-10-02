@@ -115,3 +115,98 @@ TEST(AssSave, UnknownLineIdChangesNothing)
     EXPECT_FALSE(loaded.document.setLineText(LineId{999}, u8"x"));
     EXPECT_EQ(encodeAss(loaded.document), fixture("unknown-sections.ass"));
 }
+
+TEST(AssSave, EditedLinesRewriteMarkersInLegacyOrder)
+{
+    auto r = loadAss(bytesOf("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,D,[hidden][bookmark]Bob,0,0,0,,a\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_closed]G,0,0,0,,b\n"
+                             "Dial: x\n"));
+    for (const auto *line : r.document.lines())
+        ASSERT_TRUE(r.document.setLineText(line->id, line->text));
+    // The legacy save writes [bookmark] after any group or visibility marker,
+    // so a reload reads the bookmark and keeps "[hidden]" as actor text.
+    EXPECT_EQ(text(encodeAss(r.document)),
+              "[Events]\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,D,[bookmark][hidden]Bob,0,0,0,,a\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,D,[tree_closed]G,0,0,0,,b\n"
+              "Dialogue: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,,Dial: x\n");
+}
+
+TEST(AssLoad, TLModePairsReadAsOneLine)
+{
+    const auto r = loadAss(fixture("tlmode-pairs.ass"));
+    const auto lines = r.document.lines();
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(lines[0]->text, u8"Gate");
+    EXPECT_EQ(lines[0]->translation, u8"");
+    EXPECT_EQ(lines[0]->style, u8"Default"); // fields from the translation line
+    EXPECT_FALSE(lines[0]->comment);
+    EXPECT_TRUE(lines[0]->originalSpan);
+    EXPECT_EQ(lines[1]->text, u8"Harbor");
+    EXPECT_EQ(lines[1]->translation, u8"港");
+    EXPECT_EQ(text(encodeAss(r.document)), text(fixture("tlmode-pairs.ass"))); // unchanged: exact
+}
+
+TEST(AssSave, EditedTLModePairsMatchTheLegacySave)
+{
+    // Legacy run 36591631319 saved tlmode-pairs.ass. Regenerating both pairs
+    // gives its Events lines: the untranslated pair collapses to one line in
+    // the translation line's fields, the translated one becomes original
+    // (TLMode Style, Dialogue) plus translation. The legacy save writes CRLF;
+    // regenerated lines keep this file's LF.
+    auto r = loadAss(fixture("tlmode-pairs.ass"));
+    for (const auto *line : r.document.lines())
+        ASSERT_TRUE(r.document.setLineText(line->id, line->text));
+    const std::string ours = text(encodeAss(r.document));
+    std::string legacy = text(readFile(QStringLiteral(HIKARI_LEGACY_OUTPUTS "/supplement-TLMode/saved-tlmode-pairs.ass")));
+    std::erase(legacy, '\r');
+    const auto events = [](const std::string &s) { return s.substr(s.find("\nDialogue: ") + 1); };
+    EXPECT_EQ(events(ours), events(legacy));
+}
+
+TEST(AssSave, EditedUnconfirmedPairWritesTheOriginalWithFormFeedD)
+{
+    auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                             "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,orig\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,\n"));
+    const auto *line = r.document.lines().at(0);
+    // Unconfirmed is not read back from "\fD" (the trim removes the form
+    // feed), so it is set here as the Line command would.
+    EXPECT_FALSE(line->unconfirmed);
+    ASSERT_TRUE(r.document.setLineUnconfirmed(line->id, true));
+    EXPECT_EQ(text(encodeAss(r.document)),
+              "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,orig\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,\n");
+    // With the legacy "hide original on video" option the original is a Comment.
+    EXPECT_NE(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true}))
+                  .find("Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,orig\n"),
+              std::string::npos);
+}
+
+TEST(AssLoad, TLModePairingEdges)
+{
+    const auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\n"
+                                   "\n" // zero-length: not a token, skipped
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n"
+                                   "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,,unpaired\n"
+                                   "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,last\n"));
+    const auto lines = r.document.lines();
+    ASSERT_EQ(lines.size(), 3u);
+    EXPECT_EQ(lines[0]->translation, u8"uno");
+    EXPECT_EQ(lines[0]->span.length, std::string_view("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\n\n"
+                                                      "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno").size());
+    EXPECT_FALSE(lines[1]->originalSpan);
+    // No line after the last original: legacy pairs it with an empty plain
+    // line, so it keeps its text but takes zero times and the Default style.
+    EXPECT_EQ(lines[2]->text, u8"last");
+    EXPECT_EQ(lines[2]->style, u8"Default");
+    EXPECT_EQ(lines[2]->start.value, DocumentTime(0));
+    bool malformed = false;
+    for (const auto &d : r.diagnostics)
+        malformed |= d.kind == Diagnostic::Kind::MalformedPair;
+    EXPECT_TRUE(malformed);
+    EXPECT_EQ(text(encodeAss(r.document)).size(), r.document.source().bytes.size());
+}

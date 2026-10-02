@@ -53,14 +53,29 @@ struct IntField {
     std::int64_t value = 0;
 };
 
+// Actor-field markers as the legacy Dialogue::SetRaw reads them. Only a field
+// starting with '[' is examined, and only the first matching kind in the
+// order bookmark, hidden, visible, tree_closed, tree_opened,
+// tree_description is removed (every occurrence of it). Kinds never combine
+// on load; on save the group or visibility marker precedes [bookmark].
+enum class LineVisibility { Visible, Hidden, VisibleBlock };
+enum class GroupMarker { None, Description, Opened, Closed };
+
 struct LineRecord {
     LineId id;
     bool comment = false;   // ASS Comment: rather than Dialogue:
+    // An event line the legacy parser could not read as ASS ("Dial"/"Comm"
+    // prefix without "Dialogue"/"Comment", or fewer than 9 fields): the whole
+    // line is the text, with zero times and the Default style.
+    bool unparsed = false;
     IntField layer;
     TimeField start;
     TimeField end;
     std::u8string style;
-    std::u8string actor;    // as authored after trimming; marker syntax not interpreted here
+    std::u8string actor;    // trimmed, without the marker kind the loader removed
+    bool bookmark = false;
+    LineVisibility visibility = LineVisibility::Visible;
+    GroupMarker group = GroupMarker::None;
     IntField marginLeft;
     IntField marginRight;
     IntField marginVertical;
@@ -73,6 +88,14 @@ struct LineRecord {
     // until the Document's own frame rate is set (C01-fps-isolation).
     std::optional<std::int64_t> startFrame;
     std::optional<std::int64_t> endFrame;
+    // TLMode pair (Script Info "TLMode: Yes"): an original line in the
+    // "TLMode Style" followed by its translation line, read as one Line. The
+    // other fields come from the translation line; text is the original's.
+    // span covers both lines and anything between them; originalSpan is the
+    // original line alone.
+    std::optional<SourceSpan> originalSpan;
+    std::u8string translation; // legacy TextTl; empty means untranslated
+    bool unconfirmed = false;  // legacy State 4, written as the effect "\fD"
 };
 
 struct StyleRecord {
@@ -125,7 +148,8 @@ struct Diagnostic {
         InvalidUtf8,         // line kept as opaque bytes
         UnsupportedEncoding, // e.g. a UTF-16 byte-order mark; content kept as bytes
         MalformedTime,       // non-canonical time lexeme; legacy value used
-        MalformedEvent,      // Dialogue/Comment with fewer than 9 comma fields; kept opaque
+        MalformedEvent,      // not readable as an ASS event; kept as a plain-text Line
+        MalformedPair,       // TLMode original without a readable translation line
         RepeatedSection,     // a section kind seen again; both kept in order
         UnknownSection,      // header not recognized; kept untouched
         SsaStyles,           // [V4 Styles] present; conversion is a separate operation
@@ -151,6 +175,11 @@ public:
     // Line is regenerated on save; every other record keeps its exact bytes.
     // Returns false when no Line has this id.
     bool setLineText(LineId id, std::u8string text);
+    // Sets a Line's Unconfirmed state; like setLineText, the Line is regenerated.
+    bool setLineUnconfirmed(LineId id, bool unconfirmed);
+
+    // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
+    std::optional<std::u8string> scriptInfo(std::u8string_view key) const;
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

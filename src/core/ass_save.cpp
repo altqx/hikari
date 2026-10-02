@@ -25,9 +25,23 @@ std::u8string assLineText(const LineRecord &line)
     };
     // DocumentTime is microseconds; the legacy field is integer milliseconds.
     auto time = [](DocumentTime t) { return assTimeText(t.microseconds() / 1000); };
+    // ActorWithStates: [bookmark] first, then the group or visibility marker
+    // prepended before it (a group marker wins over visibility).
+    std::u8string actor = line.bookmark ? u8"[bookmark]" + line.actor : line.actor;
+    switch (line.group) {
+    case GroupMarker::Description: actor.insert(0, u8"[tree_description]"); break;
+    case GroupMarker::Opened: actor.insert(0, u8"[tree_opened]"); break;
+    case GroupMarker::Closed: actor.insert(0, u8"[tree_closed]"); break;
+    case GroupMarker::None:
+        if (line.visibility == LineVisibility::Hidden)
+            actor.insert(0, u8"[hidden]");
+        else if (line.visibility == LineVisibility::VisibleBlock)
+            actor.insert(0, u8"[visible]");
+        break;
+    }
     std::u8string out = line.comment ? u8"Comment: " : u8"Dialogue: ";
     out += number(line.layer.value) + u8',' + time(line.start.value) + u8',' + time(line.end.value) + u8',' +
-           line.style + u8',' + line.actor + u8',' + number(line.marginLeft.value) + u8',' +
+           line.style + u8',' + actor + u8',' + number(line.marginLeft.value) + u8',' +
            number(line.marginRight.value) + u8',' + number(line.marginVertical.value) + u8',' + line.effect +
            u8',' + line.text;
     return out;
@@ -37,6 +51,13 @@ std::u8string assLineText(const LineRecord &line)
 
 std::vector<std::byte> encodeAss(const Document &document)
 {
+    return encodeAss(document, AssSaveOptions{});
+}
+
+std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions &options)
+{
+    const std::u8string tlMode = document.scriptInfo(u8"TLMode").value_or(std::u8string{});
+    const std::u8string tlStyle = document.scriptInfo(u8"TLMode Style").value_or(std::u8string{});
     const auto &src = document.source().bytes;
     std::vector<std::byte> out;
     out.reserve(src.size() + 64);
@@ -56,7 +77,28 @@ std::vector<std::byte> encodeAss(const Document &document)
         for (const auto &record : section.records) {
             const auto *line = std::get_if<LineRecord>(&record);
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
-            if (line && line->edited) {
+            if (line && line->edited && line->originalSpan && !tlMode.empty()) {
+                const bool hasTranslation = !line->translation.empty();
+                if (tlMode != u8"Translated" && (hasTranslation || line->unconfirmed)) {
+                    LineRecord original = *line;
+                    original.style = tlStyle;
+                    original.comment = line->comment || options.hideOriginalOnVideo;
+                    if (line->unconfirmed)
+                        original.effect = u8"\fD";
+                    append(legacy::assLineText(original));
+                    copy(line->originalSpan->offset + line->originalSpan->length,
+                         line->originalSpan->terminatorLength);
+                    LineRecord translated = *line;
+                    translated.text = line->translation;
+                    append(legacy::assLineText(translated));
+                } else {
+                    LineRecord single = *line;
+                    if (hasTranslation)
+                        single.text = line->translation;
+                    append(legacy::assLineText(single));
+                }
+                copy(span.offset + span.length, span.terminatorLength);
+            } else if (line && line->edited) {
                 append(legacy::assLineText(*line));
                 copy(span.offset + span.length, span.terminatorLength);
             } else {
