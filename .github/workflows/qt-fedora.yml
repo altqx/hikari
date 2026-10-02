@@ -78,6 +78,10 @@ jobs:
           set -euo pipefail
           test ! -e "$HOME/.local/share/Qt/qtaccount.ini"
           test ! -e out/sdk/qt-install-private
+          # N6: the host has no sound card. A null ALSA PCM gives the PortAudio
+          # stream tests a device: path coverage only, it has no real timing.
+          printf 'pcm.hikari_null {\n    type null\n}\n' >> "$HOME/.asoundrc"
+          export HIKARI_TEST_AUDIO_DEVICE=hikari_null
           cmake --workflow --preset fedora-x64-verify
 
       - name: Collect sanitized evidence

@@ -36,3 +36,7 @@ tasks:
     # The media helper tests with failure output (N1, N2).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(Fixture|AudioFixture)[.]" --repeat until-fail:3
     timeoutSeconds: 900
+  audio:
+    # The editor output (N6), verbose so the enumerated devices are recorded.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(AudioRing|OutputEngine|PortAudioOutput|PortAudioDevice)[.]" -V
+    timeoutSeconds: 600

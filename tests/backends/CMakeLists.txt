@@ -47,3 +47,10 @@ target_compile_definitions(hikari_backends_indexed_source_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_media_fixtures)
+
+# N6: the real-time engine everywhere; the PortAudio stream wherever an output
+# device exists (CI Linux provides a null ALSA PCM, HIKARI_TEST_AUDIO_DEVICE).
+hikari_add_gtest(hikari_backends_audio_engine_tests SOURCES audio_engine_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+hikari_add_gtest(hikari_backends_portaudio_tests SOURCES portaudio_output_tests.cpp
+    LIBRARIES hikari_backends LABELS backends PROPERTIES RUN_SERIAL TRUE)
