@@ -1,6 +1,7 @@
 #include "line_editor_controller.h"
 
 #include "hikari/core/ass_load.h"
+#include "hikari/core/checked.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -370,6 +371,20 @@ bool LineEditorController::commitAndAdvance()
         next.translation.clear();
         next.start.value = last.end.value;
         next.end.value = core::DocumentTime(last.end.value.microseconds() + 5'000'000);
+        if (s->document().format() == core::SubtitleFormat::MicroDvd) {
+            // Frames: the new Line starts at the last end frame; its end is the
+            // frame at End + 5 s rounded up, as legacy SubsTime computes it.
+            // Without the Document's own rate (C01-fps-isolation) the end
+            // frame is left empty rather than guessed.
+            next.startFrame = last.endFrame;
+            next.endFrame.reset();
+            if (const auto &rate = s->document().frameRate()) {
+                const auto &fps = rate->framesPerSecond();
+                if (const auto frame = core::mulDiv(next.end.value.microseconds(), fps.numerator(),
+                                                    fps.denominator(), 1'000'000, core::Rounding::Ceil))
+                    next.endFrame = *frame;
+            }
+        }
         std::optional<core::LineId> added;
         const auto result = s->run(application::Command{
             "Append Line", s->revision(), {last.id}, [&](core::Document &d) {

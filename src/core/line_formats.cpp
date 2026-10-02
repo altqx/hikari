@@ -269,8 +269,9 @@ std::vector<std::byte> encodeLineFormat(const Document &document)
             std::u8string body;
             switch (document.format()) {
             case SubtitleFormat::MicroDvd:
-                body = u8"{" + number(line->startFrame.value_or(0)) + u8"}{" + number(line->endFrame.value_or(0)) +
-                       u8"}" + line->text;
+                // A missing end frame is written empty (MicroDVD's open end).
+                body = u8"{" + number(line->startFrame.value_or(0)) + u8"}{" +
+                       (line->endFrame ? number(*line->endFrame) : std::u8string()) + u8"}" + line->text;
                 break;
             case SubtitleFormat::Mpl2:
                 body = u8"[" + number(startMs / 100) + u8"][" + number(endMs / 100) + u8"]" + line->text;

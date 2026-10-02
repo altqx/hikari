@@ -6,7 +6,7 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | --- | --- | --- | --- | --- |
 | 3011 | `EDITBOX_COMMIT_GO_NEXT_LINE` Apply and go to the next line | Enter | Enter (outside composition); on the last Line it appends one, as `SubsGrid::NextLine` does | `editor_workflow`, `shell_tests`, legacy capture 37024532554 |
 | 3010 | `EDITBOX_COMMIT` Apply changes | Ctrl+Enter | Ctrl+Enter | `LineEditorController::commit` |
-| 3012 | `EDITBOX_INSERT_BOLD` Add bold | Ctrl+B | Ctrl+B and the B button, legacy tag placement and restoration | `tag_commands_tests`, `shell_tests`, legacy capture 37024532554 |
+| 3012 | `EDITBOX_INSERT_BOLD` Add bold | Ctrl+B | Ctrl+B and the B button: ASS override tags with legacy placement and restoration; SRT `<b>`, MicroDVD `{Y:b}` (`PutinNonass`) | `tag_commands_tests`, `shell_tests`, legacy captures 37024532554 and 37034136343 |
 | 3013 | `EDITBOX_INSERT_ITALIC` Add italic | Ctrl+I | Ctrl+I and the I button | `tag_commands_tests` |
 | 3001 | `EDITBOX_CHANGE_UNDERLINE` Underline | none | U button | `tag_commands_tests` |
 | 3002 | `EDITBOX_CHANGE_STRIKEOUT` Strikethrough | none | S button | `tag_commands_tests` |

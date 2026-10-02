@@ -302,6 +302,42 @@ private slots:
         QVERIFY(editor.problem().isEmpty());
     }
 
+    void enterOnTheLastMicroDvdLineCountsFrames()
+    {
+        for (const bool withRate : {true, false}) {
+            const QString path = dir.filePath(withRate ? QStringLiteral("rate.sub") : QStringLiteral("norate.sub"));
+            {
+                QFile f(path);
+                QVERIFY(f.open(QIODevice::WriteOnly));
+                f.write("{10}{20}abc|def\n{30}{40}x\n");
+            }
+            QVERIFY(application->openFile(path));
+            auto *session = application->files().session(*application->workspace().editingTarget());
+            if (withRate)
+                QVERIFY(session->run(application::Command{"Set frame rate", session->revision(), {},
+                                                          [](core::Document &d) {
+                                                              d.setFrameRate(*core::FrameRate::make(24000, 1001));
+                                                              return true;
+                                                          }}));
+            application->shell().refresh(&session->document(), nullptr);
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_End);
+            auto *text = item("lineText");
+            QTRY_COMPARE(text->property("text").toString(), QStringLiteral("x"));
+            text->forceActiveFocus();
+            press(Qt::Key_Return);
+            QTRY_COMPARE(session->document().lines().size(), 3u);
+            QVERIFY(application->editor().save());
+            application->waitForWrites();
+            QFile saved(path);
+            QVERIFY(saved.open(QIODevice::ReadOnly));
+            // Legacy capture 37034136343 appended {40}{160} at its 23.976 fps.
+            QCOMPARE(saved.readAll(), withRate ? QByteArray("{10}{20}abc|def\n{30}{40}x\n{40}{160}\n")
+                                               : QByteArray("{10}{20}abc|def\n{30}{40}x\n{40}{}\n"));
+            QVERIFY(application->closeEditingTarget());
+        }
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

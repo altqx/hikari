@@ -82,7 +82,8 @@ TEST(TagCommands, MatchTheLegacyCapture)
     EXPECT_EQ(s8(run(u"{\\b1}abc", 2, 2, u'b').text), "{\\b0}abc");         // Home, Right x2
 }
 
-// EditBox::PutinNonass, traced by hand through the legacy source.
+// EditBox::PutinNonass, traced by hand through the legacy source and confirmed
+// by legacy capture run 37034136343 (SRT and MicroDVD cases).
 
 TEST(TagCommands, SrtWrapsTheSelectionInHtmlLikeTags)
 {
