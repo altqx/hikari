@@ -9,6 +9,7 @@
 
 extern "C" {
 #include <libavutil/pixfmt.h>
+#include <libavformat/avformat.h>
 }
 
 #include <algorithm>
@@ -179,6 +180,29 @@ void audio(Source &source, Reader &in, Responder &r)
 
 } // namespace
 
+// Container chapters for general playback (N5), read with libavformat in this
+// process so FFmpeg stays out of the application.
+void chapters(Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    if (!in.ok() || path.empty())
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed Chapters"));
+    AVFormatContext *fmt = nullptr;
+    if (avformat_open_input(&fmt, path.c_str(), nullptr, nullptr) < 0)
+        return r.terminal(Outcome::Failed, bytesOf("cannot open " + path));
+    Writer w;
+    w.i32(static_cast<std::int32_t>(fmt->nb_chapters));
+    for (unsigned i = 0; i < fmt->nb_chapters; ++i) {
+        const AVChapter *c = fmt->chapters[i];
+        const AVDictionaryEntry *title = av_dict_get(c->metadata, "title", nullptr, 0);
+        w.i64(av_rescale_q(c->start, c->time_base, AVRational{1, 1'000'000}))
+            .i64(av_rescale_q(c->end, c->time_base, AVRational{1, 1'000'000}))
+            .str(title ? title->value : "");
+    }
+    avformat_close_input(&fmt);
+    r.terminal(Outcome::Ok, w.take());
+}
+
 int main()
 {
     FFMS_Init(0, 0);
@@ -194,6 +218,8 @@ int main()
             return openAudio(source, in, r);
         case media::Command::Audio:
             return audio(source, in, r);
+        case media::Command::Chapters:
+            return chapters(in, r);
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });

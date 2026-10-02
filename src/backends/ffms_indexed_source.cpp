@@ -251,6 +251,41 @@ void FfmsIndexedSource::audio(std::int64_t start, std::int64_t count, AudioReady
     m_reads[ticket].request = *request;
 }
 
+void FfmsIndexedSource::chapters(const std::string &path, Listed done)
+{
+    ensureHelper([this, path, done = std::move(done)](bool ok) mutable {
+        if (!ok)
+            return done(std::unexpected(application::PlayerError::BackendFailure));
+        auto request = m_host->request(0,
+            Writer().u8(static_cast<std::uint8_t>(media::Command::Chapters)).str(path).take(),
+            [done](std::expected<Event, HostError> e) {
+                if (!e)
+                    return done(std::unexpected(application::PlayerError::BackendFailure));
+                if (e->kind != Kind::Terminal)
+                    return;
+                if (e->outcome != Outcome::Ok)
+                    return done(std::unexpected(e->outcome == Outcome::InvalidInput
+                                                    ? application::PlayerError::InvalidInput
+                                                    : application::PlayerError::ResourceError));
+                Reader in(e->payload);
+                const std::int32_t n = in.i32();
+                std::vector<application::Chapter> list;
+                for (std::int32_t i = 0; in.ok() && i < n; ++i) {
+                    application::Chapter c;
+                    c.startUs = in.i64();
+                    c.endUs = in.i64();
+                    c.title = in.str();
+                    list.push_back(std::move(c));
+                }
+                if (!in.ok() || n < 0 || !in.atEnd())
+                    return done(std::unexpected(application::PlayerError::BackendFailure));
+                done(std::move(list));
+            });
+        if (!request)
+            done(std::unexpected(application::PlayerError::BackendFailure));
+    });
+}
+
 void FfmsIndexedSource::cancelReads()
 {
     auto reads = std::move(m_reads);

@@ -13,8 +13,8 @@ hikari_module(hikari_lua_protocol ALLOW hikari_helper_endpoint hikari_applicatio
 # Backend adapters implementing application ports (FFMS2/libass, audio, files,
 # helper processes).
 add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cpp ffms_indexed_source.cpp
-    audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp
-    include/hikari/backends/lua_script_host.h
+    audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
+    include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h
     include/hikari/backends/helper_host.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
@@ -24,6 +24,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cp
 target_include_directories(hikari_backends PUBLIC include)
 set_target_properties(hikari_backends PROPERTIES AUTOMOC ON)
 target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol Qt6::Core
+    Qt6::Multimedia
     PRIVATE Hikari::media_deps Hikari::portaudio)
 hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper_endpoint hikari_lua_protocol
     Hikari::media_deps

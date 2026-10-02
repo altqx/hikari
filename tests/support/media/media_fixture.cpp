@@ -10,10 +10,16 @@
 //          longgop   24000/1001, 300 frames, one keyframe
 //          audio     the cfr video plus 2 s of 48 kHz stereo PCM whose left
 //                    channel is the sample index modulo 32768
+//          tracks    the audio fixture with a second audio track (languages
+//                    eng and jpn, titled), a SubRip track with one cue
+//                    "Hello" from 0.5 s to 1.5 s, and two chapters (N5)
+//          unknown   the cfr video written as a live stream: no duration
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/dict.h>
+#include <libavutil/mem.h>
 #include <libavutil/opt.h>
 }
 
@@ -49,9 +55,10 @@ int fail(const char *what)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|tracks|unknown>");
     const std::string out = argv[1], kind = argv[2];
     const bool vfr = kind == "vfr";
+    const bool tracks = kind == "tracks";
     const int frames = kind == "longgop" ? 300 : 48;
 
     AVFormatContext *fmt = nullptr;
@@ -78,8 +85,8 @@ int main(int argc, char **argv)
     vs->time_base = enc->time_base;
 
     AVCodecContext *aenc = nullptr;
-    AVStream *as = nullptr;
-    if (kind == "audio") {
+    AVStream *as = nullptr, *as2 = nullptr, *ss = nullptr;
+    if (kind == "audio" || tracks) {
         const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
         aenc = avcodec_alloc_context3(acodec);
         aenc->sample_rate = 48000;
@@ -92,8 +99,37 @@ int main(int argc, char **argv)
         avcodec_parameters_from_context(as->codecpar, aenc);
         as->time_base = aenc->time_base;
     }
-    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, nullptr) < 0)
+    if (tracks) {
+        av_dict_set(&as->metadata, "language", "eng", 0);
+        av_dict_set(&as->metadata, "title", "Main", 0);
+        as2 = avformat_new_stream(fmt, nullptr);
+        avcodec_parameters_from_context(as2->codecpar, aenc);
+        as2->time_base = aenc->time_base;
+        av_dict_set(&as2->metadata, "language", "jpn", 0);
+        av_dict_set(&as2->metadata, "title", "Commentary", 0);
+        ss = avformat_new_stream(fmt, nullptr);
+        ss->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        ss->codecpar->codec_id = AV_CODEC_ID_SUBRIP;
+        ss->time_base = AVRational{1, 1000};
+        av_dict_set(&ss->metadata, "language", "eng", 0);
+        fmt->chapters = static_cast<AVChapter **>(av_calloc(2, sizeof(AVChapter *)));
+        fmt->nb_chapters = 2;
+        for (int c = 0; c < 2; ++c) {
+            auto *chapter = static_cast<AVChapter *>(av_mallocz(sizeof(AVChapter)));
+            chapter->id = c + 1;
+            chapter->time_base = AVRational{1, 1000};
+            chapter->start = c * 1000;
+            chapter->end = (c + 1) * 1000;
+            av_dict_set(&chapter->metadata, "title", c == 0 ? "Opening" : "Second", 0);
+            fmt->chapters[c] = chapter;
+        }
+    }
+    AVDictionary *muxerOptions = nullptr;
+    if (kind == "unknown")
+        av_dict_set(&muxerOptions, "live", "1", 0); // no Duration element, no cues
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, &muxerOptions) < 0)
         return fail("open output");
+    av_dict_free(&muxerOptions);
 
     AVPacket *pkt = av_packet_alloc();
     auto drain = [&](AVCodecContext *c, AVStream *s, AVFrame *f) {
@@ -144,8 +180,39 @@ int main(int argc, char **argv)
                 return fail("encode audio");
         }
         drain(aenc, as, nullptr);
+        if (as2) {
+            // The same PCM, packet for packet, on the second track.
+            avcodec_free_context(&aenc);
+            const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+            aenc = avcodec_alloc_context3(acodec);
+            aenc->sample_rate = 48000;
+            aenc->sample_fmt = AV_SAMPLE_FMT_S16;
+            av_channel_layout_default(&aenc->ch_layout, 2);
+            aenc->time_base = AVRational{1, 48000};
+            avcodec_open2(aenc, acodec, nullptr);
+            for (std::int64_t s = 0; s < 96000; s += 1024) {
+                av_frame_make_writable(a);
+                std::memset(a->data[0], 0, 1024 * 4);
+                a->pts = s;
+                if (!drain(aenc, as2, a))
+                    return fail("encode second audio");
+            }
+            drain(aenc, as2, nullptr);
+        }
         av_frame_free(&a);
         avcodec_free_context(&aenc);
+    }
+    if (ss) {
+        const char cue[] = "Hello";
+        AVPacket *sp = av_packet_alloc();
+        av_new_packet(sp, sizeof cue - 1);
+        std::memcpy(sp->data, cue, sizeof cue - 1);
+        sp->pts = sp->dts = 500;
+        sp->duration = 1000;
+        sp->stream_index = ss->index;
+        av_packet_rescale_ts(sp, AVRational{1, 1000}, ss->time_base);
+        av_interleaved_write_frame(fmt, sp);
+        av_packet_free(&sp);
     }
     av_write_trailer(fmt);
     avio_closep(&fmt->pb);

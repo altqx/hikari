@@ -44,3 +44,7 @@ tasks:
     # B4: changed pinned inputs are refused by vcpkg's hash check.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^changed-input-" -V
     timeoutSeconds: 900
+  player:
+    # General playback (N5), verbose so the seek observations are recorded.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "general_player" -V
+    timeoutSeconds: 600

@@ -19,6 +19,9 @@
 //         terminal Ok: i64 start, i64 count (shortened at the end), bytes
 //                      interleaved samples
 //         terminal InvalidInput: start past the end (EOF) or audio not open
+// Chapters request: u8 Chapters, str path (any file; independent of Open)
+//         terminal Ok: i32 count, then per chapter i64 startUs, i64 endUs,
+//                      str title
 
 #include <cstdint>
 
@@ -27,6 +30,6 @@ namespace hikari::backends::media {
 inline constexpr std::uint32_t kProtocolVersion = 1;
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
-enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4 };
+enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5 };
 
 } // namespace hikari::backends::media

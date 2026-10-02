@@ -4,6 +4,7 @@
 // helper process per source; it is started on demand and replaced when it is
 // lost. Runs on its owner's thread with a Qt event loop.
 
+#include "hikari/application/general_player.h"
 #include "hikari/application/indexed_source.h"
 #include "hikari/backends/helper_host.h"
 
@@ -16,7 +17,9 @@
 
 namespace hikari::backends {
 
-class FfmsIndexedSource : public QObject, public application::IndexedSourcePort {
+// It also lists container chapters for general playback (N5), so FFmpeg
+// stays out of the application process.
+class FfmsIndexedSource : public QObject, public application::IndexedSourcePort, public application::ChapterPort {
 public:
     explicit FfmsIndexedSource(QString helperProgram, QObject *parent = nullptr);
     ~FfmsIndexedSource() override;
@@ -27,6 +30,7 @@ public:
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void cancelReads() override;
+    void chapters(const std::string &path, Listed done) override;
     std::uint64_t generation() const override { return m_generation; }
 
     // Tests: the helper process currently in use (null before the first open).
