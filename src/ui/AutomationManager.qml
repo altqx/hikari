@@ -62,6 +62,12 @@ Pane {
                         onClicked: root.controller.reload(script.modelData.path)
                     }
                     Button {
+                        objectName: "forceStop_" + script.index
+                        text: qsTr("Force stop")
+                        visible: script.modelData.forceStopOffered
+                        onClicked: root.controller.forceStop(script.modelData.path)
+                    }
+                    Button {
                         text: qsTr("Unload")
                         enabled: script.modelData.state !== "running"
                         onClicked: root.controller.unload(script.modelData.path)

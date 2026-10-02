@@ -49,6 +49,7 @@ void AutomationManagerController::refresh()
                                  {QStringLiteral("state"), stateName(s.state)},
                                  {QStringLiteral("error"), QString::fromStdString(s.error)},
                                  {QStringLiteral("generation"), qulonglong(s.generation)},
+                                 {QStringLiteral("forceStopOffered"), s.forceStopOffered},
                                  {QStringLiteral("macros"), macros}};
         m_busy = m_busy || s.state == ScriptStatus::State::Running;
     }
@@ -78,6 +79,15 @@ bool AutomationManagerController::run(const QString &path, int ordinal)
 void AutomationManagerController::cancel()
 {
     m_service.cancel();
+}
+
+} // namespace hikari::ui
+
+namespace hikari::ui {
+
+bool AutomationManagerController::forceStop(const QString &path)
+{
+    return m_service.forceStop(path.toStdString());
 }
 
 } // namespace hikari::ui

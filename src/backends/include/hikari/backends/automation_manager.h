@@ -29,6 +29,11 @@ public:
     void unload(const std::string &path) override;
     bool run(const std::string &path, int ordinal) override;
     void cancel() override;
+    bool forceStop(const std::string &path) override;
+    // Application quit: no new runs, running macros are cancelled, and helpers
+    // still running after `deadlineMs` are terminated. Returns those paths.
+    std::vector<std::string> shutdown(int deadlineMs = 5000);
+    void setGracePeriod(int ms);
     void setObserver(std::function<void()> changed) override { m_observer = std::move(changed); }
 
     const application::AutomationRegistry &registry() const { return m_registry; }
@@ -54,6 +59,8 @@ private:
     std::map<std::string, Entry> m_entries;
     application::AutomationRegistry m_registry;
     std::function<void()> m_observer;
+    int m_graceMs = 3000;
+    bool m_shuttingDown = false;
 };
 
 } // namespace hikari::backends

@@ -1,6 +1,8 @@
 #include "hikari/backends/automation_manager.h"
 
 #include <QCryptographicHash>
+#include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QFile>
 
 #include <algorithm>
@@ -57,6 +59,7 @@ std::vector<ScriptStatus> AutomationManager::scripts() const
         s.info = e.host->info();
         s.error = e.host->lastError().toStdString();
         s.generation = e.generation;
+        s.forceStopOffered = e.host->forceStopAvailable();
         out.push_back(std::move(s));
     }
     return out;
@@ -106,6 +109,7 @@ void AutomationManager::attach(const std::string &path, Entry &entry)
         notify();
     });
     connect(host, &LuaScriptHost::unavailable, this, [this] { notify(); });
+    connect(host, &LuaScriptHost::forceStopOffered, this, [this] { notify(); });
     connect(host, &LuaScriptHost::finished, this,
             [this, path](LuaScriptHost::RunOutcome outcome, const QString &message) {
                 emit runFinished(QString::fromStdString(path), outcome, message);
@@ -122,6 +126,7 @@ void AutomationManager::load(const std::string &path)
     Entry entry;
     entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path), m_sharedInclude);
     entry.generation = 1;
+    entry.host->setGracePeriod(m_graceMs);
     auto &stored = m_entries.emplace(path, std::move(entry)).first->second;
     m_order.push_back(path);
     attach(path, stored);
@@ -154,13 +159,49 @@ void AutomationManager::unload(const std::string &path)
 
 bool AutomationManager::run(const std::string &path, int ordinal)
 {
-    if (busy())
+    if (m_shuttingDown || busy())
         return false; // one active macro application-wide
     LuaScriptHost *h = host(path);
     if (!h || !h->run(ordinal))
         return false;
     notify();
     return true;
+}
+
+bool AutomationManager::forceStop(const std::string &path)
+{
+    LuaScriptHost *h = host(path);
+    if (!h || !h->forceStop())
+        return false;
+    notify();
+    return true;
+}
+
+void AutomationManager::setGracePeriod(int ms)
+{
+    m_graceMs = ms;
+    for (auto &[path, e] : m_entries)
+        e.host->setGracePeriod(ms);
+}
+
+std::vector<std::string> AutomationManager::shutdown(int deadlineMs)
+{
+    m_shuttingDown = true;
+    cancel();
+    QElapsedTimer waited;
+    waited.start();
+    while (busy() && waited.elapsed() < deadlineMs)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
+    std::vector<std::string> terminated;
+    for (const auto &path : m_order) {
+        LuaScriptHost *h = m_entries.at(path).host.get();
+        if (h->state() == LuaScriptHost::State::Running) {
+            h->terminate();
+            terminated.push_back(path);
+        }
+    }
+    notify();
+    return terminated;
 }
 
 void AutomationManager::cancel()

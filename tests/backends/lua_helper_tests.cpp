@@ -121,7 +121,7 @@ TEST_F(LuaHelper, ScriptGlobalsAndMetadataUseLegacyCoercions)
     EXPECT_EQ(host->info().name, "Host fixture");
     EXPECT_EQ(host->info().description, "42");
     EXPECT_EQ(host->info().version, "");
-    EXPECT_EQ(host->info().macros.size(), 10u);
+    EXPECT_EQ(host->info().macros.size(), 11u);
 }
 
 TEST_F(LuaHelper, DialogRoundTripPreservesCoercionsFalseAndNil)

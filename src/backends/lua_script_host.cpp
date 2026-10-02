@@ -21,6 +21,13 @@ LuaScriptHost::LuaScriptHost(QString helperPath, QString scriptPath, QString sha
     : QObject(parent), m_helperPath(std::move(helperPath)), m_scriptPath(std::move(scriptPath)),
       m_sharedInclude(std::move(sharedInclude)), m_traceLevel(traceLevel)
 {
+    m_grace.setSingleShot(true);
+    connect(&m_grace, &QTimer::timeout, this, [this] {
+        if (m_state == State::Running && m_cancelRequested) {
+            m_forceStopOffered = true;
+            emit forceStopOffered();
+        }
+    });
 }
 
 LuaScriptHost::~LuaScriptHost() = default;
@@ -149,6 +156,7 @@ bool LuaScriptHost::run(int macroIndex)
     *id = *sent;
     m_runRequest = *sent;
     m_cancelRequested = false;
+    m_forceStopOffered = false;
     m_state = State::Running;
     return true;
 }
@@ -157,8 +165,34 @@ void LuaScriptHost::cancel()
 {
     if (m_state != State::Running || !m_host)
         return;
+    if (m_cancelRequested)
+        return;
     m_cancelRequested = true;
     m_host->cancel(m_runRequest);
+    m_grace.start(m_graceMs);
+}
+
+bool LuaScriptHost::forceStop()
+{
+    if (m_state != State::Running || !m_forceStopOffered)
+        return false;
+    endRun(RunOutcome::ForceStopped, QStringLiteral("force stopped"));
+    terminate();
+    return true;
+}
+
+void LuaScriptHost::terminate()
+{
+    if (m_state == State::Running)
+        endRun(RunOutcome::ForceStopped, QStringLiteral("terminated"));
+    if (m_host) {
+        disconnect(m_host.get(), nullptr, this, nullptr);
+        m_host->stop();
+    }
+    // The script's state is gone; only an explicit restart brings it back.
+    m_state = State::Unavailable;
+    m_lastError = QStringLiteral("the script's helper was stopped; restart to load it again");
+    emit unavailable(m_lastError);
 }
 
 void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostError> event)
@@ -233,6 +267,8 @@ void LuaScriptHost::endRun(RunOutcome outcome, const QString &message)
         return;
     m_state = State::Ready;
     m_runRequest = 0;
+    m_grace.stop();
+    m_forceStopOffered = false;
     if (m_dialogOpen) {
         m_dialogOpen = false;
         emit dialogWithdrawn();

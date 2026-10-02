@@ -14,6 +14,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QTimer>
 
 #include <functional>
 #include <memory>
@@ -25,7 +26,8 @@ class LuaScriptHost : public QObject {
     Q_OBJECT
 public:
     enum class State { Idle, Loading, Ready, Running, LoadFailed, Unavailable };
-    enum class RunOutcome { Ok, Failed, Cancelled, HelperLost };
+    // ForceStopped: the user chose Force stop after the grace period.
+    enum class RunOutcome { Ok, Failed, Cancelled, HelperLost, ForceStopped };
 
     using DialogReply = std::function<void(application::DialogResult)>;
     using DialogHandler = std::function<void(const application::DialogRequest &, DialogReply)>;
@@ -42,8 +44,16 @@ public:
     // False unless Ready (one macro at a time per script).
     bool run(int macroIndex);
     // Latches the run as cancelled: it ends Cancelled even if the script then
-    // returns normally.
+    // returns normally. If it has not stopped after the grace period, Force
+    // stop is offered (forceStopOffered); nothing is killed automatically.
     void cancel();
+    bool forceStopAvailable() const { return m_forceStopOffered; }
+    // Kills this script's helper (only after it was offered). The run ends
+    // ForceStopped; the script needs an explicit restart and nothing reruns.
+    bool forceStop();
+    // Ends the helper now, for application quit (after its deadline).
+    void terminate();
+    void setGracePeriod(int ms) { m_graceMs = ms; }
 
     State state() const { return m_state; }
     const application::ScriptInfo &info() const { return m_info; }
@@ -64,6 +74,7 @@ signals:
     void finished(hikari::backends::LuaScriptHost::RunOutcome outcome, const QString &message);
     // The run ended while its dialog was open: close the dialog.
     void dialogWithdrawn();
+    void forceStopOffered();
     void unavailable(const QString &reason);
 
 private:
@@ -82,6 +93,9 @@ private:
     std::uint64_t m_runRequest = 0; // the request of the running macro
     bool m_dialogOpen = false;
     bool m_cancelRequested = false;
+    bool m_forceStopOffered = false;
+    int m_graceMs = 3000;
+    QTimer m_grace;
     double m_loadMs = 0;
     std::int64_t m_loadStartedNs = 0;
     DialogHandler m_dialogHandler;

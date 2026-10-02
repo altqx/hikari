@@ -102,6 +102,7 @@ struct ScriptStatus {
     ScriptInfo info;
     std::string error;
     std::uint64_t generation = 0; // a reload or restart is a new helper generation
+    bool forceStopOffered = false; // cancelled, and still running after the grace period
 };
 
 class AutomationServicePort {
@@ -113,6 +114,8 @@ public:
     virtual void unload(const std::string &path) = 0;
     virtual bool run(const std::string &path, int ordinal) = 0; // false while any macro runs
     virtual void cancel() = 0;
+    // Only after it was offered: kills that script's helper (explicit restart).
+    virtual bool forceStop(const std::string &path) = 0;
     virtual void setObserver(std::function<void()> changed) = 0;
 };
 

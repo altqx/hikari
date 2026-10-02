@@ -219,3 +219,97 @@ TEST_F(Manager, PerScriptProcessCostIsMeasured)
     // An observation on an uncalibrated host (A33-resources), not a budget.
     std::fprintf(stderr, "6 loaded scripts: %.1f MiB resident in their helpers\n", total / 1048576.0);
 }
+
+// L5 (A33-cancel): grace period, Force stop, quit deadline and a stuck
+// native call. The fixture's grace is shortened from 3 s to keep tests quick.
+namespace {
+constexpr int kWaitForCancel = 4, kStuck = 10, kCount = 2;
+}
+
+TEST_F(Manager, ACooperativeCancelNeedsNoForceStop)
+{
+    manager.setGracePeriod(300);
+    const auto a = fixture("host-fixture.lua");
+    manager.load(a);
+    ASSERT_TRUE(settled(a));
+    std::optional<LuaScriptHost::RunOutcome> outcome;
+    QObject::connect(&manager, &AutomationManager::runFinished,
+                     [&](const QString &, LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
+    ASSERT_TRUE(manager.run(a, kWaitForCancel));
+    manager.cancel();
+    ASSERT_TRUE(waitFor([&] { return outcome.has_value(); }));
+    EXPECT_EQ(*outcome, LuaScriptHost::RunOutcome::Cancelled);
+    EXPECT_FALSE(status(a).forceStopOffered);
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Ready) << "the script keeps its helper and state";
+}
+
+TEST_F(Manager, AStuckNativeCallIsOfferedForceStopButNeverKilledAutomatically)
+{
+    manager.setGracePeriod(300);
+    QTemporaryDir dir;
+    const QString other = dir.filePath(QStringLiteral("other.lua"));
+    writeScript(other, "n = 0\naegisub.register_macro('Count', '', function() n = n + 1 aegisub.debug.out('n=%d', n) end)\n");
+    const auto a = fixture("host-fixture.lua");
+    const auto b = other.toStdString();
+    manager.load(a);
+    manager.load(b);
+    ASSERT_TRUE(settled(a) && settled(b));
+    QStringList log;
+    QObject::connect(manager.host(b), &LuaScriptHost::logged, [&](const QString &t) { log << t; });
+    ASSERT_TRUE(manager.run(b, 0));
+    ASSERT_TRUE(waitFor([&] { return !manager.busy(); }));
+
+    std::optional<LuaScriptHost::RunOutcome> outcome;
+    QObject::connect(&manager, &AutomationManager::runFinished,
+                     [&](const QString &, LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
+    ASSERT_TRUE(manager.run(a, kStuck));
+    QElapsedTimer t;
+    t.start();
+    manager.cancel();
+    EXPECT_FALSE(manager.forceStop(a)) << "not before the grace period";
+    ASSERT_TRUE(waitFor([&] { return status(a).forceStopOffered; }, 5'000));
+    EXPECT_GE(t.elapsed(), 250);
+    waitFor([] { return false; }, 600); // twice the grace: still nobody kills it
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Running);
+    EXPECT_FALSE(outcome.has_value());
+
+    ASSERT_TRUE(manager.forceStop(a));
+    ASSERT_TRUE(outcome.has_value());
+    EXPECT_EQ(*outcome, LuaScriptHost::RunOutcome::ForceStopped);
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Unavailable) << "an explicit restart is needed";
+    EXPECT_FALSE(manager.run(a, kCount));
+    EXPECT_EQ(status(b).state, ScriptStatus::State::Ready) << "the other script is unaffected";
+    ASSERT_TRUE(manager.run(b, 0));
+    ASSERT_TRUE(waitFor([&] { return !manager.busy() && log.size() == 2; }));
+    EXPECT_EQ(log, (QStringList{"n=1", "n=2"}));
+
+    ASSERT_TRUE(manager.reload(a)); // the explicit restart
+    ASSERT_TRUE(settled(a));
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Ready);
+}
+
+TEST_F(Manager, QuitTerminatesOnlyHelpersStillRunningAtTheDeadline)
+{
+    const auto a = fixture("host-fixture.lua");
+    manager.load(a);
+    ASSERT_TRUE(settled(a));
+    ASSERT_TRUE(manager.run(a, kStuck));
+    QElapsedTimer t;
+    t.start();
+    const auto terminated = manager.shutdown(500);
+    EXPECT_GE(t.elapsed(), 450) << "it waited for a cooperative exit first";
+    EXPECT_LT(t.elapsed(), 5'000);
+    EXPECT_EQ(terminated, std::vector<std::string>{a});
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Unavailable);
+    EXPECT_FALSE(manager.run(a, kCount)) << "no new runs while quitting";
+}
+
+TEST_F(Manager, QuitWithCooperativeScriptsTerminatesNothing)
+{
+    const auto a = fixture("host-fixture.lua");
+    manager.load(a);
+    ASSERT_TRUE(settled(a));
+    ASSERT_TRUE(manager.run(a, kWaitForCancel));
+    EXPECT_TRUE(manager.shutdown(2'000).empty()) << "it stopped cooperatively";
+    EXPECT_EQ(status(a).state, ScriptStatus::State::Ready);
+}

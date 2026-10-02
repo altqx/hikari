@@ -32,6 +32,7 @@ public:
     Q_INVOKABLE void unload(const QString &path);
     Q_INVOKABLE bool run(const QString &path, int ordinal);
     Q_INVOKABLE void cancel();
+    Q_INVOKABLE bool forceStop(const QString &path);
 
 signals:
     void changed();

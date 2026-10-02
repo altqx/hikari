@@ -87,3 +87,15 @@ aegisub.register_macro("Controls", "", function()
         { class = "alpha", name = "al", value = "&H40&" },
     }, { "OK" }))
 end)
+
+-- L5: a native call that cannot see a cooperative cancel.
+aegisub.register_macro("Stuck in native code", "", function()
+    local ffi = require("ffi")
+    if jit.os == "Windows" then
+        ffi.cdef("void Sleep(unsigned long ms);")
+        ffi.C.Sleep(30000)
+    else
+        ffi.cdef("unsigned int sleep(unsigned int seconds);")
+        ffi.C.sleep(30)
+    end
+end)
