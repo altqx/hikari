@@ -24,6 +24,8 @@ void merge(DraftChange &into, const DraftChange &change)
 {
     if (change.text)
         into.text = change.text;
+    if (change.translation)
+        into.translation = change.translation;
     if (change.start)
         into.start = change.start;
     if (change.end)
@@ -40,6 +42,8 @@ void apply(core::LineRecord &line, const DraftChange &change)
 {
     if (change.text)
         line.text = *change.text;
+    if (change.translation)
+        line.translation = *change.translation;
     if (change.start)
         line.start.value = *change.start;
     if (change.end)
@@ -54,7 +58,7 @@ void apply(core::LineRecord &line, const DraftChange &change)
 
 bool sameFields(const core::LineRecord &a, const core::LineRecord &b)
 {
-    return a.text == b.text && a.start.value == b.start.value && a.end.value == b.end.value &&
+    return a.text == b.text && a.translation == b.translation && a.start.value == b.start.value && a.end.value == b.end.value &&
            a.marginLeft.value == b.marginLeft.value && a.marginRight.value == b.marginRight.value &&
            a.marginVertical.value == b.marginVertical.value;
 }
@@ -191,6 +195,7 @@ bool EditSession::commit(bool leaving)
     core::Document next = document();
     next.editLine(id, [&](core::LineRecord &line) {
         line.text = record->text;
+        line.translation = record->translation;
         line.start.value = record->start.value;
         line.end.value = record->end.value;
         line.marginLeft.value = record->marginLeft.value;

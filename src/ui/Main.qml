@@ -93,6 +93,72 @@ ApplicationWindow {
         Menu { title: qsTr("&Help") }
     }
 
+    // One text role of the Line editor (Original or Translated). The field
+    // mirrors the editor's projection; user changes go to the controller,
+    // which maps them onto the raw source. Programmatic updates are not edits.
+    component RoleField: TextArea {
+        id: field
+        required property int role
+        readonly property string shown: role === 0 ? root.editor.text : root.editor.translationText
+        readOnly: !root.editor.editable
+        wrapMode: TextEdit.Wrap
+        selectByMouse: true
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+
+        property bool syncing: false
+        function sync() {
+            if (text === shown)
+                return
+            syncing = true
+            const caret = cursorPosition
+            text = shown
+            cursorPosition = Math.min(caret, length)
+            syncing = false
+        }
+        function report() {
+            if (syncing)
+                return
+            if (role === 0)
+                root.editor.textEdited(text, cursorPosition)
+            else
+                root.editor.translationEdited(text, cursorPosition)
+        }
+        Component.onCompleted: sync()
+        onTextChanged: if (!syncing) Qt.callLater(field.report)
+        Connections {
+            target: root.editor
+            function onChanged() { field.sync() }
+            function onSelectionRequested() {
+                if (field.activeFocus)
+                    field.select(root.editor.selectionStart, root.editor.selectionEnd)
+            }
+        }
+        Keys.onPressed: event => {
+            const ctrl = event.modifiers & Qt.ControlModifier
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                    && !(event.modifiers & Qt.ShiftModifier) && !field.inputMethodComposing) {
+                root.editor.commitAndAdvance()
+                event.accepted = true
+            } else if (ctrl && (event.key === Qt.Key_B || event.key === Qt.Key_I)) {
+                // Legacy defaults: Ctrl+B Bold, Ctrl+I Italic.
+                root.editor.toggleTagIn(field.role, event.key === Qt.Key_B ? "b" : "i",
+                                        field.selectionStart, field.selectionEnd)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Escape) {
+                root.editor.discard()
+                event.accepted = true
+            } else if (ctrl && event.key === Qt.Key_Z && !(event.modifiers & Qt.ShiftModifier)) {
+                root.editor.undo()
+                event.accepted = true
+            } else if (ctrl && (event.key === Qt.Key_Y
+                                || (event.key === Qt.Key_Z && (event.modifiers & Qt.ShiftModifier)))) {
+                root.editor.redo()
+                event.accepted = true
+            }
+        }
+    }
+
     component Panel: FocusScope {
         id: panel
         property string title
@@ -229,7 +295,10 @@ ApplicationWindow {
                                     focusPolicy: Qt.NoFocus
                                     enabled: root.editor.editable
                                     Accessible.name: modelData.name
-                                    onClicked: root.editor.toggleTag(modelData.tag, lineText.selectionStart, lineText.selectionEnd)
+                                    onClicked: {
+                                        const field = translationText.activeFocus ? translationText : lineText
+                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    }
                                 }
                             }
                             CheckBox {
@@ -240,65 +309,19 @@ ApplicationWindow {
                             }
                         }
 
-                        TextArea {
+                        RoleField {
                             id: lineText
                             objectName: "lineText"
+                            role: 0
                             focus: true
-                            readOnly: !root.editor.editable
-                            wrapMode: TextEdit.Wrap
-                            selectByMouse: true
-                            Accessible.name: qsTr("Line text")
-                            Layout.fillWidth: true
-                            Layout.fillHeight: true
-
-                            // The field mirrors the editor's projection. User
-                            // changes go to the controller, which maps them onto
-                            // the raw source; programmatic updates are not edits.
-                            property bool syncing: false
-                            function sync() {
-                                if (text === root.editor.text)
-                                    return
-                                syncing = true
-                                const caret = cursorPosition
-                                text = root.editor.text
-                                cursorPosition = Math.min(caret, length)
-                                syncing = false
-                            }
-                            Component.onCompleted: sync()
-                            onTextChanged: {
-                                if (!syncing)
-                                    Qt.callLater(() => { if (!lineText.syncing) root.editor.textEdited(lineText.text, lineText.cursorPosition) })
-                            }
-                            Connections {
-                                target: root.editor
-                                function onChanged() { lineText.sync() }
-                                function onSelectionRequested() {
-                                    lineText.select(root.editor.selectionStart, root.editor.selectionEnd)
-                                }
-                            }
-                            Keys.onPressed: event => {
-                                const ctrl = event.modifiers & Qt.ControlModifier
-                                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                                        && !(event.modifiers & Qt.ShiftModifier) && !lineText.inputMethodComposing) {
-                                    root.editor.commitAndAdvance()
-                                    event.accepted = true
-                                } else if (ctrl && (event.key === Qt.Key_B || event.key === Qt.Key_I)) {
-                                    // Legacy defaults: Ctrl+B Bold, Ctrl+I Italic.
-                                    root.editor.toggleTag(event.key === Qt.Key_B ? "b" : "i",
-                                                          lineText.selectionStart, lineText.selectionEnd)
-                                    event.accepted = true
-                                } else if (event.key === Qt.Key_Escape) {
-                                    root.editor.discard()
-                                    event.accepted = true
-                                } else if (ctrl && event.key === Qt.Key_Z && !(event.modifiers & Qt.ShiftModifier)) {
-                                    root.editor.undo()
-                                    event.accepted = true
-                                } else if (ctrl && (event.key === Qt.Key_Y
-                                                    || (event.key === Qt.Key_Z && (event.modifiers & Qt.ShiftModifier)))) {
-                                    root.editor.redo()
-                                    event.accepted = true
-                                }
-                            }
+                            Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                        }
+                        RoleField {
+                            id: translationText
+                            objectName: "translationText"
+                            role: 1
+                            visible: root.editor.translationMode
+                            Accessible.name: qsTr("Translated text")
                         }
 
                         Label {

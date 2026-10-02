@@ -156,16 +156,24 @@ QString LineEditorController::problemText() const
                                                                  : tr("Margins must be between 0 and 9999.");
 }
 
+bool LineEditorController::translationMode() const
+{
+    auto *s = session();
+    return s && s->document().scriptInfo(u8"TLMode") == u8"Yes";
+}
+
 void LineEditorController::refresh()
 {
     const auto r = record();
-    if (!r)
-        m_text.clear();
-    else if (m_showTags)
-        m_text = qs(r->text);
-    else {
-        const auto p = core::project(core::toUtf16(r->text));
-        m_text = QString::fromUtf16(p.text.data(), static_cast<qsizetype>(p.text.size()));
+    for (int role = 0; role < 2; ++role) {
+        if (!r)
+            m_shown[role].clear();
+        else if (m_showTags)
+            m_shown[role] = qs(roleText(*r, role));
+        else {
+            const auto p = core::project(core::toUtf16(roleText(*r, role)));
+            m_shown[role] = QString::fromUtf16(p.text.data(), static_cast<qsizetype>(p.text.size()));
+        }
     }
     if (m_attempted.isEmpty())
         m_problem = problemText();
@@ -201,17 +209,19 @@ bool LineEditorController::showLine(qulonglong id)
     return true;
 }
 
-bool LineEditorController::setRaw(std::u8string raw)
+bool LineEditorController::setRaw(int role, std::u8string raw)
 {
     auto *s = session();
     const auto r = record();
     if (!s || !r || !m_editable)
         return false;
-    if (raw == r->text)
+    if (raw == roleText(*r, role))
         return true;
-    if (!s->editDraftText(r->id, raw))
+    application::DraftChange change;
+    (role == 0 ? change.text : change.translation) = std::move(raw);
+    if (!s->editDraft(r->id, change))
         return false;
-    m_draftUndo.push_back(r->text);
+    m_draftUndo.push_back({r->text, r->translation});
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
@@ -220,13 +230,23 @@ bool LineEditorController::setRaw(std::u8string raw)
 
 void LineEditorController::textEdited(const QString &newText, int cursor)
 {
+    edit(0, newText, cursor);
+}
+
+void LineEditorController::translationEdited(const QString &newText, int cursor)
+{
+    edit(1, newText, cursor);
+}
+
+void LineEditorController::edit(int role, const QString &newText, int cursor)
+{
     if (!editable()) {
         refresh(); // a protected or empty editor never changes content
         return;
     }
-    if (newText == m_text)
+    if (newText == m_shown[role])
         return;
-    const QString old = m_text;
+    const QString old = m_shown[role];
     // Locate the change: the common suffix may not reach past the caret, so
     // repeated characters resolve to where the user actually typed.
     const qsizetype caret = std::clamp<qsizetype>(cursor, 0, newText.size());
@@ -243,21 +263,21 @@ void LineEditorController::textEdited(const QString &newText, int cursor)
     const auto end = static_cast<std::size_t>(old.size() - suffix);
 
     if (m_showTags) {
-        setRaw(u8(newText));
+        setRaw(role, u8(newText));
         return;
     }
     std::vector<std::size_t> bounds{0};
     QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, old);
     for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
         bounds.push_back(static_cast<std::size_t>(b));
-    const auto raw = core::toUtf16(record()->text);
+    const auto raw = core::toUtf16(roleText(*record(), role));
     const auto result = core::mappedReplace(raw, start, end, u16(inserted), bounds);
     if (!result) {
         refresh(); // the field shows the unchanged source again
         fail(refusalText(result.error()), newText);
         return;
     }
-    setRaw(core::toUtf8(*result));
+    setRaw(role, core::toUtf8(*result));
 }
 
 void LineEditorController::setStartText(const QString &text)
@@ -387,17 +407,17 @@ bool LineEditorController::undo()
         return false;
     const auto r = record();
     if (!m_draftUndo.empty() && r) {
-        m_draftRedo.push_back(r->text);
-        const std::u8string previous = std::move(m_draftUndo.back());
+        m_draftRedo.push_back({r->text, r->translation});
+        const Snapshot previous = std::move(m_draftUndo.back());
         m_draftUndo.pop_back();
-        s->editDraftText(r->id, previous);
+        s->editDraft(r->id, application::DraftChange{.text = previous.text, .translation = previous.translation});
         // Back at the committed Line: no draft remains.
         const auto lines = s->document().lines();
         const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
         const auto d = s->draftRecord();
-        if (it != lines.end() && d && d->text == (*it)->text && d->start.value == (*it)->start.value &&
-            d->end.value == (*it)->end.value && d->marginLeft.value == (*it)->marginLeft.value &&
-            d->marginRight.value == (*it)->marginRight.value &&
+        if (it != lines.end() && d && d->text == (*it)->text && d->translation == (*it)->translation &&
+            d->start.value == (*it)->start.value && d->end.value == (*it)->end.value &&
+            d->marginLeft.value == (*it)->marginLeft.value && d->marginRight.value == (*it)->marginRight.value &&
             d->marginVertical.value == (*it)->marginVertical.value)
             s->discardDraft();
         m_attempted.clear();
@@ -423,10 +443,10 @@ bool LineEditorController::redo()
         return false;
     const auto r = record();
     if (!m_draftRedo.empty() && r) {
-        m_draftUndo.push_back(r->text);
-        const std::u8string next = std::move(m_draftRedo.back());
+        m_draftUndo.push_back({r->text, r->translation});
+        const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
-        s->editDraftText(r->id, next);
+        s->editDraft(r->id, application::DraftChange{.text = next.text, .translation = next.translation});
         refresh();
         return true;
     }
@@ -469,6 +489,11 @@ bool LineEditorController::save()
 
 bool LineEditorController::toggleTag(const QString &tag, int selectionStart, int selectionEnd)
 {
+    return toggleTagIn(0, tag, selectionStart, selectionEnd);
+}
+
+bool LineEditorController::toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd)
+{
     const auto r = record();
     if (!editable() || !r || tag.size() != 1 || !QStringLiteral("bius").contains(tag))
         return false;
@@ -481,7 +506,7 @@ bool LineEditorController::toggleTag(const QString &tag, int selectionStart, int
                                                                                       : style.strikeOut;
             break;
         }
-    const std::u16string raw = core::toUtf16(r->text);
+    const std::u16string raw = core::toUtf16(roleText(*r, role));
     long from = selectionStart, to = selectionEnd;
     std::optional<core::Projection> projection;
     if (!m_showTags) {
@@ -493,7 +518,7 @@ bool LineEditorController::toggleTag(const QString &tag, int selectionStart, int
                  : static_cast<long>(core::rawOffset(*projection, static_cast<std::size_t>(selectionEnd), false));
     }
     const auto result = core::legacy::toggleTag({raw, from, to}, tag[0].unicode(), styleValue);
-    if (!setRaw(core::toUtf8(result.text)))
+    if (!setRaw(role, core::toUtf8(result.text)))
         return false;
     if (m_showTags) {
         m_selectionStart = static_cast<int>(result.selectionStart);

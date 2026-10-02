@@ -30,6 +30,9 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool showTags READ showTags WRITE setShowTags NOTIFY changed)
     Q_PROPERTY(QString text READ text NOTIFY changed)
+    // Translation mode (Script Info "TLMode: Yes"): Original above Translated.
+    Q_PROPERTY(bool translationMode READ translationMode NOTIFY changed)
+    Q_PROPERTY(QString translationText READ translationText NOTIFY changed)
     Q_PROPERTY(QString startText READ startText NOTIFY changed)
     Q_PROPERTY(QString endText READ endText NOTIFY changed)
     Q_PROPERTY(QString marginLeftText READ marginLeftText NOTIFY changed)
@@ -56,7 +59,9 @@ public:
     bool editable() const { return m_editable && hasLine(); }
     bool showTags() const { return m_showTags; }
     void setShowTags(bool show);
-    QString text() const { return m_text; }
+    QString text() const { return m_shown[0]; }
+    bool translationMode() const;
+    QString translationText() const { return m_shown[1]; }
     QString startText() const;
     QString endText() const;
     QString marginLeftText() const;
@@ -71,6 +76,7 @@ public:
     Q_INVOKABLE bool showLine(qulonglong id);
     // The text field now holds `newText` with the caret at `cursor`.
     Q_INVOKABLE void textEdited(const QString &newText, int cursor);
+    Q_INVOKABLE void translationEdited(const QString &newText, int cursor);
     Q_INVOKABLE void setStartText(const QString &text);
     Q_INVOKABLE void setEndText(const QString &text);
     Q_INVOKABLE void setMarginText(int which, const QString &text); // 0 left, 1 right, 2 vertical
@@ -83,6 +89,8 @@ public:
     // Legacy Bold/Italic/Underline/Strikeout ('b', 'i', 'u', 's') on the
     // text field's selection, with the Style's value deciding the direction.
     Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
+    // The same in a given role: 0 Original, 1 Translated.
+    Q_INVOKABLE bool toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd);
     int selectionStart() const { return m_selectionStart; }
     int selectionEnd() const { return m_selectionEnd; }
 
@@ -99,7 +107,12 @@ private:
     std::optional<core::LineRecord> record() const; // the active Line, draft applied
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
-    bool setRaw(std::u8string raw);
+    bool setRaw(int role, std::u8string raw);
+    void edit(int role, const QString &newText, int cursor);
+    const std::u8string &roleText(const core::LineRecord &line, int role) const
+    {
+        return role == 0 ? line.text : line.translation;
+    }
     void committed();
     QString problemText() const;
 
@@ -107,11 +120,15 @@ private:
     std::optional<application::DocumentId> m_document;
     bool m_editable = false;
     bool m_showTags = false; // tags hidden by default
-    QString m_text;          // what the text field shows
+    QString m_shown[2];      // what the Original and Translated fields show
     QString m_problem;
     QString m_attempted;
-    std::vector<std::u8string> m_draftUndo; // exact raw snapshots of this draft
-    std::vector<std::u8string> m_draftRedo;
+    // Exact raw snapshots of this draft, both roles.
+    struct Snapshot {
+        std::u8string text, translation;
+    };
+    std::vector<Snapshot> m_draftUndo;
+    std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;
     int m_selectionStart = 0;
     int m_selectionEnd = 0;

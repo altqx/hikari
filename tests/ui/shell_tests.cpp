@@ -224,6 +224,42 @@ private slots:
         QTRY_COMPARE(grid->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
     }
 
+    void translationModeStacksOriginalAboveTranslated()
+    {
+        const QString path = dir.filePath(QStringLiteral("tl.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        }
+        QVERIFY(application->openFile(path));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate"));
+        QVERIFY(translated->isVisible());
+        QTRY_VERIFY(original->y() < translated->y()); // Original above Translated, once laid out
+        translated->forceActiveFocus();
+        for (char c : std::string("Brama"))
+            QTest::keyClick(window, c);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Brama"));
+        press(Qt::Key_Return); // commit (the last Line: a new Line follows)
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QFile saved(path);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        const QByteArray bytes = saved.readAll();
+        // The pair is written as the original line in the TLMode Style plus
+        // the translation line.
+        QVERIFY2(bytes.contains("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"),
+                 bytes.constData());
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

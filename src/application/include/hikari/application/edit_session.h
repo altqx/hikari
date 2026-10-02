@@ -50,6 +50,7 @@ enum class DraftProblem { EndBeforeStart, MarginOutOfRange };
 // Field changes of the pending draft; unset fields keep the committed value.
 struct DraftChange {
     std::optional<std::u8string> text;
+    std::optional<std::u8string> translation; // TLMode translated role
     std::optional<core::DocumentTime> start, end;
     std::optional<std::int64_t> marginLeft, marginRight, marginVertical;
 };

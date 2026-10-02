@@ -88,7 +88,10 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                 continue;
             }
             newlines.see(span);
-            if (line && line->edited && line->originalSpan && !tlMode.empty()) {
+            // A TLMode pair, or a Line that was given a translation, is written
+            // as an original line plus its translation line.
+            if (line && line->edited && (line->originalSpan || !line->translation.empty()) && !tlMode.empty()) {
+                const SourceSpan &originalSpan = line->originalSpan ? *line->originalSpan : span;
                 const bool hasTranslation = !line->translation.empty();
                 if (tlMode != u8"Translated" && (hasTranslation || line->unconfirmed)) {
                     LineRecord original = *line;
@@ -97,8 +100,10 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
                     if (line->unconfirmed)
                         original.effect = u8"\fD";
                     append(legacy::assLineText(original));
-                    copy(line->originalSpan->offset + line->originalSpan->length,
-                         line->originalSpan->terminatorLength);
+                    if (line->originalSpan)
+                        copy(originalSpan.offset + originalSpan.length, originalSpan.terminatorLength);
+                    else
+                        append(span.terminatorLength == 1 ? u8"\n" : u8"\r\n");
                     LineRecord translated = *line;
                     translated.text = line->translation;
                     append(legacy::assLineText(translated));

@@ -2,14 +2,17 @@
 # the frozen official installation, everything else from the pinned vcpkg graph.
 include_guard(GLOBAL)
 
+# FFmpeg first: Qt puts its own FindFFmpeg.cmake on CMAKE_MODULE_PATH, and
+# on a case-insensitive filesystem (Windows) find_package(FFMPEG) would load
+# it instead of vcpkg's FindFFMPEG.
+find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
+find_package(FFMPEG REQUIRED)
+
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS Core Gui Qml Quick)
 cmake_path(IS_PREFIX HIKARI_QT_PREFIX "${Qt6_DIR}" NORMALIZE _hikari_qt_owned)
 if(NOT _hikari_qt_owned)
     message(FATAL_ERROR "Qt6_DIR ${Qt6_DIR} is not the provisioned Qt at ${HIKARI_QT_PREFIX}")
 endif()
-
-find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
-find_package(FFMPEG REQUIRED)
 
 # libass ships pkg-config metadata only. Static linking needs its full closure.
 if(WIN32 AND NOT PKG_CONFIG_EXECUTABLE)
