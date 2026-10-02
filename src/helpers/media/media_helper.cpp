@@ -116,6 +116,13 @@ void open(Source &source, Reader &in, Responder &r)
         out.i64(FFMS_GetFrameInfo(t, i)->PTS);
     FFMS_ErrorInfo audioErr{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     out.i32(FFMS_GetFirstTrackOfType(index.get(), FFMS_TYPE_AUDIO, &audioErr)); // -1 when none
+    std::vector<int> audioTracks;
+    for (int i = 0; i < FFMS_GetNumTracks(index.get()); ++i)
+        if (FFMS_GetTrackType(FFMS_GetTrackFromIndex(index.get(), i)) == FFMS_TYPE_AUDIO)
+            audioTracks.push_back(i);
+    out.i32(static_cast<std::int32_t>(audioTracks.size()));
+    for (int t : audioTracks)
+        out.i32(t);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);

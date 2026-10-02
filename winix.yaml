@@ -68,3 +68,7 @@ tasks:
     # PCM streams and Line audition (I3).
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(PcmFixture|Audition)[.]" -V
     timeoutSeconds: 600
+  transport:
+    # General <-> indexed handoff (I4), verbose for the frame observations.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "transport_tests" -V
+    timeoutSeconds: 600

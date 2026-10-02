@@ -156,7 +156,12 @@ void QtGeneralPlayer::seek(std::int64_t us, Seeked done)
     ++m_epoch;
     m_clock.valid = false;
     m_pendingSeek = PendingSeek{m_generation, us, std::move(done)};
+    const bool stopped = m_player.playbackState() == QMediaPlayer::StoppedState;
     m_player.setPosition(us / 1000); // QMediaPlayer positions are milliseconds
+    // A stopped player delivers no frame for a seek: pause at the target, so
+    // the first delivered frame is the seek's (no frame from before it).
+    if (stopped)
+        m_player.pause();
 }
 
 void QtGeneralPlayer::onFrame(const QVideoFrame &frame)

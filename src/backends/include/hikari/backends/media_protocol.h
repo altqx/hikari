@@ -7,7 +7,8 @@
 //         progress: i64 done, i64 total
 //         terminal Ok: i32 track, i64 fpsNum, i64 fpsDen, i64 timeBaseNum,
 //                      i64 timeBaseDen, i32 frameCount, i64 pts[frameCount],
-//                      i32 firstAudioTrack (-1: none)
+//                      i32 firstAudioTrack (-1: none), i32 audioCount,
+//                      i32 audioTracks[audioCount] (every audio track, in order)
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open
@@ -34,7 +35,7 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 1;
+inline constexpr std::uint32_t kProtocolVersion = 2; // 2: the Open reply lists audio tracks
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7 };

@@ -136,3 +136,11 @@ target_compile_definitions(hikari_backends_line_audition_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_line_audition_tests hikari_media_helper hikari_media_fixtures)
+
+# I4: general <-> indexed handoff (real Qt player and media helper).
+hikari_add_qttest(hikari_backends_transport_tests SOURCES transport_tests.cpp
+    LIBRARIES hikari_backends Qt6::Gui Qt6::Multimedia)
+target_compile_definitions(hikari_backends_transport_tests PRIVATE
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+add_dependencies(hikari_backends_transport_tests hikari_media_helper hikari_media_fixtures)
