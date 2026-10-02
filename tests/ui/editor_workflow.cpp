@@ -63,8 +63,16 @@ protected:
             mouseClick("mainWindow/fileMenuBarItem");
             wait(300ms);
             mouseClick("mainWindow/saveMenuItem");
-            wait(800ms);
-            observed.push_back(getStringProperty("mainWindow/saveStatus", "text")); // 5
+            // The write is asynchronous (temporary file, flush, rename): poll
+            // until it is acknowledged rather than sleeping a fixed time.
+            std::string status;
+            for (int i = 0; i < 100; ++i) {
+                wait(100ms);
+                status = getStringProperty("mainWindow/saveStatus", "text");
+                if (status == "Saved")
+                    break;
+            }
+            observed.push_back(status); // 5
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());

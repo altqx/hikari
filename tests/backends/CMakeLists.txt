@@ -19,3 +19,10 @@ target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
+
+add_executable(hikari_test_helper test_helper.cpp)
+target_link_libraries(hikari_test_helper PRIVATE hikari_helper_endpoint)
+hikari_add_gtest(hikari_backends_helper_tests SOURCES helper_host_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_helper_tests PRIVATE HIKARI_TEST_HELPER="$<TARGET_FILE:hikari_test_helper>")
+add_dependencies(hikari_backends_helper_tests hikari_test_helper)
