@@ -1,6 +1,7 @@
 // C4-ssa: Style values as the legacy Styles::parseStyle reads ASS and SSA v4.
 
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 
 #include <QFile>
@@ -20,6 +21,44 @@ std::vector<std::byte> readFile(const QString &path)
     std::vector<std::byte> out(static_cast<std::size_t>(d.size()));
     std::memcpy(out.data(), d.constData(), out.size());
     return out;
+}
+
+std::string text(const std::vector<std::byte> &b)
+{
+    std::string s(reinterpret_cast<const char *>(b.data()), b.size());
+    std::erase(s, '\r'); // the legacy save writes CRLF; the inputs use LF
+    return s;
+}
+
+std::vector<std::byte> input(const char *name)
+{
+    return readFile(QStringLiteral(HIKARI_CAPTURE_INPUTS "/") + QLatin1String(name));
+}
+
+std::string legacyOutput(const char *name)
+{
+    return text(readFile(QStringLiteral(HIKARI_C4SSA_OUTPUTS "/") + QLatin1String(name)));
+}
+
+// The Dialogue/Comment lines of a saved file, in order.
+std::vector<std::string> eventLines(const std::string &file)
+{
+    std::vector<std::string> out;
+    std::size_t pos = 0;
+    while (pos < file.size()) {
+        const std::size_t end = std::min(file.find('\n', pos), file.size());
+        const std::string line = file.substr(pos, end - pos);
+        if (line.starts_with("Dialogue: ") || line.starts_with("Comment: "))
+            out.push_back(line);
+        pos = end + 1;
+    }
+    return out;
+}
+
+void editEveryLine(Document &doc)
+{
+    for (const auto *line : doc.lines())
+        ASSERT_TRUE(doc.setLineText(line->id, line->text));
 }
 
 std::vector<std::byte> bytesOf(std::string_view s)
@@ -107,4 +146,60 @@ TEST(Style, LegacyColourParsing)
     EXPECT_EQ(legacy::colour(u8"&h40ff0000"), (Colour{0, 0, 255, 0x40}));
     EXPECT_EQ(legacy::colour(u8"#FF8000"), (Colour{255, 0x80, 0, 0})); // HTML order
     EXPECT_EQ(legacy::colour(u8"-"), (Colour{}));                      // IsNumber, ToLong fails
+}
+
+// Legacy capture run 37014681128 (c4-ssa-edge-families): with every Line
+// regenerated, the rewrite writes what the old app saved.
+
+TEST(LegacyCapture, EventEdgeFamilies)
+{
+    auto doc = loadAss(input("ass-event-edges.ass")).document;
+    editEveryLine(doc);
+    // The legacy save moves the Script Info Dialogue into Events; the rewrite
+    // keeps it in place, so compare the Lines in order.
+    ASSERT_EQ(eventLines(legacyOutput("saved-ass-event-edges.ass")).size(), 12u);
+    EXPECT_EQ(eventLines(text(encodeAss(doc))), eventLines(legacyOutput("saved-ass-event-edges.ass")));
+}
+
+TEST(LegacyCapture, TLModeEdgeFamilies)
+{
+    auto doc = loadAss(input("tlmode-edges.ass")).document;
+    EXPECT_FALSE(doc.lines()[0]->unconfirmed); // form-feed+D is not read back
+    editEveryLine(doc);
+    const auto events = [](const std::string &s) { return s.substr(s.rfind("Format: Layer")); };
+    ASSERT_EQ(eventLines(legacyOutput("saved-tlmode-edges.ass")).size(), 6u);
+    EXPECT_EQ(events(text(encodeAss(doc))), events(legacyOutput("saved-tlmode-edges.ass")));
+}
+
+TEST(LegacyCapture, SsaStylesDecodeAsTheLegacyConversion)
+{
+    auto doc = loadAss(input("ssa-v4.ssa")).document;
+    const auto ours = decodeStyles(doc);
+    const std::string legacy = legacyOutput("saved-ssa-v4.ssa.ass");
+    const auto saved = decodeStyles(loadAss(bytesOf(legacy)).document);
+    ASSERT_EQ(ours.size(), 3u);
+    ASSERT_EQ(ours.size(), saved.size());
+    for (std::size_t i = 0; i < ours.size(); ++i) {
+        StyleValues a = ours[i];
+        a.ssaTertiaryColour.reset(); // no ASS field: dropped by the conversion
+        a.ssaAlphaLevel.reset();
+        StyleValues b = saved[i];
+        // Booleans are written as -1/0 and read back as "not 0".
+        EXPECT_EQ(a.name, b.name);
+        EXPECT_EQ(a.primary, b.primary);
+        EXPECT_EQ(a.secondary, b.secondary);
+        EXPECT_EQ(a.outline, b.outline);
+        EXPECT_EQ(a.back, b.back);
+        EXPECT_EQ(a.bold, b.bold);
+        EXPECT_EQ(a.italic, b.italic);
+        EXPECT_EQ(a.borderStyle, b.borderStyle);
+        EXPECT_EQ(a.alignment, b.alignment) << i;
+        EXPECT_EQ(a.marginLeft, b.marginLeft);
+        EXPECT_EQ(a.marginVertical, b.marginVertical);
+        EXPECT_EQ(a.encoding, b.encoding);
+        EXPECT_TRUE(b.complete);
+    }
+    editEveryLine(doc);
+    ASSERT_EQ(eventLines(legacy).size(), 2u);
+    EXPECT_EQ(eventLines(text(encodeAss(doc))), eventLines(legacy));
 }
