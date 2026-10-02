@@ -70,6 +70,16 @@ bool OutputEngine::render(std::span<float> out, const CallbackTiming &timing) no
         e.dacTimeDerived = true;
         e.uncertaintySeconds = bufferSeconds + m_outputLatency;
     }
+    if (ready > 0) {
+        m_readyEndDac = e.dacTimeSeconds + static_cast<double>(ready) / rate;
+        m_readyStream = timing.streamTime;
+        m_readyMonotonic = timing.monotonic;
+        m_readyConsumed = m_consumed + ready;
+    }
+    e.lastReadyEndDacSeconds = m_readyEndDac;
+    e.lastReadyStreamSeconds = m_readyStream;
+    e.lastReadyMonotonicSeconds = m_readyMonotonic;
+    e.lastReadyFramesConsumed = m_readyConsumed;
     publish(e);
 
     m_consumed += ready;
@@ -101,6 +111,10 @@ void OutputEngine::publish(const application::ClockEstimate &e) noexcept
     m_snapStream.store(e.streamTimeSeconds, kRelaxed);
     m_snapMonotonic.store(e.monotonicSeconds, kRelaxed);
     m_snapUncertainty.store(e.uncertaintySeconds, kRelaxed);
+    m_snapReadyEndDac.store(e.lastReadyEndDacSeconds, kRelaxed);
+    m_snapReadyStream.store(e.lastReadyStreamSeconds, kRelaxed);
+    m_snapReadyMonotonic.store(e.lastReadyMonotonicSeconds, kRelaxed);
+    m_snapReadyConsumed.store(e.lastReadyFramesConsumed, kRelaxed);
     m_seq.store(seq + 2, std::memory_order_release);
 }
 
@@ -183,6 +197,10 @@ application::ClockEstimate OutputEngine::clock(double now) const
         e.streamTimeSeconds = m_snapStream.load(kRelaxed);
         e.monotonicSeconds = m_snapMonotonic.load(kRelaxed);
         e.uncertaintySeconds = m_snapUncertainty.load(kRelaxed);
+        e.lastReadyEndDacSeconds = m_snapReadyEndDac.load(kRelaxed);
+        e.lastReadyStreamSeconds = m_snapReadyStream.load(kRelaxed);
+        e.lastReadyMonotonicSeconds = m_snapReadyMonotonic.load(kRelaxed);
+        e.lastReadyFramesConsumed = m_snapReadyConsumed.load(kRelaxed);
         std::atomic_thread_fence(std::memory_order_acquire);
         if (m_seq.load(kRelaxed) != before)
             continue;

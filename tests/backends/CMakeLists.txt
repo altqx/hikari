@@ -127,3 +127,12 @@ add_test(NAME media-helper-manifest-control COMMAND "${CMAKE_COMMAND}"
     "-DOUT=${CMAKE_CURRENT_BINARY_DIR}/manifest-control.json"
     -P "${PROJECT_SOURCE_DIR}/cmake/manifest/HelperManifest.cmake")
 set_tests_properties(media-helper-manifest-control PROPERTIES LABELS packaging TIMEOUT 120 WILL_FAIL TRUE)
+
+# I3: Line audition through the editor output (simulated device everywhere,
+# PortAudio where a device exists).
+hikari_add_gtest(hikari_backends_line_audition_tests SOURCES line_audition_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends PROPERTIES RUN_SERIAL TRUE)
+target_compile_definitions(hikari_backends_line_audition_tests PRIVATE
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+add_dependencies(hikari_backends_line_audition_tests hikari_media_helper hikari_media_fixtures)

@@ -64,3 +64,7 @@ tasks:
     # The media helper's direct imports (manifest development aid).
     script: ./tools/winix/msvc.ps1 dumpbin /dependents out/build/windows-x64-release/hikari-media-helper.exe
     timeoutSeconds: 120
+  audition:
+    # PCM streams and Line audition (I3).
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(PcmFixture|Audition)[.]" -V
+    timeoutSeconds: 600

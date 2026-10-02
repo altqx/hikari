@@ -2,6 +2,8 @@
 
 #include <QElapsedTimer>
 
+#include <cstring>
+
 #include "hikari/backends/media_protocol.h"
 
 namespace hikari::backends {
@@ -316,6 +318,80 @@ void FfmsIndexedSource::chapters(const std::string &path, Listed done)
         if (!request)
             done(std::unexpected(application::PlayerError::BackendFailure));
     });
+}
+
+void FfmsIndexedSource::beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done)
+{
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
+    if (!m_audio || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    auto [ticket, finish] = this->track(std::move(done));
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::PcmBegin)).i64(start).i64(count).i32(outRate)
+            .i32(outChannels).take(),
+        [generation, outChannels, finish, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return finish(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return finish(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return finish(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            application::PcmStream stream;
+            stream.generation = generation;
+            stream.start = in.i64();
+            stream.count = in.i64();
+            stream.totalFrames = in.i64();
+            if (!in.ok() || stream.count < 0 || stream.totalFrames < 0)
+                return finish(std::unexpected(SourceError::BackendFailure));
+            m_pcmChannels = outChannels;
+            finish(stream);
+        });
+    if (!request)
+        return finish(std::unexpected(errorOf(request.error())));
+    m_reads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::nextPcm(std::int64_t maxFrames, PcmReady done)
+{
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
+    if (!m_audio || !m_host || m_pcmChannels <= 0)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    const int channels = m_pcmChannels;
+    auto [ticket, finish] = this->track(std::move(done));
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::PcmNext)).i64(maxFrames).take(),
+        [generation, channels, finish, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return finish(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return finish(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return finish(std::unexpected(errorOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            application::PcmChunk chunk;
+            chunk.generation = generation;
+            chunk.frames = in.i64();
+            chunk.end = in.u8() != 0;
+            const auto bytes = in.bytes();
+            if (!in.ok() || chunk.frames < 0 ||
+                bytes.size() != static_cast<std::size_t>(chunk.frames) * channels * sizeof(float))
+                return finish(std::unexpected(SourceError::BackendFailure));
+            chunk.samples.resize(bytes.size() / sizeof(float));
+            std::memcpy(chunk.samples.data(), bytes.data(), bytes.size());
+            finish(std::move(chunk));
+        });
+    if (!request)
+        return finish(std::unexpected(errorOf(request.error())));
+    m_reads[ticket].request = *request;
 }
 
 void FfmsIndexedSource::cancelReads()

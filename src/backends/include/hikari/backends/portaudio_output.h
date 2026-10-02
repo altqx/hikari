@@ -36,6 +36,7 @@ public:
     std::size_t write(std::span<const float> interleaved) override;
     application::OutputStatus status() const override;
     application::ClockEstimate clock() const override;
+    application::OutputFormat format() const override;
 
     // The opened device's id and the stream's reported output latency.
     std::string openDeviceId() const;

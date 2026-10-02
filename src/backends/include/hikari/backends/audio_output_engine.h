@@ -65,6 +65,8 @@ private:
     std::size_t m_previousFrames = 0;
     std::uint64_t m_consumed = 0;
     double m_longestBuffer = 0; // seconds, for the stall limit
+    double m_readyEndDac = 0, m_readyStream = 0, m_readyMonotonic = 0;
+    std::uint64_t m_readyConsumed = 0;
 
     std::atomic<bool> m_running{false};
     std::atomic<bool> m_stopRequested{false};
@@ -90,6 +92,10 @@ private:
     std::atomic<double> m_snapStream{0};
     std::atomic<double> m_snapMonotonic{0};
     std::atomic<double> m_snapUncertainty{0};
+    std::atomic<double> m_snapReadyEndDac{0};
+    std::atomic<double> m_snapReadyStream{0};
+    std::atomic<double> m_snapReadyMonotonic{0};
+    std::atomic<std::uint64_t> m_snapReadyConsumed{0};
 
     static_assert(std::atomic<double>::is_always_lock_free);
     static_assert(std::atomic<bool>::is_always_lock_free);

@@ -268,6 +268,11 @@ ClockEstimate PortAudioOutput::clock() const
     return d->engine ? d->engine->clock(monotonicSeconds()) : ClockEstimate{};
 }
 
+OutputFormat PortAudioOutput::format() const
+{
+    return d->engine ? d->engine->format() : OutputFormat{};
+}
+
 std::string PortAudioOutput::openDeviceId() const
 {
     return d->deviceId;

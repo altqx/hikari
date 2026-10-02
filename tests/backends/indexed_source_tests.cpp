@@ -379,6 +379,109 @@ TEST_F(AudioFixture, CancelledAndSupersededRangesNeverDeliverSamples)
     EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen) << "the new source has no audio opened yet";
 }
 
+struct PcmFixture : AudioFixture {
+    std::optional<PcmStream> begin(std::int64_t start, std::int64_t count, int rate, int channels)
+    {
+        std::optional<std::expected<PcmStream, SourceError>> result;
+        source.beginPcm(start, count, rate, channels, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        if (!result || !*result)
+            return std::nullopt;
+        return **result;
+    }
+    // The whole stream in chunks of `chunk` frames.
+    std::vector<float> readAll(std::int64_t chunk, int *chunks = nullptr)
+    {
+        std::vector<float> all;
+        for (int n = 0; n < 10'000; ++n) {
+            std::optional<std::expected<PcmChunk, SourceError>> result;
+            source.nextPcm(chunk, [&](auto r) { result = std::move(r); });
+            EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+            if (!result || !*result)
+                break;
+            all.insert(all.end(), (*result)->samples.begin(), (*result)->samples.end());
+            if (chunks)
+                ++*chunks;
+            if ((*result)->end)
+                break;
+        }
+        return all;
+    }
+    void SetUp() override
+    {
+        const auto t = open("audio");
+        ASSERT_TRUE(t);
+        ASSERT_TRUE(openAudio(t->firstAudioTrack));
+    }
+};
+
+TEST_F(PcmFixture, WithoutResamplingTheRangeIsSampleExact)
+{
+    const auto stream = begin(1000, 4800, 48000, 2);
+    ASSERT_TRUE(stream);
+    EXPECT_EQ(stream->totalFrames, 4800);
+    int chunks = 0;
+    const auto pcm = readAll(1000, &chunks);
+    ASSERT_EQ(pcm.size(), 4800u * 2);
+    EXPECT_EQ(chunks, 5);
+    for (std::size_t k = 0; k < 4800; ++k) {
+        ASSERT_EQ(pcm[2 * k], float((1000 + k) % 32768) / 32768.0f) << k;
+        ASSERT_EQ(pcm[2 * k + 1], -float((1000 + k) % 32768) / 32768.0f) << k;
+    }
+}
+
+TEST_F(PcmFixture, ResamplingKeepsTheExactLengthAndTheTimeline)
+{
+    const auto stream = begin(1000, 4800, 44100, 2);
+    ASSERT_TRUE(stream);
+    EXPECT_EQ(stream->totalFrames, 4410) << "0.1 s at 44.1 kHz";
+    const auto pcm = readAll(4410);
+    ASSERT_EQ(pcm.size(), 4410u * 2);
+    // Away from the edges (the resampler's filter has no history there), the
+    // output samples the ramp at source position start + k * 48000 / 44100.
+    double worst = 0;
+    for (std::size_t k = 64; k < 4410 - 64; ++k) {
+        const double expected = (1000 + k * 48000.0 / 44100.0) / 32768.0;
+        worst = std::max(worst, std::abs(pcm[2 * k] - expected));
+    }
+    std::fprintf(stderr, "resampled ramp: worst error %.3f source steps\n", worst * 32768);
+    EXPECT_LT(worst * 32768, 1.0) << "within one source step of the timeline";
+}
+
+TEST_F(PcmFixture, ChunksJoinWithoutSeams)
+{
+    ASSERT_TRUE(begin(1000, 4800, 44100, 2));
+    const auto whole = readAll(4410);
+    ASSERT_TRUE(begin(1000, 4800, 44100, 2));
+    const auto pieces = readAll(333);
+    ASSERT_EQ(whole.size(), pieces.size());
+    for (std::size_t i = 0; i < whole.size(); ++i)
+        ASSERT_EQ(whole[i], pieces[i]) << i;
+}
+
+TEST_F(PcmFixture, ChannelsAreMappedByLayout)
+{
+    ASSERT_TRUE(begin(1000, 4800, 48000, 1));
+    const auto mono = readAll(4800);
+    ASSERT_EQ(mono.size(), 4800u);
+    // The fixture's right channel is the negated left: a downmix cancels.
+    for (float v : mono)
+        ASSERT_LT(std::abs(v), 1e-6f);
+}
+
+TEST_F(PcmFixture, RangesEndAtTheSource)
+{
+    const auto stream = begin(96200, 1000, 48000, 2);
+    ASSERT_TRUE(stream);
+    EXPECT_EQ(stream->count, 56);
+    EXPECT_EQ(stream->totalFrames, 56);
+    EXPECT_EQ(readAll(1000).size(), 56u * 2);
+    std::optional<std::expected<PcmStream, SourceError>> past;
+    source.beginPcm(96256, 10, 48000, 2, [&](auto r) { past = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return past.has_value(); }));
+    EXPECT_EQ(past->error(), SourceError::EndOfStream);
+}
+
 TEST_F(AudioFixture, HelperLossDuringAudioRequestsIsExplicit)
 {
     const auto t = open("audio");

@@ -33,6 +33,8 @@ public:
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void cancelReads() override;
+    void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
+    void nextPcm(std::int64_t maxFrames, PcmReady done) override;
     void chapters(const std::string &path, Listed done) override;
     std::uint64_t generation() const override { return m_generation; }
 
@@ -64,6 +66,7 @@ private:
     std::optional<std::uint64_t> m_openRequest;
     std::string m_path;
     bool m_lost = false;
+    int m_pcmChannels = 0; // channels of the current PCM stream
     double m_startupMs = 0;
     struct Read {
         std::uint64_t request = 0;

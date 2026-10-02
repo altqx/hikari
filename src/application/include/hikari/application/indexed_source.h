@@ -74,6 +74,22 @@ struct IndexedFrame {
     std::vector<std::byte> bgra; // owned, top-down
 };
 
+// A resampled stream over a half-open source range (I3): interleaved float at
+// the requested rate and channel count. Chunks continue one resampler, so
+// they join without seams, and the stream yields exactly the range's duration
+// at the output rate (rounded to a frame).
+struct PcmStream {
+    std::uint64_t generation = 0;
+    std::int64_t start = 0, count = 0; // the source range (shortened at the end)
+    std::int64_t totalFrames = 0;      // output frames the stream will yield
+};
+struct PcmChunk {
+    std::uint64_t generation = 0;
+    std::int64_t frames = 0;
+    std::vector<float> samples; // frames * channels
+    bool end = false;
+};
+
 class IndexedSourcePort {
 public:
     using Progress = std::function<void(std::int64_t done, std::int64_t total)>;
@@ -91,6 +107,11 @@ public:
     virtual void openAudio(int track, AudioOpened done) = 0;
     // A half-open range [start, start + count) of sample frames.
     virtual void audio(std::int64_t start, std::int64_t count, AudioReady done) = 0;
+    using PcmBegun = std::function<void(std::expected<PcmStream, SourceError>)>;
+    using PcmReady = std::function<void(std::expected<PcmChunk, SourceError>)>;
+    // Starts a resampled stream over the open audio track (replacing any other).
+    virtual void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) = 0;
+    virtual void nextPcm(std::int64_t maxFrames, PcmReady done) = 0;
     // Resolves every outstanding frame and audio request as Cancelled now;
     // the helper's late results are dropped.
     virtual void cancelReads() = 0;

@@ -73,6 +73,14 @@ struct ClockEstimate {
     double streamTimeSeconds = 0;     // the stream clock at that callback
     double monotonicSeconds = 0;      // steady_clock at that callback, to map domains
     double uncertaintySeconds = 0;    // callback granularity, plus latency when derived
+    // The latest callback that took queued audio, kept after the queue runs
+    // dry: where that audio ends (DAC time, stream domain), that callback's
+    // stream and monotonic times, and the queued frames taken up to its end.
+    // A player maps these to when its last frame should finish sounding.
+    double lastReadyEndDacSeconds = 0;
+    double lastReadyStreamSeconds = 0;
+    double lastReadyMonotonicSeconds = 0;
+    std::uint64_t lastReadyFramesConsumed = 0;
 };
 
 class AudioOutputPort {
@@ -88,6 +96,8 @@ public:
     virtual std::expected<void, OutputError> start() = 0;
     virtual void stop() = 0; // discards queued and device-buffered audio
     virtual void close() = 0;
+    // The open stream's format (meaningless while closed).
+    virtual OutputFormat format() const = 0;
     // Queues ready samples (whole frames); returns the samples accepted.
     virtual std::size_t write(std::span<const float> interleaved) = 0;
     virtual OutputStatus status() const = 0;
