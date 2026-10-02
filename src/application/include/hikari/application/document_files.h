@@ -47,6 +47,7 @@ enum class SaveRefusal {
     ExternalChange, // the file changed or vanished since it was loaded or last written
     Collision,      // another open Document is associated with that destination
     WriteInProgress,
+    InvalidDraft,   // the pending draft can't be committed (E63-invalid-commit)
 };
 
 // A prepared replacement. Nothing is published until activate().

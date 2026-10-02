@@ -31,6 +31,18 @@ std::optional<std::u8string> Document::scriptInfo(std::u8string_view key) const
     return value;
 }
 
+bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change)
+{
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                change(*line);
+                line->edited = true;
+                return true;
+            }
+    return false;
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)

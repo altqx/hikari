@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 #include <variant>
@@ -177,6 +178,8 @@ public:
     bool setLineText(LineId id, std::u8string text);
     // Sets a Line's Unconfirmed state; like setLineText, the Line is regenerated.
     bool setLineUnconfirmed(LineId id, bool unconfirmed);
+    // Changes any fields of one Line; the Line is then regenerated on save.
+    bool editLine(LineId id, const std::function<void(LineRecord &)> &change);
 
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;

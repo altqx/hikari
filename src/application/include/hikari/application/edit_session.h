@@ -37,6 +37,21 @@ enum class CommandRefusal {
     UnknownLine,    // a declared target Line no longer exists
     Protected,      // the session is a protected reference
     Invalid,        // the command's own validation failed
+    InvalidDraft,   // the overlapping draft can't be committed (E63-invalid-commit)
+};
+
+// E63-invalid-commit: by default a draft whose End is before its Start, or
+// with a margin outside 0..9999, is not committed; the draft and its reason
+// stay. The legacy preference commits it: margins clamp to 0..9999 (NumCtrl),
+// and leaving the Line sets an End before Start to the Start (EditBox::SetLine).
+enum class InvalidCommitPolicy { Block, Legacy };
+enum class DraftProblem { EndBeforeStart, MarginOutOfRange };
+
+// Field changes of the pending draft; unset fields keep the committed value.
+struct DraftChange {
+    std::optional<std::u8string> text;
+    std::optional<core::DocumentTime> start, end;
+    std::optional<std::int64_t> marginLeft, marginRight, marginVertical;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning
@@ -62,13 +77,22 @@ public:
     // Selection changes are not history steps.
     void setSelection(Selection selection);
     // Moving the active Line commits a pending draft on another Line first.
-    void navigateTo(core::LineId line);
+    // False, and nothing moves, when that draft can't be committed.
+    bool navigateTo(core::LineId line);
 
-    // Draft: at most one, on the active Line.
+    void setInvalidCommitPolicy(InvalidCommitPolicy policy) { m_policy = policy; }
+    InvalidCommitPolicy invalidCommitPolicy() const { return m_policy; }
+
+    // Draft: at most one, on the active Line. Editing another Line commits
+    // the current draft first; false when that commit is blocked.
+    bool editDraft(core::LineId line, const DraftChange &change);
     bool editDraftText(core::LineId line, std::u8string text);
     std::optional<core::LineId> draftLine() const;
     std::optional<std::u8string> draftText() const;
-    bool commitDraft(); // one history step; false when there is no draft
+    // The draft's Line with its changes applied, as it would be committed.
+    std::optional<core::LineRecord> draftRecord() const;
+    std::optional<DraftProblem> draftProblem() const;
+    bool commitDraft(); // one history step; false when there is no draft or it is blocked
     void discardDraft();
 
     std::expected<void, CommandRefusal> run(const Command &command);
@@ -86,7 +110,7 @@ public:
         ContentId content;
         std::uint64_t revision = 0;
     };
-    SaveSnapshot prepareSave();
+    std::expected<SaveSnapshot, DraftProblem> prepareSave();
     void markSaved(ContentId content);
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
 
@@ -99,10 +123,11 @@ private:
     };
     struct Draft {
         core::LineId line;
-        std::u8string text;
+        DraftChange change;
     };
 
     void pushState(core::Document document, std::string name);
+    bool commit(bool leaving);
 
     std::deque<State> m_states;
     std::size_t m_cursor = 0;
@@ -112,6 +137,7 @@ private:
     std::uint64_t m_revision = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
+    InvalidCommitPolicy m_policy = InvalidCommitPolicy::Block;
 };
 
 } // namespace hikari::application

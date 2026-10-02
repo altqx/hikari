@@ -151,8 +151,8 @@ TEST_F(SessionTest, SaveCommitsTheDraftAndUndoToSavePointIsClean)
     session.editDraftText(l1, u8"saved text");
     const auto snapshot = session.prepareSave();
     EXPECT_FALSE(session.draftLine());
-    EXPECT_EQ(snapshot.document.lines()[0]->text, u8"saved text");
-    session.markSaved(snapshot.content); // the write was reported Written
+    EXPECT_EQ(snapshot->document.lines()[0]->text, u8"saved text");
+    session.markSaved(snapshot->content); // the write was reported Written
     EXPECT_FALSE(session.isDirty());
     ASSERT_TRUE(session.run(setText(l2, u8"after save")));
     EXPECT_TRUE(session.isDirty());
@@ -164,7 +164,7 @@ TEST_F(SessionTest, EditsDuringAnInFlightWriteStayDirty)
 {
     const auto snapshot = session.prepareSave();
     ASSERT_TRUE(session.run(setText(l3, u8"typed while writing")));
-    session.markSaved(snapshot.content); // the older snapshot finished writing
+    session.markSaved(snapshot->content); // the older snapshot finished writing
     EXPECT_TRUE(session.isDirty());
     ASSERT_TRUE(session.undo());
     EXPECT_FALSE(session.isDirty());
@@ -173,7 +173,7 @@ TEST_F(SessionTest, EditsDuringAnInFlightWriteStayDirty)
 TEST_F(SessionTest, BranchingAwayFromTheSavePointStaysDirty)
 {
     ASSERT_TRUE(session.run(setText(l1, u8"a")));
-    session.markSaved(session.prepareSave().content);
+    session.markSaved(session.prepareSave()->content);
     ASSERT_TRUE(session.undo());
     ASSERT_TRUE(session.run(setText(l1, u8"a"))); // same bytes, different commit
     EXPECT_TRUE(session.isDirty());
@@ -182,7 +182,7 @@ TEST_F(SessionTest, BranchingAwayFromTheSavePointStaysDirty)
 
 TEST_F(SessionTest, HistoryKeepsFiveHundredStepsAndTheSavedIdentity)
 {
-    session.markSaved(session.prepareSave().content);
+    session.markSaved(session.prepareSave()->content);
     for (int i = 0; i < 600; ++i)
         ASSERT_TRUE(session.run(setText(l1, std::u8string(u8"v") + static_cast<char8_t>(u8'a' + i % 26) +
                                             static_cast<char8_t>(u8'a' + i / 26))));
@@ -200,4 +200,57 @@ TEST(EditSessionProtected, ReferenceRefusesEdits)
     EXPECT_FALSE(reference.editDraftText(core::LineId{1}, u8"x"));
     EXPECT_EQ(reference.run(Command{"x", 0, {core::LineId{1}}, [](core::Document &) { return true; }}).error(),
               CommandRefusal::Protected);
+}
+
+// E63-invalid-commit: blocked by default, legacy behaviour as a preference.
+
+TEST_F(SessionTest, FieldDraftsCommitTogetherAsOneStep)
+{
+    ASSERT_TRUE(session.editDraftText(l1, u8"one!"));
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(2'500'000), .marginLeft = 12}));
+    EXPECT_EQ(session.draftRecord()->text, u8"one!");
+    ASSERT_TRUE(session.navigateTo(l2));
+    EXPECT_EQ(session.historySize(), 2u);
+    const auto *line = session.document().lines()[0];
+    EXPECT_EQ(line->end.value, core::DocumentTime(2'500'000));
+    EXPECT_EQ(line->marginLeft.value, 12);
+    EXPECT_TRUE(line->edited);
+}
+
+TEST_F(SessionTest, InvalidDraftsAreBlockedByDefault)
+{
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000)})); // before Start
+    EXPECT_EQ(session.draftProblem(), DraftProblem::EndBeforeStart);
+    EXPECT_FALSE(session.commitDraft());
+    EXPECT_FALSE(session.navigateTo(l2));
+    EXPECT_FALSE(session.editDraftText(l2, u8"x"));
+    EXPECT_EQ(session.selection().active, l1);
+    EXPECT_EQ(session.prepareSave().error(), DraftProblem::EndBeforeStart);
+    EXPECT_EQ(session.run(setText(l1, u8"cmd")).error(), CommandRefusal::InvalidDraft);
+    EXPECT_FALSE(session.undo());
+    EXPECT_EQ(session.historySize(), 1u); // nothing committed
+    ASSERT_TRUE(session.draftLine());     // the draft is kept for correction
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(1'500'000)}));
+    EXPECT_FALSE(session.draftProblem());
+    EXPECT_TRUE(session.navigateTo(l2));
+
+    ASSERT_TRUE(session.editDraft(l2, DraftChange{.marginVertical = 10'000}));
+    EXPECT_EQ(session.draftProblem(), DraftProblem::MarginOutOfRange);
+    EXPECT_FALSE(session.commitDraft());
+    session.discardDraft(); // Esc
+    EXPECT_TRUE(session.navigateTo(l3));
+}
+
+TEST_F(SessionTest, LegacyPreferenceCommitsAndCorrectsOnLeave)
+{
+    session.setInvalidCommitPolicy(InvalidCommitPolicy::Legacy);
+    // Committing in place keeps End before Start, as the legacy editor did...
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000), .marginRight = -5}));
+    ASSERT_TRUE(session.commitDraft());
+    EXPECT_EQ(session.document().lines()[0]->end.value, core::DocumentTime(500'000));
+    EXPECT_EQ(session.document().lines()[0]->marginRight.value, 0); // NumCtrl clamps
+    // ...and leaving the Line sets End to Start (EditBox::SetLine).
+    ASSERT_TRUE(session.editDraft(l2, DraftChange{.end = core::DocumentTime(1'000'000)}));
+    ASSERT_TRUE(session.navigateTo(l3));
+    EXPECT_EQ(session.document().lines()[1]->end.value, core::DocumentTime(3'000'000));
 }

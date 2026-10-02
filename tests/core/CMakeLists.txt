@@ -31,3 +31,6 @@ hikari_add_gtest(hikari_core_style_tests SOURCES style_tests.cpp LIBRARIES hikar
 target_compile_definitions(hikari_core_style_tests PRIVATE
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs"
     HIKARI_C4SSA_OUTPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-37014681128/outputs/c4-ssa-edge-families")
+
+hikari_add_gtest(hikari_core_text_projection_tests SOURCES text_projection_tests.cpp
+    LIBRARIES hikari_core Qt6::Core LABELS core)

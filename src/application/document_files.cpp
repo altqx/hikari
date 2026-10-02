@@ -135,9 +135,11 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     if (destination.value.empty())
         return std::unexpected(SaveRefusal::NoDestination);
     auto snapshot = entry->session->prepareSave(); // commit-then-save
-    return SavePlan{document,      entry->generation,
-                    snapshot.revision, snapshot.content,
-                    destination,   core::encodeSubtitle(snapshot.document),
+    if (!snapshot)
+        return std::unexpected(SaveRefusal::InvalidDraft);
+    return SavePlan{document,           entry->generation,
+                    snapshot->revision, snapshot->content,
+                    destination,        core::encodeSubtitle(snapshot->document),
                     saveAs.has_value() && *saveAs != entry->destination};
 }
 
