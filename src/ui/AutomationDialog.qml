@@ -5,6 +5,7 @@
 // window answers with no button.
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
@@ -76,7 +77,9 @@ Window {
                         case "floatedit": return floatControl;
                         case "dropdown": return dropdownControl;
                         case "checkbox": return checkControl;
-                        default: return editControl; // edit, alpha, color, coloralpha
+                        case "color":
+                        case "coloralpha": return colorControl;
+                        default: return editControl; // edit, alpha
                         }
                     }
                     property var spec: modelData
@@ -150,16 +153,13 @@ Window {
             id: floatField
             readonly property var spec: parent ? parent.spec : ({})
             text: String(spec.number)
-            validator: DoubleValidator {
-                bottom: floatField.spec.numberMin
-                top: floatField.spec.numberMax
-                notation: DoubleValidator.StandardNotation
-                locale: "C"
-            }
+            // As legacy NumCtrl: digits with a point or comma; no step (legacy
+            // ignores it); the controller clamps to the range.
+            validator: RegularExpressionValidator { regularExpression: /^-?[0-9]*([.,][0-9]*)?$/ }
             Accessible.name: spec.hint || spec.name
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
-            function readValue() { return Number(text); }
+            function readValue() { return text; }
         }
     }
     Component {
@@ -172,6 +172,35 @@ Window {
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
             function readValue() { return currentIndex >= 0 ? currentText : spec.text; }
+        }
+    }
+    Component {
+        id: colorControl
+        RowLayout {
+            id: colorRow
+            readonly property var spec: parent ? parent.spec : ({})
+            property color value: spec.color
+            function readValue() { return value; }
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 20
+                color: colorRow.value
+                border.color: palette.mid
+                Accessible.name: colorRow.spec.hint || colorRow.spec.name
+            }
+            Button {
+                objectName: "colorPick"
+                text: "…"
+                ToolTip.text: colorRow.spec.hint
+                ToolTip.visible: hovered && colorRow.spec.hint !== ""
+                onClicked: picker.open()
+            }
+            ColorDialog {
+                id: picker
+                selectedColor: colorRow.value
+                options: colorRow.spec.kind === "coloralpha" ? ColorDialog.ShowAlphaChannel : 0
+                onAccepted: colorRow.value = selectedColor
+            }
         }
     }
     Component {

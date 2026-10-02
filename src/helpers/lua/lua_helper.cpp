@@ -30,6 +30,7 @@ extern "C" {
 #include <algorithm>
 #include <cctype>
 #include <cstdio>
+#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
@@ -306,6 +307,77 @@ bool fieldBool(lua_State *L, const char *name, bool def)
     return def;
 }
 
+// Legacy AssColor (HikariSub/styles.cpp at 20d647c4): SetAss parses a
+// decimal SSA number, an ASS &HAABBGGRR& string or an HTML #AARRGGBB/#RRGGBB
+// string; GetHex prints #RRGGBB, or #AARRGGBB (AA = ASS transparency) when
+// alpha is wanted and non-zero. Its quirks are kept: Upper()'s result is
+// discarded, so a lowercase "&h" is not stripped, and a malformed component
+// stays 0.
+struct AssColor {
+    long r = 0, g = 0, b = 0, a = 0;
+};
+
+bool parseLong(const std::string &text, int base, long &out)
+{
+    if (text.empty())
+        return false;
+    char *end = nullptr;
+    const long v = std::strtol(text.c_str(), &end, base);
+    if (*end != '\0')
+        return false;
+    out = v;
+    return true;
+}
+
+// wxString::SubString(from, to): inclusive, clamped to the string.
+std::string subString(const std::string &s, std::size_t from, std::size_t to)
+{
+    if (from >= s.size())
+        return {};
+    return s.substr(from, std::min(to, s.size() - 1) - from + 1);
+}
+
+AssColor assColor(std::string color)
+{
+    AssColor c;
+    const bool number = !color.empty() &&
+                        std::all_of(color.begin(), color.end(), [](unsigned char ch) { return std::isdigit(ch); });
+    if (number) {
+        long v = 0;
+        parseLong(color, 10, v);
+        c.r = v & 0xff;
+        c.g = (v >> 8) & 0xff;
+        c.b = (v >> 16) & 0xff;
+        c.a = (v >> 24) & 0xff;
+        return c;
+    }
+    const bool html = color.rfind('#', 0) == 0;
+    std::erase(color, '&');
+    std::erase(color, 'H');
+    std::erase(color, '#');
+    if (color.size() > 7) {
+        parseLong(subString(color, 0, 1), 16, c.a);
+        color = color.substr(2);
+    }
+    std::string r = subString(color, 4, 5), g = subString(color, 2, 3), b = subString(color, 0, 1);
+    if (html)
+        std::swap(r, b);
+    parseLong(r, 16, c.r);
+    parseLong(g, 16, c.g);
+    parseLong(b, 16, c.b);
+    return c;
+}
+
+std::string hexOf(const AssColor &c, bool alpha)
+{
+    char text[16];
+    if (alpha && c.a)
+        std::snprintf(text, sizeof text, "#%02lX%02lX%02lX%02lX", c.a, c.r, c.g, c.b);
+    else
+        std::snprintf(text, sizeof text, "#%02lX%02lX%02lX", c.r, c.g, c.b);
+    return text;
+}
+
 DialogControl decodeControl(lua_State *L)
 {
     if (!lua_istable(L, -1))
@@ -330,8 +402,12 @@ DialogControl decodeControl(lua_State *L)
     if (c.kind == "edit" || c.kind == "textbox" || c.kind == "alpha") {
         c.text = fieldString(L, "value");
         c.text = fieldString(L, "text", c.text); // undocumented legacy alias
-    } else if (c.kind == "dropdown" || c.kind == "color" || c.kind == "coloralpha") {
+    } else if (c.kind == "dropdown") {
         c.text = fieldString(L, "value");
+    } else if (c.kind == "color" || c.kind == "coloralpha") {
+        // The picker starts from the parsed colour; an unchanged dialog
+        // returns it normalized, as legacy did.
+        c.text = hexOf(assColor(fieldString(L, "value")), c.kind == "coloralpha");
     }
     if (c.kind == "intedit") {
         c.intValue = fieldInt(L, "value", 0);
@@ -341,6 +417,7 @@ DialogControl decodeControl(lua_State *L)
             c.intMin = INT_MIN;
             c.intMax = INT_MAX;
         }
+        c.intValue = std::clamp(c.intValue, c.intMin, c.intMax); // NumCtrl clamps what it shows
     } else if (c.kind == "floatedit") {
         c.number = fieldNumber(L, "value", 0.0);
         c.numberMin = fieldNumber(L, "min", -DBL_MAX);
@@ -350,6 +427,7 @@ DialogControl decodeControl(lua_State *L)
             c.numberMin = -DBL_MAX;
             c.numberMax = DBL_MAX;
         }
+        c.number = std::clamp(c.number, c.numberMin, c.numberMax);
     } else if (c.kind == "checkbox") {
         c.checked = fieldBool(L, "value", false);
     } else if (c.kind == "dropdown") {
@@ -423,7 +501,7 @@ int dialogDisplay(lua_State *L)
             return cancelScript(L); // the run was cancelled while the dialog waited
         return luaL_error(L, "the dialog could not be shown");
     }
-    const auto result = lua::decodeDialogResult(*answer, request);
+    auto result = lua::decodeDialogResult(*answer, request);
     if (!result)
         return luaL_error(L, "the host returned a malformed dialog result");
 
@@ -438,6 +516,10 @@ int dialogDisplay(lua_State *L)
 
     lua_createtable(L, 0, static_cast<int>(request.controls.size()));
     for (std::size_t i = 0; i < request.controls.size(); ++i) {
+        const auto &control = request.controls[i];
+        if ((control.kind == "color" || control.kind == "coloralpha") &&
+            std::holds_alternative<std::string>(result->values[i]))
+            result->values[i] = hexOf(assColor(std::get<std::string>(result->values[i])), control.kind == "coloralpha");
         pushValue(L, result->values[i]); // a label sets its name to nil
         lua_setfield(L, -2, request.controls[i].name.c_str());
     }

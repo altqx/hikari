@@ -121,7 +121,7 @@ TEST_F(LuaHelper, ScriptGlobalsAndMetadataUseLegacyCoercions)
     EXPECT_EQ(host->info().name, "Host fixture");
     EXPECT_EQ(host->info().description, "42");
     EXPECT_EQ(host->info().version, "");
-    EXPECT_EQ(host->info().macros.size(), 9u);
+    EXPECT_EQ(host->info().macros.size(), 10u);
 }
 
 TEST_F(LuaHelper, DialogRoundTripPreservesCoercionsFalseAndNil)
@@ -183,6 +183,37 @@ TEST_F(LuaHelper, DefaultButtonsReturnEmptyStringOrFalse)
     pressed = -1;
     ASSERT_TRUE(runToEnd(*host, "Default buttons"));
     EXPECT_EQ(run.log.value(0).toStdString(), "button=boolean:false e=string:x") << "closed returns false";
+}
+
+TEST_F(LuaHelper, ColourAndNumberControlsFollowTheLegacyCoercions)
+{
+    auto host = load(fixture("host-fixture.lua"));
+    std::optional<DialogRequest> asked;
+    host->setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
+        asked = request;
+        auto result = hikari::application::initialDialogResult(request); // closed untouched
+        result.pressed = 0;
+        reply(result);
+    });
+    ASSERT_TRUE(runToEnd(*host, "Controls"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(asked);
+    const auto &c = asked->controls;
+    EXPECT_EQ(c[0].text, "#FF0000") << "ASS &HBBGGRR&";
+    EXPECT_EQ(c[1].text, "#00FF00") << "HTML, normalized to upper case";
+    EXPECT_EQ(c[2].text, "#800000FF") << "#TTRRGGBB: ASS transparency first";
+    EXPECT_EQ(c[3].text, "#FF0000") << "a decimal SSA colour";
+    EXPECT_EQ(c[4].text, "#0F0000") << "legacy Upper() discards its result: a lowercase &h is not stripped";
+    EXPECT_EQ(c[5].text, "#000000") << "malformed components stay 0";
+    EXPECT_EQ(c[6].intValue, 10) << "NumCtrl clamps what it shows";
+    EXPECT_DOUBLE_EQ(c[7].number, 0.0);
+    EXPECT_DOUBLE_EQ(c[7].step, 0.5) << "carried, then ignored, as legacy ignores it";
+    ASSERT_EQ(run.log.size(), 1);
+    EXPECT_EQ(run.log[0].toStdString(),
+              "button=string:OK al=string:&H40& alpha=string:#800000FF ass=string:#FF0000 clamped=number:10 "
+              "decimal=string:#FF0000 f=number:0 html=string:#00FF00 junk=string:#000000 lower=string:#0F0000 "
+              "tb=string:multi")
+        << "colours come back normalized; the alpha class is an edit field";
 }
 
 TEST_F(LuaHelper, MalformedDialogResultFailsTheRun)

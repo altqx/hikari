@@ -71,3 +71,19 @@ end)
 aegisub.register_macro("Bad dialog", "", function()
     aegisub.dialog.display({ { class = "slider" } })
 end)
+
+-- L2: the remaining control classes and their legacy coercions.
+aegisub.register_macro("Controls", "", function()
+    report(aegisub.dialog.display({
+        { class = "color", name = "ass", value = "&H0000FF&" },
+        { class = "color", name = "html", value = "#00ff00" },
+        { class = "coloralpha", name = "alpha", value = "&H80FF0000" },
+        { class = "color", name = "decimal", value = 255 },
+        { class = "color", name = "lower", value = "&h0000ff&" },
+        { class = "color", name = "junk", value = "zz" },
+        { class = "intedit", name = "clamped", value = 50, min = 0, max = 10 },
+        { class = "floatedit", name = "f", value = -3, min = 0, max = 10, step = 0.5 },
+        { class = "textbox", name = "tb", value = "multi" },
+        { class = "alpha", name = "al", value = "&H40&" },
+    }, { "OK" }))
+end)

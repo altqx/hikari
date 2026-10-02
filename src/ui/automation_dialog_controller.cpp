@@ -1,5 +1,7 @@
 #include "automation_dialog_controller.h"
 
+#include <QColor>
+
 #include <algorithm>
 #include <cmath>
 
@@ -7,6 +9,36 @@ namespace hikari::ui {
 
 using application::DialogResult;
 using application::DialogValueType;
+
+namespace {
+
+bool isColour(const std::string &kind)
+{
+    return kind == "color" || kind == "coloralpha";
+}
+
+// The helper's legacy hex: #RRGGBB, or #TTRRGGBB with TT = ASS transparency.
+QColor colourOf(const QString &legacy)
+{
+    const QString hex = legacy.mid(1);
+    bool ok = false;
+    const uint v = hex.toUInt(&ok, 16);
+    if (!ok)
+        return QColor(Qt::black);
+    if (hex.size() == 8)
+        return QColor(int((v >> 16) & 0xff), int((v >> 8) & 0xff), int(v & 0xff), 255 - int(v >> 24));
+    return QColor(int((v >> 16) & 0xff), int((v >> 8) & 0xff), int(v & 0xff));
+}
+
+QString legacyHexOf(const QColor &c, bool alpha)
+{
+    const int transparency = 255 - c.alpha();
+    if (alpha && transparency)
+        return QString::asprintf("#%02X%02X%02X%02X", transparency, c.red(), c.green(), c.blue());
+    return QString::asprintf("#%02X%02X%02X", c.red(), c.green(), c.blue());
+}
+
+} // namespace
 
 AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
 
@@ -35,7 +67,9 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("intValue"), c.intValue},
             {QStringLiteral("intMin"), c.intMin},
             {QStringLiteral("intMax"), c.intMax},
-            {QStringLiteral("number"), c.number},
+            // Legacy NumCtrl clamps the shown value to its range.
+            {QStringLiteral("number"), std::clamp(c.number, c.numberMin, c.numberMax)},
+            {QStringLiteral("color"), isColour(c.kind) ? colourOf(QString::fromStdString(c.text)) : QColor()},
             {QStringLiteral("numberMin"), c.numberMin},
             {QStringLiteral("numberMax"), c.numberMax},
             {QStringLiteral("checked"), c.checked},
@@ -72,18 +106,24 @@ void AutomationDialogController::finish(int pressed, const QVariantList &values)
         case DialogValueType::None:
             break;
         case DialogValueType::Text:
-            result.values[i] = v.toString().toStdString();
+            if (isColour(c.kind) && v.canConvert<QColor>() && v.metaType().id() == QMetaType::QColor)
+                result.values[i] = legacyHexOf(v.value<QColor>(), c.kind == "coloralpha").toStdString();
+            else
+                result.values[i] = v.toString().toStdString();
             break;
         case DialogValueType::Integer: {
             bool ok = false;
-            const double d = v.toDouble(&ok);
+            // Legacy NumCtrl: a comma is a decimal point; the value is clamped
+            // and an integer truncates toward zero; unparseable text keeps
+            // the value it had.
+            const double d = v.toString().replace(QLatin1Char(','), QLatin1Char('.')).toDouble(&ok);
             if (ok && std::isfinite(d))
                 result.values[i] = static_cast<int>(std::clamp(d, double(c.intMin), double(c.intMax)));
             break;
         }
         case DialogValueType::Number: {
             bool ok = false;
-            const double d = v.toDouble(&ok);
+            const double d = v.toString().replace(QLatin1Char(','), QLatin1Char('.')).toDouble(&ok);
             if (ok && std::isfinite(d))
                 result.values[i] = std::clamp(d, c.numberMin, c.numberMax);
             break;

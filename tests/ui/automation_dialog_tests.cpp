@@ -132,6 +132,30 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("t")); // values are still read back
     }
 
+    // L2: colour pickers show the legacy colour (AA is ASS transparency) and
+    // return legacy hex; number fields take a comma as the decimal point.
+    void coloursAndNumbersFollowTheLegacyControls()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "coloralpha", .name = "c", .text = "#800000FF"},
+                            DialogControl{.kind = "color", .name = "d", .text = "#00FF00"},
+                            DialogControl{.kind = "floatedit", .name = "f", .number = 1, .numberMin = 0, .numberMax = 10}};
+        request.buttons = {"OK"};
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Controls"), request, [&](DialogResult r) { result = r; });
+        QTRY_VERIFY(window->isVisible());
+        const QColor shown = control(0)->property("value").value<QColor>();
+        QCOMPARE(shown, QColor(0, 0, 255, 255 - 0x80)); // transparency 0x80
+        control(0)->setProperty("value", QColor(0, 0, 255, 128));
+        control(1)->setProperty("value", QColor(255, 0, 0)); // a picked opaque colour
+        control(2)->setProperty("text", QStringLiteral("2,5"));
+        press(0);
+        QVERIFY(result);
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("#7F0000FF"));
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("#FF0000"));
+        QCOMPARE(std::get<double>(result->values[2]), 2.5);
+    }
+
     void defaultButtonsShowOkAndCancel()
     {
         DialogRequest request;
