@@ -81,6 +81,8 @@ Then create separate integration cards for CPU/GPU overlay equivalence, renderer
 
 Automation integration splits into startup/registration/state, typed dialogs, media/font/clipboard services, staged edits and cancellation/crash/restart. Preserve native modules, FFI and DependencyControl and characterize unchanged API quirks; C06–C08 remain named decisions. External script effects cannot be rolled back by Document undo or helper termination. Each integration card includes a complete user workflow and its cancellation/error outcome, not only a successful IPC exchange.
 
+**Wave 2 instantiation (2026-10-03).** Phase 3 is instantiated as [wave 2](https://github.com/altqx/hikari/issues/102), cards #103–#126: B4 (PortAudio and LuaJIT inputs), H1 (the shared helper-process framework), the first native owners N1–N8 (FFMS2 indexed frame, source PCM, libass overlay, font service, Qt general player, PortAudio output, scene-graph presenter, Lua helper), the integrations I1–I6 (indexed video in the shell, CPU/GPU overlay parity, audible playback, transport handoff, font collection and reimport, media helper loss and packaging), the automation cards L1–L6, and the human cards H2 (listening) and H3 (calibrated media performance). Each card carries its named M50, F47, A33 or S44 obligations, and needs Windows and Linux evidence.
+
 ## Phase 4: inventory-complete surfaces and carry-over
 
 The following are **work packages to split**, not oversized implementation issues. For each, assign every exact inventory row/action/setting to a bounded operation card, plus its shared-service dependency and native evidence. Every row has one accountable owner and may link several contributing cards; multiple menu paths can share an action without disappearing from verification.
