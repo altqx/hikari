@@ -16,3 +16,7 @@ hikari_add_gtest(hikari_core_ass_save_tests SOURCES ass_save_tests.cpp
 target_compile_definitions(hikari_core_ass_save_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures"
     HIKARI_LEGACY_OUTPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-36591631319/outputs")
+
+hikari_add_gtest(hikari_core_srt_tests SOURCES srt_tests.cpp LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_srt_tests PRIVATE
+    HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")

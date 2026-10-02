@@ -66,12 +66,12 @@ def x(cmd, display, timeout=30):
         return subprocess.CompletedProcess(cmd, 124, "", "timeout")
 
 
-def save_as(case, fixtures, package, display, workdir):
+def save_as(case, inputs_dir, package, display, workdir):
     obs = []
     for name in case["inputs"]:
         if Path(name).suffix.lower() not in SUBTITLE_SUFFIXES:
             continue  # descriptors (JSON) and Session templates are not files to open
-        src = fixtures / "inputs" / name
+        src = inputs_dir / name
         scratch = Path(tempfile.mkdtemp(prefix="cap-", dir=workdir))
         with tarfile.open(package) as t:
             t.extractall(scratch, filter="data")
@@ -183,13 +183,19 @@ def main():
     result = {"schema": 1, "legacy_commit": a.legacy_commit, "package_sha256": sha256(a.package),
               "probe_sha256": sha256(a.probe), "host": platform.platform(),
               "captured_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "cases": []}
+    # Capture-only cases with their own inputs (hashes recorded, not checked).
+    extra_dir = a.plan.parent / "inputs"
+    for cid, route in plan.get("extra_cases", {}).items():
+        cases[cid] = {"id": cid, "inputs": route["inputs"]}
+        plan["routes"][cid] = route
     for cid, route in plan["routes"].items():
         case = cases[cid]
         entry = {"id": cid, "route": route["route"]}
         if route["route"] == "time":
             entry["observations"] = time_cases(case, a.fixtures, a.probe)
         elif route["route"] == "save-as":
-            entry["observations"] = save_as(case, a.fixtures, a.package, a.display, workdir)
+            source = extra_dir if cid in plan.get("extra_cases", {}) else a.fixtures / "inputs"
+            entry["observations"] = save_as(case, source, a.package, a.display, workdir)
         else:
             entry["status"] = "not-captured"
             entry["reason"] = route["reason"]

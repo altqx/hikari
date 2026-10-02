@@ -15,7 +15,8 @@
 
 namespace hikari::core {
 
-// Byte range of one physical line in the source, excluding its terminator.
+// Byte range of a record in the source, excluding its final line terminator.
+// Usually one physical line; an SRT cue spans its number, timing and text lines.
 struct SourceSpan {
     std::size_t offset = 0;
     std::size_t length = 0;
@@ -67,6 +68,7 @@ struct LineRecord {
     std::u8string text;     // legacy trims surrounding whitespace; raw bytes stay in the span
     SourceSpan span;        // where the record came from; its terminator is reused on save
     bool edited = false;    // the span no longer describes the record; regenerate on save
+    std::optional<std::u8string> cueNumber; // SRT: the authored cue number line, if any
 };
 
 struct StyleRecord {
@@ -103,6 +105,7 @@ enum class SectionKind {
     Fonts,
     Graphics,
     Unknown,    // retained untouched (C03-preservation)
+    Cues,       // the single body of a sectionless format (SRT)
 };
 
 struct Section {
