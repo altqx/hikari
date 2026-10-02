@@ -103,3 +103,11 @@ Qt republishes and deletes its online-repository metadata. On 2026-09-28 `all_os
 - Acquisition removes mirror files the lock no longer lists; verify-only mode still reports them as failures. The installed-Qt stamp now identifies installed content (requested packages and payload digests), so a metadata-only refresh keeps an existing installation.
 
 Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining them too is a separate, unmade decision.
+
+## Windows builds (B2-W, 2026-10-02)
+
+- **CI:** `.github/workflows/qt-windows.yml` runs on `windows-2025` with the newest Visual Studio's x64 developer environment (Visual Studio 18, MSVC 14.51 on the first runs). The empty-cache job provisions with the secret in one step only, rejects and repairs a corrupted mirror object, then builds and tests without credentials. It saves `out/sdk` for a second job, which reruns the verify workflow from that warm SDK with no secret at all.
+- **Windows specifics found by the first runs:** the vcpkg partial clone's on-demand fetch of an override's port tree is now prefetched with retries during provisioning; FFmpeg is found before Qt, because Qt's `FindFFmpeg.cmake` shadows vcpkg's `FindFFMPEG` on a case-insensitive filesystem; MSVC compiles sources as UTF-8 (`/utf-8`); and the Qt installer's private home also redirects `APPDATA`/`LOCALAPPDATA`, where it keeps its account file on Windows.
+- **Host tools:** git, ninja and cl, checked up front. vcpkg downloads its own CMake, 7-Zip and MSYS2 tools.
+- **Local Windows VM:** [`winix.yaml`](../../winix.yaml) runs the same presets through Winix (`provision`, `build`, `test`, `backends`). `tools/winix/msvc.ps1` loads the developer environment and falls back to Visual Studio's bundled Git. `out/` stays in the VM. Qt provisioning there uses a Qt Account login made once inside the VM; the CI secret is never copied into it.
+- **vcpkg binary cache:** `out/sdk/vcpkg-archives`, on every platform, so one directory makes a run warm.
