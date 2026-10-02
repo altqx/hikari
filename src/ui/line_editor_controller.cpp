@@ -532,6 +532,107 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
     return true;
 }
 
+bool LineEditorController::splitLine(int role, int selectionStart, int selectionEnd)
+{
+    const auto r = record();
+    if (!editable() || !r)
+        return false;
+    // "\N" for ASS and SRT, "|" for the line-based formats.
+    const auto format = session()->document().format();
+    const std::u16string split = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::Srt
+                                     ? std::u16string(u"\\N")
+                                     : std::u16string(u"|");
+    std::u16string raw = core::toUtf16(roleText(*r, role));
+    long start = selectionStart, end = selectionEnd;
+    if (!m_showTags) {
+        const auto p = core::project(raw);
+        start = static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionStart), true));
+        end = selectionEnd == selectionStart
+                  ? start
+                  : static_cast<long>(core::rawOffset(p, static_cast<std::size_t>(selectionEnd), false));
+    }
+    if (start > 0 && raw[static_cast<std::size_t>(start - 1)] == u' ')
+        --start;
+    if (end < static_cast<long>(raw.size()) && raw[static_cast<std::size_t>(end)] == u' ')
+        ++end;
+    if (start != end)
+        raw.erase(static_cast<std::size_t>(start), static_cast<std::size_t>(end - start));
+    raw.insert(static_cast<std::size_t>(start), split);
+    const long caret = start + static_cast<long>(split.size());
+    if (!setRaw(role, core::toUtf8(raw)))
+        return false;
+    const auto after = core::project(raw);
+    m_selectionStart = m_selectionEnd =
+        m_showTags ? static_cast<int>(caret) : static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(caret)));
+    emit selectionRequested();
+    return true;
+}
+
+bool LineEditorController::toggleUnconfirmedAndAdvance()
+{
+    auto *s = session();
+    const auto r = record();
+    if (!editable() || !r)
+        return false;
+    if (!translationMode()) {
+        fail(tr("Unconfirmed applies in translation mode only."));
+        return false;
+    }
+    const bool now = !r->unconfirmed; // ChangeState(4) toggles
+    const auto result = s->run(application::Command{
+        "Mark unconfirmed", s->revision(), {r->id},
+        [&](core::Document &d) { return d.setLineUnconfirmed(r->id, now); }});
+    if (!result) {
+        fail(problemText());
+        return false;
+    }
+    committed();
+    return commitAndAdvance();
+}
+
+bool LineEditorController::findNext(std::size_t &cursor, const std::function<bool(const core::LineRecord &)> &match,
+                                    const QString &none)
+{
+    auto *s = session();
+    if (!s)
+        return false;
+    if (!translationMode()) {
+        fail(tr("This search applies in translation mode only."));
+        return false;
+    }
+    const auto lines = s->document().lines();
+    for (int pass = 0; pass < 2; ++pass) {
+        for (std::size_t i = cursor; i < lines.size(); ++i) {
+            if (lines[i]->visibility == core::LineVisibility::Hidden)
+                continue;
+            if (match(*lines[i])) {
+                cursor = i + 1;
+                if (!showLine(lines[i]->id.value))
+                    return false;
+                emit lineChanged(lines[i]->id.value);
+                return true;
+            }
+        }
+        if (cursor == 0)
+            break;
+        cursor = 0; // wrap once, as the legacy goto does
+    }
+    fail(none);
+    return false;
+}
+
+bool LineEditorController::findNextUnconfirmed()
+{
+    return findNext(m_nextUnconfirmed, [](const core::LineRecord &l) { return l.unconfirmed; },
+                    tr("No unconfirmed lines found"));
+}
+
+bool LineEditorController::findNextUntranslated()
+{
+    return findNext(m_nextUntranslated, [](const core::LineRecord &l) { return l.translation.empty(); },
+                    tr("No untranslated lines found"));
+}
+
 void LineEditorController::writeFinished()
 {
     refresh();

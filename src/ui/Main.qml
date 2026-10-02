@@ -136,9 +136,27 @@ ApplicationWindow {
         }
         Keys.onPressed: event => {
             const ctrl = event.modifiers & Qt.ControlModifier
-            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
-                    && !(event.modifiers & Qt.ShiftModifier) && !field.inputMethodComposing) {
+            const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+            // Legacy EDITBOX defaults; composition keeps its own Enter.
+            if (enter && field.inputMethodComposing) {
+                return
+            } else if (enter && (event.modifiers & Qt.ShiftModifier)) {
+                root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd)
+                event.accepted = true
+            } else if (enter && ctrl) {
+                root.editor.commit()
+                event.accepted = true
+            } else if (enter) {
                 root.editor.commitAndAdvance()
+                event.accepted = true
+            } else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Down) {
+                root.editor.toggleUnconfirmedAndAdvance()
+                event.accepted = true
+            } else if (ctrl && event.key === Qt.Key_D) {
+                root.editor.findNextUnconfirmed()
+                event.accepted = true
+            } else if (ctrl && event.key === Qt.Key_R) {
+                root.editor.findNextUntranslated()
                 event.accepted = true
             } else if (ctrl && (event.key === Qt.Key_B || event.key === Qt.Key_I)) {
                 // Legacy defaults: Ctrl+B Bold, Ctrl+I Italic.

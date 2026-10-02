@@ -91,6 +91,15 @@ public:
     Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
     // The same in a given role: 0 Original, 1 Translated.
     Q_INVOKABLE bool toggleTagIn(int role, const QString &tag, int selectionStart, int selectionEnd);
+    // EDITBOX_SPLIT_LINE (Shift+Enter): a hard break replaces the selection,
+    // taking an adjacent space on each side.
+    Q_INVOKABLE bool splitLine(int role, int selectionStart, int selectionEnd);
+    // Translation mode: EDITBOX_SET_DOUBTFUL (Alt+Down) toggles Unconfirmed and
+    // goes to the next Line; Ctrl+D / Ctrl+R find the next unconfirmed or
+    // untranslated visible Line, wrapping once.
+    Q_INVOKABLE bool toggleUnconfirmedAndAdvance();
+    Q_INVOKABLE bool findNextUnconfirmed();
+    Q_INVOKABLE bool findNextUntranslated();
     int selectionStart() const { return m_selectionStart; }
     int selectionEnd() const { return m_selectionEnd; }
 
@@ -130,6 +139,10 @@ private:
     std::vector<Snapshot> m_draftUndo;
     std::vector<Snapshot> m_draftRedo;
     std::function<void()> m_onCommitted;
+    bool findNext(std::size_t &cursor, const std::function<bool(const core::LineRecord &)> &match,
+                  const QString &none);
+    std::size_t m_nextUnconfirmed = 0; // legacy CurrentDoubtful
+    std::size_t m_nextUntranslated = 0; // legacy CurrentUntranslated
     int m_selectionStart = 0;
     int m_selectionEnd = 0;
 };

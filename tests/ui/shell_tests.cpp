@@ -260,6 +260,48 @@ private slots:
                  bytes.constData());
     }
 
+    void editorShortcutsFollowTheLegacyDefaults()
+    {
+        const QString path = dir.filePath(QStringLiteral("keys.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one two\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,jeden\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,three\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &editor = application->editor();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        auto *original = item("lineText");
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("one two"));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+
+        // Shift+Enter: a hard break replaces the space at the caret.
+        original->forceActiveFocus();
+        original->setProperty("cursorPosition", 4);
+        press(Qt::Key_Return, Qt::ShiftModifier);
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText()->c_str())),
+                 QStringLiteral("one\\Ntwo"));
+        QCOMPARE(original->property("text").toString(), QStringLiteral("one\ntwo"));
+
+        // Ctrl+R: the next untranslated Line is the second pair.
+        press(Qt::Key_R, Qt::ControlModifier);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("three"));
+        // Alt+Down: Unconfirmed on, then the next Line (appended after the last).
+        press(Qt::Key_Down, Qt::AltModifier);
+        QCOMPARE(session->document().lines()[1]->unconfirmed, true);
+        QCOMPARE(session->document().lines().size(), 3u);
+        // Ctrl+D finds it again.
+        press(Qt::Key_D, Qt::ControlModifier);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("three"));
+        QVERIFY(editor.problem().isEmpty());
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected
