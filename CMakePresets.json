@@ -107,6 +107,9 @@
         "exclude": {
           "label": "perf"
         }
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
       }
     },
     {
@@ -146,6 +149,9 @@
       "output": {
         "outputOnFailure": true,
         "verbosity": "verbose"
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
       }
     }
   ],
