@@ -105,6 +105,7 @@ private:
     std::map<std::uint64_t, Pending> m_pending;
     std::size_t m_pendingBytes = 0;
     std::size_t m_rejected = 0;
+    bool m_stopping = false;
     QByteArray m_diagnostics;
     std::size_t m_droppedDiagnostics = 0;
     static inline std::uint64_t s_nextSession = 1;

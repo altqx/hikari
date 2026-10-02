@@ -105,3 +105,25 @@ target_compile_definitions(hikari_backends_font_service_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
     HIKARI_QT_FONTS="${HIKARI_QT_EXAMPLE_FONTS}")
 add_dependencies(hikari_backends_font_service_tests hikari_font_fixtures)
+
+# I6 (M50-helper): the media helper's package manifest — its static vcpkg
+# closure with reviewed licences and copyright files, and OS-only dynamic
+# dependencies. Written into provision-evidence, which CI keeps.
+add_test(NAME media-helper-manifest COMMAND "${CMAKE_COMMAND}"
+    "-DHELPER=$<TARGET_FILE:hikari_media_helper>" -DNAME=hikari-media-helper -DROOTS=hikari-ffms2
+    "-DSTATUS=${VCPKG_INSTALLED_DIR}/vcpkg/status" "-DINSTALLED=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}"
+    "-DTRIPLET=${VCPKG_TARGET_TRIPLET}" "-DLICENCES=${PROJECT_SOURCE_DIR}/cmake/locks/media-helper-licences.json"
+    "-DOUT=${CMAKE_BINARY_DIR}/provision-evidence/media-helper-manifest.json"
+    -P "${PROJECT_SOURCE_DIR}/cmake/manifest/HelperManifest.cmake")
+set_tests_properties(media-helper-manifest PROPERTIES LABELS packaging TIMEOUT 120)
+# Control: a closure package without a reviewed licence fails the manifest.
+file(READ "${PROJECT_SOURCE_DIR}/cmake/locks/media-helper-licences.json" _hikari_licences)
+string(JSON _hikari_licences REMOVE "${_hikari_licences}" packages zlib)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/licences-without-zlib.json" "${_hikari_licences}")
+add_test(NAME media-helper-manifest-control COMMAND "${CMAKE_COMMAND}"
+    "-DHELPER=$<TARGET_FILE:hikari_media_helper>" -DNAME=hikari-media-helper -DROOTS=hikari-ffms2
+    "-DSTATUS=${VCPKG_INSTALLED_DIR}/vcpkg/status" "-DINSTALLED=${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}"
+    "-DTRIPLET=${VCPKG_TARGET_TRIPLET}" "-DLICENCES=${CMAKE_CURRENT_BINARY_DIR}/licences-without-zlib.json"
+    "-DOUT=${CMAKE_CURRENT_BINARY_DIR}/manifest-control.json"
+    -P "${PROJECT_SOURCE_DIR}/cmake/manifest/HelperManifest.cmake")
+set_tests_properties(media-helper-manifest-control PROPERTIES LABELS packaging TIMEOUT 120 WILL_FAIL TRUE)

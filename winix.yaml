@@ -56,3 +56,11 @@ tasks:
     # Font identity (N4) through DirectWrite, verbose for the provider line.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity)[.]" -V
     timeoutSeconds: 600
+  packaging:
+    # Helper package manifests (I6), verbose so the closure is recorded.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -L packaging -V
+    timeoutSeconds: 300
+  imports:
+    # The media helper's direct imports (manifest development aid).
+    script: ./tools/winix/msvc.ps1 dumpbin /dependents out/build/windows-x64-release/hikari-media-helper.exe
+    timeoutSeconds: 120

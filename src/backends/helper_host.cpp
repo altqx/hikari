@@ -58,6 +58,8 @@ void HelperHost::write(const Frame &frame)
 void HelperHost::readOutput()
 {
     const QByteArray data = m_process.readAllStandardOutput();
+    if (m_stopping)
+        return; // a deliberate stop: replies racing it are dropped
     m_decoder.feed(reinterpret_cast<const std::byte *>(data.constData()), static_cast<std::size_t>(data.size()));
     while (auto frame = m_decoder.next()) {
         if (m_state == State::Starting) {
@@ -161,11 +163,15 @@ void HelperHost::readDiagnostics()
 
 void HelperHost::stop()
 {
+    // Requests pending now resolve HelperLost, even if their replies are
+    // already in the pipe (waitForFinished reads output while it waits).
+    m_stopping = true;
     if (m_process.state() != QProcess::NotRunning) {
         m_process.kill();
         m_process.waitForFinished(2000);
     }
     fail();
+    m_stopping = false;
 }
 
 void HelperHost::fail()

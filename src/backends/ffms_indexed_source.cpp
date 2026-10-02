@@ -1,5 +1,7 @@
 #include "hikari/backends/ffms_indexed_source.h"
 
+#include <QElapsedTimer>
+
 #include "hikari/backends/media_protocol.h"
 
 namespace hikari::backends {
@@ -46,9 +48,22 @@ void FfmsIndexedSource::ensureHelper(std::function<void(bool)> ready)
     if (m_host && m_host->state() == HelperHost::State::Ready)
         return ready(true);
     // A lost or refused helper is replaced by a new process (a new session).
-    if (!m_host || m_host->state() == HelperHost::State::Lost || m_host->state() == HelperHost::State::Refused)
-        m_host = std::make_unique<HelperHost>(m_program, QStringList{}, media::kProtocolVersion);
     auto *host = m_host.get();
+    if (!host || host->state() == HelperHost::State::Lost || host->state() == HelperHost::State::Refused) {
+        m_host = std::make_unique<HelperHost>(m_program, QStringList{}, media::kProtocolVersion);
+        host = m_host.get();
+        auto started = std::make_shared<QElapsedTimer>();
+        started->start();
+        connect(host, &HelperHost::ready, this, [this, started] { m_startupMs = started->nsecsElapsed() / 1e6; },
+                Qt::SingleShotConnection);
+        // Loss after the handshake closes the generation; nothing restarts on its own.
+        connect(host, &HelperHost::lost, this, [this, host] {
+            if (host != m_host.get() || host->session() == 0)
+                return;
+            m_lost = true;
+            emit helperLost(m_generation);
+        });
+    }
     auto shared = std::make_shared<std::function<void(bool)>>(std::move(ready));
     connect(host, &HelperHost::ready, this, [shared] { (*shared)(true); }, Qt::SingleShotConnection);
     connect(host, &HelperHost::refused, this, [shared] { (*shared)(false); }, Qt::SingleShotConnection);
@@ -63,6 +78,8 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
 {
     const std::uint64_t generation = ++m_generation;
     m_open = false;
+    m_lost = false;
+    m_path = path;
     m_audio.reset();
     ensureHelper([this, generation, path, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
         if (!ok)
@@ -115,6 +132,15 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
     return generation;
 }
 
+std::uint64_t FfmsIndexedSource::restart(Progress progress, Opened done)
+{
+    if (m_path.empty()) {
+        done(std::unexpected(SourceError::NotOpen));
+        return 0;
+    }
+    return open(m_path, std::move(progress), std::move(done));
+}
+
 void FfmsIndexedSource::cancelOpen()
 {
     if (m_host && m_openRequest)
@@ -140,6 +166,8 @@ std::pair<std::uint64_t, std::function<void(R)>> FfmsIndexedSource::track(std::f
 
 void FfmsIndexedSource::frame(int index, FrameReady done)
 {
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
     if (!m_open || !m_host)
         return done(std::unexpected(SourceError::NotOpen));
     const std::uint64_t generation = m_generation;
@@ -177,6 +205,8 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
 
 void FfmsIndexedSource::openAudio(int track, AudioOpened done)
 {
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
     if (!m_open || !m_host)
         return done(std::unexpected(SourceError::NotOpen));
     const std::uint64_t generation = m_generation;
@@ -216,6 +246,8 @@ void FfmsIndexedSource::openAudio(int track, AudioOpened done)
 
 void FfmsIndexedSource::audio(std::int64_t start, std::int64_t count, AudioReady done)
 {
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
     if (!m_audio || !m_host)
         return done(std::unexpected(SourceError::NotOpen));
     const std::uint64_t generation = m_generation;

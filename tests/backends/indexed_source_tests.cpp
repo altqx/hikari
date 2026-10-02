@@ -8,6 +8,8 @@
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
+#include <cstdio>
+
 #include <algorithm>
 #include <cstring>
 #include <numeric>
@@ -220,6 +222,57 @@ TEST_F(Fixture, HelperLossIsReportedAndAReopenRecovers)
     EXPECT_EQ(barcode(*frame(5)), 5);
 }
 
+TEST_F(Fixture, HelperLossClosesTheGenerationUntilAnExplicitRestart)
+{
+    ASSERT_TRUE(open("cfr"));
+    EXPECT_GT(source.lastHelperStartupMs(), 0.0);
+    std::fprintf(stderr, "helper startup to handshake: %.1f ms\n", source.lastHelperStartupMs());
+    const auto session = source.helperHost()->session();
+    std::vector<quint64> lost;
+    QObject::connect(&source, &backends::FfmsIndexedSource::helperLost, [&](quint64 g) { lost.push_back(g); });
+    std::optional<std::expected<IndexedFrame, SourceError>> pending;
+    source.frame(5, [&](auto r) { pending = std::move(r); });
+    source.helperHost()->stop(); // the helper dies mid-request
+    ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
+    EXPECT_EQ(pending->error(), SourceError::HelperLost);
+    EXPECT_TRUE(source.isHelperLost());
+    EXPECT_EQ(lost, std::vector<quint64>{source.generation()});
+    EXPECT_EQ(frame(6).error(), SourceError::HelperLost) << "no silent restart";
+    EXPECT_EQ(source.helperHost()->session(), session);
+
+    std::optional<std::expected<SourceTimeline, SourceError>> restarted;
+    source.restart({}, [&](auto r) { restarted = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return restarted.has_value(); }));
+    ASSERT_TRUE(*restarted);
+    EXPECT_FALSE(source.isHelperLost());
+    EXPECT_GT(source.helperHost()->session(), session) << "a new helper generation";
+    EXPECT_EQ(barcode(*frame(6)), 6);
+}
+
+TEST_F(Fixture, RestartBeforeAnyOpenIsRefused)
+{
+    std::optional<std::expected<SourceTimeline, SourceError>> result;
+    EXPECT_EQ(source.restart({}, [&](auto r) { result = std::move(r); }), 0u);
+    ASSERT_TRUE(result);
+    EXPECT_EQ(result->error(), SourceError::NotOpen);
+}
+
+TEST_F(Fixture, FrameTransferObservation)
+{
+    ASSERT_TRUE(open("cfr"));
+    QElapsedTimer timer;
+    timer.start();
+    std::size_t bytes = 0;
+    for (int i = 0; i < 48; ++i) {
+        const auto f = frame(i);
+        ASSERT_TRUE(f);
+        bytes += f->bgra.size();
+    }
+    const double ms = timer.nsecsElapsed() / 1e6;
+    // An observation on an uncalibrated host, not a budget (M50-perf).
+    std::fprintf(stderr, "frame transfer: 48 frames, %zu bytes, %.1f ms (%.2f ms per frame)\n", bytes, ms, ms / 48);
+}
+
 TEST_F(Fixture, UnreadableFilesFailExplicitly)
 {
     std::optional<std::expected<SourceTimeline, SourceError>> result;
@@ -324,6 +377,19 @@ TEST_F(AudioFixture, CancelledAndSupersededRangesNeverDeliverSamples)
     ASSERT_TRUE(waitFor([&] { return stale.has_value() && reopened.has_value(); }));
     EXPECT_EQ(stale->error(), SourceError::Stale);
     EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen) << "the new source has no audio opened yet";
+}
+
+TEST_F(AudioFixture, HelperLossDuringAudioRequestsIsExplicit)
+{
+    const auto t = open("audio");
+    ASSERT_TRUE(t);
+    ASSERT_TRUE(openAudio(t->firstAudioTrack));
+    std::optional<std::expected<AudioBlock, SourceError>> pending;
+    source.audio(0, 48000, [&](auto r) { pending = std::move(r); });
+    source.helperHost()->stop();
+    ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
+    EXPECT_EQ(pending->error(), SourceError::HelperLost);
+    EXPECT_EQ(audio(0, 10).error(), SourceError::HelperLost);
 }
 
 TEST_F(AudioFixture, SourcesWithoutAudioReportIt)
