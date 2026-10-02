@@ -37,7 +37,7 @@ struct ProjectionSpan {
 };
 
 // Shown for each protected span: a visible reserved marker.
-inline constexpr char16_t kProtectedMarker = u'□';
+inline constexpr char16_t kProtectedMarker = u'\u25A1';
 
 struct Projection {
     std::u16string text;

@@ -13,6 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(CTest)
+# Sources are UTF-8; MSVC otherwise reads them in the system code page.
+add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/utf-8>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/utf-8>")
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)

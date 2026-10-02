@@ -86,7 +86,7 @@ Projection project(std::u16string_view raw)
         case SpanKind::HiddenOverride: break;
         case SpanKind::HardBreak: value = u"\n"; break;
         case SpanKind::SoftBreak: value = u" "; break;
-        case SpanKind::HardSpace: value = u" "; break;
+        case SpanKind::HardSpace: value = u"\u00A0"; break;
         case SpanKind::DrawingPayload:
         case SpanKind::Malformed: value = std::u16string(1, kProtectedMarker); break;
         }
@@ -142,7 +142,7 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
         }
     }
     for (char16_t c : inserted)
-        if (c == u'{' || c == u'}' || c == u'\\' || c == kProtectedMarker || c == u' ' || c == u' ')
+        if (c == u'{' || c == u'}' || c == u'\\' || c == kProtectedMarker || c == u'\u2028' || c == u'\u2029')
             return std::unexpected(MapRefusal::AssSyntax);
 
     std::vector<const ProjectionSpan *> selected;
@@ -176,7 +176,7 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
     for (char16_t c : inserted) {
         if (c == u'\n')
             encoded += u"\\N";
-        else if (c == u' ')
+        else if (c == u'\u00A0')
             encoded += u"\\h";
         else
             encoded += c;
