@@ -46,7 +46,11 @@ protected:
             enterKey("mainWindow/editingGrid", Qt::Key_Home, spix::KeyModifiers::None);
             wait(200ms);
             observed.push_back(text()); // 0: the first Line, shown with tags hidden
-            mouseClick("mainWindow/lineText", spix::Point(0.98, 0.1)); // caret after the text
+            // Focus the field and put the caret after the text with End. (A
+            // click at a computed position missed the field on Windows.)
+            invokeMethod("mainWindow/lineText", "forceActiveFocus", {});
+            enterKey("mainWindow/lineText", Qt::Key_End, spix::KeyModifiers::None);
+            wait(200ms);
             inputText("mainWindow/lineText", " edited");
             wait(300ms);
             observed.push_back(text()); // 1: the draft

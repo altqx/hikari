@@ -226,7 +226,8 @@ TEST(AssLoad, UnconfirmedRoundTripsC87)
     EXPECT_FALSE(lines[2]->unconfirmed);
     ASSERT_TRUE(r.document.setLineUnconfirmed(lines[0]->id, true));
     const auto saved = encodeAss(r.document);
-    const auto reloaded = loadAss(saved).document.lines();
+    const auto reloadedDocument = loadAss(saved).document; // keep it alive: lines() points into it
+    const auto reloaded = reloadedDocument.lines();
     ASSERT_EQ(reloaded.size(), 3u);
     EXPECT_TRUE(reloaded[0]->unconfirmed);
     EXPECT_EQ(reloaded[0]->translation, u8"A");
