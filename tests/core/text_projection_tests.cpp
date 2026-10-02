@@ -115,3 +115,17 @@ TEST(Projection, Utf8RoundTrip)
     EXPECT_EQ(toUtf8(toUtf16(s)), s);
     EXPECT_EQ(toUtf16(s).size(), 5u);
 }
+
+TEST(Projection, OffsetMapping)
+{
+    const auto p = project(u"A{\\i1}BC{\\i0}D");
+    // Display "ABCD". The boundary after A maps after or before {\i1}.
+    EXPECT_EQ(rawOffset(p, 1, true), 6u);
+    EXPECT_EQ(rawOffset(p, 1, false), 1u);
+    EXPECT_EQ(rawOffset(p, 2, true), 7u); // inside "BC"
+    EXPECT_EQ(rawOffset(p, 3, false), 8u); // end of "BC", before {\i0}
+    EXPECT_EQ(rawOffset(p, 4, true), 14u);
+    EXPECT_EQ(displayOffset(p, 7), 2u);
+    EXPECT_EQ(displayOffset(p, 3), 1u); // inside {\i1}
+    EXPECT_EQ(displayOffset(p, 14), 4u);
+}

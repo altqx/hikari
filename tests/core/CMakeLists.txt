@@ -34,3 +34,5 @@ target_compile_definitions(hikari_core_style_tests PRIVATE
 
 hikari_add_gtest(hikari_core_text_projection_tests SOURCES text_projection_tests.cpp
     LIBRARIES hikari_core Qt6::Core LABELS core)
+
+hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp LIBRARIES hikari_core LABELS core)

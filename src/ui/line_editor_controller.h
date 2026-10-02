@@ -39,6 +39,9 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QString attempted READ attempted NOTIFY changed)
     Q_PROPERTY(bool dirty READ dirty NOTIFY changed)
     Q_PROPERTY(QString saveStatus READ saveStatus NOTIFY changed)
+    // Where the text field's selection should be after a command.
+    Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionRequested)
+    Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY selectionRequested)
 
 public:
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
@@ -77,6 +80,11 @@ public:
     Q_INVOKABLE bool undo();             // draft history first, then the Document
     Q_INVOKABLE bool redo();
     Q_INVOKABLE bool save();
+    // Legacy Bold/Italic/Underline/Strikeout ('b', 'i', 'u', 's') on the
+    // text field's selection, with the Style's value deciding the direction.
+    Q_INVOKABLE bool toggleTag(const QString &tag, int selectionStart, int selectionEnd);
+    int selectionStart() const { return m_selectionStart; }
+    int selectionEnd() const { return m_selectionEnd; }
 
     // The WriteCoordinator listener calls this after DocumentFiles has the result.
     void writeFinished();
@@ -84,6 +92,7 @@ public:
 signals:
     void changed();
     void lineChanged(qulonglong id); // the active Line moved (keeps the Grid in step)
+    void selectionRequested();
 
 private:
     application::EditSession *session() const;
@@ -104,6 +113,8 @@ private:
     std::vector<std::u8string> m_draftUndo; // exact raw snapshots of this draft
     std::vector<std::u8string> m_draftRedo;
     std::function<void()> m_onCommitted;
+    int m_selectionStart = 0;
+    int m_selectionEnd = 0;
 };
 
 } // namespace hikari::ui

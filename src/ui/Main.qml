@@ -213,6 +213,25 @@ ApplicationWindow {
                                 Accessible.name: qsTr("Vertical margin")
                                 onEditingFinished: root.editor.setMarginText(2, text)
                             }
+                            // Ordinary ASS controls; they keep focus (and the
+                            // selection) in the text field.
+                            Repeater {
+                                model: [
+                                    { tag: "b", label: qsTr("B"), name: qsTr("Bold") },
+                                    { tag: "i", label: qsTr("I"), name: qsTr("Italic") },
+                                    { tag: "u", label: qsTr("U"), name: qsTr("Underline") },
+                                    { tag: "s", label: qsTr("S"), name: qsTr("Strikeout") }
+                                ]
+                                ToolButton {
+                                    required property var modelData
+                                    objectName: "tag_" + modelData.tag
+                                    text: modelData.label
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    Accessible.name: modelData.name
+                                    onClicked: root.editor.toggleTag(modelData.tag, lineText.selectionStart, lineText.selectionEnd)
+                                }
+                            }
                             CheckBox {
                                 objectName: "showTags"
                                 text: qsTr("Show tags")
@@ -253,12 +272,20 @@ ApplicationWindow {
                             Connections {
                                 target: root.editor
                                 function onChanged() { lineText.sync() }
+                                function onSelectionRequested() {
+                                    lineText.select(root.editor.selectionStart, root.editor.selectionEnd)
+                                }
                             }
                             Keys.onPressed: event => {
                                 const ctrl = event.modifiers & Qt.ControlModifier
                                 if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
                                         && !(event.modifiers & Qt.ShiftModifier) && !lineText.inputMethodComposing) {
                                     root.editor.commitAndAdvance()
+                                    event.accepted = true
+                                } else if (ctrl && (event.key === Qt.Key_B || event.key === Qt.Key_I)) {
+                                    // Legacy defaults: Ctrl+B Bold, Ctrl+I Italic.
+                                    root.editor.toggleTag(event.key === Qt.Key_B ? "b" : "i",
+                                                          lineText.selectionStart, lineText.selectionEnd)
                                     event.accepted = true
                                 } else if (event.key === Qt.Key_Escape) {
                                     root.editor.discard()

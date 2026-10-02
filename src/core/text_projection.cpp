@@ -1,6 +1,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <optional>
 
 namespace hikari::core {
 
@@ -197,6 +198,32 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
     if (after.text != desired || keptTokens(raw, p) != keptTokens(result, after))
         return std::unexpected(MapRefusal::Reinterpreted);
     return result;
+}
+
+std::size_t rawOffset(const Projection &p, std::size_t display, bool afterTags)
+{
+    std::optional<std::size_t> best;
+    for (const auto &s : p.spans) {
+        if (s.displayStart == display)
+            best = best ? (afterTags ? std::max(*best, s.rawStart) : std::min(*best, s.rawStart)) : s.rawStart;
+        if (s.displayEnd == display)
+            best = best ? (afterTags ? std::max(*best, s.rawEnd) : std::min(*best, s.rawEnd)) : s.rawEnd;
+        if (s.displayStart < display && display < s.displayEnd)
+            return s.rawStart + (display - s.displayStart); // inside a text run
+    }
+    return best.value_or(0);
+}
+
+std::size_t displayOffset(const Projection &p, std::size_t raw)
+{
+    for (const auto &s : p.spans) {
+        if (raw < s.rawEnd || (raw == s.rawEnd && s.rawEnd == s.rawStart)) {
+            if (s.kind == SpanKind::Text && raw >= s.rawStart)
+                return s.displayStart + (raw - s.rawStart);
+            return s.displayStart; // inside a hidden or protected span
+        }
+    }
+    return p.text.size();
 }
 
 std::u16string toUtf16(std::u8string_view s)

@@ -62,6 +62,14 @@ std::expected<std::u16string, MapRefusal> mappedReplace(std::u16string_view raw,
                                                         std::size_t end, std::u16string_view inserted,
                                                         std::span<const std::size_t> graphemeBoundaries = {});
 
+// Raw offset of a projection offset. A boundary between visible text and
+// hidden tags maps after the tags (`afterTags`, the insertion default) or
+// before them (the end of a selection, so following tags stay outside it).
+std::size_t rawOffset(const Projection &projection, std::size_t displayOffset, bool afterTags);
+// Projection offset of a raw offset; inside a hidden or protected span it is
+// the span's display start.
+std::size_t displayOffset(const Projection &projection, std::size_t rawOffset);
+
 std::u16string toUtf16(std::u8string_view text);
 std::u8string toUtf8(std::u16string_view text);
 

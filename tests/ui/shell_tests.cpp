@@ -181,6 +181,30 @@ private slots:
         QVERIFY(!item<QObject>("lineText")->property("readOnly").toBool());
     }
 
+    void boldWrapsTheSelectionWithTagsHidden()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // the first Line, "first"
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 5));
+        press(Qt::Key_B, Qt::ControlModifier);
+        // The field still shows the text; the raw draft has the legacy tags,
+        // and the same five characters stay selected.
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::u8string draft = session->draftText().value_or(u8"");
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(draft.data()), qsizetype(draft.size())),
+                 QStringLiteral("{\\b1}first{\\b0}"));
+        QCOMPARE(text->property("selectionStart").toInt(), 0);
+        QCOMPARE(text->property("selectionEnd").toInt(), 5);
+        // Draft Undo restores the exact previous raw text.
+        press(Qt::Key_Z, Qt::ControlModifier);
+        QVERIFY(!session->draftLine());
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

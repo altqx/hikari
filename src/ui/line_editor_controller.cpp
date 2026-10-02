@@ -2,6 +2,8 @@
 
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/style.h"
+#include "hikari/core/tag_commands.h"
 #include "hikari/core/text_projection.h"
 
 #include <QTextBoundaryFinder>
@@ -435,6 +437,46 @@ bool LineEditorController::save()
         return false;
     }
     refresh();
+    return true;
+}
+
+bool LineEditorController::toggleTag(const QString &tag, int selectionStart, int selectionEnd)
+{
+    const auto r = record();
+    if (!editable() || !r || tag.size() != 1 || !QStringLiteral("bius").contains(tag))
+        return false;
+    // The Style's value; legacy GetStyle(0, name) takes the first Style of that name.
+    bool styleValue = false;
+    for (const auto &style : core::decodeStyles(session()->document()))
+        if (style.name == r->style) {
+            const char16_t t = tag[0].unicode();
+            styleValue = t == u'b' ? style.bold : t == u'i' ? style.italic : t == u'u' ? style.underline
+                                                                                      : style.strikeOut;
+            break;
+        }
+    const std::u16string raw = core::toUtf16(r->text);
+    long from = selectionStart, to = selectionEnd;
+    std::optional<core::Projection> projection;
+    if (!m_showTags) {
+        projection = core::project(raw);
+        // The caret goes after boundary tags; a selection's end before them.
+        from = static_cast<long>(core::rawOffset(*projection, static_cast<std::size_t>(selectionStart), true));
+        to = selectionEnd == selectionStart
+                 ? from
+                 : static_cast<long>(core::rawOffset(*projection, static_cast<std::size_t>(selectionEnd), false));
+    }
+    const auto result = core::legacy::toggleTag({raw, from, to}, tag[0].unicode(), styleValue);
+    if (!setRaw(core::toUtf8(result.text)))
+        return false;
+    if (m_showTags) {
+        m_selectionStart = static_cast<int>(result.selectionStart);
+        m_selectionEnd = static_cast<int>(result.selectionEnd);
+    } else {
+        const auto after = core::project(result.text);
+        m_selectionStart = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionStart)));
+        m_selectionEnd = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd)));
+    }
+    emit selectionRequested();
     return true;
 }
 
