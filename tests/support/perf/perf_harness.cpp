@@ -10,6 +10,11 @@
 
 #if defined(__linux__)
 #include <sys/utsname.h>
+#elif defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
 #endif
 
 namespace hikari::perf {
@@ -80,7 +85,18 @@ HostIdentity currentHost()
     if (uname(&u) == 0)
         host.os = std::string(u.sysname) + " " + u.release;
 #elif defined(_WIN32)
-    host.os = "Windows";
+    auto reg = [](const wchar_t *key, const wchar_t *value) {
+        wchar_t buffer[256] = {};
+        DWORD size = sizeof buffer;
+        if (::RegGetValueW(HKEY_LOCAL_MACHINE, key, value, RRF_RT_REG_SZ, nullptr, buffer, &size) != ERROR_SUCCESS)
+            return std::string();
+        char out[512] = {};
+        ::WideCharToMultiByte(CP_UTF8, 0, buffer, -1, out, sizeof out, nullptr, nullptr);
+        return std::string(out);
+    };
+    host.cpu = reg(L"HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", L"ProcessorNameString");
+    const wchar_t *nt = L"SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+    host.os = "Windows " + reg(nt, L"DisplayVersion") + " build " + reg(nt, L"CurrentBuild");
 #endif
 #if defined(__clang__)
     host.compiler = "clang " __clang_version__;
