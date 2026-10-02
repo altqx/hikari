@@ -49,6 +49,36 @@
     "ssa-v4.ssa"
    ],
    "note": "C4-ssa characterization: Dial/Comm prefixes that SetRaw rejects, short events, an event in Script Info, Actor marker precedence, TLMode pairing (form-feed+D Unconfirmed, blank line, comment and missing partner) and SSA v4 styles. Capture-only fixtures."
+  },
+  "editor-tag-commands": {
+   "route": "save-as",
+   "inputs": [
+    "tag-commands.ass"
+   ],
+   "keys": [
+    "Home",
+    "Return",
+    "End",
+    "shift+Home",
+    "ctrl+b",
+    "Return",
+    "End",
+    "ctrl+b",
+    "Return",
+    "Home",
+    "Right",
+    "Right",
+    "Right",
+    "Right",
+    "ctrl+b",
+    "Return",
+    "Home",
+    "Right",
+    "Right",
+    "ctrl+b",
+    "Return"
+   ],
+   "note": "V2-E-grammar: Ctrl+B (EDITBOX_INSERT_BOLD) in the legacy editor on four Lines: a whole-Line selection, the caret after an existing bold tag, the caret inside an italic block, and the caret inside a bold tag. Return in the grid focuses the editor; Return in the editor commits and goes to the next Line."
   }
  }
 }

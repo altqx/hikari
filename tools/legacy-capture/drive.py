@@ -7,7 +7,8 @@ package (its configuration lives next to the executable) on a private X server.
 
 Routes (see plan.json):
   time      legacy SubsTime/Timebase code via the legacy_time_capture probe
-  save-as   open a scratch copy in the real app, Save As to a new path, hash it
+  save-as   open a scratch copy in the real app, Save As to a new path, hash it;
+            an optional "keys" script is typed first (editor commands)
 Anything else is recorded as not captured, with the plan's reason.
 """
 import argparse, hashlib, json, os, platform, shutil, subprocess, sys, tarfile, tempfile, time
@@ -66,7 +67,7 @@ def x(cmd, display, timeout=30):
         return subprocess.CompletedProcess(cmd, 124, "", "timeout")
 
 
-def save_as(case, inputs_dir, package, display, workdir):
+def save_as(case, inputs_dir, package, display, workdir, keys=None):
     obs = []
     for name in case["inputs"]:
         if Path(name).suffix.lower() not in SUBTITLE_SUFFIXES:
@@ -119,6 +120,14 @@ def save_as(case, inputs_dir, package, display, workdir):
             x(["xdotool", "windowactivate", "--sync", wid], display)
             x(["xdotool", "mousemove", "--window", wid, "400", "550", "click", "1"], display)
             time.sleep(1)
+            # Editor key script (route "keys"): typed into the focused window,
+            # one key chord at a time, before Save As.
+            for chord in keys or []:
+                x(["xdotool", "key", "--clearmodifiers", chord], display)
+                time.sleep(0.4)
+            if keys:
+                rec["keys"] = keys
+                time.sleep(1)
             x(["xdotool", "key", "--clearmodifiers", "ctrl+shift+s"], display)
             dlg = x(["xdotool", "search", "--sync", "--onlyvisible", "--name", "Save subtitle file"], display, 30)
             if not dlg.stdout.split():
@@ -195,7 +204,7 @@ def main():
             entry["observations"] = time_cases(case, a.fixtures, a.probe)
         elif route["route"] == "save-as":
             source = extra_dir if cid in plan.get("extra_cases", {}) else a.fixtures / "inputs"
-            entry["observations"] = save_as(case, source, a.package, a.display, workdir)
+            entry["observations"] = save_as(case, source, a.package, a.display, workdir, route.get("keys"))
         else:
             entry["status"] = "not-captured"
             entry["reason"] = route["reason"]
