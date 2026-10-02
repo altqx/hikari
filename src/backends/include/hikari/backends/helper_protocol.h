@@ -25,6 +25,11 @@ enum class Kind : std::uint16_t {
     Progress = 12, // helper -> host
     Cancel = 13,   // host -> helper
     Terminal = 14, // helper -> host: code = outcome, ends the request
+    // A synchronous call from inside a running request (dialogs, host
+    // services). Both carry the request's run and request IDs; the payload
+    // starts with an i64 call ID, then the call's own fields.
+    Service = 15,      // helper -> host
+    ServiceReply = 16, // host -> helper: code = outcome
 };
 
 // Terminal outcome codes.
@@ -61,6 +66,7 @@ public:
     Writer &u8(std::uint8_t v);
     Writer &i32(std::int32_t v);
     Writer &i64(std::int64_t v);
+    Writer &f64(double v);
     Writer &str(const std::string &v);
     Writer &bytes(const std::vector<std::byte> &v);
     Writer &raw(const void *data, std::size_t size); // u32 length + bytes
@@ -78,9 +84,11 @@ public:
     std::uint8_t u8();
     std::int32_t i32();
     std::int64_t i64();
+    double f64();
     std::string str();
     std::vector<std::byte> bytes();
     bool ok() const { return m_ok; }
+    bool atEnd() const { return m_pos == m_in.size(); }
 
 private:
     bool need(std::size_t n);

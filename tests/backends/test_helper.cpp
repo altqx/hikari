@@ -4,11 +4,16 @@
 //   crash         exit abruptly mid-request
 //   wait          loop until cancelled, then Cancelled
 //   duplicate     two Terminal frames (the second must be rejected by the host)
+//   service:<x>   a synchronous host call with <x>; reply with the answer, then
+//                 Ok, or end with the call's failure outcome
+//   noisy         write junk to stdout and stderr, then Ok (the protocol must
+//                 survive; the junk lands in the host's diagnostics)
 // "--version N" announces protocol version N instead of 1.
 
 #include "hikari/backends/helper_endpoint.h"
 
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <string>
 #include <thread>
@@ -39,9 +44,20 @@ int main(int argc, char **argv)
         } else if (command == "duplicate") {
             r.terminal(Outcome::Ok);
             // Bypass the responder's guard: a misbehaving helper.
-            const auto bytes = encode(Frame{Kind::Terminal, 0, request.session, request.run, request.request, {}});
-            std::fwrite(bytes.data(), 1, bytes.size(), stdout);
+            sendUncheckedFrame(Frame{Kind::Terminal, 0, request.session, request.run, request.request, {}});
+        } else if (command.starts_with("service:")) {
+            const auto answer = r.call(bytesOf(command.substr(8)));
+            if (!answer) {
+                r.terminal(answer.error());
+                return;
+            }
+            r.reply(*answer);
+            r.terminal(Outcome::Ok);
+        } else if (command == "noisy") {
+            std::printf("HKRI junk on stdout\n");
             std::fflush(stdout);
+            std::fprintf(stderr, "junk on stderr\n");
+            r.terminal(Outcome::Ok);
         } else {
             r.terminal(Outcome::Unsupported);
         }

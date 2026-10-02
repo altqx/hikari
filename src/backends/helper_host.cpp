@@ -17,6 +17,7 @@ HelperHost::HelperHost(QString program, QStringList arguments, std::uint32_t pro
     m_process.setProcessChannelMode(QProcess::SeparateChannels);
     m_process.setReadChannel(QProcess::StandardOutput);
     connect(&m_process, &QProcess::readyReadStandardOutput, this, &HelperHost::readOutput);
+    connect(&m_process, &QProcess::readyReadStandardError, this, &HelperHost::readDiagnostics);
     connect(&m_process, &QProcess::finished, this, [this] { fail(); });
     connect(&m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError e) {
         if (e == QProcess::FailedToStart || e == QProcess::Crashed)
@@ -84,9 +85,20 @@ void HelperHost::readOutput()
         const auto it = m_pending.find(frame->request);
         const bool known = frame->session == m_session && it != m_pending.end() &&
                            (frame->kind == Kind::Reply || frame->kind == Kind::Progress ||
-                            frame->kind == Kind::Terminal);
-        if (!known) {
-            ++m_rejected; // late, duplicated, foreign-session or unknown
+                            frame->kind == Kind::Service || frame->kind == Kind::Terminal);
+        if (!known || (frame->kind == Kind::Service && frame->payload.size() < 8)) {
+            ++m_rejected; // late, duplicated, foreign-session, unknown or malformed
+            continue;
+        }
+        if (frame->kind == Kind::Service) {
+            Reader r(frame->payload);
+            const auto call = static_cast<std::uint64_t>(r.i64());
+            if (!it->second.calls.insert(call).second) {
+                ++m_rejected; // a call ID reused while unanswered
+                continue;
+            }
+            frame->payload.erase(frame->payload.begin(), frame->payload.begin() + 8);
+            it->second.handler(Event{Kind::Service, Outcome::Ok, std::move(frame->payload), call});
             continue;
         }
         if (frame->kind == Kind::Terminal) {
@@ -124,6 +136,29 @@ void HelperHost::cancel(std::uint64_t request)
         write(Frame{Kind::Cancel, 0, m_session, 0, request, {}});
 }
 
+bool HelperHost::answer(std::uint64_t request, std::uint64_t call, Outcome outcome, std::vector<std::byte> payload)
+{
+    const auto it = m_pending.find(request);
+    if (m_state != State::Ready || it == m_pending.end() || it->second.calls.erase(call) == 0)
+        return false;
+    Writer w;
+    w.i64(static_cast<std::int64_t>(call));
+    auto body = w.take();
+    body.insert(body.end(), payload.begin(), payload.end());
+    write(Frame{Kind::ServiceReply, static_cast<std::uint16_t>(outcome), m_session, 0, request, std::move(body)});
+    return true;
+}
+
+void HelperHost::readDiagnostics()
+{
+    m_diagnostics += m_process.readAllStandardError();
+    const auto limit = static_cast<qsizetype>(m_limits.maxDiagnosticBytes);
+    if (m_diagnostics.size() > limit) {
+        m_droppedDiagnostics += static_cast<std::size_t>(m_diagnostics.size() - limit);
+        m_diagnostics.remove(0, m_diagnostics.size() - limit);
+    }
+}
+
 void HelperHost::stop()
 {
     if (m_process.state() != QProcess::NotRunning) {
@@ -135,6 +170,7 @@ void HelperHost::stop()
 
 void HelperHost::fail()
 {
+    readDiagnostics(); // keep the last words of a helper that died
     const bool wasLive = m_state == State::Ready || m_state == State::Starting;
     if (m_state != State::Refused)
         m_state = State::Lost;

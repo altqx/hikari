@@ -6,6 +6,8 @@
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
+#include <optional>
+
 using namespace hikari::backends::helper;
 
 namespace {
@@ -153,6 +155,97 @@ TEST_F(HelperHostTest, StopEndsTheSessionAndAReplacementGetsANewOne)
     auto second = startHelper();
     ASSERT_TRUE(waitFor([&] { return second->state() == HelperHost::State::Ready; }));
     EXPECT_GT(second->session(), session);
+}
+
+TEST_F(HelperHostTest, ServiceCallIsAnsweredOnceWithinItsRequest)
+{
+    auto host = startHelper();
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results r;
+    std::uint64_t call = 0;
+    std::string asked;
+    const auto id = host->request(1, bytesOf("service:question"), [&](std::expected<Event, HostError> e) {
+        if (e && e->kind == Kind::Service) {
+            call = e->call;
+            asked = textOf(e->payload);
+        }
+        r.events.push_back(std::move(e));
+    });
+    ASSERT_TRUE(id);
+    ASSERT_TRUE(waitFor([&] { return call != 0; }));
+    EXPECT_EQ(asked, "question");
+    EXPECT_FALSE(host->answer(*id, call + 1, Outcome::Ok, bytesOf("wrong call")));
+    EXPECT_TRUE(host->answer(*id, call, Outcome::Ok, bytesOf("answer")));
+    EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, bytesOf("again"))) << "answered once";
+    ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
+    ASSERT_EQ(r.events.size(), 3u); // Service, Reply, Terminal
+    EXPECT_EQ(textOf(r.events[1]->payload), "answer");
+    EXPECT_EQ(r.events[2]->outcome, Outcome::Ok);
+    EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, {})) << "the request has ended";
+}
+
+TEST_F(HelperHostTest, ServiceFailureReachesTheHelper)
+{
+    auto host = startHelper();
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results r;
+    std::optional<std::uint64_t> id;
+    id = *host->request(1, bytesOf("service:x"), [&](std::expected<Event, HostError> e) {
+        if (e && e->kind == Kind::Service)
+            host->answer(*id, e->call, Outcome::Unsupported);
+        r.events.push_back(std::move(e));
+    });
+    ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
+    EXPECT_EQ(r.events.back()->outcome, Outcome::Unsupported);
+}
+
+TEST_F(HelperHostTest, CancelReleasesAHelperWaitingOnAService)
+{
+    auto host = startHelper();
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results r;
+    std::uint64_t call = 0;
+    const auto id = host->request(1, bytesOf("service:never answered"), [&](std::expected<Event, HostError> e) {
+        if (e && e->kind == Kind::Service)
+            call = e->call;
+        r.events.push_back(std::move(e));
+    });
+    ASSERT_TRUE(waitFor([&] { return call != 0; }));
+    host->cancel(*id);
+    ASSERT_TRUE(waitFor([&] { return r.resolved(); }));
+    EXPECT_EQ(r.events.back()->outcome, Outcome::Cancelled);
+    EXPECT_FALSE(host->answer(*id, call, Outcome::Ok, {})) << "a late answer is dropped";
+    // The helper is still usable.
+    Results next;
+    ASSERT_TRUE(host->request(1, bytesOf("echo:after"), next.handler()));
+    ASSERT_TRUE(waitFor([&] { return next.resolved(); }));
+    EXPECT_EQ(textOf(next.events[0]->payload), "after");
+}
+
+TEST_F(HelperHostTest, HelperStdoutNeverReachesTheProtocol)
+{
+    auto host = startHelper();
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results noisy, echo;
+    ASSERT_TRUE(host->request(1, bytesOf("noisy"), noisy.handler()));
+    ASSERT_TRUE(host->request(1, bytesOf("echo:intact"), echo.handler()));
+    ASSERT_TRUE(waitFor([&] { return noisy.resolved() && echo.resolved(); }));
+    EXPECT_EQ(noisy.events.back()->outcome, Outcome::Ok);
+    EXPECT_EQ(textOf(echo.events[0]->payload), "intact");
+    EXPECT_EQ(host->rejectedFrames(), 0u);
+    ASSERT_TRUE(waitFor([&] { return host->diagnostics().contains("junk on stderr"); }));
+    EXPECT_TRUE(host->diagnostics().contains("HKRI junk on stdout")) << host->diagnostics().toStdString();
+}
+
+TEST_F(HelperHostTest, DiagnosticsKeepOnlyTheNewestBytes)
+{
+    auto host = startHelper({}, HelperHost::Limits{.maxDiagnosticBytes = 20});
+    ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
+    Results r;
+    ASSERT_TRUE(host->request(1, bytesOf("noisy"), r.handler()));
+    ASSERT_TRUE(waitFor([&] { return r.resolved() && host->diagnostics().endsWith("junk on stderr\n"); }));
+    EXPECT_LE(host->diagnostics().size(), 20);
+    EXPECT_GT(host->droppedDiagnosticBytes(), 0u);
 }
 
 TEST(HelperProtocol, DecoderHandlesSplitAndMalformedInput)

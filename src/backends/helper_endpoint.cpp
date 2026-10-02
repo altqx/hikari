@@ -3,12 +3,17 @@
 #include <condition_variable>
 #include <cstdio>
 #include <deque>
+#include <map>
 #include <mutex>
 #include <thread>
 
 #ifdef _WIN32
 #include <fcntl.h>
 #include <io.h>
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
 #else
 #include <unistd.h>
 #endif
@@ -18,22 +23,61 @@ namespace hikari::backends::helper {
 namespace {
 
 std::mutex g_out;
+int g_protocolFd = 1;
+
+void writeAll(const std::vector<std::byte> &bytes)
+{
+    std::size_t done = 0;
+    while (done < bytes.size()) {
+#ifdef _WIN32
+        const int n = ::_write(g_protocolFd, bytes.data() + done, static_cast<unsigned>(bytes.size() - done));
+#else
+        const auto n = ::write(g_protocolFd, bytes.data() + done, bytes.size() - done);
+#endif
+        if (n <= 0)
+            return; // the host is gone; the reader sees stdin close
+        done += static_cast<std::size_t>(n);
+    }
+}
 
 void write(const Frame &frame)
 {
     const auto bytes = encode(frame);
     std::lock_guard lock(g_out);
-    std::fwrite(bytes.data(), 1, bytes.size(), stdout);
+    writeAll(bytes);
+}
+
+// Moves the protocol to a private descriptor and sends fd 1 to stderr.
+void protectProtocolChannel()
+{
     std::fflush(stdout);
+#ifdef _WIN32
+    _setmode(_fileno(stdin), _O_BINARY);
+    g_protocolFd = ::_dup(1);
+    _setmode(g_protocolFd, _O_BINARY);
+    ::_dup2(2, 1);
+    SetStdHandle(STD_OUTPUT_HANDLE, GetStdHandle(STD_ERROR_HANDLE));
+#else
+    g_protocolFd = ::dup(1);
+    ::dup2(2, 1);
+#endif
 }
 
 struct Inbox {
     std::mutex mutex;
     std::condition_variable ready;
     std::deque<Frame> frames;
+    std::map<std::uint64_t, Frame> serviceReplies; // by call ID
     bool closed = false;
     std::uint64_t cancelRequest = 0; // the request a Cancel named
 };
+
+std::uint64_t callIdOf(const Frame &frame)
+{
+    Reader r(frame.payload);
+    const auto id = static_cast<std::uint64_t>(r.i64());
+    return r.ok() ? id : 0;
+}
 
 class StdResponder : public Responder {
 public:
@@ -55,6 +99,34 @@ public:
         std::lock_guard lock(m_inbox.mutex);
         return m_inbox.cancelRequest == m_request.request;
     }
+    std::expected<std::vector<std::byte>, Outcome> call(std::vector<std::byte> payload) override
+    {
+        if (m_ended)
+            return std::unexpected(Outcome::Failed);
+        static std::uint64_t s_nextCall = 1;
+        const std::uint64_t id = s_nextCall++;
+        Writer w;
+        w.i64(static_cast<std::int64_t>(id));
+        auto body = w.take();
+        body.insert(body.end(), payload.begin(), payload.end());
+        send(Kind::Service, 0, std::move(body));
+
+        std::unique_lock lock(m_inbox.mutex);
+        m_inbox.ready.wait(lock, [&] {
+            return m_inbox.serviceReplies.contains(id) || m_inbox.closed ||
+                   m_inbox.cancelRequest == m_request.request;
+        });
+        const auto it = m_inbox.serviceReplies.find(id);
+        if (it == m_inbox.serviceReplies.end())
+            return std::unexpected(Outcome::Cancelled);
+        Frame reply = std::move(it->second);
+        m_inbox.serviceReplies.erase(it);
+        const auto outcome = static_cast<Outcome>(reply.code);
+        if (outcome != Outcome::Ok)
+            return std::unexpected(outcome);
+        reply.payload.erase(reply.payload.begin(), reply.payload.begin() + 8);
+        return std::move(reply.payload);
+    }
     bool ended() const { return m_ended; }
 
 private:
@@ -72,12 +144,14 @@ private:
 
 } // namespace
 
+void sendUncheckedFrame(const Frame &frame)
+{
+    write(frame);
+}
+
 int runHelper(const std::string &name, std::uint32_t protocolVersion, const RequestHandler &handler)
 {
-#ifdef _WIN32
-    _setmode(_fileno(stdin), _O_BINARY);
-    _setmode(_fileno(stdout), _O_BINARY);
-#endif
+    protectProtocolChannel();
     write(Frame{Kind::Hello, static_cast<std::uint16_t>(protocolVersion), 0, 0, 0, bytesOf(name)});
 
     Inbox inbox;
@@ -96,18 +170,22 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
             decoder.feed(buffer, static_cast<std::size_t>(n));
             while (auto frame = decoder.next()) {
                 std::lock_guard lock(inbox.mutex);
-                if (frame->kind == Kind::Cancel)
+                if (frame->kind == Kind::Cancel) {
                     inbox.cancelRequest = frame->request;
-                else
+                } else if (frame->kind == Kind::ServiceReply) {
+                    if (frame->payload.size() >= 8)
+                        inbox.serviceReplies[callIdOf(*frame)] = std::move(*frame);
+                } else {
                     inbox.frames.push_back(std::move(*frame));
-                inbox.ready.notify_one();
+                }
+                inbox.ready.notify_all();
             }
             if (decoder.failed())
                 break;
         }
         std::lock_guard lock(inbox.mutex);
         inbox.closed = true;
-        inbox.ready.notify_one();
+        inbox.ready.notify_all();
     });
 
     auto take = [&inbox]() -> std::optional<Frame> {
@@ -133,6 +211,8 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
             handler(*frame, responder);
             if (!responder.ended())
                 responder.terminal(Outcome::Failed, bytesOf("handler returned without a result"));
+            std::lock_guard lock(inbox.mutex);
+            inbox.serviceReplies.clear(); // answers that arrived after their call gave up
         }
     }
     // stdin is closed or ignored from here; the reader ends with the process.

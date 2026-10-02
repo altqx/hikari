@@ -5,7 +5,10 @@
 // stopped), and routes replies to requests by session and request ID. Every
 // request resolves exactly once: its Terminal frame, or HelperLost when the
 // process ends, crashes or breaks the protocol. Late, duplicated or unknown
-// replies are rejected and counted. Outstanding work is bounded.
+// replies are rejected and counted. Outstanding work is bounded. A running
+// request may make synchronous service calls (Kind::Service); each is
+// answered at most once, and never after its request has ended. The helper's
+// stderr is kept as bounded diagnostics, separate from the protocol.
 //
 // Runs on the thread that owns it, with a Qt event loop.
 
@@ -18,6 +21,7 @@
 #include <expected>
 #include <functional>
 #include <map>
+#include <set>
 
 namespace hikari::backends::helper {
 
@@ -28,9 +32,10 @@ enum class HostError {
 };
 
 struct Event {
-    Kind kind = Kind::Reply; // Reply, Progress or Terminal
+    Kind kind = Kind::Reply; // Reply, Progress, Service or Terminal
     Outcome outcome = Outcome::Ok; // for Terminal
-    std::vector<std::byte> payload;
+    std::vector<std::byte> payload; // for Service, without the call ID
+    std::uint64_t call = 0;         // for Service: pass to answer()
 };
 
 class HelperHost : public QObject {
@@ -42,8 +47,9 @@ public:
         std::size_t maxOutstanding = 64;
         std::size_t maxOutstandingBytes = 16u << 20;
         int handshakeMs = 10'000;
+        std::size_t maxDiagnosticBytes = 64u << 10; // the newest stderr bytes kept
     };
-    // Called for each Reply/Progress, then once with the Terminal or with
+    // Called for each Reply/Progress/Service, then once with the Terminal or with
     // HelperLost (as an unexpected error).
     using Handler = std::function<void(std::expected<Event, HostError>)>;
 
@@ -60,10 +66,15 @@ public:
     std::expected<std::uint64_t, HostError> request(std::uint64_t run, std::vector<std::byte> payload,
                                                     Handler handler);
     void cancel(std::uint64_t request);
+    // Answers a Service call. False when the call is unknown, already
+    // answered, or its request has ended: the answer is dropped.
+    bool answer(std::uint64_t request, std::uint64_t call, Outcome outcome, std::vector<std::byte> payload = {});
     void stop(); // ends the helper; pending requests resolve as HelperLost
 
     std::size_t rejectedFrames() const { return m_rejected; }
     std::size_t outstanding() const { return m_pending.size(); }
+    QByteArray diagnostics() const { return m_diagnostics; }
+    std::size_t droppedDiagnosticBytes() const { return m_droppedDiagnostics; }
 
 signals:
     void ready();
@@ -72,6 +83,7 @@ signals:
 
 private:
     void readOutput();
+    void readDiagnostics();
     void fail();
     void write(const Frame &frame);
 
@@ -88,10 +100,13 @@ private:
     struct Pending {
         Handler handler;
         std::size_t bytes = 0;
+        std::set<std::uint64_t> calls; // unanswered service calls
     };
     std::map<std::uint64_t, Pending> m_pending;
     std::size_t m_pendingBytes = 0;
     std::size_t m_rejected = 0;
+    QByteArray m_diagnostics;
+    std::size_t m_droppedDiagnostics = 0;
     static inline std::uint64_t s_nextSession = 1;
 };
 

@@ -1,5 +1,6 @@
 #include "hikari/backends/helper_protocol.h"
 
+#include <bit>
 #include <cstring>
 
 namespace hikari::backends::helper {
@@ -93,6 +94,10 @@ Writer &Writer::i64(std::int64_t v)
     put<std::uint64_t>(m_out, static_cast<std::uint64_t>(v));
     return *this;
 }
+Writer &Writer::f64(double v)
+{
+    return i64(std::bit_cast<std::int64_t>(v));
+}
 Writer &Writer::raw(const void *data, std::size_t size)
 {
     put<std::uint32_t>(m_out, static_cast<std::uint32_t>(size));
@@ -138,6 +143,10 @@ std::int64_t Reader::i64()
     const auto v = static_cast<std::int64_t>(get<std::uint64_t>(m_in.data() + m_pos));
     m_pos += 8;
     return v;
+}
+double Reader::f64()
+{
+    return std::bit_cast<double>(i64());
 }
 std::vector<std::byte> Reader::bytes()
 {
