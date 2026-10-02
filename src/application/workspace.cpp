@@ -13,6 +13,19 @@ DocumentId Workspace::add(std::string title)
     return id;
 }
 
+bool Workspace::add(DocumentId id, std::string title, bool asReference)
+{
+    if (find(id))
+        return false;
+    m_documents.push_back(Entry{id, std::move(title)});
+    m_next = std::max(m_next, id.value + 1);
+    if (asReference)
+        m_reference = id;
+    else if (!m_target)
+        m_target = id;
+    return true;
+}
+
 bool Workspace::remove(DocumentId id)
 {
     const auto it = std::ranges::find(m_documents, id, &Entry::id);

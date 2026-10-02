@@ -55,4 +55,11 @@ void ShellController::activateLine(qulonglong id)
     emit activeLineChanged();
 }
 
+void ShellController::selectLine(qulonglong id)
+{
+    const core::LineId line{id};
+    if (m_lines.rowOf(line))
+        m_lines.setSelection(application::Selection{line, {line}}, line);
+}
+
 } // namespace hikari::ui

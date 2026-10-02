@@ -1,12 +1,10 @@
 // V1-S: the Classic shell bound to real Lines. Target labels, the protected
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
-#include "shell_controller.h"
-
-#include "hikari/application/workspace.h"
-#include "hikari/core/ass_load.h"
+#include "hikari/app/application.h"
 
 #include <QQmlApplicationEngine>
+#include <QTemporaryDir>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
@@ -20,13 +18,14 @@ using namespace hikari;
 
 namespace {
 
-core::Document documentOf(const char *events)
+QString writeFile(const QTemporaryDir &dir, const char *name, const char *events)
 {
-    std::string s = std::string("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
-                                "Effect, Text\n") + events;
-    std::vector<std::byte> b(s.size());
-    std::memcpy(b.data(), s.data(), s.size());
-    return core::loadAss(b).document;
+    const QString path = dir.filePath(QLatin1String(name));
+    QFile f(path);
+    f.open(QIODevice::WriteOnly);
+    f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+    f.write(events);
+    return path;
 }
 
 } // namespace
@@ -34,13 +33,11 @@ core::Document documentOf(const char *events)
 class ShellTest : public QObject {
     Q_OBJECT
 
-    application::Workspace workspace;
-    ui::ShellController *shell = nullptr;
+    QTemporaryDir dir;
+    QString episode, original;
+    app::Application *application = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
-    core::Document target = documentOf("Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
-                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
-    core::Document reference = documentOf("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
 
     template <typename T = QQuickItem> T *item(const char *name) const
     {
@@ -66,12 +63,19 @@ class ShellTest : public QObject {
     }
 
 private slots:
+    void initTestCase()
+    {
+        QVERIFY(dir.isValid());
+        episode = writeFile(dir, "episode.ass",
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
+                            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+        original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
+    }
     void init()
     {
-        workspace = application::Workspace{};
-        shell = new ui::ShellController(workspace);
+        application = new app::Application;
         engine = new QQmlApplicationEngine;
-        engine->setInitialProperties({{QStringLiteral("shell"), QVariant::fromValue(shell)}});
+        engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
@@ -82,12 +86,11 @@ private slots:
     void cleanup()
     {
         delete engine;
-        delete shell;
+        delete application;
     }
 
     void zeroDocumentState()
     {
-        shell->refresh(nullptr, nullptr);
         QCOMPARE(panelTitle("gridPanel"), QStringLiteral("No document open"));
         QVERIFY(!item("referencePanel")->isVisible());
         QCOMPARE(item<QObject>("statusTargets")->property("text").toString(), QStringLiteral("No editing target"));
@@ -95,10 +98,8 @@ private slots:
 
     void labelsNameTheEditingTargetAndTheProtectedReference()
     {
-        workspace.add("episode.ass");
-        const auto ref = workspace.add("original.ass");
-        QVERIFY(workspace.setReference(ref));
-        shell->refresh(&target, &reference);
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
         QCOMPARE(panelTitle("gridPanel"), QStringLiteral("Editing: episode.ass"));
         QVERIFY(item("referencePanel")->isVisible());
         QCOMPARE(panelTitle("referencePanel"), QStringLiteral("Reference (protected, read-only): original.ass"));
@@ -114,10 +115,11 @@ private slots:
 
     void focusingTheReferenceDoesNotRetarget()
     {
-        const auto a = workspace.add("episode.ass");
-        const auto ref = workspace.add("original.ass");
-        QVERIFY(workspace.setReference(ref));
-        shell->refresh(&target, &reference);
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        auto &workspace = application->workspace();
+        const auto a = *workspace.editingTarget();
+        const auto ref = *workspace.reference();
         item("referenceGrid")->forceActiveFocus();
         QCOMPARE(focusedPanel(), QStringLiteral("referencePanel"));
         QCOMPARE(workspace.editingTarget(), a);
@@ -128,10 +130,8 @@ private slots:
 
     void f6TraversesTheMajorPanels()
     {
-        workspace.add("episode.ass");
-        const auto ref = workspace.add("original.ass");
-        QVERIFY(workspace.setReference(ref));
-        shell->refresh(&target, &reference);
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
         item("editingGrid")->forceActiveFocus();
         QStringList forward;
         for (int i = 0; i < 5; ++i) {
@@ -149,8 +149,7 @@ private slots:
 
     void f6SkipsAHiddenReferenceAndWorksFromText()
     {
-        workspace.add("episode.ass");
-        shell->refresh(&target, nullptr);
+        QVERIFY(application->openFile(episode));
         item("lineText")->forceActiveFocus();
         QCOMPARE(focusedPanel(), QStringLiteral("editorPanel"));
         press(Qt::Key_F6);
@@ -161,26 +160,32 @@ private slots:
 
     void focusReturnsToWhereItWasInAPanel()
     {
-        workspace.add("episode.ass");
-        shell->refresh(&target, nullptr);
-        item("styleField")->forceActiveFocus();
+        QVERIFY(application->openFile(episode));
+        item("showTags")->forceActiveFocus();
         press(Qt::Key_F6); // to the Grid
         QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
         press(Qt::Key_F6, Qt::ShiftModifier); // back to the editor
-        QVERIFY(item("styleField")->hasActiveFocus());
+        QVERIFY(item("showTags")->hasActiveFocus());
         press(Qt::Key_F6);
         QVERIFY(item("editingGrid")->hasActiveFocus());
     }
 
-    void gridActivationShowsTheLineReadOnly()
+    void gridActivationShowsTheLineInTheEditor()
     {
-        workspace.add("episode.ass");
-        shell->refresh(&target, nullptr);
+        QVERIFY(application->openFile(episode));
         auto *grid = item("editingGrid");
         grid->forceActiveFocus();
         press(Qt::Key_Down); // keyboard navigation asks for the next Line
         QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
-        QCOMPARE(item<QObject>("styleField")->property("text").toString(), QStringLiteral("Sign"));
+        QCOMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("0:00:01.00"));
+        QVERIFY(!item<QObject>("lineText")->property("readOnly").toBool());
+    }
+
+    void theReferenceIsNeverEdited()
+    {
+        QVERIFY(application->openReference(original)); // the only Document is protected
+        QVERIFY(!application->workspace().editingTarget());
+        QVERIFY(!application->editor().editable());
         QVERIFY(item<QObject>("lineText")->property("readOnly").toBool());
     }
 };

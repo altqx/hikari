@@ -25,6 +25,9 @@ class Workspace {
 public:
     // Adds a Document; the first one becomes the editing target.
     DocumentId add(std::string title);
+    // Adds a Document that already has an identity (from DocumentFiles). As
+    // the protected reference it never becomes the editing target.
+    bool add(DocumentId id, std::string title, bool asReference = false);
     // Removes a Document. Removing the editing target hands it to the first
     // remaining unprotected Document, if any.
     bool remove(DocumentId id);

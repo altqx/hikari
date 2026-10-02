@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Hikari.Ui
 
 // Classic shell (V1-S): menus across the top, video left, audio above the
@@ -17,6 +18,8 @@ ApplicationWindow {
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
 
     required property ShellController shell
+    required property LineEditorController editor
+    required property var app
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel]
@@ -49,10 +52,43 @@ ApplicationWindow {
     }
 
     // Classic menus. Commands join through the shared action system as their
-    // cards land; nothing here edits a Document yet.
+    // cards land.
     menuBar: MenuBar {
-        Menu { title: qsTr("&File") }
-        Menu { title: qsTr("&Edit") }
+        MenuBarItem {
+            objectName: "fileMenuBarItem"
+            menu: Menu {
+                title: qsTr("&File")
+                MenuItem {
+                    action: Action {
+                        text: qsTr("&Open…")
+                        shortcut: StandardKey.Open
+                        onTriggered: openDialog.open()
+                    }
+                }
+                MenuItem {
+                    objectName: "saveMenuItem"
+                    action: Action {
+                        text: qsTr("&Save")
+                        shortcut: StandardKey.Save
+                        enabled: root.editor.editable
+                        onTriggered: root.editor.save()
+                    }
+                }
+            }
+        }
+        Menu {
+            title: qsTr("&Edit")
+            Action {
+                text: qsTr("&Undo")
+                enabled: root.editor.hasLine
+                onTriggered: root.editor.undo()
+            }
+            Action {
+                text: qsTr("&Redo")
+                enabled: root.editor.hasLine
+                onTriggered: root.editor.redo()
+            }
+        }
         Menu { title: qsTr("&View") }
         Menu { title: qsTr("&Help") }
     }
@@ -132,24 +168,127 @@ ApplicationWindow {
                     SplitView.fillHeight: true
                     ColumnLayout {
                         anchors.fill: parent
-                        TextField {
-                            id: styleField
-                            objectName: "styleField"
-                            readOnly: true
-                            text: shell.activeLineStyle
-                            Accessible.name: qsTr("Style")
+
+                        // Local inspector: timing and margins of the active Line.
+                        RowLayout {
                             Layout.fillWidth: true
+                            component Field: TextField {
+                                property string value
+                                text: value
+                                enabled: root.editor.editable
+                                selectByMouse: true
+                                Layout.preferredWidth: 90
+                                onValueChanged: text = value
+                            }
+                            Field {
+                                objectName: "startField"
+                                value: root.editor.startText
+                                Accessible.name: qsTr("Start")
+                                onEditingFinished: root.editor.setStartText(text)
+                            }
+                            Field {
+                                objectName: "endField"
+                                value: root.editor.endText
+                                Accessible.name: qsTr("End")
+                                onEditingFinished: root.editor.setEndText(text)
+                            }
+                            Field {
+                                objectName: "marginLeftField"
+                                value: root.editor.marginLeftText
+                                Layout.preferredWidth: 50
+                                Accessible.name: qsTr("Left margin")
+                                onEditingFinished: root.editor.setMarginText(0, text)
+                            }
+                            Field {
+                                objectName: "marginRightField"
+                                value: root.editor.marginRightText
+                                Layout.preferredWidth: 50
+                                Accessible.name: qsTr("Right margin")
+                                onEditingFinished: root.editor.setMarginText(1, text)
+                            }
+                            Field {
+                                objectName: "marginVerticalField"
+                                value: root.editor.marginVerticalText
+                                Layout.preferredWidth: 50
+                                Accessible.name: qsTr("Vertical margin")
+                                onEditingFinished: root.editor.setMarginText(2, text)
+                            }
+                            CheckBox {
+                                objectName: "showTags"
+                                text: qsTr("Show tags")
+                                checked: root.editor.showTags
+                                onToggled: root.editor.showTags = checked
+                            }
                         }
+
                         TextArea {
                             id: lineText
                             objectName: "lineText"
                             focus: true
-                            readOnly: true
-                            text: shell.activeLineText
+                            readOnly: !root.editor.editable
                             wrapMode: TextEdit.Wrap
+                            selectByMouse: true
                             Accessible.name: qsTr("Line text")
                             Layout.fillWidth: true
                             Layout.fillHeight: true
+
+                            // The field mirrors the editor's projection. User
+                            // changes go to the controller, which maps them onto
+                            // the raw source; programmatic updates are not edits.
+                            property bool syncing: false
+                            function sync() {
+                                if (text === root.editor.text)
+                                    return
+                                syncing = true
+                                const caret = cursorPosition
+                                text = root.editor.text
+                                cursorPosition = Math.min(caret, length)
+                                syncing = false
+                            }
+                            Component.onCompleted: sync()
+                            onTextChanged: {
+                                if (!syncing)
+                                    Qt.callLater(() => { if (!lineText.syncing) root.editor.textEdited(lineText.text, lineText.cursorPosition) })
+                            }
+                            Connections {
+                                target: root.editor
+                                function onChanged() { lineText.sync() }
+                            }
+                            Keys.onPressed: event => {
+                                const ctrl = event.modifiers & Qt.ControlModifier
+                                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                        && !(event.modifiers & Qt.ShiftModifier) && !lineText.inputMethodComposing) {
+                                    root.editor.commitAndAdvance()
+                                    event.accepted = true
+                                } else if (event.key === Qt.Key_Escape) {
+                                    root.editor.discard()
+                                    event.accepted = true
+                                } else if (ctrl && event.key === Qt.Key_Z && !(event.modifiers & Qt.ShiftModifier)) {
+                                    root.editor.undo()
+                                    event.accepted = true
+                                } else if (ctrl && (event.key === Qt.Key_Y
+                                                    || (event.key === Qt.Key_Z && (event.modifiers & Qt.ShiftModifier)))) {
+                                    root.editor.redo()
+                                    event.accepted = true
+                                }
+                            }
+                        }
+
+                        Label {
+                            objectName: "editorProblem"
+                            visible: text.length > 0
+                            text: root.editor.problem
+                            color: "firebrick"
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                            Accessible.role: Accessible.AlertMessage
+                        }
+                        Label {
+                            objectName: "editorAttempted"
+                            visible: root.editor.attempted.length > 0
+                            text: qsTr("Not applied: %1").arg(root.editor.attempted)
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
                         }
                     }
                 }
@@ -168,7 +307,14 @@ ApplicationWindow {
                 anchors.fill: parent
                 focus: true
                 model: shell.lines
-                onActiveLineRequested: id => shell.activateLine(id)
+                onActiveLineRequested: id => {
+                    if (root.editor.showLine(id))
+                        root.shell.selectLine(id)
+                }
+                Connections {
+                    target: root.editor
+                    function onLineChanged(id) { root.shell.selectLine(id) }
+                }
             }
         }
 
@@ -187,10 +333,25 @@ ApplicationWindow {
         }
     }
 
-    footer: Label {
-        objectName: "statusTargets"
-        padding: 4
-        text: (shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No editing target"))
-              + (shell.hasReference ? qsTr("  |  Reference (protected): %1").arg(shell.referenceTitle) : "")
+    footer: RowLayout {
+        Label {
+            objectName: "statusTargets"
+            padding: 4
+            text: (shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No editing target"))
+                  + (shell.hasReference ? qsTr("  |  Reference (protected): %1").arg(shell.referenceTitle) : "")
+            Layout.fillWidth: true
+        }
+        Label {
+            objectName: "saveStatus"
+            padding: 4
+            text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
+                  ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
+        }
+    }
+
+    FileDialog {
+        id: openDialog
+        nameFilters: [qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTr("All files (*)")]
+        onAccepted: root.app.openFile(selectedFile.toString().replace(/^file:\/\//, ""))
     }
 }

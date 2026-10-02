@@ -45,6 +45,8 @@ public:
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
+    // Marks a Line active and selected in the editing target's Grid.
+    Q_INVOKABLE void selectLine(qulonglong id);
 
 signals:
     void targetsChanged();
