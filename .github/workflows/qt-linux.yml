@@ -27,6 +27,7 @@ on:
       - tests/modules/**
       - tests/core/**
       - tests/application/**
+      - tests/backends/**
       - tests/ui/**
       - tests/fixtures/**
       - docs/qt/fixtures/**
