@@ -13,3 +13,7 @@ add_test(NAME perf.ui
     COMMAND hikari_ui_perf "${CMAKE_BINARY_DIR}/perf-report-ui.json"
             "${CMAKE_CURRENT_SOURCE_DIR}/reference-hosts.json")
 set_tests_properties(perf.ui PROPERTIES LABELS perf TIMEOUT 600 RUN_SERIAL TRUE ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
+# Ordinary (non-perf) self-checks for the harness itself.
+hikari_add_gtest(hikari_perf_harness_tests SOURCES harness_tests.cpp
+    LIBRARIES hikari_perf_harness LABELS control)

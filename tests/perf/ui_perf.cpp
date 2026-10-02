@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     QImage frame(1280, 720, QImage::Format_ARGB32_Premultiplied);
     double y = 0;
     std::vector<perf::BenchmarkResult> results;
-    results.push_back(perf::run({"ui.grid_paint.50k_lines.1280x720", 5, 200, std::chrono::milliseconds(500), [&] {
+    results.push_back(perf::run({"ui.grid_paint.50k_lines.1280x720", 5, 200, perf::kWarmWarmup, [&] {
         y = y > 900'000 ? 0 : y + 4'321;
         grid.setContentY(y);
         QPainter painter(&frame);

@@ -5,6 +5,7 @@
 #include <fstream>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
 #include <thread>
 
 #if defined(__linux__)
@@ -24,7 +25,11 @@ double nearestRank(const std::vector<double> &sorted, double p)
 BenchmarkResult run(const BenchmarkSpec &spec)
 {
     using clock = std::chrono::steady_clock;
-    BenchmarkResult result{spec.name, {}, 0};
+    if (spec.runs < 1 || static_cast<std::size_t>(spec.runs) * spec.operationsPerRun < kMinimumOperations)
+        throw std::invalid_argument(spec.name + ": fewer than 1,000 timed operations");
+    if (spec.warmup < kWarmWarmup)
+        throw std::invalid_argument(spec.name + ": warm workloads need ten seconds of warmup");
+    BenchmarkResult result{spec.name, spec.warmup, {}, 0};
     if (spec.warmup.count() > 0) {
         const auto until = clock::now() + spec.warmup;
         while (clock::now() < until)
@@ -128,7 +133,8 @@ bool writeReport(const std::string &path, const HostIdentity &host, bool calibra
         << "\",\n \"benchmarks\": [\n";
     for (std::size_t b = 0; b < results.size(); ++b) {
         const auto &r = results[b];
-        out << "  {\"name\": \"" << escape(r.name) << "\", \"p95SpreadPercent\": " << r.p95SpreadPercent
+        out << "  {\"name\": \"" << escape(r.name) << "\", \"warmupMs\": " << r.warmup.count()
+            << ", \"p95SpreadPercent\": " << r.p95SpreadPercent
             << ", \"runs\": [";
         for (std::size_t i = 0; i < r.runs.size(); ++i) {
             const auto &s = r.runs[i];

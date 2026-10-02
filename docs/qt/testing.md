@@ -101,4 +101,6 @@ The controls avoid host fonts. QML uses shapes only. libass, which needs one fon
 
 A host counts as calibrated only when its fingerprint is listed in `tests/perf/reference-hosts.json`, which is empty until reference hosts are bound. Results from any other host are labelled observations, never budget passes. Perf tests carry the `perf` label: the `*-verify` presets exclude them, and `ctest --preset <platform>-x64-perf` runs them. The Ubuntu CI job runs them and keeps `perf-report-core.json`.
 
-First workloads: loading a generated 50,000-Line ASS script (5×4 samples, the G fixture size), and NTSC `frameAtOrAfter` lookups (5×2,000).
+The harness enforces the contract minimums for warm latency workloads: ten seconds of warmup and at least 1,000 timed operations. A spec below either one throws before it runs, and a `control` self-test checks this with the ordinary tests. Each report records the warmup used. Without the warmup, the first run of the ASS-load workload was about twice as slow as the rest (a 98% p95 spread on the Ubuntu runner).
+
+First workloads, each 5×200 operations: loading a generated 50,000-Line ASS script (the G fixture size), NTSC `frameAtOrAfter` lookups timed in batches of 1,000 because one lookup is close to the clock's resolution, and painting the Grid over 50,000 Lines at 1280×720. The Ubuntu CI job keeps both `perf-report-core.json` and `perf-report-ui.json`.

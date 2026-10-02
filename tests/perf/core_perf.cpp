@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     const auto script = generateScript(50'000);
     std::vector<perf::BenchmarkResult> results;
 
-    results.push_back(perf::run({"core.ass_load.50k_lines", 5, 4, {}, [&] {
+    results.push_back(perf::run({"core.ass_load.50k_lines", 5, 200, perf::kWarmWarmup, [&] {
         const auto r = core::loadAss(script);
         if (r.document.lines().size() != 50'000)
             std::abort();
@@ -55,10 +55,14 @@ int main(int argc, char **argv)
 
     const auto timeline = core::FrameTimeline::constantRate(*core::FrameRate::make(24000, 1001), core::DocumentTime(0));
     std::int64_t t = 0;
-    results.push_back(perf::run({"core.frame_lookup.ntsc", 5, 2'000, {}, [&] {
-        t = (t + 41'711) % 3'600'000'000;
-        if (!timeline.frameAtOrAfter(core::DocumentTime(t)))
-            std::abort();
+    // One lookup is near the clock's resolution, so one timed operation is a
+    // batch of 1,000 lookups.
+    results.push_back(perf::run({"core.frame_lookup.ntsc.x1000", 5, 200, perf::kWarmWarmup, [&] {
+        for (int i = 0; i < 1'000; ++i) {
+            t = (t + 41'711) % 3'600'000'000;
+            if (!timeline.frameAtOrAfter(core::DocumentTime(t)))
+                std::abort();
+        }
     }}));
 
     const auto host = perf::currentHost();
