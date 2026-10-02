@@ -81,8 +81,8 @@ add_dependencies(hikari_backends_general_player_tests hikari_media_helper hikari
 # deterministic.
 set(HIKARI_FONT_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/font-fixtures")
 add_custom_command(OUTPUT "${HIKARI_FONT_FIXTURE_DIR}/base.ttf"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_FONT_FIXTURE_DIR}"
-    COMMAND hikari_font_fixture "${HIKARI_FONT_FIXTURE_DIR}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_FONT_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
+    COMMAND hikari_font_fixture "${HIKARI_FONT_FIXTURE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
     DEPENDS hikari_font_fixture
     COMMENT "Generating font fixtures")
 add_custom_target(hikari_font_fixtures ALL DEPENDS "${HIKARI_FONT_FIXTURE_DIR}/base.ttf")
@@ -95,6 +95,7 @@ file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf"
   <dir>${HIKARI_FONT_FIXTURE_DIR}</dir>
   <dir>${HIKARI_QT_EXAMPLE_FONTS}/quick/advancedtext/fonts</dir>
   <dir>${HIKARI_QT_EXAMPLE_FONTS}/quickcontrols/wearable/WearableStyle/fonts</dir>
+  <dir>${CMAKE_CURRENT_BINARY_DIR}/font-refresh</dir>
   <cachedir>${CMAKE_CURRENT_BINARY_DIR}/font-fixtures-cache</cachedir>
 </fontconfig>
 ")
@@ -144,3 +145,16 @@ target_compile_definitions(hikari_backends_transport_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_transport_tests hikari_media_helper hikari_media_fixtures)
+
+# I5: whole-document collection, reimport, refresh, concurrency and the
+# multilingual corpus. font-refresh starts empty; the refresh test copies a
+# font into it and removes it again.
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
+hikari_add_gtest(hikari_backends_font_collection_tests SOURCES font_collection_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends
+    PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
+target_compile_definitions(hikari_backends_font_collection_tests PRIVATE
+    HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_FONT_REFRESH_SOURCE="${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
+    HIKARI_FONT_REFRESH_DIR="${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
+add_dependencies(hikari_backends_font_collection_tests hikari_font_fixtures)

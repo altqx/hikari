@@ -2,11 +2,13 @@
 
 #include <QCryptographicHash>
 #include <QFile>
+#include <QFileInfo>
 
 #include <algorithm>
 #include <cctype>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
 #include <map>
 
 extern "C" {
@@ -103,11 +105,61 @@ void readNames(const std::vector<unsigned char> &bytes, long index, const std::s
 }
 
 struct State {
-    FontReport report;
+    FontReport report;     // faces live here in both modes
     std::size_t current = 0;
-    std::map<int, std::size_t> uidToFace; // per request: the renderer's selector-local ids
+    std::map<int, std::size_t> uidToFace; // the renderer's selector-local ids
     std::vector<std::pair<std::string, std::string>> attachments; // name, sha256
+    application::FontCollection *collection = nullptr; // set while collecting a document
 };
+
+std::string codeName(std::uint32_t code)
+{
+    char text[16];
+    std::snprintf(text, sizeof text, "U+%04X", unsigned(code));
+    return text;
+}
+
+template <typename T> void addUnique(std::vector<T> &list, const T &value)
+{
+    if (std::find(list.begin(), list.end(), value) == list.end())
+        list.push_back(value);
+}
+
+// Collection mode: one entry per distinct byte stream, with its faces and roles.
+void collectFace(State &st, const ResolvedFace &face, const std::vector<unsigned char> &bytes)
+{
+    auto &c = *st.collection;
+    if (face.stage != SelectionStage::Requested && face.code == 0 && !face.requestedFamily.empty())
+        addUnique(c.missingFamilies, face.requestedFamily);
+    if (face.stage == SelectionStage::Requested && face.code == 0 && face.nameMatch == NameMatch::None)
+        addUnique(c.substitutedFamilies, face.requestedFamily);
+    if (face.stage == SelectionStage::Fallback && face.code != 0)
+        addUnique(c.fallbackGlyphs, face.code);
+    if (face.sha256.empty())
+        return;
+    auto it = std::find_if(c.fonts.begin(), c.fonts.end(),
+                           [&](const application::CollectedFont &f) { return f.sha256 == face.sha256; });
+    if (it == c.fonts.end()) {
+        application::CollectedFont font;
+        font.sha256 = face.sha256;
+        auto copy = std::make_shared<std::vector<std::byte>>(bytes.size());
+        std::memcpy(copy->data(), bytes.data(), bytes.size());
+        font.bytes = std::move(copy);
+        font.attachment = face.attachment;
+        font.path = face.path;
+        font.name = !face.attachment.empty() ? face.attachment
+                    : !face.path.empty()      ? QFileInfo(QString::fromStdString(face.path)).fileName().toStdString()
+                                              : face.postscriptName + ".font";
+        c.fonts.push_back(std::move(font));
+        it = std::prev(c.fonts.end());
+    }
+    switch (face.stage) {
+    case SelectionStage::Requested: addUnique(it->roles, "requested " + face.requestedFamily); break;
+    case SelectionStage::DefaultFamily: addUnique(it->roles, std::string("default family")); break;
+    case SelectionStage::Fallback: addUnique(it->roles, "fallback " + codeName(face.code)); break;
+    case SelectionStage::DefaultPath: addUnique(it->roles, std::string("default path")); break;
+    }
+}
 
 SelectionStage stageOf(ASS_HikariFontStage s)
 {
@@ -122,7 +174,6 @@ SelectionStage stageOf(ASS_HikariFontStage s)
 void onSelected(void *data, const ASS_HikariFontSelection *s)
 {
     auto &st = *static_cast<State *>(data);
-    auto &request = st.report.requests[st.current];
     if (s->uid >= 0 && st.uidToFace.contains(s->uid))
         return; // the same face again (libass then skips it too)
     ResolvedFace face;
@@ -158,15 +209,23 @@ void onSelected(void *data, const ASS_HikariFontSelection *s)
             face.attachment = name;
             break;
         }
+    if (st.collection)
+        collectFace(st, face, bytes);
     const std::size_t index = st.report.faces.size();
     st.report.faces.push_back(std::move(face));
     if (s->uid >= 0)
         st.uidToFace[s->uid] = index;
+    if (st.collection)
+        return;
+    auto &request = st.report.requests[st.current];
     request.faces.push_back(index);
-    if (s->stage == ASS_HIKARI_FONT_REQUESTED)
-        request.requestedFamilyFound = true;
-    else
+    const auto &added = st.report.faces[index];
+    if (s->stage != ASS_HIKARI_FONT_REQUESTED)
         request.usedFallback = true;
+    else if (added.nameMatch == NameMatch::None)
+        request.substituted = true; // the provider answered with a face of other names
+    else
+        request.requestedFamilyFound = true;
 }
 
 void onFaceOpened(void *data, int uid, long faceIndex, long numFaces, const char *postscript, int nCoords,
@@ -182,6 +241,10 @@ void onFaceOpened(void *data, int uid, long faceIndex, long numFaces, const char
     if (postscript && face.postscriptName.empty())
         face.postscriptName = postscript;
     face.coords.assign(coords, coords + nCoords);
+    if (st.collection && !face.sha256.empty())
+        for (auto &font : st.collection->fonts)
+            if (font.sha256 == face.sha256)
+                addUnique(font.faces, faceIndex);
 }
 
 void onGlyphSimulated(void *data, int uid, unsigned, int embolden, int italicize)
@@ -197,6 +260,10 @@ void onGlyphSimulated(void *data, int uid, unsigned, int embolden, int italicize
 void onGlyphMissing(void *data, uint32_t code, const char *, unsigned, unsigned)
 {
     auto &st = *static_cast<State *>(data);
+    if (st.collection) {
+        addUnique(st.collection->missingGlyphs, code);
+        return;
+    }
     auto &missing = st.report.requests[st.current].missingGlyphs;
     if (std::find(missing.begin(), missing.end(), code) == missing.end())
         missing.push_back(code);
@@ -258,7 +325,7 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
 
     for (std::size_t i = 0; i < requests.size(); ++i) {
         const auto &request = requests[i];
-        state.report.requests.push_back({request, {}, false, false, {}});
+        state.report.requests.push_back({request, {}, false, false, false, {}});
         state.current = i;
         state.uidToFace.clear();
         // A fresh renderer: its font cache and selector know nothing yet.
@@ -409,6 +476,144 @@ std::vector<SystemFace> LibassFontService::systemFaces()
     FcPatternDestroy(pattern);
 #endif
     return out;
+}
+
+namespace {
+
+constexpr int kFrameWidth = 640, kFrameHeight = 360;
+
+// Composites one libass frame onto transparent black and hashes it.
+std::string frameHash(ASS_Image *image)
+{
+    std::vector<unsigned char> rgba(std::size_t(kFrameWidth) * kFrameHeight * 4, 0);
+    for (; image; image = image->next) {
+        const unsigned r = image->color >> 24, g = (image->color >> 16) & 0xff, b = (image->color >> 8) & 0xff;
+        const unsigned opacity = 255 - (image->color & 0xff);
+        for (int y = 0; y < image->h; ++y) {
+            const int dy = image->dst_y + y;
+            if (dy < 0 || dy >= kFrameHeight)
+                continue;
+            for (int x = 0; x < image->w; ++x) {
+                const int dx = image->dst_x + x;
+                if (dx < 0 || dx >= kFrameWidth)
+                    continue;
+                const unsigned a = image->bitmap[y * image->stride + x] * opacity / 255;
+                unsigned char *p = &rgba[(std::size_t(dy) * kFrameWidth + dx) * 4];
+                p[0] = static_cast<unsigned char>((r * a + p[0] * (255 - a)) / 255);
+                p[1] = static_cast<unsigned char>((g * a + p[1] * (255 - a)) / 255);
+                p[2] = static_cast<unsigned char>((b * a + p[2] * (255 - a)) / 255);
+                p[3] = static_cast<unsigned char>(a + p[3] * (255 - a) / 255);
+            }
+        }
+    }
+    return sha256(rgba);
+}
+
+struct Rendering {
+    std::vector<std::int64_t> times;
+    std::vector<std::string> hashes;
+};
+
+// Renders `script` at every event's midpoint in one renderer; false when
+// cancelled. Diagnostics, if installed on `library`, see every selection.
+std::expected<Rendering, FontError> renderDocument(ASS_Library *library, const std::vector<std::byte> &script,
+                                                   const application::FontEnvironment &environment,
+                                                   const std::atomic<bool> *cancel)
+{
+    for (const auto &a : environment.attachments)
+        if (a.bytes)
+            ass_add_font(library, a.name.c_str(), reinterpret_cast<const char *>(a.bytes->data()),
+                         int(a.bytes->size()));
+    ASS_Renderer *renderer = ass_renderer_init(library);
+    if (!renderer)
+        return std::unexpected(FontError::RendererUnavailable);
+    ass_set_frame_size(renderer, kFrameWidth, kFrameHeight);
+    ass_set_fonts(renderer, nullptr, environment.defaultFamily.empty() ? nullptr : environment.defaultFamily.c_str(),
+                  environment.systemFonts ? ASS_FONTPROVIDER_AUTODETECT : ASS_FONTPROVIDER_NONE, nullptr, 1);
+    std::vector<char> buffer(reinterpret_cast<const char *>(script.data()),
+                             reinterpret_cast<const char *>(script.data()) + script.size());
+    ASS_Track *track = ass_read_memory(library, buffer.data(), buffer.size(), nullptr);
+    if (!track) {
+        ass_renderer_done(renderer);
+        return std::unexpected(FontError::InvalidInput);
+    }
+    Rendering out;
+    for (int i = 0; i < track->n_events; ++i)
+        out.times.push_back(track->events[i].Start + track->events[i].Duration / 2);
+    std::sort(out.times.begin(), out.times.end());
+    out.times.erase(std::unique(out.times.begin(), out.times.end()), out.times.end());
+    for (const std::int64_t t : out.times) {
+        if (cancel && cancel->load()) {
+            ass_free_track(track);
+            ass_renderer_done(renderer);
+            return std::unexpected(FontError::Cancelled);
+        }
+        int changed = 0;
+        out.hashes.push_back(frameHash(ass_render_frame(renderer, track, t, &changed)));
+    }
+    ass_free_track(track);
+    ass_renderer_done(renderer);
+    return out;
+}
+
+} // namespace
+
+std::expected<application::FontCollection, FontError>
+LibassFontService::collect(const std::vector<std::byte> &script, const application::FontEnvironment &environment,
+                           const std::atomic<bool> *cancel)
+{
+    ASS_Library *library = ass_library_init();
+    if (!library)
+        return std::unexpected(FontError::RendererUnavailable);
+    application::FontCollection collection;
+    collection.generation = environment.generation;
+    State state;
+    state.collection = &collection;
+    state.report.provider = environment.systemFonts ? "" : "none";
+    ass_set_message_cb(library, onMessage, &state);
+    const ASS_HikariFontDiagnostics callbacks{ASS_HIKARI_FONT_DIAGNOSTICS_VERSION, onSelected, onFaceOpened,
+                                              onGlyphSimulated, onGlyphMissing};
+    ass_hikari_set_font_diagnostics(library, &callbacks, &state);
+    for (const auto &a : environment.attachments) {
+        if (!a.bytes)
+            continue;
+        std::vector<unsigned char> copy(reinterpret_cast<const unsigned char *>(a.bytes->data()),
+                                        reinterpret_cast<const unsigned char *>(a.bytes->data()) + a.bytes->size());
+        state.attachments.emplace_back(a.name, sha256(copy));
+    }
+    auto rendering = renderDocument(library, script, environment, cancel);
+    ass_library_done(library);
+    if (!rendering)
+        return std::unexpected(rendering.error());
+    collection.provider = state.report.provider;
+    collection.selections = std::move(state.report.faces);
+    collection.frameTimesMs = std::move(rendering->times);
+    collection.frameHashes = std::move(rendering->hashes);
+    return collection;
+}
+
+std::expected<application::ReimportCheck, FontError>
+LibassFontService::verifyReimport(const std::vector<std::byte> &script, const application::FontCollection &collection,
+                                  const std::string &defaultFamily)
+{
+    application::FontEnvironment clean;
+    clean.systemFonts = false;
+    clean.defaultFamily = defaultFamily;
+    for (const auto &font : collection.fonts)
+        clean.attachments.push_back({font.name, font.bytes});
+    ASS_Library *library = ass_library_init();
+    if (!library)
+        return std::unexpected(FontError::RendererUnavailable);
+    auto rendering = renderDocument(library, script, clean, nullptr);
+    ass_library_done(library);
+    if (!rendering)
+        return std::unexpected(rendering.error());
+    application::ReimportCheck check;
+    for (std::size_t i = 0; i < rendering->hashes.size() && i < collection.frameHashes.size(); ++i)
+        if (rendering->hashes[i] != collection.frameHashes[i])
+            check.differingFrames.push_back(i);
+    check.identical = check.differingFrames.empty() && rendering->hashes.size() == collection.frameHashes.size();
+    return check;
 }
 
 } // namespace hikari::backends

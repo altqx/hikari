@@ -17,6 +17,12 @@ public:
     resolve(const application::FontEnvironment &environment,
             const std::vector<application::FontRequest> &requests) override;
     std::vector<application::SystemFace> systemFaces() override;
+    std::expected<application::FontCollection, application::FontError>
+    collect(const std::vector<std::byte> &script, const application::FontEnvironment &environment,
+            const std::atomic<bool> *cancel = nullptr) override;
+    std::expected<application::ReimportCheck, application::FontError>
+    verifyReimport(const std::vector<std::byte> &script, const application::FontCollection &collection,
+                   const std::string &defaultFamily = {}) override;
 };
 
 } // namespace hikari::backends

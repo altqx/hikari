@@ -8,6 +8,7 @@
 // Authored names stay as written; requested and resolved identities are kept
 // apart, and anything unresolved is reported, never counted as complete.
 
+#include <atomic>
 #include <cstdint>
 #include <expected>
 #include <memory>
@@ -70,10 +71,11 @@ struct ResolvedFace {
 struct RequestReport {
     FontRequest request;
     std::vector<std::size_t> faces;          // indices into FontReport::faces
-    bool requestedFamilyFound = false;       // a Requested-stage base face
+    bool requestedFamilyFound = false;       // a face answering to the requested name
+    bool substituted = false;                // the provider substituted a face with other names
     bool usedFallback = false;               // any face from a later stage
     std::vector<std::uint32_t> missingGlyphs;
-    bool captured() const { return requestedFamilyFound && !usedFallback && missingGlyphs.empty(); }
+    bool captured() const { return requestedFamilyFound && !substituted && !usedFallback && missingGlyphs.empty(); }
 };
 
 struct FontReport {
@@ -103,7 +105,46 @@ struct SystemFace {
     bool italic = false;
 };
 
-enum class FontError { RendererUnavailable, InvalidInput };
+// The fonts a whole document actually used (I5, F47-corpus), gathered from the
+// renderer's own selections across every style and inline change. Fallback-
+// dependent characters are reported, not promised: a clean reimport cannot
+// recreate the host's fallback resolver.
+struct CollectedFont {
+    std::string sha256;
+    std::shared_ptr<const std::vector<std::byte>> bytes;
+    std::string name;              // an attachment name, or the file name it came from
+    std::string attachment;        // set when it came from the document's attachments
+    std::string path;              // set when the provider named a file
+    std::vector<long> faces;       // collection faces used (named-instance bits included)
+    std::vector<std::string> roles; // "requested <family>", "default family", "fallback U+XXXX"
+};
+
+struct FontCollection {
+    std::uint64_t generation = 0;
+    std::string provider;
+    std::vector<CollectedFont> fonts;
+    std::vector<ResolvedFace> selections;     // every selection, in rendering order
+    std::vector<std::string> missingFamilies;  // requested families the renderer never found
+    // Requested families the provider answered with a face of other names (an
+    // alias such as sans-serif, or its best match for an absent family).
+    std::vector<std::string> substitutedFamilies;
+    std::vector<std::uint32_t> missingGlyphs;  // characters no face had
+    std::vector<std::uint32_t> fallbackGlyphs; // characters drawn by a fallback face
+    std::vector<std::string> frameHashes;      // the rendered frames, one per sampled time
+    std::vector<std::int64_t> frameTimesMs;
+    bool complete() const
+    {
+        return missingFamilies.empty() && substitutedFamilies.empty() && missingGlyphs.empty() &&
+               fallbackGlyphs.empty();
+    }
+};
+
+struct ReimportCheck {
+    bool identical = false;
+    std::vector<std::size_t> differingFrames; // indices into FontCollection::frameTimesMs
+};
+
+enum class FontError { RendererUnavailable, InvalidInput, Cancelled };
 
 class FontServicePort {
 public:
@@ -111,6 +152,16 @@ public:
     virtual std::expected<FontReport, FontError> resolve(const FontEnvironment &environment,
                                                          const std::vector<FontRequest> &requests) = 0;
     virtual std::vector<SystemFace> systemFaces() = 0;
+    // Renders `script` at each event's midpoint and gathers what was used.
+    // `cancel`, when set during the work, ends it with Cancelled.
+    virtual std::expected<FontCollection, FontError> collect(const std::vector<std::byte> &script,
+                                                             const FontEnvironment &environment,
+                                                             const std::atomic<bool> *cancel = nullptr) = 0;
+    // Renders the same frames in a clean environment that holds only the
+    // collected fonts (no system provider) and compares them.
+    virtual std::expected<ReimportCheck, FontError> verifyReimport(const std::vector<std::byte> &script,
+                                                                   const FontCollection &collection,
+                                                                   const std::string &defaultFamily = {}) = 0;
 };
 
 } // namespace hikari::application

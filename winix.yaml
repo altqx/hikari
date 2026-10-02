@@ -54,7 +54,7 @@ tasks:
     timeoutSeconds: 300
   fonts:
     # Font identity (N4) through DirectWrite, verbose for the provider line.
-    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity)[.]" -V
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection)[.]" -V
     timeoutSeconds: 600
   packaging:
     # Helper package manifests (I6), verbose so the closure is recorded.

@@ -4,7 +4,11 @@
 // The generated fonts are dedicated to the public domain (CC0-1.0). They test
 // identity and coverage decisions, not credible shaping.
 //
-//   hikari_font_fixture <directory>
+//   hikari_font_fixture <directory> [<refresh directory>]
+//
+// The optional second directory receives refresh.ttf (family
+// HikariProbeRefresh), kept out of the fontconfig-visible fixture directory
+// so a test can make it appear later.
 
 #include <algorithm>
 #include <cstdint>
@@ -89,7 +93,9 @@ Bytes font(const FontSpec &spec)
     chars.erase(std::unique(chars.begin(), chars.end()), chars.end());
     const int width = spec.width;
 
-    // Glyph 0 is empty; glyph 1 is one original four-point rectangle.
+    // Glyph 0 is .notdef and glyph 2 the space, both empty; glyph 1 is one
+    // original four-point rectangle. (Mapping space to .notdef would make a
+    // renderer look for a fallback space.)
     Writer glyph;
     glyph.i16(1).i16(0).i16(0).i16(std::int16_t(width)).i16(700);
     glyph.u16(3).u16(0).u8(1).u8(1).u8(1).u8(1);
@@ -102,9 +108,9 @@ Bytes font(const FontSpec &spec)
     head.i16(0).i16(0).i16(std::int16_t(width)).i16(700).u16(spec.weight >= 700 ? 1 : 0).u16(8).i16(2).i16(1).i16(0);
     Writer hhea;
     hhea.u32(0x10000).i16(800).i16(-200).i16(0).u16(std::uint16_t(width + 80)).i16(0).i16(0).i16(std::int16_t(width));
-    hhea.i16(1).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).u16(2);
+    hhea.i16(1).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).i16(0).u16(3);
     Writer maxp;
-    maxp.u32(0x10000).u16(2).u16(4).u16(1).u16(0).u16(0).u16(2); // version 1.0: 13 fields after numGlyphs
+    maxp.u32(0x10000).u16(3).u16(4).u16(1).u16(0).u16(0).u16(2); // version 1.0: 13 fields after numGlyphs
     for (int i = 0; i < 8; ++i)
         maxp.u16(0);
 
@@ -142,7 +148,7 @@ Bytes font(const FontSpec &spec)
     for (int c : codes)
         cmap4.u16(std::uint16_t(c));
     for (int c : codes)
-        cmap4.u16(c == 0xffff ? 1 : std::uint16_t(((c == 32 ? 0 : 1) - c) & 0xffff));
+        cmap4.u16(c == 0xffff ? 1 : std::uint16_t(((c == 32 ? 2 : 1) - c) & 0xffff));
     for (int i = 0; i < n; ++i)
         cmap4.u16(0);
     Writer cmap;
@@ -163,9 +169,9 @@ Bytes font(const FontSpec &spec)
     Writer post;
     post.u32(0x30000).u32(0).i16(-75).i16(50).u32(0).u32(0).u32(0).u32(0).u32(0);
     Writer hmtx;
-    hmtx.u16(std::uint16_t(width + 80)).i16(0).u16(std::uint16_t(width + 80)).i16(0);
+    hmtx.u16(std::uint16_t(width + 80)).i16(0).u16(std::uint16_t(width + 80)).i16(0).u16(std::uint16_t(width / 2)).i16(0);
     Writer loca;
-    loca.u32(0).u32(0).u32(std::uint32_t(glyph.out.size()));
+    loca.u32(0).u32(0).u32(std::uint32_t(glyph.out.size())).u32(std::uint32_t(glyph.out.size()));
 
     std::map<std::string, Bytes> tables = {{"head", head.out}, {"hhea", hhea.out}, {"maxp", maxp.out},
                                            {"hmtx", hmtx.out}, {"loca", loca.out}, {"glyf", glyph.out},
@@ -223,9 +229,16 @@ Bytes collection(const std::vector<Bytes> &fonts)
 
 int main(int argc, char **argv)
 {
-    if (argc != 2) {
-        std::fprintf(stderr, "usage: hikari_font_fixture <directory>\n");
+    if (argc != 2 && argc != 3) {
+        std::fprintf(stderr, "usage: hikari_font_fixture <directory> [<refresh directory>]\n");
         return 1;
+    }
+    if (argc == 3) {
+        const Bytes refresh = font({"HikariProbeRefresh", "HikariProbeRefresh-Regular", "", 460});
+        std::ofstream out(std::string(argv[2]) + "/refresh.ttf", std::ios::binary);
+        out.write(reinterpret_cast<const char *>(refresh.data()), std::streamsize(refresh.size()));
+        if (!out)
+            return 1;
     }
     const std::string dir = argv[1];
     const std::map<std::string, Bytes> fixtures = {
