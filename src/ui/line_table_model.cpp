@@ -184,4 +184,23 @@ int LineFilterModel::hiddenSelectedCount() const
     return hidden;
 }
 
+int LineFilterModel::nearestVisibleRow(core::LineId id) const
+{
+    if (!m_lines)
+        return -1;
+    const auto source = m_lines->rowOf(id);
+    if (!source)
+        return -1;
+    const int rows = m_lines->rowCount();
+    for (int distance = 0; distance < rows; ++distance)
+        for (int candidate : {*source + distance, *source - distance}) {
+            if (candidate < 0 || candidate >= rows)
+                continue;
+            const QModelIndex proxy = mapFromSource(m_lines->index(candidate, 0));
+            if (proxy.isValid())
+                return proxy.row();
+        }
+    return -1;
+}
+
 } // namespace hikari::ui

@@ -5,11 +5,14 @@
 // identity comes from the model's LineIdRole; painting never stores content.
 // Row commands, shell integration and accessibility are separate cards.
 
+#include "hikari/core/document.h"
+
 #include <QAbstractItemModel>
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
 
+#include <optional>
 #include <vector>
 
 namespace hikari::ui {
@@ -48,20 +51,45 @@ public:
     const GridGeometry &geometry() const { return m_geometry; }
 
     Q_INVOKABLE int rowAt(qreal y) const;
+
+    // Identity and state, resolved through a filter proxy when there is one.
+    std::optional<core::LineId> lineAtRow(int row) const;
+    int rowOfLine(core::LineId id) const;             // -1 when not shown
+    std::optional<core::LineId> activeLine() const;    // application state
+    int currentRow() const;                            // row of the active Line, or -1
+    int currentColumn() const { return m_currentColumn; }
+    bool isRowSelected(int row) const;
+    QList<int> shownSelectedRows() const;              // sorted rows of shown selected Lines
+    int selectedCount() const;                         // all selected Lines, shown or hidden
+    int hiddenSelectedCount() const;
+    QString cellText(int row, int column) const;
+    QString columnTitle(int column) const;
+    int columnCount() const;
+    QRectF cellRect(int row, int column) const;        // item coordinates
+    void scrollToRow(int row);
     // Rows painted by the last paint() call: evidence that only the viewport is drawn.
     int lastPaintedRowCount() const { return m_lastPainted; }
 
     void paint(QPainter *painter) override;
 
 signals:
+    // Keyboard navigation asks the application to move the active Line; the
+    // Grid never changes selection itself.
+    void activeLineRequested(qulonglong lineId);
     void modelChanged();
     void contentYChanged();
     void contentHeightChanged();
     void rowHeightChanged();
     void painted();
 
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+
 private:
     void modelLayoutChanged();
+    void stateChanged();
+    void announceState(bool activeMoved);
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
 
@@ -70,6 +98,10 @@ private:
     GridGeometry m_geometry;
     qreal m_contentY = 0;
     int m_lastPainted = 0;
+    int m_currentColumn = 5; // Text
+    std::optional<core::LineId> m_announcedActive;
+    int m_announcedSelected = 0;
+    int m_announcedHidden = 0;
 };
 
 } // namespace hikari::ui

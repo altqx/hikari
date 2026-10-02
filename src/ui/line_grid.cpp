@@ -1,8 +1,12 @@
 #include "line_grid.h"
 
+#include "line_grid_accessible.h"
 #include "line_table_model.h"
 
+#include <QAbstractProxyModel>
+#include <QAccessible>
 #include <QFontMetricsF>
+#include <QKeyEvent>
 #include <QPainter>
 
 #include <algorithm>
@@ -39,6 +43,9 @@ int GridGeometry::rowAt(double viewportY, double contentY, int rowCount) const
 LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
 {
     setOpaquePainting(true);
+    setActiveFocusOnTab(true);
+    setFlag(ItemIsFocusScope, false);
+    installGridAccessibility();
     updateRowHeight();
     connect(this, &QQuickItem::heightChanged, this, [this] { setContentY(m_contentY); });
 }
@@ -67,7 +74,12 @@ void LineGrid::setModel(QAbstractItemModel *model)
             connect(m_model, &QAbstractItemModel::rowsInserted, this, relayout),
             connect(m_model, &QAbstractItemModel::rowsRemoved, this, relayout),
             connect(m_model, &QAbstractItemModel::layoutChanged, this, relayout),
-            connect(m_model, &QAbstractItemModel::dataChanged, this, repaint),
+            connect(m_model, &QAbstractItemModel::dataChanged, this,
+                    [this, repaint](const QModelIndex &, const QModelIndex &, const QList<int> &roles) {
+                        repaint();
+                        if (roles.contains(LineTableModel::ActiveRole) || roles.contains(LineTableModel::SelectedRole))
+                            stateChanged();
+                    }),
         };
     }
     emit modelChanged();
@@ -79,6 +91,204 @@ void LineGrid::modelLayoutChanged()
     emit contentHeightChanged();
     setContentY(m_contentY);
     update();
+    stateChanged();
+}
+
+namespace {
+
+LineTableModel *sourceLines(QAbstractItemModel *model)
+{
+    if (auto *lines = qobject_cast<LineTableModel *>(model))
+        return lines;
+    if (auto *proxy = qobject_cast<QAbstractProxyModel *>(model))
+        return sourceLines(proxy->sourceModel());
+    return nullptr;
+}
+
+} // namespace
+
+std::optional<core::LineId> LineGrid::lineAtRow(int row) const
+{
+    if (!m_model || row < 0 || row >= m_model->rowCount())
+        return std::nullopt;
+    return core::LineId{m_model->index(row, 0).data(LineTableModel::LineIdRole).toULongLong()};
+}
+
+int LineGrid::rowOfLine(core::LineId id) const
+{
+    if (!m_model)
+        return -1;
+    if (auto *lines = qobject_cast<LineTableModel *>(m_model.data()))
+        return lines->rowOf(id).value_or(-1);
+    if (auto *filter = qobject_cast<LineFilterModel *>(m_model.data())) {
+        auto *lines = sourceLines(filter);
+        const auto source = lines ? lines->rowOf(id) : std::nullopt;
+        if (!source)
+            return -1;
+        return filter->mapFromSource(lines->index(*source, 0)).row();
+    }
+    for (int r = 0; r < m_model->rowCount(); ++r)
+        if (lineAtRow(r) == id)
+            return r;
+    return -1;
+}
+
+std::optional<core::LineId> LineGrid::activeLine() const
+{
+    auto *lines = sourceLines(m_model);
+    return lines ? lines->selection().active : std::nullopt;
+}
+
+int LineGrid::currentRow() const
+{
+    const auto active = activeLine();
+    return active ? rowOfLine(*active) : -1;
+}
+
+bool LineGrid::isRowSelected(int row) const
+{
+    return m_model && row >= 0 && row < m_model->rowCount() &&
+           m_model->index(row, 0).data(LineTableModel::SelectedRole).toBool();
+}
+
+QList<int> LineGrid::shownSelectedRows() const
+{
+    QList<int> rows;
+    if (auto *lines = sourceLines(m_model))
+        for (const auto &id : lines->selection().selected)
+            if (const int row = rowOfLine(id); row >= 0)
+                rows.append(row);
+    std::sort(rows.begin(), rows.end());
+    return rows;
+}
+
+int LineGrid::selectedCount() const
+{
+    auto *lines = sourceLines(m_model);
+    return lines ? static_cast<int>(lines->selection().selected.size()) : 0;
+}
+
+int LineGrid::hiddenSelectedCount() const
+{
+    if (auto *filter = qobject_cast<LineFilterModel *>(m_model.data()))
+        return filter->hiddenSelectedCount();
+    return 0;
+}
+
+QString LineGrid::cellText(int row, int column) const
+{
+    return m_model ? m_model->index(row, column).data().toString() : QString();
+}
+
+QString LineGrid::columnTitle(int column) const
+{
+    return m_model ? m_model->headerData(column, Qt::Horizontal).toString() : QString();
+}
+
+int LineGrid::columnCount() const
+{
+    return m_model ? std::min(m_model->columnCount(), 6) : 0;
+}
+
+QRectF LineGrid::cellRect(int row, int column) const
+{
+    const auto widths = columnWidths(width());
+    double x = 0;
+    for (int c = 0; c < column && c < static_cast<int>(widths.size()); ++c)
+        x += widths[static_cast<std::size_t>(c)];
+    const double w = column < static_cast<int>(widths.size()) ? widths[static_cast<std::size_t>(column)] : 0;
+    return QRectF(x, m_geometry.headerHeight + row * m_geometry.rowHeight - m_contentY, w, m_geometry.rowHeight);
+}
+
+void LineGrid::scrollToRow(int row)
+{
+    const double top = row * m_geometry.rowHeight;
+    const double body = height() - m_geometry.headerHeight;
+    if (top < m_contentY)
+        setContentY(top);
+    else if (top + m_geometry.rowHeight > m_contentY + body)
+        setContentY(top + m_geometry.rowHeight - body);
+}
+
+void LineGrid::keyPressEvent(QKeyEvent *event)
+{
+    const int rows = m_model ? m_model->rowCount() : 0;
+    if (rows == 0) {
+        event->ignore();
+        return;
+    }
+    const int page = std::max(1, m_geometry.visibleRowCount(m_contentY, height(), rows) - 1);
+    const int current = std::max(0, currentRow());
+    int target = current;
+    switch (event->key()) {
+    case Qt::Key_Up: target = current - 1; break;
+    case Qt::Key_Down: target = currentRow() < 0 ? 0 : current + 1; break;
+    case Qt::Key_PageUp: target = current - page; break;
+    case Qt::Key_PageDown: target = current + page; break;
+    case Qt::Key_Home: target = 0; break;
+    case Qt::Key_End: target = rows - 1; break;
+    case Qt::Key_Left: m_currentColumn = std::max(0, m_currentColumn - 1); announceState(true); event->accept(); return;
+    case Qt::Key_Right: m_currentColumn = std::min(columnCount() - 1, m_currentColumn + 1); announceState(true); event->accept(); return;
+    default:
+        event->ignore();
+        return;
+    }
+    target = std::clamp(target, 0, rows - 1);
+    scrollToRow(target);
+    if (const auto id = lineAtRow(target))
+        emit activeLineRequested(id->value);
+    event->accept();
+}
+
+void LineGrid::focusInEvent(QFocusEvent *event)
+{
+    QQuickPaintedItem::focusInEvent(event);
+    announceState(true);
+}
+
+void LineGrid::stateChanged()
+{
+    // A filtered-out current Line moves to the nearest visible row; hidden
+    // selection itself is kept and reported (accepted announcement policy).
+    if (const auto active = activeLine(); active && rowOfLine(*active) < 0) {
+        if (auto *filter = qobject_cast<LineFilterModel *>(m_model.data())) {
+            const int nearest = filter->nearestVisibleRow(*active);
+            if (const auto id = lineAtRow(nearest)) {
+                emit activeLineRequested(id->value);
+                return;
+            }
+        }
+    }
+    announceState(activeLine() != m_announcedActive);
+}
+
+void LineGrid::announceState(bool activeMoved)
+{
+    // Current cell first: a Focus event for the active cell when it moved.
+    if (activeMoved && hasActiveFocus() && QAccessible::isActive()) {
+        const int row = currentRow();
+        if (row >= 0) {
+            QAccessibleInterface *table = QAccessible::queryAccessibleInterface(this);
+            if (auto *ti = table ? table->tableInterface() : nullptr)
+                if (QAccessibleInterface *cell = ti->cellAt(row, m_currentColumn)) {
+                    QAccessibleEvent focus(cell, QAccessible::Focus);
+                    QAccessible::updateAccessibility(&focus);
+                }
+        }
+    }
+    m_announcedActive = activeLine();
+    // Counts separately, and only when they change.
+    const int selected = selectedCount(), hidden = hiddenSelectedCount();
+    if (selected != m_announcedSelected || hidden != m_announcedHidden) {
+        m_announcedSelected = selected;
+        m_announcedHidden = hidden;
+        if (QAccessible::isActive()) {
+            const QString message = hidden > 0 ? tr("%n selected, %1 hidden", nullptr, selected).arg(hidden)
+                                               : tr("%n selected", nullptr, selected);
+            QAccessibleAnnouncementEvent announcement(this, message);
+            QAccessible::updateAccessibility(&announcement);
+        }
+    }
 }
 
 qreal LineGrid::contentHeight() const

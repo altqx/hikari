@@ -74,6 +74,9 @@ public:
     void setLineModel(LineTableModel *model);
     void setPredicate(Predicate predicate); // empty predicate shows every Line
     int hiddenSelectedCount() const;
+    // Proxy row of the shown Line nearest (in document order) to `id`, which
+    // may itself be hidden; ties prefer the following Line. -1 if none shown.
+    int nearestVisibleRow(core::LineId id) const;
 
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
