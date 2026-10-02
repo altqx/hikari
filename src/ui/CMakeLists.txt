@@ -1,6 +1,7 @@
 # Qt Quick UI: shell, controls and presenters. Observes application state and
 # submits commands; never a second authoritative document store.
-qt_add_library(hikari_ui STATIC)
+qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h)
+target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0

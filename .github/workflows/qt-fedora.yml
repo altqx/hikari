@@ -24,6 +24,7 @@ on:
       - tests/modules/**
       - tests/core/**
       - tests/application/**
+      - tests/ui/**
       - tests/fixtures/**
       - docs/qt/fixtures/**
       - .github/workflows/qt-fedora.yml
