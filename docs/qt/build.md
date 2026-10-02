@@ -89,7 +89,7 @@ A failure in any of them reopens the build decision rather than substituting ano
 - **SDK state:** `out/sdk` holds the Qt mirror, the Qt installation (stamped with the lock digest), the metadata cache and the vcpkg checkout. It is shared by presets, ignored, and reconstructible. A Qt installation from a different lock stops the configure instead of being reused.
 - **Authentication:** with `QT_INSTALLER_JWT_TOKEN` set, the installer runs under a private HOME (on Windows also a private `APPDATA` and `LOCALAPPDATA`, where it keeps its account file) that is deleted afterwards. Without it, the installer uses the developer's existing Qt Account login. The owner authorized local and CI installs under the locked license set on 2026-09-29.
 - **Isolation in CI:** `cmake --workflow --preset provision` is the only step given the secret. The credential-free `*-verify` workflow then reuses the stamped installation.
-- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip.
+- **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip, plus the ALSA development files (PortAudio's host API links the system ALSA library).
 
 Failure behavior exercised locally: a corrupted or stray Qt mirror object and a vcpkg checkout at another commit each stop the configure with the path named; a tampered vcpkg tool is replaced by the verified download. The wx Linux root build moved to `cmake/linux-compat/LegacyWxLinux.CMakeLists.txt` as reference.
 
@@ -111,3 +111,8 @@ Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining
 - **Host tools:** git, ninja and cl, checked up front. vcpkg downloads its own CMake, 7-Zip and MSYS2 tools.
 - **Local Windows VM:** [`winix.yaml`](../../winix.yaml) runs the same presets through Winix (`provision`, `build`, `test`, `backends`). `tools/winix/msvc.ps1` loads the developer environment and falls back to Visual Studio's bundled Git. `out/` stays in the VM. Qt provisioning there uses a Qt Account login made once inside the VM; the CI secret is never copied into it.
 - **vcpkg binary cache:** `out/sdk/vcpkg-archives`, on every platform, so one directory makes a run warm.
+
+## Phase 3 native inputs (B4, 2026-10-03)
+
+- **PortAudio** comes from the owned overlay `ports/portaudio`: upstream vcpkg's revision `147dd722…` and patches, without the jack2 dependency, with the host APIs pinned. Linux gets ALSA only (PipeWire and PulseAudio desktops reach it through their ALSA plugins); Windows gets WASAPI and DirectSound (the legacy app used DirectSound). JACK, ASIO, WDM-KS, MME and PulseAudio are off. `dependency-load` fails if the runtime host API set differs. Target: `Hikari::portaudio`.
+- **LuaJIT** comes from vcpkg's port at the baseline (2026-09-08 snapshot, static, with FFI). Its link flags export the executable's symbols (`-Wl,-E`), which Lua native modules need, so `Hikari::luajit` is for the Lua helper only, never the application. `luajit-load` runs it in its own process and checks the JIT and FFI.

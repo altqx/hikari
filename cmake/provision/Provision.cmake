@@ -26,6 +26,13 @@ if(HIKARI_PLATFORM STREQUAL "linux")
             list(APPEND _hikari_missing ${tool})
         endif()
     endforeach()
+    # PortAudio's ALSA host API links the system ALSA library.
+    if(_hikari_tool_pkg-config)
+        execute_process(COMMAND pkg-config --exists alsa RESULT_VARIABLE _hikari_alsa)
+        if(NOT _hikari_alsa EQUAL 0)
+            list(APPEND _hikari_missing "alsa (development files)")
+        endif()
+    endif()
     # autoconf-archive has no executable; vcpkg's autotools ports need its macros.
     if(_hikari_tool_automake)
         execute_process(COMMAND aclocal --print-ac-dir OUTPUT_VARIABLE _hikari_acdir

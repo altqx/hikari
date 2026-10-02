@@ -52,7 +52,7 @@ jobs:
       - name: Declared host prerequisites
         run: |
           set -euo pipefail
-          pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive
+          pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive alsa-lib-devel
                 automake libtool nasm python3 curl tar zip unzip xz bzip2 patch diffutils findutils
                 which file perl
                 mesa-libGL-devel mesa-libEGL libxkbcommon libxkbcommon-x11 fontconfig dbus-libs

@@ -1,0 +1,27 @@
+{
+  "name": "portaudio",
+  "version": "19.7",
+  "port-version": 100,
+  "description": "PortAudio (Hikari-owned overlay: pinned host APIs, no JACK)",
+  "homepage": "https://www.portaudio.com",
+  "license": "MIT",
+  "supports": "!uwp",
+  "dependencies": [
+    {
+      "name": "vcpkg-cmake",
+      "host": true
+    },
+    {
+      "name": "vcpkg-cmake-config",
+      "host": true
+    }
+  ],
+  "features": {
+    "asio": {
+      "description": "Enable support for Steinberg Audio Stream Input/Output (ASIO)",
+      "dependencies": [
+        "asiosdk"
+      ]
+    }
+  }
+}

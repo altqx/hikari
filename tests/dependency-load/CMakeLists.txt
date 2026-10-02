@@ -1,6 +1,13 @@
-# Combined load of the provisioned Qt, FFMS2 and libass (B48-combined).
+# Combined load of the provisioned Qt, FFMS2 and libass (B48-combined), and
+# PortAudio (B4).
 add_executable(hikari_dependency_load main.cpp)
-target_link_libraries(hikari_dependency_load PRIVATE Qt6::Gui Qt6::Qml Qt6::Quick Hikari::media_deps)
+target_link_libraries(hikari_dependency_load PRIVATE Qt6::Gui Qt6::Qml Qt6::Quick Hikari::media_deps Hikari::portaudio)
+
+# LuaJIT loads in its own process, as in the Lua helper (B4).
+add_executable(hikari_luajit_load luajit_load.cpp)
+target_link_libraries(hikari_luajit_load PRIVATE Hikari::luajit)
+add_test(NAME luajit-load COMMAND hikari_luajit_load)
+set_tests_properties(luajit-load PROPERTIES TIMEOUT 60)
 add_test(NAME dependency-load COMMAND hikari_dependency_load)
 set_tests_properties(dependency-load PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 60)
 if(WIN32)

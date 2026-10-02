@@ -17,6 +17,8 @@
     "libass",
     "gtest",
     "spix",
+    "portaudio",
+    "luajit",
     {
       "name": "pkgconf",
       "host": true,

@@ -3,12 +3,15 @@
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <cstdio>
+#include <algorithm>
 #include <memory>
+#include <vector>
 
 #include <ffms.h>
 extern "C" {
 #include <ass/ass.h>
 }
+#include <portaudio.h>
 
 static int fail(const char *what)
 {
@@ -45,6 +48,23 @@ int main(int argc, char **argv)
     ass_set_fonts(renderer, nullptr, "sans-serif", ASS_FONTPROVIDER_AUTODETECT, nullptr, 0);
     ass_renderer_done(renderer);
     ass_library_done(library);
+
+    // PortAudio with exactly the pinned host APIs (ports/portaudio).
+    std::printf("portaudio=%s\n", Pa_GetVersionInfo()->versionText);
+    if (Pa_Initialize() != paNoError)
+        return fail("Pa_Initialize");
+    std::vector<PaHostApiTypeId> apis;
+    for (PaHostApiIndex i = 0; i < Pa_GetHostApiCount(); ++i)
+        apis.push_back(Pa_GetHostApiInfo(i)->type);
+    Pa_Terminate();
+#ifdef _WIN32
+    const std::vector<PaHostApiTypeId> pinned{paDirectSound, paWASAPI};
+#else
+    const std::vector<PaHostApiTypeId> pinned{paALSA};
+#endif
+    std::ranges::sort(apis);
+    if (apis != pinned)
+        return fail("PortAudio host APIs differ from the pinned set");
 
     std::puts("PASS dependency-load");
     return 0;
