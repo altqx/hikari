@@ -1,18 +1,22 @@
-// A2 on Linux: open a copied fixture, edit one Line, save through the atomic
-// writer, reopen. Real files, real reader and writer; the writer's worker
-// completions are marshalled to this thread as the application does.
+// A2 on the native platform: open a copied fixture, edit one Line, save
+// through the atomic writer, reopen. Real files, the platform's reader and
+// writer; the writer's worker completions are marshalled to this thread as
+// the application does.
 
 #include "hikari/application/document_files.h"
-#include "hikari/backends/posix_file_port.h"
-#include "hikari/backends/posix_file_reader.h"
+#include "hikari/backends/platform_files.h"
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
 #include <sstream>
+#ifndef _WIN32
 #include <sys/stat.h>
+#include <unistd.h>
+#endif
 
 using namespace hikari;
 using namespace hikari::application;
@@ -32,19 +36,21 @@ struct Reopen : ::testing::Test {
     fs::path dir;
     std::mutex mutex;
     std::vector<std::pair<PermitId, WriteOutcome>> reported;
-    backends::PosixFileReader reader;
-    backends::PosixFilePort port{[this](PermitId p, WriteOutcome o) {
+    std::unique_ptr<FileReadPort> reader = backends::makeFileReader();
+    std::unique_ptr<backends::PlatformFilePort> port = backends::makeFilePort([this](PermitId p, WriteOutcome o) {
         std::lock_guard lock(mutex);
         reported.emplace_back(p, o);
-    }};
+    });
     DocumentFiles *files = nullptr;
-    WriteCoordinator writes{port, [this](const WriteResult &r) { files->onWriteResult(r); }};
-    DocumentFiles service{reader, writes};
+    WriteCoordinator writes{*port, [this](const WriteResult &r) { files->onWriteResult(r); }};
+    DocumentFiles service{*reader, writes};
 
     void SetUp() override
     {
         files = &service;
-        dir = fs::temp_directory_path() / ("hikari-a2-" + std::to_string(::getpid()) + "-" +
+        // Unique per run, so parallel test processes never share a directory.
+        const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+        dir = fs::temp_directory_path() / ("hikari-a2-" + std::to_string(stamp) + "-" +
                                            ::testing::UnitTest::GetInstance()->current_test_info()->name());
         fs::remove_all(dir);
         fs::create_directories(dir);
@@ -52,13 +58,13 @@ struct Reopen : ::testing::Test {
     }
     void TearDown() override
     {
-        port.waitIdle();
+        port->waitIdle();
         fs::remove_all(dir);
     }
     // Waits for the writer, then delivers its reports on this thread.
     void drain()
     {
-        port.waitIdle();
+        port->waitIdle();
         std::vector<std::pair<PermitId, WriteOutcome>> batch;
         {
             std::lock_guard lock(mutex);
@@ -69,7 +75,7 @@ struct Reopen : ::testing::Test {
     }
     DocumentId open(const fs::path &path)
     {
-        auto staged = service.stageOpen({path.string()});
+        auto staged = service.stageOpen({reinterpret_cast<const char *>(path.u8string().c_str())});
         EXPECT_TRUE(staged);
         return *service.activate(std::move(*staged));
     }
@@ -115,6 +121,7 @@ TEST_F(Reopen, ExternalEditOnDiskIsDetectedByContent)
     EXPECT_NE(slurp(dir / "copy.ass").find("gate"), std::string::npos); // untouched
 }
 
+#ifndef _WIN32
 TEST_F(Reopen, FailedSaveAsKeepsWorkAndAssociation)
 {
     const auto doc = open(dir / "copy.ass");
@@ -132,3 +139,4 @@ TEST_F(Reopen, FailedSaveAsKeepsWorkAndAssociation)
     EXPECT_EQ(service.destination(doc)->value, (dir / "copy.ass").string());
     EXPECT_FALSE(fs::exists(dir / "locked" / "out.ass"));
 }
+#endif

@@ -1,0 +1,1516 @@
+{
+ "schema": 1,
+ "platform": "windows",
+ "base": "https://download.qt.io/online/qtsdkrepository/",
+ "requested": [
+  "qt.qt6.6112.win64_msvc2022_64",
+  "qt.qt6.6112.addons.qtmultimedia",
+  "qt.qt6.6112.addons.qtshadertools"
+ ],
+ "complete": true,
+ "problems": [],
+ "installer": {
+  "url": "https://download.qt.io/archive/online_installers/4.11/qt-online-installer-windows-x64-4.11.0.exe",
+  "declared_sha256": "ae919bc9b224b8ccdada69ec787a9f69330001f227f3fcbfb4a11a4adb3786f6",
+  "length": 58051784,
+  "sha256": "ae919bc9b224b8ccdada69ec787a9f69330001f227f3fcbfb4a11a4adb3786f6",
+  "sha1": "fa3bc9560f9e3a9c2361277eb830c035bf0e5cd8"
+ },
+ "roots": [
+  {
+   "suffix": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/Updates.xml",
+    "length": 120911,
+    "sha256": "47a07e2a22f453cb89028c3a0524f64467f1114cbf57936158784ebda2d7bdcc",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__qt6_6112__qt6_6112_msvc2022_64__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/2026-08-13-1206_meta.7z",
+    "name": "2026-08-13-1206_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 138
+  },
+  {
+   "suffix": "all_os/qt/qt6_6112_windows_line_endings_src/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/Updates.xml",
+    "length": 72696,
+    "sha256": "0558fde117f92734a3257b53d8145beaa5bd38f6be87049191f719fee713b0ad",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__qt__qt6_6112_windows_line_endings_src__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/2026-08-13-1028_meta.7z",
+    "name": "2026-08-13-1028_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 72
+  },
+  {
+   "suffix": "windows_x86/desktop/tools_generic/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_generic/Updates.xml",
+    "length": 1469,
+    "sha256": "9b6b2e32d2d2821bfc7a1a2d5448ef807435a5666f6b9a2b7553f4ecd4440a6a",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__tools_generic__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_generic/2026-09-03-1112_meta.7z",
+    "name": "2026-09-03-1112_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 2
+  },
+  {
+   "suffix": "windows_x86/desktop/sdktool/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/sdktool/Updates.xml",
+    "length": 973,
+    "sha256": "16ff0f52490ccc22eec6fcbe96b72c9ff3925012efee552316a3f3a0e807ed74",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__sdktool__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/sdktool/2026-09-22-1200_meta.7z",
+    "name": "2026-09-22-1200_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 1
+  },
+  {
+   "suffix": "all_os/license_agreements/licenses/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/Updates.xml",
+    "length": 3482,
+    "sha256": "21af9b0e5417a0bfe20a5896dc3b4131c6c79dd48cc719328390d551cc03d365",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__license_agreements__licenses__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/2024-04-15-0915_meta.7z",
+    "name": "2024-04-15-0915_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 6
+  },
+  {
+   "suffix": "all_os/qt_patchers/6112/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt_patchers/6112/Updates.xml",
+    "length": 972,
+    "sha256": "59967da435797a32b6045a3c2d7246ba1e58c6a94b980adc42ccf435ca027a5a",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__qt_patchers__6112__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt_patchers/6112/2026-08-13-1018_meta.7z",
+    "name": "2026-08-13-1018_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 1
+  },
+  {
+   "suffix": "all_os/unified_patching/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/unified_patching/Updates.xml",
+    "length": 700,
+    "sha256": "d2f0666669a8b71f674a5f93363edd97fa8293b405e3a1d8e917817d688f0df9",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__unified_patching__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/unified_patching/2023-11-21-1039_meta.7z",
+    "name": "2023-11-21-1039_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 1
+  },
+  {
+   "suffix": "all_os/dependencycheck/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/dependencycheck/Updates.xml",
+    "length": 775,
+    "sha256": "bd4e281c18fa64f213a8506e8b25a94f0f369b75e92c1e28aa5378239a906c5a",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__dependencycheck__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/dependencycheck/2026-08-26-0909_meta.7z",
+    "name": "2026-08-26-0909_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 1
+  },
+  {
+   "suffix": "all_os/default_install/",
+   "updates_xml": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/Updates.xml",
+    "length": 875,
+    "sha256": "31470838256dd39efee39935742f4759990aa8f15ad302f05720c4445a03af44",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__default_install__Updates.xml"
+   },
+   "metadata": {
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-09-28-1022_meta.7z",
+    "name": "2026-09-28-1022_meta.7z"
+   },
+   "checksum": "true",
+   "package_count": 1
+  }
+ ],
+ "selected": [
+  "qt.license.acceptance",
+  "qt.license.lgpl",
+  "qt.license.thirdparty",
+  "qt.qt6.6112.addons.qtmultimedia",
+  "qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64",
+  "qt.qt6.6112.addons.qtshadertools",
+  "qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64",
+  "qt.qt6.6112.doc",
+  "qt.qt6.6112.doc.qtmultimedia",
+  "qt.qt6.6112.doc.qtshadertools",
+  "qt.qt6.6112.examples",
+  "qt.qt6.6112.examples.qtmultimedia",
+  "qt.qt6.6112.win64_msvc2022_64",
+  "qt.tools",
+  "qt.tools.qtcreator"
+ ],
+ "selection_reason": {
+  "qt.license.acceptance": "dependency/auto",
+  "qt.license.lgpl": "dependency/auto",
+  "qt.license.thirdparty": "dependency/auto",
+  "qt.qt6.6112.addons.qtmultimedia": "requested",
+  "qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64": "dependency/auto",
+  "qt.qt6.6112.addons.qtshadertools": "requested",
+  "qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64": "dependency/auto",
+  "qt.qt6.6112.doc": "dependency/auto",
+  "qt.qt6.6112.doc.qtmultimedia": "dependency/auto",
+  "qt.qt6.6112.doc.qtshadertools": "dependency/auto",
+  "qt.qt6.6112.examples": "dependency/auto",
+  "qt.qt6.6112.examples.qtmultimedia": "dependency/auto",
+  "qt.qt6.6112.win64_msvc2022_64": "requested",
+  "qt.tools": "dependency/auto",
+  "qt.tools.qtcreator": "dependency/auto"
+ },
+ "conditional": [
+  "qt",
+  "qt.qt6.6112",
+  "qt.qt6.6112.addons"
+ ],
+ "duplicate_grouping_nodes": [
+  {
+   "package": "qt.qt6.6112.addons",
+   "roots": [
+    "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/",
+    "all_os/qt/qt6_6112_windows_line_endings_src/"
+   ],
+   "kept": "all_os/qt/qt6_6112_windows_line_endings_src/"
+  }
+ ],
+ "absent_optional_script_dependencies": [
+  "qt.qt6.6112.win64_msvc2022_64 -> mocwrapper"
+ ],
+ "script_dependencies": {
+  "qt.qt6.6112.addons.qtgraphs": [
+   "qt.qt6.6112.addons.qtquick3d",
+   "qt.qt6.6112.qtquick3d"
+  ],
+  "qt.qt6.6112.addons.qtlottie": [
+   "qt.qt6.6112.examples.qtlottie"
+  ],
+  "qt.qt6.6112.addons.qtquick3dphysics": [
+   "qt.qt6.6112.addons.qtquick3d",
+   "qt.qt6.6112.addons.qtshadertools",
+   "qt.qt6.6112.qtquick3d",
+   "qt.qt6.6112.qtshadertools"
+  ],
+  "qt.qt6.6112.win64_msvc2022_64": [
+   "mocwrapper"
+  ],
+  "qt.tools": [
+   "qt.license.lgpl",
+   "qt.license.thirdparty"
+  ]
+ },
+ "objects": [
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/2026-08-13-1206_meta.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/2026-08-13-1206_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 4479,
+   "sha1": "9c5e13722ac76fd5eb9274574ec7966f6c97e9b8",
+   "sha256": "0d1bfdb24469dfba4fd2fd8653eebd5362f7afc387753afb19cf68bc98a03137",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__qt6_6112__qt6_6112_msvc2022_64__2026-08-13-1206_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/2026-08-13-1028_meta.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/2026-08-13-1028_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 2027,
+   "sha1": "a8f2e742bc7269406a327fe580a51f26202f6a9d",
+   "sha256": "9a3aeb9e5c66a0af20eb45424f26090e1f66b12147dc56a410937b3a67ae5509",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__qt__qt6_6112_windows_line_endings_src__2026-08-13-1028_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/tools_generic/2026-09-03-1112_meta.7z",
+   "path": "windows_x86/desktop/tools_generic/2026-09-03-1112_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 3336,
+   "sha1": "771819196d57d9187f4035063162b671950ef0f5",
+   "sha256": "28b4eb373124722f78e08f65126d4763fb7095819858bdec2ac5ada20ab6c953",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__tools_generic__2026-09-03-1112_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/sdktool/2026-09-22-1200_meta.7z",
+   "path": "windows_x86/desktop/sdktool/2026-09-22-1200_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 3405,
+   "sha1": "87673e58281dc7195a921c835a840e0634c2e2d0",
+   "sha256": "4f5c91e5982dd2f6c81e30f98989b550ca3d520f9c75236bc8a9e22198604909",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/windows_x86__desktop__sdktool__2026-09-22-1200_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/2024-04-15-0915_meta.7z",
+   "path": "all_os/license_agreements/licenses/2024-04-15-0915_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 27560,
+   "sha1": "418f26b45a2193fb1c58b1542e6dfc23f91903f5",
+   "sha256": "783101d120e2f259110d87ad73ba4f285d7eac5e653352914e80697f7cc70b5e",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__license_agreements__licenses__2024-04-15-0915_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt_patchers/6112/2026-08-13-1018_meta.7z",
+   "path": "all_os/qt_patchers/6112/2026-08-13-1018_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 5478,
+   "sha1": "fe79f13cb9b60ace205125664cef8658436b88cd",
+   "sha256": "8f429b0fbd4c6e7f6b5a5a565d305a8aa28ef20fad4da6ce2dde3f807c56b2b6",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__qt_patchers__6112__2026-08-13-1018_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/unified_patching/2023-11-21-1039_meta.7z",
+   "path": "all_os/unified_patching/2023-11-21-1039_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 4139,
+   "sha1": "67e241c2b4f23d935862cd68b9367562063e9dcf",
+   "sha256": "d0e7809c51156ed1da18bc2d2d3c1687c51eb38f008e49548abb24019b17a9a8",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__unified_patching__2023-11-21-1039_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/dependencycheck/2026-08-26-0909_meta.7z",
+   "path": "all_os/dependencycheck/2026-08-26-0909_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 6548,
+   "sha1": "c45dfd10f0bd4ce824fe7c4b98cc9ea88b30c40c",
+   "sha256": "9dac2ae601651eeaccbbe9b1440d7f522820725b2639b6a4154d53aba8e5f4d6",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__dependencycheck__2026-08-26-0909_meta.7z"
+  },
+  {
+   "kind": "metadata",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-09-28-1022_meta.7z",
+   "path": "all_os/default_install/2026-09-28-1022_meta.7z",
+   "package": null,
+   "conditional": false,
+   "length": 10602,
+   "sha1": "f97d8e0f2549f525c16c4b85dfaecc9fe1b06f6d",
+   "sha256": "b24863265bc05c89d74e5c8b5d8121ae29c486389b09a3fda5cca0bde95e39fc",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__default_install__2026-09-28-1022_meta.7z"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/qt.license.thirdparty/1.0.0-1Licenses.7z",
+   "path": "all_os/license_agreements/licenses/qt.license.thirdparty/1.0.0-1Licenses.7z",
+   "package": "qt.license.thirdparty",
+   "conditional": false,
+   "length": 7869,
+   "sha1": "26e44d7bbb2ef86e7706d2473791fa72c80b0aeb",
+   "sha256": "039953c483687f98699c6786a6099a3a288af372047228e40fc74a212fc6291d"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/qt.license.thirdparty/1.0.0-1Licenses.7z.sha1",
+   "path": "all_os/license_agreements/licenses/qt.license.thirdparty/1.0.0-1Licenses.7z.sha1",
+   "package": "qt.license.thirdparty",
+   "conditional": false,
+   "length": 40,
+   "sha1": "3015e65a74fd343b3d59a510ddea7e966d0e23b3",
+   "sha256": "e397c48bfea1913743c5226f4aa13d999ceff5cff2d8e9b2dcfdd823bdbbbbdb"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112/6.11.2-0-202608131018sha1s.txt.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112/6.11.2-0-202608131018sha1s.txt.7z",
+   "package": "qt.qt6.6112",
+   "conditional": true,
+   "length": 1617,
+   "sha1": "c13e4efd2de4b4dac8d44425454f580e9d831e4d",
+   "sha256": "bac785702c42e938f8576883f1057f36bb3bbb2f7ab7424d5062672c39ec245f"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112/6.11.2-0-202608131018sha1s.txt.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112/6.11.2-0-202608131018sha1s.txt.7z.sha1",
+   "package": "qt.qt6.6112",
+   "conditional": true,
+   "length": 40,
+   "sha1": "ad6bbf586fc423cfa9deff59d11126390530acaa",
+   "sha256": "598088f46a7ad195626e0fb7c179f34c909972eb383d43c1e73c3cd4bba03852"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64/6.11.2-0-202608131017qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64/6.11.2-0-202608131017qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64",
+   "conditional": false,
+   "length": 43228011,
+   "sha1": "b074034da581a838892a54051a2469c0a2c38e21",
+   "sha256": "24d73c45fefe5e260aa9a99eea1aea48adcad54f93bddaa3ec5b0574b55f57c7"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64/6.11.2-0-202608131017qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64/6.11.2-0-202608131017qtmultimedia-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.addons.qtmultimedia.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "7ccf1f9ff02526d06f8b48f436064c027cf2aa91",
+   "sha256": "3455ce6df77d4d172c0e1f21bdcce2219c829efe7119e045ffc575420ef933d5"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64/6.11.2-0-202608131017qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64/6.11.2-0-202608131017qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64",
+   "conditional": false,
+   "length": 3293582,
+   "sha1": "27f32f1cc715f91e95802e654f585e0dd42c558a",
+   "sha256": "d434c320f5788cf54c71e68ab28488ceb2f1ba725e63241530155347a4c5081e"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64/6.11.2-0-202608131017qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64/6.11.2-0-202608131017qtshadertools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.addons.qtshadertools.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "bb8e3f363f7bccb51c158322354a7c70ce62efb0",
+   "sha256": "d45c83384d826461c2d769d65b16ad55a64b275f7e69010bb7e6dabe4d5b05c5"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qt5-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qt5-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 281471,
+   "sha1": "7c5dc030b7e20fce27848e4f9e9a0127cdc34abf",
+   "sha256": "5389611a6d1aee1f2927c906484754aea307f5906dce94f892b963ec4bd9868f"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qt5-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qt5-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "44e80c2cd8318366fb95abe53b88a268476fef12",
+   "sha256": "e118fe4a889a7e58fdee172542791635b21095e5fcb87e254c947526195fc054"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qdoc-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qdoc-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 422272,
+   "sha1": "577b65faea0514ced9cda6b92fc2f55b8afa9672",
+   "sha256": "11310dcb154aa0caaddca07dfce22279fd05247f0a9b6379d174d81e359976ff"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qdoc-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qdoc-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "c1ee7ee86457eaf2567769bfdd01ad4c7187f955",
+   "sha256": "95f96bbe69679d1b9a252cbe96ade3e337184d9a0952b4124dfd5919b75d2d4f"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qmake-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qmake-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 405711,
+   "sha1": "94ed385ae90b670bd1ecc480c0929eadf078531f",
+   "sha256": "e0f7c4b58158f29be84c35d40dc00931891cb365f6d399a2a92f677483555cb5"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qmake-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qmake-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "4e4804ea236b64bc245dd197079b88b9287d4376",
+   "sha256": "c58aedeaa0d5947eca9bb45bb1d72d1eb0f8ddf76b0b6af4e11e124db3d8b693"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtassistant-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtassistant-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 931583,
+   "sha1": "2c1012580addba6c0382a483fd25239e2b67cb26",
+   "sha256": "204c992b1af8a44c3fe482a544c265774f8e4a41523758a8ab9294eb81a66221"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtassistant-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtassistant-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "949a752a61dc2a85b7e6cbe5395f5e5302f4d08a",
+   "sha256": "83a6e5f81f7ab200afce963703b2d835858ddd320e8e6d0c65140084316afa09"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtconcurrent-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtconcurrent-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 265729,
+   "sha1": "06071497f3f352c513a7574088351ec4372dc480",
+   "sha256": "951151eac85e9291ef9214058f0f25ad10d1c253eae6728d36e8e76d774627cf"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtconcurrent-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtconcurrent-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "eb4cef12e7e1e10b987bbd95fd864141d5fcfac2",
+   "sha256": "107af114e1209ceeae00ff5ff913e72d7bc42a148b78a143aff5949984eb309a"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcmake-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcmake-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 143282,
+   "sha1": "65ebee6e0acb1df7a25b46d1ac7aa497f543a86e",
+   "sha256": "338b277c0a879a54084cb28bb339747879fc866944aaff4f570869166e624218"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcmake-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcmake-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "8a0ce3393b101fa346028338a109738724e730ed",
+   "sha256": "3b88a7af04a68d49d4a3520fb1b5bf3d19dd42cbb5ba7cc7bcbe3e46f03dd375"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcore-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcore-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 10218252,
+   "sha1": "f099f0f70f72f1e4fa3b7144a3d07a6bc240dc82",
+   "sha256": "4dd292107b4d8cf303370f3d5eb4930a0f96e47efc5d96e5a9f4e8a8b0eef729"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcore-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtcore-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "97de4dbb2ff7e73457f57c6545177af0b741ed72",
+   "sha256": "771aee0808116e32e784da632fd6258c3ac9d844abb4316db70a20974f5f65a7"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdbus-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdbus-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 511986,
+   "sha1": "093eeb2b34b4f0bd0f68be8b8e2c9731475077e3",
+   "sha256": "7846b86496d66df1080096d95c1398a44b03e4843bf6730671a3a524614a3cf8"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdbus-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdbus-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "86da52e8f158628106a21ebf6b549e9c5776506b",
+   "sha256": "0b38bb58e58f4940e044a460dba51f2dc05eea35e359324897d6b7b4c1b43eb5"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdesigner-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdesigner-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 3983981,
+   "sha1": "2f2d97b419008f717783564c869b7e2ac46fc7f8",
+   "sha256": "fd7f1fa1ed64749d144ed0ae064457929744a7784a24b72f302f4e0b76956763"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdesigner-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdesigner-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "c7dd19550570521d7e86ae7a0c2d7a913c4c49a3",
+   "sha256": "f83f08495c01e95ad8f07769cf406ab15450b54f17156b28ceef50473205aa50"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdistancefieldgenerator-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdistancefieldgenerator-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 164566,
+   "sha1": "8167fd0b3e95b2a57ce6fc402381263215caae18",
+   "sha256": "d6426be404369f43a4bd1a0bf16580140545ddfdadb88249db93d4aa823799f0"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdistancefieldgenerator-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdistancefieldgenerator-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "42e63531e5a7e431d1b57a3c9f342f94bc437f54",
+   "sha256": "d85d6d79674cac84df01fc63c948a067a1aa2a8face35971600938c11955ea72"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdoc-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdoc-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 20517006,
+   "sha1": "063f8ef38a5a5d260a9291101d331d2abf9f07ca",
+   "sha256": "ade3b5dcc2d5d342c6fbd33e7efeaa4971c1d003f726088ee5c01ce582e46eba"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdoc-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtdoc-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "dbd66e522e755795b194f2a770d80ebea8ce3444",
+   "sha256": "5afb9568f2aba2b94ba36009ae9760ed754da1f6a4f1baf2078b8e733be150a3"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtgui-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtgui-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 8786456,
+   "sha1": "664e739d22e78ec128579fb9ce6985cd8ed7f211",
+   "sha256": "d76edcea35407125aa1126018b0705aba4952104baf021a0165a5b094441983f"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtgui-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtgui-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "9f8bd78efb44bdd85a3048da4de7963f59b8a1bb",
+   "sha256": "8d6785e290dd2b7ca8935bd2038c2ff5bd1a456327ad804de4dc35a9d95515c6"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qthelp-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qthelp-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 432781,
+   "sha1": "18eb23224f2024b72b607cbc1cc68812ab643091",
+   "sha256": "7b376f805b954dc6e658e335131e3025d27a02519d0893e6922137a3c022b450"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qthelp-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qthelp-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "f89271f9529c644a5793c8d9d6909b40fe2c4a70",
+   "sha256": "2bef42f3be106c4693cfce09a6fd2a3a4f976bc16f1da4142e2df60ddeef249e"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtjenny-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtjenny-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 104663,
+   "sha1": "209875a660b34d61bcb6af1861619238d2ca19c4",
+   "sha256": "8ecf51ead4bc1f306bf8eb9cd3f264fb0e43e0ad4bc2d68bad6a3a3b0a36afdc"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtjenny-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtjenny-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "4a296f6d6a7930f291e64f65129afea81686be87",
+   "sha256": "9c0fa06919468329311e31bed0832c2c22379fa7d7e7fb6ce6f2650ab41561ae"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsplatform-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsplatform-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 714972,
+   "sha1": "f14283b757d4d1b47c7fe220f8618e3952f8a0ff",
+   "sha256": "e970bbd0c7d5ab547218c7a991f54ddc4eb4224be0f761cd692f41f1adeb2c05"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsplatform-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsplatform-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "b7d680d29d49cd518bf0fe7b89bacc689b4737eb",
+   "sha256": "85ca7b4af5d4dc000b7ab4be8fd5de214160b4f56d82798fff1e5652c9df6ee4"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsstylekit-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsstylekit-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 431314,
+   "sha1": "803f66cc27544dcdc85de86d94ebf7f7adce03d5",
+   "sha256": "b7f45b0a99a22499070f09f0a2e88e015fa37e3d8d3437ea96dd79740024a5ba"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsstylekit-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlabsstylekit-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "97f6bfea56846b35780c0674550e5452e630e514",
+   "sha256": "609dea76ce28ca9dccd5a6219e5d7c027090c0eb46ad0acd3d3934323bc4100b"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlinguist-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlinguist-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 1082513,
+   "sha1": "151afae17ae11c0069e7541a40c364f51c8b221a",
+   "sha256": "e6a7ab2fee7128cce8ba18498f710dd271329e9cc979d3bb3e68d4e7345d7c2d"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlinguist-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtlinguist-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "587591c2b45adb1dd82850737ce7ff70bf2283b6",
+   "sha256": "41db39eb7fbc68b474898aa8c95692166b1c294a6fe1ffc11c449e00a818f3b5"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtnetwork-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtnetwork-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 2042865,
+   "sha1": "faf1e79c8f3ac121c5f96672885d3716124f6616",
+   "sha256": "7885dcf37f31e05fc1fb21f7198e4fde1c5f605df3c5107f82f778d6ccd27599"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtnetwork-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtnetwork-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "53c5a554fad774ddf7ba948d938768336ca433b1",
+   "sha256": "9e485f356bd899f0e22dc644f3ae511e43ea20a20aa98e98398aa4447195b7ad"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtopengl-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtopengl-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 1255305,
+   "sha1": "5296119374979eeb338b11ecbe850934d8dde9db",
+   "sha256": "7d8dd15f9dc1c062426925f453931779a5997bd427a8d17244192a8d8c2363df"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtopengl-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtopengl-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "d4e87b429de2206f6756e2184a381111a4039558",
+   "sha256": "060da68f9062cf3a5c545189efd0cc00fba4325408d89b17b830f6e1935b55cb"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtplatformintegration-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtplatformintegration-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 61622,
+   "sha1": "b26784f4be0c96c966c4f6101d7e533d4e001e46",
+   "sha256": "97215da7b66541c96af2ff3ba8c2a369c9317308b6bcbcec12deda1d3a2d9a8e"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtplatformintegration-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtplatformintegration-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "3ede578c5bd50c0df0567dbcbfa501252ad3e53b",
+   "sha256": "32c79cb473cdd18a31321f4bb4d9025c584bfe37af99892e56b7737de5fc3ac6"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtprintsupport-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtprintsupport-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 445129,
+   "sha1": "3d05497d6ebbdd6fa4118ccab8aa55cedbdb0edd",
+   "sha256": "fbc7159a2b503e9785126f832b2d16f0640bddc2fcbcdd9a16c38ab2ba2a1988"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtprintsupport-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtprintsupport-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "2bf355d776afd5fb7059f926213c2d648cf8ce69",
+   "sha256": "77d798a5ef7acc5f26fc16c71ae69414c7daa91d2dc05b7a1877a11c8d946dc4"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqml-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqml-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 2348502,
+   "sha1": "b64622e334a2e80c132ec882ae8d39aaea6b9b9d",
+   "sha256": "d27dc4849f0bb6bd82e49f9d0c82f8c4df7dfd1bf432177ce8dacd932bf61b63"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqml-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqml-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "64622875cb8eb1d0bb56d6805791fe1a3234caa9",
+   "sha256": "acd7abbd91d77ad6ea97c89719a55337e7ee46bd4ba6eebc13f453c1f7ca77b2"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlcore-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlcore-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 114659,
+   "sha1": "90ae075672e9f3f09d80b0e6a81b89017de4a90f",
+   "sha256": "91fbcd982bc2fb06467efa157f28c810c31ec836342ce9ca27c83199f10201e3"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlcore-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlcore-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "0064fb82370ba2cdcd5ca95b5289305cb44b51c1",
+   "sha256": "7a44b26b0da210afee4c9cba7ed0425026b999856a40bb11889544116b9879f2"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlmodels-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlmodels-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 301114,
+   "sha1": "9f2312ce4e7287327efba3717d88ffb19d7679bf",
+   "sha256": "65c4747fc6c725d980df481b1b5ae91868634cebf0cb2cee173e73c778e5ff71"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlmodels-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlmodels-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "5b457f35665e605d3c1d71e223a4556857a5b8ad",
+   "sha256": "45517d92fdf1b528d3af4e9edcbe81ef14603cc93dc6e244f3ff52d8cc3e6997"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmltest-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmltest-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 132563,
+   "sha1": "20799fc187ace84a39b7a105f1c9e73f525a49c1",
+   "sha256": "dbe3d88c604aebe0489df642ccc23b1b63483594aeb0dfcf8ea87117caf75b54"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmltest-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmltest-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "6083599ab6b16d4253a43678bc6cd5dd8c982807",
+   "sha256": "b7521f42faa4b42ca56dd3a9d21fba87b9480dadb3e2aa42a26c656658b0eafa"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlworkerscript-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlworkerscript-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 50054,
+   "sha1": "bdca8c3f025a436a578b00a94b86224dc4c804e4",
+   "sha256": "6742815d194c8052a8902b00e5c7dfa3cc8da67dc9b9288358502e2fc2a55ce3"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlworkerscript-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlworkerscript-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "b2ce0a06227ec2f163303d669d2fb43dc4a2d5d1",
+   "sha256": "9ecc582bb336dd3990b0e13d261823a73854ea27deb1e9c5ebea84e4f9629ff3"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlxmllistmodel-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlxmllistmodel-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 59457,
+   "sha1": "886102b2ff9e17ff7171cfc73aebc2fe7e26943c",
+   "sha256": "de778722cd6cc52b42ad994efa33b6d559c08c4f9a97f607d9e69a17c7df93c1"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlxmllistmodel-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtqmlxmllistmodel-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "514c4bba7b46ecf11f01376bd616f823ecfc32db",
+   "sha256": "c72c45f8325b42ad90efd0fb5aadd11b480ab4970a587772f1b6ffe5b03365d9"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquick-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquick-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 27958038,
+   "sha1": "008404302265fdb0f76de68206dc2fc6402ebeab",
+   "sha256": "3be7a379c2c70b46b0db386702b62412f5620f182a8be7726b51d43b546b5695"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquick-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquick-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "a97e8046e03b415de74a55503fe60a9bd16023f6",
+   "sha256": "5c7e15cdf23cb4b5cecd9b66fc7701056f6a795cca15812ecc3186621303fbcc"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickcontrols-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickcontrols-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 8795064,
+   "sha1": "e31d689dbe02f35a46a883e6271976a33a754936",
+   "sha256": "cde7f4bd272c4b1963415f76c35729934052077b2f21a44469f0c65da6dc4d08"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickcontrols-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickcontrols-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "54a7727894835149f73a69132514a817beb76785",
+   "sha256": "1eff0d9eec11c2fa8c5e79ff96faeb6fa9710d29cc78afa49ab38b514989cd11"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickdialogs-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickdialogs-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 358501,
+   "sha1": "0a16683bde84a86aab9e3ff1f554a5e8261a203f",
+   "sha256": "a43a0a9ff917f1f26ea4a585ba260c7322a97fc7470ac1f67a5dc9ac2084d47d"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickdialogs-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtquickdialogs-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "b2999795c0fd5d0dcca74bdc4b5f7d67d3a35296",
+   "sha256": "4a632ab4adfb0a30fcd81ab6e0e4b0ae0a9bd8fa572c632b422e164d2f0f2ec2"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsql-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsql-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 1091197,
+   "sha1": "21e24ef38c70ab50da16e6469a6f2eb9b5bb0356",
+   "sha256": "3ea4c3d81ff110cebfa7160e25858e6ea53e2a7e87022977254920a5102e6d1e"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsql-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsql-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "190e624923ad822f48727d6ad8cdec76dfaa2cf7",
+   "sha256": "6dd9098e5b2b227f8b0c32d14b1be85704e61cd7f2250c57a0e2d148b556ceb7"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsvg-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsvg-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 965249,
+   "sha1": "8715d45942f986d4f633f6bcaa754aacc329db72",
+   "sha256": "08d96a08d7b39817b02231adcfb3932c1a15d88f71ecf1484d421e732e85d77f"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsvg-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtsvg-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "284ed7a591275e0eb9f65760711335b8f75dcc7f",
+   "sha256": "32ac653bd2a116f3046dfe08d56df7ff234567b9b6e1a15d99f322aa8e2e4f76"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qttestlib-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qttestlib-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 359277,
+   "sha1": "2a2f6a282877c234c31210ac65f9f203a43ec435",
+   "sha256": "62bf199bb39a62ac50fc07af625569628fd5b007fdc310e165890a9a3c11157f"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qttestlib-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qttestlib-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "3b93ef1ab516328d80ba7b292cbe9e51a1e17ba8",
+   "sha256": "7fcd1ed95d0b9fdeddef2c8920673931aa8b5de2c22eb413012f5f7cebd86c19"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtuitools-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtuitools-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 241717,
+   "sha1": "e93955ce5986e5da9583b9ec1dcd2648af555a2c",
+   "sha256": "d2827fd57dd360099c081069436be8910f3501cec4637ce1e7fb2e22f742d942"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtuitools-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtuitools-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "1b02a13041e3be7846834858b69608dfcd95163c",
+   "sha256": "1f434779db7aeee09549c9d06cfeded5bc99143c57787355b626a6a244bc878c"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtwidgets-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtwidgets-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 22594378,
+   "sha1": "36f38cab31acb9bc1668f2f82d6ca66d444d518f",
+   "sha256": "769d867880b312566e06cb04c07ac2cd50e28c0a1923b56bf7e4d332f81a0f81"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtwidgets-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtwidgets-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "b510343b5f3beed96ac77ee17214fc3869005164",
+   "sha256": "e2aacb9eb737a6fc90305dd00b64dd95ecaeb3a7b900ecac75bda5a11685f5fd"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtxml-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtxml-documentation.zip",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 468007,
+   "sha1": "357738bdf9299616005bd551c34ca48cac1a1e9f",
+   "sha256": "31c812a6d229d96eef42e198417d8194843b7ce68e716be59a586191a47823b0"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtxml-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc/6.11.2-0-202608131018qtxml-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc",
+   "conditional": false,
+   "length": 40,
+   "sha1": "209f98f98263e964b8c302366a1b7427c7e5d45b",
+   "sha256": "e5182fe93ca55652d00b160bb66f039541fe11b27ae61208854d3fed68648914"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.zip",
+   "package": "qt.qt6.6112.doc.qtmultimedia",
+   "conditional": false,
+   "length": 5956338,
+   "sha1": "ec3c2187086c593915484b1d3d3f2a461baa6901",
+   "sha256": "2db1c75b51a68ec25876df08d5e1398db7fe858dc8aff49756e3e3d3efc5ee69"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtmultimedia-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc.qtmultimedia",
+   "conditional": false,
+   "length": 40,
+   "sha1": "57ed5e6e1087021f561ba5e30d70a5a7cf018247",
+   "sha256": "6b02f6d881dee9a4778c70232e474f1c955fa4f3a46707afeea7b462a49102ad"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.zip",
+   "package": "qt.qt6.6112.doc.qtmultimedia",
+   "conditional": false,
+   "length": 566230,
+   "sha1": "e2fc8e588cdd315cf0c6fddb5e5f58c4b667da51",
+   "sha256": "dc9f0f4641917068377bee76e8f38ccfbcc5ea492954a25f906509c27d7568a2"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtmultimedia/6.11.2-0-202608131018qtspatialaudio-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc.qtmultimedia",
+   "conditional": false,
+   "length": 40,
+   "sha1": "6e1401d57a0d9925add64eb15b5963fd647874c4",
+   "sha256": "d010ea9fa9b78d1352fe0c841b8f9d46b33b95de45528d2749e6430217bf935e"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.zip",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.zip",
+   "package": "qt.qt6.6112.doc.qtshadertools",
+   "conditional": false,
+   "length": 238554,
+   "sha1": "c65a24b9b712895b5f07b75719ed0e0dd6ea6637",
+   "sha256": "89637f081cf05d9d39bcc97ef1dfb5eaa18bcf95ae8a47a298a6506d3b6de799"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.zip.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.doc.qtshadertools/6.11.2-0-202608131018qtshadertools-documentation.zip.sha1",
+   "package": "qt.qt6.6112.doc.qtshadertools",
+   "conditional": false,
+   "length": 40,
+   "sha1": "fc0acbbf70177199252a806af244fb552510ce44",
+   "sha256": "fff2e8b7f24d7c7ce7aeed603a6e7fe38e133c1fb80099d925f2f49fb8968b92"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtbase-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtbase-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 4237795,
+   "sha1": "0a55febf9330292b245a06c598a8b285c3820f13",
+   "sha256": "c5178f50a5fe6eb171038dc303aeb194b958156895e31088929e28c6ac1425e7"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtbase-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtbase-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 40,
+   "sha1": "30e1145cbff796a6f80f555706679fd140407abe",
+   "sha256": "8315e058630f22c480252b3a1d17b7d457040b9a0257df6c0a1a9004704c3288"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 12462760,
+   "sha1": "856d3246a47bb1740824c698ed1a553240166131",
+   "sha256": "725d898b51bcb164c888ecabe967f1d52ba4448be9f0a2dc68821c0b627036d0"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdeclarative-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 40,
+   "sha1": "a6e3a5b6c09a79fa10f2e2e858bd1ba8ec181795",
+   "sha256": "0669ebea53627724177b56d722bfbcc7fb721ac5bb0c3a1744b0ede794db312b"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdoc-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdoc-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 43339950,
+   "sha1": "06f317429ccdafe685ab691f6b1dc9cf4a78849d",
+   "sha256": "adac42a8791ce723eff7ae0a9e2fa5d2b6b2354b66dec271505f69b690b82d6d"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdoc-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtdoc-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 40,
+   "sha1": "39132089d1397923b00515490940fc3e2c302ada",
+   "sha256": "e52c38f79986be08e26baca893bde20ab3c33f56bdf71246fbcfa304d3724fb6"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qttools-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qttools-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 719349,
+   "sha1": "654b90cad818286b0b77e72175abdcc01473033c",
+   "sha256": "69522ddd0e29a4a28a73d673b2a4159fc6a0ee3a3c7f93a2c78bce7ece0c21eb"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qttools-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qttools-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 40,
+   "sha1": "cb36317d47fe84bc596a50bfb77b020f874456c6",
+   "sha256": "263dff2fc36b2e4aab252541743892c5bb4f092c6c9875486c6eaeffc6a4d089"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtsvg-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtsvg-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 612701,
+   "sha1": "7923c42f0cb96e89366e1fe09ad10926723ff102",
+   "sha256": "8e586a710b06c0e1d0068edfeb801190ec2c388e544bf83544d958aa25198595"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtsvg-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples/6.11.2-0-202608131018qtsvg-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples",
+   "conditional": false,
+   "length": 40,
+   "sha1": "f9182e349c76d20638de123da771fb27cacdfac4",
+   "sha256": "c3c0789758b93e26783c620c0b42267df26a27c47468e5e370f6af3979f98336"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z",
+   "package": "qt.qt6.6112.examples.qtmultimedia",
+   "conditional": false,
+   "length": 1588021,
+   "sha1": "e6dd086a0571c9f6bbd014c842f97b521380a23b",
+   "sha256": "12ec7a3ddca1f32a7ffaf7c2f16a35a68d8940db754a7e347a011d95c13cdaaa"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z.sha1",
+   "path": "all_os/qt/qt6_6112_windows_line_endings_src/qt.qt6.6112.examples.qtmultimedia/6.11.2-0-202608131018qtmultimedia-examples-6.11.2.7z.sha1",
+   "package": "qt.qt6.6112.examples.qtmultimedia",
+   "conditional": false,
+   "length": 40,
+   "sha1": "4f44a9da8053f0d7fd6c104afcbf42b6c5fe9c43",
+   "sha256": "daa71abd9514146cb518c83d48826062b684758f5cb6febe7dc017975a92dafc"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 39618573,
+   "sha1": "1fca9483183d426c1a3a984f1382382fa51f48de",
+   "sha256": "fd984b7264361b4dd3fd2a417702ca1258e4086268f2ee6a69b9a393d9c3f6bb"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtbase-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "4e559a502c51deaac9de1fac890ee87fbf58c4ef",
+   "sha256": "fb3cf9b2607a0b710b534cb29acbdfd61a9509f69c8d753f48bd73da38b42a37"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 684353,
+   "sha1": "f458d7f238795d61a3e53fa5211cf2d6b1aa08ef",
+   "sha256": "417f44499c835b2303f3ff78043179bb23442f33d5d2816fbf7e8dbf275b1c89"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtsvg-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "77dff5977eb731ea9a5de3e393fbade1f65347ee",
+   "sha256": "e8bc8be995edbc9243412eede64c3a287056a4bb6ef48eac03f5ea788e47634c"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 172484222,
+   "sha1": "f3ac5149eb76cb0279ba84e126734cf520214519",
+   "sha256": "5591ca564c1a9299a45a15b6b1d324c86e0aaed7cf6c47b7e6fe464aecae2587"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdeclarative-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "78bd3eb3ce05a19f0f09472b33d51ca207a610ee",
+   "sha256": "d2763e9f86970644d57594160fdcf175784503ba146d7085642aa53641b48f22"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 1872717,
+   "sha1": "675bf1eee1945d334e05d22232893065d1423df6",
+   "sha256": "731f32b8ccb9667068a57f0d262ba9a2b94018fa271a89b4193da6f940ef5a03"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qtdoc-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "cd5bd26cec54d83a052ebf40cf00855b5745506a",
+   "sha256": "c0f8a7efa88afd50872ea06902d7e9710adb7aeedcc365af26dc5d7865b80318"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 27033907,
+   "sha1": "0a94da47fb97103660b5bfec7361ae51b05f7323",
+   "sha256": "5f2b387a1f8055102b1388ff4ea743124ed6389d442f75c659728bb5c2a56946"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttools-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "ef819ee0a57b0194a912c644c9198a3b5d3d934c",
+   "sha256": "a09782728d627184b464d3b09e9f497bddf7bdfcbc17a72e5784b2dc720d9709"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 1953635,
+   "sha1": "2826dd1fcb9489d243c25a812f3edd7319ca2e45",
+   "sha256": "1c9516ce25d286ecf97e7aaaa5c8fa395823f21af5fa3dcb7bd06f648453dd77"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017qttranslations-Windows-Windows_11_24H2-MSVC2022-Windows-Windows_11_24H2-X86_64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "9aaf144fe0dc3df14522f0c46f9e12a70969cd4f",
+   "sha256": "f88581fef241af991113864d251de8dbc5dd237d6b19bce4bd0cdf563261c673"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017d3dcompiler_47-x64.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017d3dcompiler_47-x64.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 1380117,
+   "sha1": "15012129f9503b4cefdb1bc8a82d0ff42efc10e6",
+   "sha256": "b1c379f739fa59a495a388c0878757e3d90fb72e0df771237a1ee4a2c1675d15"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017d3dcompiler_47-x64.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017d3dcompiler_47-x64.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "2ca76a1f1b3fafa70a8c9ec542b2316206fde31a",
+   "sha256": "ada03252867f41d250d9789abdfa36ccd9ae5dfd41e95addbd1ad5d92d06ca1b"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017opengl32sw-64-mesa_11_2_2-signed_sha256.7z",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 5474526,
+   "sha1": "753a1934e93a7402ce1584b71212f38c45770d3c",
+   "sha256": "59a086716cfd4bdec035698d501ba45526f8d2ecb5c0c428a356d8be0b5d2c79"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017opengl32sw-64-mesa_11_2_2-signed_sha256.7z.sha1",
+   "path": "windows_x86/desktop/qt6_6112/qt6_6112_msvc2022_64/qt.qt6.6112.win64_msvc2022_64/6.11.2-0-202608131017opengl32sw-64-mesa_11_2_2-signed_sha256.7z.sha1",
+   "package": "qt.qt6.6112.win64_msvc2022_64",
+   "conditional": false,
+   "length": 40,
+   "sha1": "aa82a30ca83c0d2fc2d8d5be5a5b3dc4dfcc4e5a",
+   "sha256": "baae3563d36ccdbe65c9301d876a44c96aa6716ddfd33a5d114e8d402b134003"
+  },
+  {
+   "kind": "payload",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/sdktool/qt.tools.qtcreator/20.0.2-0-202609221200qtcreator_sdktool.7z",
+   "path": "windows_x86/desktop/sdktool/qt.tools.qtcreator/20.0.2-0-202609221200qtcreator_sdktool.7z",
+   "package": "qt.tools.qtcreator",
+   "conditional": false,
+   "length": 1162855,
+   "sha1": "657c8c2b248bef912942f21467da0c0550be073f",
+   "sha256": "7789983ce3febdd74a63ff6a5dd1956d294695c5a774d108ecd217cf327ad977"
+  },
+  {
+   "kind": "sidecar",
+   "url": "https://download.qt.io/online/qtsdkrepository/windows_x86/desktop/sdktool/qt.tools.qtcreator/20.0.2-0-202609221200qtcreator_sdktool.7z.sha1",
+   "path": "windows_x86/desktop/sdktool/qt.tools.qtcreator/20.0.2-0-202609221200qtcreator_sdktool.7z.sha1",
+   "package": "qt.tools.qtcreator",
+   "conditional": false,
+   "length": 40,
+   "sha1": "02cdf845b2093fac95db128b147f410cfab55bd9",
+   "sha256": "efc58bb1925c6e1c9b901b19a943e1f3115f5b90860af950afd05bb66d01a2b1"
+  }
+ ],
+ "declared_bytes": {
+  "objects": 487028812,
+  "installer": 58051784,
+  "unconditional_payload": 486957301
+ },
+ "license_texts": [
+  {
+   "file": "qt.license.gplv3except/LICENSE.GPL3-EXCEPT",
+   "sha256": "0dbe024961f6ab5c52689cbd036c977975d0d0f6a67ff97762d96cb819dd5652"
+  },
+  {
+   "file": "qt.license.lgpl/LICENSE",
+   "sha256": "2004ee3ef8282a85f7dbd035dfacf63cf03d569537bc08655ffeb140ea3671c5"
+  },
+  {
+   "file": "qt.license.python/LICENSE.PYTHON",
+   "sha256": "7dd3de38cf9812316c917014fe93c495bc1fe37830255b3d3ae0be7cd27860e9"
+  },
+  {
+   "file": "qt.license.win10sdk/sdk_license",
+   "sha256": "55b63a0c2b6f353ed85ed2ec74e69f37cd419229936438b1796b645afd6eea5d"
+  }
+ ],
+ "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition. 7 object digests reused from the previous lock by URL and length.",
+ "metadata_retention": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/"
+}

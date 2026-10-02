@@ -1,0 +1,130 @@
+name: Qt rewrite — Windows
+
+# B2-W: reconstruct the pinned build on a GitHub-hosted Windows runner with
+# the latest MSVC, from an empty cache, using the same presets as Linux.
+on:
+  push:
+    branches: [qt]
+    paths:
+      - CMakeLists.txt
+      - CMakePresets.json
+      - vcpkg.json
+      - vcpkg-configuration.json
+      - cmake/provision/**
+      - cmake/locks/**
+      - cmake/HikariDependencies.cmake
+      - cmake/HikariTesting.cmake
+      - cmake/quicktest_main.cpp
+      - ports/**
+      - triplets/**
+      - src/**
+      - tests/dependency-load/**
+      - tests/runners/**
+      - tests/support/**
+      - tests/perf/**
+      - tests/references/**
+      - tests/modules/**
+      - tests/core/**
+      - tests/application/**
+      - tests/backends/**
+      - tests/ui/**
+      - tests/fixtures/**
+      - docs/qt/fixtures/**
+      - .github/workflows/qt-windows.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: qt-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    name: Windows x64 release (latest MSVC), empty cache
+    runs-on: windows-2025
+    timeout-minutes: 240
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          submodules: false
+
+      # The developer environment of the newest installed Visual Studio, for
+      # every later step (vcpkg builds FFmpeg and the overlays with cl too).
+      - name: Latest MSVC developer environment
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vs) { throw 'No Visual Studio with the x64 C++ tools' }
+          cmd /c "`"$vs\VC\Auxiliary\Build\vcvars64.bat`" >nul && set" | ForEach-Object {
+            if ($_ -match '^([^=]+)=(.*)$') { "$($Matches[1])=$($Matches[2])" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV }
+          }
+          New-Item -ItemType Directory -Force out/evidence | Out-Null
+          & $vswhere -latest -products * -format json | Out-File -Encoding utf8 out/evidence/visual-studio.json
+
+      - name: Declared host prerequisites
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Get-Command ninja -ErrorAction SilentlyContinue)) { choco install ninja --no-progress -y | Out-Null }
+          $ids = @(
+            "OS=$([Environment]::OSVersion.VersionString)", "ImageVersion=$env:ImageVersion",
+            (cmake --version | Select-Object -First 1), "ninja $(ninja --version)",
+            ((cl 2>&1) | Select-Object -First 1), "WindowsSDK=$env:WindowsSDKVersion", "VCTools=$env:VCToolsVersion",
+            (python --version), (git --version))
+          $ids | Out-File -Encoding utf8 out/evidence/host.txt
+          Get-Content out/evidence/host.txt
+
+      - name: Provision Qt and vcpkg (only step with the secret)
+        env:
+          QT_INSTALLER_JWT_TOKEN: ${{ secrets.QT_INSTALLER_JWT_TOKEN }}
+        run: cmake --workflow --preset provision
+
+      - name: Reject a corrupted mirror object, then repair it
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $victim = python -c "import json;l=json.load(open('cmake/locks/qt-windows.lock.json'));print(next(o['path'] for o in l['objects'] if o['kind']=='payload' and o['package']=='qt.license.thirdparty'))"
+          Add-Content -NoNewline -Path "out/sdk/qt-mirror-windows/$victim" -Value 'x'
+          cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=ON *> out/evidence/corrupt-verify.log
+          if ($LASTEXITCODE -eq 0) { throw 'Corrupted object was accepted' }
+          if (-not (Select-String -SimpleMatch -Quiet -Pattern $victim out/build/provision/provision-evidence/qt-verify-rejections.tsv)) { throw 'Rejection not recorded' }
+          cmake --preset provision -DHIKARI_QT_VERIFY_ONLY=OFF *> out/evidence/repair.log
+          if ($LASTEXITCODE -ne 0) { throw 'Repair failed' }
+
+      - name: Configure, build and test without credentials
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (Test-Path "$env:APPDATA\Qt\qtaccount.ini") { throw 'Qt account file left in the profile' }
+          if (Test-Path out/sdk/qt-install-private) { throw 'Private install directory left behind' }
+          cmake --workflow --preset windows-x64-verify
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Performance observations (uncalibrated host)
+        run: |
+          ctest --preset windows-x64-perf
+          Copy-Item out/build/windows-x64-release/perf-report-*.json out/evidence/ -ErrorAction SilentlyContinue
+
+      - name: Collect sanitized evidence
+        if: always()
+        run: |
+          foreach ($d in 'out/build/provision/provision-evidence', 'out/build/windows-x64-release/provision-evidence') {
+            if (Test-Path $d) { Copy-Item -Recurse $d "out/evidence/$(Split-Path (Split-Path $d -Parent) -Leaf)" }
+          }
+          Copy-Item out/build/windows-x64-release/Testing/Temporary/LastTest.log out/evidence/ -ErrorAction SilentlyContinue
+          # Deepest path reached in the SDK and build trees (B48-winpath evidence).
+          Get-ChildItem -Recurse -Force out/sdk, out/build -ErrorAction SilentlyContinue |
+            Sort-Object { $_.FullName.Length } -Descending | Select-Object -First 5 |
+            ForEach-Object { "$($_.FullName.Length)`t$($_.FullName)" } | Out-File -Encoding utf8 out/evidence/deepest-paths.tsv
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: qt-windows-${{ github.run_id }}-${{ github.run_attempt }}
+          path: out/evidence/
+          if-no-files-found: warn
+          retention-days: 14
