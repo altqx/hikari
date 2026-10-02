@@ -54,3 +54,14 @@ hikari_add_gtest(hikari_backends_audio_engine_tests SOURCES audio_engine_tests.c
     LIBRARIES hikari_backends LABELS backends)
 hikari_add_gtest(hikari_backends_portaudio_tests SOURCES portaudio_output_tests.cpp
     LIBRARIES hikari_backends LABELS backends PROPERTIES RUN_SERIAL TRUE)
+
+# N8: the isolated Lua helper with the unchanged bundled edgeblur script and
+# authored fixtures.
+hikari_add_gtest(hikari_backends_lua_helper_tests SOURCES lua_helper_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/lua-fixtures"
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_EDGEBLUR_SCRIPT="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload/macro-1-edgeblur.lua")
+add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper)
