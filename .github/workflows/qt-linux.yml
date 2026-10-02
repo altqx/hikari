@@ -94,7 +94,7 @@ jobs:
       - name: Performance observations (uncalibrated host)
         run: |
           ctest --preset ubuntu-x64-perf
-          cp out/build/ubuntu-x64-release/perf-report-core.json out/evidence/ 2>/dev/null || true
+          cp out/build/ubuntu-x64-release/perf-report-*.json out/evidence/ 2>/dev/null || true
 
       - name: Collect sanitized evidence
         if: always()
