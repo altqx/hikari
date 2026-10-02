@@ -7,7 +7,9 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QDeadlineTimer>
 #include <QQmlApplicationEngine>
+#include <QQuickWindow>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <Spix/QtQmlBot.h>
@@ -102,6 +104,14 @@ int main(int argc, char **argv)
         engine.loadFromModule("Hikari.Ui", "Main");
         if (engine.rootObjects().isEmpty())
             return 2;
+        // Under a real X server without a window manager the window is not
+        // exposed or active at once; Spix posts input to it, so wait first.
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        window->requestActivate();
+        QDeadlineTimer deadline(10'000);
+        while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        expect(window->isExposed(), "the window is exposed");
         Workflow test;
         spix::QtQmlBot bot;
         bot.runTestServer(test);
