@@ -63,26 +63,41 @@ std::vector<std::byte> readFile(const QString &path)
     return bytesOf(std::string_view(d.constData(), static_cast<std::size_t>(d.size())));
 }
 
-TEST(SrtLoad, CrlfBlankLinesKeepTheLegacyTrailingBreak)
+TEST(SrtLoad, BlankLinesAddNoBreakC82)
 {
-    // Legacy reads CRLF untouched; a CRLF blank line is a "\r" token, so a cue
-    // followed by one ends with "\N". Legacy capture run 37011681370 confirms
-    // it. Reproduced as-is: a defect candidate, not an approved departure.
+    // Legacy capture run 37011681370: the old app read a CRLF blank line as a
+    // "\r" token, so cue 1 became "Hello\N" and its save gained a blank line.
+    // Approved C82-srt-blank-break: blank lines add nothing to the cue text.
     const auto input = readFile(QStringLiteral(HIKARI_CAPTURE_INPUTS "/crlf-two-cues.srt"));
     auto r = loadSrt(input);
     const auto lines = r.document.lines();
     ASSERT_EQ(lines.size(), 2u);
-    EXPECT_EQ(s8(lines[0]->text), "Hello\\N");
+    EXPECT_EQ(s8(lines[0]->text), "Hello");
     EXPECT_EQ(s8(lines[1]->text), "Bye");
 
-    // Regenerating cue 1 gives the bytes the old app wrote for it, extra blank
-    // line included. The legacy save also added a BOM and a final blank line,
-    // which same-format save leaves out for the unchanged rest of the file.
+    // Regenerating cue 1 now gives back the input exactly. The old app's save
+    // differs by the extra line break (plus its BOM and final blank line).
     ASSERT_TRUE(r.document.setLineText(lines[0]->id, lines[0]->text));
+    EXPECT_EQ(text(encodeSrt(r.document)), text(input));
     std::string legacy = text(readFile(QStringLiteral(HIKARI_CRLF_OBSERVATION)));
     ASSERT_TRUE(legacy.starts_with("\xEF\xBB\xBF") && legacy.ends_with("\r\n\r\n"));
     legacy = legacy.substr(3, legacy.size() - 5);
-    EXPECT_EQ(text(encodeSrt(r.document)), legacy);
+    const std::string extra = "Hello\r\n\r\n\r\n";
+    legacy.replace(legacy.find(extra), extra.size(), "Hello\r\n\r\n");
+    EXPECT_EQ(text(input), legacy);
+}
+
+TEST(SrtLoad, WhitespaceOnlyLinesAddNoBreakC82)
+{
+    // The same rule for LF files and whitespace-only lines, including the
+    // cue-number trimming of the following cue.
+    const auto r = loadSrt(bytesOf("1\n00:00:01,000 --> 00:00:02,000\nA\n  \n\t\n"
+                                   "2\n00:00:03,000 --> 00:00:04,000\nB\n \nC\n"));
+    const auto lines = r.document.lines();
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(s8(lines[0]->text), "A");
+    EXPECT_EQ(s8(lines[1]->text), "B\\NC");
+    EXPECT_EQ(*lines[1]->cueNumber, u8"2");
 }
 
 TEST(SrtLoad, PrecisionFixtureAndMillisecondFields)

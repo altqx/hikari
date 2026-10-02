@@ -164,11 +164,21 @@ TEST(LegacyCapture, EventEdgeFamilies)
 TEST(LegacyCapture, TLModeEdgeFamilies)
 {
     auto doc = loadAss(input("tlmode-edges.ass")).document;
-    EXPECT_FALSE(doc.lines()[0]->unconfirmed); // form-feed+D is not read back
+    EXPECT_TRUE(doc.lines()[0]->unconfirmed); // C87-unconfirmed-roundtrip
     editEveryLine(doc);
     const auto events = [](const std::string &s) { return s.substr(s.rfind("Format: Layer")); };
-    ASSERT_EQ(eventLines(legacyOutput("saved-tlmode-edges.ass")).size(), 6u);
-    EXPECT_EQ(events(text(encodeAss(doc))), events(legacyOutput("saved-tlmode-edges.ass")));
+    std::string expected = events(legacyOutput("saved-tlmode-edges.ass"));
+    ASSERT_EQ(eventLines(expected).size(), 6u);
+    // The legacy output, except for the two approved departures:
+    // the Unconfirmed original keeps its form-feed+D effect...
+    const std::string lost = "Orig,Tl,1,2,3,fx,unconfirmed original";
+    expected.replace(expected.find(lost), lost.size(), "Orig,Tl,1,2,3,\fD,unconfirmed original");
+    // ...and the ';' line is not taken as a translation (C87-nondialogue-partner).
+    const std::string twice = "original before comment\noriginal before comment\n";
+    expected.replace(expected.find(twice), twice.size(),
+                     "Dialogue: 0,0:00:07.00,0:00:08.00,Orig,,0,0,0,,original before comment\n"
+                     "; comment taken as translation\n");
+    EXPECT_EQ(events(text(encodeAss(doc))), expected);
 }
 
 TEST(LegacyCapture, SsaStylesDecodeAsTheLegacyConversion)

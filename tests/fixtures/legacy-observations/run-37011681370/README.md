@@ -4,4 +4,4 @@ Captured by [legacy-capture](../../../../.github/workflows/legacy-capture.yml) [
 
 | Case | Route | Old app observed | Disposition |
 | --- | --- | --- | --- |
-| srt-crlf-blank-lines (input `tools/legacy-capture/inputs/crlf-two-cues.srt`) | Save As (SRT) | Cue 1 `Hello` followed by a CRLF blank line is saved as `Hello` plus an extra blank line: the cue text became `Hello\N`. Cue 2 (no blank line after it) is unchanged. A UTF-8 BOM and a trailing blank line were also added, as in supplement-format-precision. | Candidate defect. The rewrite reproduces the `\N` (C4-srt) until a named decision says otherwise. |
+| srt-crlf-blank-lines (input `tools/legacy-capture/inputs/crlf-two-cues.srt`) | Save As (SRT) | Cue 1 `Hello` followed by a CRLF blank line is saved as `Hello` plus an extra blank line: the cue text became `Hello\N`. Cue 2 (no blank line after it) is unchanged. A UTF-8 BOM and a trailing blank line were also added, as in supplement-format-precision. | Changed by approved [C82-srt-blank-break](../../../../docs/qt/compatibility-decisions.md): blank lines add nothing, so the rewrite reads `Hello`. The SRT test compares against these bytes. |

@@ -18,12 +18,13 @@ struct PhysicalLine {
     u8sv text;         // content without terminator; empty when invalid
 };
 
-// wxStringTokenizer(text, "\n", wxTOKEN_STRTOK) never yields an empty token,
-// so only zero-length lines vanish. A CRLF blank line is the token "\r" and
-// survives; Trim() then empties it.
+// Legacy (wxStringTokenizer STRTOK) drops only zero-length lines, so a CRLF
+// blank line ("\r") or a whitespace-only line was a token that Trim() emptied,
+// adding a trailing \N to the cue. Approved C82-srt-blank-break: any line that
+// is blank after trimming adds nothing, in LF and CRLF files alike.
 bool isToken(const PhysicalLine &line)
 {
-    return line.span.length + (line.span.terminatorLength == 2 ? 1 : 0) > 0;
+    return !line.valid || !trim(line.text).empty();
 }
 
 // SubsLoader::TrimLastNumber on the accumulated cue text: drops the trailing

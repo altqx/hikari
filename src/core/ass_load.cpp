@@ -282,10 +282,8 @@ private:
         LineRecord line = parseEvent(view, span);
         if (line.unparsed)
             addDiagnostic(Diagnostic::Severity::Warning, Diagnostic::Kind::MalformedEvent, span.offset, view);
-        if (m_tlStyle && line.style == *m_tlStyle) {
-            pair(std::move(line));
+        if (m_tlStyle && line.style == *m_tlStyle && pair(line, view))
             return;
-        }
         line.id = DocumentBuilder::nextLineId(m_result.document);
         current().records.push_back(std::move(line));
     }
@@ -336,7 +334,8 @@ private:
     // SubsLoader::LoadASS in TLMode: the next token, whatever it is, is the
     // translation line. Zero-length lines are not tokens; a CRLF blank line
     // ("\r") is. The translation line is read without left trimming.
-    void pair(LineRecord original)
+    // Returns false when the original stays unpaired (C87-nondialogue-partner).
+    bool pair(LineRecord &original, u8sv originalView)
     {
         const auto &b = DocumentBuilder::source(m_result.document).bytes;
         std::size_t j = m_next;
@@ -346,17 +345,18 @@ private:
         if (j < m_spans.size() && validUtf8(b.data() + m_spans[j].offset, m_spans[j].length)) {
             const SourceSpan &ps = m_spans[j];
             const u8sv raw(reinterpret_cast<const char8_t *>(b.data() + ps.offset), ps.length);
-            merged = parseEvent(raw, ps);
-            // SetRaw's NonDialogue form: ";..." or one "{...}" block. The legacy
-            // token keeps a CRLF line's '\r', so "{...}\r" does not qualify.
-            const bool braces = ps.terminatorLength != 2 && startsWith(raw, u8"{") && raw.ends_with(u8'}') &&
+            // Legacy took a ";..." or lone "{...}" line (SetRaw's NonDialogue)
+            // as the translation, then saved the original twice and lost it.
+            // Approved C87-nondialogue-partner: it stays a comment, and the
+            // original stays an unpaired Line.
+            const bool braces = startsWith(raw, u8"{") && raw.ends_with(u8'}') &&
                                 std::ranges::count(raw, u8'{') == 1 && std::ranges::count(raw, u8'}') == 1;
-            if (merged.unparsed && (startsWith(raw, u8";") || braces)) {
-                merged.nonDialogue = true;
-                merged.comment = true;
-                merged.visibility = LineVisibility::Hidden;
-                merged.text = std::u8string(trimRight(raw));
+            if (startsWith(raw, u8";") || braces) {
+                addDiagnostic(Diagnostic::Severity::Warning, Diagnostic::Kind::MalformedPair, original.span.offset,
+                              original.text);
+                return false;
             }
+            merged = parseEvent(raw, ps);
             merged.span = SourceSpan{original.span.offset, ps.offset + ps.length - original.span.offset,
                                      ps.terminatorLength};
             m_next = j + 1;
@@ -374,10 +374,13 @@ private:
         merged.originalSpan = original.span;
         merged.translation = std::move(merged.text);
         merged.text = std::move(original.text);
-        // Legacy compares the original's trimmed Effect with "\f" "D"; the
-        // trim removes the form feed, as wxString::Trim does.
-        merged.unconfirmed = original.effect == u8"\fD";
+        // Legacy compared the trimmed Effect with form-feed+D, and the trim
+        // removed the form feed, so Unconfirmed was never read back. Approved
+        // C87-unconfirmed-roundtrip: the authored field itself is compared.
+        const auto fields = splitAll(originalView, u8',');
+        merged.unconfirmed = fields.size() > 8 && fields[8] == u8"\fD";
         current().records.push_back(std::move(merged));
+        return true;
     }
 
     LoadResult m_result;

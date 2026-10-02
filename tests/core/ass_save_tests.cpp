@@ -171,8 +171,6 @@ TEST(AssSave, EditedUnconfirmedPairWritesTheOriginalWithFormFeedD)
                              "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,orig\n"
                              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,\n"));
     const auto *line = r.document.lines().at(0);
-    // Unconfirmed is not read back from "\fD" (the trim removes the form
-    // feed), so it is set here as the Line command would.
     EXPECT_FALSE(line->unconfirmed);
     ASSERT_TRUE(r.document.setLineUnconfirmed(line->id, true));
     EXPECT_EQ(text(encodeAss(r.document)),
@@ -209,4 +207,51 @@ TEST(AssLoad, TLModePairingEdges)
         malformed |= d.kind == Diagnostic::Kind::MalformedPair;
     EXPECT_TRUE(malformed);
     EXPECT_EQ(text(encodeAss(r.document)).size(), r.document.source().bytes.size());
+}
+
+TEST(AssLoad, UnconfirmedRoundTripsC87)
+{
+    // Approved C87-unconfirmed-roundtrip: the form-feed+D the save writes is
+    // read back. A bare "D" (or form feed with spaces) is not the marker.
+    auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,A\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,D,b\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,,B\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0, \fD ,c\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,C\n"));
+    const auto lines = r.document.lines();
+    ASSERT_EQ(lines.size(), 3u);
+    EXPECT_FALSE(lines[1]->unconfirmed);
+    EXPECT_FALSE(lines[2]->unconfirmed);
+    ASSERT_TRUE(r.document.setLineUnconfirmed(lines[0]->id, true));
+    const auto saved = encodeAss(r.document);
+    const auto reloaded = loadAss(saved).document.lines();
+    ASSERT_EQ(reloaded.size(), 3u);
+    EXPECT_TRUE(reloaded[0]->unconfirmed);
+    EXPECT_EQ(reloaded[0]->translation, u8"A");
+}
+
+TEST(AssLoad, CommentAfterAnOriginalIsNotItsTranslationC87)
+{
+    // Approved C87-nondialogue-partner, for ';' and lone '{...}' lines in LF
+    // and CRLF files: the original stays unpaired, the comment stays put.
+    for (const std::string nl : {"\n", "\r\n"}) {
+        const std::string input = "[Script Info]" + nl + "TLMode: Yes" + nl + "TLMode Style: O" + nl + "[Events]" + nl +
+                                  "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,first" + nl + "; note" + nl +
+                                  "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,second" + nl + "{block}" + nl;
+        auto r = loadAss(bytesOf(input));
+        const auto lines = r.document.lines();
+        ASSERT_EQ(lines.size(), 2u);
+        EXPECT_FALSE(lines[0]->originalSpan);
+        EXPECT_EQ(lines[0]->style, u8"O");
+        EXPECT_EQ(lines[0]->start.value, DocumentTime(1'000'000));
+        EXPECT_EQ(lines[1]->text, u8"second");
+        // Editing keeps the comment lines and reloads the same way.
+        for (const auto *line : lines)
+            ASSERT_TRUE(r.document.setLineText(line->id, line->text));
+        const auto saved = encodeAss(r.document);
+        EXPECT_EQ(text(saved), input);
+        EXPECT_EQ(loadAss(saved).document.lines().size(), 2u);
+    }
 }
