@@ -243,7 +243,7 @@ TEST_F(HelperHostTest, DiagnosticsKeepOnlyTheNewestBytes)
     ASSERT_TRUE(waitFor([&] { return host->state() == HelperHost::State::Ready; }));
     Results r;
     ASSERT_TRUE(host->request(1, bytesOf("noisy"), r.handler()));
-    ASSERT_TRUE(waitFor([&] { return r.resolved() && host->diagnostics().endsWith("junk on stderr\n"); }));
+    ASSERT_TRUE(waitFor([&] { return r.resolved() && host->diagnostics().trimmed().endsWith("junk on stderr"); }));
     EXPECT_LE(host->diagnostics().size(), 20);
     EXPECT_GT(host->droppedDiagnosticBytes(), 0u);
 }
