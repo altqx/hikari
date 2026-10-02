@@ -81,3 +81,30 @@ TEST(TagCommands, MatchTheLegacyCapture)
     EXPECT_EQ(s8(run(u"{\\i1}abc", 4, 4, u'b').text), "{\\b1\\i1}abc");    // Home, Right x4
     EXPECT_EQ(s8(run(u"{\\b1}abc", 2, 2, u'b').text), "{\\b0}abc");         // Home, Right x2
 }
+
+// EditBox::PutinNonass, traced by hand through the legacy source.
+
+TEST(TagCommands, SrtWrapsTheSelectionInHtmlLikeTags)
+{
+    const auto r = toggleNonAssTag(EditorText{u"abc", 0, 3}, u'b', true);
+    EXPECT_EQ(s8(r.text), "<b>abc</b>");
+    EXPECT_EQ(r.selectionStart, 10);
+}
+
+TEST(TagCommands, SrtReplacesATagAtTheCaretWithAnOpeningOne)
+{
+    // A tag within four characters of the caret is replaced by the opening
+    // tag, even a closing one (legacy quirk).
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"<b>abc</b>", 10, 10}, u'b', true).text), "<b>abc<b>");
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"abc", 3, 3}, u'i', true).text), "abc<i>");
+}
+
+TEST(TagCommands, MicroDvdPutsTheTagAfterTheLastPipeBeforeTheCaret)
+{
+    // SubString(0, from) is inclusive, and the tag goes at the "|" itself.
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"abc|def", 5, 5}, u'b', false).text), "abc{Y:b}|def");
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"{y:b}abc", 2, 2}, u'b', false).text), "{Y:b}abc");
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"abc", 1, 1}, u'i', false).text), "{Y:i}abc");
+    // Underline and strikeout have no MicroDVD form: nothing changes.
+    EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"abc", 1, 1}, u'u', false).text), "abc");
+}

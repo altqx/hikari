@@ -52,4 +52,10 @@ private:
 // `tag` is 'b', 'i', 'u' or 's'.
 EditorText toggleTag(EditorText state, char16_t tag, bool styleValue);
 
+// The same commands for the other formats (EditBox::PutinNonass): SRT gets
+// <b>/<i>/<u>/<s>, MicroDVD gets {Y:b}/{Y:i} after the last "|" before the
+// caret; everything else (MicroDVD underline/strikeout, MPL2, TMPlayer) is
+// left unchanged, as in the legacy editor. `srt` selects the SRT form.
+EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt);
+
 } // namespace hikari::core::legacy

@@ -517,7 +517,17 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
                  ? from
                  : static_cast<long>(core::rawOffset(*projection, static_cast<std::size_t>(selectionEnd), false));
     }
-    const auto result = core::legacy::toggleTag({raw, from, to}, tag[0].unicode(), styleValue);
+    // Legacy subsFormat < SRT (ASS, and plain text, which loads as ASS) uses
+    // override tags; SRT and MicroDVD use their own markup (PutinNonass).
+    const auto format = session()->document().format();
+    core::legacy::EditorText result;
+    if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText)
+        result = core::legacy::toggleTag({raw, from, to}, tag[0].unicode(), styleValue);
+    else if (format == core::SubtitleFormat::Srt || format == core::SubtitleFormat::MicroDvd)
+        result = core::legacy::toggleNonAssTag({raw, from, to}, tag[0].unicode(),
+                                               format == core::SubtitleFormat::Srt);
+    else
+        return false; // MPL2 and TMPlayer: no legacy action
     if (!setRaw(role, core::toUtf8(result.text)))
         return false;
     if (m_showTags) {

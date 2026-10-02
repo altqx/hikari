@@ -342,4 +342,110 @@ EditorText toggleTag(EditorText state, char16_t tag, bool styleValue)
     return editor.state();
 }
 
+namespace {
+
+char16_t lower(char16_t c)
+{
+    return c >= u'A' && c <= u'Z' ? static_cast<char16_t>(c - u'A' + u'a') : c;
+}
+
+// First case-insensitive occurrence of `needle` in `hay` at or after `from`.
+std::size_t findNoCase(u16v hay, u16v needle, std::size_t from = 0)
+{
+    for (std::size_t i = from; i + needle.size() <= hay.size(); ++i) {
+        std::size_t k = 0;
+        while (k < needle.size() && lower(hay[i + k]) == lower(needle[k]))
+            ++k;
+        if (k == needle.size())
+            return i;
+    }
+    return u16v::npos;
+}
+
+// wxRegEx("\\</?" + text + "\\>", icase).Matches(window): start and length.
+bool matchSrtTag(u16v window, char16_t text, std::size_t &start, std::size_t &len)
+{
+    for (std::size_t i = 0; i < window.size(); ++i) {
+        if (window[i] != u'<')
+            continue;
+        std::size_t j = i + 1;
+        if (j < window.size() && window[j] == u'/')
+            ++j;
+        if (j + 1 < window.size() && lower(window[j]) == lower(text) && window[j + 1] == u'>') {
+            start = i;
+            len = j + 2 - i;
+            return true;
+        }
+    }
+    return false;
+}
+
+// txt.SubString(from - 4, from + 4): empty when from - 4 wraps below zero.
+u16 window(u16v txt, long from)
+{
+    if (from < 4)
+        return {};
+    return subString(txt, from - 4, from + 4);
+}
+
+} // namespace
+
+EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt)
+{
+    u16 txt = state.text;
+    long from = state.selectionStart, to = state.selectionEnd;
+    long where = from;
+    if (srt) {
+        const u16 open = u16(u"<") + tag + u">";
+        const u16 close = u16(u"</") + tag + u">";
+        std::size_t start = 0, len = 0;
+        bool match = false;
+        if (matchSrtTag(window(txt, from), tag, start, len) && len + start >= 4 && start <= 4) {
+            where = from - 4 + static_cast<long>(start);
+            txt.erase(static_cast<std::size_t>(where), len);
+            txt.insert(static_cast<std::size_t>(where), open);
+            where += 3;
+            match = true;
+        }
+        if (!match) {
+            txt.insert(static_cast<std::size_t>(from), open);
+            from += 3;
+            to += 3;
+            where = from;
+        }
+        if (from != to) {
+            match = false;
+            if (matchSrtTag(window(txt, to), tag, start, len) && len + start >= 4 && start <= 4) {
+                txt.erase(static_cast<std::size_t>(to - 4 + static_cast<long>(start)), len);
+                txt.insert(static_cast<std::size_t>(to - 4 + static_cast<long>(start)), close);
+                where = to + static_cast<long>(start);
+                match = true;
+            }
+            if (!match) {
+                txt.insert(static_cast<std::size_t>(to), close);
+                where = to + 4;
+            }
+        }
+    } else if (tag == u'b' || tag == u'i') {
+        // MicroDVD: PutinNonass("y:b", "Y:b") and ("y:i", "Y:i").
+        const u16 find = u16(u"{y:") + tag + u"}";
+        const u16 put = u16(u"{Y:") + tag + u"}";
+        long wheres = findLast(subString(txt, 0, from), u'|');
+        if (wheres == -1)
+            wheres = 0;
+        const std::size_t found = findNoCase(txt, find, static_cast<std::size_t>(wheres));
+        if (found != u16::npos) {
+            where = static_cast<long>(found);
+            txt.erase(found, find.size());
+            txt.insert(found, put);
+        } else {
+            txt.insert(static_cast<std::size_t>(wheres), put);
+            where = wheres + static_cast<long>(put.size());
+        }
+    } else {
+        return state; // no legacy action for this tag in this format
+    }
+    return EditorText{txt, where, where};
+}
+
 } // namespace hikari::core::legacy
