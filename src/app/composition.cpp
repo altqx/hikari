@@ -1,5 +1,8 @@
 #include "hikari/app/composition.h"
 
+#include "hikari/application/workspace.h"
+#include "shell_controller.h"
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QTimer>
@@ -16,7 +19,13 @@ int run(int argc, char **argv, StartupMode mode)
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
 
+    // No Document is open at start: opening arrives with A2.
+    application::Workspace workspace;
+    ui::ShellController shell(workspace);
+    shell.refresh(nullptr, nullptr);
+
     QQmlApplicationEngine engine;
+    engine.setInitialProperties({{QStringLiteral("shell"), QVariant::fromValue(&shell)}});
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);
     engine.loadFromModule("Hikari.Ui", "Main");
