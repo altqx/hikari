@@ -40,6 +40,15 @@
     "crlf-two-cues.srt"
    ],
    "note": "Source reading predicts each CRLF cue but the last gains a trailing \\N (blank CRLF line is a '\\r' token). Capture-only fixture, not part of the approved-departure pack."
+  },
+  "c4-ssa-edge-families": {
+   "route": "save-as",
+   "inputs": [
+    "ass-event-edges.ass",
+    "tlmode-edges.ass",
+    "ssa-v4.ssa"
+   ],
+   "note": "C4-ssa characterization: Dial/Comm prefixes that SetRaw rejects, short events, an event in Script Info, Actor marker precedence, TLMode pairing (form-feed+D Unconfirmed, blank line, comment and missing partner) and SSA v4 styles. Capture-only fixtures."
   }
  }
 }
