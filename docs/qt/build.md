@@ -92,3 +92,14 @@ A failure in any of them reopens the build decision rather than substituting ano
 - **Linux host tools** (checked up front): git, ninja, a C/C++ compiler, make, pkg-config, autoconf, autoconf-archive, automake, libtool, nasm, python3, curl, tar, zip and unzip.
 
 Failure behavior exercised locally: a corrupted or stray Qt mirror object and a vcpkg checkout at another commit each stop the configure with the path named; a tampered vcpkg tool is replaced by the verified download. The wx Linux root build moved to `cmake/linux-compat/LegacyWxLinux.CMakeLists.txt` as reference.
+
+## Retained Qt repository metadata (2026-10-02)
+
+Qt republishes and deletes its online-repository metadata. On 2026-09-28 `all_os/default_install` was republished and its previous metadata archive removed, so clean builds could no longer reproduce the Sept 29 lock (B2-U/F runs failed at acquisition with a SHA-256 mismatch, as designed). altqx chose to keep our own copy of the pinned metadata:
+
+- The 9 `Updates.xml` indexes and 9 metadata archives (about 300 KB, including Qt's license texts and installer scripts) are assets of the release [`qt-metadata-linux-6.11.2-20261002`](https://github.com/altqx/hikari/releases/tag/qt-metadata-linux-6.11.2-20261002), redistributed unchanged.
+- The lock gives each such entry a `retained_url`, and acquisition prefers it. Versioned payload archives still come from download.qt.io. The SHA-256 check is the same either way.
+- `tools/qt-lock/make-lock.py --previous <lock> --retention-base <url>` reuses verified digests by URL and length, and hashes only new or changed objects. The refresh reused 124 of 125; the selected closure and license texts are unchanged.
+- Acquisition removes mirror files the lock no longer lists; verify-only mode still reports them as failures. The installed-Qt stamp now identifies installed content (requested packages and payload digests), so a metadata-only refresh keeps an existing installation.
+
+Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining them too is a separate, unmade decision.

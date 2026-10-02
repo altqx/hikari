@@ -22,7 +22,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/Updates.xml",
     "length": 115171,
-    "sha256": "5cc522ccfe18d76a6e703bfb33704cdfff3ed24695ca3d449c4d710bc6385e32"
+    "sha256": "5cc522ccfe18d76a6e703bfb33704cdfff3ed24695ca3d449c4d710bc6385e32",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__qt6_6112__qt6_6112__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/qt6_6112/qt6_6112/2026-08-13-1101_meta.7z",
@@ -36,7 +37,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/Updates.xml",
     "length": 73413,
-    "sha256": "56eda053cf58039ddef26e866d9687a513bfe1e0fe17254fa84f87aee64eaaa2"
+    "sha256": "56eda053cf58039ddef26e866d9687a513bfe1e0fe17254fa84f87aee64eaaa2",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__qt__qt6_6112_unix_line_endings_src__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt/qt6_6112_unix_line_endings_src/2026-08-13-1030_meta.7z",
@@ -50,7 +52,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/tools_generic/Updates.xml",
     "length": 1469,
-    "sha256": "b6aecc79c43697c4e31ade479461fdbca563b5f111bfa9607d3f5e376f635344"
+    "sha256": "b6aecc79c43697c4e31ade479461fdbca563b5f111bfa9607d3f5e376f635344",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__tools_generic__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/tools_generic/2026-09-03-1112_meta.7z",
@@ -64,7 +67,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/sdktool/Updates.xml",
     "length": 987,
-    "sha256": "b6e78965fa5711b4249eaf365c322a0cc751fa23c5eb8a74102da08373306f71"
+    "sha256": "b6e78965fa5711b4249eaf365c322a0cc751fa23c5eb8a74102da08373306f71",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__sdktool__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/linux_x64/desktop/sdktool/2026-09-22-1200_meta.7z",
@@ -78,7 +82,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/Updates.xml",
     "length": 3482,
-    "sha256": "21af9b0e5417a0bfe20a5896dc3b4131c6c79dd48cc719328390d551cc03d365"
+    "sha256": "21af9b0e5417a0bfe20a5896dc3b4131c6c79dd48cc719328390d551cc03d365",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__license_agreements__licenses__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/license_agreements/licenses/2024-04-15-0915_meta.7z",
@@ -92,7 +97,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt_patchers/6112/Updates.xml",
     "length": 972,
-    "sha256": "59967da435797a32b6045a3c2d7246ba1e58c6a94b980adc42ccf435ca027a5a"
+    "sha256": "59967da435797a32b6045a3c2d7246ba1e58c6a94b980adc42ccf435ca027a5a",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__qt_patchers__6112__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/qt_patchers/6112/2026-08-13-1018_meta.7z",
@@ -106,7 +112,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/unified_patching/Updates.xml",
     "length": 700,
-    "sha256": "d2f0666669a8b71f674a5f93363edd97fa8293b405e3a1d8e917817d688f0df9"
+    "sha256": "d2f0666669a8b71f674a5f93363edd97fa8293b405e3a1d8e917817d688f0df9",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__unified_patching__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/unified_patching/2023-11-21-1039_meta.7z",
@@ -120,7 +127,8 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/dependencycheck/Updates.xml",
     "length": 775,
-    "sha256": "bd4e281c18fa64f213a8506e8b25a94f0f369b75e92c1e28aa5378239a906c5a"
+    "sha256": "bd4e281c18fa64f213a8506e8b25a94f0f369b75e92c1e28aa5378239a906c5a",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__dependencycheck__Updates.xml"
    },
    "metadata": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/dependencycheck/2026-08-26-0909_meta.7z",
@@ -134,11 +142,12 @@
    "updates_xml": {
     "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/Updates.xml",
     "length": 875,
-    "sha256": "1e0f966bb6954a3dfe0645fd908b2d91071281564eda09e809d747c0d684e748"
+    "sha256": "31470838256dd39efee39935742f4759990aa8f15ad302f05720c4445a03af44",
+    "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__default_install__Updates.xml"
    },
    "metadata": {
-    "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-08-18-0452_meta.7z",
-    "name": "2026-08-18-0452_meta.7z"
+    "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-09-28-1022_meta.7z",
+    "name": "2026-09-28-1022_meta.7z"
    },
    "checksum": "true",
    "package_count": 1
@@ -183,6 +192,7 @@
   "qt.qt6.6112",
   "qt.qt6.6112.addons"
  ],
+ "duplicate_grouping_nodes": [],
  "absent_optional_script_dependencies": [
   "qt.qt6.6112.linux_gcc_64 -> mocwrapper"
  ],
@@ -217,7 +227,8 @@
    "conditional": false,
    "length": 4563,
    "sha1": "a3886c77240546cd878ac7a426a6b5be183a7d98",
-   "sha256": "0b3be7c1efc48ae76c4876d88b035f50feff1770486f4153e9e4de570f9cbd8c"
+   "sha256": "0b3be7c1efc48ae76c4876d88b035f50feff1770486f4153e9e4de570f9cbd8c",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__qt6_6112__qt6_6112__2026-08-13-1101_meta.7z"
   },
   {
    "kind": "metadata",
@@ -227,7 +238,8 @@
    "conditional": false,
    "length": 2027,
    "sha1": "e05690042d5a57365374c1e15836a4ba95400157",
-   "sha256": "e8e7136177195d2b9e7b584444a7032e18b3d56cf139bea6581c5e2e440916c1"
+   "sha256": "e8e7136177195d2b9e7b584444a7032e18b3d56cf139bea6581c5e2e440916c1",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__qt__qt6_6112_unix_line_endings_src__2026-08-13-1030_meta.7z"
   },
   {
    "kind": "metadata",
@@ -237,7 +249,8 @@
    "conditional": false,
    "length": 3338,
    "sha1": "cd4cf047aa19925aa839ea4a913856433575fcd1",
-   "sha256": "82c96f945f31162ba8f2a3e391f62607223049e5bb3817276b2ae81b5fee5679"
+   "sha256": "82c96f945f31162ba8f2a3e391f62607223049e5bb3817276b2ae81b5fee5679",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__tools_generic__2026-09-03-1112_meta.7z"
   },
   {
    "kind": "metadata",
@@ -247,7 +260,8 @@
    "conditional": false,
    "length": 3406,
    "sha1": "cb9911fa3205ed98fe02cb0c5ae64b189a022f13",
-   "sha256": "3ba4b1e7bde8e8f9c53f2de26176037f6035c769516995a4045449cd4b85a109"
+   "sha256": "3ba4b1e7bde8e8f9c53f2de26176037f6035c769516995a4045449cd4b85a109",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/linux_x64__desktop__sdktool__2026-09-22-1200_meta.7z"
   },
   {
    "kind": "metadata",
@@ -257,7 +271,8 @@
    "conditional": false,
    "length": 27560,
    "sha1": "418f26b45a2193fb1c58b1542e6dfc23f91903f5",
-   "sha256": "783101d120e2f259110d87ad73ba4f285d7eac5e653352914e80697f7cc70b5e"
+   "sha256": "783101d120e2f259110d87ad73ba4f285d7eac5e653352914e80697f7cc70b5e",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__license_agreements__licenses__2024-04-15-0915_meta.7z"
   },
   {
    "kind": "metadata",
@@ -267,7 +282,8 @@
    "conditional": false,
    "length": 5478,
    "sha1": "fe79f13cb9b60ace205125664cef8658436b88cd",
-   "sha256": "8f429b0fbd4c6e7f6b5a5a565d305a8aa28ef20fad4da6ce2dde3f807c56b2b6"
+   "sha256": "8f429b0fbd4c6e7f6b5a5a565d305a8aa28ef20fad4da6ce2dde3f807c56b2b6",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__qt_patchers__6112__2026-08-13-1018_meta.7z"
   },
   {
    "kind": "metadata",
@@ -277,7 +293,8 @@
    "conditional": false,
    "length": 4139,
    "sha1": "67e241c2b4f23d935862cd68b9367562063e9dcf",
-   "sha256": "d0e7809c51156ed1da18bc2d2d3c1687c51eb38f008e49548abb24019b17a9a8"
+   "sha256": "d0e7809c51156ed1da18bc2d2d3c1687c51eb38f008e49548abb24019b17a9a8",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__unified_patching__2023-11-21-1039_meta.7z"
   },
   {
    "kind": "metadata",
@@ -287,17 +304,19 @@
    "conditional": false,
    "length": 6548,
    "sha1": "c45dfd10f0bd4ce824fe7c4b98cc9ea88b30c40c",
-   "sha256": "9dac2ae601651eeaccbbe9b1440d7f522820725b2639b6a4154d53aba8e5f4d6"
+   "sha256": "9dac2ae601651eeaccbbe9b1440d7f522820725b2639b6a4154d53aba8e5f4d6",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__dependencycheck__2026-08-26-0909_meta.7z"
   },
   {
    "kind": "metadata",
-   "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-08-18-0452_meta.7z",
-   "path": "all_os/default_install/2026-08-18-0452_meta.7z",
+   "url": "https://download.qt.io/online/qtsdkrepository/all_os/default_install/2026-09-28-1022_meta.7z",
+   "path": "all_os/default_install/2026-09-28-1022_meta.7z",
    "package": null,
    "conditional": false,
-   "length": 10607,
-   "sha1": "2b27b7372971aeedf02203510495c78af110105a",
-   "sha256": "cf6e55c50d7bc0c5fdabfbef5b5cbe736e28dc9573fbdbbfffea598e4c275f44"
+   "length": 10602,
+   "sha1": "f97d8e0f2549f525c16c4b85dfaecc9fe1b06f6d",
+   "sha256": "b24863265bc05c89d74e5c8b5d8121ae29c486389b09a3fda5cca0bde95e39fc",
+   "retained_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__default_install__2026-09-28-1022_meta.7z"
   },
   {
    "kind": "payload",
@@ -1461,7 +1480,7 @@
   }
  ],
  "declared_bytes": {
-  "objects": 406381710,
+  "objects": 406381705,
   "installer": 81242039,
   "unconditional_payload": 406310107
  },
@@ -1483,5 +1502,6 @@
    "sha256": "55b63a0c2b6f353ed85ed2ec74e69f37cd419229936438b1796b645afd6eea5d"
   }
  ],
- "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition. Digests reused from a lock whose repository metadata was byte-identical."
+ "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition. 124 object digests reused from the previous lock by URL and length.",
+ "metadata_retention": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/"
 }

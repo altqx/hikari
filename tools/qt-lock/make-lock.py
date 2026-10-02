@@ -114,7 +114,8 @@ def main():
     ap.add_argument("--platform", default="linux", choices=PLATFORMS)
     ap.add_argument("--out", required=True)
     ap.add_argument("--hash-dir", help="stream objects here to compute SHA-256")
-    ap.add_argument("--previous", help="reuse digests from this lock when every root's Updates.xml is byte-identical")
+    ap.add_argument("--previous", help="reuse verified digests from this lock for unchanged objects")
+    ap.add_argument("--retention-base", help="URL prefix of the retained metadata copy (release assets)")
     a = ap.parse_args()
     plat = PLATFORMS[a.platform]
 
@@ -243,35 +244,40 @@ def main():
         o["length"] = head_length(o["url"]); total += o["length"]
     installer["length"] = head_length(installer["url"])
 
-    reuse = None
-    if a.previous:
-        prev = json.load(open(a.previous))
-        same = {r["suffix"]: r["updates_xml"]["sha256"] for r in prev["roots"]} == \
-               {r["suffix"]: r["updates_xml"]["sha256"] for r in roots}
-        if not same or not prev.get("complete"):
-            sys.exit("previous lock does not match current metadata; run a full --hash-dir pass")
-        reuse = prev
-
-    if reuse:
-        known = {o["url"]: o for o in reuse["objects"]}
-        for o in objects:
-            k = known.get(o["url"])
-            if not k or k["length"] != o["length"]:
-                sys.exit(f"object not in previous lock: {o['path']}; run a full --hash-dir pass")
+    # Reuse verified digests from a previous lock object by object; hash only
+    # what is new or changed (a republished support node, say).
+    prev = json.load(open(a.previous)) if a.previous else None
+    if prev and not prev.get("complete"):
+        sys.exit("previous lock is incomplete")
+    known = {o["url"]: o for o in prev["objects"]} if prev else {}
+    to_hash = []
+    for o in objects:
+        k = known.get(o["url"])
+        if k and k["length"] == o["length"]:
             o["sha1"], o["sha256"] = k["sha1"], k["sha256"]
-        if reuse["installer"]["length"] != installer["length"]:
-            sys.exit("installer length changed")
-        installer.update(sha1=reuse["installer"]["sha1"], sha256=reuse["installer"]["sha256"])
-        lock_licenses = reuse["license_texts"]
-    elif a.hash_dir:
+        else:
+            to_hash.append(o)
+    reused = len(objects) - len(to_hash)
+    if prev and prev["installer"]["url"] == installer["url"] and prev["installer"]["length"] == installer["length"]:
+        installer.update(sha1=prev["installer"]["sha1"], sha256=prev["installer"]["sha256"])
+    lic_root = next(r for r in roots if r["suffix"].startswith("all_os/license_agreements"))
+    prev_lic = next((r for r in prev["roots"] if r["suffix"] == lic_root["suffix"]), None) if prev else None
+    lock_licenses = prev["license_texts"] if prev_lic and prev_lic["updates_xml"]["sha256"] == lic_root["updates_xml"]["sha256"] else None
+    needs_hash = to_hash or installer.get("sha256") is None or lock_licenses is None
+    if needs_hash and not a.hash_dir:
+        sys.exit(f"{len(to_hash)} objects need hashing; rerun with --hash-dir")
+    if needs_hash:
         os.makedirs(a.hash_dir, exist_ok=True)
         sidecars = {}
-        for o in objects:
+        for o in to_hash:
             if o["kind"] == "sidecar":
                 d = fetch(o["url"])
                 o["sha1"] = hashlib.sha1(d).hexdigest(); o["sha256"] = hashlib.sha256(d).hexdigest()
-                sidecars[o["url"][:-5]] = d.decode().split()[0].strip().lower()
         for o in objects:
+            if o["kind"] == "sidecar" and o["path"][:-5] in {x["path"] for x in to_hash}:
+                sidecars[o["url"][:-5]] = fetch(o["url"]).decode().split()[0].strip().lower()
+        lic_meta = next(o for o in objects if o["url"] == lic_root["metadata"]["url"])
+        for o in to_hash + ([lic_meta] if lock_licenses is None and lic_meta not in to_hash else []):
             if o["kind"] == "sidecar":
                 continue
             dest = os.path.join(a.hash_dir, o["path"].replace("/", "__"))
@@ -280,36 +286,45 @@ def main():
                 problems.append(f"length mismatch {o['path']}")
             if o["kind"] == "payload" and sidecars.get(o["url"]) != s1:
                 problems.append(f"publisher SHA-1 mismatch {o['path']}")
+            if o["sha256"] is not None and o["sha256"] != s256:
+                problems.append(f"digest changed {o['path']}")
             o["sha1"], o["sha256"] = s1, s256
             print(f"hashed {o['path']} {n}", file=sys.stderr)
-        dest = os.path.join(a.hash_dir, "installer.run")
-        s1, s256, n = stream_hash(installer["url"], dest)
-        installer["sha1"], installer["sha256"] = s1, s256
-        if s256 != installer["declared_sha256"]:
+        if installer.get("sha256") is None:
+            s1, s256, n = stream_hash(installer["url"], os.path.join(a.hash_dir, "installer.run"))
+            installer["sha1"], installer["sha256"] = s1, s256
+        if installer["sha256"] != installer["declared_sha256"]:
             problems.append("installer SHA-256 differs from declared value")
-        # License texts: changed bytes require fresh owner review.
-        lic_root = next(r for r in roots if r["suffix"].startswith("all_os/license_agreements"))
-        lic_meta = next(o for o in objects if o["url"] == lic_root["metadata"]["url"])
-        with tempfile.TemporaryDirectory() as td:
-            subprocess.run(["7z", "x", "-y", f"-o{td}", os.path.join(a.hash_dir, lic_meta["path"].replace("/", "__"))],
-                           check=True, stdout=subprocess.DEVNULL)
-            licenses = []
-            for dp, _, fs in os.walk(td):
-                for f in sorted(fs):
-                    if f.lower().endswith((".txt", ".html", ".rtf")) or "licen" in f.lower():
-                        full = os.path.join(dp, f)
-                        licenses.append({"file": os.path.relpath(full, td),
-                                         "sha256": hashlib.sha256(open(full, "rb").read()).hexdigest()})
-        lock_licenses = sorted(licenses, key=lambda x: x["file"])
-    else:
-        lock_licenses = None
+        if lock_licenses is None:
+            # License texts: changed bytes require fresh owner review.
+            with tempfile.TemporaryDirectory() as td:
+                subprocess.run(["7z", "x", "-y", f"-o{td}", os.path.join(a.hash_dir, lic_meta["path"].replace("/", "__"))],
+                               check=True, stdout=subprocess.DEVNULL)
+                licenses = []
+                for dp, _, fs in os.walk(td):
+                    for f in sorted(fs):
+                        if f.lower().endswith((".txt", ".html", ".rtf")) or "licen" in f.lower():
+                            full = os.path.join(dp, f)
+                            licenses.append({"file": os.path.relpath(full, td),
+                                             "sha256": hashlib.sha256(open(full, "rb").read()).hexdigest()})
+            lock_licenses = sorted(licenses, key=lambda x: x["file"])
+
+    # Mutable repository metadata is served from a retained copy (GitHub
+    # release assets); versioned payload archives still come from Qt.
+    if a.retention_base:
+        for r in roots:
+            path = r["updates_xml"]["url"][len(BASE):]
+            r["updates_xml"]["retained_url"] = a.retention_base + path.replace("/", "__")
+        for o in objects:
+            if o["kind"] == "metadata":
+                o["retained_url"] = a.retention_base + o["path"].replace("/", "__")
 
     lock = {
         "schema": 1,
         "platform": a.platform,
         "base": BASE,
         "requested": plat["packages"],
-        "complete": bool(a.hash_dir or reuse) and not problems,
+        "complete": all(o["sha256"] for o in objects) and bool(lock_licenses) and not problems,
         "problems": problems,
         "installer": installer,
         "roots": roots,
@@ -325,7 +340,8 @@ def main():
                                                         if o["kind"] == "payload" and not o["conditional"])},
         "license_texts": lock_licenses,
         "trust": "Publisher SHA-1 sidecars over HTTPS; SHA-256 computed on first verified acquisition."
-                 + (" Digests reused from a lock whose repository metadata was byte-identical." if reuse else ""),
+                 + (f" {reused} object digests reused from the previous lock by URL and length." if prev else ""),
+        "metadata_retention": a.retention_base or None,
     }
     with open(a.out, "w") as f:
         json.dump(lock, f, indent=1)
