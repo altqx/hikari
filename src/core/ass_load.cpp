@@ -198,6 +198,13 @@ private:
             return;
         }
         Section &section = current();
+        // LoadASS checks for events before anything else, in every section
+        // but embedded font/graphic data: a Dialogue in Script Info is a Line.
+        if ((startsWith(view, u8"Dial") || startsWith(view, u8"Comm")) && section.kind != SectionKind::Fonts &&
+            section.kind != SectionKind::Graphics) {
+            event(view, span);
+            return;
+        }
         switch (section.kind) {
         case SectionKind::ScriptInfo:
             if (!view.empty() && view.front() != u8';' && view.find(u8':') != u8sv::npos &&
@@ -224,10 +231,6 @@ private:
         case SectionKind::Events:
             if (startsWith(view, u8"Format:")) {
                 section.records.push_back(FormatRecord{fields(view.substr(7)), span});
-                return;
-            }
-            if (startsWith(view, u8"Dial") || startsWith(view, u8"Comm")) {
-                event(view, span);
                 return;
             }
             break;
@@ -342,7 +345,18 @@ private:
         LineRecord merged;
         if (j < m_spans.size() && validUtf8(b.data() + m_spans[j].offset, m_spans[j].length)) {
             const SourceSpan &ps = m_spans[j];
-            merged = parseEvent(u8sv(reinterpret_cast<const char8_t *>(b.data() + ps.offset), ps.length), ps);
+            const u8sv raw(reinterpret_cast<const char8_t *>(b.data() + ps.offset), ps.length);
+            merged = parseEvent(raw, ps);
+            // SetRaw's NonDialogue form: ";..." or one "{...}" block. The legacy
+            // token keeps a CRLF line's '\r', so "{...}\r" does not qualify.
+            const bool braces = ps.terminatorLength != 2 && startsWith(raw, u8"{") && raw.ends_with(u8'}') &&
+                                std::ranges::count(raw, u8'{') == 1 && std::ranges::count(raw, u8'}') == 1;
+            if (merged.unparsed && (startsWith(raw, u8";") || braces)) {
+                merged.nonDialogue = true;
+                merged.comment = true;
+                merged.visibility = LineVisibility::Hidden;
+                merged.text = std::u8string(trimRight(raw));
+            }
             merged.span = SourceSpan{original.span.offset, ps.offset + ps.length - original.span.offset,
                                      ps.terminatorLength};
             m_next = j + 1;

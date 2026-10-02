@@ -77,7 +77,19 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         for (const auto &record : section.records) {
             const auto *line = std::get_if<LineRecord>(&record);
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
-            if (line && line->edited && line->originalSpan && !tlMode.empty()) {
+            if (line && line->edited && line->nonDialogue) {
+                // GetRaw writes a NonDialogue's text alone, even for the
+                // translation, so both lines of such a pair carry the original.
+                const bool both = !tlMode.empty() && tlMode != u8"Translated" &&
+                                  (!line->translation.empty() || line->unconfirmed);
+                if (both && line->originalSpan) {
+                    append(line->text);
+                    copy(line->originalSpan->offset + line->originalSpan->length,
+                         line->originalSpan->terminatorLength);
+                }
+                append(line->text);
+                copy(span.offset + span.length, span.terminatorLength);
+            } else if (line && line->edited && line->originalSpan && !tlMode.empty()) {
                 const bool hasTranslation = !line->translation.empty();
                 if (tlMode != u8"Translated" && (hasTranslation || line->unconfirmed)) {
                     LineRecord original = *line;

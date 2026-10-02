@@ -68,6 +68,10 @@ struct LineRecord {
     // prefix without "Dialogue"/"Comment", or fewer than 9 fields): the whole
     // line is the text, with zero times and the Default style.
     bool unparsed = false;
+    // Legacy NonDialogue (only as a TLMode translation line here: ";..." or a
+    // lone "{...}"): hidden, and saved as its text alone. A pair with such a
+    // partner saves the original's text twice, losing the partner's text.
+    bool nonDialogue = false;
     IntField layer;
     TimeField start;
     TimeField end;
