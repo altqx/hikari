@@ -104,6 +104,7 @@ hikari_add_gtest(hikari_backends_font_service_tests SOURCES font_service_tests.c
     PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 target_compile_definitions(hikari_backends_font_service_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf"
     HIKARI_QT_FONTS="${HIKARI_QT_EXAMPLE_FONTS}")
 add_dependencies(hikari_backends_font_service_tests hikari_font_fixtures)
 
@@ -155,6 +156,7 @@ hikari_add_gtest(hikari_backends_font_collection_tests SOURCES font_collection_t
     PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
 target_compile_definitions(hikari_backends_font_collection_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf"
     HIKARI_FONT_REFRESH_SOURCE="${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
     HIKARI_FONT_REFRESH_DIR="${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
 add_dependencies(hikari_backends_font_collection_tests hikari_font_fixtures)

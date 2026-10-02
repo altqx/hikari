@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <thread>
@@ -18,6 +19,12 @@ using namespace hikari::application;
 using hikari::backends::LibassFontService;
 
 namespace {
+
+#ifndef _WIN32
+// The private configuration, set before fontconfig first initializes: the
+// ctest ENVIRONMENT property did not reach these tests on the Fedora runner.
+[[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
+#endif
 
 std::shared_ptr<const std::vector<std::byte>> load(const std::string &path)
 {
@@ -248,8 +255,12 @@ TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
     LibassFontService service;
     const auto before = service.collect(script, env);
     ASSERT_TRUE(before);
-    // Absent: fontconfig answers with its best match under other names.
-    EXPECT_EQ(before->substitutedFamilies, std::vector<std::string>{"HikariProbeRefresh"});
+    // Absent: fontconfig answers with its best match under other names, at
+    // the request (Arch) or as a substitution (Ubuntu's fontconfig rules).
+    const auto listed = [](const std::vector<std::string> &l) {
+        return std::find(l.begin(), l.end(), "HikariProbeRefresh") != l.end();
+    };
+    EXPECT_TRUE(listed(before->substitutedFamilies) || listed(before->missingFamilies));
     EXPECT_FALSE(before->complete());
     fs::copy_file(fs::path(HIKARI_FONT_REFRESH_SOURCE) / "refresh.ttf", installed);
     env.generation = 2;

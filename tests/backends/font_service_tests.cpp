@@ -20,6 +20,12 @@ using hikari::backends::LibassFontService;
 
 namespace {
 
+#ifndef _WIN32
+// The private configuration, set before fontconfig first initializes: the
+// ctest ENVIRONMENT property did not reach these tests on the Fedora runner.
+[[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
+#endif
+
 std::shared_ptr<const std::vector<std::byte>> load(const std::string &path)
 {
     QFile f(QString::fromStdString(path));
