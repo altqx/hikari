@@ -25,6 +25,18 @@ std::vector<const LineRecord *> Document::lines() const
     return out;
 }
 
+bool Document::setLineText(LineId id, std::u8string text)
+{
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                line->text = std::move(text);
+                line->edited = true;
+                return true;
+            }
+    return false;
+}
+
 namespace {
 
 using u8sv = std::u8string_view;

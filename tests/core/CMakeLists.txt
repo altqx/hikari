@@ -10,3 +10,9 @@ hikari_add_gtest(hikari_core_ass_load_tests SOURCES ass_load_tests.cpp
     LIBRARIES hikari_core Qt6::Core LABELS core)
 target_compile_definitions(hikari_core_ass_load_tests PRIVATE
     HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+
+hikari_add_gtest(hikari_core_ass_save_tests SOURCES ass_save_tests.cpp
+    LIBRARIES hikari_core Qt6::Core LABELS core)
+target_compile_definitions(hikari_core_ass_save_tests PRIVATE
+    HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures"
+    HIKARI_LEGACY_OUTPUTS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-36591631319/outputs")

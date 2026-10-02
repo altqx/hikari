@@ -65,7 +65,8 @@ struct LineRecord {
     IntField marginVertical;
     std::u8string effect;
     std::u8string text;     // legacy trims surrounding whitespace; raw bytes stay in the span
-    SourceSpan span;
+    SourceSpan span;        // where the record came from; its terminator is reused on save
+    bool edited = false;    // the span no longer describes the record; regenerate on save
 };
 
 struct StyleRecord {
@@ -135,6 +136,11 @@ public:
 
     // Lines in document order across all Events sections.
     std::vector<const LineRecord *> lines() const;
+
+    // Replaces one Line's text. The record's source span becomes stale and the
+    // Line is regenerated on save; every other record keeps its exact bytes.
+    // Returns false when no Line has this id.
+    bool setLineText(LineId id, std::u8string text);
 
 private:
     friend struct DocumentBuilder;
