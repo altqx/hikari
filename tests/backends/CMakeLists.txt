@@ -158,3 +158,13 @@ target_compile_definitions(hikari_backends_font_collection_tests PRIVATE
     HIKARI_FONT_REFRESH_SOURCE="${CMAKE_CURRENT_BINARY_DIR}/font-refresh-source"
     HIKARI_FONT_REFRESH_DIR="${CMAKE_CURRENT_BINARY_DIR}/font-refresh")
 add_dependencies(hikari_backends_font_collection_tests hikari_font_fixtures)
+
+# L1: the automation manager and macro identity.
+hikari_add_gtest(hikari_backends_automation_manager_tests SOURCES automation_manager_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_automation_manager_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/lua-fixtures"
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_EDGEBLUR_SCRIPT="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload/macro-1-edgeblur.lua")
+add_dependencies(hikari_backends_automation_manager_tests hikari_lua_helper)

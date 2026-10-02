@@ -72,3 +72,8 @@ tasks:
     # General <-> indexed handoff (I4), verbose for the frame observations.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "transport_tests" -V
     timeoutSeconds: 600
+  automation:
+    # The Lua helper, dialogs and the automation manager (N8, L1), verbose for
+    # the per-script process cost.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LuaHelper|Manager|AutomationRegistry)[.]|automation" -V
+    timeoutSeconds: 600

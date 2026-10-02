@@ -7,6 +7,8 @@
 // values. No script-generated QML and no Lua values cross the boundary.
 
 #include <cfloat>
+#include <cstdint>
+#include <functional>
 #include <climits>
 #include <string>
 #include <variant>
@@ -90,5 +92,28 @@ inline DialogResult initialDialogResult(const DialogRequest &request)
     }
     return result;
 }
+
+// The automation manager as the UI sees it (L1): loaded scripts, their
+// macros by registration, and one active macro application-wide.
+struct ScriptStatus {
+    enum class State { Loading, Ready, Running, LoadFailed, Unavailable };
+    std::string path;
+    State state = State::Loading;
+    ScriptInfo info;
+    std::string error;
+    std::uint64_t generation = 0; // a reload or restart is a new helper generation
+};
+
+class AutomationServicePort {
+public:
+    virtual ~AutomationServicePort() = default;
+    virtual std::vector<ScriptStatus> scripts() const = 0;
+    virtual void load(const std::string &path) = 0;   // runs the script's top level in a new helper
+    virtual bool reload(const std::string &path) = 0; // visibly: top level runs again
+    virtual void unload(const std::string &path) = 0;
+    virtual bool run(const std::string &path, int ordinal) = 0; // false while any macro runs
+    virtual void cancel() = 0;
+    virtual void setObserver(std::function<void()> changed) = 0;
+};
 
 } // namespace hikari::application

@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 using namespace hikari::application;
@@ -187,6 +188,19 @@ TEST(FontIdentity, InvalidFamiliesAreRefused)
 }
 
 #ifndef _WIN32
+
+extern "C" int FcGetVersion(void);
+
+// libass must use the pinned static fontconfig (vcpkg 2.17.1), configured
+// by the test's private FONTCONFIG_FILE, not a system copy Qt loads.
+TEST(FontconfigIdentity, ThePinnedFontconfigReadsThePrivateConfiguration)
+{
+    const char *file = std::getenv("FONTCONFIG_FILE");
+    std::fprintf(stderr, "fontconfig %d, FONTCONFIG_FILE=%s\n", FcGetVersion(), file ? file : "(unset)");
+    EXPECT_EQ(FcGetVersion(), 21701);
+    ASSERT_NE(file, nullptr);
+    EXPECT_NE(std::string(file).find("font-fixtures.conf"), std::string::npos);
+}
 
 TEST(FontconfigIdentity, TheProviderNamesTheFileItSelected)
 {

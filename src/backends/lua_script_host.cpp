@@ -4,6 +4,8 @@
 
 #include <QPointer>
 
+#include <chrono>
+
 namespace hikari::backends {
 
 using helper::Event;
@@ -26,6 +28,11 @@ LuaScriptHost::~LuaScriptHost() = default;
 QByteArray LuaScriptHost::diagnostics() const
 {
     return m_host ? m_host->diagnostics() : QByteArray();
+}
+
+qint64 LuaScriptHost::processId() const
+{
+    return m_host ? m_host->processId() : 0;
 }
 
 std::uint64_t LuaScriptHost::session() const
@@ -57,6 +64,9 @@ void LuaScriptHost::restart()
 void LuaScriptHost::startHelper()
 {
     m_state = State::Loading;
+    m_loadStartedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                          std::chrono::steady_clock::now().time_since_epoch())
+                          .count();
     m_host = std::make_unique<HelperHost>(m_helperPath, QStringList{}, lua::kProtocolVersion);
     HelperHost *host = m_host.get();
     connect(host, &HelperHost::ready, this, &LuaScriptHost::sendLoad);
@@ -100,6 +110,11 @@ void LuaScriptHost::sendLoad()
         if (e->outcome == Outcome::Ok) {
             if (auto info = lua::decodeInfo(e->payload)) {
                 m_info = std::move(*info);
+                m_loadMs = (std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                std::chrono::steady_clock::now().time_since_epoch())
+                                .count() -
+                            m_loadStartedNs) /
+                           1e6;
                 m_state = State::Ready;
                 emit loaded();
                 return;

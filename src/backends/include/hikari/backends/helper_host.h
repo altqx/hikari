@@ -75,6 +75,7 @@ public:
     std::size_t outstanding() const { return m_pending.size(); }
     QByteArray diagnostics() const { return m_diagnostics; }
     std::size_t droppedDiagnosticBytes() const { return m_droppedDiagnostics; }
+    qint64 processId() const { return m_process.processId(); } // 0 when not running
 
 signals:
     void ready();

@@ -22,3 +22,11 @@ target_compile_definitions(hikari_ui_presenter_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_presenter_tests hikari_media_helper hikari_media_fixtures)
+# L1: the automation manager tool over the real manager.
+hikari_add_qttest(hikari_ui_automation_manager_tests SOURCES automation_manager_ui_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
+target_compile_definitions(hikari_ui_automation_manager_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
+add_dependencies(hikari_ui_automation_manager_tests hikari_lua_helper)

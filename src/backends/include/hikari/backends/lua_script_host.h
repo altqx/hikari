@@ -50,6 +50,9 @@ public:
     QString lastError() const { return m_lastError; }
     QByteArray diagnostics() const;
     std::uint64_t session() const;
+    qint64 processId() const;
+    // Milliseconds from starting the helper to the script being loaded.
+    double loadMs() const { return m_loadMs; }
 
 signals:
     void loaded();
@@ -79,6 +82,8 @@ private:
     std::uint64_t m_runRequest = 0; // the request of the running macro
     bool m_dialogOpen = false;
     bool m_cancelRequested = false;
+    double m_loadMs = 0;
+    std::int64_t m_loadStartedNs = 0;
     DialogHandler m_dialogHandler;
 };
 

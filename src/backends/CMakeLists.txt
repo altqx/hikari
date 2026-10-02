@@ -16,6 +16,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cp
     audio_ring.cpp audio_output_engine.cpp portaudio_output.cpp lua_script_host.cpp qt_general_player.cpp
     libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
+    automation_manager.cpp include/hikari/backends/automation_manager.h process_metrics.cpp
     include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h
     include/hikari/backends/helper_host.h
