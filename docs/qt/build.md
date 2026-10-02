@@ -120,3 +120,14 @@ Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining
 ## Editor audio output tests (N6, 2026-10-03)
 
 `audio_engine_tests` cover the callback half (`OutputEngine`) on every host: no allocation while rendering, silence when nothing is ready, underrun/suspend/stop/loss invalidation and untorn clock snapshots. `portaudio_tests` open a real PortAudio stream on the device named by `HIKARI_TEST_AUDIO_DEVICE` (a substring of the device name; a named device that is missing fails the tests), or else the host default. With no output device they skip and say so. They write silence only. The Linux CI jobs define a null ALSA PCM, `hikari_null`, in `~/.asoundrc` and select it. That covers the stream, rescan, reopen and loss paths, but its callbacks run unpaced, so its timings mean nothing. The Winix VM and GitHub's Windows runners have no audio endpoint, so WASAPI and DirectSound streams still need a host that has one.
+
+## libass font diagnostics patch (N4, 2026-10-03)
+
+The owned libass overlay carries `ports/libass/hikari-font-diagnostics.patch`, a narrow diagnostic API (`ass_hikari_set_font_diagnostics`, version 1) that the font collector uses to verify identity (F47-abi). Per library it reports:
+
+- every selection, with its stage (requested family, default family, provider fallback or default path) and a reader for stream bytes;
+- each opened face's actual index, face count and variation coordinates;
+- glyphs libass emboldens or slants synthetically;
+- characters no face covers.
+
+Rendering is unchanged; the hooks only observe. The patch is anchored on pinned 0.17.5 sources, and a libass update must re-apply it and pass `font_service_tests`. On Linux those tests set `FONTCONFIG_FILE` to a generated configuration that lists only the build's CC0 font fixtures and the locked Qt install's OFL fonts (Georama, Titillium Web). On Windows they use DirectWrite and the installed fonts.

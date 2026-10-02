@@ -1,7 +1,7 @@
 {
   "name": "libass",
   "version": "0.17.5",
-  "description": "libass subtitle renderer (Hikari-owned overlay: explicit font providers, no libunibreak)",
+  "description": "libass subtitle renderer (Hikari-owned overlay: explicit font providers, no libunibreak, font identity diagnostics)",
   "homepage": "https://github.com/libass/libass",
   "license": "ISC",
   "dependencies": [
@@ -17,5 +17,5 @@
       "host": true
     }
   ],
-  "port-version": 100
+  "port-version": 102
 }

@@ -74,3 +74,34 @@ target_compile_definitions(hikari_backends_general_player_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_general_player_tests hikari_media_helper hikari_media_fixtures)
+
+# N4: font identity through the patched libass. Original CC0 fixtures are
+# generated at build time; on Linux a private fontconfig configuration lists
+# only them and the locked Qt install's OFL fonts, so selections are
+# deterministic.
+set(HIKARI_FONT_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/font-fixtures")
+add_custom_command(OUTPUT "${HIKARI_FONT_FIXTURE_DIR}/base.ttf"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_FONT_FIXTURE_DIR}"
+    COMMAND hikari_font_fixture "${HIKARI_FONT_FIXTURE_DIR}"
+    DEPENDS hikari_font_fixture
+    COMMENT "Generating font fixtures")
+add_custom_target(hikari_font_fixtures ALL DEPENDS "${HIKARI_FONT_FIXTURE_DIR}/base.ttf")
+set(HIKARI_QT_EXAMPLE_FONTS "${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2")
+cmake_path(NORMAL_PATH HIKARI_QT_EXAMPLE_FONTS)
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf"
+"<?xml version=\"1.0\"?>
+<!DOCTYPE fontconfig SYSTEM \"fonts.dtd\">
+<fontconfig>
+  <dir>${HIKARI_FONT_FIXTURE_DIR}</dir>
+  <dir>${HIKARI_QT_EXAMPLE_FONTS}/quick/advancedtext/fonts</dir>
+  <dir>${HIKARI_QT_EXAMPLE_FONTS}/quickcontrols/wearable/WearableStyle/fonts</dir>
+  <cachedir>${CMAKE_CURRENT_BINARY_DIR}/font-fixtures-cache</cachedir>
+</fontconfig>
+")
+hikari_add_gtest(hikari_backends_font_service_tests SOURCES font_service_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends
+    PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
+target_compile_definitions(hikari_backends_font_service_tests PRIVATE
+    HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_QT_FONTS="${HIKARI_QT_EXAMPLE_FONTS}")
+add_dependencies(hikari_backends_font_service_tests hikari_font_fixtures)

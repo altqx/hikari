@@ -1,0 +1,256 @@
+diff --git i/libass/ass.h w/libass/ass.h
+index 851ca7c..08fd140 100644
+--- i/libass/ass.h
++++ w/libass/ass.h
+@@ -360,6 +360,60 @@ void ass_process_force_style(ASS_Track *track);
+  * \param msg_cb pointer to callback function
+  * \param data additional data, will be passed to callback
+  */
++/*
++ * Hikari font diagnostics (an owned overlay patch, not upstream libass).
++ * Reports which font bytes and faces the renderer actually used, so a
++ * collector can verify identity instead of trusting a name lookup. The
++ * callbacks run on the rendering thread, during rendering; the strings and
++ * the read function are valid only for the duration of the call.
++ */
++#define ASS_HIKARI_FONT_DIAGNOSTICS_VERSION 1
++
++typedef enum {
++    ASS_HIKARI_FONT_REQUESTED = 1,  // the requested family (or a provider substitution)
++    ASS_HIKARI_FONT_DEFAULT_FAMILY, // the configured default family
++    ASS_HIKARI_FONT_FALLBACK,       // the provider's glyph fallback
++    ASS_HIKARI_FONT_DEFAULT_PATH,   // the configured default font file
++} ASS_HikariFontStage;
++
++typedef struct ass_hikari_font_selection {
++    ASS_HikariFontStage stage;
++    const char *requested_family;   // may be NULL or empty
++    unsigned bold, italic;
++    uint32_t code;                  // the character that needed a face (0: none)
++    const char *path;               // NULL when the bytes come from a stream
++    const char *display_name;
++    const char *postscript_name;    // may be NULL
++    int index;                      // face index requested from the file or stream
++    int uid;                        // selector-local id; -1 for the default path
++    int embedded;                   // memory/attachment font (ass_add_font)
++    // Reads stream bytes; with data NULL returns the stream size. NULL for files.
++    size_t (*read)(void *read_data, unsigned char *data, size_t offset, size_t len);
++    void *read_data;
++} ASS_HikariFontSelection;
++
++typedef struct ass_hikari_font_diagnostics {
++    int version; // ASS_HIKARI_FONT_DIAGNOSTICS_VERSION
++    void (*selected)(void *priv, const ASS_HikariFontSelection *selection);
++    // After FreeType opened a selection: the actual face index (named-instance
++    // bits included), the file's face count and design coordinates, if any.
++    void (*face_opened)(void *priv, int uid, long face_index, long num_faces,
++                        const char *postscript_name, int n_coords, const double *coords);
++    // When a glyph is synthetically emboldened or slanted.
++    void (*glyph_simulated)(void *priv, int uid, unsigned glyph_index,
++                            int embolden, int italicize);
++    // When no available face has the character.
++    void (*glyph_missing)(void *priv, uint32_t code, const char *family,
++                          unsigned bold, unsigned italic);
++} ASS_HikariFontDiagnostics;
++
++/**
++ * \brief Install font diagnostics (copied; NULL or another version removes them).
++ */
++void ass_hikari_set_font_diagnostics(ASS_Library *priv,
++                                     const ASS_HikariFontDiagnostics *callbacks,
++                                     void *data);
++
+ void ass_set_message_cb(ASS_Library *priv, void (*msg_cb)
+                         (int level, const char *fmt, va_list args, void *data),
+                         void *data);
+diff --git i/libass/ass_font.c w/libass/ass_font.c
+index aa12ca1..f9df5c5 100644
+--- i/libass/ass_font.c
++++ w/libass/ass_font.c
+@@ -27,6 +27,7 @@
+ #include FT_TRUETYPE_TABLES_H
+ #include FT_OUTLINE_H
+ #include FT_TRUETYPE_IDS_H
++#include FT_MULTIPLE_MASTERS_H
+ #include FT_TYPE1_TABLES_H
+ #include <limits.h>
+ 
+@@ -467,6 +468,24 @@ static int add_face(ASS_FontSelector *fontsel, ASS_Font *font, uint32_t ch)
+     if (!face)
+         return -1;
+ 
++    if (font->library->hikari_font_diagnostics.face_opened) {
++        double coords[16];
++        int n_coords = 0;
++        FT_MM_Var *mm = NULL;
++        if (FT_HAS_MULTIPLE_MASTERS(face) && !FT_Get_MM_Var(face, &mm)) {
++            FT_Fixed fixed[16];
++            n_coords = FFMIN((int) mm->num_axis, 16);
++            if (FT_Get_Var_Design_Coordinates(face, n_coords, fixed))
++                n_coords = 0;
++            for (int c = 0; c < n_coords; c++)
++                coords[c] = fixed[c] / 65536.0;
++            FT_Done_MM_Var(font->ftlibrary, mm);
++        }
++        font->library->hikari_font_diagnostics.face_opened(
++            font->library->hikari_font_diagnostics_data, uid, face->face_index,
++            face->num_faces, FT_Get_Postscript_Name(face), n_coords, coords);
++    }
++
+     ass_charmap_magic(font->library, face);
+     set_font_metrics(face);
+ 
+@@ -697,6 +716,11 @@ int ass_font_get_index(ASS_FontSelector *fontsel, ASS_Font *font,
+                         font->desc.italic);
+             }
+         }
++        // No face has it: either the added face lacks it or none was found.
++        if (index == 0 && font->library->hikari_font_diagnostics.glyph_missing)
++            font->library->hikari_font_diagnostics.glyph_missing(
++                font->library->hikari_font_diagnostics_data, symbol,
++                font->desc.family.str, font->desc.bold, font->desc.italic);
+     }
+ 
+     // FIXME: make sure we have a valid face_index. this is a HACK.
+@@ -738,11 +762,17 @@ bool ass_font_get_glyph(ASS_Font *font, int face_index, int index,
+     }
+ 
+     FT_Long style_flags = ass_face_get_style_flags(face);
+-    if (!(style_flags & FT_STYLE_FLAG_ITALIC) && (font->desc.italic > 55))
++    int italicize = !(style_flags & FT_STYLE_FLAG_ITALIC) && (font->desc.italic > 55);
++    int embolden = !(style_flags & FT_STYLE_FLAG_BOLD) &&
++        font->desc.bold > ass_face_get_weight(face) + 150;
++    if (italicize)
+         ass_glyph_italicize(face);
+-    if (!(style_flags & FT_STYLE_FLAG_BOLD) &&
+-        font->desc.bold > ass_face_get_weight(face) + 150)
++    if (embolden)
+         ass_glyph_embolden(face->glyph);
++    if ((italicize || embolden) && font->library->hikari_font_diagnostics.glyph_simulated)
++        font->library->hikari_font_diagnostics.glyph_simulated(
++            font->library->hikari_font_diagnostics_data, font->faces_uid[face_index],
++            index, embolden, italicize);
+     return true;
+ }
+ 
+diff --git i/libass/ass_fontselect.c w/libass/ass_fontselect.c
+index 2303876..f4c745d 100644
+--- i/libass/ass_fontselect.c
++++ w/libass/ass_fontselect.c
+@@ -890,12 +890,14 @@ char *ass_font_select(ASS_FontSelector *priv,
+     unsigned bold = font->desc.bold;
+     unsigned italic = font->desc.italic;
+     ASS_FontProvider *default_provider = priv->default_provider;
++    ASS_HikariFontStage stage = ASS_HIKARI_FONT_REQUESTED;
+ 
+     if (family && *family)
+         res = select_font(priv, family, false, bold, italic, index,
+                 postscript_name, uid, data, code);
+ 
+     if (!res && priv->family_default) {
++        stage = ASS_HIKARI_FONT_DEFAULT_FAMILY;
+         res = select_font(priv, priv->family_default, false, bold,
+                 italic, index, postscript_name, uid, data, code);
+         if (res)
+@@ -913,6 +915,7 @@ char *ass_font_select(ASS_FontSelector *priv,
+                 default_provider->priv, priv->library, search_family, code);
+ 
+         if (fallback_family) {
++            stage = ASS_HIKARI_FONT_FALLBACK;
+             res = select_font(priv, fallback_family, true, bold, italic,
+                     index, postscript_name, uid, data, code);
+             free(fallback_family);
+@@ -920,6 +923,7 @@ char *ass_font_select(ASS_FontSelector *priv,
+     }
+ 
+     if (!res && priv->path_default) {
++        stage = ASS_HIKARI_FONT_DEFAULT_PATH;
+         res = priv->path_default;
+         *index = priv->index_default;
+         ass_msg(priv->library, MSGL_WARN, "fontselect: Using default font: "
+@@ -932,7 +936,26 @@ char *ass_font_select(ASS_FontSelector *priv,
+         ass_msg(priv->library, MSGL_INFO,
+                 "fontselect: (%s, %d, %d) -> %s, %d, %s", family, bold,
+                 italic, res, *index, *postscript_name ? *postscript_name : "(none)");
+-    else
++    if (res && priv->library->hikari_font_diagnostics.selected) {
++        ASS_HikariFontSelection selection = {
++            .stage = stage,
++            .requested_family = family,
++            .bold = bold,
++            .italic = italic,
++            .code = code,
++            .path = data->func ? NULL : res,
++            .display_name = res,
++            .postscript_name = *postscript_name,
++            .index = *index,
++            .uid = stage == ASS_HIKARI_FONT_DEFAULT_PATH ? -1 : *uid,
++            .embedded = data->func == get_data_embedded,
++            .read = data->func,
++            .read_data = data->priv,
++        };
++        priv->library->hikari_font_diagnostics.selected(
++            priv->library->hikari_font_diagnostics_data, &selection);
++    }
++    if (!res)
+         ass_msg(priv->library, MSGL_WARN,
+                 "fontselect: failed to find any fallback with glyph 0x%X for font: "
+                 "(%s, %d, %d)", code, family, bold, italic);
+diff --git i/libass/ass_library.c w/libass/ass_library.c
+index a27aada..6580440 100644
+--- i/libass/ass_library.c
++++ w/libass/ass_library.c
+@@ -149,6 +149,19 @@ void ass_clear_fonts(ASS_Library *priv)
+  * \param msg_cb the callback function
+  * \param data additional data that will be passed to the callback
+  */
++void ass_hikari_set_font_diagnostics(ASS_Library *priv,
++                                     const ASS_HikariFontDiagnostics *callbacks,
++                                     void *data)
++{
++    if (callbacks && callbacks->version == ASS_HIKARI_FONT_DIAGNOSTICS_VERSION) {
++        priv->hikari_font_diagnostics = *callbacks;
++        priv->hikari_font_diagnostics_data = data;
++    } else {
++        memset(&priv->hikari_font_diagnostics, 0, sizeof(priv->hikari_font_diagnostics));
++        priv->hikari_font_diagnostics_data = NULL;
++    }
++}
++
+ void ass_set_message_cb(ASS_Library *priv,
+                         void (*msg_cb)(int, const char *, va_list, void *),
+                         void *data)
+diff --git i/libass/ass_library.h w/libass/ass_library.h
+index 0a97960..c814e4c 100644
+--- i/libass/ass_library.h
++++ w/libass/ass_library.h
+@@ -21,6 +21,7 @@
+ 
+ #include <stdarg.h>
+ 
++#include "ass.h"
+ #include "ass_filesystem.h"
+ 
+ typedef struct {
+@@ -38,6 +39,9 @@ struct ass_library {
+     size_t num_fontdata;
+     void (*msg_callback)(int, const char *, va_list, void *);
+     void *msg_callback_data;
++
++    ASS_HikariFontDiagnostics hikari_font_diagnostics;
++    void *hikari_font_diagnostics_data;
+ };
+ 
+ char *ass_load_file(struct ass_library *library, const char *fname, FileNameSource hint, size_t *bufsize);
+diff --git i/libass/libass.sym w/libass/libass.sym
+index 4cc6215..c95c199 100644
+--- i/libass/libass.sym
++++ w/libass/libass.sym
+@@ -34,6 +34,7 @@ ass_clear_fonts
+ ass_step_sub
+ ass_process_force_style
+ ass_set_message_cb
++ass_hikari_set_font_diagnostics
+ ass_fonts_update
+ ass_set_cache_limits
+ ass_flush_events

@@ -8,6 +8,9 @@ vcpkg_from_github(
     HEAD_REF master
     PATCHES
         arm64-windows-asm.patch
+        # Font identity diagnostics for the collector (N4, F47-abi): which
+        # bytes, faces, fallbacks and simulations the renderer actually used.
+        hikari-font-diagnostics.patch
 )
 
 vcpkg_find_acquire_program(PKGCONFIG)
