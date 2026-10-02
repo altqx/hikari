@@ -55,17 +55,34 @@ TEST(SrtLoad, CuesNumbersTimesAndJoinedText)
     EXPECT_EQ(s8(lines[1]->end.lexeme), "00:00:04,000");
 }
 
+std::vector<std::byte> readFile(const QString &path)
+{
+    QFile f(path);
+    EXPECT_TRUE(f.open(QIODevice::ReadOnly)) << path.toStdString();
+    const QByteArray d = f.readAll();
+    return bytesOf(std::string_view(d.constData(), static_cast<std::size_t>(d.size())));
+}
+
 TEST(SrtLoad, CrlfBlankLinesKeepTheLegacyTrailingBreak)
 {
-    // Legacy reads CRLF untouched; a CRLF blank line is a "\r" token, so every
-    // cue but the last ends with "\N". Reproduced as-is (a defect candidate,
-    // not an approved departure; legacy capture pending).
-    const auto r = loadSrt(bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\nHello\r\n\r\n"
-                                   "2\r\n00:00:03,000 --> 00:00:04,000\r\nBye\r\n"));
+    // Legacy reads CRLF untouched; a CRLF blank line is a "\r" token, so a cue
+    // followed by one ends with "\N". Legacy capture run 37011681370 confirms
+    // it. Reproduced as-is: a defect candidate, not an approved departure.
+    const auto input = readFile(QStringLiteral(HIKARI_CAPTURE_INPUTS "/crlf-two-cues.srt"));
+    auto r = loadSrt(input);
     const auto lines = r.document.lines();
     ASSERT_EQ(lines.size(), 2u);
     EXPECT_EQ(s8(lines[0]->text), "Hello\\N");
     EXPECT_EQ(s8(lines[1]->text), "Bye");
+
+    // Regenerating cue 1 gives the bytes the old app wrote for it, extra blank
+    // line included. The legacy save also added a BOM and a final blank line,
+    // which same-format save leaves out for the unchanged rest of the file.
+    ASSERT_TRUE(r.document.setLineText(lines[0]->id, lines[0]->text));
+    std::string legacy = text(readFile(QStringLiteral(HIKARI_CRLF_OBSERVATION)));
+    ASSERT_TRUE(legacy.starts_with("\xEF\xBB\xBF") && legacy.ends_with("\r\n\r\n"));
+    legacy = legacy.substr(3, legacy.size() - 5);
+    EXPECT_EQ(text(encodeSrt(r.document)), legacy);
 }
 
 TEST(SrtLoad, PrecisionFixtureAndMillisecondFields)
