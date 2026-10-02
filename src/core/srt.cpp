@@ -114,6 +114,7 @@ LoadResult loadSrt(std::span<const std::byte> bytes)
     Document &doc = result.document;
     auto &src = DocumentBuilder::source(doc);
     src.bytes.assign(bytes.begin(), bytes.end());
+    DocumentBuilder::setFormat(doc, SubtitleFormat::Srt);
     const auto &b = src.bytes;
     std::size_t pos = 0;
     if (b.size() >= 3 && b[0] == std::byte{0xEF} && b[1] == std::byte{0xBB} && b[2] == std::byte{0xBF}) {

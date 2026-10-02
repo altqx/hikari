@@ -69,6 +69,10 @@ struct LineRecord {
     SourceSpan span;        // where the record came from; its terminator is reused on save
     bool edited = false;    // the span no longer describes the record; regenerate on save
     std::optional<std::u8string> cueNumber; // SRT: the authored cue number line, if any
+    // MicroDVD: authored frame numbers. start/end times stay unresolved (zero)
+    // until the Document's own frame rate is set (C01-fps-isolation).
+    std::optional<std::int64_t> startFrame;
+    std::optional<std::int64_t> endFrame;
 };
 
 struct StyleRecord {
@@ -132,6 +136,9 @@ struct Diagnostic {
     std::u8string excerpt;
 };
 
+// The legacy format codes (styles.h): which serialization a Document uses.
+enum class SubtitleFormat { Ass = 1, Srt, TMPlayer, MicroDvd, Mpl2, PlainText = 0 };
+
 class Document {
 public:
     const SourceText &source() const { return m_source; }
@@ -145,11 +152,20 @@ public:
     // Returns false when no Line has this id.
     bool setLineText(LineId id, std::u8string text);
 
+    SubtitleFormat format() const { return m_format; }
+    // MicroDVD frame rate for this Document only; nullopt while unknown.
+    const std::optional<FrameRate> &frameRate() const { return m_frameRate; }
+    // Sets the rate and resolves every frame-timed Line's start/end from its
+    // authored frames, exactly (nearest microsecond). Other Documents are untouched.
+    void setFrameRate(FrameRate rate);
+
 private:
     friend struct DocumentBuilder;
     SourceText m_source;
     std::vector<Section> m_sections;
     std::uint64_t m_nextLineId = 1;
+    SubtitleFormat m_format = SubtitleFormat::Ass;
+    std::optional<FrameRate> m_frameRate;
 };
 
 struct LoadResult {

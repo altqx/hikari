@@ -19,6 +19,7 @@ struct DocumentBuilder {
     static SourceText &source(Document &d) { return d.m_source; }
     static std::vector<Section> &sections(Document &d) { return d.m_sections; }
     static LineId nextLineId(Document &d) { return LineId{d.m_nextLineId++}; }
+    static void setFormat(Document &d, SubtitleFormat f) { d.m_format = f; }
 };
 
 
