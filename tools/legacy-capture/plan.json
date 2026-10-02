@@ -79,6 +79,48 @@
     "Return"
    ],
    "note": "V2-E-grammar: Ctrl+B (EDITBOX_INSERT_BOLD) in the legacy editor on four Lines: a whole-Line selection, the caret after an existing bold tag, the caret inside an italic block, and the caret inside a bold tag. Return in the grid focuses the editor; Return in the editor commits and goes to the next Line."
+  },
+  "editor-tag-commands-srt": {
+   "route": "save-as",
+   "inputs": [
+    "tag-commands.srt"
+   ],
+   "keys": [
+    "Home",
+    "Return",
+    "End",
+    "shift+Home",
+    "ctrl+b",
+    "Return",
+    "End",
+    "ctrl+b",
+    "Return"
+   ],
+   "note": "PutinNonass for SRT: Ctrl+B on a whole-cue selection, then with the caret after an existing </b>."
+  },
+  "editor-tag-commands-microdvd": {
+   "route": "save-as",
+   "inputs": [
+    "tag-commands.sub"
+   ],
+   "keys": [
+    "Home",
+    "Return",
+    "Home",
+    "Right",
+    "Right",
+    "Right",
+    "Right",
+    "Right",
+    "ctrl+b",
+    "Return",
+    "Home",
+    "Right",
+    "Right",
+    "ctrl+b",
+    "Return"
+   ],
+   "note": "PutinNonass for MicroDVD: Ctrl+B with the caret after a '|', then inside a line starting with {y:b}."
   }
  }
 }
