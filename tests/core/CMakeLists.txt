@@ -39,3 +39,4 @@ hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp L
 hikari_add_gtest(hikari_core_editor_font_colour_tests SOURCES editor_font_colour_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_conversion_tests SOURCES conversion_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_legacy_regex_tests SOURCES legacy_regex_tests.cpp LIBRARIES hikari_core LABELS core)

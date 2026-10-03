@@ -34,6 +34,8 @@
     },
     "icu",
     "curl",
+    "pcre2",
+    "hunspell",
     {
       "name": "pkgconf",
       "host": true,

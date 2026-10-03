@@ -40,6 +40,8 @@ add_library(Hikari::media_deps ALIAS hikari_media_deps)
 # Editor audio output (ADR 0010): the owned PortAudio overlay with pinned host
 # APIs. Static; ALSA is the system library on Linux.
 find_package(portaudio CONFIG REQUIRED)
+# R1-pcre2 / R2-hunspell: legacy wxRegEx's PCRE2 and the spell checker.
+find_package(PCRE2 CONFIG REQUIRED COMPONENTS 16BIT)
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)
 add_library(Hikari::portaudio ALIAS hikari_portaudio)

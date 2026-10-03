@@ -1,9 +1,10 @@
 #include "hikari/core/tag_commands.h"
 
+#include "hikari/core/legacy_regex.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
-#include <regex>
+#include <tuple>
 #include <string>
 
 namespace hikari::core::legacy {
@@ -54,17 +55,11 @@ std::size_t findFromEnd(u16v text, u16v what)
     return p == u16v::npos ? static_cast<std::size_t>(-1) : p;
 }
 
-// wxRegEx("^" + pattern).ReplaceAll(&s, "\\1"): the anchored match (if any)
-// replaced by its first group.
-bool replaceWithGroup(u16 &s, const std::regex &re)
+// regex.ReplaceAll(&s, "\\1") with regex = wxRegEx("^" + pattern): the
+// anchored match (if any) replaced by its first group.
+bool replaceWithGroup(u16 &s, const LegacyRegex &re)
 {
-    const std::string utf8(reinterpret_cast<const char *>(toUtf8(s).c_str()));
-    std::smatch m;
-    if (!std::regex_search(utf8, m, re, std::regex_constants::match_continuous))
-        return false;
-    const std::string replaced = m[1].str() + utf8.substr(static_cast<std::size_t>(m.length(0)));
-    s = toUtf16(std::u8string(reinterpret_cast<const char8_t *>(replaced.data()), replaced.size()));
-    return true;
+    return re.replaceAll(s, u"\\1") > 0;
 }
 
 } // namespace
@@ -123,9 +118,12 @@ bool TagEditor::findTag(u16v pattern, int mode, bool toEndOfSelection)
     m_inBracket = false;
     m_hasSelection = false;
     const u16 &txt = m_state.text;
-    m_lastPattern = u16(pattern);
-    const std::string pat(reinterpret_cast<const char *>(toUtf8(pattern).c_str()));
-    const std::regex re(pat);
+    // `pattern` may view m_lastPattern itself (the reset's second search).
+    const u16 patternCopy(pattern);
+    m_lastPattern = patternCopy;
+    const LegacyRegex re(u"^" + patternCopy, LegacyRegex::Advanced);
+    if (!re.isValid())
+        return false;
 
     if (mode != 1 && mode != 3) {
         m_from = m_state.selectionStart;
@@ -184,7 +182,7 @@ bool TagEditor::findTag(u16v pattern, int mode, bool toEndOfSelection)
         bracketEnd = static_cast<long>(txtlen) - 1;
     if (static_cast<std::size_t>(bracketStart) > txtlen)
         bracketStart = static_cast<long>(txtlen) - 1;
-    const bool findTTag = startsWith(pattern, u"t");
+    const bool findTTag = startsWith(patternCopy, u"t");
 
     for (long i = bracketEnd; i >= 0; i--) {
         const char16_t ch = txt[static_cast<std::size_t>(i)];
@@ -539,20 +537,10 @@ u16 putTagInLine(u16 text, u16v pattern, u16v tag)
 
 namespace {
 
-// UTF-16 units as wchar_t, so match positions stay UTF-16 offsets.
-std::wstring wide(u16v s)
-{
-    return std::wstring(s.begin(), s.end());
-}
-
 // wxRegEx(pattern, wxRE_ADVANCED | wxRE_ICASE): an invalid pattern matches nothing.
-std::optional<std::wregex> legacyRegex(const std::wstring &pattern)
+LegacyRegex legacyRegex(u16v pattern)
 {
-    try {
-        return std::wregex(pattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
-    } catch (const std::regex_error &) {
-        return std::nullopt;
-    }
+    return LegacyRegex(pattern, LegacyRegex::Advanced | LegacyRegex::IgnoreCase);
 }
 
 } // namespace
@@ -564,17 +552,14 @@ EditorText putInNonAss(EditorText state, NonAssFormat format, u16v text, u16v ta
     u16 txt = state.text;
     long from = state.selectionStart, to = state.selectionEnd;
     long where = from;
-    const auto matchAt = [](const std::optional<std::wregex> &re, u16v hay, std::size_t &start, std::size_t &len) {
-        std::wsmatch m;
-        const std::wstring h = wide(hay);
-        if (!re || !std::regex_search(h, m, *re))
+    const auto matchAt = [](const LegacyRegex &re, u16v hay, std::size_t &start, std::size_t &len) {
+        if (!re.matches(hay))
             return false;
-        start = static_cast<std::size_t>(m.position(0));
-        len = static_cast<std::size_t>(m.length(0));
+        std::tie(start, len) = *re.match(0);
         return true;
     };
     if (format == NonAssFormat::Srt) {
-        const auto re = legacyRegex(L"</?" + wide(text) + L">");
+        const auto re = legacyRegex(u"\\</?" + u16(text) + u"\\>");
         std::size_t start = 0, len = 0;
         bool match = false;
         if (matchAt(re, window(txt, from), start, len) && len + start >= 4 && start <= 4) {
@@ -604,7 +589,7 @@ EditorText putInNonAss(EditorText state, NonAssFormat format, u16v text, u16v ta
             }
         }
     } else if (format == NonAssFormat::MicroDvd) {
-        const auto re = legacyRegex(L"\\{" + wide(text) + L"\\}");
+        const auto re = legacyRegex(u"\\{" + u16(text) + u"}");
         long wheres = findLast(subString(txt, 0, from), u'|');
         if (wheres == -1)
             wheres = 0;
@@ -629,10 +614,8 @@ u16 putInNonAssLine(u16 line, NonAssFormat format, u16v text, u16v tag)
     const bool srt = format == NonAssFormat::Srt;
     const u16 open = srt ? u"<" : u"{", close = srt ? u">" : u"}";
     if (line.starts_with(open)) {
-        if (const auto re = legacyRegex(wide(srt ? u16(open) : u"\\{") + wide(tag) + wide(srt ? u16(close) : u"\\}"))) {
-            const std::wstring replaced = std::regex_replace(wide(line), *re, std::wstring());
-            line = u16(replaced.begin(), replaced.end());
-        }
+        // EditBox::PutinNonass: wxRegEx(chars + tag + chare).ReplaceAll(&txt, "").
+        legacyRegex(open + u16(tag) + close).replaceAll(line, u"");
         return open + u16(text) + close + line;
     }
     return open + u16(text) + close + line;

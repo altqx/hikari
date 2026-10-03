@@ -3,13 +3,13 @@
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/clipboard_rows.h"
+#include "hikari/core/legacy_regex.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
 #include <cmath>
-#include <regex>
 #include <set>
 
 namespace hikari::application {
@@ -88,12 +88,6 @@ std::u8string fieldText(const core::LineRecord &line, SelectLinesSettings::Field
     case F::Text: break;
     }
     return translationMode && !line.translation.empty() ? line.translation : line.text;
-}
-
-// UTF-16 units as wchar_t, so the pattern sees what wxString holds.
-std::wstring wide(std::u16string_view s)
-{
-    return std::wstring(s.begin(), s.end());
 }
 
 std::u16string asciiFold(std::u16string_view s)
@@ -207,15 +201,11 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     std::u16string find = core::toUtf16(settings.find);
     if (!settings.matchCase && !settings.regex)
         find = lower(find);
-    // wxRegEx(find, wxRE_ADVANCED [| wxRE_ICASE]), approximated by ECMAScript.
-    std::optional<std::wregex> re;
+    // wxRegEx(find, wxRE_ADVANCED [| wxRE_ICASE]) (R1-pcre2).
+    std::optional<core::LegacyRegex> re;
     if (settings.regex) {
-        auto flags = std::regex_constants::ECMAScript;
-        if (!settings.matchCase)
-            flags |= std::regex_constants::icase;
-        try {
-            re.emplace(wide(find), flags);
-        } catch (const std::regex_error &) {
+        re.emplace(find, core::LegacyRegex::Advanced | (settings.matchCase ? 0 : core::LegacyRegex::IgnoreCase));
+        if (!re->isValid()) {
             session.setSelection(selection);
             return SelectLinesResult{};
         }
@@ -230,8 +220,7 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
         bool found = false;
         if (!txt.empty() && !find.empty()) {
             if (re) {
-                const std::wstring w = wide(txt);
-                found = std::regex_search(w, *re);
+                found = re->matches(txt);
             } else {
                 if (!settings.matchCase)
                     txt = lower(txt);
