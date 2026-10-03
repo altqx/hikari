@@ -122,5 +122,80 @@
    ],
    "note": "PutinNonass for MicroDVD: Ctrl+B with the caret after a '|', then inside a line starting with {y:b}."
   }
+ },
+ "automation": {
+  "id": "S3-automation",
+  "probe": "automation/capture-probe.lua",
+  "note": "L2 dialog subset and L6 corpus (A33-compat). Macro k of the probe is bound to Ctrl+Shift+F(k+1); keys are sent to the dialog the macro opens.",
+  "steps": [
+   {
+    "case": "defaults-ok",
+    "macro": 0,
+    "keys": [
+     "Return"
+    ]
+   },
+   {
+    "case": "defaults-escape",
+    "macro": 1,
+    "keys": [
+     "Escape"
+    ]
+   },
+   {
+    "case": "buttons-return",
+    "macro": 2,
+    "keys": [
+     "Return"
+    ]
+   },
+   {
+    "case": "buttons-escape",
+    "macro": 3,
+    "keys": [
+     "Escape"
+    ]
+   },
+   {
+    "case": "button-id-unknown",
+    "macro": 4,
+    "keys": [
+     "Return"
+    ]
+   },
+   {
+    "case": "button-id-invalid",
+    "macro": 5
+   },
+   {
+    "case": "float-step-up",
+    "macro": 6,
+    "keys": [
+     "Up",
+     "Return"
+    ]
+   },
+   {
+    "case": "int-step-up",
+    "macro": 7,
+    "keys": [
+     "Up",
+     "Return"
+    ]
+   },
+   {
+    "case": "edit-typed",
+    "macro": 8,
+    "keys": [
+     "type:héllo",
+     "Return"
+    ]
+   },
+   {
+    "case": "corpus",
+    "macro": 9,
+    "timeout": 120
+   }
+  ]
  }
 }
