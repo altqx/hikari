@@ -811,6 +811,7 @@ TEST_F(LuaHelper, NativePreloadsMatchTheLegacyModules)
     };
     EXPECT_EQ(logOf("Regex"), (QStringList{"Hello World,Hello,World,1,5", "a#b#c#", "a#b#c333", "true", "4",
                                            "false,true"}));
+    EXPECT_EQ(logOf("RegexTraced"), (QStringList{"0"}));
     EXPECT_EQ(logOf("Unicode"), (QStringList{QStringLiteral("STRASSE,àéî,strasse"), "3,26085"}));
     EXPECT_EQ(logOf("Lpeg"), (QStringList{"4,0.10"}));
     EXPECT_EQ(logOf("Luabins"), (QStringList{"true,1,two,3"}));

@@ -19,6 +19,17 @@ aegisub.register_macro("Regex", "", function()
     show(ok, err ~= nil)
 end)
 
+-- re.moon reads a search result and then frees it; once traced, the reads must
+-- not be fused past the free (the Hikari LuaJIT overlay patch).
+aegisub.register_macro("RegexTraced", "", function()
+    local re = require 'aegisub.re'
+    local wrong = 0
+    for _ = 1, 3000 do
+        if #re.split("a,b,,c", ",") ~= 4 then wrong = wrong + 1 end
+    end
+    show(wrong)
+end)
+
 aegisub.register_macro("Unicode", "", function()
     local unicode = require 'aegisub.unicode'
     show(unicode.to_upper_case("straße"), unicode.to_lower_case("ÀÉÎ"), unicode.to_fold_case("Straße"))

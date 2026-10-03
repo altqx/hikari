@@ -135,3 +135,7 @@ The owned libass overlay carries `ports/libass/hikari-font-diagnostics.patch`, a
 - characters no face covers.
 
 Rendering is unchanged; the hooks only observe. The patch is anchored on pinned 0.17.5 sources, and a libass update must re-apply it and pass `font_service_tests`. On Linux those tests set `FONTCONFIG_FILE` to a generated configuration that lists only the build's CC0 font fixtures and the locked Qt install's OFL fonts (Georama, Titillium Web). On Windows they use DirectWrite and the installed fonts.
+
+## LuaJIT fusion patch (2026-10-03)
+
+The owned LuaJIT overlay (`ports/luajit`, the vcpkg port at the 2026-09-08 snapshot) adds `hikari-xload-fusion-across-calls.patch`. On x86/x64 the stock backend fuses an FFI memory load (XLOAD) into a later instruction's operand without checking for a C call (CALLXS) in between, so the load can run after that call. `aegisub/re.moon` reads a search result and then calls `ffi.C.free` on it (`first, last = res[0], res[1]`). Once traced, the read of `res[1]` could land after the free and return glibc's tcache link word. `re.split` and `re.find` then lost matches in streaks. This was the intermittent `LuaHelper.NativePreloadsMatchTheLegacyModules` failure (about 4% of runs; 60% with the `RegexTraced` loop). The patch treats a CALLXS as a fusion conflict for XLOAD and changes nothing else; other fusion and the other backends are untouched. A LuaJIT update must re-apply it, or confirm that upstream fixed it, and pass the `RegexTraced` check.
