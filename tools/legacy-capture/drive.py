@@ -313,9 +313,11 @@ def automation(spec, package, display, workdir, probe_source):
                     srec["status"] = "captured"
                     break
                 time.sleep(0.5)
+            srec["windows_after"] = [t for _, t in popups(display, wid)]
+            srec["main_title_after"] = x(["xdotool", "getwindowname", wid], display, 5).stdout.strip()
             if srec["status"] != "captured":
                 srec["screenshot"] = screenshot(display, workdir, f"automation-{step['case']}")
-                srec["popups"] = [t for _, t in popups(display, wid)]
+                srec["popups"] = srec["windows_after"]
                 for other, _ in popups(display, wid):  # leave a clean state for the next step
                     x(["xdotool", "windowactivate", "--sync", other], display, 10)
                     x(["xdotool", "key", "Escape"], display, 5)
@@ -324,6 +326,12 @@ def automation(spec, package, display, workdir, probe_source):
         probe_rec["status"] = "captured" if all(s["status"] == "captured" for s in probe_rec["steps"]) else "incomplete"
     finally:
         probe_rec["app_log_tail"] = finish(proc)
+        # Whether the app read the crafted hotkeys: its Config directory and
+        # the Hotkeys.txt it left behind.
+        probe_rec["config_files"] = sorted(p.name for p in config.glob("*")) if config.is_dir() else []
+        hotkeys = config / "Hotkeys.txt"
+        probe_rec["hotkeys_after"] = hotkeys.read_text(errors="replace")[:2000] if hotkeys.exists() else None
+        probe_rec["capture_lines"] = output.read_text(errors="replace")[:20000] if output.exists() else None
         obs.append(probe_rec)
         shutil.rmtree(scratch, ignore_errors=True)
     return obs
