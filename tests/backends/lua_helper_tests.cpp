@@ -7,12 +7,20 @@
 #include "hikari/core/ass_load.h"
 
 #include <QCoreApplication>
+#include <QDir>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QTemporaryDir>
 #include <QTimer>
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <cstdio>
 #include <functional>
+#include <map>
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -338,7 +346,10 @@ TEST_F(LuaHelper, RuntimeErrorCarriesATraceback)
     ASSERT_TRUE(runToEnd(*host, "Error"));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
     EXPECT_TRUE(run.message.contains("script failure")) << run.message.toStdString();
-    EXPECT_TRUE(run.message.contains("stack traceback")) << run.message.toStdString();
+    // Legacy add_stack_trace: a "File ..., line ..." block per frame, the
+    // message after each, its "[string ...]:N: " location removed.
+    EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line ").arg(fixture("host-fixture.lua"))))
+        << run.message.toStdString();
 }
 
 TEST_F(LuaHelper, LoadFailuresAreReportedWithTheirReasons)
@@ -777,6 +788,92 @@ TEST(LuaProtocol, HostServiceFramesRoundTripAndRejectMalformedOnes)
     helper::Writer status;
     status.i32(7).i32(0).i32(0).i32(0).bytes({});
     EXPECT_FALSE(lua::decodeHostReply(status.take()));
+}
+
+// L6: the legacy native preloads, MoonScript, and the bundled corpus.
+TEST_F(LuaHelper, NativePreloadsMatchTheLegacyModules)
+{
+    QTemporaryDir temp;
+    ASSERT_TRUE(temp.isValid());
+    auto host = load(fixture("natives.lua"),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         hikari::application::HostServiceReply out;
+                         if (r.service == hikari::application::HostService::DecodePath)
+                             out.strings = {temp.path().toStdString()};
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto logOf = [&](const char *name) {
+        EXPECT_TRUE(runToEnd(*host, name)) << name;
+        EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << name << ": " << run.message.toStdString();
+        return run.log;
+    };
+    EXPECT_EQ(logOf("Regex"), (QStringList{"Hello World,Hello,World,1,5", "a#b#c#", "a#b#c333", "true", "4",
+                                           "false,true"}));
+    EXPECT_EQ(logOf("Unicode"), (QStringList{QStringLiteral("STRASSE,àéî,strasse"), "3,26085"}));
+    EXPECT_EQ(logOf("Lpeg"), (QStringList{"4,0.10"}));
+    EXPECT_EQ(logOf("Luabins"), (QStringList{"true,1,two,3"}));
+    // The bundled lfs.moon wraps mkdir, touch and rmdir in tonumber(), which
+    // turns their C bool into nil: legacy returns nil, nil on success.
+    // attributes() returns its value and a nil error.
+    EXPECT_EQ(logOf("Lfs"), (QStringList{"nil,nil", "directory,nil", "nil,nil", "file,0,nil", "a.txt", "nil,nil",
+                                         "nil,nil"}));
+}
+
+TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
+{
+    auto host = load(fixture("moon-macro.moon"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_EQ(host->info().name, "Moon");
+    ASSERT_TRUE(runToEnd(*host, "Moon"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"moon ran 2,4,6"});
+    ASSERT_TRUE(runToEnd(*host, "Moon error"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Failed);
+    EXPECT_TRUE(run.message.contains("moon failure")) << run.message.toStdString();
+    // The frame names the .moon source line, mapped through MoonScript's line tables.
+    EXPECT_TRUE(run.message.contains(QStringLiteral("File \"%1\", line 7").arg(fixture("moon-macro.moon"))))
+        << run.message.toStdString();
+}
+
+// Every bundled Autoload script, loaded unchanged. The results are written to
+// an artifact (A33-compat corpus); first-party scripts must load and register.
+TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
+{
+    QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));
+    const QStringList files = dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name);
+    ASSERT_FALSE(files.isEmpty());
+    QJsonArray corpus;
+    std::map<QString, std::pair<LuaScriptHost::State, QStringList>> results;
+    for (const QString &file : files) {
+        auto host = load(dir.filePath(file));
+        QStringList macros;
+        for (const auto &m : host->info().macros)
+            macros << QString::fromStdString(m.name);
+        const QString error = host->lastError();
+        results[file] = {host->state(), macros};
+        corpus.append(QJsonObject{{QStringLiteral("script"), file},
+                                  {QStringLiteral("loaded"), host->state() == LuaScriptHost::State::Ready},
+                                  {QStringLiteral("name"), QString::fromStdString(host->info().name)},
+                                  {QStringLiteral("macros"), QJsonArray::fromStringList(macros)},
+                                  {QStringLiteral("error"), error}});
+        std::fprintf(stderr, "corpus %s: %s %s\n", qPrintable(file),
+                     host->state() == LuaScriptHost::State::Ready ? "loaded" : "failed",
+                     qPrintable(host->state() == LuaScriptHost::State::Ready ? macros.join(QStringLiteral(" | "))
+                                                                             : error.section(QLatin1Char('\n'), 0, 2)));
+    }
+    QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+    QFile out(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-corpus.json"));
+    ASSERT_TRUE(out.open(QIODevice::WriteOnly));
+    out.write(QJsonDocument(corpus).toJson());
+    for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
+                                   "cleantags-autoload.lua", "karaoke-auto-leadin.lua", "kara-templater.lua",
+                                   "select-overlaps.moon"}) {
+        const auto it = results.find(QString::fromLatin1(firstParty));
+        ASSERT_NE(it, results.end()) << firstParty;
+        EXPECT_EQ(it->second.first, LuaScriptHost::State::Ready) << firstParty;
+        EXPECT_FALSE(it->second.second.isEmpty()) << firstParty;
+    }
 }
 
 } // namespace

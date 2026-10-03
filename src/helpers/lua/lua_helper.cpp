@@ -24,6 +24,7 @@
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/lua_protocol.h"
+#include "lua_native.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -38,6 +39,7 @@ extern "C" {
 #include <cstring>
 #include <new>
 #include <filesystem>
+#include <regex>
 #include <type_traits>
 #include <variant>
 #include <fstream>
@@ -110,7 +112,25 @@ bool loadFile(lua_State *L, const std::filesystem::path &path)
         data += 3;
         size -= 3;
     }
-    return luaL_loadbuffer(L, data, size, toUtf8(path).c_str()) == 0;
+    const std::string name = toUtf8(path);
+    if (!name.ends_with("moon"))
+        return luaL_loadbuffer(L, data, size, name.c_str()) == 0;
+    // MoonScript: compiled by moonscript.loadstring (installed at load). The
+    // raw text is kept for mapping error lines back to the .moon source.
+    lua_getfield(L, LUA_REGISTRYINDEX, "moonscript");
+    lua_pushlstring(L, data, size);
+    lua_pushvalue(L, -1);
+    lua_setfield(L, LUA_REGISTRYINDEX, ("raw moonscript: " + name).c_str());
+    lua_pushstring(L, name.c_str());
+    if (lua_pcall(L, 2, 2, 0))
+        return false; // leaves the error message
+    // loadstring returns nil, error on error, or the function.
+    if (lua_isnil(L, -2)) {
+        lua_remove(L, -2);
+        return false;
+    }
+    lua_pop(L, 1);
+    return true;
 }
 
 std::string stringOrEmpty(lua_State *L, int index)
@@ -136,12 +156,84 @@ std::string checkString(lua_State *L, int index)
     return std::string(s, len);
 }
 
+// Legacy moon_line: a .moon file's Lua line mapped through MoonScript's line
+// tables to a character offset, then to a line of the raw source.
+int moonLine(lua_State *L, int luaLine, const std::string &file)
+{
+    if (luaL_dostring(L, "return require 'moonscript.line_tables'")) {
+        lua_pop(L, 1);
+        return luaLine;
+    }
+    lua_pushstring(L, file.c_str());
+    lua_rawget(L, -2);
+    if (!lua_istable(L, -1)) {
+        lua_pop(L, 2);
+        return luaLine;
+    }
+    lua_rawgeti(L, -1, luaLine);
+    if (!lua_isnumber(L, -1)) {
+        lua_pop(L, 3);
+        return luaLine;
+    }
+    const auto charPos = static_cast<std::size_t>(lua_tonumber(L, -1));
+    lua_pop(L, 3);
+    lua_getfield(L, LUA_REGISTRYINDEX, ("raw moonscript: " + file).c_str());
+    if (!lua_isstring(L, -1)) {
+        lua_pop(L, 1);
+        return luaLine;
+    }
+    std::size_t len = 0;
+    const char *moon = lua_tolstring(L, -1, &len);
+    const int line = static_cast<int>(std::count(moon, moon + std::min(len, charPos), '\n')) + 1;
+    lua_pop(L, 1);
+    return line;
+}
+
+// Legacy add_stack_trace: one "File ..., line ..." block per frame, each
+// followed by the message with its "[string ...]:N: " location removed.
 int addStackTrace(lua_State *L)
 {
     if (lua_touserdata(L, 1) == &g_cancelTag)
         return 1; // cancellation is not an error to annotate
-    const char *message = lua_tostring(L, 1);
-    luaL_traceback(L, L, message ? message : "(error object is not a string)", 1);
+    int level = 1;
+    if (lua_isnumber(L, 2)) {
+        level = static_cast<int>(lua_tointeger(L, 2));
+        lua_pop(L, 1);
+    }
+    const char *err = lua_tostring(L, 1);
+    if (!err)
+        return 1;
+    std::string message = err;
+    if (lua_gettop(L))
+        lua_pop(L, 1);
+    static const std::regex location("^\\[string (.*)\\]:[0-9]+: ");
+    message = std::regex_replace(message, location, "", std::regex_constants::format_first_only);
+
+    std::string frames;
+    lua_Debug ar;
+    while (lua_getstack(L, level++, &ar)) {
+        lua_getinfo(L, "Snl", &ar);
+        if (ar.what[0] == 't') {
+            frames += "(tail call)";
+            continue;
+        }
+        std::string file = ar.source ? ar.source : "";
+        const bool moon = file != "=[C]" && file.ends_with(".moon");
+        if (file == "=[C]")
+            file = "<C function>";
+        const auto realLine = [&](int line) { return moon ? moonLine(L, line, file) : line; };
+        std::string function = ar.name ? ar.name : "";
+        if (*ar.what == 'm')
+            function += " <main>";
+        else if (*ar.what == 'C')
+            function += '?';
+        else if (!*ar.namewhat)
+            function += " <anonymous function at lines " + std::to_string(realLine(ar.linedefined)) + "-" +
+                        std::to_string(realLine(ar.lastlinedefined - 1)) + ">";
+        frames += "File \"" + file + "\", line " + std::to_string(realLine(ar.currentline)) + " " + function + "\n" +
+                  message + "\n\n";
+    }
+    lua_pushstring(L, frames.c_str());
     return 1;
 }
 
@@ -217,7 +309,8 @@ int include(lua_State *L)
         return lua_error(L);
     }
     if (!loadFile(L, filepath)) {
-        lua_pushfstring(L, "Error loading Lua include \"%s\":\n%s", toUtf8(filepath).c_str(), lua_tostring(L, -1));
+        // Legacy appends check_string(L, 1), the include's own name, not the error.
+        lua_pushfstring(L, "Error loading Lua include \"%s\":\n%s", toUtf8(filepath).c_str(), filename.c_str());
         return lua_error(L);
     }
     const int before = lua_gettop(L) - 1;
@@ -593,6 +686,62 @@ void installAegisub(lua_State *L)
 
 // ---- requests -------------------------------------------------------------
 
+// Legacy module_loader (package.loaders[2]): each package.path entry with
+// "/?" replaced by the module path, a .moon file preferred over its .lua.
+int moduleLoader(lua_State *L)
+{
+    const int pretop = lua_gettop(L);
+    std::string module = checkString(L, -1);
+    std::replace(module.begin(), module.end(), '.', LUA_DIRSEP[0]);
+    lua_getglobal(L, "package");
+    lua_getfield(L, -1, "path");
+    const std::string paths = checkString(L, -1);
+    lua_pop(L, 2);
+    std::size_t from = 0;
+    while (from <= paths.size()) {
+        const std::size_t to = std::min(paths.find(';', from), paths.size());
+        std::string filename = paths.substr(from, to - from);
+        from = to + 1;
+        if (filename.empty())
+            continue;
+        for (std::size_t at = 0; (at = filename.find("/?", at)) != std::string::npos; at += module.size())
+            filename.replace(at, 2, module);
+        if (filename.ends_with("lua")) {
+            const std::string moon = filename.substr(0, filename.rfind('.')) + ".moon";
+            if (std::filesystem::exists(fromUtf8(moon)))
+                filename = moon;
+        }
+        if (!std::filesystem::exists(fromUtf8(filename)))
+            continue;
+        if (!loadFile(L, fromUtf8(filename)))
+            return luaL_error(L, "Error loading Lua module \"%s\":\n%s", filename.c_str(), checkString(L, 1).c_str());
+        break;
+    }
+    return lua_gettop(L) - pretop;
+}
+
+// Legacy Install: package.path from the include directories, the module
+// loader above, and moonscript.loadstring kept in the registry. False leaves
+// the error message on the stack.
+bool install(lua_State *L)
+{
+    lua_getglobal(L, "package");
+    std::string packagePath;
+    for (const auto &dir : g_script.includePath)
+        packagePath += dir + "/?.lua;" + dir + "/?/init.lua;";
+    lua_pushstring(L, packagePath.c_str());
+    lua_setfield(L, -2, "path");
+    lua_getfield(L, -1, "loaders");
+    lua_pushcfunction(L, moduleLoader);
+    lua_rawseti(L, -2, 2);
+    lua_pop(L, 2);
+    luaL_loadstring(L, "return require('moonscript').loadstring");
+    if (lua_pcall(L, 0, 1, 0))
+        return false;
+    lua_setfield(L, LUA_REGISTRYINDEX, "moonscript");
+    return true;
+}
+
 void load(Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -605,31 +754,20 @@ void load(Reader &in, Responder &r)
 
     g_script.path = fromUtf8(path);
     g_script.traceLevel = traceLevel;
-    g_script.includePath = {toUtf8(g_script.path.parent_path()), sharedInclude};
+    // Legacy include directories end with a separator (wxPATH_GET_SEPARATOR).
+    g_script.includePath = {toUtf8(g_script.path.parent_path()) + LUA_DIRSEP, sharedInclude + LUA_DIRSEP};
     lua_State *L = luaL_newstate();
     if (!L)
         return r.terminal(Outcome::Failed, bytesOf("Could not initialize Lua state"));
     luaL_openlibs(L);
+    hikari::lua_native::preload(L);
     lua_pushnil(L);
     lua_setglobal(L, "dofile");
     lua_pushnil(L);
     lua_setglobal(L, "loadfile");
     lua_pushcfunction(L, include);
     lua_setglobal(L, "include");
-    lua_getglobal(L, "package");
-    std::string packagePath;
-    for (const auto &dir : g_script.includePath)
-        packagePath += dir + "/?.lua;" + dir + "/?/init.lua;";
-    lua_pushstring(L, packagePath.c_str());
-    lua_setfield(L, -2, "path");
-    lua_pop(L, 1);
-    installAegisub(L);
     g_script.L = L;
-    g_services = &r;
-    struct EndServices {
-        ~EndServices() { g_services = nullptr; }
-    } endServices;
-
     auto fail = [&](const std::string &message) {
         g_script.info = {};
         g_script.features.clear();
@@ -637,6 +775,16 @@ void load(Reader &in, Responder &r)
         g_script.L = nullptr;
         r.terminal(Outcome::Failed, bytesOf(message));
     };
+    if (!install(L))
+        return fail(stringOrEmpty(L, -1));
+    lua_pushstring(L, path.c_str());
+    lua_setfield(L, LUA_REGISTRYINDEX, "filename");
+    installAegisub(L);
+    g_services = &r;
+    struct EndServices {
+        ~EndServices() { g_services = nullptr; }
+    } endServices;
+
     if (!loadFile(L, g_script.path))
         return fail(stringOrEmpty(L, -1));
     lua_pushcfunction(L, addStackTrace);
@@ -1748,6 +1896,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
 
 int main()
 {
+    hikari::lua_native::installGlobalLocale();
     return runHelper(lua::kHelperName, lua::kProtocolVersion, [](const Frame &request, Responder &r) {
         Reader in(request.payload);
         switch (static_cast<lua::Command>(in.i32())) {

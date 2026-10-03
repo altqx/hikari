@@ -20,6 +20,19 @@
     "portaudio",
     "luajit",
     {
+      "name": "boost-regex",
+      "features": [
+        "icu"
+      ]
+    },
+    {
+      "name": "boost-locale",
+      "features": [
+        "icu"
+      ]
+    },
+    "icu",
+    {
       "name": "pkgconf",
       "host": true,
       "platform": "windows"
