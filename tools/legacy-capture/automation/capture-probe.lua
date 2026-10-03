@@ -7,8 +7,11 @@
 --
 -- What this observes is the legacy Lua environment as the app provides it:
 -- its aegisub API, include path, native modules, FFI and DependencyControl.
--- Corpus scripts are loaded in this probe's state, each with its own global
--- table; package.loaded is shared between them (recorded in the output).
+-- Corpus scripts are loaded in this probe's state, one after another in the
+-- real global table (cleared of the probe's script_* and restored after
+-- each); package.loaded is shared between them (recorded in the output).
+-- The hosts remove loadfile/dofile, so scripts are read and compiled with
+-- loadstring under their own path.
 
 script_name = "Hikari capture probe"
 script_description = "Legacy automation capture (S3)"
@@ -155,8 +158,13 @@ local function capture_corpus()
     for path in list:lines() do
         if path ~= "" then
             local rec = { file = path:match("[^/\\]+$"), registrations = {} }
-            local env = setmetatable({}, { __index = _G })
-            env._G = env
+            -- Each legacy script has a Lua state of its own; here a script runs
+            -- in the real globals (modules such as DependencyControl read
+            -- script_* from them), cleared of the probe's own script_* and
+            -- restored afterwards.
+            local saved = {}
+            for k, v in pairs(_G) do saved[k] = v end
+            script_name, script_description, script_author, script_version, script_namespace = nil, nil, nil, nil, nil
             aegisub.register_macro = function(name, desc, proc, valid, active)
                 rec.registrations[#rec.registrations + 1] = { kind = "macro", name = typed(name), description = typed(desc),
                     processing = type(proc), validation = type(valid), is_active = type(active) }
@@ -170,22 +178,35 @@ local function capture_corpus()
                 local okm, ms = pcall(require, "moonscript.base")
                 if okm then chunk, err = ms.loadfile(path) else chunk, err = nil, "moonscript unavailable: " .. tostring(ms) end
             else
-                chunk, err = loadfile(path)
+                -- The host removes loadfile (legacy replaces it with include):
+                -- read the file and compile it under its own name, BOM skipped.
+                local f, openErr = io.open(path, "rb")
+                if not f then
+                    chunk, err = nil, openErr
+                else
+                    local text = f:read("*a")
+                    f:close()
+                    if text:sub(1, 3) == "\239\187\191" then text = text:sub(4) end
+                    chunk, err = loadstring(text, "@" .. path)
+                end
             end
             if not chunk then
                 rec.loaded = false
                 rec.error = tostring(err)
             else
-                setfenv(chunk, env)
                 local ok, e = xpcall(chunk, debug.traceback)
                 rec.loaded = ok
                 rec.error = (not ok) and tostring(e) or nil
             end
-            rec.script_name = typed(rawget(env, "script_name"))
-            rec.script_description = typed(rawget(env, "script_description"))
-            rec.script_author = typed(rawget(env, "script_author"))
-            rec.script_version = typed(rawget(env, "script_version"))
-            rec.script_namespace = typed(rawget(env, "script_namespace"))
+            rec.script_name = typed(rawget(_G, "script_name"))
+            rec.script_description = typed(rawget(_G, "script_description"))
+            rec.script_author = typed(rawget(_G, "script_author"))
+            rec.script_version = typed(rawget(_G, "script_version"))
+            rec.script_namespace = typed(rawget(_G, "script_namespace"))
+            for k in pairs(_G) do
+                if saved[k] == nil then rawset(_G, k, nil) end
+            end
+            for k, v in pairs(saved) do rawset(_G, k, v) end
             result.scripts[#result.scripts + 1] = rec
         end
     end

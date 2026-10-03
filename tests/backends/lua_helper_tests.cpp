@@ -904,4 +904,74 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     }
 }
 
+// S3/L6: the legacy capture probe (tools/legacy-capture/automation) run in
+// this host over the same corpus; its JSON line is the rewrite side of the
+// legacy comparison (artifacts/automation-capture-corpus.json).
+TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
+{
+    QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));
+    const QStringList files = dir.entryList({QStringLiteral("*.lua"), QStringLiteral("*.moon")}, QDir::Files, QDir::Name);
+    ASSERT_FALSE(files.isEmpty());
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString list = work.filePath(QStringLiteral("corpus.txt"));
+    const QString output = work.filePath(QStringLiteral("capture.jsonl"));
+    {
+        QFile f(list);
+        ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+        for (const QString &file : files)
+            f.write((dir.filePath(file) + QLatin1Char('\n')).toUtf8());
+    }
+    // The helper process inherits the environment, as the legacy app's Lua does.
+    qputenv("HIKARI_CAPTURE_OUT", output.toLocal8Bit());
+    qputenv("HIKARI_CAPTURE_CORPUS", list.toLocal8Bit());
+    const QString automation = work.filePath(QStringLiteral("Automation"));
+    for (const char *sub : {"log", "autosave", "temp"})
+        QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = automation.toStdString();
+    paths.dictionaryDir = work.filePath(QStringLiteral("Dictionary")).toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    auto host = load(QStringLiteral(HIKARI_CAPTURE_PROBE),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         hikari::application::HostServiceReply out = hikari::application::HostServiceReply::unavailable();
+                         if (r.service == hikari::application::HostService::DecodePath) {
+                             out = {};
+                             out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                         }
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Capture 10 corpus"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    qunsetenv("HIKARI_CAPTURE_OUT");
+    qunsetenv("HIKARI_CAPTURE_CORPUS");
+    QFile f(output);
+    ASSERT_TRUE(f.open(QIODevice::ReadOnly));
+    const QByteArray line = f.readLine();
+    const QJsonObject result = QJsonDocument::fromJson(line).object();
+    ASSERT_EQ(result.value(QStringLiteral("case")).toString(), QStringLiteral("corpus")) << line.toStdString();
+    ASSERT_FALSE(result.contains(QStringLiteral("error"))) << line.toStdString();
+    QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+    QFile artifact(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-capture-corpus.json"));
+    ASSERT_TRUE(artifact.open(QIODevice::WriteOnly));
+    artifact.write(QJsonDocument(result).toJson());
+    // Every bundled script loads and registers, as in the host's own load.
+    const QJsonArray scripts = result.value(QStringLiteral("scripts")).toArray();
+    EXPECT_EQ(scripts.size(), files.size());
+    for (const auto &value : scripts) {
+        const QJsonObject script = value.toObject();
+        const std::string file = script.value(QStringLiteral("file")).toString().toStdString();
+        EXPECT_TRUE(script.value(QStringLiteral("loaded")).toBool())
+            << file << ": " << script.value(QStringLiteral("error")).toString().toStdString();
+        EXPECT_FALSE(script.value(QStringLiteral("registrations")).toArray().isEmpty()) << file;
+    }
+    for (const char *module : {"aegisub.re", "aegisub.unicode", "lfs", "lpeg", "luabins", "ffi"})
+        EXPECT_TRUE(result.value(QStringLiteral("modules")).toObject().value(QLatin1String(module)).toObject().value(
+            QStringLiteral("ok")).toBool())
+            << module;
+}
+
 } // namespace
