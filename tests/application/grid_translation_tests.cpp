@@ -214,3 +214,29 @@ TEST(MoveTranslation, OnlyInTranslationModeWithTheOriginalShown)
     session.setSelection(Selection{id, {id}, id, {}});
     EXPECT_FALSE(moveTranslation(session, TranslationMove::DeleteTranslationLine));
 }
+
+TEST(TurnOffTranslationMode, TranslationsBecomeTheTextAndTheTlStyleGoes)
+{
+    EditSession session{load(kScript)};
+    EXPECT_EQ(turnOffTranslationMode(session).error(), CommandRefusal::Invalid); // not in translation mode
+    ASSERT_TRUE(pasteTranslation(session, u8"one\ntwo\n", u8"txt"));
+    const auto third = session.document().lines()[2]->id;
+    ASSERT_TRUE(session.run(Command{"x", session.revision(), {third}, [&](core::Document &d) {
+        return d.setLineUnconfirmed(third, true);
+    }}));
+    const auto steps = session.historySize();
+    ASSERT_TRUE(turnOffTranslationMode(session));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Turning off translator mode");
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one/", "two/", "C/", "D/"}));
+    EXPECT_FALSE(session.document().lines()[2]->unconfirmed);
+    const auto &d = session.document();
+    EXPECT_FALSE(d.scriptInfo(u8"TLMode"));
+    EXPECT_FALSE(d.scriptInfo(u8"TLMode Style"));
+    EXPECT_EQ(d.scriptInfo(u8"TLMode Showtl"), u8"Yes"); // legacy leaves it
+    EXPECT_EQ(core::decodeStyles(d).size(), 1u);
+    const std::string file = saved(session);
+    EXPECT_EQ(file.find("TLmode"), std::string::npos) << file;
+    EXPECT_NE(file.find(",one\n"), std::string::npos) << file;
+    EXPECT_EQ(file.find(",A\n"), std::string::npos) << file;
+}

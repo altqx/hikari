@@ -18,6 +18,7 @@
 #include "automation_services_qt.h"
 
 #include <QClipboard>
+#include <QDesktopServices>
 #include <QFile>
 #include <QStringDecoder>
 #include <QTextBoundaryFinder>
@@ -156,6 +157,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (!m_settingsFile.isEmpty()) {
         const QSettings ini(m_settingsFile, QSettings::IniFormat);
         m_selectOptions = ini.value(QStringLiteral("SelectLines/Options"), 0).toInt();
+        m_saveWithVideoName = ini.value(QStringLiteral("Subtitles/SaveWithVideoName"), false).toBool();
         // Legacy keeps 20 when the dialog opens.
         m_selectRecent = ini.value(QStringLiteral("SelectLines/Recent")).toStringList().mid(0, 20);
     }
@@ -591,6 +593,132 @@ bool Application::targetUntitled() const
     const auto target = m_workspace.editingTarget();
     const auto destination = target ? m_files->destination(*target) : std::nullopt;
     return target && (!destination || destination->value.empty());
+}
+
+namespace {
+
+// wxString::BeforeLast: empty when the character is missing.
+QString beforeLast(const QString &s, QChar c)
+{
+    const auto at = s.lastIndexOf(c);
+    return at < 0 ? QString() : s.left(at);
+}
+
+QString extensionFor(core::SubtitleFormat format)
+{
+    return format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? QStringLiteral("ass")
+           : format == core::SubtitleFormat::Srt                                          ? QStringLiteral("srt")
+                                                                                          : QStringLiteral("txt");
+}
+
+// Legacy checks the read-only attribute of an existing file.
+bool readOnly(const QString &path)
+{
+    const QFileInfo info(path);
+    return info.exists() && !info.isWritable();
+}
+
+} // namespace
+
+QString Application::saveRoute() const
+{
+    const auto target = m_workspace.editingTarget();
+    if (!target)
+        return {};
+    const auto destination = m_files->destination(*target);
+    const QString path = destination ? QString::fromStdString(destination->value) : QString();
+    const QString video = m_video->session().state() == application::VideoSession::State::Ready
+                              ? QString::fromStdString(m_video->session().path())
+                              : QString();
+    if (path.isEmpty() || (m_saveWithVideoName && !video.isEmpty() &&
+                           beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
+        return QStringLiteral("dialog");
+    return readOnly(path) ? QStringLiteral("readonly") : QString();
+}
+
+QVariantMap Application::saveDialogValues() const
+{
+    auto *session = targetSession();
+    if (!session)
+        return {};
+    const auto target = m_workspace.editingTarget();
+    const auto destination = m_files->destination(*target);
+    const QString video = m_video->session().state() == application::VideoSession::State::Ready
+                              ? QString::fromStdString(m_video->session().path())
+                              : QString();
+    const QString path = !video.isEmpty() && m_saveWithVideoName ? video
+                         : destination                           ? QString::fromStdString(destination->value)
+                                                                 : QString();
+    const QString ext = extensionFor(session->document().format());
+    const QString filter = ext == QStringLiteral("txt") ? tr("Subtitle file ") + QStringLiteral("(*.txt *.sub)")
+                                                        : tr("Subtitle file ") + QStringLiteral("(*.%1)").arg(ext);
+    const QFileInfo info(path);
+    return {{QStringLiteral("folder"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath())},
+            {QStringLiteral("file"), path.isEmpty() ? QUrl() : QUrl::fromLocalFile(info.absolutePath() + u'/' + info.completeBaseName())},
+            {QStringLiteral("filter"), filter},
+            {QStringLiteral("extension"), ext}};
+}
+
+QString Application::saveChosen(const QUrl &file)
+{
+    auto *session = targetSession();
+    QString path = file.toLocalFile();
+    if (!session || path.isEmpty())
+        return QStringLiteral("failed");
+    if (readOnly(path))
+        return QStringLiteral("readonly");
+    // Legacy EndsWith(ext), without the dot.
+    const QString ext = extensionFor(session->document().format());
+    if (!path.endsWith(ext))
+        path += u'.' + ext;
+    if (readOnly(path))
+        return QStringLiteral("readonly");
+    return saveAs(path) ? QString() : QStringLiteral("failed");
+}
+
+bool Application::saveAll()
+{
+    bool targetNeedsDialog = false;
+    for (const auto id : m_workspace.documents()) {
+        auto *session = m_files->session(id);
+        if (!session || !session->isDirty())
+            continue;
+        const auto destination = m_files->destination(id);
+        if (!destination || destination->value.empty()) {
+            targetNeedsDialog = targetNeedsDialog || m_workspace.editingTarget() == id;
+            continue;
+        }
+        if (auto plan = m_files->prepareSave(id))
+            m_files->startSave(std::move(*plan));
+    }
+    m_editor->reloadFromSession();
+    refreshViews();
+    return targetNeedsDialog;
+}
+
+bool Application::turnOffTranslationMode()
+{
+    auto *session = targetSession();
+    if (!session || !application::turnOffTranslationMode(*session))
+        return false;
+    m_editor->reloadFromSession();
+    refreshViews();
+    return true;
+}
+
+void Application::setSaveWithVideoName(bool on)
+{
+    if (m_saveWithVideoName == on)
+        return;
+    m_saveWithVideoName = on;
+    if (!m_settingsFile.isEmpty())
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Subtitles/SaveWithVideoName"), on);
+    emit saveWithVideoNameChanged();
+}
+
+void Application::reportIssue()
+{
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://github.com/altqx/hikari/issues")));
 }
 
 QVariantMap Application::reviewOpen(const QString &path)

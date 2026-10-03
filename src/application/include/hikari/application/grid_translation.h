@@ -21,6 +21,13 @@ namespace hikari::application {
 // section.
 bool turnOnTranslationMode(core::Document &document);
 
+// SubsGrid::SetTlMode(false) ("Turning off translator mode", as Save
+// translation runs it, without the confirmation): "TLMode" and the Style
+// named in "TLMode Style" (with that entry) are removed; each translated
+// Line takes its translation as its text; Unconfirmed is cleared. Refused
+// unless translation mode is on.
+std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session);
+
 // GRID_PASTE_TRANSLATION ("Pasting translation"): each entry of the chosen
 // file becomes the translation of the next shown Line, from the first; once
 // they run out, new Lines are appended (zero times, the Default Style, the

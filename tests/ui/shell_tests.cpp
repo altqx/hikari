@@ -915,6 +915,69 @@ private slots:
         application->editor().discard();
     }
 
+    // P7: the legacy Save routes: the video name, the extension, Save
+    // translation, Save all and read-only files.
+    void saveVariantsFollowTheLegacySave()
+    {
+        const QString path = dir.filePath(QStringLiteral("variants.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,original\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,translated\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(application->saveRoute(), QString());
+        // With the video name, a differently named Document asks, starting at the video.
+        application->setSaveWithVideoName(true);
+        QCOMPARE(application->saveRoute(), QString()); // no video yet
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        QCOMPARE(application->saveRoute(), QStringLiteral("dialog"));
+        const auto values = application->saveDialogValues();
+        QCOMPARE(values.value(QStringLiteral("file")).toUrl(),
+                 QUrl::fromLocalFile(QFileInfo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv")).absolutePath() + QStringLiteral("/cfr")));
+        QCOMPARE(values.value(QStringLiteral("filter")).toString(), QStringLiteral("Subtitle file (*.ass)"));
+        application->setSaveWithVideoName(false);
+        // Save translation: translator mode off as one step, then the chosen
+        // file gets the extension.
+        const auto steps = session->historySize();
+        QVERIFY(application->turnOffTranslationMode());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Turning off translator mode"));
+        QVERIFY(!application->turnOffTranslationMode());
+        QCOMPARE(application->saveChosen(QUrl::fromLocalFile(dir.filePath(QStringLiteral("translation")))), QString());
+        QTRY_VERIFY(!session->isDirty());
+        QFile written(dir.filePath(QStringLiteral("translation.ass")));
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        const QByteArray bytes = written.readAll();
+        QVERIFY2(bytes.contains(",translated") && !bytes.contains("TLMode:") && !bytes.contains(",original"), bytes.constData());
+        // Save all writes the modified Document to its file.
+        QVERIFY(application->selectLines({{QStringLiteral("find"), QString()}, {QStringLiteral("with"), false},
+                                          {QStringLiteral("field"), 0}, {QStringLiteral("mode"), 0},
+                                          {QStringLiteral("action"), 5}},
+                                         false)
+                    .startsWith(QStringLiteral("1 ")));
+        QVERIFY(session->isDirty());
+        QVERIFY(!application->saveAll());
+        QTRY_VERIFY(!session->isDirty());
+        written.close();
+        QVERIFY(written.open(QIODevice::ReadOnly));
+        QVERIFY(written.readAll().contains("Comment: 0,0:00:01.00"));
+        // A read-only file is refused and asked again.
+        const QString locked = dir.filePath(QStringLiteral("locked.ass"));
+        {
+            QFile f(locked);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ReadUser);
+        QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
+        QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    }
+
     // F2: Edit > Select lines selects by the dialog's settings and reports the count.
     void selectLinesDialogSelectsAndActs()
     {

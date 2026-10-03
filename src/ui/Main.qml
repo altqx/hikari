@@ -388,11 +388,17 @@ ApplicationWindow {
                         text: qsTr("&Save")
                         shortcut: StandardKey.Save
                         enabled: root.editor.editable
+                        onTriggered: root.saveSubtitles()
+                    }
+                }
+                MenuItem {
+                    objectName: "saveAllMenuItem"
+                    action: Action {
+                        text: qsTr("Save &all")
+                        enabled: root.shell.hasEditingTarget
                         onTriggered: {
-                            if (root.app.targetUntitled())
-                                saveAsDialog.open()
-                            else
-                                root.editor.save()
+                            if (root.app.saveAll())
+                                root.openSaveDialog()
                         }
                     }
                 }
@@ -403,7 +409,27 @@ ApplicationWindow {
                         text: qsTr("Save &as…")
                         shortcut: "Ctrl+Shift+S" // legacy GLOBAL_SAVE_SUBS_AS
                         enabled: root.shell.hasEditingTarget
-                        onTriggered: saveAsDialog.open()
+                        onTriggered: root.openSaveDialog()
+                    }
+                }
+                MenuItem {
+                    objectName: "saveTranslationMenuItem"
+                    action: Action {
+                        text: qsTr("Save &translation")
+                        enabled: root.shell.hasEditingTarget && root.editor.translationMode
+                        onTriggered: {
+                            if (root.app.turnOffTranslationMode())
+                                root.openSaveDialog()
+                        }
+                    }
+                }
+                MenuItem {
+                    objectName: "saveWithVideoNameMenuItem"
+                    action: Action {
+                        text: qsTr("Save subtitles using the video name")
+                        checkable: true
+                        checked: root.app.saveWithVideoName
+                        onToggled: root.app.saveWithVideoName = checked
                     }
                 }
                 MenuItem {
@@ -685,7 +711,16 @@ ApplicationWindow {
                 onTriggered: scriptPropertiesDialog.openFor()
             }
         }
-        Menu { title: qsTr("&Help") }
+        Menu {
+            title: qsTr("&Help")
+            MenuItem {
+                objectName: "reportIssueMenuItem"
+                action: Action {
+                    text: qsTr("&Report an issue")
+                    onTriggered: root.app.reportIssue()
+                }
+            }
+        }
     }
 
     // One text role of the Line editor (Original or Translated). The field
@@ -1843,11 +1878,46 @@ ApplicationWindow {
         }
     }
 
+    // Legacy HikariSubFrame::Save: "Save subtitle file" for the Document's
+    // format, starting at its file (or the video's, with the video name).
+    function saveSubtitles() {
+        const route = root.app.saveRoute()
+        if (route === "dialog")
+            openSaveDialog()
+        else if (route === "readonly")
+            readOnlyWarning.open()
+        else
+            root.editor.save()
+    }
+    function openSaveDialog() {
+        const v = root.app.saveDialogValues()
+        saveAsDialog.nameFilters = [v.filter]
+        if (v.folder.toString() !== "")
+            saveAsDialog.currentFolder = v.folder
+        if (v.file.toString() !== "")
+            saveAsDialog.selectedFile = v.file
+        saveAsDialog.open()
+    }
     FileDialog {
         id: saveAsDialog
+        objectName: "saveAsDialog"
+        title: qsTr("Save subtitle file")
         fileMode: FileDialog.SaveFile
-        nameFilters: [qsTr("ASS subtitles (*.ass)"), qsTr("All files (*)")]
-        onAccepted: root.app.saveAsUrl(selectedFile)
+        nameFilters: [qsTr("Subtitle file ") + "(*.ass)"]
+        onAccepted: {
+            if (root.app.saveChosen(selectedFile) === "readonly")
+                readOnlyWarning.open()
+        }
+    }
+    Dialog {
+        id: readOnlyWarning
+        objectName: "readOnlyWarning"
+        title: qsTr("Warning")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        Label { text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.") }
+        onClosed: root.openSaveDialog()
     }
 
     // The accepted close review: every affected Document with Save or Discard,

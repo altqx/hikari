@@ -127,6 +127,33 @@ bool turnOnTranslationMode(core::Document &document)
     return document.setScriptInfo(u8"TLMode", u8"Yes");
 }
 
+std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session)
+{
+    if (session.document().scriptInfo(u8"TLMode") != std::optional<u8>(u8"Yes"))
+        return std::unexpected(CommandRefusal::Invalid);
+    std::set<core::LineId> touches;
+    for (const auto *line : session.document().lines())
+        if (!line->translation.empty() || line->unconfirmed)
+            touches.insert(line->id);
+    return session.run(Command{"Turning off translator mode", session.revision(), touches, [&](core::Document &d) {
+        d.removeScriptInfo(u8"TLMode");
+        if (const auto style = d.scriptInfo(u8"TLMode Style")) {
+            d.removeStyle(*style);
+            d.removeScriptInfo(u8"TLMode Style");
+        }
+        for (const auto id : touches)
+            if (!d.editLine(id, [](core::LineRecord &l) {
+                    if (!l.translation.empty()) {
+                        l.text = l.translation;
+                        l.translation.clear();
+                    }
+                    l.unconfirmed = false;
+                }))
+                return false;
+        return true;
+    }});
+}
+
 std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::u8string_view fileText,
                                                      std::u8string_view extension, const LineVisible &visible,
                                                      const core::PasteConversion &conversion)

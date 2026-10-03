@@ -45,6 +45,7 @@ class Application : public QObject {
 signals:
     void closeFinished(bool done, const QString &problem);
     void quitApprovedChanged();
+    void saveWithVideoNameChanged();
     void recentChanged();
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
@@ -120,6 +121,27 @@ public:
     Q_INVOKABLE QString localPath(const QUrl &url) const { return url.toLocalFile(); }
     // The editing target has no file yet (its first save needs Save As).
     Q_INVOKABLE bool targetUntitled() const;
+    // P7: legacy HikariSubFrame::Save. saveRoute is "dialog" when Save asks
+    // for a file (none yet, or "Save subtitles using the video name" with a
+    // name other than the video's), "readonly" when the file is read-only
+    // (a warning, then the dialog), or "" to save in place.
+    Q_INVOKABLE QString saveRoute() const;
+    // Where the "Save subtitle file" dialog starts: {folder, file, filter, extension}.
+    Q_INVOKABLE QVariantMap saveDialogValues() const;
+    // The dialog's file: the format's extension is added unless the path
+    // already ends with it. "readonly" asks again; "" when the save started.
+    Q_INVOKABLE QString saveChosen(const QUrl &file);
+    // GLOBAL_SAVE_ALL_SUBS: every modified Document that has a file. True
+    // when the editing target is modified without one (it needs the dialog).
+    Q_INVOKABLE bool saveAll();
+    // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
+    Q_INVOKABLE bool turnOffTranslationMode();
+    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING), kept in the INI file.
+    Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
+    bool saveWithVideoName() const { return m_saveWithVideoName; }
+    void setSaveWithVideoName(bool on);
+    // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
+    Q_INVOKABLE void reportIssue();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
     bool quitApproved() const { return m_quitApproved; }
@@ -287,6 +309,7 @@ private:
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
+    bool m_saveWithVideoName = false;
     QStringList m_selectRecent;
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
