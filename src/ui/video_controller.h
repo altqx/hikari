@@ -25,6 +25,7 @@ class VideoController : public QObject {
     Q_PROPERTY(int frameCount READ frameCount NOTIFY changed)
     Q_PROPERTY(bool offering READ offering NOTIFY changed)
     Q_PROPERTY(QString offer READ offer NOTIFY changed)
+    Q_PROPERTY(bool playing READ playing NOTIFY changed)
 public:
     VideoController(application::IndexedSourcePort &source, application::SubtitleRendererPort &renderer,
                     QObject *parent = nullptr);
@@ -50,6 +51,12 @@ public:
     Q_INVOKABLE void openVideo(const QString &path);
     Q_INVOKABLE void openVideoUrl(const QUrl &url) { openVideo(url.toLocalFile()); }
     Q_INVOKABLE bool stepFrames(int frames);
+    // V1: legacy Play / Pause (VIDEO_PLAY_PAUSE, Space) and Stop.
+    bool playing() const { return m_session.playing(); }
+    Q_INVOKABLE bool play();
+    Q_INVOKABLE bool pause();
+    Q_INVOKABLE bool togglePlay() { return playing() ? pause() : play(); }
+    Q_INVOKABLE bool stop();
 
 signals:
     void changed();

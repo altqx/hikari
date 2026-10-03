@@ -13,6 +13,7 @@
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
 #include "log_controller.h"
@@ -59,6 +60,8 @@ public:
         QString settingsFile;
         // P3: where recovery bundles live; empty: no autosave (tests).
         QString recoveryDir;
+        // V1: whether video playback may open an audio device.
+        bool playbackAudio = true;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -231,6 +234,7 @@ private:
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
+    std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;

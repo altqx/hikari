@@ -67,6 +67,12 @@ void VideoSession::open(const std::string &path)
 
 void VideoSession::close()
 {
+    if (m_player && m_playing)
+        m_player->stop();
+    m_playing = false;
+    ++m_playEpoch;
+    m_lastGeneralUs.reset();
+    m_overlayTime.reset();
     if (m_state == State::Opening)
         m_source.cancelOpen();
     m_source.cancelReads();
@@ -141,7 +147,10 @@ void VideoSession::showFrame(int index)
             }
             return;
         }
+        if (m_playing)
+            return; // playback shows the player's frames
         m_shown = std::make_shared<const IndexedFrame>(std::move(*frame));
+        m_overlayTime.reset();
         m_lastPresent.reset();
         render();
         present();
@@ -182,7 +191,7 @@ void VideoSession::render()
     m_overlay.reset();
     if (!m_hasSubtitles || !m_shown)
         return;
-    const auto start = frameStart(m_shown->index);
+    const auto start = m_overlayTime ? m_overlayTime : frameStart(m_shown->index);
     if (!start)
         return;
     if (auto overlay = m_renderer.render(*start, m_shown->width, m_shown->height))
@@ -205,6 +214,87 @@ void VideoSession::present()
         m_lastPresent = result;
         notify();
     });
+}
+
+bool VideoSession::play()
+{
+    if (!m_player || m_state != State::Ready || m_playing)
+        return false;
+    m_playing = true;
+    const std::uint64_t epoch = ++m_playEpoch;
+    const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
+                                        : 0;
+    const std::weak_ptr<bool> alive = m_alive;
+    auto start = [this, alive, epoch, fromUs] {
+        m_player->seek(fromUs, [this, alive, epoch](std::expected<SeekResult, PlayerError> sought) {
+            if (alive.expired() || epoch != m_playEpoch || !m_playing)
+                return;
+            if (!sought) {
+                m_playing = false;
+                return notify();
+            }
+            m_player->play();
+        });
+    };
+    if (m_playerPath == m_path) {
+        start();
+    } else {
+        m_player->open(m_path, [this, alive, epoch, start](std::expected<MediaDescription, PlayerError> opened) {
+            if (alive.expired() || epoch != m_playEpoch || !m_playing)
+                return;
+            if (!opened) {
+                m_playing = false;
+                return notify();
+            }
+            m_playerPath = m_path;
+            start();
+        });
+    }
+    notify();
+    return true;
+}
+
+void VideoSession::generalFrame(IndexedFrame frame, std::int64_t startUs)
+{
+    if (!m_playing)
+        return; // a late frame after a pause or stop
+    m_lastGeneralUs = startUs;
+    frame.generation = m_source.generation();
+    m_shown = std::make_shared<const IndexedFrame>(std::move(frame));
+    m_overlayTime = core::DocumentTime(startUs);
+    m_lastPresent.reset();
+    render();
+    present();
+    notify();
+}
+
+bool VideoSession::pause()
+{
+    if (!m_playing)
+        return false;
+    m_player->pause();
+    m_playing = false;
+    ++m_playEpoch;
+    // The indexed frame whose interval holds the last delivered frame's start.
+    int index = m_requested.value_or(0);
+    if (m_lastGeneralUs && m_timeline)
+        if (const auto frame = m_timeline->frameContaining(core::DocumentTime(*m_lastGeneralUs)))
+            index = static_cast<int>(frame->value());
+    showFrame(index);
+    return true;
+}
+
+bool VideoSession::stop()
+{
+    if (m_state != State::Ready)
+        return false;
+    if (m_playing) {
+        m_player->pause();
+        m_playing = false;
+        ++m_playEpoch;
+    }
+    showFrame(0);
+    return true;
 }
 
 } // namespace hikari::application

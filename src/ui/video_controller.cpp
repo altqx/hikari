@@ -108,4 +108,25 @@ bool VideoController::stepFrames(int frames)
     return m_session.step(frames);
 }
 
+bool VideoController::play()
+{
+    const bool done = m_session.play();
+    emit changed();
+    return done;
+}
+
+bool VideoController::pause()
+{
+    const bool done = m_session.pause();
+    emit changed();
+    return done;
+}
+
+bool VideoController::stop()
+{
+    const bool done = m_session.stop();
+    emit changed();
+    return done;
+}
+
 } // namespace hikari::ui

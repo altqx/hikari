@@ -50,6 +50,11 @@ hikari_add_spix_test(hikari_ui_video_workflow SOURCES video_workflow.cpp LIBRARI
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_video_workflow hikari_media_helper hikari_media_fixtures)
+# V1: playback with the I4 handoff (Spix workflow).
+hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)
 # G1: Grid range selection (Spix workflow).
 hikari_add_spix_test(hikari_ui_grid_workflow SOURCES grid_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp LIBRARIES hikari_composition)

@@ -11,6 +11,9 @@
 #include "hikari/core/ass_save.h"
 
 #include <QClipboard>
+#include <QImage>
+#include <QVideoFrame>
+#include <cstring>
 #include <QCollator>
 #include <QGuiApplication>
 #include <QLocale>
@@ -112,6 +115,24 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
+    // V1: playback through the general player; its frames are shown with the
+    // overlay, and a pause hands back to the exact indexed frame.
+    m_generalPlayer = std::make_unique<backends::QtGeneralPlayer>(options.playbackAudio);
+    m_video->session().setGeneralPlayer(m_generalPlayer.get());
+    connect(m_generalPlayer.get(), &backends::QtGeneralPlayer::frameDelivered, this, [this](const QVideoFrame &frame) {
+        const QImage image = frame.toImage().convertToFormat(QImage::Format_RGB32); // BGRA in memory
+        if (image.isNull())
+            return;
+        application::IndexedFrame out;
+        out.index = -1; // a player frame, not an indexed one
+        out.width = image.width();
+        out.height = image.height();
+        out.stride = static_cast<int>(image.bytesPerLine());
+        out.bgra.resize(static_cast<std::size_t>(image.sizeInBytes()));
+        std::memcpy(out.bgra.data(), image.constBits(), out.bgra.size());
+        m_video->session().generalFrame(std::move(out), frame.startTime());
+        emit m_video->changed();
+    }, Qt::QueuedConnection);
     m_automation = std::make_unique<AutomationShell>(
         AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir)}, *m_files,
         m_workspace, *m_editor, *m_video, *m_shell, *m_mediaSource);

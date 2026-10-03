@@ -537,6 +537,8 @@ ApplicationWindow {
                 // Frame stepping while the panel has focus (legacy video arrows).
                 Keys.onLeftPressed: root.video.stepFrames(-1)
                 Keys.onRightPressed: root.video.stepFrames(1)
+                // Legacy VIDEO_PLAY_PAUSE (Space in the video).
+                Keys.onSpacePressed: root.video.togglePlay()
 
                 // The legacy "Associated files" confirmation, inline: the
                 // Document stays editable whatever is chosen.
@@ -581,6 +583,20 @@ ApplicationWindow {
                 RowLayout {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    Button {
+                        objectName: "playPause"
+                        text: root.video.playing ? qsTr("Pause") : qsTr("Play")
+                        enabled: root.video.hasVideo
+                        focusPolicy: Qt.NoFocus
+                        onClicked: root.video.togglePlay()
+                    }
+                    Button {
+                        objectName: "stopVideo"
+                        text: qsTr("Stop")
+                        enabled: root.video.hasVideo
+                        focusPolicy: Qt.NoFocus
+                        onClicked: root.video.stop()
+                    }
                     Button {
                         objectName: "previousFrame"
                         text: qsTr("Previous frame")

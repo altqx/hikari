@@ -235,3 +235,91 @@ TEST_F(VideoTest, CloseDropsLateFrames)
 }
 
 } // namespace
+
+namespace {
+
+struct FakePlayer : GeneralPlayerPort {
+    std::vector<std::string> calls;
+    Opened pendingOpen;
+    Seeked pendingSeek;
+    std::int64_t soughtUs = -1;
+    void open(const std::string &path, Opened done) override
+    {
+        calls.push_back("open " + path);
+        pendingOpen = std::move(done);
+    }
+    void seek(std::int64_t us, Seeked done) override
+    {
+        calls.push_back("seek " + std::to_string(us));
+        soughtUs = us;
+        pendingSeek = std::move(done);
+    }
+    void play() override { calls.push_back("play"); }
+    void pause() override { calls.push_back("pause"); }
+    void stop() override { calls.push_back("stop"); }
+    bool selectAudioTrack(int) override { return true; }
+    bool selectSubtitleTrack(int) override { return true; }
+    PlaybackState playbackState() const override { return PlaybackState::Stopped; }
+    MediaStatus mediaStatus() const override { return MediaStatus::Loaded; }
+    double bufferProgress() const override { return 1; }
+    PlayerClock clock() const override { return {}; }
+    MediaDescription description() const override { return {}; }
+    std::uint64_t generation() const override { return 1; }
+    void opened() { pendingOpen(MediaDescription{}); }
+    void delivered() { pendingSeek(SeekResult{1, soughtUs, soughtUs, {}}); }
+};
+
+IndexedFrame playerFrame()
+{
+    IndexedFrame f;
+    f.index = -1;
+    f.width = 4;
+    f.height = 2;
+    f.stride = 16;
+    f.bgra.resize(32);
+    return f;
+}
+
+} // namespace
+
+TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.setSubtitles({std::byte{'x'}});
+    EXPECT_FALSE(video.play()); // no video yet
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    video.showFrame(2);
+    source.answer(); // frame 2 at 80 ms
+    ASSERT_TRUE(video.play());
+    EXPECT_TRUE(video.playing());
+    player.opened();
+    player.delivered(); // the seek to the shown frame's start
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "seek 80000", "play"}));
+    // Frames from the player are shown with the overlay at their own time.
+    video.generalFrame(playerFrame(), 205'000);
+    EXPECT_EQ(presenter.shown.back().frame->index, -1);
+    EXPECT_EQ(renderer.renderedAt.back(), 205'000);
+    // Pause: the indexed frame whose interval holds 205 ms is frame 5 (200-240 ms).
+    ASSERT_TRUE(video.pause());
+    EXPECT_FALSE(video.playing());
+    EXPECT_EQ(player.calls.back(), "pause");
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 5);
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 5);
+    EXPECT_EQ(renderer.renderedAt.back(), 200'000);
+    // A late player frame after the pause is ignored.
+    video.generalFrame(playerFrame(), 250'000);
+    EXPECT_EQ(video.shownFrame(), 5);
+    // Playing again does not reopen; Stop returns to the first frame.
+    ASSERT_TRUE(video.play());
+    player.delivered();
+    EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 200000");
+    ASSERT_TRUE(video.stop());
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 0);
+}
