@@ -21,6 +21,9 @@ ShellController::ShellController(application::Workspace &workspace, QObject *par
 void ShellController::refresh(const core::Document *target, const core::Document *reference)
 {
     m_lines.setDocument(target ? *target : core::Document{});
+    const auto format = target ? target->format() : core::SubtitleFormat::Ass;
+    m_assFormat = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
+    m_endColumn = format != core::SubtitleFormat::TMPlayer;
     m_referenceLines.setDocument(reference ? *reference : core::Document{});
     m_activeText.clear();
     m_activeStyle.clear();

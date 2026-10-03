@@ -569,6 +569,25 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    void hideColumnsMenuTogglesGridColumns()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto *grid = item("editingGrid");
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        QCOMPARE(table->columnCount(), 13);
+        QObject *hideCps = nullptr;
+        for (QObject *o : root->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String("hideColumn512"))
+                hideCps = o;
+        QVERIFY(hideCps);
+        QVERIFY(QMetaObject::invokeMethod(hideCps, "triggered"));
+        QCOMPARE(application->shell().hiddenColumns(), 512);
+        QTRY_COMPARE(table->columnCount(), 12);
+        QVERIFY(hideCps->property("checked").toBool());
+        application->shell().setHiddenColumns(0);
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

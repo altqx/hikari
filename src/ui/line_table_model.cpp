@@ -1,6 +1,13 @@
 #include "line_table_model.h"
 
+#include "hikari/core/ass_save.h"
+#include "hikari/core/line_formats.h"
+#include "hikari/core/srt.h"
+#include "line_measures.h"
+
 #include <QString>
+
+#include <cmath>
 
 namespace hikari::ui {
 
@@ -11,18 +18,111 @@ QString qs(const std::u8string &s)
     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
 }
 
+// SubsTime::raw for the Document's format.
+QString legacyTime(const core::TimeField &time, std::optional<std::int64_t> frame, core::SubtitleFormat format)
+{
+    const std::int64_t ms = time.value.microseconds() / 1000;
+    switch (format) {
+    case core::SubtitleFormat::Srt: return qs(core::legacy::srtTimeText(ms));
+    case core::SubtitleFormat::TMPlayer: return qs(core::legacy::tmpTimeText(ms));
+    case core::SubtitleFormat::MicroDvd: return QString::number(frame.value_or(0));
+    case core::SubtitleFormat::Mpl2:
+        return QString::number(static_cast<std::int64_t>(std::ceil(static_cast<float>(ms) * (10.0f / 1000.0f))));
+    default: return qs(core::legacy::assTimeText(ms));
+    }
+}
+
 } // namespace
 
+int LineTableModel::hideBit(Column column)
+{
+    switch (column) {
+    case LayerColumn: return 1;
+    case StartColumn: return 2;
+    case EndColumn: return 4;
+    case StyleColumn: return 8;
+    case ActorColumn: return 16;
+    case MarginLeftColumn: return 32;
+    case MarginRightColumn: return 64;
+    case MarginVerticalColumn: return 128;
+    case EffectColumn: return 256;
+    case CpsColumn: return 512;
+    case WrapsColumn: return 8192;
+    default: return 0;
+    }
+}
+
+bool LineTableModel::columnShown(int column) const
+{
+    if (column < 0 || column >= ColumnCount)
+        return false;
+    const bool ass = m_format == core::SubtitleFormat::Ass || m_format == core::SubtitleFormat::PlainText;
+    const bool tmp = m_format == core::SubtitleFormat::TMPlayer;
+    switch (column) {
+    case LayerColumn:
+    case StyleColumn:
+    case ActorColumn:
+    case MarginLeftColumn:
+    case MarginRightColumn:
+    case MarginVerticalColumn:
+    case EffectColumn:
+        if (!ass)
+            return false;
+        break;
+    case EndColumn:
+    case CpsColumn:
+        if (tmp)
+            return false;
+        break;
+    default:
+        break;
+    }
+    return !(m_hidden & hideBit(static_cast<Column>(column)));
+}
+
+void LineTableModel::setHiddenColumns(int mask)
+{
+    if (mask == m_hidden)
+        return;
+    m_hidden = mask;
+    emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1);
+}
+
 LineTableModel::LineTableModel(QObject *parent) : QAbstractTableModel(parent) {}
+
+const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
+{
+    if (row.measures)
+        return *row.measures;
+    Measures m;
+    const core::LineRecord &line = row.line;
+    if (!line.comment) {
+        const auto &text = m_translationMode && !line.translation.empty() ? line.translation : line.text;
+        const LineMeasures measured = measureLine(qs(text), m_format);
+        if (m_format != core::SubtitleFormat::TMPlayer) {
+            const int cps = legacyCps(measured.chars, line.start.value.microseconds() / 1000,
+                                      line.end.value.microseconds() / 1000);
+            m.cps = QString::number(cps);
+            m.cpsTooHigh = cps > 15;
+        }
+        m.wraps = measured.wraps;
+        m.badWraps = measured.badWraps;
+    }
+    row.measures = std::move(m);
+    return *row.measures;
+}
 
 void LineTableModel::setDocument(const core::Document &document)
 {
     beginResetModel();
     m_rows.clear();
     m_rowById.clear();
+    m_format = document.format();
+    // Legacy measures the translation when translation mode shows one.
+    m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
     for (const core::LineRecord *line : document.lines()) {
         m_rowById.emplace(line->id.value, static_cast<int>(m_rows.size()));
-        m_rows.push_back(Row{*line});
+        m_rows.push_back(Row{*line, std::nullopt});
     }
     // Keep only selection that still names existing Lines.
     std::erase_if(m_selection.selected, [&](core::LineId id) { return !m_rowById.contains(id.value); });
@@ -87,24 +187,25 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
 {
     if (!checkIndex(index, CheckIndexOption::IndexIsValid | CheckIndexOption::ParentIsInvalid))
         return {};
-    const core::LineRecord &line = m_rows[static_cast<std::size_t>(index.row())].line;
+    const Row &r = m_rows[static_cast<std::size_t>(index.row())];
+    const core::LineRecord &line = r.line;
     switch (role) {
     case Qt::DisplayRole:
         switch (index.column()) {
-        case NumberColumn:
-            return index.row() + 1;
-        case StartColumn:
-            return qs(line.start.lexeme);
-        case EndColumn:
-            return qs(line.end.lexeme);
-        case StyleColumn:
-            return qs(line.style);
-        case ActorColumn:
-            return qs(line.actor);
-        case TextColumn:
-            return qs(line.text);
-        default:
-            return {};
+        case NumberColumn: return index.row() + 1;
+        case LayerColumn: return QString::number(line.layer.value);
+        case StartColumn: return legacyTime(line.start, line.startFrame, m_format);
+        case EndColumn: return legacyTime(line.end, line.endFrame, m_format);
+        case StyleColumn: return qs(line.style);
+        case ActorColumn: return qs(line.actor);
+        case MarginLeftColumn: return QString::number(line.marginLeft.value);
+        case MarginRightColumn: return QString::number(line.marginRight.value);
+        case MarginVerticalColumn: return QString::number(line.marginVertical.value);
+        case EffectColumn: return qs(line.effect);
+        case CpsColumn: return measuresOf(r).cps;
+        case WrapsColumn: return measuresOf(r).wraps;
+        case TextColumn: return qs(line.text);
+        default: return {};
         }
     case LineIdRole:
         return QVariant::fromValue<qulonglong>(line.id.value);
@@ -120,6 +221,10 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue<qlonglong>(line.start.value.microseconds());
     case EndMicrosecondsRole:
         return QVariant::fromValue<qlonglong>(line.end.value.microseconds());
+    case CpsTooHighRole:
+        return measuresOf(r).cpsTooHigh;
+    case BadWrapsRole:
+        return measuresOf(r).badWraps;
     default:
         return {};
     }
@@ -127,11 +232,15 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
 
 QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (orientation != Qt::Horizontal || role != Qt::DisplayRole)
+    if (orientation != Qt::Horizontal || section < 0 || section >= ColumnCount)
         return {};
-    static const char *names[] = {"#", "Start", "End", "Style", "Actor", "Text"};
-    if (section < 0 || section >= ColumnCount)
+    if (role == ColumnShownRole)
+        return columnShown(section);
+    if (role != Qt::DisplayRole)
         return {};
+    // Legacy headings.
+    static const char *names[] = {"#",     "L.",   "Start", "End",    "Styles", "Actor", "Left",
+                                  "Right", "Vert.", "Effect", "CPS", "Wraps",  "Text"};
     return tr(names[section]);
 }
 
@@ -144,7 +253,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {SelectedRole, "selected"},
                   {AnchorRole, "anchor"},
                   {StartMicrosecondsRole, "startMicroseconds"},
-                  {EndMicrosecondsRole, "endMicroseconds"}});
+                  {EndMicrosecondsRole, "endMicroseconds"},
+                  {CpsTooHighRole, "cpsTooHigh"},
+                  {BadWrapsRole, "badWraps"}});
     return roles;
 }
 

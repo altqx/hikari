@@ -167,6 +167,21 @@ private slots:
         QCOMPARE(app::Application(third).recentEntries().size(), std::size_t(2));
     }
 
+    void hiddenGridColumnsPersist()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        {
+            app::Application a(options);
+            QCOMPARE(a.shell().hiddenColumns(), 0);
+            a.shell().toggleColumn(8192); // GRID_HIDE_WRAPS
+            a.shell().toggleColumn(1);    // GRID_HIDE_LAYER
+        }
+        app::Application again(options);
+        QCOMPARE(again.shell().hiddenColumns(), 8193);
+    }
+
     void aChangedFileIsOfferedOnceAndReloads()
     {
         app::Application a;

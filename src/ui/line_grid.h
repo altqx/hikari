@@ -104,13 +104,18 @@ private:
     void announceState(bool activeMoved);
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
+    // The model column shown at display position `column`.
+    int modelColumn(int column) const;
 
     QPointer<QAbstractItemModel> m_model;
     std::vector<QMetaObject::Connection> m_connections;
     GridGeometry m_geometry;
     qreal m_contentY = 0;
     int m_lastPainted = 0;
-    int m_currentColumn = 5; // Text
+    int m_currentColumn = -1; // the Text column once columns are known
+    // Model columns in display order: those the model reports as shown.
+    std::vector<int> m_columns;
+    void updateColumns();
     std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;
     int m_announcedSelected = 0;

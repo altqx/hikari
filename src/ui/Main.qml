@@ -874,6 +874,38 @@ ApplicationWindow {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
                     }
+                    // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
+                    Menu {
+                        id: hideColumnsMenu
+                        objectName: "hideColumnsMenu"
+                        title: qsTr("Hide columns")
+                        Instantiator {
+                            model: [
+                                { bit: 1, label: qsTr("Hide layer"), ass: true },
+                                { bit: 2, label: qsTr("Hide start time"), ass: false },
+                                { bit: 4, label: qsTr("Hide end time"), ass: false, end: true },
+                                { bit: 16, label: qsTr("Hide actor"), ass: true },
+                                { bit: 8, label: qsTr("Hide style"), ass: true },
+                                { bit: 32, label: qsTr("Hide left margin"), ass: true },
+                                { bit: 64, label: qsTr("Hide right margin"), ass: true },
+                                { bit: 128, label: qsTr("Hide vertical margin"), ass: true },
+                                { bit: 256, label: qsTr("Hide effect"), ass: true },
+                                { bit: 512, label: qsTr("Hide characters per second"), ass: false },
+                                { bit: 8192, label: qsTr("Hide line wraps"), ass: false }
+                            ]
+                            delegate: MenuItem {
+                                required property var modelData
+                                objectName: "hideColumn" + modelData.bit
+                                text: modelData.label
+                                checkable: true
+                                checked: (root.shell.hiddenColumns & modelData.bit) !== 0
+                                enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
+                                onTriggered: root.shell.toggleColumn(modelData.bit)
+                            }
+                            onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                            onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
+                        }
+                    }
                     MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: fpsWindow.show() }
                     MenuItem {
                         objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")

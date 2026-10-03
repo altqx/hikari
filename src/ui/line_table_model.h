@@ -22,7 +22,26 @@ namespace hikari::ui {
 class LineTableModel : public QAbstractTableModel {
     Q_OBJECT
 public:
-    enum Column { NumberColumn, StartColumn, EndColumn, StyleColumn, ActorColumn, TextColumn, ColumnCount };
+    // The legacy Grid columns (SubsGridWindow at 20d647c4), in legacy order.
+    enum Column {
+        NumberColumn,
+        LayerColumn,
+        StartColumn,
+        EndColumn,
+        StyleColumn,
+        ActorColumn,
+        MarginLeftColumn,
+        MarginRightColumn,
+        MarginVerticalColumn,
+        EffectColumn,
+        CpsColumn,
+        WrapsColumn,
+        TextColumn,
+        ColumnCount
+    };
+    // headerData role: whether the column is shown (the Document's format
+    // has it and GRID_HIDE_COLUMNS does not hide it).
+    static constexpr int ColumnShownRole = Qt::UserRole + 50;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -31,7 +50,11 @@ public:
         AnchorRole,
         StartMicrosecondsRole,
         EndMicrosecondsRole,
+        CpsTooHighRole, // over 15 characters per second (legacy shorttime)
+        BadWrapsRole,   // a wrap over 43 characters, or three wraps or more
     };
+    // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
+    static int hideBit(Column column);
 
     explicit LineTableModel(QObject *parent = nullptr);
 
@@ -39,6 +62,9 @@ public:
     // present is dropped.
     void setDocument(const core::Document &document);
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
+    void setHiddenColumns(int mask);
+    int hiddenColumns() const { return m_hidden; }
+    bool columnShown(int column) const;
 
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
@@ -52,15 +78,24 @@ public:
     QHash<int, QByteArray> roleNames() const override;
 
 private:
+    struct Measures {
+        QString cps, wraps; // empty for comments (and CPS in TMPlayer)
+        bool cpsTooHigh = false, badWraps = false;
+    };
     struct Row {
         core::LineRecord line;
+        mutable std::optional<Measures> measures; // measured when first shown, as legacy does
     };
+    const Measures &measuresOf(const Row &row) const;
     void emitStateChanged(const std::vector<core::LineId> &ids);
 
     std::vector<Row> m_rows;
     std::unordered_map<std::uint64_t, int> m_rowById;
     application::Selection m_selection;
     std::optional<core::LineId> m_anchor;
+    core::SubtitleFormat m_format = core::SubtitleFormat::Ass;
+    bool m_translationMode = false;
+    int m_hidden = 0;
 };
 
 // Filtered view over a LineTableModel. Hidden Lines stay selected: the

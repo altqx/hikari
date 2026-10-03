@@ -28,6 +28,11 @@ class ShellController : public QObject {
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
     // "3 Lines selected", with the hidden count when some are hidden (G1).
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
+    // GRID_HIDE_COLUMNS: legacy column bits hidden in both Grids (G7).
+    Q_PROPERTY(int hiddenColumns READ hiddenColumns WRITE setHiddenColumns NOTIFY hiddenColumnsChanged)
+    // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
+    Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
+    Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
     // A transient status message (automation's set_status_text).
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
 
@@ -56,6 +61,20 @@ public:
         }
     }
 
+    int hiddenColumns() const { return m_lines.hiddenColumns(); }
+    void setHiddenColumns(int mask)
+    {
+        if (mask == m_lines.hiddenColumns())
+            return;
+        m_lines.setHiddenColumns(mask);
+        m_referenceLines.setHiddenColumns(mask);
+        emit hiddenColumnsChanged();
+    }
+    // Legacy toggles one column's bit (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
+    Q_INVOKABLE void toggleColumn(int bit) { setHiddenColumns(hiddenColumns() ^ bit); }
+    bool assColumns() const { return m_assFormat; }
+    bool endColumn() const { return m_endColumn; }
+
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
     // Marks a Line active and selected in the editing target's Grid.
@@ -69,6 +88,7 @@ signals:
     void targetsChanged();
     void activeLineChanged();
     void statusTextChanged();
+    void hiddenColumnsChanged();
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;
@@ -80,6 +100,8 @@ private:
     QString m_activeStyle;
     QString m_selectionStatus;
     QString m_statusText;
+    bool m_assFormat = true;
+    bool m_endColumn = true;
 };
 
 } // namespace hikari::ui

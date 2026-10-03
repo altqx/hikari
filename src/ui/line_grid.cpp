@@ -69,13 +69,20 @@ void LineGrid::setModel(QAbstractItemModel *model)
     m_connections.clear();
     m_model = model;
     if (m_model) {
-        auto relayout = [this] { modelLayoutChanged(); };
+        auto relayout = [this] {
+            updateColumns();
+            modelLayoutChanged();
+        };
         auto repaint = [this] { update(); };
         m_connections = {
             connect(m_model, &QAbstractItemModel::modelReset, this, relayout),
             connect(m_model, &QAbstractItemModel::rowsInserted, this, relayout),
             connect(m_model, &QAbstractItemModel::rowsRemoved, this, relayout),
             connect(m_model, &QAbstractItemModel::layoutChanged, this, relayout),
+            connect(m_model, &QAbstractItemModel::headerDataChanged, this, [this] {
+                updateColumns();
+                update();
+            }),
             connect(m_model, &QAbstractItemModel::dataChanged, this,
                     [this, repaint](const QModelIndex &, const QModelIndex &, const QList<int> &roles) {
                         repaint();
@@ -85,6 +92,7 @@ void LineGrid::setModel(QAbstractItemModel *model)
         };
     }
     emit modelChanged();
+    updateColumns();
     modelLayoutChanged();
 }
 
@@ -177,19 +185,40 @@ int LineGrid::hiddenSelectedCount() const
     return 0;
 }
 
+void LineGrid::updateColumns()
+{
+    // The model column the caret was on stays current when it is still shown.
+    const int previous = m_currentColumn >= 0 ? modelColumn(m_currentColumn) : LineTableModel::TextColumn;
+    m_columns.clear();
+    if (m_model)
+        for (int c = 0; c < m_model->columnCount(); ++c) {
+            const QVariant shown = m_model->headerData(c, Qt::Horizontal, LineTableModel::ColumnShownRole);
+            if (!shown.isValid() || shown.toBool())
+                m_columns.push_back(c);
+        }
+    const auto it = std::find(m_columns.begin(), m_columns.end(), previous);
+    m_currentColumn = it != m_columns.end() ? static_cast<int>(it - m_columns.begin())
+                                            : static_cast<int>(m_columns.size()) - 1;
+}
+
+int LineGrid::modelColumn(int column) const
+{
+    return column >= 0 && column < static_cast<int>(m_columns.size()) ? m_columns[static_cast<std::size_t>(column)] : -1;
+}
+
 QString LineGrid::cellText(int row, int column) const
 {
-    return m_model ? m_model->index(row, column).data().toString() : QString();
+    return m_model ? m_model->index(row, modelColumn(column)).data().toString() : QString();
 }
 
 QString LineGrid::columnTitle(int column) const
 {
-    return m_model ? m_model->headerData(column, Qt::Horizontal).toString() : QString();
+    return m_model ? m_model->headerData(modelColumn(column), Qt::Horizontal).toString() : QString();
 }
 
 int LineGrid::columnCount() const
 {
-    return m_model ? std::min(m_model->columnCount(), 6) : 0;
+    return m_model ? static_cast<int>(m_columns.size()) : 0;
 }
 
 QRectF LineGrid::cellRect(int row, int column) const
@@ -386,15 +415,34 @@ int LineGrid::rowAt(qreal y) const
 
 std::vector<double> LineGrid::columnWidths(double total) const
 {
-    // #, Start, End, Style, Actor; Text takes the rest.
+    // Fixed widths per model column; Text takes the rest.
     const QFontMetricsF m(QFont{});
-    std::vector<double> w{m.horizontalAdvance(QStringLiteral("00000")) + 8,
-                          m.horizontalAdvance(QStringLiteral("0:00:00.00")) + 12,
-                          m.horizontalAdvance(QStringLiteral("0:00:00.00")) + 12, 90, 90};
+    auto fit = [&](const char *sample, double pad) { return m.horizontalAdvance(QLatin1String(sample)) + pad; };
+    std::vector<double> w;
     double used = 0;
-    for (double v : w)
-        used += v;
-    w.push_back(std::max(40.0, total - used));
+    for (const int c : m_columns) {
+        double width = 0;
+        switch (c) {
+        case LineTableModel::NumberColumn: width = fit("00000", 8); break;
+        case LineTableModel::LayerColumn: width = fit("000", 8); break;
+        case LineTableModel::StartColumn:
+        case LineTableModel::EndColumn: width = fit("00:00:00,000", 12); break;
+        case LineTableModel::StyleColumn:
+        case LineTableModel::ActorColumn: width = 90; break;
+        case LineTableModel::MarginLeftColumn:
+        case LineTableModel::MarginRightColumn:
+        case LineTableModel::MarginVerticalColumn: width = fit("Right", 8); break;
+        case LineTableModel::EffectColumn: width = 60; break;
+        case LineTableModel::CpsColumn: width = fit("CPS", 10); break;
+        case LineTableModel::WrapsColumn: width = fit("00/00", 10); break;
+        default: width = -1; break; // Text
+        }
+        w.push_back(width);
+        used += std::max(0.0, width);
+    }
+    for (double &v : w)
+        if (v < 0)
+            v = std::max(40.0, total - used);
     return w;
 }
 
@@ -404,7 +452,7 @@ void LineGrid::paint(QPainter *painter)
     painter->fillRect(bounds, QColor(0x20, 0x24, 0x2b));
     m_lastPainted = 0;
     const int rows = m_model ? m_model->rowCount() : 0;
-    const int columns = m_model ? std::min(m_model->columnCount(), 6) : 0;
+    const int columns = columnCount();
     const auto widths = columnWidths(bounds.width());
     const double rh = m_geometry.rowHeight;
 
@@ -414,7 +462,7 @@ void LineGrid::paint(QPainter *painter)
     double x = 0;
     for (int c = 0; c < columns; ++c) {
         painter->drawText(QRectF(x + 4, 0, widths[c] - 8, m_geometry.headerHeight), Qt::AlignVCenter,
-                          m_model->headerData(c, Qt::Horizontal).toString());
+                          columnTitle(c));
         x += widths[c];
     }
 
@@ -439,7 +487,12 @@ void LineGrid::paint(QPainter *painter)
         painter->setPen(comment ? QColor(0x80, 0x86, 0x90) : QColor(0xe6, 0xe8, 0xec));
         x = 0;
         for (int c = 0; c < columns; ++c) {
-            const QString text = m_model->index(row, c).data().toString();
+            const int mc = modelColumn(c);
+            // Legacy marks a fast CPS and bad wraps on their cells.
+            if ((mc == LineTableModel::CpsColumn && idx.data(LineTableModel::CpsTooHighRole).toBool()) ||
+                (mc == LineTableModel::WrapsColumn && idx.data(LineTableModel::BadWrapsRole).toBool()))
+                painter->fillRect(QRectF(x, top, widths[c], rh), QColor(0x7a, 0x2e, 0x2e));
+            const QString text = m_model->index(row, mc).data().toString();
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];

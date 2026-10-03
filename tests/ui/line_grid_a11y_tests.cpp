@@ -92,23 +92,37 @@ private slots:
         QCOMPARE(iface->role(), QAccessible::Table);
         QCOMPARE(iface->text(QAccessible::Name), QStringLiteral("Subtitle lines"));
         QCOMPARE(rig.table()->rowCount(), 50'000);
-        QCOMPARE(rig.table()->columnCount(), 6);
-        QCOMPARE(rig.table()->columnDescription(5), QStringLiteral("Text"));
-        QAccessibleInterface *cell = rig.table()->cellAt(49'999, 5);
+        QCOMPARE(rig.table()->columnCount(), 13); // every legacy ASS column
+        QCOMPARE(rig.table()->columnDescription(12), QStringLiteral("Text"));
+        QCOMPARE(rig.table()->columnDescription(10), QStringLiteral("CPS"));
+        QAccessibleInterface *cell = rig.table()->cellAt(49'999, 12);
         QVERIFY(cell);
         QCOMPARE(cell->role(), QAccessible::Cell);
         QCOMPARE(cell->text(QAccessible::Name), QStringLiteral("line 50000"));
     }
 
+    void hiddenColumnsLeaveTheTable()
+    {
+        Rig rig(10);
+        // GRID_HIDE_COLUMNS: Layer (1), CPS (512) and Wraps (8192).
+        rig.lines.setHiddenColumns(1 | 512 | 8192);
+        QCOMPARE(rig.table()->columnCount(), 10);
+        QCOMPARE(rig.table()->columnDescription(1), QStringLiteral("Start"));
+        QCOMPARE(rig.table()->columnDescription(9), QStringLiteral("Text"));
+        QCOMPARE(rig.table()->cellAt(0, 9)->text(QAccessible::Name), QStringLiteral("line 1"));
+        rig.lines.setHiddenColumns(0);
+        QCOMPARE(rig.table()->columnCount(), 13);
+    }
+
     void cellsKeepLineIdentityThroughFiltering()
     {
         Rig rig(100);
-        QAccessibleInterface *cell = rig.table()->cellAt(20, 5); // Line 21
-        QCOMPARE(cell, rig.table()->cellAt(20, 5));               // same object on repeat
+        QAccessibleInterface *cell = rig.table()->cellAt(20, 12); // Line 21
+        QCOMPARE(cell, rig.table()->cellAt(20, 12));               // same object on repeat
         rig.filter.setPredicate([](const core::LineRecord &l) { return !l.comment; });
         // Comments 2 and 12 are now hidden: Line 21 moved up two rows, same cell.
         QCOMPARE(cell->tableCellInterface()->rowIndex(), 18);
-        QCOMPARE(cell, rig.table()->cellAt(18, 5));
+        QCOMPARE(cell, rig.table()->cellAt(18, 12));
         QCOMPARE(cell->text(QAccessible::Name), QStringLiteral("line 21"));
     }
 
@@ -127,9 +141,9 @@ private slots:
     {
         Rig rig(1'000);
         auto *a11y = static_cast<LineGridAccessible *>(QAccessible::queryAccessibleInterface(rig.grid));
-        const QAccessible::Id first = QAccessible::uniqueId(rig.table()->cellAt(0, 5));
+        const QAccessible::Id first = QAccessible::uniqueId(rig.table()->cellAt(0, 12));
         for (int row = 1; row < 1'000; ++row)
-            QVERIFY(rig.table()->cellAt(row, 5));
+            QVERIFY(rig.table()->cellAt(row, 12));
         QCOMPARE(a11y->cellsCreated(), std::size_t{1'000});
         QCOMPARE(a11y->cachedCellCount(), LineGridAccessible::kCellCacheCapacity);
         QVERIFY(!QAccessible::accessibleInterface(first)); // evicted and released

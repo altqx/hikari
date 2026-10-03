@@ -107,6 +107,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
+    // GRID_HIDE_COLUMNS (G7).
+    if (!m_settingsFile.isEmpty())
+        m_shell->setHiddenColumns(QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns"), 0).toInt());
+    connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this, [this] {
+        if (!m_settingsFile.isEmpty())
+            QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Grid/HiddenColumns"), m_shell->hiddenColumns());
+    });
     if (!m_settingsFile.isEmpty()) {
         std::vector<std::string> stored;
         for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Subtitles")).toStringList())
