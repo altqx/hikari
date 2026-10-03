@@ -238,6 +238,9 @@ ApplicationWindow {
                 if (w.active) {
                     w.activeChanged.disconnect(refocus)
                     panel.forceActiveFocus(reason)
+                    // Again after the other activation handlers (the docking
+                    // layer focuses its own frame when a floating window activates).
+                    Qt.callLater(() => panel.forceActiveFocus(reason))
                 }
             }
             w.activeChanged.connect(refocus)
@@ -1547,7 +1550,7 @@ ApplicationWindow {
                             return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
                         }
                         RowLayout {
-                            Label { text: settings.byFrames ? qsTr("Frames") : qsTr("Time") }
+                            Label { text: shiftForm.settings.byFrames ? qsTr("Frames") : qsTr("Time") }
                             TextField {
                                 id: shiftTime
                                 objectName: "shiftTime"
