@@ -188,10 +188,7 @@ ApplicationWindow {
     function showPanel(dock) {
         dock.open()
         dock.raise()
-        const panel = panels[dockList.indexOf(dock)]
-        if (panel.Window.window)
-            panel.Window.window.requestActivate()
-        panel.forceActiveFocus(Qt.OtherFocusReason)
+        root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
     function panelOf(item) {
@@ -211,10 +208,25 @@ ApplicationWindow {
             current = shown.indexOf(panelOf(root.activeFocusItem))
         const next = current < 0 ? (step > 0 ? 0 : shown.length - 1)
                                  : (current + step + shown.length) % shown.length
-        const target = shown[next]
-        if (target.Window.window && !target.Window.active)
-            target.Window.window.requestActivate()
-        target.forceActiveFocus(Qt.TabFocusReason)
+        root.focusPanel(shown[next], Qt.TabFocusReason)
+    }
+
+    // Focus a panel, activating its window first when it is another one (a
+    // floating panel). Platforms that activate asynchronously (X11) give the
+    // window its own focus on activation, so the panel takes it again then.
+    function focusPanel(panel, reason) {
+        const w = panel.Window.window
+        if (w && !panel.Window.active) {
+            const refocus = function() {
+                if (w.active) {
+                    w.activeChanged.disconnect(refocus)
+                    panel.forceActiveFocus(reason)
+                }
+            }
+            w.activeChanged.connect(refocus)
+            w.requestActivate()
+        }
+        panel.forceActiveFocus(reason)
     }
 
     // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
