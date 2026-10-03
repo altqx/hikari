@@ -272,3 +272,85 @@ TEST_F(GridCommandsTest, ContinuousTimesFollowTheNeighbours)
 }
 
 } // namespace
+
+namespace {
+
+// Starts 5, 1, 3 and 1 (ties by End), with Styles, Actors, Effects and Layers.
+constexpr std::string_view kUnsorted = "[Events]\n"
+                                       "Dialogue: 2,0:00:05.00,0:00:06.00,B,y,0,0,0,e2,p\n"
+                                       "Dialogue: 1,0:00:01.00,0:00:04.00,A,z,0,0,0,e1,q\n"
+                                       "Dialogue: 2,0:00:03.00,0:00:04.00,C,x,0,0,0,e1,r\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,A,w,0,0,0,e3,s\n";
+
+std::u8string order(const EditSession &s)
+{
+    std::u8string out;
+    for (const auto *l : s.document().lines())
+        out += l->text;
+    return out;
+}
+
+} // namespace
+
+TEST(SortLines, EveryKeyFollowsTheLegacyComparators)
+{
+    const std::pair<SortKey, std::u8string> cases[] = {
+        {SortKey::Start, u8"sqrp"},  // 1 (ends 2, 4), 3, 5
+        {SortKey::End, u8"sqrp"},    // 2, 4 (starts 1, 3), 6
+        {SortKey::Style, u8"qspr"},  // A (starts 1, 1: stable), B, C
+        {SortKey::Actor, u8"srpq"},  // w, x, y, z
+        {SortKey::Layer, u8"sqrp"},  // 0, 1, 2 (starts 3, 5)
+    };
+    for (const auto &[key, expected] : cases) {
+        EditSession session{load(kUnsorted)};
+        ASSERT_TRUE(sortLines(session, key, false)) << static_cast<int>(key);
+        EXPECT_EQ(order(session), expected) << static_cast<int>(key);
+    }
+    // Legacy quirk: Lines with different Effects are ordered by Actor.
+    EditSession effect{load(kUnsorted)};
+    ASSERT_TRUE(sortLines(effect, SortKey::Effect, false));
+    EXPECT_EQ(order(effect), u8"srpq");
+}
+
+TEST(SortLines, OneStepThatKeepsIdentitiesAndUndoes)
+{
+    EditSession session{load(kUnsorted)};
+    const auto before = session.document().lines();
+    const core::LineId p = before[0]->id;
+    const auto steps = session.historySize();
+    ASSERT_TRUE(sortLines(session, SortKey::Start, false));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Sorting subtitles");
+    EXPECT_EQ(session.document().lines()[3]->id, p);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(order(session), u8"pqrs");
+    // An order that does not change adds no step.
+    ASSERT_TRUE(session.redo());
+    const auto again = session.historySize();
+    ASSERT_TRUE(sortLines(session, SortKey::Start, false));
+    EXPECT_EQ(session.historySize(), again);
+}
+
+TEST(SortLines, SelectedLinesSortAmongTheirOwnRowsAndTheSelectionKeepsItsRows)
+{
+    EditSession session{load(kUnsorted)};
+    const auto lines = session.document().lines();
+    // Rows 0 and 3 (p at 5 s, s at 1 s); row 0 active.
+    session.setSelection(Selection{lines[0]->id, {lines[0]->id, lines[3]->id}, lines[0]->id, {}});
+    ASSERT_TRUE(sortLines(session, SortKey::Start, true));
+    EXPECT_EQ(order(session), u8"sqrp");
+    const auto after = session.document().lines();
+    EXPECT_EQ(session.selection().active, after[0]->id); // row 0, now s
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{after[0]->id, after[3]->id}));
+    session.setSelection(Selection{});
+    EXPECT_FALSE(sortLines(session, SortKey::Start, true));
+}
+
+TEST(SortLines, TextKeysUseTheGivenCollation)
+{
+    EditSession session{load(kUnsorted)};
+    // Reverse collation: C, B, A (A's tie stays stable by Start).
+    ASSERT_TRUE(sortLines(session, SortKey::Style, false,
+                          [](std::u8string_view a, std::u8string_view b) { return b.compare(a); }));
+    EXPECT_EQ(order(session), u8"rpqs");
+}

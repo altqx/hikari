@@ -36,6 +36,15 @@ ApplicationWindow {
         return out
     }
 
+    readonly property var sortKeys: [
+        { key: "start", label: qsTr("The starting time") },
+        { key: "end", label: qsTr("End time") },
+        { key: "style", label: qsTr("Styles") },
+        { key: "actor", label: qsTr("Actor") },
+        { key: "effect", label: qsTr("Effect") },
+        { key: "layer", label: qsTr("Layer") }
+    ]
+
     // Close review (P1): rows of Documents with unsaved work, then `then`.
     function beginClose(then) {
         const rows = root.app.reviewClose(then)
@@ -242,6 +251,41 @@ ApplicationWindow {
                 text: qsTr("&Redo")
                 enabled: root.editor.hasLine
                 onTriggered: root.editor.redo()
+            }
+            // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
+            Menu {
+                objectName: "sortAllMenu"
+                title: qsTr("So&rt all lines")
+                enabled: root.editor.editable
+                id: sortAllMenu
+                Instantiator {
+                    model: root.sortKeys
+                    delegate: MenuItem {
+                        required property var modelData
+                        objectName: "sortAll_" + modelData.key
+                        text: modelData.label
+                        onTriggered: root.app.sortLines(modelData.key, false)
+                    }
+                    onObjectAdded: (index, object) => sortAllMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
+                }
+            }
+            Menu {
+                objectName: "sortSelectedMenu"
+                title: qsTr("So&rt selected lines")
+                enabled: root.editor.editable
+                id: sortSelectedMenu
+                Instantiator {
+                    model: root.sortKeys
+                    delegate: MenuItem {
+                        required property var modelData
+                        objectName: "sortSelected_" + modelData.key
+                        text: modelData.label
+                        onTriggered: root.app.sortLines(modelData.key, true)
+                    }
+                    onObjectAdded: (index, object) => sortSelectedMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
+                }
             }
             MenuItem {
                 objectName: "undoToLastSaveMenuItem"

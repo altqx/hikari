@@ -1,6 +1,7 @@
 #include "hikari/application/grid_commands.h"
 
 #include <algorithm>
+#include <set>
 #include <vector>
 
 namespace hikari::application {
@@ -407,6 +408,98 @@ std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool wi
     if (!ran)
         return std::unexpected(ran.error());
     session.setSelection(selection);
+    return {};
+}
+
+std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key, bool selectedOnly,
+                                              const TextCompare &compare)
+{
+    const auto lines = linesOf(session);
+    const auto &selection = session.selection();
+    std::vector<std::size_t> rows;
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (!selectedOnly || selection.selected.contains(lines[i]->id))
+            rows.push_back(i);
+    if (rows.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    auto text = [&](std::u8string_view a, std::u8string_view b) {
+        return compare ? compare(a, b) : a.compare(b);
+    };
+    // Legacy sortstart ... sortlayer (SubsGridBase.cpp).
+    auto less = [&](const core::LineRecord *i, const core::LineRecord *j) {
+        const auto si = msOf(i->start.value), sj = msOf(j->start.value);
+        const auto ei = msOf(i->end.value), ej = msOf(j->end.value);
+        switch (key) {
+        case SortKey::Start:
+            return si != sj ? si < sj : ei < ej;
+        case SortKey::End:
+            return ei != ej ? ei < ej : si < sj;
+        case SortKey::Style:
+            return i->style != j->style ? text(i->style, j->style) < 0 : si < sj;
+        case SortKey::Actor:
+            return i->actor != j->actor ? text(i->actor, j->actor) < 0 : si < sj;
+        case SortKey::Effect:
+            // Legacy sorteffect compares the Actors when the Effects differ
+            // (characterized; not a consistent order for every input).
+            return i->effect != j->effect ? text(i->actor, j->actor) < 0 : si < sj;
+        case SortKey::Layer:
+            return i->layer.value != j->layer.value ? i->layer.value < j->layer.value : si < sj;
+        }
+        return false;
+    };
+    std::vector<const core::LineRecord *> items;
+    for (const auto row : rows)
+        items.push_back(lines[row]);
+    std::stable_sort(items.begin(), items.end(), less);
+    std::vector<core::LineId> order;
+    for (const auto *l : lines)
+        order.push_back(l->id);
+    bool changed = false;
+    for (std::size_t k = 0; k < rows.size(); ++k) {
+        changed = changed || order[rows[k]] != items[k]->id;
+        order[rows[k]] = items[k]->id;
+    }
+    if (!changed)
+        return {};
+    // Legacy keeps the selection by row number.
+    std::set<std::size_t> selectedRows;
+    std::optional<std::size_t> activeRow, anchorRow;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        if (selection.selected.contains(lines[i]->id))
+            selectedRows.insert(i);
+        if (selection.active == lines[i]->id)
+            activeRow = i;
+        if (selection.anchor == lines[i]->id)
+            anchorRow = i;
+    }
+    std::set<core::LineId> touched(order.begin(), order.end());
+    const auto ran = session.run(Command{"Sorting subtitles", session.revision(), touched, [&](core::Document &d) {
+                                             // Row by row, the wanted Line goes before the
+                                             // one now there; Lines already in place stay.
+                                             std::vector<core::LineId> current;
+                                             for (const auto *l : d.lines())
+                                                 current.push_back(l->id);
+                                             for (std::size_t k = 0; k < order.size(); ++k) {
+                                                 if (current[k] == order[k])
+                                                     continue;
+                                                 if (!d.moveLine(order[k], current[k]))
+                                                     return false;
+                                                 current.erase(std::find(current.begin() + static_cast<std::ptrdiff_t>(k),
+                                                                         current.end(), order[k]));
+                                                 current.insert(current.begin() + static_cast<std::ptrdiff_t>(k), order[k]);
+                                             }
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    Selection next;
+    for (const auto row : selectedRows)
+        next.selected.insert(order[row]);
+    if (activeRow)
+        next.active = order[*activeRow];
+    if (anchorRow)
+        next.anchor = order[*anchorRow];
+    session.setSelection(std::move(next));
     return {};
 }
 

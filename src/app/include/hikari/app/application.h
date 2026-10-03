@@ -123,6 +123,9 @@ public:
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
+    // G6: Edit > Sort all lines / Sort selected lines by "start", "end",
+    // "style", "actor", "effect" or "layer"; text keys use the locale's collation.
+    Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
     // G2: the Grid clipboard (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE
     // Ctrl+V, GRID_COPY_COLUMNS, GRID_PASTE_COLUMNS) through the system clipboard.
     Q_INVOKABLE bool copyLines();

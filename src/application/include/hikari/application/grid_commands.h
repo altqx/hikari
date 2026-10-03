@@ -10,6 +10,7 @@
 #include <expected>
 #include <functional>
 #include <optional>
+#include <string_view>
 
 namespace hikari::application {
 
@@ -59,5 +60,16 @@ std::expected<void, CommandRefusal> swapLines(EditSession &session);
 // GRID_MAKE_CONTINOUS_PREVIOUS_LINE / _NEXT_LINE: each selected Line starts
 // where the Line before it ends, or ends where the Line after it starts.
 std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool withPrevious, const LineVisible &visible = {});
+
+// GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ("Sorting subtitles"):
+// a stable sort of every Line or of the selected Lines (hidden ones too)
+// among their own rows. Ties go by End for Start, by Start otherwise. The
+// selection stays on the same rows, as legacy keeps row numbers. An order
+// that does not change adds no step.
+enum class SortKey { Start, End, Style, Actor, Effect, Layer };
+// Locale collation for Style, Actor and Effect (<0, 0, >0); bytes when empty.
+using TextCompare = std::function<int(std::u8string_view, std::u8string_view)>;
+std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key, bool selectedOnly,
+                                              const TextCompare &compare = {});
 
 } // namespace hikari::application

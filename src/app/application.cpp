@@ -839,6 +839,33 @@ bool Application::pasteColumns(int columns)
     return done;
 }
 
+bool Application::sortLines(const QString &key, bool selectedOnly)
+{
+    using application::SortKey;
+    static const std::pair<const char *, SortKey> keys[] = {{"start", SortKey::Start}, {"end", SortKey::End},
+                                                            {"style", SortKey::Style}, {"actor", SortKey::Actor},
+                                                            {"effect", SortKey::Effect}, {"layer", SortKey::Layer}};
+    auto *session = targetSession();
+    const auto *found = std::find_if(std::begin(keys), std::end(keys),
+                                     [&](const auto &k) { return key == QLatin1String(k.first); });
+    if (!session || found == std::end(keys))
+        return false;
+    // Legacy compares with the UI locale's std::collate.
+    const QCollator collator;
+    const bool done = application::sortLines(*session, found->second, selectedOnly,
+                                             [&](std::u8string_view a, std::u8string_view b) {
+                                                 auto q = [](std::u8string_view s) {
+                                                     return QString::fromUtf8(reinterpret_cast<const char *>(s.data()),
+                                                                              static_cast<qsizetype>(s.size()));
+                                                 };
+                                                 return collator.compare(q(a), q(b));
+                                             })
+                          .has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::duplicateLines()
 {
     const auto target = m_workspace.editingTarget();

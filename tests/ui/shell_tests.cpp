@@ -439,6 +439,36 @@ private slots:
         QTRY_COMPARE(texts(), (QStringList{"a"}));
     }
 
+    void editMenuSortsAllOrSelectedLines()
+    {
+        const QString path = writeFile(dir, "g6.ass",
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,b,0,0,0,,late\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,c,0,0,0,,early\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,a,0,0,0,,middle\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto texts = [&] {
+            QStringList out;
+            for (const auto *l : session->document().lines())
+                out << QString::fromUtf8(reinterpret_cast<const char *>(l->text.data()), qsizetype(l->text.size()));
+            return out;
+        };
+        auto *root = engine->rootObjects().first();
+        auto *byStart = root->findChild<QObject *>(QStringLiteral("sortAll_start"));
+        QVERIFY(byStart);
+        QVERIFY(QMetaObject::invokeMethod(byStart, "triggered"));
+        QTRY_COMPARE(texts(), (QStringList{"early", "middle", "late"}));
+        // The Grid shows the new order.
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        QCOMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("early"));
+        // Sort the first two rows by Actor (c, a): they swap; "late" stays.
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("sortSelected_actor")), "triggered"));
+        QTRY_COMPARE(texts(), (QStringList{"middle", "early", "late"}));
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));
