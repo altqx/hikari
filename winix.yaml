@@ -52,6 +52,10 @@ tasks:
     # N7 in a real window (the windows platform and its RHI backend), not offscreen.
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:QSG_INFO = '1'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_presenter_tests.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; & $exe.FullName -o presenter-window.txt,txt; $code = $LASTEXITCODE; Get-Content presenter-window.txt; exit $code
     timeoutSeconds: 300
+  video-window:
+    # I1's Spix workflow in a real window (the windows platform and its RHI backend).
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_workflow.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; $ErrorActionPreference = 'Continue'; & $exe.FullName 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
+    timeoutSeconds: 300
   fonts:
     # Font identity (N4) through DirectWrite, verbose for the provider line.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection)[.]" -V
