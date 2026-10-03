@@ -84,6 +84,12 @@ public:
     // one it was staged for when that Document is still exactly as it was.
     std::expected<DocumentId, OpenError> activate(StagedOpen staged);
 
+    // A new Untitled Document (P1; legacy SubsGrid::LoadDefault): the default
+    // Script Info, the Default Style and one empty Line, with no destination,
+    // so its first save needs Save As. It starts saved: an untouched new
+    // Document never asks to be saved.
+    DocumentId createNew();
+
     EditSession *session(DocumentId document);
     std::optional<DestinationKey> destination(DocumentId document) const;
     std::uint64_t generation(DocumentId document) const; // 0 for an unknown Document

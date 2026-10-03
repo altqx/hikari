@@ -4,6 +4,10 @@
 #include "hikari/core/ass_save.h"
 
 #include <QCoreApplication>
+#include <QStringList>
+#include <QVariantMap>
+
+#include <algorithm>
 #include <QFileInfo>
 
 namespace hikari::app {
@@ -42,6 +46,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_writes = std::make_unique<application::WriteCoordinator>(*m_port, [this](const application::WriteResult &r) {
         m_files->onWriteResult(r);
         m_editor->writeFinished();
+        writeFinished(r);
     });
     m_files = std::make_unique<application::DocumentFiles>(*m_reader, *m_writes);
     m_shell = std::make_unique<ui::ShellController>(m_workspace);
@@ -168,6 +173,178 @@ void Application::refreshVideo()
             if (line->id == *active)
                 m_video->session().seekTo(line->start.value);
     }
+}
+
+namespace {
+
+QString fileTitle(const std::string &path)
+{
+    return QFileInfo(QString::fromStdString(path)).fileName();
+}
+
+} // namespace
+
+void Application::newDocument()
+{
+    const auto id = m_files->createNew();
+    m_workspace.add(id, tr("Untitled").toStdString());
+    m_workspace.setEditingTarget(id);
+    refreshViews();
+}
+
+QVariantList Application::reviewClose(const QString &then)
+{
+    m_closeThen = then;
+    m_closing.clear();
+    std::vector<application::DocumentId> scope;
+    if (then == QLatin1String("quit"))
+        scope = m_workspace.documents();
+    else if (const auto target = m_workspace.editingTarget())
+        scope = {*target};
+    QVariantList rows;
+    for (const auto id : scope) {
+        auto *session = m_files->session(id);
+        if (!session || !session->isDirty())
+            continue;
+        const std::string *title = m_workspace.title(id);
+        const auto destination = m_files->destination(id);
+        rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
+                            {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()},
+                            {QStringLiteral("untitled"), !destination || destination->value.empty()}};
+    }
+    return rows;
+}
+
+void Application::resolveClose(const QVariantList &choices)
+{
+    m_closing.clear();
+    for (const QVariant &v : choices) {
+        const QVariantMap row = v.toMap();
+        const application::DocumentId id{row.value(QStringLiteral("id")).toULongLong()};
+        auto *session = m_files->session(id);
+        if (!session)
+            continue;
+        Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
+        if (c.save) {
+            const QString path = row.value(QStringLiteral("path")).toString();
+            auto plan = m_files->prepareSave(
+                id, path.isEmpty() ? std::nullopt
+                                   : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
+            if (!plan) {
+                m_closing.clear();
+                emit closeFinished(false, plan.error() == application::SaveRefusal::NoDestination
+                                              ? tr("Choose where to save the Untitled Document.")
+                                              : tr("A Document could not be saved; nothing was closed."));
+                return;
+            }
+            c.revision = plan->revision;
+            auto permit = m_files->startSave(std::move(*plan));
+            if (!permit) {
+                m_closing.clear();
+                emit closeFinished(false, tr("A Document could not be saved; nothing was closed."));
+                return;
+            }
+            c.permit = *permit;
+        } else {
+            session->discardDraft(); // Discard covers the draft; no automatic commit
+            c.revision = session->revision();
+        }
+        m_closing.push_back(c);
+    }
+    refreshViews();
+    // Without saves to wait for, finish now; otherwise when the last one reports.
+    if (std::none_of(m_closing.begin(), m_closing.end(), [](const Closing &c) { return c.permit.has_value(); }))
+        finishClose();
+}
+
+void Application::writeFinished(const application::WriteResult &result)
+{
+    // Save As of an Untitled or renamed Document: the title follows the file.
+    if (result.outcome == application::WriteOutcome::Written)
+        if (const std::string *title = m_workspace.title(result.document);
+            title && QString::fromStdString(*title) != fileTitle(result.destination.value)) {
+            const auto destination = m_files->destination(result.document);
+            if (destination && destination->value == result.destination.value) {
+                m_workspace.setTitle(result.document, fileTitle(result.destination.value).toStdString());
+                refreshViews();
+            }
+        }
+    if (m_closing.empty())
+        return;
+    const bool waiting = std::any_of(m_closing.begin(), m_closing.end(), [this](const Closing &c) {
+        if (!c.permit)
+            return false;
+        const auto status = m_files->lastSave(c.document);
+        return !status || status->permit.value != c.permit->value || !status->outcome;
+    });
+    if (!waiting)
+        finishClose();
+}
+
+void Application::finishClose()
+{
+    QStringList kept;
+    for (const auto &c : m_closing) {
+        auto *session = m_files->session(c.document);
+        if (!session)
+            continue;
+        bool ok = true;
+        if (c.save) {
+            // L58-write-close: only an acknowledged complete write authorizes the close.
+            const auto status = m_files->lastSave(c.document);
+            ok = status && status->outcome == application::WriteOutcome::Written && !session->isDirty();
+        } else {
+            // Work done after the Discard choice is not covered by it.
+            ok = session->revision() == c.revision && !session->draftLine();
+        }
+        if (!ok) {
+            const std::string *title = m_workspace.title(c.document);
+            kept << (title ? QString::fromStdString(*title) : QString());
+        }
+    }
+    const QString then = m_closeThen;
+    m_closing.clear();
+    m_closeThen.clear();
+    if (!kept.isEmpty()) {
+        refreshViews();
+        emit closeFinished(false, tr("Not closed, because saving failed or there is newer work: %1").arg(kept.join(QStringLiteral(", "))));
+        return;
+    }
+    if (then == QLatin1String("quit")) {
+        m_quitApproved = true;
+        emit quitApprovedChanged();
+    } else if (then == QLatin1String("new")) {
+        closeEditingTarget();
+        newDocument();
+    } else {
+        closeEditingTarget();
+    }
+    emit closeFinished(true, QString());
+}
+
+void Application::cancelClose()
+{
+    // Saves already completed stay completed (accepted quit review).
+    m_closing.clear();
+    m_closeThen.clear();
+}
+
+bool Application::targetUntitled() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    return target && (!destination || destination->value.empty());
+}
+
+bool Application::saveAs(const QString &path)
+{
+    const auto target = m_workspace.editingTarget();
+    if (!target || path.isEmpty())
+        return false;
+    auto plan = m_files->prepareSave(*target, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
+    if (!plan)
+        return false;
+    return m_files->startSave(std::move(*plan)).has_value();
 }
 
 application::GridSelection Application::gridSelection() const

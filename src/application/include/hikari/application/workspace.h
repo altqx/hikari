@@ -35,6 +35,8 @@ public:
     std::optional<DocumentId> editingTarget() const { return m_target; }
     std::optional<DocumentId> reference() const { return m_reference; }
     const std::string *title(DocumentId id) const;
+    bool setTitle(DocumentId id, std::string title); // after Save As
+    std::vector<DocumentId> documents() const;    // in the order they were added
 
     // Explicit operations. The reference can't become the editing target this
     // way (use promoteReference); a Document can't be both.

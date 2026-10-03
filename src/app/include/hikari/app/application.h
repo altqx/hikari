@@ -15,6 +15,7 @@
 #include "video_controller.h"
 
 #include <QObject>
+#include <QUrl>
 #include <QVariantMap>
 
 #include <memory>
@@ -23,6 +24,10 @@ namespace hikari::app {
 
 class Application : public QObject {
     Q_OBJECT
+signals:
+    void closeFinished(bool done, const QString &problem);
+    void quitApprovedChanged();
+
 public:
     struct Options {
         // The media helper program; empty: next to the application, else the build tree's.
@@ -36,8 +41,31 @@ public:
     Q_INVOKABLE bool openFile(const QString &path);
     // Opens a file as the protected comparison reference.
     Q_INVOKABLE bool openReference(const QString &path);
-    // Closes the editing target (close review belongs to a later card).
+    // Closes the editing target at once, without review (callers review first).
     Q_INVOKABLE bool closeEditingTarget();
+
+    // Close review (P1; accepted L58-write-close). `then` is "close" (the
+    // editing target), "new" (replace it with an Untitled Document, legacy
+    // "Remove subtitles from the editor") or "quit" (every Document). Returns
+    // one row per Document with unsaved work: {id, title, untitled}. With
+    // none, call finishClose() to carry `then` out at once.
+    Q_INVOKABLE QVariantList reviewClose(const QString &then);
+    // One choice per row: {id, save: bool, path: Save As destination for an
+    // Untitled Document}. Save commits the draft and writes; Discard drops the
+    // draft. Nothing is closed until every save is acknowledged Written, and a
+    // Document edited after its choice stays open. closeFinished reports the result.
+    Q_INVOKABLE void resolveClose(const QVariantList &choices);
+    Q_INVOKABLE void finishClose();
+    Q_INVOKABLE void cancelClose();
+    // Saves the editing target to a new destination (GLOBAL_SAVE_SUBS_AS).
+    Q_INVOKABLE bool saveAs(const QString &path);
+    Q_INVOKABLE bool saveAsUrl(const QUrl &url) { return saveAs(url.toLocalFile()); }
+    Q_INVOKABLE QString localPath(const QUrl &url) const { return url.toLocalFile(); }
+    // The editing target has no file yet (its first save needs Save As).
+    Q_INVOKABLE bool targetUntitled() const;
+    // Quit was reviewed and may proceed (the window then closes for good).
+    Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
+    bool quitApproved() const { return m_quitApproved; }
 
     // Grid selection gestures (G1). The active Line moves through the Line
     // editor (a pending draft commits by policy); a refusal leaves everything as it was.
@@ -65,6 +93,8 @@ private:
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
     void refreshVideo();
+    void writeFinished(const application::WriteResult &result);
+    void newDocument();
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
 
@@ -83,6 +113,15 @@ private:
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
     bool m_changeActiveOnSelection = true;
+    struct Closing {
+        application::DocumentId document;
+        bool save = false;
+        std::uint64_t revision = 0; // the content the choice covers
+        std::optional<application::PermitId> permit;
+    };
+    QString m_closeThen;
+    std::vector<Closing> m_closing;
+    bool m_quitApproved = false;
 };
 
 } // namespace hikari::app

@@ -22,6 +22,36 @@ ApplicationWindow {
     required property VideoController video
     required property var app
 
+    // Close review (P1): rows of Documents with unsaved work, then `then`.
+    function beginClose(then) {
+        const rows = root.app.reviewClose(then)
+        if (rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(rows)
+    }
+    onClosing: close => {
+        if (root.app.quitApproved)
+            return
+        const rows = root.app.reviewClose("quit")
+        if (rows.length === 0)
+            return
+        close.accepted = false
+        closeReview.review(rows)
+    }
+    Connections {
+        target: root.app
+        function onCloseFinished(done, problem) {
+            if (done) {
+                closeReview.close()
+                if (root.app.quitApproved)
+                    root.close()
+            } else {
+                closeReview.problem = problem
+            }
+        }
+    }
+
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel]
 
@@ -67,6 +97,23 @@ ApplicationWindow {
                     }
                 }
                 MenuItem {
+                    objectName: "newMenuItem"
+                    // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
+                    action: Action {
+                        text: qsTr("Remove subtitles from the &editor")
+                        onTriggered: root.beginClose("new")
+                    }
+                }
+                MenuItem {
+                    objectName: "closeMenuItem"
+                    action: Action {
+                        text: qsTr("&Close")
+                        shortcut: "Ctrl+W" // legacy GLOBAL_CLOSE_PAGE
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: root.beginClose("close")
+                    }
+                }
+                MenuItem {
                     objectName: "openVideoMenuItem"
                     action: Action {
                         text: qsTr("Open &Video…")
@@ -79,7 +126,28 @@ ApplicationWindow {
                         text: qsTr("&Save")
                         shortcut: StandardKey.Save
                         enabled: root.editor.editable
-                        onTriggered: root.editor.save()
+                        onTriggered: {
+                            if (root.app.targetUntitled())
+                                saveAsDialog.open()
+                            else
+                                root.editor.save()
+                        }
+                    }
+                }
+                MenuItem {
+                    objectName: "saveAsMenuItem"
+                    action: Action {
+                        text: qsTr("Save &as…")
+                        shortcut: "Ctrl+Shift+S" // legacy GLOBAL_SAVE_SUBS_AS
+                        enabled: root.shell.hasEditingTarget
+                        onTriggered: saveAsDialog.open()
+                    }
+                }
+                MenuItem {
+                    objectName: "exitMenuItem"
+                    action: Action {
+                        text: qsTr("E&xit")
+                        onTriggered: root.close()
                     }
                 }
             }
@@ -598,6 +666,121 @@ ApplicationWindow {
                     onClicked: historyWindow.close()
                 }
             }
+        }
+    }
+
+    FileDialog {
+        id: saveAsDialog
+        fileMode: FileDialog.SaveFile
+        nameFilters: [qsTr("ASS subtitles (*.ass)"), qsTr("All files (*)")]
+        onAccepted: root.app.saveAsUrl(selectedFile)
+    }
+
+    // The accepted close review: every affected Document with Save or Discard,
+    // Save all, Discard all and Cancel. Nothing closes until every save is
+    // acknowledged as written.
+    Window {
+        id: closeReview
+        objectName: "closeReview"
+        title: qsTr("Unsaved changes")
+        width: 480
+        height: 320
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property var rows: []
+        property var choices: []
+        property string problem: ""
+        function review(list) {
+            choices = list.map(r => ({ id: r.id, save: true, path: "" }))
+            rows = list
+            problem = ""
+            show()
+        }
+        function proceed() {
+            for (let i = 0; i < rows.length; ++i)
+                if (choices[i].save && rows[i].untitled && choices[i].path.length === 0) {
+                    problem = qsTr("Choose where to save %1.").arg(rows[i].title)
+                    return
+                }
+            root.app.resolveClose(choices)
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                text: qsTr("These Documents have unsaved changes:")
+            }
+            Repeater {
+                model: closeReview.rows
+                delegate: RowLayout {
+                    id: rowItem
+                    required property int index
+                    required property var modelData
+                    Label {
+                        text: rowItem.modelData.title
+                        Layout.fillWidth: true
+                    }
+                    RadioButton {
+                        objectName: "closeSave" + rowItem.index
+                        text: qsTr("Save")
+                        checked: closeReview.choices[rowItem.index].save
+                        onToggled: closeReview.choices[rowItem.index].save = checked
+                    }
+                    RadioButton {
+                        objectName: "closeDiscard" + rowItem.index
+                        text: qsTr("Discard")
+                        checked: !closeReview.choices[rowItem.index].save
+                        onToggled: closeReview.choices[rowItem.index].save = !checked
+                    }
+                    Button {
+                        visible: rowItem.modelData.untitled
+                        text: qsTr("Save as…")
+                        onClicked: {
+                            closeSaveAs.row = rowItem.index
+                            closeSaveAs.open()
+                        }
+                    }
+                }
+            }
+            Label {
+                objectName: "closeReviewProblem"
+                text: closeReview.problem
+                visible: text.length > 0
+                color: "firebrick"
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "closeSaveAll"
+                    text: qsTr("Save all")
+                    onClicked: { closeReview.choices.forEach(c => c.save = true); closeReview.proceed() }
+                }
+                Button {
+                    objectName: "closeDiscardAll"
+                    text: qsTr("Discard all")
+                    onClicked: { closeReview.choices.forEach(c => c.save = false); closeReview.proceed() }
+                }
+                Button {
+                    objectName: "closeContinue"
+                    text: qsTr("Continue")
+                    onClicked: closeReview.proceed()
+                }
+                Button {
+                    objectName: "closeCancel"
+                    text: qsTr("Cancel")
+                    onClicked: { root.app.cancelClose(); closeReview.close() }
+                }
+            }
+        }
+        FileDialog {
+            id: closeSaveAs
+            property int row: -1
+            fileMode: FileDialog.SaveFile
+            nameFilters: [qsTr("ASS subtitles (*.ass)"), qsTr("All files (*)")]
+            onAccepted: closeReview.choices[row].path = root.app.localPath(selectedFile)
         }
     }
 

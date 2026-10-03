@@ -1,8 +1,11 @@
 #include "hikari/application/document_files.h"
 
+#include "hikari/core/ass_load.h"
 #include "hikari/core/subtitle_load.h"
 
 #include <algorithm>
+#include <cstring>
+#include <string_view>
 
 namespace hikari::application {
 
@@ -96,6 +99,41 @@ std::expected<DocumentId, OpenError> DocumentFiles::activate(StagedOpen staged)
     entry.knownBytes = std::move(bytes);
     m_documents.emplace(id, std::move(entry));
     m_writes.associate(id, staged.destination);
+    return id;
+}
+
+DocumentId DocumentFiles::createNew()
+{
+    // Legacy LoadDefault, with the Styles() and Dialogue() defaults.
+    static constexpr std::string_view kDefault =
+        "[Script Info]\r\n"
+        "Title: HikariSub Ass File\r\n"
+        "PlayResX: 1280\r\n"
+        "PlayResY: 720\r\n"
+        "ScaledBorderAndShadow: yes\r\n"
+        "WrapStyle: 0\r\n"
+        "ScriptType: v4.00+\r\n"
+        "Last Style Storage: Default\r\n"
+        "YCbCr Matrix: TV.601\r\n"
+        "\r\n"
+        "[V4+ Styles]\r\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+        "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+        "MarginL, MarginR, MarginV, Encoding\r\n"
+        "Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1\r\n"
+        "\r\n"
+        "[Events]\r\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+        "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,\r\n";
+    std::vector<std::byte> bytes(kDefault.size());
+    std::memcpy(bytes.data(), kDefault.data(), kDefault.size());
+    const DocumentId id{m_nextDocument++};
+    Entry entry;
+    entry.session = std::make_unique<EditSession>(core::loadAss(bytes).document);
+    entry.session->markSaved(entry.session->contentId());
+    if (const auto lines = entry.session->document().lines(); !lines.empty())
+        entry.session->setSelection(Selection{lines.front()->id, {lines.front()->id}, lines.front()->id, {}});
+    m_documents.emplace(id, std::move(entry)); // no destination, no knownBytes: Untitled
     return id;
 }
 

@@ -93,4 +93,22 @@ std::expected<void, TargetRefusal> Workspace::checkContentCommand(DocumentId tar
     return {};
 }
 
+bool Workspace::setTitle(DocumentId id, std::string title)
+{
+    for (auto &e : m_documents)
+        if (e.id == id) {
+            e.title = std::move(title);
+            return true;
+        }
+    return false;
+}
+
+std::vector<DocumentId> Workspace::documents() const
+{
+    std::vector<DocumentId> out;
+    for (const auto &e : m_documents)
+        out.push_back(e.id);
+    return out;
+}
+
 } // namespace hikari::application
