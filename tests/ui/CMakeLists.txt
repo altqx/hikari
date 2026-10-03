@@ -64,6 +64,12 @@ hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIB
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
+# S2: automation hotkeys with real Lua scripts.
+hikari_add_qttest(hikari_ui_automation_hotkeys_tests SOURCES automation_hotkeys_ui_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_hotkeys_tests PRIVATE
+    HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_hotkeys_tests hikari_lua_helper hikari_automation_stage)
 hikari_add_spix_test(hikari_ui_close_workflow SOURCES close_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_open_workflow SOURCES open_workflow.cpp LIBRARIES hikari_composition)
 # S1: automation in the shell (Spix workflow, real helpers and video).

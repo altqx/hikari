@@ -2,7 +2,8 @@
 # order. The library lets tests start the same composition without shipping a
 # test hook in the executable.
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
-    automation_shell.cpp include/hikari/app/automation_shell.h)
+    automation_shell.cpp include/hikari/app/automation_shell.h
+    automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core

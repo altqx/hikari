@@ -4,6 +4,7 @@
 // workflow tests build the same graph: native file ports, the write
 // coordinator, Documents, the workspace and the shell/editor presenters.
 
+#include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_commands.h"
@@ -196,6 +197,7 @@ public:
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
     AutomationShell &automation() { return *m_automation; }
+    AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
@@ -236,6 +238,7 @@ private:
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
     std::unique_ptr<AutomationShell> m_automation;
+    std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;

@@ -28,6 +28,7 @@ ApplicationWindow {
     required property LogController log
     required property TagButtonsController tagButtons
     required property GridFilterController gridFilter
+    required property var automationHotkeys
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -346,6 +347,13 @@ ApplicationWindow {
             id: automationMenu
             objectName: "automationMenu"
             title: qsTr("&Automation")
+            Action {
+                text: qsTr("Open shortcut mapping window")
+                onTriggered: {
+                    root.automationHotkeys.begin()
+                    automationHotkeysWindow.show()
+                }
+            }
             MenuItem {
                 objectName: "loadScriptMenuItem"
                 action: Action {
@@ -1932,6 +1940,177 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignRight
                 text: qsTr("Close")
                 onClicked: temporaryFilesWindow.close()
+            }
+        }
+    }
+
+    // S2: committed automation shortcuts, application-wide.
+    Repeater {
+        model: root.automationHotkeys.shortcuts
+        delegate: Item {
+            required property var modelData
+            Shortcut {
+                sequence: modelData.keys
+                context: Qt.ApplicationShortcut
+                onActivated: root.automationHotkeys.run(modelData.legacyName)
+            }
+        }
+    }
+
+    // Legacy AutomationHotkeysDialog ("List of automation shortcuts").
+    Window {
+        id: automationHotkeysWindow
+        objectName: "automationHotkeysWindow"
+        title: qsTr("List of automation shortcuts")
+        width: 800
+        height: 360
+        flags: Qt.Dialog
+        property int selected: -1
+        function selectedName() {
+            const rows = root.automationHotkeys.rows
+            return selected >= 0 && selected < rows.length ? rows[selected].legacyName : ""
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            ListView {
+                id: hotkeyList
+                objectName: "automationHotkeyList"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: root.automationHotkeys.rows
+                header: RowLayout {
+                    width: hotkeyList.width
+                    Label { text: qsTr("Path and script name"); Layout.preferredWidth: hotkeyList.width * 0.5 }
+                    Label { text: qsTr("Macro"); Layout.preferredWidth: hotkeyList.width * 0.35 }
+                    Label { text: qsTr("Hotkey"); Layout.fillWidth: true }
+                }
+                delegate: ItemDelegate {
+                    required property var modelData
+                    required property int index
+                    width: hotkeyList.width
+                    highlighted: automationHotkeysWindow.selected === index
+                    onClicked: automationHotkeysWindow.selected = index
+                    onDoubleClicked: {
+                        automationHotkeysWindow.selected = index
+                        hotkeyCapture.capture(modelData.legacyName)
+                    }
+                    Accessible.name: modelData.macro + " " + modelData.keys + " " + modelData.problem
+                    contentItem: RowLayout {
+                        Label { text: modelData.script.length ? modelData.script : modelData.legacyName; elide: Text.ElideMiddle; Layout.preferredWidth: hotkeyList.width * 0.5 }
+                        Label { text: modelData.macro; elide: Text.ElideRight; Layout.preferredWidth: hotkeyList.width * 0.35 }
+                        Label {
+                            text: modelData.problem.length ? modelData.problem : modelData.keys
+                            color: modelData.problem.length ? "#e0a030" : palette.windowText
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "automationHotkeysOk"
+                    text: qsTr("OK")
+                    onClicked: {
+                        root.automationHotkeys.commit()
+                        automationHotkeysWindow.close()
+                    }
+                }
+                Button {
+                    objectName: "mapHotkey"
+                    text: qsTr("Map hotkey")
+                    enabled: automationHotkeysWindow.selectedName().length > 0
+                    onClicked: hotkeyCapture.capture(automationHotkeysWindow.selectedName())
+                }
+                Button {
+                    objectName: "deleteHotkey"
+                    text: qsTr("Delete hotkey")
+                    enabled: automationHotkeysWindow.selectedName().length > 0
+                    onClicked: root.automationHotkeys.clearKeys(automationHotkeysWindow.selectedName())
+                }
+                Button {
+                    objectName: "importLegacyHotkeys"
+                    text: qsTr("Import legacy hotkeys…")
+                    onClicked: legacyHotkeysDialog.open()
+                }
+                Button {
+                    objectName: "automationHotkeysCancel"
+                    text: qsTr("Cancel")
+                    onClicked: {
+                        root.automationHotkeys.cancel()
+                        automationHotkeysWindow.close()
+                    }
+                }
+            }
+        }
+        FileDialog {
+            id: legacyHotkeysDialog
+            nameFilters: [qsTr("Hotkeys (Hotkeys.txt)"), qsTr("All files (*)")]
+            onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
+        }
+    }
+    // Legacy HkeysDialog ("Hotkey mapping").
+    Window {
+        id: hotkeyCapture
+        objectName: "hotkeyCapture"
+        title: qsTr("Hotkey mapping")
+        width: 420
+        height: 150
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property string name: ""
+        property string keys: ""
+        property string conflictWith: ""
+        function capture(n) {
+            name = n
+            keys = ""
+            conflictWith = ""
+            show()
+            captureArea.forceActiveFocus()
+        }
+        function accept(k) {
+            const other = root.automationHotkeys.conflict(name, k)
+            if (other.length > 0 && conflictWith !== other) {
+                keys = k
+                conflictWith = other // asks before replacing, as legacy does
+                return
+            }
+            root.automationHotkeys.setKeys(name, k)
+            close()
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: hotkeyCapture.conflictWith.length
+                      ? qsTr("\"%1\" is already assigned to %2. Press it again to replace it.").arg(hotkeyCapture.keys).arg(hotkeyCapture.conflictWith)
+                      : qsTr("Please enter a hotkey for \"%1\".").arg(hotkeyCapture.name)
+            }
+            Item {
+                id: captureArea
+                objectName: "hotkeyCaptureArea"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 30
+                focus: true
+                Keys.onPressed: event => {
+                    const k = root.automationHotkeys.keysOf(event.key, event.modifiers)
+                    if (k.length > 0) {
+                        if (hotkeyCapture.conflictWith.length && k === hotkeyCapture.keys)
+                            hotkeyCapture.conflictWith = "" // confirmed: replace
+                        hotkeyCapture.accept(k)
+                    }
+                    event.accepted = true
+                }
+            }
+            Button {
+                Layout.alignment: Qt.AlignRight
+                text: qsTr("Cancel")
+                onClicked: hotkeyCapture.close()
             }
         }
     }

@@ -24,5 +24,7 @@ hikari_add_gtest(hikari_application_grid_groups_tests SOURCES grid_groups_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recovery_store_tests SOURCES recovery_store_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_automation_hotkeys_tests SOURCES automation_hotkeys_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
