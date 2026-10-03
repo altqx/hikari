@@ -569,3 +569,69 @@ TEST_F(AudioFixture, SourcesWithoutAudioReportIt)
     EXPECT_EQ(t->firstAudioTrack, -1);
     EXPECT_EQ(openAudio(0).error(), SourceError::Unsupported); // track 0 is video
 }
+
+// A1: the audio box's audio in legacy's decode format (ProviderFFMS2: S16,
+// stereo or mono, FFMS_DELAY_FIRST_VIDEO_TRACK), from files with or without video.
+struct DisplayAudioFixture : AudioFixture {
+    std::expected<AudioInfo, SourceError> openDisplay(const char *kind, std::vector<std::int64_t> *progress = nullptr)
+    {
+        std::optional<std::expected<AudioInfo, SourceError>> result;
+        source.openDisplayAudio(fixture(kind),
+                                [&](std::int64_t done, std::int64_t) { if (progress) progress->push_back(done); },
+                                [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+};
+
+TEST_F(DisplayAudioFixture, AudioWithoutVideoOpensInTheLegacyFormat)
+{
+    std::vector<std::int64_t> progress;
+    const auto info = openDisplay("audioonly", &progress);
+    ASSERT_TRUE(info) << static_cast<int>(info.error());
+    EXPECT_EQ(info->format, SampleFormat::S16);
+    EXPECT_EQ(info->bitsPerSample, 16);
+    EXPECT_EQ(info->channels, 2);
+    EXPECT_EQ(info->channelLayout, 3); // front left and right
+    EXPECT_EQ(info->sampleRate, 48000);
+    EXPECT_EQ(info->sampleCount, 96256);
+    EXPECT_EQ(info->originMicroseconds, 0);
+    for (std::int64_t start : {0, 1771, 50000, 96200}) {
+        const auto b = audio(start, 56);
+        ASSERT_TRUE(b) << start;
+        ASSERT_EQ(b->count, 56);
+        for (std::int64_t i = 0; i < 56; ++i) {
+            const auto v = static_cast<std::int16_t>((((start + i) * 37) % 65536) - 32768);
+            ASSERT_EQ(left(*b, i), v) << start + i;
+            ASSERT_EQ(right(*b, i), static_cast<std::int16_t>(v / 2)) << start + i;
+        }
+    }
+    // there is no video to read
+    EXPECT_EQ(frame(0).error(), SourceError::NotOpen);
+}
+
+TEST_F(DisplayAudioFixture, SampleZeroIsTheFirstVideoFrame)
+{
+    // The audio starts 0.5 s after the video: legacy's delay mode pads 24000
+    // silent frames before it (the N2 source range would start at the audio).
+    const auto info = openDisplay("audiodelay");
+    ASSERT_TRUE(info);
+    EXPECT_EQ(info->sampleCount, 96256 + 24000);
+    const auto before = audio(23990, 10);
+    ASSERT_TRUE(before);
+    for (std::int64_t i = 0; i < 10; ++i)
+        EXPECT_EQ(left(*before, i), 0);
+    const auto b = audio(24000, 40);
+    ASSERT_TRUE(b);
+    for (std::int64_t i = 0; i < 40; ++i) {
+        EXPECT_EQ(left(*b, i), static_cast<std::int16_t>(i % 32768));
+        EXPECT_EQ(right(*b, i), static_cast<std::int16_t>(-(i % 32768)));
+    }
+}
+
+TEST_F(DisplayAudioFixture, VideoWithoutAudioHasNoDisplayAudio)
+{
+    EXPECT_EQ(openDisplay("cfr").error(), SourceError::Unsupported);
+    // a later open of the same source still works
+    EXPECT_TRUE(openDisplay("audio"));
+}

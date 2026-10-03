@@ -94,6 +94,7 @@ struct FakeSource : IndexedSourcePort {
     void frame(int index, FrameReady done) override { frames.emplace_back(index, std::move(done)); }
     void openAudio(int, AudioOpened) override {}
     void audio(std::int64_t, std::int64_t, AudioReady) override {}
+    std::uint64_t openDisplayAudio(const std::string &, Progress, AudioOpened) override { return 0; }
     void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
     void nextPcm(std::int64_t, PcmReady) override {}
     void cancelReads() override {}

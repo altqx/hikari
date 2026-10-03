@@ -21,6 +21,7 @@ ApplicationWindow {
     required property ShellController shell
     required property LineEditorController editor
     required property VideoController video
+    required property AudioController audio
     required property var app
     required property var automation
     required property AutomationManagerController automationManager
@@ -605,6 +606,71 @@ ApplicationWindow {
             Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
             Action { text: qsTr("Open keyframes"); onTriggered: keyframesDialog.open() }
         }
+        // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
+        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO).
+        Menu {
+            id: audioMenu
+            objectName: "audioMenu"
+            title: qsTr("A&udio")
+            MenuItem {
+                objectName: "openAudioMenuItem"
+                action: Action {
+                    text: qsTr("Open audio")
+                    onTriggered: {
+                        audioDialog.currentFolder = root.app.audioDialogFolder()
+                        audioDialog.open()
+                    }
+                }
+            }
+            Menu {
+                id: recentAudioMenu
+                objectName: "recentAudioMenu"
+                title: qsTr("Recently opened audio")
+                property var rows: []
+                onAboutToShow: rows = root.app.recentAudio()
+                Instantiator {
+                    model: recentAudioMenu.rows
+                    delegate: MenuItem {
+                        required property var modelData
+                        required property int index
+                        objectName: "recentAudio" + index
+                        text: modelData.label
+                        onTriggered: root.audio.openAudio(modelData.path)
+                    }
+                    onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
+                }
+                MenuItem {
+                    text: qsTr("None")
+                    enabled: false
+                    visible: recentAudioMenu.rows.length === 0
+                    height: visible ? implicitHeight : 0
+                }
+            }
+            MenuItem {
+                objectName: "audioFromVideoMenuItem"
+                action: Action {
+                    text: qsTr("Open audio from video")
+                    enabled: root.video.hasVideo
+                    onTriggered: root.app.openAudioFromVideo()
+                }
+            }
+            MenuItem {
+                objectName: "dummyAudioMenuItem"
+                action: Action {
+                    text: qsTr("Open blank 2h30m audio")
+                    onTriggered: root.audio.openDummy()
+                }
+            }
+            MenuItem {
+                objectName: "closeAudioMenuItem"
+                action: Action {
+                    text: qsTr("Close audio")
+                    enabled: root.audio.hasAudio
+                    onTriggered: root.audio.closeAudio()
+                }
+            }
+        }
         Menu {
             id: viewMenu
             objectName: "viewMenu"
@@ -1059,9 +1125,53 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "audioPanel"
                 title: qsTr("Audio")
+                // A1: the waveform with its time ruler and marks (legacy
+                // AudioDisplay), the search bar below it (legacy audioScroll).
+                AudioDisplay {
+                    id: audioDisplay
+                    objectName: "audioDisplay"
+                    controller: root.audio
+                    visible: root.audio.loaded
+                    focus: true
+                    clip: true
+                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: audioScroll.top }
+                    Accessible.role: Accessible.Graphic
+                    Accessible.name: qsTr("Audio display")
+                    Accessible.description: root.audio.status
+                }
+                ScrollBar {
+                    id: audioScroll
+                    objectName: "audioScroll"
+                    visible: root.audio.loaded
+                    orientation: Qt.Horizontal
+                    policy: ScrollBar.AlwaysOn
+                    focusPolicy: Qt.NoFocus
+                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    height: visible ? implicitHeight : 0
+                    size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
+                    Binding on position {
+                        when: !audioScroll.pressed
+                        value: root.audio.scrollRange > 0 ? root.audio.scrollPosition / root.audio.scrollRange : 0
+                    }
+                    onPositionChanged: {
+                        if (pressed) // legacy AudioBox::OnScrollbar
+                            root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
+                    }
+                    ToolTip.text: qsTr("Search bar")
+                }
                 Label {
+                    objectName: "audioStatus"
                     anchors.centerIn: parent
-                    text: qsTr("No audio open")
+                    visible: !root.audio.loaded
+                    text: root.audio.status
+                }
+                // Legacy EditBox::LoadAudio focuses a newly made display.
+                Connections {
+                    target: root.audio
+                    function onOpened(path, created) {
+                        if (created)
+                            root.showPanel(audioDock)
+                    }
                 }
             }
         }
@@ -2444,6 +2554,15 @@ ApplicationWindow {
         }
     }
 
+    // A1: legacy OpenAudioInTab's dialog and filter.
+    FileDialog {
+        id: audioDialog
+        objectName: "audioDialog"
+        title: qsTr("Choose audio file")
+        nameFilters: [qsTr("Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
+                      qsTr("All files") + " (*)"]
+        onAccepted: root.audio.openAudioUrl(selectedFile)
+    }
     FileDialog {
         id: keyframesDialog
         title: qsTr("Choose video file")

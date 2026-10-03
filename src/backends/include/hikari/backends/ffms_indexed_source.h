@@ -32,6 +32,7 @@ public:
     void frame(int index, FrameReady done) override;
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
+    std::uint64_t openDisplayAudio(const std::string &path, Progress progress, AudioOpened done) override;
     void cancelReads() override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
     void nextPcm(std::int64_t maxFrames, PcmReady done) override;

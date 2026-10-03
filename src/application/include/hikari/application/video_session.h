@@ -82,6 +82,8 @@ public:
 
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }
+    // A1: the opened video has an audio track (legacy GetSampleRate() > 0).
+    bool hasAudio() const { return m_state == State::Ready && m_hasAudio; }
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
     std::optional<int> requestedFrame() const { return m_requested; }
@@ -122,6 +124,7 @@ private:
     std::optional<std::int64_t> m_lastGeneralUs;
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
+    bool m_hasAudio = false;
     double m_fps = 0;
 };
 

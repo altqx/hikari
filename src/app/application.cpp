@@ -275,7 +275,139 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return std::nullopt;
         return start->microseconds() / 1000;
     });
+    // A1: the audio box reads through a media helper of its own.
+    m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
+    m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
+    if (!m_settingsFile.isEmpty()) {
+        std::vector<std::string> stored;
+        for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Audio")).toStringList())
+            stored.push_back(path.toStdString());
+        m_recentAudio.set(std::move(stored));
+    }
+    connect(m_audio.get(), &ui::AudioController::opened, this,
+            [this](const QString &path, bool) { rememberRecentAudio(path); });
+    connect(m_audio.get(), &ui::AudioController::failed, this, [this](const QString &problem) {
+        if (!problem.isEmpty())
+            m_log->log(problem);
+    });
+    connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        // Legacy RendererFFMS2::OpenFile (changeAudio): an indexed video brings
+        // its audio into the box, and a video without audio closes the box.
+        const auto &video = m_video->session();
+        if (video.state() == application::VideoSession::State::Opening)
+            m_audioFollowedVideo.clear();
+        if (video.state() == application::VideoSession::State::Ready &&
+            m_audioFollowedVideo != QString::fromStdString(video.path())) {
+            m_audioFollowedVideo = QString::fromStdString(video.path());
+            if (video.hasAudio())
+                m_audio->openAudio(m_audioFollowedVideo);
+            else if (m_audio->hasAudio())
+                m_audio->closeAudio();
+        }
+        refreshAudio();
+    });
     refreshViews();
+}
+
+// A1: legacy AudioDisplay::SetDialogue runs when the active Line changes or
+// the editor commits (EditBox::SetLine, Send); every redraw shades the other
+// Lines and marks the keyframes and the paused video's frame.
+void Application::refreshAudio()
+{
+    if (!m_audio)
+        return; // views refreshed while the application is still being composed
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    std::vector<application::AudioLineSpan> lines;
+    int active = -1;
+    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> key;
+    if (session) {
+        const auto shown = shownLines();
+        const auto activeId = session->selection().active;
+        for (const auto *line : session->document().lines()) {
+            if (activeId && line->id == *activeId)
+                active = static_cast<int>(lines.size());
+            lines.push_back({static_cast<int>(line->start.value.microseconds() / 1000),
+                             static_cast<int>(line->end.value.microseconds() / 1000), shown(line->id)});
+        }
+        if (activeId)
+            key = std::tuple(target->value, activeId->value, session->revision());
+    }
+    const bool select = key && key != m_audioLine;
+    m_audioLine = key;
+    m_audio->setLines(std::move(lines), active, select);
+    const auto &video = m_video->session();
+    std::vector<int> keyframes;
+    std::optional<int> paused;
+    if (video.state() == application::VideoSession::State::Ready) {
+        const auto timebase = video.legacyTimebase();
+        for (const int frame : video.keyframes())
+            keyframes.push_back(timebase.msAt(frame));
+        // legacy VideoBox::Tell while Paused
+        if (!video.playing() && video.shownFrame())
+            paused = timebase.msAt(*video.shownFrame());
+    }
+    m_audio->setKeyframes(std::move(keyframes));
+    m_audio->setVideoTime(paused);
+}
+
+void Application::rememberRecentAudio(const QString &path)
+{
+    m_recentAudio.add(path.toStdString());
+    if (!m_settingsFile.isEmpty()) {
+        QStringList list;
+        for (const auto &entry : m_recentAudio.entries())
+            list << QString::fromStdString(entry);
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Audio"), list);
+    }
+}
+
+// Legacy OpenAudioInTab with no path: the video's file (a provider of its own).
+void Application::openAudioFromVideo()
+{
+    const auto &video = m_video->session();
+    if (video.state() == application::VideoSession::State::Ready)
+        m_audio->openAudio(QString::fromStdString(video.path()));
+}
+
+QVariantList Application::recentAudio()
+{
+    const bool pruned = m_recentAudio.prune([](const std::string &path) {
+        return application::isMissingLocalFile(
+            path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
+            [](char drive) {
+#ifdef _WIN32
+                const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
+                return ::GetDriveTypeW(root) == DRIVE_REMOTE;
+#else
+                (void)drive;
+                return false;
+#endif
+            });
+    });
+    if (pruned && !m_settingsFile.isEmpty()) {
+        QStringList list;
+        for (const auto &entry : m_recentAudio.entries())
+            list << QString::fromStdString(entry);
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Audio"), list);
+    }
+    QVariantList rows;
+    int n = 0;
+    for (const auto &entry : m_recentAudio.entries()) {
+        const QString path = QString::fromStdString(entry);
+        rows << QVariantMap{{QStringLiteral("path"), path},
+                            {QStringLiteral("label"), QStringLiteral("%1 %2").arg(++n).arg(QFileInfo(path).fileName())}};
+    }
+    return rows;
+}
+
+QUrl Application::audioDialogFolder() const
+{
+    const auto &video = m_video->session();
+    if (video.path().empty())
+        return {};
+    return QUrl::fromLocalFile(QFileInfo(QString::fromStdString(video.path())).absolutePath());
 }
 
 Application::~Application()
@@ -403,6 +535,7 @@ void Application::refreshViews()
         m_editor->setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
     }
     refreshVideo();
+    refreshAudio();
 }
 
 void Application::refreshVideo()
@@ -2200,6 +2333,7 @@ QVariantMap Application::qmlProperties()
     return {{QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},
             {QStringLiteral("editor"), QVariant::fromValue(m_editor.get())},
             {QStringLiteral("video"), QVariant::fromValue(m_video.get())},
+            {QStringLiteral("audio"), QVariant::fromValue(m_audio.get())},
             {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},

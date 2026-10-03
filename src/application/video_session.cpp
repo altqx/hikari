@@ -57,6 +57,7 @@ void VideoSession::open(const std::string &path)
         }
         m_timeline = core::FrameTimeline::indexed(m_starts);
         m_keyframes = opened->keyframes;
+        m_hasAudio = opened->firstAudioTrack >= 0;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_state = State::Ready;
         notify();

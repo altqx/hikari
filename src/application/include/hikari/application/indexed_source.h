@@ -109,6 +109,14 @@ public:
     virtual void openAudio(int track, AudioOpened done) = 0;
     // A half-open range [start, start + count) of sample frames.
     virtual void audio(std::int64_t start, std::int64_t count, AudioReady done) = 0;
+    // The audio box's audio (A1; legacy ProviderFFMS2): indexes `path` (with
+    // or without video) and opens its first audio track in legacy's decode
+    // format: S16, front left and right when the track has more than one
+    // channel, otherwise mono, at the track's rate, shifted so sample 0 is the
+    // first video frame's time (the audio's own start without video;
+    // FFMS_DELAY_FIRST_VIDEO_TRACK); originMicroseconds is 0. Replaces any
+    // open source; audio() reads it. No audio track: Unsupported.
+    virtual std::uint64_t openDisplayAudio(const std::string &path, Progress progress, AudioOpened done) = 0;
     using PcmBegun = std::function<void(std::expected<PcmStream, SourceError>)>;
     using PcmReady = std::function<void(std::expected<PcmChunk, SourceError>)>;
     // Starts a resampled stream over the open audio track (replacing any other).

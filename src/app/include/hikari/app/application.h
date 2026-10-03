@@ -27,6 +27,7 @@
 #include "grid_filter_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
+#include "audio_controller.h"
 
 #include <QDate>
 #include <QDateTime>
@@ -39,6 +40,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <tuple>
 
 namespace hikari::app {
 
@@ -289,12 +291,20 @@ public:
     // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);
+    // A1: the Audio menu. GLOBAL_AUDIO_FROM_VIDEO opens the video's file
+    // again as audio; GLOBAL_RECENT_AUDIO lists {path, label} rows (missing
+    // local files pruned first, as legacy AppendRecent); the GLOBAL_OPEN_AUDIO
+    // dialog starts in the video's folder (legacy: else the latest video's).
+    Q_INVOKABLE void openAudioFromVideo();
+    Q_INVOKABLE QVariantList recentAudio();
+    Q_INVOKABLE QUrl audioDialogFolder() const;
     // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
     void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
+    ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     UpdateChecker &updates() { return *m_updates; }
@@ -409,6 +419,15 @@ private:
     // The last column choices (legacy default: none).
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
+    // A1: the audio box, with its own media helper; the Lines and marks it
+    // shows follow the editing target and the video.
+    std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
+    std::unique_ptr<ui::AudioController> m_audio;
+    application::RecentFiles m_recentAudio;
+    QString m_audioFollowedVideo; // the video whose audio the box last followed
+    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine; // target, active Line, revision
+    void refreshAudio();
+    void rememberRecentAudio(const QString &path);
 };
 
 } // namespace hikari::app

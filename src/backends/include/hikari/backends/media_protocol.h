@@ -32,14 +32,22 @@
 // Chapters request: u8 Chapters, str path (any file; independent of Open)
 //         terminal Ok: i32 count, then per chapter i64 startUs, i64 endUs,
 //                      str title
+// OpenDisplayAudio request: u8 OpenDisplayAudio, str path (A1: the audio box)
+//         progress: i64 done, i64 total (indexing)
+//         terminal Ok: as OpenAudio, for the file's first audio track in
+//                      legacy's decode format (S16; stereo or mono; delay
+//                      FFMS_DELAY_FIRST_VIDEO_TRACK; origin 0). Replaces the
+//                      open source; Audio and PcmBegin then read it.
+//         terminal Unsupported: no audio track
 
 #include <cstdint>
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 3; // 2: audio tracks; 3: keyframes in the Open reply
+inline constexpr std::uint32_t kProtocolVersion = 4; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
-enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7 };
+enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
+                                 OpenDisplayAudio = 8 };
 
 } // namespace hikari::backends::media

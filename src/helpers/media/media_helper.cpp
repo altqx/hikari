@@ -196,6 +196,71 @@ void openAudio(Source &source, Reader &in, Responder &r)
                                 .take());
 }
 
+// A1: the audio box's audio, as legacy ProviderFFMS2 opens it: the file's
+// first audio track indexed (decode errors ignored, FFMS_IEH_IGNORE), sample 0
+// at the first video frame (FFMS_DELAY_FIRST_VIDEO_TRACK), converted to S16
+// with front left and right for more than one channel, else front centre.
+void openDisplayAudio(Source &source, Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    if (!in.ok())
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed open"));
+    source = {};
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    FFMS_Indexer *indexer = FFMS_CreateIndexer(path.c_str(), &err);
+    if (!indexer)
+        return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
+    int track = -1;
+    for (int i = 0; i < FFMS_GetNumTracksI(indexer) && track < 0; ++i)
+        if (FFMS_GetTrackTypeI(indexer, i) == FFMS_TYPE_AUDIO)
+            track = i;
+    if (track < 0) {
+        FFMS_CancelIndexing(indexer);
+        return r.terminal(Outcome::Unsupported, bytesOf("no audio track"));
+    }
+    Progress progress{&r};
+    FFMS_SetProgressCallback(indexer, onProgress, &progress);
+    FFMS_TrackIndexSettings(indexer, track, 1, 0);
+    std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_IGNORE, &err));
+    if (!index)
+        return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
+        FFMS_CreateAudioSource(path.c_str(), track, index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
+    if (!audio)
+        return r.terminal(Outcome::Unsupported, bytesOf(errorText(err)));
+    const bool stereo = FFMS_GetAudioProperties(audio.get())->Channels > 1;
+    FFMS_ResampleOptions *options = FFMS_CreateResampleOptions(audio.get());
+    options->ChannelLayout = stereo ? (FFMS_CH_FRONT_LEFT | FFMS_CH_FRONT_RIGHT) : FFMS_CH_FRONT_CENTER;
+    options->SampleFormat = FFMS_FMT_S16;
+    const std::int64_t layout = options->ChannelLayout;
+    const int converted = FFMS_SetOutputFormatA(audio.get(), options, &err);
+    FFMS_DestroyResampleOptions(options);
+    if (converted != 0)
+        return r.terminal(Outcome::Unsupported, bytesOf(errorText(err)));
+    // The properties keep the source's channels; the output is what was asked.
+    const FFMS_AudioProperties *a = FFMS_GetAudioProperties(audio.get());
+    source.path = path;
+    source.index = std::move(index);
+    source.channels = stereo ? 2 : 1;
+    source.bytesPerFrame = 2 * source.channels;
+    source.samples = a->NumSamples;
+    source.sampleFormat = FFMS_FMT_S16;
+    source.sampleRate = a->SampleRate;
+    source.channelLayout = layout;
+    source.audio = std::move(audio);
+    r.terminal(Outcome::Ok, Writer()
+                                .i32(track)
+                                .i32(FFMS_FMT_S16)
+                                .i32(source.sampleRate)
+                                .i32(16)
+                                .i32(source.channels)
+                                .i64(layout)
+                                .i64(source.samples)
+                                .i64(0)
+                                .take());
+}
+
 void audio(Source &source, Reader &in, Responder &r)
 {
     const std::int64_t start = in.i64();
@@ -353,6 +418,9 @@ int main()
             return pcmBegin(source, session, in, r);
         case media::Command::PcmNext:
             return pcmNext(source, session, in, r);
+        case media::Command::OpenDisplayAudio:
+            session.reset();
+            return openDisplayAudio(source, in, r);
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });
