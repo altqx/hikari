@@ -736,7 +736,8 @@ const LineRecord *find(const Document &document, LineId id)
 
 } // namespace
 
-std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode)
+std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode,
+                            bool numberSrtCues)
 {
     const auto rows = rowsOf(document);
     std::u8string out;
@@ -745,7 +746,7 @@ std::u8string clipboardRows(const Document &document, const std::vector<LineId> 
         if (!line)
             continue;
         // Legacy numbers SRT cues by Document row.
-        if (document.format() == SubtitleFormat::Srt)
+        if (numberSrtCues && document.format() == SubtitleFormat::Srt)
             out += number(static_cast<std::int64_t>(rows.at(id.value)) + 1) + u8"\r\n";
         const bool translation = translationMode && !line->translation.empty();
         out += getRaw(fromLine(*line, document.format()), *line, translation);

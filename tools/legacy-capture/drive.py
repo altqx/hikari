@@ -293,16 +293,12 @@ def automation(spec, package, display, workdir, probe_source):
             x(["xdotool", "key", "Return"], display, 5)
             time.sleep(1)
         # Legacy builds the Automation menu, and with it the macros' menu
-        # accelerators ("Script <path>-<k>"), when that menu first opens:
-        # open it once from the keyboard (F10, then Right to Automation).
+        # accelerators ("Script <path>-<k>"), when that menu first opens. Its
+        # menu bar is drawn by the app (F10 does not reach it), so the label
+        # is clicked at its screen position (plan "automation_menu_at").
         x(["xdotool", "windowactivate", "--sync", wid], display)
-        x(["xdotool", "mousemove", "--window", wid, "400", "550", "click", "1"], display)
-        time.sleep(1)
-        x(["xdotool", "key", "F10"], display)
-        time.sleep(1)
-        for _ in range(spec.get("automation_menu_index", 6)):
-            x(["xdotool", "key", "Right"], display)
-            time.sleep(0.3)
+        mx, my = spec.get("automation_menu_at", [385, 59])
+        x(["xdotool", "mousemove", str(mx), str(my), "click", "1"], display)
         time.sleep(2)
         probe_rec["automation_menu"] = screenshot(display, workdir, "automation-menu")
         for _ in range(3):

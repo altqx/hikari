@@ -189,6 +189,16 @@ public:
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
     // opens, as legacy does); otherwise the legacy message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
+    // F2: GLOBAL_OPEN_SELECT_LINES. The dialog's settings {find, with,
+    // matchCase, regex, field, dialogues, comments, mode, action} and its
+    // recent searches (legacy SELECT_LINES_OPTIONS and _RECENT_SELECTIONS,
+    // kept in the INI file); selectLines runs on the editing target or on
+    // every open Document and returns the legacy message.
+    Q_INVOKABLE QVariantMap selectLinesSettings() const;
+    Q_INVOKABLE void saveSelectLinesSettings(const QVariantMap &settings);
+    Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
+    // The "+" button: the chosen styles as the legacy anchored pattern.
+    Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -244,6 +254,9 @@ private:
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;
+    // The Lines "some actions" walk: the shown ones of `session`, or every
+    // Line with "Ignore filtering in some actions" (legacy ignoreFiltered).
+    application::LineVisible actionLines(const application::EditSession &session) const;
     void rememberColumns(bool paste, int columns);
     void refreshViews();
     // The Video panel follows the editing target: its association when the
@@ -273,6 +286,8 @@ private:
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
+    int m_selectOptions = 0;
+    QStringList m_selectRecent;
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);

@@ -29,8 +29,10 @@ inline constexpr int TextWithoutTags = Translation;
 
 // GRID_COPY for these Lines, in this order. SRT numbers each cue by its
 // Document row. In translation mode a Line with a translation is copied with
-// the translation as its text.
-std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode);
+// the translation as its text. Without `numberSrtCues` the Lines are
+// written by Dialogue::GetRaw alone (select lines' Copy and Cut).
+std::u8string clipboardRows(const Document &document, const std::vector<LineId> &lines, bool translationMode,
+                            bool numberSrtCues = true);
 // GRID_COPY_COLUMNS: the chosen fields of each Line, one line each.
 std::u8string clipboardColumns(const Document &document, const std::vector<LineId> &lines, int columns,
                                bool translationMode);

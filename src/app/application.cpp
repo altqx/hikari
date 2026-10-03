@@ -8,6 +8,7 @@
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
+#include "hikari/application/select_lines.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
@@ -151,8 +152,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_settingsFile = options.settingsFile;
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(m_settingsFile);
-    // D1: the panel layout beside the settings (none without a settings file).
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(m_settingsFile);
+    if (!m_settingsFile.isEmpty()) {
+        const QSettings ini(m_settingsFile, QSettings::IniFormat);
+        m_selectOptions = ini.value(QStringLiteral("SelectLines/Options"), 0).toInt();
+        // Legacy keeps 20 when the dialog opens.
+        m_selectRecent = ini.value(QStringLiteral("SelectLines/Recent")).toStringList().mid(0, 20);
+    }
+    // D1: the panel layout beside the settings (none without a settings file).
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
@@ -1373,8 +1380,7 @@ QString Application::shiftTimes()
             context.videoFrameEndMs = timebase.endTimeFor(*frame);
         }
     }
-    const auto shown = shownLines();
-    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, shown);
+    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, actionLines(*session));
     m_editor->reloadFromSession();
     refreshViews();
     if (!result) {
@@ -1393,6 +1399,122 @@ QString Application::shiftTimes()
     if (result->endCorrectionSkipped)
         m_log->log(tr("Video was not loaded using FFMS2"));
     return {};
+}
+
+application::LineVisible Application::actionLines(const application::EditSession &session) const
+{
+    if (m_gridFilter->ignoreInActions())
+        return {};
+    std::set<core::LineId> hidden;
+    for (const auto *line : session.document().lines())
+        if (line->visibility == core::LineVisibility::Hidden)
+            hidden.insert(line->id);
+    return [hidden](core::LineId id) { return !hidden.contains(id); };
+}
+
+namespace {
+
+std::u8string utf8(const QString &s)
+{
+    const QByteArray b = s.toUtf8();
+    return std::u8string(reinterpret_cast<const char8_t *>(b.constData()), static_cast<std::size_t>(b.size()));
+}
+
+QString fromUtf8(const std::u8string &s)
+{
+    return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
+}
+
+application::SelectLinesSettings selectSettings(const QVariantMap &m, int options)
+{
+    using S = application::SelectLinesSettings;
+    S s = application::selectLinesFromOptions(options);
+    s.find = utf8(m.value(QStringLiteral("find")).toString());
+    s.with = m.value(QStringLiteral("with"), s.with).toBool();
+    s.matchCase = m.value(QStringLiteral("matchCase"), s.matchCase).toBool();
+    s.regex = m.value(QStringLiteral("regex"), s.regex).toBool();
+    s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field"), int(s.field)).toInt(), 0, 5));
+    s.dialogues = m.value(QStringLiteral("dialogues"), s.dialogues).toBool();
+    s.comments = m.value(QStringLiteral("comments"), s.comments).toBool();
+    s.mode = static_cast<S::Mode>(std::clamp(m.value(QStringLiteral("mode"), int(s.mode)).toInt(), 0, 2));
+    s.action = static_cast<S::Action>(std::clamp(m.value(QStringLiteral("action"), int(s.action)).toInt(), 0, 6));
+    return s;
+}
+
+} // namespace
+
+QVariantMap Application::selectLinesSettings() const
+{
+    const auto s = application::selectLinesFromOptions(m_selectOptions);
+    return {{QStringLiteral("with"), s.with},
+            {QStringLiteral("matchCase"), s.matchCase},
+            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("field"), int(s.field)},
+            {QStringLiteral("dialogues"), s.dialogues},
+            {QStringLiteral("comments"), s.comments},
+            {QStringLiteral("mode"), int(s.mode)},
+            {QStringLiteral("action"), int(s.action)},
+            {QStringLiteral("recent"), m_selectRecent}};
+}
+
+void Application::saveSelectLinesSettings(const QVariantMap &settings)
+{
+    m_selectOptions = application::selectLinesOptions(selectSettings(settings, m_selectOptions));
+    if (m_settingsFile.isEmpty())
+        return;
+    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    ini.setValue(QStringLiteral("SelectLines/Options"), m_selectOptions);
+    ini.setValue(QStringLiteral("SelectLines/Recent"), m_selectRecent);
+}
+
+QString Application::selectLines(const QVariantMap &map, bool allTabs)
+{
+    const auto settings = selectSettings(map, m_selectOptions);
+    // wxString::MakeLower, character by character.
+    const application::TextFold fold = [](std::u16string_view s) {
+        const QString lower = QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size())).toLower();
+        return std::u16string(reinterpret_cast<const char16_t *>(lower.utf16()), static_cast<std::size_t>(lower.size()));
+    };
+    std::vector<application::EditSession *> sessions;
+    if (allTabs) {
+        for (const auto id : m_workspace.documents())
+            if (auto *session = m_files->session(id))
+                sessions.push_back(session);
+    } else if (auto *session = targetSession()) {
+        sessions.push_back(session);
+    }
+    int count = 0;
+    for (auto *session : sessions) {
+        const auto result = application::selectLines(*session, settings, actionLines(*session), fold);
+        if (!result)
+            continue;
+        count += result->count;
+        // Each Document's Copy or Cut replaces the clipboard (legacy, per tab).
+        if (result->clipboard)
+            setClipboardText(*result->clipboard);
+    }
+    m_editor->reloadFromSession();
+    refreshViews();
+    // AddRecent, after the run.
+    std::vector<std::u8string> recent;
+    for (const QString &r : std::as_const(m_selectRecent))
+        recent.push_back(utf8(r));
+    m_selectRecent.clear();
+    for (const auto &r : application::addRecentSelection(std::move(recent), settings.find))
+        m_selectRecent << fromUtf8(r);
+    saveSelectLinesSettings(map);
+    using M = application::SelectLinesSettings::Mode;
+    return settings.mode == M::Select           ? tr("%1 lines selected.").arg(count)
+           : settings.mode == M::AddToSelection ? tr("%1 lines added to selection.").arg(count)
+                                                : tr("%1 lines deselected.").arg(count);
+}
+
+QString Application::selectStylesPattern(const QStringList &styles) const
+{
+    std::vector<std::u8string> names;
+    for (const QString &s : styles)
+        names.push_back(utf8(s));
+    return fromUtf8(application::stylesPattern(names));
 }
 
 QVariantMap Application::scriptProperties()

@@ -498,6 +498,14 @@ ApplicationWindow {
                     onTriggered: historyWindow.show()
                 }
             }
+            MenuItem {
+                objectName: "selectLinesMenuItem"
+                action: Action {
+                    text: qsTr("Select &lines")
+                    enabled: root.editor.hasLine
+                    onTriggered: selectLinesDialog.openDialog()
+                }
+            }
         }
         Menu {
             id: automationMenu
@@ -2379,6 +2387,11 @@ ApplicationWindow {
         standardButtons: Dialog.Yes | Dialog.No
         Label { text: qsTr("Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTr("start") : qsTr("end")) }
         onAccepted: shiftMessage.text = root.app.shiftTimes()
+    }
+    SelectLinesDialog {
+        id: selectLinesDialog
+        app: root.app
+        anchors.centerIn: parent
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

@@ -6,6 +6,8 @@
 #include "line_grid.h"
 
 #include <QAccessible>
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QTemporaryDir>
 #include <QQuickItem>
@@ -910,6 +912,60 @@ private slots:
         QCOMPARE(d.scriptInfo(u8"PlayResX"), std::optional<std::u8string>(u8"1280"));
         QCOMPARE(d.scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"360")); // height not edited
         QCOMPARE(d.scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+        application->editor().discard();
+    }
+
+    // F2: Edit > Select lines selects by the dialog's settings and reports the count.
+    void selectLinesDialogSelectsAndActs()
+    {
+        const QString path = dir.filePath(QStringLiteral("select.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,beta\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("selectLinesDialog"));
+        QVERIFY(dialog);
+        auto *menuItem = root->findChild<QObject *>(QStringLiteral("selectLinesMenuItem"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *find = dialogItem("selectLinesDialog", "selectFindText");
+        QVERIFY(find);
+        find->setProperty("editText", QStringLiteral("alpha"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
+        auto *result = root->findChild<QObject *>(QStringLiteral("selectResult"));
+        QTRY_VERIFY(result->property("visible").toBool());
+        QCOMPARE(result->property("text").toString(), QStringLiteral("2 lines selected."));
+        const auto lines = session->document().lines();
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QCOMPARE(dialog->property("recent").toStringList(), QStringList{QStringLiteral("alpha")});
+        // "Close" in the message closes the Select dialog too.
+        QVERIFY(QMetaObject::invokeMethod(result, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        // Delete by style, as one "Selecting lines" step; Without and Comments too.
+        const auto steps = session->historySize();
+        const QString message = application->selectLines(
+            {{QStringLiteral("find"), QStringLiteral("Sign")}, {QStringLiteral("field"), 1},
+             {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 6}},
+            false);
+        QCOMPARE(message, QStringLiteral("1 lines selected."));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Selecting lines"));
+        QCOMPARE(session->document().lines().size(), std::size_t(2));
+        QCOMPARE(application->selectLinesSettings().value(QStringLiteral("recent")).toStringList(),
+                 (QStringList{QStringLiteral("Sign"), QStringLiteral("alpha")}));
+        // Copy puts the raw Lines on the clipboard.
+        application->selectLines(
+            {{QStringLiteral("find"), QStringLiteral("BET")}, {QStringLiteral("field"), 0}, {QStringLiteral("action"), 1}}, false);
+        QCOMPARE(QGuiApplication::clipboard()->text(),
+                 QStringLiteral("Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\r\n"));
         application->editor().discard();
     }
 
