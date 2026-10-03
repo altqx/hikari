@@ -188,6 +188,11 @@ TEST(StyleCatalogFiles, LegacyFormatAndCatalogs)
     }
     StyleCatalogs again(dir);
     EXPECT_EQ(again.names(), (std::vector<std::u8string>{u8"Default", u8"Show"}));
+    // GetConversionStyle reads another catalog without making it current.
+    EXPECT_EQ(again.find(u8"Show", u8"Title")->name, u8"Title");
+    EXPECT_FALSE(again.find(u8"Show", u8"Missing"));
+    EXPECT_FALSE(again.find(u8"Nope", u8"Title"));
+    EXPECT_EQ(again.current(), u8"Default");
     ASSERT_TRUE(again.choose(u8"Show"));
     EXPECT_EQ(names(again.styles()), (std::vector<std::u8string>{u8"Title"}));
     ASSERT_TRUE(again.remove(u8"Show"));

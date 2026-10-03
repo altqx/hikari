@@ -2651,6 +2651,7 @@ ApplicationWindow {
             convFps.text = o.fps
             convFpsFromVideo.checked = o.fpsFromVideo
             convStyle.text = o.style
+            convCatalog.currentIndex = Math.max(0, root.styleManager.catalogs.indexOf(o.styleCatalog))
             convNewEnds.checked = o.newEndTimes
             convPerLetter.value = o.timePerCharacter
             convPrefix.text = o.prefix
@@ -2669,6 +2670,13 @@ ApplicationWindow {
                 RowLayout {
                     TextField { id: convFps; objectName: "convFps"; Accessible.name: qsTr("FPS"); onEditingFinished: conversionDialog.set("fps", text) }
                     CheckBox { id: convFpsFromVideo; text: qsTr("FPS from video"); onToggled: conversionDialog.set("fpsFromVideo", checked) }
+                }
+                Label { text: qsTr("Catalog for style") }
+                ComboBox {
+                    id: convCatalog
+                    model: root.styleManager.catalogs
+                    Accessible.name: qsTr("Catalog for style")
+                    onActivated: (i) => conversionDialog.set("styleCatalog", model[i])
                 }
                 Label { text: qsTr("Style") }
                 TextField { id: convStyle; Accessible.name: qsTr("Style"); onEditingFinished: conversionDialog.set("style", text) }

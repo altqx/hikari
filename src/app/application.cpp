@@ -1779,6 +1779,7 @@ QVariant conversionOption(const QVariantMap &options, const QString &key)
     static const QVariantMap defaults{{QStringLiteral("fps"), QStringLiteral("23.976")},
                                       {QStringLiteral("fpsFromVideo"), false},
                                       {QStringLiteral("style"), QStringLiteral("Default")},
+                                      {QStringLiteral("styleCatalog"), QStringLiteral("Default")},
                                       {QStringLiteral("newEndTimes"), false},
                                       {QStringLiteral("timePerCharacter"), 110},
                                       {QStringLiteral("prefix"), QString()},
@@ -1807,7 +1808,7 @@ std::optional<core::SubtitleFormat> formatNamed(const QString &name)
 QVariantMap Application::conversionOptions() const
 {
     QVariantMap out;
-    for (const char *key : {"fps", "fpsFromVideo", "style", "newEndTimes", "timePerCharacter", "prefix",
+    for (const char *key : {"fps", "fpsFromVideo", "style", "styleCatalog", "newEndTimes", "timePerCharacter", "prefix",
                             "resolutionWidth", "resolutionHeight"})
         out.insert(QLatin1String(key), conversionOption(m_conversionOptions, QLatin1String(key)));
     return out;
@@ -1883,10 +1884,13 @@ QVariantMap Application::previewConversion(const QString &targetName)
     options.timePerCharacter = o.value(QStringLiteral("timePerCharacter")).toInt();
     options.resolutionWidth = utf8(o.value(QStringLiteral("resolutionWidth")).toString());
     options.resolutionHeight = utf8(o.value(QStringLiteral("resolutionHeight")).toString());
-    // The conversion Style: legacy Styles() named CONVERT_STYLE (catalogs are Y2).
-    options.style = core::legacy::decodeStyle(
-        u8"Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1", false);
-    options.style.name = utf8(o.value(QStringLiteral("style")).toString());
+    // config::GetConversionStyle: CONVERT_STYLE from the CONVERT_STYLE_CATALOG
+    // catalog, else legacy Styles() with that name.
+    const std::u8string styleName = utf8(o.value(QStringLiteral("style")).toString());
+    if (const auto found = m_styleManager->catalogStore().find(utf8(o.value(QStringLiteral("styleCatalog")).toString()), styleName))
+        options.style = *found;
+    else
+        options.style = application::defaultStyle(styleName);
     const QCollator collator;
     auto result = core::convertDocument(session->document(), *target, options, [&](std::u8string_view a, std::u8string_view b) {
         return collator.compare(QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),

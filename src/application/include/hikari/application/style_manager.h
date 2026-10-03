@@ -114,6 +114,11 @@ public:
     // Deletes a catalog other than Default; the one before it becomes current.
     bool remove(const std::u8string &name);
     void markChanged() { m_changed = true; }
+    // config::GetConversionStyle: the Style `style` of catalog `catalog` (the
+    // current list for the current catalog, else read from its file), or
+    // nullopt when either is missing. Legacy loaded that catalog as the
+    // current one on the way; the current catalog is left alone here.
+    std::optional<core::StyleValues> find(const std::u8string &catalog, const std::u8string &style) const;
     bool save();
 
 private:

@@ -44,6 +44,7 @@ public:
     bool available() const;
     int previewKey() const { return m_previewKey; }
     QImage preview() const { return m_preview; }
+    const application::StyleCatalogs &catalogStore() const { return m_catalogs; }
 
     // The window opened or the editing target changed (LoadAssStyles): the
     // catalog named by "Last Style Storage" becomes current when it exists.

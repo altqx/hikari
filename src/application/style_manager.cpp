@@ -375,6 +375,24 @@ bool StyleCatalogs::remove(const std::u8string &name)
     return true;
 }
 
+std::optional<core::StyleValues> StyleCatalogs::find(const std::u8string &catalog, const std::u8string &style) const
+{
+    StyleList fromFile;
+    const StyleList *list = &m_styles;
+    if (catalog != m_current) {
+        if (std::find(m_names.begin(), m_names.end(), catalog) == m_names.end())
+            return std::nullopt;
+        std::ifstream in(m_dir / (catalog + u8".sty"), std::ios::binary);
+        std::stringstream text;
+        text << in.rdbuf();
+        fromFile = readCatalog(text.str());
+        list = &fromFile;
+    }
+    if (const auto row = firstNamed(*list, style))
+        return (*list)[*row];
+    return std::nullopt;
+}
+
 bool StyleCatalogs::save()
 {
     if (!m_changed)
