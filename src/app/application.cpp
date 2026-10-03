@@ -1,10 +1,13 @@
 #include "hikari/app/application.h"
 
+#include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 
+#include <QClipboard>
 #include <QCollator>
+#include <QGuiApplication>
 #include <QCoreApplication>
 #include <QSettings>
 #include <QStringList>
@@ -106,6 +109,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Subtitles")).toStringList())
             stored.push_back(path.toStdString());
         m_recent.set(std::move(stored));
+        const QSettings settings(m_settingsFile, QSettings::IniFormat);
+        m_copyColumns = settings.value(QStringLiteral("Grid/CopyColumns"), 0).toInt();
+        m_pasteColumns = settings.value(QStringLiteral("Grid/PasteColumns"), 0).toInt();
     }
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
@@ -704,6 +710,133 @@ bool Application::insertLine(bool before, const QString &timing)
     m_editor->reloadFromSession();
     refreshViews();
     return done.has_value();
+}
+
+application::EditSession *Application::targetSession() const
+{
+    const auto target = m_workspace.editingTarget();
+    return target ? m_files->session(*target) : nullptr;
+}
+
+application::LineVisible Application::shownLines() const
+{
+    const auto shown = m_shell->displayedLines();
+    const std::set<core::LineId> set(shown.begin(), shown.end());
+    return [set](core::LineId id) { return set.contains(id); };
+}
+
+namespace {
+
+QString clipboardText()
+{
+    return QGuiApplication::clipboard()->text();
+}
+
+void setClipboardText(const std::u8string &text)
+{
+    QGuiApplication::clipboard()->setText(
+        QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
+}
+
+std::u8string toU8(const QString &text)
+{
+    const QByteArray utf8 = text.toUtf8();
+    return std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()));
+}
+
+} // namespace
+
+bool Application::copyLines()
+{
+    auto *session = targetSession();
+    if (!session || session->selection().selected.empty())
+        return false;
+    setClipboardText(application::copyRows(*session));
+    return true;
+}
+
+bool Application::cutLines()
+{
+    // Legacy GRID_CUT copies, then deletes the selection.
+    return copyLines() && deleteLines();
+}
+
+bool Application::pasteLines()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::pasteRows(*session, toU8(clipboardText()), shownLines()).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+QVariantList Application::columnChoices(bool paste)
+{
+    using namespace core::column;
+    auto *session = targetSession();
+    if (!session)
+        return {};
+    const auto format = session->document().format();
+    std::vector<std::pair<QString, int>> rows;
+    if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText) {
+        rows = {{tr("Layer"), Layer},        {tr("The starting time"), Start}, {tr("End time"), End},
+                {tr("Actor"), Actor},        {tr("Styles"), Style},           {tr("Left margin"), MarginLeft},
+                {tr("Right margin"), MarginRight}, {tr("Vertical margin"), MarginVertical}, {tr("Effect"), Effect}};
+        if (!paste) {
+            rows.push_back({tr("Text"), Text});
+            rows.push_back({tr("Text without tags"), TextWithoutTags});
+        } else if (application::translationMode(*session)) {
+            rows.push_back({tr("Text into original"), Text});
+            rows.push_back({tr("Text into translation"), Translation});
+        } else {
+            rows.push_back({tr("Text"), Text});
+        }
+    } else if (format == core::SubtitleFormat::TMPlayer) {
+        rows = {{tr("The starting time"), Start}, {tr("Text"), Text}};
+    } else {
+        // Legacy labels the end time "The starting time" too.
+        rows = {{tr("The starting time"), Start}, {tr("The starting time"), End}, {tr("Text"), Text}};
+    }
+    const int chosen = paste ? m_pasteColumns : m_copyColumns;
+    QVariantList out;
+    for (const auto &[label, bit] : rows)
+        out << QVariantMap{{QStringLiteral("label"), label},
+                           {QStringLiteral("bit"), bit},
+                           {QStringLiteral("checked"), (chosen & bit) != 0}};
+    return out;
+}
+
+void Application::rememberColumns(bool paste, int columns)
+{
+    (paste ? m_pasteColumns : m_copyColumns) = columns;
+    if (!m_settingsFile.isEmpty())
+        QSettings(m_settingsFile, QSettings::IniFormat)
+            .setValue(paste ? QStringLiteral("Grid/PasteColumns") : QStringLiteral("Grid/CopyColumns"), columns);
+}
+
+bool Application::copyColumns(int columns)
+{
+    auto *session = targetSession();
+    if (!session || session->selection().selected.empty())
+        return false;
+    rememberColumns(false, columns);
+    setClipboardText(application::copyColumns(*session, columns));
+    return true;
+}
+
+bool Application::pasteColumns(int columns)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    rememberColumns(true, columns);
+    const bool done =
+        application::pasteColumns(*session, toU8(clipboardText()), columns, shownLines()).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
 }
 
 bool Application::duplicateLines()

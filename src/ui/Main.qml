@@ -702,12 +702,22 @@ ApplicationWindow {
                 onLineDragged: id => root.app.dragSelection(id)
                 onSelectAllRequested: root.app.selectAllLines()
                 onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
-                // Legacy GRID_DUPLICATE_LINES (Ctrl+D in the Grid).
+                // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
+                // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
                 Keys.onPressed: event => {
-                    if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_D) {
+                    if (!(event.modifiers & Qt.ControlModifier))
+                        return
+                    if (event.key === Qt.Key_D)
                         root.app.duplicateLines()
-                        event.accepted = true
-                    }
+                    else if (event.key === Qt.Key_C)
+                        root.app.copyLines()
+                    else if (event.key === Qt.Key_X)
+                        root.app.cutLines()
+                    else if (event.key === Qt.Key_V)
+                        root.app.pasteLines()
+                    else
+                        return
+                    event.accepted = true
                 }
                 Menu {
                     id: gridMenu
@@ -746,6 +756,11 @@ ApplicationWindow {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
                     }
+                    MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: root.app.copyLines() }
+                    MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: root.app.cutLines() }
+                    MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: root.app.pasteLines() }
+                    MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: columnsWindow.choose(false) }
+                    MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: columnsWindow.choose(true) }
                     MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
                 }
             }
@@ -1074,6 +1089,68 @@ ApplicationWindow {
             const subtitles = root.app.openDropped(drop.urls)
             if (subtitles.length > 0)
                 root.openSubtitles(subtitles)
+        }
+    }
+
+    // The column choice for Copy columns / Paste columns (legacy Stylelistbox),
+    // checked as last chosen.
+    Window {
+        id: columnsWindow
+        objectName: "columnsWindow"
+        title: paste ? qsTr("Paste columns") : qsTr("Copy columns")
+        width: 320
+        height: 420
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property bool paste: false
+        property var rows: []
+        function choose(forPaste) {
+            paste = forPaste
+            rows = root.app.columnChoices(forPaste)
+            show()
+        }
+        function chosen() {
+            let bits = 0
+            for (let i = 0; i < columnRepeater.count; ++i)
+                if (columnRepeater.itemAt(i).checked)
+                    bits |= rows[i].bit
+            return bits
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Repeater {
+                id: columnRepeater
+                model: columnsWindow.rows
+                delegate: CheckBox {
+                    required property var modelData
+                    required property int index
+                    objectName: "column" + index
+                    text: modelData.label
+                    checked: modelData.checked
+                }
+            }
+            Item { Layout.fillHeight: true }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "columnsOk"
+                    text: qsTr("OK")
+                    onClicked: {
+                        const bits = columnsWindow.chosen()
+                        columnsWindow.close()
+                        if (columnsWindow.paste)
+                            root.app.pasteColumns(bits)
+                        else
+                            root.app.copyColumns(bits)
+                    }
+                }
+                Button {
+                    objectName: "columnsCancel"
+                    text: qsTr("Cancel")
+                    onClicked: columnsWindow.close()
+                }
+            }
         }
     }
 

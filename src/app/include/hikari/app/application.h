@@ -6,6 +6,7 @@
 
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
+#include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/workspace.h"
@@ -122,6 +123,18 @@ public:
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
+    // G2: the Grid clipboard (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE
+    // Ctrl+V, GRID_COPY_COLUMNS, GRID_PASTE_COLUMNS) through the system clipboard.
+    Q_INVOKABLE bool copyLines();
+    Q_INVOKABLE bool cutLines();
+    Q_INVOKABLE bool pasteLines();
+    // The column choices for the editing target's format: {label, bit,
+    // checked}, checked as last chosen (COPY_COLLUMS_SELECTIONS /
+    // PASTE_COLUMNS_SELECTION); copy and paste offer different lists.
+    Q_INVOKABLE QVariantList columnChoices(bool paste);
+    // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
+    Q_INVOKABLE bool copyColumns(int columns);
+    Q_INVOKABLE bool pasteColumns(int columns);
     // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
     void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
 
@@ -141,6 +154,9 @@ private:
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     void rememberRecent(const std::string &path);
     void recordFileTime(application::DocumentId document);
+    application::EditSession *targetSession() const;
+    application::LineVisible shownLines() const;
+    void rememberColumns(bool paste, int columns);
     void refreshViews();
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
@@ -184,6 +200,9 @@ private:
     // and the Documents whose removal was already noticed.
     std::map<std::uint64_t, QDateTime> m_fileTimes;
     std::set<std::uint64_t> m_removedNoticed;
+    // The last column choices (legacy default: none).
+    int m_copyColumns = 0;
+    int m_pasteColumns = 0;
 };
 
 } // namespace hikari::app

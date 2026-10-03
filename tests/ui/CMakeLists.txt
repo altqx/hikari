@@ -49,6 +49,7 @@ hikari_add_spix_test(hikari_ui_video_workflow SOURCES video_workflow.cpp LIBRARI
 add_dependencies(hikari_ui_video_workflow hikari_media_helper hikari_media_fixtures)
 # G1: Grid range selection (Spix workflow).
 hikari_add_spix_test(hikari_ui_grid_workflow SOURCES grid_workflow.cpp LIBRARIES hikari_composition)
+hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp LIBRARIES hikari_composition)
 # G10: History (Spix workflow).
 hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIBRARIES hikari_composition)
 # P1: close review (L58-write-close).
