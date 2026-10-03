@@ -448,4 +448,78 @@ EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt)
     return EditorText{txt, where, where};
 }
 
+EditorText applyTagButton(EditorText state, u16v buttonTag, bool atTextStart,
+                          const std::function<std::optional<u16>(u16v)> &styleValue)
+{
+    u16 tag(buttonTag);
+    if (tag.empty() || tag.front() != u'\\')
+        tag.insert(0, 1, u'\\');
+    // The tag name ends at the first value character after its first letter.
+    const u16v delims = u"1234567890-&()[]";
+    u16 findtag;
+    bool found = false;
+    for (std::size_t i = 2; i < tag.size(); ++i)
+        if (delims.find(tag[i]) != u16v::npos) {
+            found = true;
+            findtag = tag.substr(1, i - 1);
+            break;
+        }
+    if (!found)
+        findtag = tag.substr(tag.find(u'\\') + 1);
+    const bool isFN = findtag.starts_with(u"fn");
+    const bool isR = findtag.starts_with(u"r");
+    const u16 pattern = isFN ? u16(u"fn(.*)") : isR ? u16(u"(r.*)") : findtag + u"([0-9\\(&-].*)";
+    TagEditor editor(std::move(state));
+    u16 result;
+    if (editor.findTag(pattern, atTextStart ? 1 : 0, !atTextStart)) {
+        result = editor.finding();
+    } else if (!isR) {
+        const auto value = styleValue ? styleValue(isFN ? u16v(u"fn") : u16v(findtag)) : std::nullopt;
+        result = value ? *value : u16(u"0");
+    }
+    const u16 reset = result.empty() ? u16() : isFN ? u"\\fn" + result : isR ? u"\\" + result : u"\\" + findtag + result;
+    editor.putTagInText(tag, reset);
+    return editor.state();
+}
+
+namespace {
+
+// The legacy block check before a plain-text insertion (EditBox::OnButtonTag):
+// positions of '{' and '}' after `from`, compared with `from` itself.
+long plainInsertPosition(u16v text, long from)
+{
+    const u16v rest = from < static_cast<long>(text.size()) ? text.substr(static_cast<std::size_t>(from)) : u16v();
+    const auto open = rest.find(u'{'), close = rest.find(u'}');
+    const long klamras = open == u16v::npos ? -1 : static_cast<long>(open);
+    const long klamrae = close == u16v::npos ? -1 : static_cast<long>(close);
+    if (klamrae != -1 && (klamras == -1 || klamras > klamrae) && klamras < from && klamrae > from)
+        from += klamrae + 1;
+    return from;
+}
+
+} // namespace
+
+EditorText insertTagButtonText(EditorText state, u16v text)
+{
+    long from = std::min(state.selectionStart, state.selectionEnd);
+    const long to = std::max(state.selectionStart, state.selectionEnd);
+    if (from != to)
+        state.text.erase(static_cast<std::size_t>(from), static_cast<std::size_t>(to - from));
+    from = plainInsertPosition(state.text, from);
+    from = std::min<long>(from, static_cast<long>(state.text.size()));
+    state.text.insert(static_cast<std::size_t>(from), text);
+    from += static_cast<long>(text.size());
+    state.selectionStart = state.selectionEnd = from;
+    return state;
+}
+
+u16 insertTagButtonTextAt(u16 text, long from, u16v insert)
+{
+    from = plainInsertPosition(text, from);
+    if (from >= static_cast<long>(text.size()))
+        from = static_cast<long>(text.size());
+    text.insert(static_cast<std::size_t>(from), insert);
+    return text;
+}
+
 } // namespace hikari::core::legacy

@@ -557,6 +557,26 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
                                                                                       : style.strikeOut;
             break;
         }
+    // Legacy subsFormat < SRT (ASS, and plain text, which loads as ASS) uses
+    // override tags; SRT and MicroDVD use their own markup (PutinNonass).
+    const auto format = session()->document().format();
+    if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText)
+        return editRaw(role, selectionStart, selectionEnd, [&](core::legacy::EditorText t) {
+            return core::legacy::toggleTag(std::move(t), tag[0].unicode(), styleValue);
+        });
+    if (format == core::SubtitleFormat::Srt || format == core::SubtitleFormat::MicroDvd)
+        return editRaw(role, selectionStart, selectionEnd, [&](core::legacy::EditorText t) {
+            return core::legacy::toggleNonAssTag(std::move(t), tag[0].unicode(), format == core::SubtitleFormat::Srt);
+        });
+    return false; // MPL2 and TMPlayer: no legacy action
+}
+
+bool LineEditorController::editRaw(int role, int selectionStart, int selectionEnd,
+                                   const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change)
+{
+    const auto r = record();
+    if (!r)
+        return false;
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     long from = selectionStart, to = selectionEnd;
     std::optional<core::Projection> projection;
@@ -568,17 +588,7 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
                  ? from
                  : static_cast<long>(core::rawOffset(*projection, static_cast<std::size_t>(selectionEnd), false));
     }
-    // Legacy subsFormat < SRT (ASS, and plain text, which loads as ASS) uses
-    // override tags; SRT and MicroDVD use their own markup (PutinNonass).
-    const auto format = session()->document().format();
-    core::legacy::EditorText result;
-    if (format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText)
-        result = core::legacy::toggleTag({raw, from, to}, tag[0].unicode(), styleValue);
-    else if (format == core::SubtitleFormat::Srt || format == core::SubtitleFormat::MicroDvd)
-        result = core::legacy::toggleNonAssTag({raw, from, to}, tag[0].unicode(),
-                                               format == core::SubtitleFormat::Srt);
-    else
-        return false; // MPL2 and TMPlayer: no legacy action
+    const core::legacy::EditorText result = change({raw, from, to});
     if (!setRaw(role, core::toUtf8(result.text)))
         return false;
     if (m_showTags) {
@@ -591,6 +601,66 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
     }
     m_selectionRole = role;
     emit selectionRequested();
+    return true;
+}
+
+std::optional<std::u16string> LineEditorController::styleTagValue(std::u16string_view tag) const
+{
+    const auto r = record();
+    if (!r)
+        return std::nullopt;
+    // Legacy GetStyle(0, name): the first Style of that name.
+    for (const auto &style : core::decodeStyles(session()->document()))
+        if (style.name == r->style) {
+            const auto value = core::legacy::styleTagValue(style, core::toUtf8(std::u16string(tag)));
+            return value ? std::optional(core::toUtf16(*value)) : std::nullopt;
+        }
+    return std::nullopt;
+}
+
+bool LineEditorController::applyTagButton(int role, const QString &tag, int type, int selectionStart, int selectionEnd)
+{
+    const auto r = record();
+    if (!editable() || !r || tag.isEmpty() || type < 0 || type > 2)
+        return false;
+    const std::u16string text = tag.toStdU16String();
+    if (type != 2)
+        return editRaw(role, selectionStart, selectionEnd, [&](core::legacy::EditorText t) {
+            return core::legacy::applyTagButton(std::move(t), text, type == 1,
+                                                [this](std::u16string_view name) { return styleTagValue(name); });
+        });
+    auto *s = session();
+    if (s->selection().selected.size() < 2)
+        return editRaw(role, selectionStart, selectionEnd, [&](core::legacy::EditorText t) {
+            return core::legacy::insertTagButtonText(std::move(t), text);
+        });
+    // Several Lines: the text goes into each selected Line's text (its
+    // translation when it has one) at the caret, as one step.
+    long from = selectionStart;
+    if (!m_showTags)
+        from = static_cast<long>(core::rawOffset(core::project(core::toUtf16(roleText(*r, role))),
+                                                 static_cast<std::size_t>(selectionStart), true));
+    if (s->draftLine() && !s->commitDraft())
+        return false;
+    std::vector<core::LineId> lines;
+    for (const auto *l : s->document().lines())
+        if (s->selection().selected.contains(l->id))
+            lines.push_back(l->id);
+    const auto ran = s->run(application::Command{
+        "Editing multiple lines", s->revision(), {lines.begin(), lines.end()}, [&](core::Document &d) {
+            for (const auto id : lines)
+                if (!d.editLine(id, [&](core::LineRecord &l) {
+                        auto &field = l.translation.empty() ? l.text : l.translation;
+                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(core::toUtf16(field), from, text));
+                    }))
+                    return false;
+            return true;
+        }});
+    if (!ran)
+        return false;
+    reloadFromSession();
+    if (m_onCommitted)
+        m_onCommitted();
     return true;
 }
 

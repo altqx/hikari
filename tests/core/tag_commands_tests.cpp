@@ -109,3 +109,57 @@ TEST(TagCommands, MicroDvdPutsTheTagAfterTheLastPipeBeforeTheCaret)
     // Underline and strikeout have no MicroDVD form: nothing changes.
     EXPECT_EQ(s8(toggleNonAssTag(EditorText{u"abc", 1, 1}, u'u', false).text), "abc");
 }
+
+// E2: custom tag buttons (legacy EditBox::OnButtonTag at 20d647c4).
+namespace {
+
+std::optional<std::u16string> arialStyle(std::u16string_view tag)
+{
+    if (tag == u"fn")
+        return u"Arial";
+    if (tag == u"b")
+        return u"0";
+    if (tag == u"bord")
+        return u"2";
+    return std::nullopt; // legacy TagValueFromStyle knows no such tag
+}
+
+} // namespace
+
+TEST(TagButton, ABoldButtonActsLikeBoldWithoutTags)
+{
+    for (const auto &[from, to] : {std::pair{0L, 0L}, {1L, 1L}, {0L, 3L}, {1L, 2L}}) {
+        const EditorText state{u"abc", from, to};
+        const auto button = applyTagButton(state, u"b1", false, arialStyle);
+        const auto bold = toggleTag(state, u'b', false);
+        EXPECT_EQ(button.text, bold.text) << from << "-" << to;
+        EXPECT_EQ(button.selectionStart, bold.selectionStart);
+        EXPECT_EQ(button.selectionEnd, bold.selectionEnd);
+    }
+}
+
+TEST(TagButton, ResetsToTheStyleOrZero)
+{
+    // \fn has no numeric value: the whole name is the tag; the Style resets it.
+    EXPECT_EQ(applyTagButton({u"abc", 0, 3}, u"\\fnTimes", false, arialStyle).text, u"{\\fnTimes}abc{\\fnArial}");
+    EXPECT_EQ(applyTagButton({u"abc", 0, 3}, u"\\bord4", false, arialStyle).text, u"{\\bord4}abc{\\bord2}");
+    // A tag the Style does not know resets to 0.
+    EXPECT_EQ(applyTagButton({u"abc", 0, 3}, u"\\blur3", false, arialStyle).text, u"{\\blur3}abc{\\blur0}");
+}
+
+TEST(TagButton, ResetFollowsTheValueInEffect)
+{
+    // The value in the block at the selection is replaced in place and comes back after it.
+    EXPECT_EQ(applyTagButton({u"{\\bord6}abc", 8, 11}, u"\\bord4", false, arialStyle).text,
+              u"{\\bord4}abc{\\bord6}");
+}
+
+TEST(TagButton, PlainTextReplacesTheSelection)
+{
+    auto r = insertTagButtonText({u"abc", 1, 1}, u"XY");
+    EXPECT_EQ(r.text, u"aXYbc");
+    EXPECT_EQ(r.selectionStart, 3);
+    r = insertTagButtonText({u"abc", 0, 2}, u"X");
+    EXPECT_EQ(r.text, u"Xc");
+    EXPECT_EQ(insertTagButtonTextAt(u"ab", 9, u"X"), u"abX"); // clamped for other Lines
+}

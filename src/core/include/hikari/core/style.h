@@ -47,6 +47,10 @@ namespace legacy {
 StyleValues decodeStyle(std::u8string_view styleLine, bool ssa);
 // AssColor::SetAss: decimal (SSA) or &HAABBGGRR& / #RRGGBB hex.
 Colour colour(std::u8string_view text);
+// TagFindReplace::TagValueFromStyle: the Style's value for an override tag
+// name (fs, bord, shad, fsp, fscx, fscy, c/1c-4c as &HBBGGRR&, 1a-4a as hex,
+// fn, b, i, u, s as 0/1, fr/frz), or nullopt for any other tag.
+std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8string_view tag);
 } // namespace legacy
 
 } // namespace hikari::core

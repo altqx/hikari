@@ -106,6 +106,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
     if (!m_settingsFile.isEmpty()) {
         std::vector<std::string> stored;
         for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Subtitles")).toStringList())
@@ -981,6 +982,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
+            {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

@@ -12,6 +12,7 @@
 // unchanged and reports the attempted text, so nothing typed is lost.
 
 #include "hikari/application/document_files.h"
+#include "hikari/core/tag_commands.h"
 
 #include <QObject>
 #include <QStringList>
@@ -19,6 +20,8 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <functional>
+#include <optional>
+#include <string>
 #include <vector>
 
 namespace hikari::ui {
@@ -108,6 +111,11 @@ public:
     // EDITBOX_SPLIT_LINE (Shift+Enter): a hard break replaces the selection,
     // taking an adjacent space on each side.
     Q_INVOKABLE bool splitLine(int role, int selectionStart, int selectionEnd);
+    // E2: a custom tag button (EditBox::OnButtonTag). Types 0 (at the caret)
+    // and 1 (at the text start) put the override tag into the field `role`
+    // with its legacy reset; type 2 inserts plain text there, or with several
+    // Lines selected into every selected Line at the caret as one step.
+    Q_INVOKABLE bool applyTagButton(int role, const QString &tag, int type, int selectionStart, int selectionEnd);
     // Translation mode (legacy EditBox OnCopyAll, OnCopySelection, OnHideOriginal):
     // the Original's raw text replaces the Translated text; the Original's
     // selection is inserted at the Translated caret; the Original is wrapped
@@ -154,6 +162,11 @@ private:
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
+    // A legacy text command on the raw text of `role`, mapped through the
+    // hidden-tag projection; the result's selection is requested in QML.
+    bool editRaw(int role, int selectionStart, int selectionEnd,
+                 const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change);
+    std::optional<std::u16string> styleTagValue(std::u16string_view tag) const;
     void edit(int role, const QString &newText, int cursor);
     // After Undo or Redo on the same Line: the caret goes to the end of what
     // changed, in the field that changed (as in a text editor's own undo).

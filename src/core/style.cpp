@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <string>
 
@@ -183,6 +184,58 @@ StyleValues decodeStyle(std::u8string_view styleLine, bool ssa)
     v.encoding = std::u8string(trimRight(v.encoding));
     v.complete = true;
     return v;
+}
+
+std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8string_view tag)
+{
+    auto hex2 = [](std::int64_t v) {
+        char buf[32];
+        std::snprintf(buf, sizeof buf, "%02X", static_cast<unsigned int>(v));
+        return std::u8string(reinterpret_cast<const char8_t *>(buf));
+    };
+    auto ass = [&](const Colour &c) { return u8"&H" + hex2(c.b) + hex2(c.g) + hex2(c.r) + u8"&"; };
+    auto flag = [](bool on) { return std::u8string(on ? u8"1" : u8"0"); };
+    if (tag == u8"fs")
+        return style.fontsize;
+    if (tag == u8"bord")
+        return style.outlineWidth;
+    if (tag == u8"shad")
+        return style.shadow;
+    if (tag == u8"fsp")
+        return style.spacing;
+    if (tag == u8"fscx")
+        return style.scaleX;
+    if (tag == u8"fscy")
+        return style.scaleY;
+    if (tag == u8"c" || tag == u8"1c")
+        return ass(style.primary);
+    if (tag == u8"2c")
+        return ass(style.secondary);
+    if (tag == u8"3c")
+        return ass(style.outline);
+    if (tag == u8"4c")
+        return ass(style.back);
+    if (tag == u8"1a")
+        return hex2(style.primary.a);
+    if (tag == u8"2a")
+        return hex2(style.secondary.a);
+    if (tag == u8"3a")
+        return hex2(style.outline.a);
+    if (tag == u8"4a")
+        return hex2(style.back.a);
+    if (tag == u8"fn")
+        return style.fontname;
+    if (tag == u8"b")
+        return flag(style.bold);
+    if (tag == u8"i")
+        return flag(style.italic);
+    if (tag == u8"u")
+        return flag(style.underline);
+    if (tag == u8"s")
+        return flag(style.strikeOut);
+    if (tag == u8"fr" || tag == u8"frz")
+        return style.angle;
+    return std::nullopt;
 }
 
 } // namespace legacy

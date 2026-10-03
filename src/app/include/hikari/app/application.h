@@ -15,6 +15,7 @@
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
 #include "log_controller.h"
+#include "tag_buttons_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -151,6 +152,7 @@ public:
     ui::VideoController &video() { return *m_video; }
     AutomationShell &automation() { return *m_automation; }
     ui::LogController &log() { return *m_log; }
+    ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -188,6 +190,7 @@ private:
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<ui::LogController> m_log;
+    std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     bool m_videoFailureLogged = false;
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows

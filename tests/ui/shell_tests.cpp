@@ -47,6 +47,17 @@ class ShellTest : public QObject {
     {
         return window->findChild<T *>(QLatin1String(name));
     }
+    // Repeater delegates are not QObject children of the window: walk the items.
+    static QQuickItem *findItem(QQuickItem *from, const QString &name)
+    {
+        if (from->objectName() == name)
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = findItem(child, name))
+                return found;
+        return nullptr;
+    }
+    QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
     QString panelTitle(const char *panel) const
     {
         auto *label = window->findChild<QObject *>(QLatin1String(panel) + QLatin1String("Title"));
@@ -519,6 +530,43 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->log().lastMessage().startsWith(QStringLiteral("Video unavailable")), 20000);
         QVERIFY(application->log().shown());
         application->log().close();
+    }
+
+    void tagButtonsInsertTheirTags()
+    {
+        const QString path = writeFile(dir, "e2.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,def\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &buttons = application->tagButtons();
+        buttons.setCount(2);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        buttons.edit(1, QStringLiteral("Note"), QStringLiteral("{note}"), 2);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
+        application->editor().setShowTags(true);
+        text->forceActiveFocus();
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("tagButton0")));
+        QCOMPARE(blur->property("text").toString(), QStringLiteral("Blur"));
+        QVERIFY(QMetaObject::invokeMethod(blur, "click"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur3}abc{\\blur0}"));
+        // Plain text with both Lines selected: into each at the caret, one step.
+        QVERIFY(application->editor().commit());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_A, Qt::ControlModifier);
+        const auto steps = session->historySize();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("tagButton1"), "click"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
+        const auto lines = session->document().lines();
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[1]->text.data()), qsizetype(lines[1]->text.size())),
+                 QStringLiteral("{note}def"));
     }
 
     void enterOnTheLastLineAppendsOne()

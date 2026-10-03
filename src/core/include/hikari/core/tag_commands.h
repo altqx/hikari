@@ -7,6 +7,8 @@
 // "\t(...)" handling, "\r" stopping at the block before the caret). Text and
 // positions are UTF-16 code units, as on Windows, where wxString is UTF-16.
 
+#include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -57,5 +59,19 @@ EditorText toggleTag(EditorText state, char16_t tag, bool styleValue);
 // caret; everything else (MicroDVD underline/strikeout, MPL2, TMPlayer) is
 // left unchanged, as in the legacy editor. `srt` selects the SRT form.
 EditorText toggleNonAssTag(EditorText state, char16_t tag, bool srt);
+
+// A custom tag button (EditBox::OnButtonTag, EDITBOX_TAG_BUTTON1-20).
+// Types 0 ("Tag inserted in place of cursor") and 1 ("Insert Tag at text
+// beginning") put the override tag in with the legacy reset: the value in
+// effect (found in the text), else the Style's (`styleValue` for the tag
+// name, legacy TagValueFromStyle), else "0"; \r resets to itself.
+EditorText applyTagButton(EditorText state, std::u16string_view tag, bool atTextStart,
+                          const std::function<std::optional<std::u16string>(std::u16string_view)> &styleValue);
+// Type 2 ("Plain text"): the text replaces the selection; a caret inside an
+// override block moves past it first (legacy index arithmetic kept).
+EditorText insertTagButtonText(EditorText state, std::u16string_view text);
+// The same insertion into another selected Line's text at `from` (several
+// Lines selected): the position is clamped to the text.
+std::u16string insertTagButtonTextAt(std::u16string text, long from, std::u16string_view insert);
 
 } // namespace hikari::core::legacy

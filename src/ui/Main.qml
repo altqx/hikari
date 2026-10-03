@@ -26,6 +26,7 @@ ApplicationWindow {
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
     required property LogController log
+    required property TagButtonsController tagButtons
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -45,6 +46,19 @@ ApplicationWindow {
         { key: "effect", label: qsTr("Effect") },
         { key: "layer", label: qsTr("Layer") }
     ]
+
+    // E2: a custom tag button. Types 0 and 1 work in the focused field like
+    // Bold; plain text (type 2) goes, as in legacy, into the main field (the
+    // translation in translation mode, unless it is empty).
+    function applyTagButton(index) {
+        const b = root.tagButtons.buttons[index]
+        if (!b || b.tag.length === 0)
+            return false
+        let field = translationText.activeFocus ? translationText : lineText
+        if (b.type === 2)
+            field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
+        return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
+    }
 
     // Close review (P1): rows of Documents with unsaved work, then `then`.
     function beginClose(then) {
@@ -660,6 +674,58 @@ ApplicationWindow {
                                     onClicked: {
                                         const field = translationText.activeFocus ? translationText : lineText
                                         root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    }
+                                }
+                            }
+                            // E2: custom tag buttons; right click (or a button
+                            // without a tag) edits it.
+                            Repeater {
+                                model: root.tagButtons.buttons
+                                ToolButton {
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "tagButton" + index
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    Accessible.name: modelData.name
+                                    Accessible.description: modelData.tag
+                                    ToolTip.visible: hovered && modelData.tag.length > 0
+                                    ToolTip.text: modelData.tag
+                                    onClicked: {
+                                        if (modelData.tag.length === 0)
+                                            tagButtonDialog.editButton(index)
+                                        else
+                                            root.applyTagButton(index)
+                                    }
+                                    TapHandler {
+                                        acceptedButtons: Qt.RightButton
+                                        onTapped: tagButtonDialog.editButton(index)
+                                    }
+                                }
+                            }
+                            ToolButton {
+                                objectName: "manageTagButtons"
+                                text: qsTr("Manage tag buttons")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: tagButtonsMenu.popup()
+                                Menu {
+                                    id: tagButtonsMenu
+                                    Instantiator {
+                                        model: root.tagButtons.buttons
+                                        delegate: MenuItem {
+                                            required property var modelData
+                                            required property int index
+                                            text: modelData.name
+                                            onTriggered: root.applyTagButton(index)
+                                        }
+                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
+                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
+                                    }
+                                    MenuItem {
+                                        objectName: "changeTagButtonCount"
+                                        text: qsTr("Change number of buttons")
+                                        onTriggered: tagButtonCountDialog.open()
                                     }
                                 }
                             }
@@ -1303,6 +1369,91 @@ ApplicationWindow {
                 text: qsTr("Close")
                 onClicked: root.log.close()
             }
+        }
+    }
+
+    // Legacy TagButtonDialog ("Enter ASS tag").
+    Window {
+        id: tagButtonDialog
+        objectName: "tagButtonDialog"
+        title: qsTr("Enter ASS tag")
+        width: 320
+        height: 240
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property int index: -1
+        function editButton(i) {
+            const b = root.tagButtons.buttons[i]
+            index = i
+            tagType.currentIndex = b.type
+            tagName.text = b.name
+            tagText.text = b.tag
+            show()
+            tagText.selectAll()
+            tagText.forceActiveFocus()
+        }
+        function saveTag() {
+            root.tagButtons.edit(index, tagName.text, tagText.text, tagType.currentIndex)
+            close()
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            ComboBox {
+                id: tagType
+                objectName: "tagType"
+                Layout.fillWidth: true
+                model: [qsTr("Tag inserted in place of cursor"), qsTr("Insert Tag at text beginning"), qsTr("Plain text")]
+                Accessible.name: qsTr("Insertion")
+            }
+            Label { text: qsTr("Button name") }
+            TextField {
+                id: tagName
+                objectName: "tagName"
+                Layout.fillWidth: true
+                Accessible.name: qsTr("Button name")
+                onAccepted: tagButtonDialog.saveTag()
+            }
+            Label { text: qsTr("Button tag") }
+            TextField {
+                id: tagText
+                objectName: "tagText"
+                Layout.fillWidth: true
+                Accessible.name: qsTr("Button tag")
+                onAccepted: tagButtonDialog.saveTag()
+            }
+            RowLayout {
+                Button {
+                    objectName: "saveTag"
+                    text: qsTr("Save tag")
+                    onClicked: tagButtonDialog.saveTag()
+                }
+                Button {
+                    objectName: "cancelTag"
+                    text: qsTr("Cancel")
+                    onClicked: tagButtonDialog.close()
+                }
+            }
+        }
+    }
+
+    // Legacy NumTagButtons ("Change number of buttons", 0 to 20).
+    Dialog {
+        id: tagButtonCountDialog
+        objectName: "tagButtonCountDialog"
+        title: qsTr("Change number of buttons")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        onAboutToShow: tagButtonCount.value = root.tagButtons.count
+        onAccepted: root.tagButtons.setCount(tagButtonCount.value)
+        SpinBox {
+            id: tagButtonCount
+            objectName: "tagButtonCount"
+            from: 0
+            to: 20
+            editable: true
+            Accessible.name: qsTr("Number of buttons")
         }
     }
 
