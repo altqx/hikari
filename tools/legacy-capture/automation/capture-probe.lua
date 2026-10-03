@@ -219,3 +219,10 @@ aegisub.register_macro("Capture " .. (#cases + 1) .. " corpus", "corpus", functi
     local ok, err = pcall(capture_corpus)
     if not ok then out(json({ case = "corpus", ok = false, error = tostring(err) })) end
 end)
+
+-- In Autoload with HIKARI_CAPTURE_AT_LOAD set, the corpus capture also runs
+-- while the host loads this script, so it needs no hotkey.
+if os.getenv("HIKARI_CAPTURE_AT_LOAD") then
+    local ok, err = pcall(capture_corpus)
+    if not ok then out(json({ case = "corpus", ok = false, error = tostring(err), at_load = true })) end
+end

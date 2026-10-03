@@ -256,8 +256,9 @@ def automation(spec, package, display, workdir, probe_source):
             p.unlink()
     corpus = sorted(corpus_dir.glob("*"))
     (scratch / "corpus.txt").write_text("".join(f"{c}\n" for c in corpus))
-    probe = scratch / "probe" / "capture-probe.lua"
-    probe.parent.mkdir()
+    # The probe goes into the emptied Autoload: the host loads it (running the
+    # corpus capture at load) and its hotkeys name that path.
+    probe = autoload / "capture-probe.lua"
     shutil.copyfile(probe_source, probe)
     config = app.parent / "Config"
     config.mkdir(exist_ok=True)
@@ -272,7 +273,8 @@ def automation(spec, package, display, workdir, probe_source):
     output.touch()
     proc = subprocess.Popen([str(app), str(doc)], cwd=app.parent,
                             env={**os.environ, "DISPLAY": display, "HOME": str(scratch / "home"),
-                                 "HIKARI_CAPTURE_OUT": str(output), "HIKARI_CAPTURE_CORPUS": str(scratch / "corpus.txt")},
+                                 "HIKARI_CAPTURE_OUT": str(output), "HIKARI_CAPTURE_CORPUS": str(scratch / "corpus.txt"),
+                                 "HIKARI_CAPTURE_AT_LOAD": "1"},
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     probe_rec = {"part": "probe", "probe_sha256": sha256(probe_source), "corpus": [c.name for c in corpus],
                  "status": "timeout", "steps": []}
@@ -282,8 +284,10 @@ def automation(spec, package, display, workdir, probe_source):
         if not wid:
             probe_rec["status"] = "no-main-window"
             return obs
-        time.sleep(5)
+        time.sleep(8)  # Autoload, with the probe's load-time corpus capture
         probe_rec["startup_popups"] = [t for _, t in popups(display, wid)]
+        load_lines = output.read_text().splitlines()
+        probe_rec["load_time"] = [json.loads(l) for l in load_lines]
         for other, _ in popups(display, wid):
             x(["xdotool", "windowactivate", "--sync", other], display, 10)
             x(["xdotool", "key", "Return"], display, 5)

@@ -20,6 +20,10 @@ def legacy_corpus(path):
         if case.get("route") != "automation":
             continue
         for obs in case.get("observations", []):
+            # The capture run while the host loaded the probe, else the hotkey step.
+            for record in obs.get("load_time", []):
+                if record.get("case") == "corpus" and "scripts" in record:
+                    return record
             for step in obs.get("steps", []):
                 if step.get("case") == "corpus" and step.get("status") == "captured":
                     return step["result"]
