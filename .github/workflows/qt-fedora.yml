@@ -55,7 +55,7 @@ jobs:
           pkgs=(git cmake ninja-build gcc gcc-c++ make pkgconf-pkg-config autoconf autoconf-archive alsa-lib-devel
                 automake libtool nasm python3 curl tar zip unzip xz bzip2 patch diffutils findutils
                 which file perl
-                mesa-libGL-devel mesa-libEGL libxkbcommon libxkbcommon-x11 fontconfig dbus-libs
+                mesa-libGL-devel mesa-libEGL libxkbcommon libxkbcommon-devel libxkbcommon-x11 fontconfig dbus-libs
                 xcb-util-cursor xcb-util-wm xcb-util-keysyms xcb-util-renderutil xcb-util-image
                 pulseaudio-libs libX11 libXrandr libXext libdrm bzip2-libs zlib-ng-compat)
           dnf -y -q install "${pkgs[@]}"
