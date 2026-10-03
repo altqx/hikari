@@ -402,15 +402,29 @@ void setPreload(lua_State *L, const char *name, lua_CFunction open)
 
 void installGlobalLocale()
 {
+    // Legacy HikariSubFrame: the system default locale. Script strings are
+    // UTF-8, and Boost.Locale's generator uses UTF-8 on Windows by default; a
+    // POSIX system locale without UTF-8 (a bare C locale in a container)
+    // keeps its language with UTF-8 instead, so case mapping never drops text.
     boost::locale::generator gen;
-    for (const char *name : {"", "C.UTF-8"}) {
-        try {
-            std::locale::global(gen(name));
-            return;
-        } catch (...) {
+    try {
+        std::locale loc = gen("");
+        const auto &info = std::use_facet<boost::locale::info>(loc);
+        if (!info.utf8()) {
+            const std::string language = info.language() == "C" || info.language() == "posix" ? std::string("C")
+                                         : info.country().empty() ? info.language()
+                                                                  : info.language() + "_" + info.country();
+            loc = gen(language + ".UTF-8");
         }
+        std::locale::global(loc);
+        return;
+    } catch (...) {
     }
-    std::locale::global(std::locale::classic());
+    try {
+        std::locale::global(gen("C.UTF-8"));
+    } catch (...) {
+        std::locale::global(std::locale::classic());
+    }
 }
 
 void preload(lua_State *L)
