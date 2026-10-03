@@ -13,25 +13,6 @@ namespace {
 using u8 = std::u8string;
 using u8v = std::u8string_view;
 
-u8 hexColour(const core::Colour &c)
-{
-    char buf[16];
-    std::snprintf(buf, sizeof buf, "&H%02X%02X%02X%02X", static_cast<unsigned>(c.a & 0xFF), static_cast<unsigned>(c.b & 0xFF),
-                  static_cast<unsigned>(c.g & 0xFF), static_cast<unsigned>(c.r & 0xFF));
-    return u8(reinterpret_cast<const char8_t *>(buf));
-}
-
-// Styles::GetRaw's fields, name first.
-std::vector<u8> styleFields(const core::StyleValues &s)
-{
-    const auto flag = [](bool v) { return v ? u8(u8"-1") : u8(u8"0"); };
-    return {s.name,         s.fontname,       s.fontsize,          hexColour(s.primary), hexColour(s.secondary),
-            hexColour(s.outline), hexColour(s.back), flag(s.bold), flag(s.italic),   flag(s.underline),
-            flag(s.strikeOut), s.scaleX,       s.scaleY,            s.spacing,            s.angle,
-            s.borderStyle ? u8(u8"3") : u8(u8"1"), s.outlineWidth, s.shadow, s.alignment, s.marginLeft,
-            s.marginRight,  s.marginVertical, s.encoding};
-}
-
 // wxString::Trim(): trailing whitespace.
 u8 trimRight(u8v s)
 {
@@ -121,7 +102,7 @@ bool turnOnTranslationMode(core::Document &document)
                 }
             }
             tl.alignment = u8"8";
-            document.appendStyle(styleFields(tl));
+            document.appendStyle(core::legacy::styleRawFields(tl));
         }
     }
     return document.setScriptInfo(u8"TLMode", u8"Yes");

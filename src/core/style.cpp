@@ -250,8 +250,8 @@ std::vector<StyleValues> decodeStyles(const Document &document)
             ssa = true; // never reset: "[V4+" after "[V4" keeps the SSA layout
         for (const auto &record : section.records)
             if (const auto *style = std::get_if<StyleRecord>(&record)) {
-                if (style->inserted) {
-                    // Added in the editor: no source bytes, the fields as written.
+                if (style->inserted || style->edited) {
+                    // Added or changed in the editor: the fields as written.
                     std::u8string line = u8"Style: ";
                     for (std::size_t i = 0; i < style->fields.size(); ++i)
                         line += (i ? u8"," : u8"") + style->fields[i];
@@ -265,5 +265,32 @@ std::vector<StyleValues> decodeStyles(const Document &document)
     }
     return out;
 }
+
+namespace legacy {
+
+namespace {
+
+std::u8string hexColour(const Colour &c)
+{
+    char buf[16];
+    std::snprintf(buf, sizeof buf, "&H%02X%02X%02X%02X", static_cast<unsigned>(c.a & 0xFF), static_cast<unsigned>(c.b & 0xFF),
+                  static_cast<unsigned>(c.g & 0xFF), static_cast<unsigned>(c.r & 0xFF));
+    return std::u8string(reinterpret_cast<const char8_t *>(buf));
+}
+
+} // namespace
+
+std::vector<std::u8string> styleRawFields(const StyleValues &s)
+{
+    using u8 = std::u8string;
+    const auto flag = [](bool v) { return v ? u8(u8"-1") : u8(u8"0"); };
+    return {s.name,         s.fontname,       s.fontsize,          hexColour(s.primary), hexColour(s.secondary),
+            hexColour(s.outline), hexColour(s.back), flag(s.bold), flag(s.italic),   flag(s.underline),
+            flag(s.strikeOut), s.scaleX,       s.scaleY,            s.spacing,            s.angle,
+            s.borderStyle ? u8(u8"3") : u8(u8"1"), s.outlineWidth, s.shadow, s.alignment, s.marginLeft,
+            s.marginRight,  s.marginVertical, s.encoding};
+}
+
+} // namespace legacy
 
 } // namespace hikari::core

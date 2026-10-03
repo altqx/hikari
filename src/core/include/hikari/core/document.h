@@ -107,6 +107,7 @@ struct StyleRecord {
     std::vector<std::u8string> fields; // positional fields after "Style:", untrimmed
     SourceSpan span;
     bool inserted = false; // added in the editor: written as "Style: " + fields
+    bool edited = false;   // changed in the editor: written as "Style: " + fields in place
 };
 
 struct PropertyRecord {
@@ -214,6 +215,10 @@ public:
     bool appendStyle(std::vector<std::u8string> fields);
     // Legacy DeleteStyle(FindStyle(name)): the first Style of that name.
     bool removeStyle(std::u8string_view name);
+    // Legacy ChangeStyle: the index-th Style (document order, as decodeStyles
+    // lists them) gets these positional fields, name first, and is written
+    // as "Style: " + fields in its place. False when there is no such Style.
+    bool editStyle(std::size_t index, std::vector<std::u8string> fields);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

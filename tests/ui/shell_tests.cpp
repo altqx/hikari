@@ -915,6 +915,54 @@ private slots:
         application->editor().discard();
     }
 
+    // Y4: a video of another size offers to match it; Resample subtitles changes it.
+    void resolutionMismatchAndResample()
+    {
+        const QString path = dir.filePath(QStringLiteral("resample.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nPlayResX: 100\nPlayResY: 100\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(10,10)}a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *mismatch = root->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        QVERIFY(mismatch);
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(mismatch->property("visible").toBool(), 20000);
+        const auto values = application->resampleValues();
+        const int width = values.value(QStringLiteral("videoWidth")).toInt();
+        const int height = values.value(QStringLiteral("videoHeight")).toInt();
+        QVERIFY(width > 0 && height > 0);
+        QVERIFY(dialogItem("mismatchDialog", "mismatchText")->property("text").toString().contains(
+            QStringLiteral("Video resolution: %1 x %2\nSubtitle resolution: 100 x 100").arg(width).arg(height)));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mismatchDialog", "mismatchChange"), "click"));
+        QTRY_VERIFY(!mismatch->property("visible").toBool());
+        QCOMPARE(session->history().back().name, std::string("Changing subtitles resolution"));
+        QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(
+            reinterpret_cast<const char8_t *>(QByteArray::number(width).constData()))));
+        const auto &text = session->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())),
+                 QStringLiteral("{\\pos(%1,%2)}a").arg(width / 10).arg(height / 10));
+        // Resample subtitles back to 100x100 through the dialog.
+        auto *resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("resampleMenuItem")), "triggered"));
+        QTRY_VERIFY(resample->property("visible").toBool());
+        QCOMPARE(dialogItem("resampleDialog", "resampleSubsWidth")->property("value").toInt(), width);
+        dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 100);
+        dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 100);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+        QTRY_VERIFY(!resample->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"100")));
+        // "Disable warning" stops the question.
+        application->setAskForBadResolution(false);
+        QVERIFY(!application->askForBadResolution());
+        application->editor().discard();
+    }
+
     // P8: Help > About and Credits show the legacy notices with this build's version.
     void aboutAndCreditsShowTheNotices()
     {

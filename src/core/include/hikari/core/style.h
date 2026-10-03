@@ -51,6 +51,8 @@ Colour colour(std::u8string_view text);
 // name (fs, bord, shad, fsp, fscx, fscy, c/1c-4c as &HBBGGRR&, 1a-4a as hex,
 // fn, b, i, u, s as 0/1, fr/frz), or nullopt for any other tag.
 std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8string_view tag);
+// Styles::GetRaw's fields, name first (colours as &HAABBGGRR, flags -1/0).
+std::vector<std::u8string> styleRawFields(const StyleValues &style);
 } // namespace legacy
 
 } // namespace hikari::core

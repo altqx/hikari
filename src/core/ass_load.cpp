@@ -121,6 +121,23 @@ bool Document::removeStyle(std::u8string_view name)
     return false;
 }
 
+bool Document::editStyle(std::size_t index, std::vector<std::u8string> fields)
+{
+    if (fields.empty())
+        return false;
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *style = std::get_if<StyleRecord>(&record)) {
+                if (index-- > 0)
+                    continue;
+                style->name = fields.front();
+                style->fields = std::move(fields);
+                style->edited = true;
+                return true;
+            }
+    return false;
+}
+
 bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change)
 {
     for (auto &section : m_sections)

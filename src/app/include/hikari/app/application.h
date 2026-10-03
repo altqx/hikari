@@ -47,6 +47,11 @@ signals:
     void closeFinished(bool done, const QString &problem);
     void quitApprovedChanged();
     void saveWithVideoNameChanged();
+    void askForBadResolutionChanged();
+    // Y4: the open video's size differs from the editing target's PlayRes
+    // (legacy SetSubsResolution / SetVideoResolution): {subsWidth,
+    // subsHeight, videoWidth, videoHeight}.
+    void resolutionMismatch(const QVariantMap &sizes);
     void recentChanged();
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
@@ -214,6 +219,19 @@ public:
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
     // opens, as legacy does); otherwise the legacy message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
+    // Y4: GLOBAL_OPEN_SUBS_RESAMPLE ("Change resolution"): {subsWidth,
+    // subsHeight, videoWidth, videoHeight}, the video's being the subtitles'
+    // without a video; empty for a Document that is not ASS.
+    Q_INVOKABLE QVariantMap resampleValues() const;
+    // OK: nothing when the sizes match, else "Changing subtitles resolution".
+    Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
+    // The SubsMismatchResolutionDialog's Change: 0 only the resolution,
+    // 1 resample (no stretch), 2 resample (stretch).
+    Q_INVOKABLE bool matchVideoResolution(int option);
+    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION), kept in the INI file.
+    Q_PROPERTY(bool askForBadResolution READ askForBadResolution WRITE setAskForBadResolution NOTIFY askForBadResolutionChanged)
+    bool askForBadResolution() const { return m_askForBadResolution; }
+    void setAskForBadResolution(bool on);
     // F2: GLOBAL_OPEN_SELECT_LINES. The dialog's settings {find, with,
     // matchCase, regex, field, dialogues, comments, mode, action} and its
     // recent searches (legacy SELECT_LINES_OPTIONS and _RECENT_SELECTIONS,
@@ -315,6 +333,9 @@ private:
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
     bool m_saveWithVideoName = false;
+    bool m_askForBadResolution = true;
+    QString m_resolutionCheckedVideo; // the video whose size was compared
+    void checkResolution();
     QStringList m_selectRecent;
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;

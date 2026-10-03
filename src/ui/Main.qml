@@ -711,6 +711,12 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: scriptPropertiesDialog.openFor()
             }
+            MenuItem {
+                objectName: "resampleMenuItem"
+                text: qsTr("Resample subtitles")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: resampleDialog.openDialog()
+            }
         }
         Menu {
             title: qsTr("&Help")
@@ -2602,6 +2608,138 @@ ApplicationWindow {
                   qsTr("- Niskala5570 (Malay translation).\n") +
                   qsTr("Thanks to other HikariSub users who reported bugs:\n") +
                   "SoheiMajin, BadRequest, Ognisty321, ZlyLos, Thomas Leigh, TomBit."
+        }
+    }
+    // Y4: legacy SubsResampleDialog ("Change resolution").
+    Dialog {
+        id: resampleDialog
+        objectName: "resampleDialog"
+        title: qsTr("Change resolution")
+        modal: true
+        anchors.centerIn: parent
+        property var initial: ({})
+        function openDialog() {
+            const v = root.app.resampleValues()
+            if (v.subsWidth === undefined)
+                return
+            initial = v
+            subsWidth.value = v.subsWidth
+            subsHeight.value = v.subsHeight
+            targetWidth.value = v.videoWidth
+            targetHeight.value = v.videoHeight
+            noStretch.checked = true
+            open()
+        }
+        // The stretch choice only means something when the aspect ratio changes.
+        readonly property bool aspectChanges: targetWidth.value / subsWidth.value !== targetHeight.value / subsHeight.value
+        ColumnLayout {
+            anchors.fill: parent
+            GroupBox {
+                title: qsTr("Subtitles resolution")
+                Layout.fillWidth: true
+                RowLayout {
+                    SpinBox { id: subsWidth; objectName: "resampleSubsWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Subtitles resolution") }
+                    Label { text: " x " }
+                    SpinBox { id: subsHeight; objectName: "resampleSubsHeight"; from: 100; to: 10000; editable: true }
+                    Button {
+                        text: qsTr("From subtitles")
+                        enabled: subsWidth.value !== resampleDialog.initial.subsWidth || subsHeight.value !== resampleDialog.initial.subsHeight
+                        onClicked: { subsWidth.value = resampleDialog.initial.subsWidth; subsHeight.value = resampleDialog.initial.subsHeight }
+                    }
+                }
+            }
+            GroupBox {
+                title: qsTr("Target resolution")
+                Layout.fillWidth: true
+                RowLayout {
+                    SpinBox { id: targetWidth; objectName: "resampleWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Target resolution") }
+                    Label { text: " x " }
+                    SpinBox { id: targetHeight; objectName: "resampleHeight"; from: 100; to: 10000; editable: true }
+                    Button {
+                        text: qsTr("Get from video")
+                        // Legacy compares the target with the subtitles' size here.
+                        enabled: targetWidth.value !== resampleDialog.initial.subsWidth || targetHeight.value !== resampleDialog.initial.subsHeight
+                        onClicked: { targetWidth.value = resampleDialog.initial.videoWidth; targetHeight.value = resampleDialog.initial.videoHeight }
+                    }
+                }
+            }
+            GroupBox {
+                title: qsTr("Resample options")
+                Layout.fillWidth: true
+                enabled: resampleDialog.aspectChanges
+                RowLayout {
+                    RadioButton { id: noStretch; text: qsTr("No stretch"); checked: true }
+                    RadioButton { id: stretch; objectName: "resampleStretch"; text: qsTr("Stretch") }
+                }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "resampleOk"
+                    text: "OK"
+                    onClicked: {
+                        if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
+                            return
+                        root.app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value,
+                                          resampleDialog.aspectChanges && stretch.checked)
+                        resampleDialog.close()
+                    }
+                }
+                Button { text: qsTr("Cancel"); onClicked: resampleDialog.close() }
+            }
+        }
+    }
+    // Y4: legacy SubsMismatchResolutionDialog ("Incompatible resolution").
+    Connections {
+        target: root.app
+        function onResolutionMismatch(sizes) { mismatchDialog.show(sizes) }
+    }
+    Dialog {
+        id: mismatchDialog
+        objectName: "mismatchDialog"
+        title: qsTr("Incompatible resolution")
+        modal: true
+        anchors.centerIn: parent
+        property var sizes: ({})
+        readonly property bool canStretch: sizes.videoWidth / sizes.subsWidth !== sizes.videoHeight / sizes.subsHeight
+        function show(s) {
+            sizes = s
+            mismatchResample.checked = true
+            open()
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            Label {
+                objectName: "mismatchText"
+                text: qsTr("The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n")
+                      .arg(mismatchDialog.sizes.videoWidth).arg(mismatchDialog.sizes.videoHeight)
+                      .arg(mismatchDialog.sizes.subsWidth).arg(mismatchDialog.sizes.subsHeight)
+            }
+            GroupBox {
+                title: qsTr("Resample options")
+                ColumnLayout {
+                    RadioButton { id: mismatchOnly; objectName: "mismatchOnly"; text: qsTr("Change only the subtitle resolution") }
+                    RadioButton { id: mismatchResample; objectName: "mismatchResample"; text: qsTr("Resample subtitles (no stretch)"); checked: true }
+                    RadioButton { id: mismatchStretch; objectName: "mismatchStretch"; text: qsTr("Resample subtitles (stretch)"); visible: mismatchDialog.canStretch }
+                }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "mismatchChange"
+                    text: qsTr("Change")
+                    onClicked: {
+                        root.app.matchVideoResolution(mismatchOnly.checked ? 0 : mismatchStretch.checked ? 2 : 1)
+                        mismatchDialog.close()
+                    }
+                }
+                Button { text: qsTr("Do not change"); onClicked: mismatchDialog.close() }
+                Button {
+                    objectName: "mismatchDisable"
+                    text: qsTr("Disable warning")
+                    onClicked: { root.app.askForBadResolution = false; mismatchDialog.close() }
+                }
+            }
         }
     }
     SelectLinesDialog {

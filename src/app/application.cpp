@@ -9,6 +9,7 @@
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
+#include "hikari/application/resample.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
@@ -32,6 +33,7 @@
 #include <QUuid>
 #include <QCoreApplication>
 #include <QSettings>
+#include <QTimer>
 #include <QStringList>
 #include <QVariantMap>
 
@@ -158,6 +160,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const QSettings ini(m_settingsFile, QSettings::IniFormat);
         m_selectOptions = ini.value(QStringLiteral("SelectLines/Options"), 0).toInt();
         m_saveWithVideoName = ini.value(QStringLiteral("Subtitles/SaveWithVideoName"), false).toBool();
+        m_askForBadResolution = !ini.value(QStringLiteral("Video/DontAskForBadResolution"), false).toBool();
         // Legacy keeps 20 when the dialog opens.
         m_selectRecent = ini.value(QStringLiteral("SelectLines/Recent")).toStringList().mid(0, 20);
     }
@@ -209,6 +212,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (failed && !m_videoFailureLogged)
             m_log->log(m_video->status());
         m_videoFailureLogged = failed;
+    });
+    // Y4: a newly shown video is compared with the editing target's resolution once.
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        const auto &video = m_video->session();
+        if (video.state() != application::VideoSession::State::Ready || !video.lastFrame())
+            return;
+        const QString path = QString::fromStdString(video.path());
+        if (path == m_resolutionCheckedVideo)
+            return;
+        m_resolutionCheckedVideo = path;
+        checkResolution();
     });
     // A keyframe file opened before the video applies once a video is ready.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
@@ -306,6 +320,7 @@ bool Application::openFile(const QString &path)
     if (!open(path))
         return false;
     refreshViews();
+    checkResolution();
     return true;
 }
 
@@ -568,8 +583,10 @@ void Application::finishClose()
     } else if (then == QLatin1String("open")) {
         closeEditingTarget();
         if (m_pendingOpen) {
-            if (const auto id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false))
+            if (const auto id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false)) {
                 m_workspace.setEditingTarget(*id);
+                QTimer::singleShot(0, this, [this] { checkResolution(); });
+            }
             m_pendingOpen.reset();
             m_pendingOpenPath.clear();
         }
@@ -1644,6 +1661,86 @@ QString Application::selectStylesPattern(const QStringList &styles) const
     for (const QString &s : styles)
         names.push_back(utf8(s));
     return fromUtf8(application::stylesPattern(names));
+}
+
+void Application::checkResolution()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    if (!m_askForBadResolution || !session || targetUntitled() ||
+        session->document().format() != core::SubtitleFormat::Ass ||
+        video.state() != application::VideoSession::State::Ready || !video.lastFrame())
+        return;
+    const auto subs = application::scriptResolution(session->document());
+    const int width = video.lastFrame()->width, height = video.lastFrame()->height;
+    if (subs.width == width && subs.height == height)
+        return;
+    emit resolutionMismatch({{QStringLiteral("subsWidth"), subs.width},
+                             {QStringLiteral("subsHeight"), subs.height},
+                             {QStringLiteral("videoWidth"), width},
+                             {QStringLiteral("videoHeight"), height}});
+}
+
+QVariantMap Application::resampleValues() const
+{
+    auto *session = targetSession();
+    if (!session || (session->document().format() != core::SubtitleFormat::Ass &&
+                     session->document().format() != core::SubtitleFormat::PlainText))
+        return {};
+    const auto subs = application::scriptResolution(session->document());
+    application::Resolution video = subs;
+    if (m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame())
+        video = {m_video->session().lastFrame()->width, m_video->session().lastFrame()->height};
+    return {{QStringLiteral("subsWidth"), subs.width},
+            {QStringLiteral("subsHeight"), subs.height},
+            {QStringLiteral("videoWidth"), video.width},
+            {QStringLiteral("videoHeight"), video.height}};
+}
+
+bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch)
+{
+    auto *session = targetSession();
+    if (!session || (subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
+        return false;
+    const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
+        m_log->log(tr("In line %1, value '%2' cannot be scaled\nin tag '%3'")
+                       .arg(row)
+                       .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
+    };
+    const bool done = application::changeResolution(*session, {subsWidth, subsHeight}, {width, height}, true, stretch, warn)
+                          .has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::matchVideoResolution(int option)
+{
+    auto *session = targetSession();
+    const auto values = resampleValues();
+    if (!session || values.isEmpty())
+        return false;
+    const application::Resolution subs{values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt()};
+    const application::Resolution video{values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt()};
+    const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
+        m_log->log(tr("In line %1, value '%2' cannot be scaled\nin tag '%3'")
+                       .arg(row)
+                       .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
+    };
+    const bool done = application::changeResolution(*session, subs, video, option != 0, option == 2, warn).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+void Application::setAskForBadResolution(bool on)
+{
+    if (m_askForBadResolution == on)
+        return;
+    m_askForBadResolution = on;
+    if (!m_settingsFile.isEmpty())
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Video/DontAskForBadResolution"), !on);
+    emit askForBadResolutionChanged();
 }
 
 QVariantMap Application::scriptProperties()

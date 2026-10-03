@@ -88,7 +88,7 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             std::optional<std::u8string> generated;
             if (property && (property->inserted || property->edited))
                 generated = property->key + u8": " + property->value;
-            if (style && style->inserted) {
+            if (style && (style->inserted || style->edited)) {
                 std::u8string text = u8"Style: ";
                 for (std::size_t i = 0; i < style->fields.size(); ++i)
                     text += (i ? u8"," : u8"") + style->fields[i];
