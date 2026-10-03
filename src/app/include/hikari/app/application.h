@@ -177,6 +177,11 @@ public:
     Q_INVOKABLE QUrl targetFolder() const;
     Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
     Q_INVOKABLE bool canShiftTranslation() const;
+    // Y3: GLOBAL_OPEN_ASS_PROPERTIES. The values the dialog opens with (ASS
+    // Documents only; empty otherwise), plus the video size for "From video"
+    // and the linked-resolutions option; OK applies the edited fields.
+    Q_INVOKABLE QVariantMap scriptProperties();
+    Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
     // G9: Line groups (legacy trees). The id is the description Line's.
     Q_INVOKABLE bool makeGroups();

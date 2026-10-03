@@ -6,6 +6,7 @@
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/grid_translation.h"
+#include "hikari/application/script_properties.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
@@ -1311,6 +1312,88 @@ bool Application::shiftTranslation(int mode)
     m_editor->reloadFromSession();
     if (const auto active = session->selection().active)
         m_editor->showLine(active->value);
+    refreshViews();
+    return done;
+}
+
+QVariantMap Application::scriptProperties()
+{
+    auto *session = targetSession();
+    if (!session)
+        return {};
+    const auto format = session->document().format();
+    if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
+        return {};
+    const auto p = application::scriptProperties(session->document());
+    auto q = [](const std::u8string &s) { return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size())); };
+    QStringList matrices;
+    for (const auto &m : application::matrixNames())
+        matrices << q(m);
+    int videoWidth = 0, videoHeight = 0;
+    if (const auto frame = m_video->session().lastFrame(); frame && m_video->session().state() == application::VideoSession::State::Ready) {
+        videoWidth = frame->width;
+        videoHeight = frame->height;
+    }
+    const bool link = m_settingsFile.isEmpty() ? false
+                                               : QSettings(m_settingsFile, QSettings::IniFormat)
+                                                     .value(QStringLiteral("ScriptInfo/LinkResolutions"), false)
+                                                     .toBool();
+    return {{QStringLiteral("title"), q(p.title)},
+            {QStringLiteral("originalScript"), q(p.originalScript)},
+            {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
+            {QStringLiteral("originalEditing"), q(p.originalEditing)},
+            {QStringLiteral("originalTiming"), q(p.originalTiming)},
+            {QStringLiteral("updatedBy"), q(p.updatedBy)},
+            {QStringLiteral("playResX"), p.playResX},
+            {QStringLiteral("playResY"), p.playResY},
+            {QStringLiteral("layoutResX"), p.layoutResX},
+            {QStringLiteral("layoutResY"), p.layoutResY},
+            {QStringLiteral("matrix"), p.matrix},
+            {QStringLiteral("matrices"), matrices},
+            {QStringLiteral("wrapStyle"), p.wrapStyle},
+            {QStringLiteral("reverseCollisions"), p.reverseCollisions},
+            {QStringLiteral("scaledBorderAndShadow"), p.scaledBorderAndShadow},
+            {QStringLiteral("videoWidth"), videoWidth},
+            {QStringLiteral("videoHeight"), videoHeight},
+            {QStringLiteral("linkResolutions"), link}};
+}
+
+bool Application::applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    if (!m_settingsFile.isEmpty())
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("ScriptInfo/LinkResolutions"), linkResolutions);
+    application::ScriptProperties p;
+    p.title = toU8(values.value(QStringLiteral("title")).toString());
+    p.originalScript = toU8(values.value(QStringLiteral("originalScript")).toString());
+    p.originalTranslation = toU8(values.value(QStringLiteral("originalTranslation")).toString());
+    p.originalEditing = toU8(values.value(QStringLiteral("originalEditing")).toString());
+    p.originalTiming = toU8(values.value(QStringLiteral("originalTiming")).toString());
+    p.updatedBy = toU8(values.value(QStringLiteral("updatedBy")).toString());
+    p.playResX = values.value(QStringLiteral("playResX")).toInt();
+    p.playResY = values.value(QStringLiteral("playResY")).toInt();
+    p.layoutResX = values.value(QStringLiteral("layoutResX")).toInt();
+    p.layoutResY = values.value(QStringLiteral("layoutResY")).toInt();
+    p.matrix = values.value(QStringLiteral("matrix")).toInt();
+    p.wrapStyle = values.value(QStringLiteral("wrapStyle")).toInt();
+    p.reverseCollisions = values.value(QStringLiteral("reverseCollisions")).toBool();
+    p.scaledBorderAndShadow = values.value(QStringLiteral("scaledBorderAndShadow")).toBool();
+    application::ScriptPropertiesEdits e;
+    auto edited = [&](const char *key) { return edits.value(QLatin1String(key)).toBool(); };
+    e.title = edited("title");
+    e.originalScript = edited("originalScript");
+    e.originalTranslation = edited("originalTranslation");
+    e.originalEditing = edited("originalEditing");
+    e.originalTiming = edited("originalTiming");
+    e.updatedBy = edited("updatedBy");
+    e.playResX = edited("playResX");
+    e.playResY = edited("playResY");
+    e.layoutResX = edited("layoutResX");
+    e.layoutResY = edited("layoutResY");
+    const bool done = application::applyScriptProperties(*session, p, e, linkResolutions).has_value();
+    m_editor->reloadFromSession();
     refreshViews();
     return done;
 }

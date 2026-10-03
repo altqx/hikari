@@ -614,6 +614,17 @@ ApplicationWindow {
                 onTriggered: root.workspaceLayout.restoreBackup()
             }
         }
+        // Legacy Subtitles menu; its entries join as their cards land.
+        Menu {
+            objectName: "subtitlesMenu"
+            title: qsTr("&Subtitles")
+            MenuItem {
+                objectName: "assProperties"
+                text: qsTr("ASS file properties")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: scriptPropertiesDialog.openFor()
+            }
+        }
         Menu { title: qsTr("&Help") }
     }
 
@@ -2095,6 +2106,11 @@ ApplicationWindow {
                 text: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
             }
         }
+    }
+    ScriptPropertiesDialog {
+        id: scriptPropertiesDialog
+        app: root.app
+        anchors.centerIn: parent
     }
     FontDialog {
         id: fontDialog

@@ -875,6 +875,44 @@ private slots:
         placement->close();
     }
 
+    // Y3: Subtitles > ASS file properties writes the changed fields as one step.
+    void scriptPropertiesDialogWritesTheChangedFields()
+    {
+        const QString path = dir.filePath(QStringLiteral("props.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTitle: Show\nPlayResX: 640\nPlayResY: 360\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        QVERIFY(dialog);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propTitle")->property("text").toString(), QStringLiteral("Show"));
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propWidth")->property("value").toInt(), 640);
+        auto *translator = dialogItem("scriptPropertiesDialog", "propTranslator");
+        translator->setProperty("text", QStringLiteral("Someone"));
+        QVERIFY(QMetaObject::invokeMethod(translator, "textEdited"));
+        auto *width = dialogItem("scriptPropertiesDialog", "propWidth");
+        width->setProperty("value", 1280);
+        QVERIFY(QMetaObject::invokeMethod(width, "valueModified"));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Changing the subtitle header"));
+        const auto &d = session->document();
+        QCOMPARE(d.scriptInfo(u8"Original Translation"), std::optional<std::u8string>(u8"Someone"));
+        QCOMPARE(d.scriptInfo(u8"PlayResX"), std::optional<std::u8string>(u8"1280"));
+        QCOMPARE(d.scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"360")); // height not edited
+        QCOMPARE(d.scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+        application->editor().discard();
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));

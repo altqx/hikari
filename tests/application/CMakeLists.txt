@@ -32,3 +32,5 @@ hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_script_properties_tests SOURCES script_properties_tests.cpp
+    LIBRARIES hikari_application LABELS application)
