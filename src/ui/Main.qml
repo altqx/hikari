@@ -85,6 +85,13 @@ ApplicationWindow {
         shown[next].forceActiveFocus(Qt.TabFocusReason)
     }
 
+    // Legacy GLOBAL_REMOVE_LINES.
+    Shortcut {
+        sequences: ["Shift+Del"]
+        context: Qt.WindowShortcut
+        enabled: root.shell.hasEditingTarget
+        onActivated: root.app.deleteLines()
+    }
     Shortcut {
         sequences: ["F6"]
         context: Qt.WindowShortcut
@@ -636,6 +643,41 @@ ApplicationWindow {
                 onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
                 onLineDragged: id => root.app.dragSelection(id)
                 onSelectAllRequested: root.app.selectAllLines()
+                onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                // Legacy GRID_DUPLICATE_LINES (Ctrl+D in the Grid).
+                Keys.onPressed: event => {
+                    if ((event.modifiers & Qt.ControlModifier) && event.key === Qt.Key_D) {
+                        root.app.duplicateLines()
+                        event.accepted = true
+                    }
+                }
+                Menu {
+                    id: gridMenu
+                    objectName: "gridMenu"
+                    Menu {
+                        title: qsTr("&Insert")
+                        MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: root.app.insertLine(true) }
+                        MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: root.app.insertLine(false) }
+                        MenuItem {
+                            objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
+                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "video")
+                        }
+                        MenuItem {
+                            objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
+                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "video")
+                        }
+                        MenuItem {
+                            objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
+                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "frame")
+                        }
+                        MenuItem {
+                            objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
+                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "frame")
+                        }
+                    }
+                    MenuItem { objectName: "duplicateLines"; text: qsTr("&Duplicate lines\tCtrl+D"); onTriggered: root.app.duplicateLines() }
+                    MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
+                }
             }
         }
 

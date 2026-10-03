@@ -81,6 +81,13 @@ public:
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers);
     Q_INVOKABLE void dragSelection(qulonglong id);
     Q_INVOKABLE void selectAllLines();
+
+    // Grid structural commands (G3): one undo step each, on the editing target.
+    // `timing`: "" plain, "video" (the shown frame's time, 4 s) or "frame"
+    // (copies of the selection timed to the shown frame).
+    Q_INVOKABLE bool insertLine(bool before, const QString &timing = {});
+    Q_INVOKABLE bool duplicateLines();
+    Q_INVOKABLE bool deleteLines();
     // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
     void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
 

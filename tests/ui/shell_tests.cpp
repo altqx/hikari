@@ -388,6 +388,47 @@ private slots:
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first12"));
     }
 
+    // G3: the Grid context menu, Ctrl+D and Shift+Delete.
+    void gridMenuInsertsDuplicatesAndDeletes()
+    {
+        const QString path = writeFile(dir, "g3.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto texts = [&] {
+            QStringList out;
+            for (const auto *l : session->document().lines())
+                out << QString::fromUtf8(reinterpret_cast<const char *>(l->text.data()), qsizetype(l->text.size()));
+            return out;
+        };
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        // Right click opens the menu; Insert after fills the gap up to b.
+        const QPoint centre = grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint();
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centre);
+        auto *menu = grid->findChild<QObject *>(QStringLiteral("gridMenu"));
+        QVERIFY(menu);
+        QTRY_VERIFY(menu->property("visible").toBool());
+        auto *insertAfter = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("insertAfter"));
+        QVERIFY(insertAfter);
+        QVERIFY(QMetaObject::invokeMethod(insertAfter, "triggered"));
+        QTRY_COMPARE(texts(), (QStringList{"a", "", "b"}));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 2'000'000);
+        QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 5'000'000);
+        QCOMPARE(item<QObject>("lineText")->property("text").toString(), QString()); // the new Line is shown
+        // Ctrl+D in the Grid duplicates the selection; Shift+Delete deletes it.
+        grid->forceActiveFocus();
+        press(Qt::Key_End);
+        press(Qt::Key_D, Qt::ControlModifier);
+        QTRY_COMPARE(texts(), (QStringList{"a", "", "b", "b"}));
+        press(Qt::Key_Delete, Qt::ShiftModifier);
+        QTRY_COMPARE(texts(), (QStringList{"a", "", "b"}));
+        QVERIFY(session->undo());
+        QCOMPARE(texts(), (QStringList{"a", "", "b", "b"}));
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

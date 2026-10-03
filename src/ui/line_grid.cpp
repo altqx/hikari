@@ -45,7 +45,7 @@ LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
 {
     setOpaquePainting(true);
     setActiveFocusOnTab(true);
-    setAcceptedMouseButtons(Qt::LeftButton); // click, Ctrl/Shift-click and drag selection (G1)
+    setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton); // selection gestures (G1), context menu (G3)
     setFlag(ItemIsFocusScope, false);
     installGridAccessibility();
     updateRowHeight();
@@ -267,6 +267,16 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
 
 void LineGrid::mousePressEvent(QMouseEvent *event)
 {
+    if (event->button() == Qt::RightButton) {
+        forceActiveFocus(Qt::MouseFocusReason);
+        // Legacy: a right click on an unselected row selects it first.
+        const int row = rowAt(event->position().y());
+        if (const auto id = row >= 0 ? lineAtRow(row) : std::nullopt; id && !isRowSelected(row))
+            emit lineClicked(id->value, 0);
+        emit contextMenuRequested(event->position().x(), event->position().y());
+        event->accept();
+        return;
+    }
     if (event->button() != Qt::LeftButton) {
         event->ignore();
         return;

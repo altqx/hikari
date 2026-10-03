@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/application/grid_commands.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 
@@ -469,6 +470,60 @@ void Application::selectAllLines()
     const auto target = m_workspace.editingTarget();
     if (auto *session = target ? m_files->session(*target) : nullptr)
         applySelection(gridSelection().selectAll(session->selection()));
+}
+
+bool Application::insertLine(bool before, const QString &timing)
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    const auto where = before ? application::InsertWhere::Before : application::InsertWhere::After;
+    std::expected<void, application::CommandRefusal> done;
+    if (timing.isEmpty()) {
+        done = application::insertLine(*session, where);
+    } else {
+        // Legacy needs video for these: the shown frame's start and the next one's.
+        const auto &video = m_video->session();
+        const auto frame = video.shownFrame();
+        const auto start = frame ? video.frameStart(*frame) : std::nullopt;
+        if (!start)
+            return false;
+        const auto next = video.frameStart(*frame + 1);
+        const std::int64_t startMs = start->microseconds() / 1000;
+        if (timing == QLatin1String("frame"))
+            done = application::insertWithFrameTimes(
+                *session, where, {startMs, next ? next->microseconds() / 1000 : startMs});
+        else
+            done = application::insertLine(*session, where, startMs);
+    }
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done.has_value();
+}
+
+bool Application::duplicateLines()
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    const bool done = application::duplicateLines(*session).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::deleteLines()
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    const bool done = application::deleteLines(*session).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
 }
 
 QVariantMap Application::qmlProperties()

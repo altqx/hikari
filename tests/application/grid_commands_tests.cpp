@@ -1,0 +1,182 @@
+// G3: insert, duplicate and delete (legacy SubsGrid at 20d647c4), one undo
+// step each, with the legacy timing, run and selection rules.
+
+#include "hikari/application/grid_commands.h"
+#include "hikari/core/ass_load.h"
+
+#include <gtest/gtest.h>
+
+#include <cstring>
+#include <string_view>
+
+using namespace hikari;
+using namespace hikari::application;
+
+namespace {
+
+core::Document load(std::string_view text)
+{
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    return core::loadAss(bytes).document;
+}
+
+// a 1-2 s, b 5-6 s (Actor B, margin 7), c 6.5-8 s.
+constexpr std::string_view kThree = "[Events]\n"
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                    "Dialogue: 2,0:00:05.00,0:00:06.00,Sign,B,7,0,0,fx,b\n"
+                                    "Dialogue: 0,0:00:06.50,0:00:08.00,Default,,0,0,0,,c\n";
+
+struct GridCommandsTest : ::testing::Test {
+    EditSession session{load(kThree)};
+    core::LineId a{1}, b{2}, c{3};
+    void select(std::set<core::LineId> lines, core::LineId active) { session.setSelection(Selection{active, lines, active, {}}); }
+    std::vector<std::u8string> texts() const
+    {
+        std::vector<std::u8string> out;
+        for (const auto *l : session.document().lines())
+            out.push_back(l->text);
+        return out;
+    }
+    const core::LineRecord &line(std::size_t i) const { return *session.document().lines()[i]; }
+    static std::int64_t ms(core::DocumentTime t) { return t.microseconds() / 1000; }
+};
+
+TEST_F(GridCommandsTest, InsertBeforeStartsFourSecondsEarlierAndCopiesTheFields)
+{
+    select({b}, b);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(insertLine(session, InsertWhere::Before));
+    ASSERT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"", u8"b", u8"c"}));
+    const auto &n = line(1);
+    EXPECT_EQ(ms(n.start.value), 1000); // 5000 - 4000 (a ends at 2000, before b's start)
+    EXPECT_EQ(ms(n.end.value), 5000);
+    EXPECT_EQ(n.style, u8"Sign");
+    EXPECT_EQ(n.actor, u8"B");
+    EXPECT_EQ(n.layer.value, 2);
+    EXPECT_EQ(n.effect, u8"fx");
+    EXPECT_EQ(session.selection().active, n.id);
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{n.id});
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Inserting line");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c"}));
+}
+
+TEST_F(GridCommandsTest, InsertBeforeAnOverlappedLineTakesThePreviousEnd)
+{
+    // Legacy quirk, characterized: the previous Line ends after this one
+    // starts, so the new Line runs from 7.0 s to 6.5 s.
+    EditSession overlap{load("[Events]\n"
+                             "Dialogue: 0,0:00:05.00,0:00:07.00,Default,,0,0,0,,x\n"
+                             "Dialogue: 0,0:00:06.50,0:00:08.00,Default,,0,0,0,,y\n")};
+    overlap.setSelection(Selection{core::LineId{2}, {core::LineId{2}}, {}, {}});
+    ASSERT_TRUE(insertLine(overlap, InsertWhere::Before));
+    const auto &n = *overlap.document().lines()[1];
+    EXPECT_EQ(ms(n.start.value), 7000);
+    EXPECT_EQ(ms(n.end.value), 6500);
+}
+
+TEST_F(GridCommandsTest, InsertBeforeTheFirstLineClampsAtZero)
+{
+    select({a}, a);
+    ASSERT_TRUE(insertLine(session, InsertWhere::Before));
+    EXPECT_EQ(ms(line(0).start.value), 0);
+    EXPECT_EQ(ms(line(0).end.value), 1000);
+}
+
+TEST_F(GridCommandsTest, InsertAfterFillsTheGapOrLastsFourSeconds)
+{
+    select({a}, a);
+    ASSERT_TRUE(insertLine(session, InsertWhere::After));
+    EXPECT_EQ(ms(line(1).start.value), 2000);
+    EXPECT_EQ(ms(line(1).end.value), 5000); // up to b's start
+    select({c}, c);
+    ASSERT_TRUE(insertLine(session, InsertWhere::After));
+    EXPECT_EQ(ms(line(4).start.value), 8000);
+    EXPECT_EQ(ms(line(4).end.value), 12000); // no next Line
+    EXPECT_EQ(session.selection().active, line(4).id);
+}
+
+TEST_F(GridCommandsTest, InsertWithVideoTimeStartsThereForFourSeconds)
+{
+    select({b}, b);
+    ASSERT_TRUE(insertLine(session, InsertWhere::After, 3456));
+    EXPECT_EQ(ms(line(2).start.value), 3450); // ZEROIT
+    EXPECT_EQ(ms(line(2).end.value), 7450);
+    EXPECT_EQ(line(2).text, u8"");
+}
+
+TEST_F(GridCommandsTest, InsertWithFrameTimesCopiesTheSelectedLines)
+{
+    select({a, c}, c);
+    ASSERT_TRUE(insertWithFrameTimes(session, InsertWhere::After, FrameTimes{1001, 1043}));
+    ASSERT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"a", u8"c"}));
+    EXPECT_EQ(ms(line(3).start.value), 1000);
+    EXPECT_EQ(ms(line(3).end.value), 1040);
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{line(3).id, line(4).id}));
+    EXPECT_EQ(session.selection().active, line(3).id);
+    ASSERT_TRUE(session.undo());
+    select({b}, b);
+    ASSERT_TRUE(insertWithFrameTimes(session, InsertWhere::Before, FrameTimes{2000, 2040}));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"b", u8"c"}));
+    EXPECT_EQ(line(1).id, session.selection().active);
+}
+
+TEST_F(GridCommandsTest, DuplicateCopiesTheFirstContiguousRun)
+{
+    select({a, b}, a);
+    ASSERT_TRUE(duplicateLines(session));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"a", u8"b", u8"c"}));
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{line(2).id, line(3).id}));
+    EXPECT_EQ(session.history().back().name, "Duplicating lines");
+    ASSERT_TRUE(session.undo());
+    // A shown unselected Line ends the run: only a is copied.
+    select({a, c}, a);
+    ASSERT_TRUE(duplicateLines(session));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"a", u8"b", u8"c"}));
+    ASSERT_TRUE(session.undo());
+    // A hidden unselected Line does not: a and c are copied after c.
+    select({a, c}, a);
+    ASSERT_TRUE(duplicateLines(session, [&](core::LineId id) { return id != b; }));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"a", u8"c"}));
+    ASSERT_TRUE(session.undo());
+    // GRID_DUPLICATION_DONT_CHANGE_SELECTION keeps the originals selected.
+    select({b}, b);
+    ASSERT_TRUE(duplicateLines(session, {}, true));
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{b});
+}
+
+TEST_F(GridCommandsTest, DeleteRemovesTheSelectionAndActivatesTheNextLine)
+{
+    select({a, b}, b);
+    ASSERT_TRUE(deleteLines(session));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"c"}));
+    EXPECT_EQ(session.selection().active, c);
+    EXPECT_EQ(session.history().back().name, "Deleting lines");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c"}));
+    EXPECT_EQ(line(0).id, a); // identities come back
+}
+
+TEST_F(GridCommandsTest, DeletingEveryLineLeavesTheDefaultLine)
+{
+    select({a, b, c}, a);
+    ASSERT_TRUE(deleteLines(session));
+    ASSERT_EQ(session.document().lines().size(), 1u);
+    EXPECT_EQ(line(0).text, u8"");
+    EXPECT_EQ(line(0).style, u8"Default");
+    EXPECT_EQ(ms(line(0).end.value), 5000);
+    EXPECT_EQ(session.selection().active, line(0).id);
+}
+
+TEST_F(GridCommandsTest, CommandsAreRefusedOnAReadOnlyTarget)
+{
+    select({b}, b);
+    session.setReadOnly(true);
+    EXPECT_EQ(insertLine(session, InsertWhere::Before).error(), CommandRefusal::ReadOnly);
+    EXPECT_EQ(deleteLines(session).error(), CommandRefusal::ReadOnly);
+    EXPECT_EQ(texts().size(), 3u);
+}
+
+} // namespace

@@ -83,6 +83,8 @@ signals:
     // Dragging with the button held reaches another Line (block select).
     void lineDragged(qulonglong lineId);
     void selectAllRequested();
+    // A right click: the context menu at (x, y) in item coordinates.
+    void contextMenuRequested(qreal x, qreal y);
     void modelChanged();
     void contentYChanged();
     void contentHeightChanged();
