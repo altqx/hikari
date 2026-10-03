@@ -38,6 +38,10 @@ add_library(hikari_depctrl_downloadmanager SHARED "${_hikari_depctrl}/threaded-l
     "${_hikari_depctrl}/threaded-libcurl/DownloadManager.cpp" "${_hikari_depctrl}/threaded-libcurl/DownloadManagerC.cpp"
     "${_hikari_depctrl}/threaded-libcurl/sha1.c")
 target_link_libraries(hikari_depctrl_downloadmanager PRIVATE CURL::libcurl)
+if(WIN32)
+    # DownloadManager::isInternetConnected uses InternetGetConnectedState.
+    target_link_libraries(hikari_depctrl_downloadmanager PRIVATE wininet)
+endif()
 # The bundled sha1.c names its functions SHA1_*, as OpenSSL's libcrypto does;
 # with curl linked statically over OpenSSL (Linux) they would collide.
 target_compile_definitions(hikari_depctrl_downloadmanager PRIVATE SHA1_Transform=hikari_dm_SHA1_Transform
