@@ -215,19 +215,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
     // F3: spelling options, the Dictionary folder and the Grid's marks.
-    m_spellingText = ui::qtSpellingText();
+    m_spellingText = backends::legacySpellingText();
     m_dictionaryDir = options.dictionaryDir;
     if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
         m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    m_bundledDictionaryDir = options.bundledDictionaryDir;
     if (!m_settingsFile.isEmpty()) {
         const QSettings ini(m_settingsFile, QSettings::IniFormat);
         m_spellingOn = ini.value(QStringLiteral("Spelling/On"), true).toBool();
         m_dictionaryLanguage = ini.value(QStringLiteral("Spelling/Language"), QStringLiteral("en_US")).toString();
         m_suggestionsOnDoubleClick = ini.value(QStringLiteral("Spelling/SuggestionsOnDoubleClick"), false).toBool();
     }
-    if (!m_dictionaryDir.isEmpty())
-        m_spellChecker = std::make_unique<application::SpellChecker>(
-            std::filesystem::path(m_dictionaryDir.toStdU16String()), options.spellingBackend);
+    // The user's Dictionary folder first (UserDic.udic lives there), then the
+    // bundled one beside the executable (legacy's only folder).
+    if (!m_dictionaryDir.isEmpty() && options.spellingBackend) {
+        std::vector<std::filesystem::path> folders{std::filesystem::path(m_dictionaryDir.toStdU16String())};
+        if (!m_bundledDictionaryDir.isEmpty() && m_bundledDictionaryDir != m_dictionaryDir)
+            folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
+        m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
+    }
     m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
@@ -1838,9 +1844,9 @@ void Application::setSuggestionsOnDoubleClick(bool on)
 QVariantList Application::dictionaries() const
 {
     QVariantList out;
-    if (m_dictionaryDir.isEmpty())
+    if (!m_spellChecker)
         return out;
-    for (const auto &symbol : application::availableDictionaries(std::filesystem::path(m_dictionaryDir.toStdU16String())))
+    for (const auto &symbol : application::availableDictionaries(m_spellChecker->folders()))
         out << QVariantMap{{QStringLiteral("symbol"), qstr(symbol)}, {QStringLiteral("name"), ui::dictionaryName(qstr(symbol))}};
     return out;
 }
@@ -1958,6 +1964,8 @@ bool Application::addEditorWord(const QString &word)
 
 QVariantMap Application::spellCheckState(bool changed, const QString &problem)
 {
+    if (problem.isEmpty() && m_spellWalk && m_spellWalk->refused())
+        return spellCheckState(changed, tr("The edited line cannot be committed."));
     const auto *current = m_spellWalk && m_spellWalk->current() ? &*m_spellWalk->current() : nullptr;
     QStringList suggestions;
     if (current)
@@ -2005,6 +2013,26 @@ QVariantMap Application::openSpellChecker(const QVariantMap &options)
     return spellCheckState(false);
 }
 
+std::optional<QVariantMap> Application::restartStaleSpellCheck(application::EditSession &session,
+                                                               const QVariantMap &options)
+{
+    // The accepted draft policy: leaving the editor for the window commits
+    // its draft. When that (or anything else) changed the active Line or its
+    // text since the window's word was found, legacy's OnActive would start
+    // again; the action does that instead of acting on a word or offsets the
+    // window no longer matches.
+    m_editor->commit();
+    const bool other = m_workspace.editingTarget() != m_spellWalkDocument;
+    if (!m_spellWalk->current() || !m_spellWalk->stale(session, other))
+        return std::nullopt;
+    m_spellWalkDocument = m_workspace.editingTarget();
+    m_spellWalk->restart(session, walkOptions(options));
+    showSpellCheckWord();
+    QVariantMap state = spellCheckState(false);
+    state.insert(QStringLiteral("restarted"), true);
+    return state;
+}
+
 QVariantMap Application::spellCheckerActivated(const QVariantMap &options)
 {
     auto *session = targetSession();
@@ -2037,20 +2065,28 @@ QString refusalText(application::CommandRefusal refusal)
     }
 }
 
+QVariantMap unchangedState()
+{
+    return {{QStringLiteral("unchanged"), true}};
+}
+
 } // namespace
 
 QVariantMap Application::spellCheckerReplace(const QString &replacement, const QVariantMap &options)
 {
     auto *session = targetSession();
     if (!m_spellWalk || !session)
-        return spellCheckState(false);
-    m_editor->commit();
+        return unchangedState();
+    if (auto restarted = restartStaleSpellCheck(*session, options))
+        return *restarted;
     const auto result = m_spellWalk->replace(*session, replacement.toStdU16String(), walkOptions(options));
     if (!result)
         return spellCheckState(false, refusalText(result.error()));
-    if (*result)
-        showSpellCheckWord();
-    return spellCheckState(*result);
+    // SpellCheckerDialog::Replace returns before touching the window.
+    if (*result == application::SpellCheckWalk::Result::Unchanged)
+        return unchangedState();
+    showSpellCheckWord();
+    return spellCheckState(true);
 }
 
 QVariantMap Application::spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
@@ -2058,14 +2094,17 @@ QVariantMap Application::spellCheckerReplaceAll(const QString &misspell, const Q
 {
     auto *session = targetSession();
     if (!m_spellWalk || !session)
-        return spellCheckState(false);
-    m_editor->commit();
+        return unchangedState();
+    if (auto restarted = restartStaleSpellCheck(*session, options))
+        return *restarted;
     const auto result = m_spellWalk->replaceAll(*session, misspell.toStdU16String(), replacement.toStdU16String(),
                                                 walkOptions(options));
     if (!result)
         return spellCheckState(false, refusalText(result.error()));
+    if (*result == application::SpellCheckWalk::Result::Unchanged)
+        return unchangedState();
     showSpellCheckWord();
-    return spellCheckState(*result);
+    return spellCheckState(*result == application::SpellCheckWalk::Result::Replaced);
 }
 
 QVariantMap Application::spellCheckerIgnore(const QVariantMap &options)
@@ -2073,6 +2112,8 @@ QVariantMap Application::spellCheckerIgnore(const QVariantMap &options)
     auto *session = targetSession();
     if (!m_spellWalk || !session)
         return spellCheckState(false);
+    if (auto restarted = restartStaleSpellCheck(*session, options))
+        return *restarted;
     m_spellWalk->ignore(*session, walkOptions(options));
     showSpellCheckWord();
     return spellCheckState(false);
@@ -2083,6 +2124,8 @@ QVariantMap Application::spellCheckerIgnoreAll(const QString &word, const QVaria
     auto *session = targetSession();
     if (!m_spellWalk || !session)
         return spellCheckState(false);
+    if (auto restarted = restartStaleSpellCheck(*session, options))
+        return *restarted;
     m_spellWalk->ignoreAll(*session, word.toStdU16String(), walkOptions(options));
     showSpellCheckWord();
     return spellCheckState(false);
@@ -2093,6 +2136,8 @@ QVariantMap Application::spellCheckerAddWord(const QString &word, const QVariant
     auto *session = targetSession();
     if (!m_spellWalk || !session)
         return spellCheckState(false);
+    if (auto restarted = restartStaleSpellCheck(*session, options))
+        return *restarted;
     m_spellWalk->addWord(*session, word.toStdU16String(), walkOptions(options));
     showSpellCheckWord();
     return spellCheckState(false);

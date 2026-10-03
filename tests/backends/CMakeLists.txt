@@ -181,3 +181,10 @@ target_compile_definitions(hikari_backends_video_session_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_video_session_tests hikari_media_helper hikari_media_fixtures)
+
+# F3 / R2-hunspell: Hunspell over tiny test dictionaries, and boost::locale's
+# word segmentation over ICU.
+hikari_add_gtest(hikari_backends_legacy_spelling_tests SOURCES legacy_spelling_tests.cpp
+    LIBRARIES hikari_backends LABELS backends)
+target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
+    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling")

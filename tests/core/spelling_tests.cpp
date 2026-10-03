@@ -216,9 +216,11 @@ TEST(Spelling, UserDictionaryFile)
               (std::vector<std::u16string>{u"alpha", u"  beta", u"123", u"-", u"+7", u"12a", u"", u"gamma"}));
     EXPECT_TRUE(legacyIsNumber(u""));
     EXPECT_FALSE(legacyIsNumber(u"1.5"));
-    // AddWord: the word alone without a readable file, else "\n" + word.
+    // AddWord: the word alone without a readable file or with an empty one
+    // (OpenWrite::FileOpen returns false for empty text), else "\n" + word.
     EXPECT_EQ(appendUserWord(std::nullopt, u"alpha"), u"alpha");
-    EXPECT_EQ(appendUserWord(std::u16string_view(u""), u"alpha"), u"\nalpha");
+    EXPECT_EQ(appendUserWord(std::u16string_view(u""), u"alpha"), u"alpha");
+    EXPECT_EQ(appendUserWord(std::u16string_view(u"\n"), u"alpha"), u"\n\nalpha");
     EXPECT_EQ(appendUserWord(std::u16string_view(u"alpha\r\n"), u"beta"), u"alpha\r\n\nbeta");
     // RemoveWords: exact (case-sensitive) matches go; the rest is written
     // trimmed, each line followed by CRLF.

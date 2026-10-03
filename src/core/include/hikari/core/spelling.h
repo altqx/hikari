@@ -91,7 +91,8 @@ bool legacyIsNumber(std::u16string_view text);
 std::vector<std::u16string> userDictionaryWords(std::u16string_view content);
 // LoadAddedMisspels: the list "Remove from dictionary" offers (every line).
 std::vector<std::u16string> userDictionaryEntries(std::u16string_view content);
-// AddWord: the file's new text (the word alone when the file could not be read).
+// AddWord: the file's new text (the word alone when the file could not be
+// read or reads as empty text, as OpenWrite::FileOpen fails for both).
 std::u16string appendUserWord(std::optional<std::u16string_view> content, std::u16string_view word);
 // RemoveWords: the remaining lines, each followed by CRLF, and the removed
 // lines (in file order). Nothing is written when no line matched.

@@ -5,10 +5,10 @@
 #include "docking.h"
 #include "line_grid.h"
 #include "line_table_model.h"
-#include "spelling/fake_spelling.h"
 
 #include <QAccessible>
 #include <QClipboard>
+#include <QStyleHints>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QSettings>
@@ -1098,6 +1098,7 @@ private slots:
         QVERIFY2(text.contains(QStringLiteral("version %1").arg(application->updates().version())), qPrintable(text));
         QVERIFY(text.contains(QStringLiteral("Based on Kainote by Marcin Drob")));
         QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
+        QVERIFY(text.contains(QStringLiteral("Hunspell - Copyright"))); // F3: linked again (R2-hunspell)
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
         auto *credits = root->findChild<QObject *>(QStringLiteral("creditsDialog"));
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
@@ -1233,16 +1234,17 @@ private slots:
     }
 
 private:
-    // F3: a session with a Dictionary folder and the fake spelling backend
-    // (Hunspell is not a dependency yet), or none.
-    void restartWithSpelling(const QString &home, bool backend)
+    // F3: a session with a Dictionary folder beside its settings and the
+    // production Hunspell backend (R2-hunspell), or no backend at all.
+    void restartWithSpelling(const QString &home, bool backend, const QString &bundled = {})
     {
         delete engine;
         delete application;
         app::Application::Options options;
         options.settingsFile = home + QStringLiteral("/hikari.ini");
-        if (backend)
-            options.spellingBackend = fakes::FakeSpelling::loader();
+        if (!backend)
+            options.spellingBackend = {};
+        options.bundledDictionaryDir = bundled;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
@@ -1254,14 +1256,52 @@ private:
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowExposed(window));
     }
-    static void writeDictionary(const QString &home)
+    // A tiny Hunspell dictionary (no affix rules, ISO8859-1 by default).
+    static void writeDictionary(const QString &home, const QString &folder = QStringLiteral("Dictionary"))
     {
-        QDir().mkpath(home + QStringLiteral("/Dictionary"));
-        QFile aff(home + QStringLiteral("/Dictionary/en_US.aff"));
+        QDir().mkpath(home + QLatin1Char('/') + folder);
+        QFile aff(home + QLatin1Char('/') + folder + QStringLiteral("/en_US.aff"));
         QVERIFY(aff.open(QIODevice::WriteOnly));
-        QFile dic(home + QStringLiteral("/Dictionary/en_US.dic"));
+        QFile dic(home + QLatin1Char('/') + folder + QStringLiteral("/en_US.dic"));
         QVERIFY(dic.open(QIODevice::WriteOnly));
         dic.write("5\nHello\nworld\nThe\ntext\ngood\n");
+    }
+    // A Menu's items in order (Menu.itemAt).
+    static QList<QQuickItem *> menuItems(QObject *menu)
+    {
+        QList<QQuickItem *> out;
+        const int count = menu->property("count").toInt();
+        for (int i = 0; i < count; ++i) {
+            QQuickItem *entry = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+            out << entry;
+        }
+        return out;
+    }
+    static bool hasSubMenu(QObject *menu, const QString &title)
+    {
+        for (QQuickItem *entry : menuItems(menu)) {
+            auto *sub = entry ? entry->property("subMenu").value<QObject *>() : nullptr;
+            if (sub && sub->property("title").toString() == title)
+                return true;
+        }
+        return false;
+    }
+    // A right click. Offscreen, a text field's context menu request carries
+    // its caret's position rather than the click's, so a left click puts the
+    // caret there first.
+    void rightClick(const QPoint &point)
+    {
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, point);
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, point);
+    }
+    // The scene point of a character of an editor field.
+    QPoint fieldPoint(QQuickItem *field, int position) const
+    {
+        QRectF rect;
+        QMetaObject::invokeMethod(field, "positionToRectangle", Q_RETURN_ARG(QRectF, rect), Q_ARG(int, position));
+        return field->mapToScene(QPointF(rect.x() + 2, rect.center().y())).toPoint();
     }
     QVariantList appliedMarks(const char *field) const
     {
@@ -1387,6 +1427,192 @@ private slots:
                      .arg(QDir::toNativeSeparators(QFileInfo(empty.path()).absoluteFilePath())));
         QVERIFY(!application->spellingOn());
         QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
+    }
+
+    // F3: without a spelling backend there is no spell checker: no notice,
+    // no Spelling/On change, bracket marks only. The bundled Dictionary
+    // folder (legacy's, beside the executable) is read after the user's.
+    void spellingWithoutBackendAndBundledDictionaries()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), false);
+        const QString path = writeFile(dir, "spelling-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold}\n");
+        QVERIFY(application->openFile(path));
+        auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
+        QCOMPARE(marks(), (QVariantList{5, 5}));
+        QTest::qWait(50);
+        QVERIFY(!engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"))->property("visible").toBool());
+        QVERIFY(application->spellingOn());
+        QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("Spelling/On")));
+        QVERIFY(application->dictionaries().isEmpty());
+
+        // Only the bundled folder has a dictionary: it loads, and the user's
+        // words go to the user's folder.
+        QTemporaryDir user, bundled;
+        QVERIFY(user.isValid() && bundled.isValid());
+        writeDictionary(bundled.path());
+        restartWithSpelling(user.path(), true, bundled.filePath(QStringLiteral("Dictionary")));
+        QVERIFY(application->openFile(path));
+        QCOMPARE(marks(), (QVariantList{5, 5, 0, 4}));
+        QCOMPARE(application->dictionaries().size(), 1);
+        QVERIFY(application->addEditorWord(QStringLiteral("wrold")));
+        QVERIFY(QFile::exists(user.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
+        QVERIFY(!QFile::exists(bundled.filePath(QStringLiteral("Dictionary/UserDic.udic"))));
+        QCOMPARE(marks(), (QVariantList{5, 5}));
+    }
+
+    // F3: the window's actions after the editor's draft committed (commit on
+    // leave): the walk starts again instead of acting on the shown word,
+    // also when the press on Replace is what brings the window back; Replace
+    // with nothing to replace leaves the window as it is (legacy returns).
+    void spellCheckerActionsAfterEditorTyping()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling-typing.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,good\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
+        // Legacy order: Resample subtitles, then Check spelling.
+        auto *check = root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem"));
+        auto *subtitles = check->property("menu").value<QObject *>();
+        QVERIFY(subtitles);
+        const auto entries = menuItems(subtitles);
+        const auto at = [&](const char *name) {
+            for (qsizetype i = 0; i < entries.size(); ++i)
+                if (entries[i] && entries[i]->objectName() == QLatin1String(name))
+                    return i;
+            return qsizetype(-1);
+        };
+        QCOMPARE(at("checkSpellingMenuItem"), at("resampleMenuItem") + 1);
+
+        QVERIFY(QMetaObject::invokeMethod(check, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *misspell = dialogItem("spellCheckerDialog", "spellMisspell");
+        auto *replacement = dialogItem("spellCheckerDialog", "spellReplacement");
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
+        const auto steps = session->historySize();
+
+        // Back in the editor, typing in the found word's Line; then a press
+        // on Replace brings the window back. The press does not swap the
+        // word; the click commits the draft and starts again from its Line.
+        auto *field = item("lineText");
+        field->forceActiveFocus();
+        application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
+        auto *replace = dialogItem("spellCheckerDialog", "spellReplace");
+        const QPoint centre = replace->mapToScene(QPointF(replace->width() / 2, replace->height() / 2)).toPoint();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, centre);
+        QCoreApplication::processEvents();
+        QTRY_VERIFY(dialog->property("activeFocus").toBool());
+        QTest::qWait(20);
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, centre);
+        QTRY_COMPARE(misspell->property("text").toString(), QStringLiteral("Helo"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Edit Line"));
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->document().lines()[0]->text.data()),
+                                   qsizetype(session->document().lines()[0]->text.size())),
+                 QStringLiteral("Helo wrold"));
+        // The same through the Application call (no press involved).
+        application->editor().textEdited(QStringLiteral("Helo wrold xyzzy"), 4);
+        QVariantMap state = application->spellCheckerReplace(QStringLiteral("Hello"), {});
+        QVERIFY(state.value(QStringLiteral("restarted")).toBool());
+        QCOMPARE(state.value(QStringLiteral("word")).toString(), QStringLiteral("Helo"));
+        QCOMPARE(session->history().back().name, std::string("Edit Line"));
+
+        // Replace with an empty field: nothing happens, the window keeps its word.
+        replacement->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(replace, "click"));
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("Helo"));
+        QVERIFY(!root->findChild<QObject *>(QStringLiteral("spellMessage"))->property("visible").toBool());
+        QVERIFY(application->spellCheckerReplace(QString(), {}).value(QStringLiteral("unchanged")).toBool());
+        replacement->setProperty("text", QStringLiteral("Hello"));
+        QVERIFY(QMetaObject::invokeMethod(replace, "click"));
+        QCOMPARE(session->history().back().name, std::string("Correcting spelling errors"));
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        application->editor().discard();
+    }
+
+    // F3: the editor's spelling menu and the double-click suggestion list.
+    // The suggestions come first; "Spellchecker" and "Installed languages"
+    // are only in the spell-checked field (the Translated one in translation
+    // mode). A double click on a misspelling with
+    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK lists its suggestions without
+    // selecting the word.
+    void editorSpellingMenuAndDoubleClick()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling-menu.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold Teh\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello wrold Teh"));
+        auto *menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QVERIFY(menu);
+        rightClick(fieldPoint(field, 7));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        auto entries = menuItems(menu);
+        QVERIFY(!entries.isEmpty());
+        QCOMPARE(entries.first()->property("text").toString(), QStringLiteral("world"));
+        QVERIFY(hasSubMenu(menu, QStringLiteral("Installed languages")));
+        auto *spellingOn = field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"));
+        QVERIFY(spellingOn && spellingOn->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(entries.first(), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello world Teh"));
+        QCOMPARE(session->history().back().name, std::string("Correcting spelling errors in the text field"));
+
+        // Double click on "Teh" with the option on: the list, no selection.
+        application->setSuggestionsOnDoubleClick(true);
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
+        auto *fix = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("fixSuggestions"));
+        QTRY_VERIFY(fix->property("visible").toBool());
+        QCOMPARE(fix->property("suggestions").toStringList().first(), QStringLiteral("The"));
+        QCOMPARE(field->property("selectedText").toString(), QString());
+        QVERIFY(QMetaObject::invokeMethod(fix, "accept"));
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello world The"));
+        QTRY_VERIFY(!fix->property("visible").toBool());
+        application->setSuggestionsOnDoubleClick(false);
+
+        // Translation mode: the Original field has neither entry.
+        const QString tl = writeFile(dir, "spelling-tl.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
+        QFile f(tl);
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray body = f.readAll();
+        f.close();
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write("[Script Info]\nTLMode: Yes\n\n" + body);
+        f.close();
+        restartWithSpelling(home.path(), true);
+        QVERIFY(application->openFile(tl));
+        field = item("lineText");
+        menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("wrold"));
+        rightClick(fieldPoint(field, 1));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
+        QVERIFY(!field->findChild<QObject *>(QStringLiteral("lineTextSpellingOn"))->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        auto *translated = item("translationText");
+        auto *tlMenu = translated->findChild<QObject *>(QStringLiteral("translationTextMenu"));
+        QVERIFY(tlMenu);
+        rightClick(translated->mapToScene(QPointF(10, 10)).toPoint());
+        QTRY_VERIFY(tlMenu->property("visible").toBool());
+        QVERIFY(hasSubMenu(tlMenu, QStringLiteral("Installed languages")));
+        QVERIFY(QMetaObject::invokeMethod(tlMenu, "close"));
+        application->editor().discard();
     }
 
     // F5: Ctrl+I opens the Timing tool; Shift moves the Lines; start-only asks first.

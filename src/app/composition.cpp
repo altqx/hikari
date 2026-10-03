@@ -3,6 +3,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/backends/legacy_spelling.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -27,6 +28,11 @@ int run(int argc, char **argv, StartupMode mode)
     options.settingsFile =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
     options.recoveryDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Recovery");
+    // F3 / R2-hunspell: Hunspell (the Options default) over the user's
+    // Dictionary folder beside hikari.ini (UserDic.udic, added dictionaries),
+    // then the bundled one beside the executable (legacy's location).
+    options.spellingBackend = backends::hunspellSpellingLoader();
+    options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
     Application application(options);
     // A path on the command line opens as the editing target.
     if (argc > 1)

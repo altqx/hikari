@@ -89,7 +89,9 @@ std::vector<std::string> names(const std::vector<std::u16string> &words)
 } // namespace
 
 // AvailableDics pairs the n-th .dic with the n-th .aff of the listing: a
-// .dic without its .aff shifts every later pair out of step.
+// .dic without its .aff shifts every later pair out of step. Legacy then
+// reads past the shorter .aff list (undefined); the pairing stops at its end
+// (R3-hang-crash-loss).
 TEST_F(Spelling, AvailableDictionariesPairByPosition)
 {
     writeFile(folder / "pl.dic", "1\nkot\n");
@@ -120,7 +122,8 @@ TEST_F(Spelling, InitializeLoadsTheUserDictionary)
 }
 
 // AddWord appends "\n" + word to UserDic.udic (UTF-8 with a BOM, the word
-// alone for a new file); RemoveWords rewrites the remaining lines with CRLF.
+// alone for a new or empty file); RemoveWords rewrites the remaining lines
+// with CRLF.
 TEST_F(Spelling, UserWordsPersist)
 {
     ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
@@ -140,6 +143,43 @@ TEST_F(Spelling, UserWordsPersist)
     // The next AddWord reads the CRLF as LF (text mode) and appends "\n" + word.
     EXPECT_TRUE(checker->addWord(u"zzz"));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\n\nzzz");
+    // Removing every word leaves a BOM-only file; FileOpen reads it as a
+    // failure, so the next AddWord writes the word alone.
+    EXPECT_TRUE(checker->removeWords({u"Gda\u0144sk", u"zzz"}));
+    EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF");
+    EXPECT_FALSE(readUserDictionary(checker->userDictionary()));
+    EXPECT_TRUE(checker->addedWords().empty());
+    EXPECT_TRUE(checker->addWord(u"alpha"));
+    EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF" "alpha");
+    writeFile(checker->userDictionary(), "");
+    EXPECT_TRUE(checker->addWord(u"beta"));
+    EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF" "beta");
+}
+
+// Two Dictionary folders: the user's (UserDic.udic) first, then the bundled
+// one beside the executable. A language loads from the first folder holding
+// both files; the list names each symbol once.
+TEST_F(Spelling, DictionaryFoldersInSearchOrder)
+{
+    const fs::path bundled = folder / "bundled";
+    fs::create_directories(bundled);
+    writeFile(bundled / "en_US.aff", "");
+    writeFile(bundled / "en_US.dic", "1\nbundled\n");
+    writeFile(bundled / "pl.aff", "");
+    writeFile(bundled / "pl.dic", "1\nkot\n");
+    EXPECT_EQ(names(availableDictionaries(std::vector<fs::path>{folder, bundled})),
+              (std::vector<std::string>{"en_US", "pl"}));
+    SpellChecker both({folder, bundled}, fakes::FakeSpelling::loader(&backend));
+    ASSERT_EQ(both.initialize(u"pl"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(both.checkWord(u"kot"));
+    ASSERT_EQ(both.initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_TRUE(both.checkWord(u"Hello")); // the user's folder first
+    EXPECT_FALSE(both.checkWord(u"bundled"));
+    EXPECT_EQ(both.userDictionary(), folder / "UserDic.udic");
+    EXPECT_TRUE(both.addWord(u"Hikari"));
+    EXPECT_TRUE(fs::exists(folder / "UserDic.udic"));
+    EXPECT_FALSE(fs::exists(bundled / "UserDic.udic"));
+    EXPECT_EQ(both.initialize(u"de"), SpellChecker::Status::NoDictionary);
 }
 
 // The Spellchecker window walks from the active Line; the found word's Line
@@ -210,22 +250,22 @@ TEST_F(Spelling, ReplaceIsOneStepAndSkipsTheSameOffset)
     SpellCheckWalk walk(*checker, text);
     const SpellCheckWalk::Options options;
     ASSERT_TRUE(walk.next(session, options));
-    EXPECT_EQ(walk.replace(session, u"", options), false);
-    ASSERT_EQ(walk.replace(session, u"The", options), true);
+    EXPECT_EQ(walk.replace(session, u"", options), SpellCheckWalk::Result::Unchanged);
+    ASSERT_EQ(walk.replace(session, u"The", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(session.historySize(), 2u);
     EXPECT_EQ(session.history().back().name, "Correcting spelling errors");
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "The wo{\\i1}rdd");
     EXPECT_EQ(walk.current()->word, u"wordd");
     // The block stays inside the corrected word.
-    ASSERT_EQ(walk.replace(session, u"world", options), true);
+    ASSERT_EQ(walk.replace(session, u"world", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "The wo{\\i1}rld");
     EXPECT_EQ(walk.current()->word, u"xyz");
     // "xyz" -> "qqq" is still misspelled at offset 0: skipped, on to "txet".
-    ASSERT_EQ(walk.replace(session, u"qqq", options), true);
+    ASSERT_EQ(walk.replace(session, u"qqq", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(walk.current()->word, u"txet");
     // "txet" -> "text" is correct; the next word is "abc" at offset 0 on the
     // next Line, which is not txet's offset (4): found.
-    ASSERT_EQ(walk.replace(session, u"text", options), true);
+    ASSERT_EQ(walk.replace(session, u"text", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(walk.current()->word, u"abc");
     EXPECT_EQ(session.historySize(), 5u);
 
@@ -237,7 +277,7 @@ TEST_F(Spelling, ReplaceIsOneStepAndSkipsTheSameOffset)
     two.setSelection(Selection{top, {top}, top, {}});
     SpellCheckWalk quirk(*checker, text);
     ASSERT_TRUE(quirk.next(two, options));
-    ASSERT_EQ(quirk.replace(two, u"good", options), true);
+    ASSERT_EQ(quirk.replace(two, u"good", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(quirk.current()->word, u"def");
 }
 
@@ -256,7 +296,7 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     SpellCheckWalk walk(*checker, text);
     SpellCheckWalk::Options options{.ignoreComments = true};
     ASSERT_TRUE(walk.next(session, options));
-    ASSERT_EQ(walk.replaceAll(session, u"wrold", u"WoRlD", options), true);
+    ASSERT_EQ(walk.replaceAll(session, u"wrold", u"WoRlD", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(session.historySize(), 2u);
     EXPECT_EQ(session.history().back().name, "Correcting spelling errors");
     const auto lines = session.document().lines();
@@ -264,7 +304,8 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     EXPECT_EQ(utf8(lines[1]->text), "wrold");
     EXPECT_EQ(utf8(lines[2]->text), "{wrold} wroldly");
     // Nothing matched: no step.
-    EXPECT_EQ(walk.replaceAll(session, u"zzz", u"x", options), false);
+    EXPECT_EQ(walk.replaceAll(session, u"zzz", u"x", options), SpellCheckWalk::Result::NothingReplaced);
+    EXPECT_EQ(walk.replaceAll(session, u"", u"x", options), SpellCheckWalk::Result::Unchanged);
     EXPECT_EQ(session.historySize(), 2u);
 
     EditSession tl{load("[Script Info]\nTLMode: Yes\n\n" + std::string(kHeader) +
@@ -274,7 +315,7 @@ TEST_F(Spelling, ReplaceAllKeepsCaseAndTranslationQuirk)
     ASSERT_TRUE(spellsTranslation(tl.document()));
     SpellCheckWalk tlWalk(*checker, text);
     EXPECT_FALSE(tlWalk.next(tl, options)); // the empty translation is checked
-    ASSERT_EQ(tlWalk.replaceAll(tl, u"wrold", u"world", options), true);
+    ASSERT_EQ(tlWalk.replaceAll(tl, u"wrold", u"world", options), SpellCheckWalk::Result::Replaced);
     EXPECT_EQ(utf8(tl.document().lines()[0]->text), "wrold");
     EXPECT_EQ(utf8(tl.document().lines()[0]->translation), "world");
 }
@@ -339,4 +380,78 @@ TEST_F(Spelling, EditorReplacementCommitsTheDraft)
     EXPECT_EQ(utf8(session.document().lines()[0]->text), "good world}");
     EXPECT_EQ(session.document().lines()[0]->start.value.microseconds(), 1500000);
     EXPECT_FALSE(session.draftLine());
+}
+
+// The walk goes over every Line of the Document, hidden ones (filtered or in
+// a closed group) included, as legacy walks the file's keys; the found Line
+// becomes active and selected.
+TEST_F(Spelling, WalkReachesHiddenLines)
+{
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,good\n"
+                                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,wrold\n")};
+    const auto lines = session.document().lines();
+    const auto first = lines[0]->id, hidden = lines[1]->id;
+    ASSERT_TRUE(session.run(Command{"Filtering", session.revision(), {hidden}, [&](core::Document &d) {
+                            return d.editLine(hidden, [](core::LineRecord &l) { l.visibility = core::LineVisibility::Hidden; });
+                        }}));
+    session.setSelection(Selection{first, {first}, first, {}});
+    SpellCheckWalk walk(*checker, text);
+    const SpellCheckWalk::Options options;
+    ASSERT_TRUE(walk.next(session, options));
+    EXPECT_EQ(walk.current()->word, u"wrold");
+    EXPECT_EQ(session.selection().active, hidden);
+    EXPECT_EQ(session.selection().selected, std::set<core::LineId>{hidden});
+}
+
+// An invalid draft under the Block policy keeps its Line: the walk does not
+// move the selection, shows no word and says it was refused; the window's
+// next activation is its message's own and is ignored.
+TEST_F(Spelling, WalkRefusedByABlockedDraft)
+{
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,good\n"
+                                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,wrold\n")};
+    const auto lines = session.document().lines();
+    const auto first = lines[0]->id;
+    session.setSelection(Selection{first, {first}, first, {}});
+    ASSERT_TRUE(session.editDraft(first, DraftChange{.end = core::DocumentTime(0)})); // ends before it starts
+    ASSERT_TRUE(session.draftProblem());
+    SpellCheckWalk walk(*checker, text);
+    const SpellCheckWalk::Options options;
+    EXPECT_FALSE(walk.next(session, options));
+    EXPECT_TRUE(walk.refused());
+    EXPECT_FALSE(walk.current());
+    EXPECT_EQ(session.selection().active, first);
+    EXPECT_EQ(walk.replace(session, u"world", options), SpellCheckWalk::Result::Unchanged);
+    EXPECT_FALSE(walk.activated(session, options));
+    // Once the draft is fixed the next activation starts again.
+    session.discardDraft();
+    EXPECT_TRUE(walk.activated(session, options));
+    EXPECT_FALSE(walk.refused());
+    EXPECT_EQ(walk.current()->word, u"wrold");
+    EXPECT_EQ(session.selection().active, lines[1]->id);
+}
+
+// stale(): the active Line or its text is no longer the one the word was
+// found in; restart() starts again from the active Line's first word.
+TEST_F(Spelling, StaleWordRestarts)
+{
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EditSession session{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,good wrold\n")};
+    const auto line = session.document().lines()[0]->id;
+    session.setSelection(Selection{line, {line}, line, {}});
+    SpellCheckWalk walk(*checker, text);
+    const SpellCheckWalk::Options options;
+    ASSERT_TRUE(walk.next(session, options));
+    EXPECT_FALSE(walk.stale(session));
+    EXPECT_TRUE(walk.stale(session, true)); // another Document
+    ASSERT_TRUE(session.editDraft(line, DraftChange{.text = u8"xyz good wrold"}));
+    EXPECT_FALSE(walk.stale(session)); // a pending draft is not the Line's text yet
+    ASSERT_TRUE(session.commitDraft());
+    EXPECT_TRUE(walk.stale(session));
+    walk.restart(session, options);
+    EXPECT_EQ(walk.current()->word, u"xyz");
+    EXPECT_EQ(walk.current()->start, 0);
+    EXPECT_FALSE(walk.stale(session));
 }

@@ -16,6 +16,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/platform_files.h"
@@ -84,12 +85,17 @@ public:
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
         // file, or a temporary directory without one (tests).
         QString catalogDir;
-        // F3: the spelling backend (legacy Hunspell). None ships yet, so
-        // spell checking reports that it could not start; tests pass a fake.
-        application::SpellingBackendLoader spellingBackend;
-        // The "Dictionary" folder; empty: beside the settings file (none
-        // without one, and then no spell checker).
+        // F3 / R2-hunspell: the spelling backend (Hunspell; tests may pass a
+        // fake). Without one there is no spell checker: no marks but bracket
+        // errors, no notice, and Spelling/On is left as it is.
+        application::SpellingBackendLoader spellingBackend = backends::hunspellSpellingLoader();
+        // The user's "Dictionary" folder (UserDic.udic and dictionaries the
+        // user adds); empty: beside the settings file (none without one, and
+        // then no spell checker).
         QString dictionaryDir;
+        // Bundled dictionaries, searched after the user's folder (legacy
+        // <executable dir>/Dictionary; the composition sets it).
+        QString bundledDictionaryDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -302,8 +308,12 @@ public:
     Q_INVOKABLE bool addEditorWord(const QString &word);
     // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker window. Each call takes the
     // window's {ignoreComments, ignoreUpperCase} and returns its state
-    // {found, word, suggestions, replacement, changed, problem}; found false
-    // is "No spelling errors were found".
+    // {found, word, suggestions, replacement, changed, problem, unchanged,
+    // restarted}; found false is "No spelling errors were found". unchanged:
+    // the action did nothing (legacy returns without touching the window).
+    // restarted: the active Line or its text changed since the word was
+    // shown (the editor's draft commits when the window acts), so the walk
+    // started again from the active Line instead of acting.
     Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
     Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
@@ -472,6 +482,9 @@ private:
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
     QVariantMap spellCheckState(bool changed, const QString &problem = {});
+    // Commits the editor's draft (commit on leave) and, when that or anything
+    // else left the window's word stale, starts the walk again: its state.
+    std::optional<QVariantMap> restartStaleSpellCheck(application::EditSession &session, const QVariantMap &options);
     void showSpellCheckWord();
     std::unique_ptr<application::SpellChecker> m_spellChecker;
     bool m_spellingStarted = false;
@@ -480,6 +493,7 @@ private:
     QString m_dictionaryLanguage = QStringLiteral("en_US");
     bool m_suggestionsOnDoubleClick = false;
     QString m_dictionaryDir;
+    QString m_bundledDictionaryDir;
     std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
     std::optional<application::DocumentId> m_spellWalkDocument;
 };

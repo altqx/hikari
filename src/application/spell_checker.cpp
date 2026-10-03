@@ -100,10 +100,21 @@ std::vector<std::u16string> availableDictionaries(const fs::path &folder)
     const auto dics = listFiles(folder, u".dic");
     const auto affs = listFiles(folder, u".aff");
     std::vector<std::u16string> out;
-    // Legacy reads past the .aff list when it is shorter; here the pairing stops.
+    // R3-hang-crash-loss: legacy reads aff[i] past a shorter .aff list
+    // (undefined); here the pairing stops at its end.
     for (std::size_t i = 0; i < dics.size() && i < affs.size(); ++i)
         if (beforeLastDot(dics[i]) == beforeLastDot(affs[i]))
             out.push_back(pathText(dics[i].stem()));
+    return out;
+}
+
+std::vector<std::u16string> availableDictionaries(const std::vector<fs::path> &folders)
+{
+    std::vector<std::u16string> out;
+    for (const auto &folder : folders)
+        for (auto &symbol : availableDictionaries(folder))
+            if (std::ranges::find(out, symbol) == out.end())
+                out.push_back(std::move(symbol));
     return out;
 }
 
@@ -115,8 +126,8 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
     const std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
     std::u16string text;
     auto byteAt = [&](std::size_t i) { return static_cast<unsigned char>(bytes[i]); };
-    // wxConvAuto: a byte-order mark decides; else UTF-8, else a single-byte
-    // fallback (Latin-1 here; legacy's is the system code page).
+    // wxConvAuto: a byte-order mark decides; else UTF-8, else its default
+    // single-byte fallback, ISO-8859-1 (convauto.cpp ms_defaultMBEncoding).
     if (bytes.size() >= 2 && ((byteAt(0) == 0xFF && byteAt(1) == 0xFE) || (byteAt(0) == 0xFE && byteAt(1) == 0xFF))) {
         const bool little = byteAt(0) == 0xFF;
         for (std::size_t i = 2; i + 1 < bytes.size(); i += 2)
@@ -138,6 +149,9 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
     for (std::size_t i = 0; i < text.size(); ++i)
         if (!(text[i] == u'\r' && i + 1 < text.size() && text[i + 1] == u'\n'))
             out += text[i];
+    // OpenWrite::FileOpen: empty text (an empty or BOM-only file) is a failed read.
+    if (out.empty())
+        return std::nullopt;
     return out;
 }
 
@@ -154,8 +168,15 @@ bool writeUserDictionary(const fs::path &file, std::u16string_view text)
     return static_cast<bool>(out);
 }
 
+SpellChecker::SpellChecker(std::vector<fs::path> folders, SpellingBackendLoader loader)
+    : m_folders(std::move(folders)), m_loader(std::move(loader))
+{
+    if (m_folders.empty())
+        m_folders.emplace_back();
+}
+
 SpellChecker::SpellChecker(fs::path folder, SpellingBackendLoader loader)
-    : m_folder(std::move(folder)), m_loader(std::move(loader))
+    : SpellChecker(std::vector<fs::path>{std::move(folder)}, std::move(loader))
 {
 }
 
@@ -163,11 +184,19 @@ SpellChecker::Status SpellChecker::initialize(std::u16string_view language)
 {
     clear();
     std::u16string name(language.empty() ? std::u16string_view(u"en_US") : language);
-    const fs::path base = m_folder / fs::path(core::toUtf8(name));
-    const fs::path dic = fs::path(base).concat(u8".dic");
-    const fs::path aff = fs::path(base).concat(u8".aff");
-    if (!fileExists(dic) || !fileExists(aff))
+    std::optional<std::pair<fs::path, fs::path>> pair;
+    for (const auto &folder : m_folders) {
+        const fs::path base = folder / fs::path(core::toUtf8(name));
+        const fs::path dic = fs::path(base).concat(u8".dic");
+        const fs::path aff = fs::path(base).concat(u8".aff");
+        if (fileExists(dic) && fileExists(aff)) {
+            pair.emplace(aff, dic);
+            break;
+        }
+    }
+    if (!pair)
         return Status::NoDictionary;
+    const auto &[aff, dic] = *pair;
     m_backend = m_loader ? m_loader(aff, dic) : nullptr;
     if (!m_backend)
         return Status::LoadFailed;
@@ -356,6 +385,7 @@ std::u16string SpellCheckWalk::findNextMisspell(EditSession &session, const Opti
 
 bool SpellCheckWalk::next(EditSession &session, const Options &options)
 {
+    m_refused = false;
     const std::u16string word = findNextMisspell(session, options);
     if (word.empty()) {
         m_current.reset();
@@ -369,8 +399,16 @@ bool SpellCheckWalk::next(EditSession &session, const Options &options)
     found.start = m_errors[m_lastMisspell].start;
     found.end = m_errors[m_lastMisspell].end;
     if (m_lastActiveLine != static_cast<std::ptrdiff_t>(m_lastLine)) {
-        // SelectRow(lastLine) and the editor's SetLine.
-        session.navigateTo(found.line);
+        // SelectRow(lastLine) and the editor's SetLine. The session keeps an
+        // invalid draft's Line under the Block policy: then nothing is shown,
+        // and the window's next activation starts again (after its message).
+        if (!session.navigateTo(found.line)) {
+            m_current.reset();
+            m_refused = true;
+            m_blockOnActive = true;
+            m_lastActiveLine = -1;
+            return false;
+        }
         session.setSelection(Selection{found.line, {found.line}, found.line, {}});
         m_lastActiveLine = static_cast<std::ptrdiff_t>(m_lastLine);
     }
@@ -379,31 +417,42 @@ bool SpellCheckWalk::next(EditSession &session, const Options &options)
     return true;
 }
 
+bool SpellCheckWalk::stale(EditSession &session, bool otherDocument) const
+{
+    const std::ptrdiff_t current = activeRow(session);
+    return otherDocument || m_lastActiveLine != current ||
+           m_lastText != lineText(session.document(), static_cast<std::size_t>(current));
+}
+
+void SpellCheckWalk::restart(EditSession &session, const Options &options)
+{
+    m_lastMisspell = 0;
+    next(session, options);
+}
+
 bool SpellCheckWalk::activated(EditSession &session, const Options &options, bool otherDocument)
 {
     if (m_blockOnActive) {
         m_blockOnActive = false;
         return false;
     }
-    const std::ptrdiff_t current = activeRow(session);
-    if (otherDocument || m_lastActiveLine != current ||
-        m_lastText != lineText(session.document(), static_cast<std::size_t>(current))) {
-        m_lastMisspell = 0;
-        next(session, options);
-        return true;
-    }
-    return false;
+    if (!stale(session, otherDocument))
+        return false;
+    restart(session, options);
+    return true;
 }
 
-std::expected<bool, CommandRefusal> SpellCheckWalk::replace(EditSession &session, std::u16string_view replacement,
-                                                            const Options &options)
+std::expected<SpellCheckWalk::Result, CommandRefusal>
+SpellCheckWalk::replace(EditSession &session, std::u16string_view replacement, const Options &options)
 {
-    // Legacy reads past the list when every word of the last Line was skipped.
-    if (replacement.empty() || m_errors.empty() || m_lastMisspell >= m_errors.size())
-        return false;
+    // R3-hang-crash-loss: legacy checks only that the list is not empty and
+    // then reads errors[lastMisspell], past the list when every word of the
+    // last Line was skipped (undefined); here that is refused like an empty one.
+    if (replacement.empty() || m_errors.empty() || m_lastMisspell >= m_errors.size() || !m_current)
+        return Result::Unchanged;
     const auto lines = session.document().lines();
     if (m_lastLine >= lines.size())
-        return false;
+        return Result::Unchanged;
     const core::LineId id = lines[m_lastLine]->id;
     const bool translation = spellsTranslation(session.document());
     std::u16string text = lineText(session.document(), m_lastLine);
@@ -421,19 +470,21 @@ std::expected<bool, CommandRefusal> SpellCheckWalk::replace(EditSession &session
     next(session, options);
     // The replacement is still misspelled at the same place: skip it. (Legacy
     // compares only the offset, so the next Line's word at that offset is
-    // skipped too.)
+    // skipped too. With nothing found legacy reads errors[lastMisspell] past
+    // the list, undefined: bounds-checked, R3-hang-crash-loss.)
     if (m_current && m_lastMisspell < m_errors.size() && m_errors[m_lastMisspell].start == oldPos) {
         ++m_lastMisspell;
         next(session, options);
     }
-    return true;
+    return Result::Replaced;
 }
 
-std::expected<bool, CommandRefusal> SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell,
-                                                               std::u16string_view replacement, const Options &options)
+std::expected<SpellCheckWalk::Result, CommandRefusal>
+SpellCheckWalk::replaceAll(EditSession &session, std::u16string_view misspell, std::u16string_view replacement,
+                           const Options &options)
 {
     if (replacement.empty() || misspell.empty())
-        return false;
+        return Result::Unchanged;
     const auto &cases = m_spelling.cases;
     auto lower = [&](std::u16string_view s) {
         std::u16string out(s);
@@ -478,7 +529,7 @@ std::expected<bool, CommandRefusal> SpellCheckWalk::replaceAll(EditSession &sess
             return std::unexpected(ran.error());
     }
     next(session, options);
-    return !changes.empty();
+    return changes.empty() ? Result::NothingReplaced : Result::Replaced;
 }
 
 void SpellCheckWalk::ignore(EditSession &session, const Options &options)

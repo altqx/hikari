@@ -736,16 +736,17 @@ ApplicationWindow {
                 }
             }
             MenuItem {
-                objectName: "checkSpellingMenuItem"
-                text: qsTr("Check spelling")
-                enabled: root.shell.hasEditingTarget
-                onTriggered: spellCheckerDialog.openDialog()
-            }
-            MenuItem {
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: resampleDialog.openDialog()
+            }
+            // Legacy HikariSubFrame: after Resample subtitles.
+            MenuItem {
+                objectName: "checkSpellingMenuItem"
+                text: qsTr("Check spelling")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: spellCheckerDialog.openDialog()
             }
         }
         Menu {
@@ -882,6 +883,7 @@ ApplicationWindow {
             MenuItem { text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
             MenuItem {
+                id: spellingOnItem
                 objectName: field.objectName + "SpellingOn"
                 text: qsTr("Spellchecker")
                 checkable: true
@@ -890,25 +892,41 @@ ApplicationWindow {
                 height: visible ? implicitHeight : 0
                 onTriggered: root.app.spellingOn = checked
             }
-            Menu {
-                id: languagesMenu
-                objectName: field.objectName + "Languages"
-                title: qsTr("Installed languages")
-                property var languages: []
-                onAboutToShow: languages = root.app.dictionaries()
-                Instantiator {
-                    model: languagesMenu.languages
-                    delegate: MenuItem {
-                        required property var modelData
-                        text: modelData.name
-                        checkable: true
-                        // Legacy marks the entry whose name is the chosen language's.
-                        checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
-                        onTriggered: root.app.dictionaryLanguage = modelData.symbol
+            // "Installed languages": only in the spell-checked field (legacy
+            // builds it with the Spellchecker entry, useSpellchecker).
+            Instantiator {
+                model: field.spelled ? 1 : 0
+                delegate: Menu {
+                    id: languagesMenu
+                    objectName: field.objectName + "Languages"
+                    title: qsTr("Installed languages")
+                    property var languages: []
+                    onAboutToShow: languages = root.app.dictionaries()
+                    Instantiator {
+                        model: languagesMenu.languages
+                        delegate: MenuItem {
+                            required property var modelData
+                            text: modelData.name
+                            checkable: true
+                            // Legacy marks the entry whose name is the chosen language's.
+                            checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
+                            onTriggered: root.app.dictionaryLanguage = modelData.symbol
+                        }
+                        onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => languagesMenu.removeItem(object)
                     }
-                    onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)
-                    onObjectRemoved: (index, object) => languagesMenu.removeItem(object)
                 }
+                onObjectAdded: (index, object) => {
+                    // Right after the Spellchecker switch.
+                    for (let i = 0; i < editMenu.count; ++i) {
+                        if (editMenu.itemAt(i) === spellingOnItem) {
+                            editMenu.insertMenu(i + 1, object)
+                            return
+                        }
+                    }
+                    editMenu.addMenu(object)
+                }
+                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             MenuItem {
                 objectName: field.objectName + "AddWord"
@@ -937,8 +955,13 @@ ApplicationWindow {
                     return
                 const position = field.positionAt(eventPoint.position.x, eventPoint.position.y)
                 const found = root.app.editorMisspellAt(field.role, position)
-                if (found.word)
+                if (found.word) {
+                    // Legacy shows the list and returns before its double
+                    // click selects the word: the caret stays where clicked.
+                    field.deselect()
+                    field.cursorPosition = position
                     fixSuggestions.openFor(field.role, position, found.suggestions)
+                }
             }
         }
         Keys.onPressed: event => {
@@ -2712,6 +2735,7 @@ ApplicationWindow {
                   "KDDockWidgets - Copyright © Klarälvdalens Datakonsult AB (KDAB).\n" +
                   qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
                   "Copyright © Rodrigo Braz Monteiro.\n" +
+                  "Hunspell - Copyright © Kevin Hendricks.\n" +
                   "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
                   "FFmpeg - Copyright © the FFmpeg developers.\n" +
                   "LuaJIT - Copyright © Mike Pall.\n" +
@@ -2994,7 +3018,7 @@ ApplicationWindow {
         objectName: "spellingNotice"
         property alias text: spellingNoticeLabel.text
         anchors.centerIn: parent
-        modal: false
+        modal: true // legacy HikariMessageBox is modal
         standardButtons: Dialog.Ok
         Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
     }

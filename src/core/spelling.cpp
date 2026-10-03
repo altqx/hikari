@@ -426,7 +426,8 @@ std::vector<std::u16string> userDictionaryEntries(std::u16string_view content)
 
 std::u16string appendUserWord(std::optional<std::u16string_view> content, std::u16string_view word)
 {
-    if (!content)
+    // OpenWrite::FileOpen fails for an unreadable file and for empty text.
+    if (!content || content->empty())
         return std::u16string(word);
     std::u16string out(*content);
     out += u'\n';

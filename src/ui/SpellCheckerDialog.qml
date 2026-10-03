@@ -22,6 +22,9 @@ Dialog {
     // SetNextMisspell's display: the word, its suggestions, the first one to
     // replace with; nothing found clears them and says so.
     function show(next) {
+        // An action that did nothing (legacy returns before touching the window).
+        if (next.unchanged)
+            return
         current = next
         if (next.problem && next.problem.length > 0) {
             message.text = next.problem
@@ -45,12 +48,22 @@ Dialog {
     function replace() { show(app.spellCheckerReplace(replacement.text, options())) }
     function replaceAll() { show(app.spellCheckerReplaceAll(misspell.text, replacement.text, options())) }
 
-    // OnActive: back in the window after the editor or the Grid.
-    onActiveFocusChanged: if (activeFocus && opened && !message.opened) {
+    // OnActive: back in the window after the editor or the Grid. Handled
+    // once the focusing event is done: when it was a press on one of the
+    // window's actions, that action checks the word itself (the editor's
+    // draft commits first and a changed Line starts the walk again instead of
+    // acting), so the press cannot swap the word under the click.
+    function actionPressed() {
+        return [replaceButton, replaceAllButton, ignoreButton, ignoreAllButton, addWordButton].some(b => b.pressed)
+    }
+    function activate() {
+        if (!activeFocus || !opened || message.opened || addedWords.opened || actionPressed())
+            return
         const next = app.spellCheckerActivated(options())
         if (next.restarted)
             show(next)
     }
+    onActiveFocusChanged: if (activeFocus) Qt.callLater(activate)
     onClosed: app.closeSpellChecker()
 
     ColumnLayout {
@@ -114,21 +127,36 @@ Dialog {
                     objectName: "spellIgnoreUpper"
                     text: qsTr("Ignore words written entirely\nin uppercase")
                 }
-                Button { objectName: "spellReplace"; text: qsTr("Replace"); Layout.fillWidth: true; onClicked: dialog.replace() }
-                Button { objectName: "spellReplaceAll"; text: qsTr("Replace all"); Layout.fillWidth: true; onClicked: dialog.replaceAll() }
                 Button {
+                    id: replaceButton
+                    objectName: "spellReplace"
+                    text: qsTr("Replace")
+                    Layout.fillWidth: true
+                    onClicked: dialog.replace()
+                }
+                Button {
+                    id: replaceAllButton
+                    objectName: "spellReplaceAll"
+                    text: qsTr("Replace all")
+                    Layout.fillWidth: true
+                    onClicked: dialog.replaceAll()
+                }
+                Button {
+                    id: ignoreButton
                     objectName: "spellIgnore"
                     text: qsTr("Ignore")
                     Layout.fillWidth: true
                     onClicked: dialog.show(dialog.app.spellCheckerIgnore(dialog.options()))
                 }
                 Button {
+                    id: ignoreAllButton
                     objectName: "spellIgnoreAll"
                     text: qsTr("Ignore All")
                     Layout.fillWidth: true
                     onClicked: dialog.show(dialog.app.spellCheckerIgnoreAll(misspell.text, dialog.options()))
                 }
                 Button {
+                    id: addWordButton
                     objectName: "spellAddWord"
                     text: qsTr("Add to dictionary")
                     Layout.fillWidth: true

@@ -1,53 +1,10 @@
 #include "spelling_text.h"
 
 #include <QLocale>
-#include <QTextBoundaryFinder>
 
 #include <map>
 
 namespace hikari::ui {
-
-namespace {
-
-std::vector<core::legacy::WordSegment> segmentWords(std::u16string_view text)
-{
-    std::vector<core::legacy::WordSegment> out;
-    const QString s = QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
-    QTextBoundaryFinder finder(QTextBoundaryFinder::Word, s);
-    qsizetype start = 0;
-    for (qsizetype end = finder.toNextBoundary(); end >= 0; end = finder.toNextBoundary()) {
-        if (end <= start)
-            continue;
-        core::legacy::WordSegment segment{static_cast<std::size_t>(start), static_cast<std::size_t>(end - start), false,
-                                          false};
-        bool digits = false;
-        for (qsizetype i = start; i < end; ++i) {
-            char32_t c = s[i].unicode();
-            if (QChar::isHighSurrogate(c) && i + 1 < end && s[i + 1].isLowSurrogate()) {
-                c = QChar::surrogateToUcs4(s[i], s[i + 1]);
-                ++i;
-            }
-            segment.letters = segment.letters || QChar::isLetter(c);
-            digits = digits || QChar::isDigit(c);
-        }
-        segment.number = !segment.letters && digits;
-        out.push_back(segment);
-        start = end;
-    }
-    return out;
-}
-
-} // namespace
-
-application::SpellingText qtSpellingText()
-{
-    application::SpellingText text;
-    text.segment = segmentWords;
-    text.cases.isUpper = [](char16_t c) { return QChar(c).isUpper(); };
-    text.cases.toUpper = [](char16_t c) { return QChar(c).toUpper().unicode(); };
-    text.cases.toLower = [](char16_t c) { return QChar(c).toLower().unicode(); };
-    return text;
-}
 
 QString dictionaryName(const QString &symbol)
 {

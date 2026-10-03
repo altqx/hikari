@@ -119,13 +119,14 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
         return *row.spellMarks;
     QVariantList marks;
     const core::LineRecord &line = row.line;
-    // SubsGridWindow: comments are not checked; the original in translation
-    // mode only for brackets (the Text column shows the original).
-    if (m_spelling && !line.comment && !line.text.empty()) {
+    // SubsGridWindow: comments are not checked, and marks are drawn on the
+    // last column only. In translation mode that is the translation column
+    // (not built yet), so the Text column, showing the original, has none.
+    if (m_spelling && !line.comment && !line.text.empty() && !m_translationMode) {
         const QString text = qs(line.text);
         const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
                                                            static_cast<std::size_t>(text.size())),
-                                       m_format, !m_translationMode);
+                                       m_format, true);
         for (const int offset : result.errors)
             marks << offset;
     }
