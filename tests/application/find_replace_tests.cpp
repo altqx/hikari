@@ -9,6 +9,8 @@
 
 #include <cstring>
 #include <deque>
+#include <functional>
+#include <set>
 #include <map>
 #include <string>
 #include <string_view>
@@ -104,15 +106,28 @@ struct Host : FindReplaceHost {
         return out;
     }
     LineVisible actionLines(EditSession &) override { return visible; }
-    FindAnswer ask(const FindQuestion &q) override
+    // Answers at once from the queue (Ok when it is empty), or keeps the
+    // question open when `hold` is set.
+    bool hold = false;
+    std::function<void(FindAnswer)> pending;
+    void ask(const FindQuestion &q, std::function<void(FindAnswer)> answer) override
     {
         questions.push_back(q);
-        if (answers.empty())
-            return FindAnswer::Ok;
-        const auto a = answers.front();
-        answers.pop_front();
-        return a;
+        if (!answer)
+            return;
+        if (hold) {
+            pending = std::move(answer);
+            return;
+        }
+        FindAnswer a = FindAnswer::Ok;
+        if (!answers.empty()) {
+            a = answers.front();
+            answers.pop_front();
+        }
+        answer(a);
     }
+    int finishedCount = 0;
+    void finished() override { ++finishedCount; }
     void log(const std::u8string &text) override { logs.push_back(str(text)); }
     void showLine(DocumentId document, core::LineId line, bool keep, int role, int start, int end) override
     {
@@ -147,11 +162,19 @@ struct Host : FindReplaceHost {
         return it->second;
     }
     bool fileExists(const std::u8string &path) override { return files.contains(path); }
-    void backupFile(const std::u8string &path) override { backups.push_back(path); }
-    void writeFile(const std::u8string &path, const std::u16string &text) override
+    std::set<std::u8string> unwritable;
+    bool backupFile(const std::u8string &path) override
     {
+        backups.push_back(path);
+        return true;
+    }
+    bool writeFile(const std::u8string &path, const std::u16string &text) override
+    {
+        if (unwritable.contains(path))
+            return false;
         writes.emplace_back(path, text);
         files[path] = text;
+        return true;
     }
     std::optional<DocumentId> openFile(const std::u8string &path) override
     {
@@ -267,54 +290,27 @@ TEST(FindReplaceOptions, SaveValuesPerTab)
     EXPECT_EQ(findReplaceOptions(s, 0) & (512 | 1024 | 2048), 0);
 }
 
-TEST(FindReplaceRegex, ReplaceFollowsWxRegEx)
-{
-    using find_replace_detail::regexReplace;
-    const std::wregex re(L"(a)(b)?");
-    std::u16string t = u"xaby a";
-    // \N and & insert groups; an unmatched group inserts nothing.
-    EXPECT_EQ(regexReplace(re, t, u"[\\2\\1&]", 0), 2);
-    EXPECT_EQ(str(t), "x[baab]y [aa]");
-    // "\" escapes the next character; a trailing "\" stays; groups past the
-    // last insert nothing; numbers read every digit.
-    t = u"ab";
-    regexReplace(re, t, u"\\&\\x\\12\\", 0);
-    EXPECT_EQ(str(t), "&x\\");
-    // maxMatches 1 (Replace next).
-    t = u"aaa";
-    EXPECT_EQ(regexReplace(std::wregex(L"a"), t, u"b", 1), 1);
-    EXPECT_EQ(str(t), "baa");
-    // "^" matches only the first time (wxRE_NOTBOL afterwards).
-    t = u"aaa";
-    EXPECT_EQ(regexReplace(std::wregex(L"^a"), t, u"b", 0), 1);
-    EXPECT_EQ(str(t), "baa");
-    // Legacy repeats an empty match forever; the loop stops after it (F1-empty-match).
-    t = u"aaa";
-    EXPECT_EQ(regexReplace(std::wregex(L"a*"), t, u"X", 0), 2);
-    EXPECT_EQ(str(t), "XX");
-}
-
 TEST_F(Find, NextWalksMatchesSkippingCommentsAndSelectsTheRow)
 {
     window.find = u8"HELLO";
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5)); // TextEdit, case folded
     EXPECT_EQ(session->selection().selected, (std::set<core::LineId>{row(0)}));
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 6, 11)); // same Line, further on
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 5, 10)); // the Comment is skipped
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     EXPECT_TRUE(host.questions.empty());
     // The end: "Reached end. Search from the beginning?" No keeps the place.
     host.answers = {FindAnswer::No};
-    fr.find(&window);
+    fr.find(window);
     ASSERT_EQ(host.questions.size(), 1u);
     EXPECT_EQ(host.questions[0].kind, K::Wrap);
     EXPECT_EQ(host.shown.size(), 4u);
     // Next time it starts at row 0 again.
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
     EXPECT_EQ(str(fr.recent().finds[0]), "HELLO");
 }
@@ -324,16 +320,16 @@ TEST_F(Find, WrapYesStartsAtTheSelectionAndTheNextEndJustReportsNotFound)
     window.find = u8"hello";
     window.lines = S::Lines::FromSelection;
     select({2}, 2);
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 5, 10));
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     host.answers = {FindAnswer::Yes};
-    fr.find(&window);
+    fr.find(window);
     // From the beginning means from the first selected Line (row 3 now).
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     // Having wrapped once, reaching the end only says it found nothing.
-    fr.find(&window);
+    fr.find(window);
     ASSERT_EQ(host.questions.size(), 2u);
     EXPECT_EQ(host.questions[1].kind, K::Message);
     EXPECT_EQ(str(host.questions[1].text), "Could not find the specified phrase \"hello\".");
@@ -350,12 +346,12 @@ TEST_F(Find, TranslationModeMarksTheOriginalOrTheTranslation)
              u8"tl.ass");
     host.target = 1;
     window.find = u8"aa";
-    fr.find(&window);
+    fr.find(window);
     ASSERT_EQ(host.shown.size(), 1u);
     EXPECT_EQ(host.shown[0].role, 0); // TextEditOrig
     EXPECT_EQ(host.shown[0].start, 0);
     EXPECT_EQ(host.shown[0].end, 2);
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(host.shown[1].role, 1);
     EXPECT_EQ(host.shown[1].start, 11);
     EXPECT_EQ(host.shown[1].end, 13);
@@ -374,18 +370,18 @@ TEST_F(Find, BeginningOfTextWithoutRegexFindsTheFirstMatchAnywhere)
     // search finds the first match in each Line, wherever it is.
     window.find = u8"hello";
     window.startOfText = true;
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 5, 10)); // one per Line
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     // With a regular expression it is anchored.
     window.regex = true;
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
     host.answers = {FindAnswer::No};
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(host.questions.back().kind, K::Wrap);
 }
 
@@ -393,9 +389,9 @@ TEST_F(Find, EndOfTextAndRegexOnTheRestOfTheText)
 {
     window.find = u8"HELLO";
     window.endOfText = true;
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 6, 11));
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(3, 1, 8, 13)); // row 2 ends with a tag
     // A regular expression runs on the text after the last match, so "^"
     // matches there again (kept legacy quirk).
@@ -405,9 +401,9 @@ TEST_F(Find, EndOfTextAndRegexOnTheRestOfTheText)
     session->run(Command{"t", session->revision(), {row(0)}, [&](core::Document &d) {
                              return d.editLine(row(0), [](core::LineRecord &l) { l.text = u8"lll"; });
                          }});
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 1));
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 1, 2));
 }
 
@@ -420,12 +416,12 @@ TEST_F(Find, SkipTagsChecksOnlyTheFirstMatchOfALine)
     window.lines = S::Lines::FromSelection;
     select({2}, 2);
     host.answers = {FindAnswer::No};
-    fr.find(&window);
+    fr.find(window);
     EXPECT_TRUE(host.shown.empty());
     window.skipTags = false;
     window.skipText = true; // only inside tags
     fr.reset();
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 12, 13));
 }
 
@@ -436,11 +432,11 @@ TEST_F(Find, StylesOrSelectedLinesAndTheStylesQuestion)
     window.lines = S::Lines::Selected;
     select({0}, 0);
     // Find takes Lines in the styles OR selected (kept legacy quirk).
-    fr.find(&window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(0, 1, 0, 5));
     EXPECT_EQ(session->selection().selected, (std::set<core::LineId>{row(0)})); // the selection stays
-    fr.find(&window);
-    fr.find(&window);
+    fr.find(window);
+    fr.find(window);
     EXPECT_EQ(last(), Match(2, 1, 5, 10));
     // A missing style asks: Ignore remembers, Ok removes the missing ones.
     S w;
@@ -448,11 +444,11 @@ TEST_F(Find, StylesOrSelectedLinesAndTheStylesQuestion)
     w.styles = u8"Sign,Nope,Gone";
     host.answers = {FindAnswer::No};
     auto asked = host.questions.size();
-    fr.find(&w);
+    fr.find(w);
     ASSERT_EQ(host.questions[asked].kind, K::Styles);
     EXPECT_EQ(str(host.questions[asked].argument), "Nope, Gone,");
     asked = host.questions.size();
-    fr.find(&w);
+    fr.find(w);
     for (std::size_t i = asked; i < host.questions.size(); ++i)
         EXPECT_NE(host.questions[i].kind, K::Styles); // ignored from now on
     // No style found at all always asks; Cancel stops.
@@ -460,31 +456,118 @@ TEST_F(Find, StylesOrSelectedLinesAndTheStylesQuestion)
     host.answers = {FindAnswer::Cancel};
     const auto shownBefore = host.shown.size();
     asked = host.questions.size();
-    fr.find(&w);
+    fr.find(w);
     ASSERT_EQ(host.questions.size(), asked + 1);
     EXPECT_EQ(host.questions.back().kind, K::NoStyles);
     EXPECT_EQ(host.shown.size(), shownBefore);
     // Yes removes the styles.
     host.answers = {FindAnswer::Yes};
-    fr.find(&w);
-    EXPECT_EQ(w.styles, u8"");
+    fr.find(w);
+    EXPECT_EQ(fr.window().styles, u8"");
     // Ok keeps the found ones.
     FindReplace other{host};
     w.styles = u8"Sign,Nope";
     host.answers = {FindAnswer::Ok};
-    other.find(&w);
-    EXPECT_EQ(w.styles, u8"Sign");
+    other.find(w);
+    EXPECT_EQ(other.window().styles, u8"Sign");
 }
 
 TEST_F(Find, InvalidRegularExpressionIsLoggedAndFindsNothing)
 {
     window.find = u8"(";
     window.regex = true;
-    fr.find(&window);
+    fr.find(window);
     EXPECT_TRUE(host.shown.empty());
     EXPECT_TRUE(host.questions.empty());
     ASSERT_EQ(host.logs.size(), 1u);
     EXPECT_TRUE(host.logs[0].starts_with("Invalid regular expression '(':"));
+}
+
+TEST_F(Find, RegularExpressionsRunAsWxRegExOverPcre2)
+{
+    // R1-pcre2: wxRegEx(find, wxRE_ADVANCED | wxRE_ICASE) is PCRE2 with UTF
+    // and DOTALL: lookbehind is valid and Unicode case folds.
+    window.find = u8"(?<=hel)LO";
+    window.regex = true;
+    fr.find(window);
+    EXPECT_EQ(last(), Match(0, 1, 3, 5));
+    EXPECT_TRUE(host.logs.empty());
+    auto &unicode = host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,żółw ŁÓDŹ\n",
+                             u8"u.ass");
+    host.target = 1;
+    window.find = u8"łódź";
+    fr.find(window);
+    ASSERT_EQ(host.shown.size(), 2u);
+    EXPECT_EQ(host.shown[1].start, 5);
+    EXPECT_EQ(host.shown[1].end, 9);
+    // Match case off folds plain searches too; with it on, nothing matches.
+    window.matchCase = true;
+    host.answers = {FindAnswer::No};
+    fr.find(window);
+    EXPECT_EQ(host.shown.size(), 2u);
+    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    EXPECT_EQ(str(unicode.document().lines()[0]->text), "żółw ŁÓDŹ");
+    // "." matches the "\n" that joins the original and the translation.
+    host.add("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[V4+ Styles]\nFormat: Name\nStyle: Default\nStyle: "
+             "TLmode\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+             "Comment: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,aaa orig\n"
+             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,translated aa\n",
+             u8"tl.ass");
+    host.target = 2;
+    window.matchCase = false;
+    window.find = u8"orig.translated";
+    fr.find(window);
+    ASSERT_EQ(host.shown.size(), 3u);
+    EXPECT_EQ(host.shown[2].role, 0); // starts in the original
+    EXPECT_EQ(host.shown[2].start, 4);
+    EXPECT_EQ(host.shown[2].end, 19);
+}
+
+TEST_F(Find, RegexMatchErrorsAreLoggedAsNoMatch)
+{
+    // PCRE2's match limit (catastrophic backtracking): wx_regexec logs the
+    // error and the Line counts as not matching; nothing throws.
+    host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," + std::string(40, 'a') + "b\n",
+             u8"long.ass");
+    host.target = 1;
+    window.find = u8"(a+)+$";
+    window.regex = true;
+    host.answers = {FindAnswer::No};
+    fr.find(window);
+    EXPECT_TRUE(host.shown.empty());
+    ASSERT_FALSE(host.logs.empty());
+    EXPECT_TRUE(host.logs[0].starts_with("Failed to find match for regular expression: ")) << host.logs[0];
+    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    // Replace all and Find all go on the same way.
+    window.tab = S::Tab::Replace;
+    window.replace = u8"x";
+    fr.replaceAll(window);
+    EXPECT_EQ(str(host.questions.back().text), "Replaced 0 times.");
+    fr.findAllInCurrent(window);
+    EXPECT_TRUE(fr.results().empty());
+}
+
+TEST_F(Find, EmptyRegexMatchesMoveOnInsteadOfHanging)
+{
+    // F1-empty-match (R3-hang-crash-loss): legacy wxRegEx::Replace repeated an
+    // empty match forever, hanging Replace all and Replace checked; the
+    // match is replaced once and the search moves on.
+    host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ab\n", u8"e.ass");
+    host.target = 1;
+    window.tab = S::Tab::Replace;
+    window.find = u8"x*";
+    window.regex = true;
+    window.replace = u8"-";
+    fr.replaceAll(window);
+    EXPECT_EQ(str(host.docs[1].session->document().lines()[0]->text), "-ab");
+    EXPECT_EQ(str(host.questions.back().text), "Replaced 1 times.");
+    // Replace checked of an empty match.
+    window.tab = S::Tab::Find;
+    window.find = u8"b*";
+    fr.findAllInCurrent(window);
+    ASSERT_FALSE(fr.results().empty());
+    fr.replaceChecked(u8"+");
+    EXPECT_FALSE(str(host.docs[1].session->document().lines()[0]->text).empty());
 }
 
 TEST_F(Find, ReplaceNextReplacesTheMatchAsOneStepAndMovesOn)
@@ -509,7 +592,7 @@ TEST_F(Find, ReplaceNextReplacesTheMatchAsOneStepAndMovesOn)
     EXPECT_EQ(texts()[2], "{\\i1}hi{\\b1}");
     EXPECT_EQ(last(), Match(3, 1, 8, 13));
     // Moving the active Line makes Replace search again first; when that
-    // finds nothing, the last match is still replaced (kept legacy quirk).
+    // finds nothing, the last match, still there, is replaced (kept legacy quirk).
     select({0}, 0);
     host.answers = {FindAnswer::No};
     fr.replace(window);
@@ -519,6 +602,127 @@ TEST_F(Find, ReplaceNextReplacesTheMatchAsOneStepAndMovesOn)
     const auto asked = host.questions.size();
     fr.findNext();
     EXPECT_EQ(host.questions.size(), asked + 1);
+}
+
+TEST_F(Find, ReplaceNextNeverReplacesAStaleMatch)
+{
+    // F1-stale-replace (R3-hang-crash-loss): after Replace next replaced the
+    // last match and its search found nothing more, legacy replaced the old
+    // [start, end) again, overwriting text that did not match ("c x" -> "c").
+    host.add(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat dog cat x\n", u8"s.ass");
+    host.target = 1;
+    auto &s = *host.docs[1].session;
+    const auto text = [&] { return str(s.document().lines()[0]->text); };
+    window.tab = S::Tab::Replace;
+    window.find = u8"cat";
+    window.replace = u8"c";
+    fr.replace(window);
+    EXPECT_EQ(text(), "c dog cat x");
+    host.answers = {FindAnswer::No};
+    fr.replace(window); // the second, then "Reached end", No
+    EXPECT_EQ(text(), "c dog c x");
+    EXPECT_EQ(host.questions.back().kind, K::Wrap);
+    const auto steps = s.historySize();
+    host.answers = {FindAnswer::No};
+    fr.replace(window); // searches again, finds nothing, replaces nothing
+    EXPECT_EQ(text(), "c dog c x");
+    EXPECT_EQ(s.historySize(), steps);
+    // An edit of the matched Line makes the match stale too.
+    s.run(Command{"e", s.revision(), {s.document().lines()[0]->id}, [&](core::Document &d) {
+                      return d.editLine(s.document().lines()[0]->id, [](core::LineRecord &l) { l.text = u8"cat"; });
+                  }});
+    fr.find(window);
+    EXPECT_EQ(host.shown.back().start, 0);
+    s.run(Command{"e", s.revision(), {s.document().lines()[0]->id}, [&](core::Document &d) {
+                      return d.editLine(s.document().lines()[0]->id, [](core::LineRecord &l) { l.text = u8"xyz cat"; });
+                  }});
+    host.answers = {FindAnswer::Yes};
+    fr.replace(window); // searches again ("Reached end", Yes), finds "cat" at 4 and replaces that
+    EXPECT_EQ(text(), "xyz c");
+}
+
+TEST_F(Find, QuestionsWaitWithoutBlockingAndRefuseOtherWork)
+{
+    // A question box does not block: the operation waits for its answer and
+    // every other call (F3, buttons, Replace checked) is ignored meanwhile,
+    // as legacy's modal boxes block the window.
+    host.hold = true;
+    window.find = u8"zzz";
+    fr.find(window);
+    ASSERT_TRUE(fr.busy());
+    ASSERT_EQ(host.questions.size(), 1u);
+    EXPECT_EQ(host.questions[0].kind, K::Wrap);
+    const int finished = host.finishedCount;
+    fr.findNext();
+    fr.find(window);
+    window.tab = S::Tab::Replace;
+    fr.replaceAll(window);
+    fr.replaceChecked(u8"x");
+    EXPECT_EQ(host.questions.size(), 1u);
+    EXPECT_EQ(host.finishedCount, finished);
+    // The answer resumes it: Yes searches from the start, then says it found nothing.
+    host.hold = false;
+    auto answer = std::move(host.pending);
+    answer(FindAnswer::Yes);
+    EXPECT_FALSE(fr.busy());
+    EXPECT_EQ(host.questions.back().kind, K::Message);
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::NotFound);
+    EXPECT_EQ(host.finishedCount, finished + 1);
+    answer(FindAnswer::Yes); // a second answer is ignored
+    EXPECT_EQ(host.finishedCount, finished + 1);
+}
+
+TEST_F(Find, ADocumentClosedDuringAQuestionIsNotTouched)
+{
+    // The styles question waits; the Document closes meanwhile (legacy could
+    // not close it under the modal box): answering does nothing to it.
+    host.hold = true;
+    window.tab = S::Tab::Replace;
+    window.find = u8"hello";
+    window.replace = u8"X";
+    window.styles = u8"Nope";
+    fr.replaceAll(window);
+    ASSERT_TRUE(fr.busy());
+    EXPECT_EQ(host.questions.back().kind, K::NoStyles);
+    auto closed = std::move(host.docs[0]);
+    host.docs.clear();
+    auto answer = std::move(host.pending);
+    answer(FindAnswer::Yes);
+    EXPECT_FALSE(fr.busy());
+    EXPECT_EQ(str(closed.session->document().lines()[0]->text), "Hello hello");
+    EXPECT_EQ(closed.session->historySize(), 1u);
+}
+
+TEST_F(Find, FromSelectedWithOnlyHiddenLinesSelectedStartsThere)
+{
+    // S57-from-selected: legacy FirstSelection skipped hidden Lines and gave
+    // -1 when only hidden ones were selected, so "From selected" searched
+    // from row 0, before the selection. It starts at the selection now; a
+    // shown selected Line (the characterized ordinary case) is unchanged.
+    session->run(Command{"h", session->revision(), {row(2)}, [&](core::Document &d) {
+                             return d.editLine(row(2), [](core::LineRecord &l) {
+                                 l.visibility = core::LineVisibility::Hidden;
+                             });
+                         }});
+    window.find = u8"hello";
+    window.lines = S::Lines::FromSelection;
+    select({2}, 2);
+    fr.find(window);
+    EXPECT_EQ(last(), Match(3, 1, 8, 13)); // legacy: row 0
+    fr.reset();
+    select({0, 2}, 0);
+    fr.find(window);
+    EXPECT_EQ(last(), Match(0, 1, 0, 5));
+    // Find all and Replace all start there too.
+    select({2}, 2);
+    fr.findAllInCurrent(window);
+    ASSERT_EQ(fr.results().size(), 2u);
+    EXPECT_EQ(fr.results()[1].keyLine, 3);
+    window.tab = S::Tab::Replace;
+    window.replace = u8"X";
+    fr.replaceAll(window);
+    // (The test host ignores filtering, so the hidden row 2 is replaced too.)
+    EXPECT_EQ(texts(), (std::vector<std::string>{"Hello hello", "hello sign", "{\\i1}X{\\b1}", "the end X"}));
 }
 
 TEST_F(Find, ReplaceAllIsOneStepWithTheLegacyCount)
@@ -815,11 +1019,13 @@ TEST_F(Files, ReplaceInFilesWritesOnlyChangedTargetsAfterABackup)
         written.push_back(str(path));
     EXPECT_EQ(written, (std::vector<std::string>{"/subs/a.ass", "/subs/b.srt", "/subs/c.txt"}));
     EXPECT_EQ(host.backups, (std::vector<std::u8string>{u8"/subs/a.ass", u8"/subs/b.srt", u8"/subs/c.txt"}));
-    // The header keeps its lines with CRLF; Lines are trimmed and CRLF; blank
-    // lines and skipped comments are left out (kept legacy defects).
+    // The header keeps its lines with CRLF; a changed Line is trimmed, every
+    // other line is written as it was, with CRLF. Legacy left out the skipped
+    // comment and the blank line (R3-hang-crash-loss: kept here).
     EXPECT_EQ(str(host.writes[0].second),
               "[Script Info]\r\nTitle: x\r\n\r\n[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
               "MarginV, Effect, Text\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello dog\r\n"
+              "Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,a cat comment\r\n\r\n"
               "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,no match\r\n");
     // SRT cues are numbered again.
     EXPECT_EQ(str(host.writes[1].second), "1\r\n00:00:01,000 --> 00:00:02,000\r\nfirst dog\r\nsecond\r\n\r\n"
@@ -870,24 +1076,41 @@ TEST_F(Files, ReplaceCheckedInFilesRewritesTheCheckedLines)
                                           "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three\r\n");
 }
 
-TEST_F(Files, ReplaceCheckedInFilesDropsAnEditedLineAndTheRest)
+TEST_F(Files, ReplaceCheckedInFilesKeepsAnEditedLineAndTheRest)
 {
-    // Kept legacy defect: a checked Line that changed on disk is left out of
-    // the file together with every Line after it, once anything earlier was
-    // replaced.
+    // R3-hang-crash-loss: legacy left a checked Line that changed on disk out
+    // of the file together with every Line after it; it is logged and kept
+    // as it is now, and the later Lines (and blank lines) stay.
     host.files[u8"/subs/e.ass"] = u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat one\n"
                                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cat two\n"
-                                      "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three\n");
+                                      "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three cat\n");
     host.listed = {u8"/subs/e.ass"};
     window.find = u8"cat";
     fr.findInFiles(window);
-    host.files[u8"/subs/e.ass"] = u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat one\n"
-                                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cat 2\n"
-                                      "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three\n");
+    ASSERT_EQ(fr.results().size(), 4u);
+    host.files[u8"/subs/e.ass"] = u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat one\n\n"
+                                      "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cat 2  \n"
+                                      "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three cat\n");
     fr.replaceChecked(u8"dog");
     ASSERT_EQ(host.writes.size(), 1u);
-    EXPECT_EQ(str(host.writes[0].second), "[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,dog one\r\n");
-    EXPECT_EQ(host.logs.size(), 2u);
+    EXPECT_EQ(str(host.writes[0].second), "[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,dog one\r\n\r\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,cat 2  \r\n"
+                                          "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,three dog\r\n");
+    ASSERT_EQ(host.logs.size(), 1u);
+    EXPECT_EQ(host.logs[0], "Line 2 cannot be replaced,\ncause it was edited.");
+}
+
+TEST_F(Files, AFileThatCannotBeWrittenCountsNoReplacements)
+{
+    window.find = u8"cat";
+    window.replace = u8"dog";
+    host.unwritable = {u8"/subs/a.ass"};
+    host.answers = {FindAnswer::Yes};
+    fr.replaceInFiles(window);
+    // a.ass (1) is not counted; b.srt and c.txt are.
+    EXPECT_EQ(str(host.questions.back().text), "Replaced 2 times.");
+    EXPECT_EQ(host.questions.back().info, FindQuestion::Info::Replaced);
+    EXPECT_EQ(str(host.questions.back().argument), "2");
 }
 
 TEST_F(Files, ResultsFromTabsAfterAFilesSearchAreNotReplaced)
@@ -909,7 +1132,7 @@ TEST(FindReplaceRecent, AddRecentPerTabAndTwentyWhenLoaded)
     struct NoHost : FindReplaceHost {
         std::optional<FindTab> current() override { return std::nullopt; }
         std::vector<FindTab> tabs() override { return {}; }
-        FindAnswer ask(const FindQuestion &) override { return FindAnswer::Ok; }
+        void ask(const FindQuestion &, std::function<void(FindAnswer)>) override {}
         void showLine(DocumentId, core::LineId, bool, int, int, int) override {}
         std::optional<std::vector<std::u8string>> listFiles(const std::u8string &, const std::u8string &, bool,
                                                             bool) override
@@ -918,8 +1141,8 @@ TEST(FindReplaceRecent, AddRecentPerTabAndTwentyWhenLoaded)
         }
         std::optional<std::u16string> readFile(const std::u8string &) override { return std::nullopt; }
         bool fileExists(const std::u8string &) override { return false; }
-        void backupFile(const std::u8string &) override {}
-        void writeFile(const std::u8string &, const std::u16string &) override {}
+        bool backupFile(const std::u8string &) override { return true; }
+        bool writeFile(const std::u8string &, const std::u16string &) override { return true; }
         std::optional<DocumentId> openFile(const std::u8string &) override { return std::nullopt; }
     } host;
     FindReplace fr{host};

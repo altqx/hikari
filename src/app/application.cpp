@@ -23,6 +23,7 @@
 #include <QDesktopServices>
 #include <QFile>
 #include <QMetaMethod>
+#include <QSet>
 #include <QStringDecoder>
 #include <QTextBoundaryFinder>
 #include <QImage>
@@ -144,25 +145,72 @@ public:
     {
         return m_app.actionLines(session);
     }
-    application::FindAnswer ask(const application::FindQuestion &question) override
+    // HikariMessageBox / HikariMessageDialog without a nested event loop: the
+    // box is shown (findQuestion) and the engine resumes when it is answered
+    // (answerFindQuestion); a message needs no answer. Tests answer at once.
+    void ask(const application::FindQuestion &question, std::function<void(application::FindAnswer)> answer) override
     {
-        const QString text = qs(question.text);
-        int answer = question.kind == application::FindQuestion::Kind::Message ? 0 : 3;
+        const QString text = questionText(question);
+        const QString title = questionTitle(question);
+        const int kind = static_cast<int>(question.kind);
+        const auto reply = [&](int code) {
+            if (answer)
+                answer(static_cast<application::FindAnswer>(std::clamp(code, 0, 3)));
+        };
         if (m_app.m_findQuestionHandler) {
-            answer = m_app.m_findQuestionHandler(static_cast<int>(question.kind), text);
-        } else if (m_app.isSignalConnected(QMetaMethod::fromSignal(&Application::findQuestion))) {
-            // A modal message box: wait for the answer as legacy does.
-            QEventLoop loop;
-            m_app.m_findLoop = &loop;
-            m_app.m_findAnswer = answer;
-            emit m_app.findQuestion(static_cast<int>(question.kind), text, qs(question.title));
-            if (m_app.m_findLoop)
-                loop.exec();
-            m_app.m_findLoop = nullptr;
-            answer = m_app.m_findAnswer;
+            reply(m_app.m_findQuestionHandler(kind, text));
+            return;
         }
-        return static_cast<application::FindAnswer>(std::clamp(answer, 0, 3));
+        if (!m_app.isSignalConnected(QMetaMethod::fromSignal(&Application::findQuestion))) {
+            reply(answer ? 3 : 0); // nobody to ask: Cancel
+            return;
+        }
+        const int id = ++m_app.m_findQuestionId;
+        if (answer)
+            m_app.m_findAnswers.emplace(id, std::move(answer));
+        emit m_app.findQuestion(id, kind, text, title);
+        emit m_app.findBusyChanged();
     }
+    // The legacy texts, translated (the engine's English is the source).
+    static QString questionText(const application::FindQuestion &q)
+    {
+        using K = application::FindQuestion::Kind;
+        using I = application::FindQuestion::Info;
+        const QString argument = qs(q.argument);
+        switch (q.kind) {
+        case K::Wrap: return tr("Reached end. Search from the beginning?");
+        case K::Styles:
+            return tr("Styles named \"%1\" do not exist in the subtitles being searched,\nwhich may significantly reduce "
+                      "the number of search results.\nWhat would you like to do?")
+                .arg(argument);
+        case K::NoStyles:
+            return tr("None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\n"
+                      "What would you like to do?");
+        case K::ConfirmFiles:
+            return tr("Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are "
+                      "in the 'ReplaceBackup' folder.");
+        case K::Message: break;
+        }
+        switch (q.info) {
+        case I::NotFound: return tr("Could not find the specified phrase \"%1\".").arg(argument);
+        case I::Replaced: return tr("Replaced %1 times.").arg(argument);
+        case I::InvalidPath: return tr("Search path is invalid");
+        case I::None: break;
+        }
+        return qs(q.text);
+    }
+    static QString questionTitle(const application::FindQuestion &q)
+    {
+        const QString title = qs(q.title);
+        if (title == QLatin1String("Confirmation"))
+            return tr("Confirmation");
+        if (title == QLatin1String("Info"))
+            return tr("Info");
+        if (title == QLatin1String("Find and Replace") || title.isEmpty())
+            return tr("Find and Replace");
+        return title;
+    }
+    void finished() override { m_app.findFinished(); }
     void log(const std::u8string &text) override { m_app.m_log->log(qs(text)); }
     void showLine(application::DocumentId document, core::LineId line, bool keepSelection, int role, int start,
                   int end) override
@@ -195,8 +243,9 @@ public:
         m_app.refreshViews();
     }
     // wxDir::GetAllFiles: subfolders first, then the files (each folder in
-    // name order); hidden ones only when asked. Links are not followed, so
-    // nothing outside the folder is ever a target.
+    // name order); hidden ones only when asked. Links to files and folders
+    // are followed as wxDir follows them; a folder reached again through a
+    // link is not listed twice (legacy recursed until the path was too long).
     std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder, const std::u8string &filter,
                                                         bool subfolders, bool hidden) override
     {
@@ -204,46 +253,91 @@ public:
         if (folder.empty() || !dir.exists())
             return std::nullopt;
         std::vector<std::u8string> out;
-        collect(dir, qs(filter), subfolders, hidden, out);
+        QSet<QString> visited;
+        collect(dir, qs(filter), subfolders, hidden, visited, out);
         return out;
     }
+    // OpenWrite::FileOpen: UTF-8 (with or without its BOM), UTF-16 with a
+    // BOM, else the system code page (legacy asked uchardet first, which the
+    // rewrite does not have). A file that decodes in none of them is left
+    // alone, so writing it back cannot lose its bytes. Text-mode reading
+    // turns CRLF into LF.
     std::optional<std::u16string> readFile(const std::u8string &path) override
     {
         QFile file(qs(path));
         if (!file.open(QIODevice::ReadOnly))
             return std::nullopt;
-        QByteArray bytes = file.readAll();
+        const QByteArray bytes = file.readAll();
+        QString text;
+        bool decoded = false;
+        const auto tryDecode = [&](QStringDecoder::Encoding encoding, qsizetype skip) {
+            QStringDecoder decoder(encoding, QStringDecoder::Flag::Stateless);
+            text = decoder.decode(bytes.mid(skip));
+            decoded = !decoder.hasError();
+        };
         if (bytes.startsWith("\xEF\xBB\xBF"))
-            bytes.remove(0, 3);
-        QStringDecoder decoder(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
-        QString text = decoder.decode(bytes);
-        if (decoder.hasError())
-            return std::nullopt; // not UTF-8: left alone
-        text.replace(QStringLiteral("\r\n"), QStringLiteral("\n")); // legacy's text-mode read
+            tryDecode(QStringDecoder::Utf8, 3);
+        else if (bytes.startsWith("\xFF\xFE"))
+            tryDecode(QStringDecoder::Utf16LE, 2);
+        else if (bytes.startsWith("\xFE\xFF"))
+            tryDecode(QStringDecoder::Utf16BE, 2);
+        else {
+            tryDecode(QStringDecoder::Utf8, 0);
+            if (!decoded)
+                tryDecode(QStringDecoder::System, 0);
+        }
+        if (!decoded) {
+            m_app.m_log->log(tr("%1 could not be read in a known character set; it was left alone.").arg(qs(path)));
+            return std::nullopt;
+        }
+        text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
         if (text.isEmpty())
             return std::nullopt;
         return std::u16string(reinterpret_cast<const char16_t *>(text.utf16()), static_cast<std::size_t>(text.size()));
     }
     bool fileExists(const std::u8string &path) override { return QFileInfo(qs(path)).isFile(); }
-    void backupFile(const std::u8string &path) override
+    // The legacy copy into ReplaceBackup beside the settings file, the one
+    // place written besides the chosen files (none without a settings file).
+    bool backupFile(const std::u8string &path) override
     {
         if (m_app.m_replaceBackup.isEmpty())
-            return;
+            return true;
         QDir().mkpath(m_app.m_replaceBackup);
         const QString source = qs(path);
         const QString copy = m_app.m_replaceBackup + QLatin1Char('/') + QFileInfo(source).fileName();
         QFile::remove(copy);
-        QFile::copy(source, copy);
+        return QFile::copy(source, copy);
     }
-    void writeFile(const std::u8string &path, const std::u16string &text) override
+    // OpenWrite::FileWrite: UTF-8 with a BOM, in place (a link writes its
+    // target). A failed or short write puts the original bytes back.
+    bool writeFile(const std::u8string &path, const std::u16string &text) override
     {
-        QFile file(qs(path));
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            m_app.m_log->log(tr("Cannot open file."));
-            return;
+        const QString name = qs(path);
+        QByteArray original;
+        {
+            QFile in(name);
+            if (!in.open(QIODevice::ReadOnly)) {
+                m_app.m_log->log(tr("Cannot open file %1.").arg(name));
+                return false;
+            }
+            original = in.readAll();
         }
-        file.write("\xEF\xBB\xBF");
-        file.write(QString(reinterpret_cast<const QChar *>(text.data()), static_cast<qsizetype>(text.size())).toUtf8());
+        const QByteArray bytes =
+            "\xEF\xBB\xBF" + QString(reinterpret_cast<const QChar *>(text.data()), static_cast<qsizetype>(text.size())).toUtf8();
+        const auto write = [&](const QByteArray &data) {
+            QFile file(name);
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                return false;
+            const bool all = file.write(data) == data.size() && file.flush();
+            file.close();
+            return all && file.error() == QFileDevice::NoError;
+        };
+        if (write(bytes))
+            return true;
+        m_app.m_log->log(tr("Cannot write file %1; it was left as it was.").arg(name));
+        if (!write(original))
+            m_app.m_log->log(tr("%1 could not be restored; its backup is in %2.").arg(name, m_app.m_replaceBackup));
+        return false;
     }
     std::optional<application::DocumentId> openFile(const std::u8string &path) override
     {
@@ -253,14 +347,33 @@ public:
             if (const auto destination = m_app.m_files->destination(id);
                 destination && QFileInfo(QString::fromStdString(destination->value)).canonicalFilePath() == wanted)
                 found = id;
-        return found ? found : m_app.open(qs(path));
+        if (found)
+            return found;
+        // Legacy opened the file in the current tab when it had no path
+        // (InsertTab only otherwise): an untouched Untitled Document gives
+        // way to it. One with changes stays and the file opens beside it
+        // (legacy OpenFile would ask to save it first).
+        const auto target = m_app.m_workspace.editingTarget();
+        const auto *session = target ? m_app.m_files->session(*target) : nullptr;
+        const bool reuse = session && m_app.targetUntitled() && !session->isDirty();
+        const auto id = m_app.open(qs(path));
+        if (id && reuse && *id != *target) {
+            m_app.discardRecovery(*target);
+            m_app.m_files->close(*target);
+            m_app.m_workspace.remove(*target);
+        }
+        return id;
     }
 
 private:
     static QString tr(const char *text) { return Application::tr(text); }
-    void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, std::vector<std::u8string> &out)
+    void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, QSet<QString> &visited,
+                 std::vector<std::u8string> &out)
     {
-        QDir::Filters common = QDir::NoDotAndDotDot | QDir::NoSymLinks;
+        if (visited.contains(dir.canonicalPath()))
+            return;
+        visited.insert(dir.canonicalPath());
+        QDir::Filters common = QDir::NoDotAndDotDot;
         if (hidden)
             common |= QDir::Hidden;
 #ifndef _WIN32
@@ -269,7 +382,7 @@ private:
         const QDir::SortFlags order = QDir::Name | QDir::IgnoreCase;
         if (subfolders)
             for (const QFileInfo &sub : dir.entryInfoList(QDir::Dirs | common, order))
-                collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, out);
+                collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, visited, out);
         const QStringList names = filter.isEmpty() ? QStringList() : QStringList{filter};
         for (const QFileInfo &file : dir.entryInfoList(names, QDir::Files | common, order))
             out.push_back(toU8(QDir::toNativeSeparators(file.absoluteFilePath())));
@@ -596,6 +709,9 @@ void Application::refreshViews()
     if (target != m_editorDocument) {
         m_editorDocument = target;
         m_editor->setDocument(target, target && m_workspace.checkContentCommand(*target).has_value());
+        // F1: legacy OnPageChanged calls FR->Reset(): the next search starts over.
+        if (m_find)
+            m_find->reset();
     }
     refreshVideo();
 }
@@ -2009,11 +2125,11 @@ void Application::saveFindRecent()
     ini.setValue(QStringLiteral("FindReplace/Paths"), findList(r.paths));
 }
 
-QVariantMap Application::runFindReplace(const QString &action, const QVariantMap &settings)
+void Application::runFindReplace(const QString &action, const QVariantMap &settings)
 {
-    auto s = findSettings(settings);
+    const auto s = findSettings(settings);
     if (action == QLatin1String("find"))
-        m_find->find(&s);
+        m_find->find(s);
     else if (action == QLatin1String("findAllCurrent"))
         m_find->findAllInCurrent(s);
     else if (action == QLatin1String("findAllTabs"))
@@ -2028,9 +2144,14 @@ QVariantMap Application::runFindReplace(const QString &action, const QVariantMap
         m_find->findInFiles(s);
     else if (action == QLatin1String("replaceInFiles"))
         m_find->replaceInFiles(s);
+}
+
+void Application::findFinished()
+{
     saveFindRecent();
     emit findResultsChanged();
-    return findMap(s, m_find->recent());
+    emit findBusyChanged();
+    emit findFinished(findMap(m_find->window(), m_find->recent()));
 }
 
 void Application::findNext()
@@ -2038,12 +2159,20 @@ void Application::findNext()
     m_find->findNext();
 }
 
-void Application::answerFindQuestion(int answer)
+bool Application::findBusy() const
 {
-    m_findAnswer = answer;
-    if (m_findLoop)
-        m_findLoop->quit();
-    m_findLoop = nullptr;
+    return m_find && m_find->busy();
+}
+
+void Application::answerFindQuestion(int id, int answer)
+{
+    const auto it = m_findAnswers.find(id);
+    if (it == m_findAnswers.end())
+        return;
+    auto resume = std::move(it->second);
+    m_findAnswers.erase(it);
+    resume(static_cast<application::FindAnswer>(std::clamp(answer, 0, 3)));
+    emit findBusyChanged();
 }
 
 void Application::setFindQuestionHandler(std::function<int(int, const QString &)> handler)
@@ -2065,8 +2194,10 @@ QString Application::findReplaceActivated(const QString &find)
         const auto [from, to] = m_editor->fieldSelectionOf(role);
         if (from >= to)
             continue;
-        if (from == m_find->lastStart() && to == m_find->lastEnd())
-            return find; // the last match
+        // The last match, compared where the editor shows it (hidden tags
+        // move display offsets; legacy compared raw offsets of raw text).
+        if (std::pair(from, to) == m_editor->displaySpan(role, m_find->lastStart(), m_find->lastEnd()))
+            return find;
         const QString shown = role == 1 ? m_editor->translationText() : m_editor->text();
         const QString selected = shown.mid(from, to - from);
         m_find->selectionAdopted();

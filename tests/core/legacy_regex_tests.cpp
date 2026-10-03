@@ -100,3 +100,21 @@ TEST(LegacyRegex, ReplaceLikeWxRegEx)
     EXPECT_EQ(R(u"(", R::Advanced).replace(text, u"x"), -1);
     EXPECT_EQ(text, u"abc");
 }
+
+TEST(LegacyRegex, MatchErrorsAreReportedAndMatchNothing)
+{
+    // Catastrophic backtracking reaches PCRE2's match limit: wx_regexec logs
+    // the error and Matches returns false; matchError() gives the text.
+    const LegacyRegex re(u"(a+)+$", R::Advanced);
+    ASSERT_TRUE(re.isValid());
+    const std::u16string text = std::u16string(40, u'a') + u"b";
+    EXPECT_FALSE(re.matches(text));
+    EXPECT_FALSE(re.matchError().empty());
+    std::u16string copy = text;
+    EXPECT_EQ(re.replace(copy, u"x"), 0);
+    EXPECT_EQ(copy, text);
+    EXPECT_FALSE(re.matchError().empty());
+    // A plain miss is no error.
+    EXPECT_FALSE(re.matches(u"b"));
+    EXPECT_TRUE(re.matchError().empty());
+}

@@ -31,7 +31,6 @@
 
 #include <QDate>
 #include <QDateTime>
-#include <QEventLoop>
 #include <QLockFile>
 #include <QTimer>
 #include <QObject>
@@ -60,10 +59,16 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
-    // F1: find and replace asks (kind: 0 message, 1 "Reached end", 2 missing
-    // styles, 3 no style found, 4 replace in files) and waits for answerFindQuestion.
-    void findQuestion(int kind, const QString &text, const QString &title);
+    // F1: find and replace shows a legacy message box (kind: 0 message, 1
+    // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
+    // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
+    // needs no answer. Nothing blocks meanwhile.
+    void findQuestion(int id, int kind, const QString &text, const QString &title);
     void findResultsChanged();
+    // An operation finished (also after its questions): the tab as it is now
+    // (the styles question may have changed its styles) with the recent lists.
+    void findFinished(const QVariantMap &settings);
+    void findBusyChanged();
 
 public:
     struct Options {
@@ -163,6 +168,8 @@ public:
     Q_INVOKABLE void reportIssue();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
+    // F1: a find and replace question waits for its answer.
+    Q_PROPERTY(bool findBusy READ findBusy NOTIFY findBusyChanged)
     bool quitApproved() const { return m_quitApproved; }
 
     // Grid selection gestures (G1). The active Line moves through the Line
@@ -283,13 +290,15 @@ public:
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
     // A button: "find", "findAllCurrent", "findAllTabs", "replace",
     // "replaceAll", "replaceAllTabs", "findInFiles" or "replaceInFiles". The
-    // legacy messages and questions come as findQuestion; the result is the
-    // tab afterwards (the styles may change) with the recent lists.
-    Q_INVOKABLE QVariantMap runFindReplace(const QString &action, const QVariantMap &settings);
+    // legacy messages and questions come as findQuestion; findFinished
+    // gives the tab afterwards (the styles may change) with the recent lists.
+    // Ignored while a question waits (findBusy).
+    Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
     Q_INVOKABLE void findNext();
-    // 0 Ok, 1 Yes, 2 No, 3 Cancel.
-    Q_INVOKABLE void answerFindQuestion(int answer);
-    // The dialog activates (FindReplaceDialog::OnActivate): the text selected
+    // The answer to question `id`: 0 Ok, 1 Yes, 2 No, 3 Cancel.
+    Q_INVOKABLE void answerFindQuestion(int id, int answer);
+    bool findBusy() const;
+    // The Search tool gains the focus (FindReplaceDialog::OnActivate): the text selected
     // in the Line editor, or `find` as it is.
     Q_INVOKABLE QString findReplaceActivated(const QString &find);
     // A Lines radio button (TabWindow::Reset): the next search starts over.
@@ -422,9 +431,10 @@ private:
     QString m_findStyles;
     QString m_replaceBackup;
     std::function<int(int, const QString &)> m_findQuestionHandler;
-    QEventLoop *m_findLoop = nullptr;
-    int m_findAnswer = 3;
+    int m_findQuestionId = 0;
+    std::map<int, std::function<void(application::FindAnswer)>> m_findAnswers; // questions shown, by id
     void saveFindRecent();
+    void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);

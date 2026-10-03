@@ -42,6 +42,10 @@ public:
     // (0) or a group; a group that did not take part gives npos and 0.
     std::optional<std::pair<std::size_t, std::size_t>> match(std::size_t index = 0) const;
     std::size_t matchCount() const; // groups + 1 (0 with NoSub)
+    // PCRE2's text for an error of the last matches() or replace() other
+    // than "no match" (a match or heap limit; wx logs "Failed to find match
+    // for regular expression: %s" and treats it as no match), else "".
+    std::u16string matchError() const;
 
     // wxRegEx::Replace / ReplaceAll / ReplaceFirst: the number of
     // replacements, or -1 when the expression is invalid. After an empty

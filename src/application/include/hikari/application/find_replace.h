@@ -7,16 +7,17 @@
 // FindReplace keeps legacy's state between runs (the row and text position
 // of the next search, the last match, the recent lists, the results) and
 // walks rows as legacy does. Everything the legacy code shows or asks goes
-// through the host, which answers as the user would.
+// through the host; a question is answered later (or at once), and the
+// operation resumes with the answer instead of blocking in a modal loop.
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/write_coordinator.h"
+#include "hikari/core/legacy_regex.h"
 
 #include <cstdint>
 #include <functional>
 #include <optional>
-#include <regex>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -86,16 +87,19 @@ struct FindResult {
 // What the legacy code shows with HikariMessageBox / HikariMessageDialog.
 struct FindQuestion {
     enum class Kind {
-        Message,      // information; any answer
+        Message,      // information; nothing waits for it
         Wrap,         // "Reached end. Search from the beginning?" Yes/No
         Styles,       // some styles missing: Ok (remove nonexistent), Yes (remove styles), No (ignore), Cancel
         NoStyles,     // no style exists: Yes (remove styles), Cancel
         ConfirmFiles, // replace in files: Yes/No
     };
+    // Which message (for the shell's translated text).
+    enum class Info { None, NotFound, Replaced, InvalidPath };
     Kind kind = Kind::Message;
-    std::u8string text;
-    std::u8string argument; // Message: the phrase; Styles: the missing styles
+    std::u8string text;     // the legacy English text
+    std::u8string argument; // NotFound: the phrase; Replaced: the count; Styles: the missing styles
     std::u8string title;    // the legacy caption
+    Info info = Info::None;
 };
 enum class FindAnswer { Ok, Yes, No, Cancel };
 
@@ -114,7 +118,11 @@ public:
     virtual std::vector<FindTab> tabs() = 0;      // every open Document, in order
     // The Lines "Replace all" walks (legacy ignoreFiltered); empty: all.
     virtual LineVisible actionLines(EditSession &) { return {}; }
-    virtual FindAnswer ask(const FindQuestion &question) = 0;
+    // Shows a legacy message box without blocking. A question passes
+    // `answer`, which the host calls once with the user's answer (at once or
+    // later); FindReplace waits for it and refuses new work meanwhile
+    // (busy()). A message passes an empty `answer`: nothing waits.
+    virtual void ask(const FindQuestion &question, std::function<void(FindAnswer)> answer) = 0;
     virtual void log(const std::u8string &) {}
     // A match was found: `line` becomes active (and the only selected Line
     // unless `keepSelection`) of `document`, which becomes the editing
@@ -124,16 +132,20 @@ public:
     virtual void showLine(DocumentId document, core::LineId line, bool keepSelection, int role, int start, int end) = 0;
     // A command changed this Document (the editor and Grid show it again).
     virtual void changed(DocumentId) {}
+    // An operation (a button, F3, Replace checked) has finished, also after
+    // its questions were answered: window() and the results are final.
+    virtual void finished() {}
     // Files on disk. The host enumerates (legacy wxDir::GetAllFiles: nullopt
-    // for an invalid folder), reads (UTF-8, CRLF read as LF, BOM removed;
-    // nullopt when unreadable or empty), backs up and writes (UTF-8 with BOM).
+    // for an invalid folder), reads (the detected charset, CRLF read as LF,
+    // BOM removed; nullopt when unreadable or empty), backs up and writes
+    // (UTF-8 with BOM); both report whether they succeeded.
     virtual std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder,
                                                                 const std::u8string &filter, bool subfolders,
                                                                 bool hidden) = 0;
     virtual std::optional<std::u16string> readFile(const std::u8string &path) = 0;
     virtual bool fileExists(const std::u8string &path) = 0;
-    virtual void backupFile(const std::u8string &path) = 0;
-    virtual void writeFile(const std::u8string &path, const std::u16string &text) = 0;
+    virtual bool backupFile(const std::u8string &path) = 0;
+    virtual bool writeFile(const std::u8string &path, const std::u16string &text) = 0;
     // ShowResult for a file: the open Document with this path, or the file opened.
     virtual std::optional<DocumentId> openFile(const std::u8string &path) = 0;
 };
@@ -150,18 +162,23 @@ public:
     void setRecent(Recent recent);
     const Recent &recent() const { return m_recent; }
 
-    // The dialog's buttons; `window` is the tab as the user left it (its
-    // styles may change through the styles question).
-    void find(FindReplaceSettings *window);          // Find, Enter (legacy Find + fnext = false)
-    void findNext();                                 // GLOBAL_FIND_NEXT (F3)
-    void findAllInCurrent(FindReplaceSettings &window); // "Find all in current subtitles"
-    void findInAllOpened(FindReplaceSettings &window);  // "Find in all open subtitles"
-    void replace(FindReplaceSettings &window);       // "Replace next"
-    void replaceAll(FindReplaceSettings &window);    // "Replace all"
-    void replaceInAllOpened(FindReplaceSettings &window); // "Replace in all open subtitles"
-    void findInFiles(FindReplaceSettings &window);   // "Find in subtitles"
-    void replaceInFiles(FindReplaceSettings &window);    // "Replace in subtitles" (asks first)
-    // A radio button of the Lines box (TabWindow::Reset) and FindReplaceDialog::Reset.
+    // The dialog's buttons with the tab as the user left it. A question
+    // makes the operation wait for its answer (busy()); every call is
+    // ignored meanwhile, as legacy's modal boxes block the window.
+    void find(const FindReplaceSettings &window);          // Find, Enter (legacy Find + fnext = false)
+    void findNext();                                       // GLOBAL_FIND_NEXT (F3)
+    void findAllInCurrent(const FindReplaceSettings &window); // "Find all in current subtitles"
+    void findInAllOpened(const FindReplaceSettings &window);  // "Find in all open subtitles"
+    void replace(const FindReplaceSettings &window);       // "Replace next"
+    void replaceAll(const FindReplaceSettings &window);    // "Replace all"
+    void replaceInAllOpened(const FindReplaceSettings &window); // "Replace in all open subtitles"
+    void findInFiles(const FindReplaceSettings &window);   // "Find in subtitles"
+    void replaceInFiles(const FindReplaceSettings &window); // "Replace in subtitles" (asks first)
+    bool busy() const { return m_waiting; }
+    // The tab after the last operation (the styles question may change its styles).
+    const FindReplaceSettings &window() const { return m_window; }
+    // A radio button of the Lines box (TabWindow::Reset), FindReplaceDialog::Reset
+    // and a change of the editing target (legacy OnPageChanged).
     void reset();
     // The dialog activates with a selection in the editor (OnActivate): the
     // next search starts over from row 0 unless it is the last match.
@@ -181,15 +198,28 @@ public:
     void replaceChecked(const std::u8string &replacement);
 
 private:
-    struct TextMatch {
-        int position = 0;
-        int length = 0;
-    };
+    using Found = std::function<void(bool found)>;
+    using Then = std::function<void(bool cancelled)>;
+    bool begin(const FindReplaceSettings *window);
+    void finish();
+    void ask(const FindQuestion &question, std::function<void(FindAnswer)> then);
+    void tell(const FindQuestion &question);
+    std::optional<FindTab> tabById(DocumentId id);
     bool updateValues(const FindReplaceSettings &window);
-    bool checkStyles(FindReplaceSettings &window, const EditSession &session);
+    bool compile(std::u16string_view pattern);
+    void checkStyles(DocumentId document, Then then);
     bool keepFinding(std::u16string_view text, int textPos) const;
+    bool search(std::u16string_view text, int &start, int &length) const;
+    int regexReplace(std::u16string &text, std::u16string_view replacement, std::size_t maxMatches) const;
     std::u16string element(const core::LineRecord &line, bool translationMode) const;
     std::u16string lower(std::u16string_view s) const;
+    // Find: the search with the dialog's tab (`withWindow`) or the last values (F3).
+    void runFind(bool withWindow, Found done);
+    void seekFromStart(DocumentId document, bool withWindow, Found done);
+    void seekLines(DocumentId document, bool withWindow, Found done);
+    void endFind(bool withWindow, bool found, const Found &done);
+    bool matchStillThere(const EditSession &session);
+    void replaceFound(bool found);
     // FindInSubsLine: every match of one Line's text, as results.
     void findInLine(const std::u16string &text, std::u16string_view lineText, std::optional<DocumentId> document,
                     bool *isFirst, int linePos, int linePosId, const std::u8string &header, bool translationMode);
@@ -197,7 +227,7 @@ private:
     int replaceCheckedLine(std::u16string &line, int position, int length, int *diff) const;
     void findAllInTab(const FindTab &tab, bool allLines, bool selectedOnly);
     int replaceAllInTab(const FindTab &tab, bool allLines, bool selectedOnly);
-    void findReplaceInFiles(FindReplaceSettings &window, bool find);
+    void findReplaceInFiles(bool find);
     void findReplaceInFile(const std::u8string &path, bool find, int &replacements);
     int replaceCheckedInFile(const std::vector<const FindResult *> &results);
     void addRecent(const FindReplaceSettings &window);
@@ -206,6 +236,8 @@ private:
     FindReplaceHost &m_host;
     CaseFold m_fold;
     Recent m_recent;
+    FindReplaceSettings m_window; // the tab of the running (or last) operation
+    bool m_waiting = false;       // a question waits for its answer
 
     // Legacy FindReplace members.
     int m_linePosition = 0;
@@ -219,6 +251,12 @@ private:
     bool m_wasResetToStart = false;
     bool m_wasIgnored = false;
     std::u16string m_stylesAsText;
+    // The last match as Find left it: Replace next replaces it only while it
+    // is still there (F1-stale-replace).
+    bool m_matchValid = false;
+    std::optional<DocumentId> m_matchDocument;
+    std::optional<core::LineId> m_matchLine;
+    std::u16string m_matchText;
     // UpdateValues.
     FindReplaceSettings::Field m_field = FindReplaceSettings::Field::Text;
     bool m_matchCase = false;
@@ -232,7 +270,9 @@ private:
     bool m_selectedLines = false;
     std::u16string m_findString;
     std::u16string m_replaceString;
-    std::optional<std::wregex> m_regex; // findReplaceRegEx; kept until the next regular expression
+    // findReplaceRegEx: wxRegEx(find, wxRE_ADVANCED [| wxRE_ICASE]) over
+    // PCRE2 (R1-pcre2); kept until the next regular expression.
+    std::optional<core::LegacyRegex> m_regex;
     // FindReplaceResultsDialog.
     std::vector<FindResult> m_results;
     bool m_resultsShown = false;
@@ -241,13 +281,5 @@ private:
     bool m_resultsRegEx = false, m_resultsMatchCase = false, m_resultsNeedPrefix = false;
     std::u16string m_resultsFindString;
 };
-
-namespace find_replace_detail {
-// wxRegEx::Replace (wxWidgets src/common/regex.cpp at the legacy pin): "\N"
-// and "&" insert groups, "\" escapes the next character, a trailing "\"
-// stays; after the first match "^" does not match (wxRE_NOTBOL). Returns
-// the number of replacements.
-int regexReplace(const std::wregex &re, std::u16string &text, std::u16string_view replacement, int maxMatches);
-} // namespace find_replace_detail
 
 } // namespace hikari::application

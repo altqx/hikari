@@ -11,6 +11,7 @@
 #include <QTextBoundaryFinder>
 
 #include <algorithm>
+#include <tuple>
 #include <cstdlib>
 
 namespace hikari::ui {
@@ -1188,11 +1189,11 @@ void LineEditorController::selectInField(int start, int end)
     emit selectionRequested();
 }
 
-void LineEditorController::selectRaw(int role, int start, int end)
+std::pair<int, int> LineEditorController::displaySpan(int role, int start, int end) const
 {
     const auto r = record();
     if (!r || role < 0 || role > 1)
-        return;
+        return {start, end};
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     const int size = static_cast<int>(raw.size());
     start = std::clamp(start, 0, size);
@@ -1202,6 +1203,14 @@ void LineEditorController::selectRaw(int role, int start, int end)
         start = static_cast<int>(core::displayOffset(projection, static_cast<std::size_t>(start)));
         end = static_cast<int>(core::displayOffset(projection, static_cast<std::size_t>(end)));
     }
+    return {start, end};
+}
+
+void LineEditorController::selectRaw(int role, int start, int end)
+{
+    if (!record() || role < 0 || role > 1)
+        return;
+    std::tie(start, end) = displaySpan(role, start, end);
     m_selectionStart = start;
     m_selectionEnd = end;
     m_selectionRole = role;

@@ -129,10 +129,13 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/qt/ux/workspaces.md); Timing tabs with the editor.
+        // Tools start closed (docs/qt/ux/workspaces.md); Timing tabs with the
+        // editor, Search (its scope rail beside the results) spans the bottom.
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
+        dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
+        searchDock.close()
     }
     Connections {
         target: root.shell
@@ -145,9 +148,10 @@ ApplicationWindow {
     }
 
     // Major panels in F6 order; a hidden panel is skipped.
-    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel]
+    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel,
+                                          searchPanel]
     // D1: their docks, in the same order.
-    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock]
+    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
 
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio).
@@ -159,6 +163,21 @@ ApplicationWindow {
             audioDock.close()
         root.workspaceLayout.preset = name
         root.workspaceLayout.save()
+    }
+
+    // F1: GLOBAL_SEARCH (0) and GLOBAL_FIND_REPLACE (1) open the Search tool
+    // on that tab; the same shortcut again while the tool has the focus on
+    // that tab hides it (legacy ShowDialog). The focus coming in from
+    // elsewhere takes the editor's selection (legacy OnActivate).
+    function openSearch(which) {
+        if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
+            searchDock.close()
+            root.focusPanel(editorPanel, Qt.OtherFocusReason)
+            return
+        }
+        searchTool.showTab(which)
+        root.showPanel(searchDock)
+        searchTool.focusFind()
     }
 
     // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
@@ -544,7 +563,7 @@ ApplicationWindow {
                     text: qsTr("Find and re&place")
                     shortcut: "Ctrl+H"
                     enabled: root.editor.hasLine
-                    onTriggered: findReplace.activate(1)
+                    onTriggered: root.openSearch(1)
                 }
             }
             MenuItem {
@@ -553,7 +572,7 @@ ApplicationWindow {
                     text: qsTr("&Find")
                     shortcut: "Ctrl+F"
                     enabled: root.editor.hasLine
-                    onTriggered: findReplace.activate(0)
+                    onTriggered: root.openSearch(0)
                 }
             }
             MenuItem {
@@ -561,7 +580,8 @@ ApplicationWindow {
                 action: Action {
                     text: qsTr("Find next")
                     shortcut: "F3"
-                    enabled: root.editor.hasLine
+                    // A question box waits: nothing re-enters the search (legacy's are modal).
+                    enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: root.app.findNext()
                 }
             }
@@ -1839,6 +1859,28 @@ ApplicationWindow {
             }
         }
 
+        // F1: the Search tool (find and replace; docs/qt/ux/reviewed-surface-layouts.md B).
+        KDDW.DockWidget {
+            id: searchDock
+            objectName: "searchDock"
+            uniqueName: "Search"
+            title: qsTr("Search")
+            // TabWindow::SaveValues when the tool closes.
+            onIsOpenChanged: if (!isOpen) searchTool.save()
+            Panel {
+                id: searchPanel
+                objectName: "searchPanel"
+                anchors.fill: parent
+                title: qsTr("Find and replace")
+                onActiveFocusChanged: if (activeFocus) searchTool.activated()
+                SearchTool {
+                    id: searchTool
+                    anchors.fill: parent
+                    app: root.app
+                }
+            }
+        }
+
         Component.onCompleted: {
             root.defaultLayout()
             root.workspaceLayout.captureDefault()
@@ -2895,11 +2937,6 @@ ApplicationWindow {
         id: selectLinesDialog
         app: root.app
         anchors.centerIn: parent
-    }
-    FindReplaceDialog {
-        id: findReplace
-        app: root.app
-        anchors.fill: parent
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

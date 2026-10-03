@@ -158,6 +158,9 @@ public:
     // F1: selects [start, end) of the raw text of `role` (0 Original, 1
     // Translated) as find marks a match; offsets move past hidden tags.
     void selectRaw(int role, int start, int end);
+    // F1: [start, end) of the raw text of `role` where the field shows it
+    // (past hidden tags), as selectRaw would select it.
+    std::pair<int, int> displaySpan(int role, int start, int end) const;
     // The Document changed outside the editor (a macro): show it again.
     void reloadFromSession();
     // The video time shown (ms), or nullopt without video.

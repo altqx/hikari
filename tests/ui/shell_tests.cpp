@@ -1231,9 +1231,11 @@ private slots:
         application->editor().discard();
     }
 
-    // F1: Edit > Find and replace: Replace all as one step, Find with the
-    // editor selection, the results dialog, F3 and a legacy question box.
-    void findReplaceDialogReplacesFindsAndListsResults()
+    // F1: Ctrl+H / Ctrl+F open the persistent Search tool (scope rail left,
+    // results right): Replace all as one step, Find with the editor's
+    // selection, F3, a question box that does not block and that F3 cannot
+    // re-enter, the results and Replace checked, and the toggle that hides it.
+    void searchToolReplacesFindsAndListsResults()
     {
         const QString path = writeFile(dir, "find.ass",
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha beta\n"
@@ -1241,22 +1243,30 @@ private slots:
                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,gamma beta\n");
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
-        auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("findReplaceDialog"));
-        QVERIFY(dialog);
+        auto *dock = item<QObject>("searchDock");
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool()); // tools start closed
         QStringList questions;
         application->setFindQuestionHandler([&](int, const QString &text) {
             questions << text;
             return 2; // No
         });
-        auto *menuItem = root->findChild<QObject *>(QStringLiteral("findReplaceMenuItem"));
-        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Find and replace"));
-        dialogItem("findReplaceDialog", "findText")->setProperty("editText", QStringLiteral("BETA"));
-        dialogItem("findReplaceDialog", "findReplaceText")->setProperty("editText", QStringLiteral("B"));
+        // Ctrl+H from the Grid: the tool on "Find and replace", focused.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY(item("searchPanel")->hasActiveFocus());
+        auto *tool = item<QObject>("searchTool");
+        QVERIFY(tool);
+        QCOMPARE(tool->property("tab").toInt(), 1);
+        // Scope rail on the left, results and change review on the right.
+        const auto x = [&](const char *name) { return item(name)->mapToScene(QPointF(0, 0)).x(); };
+        QVERIFY(x("findText") < x("findResultsTitle"));
+        QVERIFY(x("replaceAllButton") < x("replaceCheckedButton"));
+        item("findText")->setProperty("editText", QStringLiteral("BETA"));
+        item("findReplaceText")->setProperty("editText", QStringLiteral("B"));
         const auto steps = session->historySize();
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("findReplaceDialog", "replaceAllButton"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(item("replaceAllButton"), "click"));
         QCOMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QCOMPARE(questions.back(), QStringLiteral("Replaced 3 times."));
@@ -1268,64 +1278,133 @@ private slots:
         QCOMPARE(text(2), QStringLiteral("gamma B"));
         application->editor().undo();
         QCOMPARE(text(0), QStringLiteral("Alpha beta"));
-        // The recent searches.
         QCOMPARE(application->findReplaceSettings(1).value(QStringLiteral("finds")).toStringList(),
                  QStringList{QStringLiteral("BETA")});
-        // Ctrl+F's Find tab: Find selects the match's Line and its text.
-        auto *find = root->findChild<QObject *>(QStringLiteral("findMenuItem"));
-        QVERIFY(QMetaObject::invokeMethod(find->property("action").value<QObject *>(), "trigger"));
-        QTRY_COMPARE(dialog->property("title").toString(), QStringLiteral("Find"));
-        dialogItem("findReplaceDialog", "findText")->setProperty("editText", QStringLiteral("gamma"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("findReplaceDialog", "findButton"), "click"));
+        // Ctrl+F in the tool switches to the Find tab (legacy SetValues: the
+        // first recent search).
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_COMPARE(tool->property("tab").toInt(), 0);
+        QCOMPARE(item("findText")->property("editText").toString(), QStringLiteral("BETA"));
+        item("findText")->setProperty("editText", QStringLiteral("zzz"));
+        // Ctrl+F from the Line editor with "beta" selected: the tool takes the
+        // selection as it gains the focus (legacy OnActivate).
+        auto *lineText = item("lineText");
+        lineText->forceActiveFocus();
+        QTRY_COMPARE(lineText->property("text").toString(), QStringLiteral("Alpha beta"));
+        QVERIFY(QMetaObject::invokeMethod(lineText, "select", Q_ARG(int, 6), Q_ARG(int, 10)));
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_COMPARE(tool->property("tab").toInt(), 0);
+        QTRY_VERIFY(item("searchPanel")->hasActiveFocus());
+        QCOMPARE(item("findText")->property("editText").toString(), QStringLiteral("beta"));
+        QVERIFY(QMetaObject::invokeMethod(item("findButton"), "click"));
         const auto lines = session->document().lines();
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id}));
+        QCOMPARE(application->editor().selectionStart(), 6);
+        QCOMPARE(application->editor().selectionEnd(), 10);
+        // F3 goes on.
+        press(Qt::Key_F3);
+        QCOMPARE(session->selection().active, std::optional(lines[1]->id));
+        press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[2]->id}));
-        QCOMPARE(application->editor().selectionStart(), 0);
-        QCOMPARE(application->editor().selectionEnd(), 5);
-        // F3 goes on: the end asks "Reached end", answered No.
+        // The end asks "Reached end" in a box that does not block: F3 (and any
+        // other find) is refused while it waits.
+        application->setFindQuestionHandler({});
+        auto *question = item<QObject>("findQuestion");
+        press(Qt::Key_F3);
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
+        QVERIFY(application->findBusy());
+        press(Qt::Key_F3);
         application->findNext();
-        QCOMPARE(questions.back(), QStringLiteral("Reached end. Search from the beginning?"));
-        // Find all in current subtitles opens the results; a double click goes there.
-        dialogItem("findReplaceDialog", "findText")->setProperty("editText", QStringLiteral("beta"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("findReplaceDialog", "findAllCurrentButton"), "click"));
-        auto *results = root->findChild<QObject *>(QStringLiteral("findResultsDialog"));
-        QTRY_VERIFY(results->property("visible").toBool());
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}});
+        QCOMPARE(question->property("queue").toList().size(), 0);
+        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
+        // Yes: from the beginning.
+        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QVERIFY(!application->findBusy());
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        // Find all lists the matches on the right; a double click goes there.
+        application->setFindQuestionHandler([&](int, const QString &text) {
+            questions << text;
+            return 2;
+        });
+        QVERIFY(QMetaObject::invokeMethod(item("findAllCurrentButton"), "click"));
+        QTRY_VERIFY(item("findResultsList")->isVisible());
         const auto rows = application->findResults();
         QCOMPARE(rows.size(), 4);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QStringLiteral("find.ass"));
         QCOMPARE(rows[2].toMap().value(QStringLiteral("line")).toString(), QStringLiteral("Line 2: "));
         QCOMPARE(rows[2].toMap().value(QStringLiteral("match")).toString(), QStringLiteral("beta"));
-        application->showFindResult(1);
-        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QCOMPARE(item("findResultsList")->property("count").toInt(), 4);
+        application->showFindResult(3);
+        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
         QCOMPARE(application->editor().selectionStart(), 6);
         // Replace the checked results but the second, as one step.
         application->toggleFindResult(2);
-        application->replaceFindResults(QStringLiteral("x"));
+        item("findResultsReplace")->setProperty("editText", QStringLiteral("x"));
+        QVERIFY(QMetaObject::invokeMethod(item("replaceCheckedButton"), "click"));
         QCOMPARE(text(0), QStringLiteral("Alpha x"));
         QCOMPARE(text(1), QStringLiteral("beta"));
         QCOMPARE(text(2), QStringLiteral("gamma x"));
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
-        // Without a handler the question box is shown and waited for.
-        application->setFindQuestionHandler({});
-        auto *question = root->findChild<QObject *>(QStringLiteral("findQuestion"));
-        bool asked = false;
-        QTimer::singleShot(0, this, [&] {
-            QTRY_VERIFY(question->property("visible").toBool());
-            asked = question->property("text").toString() == QStringLiteral("Reached end. Search from the beginning?");
-            QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerNo")), "click"));
-        });
-        // Never wait forever if the box did not answer.
-        QTimer::singleShot(10000, this, [&] { application->answerFindQuestion(3); });
-        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}});
-        QVERIFY(asked);
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QVERIFY(!item("replaceCheckedButton")->isEnabled());
+        // Ctrl+F again on the Find tab with the focus in the tool hides it.
+        item("findText")->forceActiveFocus();
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->editor().discard();
     }
 
+    // F1: changing the editing target resets the search (legacy OnPageChanged
+    // calls FR->Reset()): F3 starts over in the new Document instead of going
+    // on from the row the old Document's search reached.
+    void switchingDocumentsResetsTheSearch()
+    {
+        const QString a = writeFile(dir, "fa.ass",
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,y\n"
+                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,y\n"
+                                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,x1\n"
+                                    "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,x2\n");
+        const QString b = writeFile(dir, "fb.ass",
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x3\n"
+                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,y\n"
+                                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,y\n"
+                                    "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,x4\n");
+        QVERIFY(application->openFile(a));
+        QVERIFY(application->openFile(b)); // a second Document; A stays the editing target
+        const auto second = application->workspace().documents().back();
+        QStringList questions;
+        application->setFindQuestionHandler([&](int, const QString &text) {
+            questions << text;
+            return 2;
+        });
+        const QVariantMap find{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("x")}};
+        application->runFindReplace(QStringLiteral("find"), find);
+        application->findNext(); // A's row 3: the search would go on at row 4, past B's end
+        // A result in B makes B the editing target (row 3 active).
+        application->runFindReplace(QStringLiteral("findAllTabs"), find);
+        const auto rows = application->findResults();
+        QCOMPARE(rows.size(), 6); // A + 2, B + 2
+        application->showFindResult(5);
+        QCOMPARE(application->workspace().editingTarget(), std::optional(second));
+        auto *session = application->files().session(second);
+        const auto lines = session->document().lines();
+        QCOMPARE(session->selection().active, std::optional(lines[3]->id));
+        // F3 starts over (All lines: row 0) instead of "Reached end" from row 4.
+        application->findNext();
+        QVERIFY2(questions.isEmpty(), qPrintable(questions.join(QLatin1Char('|'))));
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QCOMPARE(application->editor().selectionStart(), 0);
+        QCOMPARE(application->editor().selectionEnd(), 1);
+    }
+
     // F1: Replace in subtitles rewrites only the listed subtitle files that
-    // changed, each after its backup; other files, hidden ones and linked
-    // files outside the folder stay as they were.
+    // changed, each after its backup; links are followed as legacy wxDir
+    // follows them (a link loop is listed once), the charset is detected,
+    // comments and blank lines stay, and other files stay byte-identical.
     void findReplaceInFilesTouchesOnlyItsTargets()
     {
         QTemporaryDir folder;
@@ -1338,17 +1417,30 @@ private slots:
             f.write(bytes);
         };
         const QByteArray ass = "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a cat\n";
-        put(folder.filePath(QStringLiteral("one.ass")), ass);
+        put(folder.filePath(QStringLiteral("one.ass")),
+            "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a cat\n"
+            "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,a cat note\n\n"
+            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,dog  \n");
         put(folder.filePath(QStringLiteral("sub/two.srt")), "1\n00:00:01,000 --> 00:00:02,000\ncat\n");
         put(folder.filePath(QStringLiteral("none.ass")), "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,dog\n");
         put(folder.filePath(QStringLiteral("notes.doc")), "cat");
         put(folder.filePath(QStringLiteral(".hidden.ass")), ass);
+        // UTF-16 with a BOM is read and written back as UTF-8 with a BOM.
+        QByteArray utf16("\xFF\xFE");
+        for (const QChar c : QStringLiteral("cat\r\n"))
+            utf16.append(char(c.unicode() & 0xFF)).append(char(c.unicode() >> 8));
+        put(folder.filePath(QStringLiteral("wide.txt")), utf16);
+        // Not UTF-8 (Latin-1 "é"): on Linux the system code page is UTF-8, so
+        // it cannot be read and is left alone rather than damaged.
+        put(folder.filePath(QStringLiteral("latin.txt")), "caf\xE9 cat\n");
         put(outside.filePath(QStringLiteral("far.ass")), ass);
         const bool linked = QFile::link(outside.filePath(QStringLiteral("far.ass")), folder.filePath(QStringLiteral("link.ass")));
+        const bool looped = QFile::link(folder.path(), folder.filePath(QStringLiteral("sub/loop")));
         const auto snapshot = [&] {
             std::map<QString, QByteArray> files;
             for (const QString &base : {folder.path(), outside.path()}) {
-                QDirIterator it(base, QDir::Files | QDir::Hidden | QDir::System, QDirIterator::Subdirectories);
+                QDirIterator it(base, QDir::Files | QDir::Hidden | QDir::System | QDir::NoSymLinks,
+                                QDirIterator::Subdirectories);
                 while (it.hasNext()) {
                     const QString p = it.next();
                     QFile f(p);
@@ -1372,24 +1464,51 @@ private slots:
                                      {QStringLiteral("folder"), folder.path()},
                                      {QStringLiteral("subfolders"), true}});
         QCOMPARE(questions.size(), 2);
-        QCOMPARE(questions[1], QStringLiteral("Replaced 2 times."));
+        QCOMPARE(questions[1], QStringLiteral("Replaced %1 times.").arg(linked ? 4 : 3));
         const auto after = snapshot();
         QCOMPARE(after.size(), before.size()); // no file appeared or vanished
         std::set<QString> changed;
         for (const auto &[p, bytes] : after)
             if (before.at(p) != bytes)
                 changed.insert(QFileInfo(p).fileName());
-        QCOMPARE(changed, (std::set<QString>{QStringLiteral("one.ass"), QStringLiteral("two.srt")}));
+        std::set<QString> expected{QStringLiteral("one.ass"), QStringLiteral("two.srt"), QStringLiteral("wide.txt")};
+        if (linked)
+            expected.insert(QStringLiteral("far.ass")); // through link.ass, which stays a link
+        QCOMPARE(changed, expected);
+        if (linked)
+            QVERIFY(QFileInfo(folder.filePath(QStringLiteral("link.ass"))).isSymLink());
+        // The comment, the blank line and the untouched Line stay as they were
+        // (legacy dropped the first two: R3-hang-crash-loss).
         QCOMPARE(after.at(folder.filePath(QStringLiteral("one.ass"))),
-                 QByteArray("\xEF\xBB\xBF[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a dog\r\n"));
+                 QByteArray("\xEF\xBB\xBF[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a dog\r\n"
+                            "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,a cat note\r\n\r\n"
+                            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,dog  \r\n"));
+        QCOMPARE(after.at(folder.filePath(QStringLiteral("wide.txt"))),
+                 QByteArray("\xEF\xBB\xBF" "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,dog\r\n"));
         // The backups hold the files as they were.
         QFile copy(backup.filePath(QStringLiteral("one.ass")));
         QVERIFY(copy.open(QIODevice::ReadOnly));
-        QCOMPARE(copy.readAll(), ass);
+        QCOMPARE(copy.readAll(), before.at(folder.filePath(QStringLiteral("one.ass"))));
         QVERIFY(QFileInfo::exists(backup.filePath(QStringLiteral("two.srt"))));
-        QCOMPARE(QDir(backup.path()).entryList(QDir::Files | QDir::Hidden).size(), 2);
-        if (linked)
-            QCOMPARE(after.at(outside.filePath(QStringLiteral("far.ass"))), ass);
+        QCOMPARE(QDir(backup.path()).entryList(QDir::Files | QDir::Hidden).size(), linked ? 4 : 3);
+        Q_UNUSED(looped);
+        // A file result opens the file in place of an untouched Untitled
+        // Document (legacy loaded it into a tab without a path).
+        QVERIFY(application->reviewClose(QStringLiteral("new")).isEmpty());
+        application->finishClose();
+        QVERIFY(application->targetUntitled());
+        application->runFindReplace(QStringLiteral("findInFiles"),
+                                    {{QStringLiteral("tab"), 2},
+                                     {QStringLiteral("find"), QStringLiteral("a dog")},
+                                     {QStringLiteral("filters"), QStringLiteral("one.ass")},
+                                     {QStringLiteral("folder"), folder.path()}});
+        const auto found = application->findResults();
+        QCOMPARE(found.size(), 2);
+        application->showFindResult(1);
+        QCOMPARE(application->workspace().documents().size(), std::size_t(1));
+        QVERIFY(!application->targetUntitled());
+        auto *opened = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(opened->selection().active, std::optional(opened->document().lines()[0]->id));
         // An invalid folder says so.
         application->runFindReplace(QStringLiteral("findInFiles"),
                                     {{QStringLiteral("tab"), 2},

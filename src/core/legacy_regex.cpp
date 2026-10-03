@@ -195,6 +195,9 @@ struct LegacyRegex::Impl {
     // The last match, as offsets into the subject matches() was given.
     mutable std::vector<std::pair<std::size_t, std::size_t>> last;
     mutable bool matched = false;
+    // The last pcre2_match error other than "no match" (wx_regexec's
+    // wxLogError path), 0 when there was none.
+    mutable int error = 0;
 
     ~Impl()
     {
@@ -214,6 +217,7 @@ struct LegacyRegex::Impl {
             options |= PCRE2_NOTEMPTY;
         const auto *subject = reinterpret_cast<PCRE2_SPTR>(text.data() + offset);
         const int rc = pcre2_match(code, subject, text.size() - offset, 0, options, data, nullptr);
+        error = rc < 0 && rc != PCRE2_ERROR_NOMATCH ? rc : 0;
         if (rc < 0)
             return rc;
         const PCRE2_SIZE *ovector = pcre2_get_ovector_pointer(data);
@@ -393,6 +397,15 @@ std::optional<std::pair<std::size_t, std::size_t>> LegacyRegex::match(std::size_
     if (start == u16::npos)
         return std::pair{u16::npos, std::size_t{0}};
     return std::pair{start, end - start};
+}
+
+std::u16string LegacyRegex::matchError() const
+{
+    if (!m_impl || !m_impl->error)
+        return {};
+    PCRE2_UCHAR buffer[256];
+    const int len = pcre2_get_error_message(m_impl->error, buffer, 256);
+    return len < 0 ? u16(u"PCRE error") : u16(reinterpret_cast<const char16_t *>(buffer), static_cast<std::size_t>(len));
 }
 
 std::size_t LegacyRegex::matchCount() const

@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
@@ -57,12 +58,6 @@ std::u16string number(long long value)
     return {s.begin(), s.end()};
 }
 
-// UTF-16 units as wchar_t, so the pattern sees what wxString holds.
-std::wstring wide(std::u16string_view s)
-{
-    return std::wstring(s.begin(), s.end());
-}
-
 std::u16string asciiFold(std::u16string_view s)
 {
     std::u16string out(s);
@@ -98,21 +93,6 @@ std::u16string trimBoth(std::u16string s)
 std::u16string mid(std::u16string_view s, std::size_t from, std::size_t count = npos)
 {
     return from >= s.size() ? std::u16string() : std::u16string(s.substr(from, count));
-}
-
-// wxRegEx::Matches then GetMatch(0) on `text`.
-bool search(const std::wregex &re, std::u16string_view text, int &start, int &length, bool notBol = false)
-{
-    const std::wstring w = wide(text);
-    std::wsmatch m;
-    auto flags = std::regex_constants::match_default;
-    if (notBol)
-        flags |= std::regex_constants::match_not_bol;
-    if (!std::regex_search(w, m, re, flags))
-        return false;
-    start = static_cast<int>(m.position(0));
-    length = static_cast<int>(m.length(0));
-    return true;
 }
 
 // wxStringTokenizer(text, "\n", wxTOKEN_STRTOK): no empty tokens.
@@ -212,14 +192,23 @@ int rowOf(const EditSession &session, std::optional<core::LineId> id)
     return 0;
 }
 
-// SubsFile::FirstSelection: the first selected shown row, or -1.
+// SubsFile::FirstSelection: the first selected shown row, or -1. Legacy
+// gave -1 when only hidden Lines were selected, so "From selected" searched
+// from row 0, before the selection; S57-from-selected starts at the first
+// selected Line then (it is skipped, being hidden).
 int firstSelection(const EditSession &session)
 {
     const auto lines = session.document().lines();
-    for (std::size_t i = 0; i < lines.size(); ++i)
-        if (session.selection().selected.contains(lines[i]->id) && lines[i]->visibility != core::LineVisibility::Hidden)
+    int hidden = -1;
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        if (!session.selection().selected.contains(lines[i]->id))
+            continue;
+        if (lines[i]->visibility != core::LineVisibility::Hidden)
             return static_cast<int>(i);
-    return -1;
+        if (hidden == -1)
+            hidden = static_cast<int>(i);
+    }
+    return hidden;
 }
 
 // SubsFile::GetElementByKey: the shown row of a row.
@@ -246,72 +235,74 @@ std::u8string replaced(std::u8string text, std::u8string_view from, std::u8strin
     return text;
 }
 
-} // namespace
+// One line of a file on disk as the legacy loops take it. Legacy tokenized
+// with wxTOKEN_STRTOK, which drops empty lines; they are kept here as blank
+// pieces, written back as they were (R3-hang-crash-loss) and not counted.
+// An SRT piece is a whole cue (legacy collects lines until the next number).
+struct FilePiece {
+    bool blank = false;
+    std::u16string token; // trimmed (legacy Trim()); an SRT cue with CRLF inside
+    std::u16string raw;   // the line as read (not for SRT)
+};
 
-namespace find_replace_detail {
-
-int regexReplace(const std::wregex &re, std::u16string &text, std::u16string_view replacement, int maxMatches)
+std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
 {
-    const std::wstring source = wide(text);
-    std::wstring result;
-    std::size_t matchStart = 0;
-    int count = 0;
-    while (!maxMatches || count < maxMatches) {
-        std::wsmatch m;
-        auto flags = std::regex_constants::match_default;
-        if (count)
-            flags |= std::regex_constants::match_not_bol;
-        const auto begin = source.begin() + static_cast<std::ptrdiff_t>(matchStart);
-        if (!std::regex_search(begin, source.end(), m, re, flags))
-            break;
-        // The replacement with its back references.
-        std::wstring textNew;
-        for (std::size_t p = 0; p < replacement.size(); ++p) {
-            const wchar_t c = replacement[p];
-            std::optional<std::size_t> index;
-            if (c == L'\\') {
-                if (p + 1 >= replacement.size()) {
-                    textNew += L'\\'; // a trailing backslash stays
-                    break;
-                }
-                ++p;
-                if (replacement[p] >= u'0' && replacement[p] <= u'9') {
-                    std::size_t n = 0;
-                    while (p < replacement.size() && replacement[p] >= u'0' && replacement[p] <= u'9')
-                        n = n * 10 + static_cast<std::size_t>(replacement[p++] - u'0');
-                    --p;
-                    index = n;
-                }
-            } else if (c == L'&') {
-                index = 0;
-            }
-            if (index) {
-                if (*index < m.size() && m[*index].matched)
-                    textNew += m[*index].str();
+    std::vector<FilePiece> out;
+    if (srt) {
+        const auto tokens = lineTokens(text);
+        std::u16string token;
+        for (std::size_t next = 0; next < tokens.size();) {
+            const std::u16string &t = tokens[next++];
+            const bool noMoreTokens = next >= tokens.size();
+            if (isNumber(t) || noMoreTokens) {
+                if (noMoreTokens)
+                    token += t + u"\r\n";
+                if (token.empty())
+                    continue;
+                out.push_back({false, trimRight(std::move(token)), {}});
+                token.clear();
             } else {
-                textNew += static_cast<wchar_t>(replacement[p]);
+                token += t + u"\r\n";
             }
         }
-        const auto start = static_cast<std::size_t>(m.position(0));
-        const auto length = static_cast<std::size_t>(m.length(0));
-        result.append(source, matchStart, start);
-        matchStart += start;
-        result += textNew;
-        ++count;
-        matchStart += length;
-        // Legacy loops forever on an empty match; it stops here (F1-empty-match).
-        if (!length)
-            break;
+        return out;
     }
-    if (matchStart < source.size())
-        result.append(source, matchStart);
-    text.assign(result.begin(), result.end());
-    return count;
+    for (std::size_t i = 0; i < text.size();) {
+        std::size_t j = text.find(u'\n', i);
+        if (j == npos)
+            j = text.size();
+        const std::u16string line(text.substr(i, j - i));
+        if (line.empty())
+            out.push_back({true, {}, {}});
+        else
+            out.push_back({false, trimRight(line), line});
+        i = j + 1;
+    }
+    return out;
 }
 
-} // namespace find_replace_detail
+// The text before the first Dialogue/Comment line of an .ass file (written
+// back with CRLF), or nullopt without dialogues.
+std::optional<std::size_t> assEventsStart(std::u16string_view text)
+{
+    auto result = text.find(u"Dialogue:");
+    const auto result1 = text.find(u"Comment:");
+    if (result == npos && result1 == npos)
+        return std::nullopt;
+    if (result1 < result)
+        result = result1;
+    return result;
+}
 
-using find_replace_detail::regexReplace;
+std::u16string crlf(std::u16string_view text)
+{
+    std::u16string out;
+    for (char16_t c : text)
+        out += c == u'\n' ? std::u16string(u"\r\n") : std::u16string(1, c);
+    return out;
+}
+
+} // namespace
 
 namespace {
 
@@ -441,6 +432,96 @@ std::u16string FindReplace::element(const core::LineRecord &line, bool translati
     return out;
 }
 
+// --- Operations and questions -------------------------------------------
+
+bool FindReplace::begin(const FindReplaceSettings *window)
+{
+    // Legacy's message boxes are modal: nothing else runs until they close.
+    if (m_waiting)
+        return false;
+    if (window)
+        m_window = *window;
+    return true;
+}
+
+void FindReplace::finish()
+{
+    m_host.finished();
+}
+
+void FindReplace::ask(const FindQuestion &question, std::function<void(FindAnswer)> then)
+{
+    m_waiting = true;
+    auto answered = std::make_shared<bool>(false);
+    m_host.ask(question, [this, answered, then = std::move(then)](FindAnswer answer) {
+        if (*answered)
+            return;
+        *answered = true;
+        m_waiting = false;
+        then(answer);
+    });
+}
+
+void FindReplace::tell(const FindQuestion &question)
+{
+    m_host.ask(question, {});
+}
+
+std::optional<FindTab> FindReplace::tabById(DocumentId id)
+{
+    for (const auto &t : m_host.tabs())
+        if (t.id == id && t.session)
+            return t;
+    return std::nullopt;
+}
+
+bool FindReplace::compile(std::u16string_view pattern)
+{
+    // wxRegEx(pattern, wxRE_ADVANCED [| wxRE_ICASE]) (R1-pcre2).
+    int flags = core::LegacyRegex::Advanced;
+    if (!m_matchCase)
+        flags |= core::LegacyRegex::IgnoreCase;
+    m_regex.emplace();
+    if (m_regex->compile(pattern, flags))
+        return true;
+    // wxRegEx::Compile's wxLogError.
+    m_host.log(replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
+                        u8(m_regex->errorMessage())));
+    m_regex.reset();
+    return false;
+}
+
+// wxRegEx::Matches then GetMatch(0); a match error (PCRE2's match or heap
+// limit) is logged as wx_regexec does and counts as no match.
+bool FindReplace::search(std::u16string_view text, int &start, int &length) const
+{
+    if (!m_regex)
+        return false;
+    if (!m_regex->matches(text)) {
+        if (const auto error = m_regex->matchError(); !error.empty())
+            m_host.log(u8"Failed to find match for regular expression: " + u8(error));
+        return false;
+    }
+    const auto m = m_regex->match(0);
+    if (!m)
+        return false;
+    start = static_cast<int>(m->first);
+    length = static_cast<int>(m->second);
+    return true;
+}
+
+// wxRegEx::Replace; an empty match moves on by one character
+// (F1-empty-match, R3-hang-crash-loss: legacy repeated it forever).
+int FindReplace::regexReplace(std::u16string &text, std::u16string_view replacement, std::size_t maxMatches) const
+{
+    if (!m_regex)
+        return 0;
+    const int count = m_regex->replace(text, replacement, maxMatches);
+    if (const auto error = m_regex->matchError(); !error.empty())
+        m_host.log(u8"Failed to find match for regular expression: " + u8(error));
+    return std::max(count, 0);
+}
+
 bool FindReplace::updateValues(const FindReplaceSettings &w)
 {
     m_field = w.field;
@@ -465,77 +546,74 @@ bool FindReplace::updateValues(const FindReplaceSettings &w)
             m_findString += u"$";
         }
     }
-    if (m_regEx) {
-        // wxRegEx(find, wxRE_ADVANCED [| wxRE_ICASE]), approximated by ECMAScript.
-        auto flags = std::regex_constants::ECMAScript;
-        if (!m_matchCase)
-            flags |= std::regex_constants::icase;
-        try {
-            m_regex.emplace(wide(m_findString), flags);
-        } catch (const std::regex_error &e) {
-            m_regex.reset();
-            m_host.log(replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(m_findString)), u8"%2",
-                                std::u8string(reinterpret_cast<const char8_t *>(e.what()))));
-            return true;
-        }
-    }
-    return false;
+    return m_regEx && !compile(m_findString);
 }
 
-bool FindReplace::checkStyles(FindReplaceSettings &window, const EditSession &session)
+// CheckStyles: the missing-styles questions, then `then(cancelled)`.
+void FindReplace::checkStyles(DocumentId document, Then then)
 {
+    const auto tab = tabById(document);
+    if (!tab)
+        return then(true);
+    FindReplaceSettings &window = m_window;
     m_stylesAsText = u16(window.styles);
     if (m_stylesAsText.empty())
-        return false;
+        return then(false);
     std::u8string notFound, found;
     // wxStringTokenizer(styles, ",", wxTOKEN_STRTOK) and SubsFile::FindStyle.
-    std::u8string_view all = window.styles;
+    const std::u8string all = window.styles;
     for (std::size_t from = 0; from < all.size();) {
         std::size_t to = all.find(u8',', from);
-        if (to == std::u8string_view::npos)
+        if (to == std::u8string::npos)
             to = all.size();
         if (to > from) {
             const std::u8string name(all.substr(from, to - from));
-            if (hasStyle(session.document(), name))
+            if (hasStyle(tab->session->document(), name))
                 found += name + u8",";
             else
                 notFound += name + u8", ";
         }
         from = to + 1;
     }
-    if ((!notFound.empty() && !m_wasIgnored) || found.empty()) {
-        if (!notFound.empty())
-            notFound.pop_back(); // RemoveLast: "a, b,"
-        FindAnswer answer;
-        if (found.empty()) {
-            answer = m_host.ask({FindQuestion::Kind::NoStyles,
-                                 u8"None of the selected styles exist in the subtitles being searched,\nso nothing will "
-                                 u8"be found.\nWhat would you like to do?",
-                                 {}, u8"Confirmation"});
-        } else {
-            answer = m_host.ask({FindQuestion::Kind::Styles,
-                                 replaced(u8"Styles named \"%s\" do not exist in the subtitles being searched,\nwhich "
-                                          u8"may significantly reduce the number of search results.\nWhat would you "
-                                          u8"like to do?",
-                                          u8"%s", notFound),
-                                 notFound, u8"Confirmation"});
-        }
+    const auto done = [this, then] {
+        if (!m_stylesAsText.empty() && !m_stylesAsText.starts_with(u","))
+            m_stylesAsText = u"," + m_stylesAsText + u",";
+        then(false);
+    };
+    if ((notFound.empty() || m_wasIgnored) && !found.empty())
+        return done();
+    if (!notFound.empty())
+        notFound.pop_back(); // RemoveLast: "a, b,"
+    FindQuestion question;
+    if (found.empty()) {
+        question = {FindQuestion::Kind::NoStyles,
+                    u8"None of the selected styles exist in the subtitles being searched,\nso nothing will be "
+                    u8"found.\nWhat would you like to do?",
+                    {}, u8"Confirmation"};
+    } else {
+        question = {FindQuestion::Kind::Styles,
+                    replaced(u8"Styles named \"%s\" do not exist in the subtitles being searched,\nwhich may "
+                             u8"significantly reduce the number of search results.\nWhat would you like to do?",
+                             u8"%s", notFound),
+                    notFound, u8"Confirmation"};
+    }
+    ask(question, [this, found, done, then](FindAnswer answer) {
         if (answer == FindAnswer::Ok) {
             m_stylesAsText = u"," + u16(found);
-            found.pop_back();
-            window.styles = found;
+            std::u8string kept = found;
+            if (!kept.empty())
+                kept.pop_back();
+            m_window.styles = kept;
         } else if (answer == FindAnswer::Yes) {
             m_stylesAsText.clear();
-            window.styles.clear();
+            m_window.styles.clear();
         } else if (answer == FindAnswer::No) {
             m_wasIgnored = true;
         } else {
-            return true;
+            return then(true);
         }
-    }
-    if (!m_stylesAsText.empty() && !m_stylesAsText.starts_with(u","))
-        m_stylesAsText = u"," + m_stylesAsText + u",";
-    return false;
+        done();
+    });
 }
 
 bool FindReplace::keepFinding(std::u16string_view text, int textPos) const
@@ -579,162 +657,201 @@ void FindReplace::selectionAdopted()
     m_textPosition = m_linePosition = 0;
 }
 
-void FindReplace::find(FindReplaceSettings *window)
-{
-    if (window && window->tab == Tab::FindInFiles)
-        return;
-    const auto tab = m_host.current();
-    if (!tab || !tab->session)
-        return;
-    EditSession &session = *tab->session;
-    if (window && updateValues(*window))
-        return;
-    if (m_findString != m_oldfind) {
-        m_fromstart = true;
-        m_oldfind = m_findString;
-    }
-    if (!m_fromstart && m_lastActive != rowOf(session, session.selection().active))
-        m_lastActive = rowOf(session, session.selection().active);
+// --- Find ------------------------------------------------------------------
 
-    for (;;) { // seekFromStart
-        bool foundsome = false;
-        if (m_fromstart) {
-            const int first = firstSelection(session);
-            m_linePosition = !m_allLines && first != -1 ? first : 0;
-            m_textPosition = 0;
-        }
-        if (window && checkStyles(*window, session))
-            return;
-        const bool styles = !m_stylesAsText.empty();
-        const bool tl = translationMode(session);
-        const auto lines = session.document().lines();
-        const int count = static_cast<int>(lines.size());
-        while (m_linePosition < count) {
-            const core::LineRecord &line = *lines[static_cast<std::size_t>(m_linePosition)];
-            if (line.visibility == core::LineVisibility::Hidden || (m_skipComments && line.comment)) {
-                ++m_linePosition;
-                m_textPosition = 0;
-                continue;
-            }
-            const bool eligible = (!styles && !m_selectedLines) ||
-                                  (styles && m_stylesAsText.find(u"," + u16(line.style) + u",") != npos) ||
-                                  (m_selectedLines && session.selection().selected.contains(line.id));
-            if (!eligible) {
-                m_textPosition = 0;
-                ++m_linePosition;
-                continue;
-            }
-            const std::u16string txt = element(line, tl);
-            int foundPosition = -1;
-            int foundLength = 0;
-            if (!(m_startLine || m_endLine) && (m_findString.empty() || txt.empty())) {
-                if (txt.empty() && m_findString.empty()) {
-                    foundPosition = 0;
-                    foundLength = 0;
-                } else {
-                    m_textPosition = 0;
-                    ++m_linePosition;
-                    continue;
-                }
-            } else if (m_regEx) {
-                int start = 0, length = 0;
-                if (m_regex && search(*m_regex, mid(txt, static_cast<std::size_t>(m_textPosition)), start, length)) {
-                    foundPosition = start + m_textPosition;
-                    foundLength = length;
-                } else {
-                    m_textPosition = 0;
-                    ++m_linePosition;
-                    continue;
-                }
-            } else {
-                const std::u16string ltext = m_matchCase ? txt : lower(txt);
-                const std::u16string lfind = m_matchCase ? m_findString : lower(m_findString);
-                if (m_startLine && (ltext.starts_with(lfind) || lfind.empty())) {
-                    foundPosition = 0;
-                    m_textPosition = 0;
-                }
-                // Legacy's else belongs to "End of text": with "Beginning of
-                // text" the plain search below runs too (kept legacy quirk).
-                if (m_endLine) {
-                    if (ltext.ends_with(lfind) || lfind.empty()) {
-                        foundPosition = static_cast<int>(txt.size()) - static_cast<int>(lfind.size());
-                        m_textPosition = 0;
-                    }
-                } else {
-                    const auto at = ltext.find(lfind, static_cast<std::size_t>(m_textPosition));
-                    foundPosition = at == npos ? -1 : static_cast<int>(at);
-                }
-                foundLength = static_cast<int>(lfind.size());
-            }
-            if (foundPosition != -1 && (!m_onlyOption || keepFinding(txt, foundPosition))) {
-                m_textPosition = foundPosition + foundLength;
-                m_findstart = foundPosition;
-                m_findend = m_textPosition;
-                m_lastActive = m_reprow = m_linePosition;
-                // The editor that shows the match: TextEdit (1), the
-                // translation mode original TextEditOrig (0), Actor (2), Effect (3).
-                int role = -1, start = m_findstart, end = m_findend;
-                if (m_field == Field::Text) {
-                    const auto newline = txt.find(u'\n');
-                    if (tl && newline != npos) {
-                        const int n = static_cast<int>(newline);
-                        if (foundPosition > n) {
-                            role = 1;
-                            start = foundPosition - n - 1;
-                            end = m_findend - n - 1;
-                        } else {
-                            role = 0;
-                        }
-                    } else {
-                        role = 1;
-                    }
-                } else if (m_field == Field::Actor) {
-                    role = 2;
-                } else if (m_field == Field::Effect) {
-                    role = 3;
-                }
-                const core::LineId id = line.id;
-                const bool nextLine = m_textPosition >= static_cast<int>(txt.size()) || m_startLine;
-                foundsome = true;
-                if (nextLine) {
-                    ++m_linePosition;
-                    m_textPosition = 0;
-                }
-                m_host.showLine(tab->id, id, m_selectedLines, role, start, end);
-                break;
-            }
-            m_textPosition = 0;
-            ++m_linePosition;
-        }
-        if (!foundsome) {
-            m_linePosition = 0;
-            m_fromstart = true;
-            if (!m_wasResetToStart) {
-                if (m_host.ask({FindQuestion::Kind::Wrap, u8"Reached end. Search from the beginning?", {}, u8"Confirmation"}) ==
-                    FindAnswer::Yes) {
-                    m_wasResetToStart = true;
-                    continue;
-                }
-            } else {
-                m_host.ask({FindQuestion::Kind::Message,
-                            u8"Could not find the specified phrase \"" + u8(m_findString) + u8"\".", u8(m_findString),
-                            u8"Confirmation"});
-                m_wasResetToStart = false;
-            }
-        }
-        break;
-    }
-    if (m_fromstart) {
-        if (window)
-            addRecent(*window);
-        m_fromstart = false;
-    }
+void FindReplace::find(const FindReplaceSettings &window)
+{
+    if (!begin(&window))
+        return;
+    runFind(true, [this](bool) { finish(); });
 }
 
 void FindReplace::findNext()
 {
-    if (!m_findString.empty())
-        find(nullptr);
+    if (!begin(nullptr))
+        return;
+    if (m_findString.empty())
+        return finish();
+    runFind(false, [this](bool) { finish(); });
+}
+
+void FindReplace::runFind(bool withWindow, Found done)
+{
+    if (withWindow && m_window.tab == Tab::FindInFiles)
+        return done(false);
+    const auto tab = m_host.current();
+    if (!tab || !tab->session)
+        return done(false);
+    if (withWindow && updateValues(m_window))
+        return done(false);
+    if (m_findString != m_oldfind) {
+        m_fromstart = true;
+        m_oldfind = m_findString;
+    }
+    EditSession &session = *tab->session;
+    if (!m_fromstart && m_lastActive != rowOf(session, session.selection().active))
+        m_lastActive = rowOf(session, session.selection().active);
+    seekFromStart(tab->id, withWindow, std::move(done));
+}
+
+// Legacy's seekFromStart label.
+void FindReplace::seekFromStart(DocumentId document, bool withWindow, Found done)
+{
+    const auto tab = tabById(document);
+    if (!tab)
+        return done(false);
+    if (m_fromstart) {
+        const int first = firstSelection(*tab->session);
+        m_linePosition = !m_allLines && first != -1 ? first : 0;
+        m_textPosition = 0;
+    }
+    if (!withWindow)
+        return seekLines(document, withWindow, std::move(done));
+    checkStyles(document, [this, document, withWindow, done](bool cancelled) {
+        if (cancelled)
+            return done(false); // legacy returns before the AddRecent tail
+        seekLines(document, withWindow, done);
+    });
+}
+
+void FindReplace::seekLines(DocumentId document, bool withWindow, Found done)
+{
+    // The editing target may have changed while a question was open.
+    const auto tab = m_host.current();
+    if (!tab || tab->id != document || !tab->session)
+        return done(false);
+    EditSession &session = *tab->session;
+    const bool styles = !m_stylesAsText.empty();
+    const bool tl = translationMode(session);
+    const auto lines = session.document().lines();
+    const int count = static_cast<int>(lines.size());
+    while (m_linePosition < count) {
+        const core::LineRecord &line = *lines[static_cast<std::size_t>(m_linePosition)];
+        if (line.visibility == core::LineVisibility::Hidden || (m_skipComments && line.comment)) {
+            ++m_linePosition;
+            m_textPosition = 0;
+            continue;
+        }
+        const bool eligible = (!styles && !m_selectedLines) ||
+                              (styles && m_stylesAsText.find(u"," + u16(line.style) + u",") != npos) ||
+                              (m_selectedLines && session.selection().selected.contains(line.id));
+        if (!eligible) {
+            m_textPosition = 0;
+            ++m_linePosition;
+            continue;
+        }
+        const std::u16string txt = element(line, tl);
+        int foundPosition = -1;
+        int foundLength = 0;
+        if (!(m_startLine || m_endLine) && (m_findString.empty() || txt.empty())) {
+            if (txt.empty() && m_findString.empty()) {
+                foundPosition = 0;
+                foundLength = 0;
+            } else {
+                m_textPosition = 0;
+                ++m_linePosition;
+                continue;
+            }
+        } else if (m_regEx) {
+            int start = 0, length = 0;
+            if (search(mid(txt, static_cast<std::size_t>(m_textPosition)), start, length)) {
+                foundPosition = start + m_textPosition;
+                foundLength = length;
+            } else {
+                m_textPosition = 0;
+                ++m_linePosition;
+                continue;
+            }
+        } else {
+            const std::u16string ltext = m_matchCase ? txt : lower(txt);
+            const std::u16string lfind = m_matchCase ? m_findString : lower(m_findString);
+            if (m_startLine && (ltext.starts_with(lfind) || lfind.empty())) {
+                foundPosition = 0;
+                m_textPosition = 0;
+            }
+            // Legacy's else belongs to "End of text": with "Beginning of
+            // text" the plain search below runs too (kept legacy quirk).
+            if (m_endLine) {
+                if (ltext.ends_with(lfind) || lfind.empty()) {
+                    foundPosition = static_cast<int>(txt.size()) - static_cast<int>(lfind.size());
+                    m_textPosition = 0;
+                }
+            } else {
+                const auto at = ltext.find(lfind, static_cast<std::size_t>(m_textPosition));
+                foundPosition = at == npos ? -1 : static_cast<int>(at);
+            }
+            foundLength = static_cast<int>(lfind.size());
+        }
+        if (foundPosition != -1 && (!m_onlyOption || keepFinding(txt, foundPosition))) {
+            m_textPosition = foundPosition + foundLength;
+            m_findstart = foundPosition;
+            m_findend = m_textPosition;
+            m_lastActive = m_reprow = m_linePosition;
+            m_matchValid = true;
+            m_matchDocument = document;
+            m_matchLine = line.id;
+            m_matchText = txt;
+            // The editor that shows the match: TextEdit (1), the
+            // translation mode original TextEditOrig (0), Actor (2), Effect (3).
+            int role = -1, start = m_findstart, end = m_findend;
+            if (m_field == Field::Text) {
+                const auto newline = txt.find(u'\n');
+                if (tl && newline != npos) {
+                    const int n = static_cast<int>(newline);
+                    if (foundPosition > n) {
+                        role = 1;
+                        start = foundPosition - n - 1;
+                        end = m_findend - n - 1;
+                    } else {
+                        role = 0;
+                    }
+                } else {
+                    role = 1;
+                }
+            } else if (m_field == Field::Actor) {
+                role = 2;
+            } else if (m_field == Field::Effect) {
+                role = 3;
+            }
+            const core::LineId id = line.id;
+            if (m_textPosition >= static_cast<int>(txt.size()) || m_startLine) {
+                ++m_linePosition;
+                m_textPosition = 0;
+            }
+            m_host.showLine(document, id, m_selectedLines, role, start, end);
+            return endFind(withWindow, true, done);
+        }
+        m_textPosition = 0;
+        ++m_linePosition;
+    }
+    m_linePosition = 0;
+    m_fromstart = true;
+    if (!m_wasResetToStart) {
+        ask({FindQuestion::Kind::Wrap, u8"Reached end. Search from the beginning?", {}, u8"Confirmation"},
+            [this, document, withWindow, done](FindAnswer answer) {
+                if (answer == FindAnswer::Yes) {
+                    m_wasResetToStart = true;
+                    return seekFromStart(document, withWindow, done);
+                }
+                endFind(withWindow, false, done);
+            });
+        return;
+    }
+    const std::u8string phrase = u8(m_findString);
+    tell({FindQuestion::Kind::Message, u8"Could not find the specified phrase \"" + phrase + u8"\".", phrase,
+          u8"Confirmation", FindQuestion::Info::NotFound});
+    m_wasResetToStart = false;
+    endFind(withWindow, false, done);
+}
+
+void FindReplace::endFind(bool withWindow, bool found, const Found &done)
+{
+    if (m_fromstart) {
+        if (withWindow)
+            addRecent(m_window);
+        m_fromstart = false;
+    }
+    done(found);
 }
 
 void FindReplace::clearResults()
@@ -759,7 +876,7 @@ void FindReplace::findInLine(const std::u16string &text, std::u16string_view lin
             }
         } else if (m_regEx) {
             int start = 0, length = 0;
-            if (!m_regex || !search(*m_regex, mid(text, static_cast<std::size_t>(tabTextPosition)), start, length))
+            if (!search(mid(text, static_cast<std::size_t>(tabTextPosition)), start, length))
                 break;
             foundPosition = start + tabTextPosition;
             foundLength = length;
@@ -816,7 +933,8 @@ void FindReplace::findInLine(const std::u16string &text, std::u16string_view lin
         if (tabTextPosition >= static_cast<int>(text.size()) || m_startLine)
             break;
         // Legacy never leaves a Line whose text ends with a plain "End of
-        // text" search (it records it forever); it stops here (F1-end-of-text).
+        // text" search (it records it forever); here it is recorded once and
+        // the search goes on (F1-end-of-text, R3-hang-crash-loss).
         if (m_endLine && !m_regEx)
             break;
         tabTextPosition = foundPosition + 1;
@@ -853,45 +971,54 @@ void FindReplace::findAllInTab(const FindTab &tab, bool allLines, bool selectedO
     }
 }
 
-void FindReplace::findAllInCurrent(FindReplaceSettings &window)
+void FindReplace::findAllInCurrent(const FindReplaceSettings &window)
 {
+    if (!begin(&window))
+        return;
     clearResults();
     const auto tab = m_host.current();
     if (!tab || !tab->session)
-        return;
-    if (checkStyles(window, *tab->session))
-        return;
-    if (updateValues(window))
-        return;
-    findAllInTab(*tab, window.lines == Settings::Lines::All, window.lines == Settings::Lines::Selected);
-    m_resultsRegEx = m_regEx;
-    m_resultsMatchCase = m_matchCase;
-    m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
-    m_resultsFindString = m_findString;
-    m_resultsShown = true;
-    addRecent(window);
+        return finish();
+    checkStyles(tab->id, [this, id = tab->id](bool cancelled) {
+        const auto tab = tabById(id);
+        if (cancelled || !tab || updateValues(m_window))
+            return finish();
+        findAllInTab(*tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+        m_resultsRegEx = m_regEx;
+        m_resultsMatchCase = m_matchCase;
+        m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
+        m_resultsFindString = m_findString;
+        m_resultsShown = true;
+        addRecent(m_window);
+        finish();
+    });
 }
 
-void FindReplace::findInAllOpened(FindReplaceSettings &window)
+void FindReplace::findInAllOpened(const FindReplaceSettings &window)
 {
+    if (!begin(&window))
+        return;
     clearResults();
     const auto current = m_host.current();
     if (!current || !current->session)
-        return;
-    if (checkStyles(window, *current->session))
-        return;
-    if (updateValues(window))
-        return;
-    for (const auto &tab : m_host.tabs())
-        if (tab.session)
-            findAllInTab(tab, window.lines == Settings::Lines::All, window.lines == Settings::Lines::Selected);
-    m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
-    m_resultsRegEx = m_regEx;
-    m_resultsMatchCase = m_matchCase;
-    m_resultsFindString = m_findString;
-    m_resultsShown = true;
-    addRecent(window);
+        return finish();
+    checkStyles(current->id, [this](bool cancelled) {
+        if (cancelled || updateValues(m_window))
+            return finish();
+        for (const auto &tab : m_host.tabs())
+            if (tab.session)
+                findAllInTab(tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+        m_resultsNeedPrefix = m_endLine && m_regEx && m_findString.empty();
+        m_resultsRegEx = m_regEx;
+        m_resultsMatchCase = m_matchCase;
+        m_resultsFindString = m_findString;
+        m_resultsShown = true;
+        addRecent(m_window);
+        finish();
+    });
 }
+
+// --- Replace ---------------------------------------------------------------
 
 int FindReplace::replaceInLine(std::u16string &text) const
 {
@@ -936,7 +1063,7 @@ int FindReplace::replaceInLine(std::u16string &text) const
         std::size_t textPos = 0;
         if (m_regEx) {
             int start = 0, length = 0;
-            if (!m_regex || !search(*m_regex, mid(ltext, newpos), start, length))
+            if (!search(mid(ltext, newpos), start, length))
                 break;
             textPos = static_cast<std::size_t>(start) + newpos;
             flen = static_cast<std::size_t>(length);
@@ -954,7 +1081,7 @@ int FindReplace::replaceInLine(std::u16string &text) const
         if (!m_onlyOption || keepFinding(text, static_cast<int>(at))) {
             if (m_regEx) {
                 std::u16string match = mid(text, at, flen);
-                regexReplace(*m_regex, match, m_replaceString, 0);
+                regexReplace(match, m_replaceString, 0);
                 text.replace(at, flen, match);
                 repsDiff += static_cast<long long>(match.size()) - static_cast<long long>(flen);
             } else {
@@ -1024,34 +1151,68 @@ int FindReplace::replaceAllInTab(const FindTab &tab, bool allLines, bool selecte
     return total;
 }
 
-void FindReplace::replace(FindReplaceSettings &window)
+// The last match is still where Find left it: not replaced yet, and its
+// Line's text unchanged since. Legacy replaced [findstart, findend) of the
+// last matched row whatever it held then: after Replace next had replaced the
+// last match and its search found nothing more, or after an edit, the next
+// Replace next overwrote text that did not match (F1-stale-replace,
+// R3-hang-crash-loss). A match still there is replaced as legacy did, also
+// when the search that ran first found nothing (kept quirk).
+bool FindReplace::matchStillThere(const EditSession &session)
 {
+    if (!m_matchValid || m_findstart < 0 || m_findend < m_findstart)
+        return false;
+    const auto lines = session.document().lines();
+    if (m_reprow < 0 || m_reprow >= static_cast<int>(lines.size()))
+        return false;
+    const core::LineRecord &line = *lines[static_cast<std::size_t>(m_reprow)];
+    const auto tab = m_host.current();
+    return tab && tab->id == m_matchDocument && line.id == m_matchLine &&
+           element(line, translationMode(session)) == m_matchText;
+}
+
+void FindReplace::replace(const FindReplaceSettings &window)
+{
+    if (!begin(&window))
+        return;
     if (window.tab != Tab::Replace) {
         m_host.log(u8"Replace called outside the replace tab");
-        return;
+        return finish();
     }
-    auto tab = m_host.current();
+    const auto tab = m_host.current();
     if (!tab || !tab->session)
-        return;
+        return finish();
+    // `searched`: Find already ran for this click (the active Line moved).
+    const auto second = [this](bool searched) {
+        const auto tab = m_host.current();
+        if (!tab || !tab->session)
+            return finish();
+        const std::u16string find1 = u16(m_window.find);
+        if (find1 != m_oldfind || m_findstart == -1 || m_findend == -1) {
+            m_fromstart = true;
+            m_oldfind = find1;
+            return runFind(true, [this](bool found) { replaceFound(found); });
+        }
+        // A match that is gone is searched for again, once (F1-stale-replace).
+        if (!matchStillThere(*tab->session) && !searched)
+            return runFind(true, [this](bool found) { replaceFound(found); });
+        replaceFound(true);
+    };
     if (m_lastActive != rowOf(*tab->session, tab->session->selection().active))
-        find(&window);
-    const Field wrep = window.field;
-    const std::u16string find1 = u16(window.find);
-    if (find1 != m_oldfind || m_findstart == -1 || m_findend == -1) {
-        m_fromstart = true;
-        m_oldfind = find1;
-        find(&window);
-    }
-    if (m_findstart == -1 || m_findend == -1)
-        return;
-    const std::u16string rep = u16(window.replace);
-    tab = m_host.current();
-    if (!tab || !tab->session)
-        return;
+        return runFind(true, [second](bool) { second(true); });
+    second(false);
+}
+
+// Replace's second half, with the match Find left.
+void FindReplace::replaceFound(bool)
+{
+    const auto tab = m_host.current();
+    if (!tab || !tab->session || m_findstart == -1 || m_findend == -1 || !matchStillThere(*tab->session))
+        return finish();
+    const Field wrep = m_window.field;
+    const std::u16string rep = u16(m_window.replace);
     EditSession &session = *tab->session;
     auto lines = session.document().lines();
-    if (m_reprow >= static_cast<int>(lines.size()))
-        return; // legacy reads past the end
     const core::LineId id = lines[static_cast<std::size_t>(m_reprow)]->id;
     if (session.draftLine() == id)
         session.commitDraft(); // commands commit an overlapping draft first
@@ -1063,11 +1224,13 @@ void FindReplace::replace(FindReplaceSettings &window)
     m_field = searched;
     const auto start = static_cast<std::size_t>(m_findstart);
     const auto length = static_cast<std::size_t>(m_findend - m_findstart);
+    // Legacy's wxString::replace threw std::out_of_range past the end
+    // (R3-hang-crash-loss: bounds-checked).
     if (start > replacedText.size())
-        return; // legacy throws out_of_range here
-    if (window.regex && m_regex) {
+        return finish();
+    if (m_window.regex && m_regex) {
         std::u16string place = mid(replacedText, start, length);
-        const int reps = regexReplace(*m_regex, place, rep, 1);
+        const int reps = regexReplace(place, rep, 1);
         replacedText.replace(start, length, reps ? place : rep);
     } else {
         replacedText.replace(start, length, rep);
@@ -1079,65 +1242,91 @@ void FindReplace::replace(FindReplaceSettings &window)
                                          }});
     if (ran)
         m_host.changed(tab->id);
+    m_matchValid = false; // replaced: Find gives the next one
     m_textPosition = m_findstart + static_cast<int>(rep.size());
-    find(&window);
+    runFind(true, [this](bool) { finish(); });
 }
 
-void FindReplace::replaceAll(FindReplaceSettings &window)
+void FindReplace::replaceAll(const FindReplaceSettings &window)
 {
-    if (window.tab != Tab::Replace)
+    if (!begin(&window))
         return;
+    if (window.tab != Tab::Replace)
+        return finish();
     const auto tab = m_host.current();
-    if (!tab || !tab->session)
-        return;
-    if (updateValues(window))
-        return;
-    if (checkStyles(window, *tab->session))
-        return;
-    const int all = replaceAllInTab(*tab, window.lines == Settings::Lines::All, window.lines == Settings::Lines::Selected);
-    const auto text = u8(number(all));
-    m_host.ask({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace"});
-    addRecent(window);
+    if (!tab || !tab->session || updateValues(m_window))
+        return finish();
+    checkStyles(tab->id, [this, id = tab->id](bool cancelled) {
+        const auto tab = tabById(id);
+        if (cancelled || !tab)
+            return finish();
+        const int all =
+            replaceAllInTab(*tab, m_window.lines == Settings::Lines::All, m_window.lines == Settings::Lines::Selected);
+        const auto text = u8(number(all));
+        tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
+              FindQuestion::Info::Replaced});
+        addRecent(m_window);
+        finish();
+    });
 }
 
-void FindReplace::replaceInAllOpened(FindReplaceSettings &window)
+void FindReplace::replaceInAllOpened(const FindReplaceSettings &window)
 {
-    if (window.tab != Tab::Replace)
+    if (!begin(&window))
         return;
+    if (window.tab != Tab::Replace)
+        return finish();
     const auto current = m_host.current();
     if (!current || !current->session)
+        return finish();
+    checkStyles(current->id, [this](bool cancelled) {
+        if (cancelled)
+            return finish();
+        int all = 0;
+        for (const auto &tab : m_host.tabs()) {
+            if (!tab.session)
+                continue;
+            if (updateValues(m_window))
+                return finish();
+            all += replaceAllInTab(tab, m_window.lines == Settings::Lines::All,
+                                   m_window.lines == Settings::Lines::Selected);
+        }
+        const auto text = u8(number(all));
+        tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
+              FindQuestion::Info::Replaced});
+        addRecent(m_window);
+        finish();
+    });
+}
+
+// --- Files on disk ------------------------------------------------------------
+
+void FindReplace::findInFiles(const FindReplaceSettings &window)
+{
+    if (!begin(&window))
         return;
-    if (checkStyles(window, *current->session))
+    findReplaceInFiles(true);
+    finish();
+}
+
+void FindReplace::replaceInFiles(const FindReplaceSettings &window)
+{
+    if (!begin(&window))
         return;
-    int all = 0;
-    for (const auto &tab : m_host.tabs()) {
-        if (!tab.session)
-            continue;
-        if (updateValues(window))
-            return;
-        all += replaceAllInTab(tab, window.lines == Settings::Lines::All, window.lines == Settings::Lines::Selected);
-    }
-    const auto text = u8(number(all));
-    m_host.ask({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace"});
-    addRecent(window);
+    ask({FindQuestion::Kind::ConfirmFiles,
+         u8"Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the "
+         u8"'ReplaceBackup' folder.",
+         {}, u8"Info"},
+        [this](FindAnswer answer) {
+            if (answer == FindAnswer::Yes)
+                findReplaceInFiles(false);
+            finish();
+        });
 }
 
-void FindReplace::findInFiles(FindReplaceSettings &window)
+void FindReplace::findReplaceInFiles(bool find)
 {
-    findReplaceInFiles(window, true);
-}
-
-void FindReplace::replaceInFiles(FindReplaceSettings &window)
-{
-    if (m_host.ask({FindQuestion::Kind::ConfirmFiles,
-                    u8"Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups "
-                    u8"are in the 'ReplaceBackup' folder.",
-                    {}, u8"Info"}) == FindAnswer::Yes)
-        findReplaceInFiles(window, false);
-}
-
-void FindReplace::findReplaceInFiles(FindReplaceSettings &window, bool find)
-{
+    const FindReplaceSettings &window = m_window;
     std::u8string filters = window.filters;
     if (filters.empty())
         filters = u8"*.ass;*.srt;*.sub;*.txt;*.mpl2";
@@ -1149,7 +1338,7 @@ void FindReplace::findReplaceInFiles(FindReplaceSettings &window, bool find)
     for (std::size_t i = 0; i < tokens.size(); ++i) {
         const auto found = m_host.listFiles(window.folder, tokens[i], window.subfolders, window.hiddenFolders);
         if (!found) {
-            m_host.ask({FindQuestion::Kind::Message, u8"Search path is invalid", {}, {}});
+            tell({FindQuestion::Kind::Message, u8"Search path is invalid", {}, {}, FindQuestion::Info::InvalidPath});
             break;
         }
         paths.insert(paths.end(), found->begin(), found->end());
@@ -1171,7 +1360,8 @@ void FindReplace::findReplaceInFiles(FindReplaceSettings &window, bool find)
         findReplaceInFile(path, find, replacements);
     if (!find && replacements) {
         const auto text = u8(number(replacements));
-        m_host.ask({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace"});
+        tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
+              FindQuestion::Info::Replaced});
         addRecent(window);
     } else if (find) {
         m_resultsShown = true;
@@ -1182,7 +1372,10 @@ void FindReplace::findReplaceInFiles(FindReplaceSettings &window, bool find)
 void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &replacements)
 {
     const auto ext = extension(path);
-    std::u16string subsText = m_host.readFile(path).value_or(std::u16string());
+    const auto read = m_host.readFile(path);
+    if (!read)
+        return; // legacy FileOpen gave "" and nothing matched
+    std::u16string subsText = *read;
     std::u16string replacedText;
     int tabLinePosition = 0;
     int positionId = 0;
@@ -1198,43 +1391,23 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
             if (newline != npos)
                 tlModeStyle = trimBoth(subsText.substr(tl + 13, newline - (tl + 13)));
         }
-        auto result = subsText.find(u"Dialogue:");
-        const auto result1 = subsText.find(u"Comment:");
-        if (result == npos && result1 == npos)
+        const auto events = assEventsStart(subsText);
+        if (!events)
             return; // no dialogues
-        if (result1 < result)
-            result = result1;
-        if (!find) {
-            replacedText = subsText.substr(0, result);
-            std::u16string crlf;
-            for (char16_t c : replacedText)
-                crlf += c == u'\n' ? std::u16string(u"\r\n") : std::u16string(1, c);
-            replacedText = std::move(crlf);
-        }
-        subsText = subsText.substr(result);
+        if (!find)
+            replacedText = crlf(subsText.substr(0, *events));
+        subsText = subsText.substr(*events);
     }
-    const auto tokens = lineTokens(subsText);
-    std::u16string token;
     bool isFirst = true;
     int fileReplacements = 0;
     const int column = columnOf(m_field);
-    for (std::size_t next = 0; next < tokens.size();) {
-        if (isSRT) {
-            const std::u16string &text = tokens[next++];
-            const bool noMoreTokens = next >= tokens.size();
-            if (isNumber(text) || noMoreTokens) {
-                if (noMoreTokens)
-                    token += text + u"\r\n";
-                if (token.empty())
-                    continue;
-                token = trimRight(std::move(token));
-            } else {
-                token += text + u"\r\n";
-                continue;
-            }
-        } else {
-            token = trimRight(tokens[next++]);
+    for (const FilePiece &piece : filePieces(subsText, isSRT)) {
+        if (piece.blank) {
+            if (!find)
+                replacedText += u"\r\n"; // kept (legacy dropped blank lines)
+            continue;
         }
+        const std::u16string &token = piece.token;
         const auto dial = core::rawDialogueFields(u8(token));
         std::u16string dialtxt = rawElement(dial, m_field);
         if (dial.comment && m_skipComments) {
@@ -1243,10 +1416,13 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
                 ++tabLinePosition;
                 ++positionId;
             }
-            // Skipped comments are not written back (kept legacy defect:
-            // replacing drops them from the file).
-            if (notTlStyle)
+            if (notTlStyle) {
+                // A skipped comment is written back as it was (legacy left it
+                // out of the file: R3-hang-crash-loss).
+                if (!find)
+                    replacedText += (isSRT ? token : piece.raw) + u"\r\n";
                 continue;
+            }
         }
         if (find) {
             findInLine(dialtxt, u16(dial.text), std::nullopt, &isFirst, tabLinePosition, positionId, path, false);
@@ -1258,7 +1434,8 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
                 replacedText += u16(core::rawDialogueWithField(u8(token), column, u8(dialtxt)));
                 fileReplacements += reps;
             } else {
-                replacedText += token + u"\r\n";
+                // An unchanged line is written as it was read (legacy wrote it trimmed).
+                replacedText += (isSRT ? token : piece.raw) + u"\r\n";
                 if (isSRT)
                     replacedText += u"\r\n";
             }
@@ -1267,14 +1444,17 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
             ++tabLinePosition;
             ++positionId;
         }
-        token.clear();
     }
     if (fileReplacements) {
-        m_host.backupFile(path);
-        m_host.writeFile(path, replacedText);
-        replacements += fileReplacements;
+        if (!m_host.backupFile(path))
+            m_host.log(u8"Cannot back up " + path + u8".");
+        // A file that could not be written counts no replacements.
+        if (m_host.writeFile(path, replacedText))
+            replacements += fileReplacements;
     }
 }
+
+// --- The results dialog -----------------------------------------------------
 
 void FindReplace::checkAll(bool check)
 {
@@ -1316,24 +1496,20 @@ void FindReplace::toggleGroup(std::size_t header)
 
 void FindReplace::showResult(std::size_t row)
 {
-    if (row >= m_results.size() || m_results[row].header)
+    if (m_waiting || row >= m_results.size() || m_results[row].header)
         return;
     const FindResult r = m_results[row];
     std::optional<FindTab> tab;
     if (r.document) {
-        for (const auto &t : m_host.tabs())
-            if (t.id == *r.document)
-                tab = t;
+        tab = tabById(*r.document);
     } else if (m_host.fileExists(r.path)) {
         if (const auto id = m_host.openFile(r.path))
-            for (const auto &t : m_host.tabs())
-                if (t.id == *id)
-                    tab = t;
+            tab = tabById(*id);
     }
     if (!tab || !tab->session)
         return;
     const auto lines = tab->session->document().lines();
-    if (r.keyLine >= static_cast<int>(lines.size()))
+    if (r.keyLine < 0 || r.keyLine >= static_cast<int>(lines.size()))
         return;
     // EditBox::GetEditor(text): the original's editor when it shows this text.
     const core::LineRecord &line = *lines[static_cast<std::size_t>(r.keyLine)];
@@ -1348,14 +1524,15 @@ void FindReplace::showResult(std::size_t row)
 
 int FindReplace::replaceCheckedLine(std::u16string &line, int position, int length, int *diff) const
 {
+    // Legacy read outside the text here (R3-hang-crash-loss: bounds-checked).
     const long long at = static_cast<long long>(position) - *diff;
-    if (at < 0 || at > static_cast<long long>(line.size()))
-        return 0; // legacy reads outside the text
+    if (at < 0 || at > static_cast<long long>(line.size()) || length < 0)
+        return 0;
     const auto from = static_cast<std::size_t>(at);
     int reps = 1;
     if (m_regEx) {
         std::u16string foundString = mid(line, from, static_cast<std::size_t>(length));
-        reps = m_regex ? regexReplace(*m_regex, foundString, m_replaceString, 0) : 0;
+        reps = regexReplace(foundString, m_replaceString, 0);
         if (reps > 0) {
             line.replace(from, static_cast<std::size_t>(length), foundString);
             *diff += length - static_cast<int>(foundString.size());
@@ -1371,6 +1548,7 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
 {
     if (results.empty())
         return 0;
+    std::size_t numOfResult = 0;
     const FindResult *seek = results[0];
     const std::u8string path = seek->path;
     const auto ext = extension(path);
@@ -1381,83 +1559,75 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
     std::u16string replacedText;
     const bool isSRT = ext == u"srt";
     if (ext == u"ass") {
-        auto result = subsText.find(u"Dialogue:");
-        const auto result1 = subsText.find(u"Comment:");
-        if (result == npos && result1 == npos)
+        const auto events = assEventsStart(subsText);
+        if (!events)
             return 0;
-        if (result1 < result)
-            result = result1;
-        for (char16_t c : subsText.substr(0, result))
-            replacedText += c == u'\n' ? std::u16string(u"\r\n") : std::u16string(1, c);
-        subsText = subsText.substr(result);
+        replacedText = crlf(subsText.substr(0, *events));
+        subsText = subsText.substr(*events);
     }
-    const auto tokens = lineTokens(subsText);
-    std::u16string token;
     int numOfChanges = 0;
-    std::size_t numOfResult = 0;
     int lineNum = 0;
     const int column = columnOf(m_field);
-    for (std::size_t next = 0; next < tokens.size();) {
-        if (isSRT) {
-            const std::u16string &text = tokens[next++];
-            const bool noMoreTokens = next >= tokens.size();
-            if (isNumber(text) || noMoreTokens) {
-                if (noMoreTokens)
-                    token += text + u"\r\n";
-                if (token.empty())
-                    continue;
-                token = trimRight(std::move(token));
-            } else {
-                token += text + u"\r\n";
-                continue;
-            }
-        } else {
-            token = trimRight(tokens[next++]);
-        }
-        if (seek->keyLine != lineNum) {
-            if (isSRT)
-                replacedText += number(lineNum + 1) + u"\r\n";
-            replacedText += token + u"\r\n";
-            if (isSRT)
-                replacedText += u"\r\n";
-            ++lineNum;
-            token.clear();
+    // The results of this Line are used up (replaced or skipped).
+    const auto skipLine = [&] {
+        while (numOfResult < results.size() && results[numOfResult]->keyLine == lineNum)
+            ++numOfResult;
+        if (numOfResult < results.size())
+            seek = results[numOfResult];
+    };
+    const auto unchanged = [&](const FilePiece &piece) {
+        if (isSRT)
+            replacedText += number(lineNum + 1) + u"\r\n";
+        // As it was read (legacy wrote it trimmed).
+        replacedText += (isSRT ? piece.token : piece.raw) + u"\r\n";
+        if (isSRT)
+            replacedText += u"\r\n";
+    };
+    for (const FilePiece &piece : filePieces(subsText, isSRT)) {
+        if (piece.blank) {
+            replacedText += u"\r\n"; // kept (legacy dropped blank lines)
             continue;
         }
-        const std::u16string raw = std::move(token);
-        token.clear();
-        std::u16string dialtxt = rawElement(core::rawDialogueFields(u8(raw)), m_field);
+        if (numOfResult >= results.size() || seek->keyLine != lineNum) {
+            unchanged(piece);
+            ++lineNum;
+            continue;
+        }
+        std::u16string dialtxt = rawElement(core::rawDialogueFields(u8(piece.token)), m_field);
         int replacementDiff = 0;
         if (dialtxt != seek->text) {
-            // Kept legacy defect: the Line is left out of the file, and so is
-            // every later one until the count moves on.
+            // Legacy left this Line out of the file and, never moving on,
+            // every later one too (R3-hang-crash-loss): it stays as it is.
             m_host.log(u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\ncause it was edited.");
+            unchanged(piece);
+            skipLine();
+            ++lineNum;
             continue;
         }
-        while (seek->keyLine == lineNum) {
+        while (numOfResult < results.size() && seek->keyLine == lineNum) {
             numOfChanges += replaceCheckedLine(dialtxt, seek->start, seek->length, &replacementDiff);
             ++numOfResult;
             if (numOfResult < results.size())
                 seek = results[numOfResult];
-            else
-                break;
         }
         if (isSRT)
             replacedText += number(lineNum + 1) + u"\r\n";
-        replacedText += u16(core::rawDialogueWithField(u8(raw), column, u8(dialtxt)));
+        replacedText += u16(core::rawDialogueWithField(u8(piece.token), column, u8(dialtxt)));
         ++lineNum;
     }
-    if (numOfChanges) {
-        m_host.backupFile(path);
-        m_host.writeFile(path, replacedText);
-    }
-    return numOfChanges;
+    if (!numOfChanges)
+        return 0;
+    if (!m_host.backupFile(path))
+        m_host.log(u8"Cannot back up " + path + u8".");
+    return m_host.writeFile(path, replacedText) ? numOfChanges : 0;
 }
 
 void FindReplace::replaceChecked(const std::u8string &replacement)
 {
-    if (!m_resultsShown)
+    if (!begin(nullptr))
         return;
+    if (!m_resultsShown)
+        return finish();
     m_replaceCheckedEnabled = false;
     // The options of the last search in the tabs go into FindReplace's own.
     m_replaceString = u16(replacement);
@@ -1465,15 +1635,8 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
     m_matchCase = m_resultsMatchCase;
     m_findString = m_resultsFindString;
     if (m_regEx) {
-        auto flags = std::regex_constants::ECMAScript;
-        if (!m_matchCase)
-            flags |= std::regex_constants::icase;
-        try {
-            m_regex.emplace(wide(m_findString), flags);
-        } catch (const std::regex_error &) {
-            m_regex.reset();
-            return;
-        }
+        if (!compile(m_findString))
+            return finish();
         if (m_resultsNeedPrefix)
             m_replaceString = u"\\1" + m_replaceString;
     }
@@ -1491,7 +1654,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
             oldPath = r.path;
         }
         replaceCheckedInFile(group);
-        return;
+        return finish();
     }
     // Each Document's checked matches, applied in order to its Lines' texts.
     struct Pending {
@@ -1518,7 +1681,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
             lastIsTextTl = false;
         }
         const auto lines = tab->session->document().lines();
-        if (r.keyLine >= static_cast<int>(lines.size()))
+        if (r.keyLine < 0 || r.keyLine >= static_cast<int>(lines.size()))
             continue;
         auto p = std::ranges::find_if(pending, [&](const Pending &x) { return x.id == *r.document; });
         if (p == pending.end()) {
@@ -1544,7 +1707,10 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         oldKeyLine = r.keyLine;
         lastIsTextTl = r.translation;
     }
-    // One "Replace all" step per Document with changes (F1-checked-step).
+    // One "Replace all" step per changed Document (F1-checked-step,
+    // R3-hang-crash-loss: legacy recorded each Document's step only when the
+    // next one started, on that tab, so the last Document's change could get
+    // no step and an empty step could land on another Document).
     for (auto &p : pending) {
         if (!p.changes)
             continue;
@@ -1566,6 +1732,7 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         if (ran)
             m_host.changed(p.id);
     }
+    finish();
 }
 
 } // namespace hikari::application
