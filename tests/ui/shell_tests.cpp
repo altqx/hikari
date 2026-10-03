@@ -913,6 +913,53 @@ private slots:
         application->editor().discard();
     }
 
+    // F5: Ctrl+I opens the Timing tool; Shift moves the Lines; start-only asks first.
+    void timingPanelShiftsTimes()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *timingDock = root->findChild<QObject *>(QStringLiteral("timingDock"));
+        QVERIFY(timingDock);
+        QVERIFY(!timingDock->property("isOpen").toBool()); // tools start closed
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_I, Qt::ControlModifier);
+        QTRY_VERIFY(timingDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("timingPanel")->hasActiveFocus());
+        auto *time = item("shiftTime");
+        time->setProperty("text", QStringLiteral("0:00:01.50"));
+        QVERIFY(QMetaObject::invokeMethod(time, "editingFinished"));
+        QCOMPARE(application->shiftTimesSettings().settings().timeMs, 1500);
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_COMPARE(session->history().back().name, std::string("Shifting times"));
+        auto ms = [&](std::size_t row, bool start) {
+            const auto *l = session->document().lines()[row];
+            return (start ? l->start : l->end).value.microseconds() / 1000;
+        };
+        QCOMPARE(ms(0, true), 2500);
+        QCOMPARE(ms(1, false), 5500);
+        // Start times only: confirmed first.
+        auto settings = application->shiftTimesSettings().settingsMap();
+        settings.insert(QStringLiteral("whichTimes"), 1);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        auto *confirm = root->findChild<QObject *>(QStringLiteral("shiftConfirm"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(confirm, "accept"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(ms(0, true), 4000);
+        QCOMPARE(ms(0, false), 3500); // the end stayed
+        // A profile keeps the settings by name.
+        application->shiftTimesSettings().saveProfile(QStringLiteral("Start only"));
+        settings.insert(QStringLiteral("whichTimes"), 0);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        application->shiftTimesSettings().loadProfile(QStringLiteral("Start only"));
+        QCOMPARE(application->shiftTimesSettings().settings().whichTimes, 1);
+        QCOMPARE(application->shiftTimesSettings().profileNames(), QStringList{QStringLiteral("Start only")});
+        application->editor().discard();
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));

@@ -31,9 +31,9 @@ class WorkspaceLayoutController : public QObject {
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
 public:
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 1;
+    static constexpr int kPanelRegistry = 2; // 2: Timing (F5)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference
+    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without settings).
     explicit WorkspaceLayoutController(QString layoutFile = {}, QObject *parent = nullptr);

@@ -62,6 +62,14 @@ std::expected<ShiftOutcome, std::variant<ShiftProblem, CommandRefusal>>
 shiftTimes(EditSession &session, const ShiftTimesSettings &settings, const ShiftContext &context,
            const LineVisible &visible = {});
 
+// Shift profiles (legacy SHIFT_TIMES_PROFILES): one line per profile,
+// "<name>: Time: <ms> Forward: <0|1> Frames: <0|1> MoveTagTimes: ... EndTimeCorrection: <n>".
+// Reading takes the values by position and skips the labels, so a style list
+// with spaces in it shifts the later values (kept from legacy).
+std::string shiftProfileText(const std::string &name, const ShiftTimesSettings &settings);
+std::string shiftProfileName(const std::string &profileText);
+ShiftTimesSettings applyShiftProfile(const std::string &profileText, ShiftTimesSettings base);
+
 namespace legacy {
 // Dialogue::ChangeTimes: the first two times of \move (after its four
 // coordinates), \t and \fad gain `start` and `end`, floored at 0.

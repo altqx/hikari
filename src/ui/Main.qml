@@ -30,6 +30,7 @@ ApplicationWindow {
     required property TagButtonsController tagButtons
     required property ColourPickerController colourPicker
     required property WorkspaceLayoutController workspaceLayout
+    required property ShiftTimesController shiftTimes
     required property GridFilterController gridFilter
     required property var automationHotkeys
 
@@ -126,6 +127,10 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
+        // Tools start closed (docs/qt/ux/workspaces.md); Timing tabs with the editor.
+        editorDock.addDockWidgetAsTab(timingDock)
+        editorDock.setAsCurrentTab()
+        timingDock.close()
     }
     Connections {
         target: root.shell
@@ -138,9 +143,9 @@ ApplicationWindow {
     }
 
     // Major panels in F6 order; a hidden panel is skipped.
-    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel]
+    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel]
     // D1: their docks, in the same order.
-    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock]
+    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock]
 
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio).
@@ -152,6 +157,17 @@ ApplicationWindow {
             audioDock.close()
         root.workspaceLayout.preset = name
         root.workspaceLayout.save()
+    }
+
+    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
+    function runShiftTimes() {
+        const which = root.shiftTimes.settings.whichTimes
+        if (which !== 0) {
+            shiftConfirm.which = which
+            shiftConfirm.open()
+            return
+        }
+        shiftMessage.text = root.app.shiftTimes()
     }
 
     // The dock of the panel with the focus (the Grid's otherwise).
@@ -229,6 +245,14 @@ ApplicationWindow {
         panel.forceActiveFocus(reason)
     }
 
+    // Legacy GLOBAL_SHOW_SHIFT_TIMES ("Time shift window", Ctrl+I). In the
+    // Line editor Ctrl+I is italic: the editor's own hotkey wins there.
+    Shortcut {
+        sequences: ["Ctrl+I"]
+        context: Qt.ApplicationShortcut
+        enabled: root.shellActive && !editorPanel.activeFocus
+        onActivated: root.showPanel(timingDock)
+    }
     // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
     Shortcut {
         sequences: ["F4"]
@@ -630,6 +654,17 @@ ApplicationWindow {
         Menu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
+            MenuItem {
+                objectName: "showShiftTimes"
+                text: qsTr("Shift &times...")
+                onTriggered: root.showPanel(timingDock)
+            }
+            MenuItem {
+                objectName: "runShiftTimes"
+                text: qsTr("Shift times / run time post processor")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: root.runShiftTimes()
+            }
             MenuItem {
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
@@ -1466,6 +1501,162 @@ ApplicationWindow {
             }
         }
 
+        // F5: the Timing tool (legacy ShiftTimes panel).
+        KDDW.DockWidget {
+            id: timingDock
+            objectName: "timingDock"
+            uniqueName: "Timing"
+            title: qsTr("Timing")
+            Panel {
+                id: timingPanel
+                objectName: "timingPanel"
+                anchors.fill: parent
+                title: qsTr("Shift times")
+                ScrollView {
+                    anchors.fill: parent
+                    clip: true
+                    ColumnLayout {
+                        id: shiftForm
+                        width: timingPanel.width - 20
+                        readonly property var settings: root.shiftTimes.settings
+                        function set(key, value) {
+                            const next = Object.assign({}, settings)
+                            next[key] = value
+                            root.shiftTimes.settings = next
+                        }
+                        // Legacy time control: h:mm:ss.cc, or frames when shown as frames.
+                        function timeText(ms) {
+                            const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60
+                            const m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000)
+                            return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + "." + String(cs).padStart(2, "0")
+                        }
+                        function parseTime(text) {
+                            const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
+                            if (!m)
+                                return -1
+                            return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
+                        }
+                        RowLayout {
+                            Label { text: settings.byFrames ? qsTr("Frames") : qsTr("Time") }
+                            TextField {
+                                id: shiftTime
+                                objectName: "shiftTime"
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("Shift subtitle times")
+                                text: shiftForm.settings.byFrames ? String(shiftForm.settings.frames)
+                                                                  : shiftForm.timeText(shiftForm.settings.timeMs)
+                                onEditingFinished: {
+                                    if (shiftForm.settings.byFrames) {
+                                        shiftForm.set("frames", Math.max(0, parseInt(text) || 0))
+                                    } else {
+                                        const ms = shiftForm.parseTime(text)
+                                        if (ms >= 0)
+                                            shiftForm.set("timeMs", ms)
+                                    }
+                                }
+                            }
+                            Button {
+                                objectName: "shiftApply"
+                                text: qsTr("Shift")
+                                Accessible.description: qsTr("Shift subtitle times")
+                                onClicked: root.runShiftTimes()
+                            }
+                        }
+                        RowLayout {
+                            RadioButton { objectName: "shiftForward"; text: qsTr("Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
+                            RadioButton { objectName: "shiftBackward"; text: qsTr("Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
+                        }
+                        RowLayout {
+                            CheckBox {
+                                objectName: "shiftFrames"
+                                text: qsTr("Frames")
+                                checked: shiftForm.settings.byFrames
+                                enabled: checked || root.app.exactTimebase()
+                                onToggled: shiftForm.set("byFrames", checked)
+                            }
+                            CheckBox { objectName: "shiftTagTimes"; text: qsTr("Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
+                        }
+                        GroupBox {
+                            title: qsTr("Shift by video / audio")
+                            Layout.fillWidth: true
+                            ColumnLayout {
+                                RowLayout {
+                                    RadioButton { text: qsTr("Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
+                                    RadioButton { text: qsTr("End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
+                                }
+                                CheckBox { objectName: "shiftToVideo"; text: qsTr("Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
+                                CheckBox { objectName: "shiftToAudio"; text: qsTr("Move the marker to audio time"); checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
+                            }
+                        }
+                        Label { text: qsTr("Which lines") }
+                        ComboBox {
+                            objectName: "shiftWhichLines"
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Which lines")
+                            model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From the selected line"),
+                                    qsTr("All times higher and equal"), qsTr("All times lower and equal"),
+                                    qsTr("According to the selected styles")]
+                            currentIndex: shiftForm.settings.whichLines
+                            onActivated: (index) => shiftForm.set("whichLines", index)
+                        }
+                        TextField {
+                            objectName: "shiftStyles"
+                            Layout.fillWidth: true
+                            visible: shiftForm.settings.whichLines === 5
+                            placeholderText: qsTr("Styles, separated by commas")
+                            Accessible.name: qsTr("Styles")
+                            text: shiftForm.settings.styles
+                            onEditingFinished: shiftForm.set("styles", text)
+                        }
+                        Label { text: qsTr("A method of time shift") }
+                        ComboBox {
+                            objectName: "shiftWhichTimes"
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("A method of time shift")
+                            model: [qsTr("Both times"), qsTr("The starting time"), qsTr("End time")]
+                            currentIndex: shiftForm.settings.whichTimes
+                            onActivated: (index) => shiftForm.set("whichTimes", index)
+                        }
+                        Label { text: qsTr("Correction end times") }
+                        ComboBox {
+                            objectName: "shiftEndCorrection"
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Correction end times")
+                            model: [qsTr("Leave unchanged"), qsTr("Adjust overlapping times"), qsTr("New times")]
+                            currentIndex: shiftForm.settings.correctEndTimes
+                            onActivated: (index) => shiftForm.set("correctEndTimes", index)
+                        }
+                        GroupBox {
+                            title: qsTr("Profiles")
+                            Layout.fillWidth: true
+                            RowLayout {
+                                anchors.fill: parent
+                                ComboBox {
+                                    id: shiftProfile
+                                    objectName: "shiftProfile"
+                                    Layout.fillWidth: true
+                                    Accessible.name: qsTr("Profiles")
+                                    editable: true
+                                    model: root.shiftTimes.profiles
+                                    onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
+                                }
+                                Button { objectName: "shiftProfileSave"; text: "+"; Accessible.name: qsTr("Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
+                                Button { objectName: "shiftProfileRemove"; text: "-"; Accessible.name: qsTr("Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
+                            }
+                        }
+                        Label {
+                            id: shiftMessage
+                            objectName: "shiftMessage"
+                            Layout.fillWidth: true
+                            wrapMode: Text.WordWrap
+                            color: palette.highlight
+                            Accessible.role: Accessible.AlertMessage
+                        }
+                    }
+                }
+            }
+        }
+
         Component.onCompleted: {
             root.defaultLayout()
             root.workspaceLayout.captureDefault()
@@ -2118,6 +2309,17 @@ ApplicationWindow {
                 text: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
             }
         }
+    }
+    Dialog {
+        id: shiftConfirm
+        objectName: "shiftConfirm"
+        property int which: 1
+        title: qsTr("Confirmation")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Yes | Dialog.No
+        Label { text: qsTr("Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTr("start") : qsTr("end")) }
+        onAccepted: shiftMessage.text = root.app.shiftTimes()
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

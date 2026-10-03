@@ -20,6 +20,7 @@
 #include "log_controller.h"
 #include "colour_picker_controller.h"
 #include "workspace_layout.h"
+#include "shift_times_controller.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
 #include "shell_controller.h"
@@ -180,6 +181,11 @@ public:
     // Y3: GLOBAL_OPEN_ASS_PROPERTIES. The values the dialog opens with (ASS
     // Documents only; empty otherwise), plus the video size for "From video"
     // and the linked-resolutions option; OK applies the edited fields.
+    // F5: GLOBAL_SHIFT_TIMES with the panel's settings and the video's
+    // timebase and shown frame; an empty result means shifted, otherwise the
+    // legacy message. Frames need an exact (indexed) timebase.
+    Q_INVOKABLE QString shiftTimes();
+    Q_INVOKABLE bool exactTimebase() const;
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -219,6 +225,7 @@ public:
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
+    ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
@@ -262,6 +269,7 @@ private:
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
+    std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

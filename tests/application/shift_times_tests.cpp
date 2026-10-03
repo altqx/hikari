@@ -198,3 +198,30 @@ TEST(ShiftEndCorrection, OverlapsAndTextLength)
     EXPECT_TRUE(r->endCorrectionSkipped);
     EXPECT_EQ(times(d), (std::vector<std::pair<int, int>>{{1010, 3510}, {3010, 4010}}));
 }
+
+TEST(ShiftProfiles, LegacyProfileText)
+{
+    ShiftTimesSettings s;
+    s.timeMs = 1500;
+    s.forward = false;
+    s.tagTimes = true;
+    s.whichLines = 5;
+    s.styles = u8"Default,Sign";
+    s.correctEndTimes = 1;
+    const std::string text = shiftProfileText("Fix", s);
+    EXPECT_EQ(text, "Fix: Time: 1500 Forward: 0 Frames: 0 MoveTagTimes: 1 MoveToStartTimes: 0 MoveToVideoTime: 0 "
+                    "MoveToVideoTime: 0 WhichLines: 5 StylesText: Default,Sign WhichTimes: 0 EndTimeCorrection: 1");
+    EXPECT_EQ(shiftProfileName(text), "Fix");
+    const auto back = applyShiftProfile(text, {});
+    EXPECT_EQ(back.timeMs, 1500);
+    EXPECT_FALSE(back.forward);
+    EXPECT_TRUE(back.tagTimes);
+    EXPECT_EQ(back.whichLines, 5);
+    EXPECT_EQ(back.styles, u8"Default,Sign");
+    EXPECT_EQ(back.correctEndTimes, 1);
+    // Styles with a space shift the later values by position, as in legacy.
+    s.styles = u8"Main Dialogue";
+    const auto shifted = applyShiftProfile(shiftProfileText("Odd", s), {});
+    EXPECT_EQ(shifted.styles, u8"Main");
+    EXPECT_EQ(shifted.whichTimes, 0); // "WhichTimes:" read as a number
+}

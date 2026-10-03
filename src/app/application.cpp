@@ -7,6 +7,7 @@
 #include "hikari/application/grid_split.h"
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
+#include "hikari/application/shift_times.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
@@ -150,6 +151,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(m_settingsFile);
     // D1: the panel layout beside the settings (none without a settings file).
+    m_shiftTimes = std::make_unique<ui::ShiftTimesController>(m_settingsFile);
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
@@ -1316,6 +1318,52 @@ bool Application::shiftTranslation(int mode)
     return done;
 }
 
+bool Application::exactTimebase() const
+{
+    return m_video->session().state() == application::VideoSession::State::Ready &&
+           m_video->session().legacyTimebase().exact();
+}
+
+QString Application::shiftTimes()
+{
+    auto *session = targetSession();
+    if (!session)
+        return tr("No document open");
+    const auto &video = m_video->session();
+    const bool hasVideo = video.state() == application::VideoSession::State::Ready;
+    const auto timebase = video.legacyTimebase();
+    application::ShiftContext context;
+    if (hasVideo) {
+        context.timebase = &timebase;
+        // VideoBox::GetFrameTime: the shown frame's midpoint start and end times.
+        if (const auto frame = video.shownFrame()) {
+            context.videoFrame = *frame;
+            context.videoFrameStartMs = timebase.startTimeFor(*frame);
+            context.videoFrameEndMs = timebase.endTimeFor(*frame);
+        }
+    }
+    const auto shown = shownLines();
+    const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, shown);
+    m_editor->reloadFromSession();
+    refreshViews();
+    if (!result) {
+        if (const auto *problem = std::get_if<application::ShiftProblem>(&result.error())) {
+            switch (*problem) {
+            case application::ShiftProblem::NoStylesChosen:
+                return tr("No styles selected for time shifting");
+            case application::ShiftProblem::NoLinesSelected:
+                return tr("No lines selected for shifting");
+            case application::ShiftProblem::NoExactTimebase:
+                return tr("Video was not loaded using FFMS2");
+            }
+        }
+        return tr("The times could not be shifted.");
+    }
+    if (result->endCorrectionSkipped)
+        m_log->log(tr("Video was not loaded using FFMS2"));
+    return {};
+}
+
 QVariantMap Application::scriptProperties()
 {
     auto *session = targetSession();
@@ -1559,6 +1607,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
             {QStringLiteral("colourPicker"), QVariant::fromValue(m_colourPicker.get())},
             {QStringLiteral("workspaceLayout"), QVariant::fromValue(m_workspaceLayout.get())},
+            {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};

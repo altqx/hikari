@@ -286,4 +286,69 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
     return outcome;
 }
 
+std::string shiftProfileText(const std::string &name, const ShiftTimesSettings &s)
+{
+    auto flag = [](bool b) { return b ? std::string("1") : std::string("0"); };
+    // Legacy GetProfileString: the audio flag is written under the video label too.
+    return name + ": Time: " + std::to_string(s.timeMs) + " Forward: " + flag(s.forward) + " Frames: " + flag(s.byFrames) +
+           " MoveTagTimes: " + flag(s.tagTimes) + " MoveToStartTimes: " + flag(s.fromStartTime) +
+           " MoveToVideoTime: " + flag(s.moveToVideoTime) + " MoveToVideoTime: " + flag(s.moveToAudioTime) +
+           " WhichLines: " + std::to_string(s.whichLines) + " StylesText: " + std::string(s.styles.begin(), s.styles.end()) +
+           " WhichTimes: " + std::to_string(s.whichTimes) + " EndTimeCorrection: " + std::to_string(s.correctEndTimes);
+}
+
+std::string shiftProfileName(const std::string &text)
+{
+    return text.substr(0, text.find(':'));
+}
+
+ShiftTimesSettings applyShiftProfile(const std::string &text, ShiftTimesSettings s)
+{
+    // AfterFirst(':') with the first character removed, split on single spaces
+    // (empty tokens kept); every other token is a label.
+    const auto colon = text.find(':');
+    std::string rest = colon == std::string::npos ? std::string() : text.substr(colon + 1);
+    if (!rest.empty())
+        rest.erase(0, 1);
+    std::vector<std::string> tokens;
+    for (std::size_t p = 0;;) {
+        const auto space = rest.find(' ', p);
+        tokens.push_back(rest.substr(p, space == std::string::npos ? std::string::npos : space - p));
+        if (space == std::string::npos)
+            break;
+        p = space + 1;
+    }
+    std::size_t k = 1; // the first label
+    auto next = [&]() -> std::optional<std::string> {
+        if (k >= tokens.size())
+            return std::nullopt;
+        std::string v = tokens[k];
+        k += 2; // the value and the following label
+        return v;
+    };
+    if (auto v = next())
+        s.timeMs = std::atoi(v->c_str());
+    if (auto v = next())
+        s.forward = *v == "1";
+    if (auto v = next())
+        s.byFrames = *v == "1";
+    if (auto v = next())
+        s.tagTimes = *v == "1";
+    if (auto v = next())
+        s.fromStartTime = *v == "1";
+    if (auto v = next())
+        s.moveToVideoTime = *v == "1";
+    if (auto v = next())
+        s.moveToAudioTime = *v == "1";
+    if (auto v = next())
+        s.whichLines = std::atoi(v->c_str());
+    if (auto v = next())
+        s.styles = std::u8string(v->begin(), v->end());
+    if (auto v = next())
+        s.whichTimes = std::atoi(v->c_str());
+    if (auto v = next())
+        s.correctEndTimes = std::atoi(v->c_str());
+    return s;
+}
+
 } // namespace hikari::application
