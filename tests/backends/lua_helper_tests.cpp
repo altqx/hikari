@@ -925,6 +925,8 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
     // The helper process inherits the environment, as the legacy app's Lua does.
     qputenv("HIKARI_CAPTURE_OUT", output.toLocal8Bit());
     qputenv("HIKARI_CAPTURE_CORPUS", list.toLocal8Bit());
+    // As in the legacy capture: once while the host loads the probe, then from its macro.
+    qputenv("HIKARI_CAPTURE_AT_LOAD", "1");
     const QString automation = work.filePath(QStringLiteral("Automation"));
     for (const char *sub : {"log", "autosave", "temp"})
         QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
@@ -948,16 +950,22 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
     EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
     qunsetenv("HIKARI_CAPTURE_OUT");
     qunsetenv("HIKARI_CAPTURE_CORPUS");
+    qunsetenv("HIKARI_CAPTURE_AT_LOAD");
     QFile f(output);
     ASSERT_TRUE(f.open(QIODevice::ReadOnly));
-    const QByteArray line = f.readLine();
-    const QJsonObject result = QJsonDocument::fromJson(line).object();
-    ASSERT_EQ(result.value(QStringLiteral("case")).toString(), QStringLiteral("corpus")) << line.toStdString();
-    ASSERT_FALSE(result.contains(QStringLiteral("error"))) << line.toStdString();
+    const QByteArray atLoad = f.readLine(), inMacro = f.readLine();
     QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
-    QFile artifact(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-capture-corpus.json"));
-    ASSERT_TRUE(artifact.open(QIODevice::WriteOnly));
-    artifact.write(QJsonDocument(result).toJson());
+    // The load-time record compares with the legacy capture (taken the same way).
+    for (const auto &[line, name] : {std::pair{atLoad, "automation-capture-corpus.json"},
+                                     std::pair{inMacro, "automation-capture-corpus-macro.json"}}) {
+        const QJsonObject record = QJsonDocument::fromJson(line).object();
+        ASSERT_EQ(record.value(QStringLiteral("case")).toString(), QStringLiteral("corpus")) << line.toStdString();
+        ASSERT_FALSE(record.contains(QStringLiteral("error"))) << line.toStdString();
+        QFile artifact(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/") + QLatin1String(name));
+        ASSERT_TRUE(artifact.open(QIODevice::WriteOnly));
+        artifact.write(QJsonDocument(record).toJson());
+    }
+    const QJsonObject result = QJsonDocument::fromJson(inMacro).object();
     // Every bundled script loads and registers, as in the host's own load.
     const QJsonArray scripts = result.value(QStringLiteral("scripts")).toArray();
     EXPECT_EQ(scripts.size(), files.size());

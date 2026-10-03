@@ -55,8 +55,14 @@ def main():
         r = rewrite.get("modules", {}).get(name, {})
         if (l.get("ok"), l.get("type")) != (r.get("ok"), r.get("type")):
             rows.append(("module", name, l, r))
-    if legacy.get("stubs") != rewrite.get("stubs"):
-        rows.append(("stubs", "C06", legacy.get("stubs"), rewrite.get("stubs")))
+    def stubs(record):
+        # Error texts name each run's own probe path; compare outcome and type.
+        out = dict(record.get("stubs") or {})
+        call = out.pop("set_undo_point_call", {}) or {}
+        out["set_undo_point_call"] = (call.get("ok"), (call.get("result") or {}).get("type"))
+        return out
+    if stubs(legacy) != stubs(rewrite):
+        rows.append(("stubs", "C06", stubs(legacy), stubs(rewrite)))
     l_api, r_api = set(legacy.get("aegisub_api", [])), set(rewrite.get("aegisub_api", []))
     if l_api != r_api:
         rows.append(("aegisub api", "only legacy / only rewrite", sorted(l_api - r_api), sorted(r_api - l_api)))
