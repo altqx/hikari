@@ -6,6 +6,7 @@
 
 #include "hikari/app/automation_hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
+#include "hikari/app/style_manager_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_commands.h"
@@ -75,6 +76,9 @@ public:
         bool playbackAudio = true;
         // P8: the release list the update check reads (tests: a file).
         QUrl updateFeed = UpdateChecker::defaultFeed();
+        // Y2: where the style catalogs live; empty: "Catalog" beside the settings
+        // file, or a temporary directory without one (tests).
+        QString catalogDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -227,6 +231,8 @@ public:
     // The formats the editing target can be converted to ("ass", "srt",
     // "mdvd", "mpl2", "tmp"); none in translation mode.
     Q_INVOKABLE QStringList conversionTargets() const;
+    // Y1: the active Line's Style, which the Style manager selects when it opens.
+    Q_INVOKABLE QString activeLineStyle() const;
     // C02-loss-preview: converts a copy and lists what it removes or
     // synthesizes ({ok, problem, losses}); acceptConversion applies that
     // plan as one "Subtitles conversion" step unless the Document or the
@@ -292,6 +298,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     UpdateChecker &updates() { return *m_updates; }
+    StyleManagerController &styleManager() { return *m_styleManager; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
@@ -340,6 +347,7 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<UpdateChecker> m_updates;
+    std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;

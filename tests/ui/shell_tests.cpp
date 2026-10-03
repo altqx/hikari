@@ -924,6 +924,69 @@ private slots:
         application->editor().discard();
     }
 
+    // Y1/Y2: the Style manager edits the Document's Styles and the catalog.
+    void styleManagerEditsStylesAndTheCatalog()
+    {
+        const QString path = dir.filePath(QStringLiteral("styles.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                    "MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                    "Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &styles = application->styleManager();
+        auto *root = engine->rootObjects().first();
+        auto *window = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(window);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(window->isVisible());
+        // The active Line's Style is selected.
+        QCOMPARE(window->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
+        // Edit Sign: rename it to Title, answer Yes to renaming the Lines.
+        auto values = styles.beginEdit(false, 1);
+        values.insert(QStringLiteral("name"), QStringLiteral("Title"));
+        values.insert(QStringLiteral("fontsize"), QStringLiteral("36"));
+        QCOMPARE(styles.commitQuestions(values).value(QStringLiteral("rename")).toBool(), true);
+        QCOMPARE(styles.commitEdit(values, {1}, false, true), QString());
+        QCOMPARE(session->history().back().name, std::string("Style editing"));
+        QCOMPARE(session->document().lines()[0]->style, std::u8string(u8"Title"));
+        // A new Style with a taken name is refused with the legacy message.
+        auto fresh = styles.beginNew(false);
+        QCOMPARE(fresh.value(QStringLiteral("name")).toString(), QStringLiteral("New Style"));
+        fresh.insert(QStringLiteral("name"), QStringLiteral("Default"));
+        QCOMPARE(styles.commitEdit(fresh, {}, false, false), QStringLiteral("Style named \"Default\" already exists."));
+        styles.endEdit();
+        // Into the catalog and back: Title is copied to a new catalog, then Clear
+        // removes the unused Default from the Document.
+        QVERIFY(styles.createCatalog(QStringLiteral("Show")));
+        QCOMPARE(styles.transferConflicts(true, {1}), QStringList());
+        QCOMPARE(styles.addToStore({1}, {}), QVariantList{0});
+        QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Title")});
+        QVERIFY(styles.cleanStyles().contains(QStringLiteral("Styles deleted:\nDefault\n")));
+        QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});
+        // Adding it back asks; "no" keeps the Document's.
+        QCOMPARE(styles.transferConflicts(false, {0}), QStringList{QStringLiteral("Title")});
+        styles.addToDocument({0}, {QStringLiteral("no")});
+        QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});
+        // The preview renders the edited values through libass.
+        styles.beginEdit(false, 0);
+        styles.renderPreview(styles.beginEdit(false, 0), 200, 80, QStringLiteral("Preview"));
+        QCOMPARE(styles.preview().size(), QSize(200, 80));
+        styles.endEdit();
+        QVERIFY(QMetaObject::invokeMethod(window, "closeManager"));
+        QTRY_VERIFY(!window->isVisible());
+        styles.deleteCatalog(QStringLiteral("Show"));
+        application->editor().discard();
+    }
+
     // Y5: Convert to SRT previews its losses, applies the plan as one step,
     // refuses a stale plan, and Save then asks for a file.
     void conversionPreviewsAndAppliesThePlan()

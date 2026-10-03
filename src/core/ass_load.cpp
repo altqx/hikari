@@ -138,6 +138,71 @@ bool Document::editStyle(std::size_t index, std::vector<std::u8string> fields)
     return false;
 }
 
+bool Document::rearrangeStyles(const std::vector<StyleSlot> &slots)
+{
+    // The current Styles, in document order, with where each one sits.
+    struct Position {
+        Section *section;
+        std::size_t record;
+    };
+    std::vector<Position> positions;
+    std::vector<StyleRecord> current;
+    Section *styles = nullptr;
+    for (auto &section : m_sections) {
+        if (section.kind == SectionKind::Styles || section.kind == SectionKind::SsaStyles)
+            styles = &section;
+        for (std::size_t i = 0; i < section.records.size(); ++i)
+            if (const auto *style = std::get_if<StyleRecord>(&section.records[i])) {
+                positions.push_back({&section, i});
+                current.push_back(*style);
+            }
+    }
+    if (!styles)
+        return false;
+    std::vector<StyleRecord> next;
+    for (const auto &slot : slots) {
+        if (slot.from && *slot.from >= current.size())
+            return false;
+        StyleRecord record = slot.from ? current[*slot.from] : StyleRecord{};
+        if (slot.fields) {
+            if (slot.fields->empty())
+                return false;
+            record.name = slot.fields->front();
+            record.fields = *slot.fields;
+            if (slot.from)
+                record.edited = true;
+            else
+                record.inserted = true;
+        }
+        if (!slot.from && !slot.fields)
+            return false;
+        next.push_back(std::move(record));
+    }
+    const std::size_t kept = std::min(next.size(), positions.size());
+    for (std::size_t i = 0; i < kept; ++i)
+        positions[i].section->records[positions[i].record] = next[i];
+    // Removals from the back, so earlier positions stay valid.
+    for (std::size_t i = positions.size(); i-- > kept;)
+        positions[i].section->records.erase(positions[i].section->records.begin() +
+                                            static_cast<std::ptrdiff_t>(positions[i].record));
+    // Extra Styles after the last Style (or the Format line) of the last Styles section.
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < styles->records.size(); ++i)
+        if (std::holds_alternative<StyleRecord>(styles->records[i]) || std::holds_alternative<FormatRecord>(styles->records[i]))
+            at = i + 1;
+    for (std::size_t i = kept; i < next.size(); ++i) {
+        StyleRecord added = next[i];
+        if (!added.inserted) {
+            // A Style moved past the end keeps no position of its own: written from its fields.
+            added.inserted = true;
+        }
+        added.span = SourceSpan{endOfRecord(*styles, at), 0, 0};
+        styles->records.insert(styles->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+        ++at;
+    }
+    return true;
+}
+
 bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change)
 {
     for (auto &section : m_sections)

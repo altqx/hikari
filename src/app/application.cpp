@@ -175,6 +175,25 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, m_settingsFile);
     m_updates = std::make_unique<UpdateChecker>(m_settingsFile, options.updateFeed, QStringLiteral(HIKARI_VERSION));
+    {
+        const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
+                                   : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
+                                                                 : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
+        StyleManagerController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.documents = [this] {
+            std::vector<application::EditSession *> out;
+            for (const auto id : m_workspace.documents())
+                if (auto *session = m_files->session(id))
+                    out.push_back(session);
+            return out;
+        };
+        hooks.refresh = [this] {
+            m_editor->reloadFromSession();
+            refreshViews();
+        };
+        m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
+    }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -1807,6 +1826,17 @@ void Application::setConversionOptions(const QVariantMap &options)
         ini.setValue(it.key(), it.value());
 }
 
+QString Application::activeLineStyle() const
+{
+    auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return {};
+    for (const auto *line : session->document().lines())
+        if (line->id == *session->selection().active)
+            return QString::fromUtf8(reinterpret_cast<const char *>(line->style.data()), qsizetype(line->style.size()));
+    return {};
+}
+
 QStringList Application::conversionTargets() const
 {
     auto *session = targetSession();
@@ -2178,6 +2208,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
+            {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

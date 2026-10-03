@@ -219,6 +219,17 @@ public:
     // lists them) gets these positional fields, name first, and is written
     // as "Style: " + fields in its place. False when there is no such Style.
     bool editStyle(std::size_t index, std::vector<std::u8string> fields);
+    // The Style manager's lists (Y1): the Styles become `slots` in this order.
+    // A slot naming an existing Style (`from`, document order) moves it with
+    // its bytes unless `fields` are given; a slot without `from` is a new
+    // Style. Slots fill the existing Style positions in order, extra ones go
+    // after the last Style, and Styles beyond the slots are removed. False
+    // without a Styles section or for an unknown `from`.
+    struct StyleSlot {
+        std::optional<std::size_t> from;
+        std::optional<std::vector<std::u8string>> fields;
+    };
+    bool rearrangeStyles(const std::vector<StyleSlot> &slots);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

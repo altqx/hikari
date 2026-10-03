@@ -2,6 +2,7 @@
 #include "docking.h"
 
 #include "hikari/app/application.h"
+#include "hikari/app/style_manager_controller.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -33,6 +34,7 @@ int run(int argc, char **argv, StartupMode mode)
 
     QQmlApplicationEngine engine;
     hikari::ui::attachDocking(engine);
+    attachStylePreview(engine, application.styleManager());
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

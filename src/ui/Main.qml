@@ -34,6 +34,7 @@ ApplicationWindow {
     required property GridFilterController gridFilter
     required property var automationHotkeys
     required property var updates
+    required property var styleManager
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -704,6 +705,12 @@ ApplicationWindow {
                 text: qsTr("Shift times / run time post processor")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: root.runShiftTimes()
+            }
+            MenuItem {
+                objectName: "styleManagerMenuItem"
+                text: qsTr("Style &manager")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             MenuItem {
                 objectName: "assProperties"
@@ -2842,6 +2849,11 @@ ApplicationWindow {
                 }
             }
         }
+    }
+    StyleManager {
+        id: styleManagerWindow
+        styles: root.styleManager
+        app: root.app
     }
     SelectLinesDialog {
         id: selectLinesDialog
