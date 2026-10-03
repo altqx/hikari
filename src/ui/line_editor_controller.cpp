@@ -1188,6 +1188,27 @@ void LineEditorController::selectInField(int start, int end)
     emit selectionRequested();
 }
 
+void LineEditorController::selectRaw(int role, int start, int end)
+{
+    const auto r = record();
+    if (!r || role < 0 || role > 1)
+        return;
+    const std::u16string raw = core::toUtf16(roleText(*r, role));
+    const int size = static_cast<int>(raw.size());
+    start = std::clamp(start, 0, size);
+    end = std::clamp(end, 0, size);
+    if (!m_showTags) {
+        const auto projection = core::project(raw);
+        start = static_cast<int>(core::displayOffset(projection, static_cast<std::size_t>(start)));
+        end = static_cast<int>(core::displayOffset(projection, static_cast<std::size_t>(end)));
+    }
+    m_selectionStart = start;
+    m_selectionEnd = end;
+    m_selectionRole = role;
+    m_fieldSelection[role] = {std::min(start, end), std::max(start, end)};
+    emit selectionRequested();
+}
+
 void LineEditorController::reloadFromSession()
 {
     m_draftUndo.clear();

@@ -537,6 +537,34 @@ ApplicationWindow {
                     onTriggered: selectLinesDialog.openDialog()
                 }
             }
+            // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
+            MenuItem {
+                objectName: "findReplaceMenuItem"
+                action: Action {
+                    text: qsTr("Find and re&place")
+                    shortcut: "Ctrl+H"
+                    enabled: root.editor.hasLine
+                    onTriggered: findReplace.activate(1)
+                }
+            }
+            MenuItem {
+                objectName: "findMenuItem"
+                action: Action {
+                    text: qsTr("&Find")
+                    shortcut: "Ctrl+F"
+                    enabled: root.editor.hasLine
+                    onTriggered: findReplace.activate(0)
+                }
+            }
+            MenuItem {
+                objectName: "findNextMenuItem"
+                action: Action {
+                    text: qsTr("Find next")
+                    shortcut: "F3"
+                    enabled: root.editor.hasLine
+                    onTriggered: root.app.findNext()
+                }
+            }
         }
         Menu {
             id: automationMenu
@@ -2867,6 +2895,11 @@ ApplicationWindow {
         id: selectLinesDialog
         app: root.app
         anchors.centerIn: parent
+    }
+    FindReplaceDialog {
+        id: findReplace
+        app: root.app
+        anchors.fill: parent
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

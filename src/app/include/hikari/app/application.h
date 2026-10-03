@@ -9,6 +9,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
+#include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/recent_files.h"
@@ -30,12 +31,14 @@
 
 #include <QDate>
 #include <QDateTime>
+#include <QEventLoop>
 #include <QLockFile>
 #include <QTimer>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -57,6 +60,10 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // F1: find and replace asks (kind: 0 message, 1 "Reached end", 2 missing
+    // styles, 3 no style found, 4 replace in files) and waits for answerFindQuestion.
+    void findQuestion(int kind, const QString &text, const QString &title);
+    void findResultsChanged();
 
 public:
     struct Options {
@@ -262,6 +269,44 @@ public:
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The "+" button: the chosen styles as the legacy anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
+    // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
+    // the dialog as {tab (0 Find, 1 Find and replace, 2 Find in subtitles),
+    // find, replace, styles, filters, folder, field, lines, matchCase, regex,
+    // startOfText, endOfText, includeComments, skipTags, skipText,
+    // subfolders, hiddenFolders} plus the recent lists {finds, replacements,
+    // filterList, paths}; legacy FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES
+    // and the recent lists live in the INI file. findReplaceSettings is the
+    // dialog as it opens; switchFindReplaceTab saves the tab left
+    // (SaveValues) and gives the next one (SetValues).
+    Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
+    Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
+    Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
+    // A button: "find", "findAllCurrent", "findAllTabs", "replace",
+    // "replaceAll", "replaceAllTabs", "findInFiles" or "replaceInFiles". The
+    // legacy messages and questions come as findQuestion; the result is the
+    // tab afterwards (the styles may change) with the recent lists.
+    Q_INVOKABLE QVariantMap runFindReplace(const QString &action, const QVariantMap &settings);
+    Q_INVOKABLE void findNext();
+    // 0 Ok, 1 Yes, 2 No, 3 Cancel.
+    Q_INVOKABLE void answerFindQuestion(int answer);
+    // The dialog activates (FindReplaceDialog::OnActivate): the text selected
+    // in the Line editor, or `find` as it is.
+    Q_INVOKABLE QString findReplaceActivated(const QString &find);
+    // A Lines radio button (TabWindow::Reset): the next search starts over.
+    Q_INVOKABLE void resetFindReplace();
+    // The results dialog: rows {header, text, line, before, match, after, checked, visible}.
+    Q_INVOKABLE QVariantList findResults() const;
+    Q_INVOKABLE bool findResultsShown() const;
+    Q_INVOKABLE bool canReplaceFindResults() const;
+    Q_INVOKABLE void checkFindResults(bool check);
+    Q_INVOKABLE void toggleFindResult(int row);
+    Q_INVOKABLE void toggleFindGroup(int row);
+    Q_INVOKABLE void showFindResult(int row);
+    Q_INVOKABLE void replaceFindResults(const QString &replacement);
+    // Tests answer the questions themselves; backups go to this folder
+    // (default: ReplaceBackup beside the settings file, none without one).
+    void setFindQuestionHandler(std::function<int(int kind, const QString &text)> handler);
+    void setReplaceBackupFolder(const QString &folder) { m_replaceBackup = folder; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -368,6 +413,18 @@ private:
     QString m_resolutionCheckedVideo; // the video whose size was compared
     void checkResolution();
     QStringList m_selectRecent;
+    // F1
+    class FindHost;
+    friend class FindHost;
+    std::unique_ptr<FindHost> m_findHost;
+    std::unique_ptr<application::FindReplace> m_find;
+    int m_findOptions = 0;
+    QString m_findStyles;
+    QString m_replaceBackup;
+    std::function<int(int, const QString &)> m_findQuestionHandler;
+    QEventLoop *m_findLoop = nullptr;
+    int m_findAnswer = 3;
+    void saveFindRecent();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);

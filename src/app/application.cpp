@@ -22,6 +22,7 @@
 #include <QClipboard>
 #include <QDesktopServices>
 #include <QFile>
+#include <QMetaMethod>
 #include <QStringDecoder>
 #include <QTextBoundaryFinder>
 #include <QImage>
@@ -107,6 +108,176 @@ QString automationPath(const QString &configured)
 
 } // namespace
 
+// F1: the shell around FindReplace (legacy HikariSubFrame, the Grid, the
+// EditBox, HikariMessageBox and the files on disk).
+class Application::FindHost : public application::FindReplaceHost {
+public:
+    explicit FindHost(Application &app) : m_app(app) {}
+
+    static QString qs(std::u8string_view s)
+    {
+        return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
+    }
+
+    std::optional<application::FindTab> tab(application::DocumentId id)
+    {
+        auto *session = m_app.m_files->session(id);
+        const std::string *title = m_app.m_workspace.title(id);
+        if (!session)
+            return std::nullopt;
+        return application::FindTab{id, session, title ? toU8(QString::fromStdString(*title)) : std::u8string()};
+    }
+    std::optional<application::FindTab> current() override
+    {
+        const auto target = m_app.m_workspace.editingTarget();
+        return target ? tab(*target) : std::nullopt;
+    }
+    std::vector<application::FindTab> tabs() override
+    {
+        std::vector<application::FindTab> out;
+        for (const auto id : m_app.m_workspace.documents())
+            if (auto t = tab(id))
+                out.push_back(*t);
+        return out;
+    }
+    application::LineVisible actionLines(application::EditSession &session) override
+    {
+        return m_app.actionLines(session);
+    }
+    application::FindAnswer ask(const application::FindQuestion &question) override
+    {
+        const QString text = qs(question.text);
+        int answer = question.kind == application::FindQuestion::Kind::Message ? 0 : 3;
+        if (m_app.m_findQuestionHandler) {
+            answer = m_app.m_findQuestionHandler(static_cast<int>(question.kind), text);
+        } else if (m_app.isSignalConnected(QMetaMethod::fromSignal(&Application::findQuestion))) {
+            // A modal message box: wait for the answer as legacy does.
+            QEventLoop loop;
+            m_app.m_findLoop = &loop;
+            m_app.m_findAnswer = answer;
+            emit m_app.findQuestion(static_cast<int>(question.kind), text, qs(question.title));
+            if (m_app.m_findLoop)
+                loop.exec();
+            m_app.m_findLoop = nullptr;
+            answer = m_app.m_findAnswer;
+        }
+        return static_cast<application::FindAnswer>(std::clamp(answer, 0, 3));
+    }
+    void log(const std::u8string &text) override { m_app.m_log->log(qs(text)); }
+    void showLine(application::DocumentId document, core::LineId line, bool keepSelection, int role, int start,
+                  int end) override
+    {
+        if (m_app.m_workspace.editingTarget() != document) {
+            if (!m_app.m_workspace.setEditingTarget(document))
+                return;
+            m_app.refreshViews();
+        }
+        auto *session = m_app.m_files->session(document);
+        if (!session)
+            return;
+        application::Selection next = session->selection();
+        if (!keepSelection)
+            next.selected = {line};
+        next.active = line;
+        next.anchor = line;
+        next.extent.reset();
+        if (!m_app.applySelection(next))
+            return;
+        // TextEdit holds the translation in translation mode; TextEditOrig the original.
+        if (role == 1)
+            m_app.m_editor->selectRaw(application::translationMode(*session) ? 1 : 0, start, end);
+        else if (role == 0)
+            m_app.m_editor->selectRaw(0, start, end);
+    }
+    void changed(application::DocumentId) override
+    {
+        m_app.m_editor->reloadFromSession();
+        m_app.refreshViews();
+    }
+    // wxDir::GetAllFiles: subfolders first, then the files (each folder in
+    // name order); hidden ones only when asked. Links are not followed, so
+    // nothing outside the folder is ever a target.
+    std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder, const std::u8string &filter,
+                                                        bool subfolders, bool hidden) override
+    {
+        const QDir dir(qs(folder));
+        if (folder.empty() || !dir.exists())
+            return std::nullopt;
+        std::vector<std::u8string> out;
+        collect(dir, qs(filter), subfolders, hidden, out);
+        return out;
+    }
+    std::optional<std::u16string> readFile(const std::u8string &path) override
+    {
+        QFile file(qs(path));
+        if (!file.open(QIODevice::ReadOnly))
+            return std::nullopt;
+        QByteArray bytes = file.readAll();
+        if (bytes.startsWith("\xEF\xBB\xBF"))
+            bytes.remove(0, 3);
+        QStringDecoder decoder(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
+        QString text = decoder.decode(bytes);
+        if (decoder.hasError())
+            return std::nullopt; // not UTF-8: left alone
+        text.replace(QStringLiteral("\r\n"), QStringLiteral("\n")); // legacy's text-mode read
+        if (text.isEmpty())
+            return std::nullopt;
+        return std::u16string(reinterpret_cast<const char16_t *>(text.utf16()), static_cast<std::size_t>(text.size()));
+    }
+    bool fileExists(const std::u8string &path) override { return QFileInfo(qs(path)).isFile(); }
+    void backupFile(const std::u8string &path) override
+    {
+        if (m_app.m_replaceBackup.isEmpty())
+            return;
+        QDir().mkpath(m_app.m_replaceBackup);
+        const QString source = qs(path);
+        const QString copy = m_app.m_replaceBackup + QLatin1Char('/') + QFileInfo(source).fileName();
+        QFile::remove(copy);
+        QFile::copy(source, copy);
+    }
+    void writeFile(const std::u8string &path, const std::u16string &text) override
+    {
+        QFile file(qs(path));
+        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            m_app.m_log->log(tr("Cannot open file."));
+            return;
+        }
+        file.write("\xEF\xBB\xBF");
+        file.write(QString(reinterpret_cast<const QChar *>(text.data()), static_cast<qsizetype>(text.size())).toUtf8());
+    }
+    std::optional<application::DocumentId> openFile(const std::u8string &path) override
+    {
+        const QString wanted = QFileInfo(qs(path)).canonicalFilePath();
+        std::optional<application::DocumentId> found;
+        for (const auto id : m_app.m_workspace.documents())
+            if (const auto destination = m_app.m_files->destination(id);
+                destination && QFileInfo(QString::fromStdString(destination->value)).canonicalFilePath() == wanted)
+                found = id;
+        return found ? found : m_app.open(qs(path));
+    }
+
+private:
+    static QString tr(const char *text) { return Application::tr(text); }
+    void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, std::vector<std::u8string> &out)
+    {
+        QDir::Filters common = QDir::NoDotAndDotDot | QDir::NoSymLinks;
+        if (hidden)
+            common |= QDir::Hidden;
+#ifndef _WIN32
+        common |= QDir::CaseSensitive; // wxMatchWild
+#endif
+        const QDir::SortFlags order = QDir::Name | QDir::IgnoreCase;
+        if (subfolders)
+            for (const QFileInfo &sub : dir.entryInfoList(QDir::Dirs | common, order))
+                collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, out);
+        const QStringList names = filter.isEmpty() ? QStringList() : QStringList{filter};
+        for (const QFileInfo &file : dir.entryInfoList(names, QDir::Files | common, order))
+            out.push_back(toU8(QDir::toNativeSeparators(file.absoluteFilePath())));
+    }
+
+    Application &m_app;
+};
+
 Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
@@ -173,6 +344,30 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
+    // F1: find and replace, its options and recent lists (legacy
+    // FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES and the four recent tables).
+    m_findHost = std::make_unique<FindHost>(*this);
+    m_find = std::make_unique<application::FindReplace>(*m_findHost, [](std::u16string_view s) {
+        // wxString::Lower: one unit at a time.
+        std::u16string out(s);
+        for (auto &c : out)
+            c = QChar(c).toLower().unicode();
+        return out;
+    });
+    if (!m_settingsFile.isEmpty()) {
+        const QSettings ini(m_settingsFile, QSettings::IniFormat);
+        m_findOptions = ini.value(QStringLiteral("FindReplace/Options"), 0).toInt();
+        m_findStyles = ini.value(QStringLiteral("FindReplace/Styles")).toString();
+        const auto list = [&](const char *key) {
+            std::vector<std::u8string> out;
+            for (const QString &s : ini.value(QLatin1String(key)).toStringList())
+                out.push_back(toU8(s));
+            return out;
+        };
+        m_find->setRecent({list("FindReplace/Finds"), list("FindReplace/Replacements"), list("FindReplace/Filters"),
+                           list("FindReplace/Paths")});
+        m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
+    }
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, m_settingsFile);
     m_updates = std::make_unique<UpdateChecker>(m_settingsFile, options.updateFeed, QStringLiteral(HIKARI_VERSION));
     {
@@ -1689,6 +1884,260 @@ QString Application::selectStylesPattern(const QStringList &styles) const
     for (const QString &s : styles)
         names.push_back(utf8(s));
     return fromUtf8(application::stylesPattern(names));
+}
+
+namespace {
+
+QString findQs(std::u8string_view s)
+{
+    return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), static_cast<qsizetype>(s.size()));
+}
+
+// F1: a dialog tab as QML holds it.
+application::FindReplaceSettings findSettings(const QVariantMap &m)
+{
+    using S = application::FindReplaceSettings;
+    S s;
+    s.tab = static_cast<S::Tab>(std::clamp(m.value(QStringLiteral("tab")).toInt(), 0, 2));
+    s.find = toU8(m.value(QStringLiteral("find")).toString());
+    s.replace = toU8(m.value(QStringLiteral("replace")).toString());
+    s.styles = toU8(m.value(QStringLiteral("styles")).toString());
+    s.filters = toU8(m.value(QStringLiteral("filters")).toString());
+    s.folder = toU8(m.value(QStringLiteral("folder")).toString());
+    s.field = static_cast<S::Field>(std::clamp(m.value(QStringLiteral("field")).toInt(), 0, 3));
+    s.lines = static_cast<S::Lines>(std::clamp(m.value(QStringLiteral("lines")).toInt(), 0, 3));
+    s.matchCase = m.value(QStringLiteral("matchCase")).toBool();
+    s.regex = m.value(QStringLiteral("regex")).toBool();
+    s.startOfText = m.value(QStringLiteral("startOfText")).toBool();
+    s.endOfText = m.value(QStringLiteral("endOfText")).toBool();
+    s.includeComments = m.value(QStringLiteral("includeComments")).toBool();
+    s.skipTags = m.value(QStringLiteral("skipTags")).toBool();
+    s.skipText = m.value(QStringLiteral("skipText")).toBool();
+    s.subfolders = m.value(QStringLiteral("subfolders")).toBool();
+    s.hiddenFolders = m.value(QStringLiteral("hiddenFolders")).toBool();
+    return s;
+}
+
+QStringList findList(const std::vector<std::u8string> &list)
+{
+    QStringList out;
+    for (const auto &s : list)
+        out << findQs(s);
+    return out;
+}
+
+QVariantMap findMap(const application::FindReplaceSettings &s, const application::FindReplace::Recent &recent)
+{
+    const auto q = [](const std::u8string &v) { return findQs(v); };
+    return {{QStringLiteral("tab"), static_cast<int>(s.tab)},
+            {QStringLiteral("find"), q(s.find)},
+            {QStringLiteral("replace"), q(s.replace)},
+            {QStringLiteral("styles"), q(s.styles)},
+            {QStringLiteral("filters"), q(s.filters)},
+            {QStringLiteral("folder"), q(s.folder)},
+            {QStringLiteral("field"), static_cast<int>(s.field)},
+            {QStringLiteral("lines"), static_cast<int>(s.lines)},
+            {QStringLiteral("matchCase"), s.matchCase},
+            {QStringLiteral("regex"), s.regex},
+            {QStringLiteral("startOfText"), s.startOfText},
+            {QStringLiteral("endOfText"), s.endOfText},
+            {QStringLiteral("includeComments"), s.includeComments},
+            {QStringLiteral("skipTags"), s.skipTags},
+            {QStringLiteral("skipText"), s.skipText},
+            {QStringLiteral("subfolders"), s.subfolders},
+            {QStringLiteral("hiddenFolders"), s.hiddenFolders},
+            {QStringLiteral("finds"), findList(recent.finds)},
+            {QStringLiteral("replacements"), findList(recent.replacements)},
+            {QStringLiteral("filterList"), findList(recent.filters)},
+            {QStringLiteral("paths"), findList(recent.paths)}};
+}
+
+// TabWindow::SetValues and the constructor take the first entry of each list.
+void findFirstEntries(application::FindReplaceSettings &s, const application::FindReplace::Recent &recent)
+{
+    const auto first = [](const std::vector<std::u8string> &l) { return l.empty() ? std::u8string() : l.front(); };
+    s.find = first(recent.finds);
+    s.replace = first(recent.replacements);
+    s.filters = first(recent.filters);
+    s.folder = first(recent.paths);
+}
+
+} // namespace
+
+QVariantMap Application::findReplaceSettings(int tab) const
+{
+    auto s = application::findReplaceFromOptions(m_findOptions);
+    s.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
+    findFirstEntries(s, m_find->recent());
+    s.styles = toU8(m_findStyles);
+    return findMap(s, m_find->recent());
+}
+
+void Application::saveFindReplaceSettings(const QVariantMap &settings)
+{
+    // TabWindow::SaveValues (legacy writes them when the application closes).
+    const auto s = findSettings(settings);
+    m_findOptions = application::findReplaceOptions(s, m_findOptions);
+    if (s.tab != application::FindReplaceSettings::Tab::FindInFiles)
+        m_findStyles = findQs(s.styles);
+    if (m_settingsFile.isEmpty())
+        return;
+    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    ini.setValue(QStringLiteral("FindReplace/Options"), m_findOptions);
+    ini.setValue(QStringLiteral("FindReplace/Styles"), m_findStyles);
+}
+
+QVariantMap Application::switchFindReplaceTab(const QVariantMap &settings, int tab)
+{
+    saveFindReplaceSettings(settings);
+    auto next = application::findReplaceSetValues(m_findOptions, findSettings(settings));
+    next.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
+    findFirstEntries(next, m_find->recent());
+    next.styles = toU8(m_findStyles);
+    return findMap(next, m_find->recent());
+}
+
+void Application::saveFindRecent()
+{
+    if (m_settingsFile.isEmpty())
+        return;
+    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    const auto &r = m_find->recent();
+    ini.setValue(QStringLiteral("FindReplace/Finds"), findList(r.finds));
+    ini.setValue(QStringLiteral("FindReplace/Replacements"), findList(r.replacements));
+    ini.setValue(QStringLiteral("FindReplace/Filters"), findList(r.filters));
+    ini.setValue(QStringLiteral("FindReplace/Paths"), findList(r.paths));
+}
+
+QVariantMap Application::runFindReplace(const QString &action, const QVariantMap &settings)
+{
+    auto s = findSettings(settings);
+    if (action == QLatin1String("find"))
+        m_find->find(&s);
+    else if (action == QLatin1String("findAllCurrent"))
+        m_find->findAllInCurrent(s);
+    else if (action == QLatin1String("findAllTabs"))
+        m_find->findInAllOpened(s);
+    else if (action == QLatin1String("replace"))
+        m_find->replace(s);
+    else if (action == QLatin1String("replaceAll"))
+        m_find->replaceAll(s);
+    else if (action == QLatin1String("replaceAllTabs"))
+        m_find->replaceInAllOpened(s);
+    else if (action == QLatin1String("findInFiles"))
+        m_find->findInFiles(s);
+    else if (action == QLatin1String("replaceInFiles"))
+        m_find->replaceInFiles(s);
+    saveFindRecent();
+    emit findResultsChanged();
+    return findMap(s, m_find->recent());
+}
+
+void Application::findNext()
+{
+    m_find->findNext();
+}
+
+void Application::answerFindQuestion(int answer)
+{
+    m_findAnswer = answer;
+    if (m_findLoop)
+        m_findLoop->quit();
+    m_findLoop = nullptr;
+}
+
+void Application::setFindQuestionHandler(std::function<int(int, const QString &)> handler)
+{
+    m_findQuestionHandler = std::move(handler);
+}
+
+QString Application::findReplaceActivated(const QString &find)
+{
+    auto *session = targetSession();
+    if (!session || !m_editor->hasLine())
+        return find;
+    // TextEdit first (the translation in translation mode), then TextEditOrig.
+    const bool tl = application::translationMode(*session);
+    std::vector<int> roles{tl ? 1 : 0};
+    if (tl)
+        roles.push_back(0);
+    for (const int role : roles) {
+        const auto [from, to] = m_editor->fieldSelectionOf(role);
+        if (from >= to)
+            continue;
+        if (from == m_find->lastStart() && to == m_find->lastEnd())
+            return find; // the last match
+        const QString shown = role == 1 ? m_editor->translationText() : m_editor->text();
+        const QString selected = shown.mid(from, to - from);
+        m_find->selectionAdopted();
+        return selected.toLower() != find.toLower() ? selected : find;
+    }
+    return find;
+}
+
+void Application::resetFindReplace()
+{
+    m_find->reset();
+}
+
+QVariantList Application::findResults() const
+{
+    QVariantList rows;
+    for (const auto &r : m_find->results()) {
+        const QString text = QString(reinterpret_cast<const QChar *>(r.text.data()), static_cast<qsizetype>(r.text.size()));
+        QVariantMap row{{QStringLiteral("header"), r.header},
+                        {QStringLiteral("text"), text},
+                        {QStringLiteral("checked"), r.checked},
+                        {QStringLiteral("visible"), r.visible}};
+        if (!r.header) {
+            // "Line %i: " and the text with the match marked (SeekResults::OnPaint).
+            row.insert(QStringLiteral("line"), tr("Line %1: ").arg(r.idLine));
+            row.insert(QStringLiteral("before"), text.left(r.start));
+            row.insert(QStringLiteral("match"), text.mid(r.start, r.length));
+            row.insert(QStringLiteral("after"), text.mid(r.start + r.length));
+        }
+        rows << row;
+    }
+    return rows;
+}
+
+bool Application::findResultsShown() const
+{
+    return m_find->resultsShown();
+}
+
+bool Application::canReplaceFindResults() const
+{
+    return m_find->canReplaceChecked();
+}
+
+void Application::checkFindResults(bool check)
+{
+    m_find->checkAll(check);
+    emit findResultsChanged();
+}
+
+void Application::toggleFindResult(int row)
+{
+    m_find->toggleChecked(static_cast<std::size_t>(std::max(row, 0)));
+    emit findResultsChanged();
+}
+
+void Application::toggleFindGroup(int row)
+{
+    m_find->toggleGroup(static_cast<std::size_t>(std::max(row, 0)));
+    emit findResultsChanged();
+}
+
+void Application::showFindResult(int row)
+{
+    m_find->showResult(static_cast<std::size_t>(std::max(row, 0)));
+}
+
+void Application::replaceFindResults(const QString &replacement)
+{
+    m_find->replaceChecked(toU8(replacement));
+    emit findResultsChanged();
 }
 
 void Application::checkResolution()
