@@ -141,6 +141,8 @@ public:
     };
     std::expected<SaveSnapshot, DraftProblem> prepareSave();
     void markSaved(ContentId content);
+    // No step is saved any more (legacy RemoveLastIterSave: the file was removed).
+    void markUnsaved() { m_saved.reset(); }
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
 
 private:

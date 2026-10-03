@@ -44,6 +44,26 @@ ApplicationWindow {
         else
             closeReview.review(rows)
     }
+    // Opening subtitles into the editing target (P2): staged first, then the
+    // target's unsaved work is reviewed as for Close.
+    function openSubtitles(path) {
+        const result = root.app.reviewOpen(path)
+        if (!result.ok)
+            root.shell.statusText = result.problem
+        else if (result.rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(result.rows)
+    }
+    // Legacy ReloadSubsIfModified when the window becomes active.
+    function checkExternalChange() {
+        if (root.app.externalChange() === "modified")
+            reloadPrompt.show()
+    }
+    onActiveChanged: {
+        if (active)
+            checkExternalChange()
+    }
     onClosing: close => {
         if (root.app.quitApproved)
             return
@@ -128,6 +148,31 @@ ApplicationWindow {
                         text: qsTr("&Open…")
                         shortcut: StandardKey.Open
                         onTriggered: openDialog.open()
+                    }
+                }
+                Menu {
+                    id: recentMenu
+                    objectName: "recentSubtitlesMenu"
+                    title: qsTr("Recently opened &subtitles")
+                    property var rows: []
+                    onAboutToShow: rows = root.app.recentSubtitles()
+                    Instantiator {
+                        model: recentMenu.rows
+                        delegate: MenuItem {
+                            required property var modelData
+                            required property int index
+                            objectName: "recentSubtitles" + index
+                            text: modelData.label
+                            onTriggered: root.openSubtitles(modelData.path)
+                        }
+                        onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => recentMenu.removeItem(object)
+                    }
+                    MenuItem {
+                        text: qsTr("None")
+                        enabled: false
+                        visible: recentMenu.rows.length === 0
+                        height: visible ? implicitHeight : 0
                     }
                 }
                 MenuItem {
@@ -1015,6 +1060,55 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         nameFilters: [qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTr("All files (*)")]
-        onAccepted: root.app.openFile(selectedFile.toString().replace(/^file:\/\//, ""))
+        onAccepted: root.openSubtitles(root.app.localPath(selectedFile))
+    }
+
+    // Dropped files open by the legacy rules (subtitles, scripts, video).
+    DropArea {
+        objectName: "dropArea"
+        anchors.fill: parent
+        onDropped: drop => {
+            if (!drop.hasUrls)
+                return
+            drop.accept(Qt.CopyAction)
+            const subtitles = root.app.openDropped(drop.urls)
+            if (subtitles.length > 0)
+                root.openSubtitles(subtitles)
+        }
+    }
+
+    Window {
+        id: reloadPrompt
+        objectName: "reloadPrompt"
+        title: qsTr("Reloading")
+        width: 420
+        height: 120
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: qsTr("Subtitles were modified by another program. Reload?")
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "reloadYes"
+                    text: qsTr("Yes")
+                    onClicked: {
+                        reloadPrompt.close()
+                        root.app.reloadTarget()
+                    }
+                }
+                Button {
+                    objectName: "reloadNo"
+                    text: qsTr("No")
+                    onClicked: reloadPrompt.close()
+                }
+            }
+        }
     }
 }

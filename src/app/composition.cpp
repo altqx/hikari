@@ -4,6 +4,7 @@
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QStandardPaths>
 #include <QTimer>
 #include <QtQml/qqmlextensionplugin.h>
 
@@ -20,6 +21,9 @@ int run(int argc, char **argv, StartupMode mode)
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
+    // The recent lists, until the settings registry owns them.
+    options.settingsFile =
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
     Application application(options);
     // A path on the command line opens as the editing target.
     if (argc > 1)

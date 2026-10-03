@@ -4,13 +4,22 @@
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 
+#include <QCollator>
 #include <QCoreApplication>
+#include <QSettings>
 #include <QStringList>
 #include <QVariantMap>
 
 #include <algorithm>
 #include <cstdlib>
 #include <QFileInfo>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace hikari::app {
 
@@ -91,6 +100,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_automation->setDocumentChanged([this] { refreshViews(); });
     if (options.autoload)
         m_automation->autoload();
+    m_settingsFile = options.settingsFile;
+    if (!m_settingsFile.isEmpty()) {
+        std::vector<std::string> stored;
+        for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Subtitles")).toStringList())
+            stored.push_back(path.toStdString());
+        m_recent.set(std::move(stored));
+    }
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
@@ -118,32 +134,49 @@ Application::~Application()
     m_port->waitIdle(); // no write may outlive the services it reports to
 }
 
+namespace {
+
+// Legacy SubsGrid::LoadSubtitles: the ASS "Active Line" (or the first Line)
+// is active, selected and the anchor, and the editor shows it.
+void selectLegacyActiveLine(application::EditSession &session)
+{
+    const auto lines = session.document().lines();
+    if (lines.empty())
+        return;
+    std::size_t active = 0;
+    if (session.document().format() == core::SubtitleFormat::Ass) {
+        const auto value = session.document().scriptInfo(u8"Active Line").value_or(std::u8string());
+        const std::string text(value.begin(), value.end());
+        const long n = std::strtol(text.c_str(), nullptr, 10); // wxAtoi
+        if (n > 0 && static_cast<std::size_t>(n) < lines.size())
+            active = static_cast<std::size_t>(n);
+    }
+    const auto line = lines[active]->id;
+    session.setSelection(application::Selection{line, {line}, line, {}});
+}
+
+} // namespace
+
 std::optional<application::DocumentId> Application::open(const QString &path, bool asReference)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged)
         return std::nullopt;
-    auto id = m_files->activate(std::move(*staged));
+    return publish(std::move(*staged), path, asReference);
+}
+
+std::optional<application::DocumentId> Application::publish(application::StagedOpen staged, const QString &path,
+                                                            bool asReference)
+{
+    auto id = m_files->activate(std::move(staged));
     if (!id)
         return std::nullopt;
-    // Legacy SubsGrid::LoadSubtitles: the ASS "Active Line" (or the first Line)
-    // is active, selected and the anchor, and the editor shows it.
-    if (auto *session = m_files->session(*id); session && !session->selection().active) {
-        const auto lines = session->document().lines();
-        if (!lines.empty()) {
-            std::size_t active = 0;
-            if (session->document().format() == core::SubtitleFormat::Ass) {
-                const auto value = session->document().scriptInfo(u8"Active Line").value_or(std::u8string());
-                const std::string text(value.begin(), value.end());
-                const long n = std::strtol(text.c_str(), nullptr, 10); // wxAtoi
-                if (n > 0 && static_cast<std::size_t>(n) < lines.size())
-                    active = static_cast<std::size_t>(n);
-            }
-            const auto line = lines[active]->id;
-            session->setSelection(application::Selection{line, {line}, line, {}});
-        }
-    }
+    if (auto *session = m_files->session(*id); session && !session->selection().active)
+        selectLegacyActiveLine(*session);
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
+    recordFileTime(*id);
+    if (!asReference)
+        rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
     return *id;
 }
 
@@ -250,6 +283,10 @@ QVariantList Application::reviewClose(const QString &then)
 {
     m_closeThen = then;
     m_closing.clear();
+    if (then != QLatin1String("open")) {
+        m_pendingOpen.reset();
+        m_pendingOpenPath.clear();
+    }
     std::vector<application::DocumentId> scope;
     if (then == QLatin1String("quit"))
         scope = m_workspace.documents();
@@ -314,6 +351,12 @@ void Application::resolveClose(const QVariantList &choices)
 void Application::writeFinished(const application::WriteResult &result)
 {
     // Save As of an Untitled or renamed Document: the title follows the file.
+    if (result.outcome == application::WriteOutcome::Written) {
+        rememberRecent(result.destination.value); // legacy SetRecent after a save
+        if (const auto destination = m_files->destination(result.document);
+            destination && destination->value == result.destination.value)
+            recordFileTime(result.document);
+    }
     if (result.outcome == application::WriteOutcome::Written)
         if (const std::string *title = m_workspace.title(result.document);
             title && QString::fromStdString(*title) != fileTitle(result.destination.value)) {
@@ -370,6 +413,15 @@ void Application::finishClose()
     } else if (then == QLatin1String("new")) {
         closeEditingTarget();
         newDocument();
+    } else if (then == QLatin1String("open")) {
+        closeEditingTarget();
+        if (m_pendingOpen) {
+            if (const auto id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false))
+                m_workspace.setEditingTarget(*id);
+            m_pendingOpen.reset();
+            m_pendingOpenPath.clear();
+        }
+        refreshViews();
     } else {
         closeEditingTarget();
     }
@@ -381,6 +433,8 @@ void Application::cancelClose()
     // Saves already completed stay completed (accepted quit review).
     m_closing.clear();
     m_closeThen.clear();
+    m_pendingOpen.reset();
+    m_pendingOpenPath.clear();
 }
 
 bool Application::targetUntitled() const
@@ -388,6 +442,156 @@ bool Application::targetUntitled() const
     const auto target = m_workspace.editingTarget();
     const auto destination = target ? m_files->destination(*target) : std::nullopt;
     return target && (!destination || destination->value.empty());
+}
+
+QVariantMap Application::reviewOpen(const QString &path)
+{
+    auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
+    if (!staged)
+        return {{QStringLiteral("ok"), false},
+                {QStringLiteral("problem"), tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName())},
+                {QStringLiteral("rows"), QVariantList()}};
+    const QVariantList rows = reviewClose(QStringLiteral("open"));
+    m_pendingOpen = std::move(*staged);
+    m_pendingOpenPath = path;
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
+}
+
+QString Application::openDropped(const QList<QUrl> &urls)
+{
+    QStringList files;
+    for (const QUrl &url : urls)
+        if (url.isLocalFile())
+            files << url.toLocalFile();
+    // Legacy sorts by the locale's collation.
+    QCollator collator;
+    std::sort(files.begin(), files.end(), [&](const QString &a, const QString &b) { return collator.compare(a, b) < 0; });
+    const bool single = files.size() == 1;
+    QString subtitles;
+    QString video;
+    for (const QString &file : files) {
+        switch (application::openKindOf(file.toStdString(), single)) {
+        case application::OpenKind::Subtitles:
+            if (subtitles.isEmpty())
+                subtitles = file; // one editing target until tabs arrive (D1)
+            break;
+        case application::OpenKind::Script:
+            m_automation->loadScript(QUrl::fromLocalFile(file));
+            break;
+        case application::OpenKind::Video:
+            if (video.isEmpty())
+                video = file;
+            break;
+        case application::OpenKind::Keyframes: // keyframes arrive with the video cards
+        case application::OpenKind::Refused:
+            break;
+        }
+    }
+    if (!video.isEmpty())
+        m_video->openVideo(video);
+    return subtitles;
+}
+
+void Application::rememberRecent(const std::string &path)
+{
+    m_recent.add(path);
+    if (!m_settingsFile.isEmpty()) {
+        QStringList list;
+        for (const auto &entry : m_recent.entries())
+            list << QString::fromStdString(entry);
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Subtitles"), list);
+    }
+    emit recentChanged();
+}
+
+QVariantList Application::recentSubtitles()
+{
+    const bool pruned = m_recent.prune([](const std::string &path) {
+        return application::isMissingLocalFile(
+            path, [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); },
+            [](char drive) {
+#ifdef _WIN32
+                const wchar_t root[] = {static_cast<wchar_t>(drive), L':', L'\\', 0};
+                return ::GetDriveTypeW(root) == DRIVE_REMOTE;
+#else
+                (void)drive;
+                return false;
+#endif
+            });
+    });
+    if (pruned && !m_settingsFile.isEmpty()) {
+        QStringList list;
+        for (const auto &entry : m_recent.entries())
+            list << QString::fromStdString(entry);
+        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Subtitles"), list);
+    }
+    QVariantList rows;
+    int n = 0;
+    for (const auto &entry : m_recent.entries()) {
+        const QString path = QString::fromStdString(entry);
+        rows << QVariantMap{{QStringLiteral("path"), path},
+                            {QStringLiteral("label"), QStringLiteral("%1 %2").arg(++n).arg(QFileInfo(path).fileName())}};
+    }
+    return rows;
+}
+
+void Application::recordFileTime(application::DocumentId document)
+{
+    const auto destination = m_files->destination(document);
+    if (!destination || destination->value.empty())
+        return;
+    m_fileTimes[document.value] = QFileInfo(QString::fromStdString(destination->value)).lastModified();
+    m_removedNoticed.erase(document.value);
+}
+
+QString Application::externalChange()
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    if (!session || !destination || destination->value.empty())
+        return {};
+    const QFileInfo file(QString::fromStdString(destination->value));
+    if (!file.exists()) {
+        // Unsaved once, so the next save writes it again.
+        if (!m_removedNoticed.insert(target->value).second)
+            return {};
+        session->markUnsaved();
+        refreshViews();
+        return QStringLiteral("removed");
+    }
+    m_removedNoticed.erase(target->value);
+    const auto known = m_fileTimes.find(target->value);
+    const QDateTime now = file.lastModified();
+    if (known != m_fileTimes.end() && now <= known->second)
+        return {};
+    // Asked once per change, whatever the answer (legacy SetLastSaveTime).
+    m_fileTimes[target->value] = now;
+    return known == m_fileTimes.end() ? QString() : QStringLiteral("modified");
+}
+
+bool Application::reloadTarget()
+{
+    const auto target = m_workspace.editingTarget();
+    if (!target)
+        return false;
+    auto staged = m_files->stageReload(*target);
+    if (!staged) {
+        m_shell->setStatusText(tr("Could not reload the subtitles; nothing was changed."));
+        return false;
+    }
+    if (!m_files->activate(std::move(*staged))) {
+        m_shell->setStatusText(tr("The subtitles changed while reloading; nothing was replaced."));
+        return false;
+    }
+    if (auto *session = m_files->session(*target))
+        selectLegacyActiveLine(*session);
+    recordFileTime(*target);
+    m_videoRevision.reset();
+    m_videoLine.reset();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return true;
 }
 
 bool Application::saveAs(const QString &path)

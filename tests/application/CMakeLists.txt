@@ -16,3 +16,5 @@ hikari_add_gtest(hikari_application_grid_selection_tests SOURCES grid_selection_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_commands_tests SOURCES grid_commands_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
+    LIBRARIES hikari_application LABELS application)

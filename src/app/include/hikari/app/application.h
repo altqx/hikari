@@ -7,6 +7,7 @@
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_selection.h"
+#include "hikari/application/recent_files.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -15,11 +16,14 @@
 #include "shell_controller.h"
 #include "video_controller.h"
 
+#include <QDateTime>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
 
+#include <map>
 #include <memory>
+#include <set>
 
 namespace hikari::app {
 
@@ -28,6 +32,7 @@ class Application : public QObject {
 signals:
     void closeFinished(bool done, const QString &problem);
     void quitApprovedChanged();
+    void recentChanged();
 
 public:
     struct Options {
@@ -39,6 +44,8 @@ public:
         QString automationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
+        // INI file holding the recent lists; empty: they are not kept (tests).
+        QString settingsFile;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -64,6 +71,29 @@ public:
     Q_INVOKABLE void resolveClose(const QVariantList &choices);
     Q_INVOKABLE void finishClose();
     Q_INVOKABLE void cancelClose();
+    // Opening subtitles into the editing target (P2; legacy OpenFile): the
+    // file is staged first, so a failed open changes nothing
+    // (L58-staged-replacement); then the target's unsaved work is reviewed as
+    // for Close. Returns {ok, problem, rows}: rows as reviewClose; with ok and
+    // no rows, call finishClose() to publish the new content.
+    Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
+    Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
+    // Dropped files by the legacy rules (OpenFile for one, OpenFiles for
+    // several, sorted): scripts load, the video opens; returns the subtitles
+    // to open with reviewOpen, or "".
+    Q_INVOKABLE QString openDropped(const QList<QUrl> &urls);
+    // GLOBAL_RECENT_SUBS: {path, label} rows, missing local files pruned first.
+    Q_INVOKABLE QVariantList recentSubtitles();
+    std::vector<std::string> recentEntries() const { return m_recent.entries(); }
+    // The legacy check when the window activates (TabPanel::ReloadSubsIfModified):
+    // "modified" when the editing target's file is newer than when it was
+    // last read or written (ask, then reloadTarget()); a removed file makes
+    // the Document unsaved once and reports "removed".
+    Q_INVOKABLE QString externalChange();
+    // Reloads the editing target from its file with fresh history; a failed
+    // or stale reload keeps the Document as it is (L58-staged-replacement).
+    Q_INVOKABLE bool reloadTarget();
+
     // Saves the editing target to a new destination (GLOBAL_SAVE_SUBS_AS).
     Q_INVOKABLE bool saveAs(const QString &path);
     Q_INVOKABLE bool saveAsUrl(const QUrl &url) { return saveAs(url.toLocalFile()); }
@@ -108,6 +138,9 @@ public:
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
+    std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
+    void rememberRecent(const std::string &path);
+    void recordFileTime(application::DocumentId document);
     void refreshViews();
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
@@ -142,6 +175,15 @@ private:
     QString m_closeThen;
     std::vector<Closing> m_closing;
     bool m_quitApproved = false;
+    // P2: the subtitles waiting for the review to replace the editing target.
+    std::optional<application::StagedOpen> m_pendingOpen;
+    QString m_pendingOpenPath;
+    application::RecentFiles m_recent;
+    QString m_settingsFile;
+    // Modification time of each Document's file when last read or written,
+    // and the Documents whose removal was already noticed.
+    std::map<std::uint64_t, QDateTime> m_fileTimes;
+    std::set<std::uint64_t> m_removedNoticed;
 };
 
 } // namespace hikari::app
