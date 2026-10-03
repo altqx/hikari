@@ -27,6 +27,7 @@ ApplicationWindow {
     required property AutomationFilePickerController automationPicker
     required property LogController log
     required property TagButtonsController tagButtons
+    required property GridFilterController gridFilter
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -815,11 +816,13 @@ ApplicationWindow {
                 model: shell.lines
                 // Every gesture is a request; the application owns the selection (G1).
                 onActiveLineRequested: id => root.app.selectLine(id)
+                onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
                 onExtendRequested: rows => root.app.extendSelection(rows)
                 onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
                 onLineDragged: id => root.app.dragSelection(id)
                 onSelectAllRequested: root.app.selectAllLines()
                 onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
                 // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
                 // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
                 Keys.onPressed: event => {
@@ -873,6 +876,87 @@ ApplicationWindow {
                     MenuItem {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
+                    }
+                    MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
+                    // Legacy Filtering submenu (GRID_FILTER_*).
+                    Menu {
+                        id: filteringMenu
+                        objectName: "filteringMenu"
+                        title: qsTr("Filtering")
+                        property var styleNames: []
+                        onAboutToShow: styleNames = root.app.styleNames()
+                        MenuItem {
+                            objectName: "filterAfterLoad"
+                            text: qsTr("Filter after loading subtitles")
+                            checkable: true
+                            enabled: root.shell.assColumns
+                            checked: root.gridFilter.afterLoad
+                            onTriggered: root.gridFilter.afterLoad = checked
+                        }
+                        MenuItem {
+                            objectName: "filterInvert"
+                            text: qsTr("Reverse filtering")
+                            checkable: true
+                            checked: root.gridFilter.inverted
+                            onTriggered: root.gridFilter.inverted = checked
+                        }
+                        MenuItem {
+                            objectName: "filterDoNotReset"
+                            text: qsTr("Do not reset previous filtering")
+                            checkable: true
+                            checked: root.gridFilter.addToFilter
+                            onTriggered: root.gridFilter.addToFilter = checked
+                        }
+                        Menu {
+                            id: filterStylesMenu
+                            title: qsTr("Hide lines with styles")
+                            enabled: root.shell.assColumns
+                            Instantiator {
+                                model: filteringMenu.styleNames
+                                delegate: MenuItem {
+                                    required property string modelData
+                                    text: modelData
+                                    checkable: true
+                                    checked: root.gridFilter.styles.indexOf(modelData) >= 0
+                                    onTriggered: root.gridFilter.setStyle(modelData, checked)
+                                }
+                                onObjectAdded: (index, object) => filterStylesMenu.insertItem(index, object)
+                                onObjectRemoved: (index, object) => filterStylesMenu.removeItem(object)
+                            }
+                        }
+                        Instantiator {
+                            model: [
+                                { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection" },
+                                { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true },
+                                { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true },
+                                { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true }
+                            ]
+                            delegate: MenuItem {
+                                required property var modelData
+                                objectName: modelData.name
+                                text: modelData.label
+                                checkable: true
+                                enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
+                                checked: (root.gridFilter.filterBy & modelData.bit) !== 0
+                                onTriggered: root.gridFilter.setFilterBy(modelData.bit, checked)
+                            }
+                            onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
+                            onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
+                        }
+                        MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: root.app.filterLines() }
+                        MenuItem {
+                            objectName: "turnOffFiltering"
+                            text: qsTr("Turn off filtering")
+                            enabled: root.shell.filtered
+                            onTriggered: root.app.turnOffFiltering()
+                        }
+                    }
+                    MenuItem {
+                        objectName: "ignoreFilteringInActions"
+                        text: qsTr("Ignore filtering in some actions")
+                        checkable: true
+                        checked: root.gridFilter.ignoreInActions
+                        onTriggered: root.gridFilter.ignoreInActions = checked
                     }
                     // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
                     Menu {

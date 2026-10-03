@@ -182,6 +182,35 @@ private slots:
         QCOMPARE(again.shell().hiddenColumns(), 8193);
     }
 
+    void filteringPreferencesPersistAndFilterAfterLoading()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        const QString path = own.filePath(QStringLiteral("comments.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,shown\n"
+                    "Comment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,note\n");
+        }
+        {
+            app::Application a(options);
+            a.gridFilter().setFilterBy(4, true); // Hide comments
+            a.gridFilter().setAfterLoad(true);
+            a.gridFilter().setInverted(false);
+        }
+        app::Application again(options);
+        QCOMPARE(again.gridFilter().filterBy(), 4);
+        QVERIFY(again.gridFilter().afterLoad());
+        QVERIFY(again.openFile(path));
+        const auto lines = target(again)->document().lines();
+        QCOMPARE(lines[1]->visibility, core::LineVisibility::Hidden);
+        QCOMPARE(target(again)->history().back().name, std::string("Filtering"));
+        QVERIFY(again.shell().filtered());
+    }
+
     void aChangedFileIsOfferedOnceAndReloads()
     {
         app::Application a;

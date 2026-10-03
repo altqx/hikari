@@ -2,6 +2,8 @@
 
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
+#include "hikari/application/grid_filtering.h"
+#include "hikari/core/style.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 
@@ -28,6 +30,12 @@
 namespace hikari::app {
 
 namespace {
+
+std::u8string toU8(const QString &text)
+{
+    const QByteArray utf8 = text.toUtf8();
+    return std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()));
+}
 
 QString mediaHelperPath(const QString &configured)
 {
@@ -107,6 +115,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
+    m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
     // GRID_HIDE_COLUMNS (G7).
     if (!m_settingsFile.isEmpty())
         m_shell->setHiddenColumns(QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns"), 0).toInt());
@@ -196,6 +205,16 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
         return std::nullopt;
     if (auto *session = m_files->session(*id); session && !session->selection().active)
         selectLegacyActiveLine(*session);
+    // GRID_FILTER_AFTER_LOAD (legacy LoadSubtitles, ASS only, never by selection alone).
+    if (auto *session = m_files->session(*id);
+        session && !asReference && session->document().format() == core::SubtitleFormat::Ass && m_gridFilter->afterLoad() &&
+        m_gridFilter->filterBy() != 0 && m_gridFilter->filterBy() != application::filter_by::Selections) {
+        application::FilterSettings settings{m_gridFilter->filterBy(), {}, m_gridFilter->inverted(),
+                                             m_gridFilter->addToFilter()};
+        for (const QString &style : m_gridFilter->styles())
+            settings.styles.push_back(toU8(style));
+        (void)application::filterLines(*session, settings, {}, true);
+    }
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
     recordFileTime(*id);
     if (!asReference)
@@ -655,6 +674,16 @@ bool Application::applySelection(application::Selection next)
     return true;
 }
 
+void Application::moveActiveLine(qulonglong id)
+{
+    auto *session = targetSession();
+    if (!session || session->selection().active == core::LineId{id})
+        return;
+    application::Selection next = session->selection();
+    next.active = core::LineId{id};
+    applySelection(std::move(next));
+}
+
 void Application::selectLine(qulonglong id)
 {
     const auto target = m_workspace.editingTarget();
@@ -754,12 +783,6 @@ void setClipboardText(const std::u8string &text)
 {
     QGuiApplication::clipboard()->setText(
         QString::fromUtf8(reinterpret_cast<const char *>(text.data()), static_cast<qsizetype>(text.size())));
-}
-
-std::u8string toU8(const QString &text)
-{
-    const QByteArray utf8 = text.toUtf8();
-    return std::u8string(reinterpret_cast<const char8_t *>(utf8.constData()), static_cast<std::size_t>(utf8.size()));
 }
 
 } // namespace
@@ -886,6 +909,58 @@ bool Application::setFpsFromVideo()
     return done;
 }
 
+bool Application::runFilter(
+    const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = command(*session).has_value();
+    // The editor following a new active Line would make the selection plain;
+    // filtering keeps it (hidden Lines stay selected).
+    const application::Selection kept = session->selection();
+    m_editor->reloadFromSession();
+    if (kept.active)
+        m_editor->showLine(kept.active->value);
+    session->setSelection(kept);
+    refreshViews();
+    return done;
+}
+
+bool Application::filterLines()
+{
+    application::FilterSettings settings{m_gridFilter->filterBy(), {}, m_gridFilter->inverted(), m_gridFilter->addToFilter()};
+    for (const QString &style : m_gridFilter->styles())
+        settings.styles.push_back(toU8(style));
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) { return application::filterLines(s, settings, shown); });
+}
+
+bool Application::hideSelectedLines()
+{
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) { return application::hideSelectedLines(s, shown); });
+}
+
+bool Application::turnOffFiltering()
+{
+    return runFilter([](application::EditSession &s) { return application::turnOffFiltering(s); });
+}
+
+bool Application::toggleHiddenBlock(int documentRow)
+{
+    return runFilter([&](application::EditSession &s) { return application::toggleHiddenBlock(s, documentRow); });
+}
+
+QStringList Application::styleNames() const
+{
+    QStringList out;
+    if (auto *session = targetSession())
+        for (const auto &style : core::decodeStyles(session->document()))
+            out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size()));
+    return out;
+}
+
 bool Application::sortLines(const QString &key, bool selectedOnly)
 {
     using application::SortKey;
@@ -990,6 +1065,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
             {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
+            {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

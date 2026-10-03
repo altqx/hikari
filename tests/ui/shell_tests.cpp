@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "line_grid.h"
 
 #include <QAccessible>
 #include <QQmlApplicationEngine>
@@ -586,6 +587,36 @@ private slots:
         QTRY_COMPARE(table->columnCount(), 12);
         QVERIFY(hideCps->property("checked").toBool());
         application->shell().setHiddenColumns(0);
+    }
+
+    void hiddenLinesLeaveTheGridAndMarksReopenThem()
+    {
+        const QString path = writeFile(dir, "g8.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        QCOMPARE(table->rowCount(), 3);
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down); // b
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QTRY_COMPARE(table->rowCount(), 2);
+        QVERIFY(application->shell().filtered());
+        // b stays selected, hidden; the active Line moved to a shown one.
+        QVERIFY(application->shell().selectionStatus().contains(QStringLiteral("hidden")));
+        QCOMPARE(grid->markWidth(), 11.0);
+        // The + mark on the border below a: a click there reveals b.
+        const double y = 2 * grid->property("rowHeight").toDouble(); // the header is one row high; below row 1
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(5, y)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 3);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
+        QTRY_VERIFY(!application->shell().filtered());
+        QCOMPARE(grid->markWidth(), 0.0);
     }
 
     void enterOnTheLastLineAppendsOne()

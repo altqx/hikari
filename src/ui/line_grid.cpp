@@ -196,6 +196,7 @@ void LineGrid::updateColumns()
             if (!shown.isValid() || shown.toBool())
                 m_columns.push_back(c);
         }
+    m_markWidth = m_model && m_model->headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool() ? 11 : 0;
     const auto it = std::find(m_columns.begin(), m_columns.end(), previous);
     m_currentColumn = it != m_columns.end() ? static_cast<int>(it - m_columns.begin())
                                             : static_cast<int>(m_columns.size()) - 1;
@@ -223,8 +224,8 @@ int LineGrid::columnCount() const
 
 QRectF LineGrid::cellRect(int row, int column) const
 {
-    const auto widths = columnWidths(width());
-    double x = 0;
+    const auto widths = columnWidths(width() - m_markWidth);
+    double x = m_markWidth;
     for (int c = 0; c < column && c < static_cast<int>(widths.size()); ++c)
         x += widths[static_cast<std::size_t>(c)];
     const double w = column < static_cast<int>(widths.size()) ? widths[static_cast<std::size_t>(column)] : 0;
@@ -311,6 +312,22 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
         return;
     }
     forceActiveFocus(Qt::MouseFocusReason);
+    if (m_markWidth > 0 && event->position().x() < m_markWidth) {
+        // The mark on the border nearest the click (legacy: half a row down).
+        const int row = rowAt(event->position().y() + m_geometry.rowHeight / 2) - 1;
+        int mark = 0, documentRow = -1;
+        if (row < 0) {
+            mark = m_model->headerData(0, Qt::Horizontal, LineTableModel::HeaderBlockRole).toInt();
+        } else if (row < m_model->rowCount()) {
+            const QModelIndex idx = m_model->index(row, 0);
+            mark = idx.data(LineTableModel::HiddenBlockRole).toInt();
+            documentRow = idx.data(LineTableModel::DocumentRowRole).toInt();
+        }
+        if (mark && event->position().y() > m_geometry.headerHeight / 2)
+            emit hiddenBlockToggleRequested(documentRow);
+        event->accept();
+        return;
+    }
     const int row = rowAt(event->position().y());
     const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
     m_dragLine = id;
@@ -355,7 +372,7 @@ void LineGrid::stateChanged()
         if (auto *filter = qobject_cast<LineFilterModel *>(m_model.data())) {
             const int nearest = filter->nearestVisibleRow(*active);
             if (const auto id = lineAtRow(nearest)) {
-                emit activeLineRequested(id->value);
+                emit activeLineFallbackRequested(id->value);
                 return;
             }
         }
@@ -446,6 +463,24 @@ std::vector<double> LineGrid::columnWidths(double total) const
     return w;
 }
 
+// Legacy SubsGridWindow: a 9px box on the border below a row, with a line
+// across; '+' for a hidden block, '-' for a revealed one.
+void LineGrid::drawBlockMark(QPainter *painter, double borderY, int mark, double width) const
+{
+    if (!mark)
+        return;
+    painter->save();
+    painter->setPen(QColor(0xc8, 0xcc, 0xd4));
+    painter->setBrush(Qt::NoBrush);
+    const QRectF box(1, borderY - 5, 9, 9);
+    painter->drawRect(box);
+    painter->drawLine(QPointF(3, borderY - 0.5), QPointF(8, borderY - 0.5));
+    if (mark == 1)
+        painter->drawLine(QPointF(5.5, box.top() + 2), QPointF(5.5, box.bottom() - 2));
+    painter->drawLine(QPointF(10, borderY - 0.5), QPointF(width, borderY - 0.5));
+    painter->restore();
+}
+
 void LineGrid::paint(QPainter *painter)
 {
     const QRectF bounds = boundingRect();
@@ -453,13 +488,13 @@ void LineGrid::paint(QPainter *painter)
     m_lastPainted = 0;
     const int rows = m_model ? m_model->rowCount() : 0;
     const int columns = columnCount();
-    const auto widths = columnWidths(bounds.width());
+    const auto widths = columnWidths(bounds.width() - m_markWidth);
     const double rh = m_geometry.rowHeight;
 
     // Header.
     painter->fillRect(QRectF(0, 0, bounds.width(), m_geometry.headerHeight), QColor(0x2c, 0x31, 0x3a));
     painter->setPen(QColor(0xc8, 0xcc, 0xd4));
-    double x = 0;
+    double x = m_markWidth;
     for (int c = 0; c < columns; ++c) {
         painter->drawText(QRectF(x + 4, 0, widths[c] - 8, m_geometry.headerHeight), Qt::AlignVCenter,
                           columnTitle(c));
@@ -485,7 +520,7 @@ void LineGrid::paint(QPainter *painter)
             painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
         }
         painter->setPen(comment ? QColor(0x80, 0x86, 0x90) : QColor(0xe6, 0xe8, 0xec));
-        x = 0;
+        x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);
             // Legacy marks a fast CPS and bad wraps on their cells.
@@ -498,7 +533,12 @@ void LineGrid::paint(QPainter *painter)
             x += widths[c];
         }
         ++m_lastPainted;
+        if (m_markWidth > 0)
+            drawBlockMark(painter, top + rh, idx.data(LineTableModel::HiddenBlockRole).toInt(), bounds.width());
     }
+    if (m_markWidth > 0)
+        drawBlockMark(painter, m_geometry.headerHeight,
+                      m_model->headerData(0, Qt::Horizontal, LineTableModel::HeaderBlockRole).toInt(), bounds.width());
     painter->restore();
     emit painted();
 }

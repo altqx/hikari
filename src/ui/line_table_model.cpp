@@ -1,5 +1,6 @@
 #include "line_table_model.h"
 
+#include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
@@ -120,10 +121,27 @@ void LineTableModel::setDocument(const core::Document &document)
     m_format = document.format();
     // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
-    for (const core::LineRecord *line : document.lines()) {
+    const auto lines = document.lines();
+    for (const core::LineRecord *line : lines) {
         m_rowById.emplace(line->id.value, static_cast<int>(m_rows.size()));
-        m_rows.push_back(Row{*line, std::nullopt});
+        m_rows.push_back(Row{*line, std::nullopt, 0});
     }
+    // Hidden-block marks (legacy CheckIfHasHiddenBlock), in one pass from the
+    // end: hiddenRun[k] counts the hidden Lines from k up to the next shown one.
+    m_filtered = application::isFiltered(document);
+    const std::size_t n = lines.size();
+    std::vector<int> hiddenRun(n + 1, 0);
+    for (std::size_t k = n; k-- > 0;)
+        hiddenRun[k] = lines[k]->visibility == core::LineVisibility::Hidden ? hiddenRun[k + 1] + 1 : 0;
+    auto markAfter = [&](std::ptrdiff_t row) {
+        const std::size_t first = static_cast<std::size_t>(row + 1);
+        if (first < n && lines[first]->visibility == core::LineVisibility::VisibleBlock)
+            return first == 0 || lines[first - 1]->visibility != core::LineVisibility::VisibleBlock ? 2 : 0;
+        return first <= n && hiddenRun[first] > 0 ? 1 : 0;
+    };
+    m_headerBlock = markAfter(-1);
+    for (std::size_t r = 0; r < n; ++r)
+        m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     // Keep only selection that still names existing Lines.
     std::erase_if(m_selection.selected, [&](core::LineId id) { return !m_rowById.contains(id.value); });
     if (m_selection.active && !m_rowById.contains(m_selection.active->value))
@@ -221,6 +239,10 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return QVariant::fromValue<qlonglong>(line.start.value.microseconds());
     case EndMicrosecondsRole:
         return QVariant::fromValue<qlonglong>(line.end.value.microseconds());
+    case HiddenBlockRole:
+        return r.blockMark;
+    case DocumentRowRole:
+        return index.row();
     case CpsTooHighRole:
         return measuresOf(r).cpsTooHigh;
     case BadWrapsRole:
@@ -236,6 +258,10 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return {};
     if (role == ColumnShownRole)
         return columnShown(section);
+    if (role == FilteredRole)
+        return m_filtered;
+    if (role == HeaderBlockRole)
+        return m_headerBlock;
     if (role != Qt::DisplayRole)
         return {};
     // Legacy headings.

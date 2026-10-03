@@ -42,6 +42,10 @@ public:
     // headerData role: whether the column is shown (the Document's format
     // has it and GRID_HIDE_COLUMNS does not hide it).
     static constexpr int ColumnShownRole = Qt::UserRole + 50;
+    // headerData roles on section 0: the Document is filtered (legacy
+    // IsFiltered: marks are drawn), and the mark before the first Line.
+    static constexpr int FilteredRole = Qt::UserRole + 51;
+    static constexpr int HeaderBlockRole = Qt::UserRole + 52;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -52,6 +56,8 @@ public:
         EndMicrosecondsRole,
         CpsTooHighRole, // over 15 characters per second (legacy shorttime)
         BadWrapsRole,   // a wrap over 43 characters, or three wraps or more
+        HiddenBlockRole, // after this Line: 1 a hidden block (+), 2 a revealed block (-), 0 none
+        DocumentRowRole, // the Line's row in the Document
     };
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
@@ -85,6 +91,7 @@ private:
     struct Row {
         core::LineRecord line;
         mutable std::optional<Measures> measures; // measured when first shown, as legacy does
+        int blockMark = 0;
     };
     const Measures &measuresOf(const Row &row) const;
     void emitStateChanged(const std::vector<core::LineId> &ids);
@@ -95,6 +102,8 @@ private:
     std::optional<core::LineId> m_anchor;
     core::SubtitleFormat m_format = core::SubtitleFormat::Ass;
     bool m_translationMode = false;
+    bool m_filtered = false;
+    int m_headerBlock = 0;
     int m_hidden = 0;
 };
 

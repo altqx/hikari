@@ -72,7 +72,16 @@ public:
 
     void paint(QPainter *painter) override;
 
+    // Width of the hidden-block mark column (legacy posX 11 while filtered).
+    double markWidth() const { return m_markWidth; }
+
 signals:
+    // A +/- mark was clicked: the hidden block after this Document row (-1:
+    // before the first Line) should open or close (G8).
+    void hiddenBlockToggleRequested(int documentRow);
+    // The active Line is no longer shown: the nearest shown Line should become
+    // active, keeping the selection (accepted announcement policy).
+    void activeLineFallbackRequested(qulonglong id);
     // Keyboard navigation asks the application to move the active Line; the
     // Grid never changes selection itself (G1: every gesture is a request).
     void activeLineRequested(qulonglong lineId);
@@ -104,6 +113,7 @@ private:
     void announceState(bool activeMoved);
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
+    void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
     // The model column shown at display position `column`.
     int modelColumn(int column) const;
 
@@ -115,6 +125,7 @@ private:
     int m_currentColumn = -1; // the Text column once columns are known
     // Model columns in display order: those the model reports as shown.
     std::vector<int> m_columns;
+    double m_markWidth = 0;
     void updateColumns();
     std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;

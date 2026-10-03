@@ -16,6 +16,7 @@
 #include "line_editor_controller.h"
 #include "log_controller.h"
 #include "tag_buttons_controller.h"
+#include "grid_filter_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -114,6 +115,8 @@ public:
     Q_INVOKABLE void clickLine(qulonglong id, int modifiers);
     Q_INVOKABLE void dragSelection(qulonglong id);
     Q_INVOKABLE void selectAllLines();
+    // The Grid's active Line was hidden: only the active Line moves.
+    Q_INVOKABLE void moveActiveLine(qulonglong id);
 
     // Grid structural commands (G3): one undo step each, on the editing target.
     // `timing`: "" plain, "video" (the shown frame's time, 4 s) or "frame"
@@ -129,6 +132,14 @@ public:
     // GRID_SET_FPS_FROM_VIDEO with the shown video frame's time.
     Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
     Q_INVOKABLE bool setFpsFromVideo();
+    // G8: GRID_FILTER with the Filtering preferences, GRID_HIDE_SELECTED,
+    // Turn off filtering, and a +/- mark (the block after a Document row).
+    Q_INVOKABLE bool filterLines();
+    Q_INVOKABLE bool hideSelectedLines();
+    Q_INVOKABLE bool turnOffFiltering();
+    Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
+    // The editing target's Style names, for "Hide lines with styles".
+    Q_INVOKABLE QStringList styleNames() const;
     // G6: Edit > Sort all lines / Sort selected lines by "start", "end",
     // "style", "actor", "effect" or "layer"; text keys use the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
@@ -153,6 +164,7 @@ public:
     AutomationShell &automation() { return *m_automation; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
+    ui::GridFilterController &gridFilter() { return *m_gridFilter; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -191,6 +203,8 @@ private:
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
+    std::unique_ptr<ui::GridFilterController> m_gridFilter;
+    bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows

@@ -16,6 +16,8 @@ QString qs(const std::u8string &s)
 ShellController::ShellController(application::Workspace &workspace, QObject *parent)
     : QObject(parent), m_workspace(workspace)
 {
+    m_shown.setLineModel(&m_lines);
+    m_shown.setPredicate([](const core::LineRecord &line) { return line.visibility != core::LineVisibility::Hidden; });
 }
 
 void ShellController::refresh(const core::Document *target, const core::Document *reference)
@@ -90,8 +92,8 @@ void ShellController::setSelection(const application::Selection &selection)
 std::vector<core::LineId> ShellController::displayedLines() const
 {
     std::vector<core::LineId> out;
-    for (int row = 0; row < m_lines.rowCount(); ++row)
-        if (const auto id = m_lines.lineAt(row))
+    for (int row = 0; row < m_shown.rowCount(); ++row)
+        if (const auto id = m_lines.lineAt(m_shown.mapToSource(m_shown.index(row, 0)).row()))
             out.push_back(*id);
     return out;
 }

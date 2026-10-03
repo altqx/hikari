@@ -67,6 +67,10 @@ struct Rig {
         QObject::connect(grid, &LineGrid::activeLineRequested, grid, [this](qulonglong id) {
             lines.setSelection({core::LineId{id}, lines.selection().selected}, core::LineId{id});
         });
+        // A hidden active Line: only the active Line moves.
+        QObject::connect(grid, &LineGrid::activeLineFallbackRequested, grid, [this](qulonglong id) {
+            lines.setSelection({core::LineId{id}, lines.selection().selected}, core::LineId{id});
+        });
         window.show();
         if (!QTest::qWaitForWindowExposed(&window))
             qFatal("grid window was not exposed");

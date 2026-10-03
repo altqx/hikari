@@ -33,6 +33,8 @@ class ShellController : public QObject {
     // The editing target's format has the ASS columns (Layer ... Effect), and an End time.
     Q_PROPERTY(bool assColumns READ assColumns NOTIFY targetsChanged)
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
+    // The editing target is filtered (legacy IsFiltered): "Turn off filtering".
+    Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
     // A transient status message (automation's set_status_text).
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
 
@@ -47,7 +49,8 @@ public:
     QString editingTitle() const;
     bool hasReference() const { return m_workspace.reference().has_value(); }
     QString referenceTitle() const;
-    QAbstractItemModel *lines() { return &m_lines; }
+    // The Grid shows the editing target's Lines that are not hidden (G8).
+    QAbstractItemModel *lines() { return &m_shown; }
     QAbstractItemModel *referenceLines() { return &m_referenceLines; }
     QString activeLineText() const { return m_activeText; }
     QString activeLineStyle() const { return m_activeStyle; }
@@ -74,6 +77,7 @@ public:
     Q_INVOKABLE void toggleColumn(int bit) { setHiddenColumns(hiddenColumns() ^ bit); }
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
+    bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
@@ -95,6 +99,7 @@ private:
 
     application::Workspace &m_workspace;
     LineTableModel m_lines;
+    LineFilterModel m_shown;
     LineTableModel m_referenceLines;
     QString m_activeText;
     QString m_activeStyle;
