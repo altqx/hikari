@@ -101,6 +101,15 @@ Carry-over directly reads existing files/catalogs/Sessions/autosaves and unchang
 
 **Wave 3 instantiation (2026-10-03).** The first Phase 4 slice is instantiated as [wave 3](https://github.com/altqx/hikari/issues/127), cards #128–#152. Grid/History is split by operation: selection (G1), row and column clipboard (G2), insert/delete/duplicate (G3), the split family (G4), join/swap/continuous timing (G5), sort (G6), columns (G7), filtering (G8), Line groups (G9), History (G10), FPS and properties (G11). The Line editor actions carried over from #101 are E1 (fonts and colours) and E2 (custom tag buttons), with Grid translation operations as E3. Application continuity starts with new/close review (P1), recent files, drag-drop and reload (P2), autosave and recovery (P3), cleanup (P4) and the log window (P5). Automation is composed into the shell (S1), with macro hotkeys (S2) and a legacy automation capture route (S3) that supplies the comparisons #120 and #124 still need. Video transport (V1, V2) and docking (D1) complete the slice. Each card names its exact inventory actions and approved departures; the Audio box, visual tools, Styles/fonts/utilities, Search/timing, Settings/localisation and the remaining continuity rows are later waves.
 
+**Wave 4 instantiation (2026-10-03).** The second Phase 4 slice is [wave 4](https://github.com/altqx/hikari/issues/153), cards #154–#174. It covers four work packages:
+
+- **Audio box:** display (A1), spectrum/zoom (A2), timing (A3), playback modes (A4) and karaoke (A5).
+- **Search/timing:** find and replace (F1), select lines (F2), spelling (F3), the minor-error rules (F4), shift times (F5), and the postprocessor and keyframes (F6).
+- **Styles/fonts/utilities:** the Style manager (Y1), catalogs (Y2), Script properties (Y3), resampling (Y4) and conversion (Y5).
+- **Continuity and settings:** tabs and session restore (P6), save variants (P7), help/about/update notices (P8), the settings registry and dialog (O1), and the shortcut editor (O2).
+
+Wave 5 holds visual tools, the video remainder, font catalogs/collector/MKV extraction, localisation, and the editor and comparison remainders.
+
 ## Phase 5: qualification and replacement readiness
 
 Apply Windows/Ubuntu merge checks and Fedora/native/nightly coverage throughout, not only at the end. Attach platform gaps to the affected capability. Then split final package work by artifact/platform: per-user Inno installer, portable ZIP, Linux AppImage and recovery tar, followed by clean-machine offline/install/upgrade/interruption/uninstall/relocation checks and source/license/signature verification. Keep full packages and notification-only updates; signing identities/accounts remain owner-controlled.
