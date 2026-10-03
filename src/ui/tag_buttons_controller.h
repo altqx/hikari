@@ -4,8 +4,10 @@
 // EDITBOX_TAG_BUTTON_VALUE1-20 at 20d647c4): how many are shown (0 to 20,
 // none by default) and each button's tag, insertion type and name. Each
 // definition is kept in the legacy option text, so a settings import can
-// carry legacy values over unchanged. Kept in the INI file the application
-// names until the settings registry owns them.
+// carry legacy values over unchanged. Kept in the settings registry
+// (editor.tagButtons, editor.tagButton1-20).
+
+#include "settings_store.h"
 
 #include <QObject>
 #include <QString>
@@ -13,6 +15,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <array>
+#include <memory>
 
 namespace hikari::ui {
 
@@ -32,7 +35,10 @@ public:
         QString name;
     };
 
+    // Settings kept in the INI file `settingsFile` (in memory when empty),
+    // or in the application's store.
     explicit TagButtonsController(QString settingsFile = {}, QObject *parent = nullptr);
+    explicit TagButtonsController(SettingsStore &settings, QObject *parent = nullptr);
 
     int count() const { return m_count; }
     QVariantList buttons() const;
@@ -48,13 +54,18 @@ public:
     static Button fromLegacy(const QString &value, int index);
     static QString toLegacy(const Button &button);
 
+    // Reads the settings again (after "Set default").
+    void reload();
+
 signals:
     void changed();
 
 private:
+    void load();
     void save() const;
 
-    QString m_settingsFile;
+    std::unique_ptr<SettingsStore> m_ownedSettings;
+    SettingsStore *m_settings;
     int m_count = 0;
     std::array<Button, kMaximum> m_buttons;
 };

@@ -455,6 +455,14 @@ ApplicationWindow {
                         onTriggered: root.log.toggleWindow()
                     }
                 }
+                // O1: legacy GLOBAL_SETTINGS, the Options dialog.
+                MenuItem {
+                    objectName: "settingsMenuItem"
+                    action: Action {
+                        text: qsTr("&Settings")
+                        onTriggered: settingsDialog.openDialog()
+                    }
+                }
                 MenuItem {
                     objectName: "exitMenuItem"
                     action: Action {
@@ -2862,6 +2870,11 @@ ApplicationWindow {
         id: styleManagerWindow
         styles: root.styleManager
         app: root.app
+    }
+    SettingsDialog {
+        id: settingsDialog
+        app: root.app
+        anchors.centerIn: parent
     }
     SelectLinesDialog {
         id: selectLinesDialog

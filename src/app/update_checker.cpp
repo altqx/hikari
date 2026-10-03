@@ -9,7 +9,6 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 #include <QNetworkRequest>
-#include <QSettings>
 
 namespace hikari::app {
 
@@ -51,24 +50,36 @@ QUrl UpdateChecker::defaultFeed()
 }
 
 UpdateChecker::UpdateChecker(QString settingsFile, QUrl feed, QString version, QObject *parent)
-    : QObject(parent), m_settingsFile(std::move(settingsFile)), m_feed(std::move(feed)), m_version(std::move(version))
+    : QObject(parent), m_ownedSettings(std::make_unique<ui::SettingsStore>(std::move(settingsFile))),
+      m_settings(m_ownedSettings.get()), m_feed(std::move(feed)), m_version(std::move(version))
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    const QSettings ini(m_settingsFile, QSettings::IniFormat);
-    m_autoCheck = ini.value(QStringLiteral("Updates/AutoCheck"), false).toBool();
-    m_stableOnly = ini.value(QStringLiteral("Updates/StableOnly"), true).toBool();
-    m_nextCheck = ini.value(QStringLiteral("Updates/NextCheck"), 0).toLongLong();
+    load();
+}
+
+UpdateChecker::UpdateChecker(ui::SettingsStore &settings, QUrl feed, QString version, QObject *parent)
+    : QObject(parent), m_settings(&settings), m_feed(std::move(feed)), m_version(std::move(version))
+{
+    load();
+}
+
+void UpdateChecker::reload()
+{
+    load();
+    emit optionsChanged();
+}
+
+void UpdateChecker::load()
+{
+    m_autoCheck = m_settings->boolean("updater.autoCheck");
+    m_stableOnly = m_settings->boolean("updater.checkForStable");
+    m_nextCheck = m_settings->integer64("updater.nextCheck");
 }
 
 void UpdateChecker::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
-    ini.setValue(QStringLiteral("Updates/AutoCheck"), m_autoCheck);
-    ini.setValue(QStringLiteral("Updates/StableOnly"), m_stableOnly);
-    ini.setValue(QStringLiteral("Updates/NextCheck"), m_nextCheck);
+    m_settings->set("updater.autoCheck", m_autoCheck);
+    m_settings->set("updater.checkForStable", m_stableOnly);
+    m_settings->set("updater.nextCheck", m_nextCheck);
 }
 
 void UpdateChecker::setAutoCheck(bool on)

@@ -3,14 +3,18 @@
 // E1: the colour picker's recent colours and colour text (legacy
 // ColorPickerRecent and AssColor at 20d647c4). Recent colours are an 8x4
 // grid, newest first, padded with black, kept in the legacy option text
-// (COLORPICKER_RECENT_COLORS: "&HAABBGGRR&" tokens separated by spaces) in
-// the INI file the application names until the settings registry owns it.
+// (COLORPICKER_RECENT_COLORS: "&HAABBGGRR&" tokens separated by spaces),
+// the registry's colourPicker.recentColours.
+
+#include "settings_store.h"
 
 #include <QObject>
 #include <QString>
 #include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
+
+#include <memory>
 
 namespace hikari::ui {
 
@@ -24,6 +28,7 @@ public:
     static constexpr int kRecent = 32;
 
     explicit ColourPickerController(QString settingsFile = {}, QObject *parent = nullptr);
+    explicit ColourPickerController(SettingsStore &settings, QObject *parent = nullptr);
 
     QVariantList recent() const { return m_recent; }
     // Legacy AddColor after OK: moved (or added) to the front; an equal
@@ -45,7 +50,8 @@ signals:
 private:
     void save() const;
 
-    QString m_settingsFile;
+    std::unique_ptr<SettingsStore> m_ownedSettings;
+    SettingsStore *m_settings;
     QVariantList m_recent;
 };
 

@@ -5,7 +5,6 @@
 #include <QFile>
 #include <QKeySequence>
 #include <QFileInfo>
-#include <QSettings>
 #include <QVariantMap>
 
 #include <set>
@@ -26,9 +25,9 @@ QString fileNameOf(const std::string &path)
 
 } // namespace
 
-AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automation, QString settingsFile,
+AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings,
                                                          QObject *parent)
-    : QObject(parent), m_automation(automation), m_settingsFile(std::move(settingsFile))
+    : QObject(parent), m_automation(automation), m_settings(settings)
 {
     load();
     m_staged = m_committed;
@@ -40,19 +39,16 @@ AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automa
     });
 }
 
+// One "legacy name\tkeys\tmacro\tsha256" row per binding.
 void AutomationHotkeysController::load()
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings s(m_settingsFile, QSettings::IniFormat);
-    s.beginGroup(QStringLiteral("AutomationHotkeys"));
-    for (const QString &key : s.childKeys()) {
-        const QStringList v = s.value(key).toStringList();
+    for (const QString &row : m_settings.list(application::kAutomationHotkeysSetting.data())) {
+        const QStringList v = row.split(QLatin1Char('\t'));
         application::MacroBinding b;
-        b.legacyName = key.toStdString();
-        b.keys = v.value(0).toStdString();
-        b.macroName = v.value(1).toStdString();
-        b.scriptSha256 = v.value(2).toStdString();
+        b.legacyName = v.value(0).toStdString();
+        b.keys = v.value(1).toStdString();
+        b.macroName = v.value(2).toStdString();
+        b.scriptSha256 = v.value(3).toStdString();
         if (!b.keys.empty())
             m_committed[b.legacyName] = b;
     }
@@ -60,13 +56,10 @@ void AutomationHotkeysController::load()
 
 void AutomationHotkeysController::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings s(m_settingsFile, QSettings::IniFormat);
-    s.remove(QStringLiteral("AutomationHotkeys"));
-    s.beginGroup(QStringLiteral("AutomationHotkeys"));
+    QStringList rows;
     for (const auto &[name, b] : m_committed)
-        s.setValue(qs(name), QStringList{qs(b.keys), qs(b.macroName), qs(b.scriptSha256)});
+        rows << QStringList{qs(name), qs(b.keys), qs(b.macroName), qs(b.scriptSha256)}.join(QLatin1Char('\t'));
+    m_settings.set(application::kAutomationHotkeysSetting.data(), rows);
 }
 
 std::optional<std::pair<std::string, int>>

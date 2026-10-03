@@ -33,7 +33,6 @@
 #include <QDir>
 #include <QUuid>
 #include <QCoreApplication>
-#include <QSettings>
 #include <QTimer>
 #include <QStringList>
 #include <QVariantMap>
@@ -154,27 +153,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
-    m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
-    m_colourPicker = std::make_unique<ui::ColourPickerController>(m_settingsFile);
-    m_shiftTimes = std::make_unique<ui::ShiftTimesController>(m_settingsFile);
-    if (!m_settingsFile.isEmpty()) {
-        QSettings ini(m_settingsFile, QSettings::IniFormat);
-        m_selectOptions = ini.value(QStringLiteral("SelectLines/Options"), 0).toInt();
-        m_saveWithVideoName = ini.value(QStringLiteral("Subtitles/SaveWithVideoName"), false).toBool();
-        m_askForBadResolution = !ini.value(QStringLiteral("Video/DontAskForBadResolution"), false).toBool();
-        ini.beginGroup(QStringLiteral("Convert"));
-        for (const QString &key : ini.childKeys())
-            m_conversionOptions.insert(key, ini.value(key));
-        ini.endGroup();
-        // Legacy keeps 20 when the dialog opens.
-        m_selectRecent = ini.value(QStringLiteral("SelectLines/Recent")).toStringList().mid(0, 20);
-    }
+    m_dictionaryDir = QDir(automationPath(options.automationDir)).filePath(QStringLiteral("../Dictionary"));
+    // O1: the settings registry over the INI file (in memory without one).
+    m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
+    connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
+    m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
+    m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
+    m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    m_selectOptions = m_settings->integer("selectLines.options");
+    // Legacy keeps 20 when the dialog opens.
+    m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     // D1: the panel layout beside the settings (none without a settings file).
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
-    m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
-    m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, m_settingsFile);
-    m_updates = std::make_unique<UpdateChecker>(m_settingsFile, options.updateFeed, QStringLiteral(HIKARI_VERSION));
+    m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
+    m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
+    m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION));
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
@@ -198,9 +192,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
     m_sessionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
-    int capacity = application::RecoveryStore::kDefaultCapacity; // legacy AUTOSAVE_MAX_FILES
-    if (!m_settingsFile.isEmpty())
-        capacity = QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recovery/Capacity"), capacity).toInt();
+    const int capacity = m_settings->integer("autosave.maxFiles"); // legacy AUTOSAVE_MAX_FILES
     if (!m_recoveryDir.isEmpty()) {
         QDir().mkpath(m_recoveryDir + QStringLiteral("/sessions"));
         m_sessionLock = std::make_unique<QLockFile>(m_recoveryDir + QStringLiteral("/sessions/") + m_sessionId + QStringLiteral(".lock"));
@@ -211,21 +203,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
     // GRID_HIDE_COLUMNS (G7).
-    if (!m_settingsFile.isEmpty())
-        m_shell->setHiddenColumns(QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns"), 0).toInt());
-    connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this, [this] {
-        if (!m_settingsFile.isEmpty())
-            QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Grid/HiddenColumns"), m_shell->hiddenColumns());
-    });
-    if (!m_settingsFile.isEmpty()) {
-        std::vector<std::string> stored;
-        for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Subtitles")).toStringList())
-            stored.push_back(path.toStdString());
-        m_recent.set(std::move(stored));
-        const QSettings settings(m_settingsFile, QSettings::IniFormat);
-        m_copyColumns = settings.value(QStringLiteral("Grid/CopyColumns"), 0).toInt();
-        m_pasteColumns = settings.value(QStringLiteral("Grid/PasteColumns"), 0).toInt();
-    }
+    m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
+            [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
+    m_recent.set(m_settings->settings().list("recent.subtitles"));
+    m_copyColumns = m_settings->integer("grid.copyColumns");
+    m_pasteColumns = m_settings->integer("grid.pasteColumns");
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
         refreshVideo();
         scheduleAutosave();
@@ -672,7 +655,7 @@ QString Application::saveRoute() const
     const QString video = m_video->session().state() == application::VideoSession::State::Ready
                               ? QString::fromStdString(m_video->session().path())
                               : QString();
-    if (path.isEmpty() || m_formatChanged.contains(target->value) || (m_saveWithVideoName && !video.isEmpty() &&
+    if (path.isEmpty() || m_formatChanged.contains(target->value) || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -688,7 +671,7 @@ QVariantMap Application::saveDialogValues() const
     const QString video = m_video->session().state() == application::VideoSession::State::Ready
                               ? QString::fromStdString(m_video->session().path())
                               : QString();
-    const QString path = !video.isEmpty() && m_saveWithVideoName ? video
+    const QString path = !video.isEmpty() && saveWithVideoName() ? video
                          : destination                           ? QString::fromStdString(destination->value)
                                                                  : QString();
     const QString ext = extensionFor(session->document().format());
@@ -754,12 +737,7 @@ bool Application::turnOffTranslationMode()
 
 void Application::setSaveWithVideoName(bool on)
 {
-    if (m_saveWithVideoName == on)
-        return;
-    m_saveWithVideoName = on;
-    if (!m_settingsFile.isEmpty())
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Subtitles/SaveWithVideoName"), on);
-    emit saveWithVideoNameChanged();
+    m_settings->set("subtitles.saveWithVideoName", on); // settingChanged announces it
 }
 
 void Application::reportIssue()
@@ -819,12 +797,7 @@ QString Application::openDropped(const QList<QUrl> &urls)
 void Application::rememberRecent(const std::string &path)
 {
     m_recent.add(path);
-    if (!m_settingsFile.isEmpty()) {
-        QStringList list;
-        for (const auto &entry : m_recent.entries())
-            list << QString::fromStdString(entry);
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Subtitles"), list);
-    }
+    m_settings->settings().set("recent.subtitles", m_recent.entries());
     emit recentChanged();
 }
 
@@ -843,12 +816,8 @@ QVariantList Application::recentSubtitles()
 #endif
             });
     });
-    if (pruned && !m_settingsFile.isEmpty()) {
-        QStringList list;
-        for (const auto &entry : m_recent.entries())
-            list << QString::fromStdString(entry);
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Subtitles"), list);
-    }
+    if (pruned)
+        m_settings->settings().set("recent.subtitles", m_recent.entries());
     QVariantList rows;
     int n = 0;
     for (const auto &entry : m_recent.entries()) {
@@ -937,7 +906,7 @@ application::GridSelection Application::gridSelection() const
         for (const auto *line : session->document().lines())
             document.push_back(line->id);
     application::GridSelection rules(std::move(document), m_shell->displayedLines());
-    rules.setChangeActiveOnSelection(m_changeActiveOnSelection);
+    rules.setChangeActiveOnSelection(m_settings->boolean("grid.changeActiveOnSelection"));
     return rules;
 }
 
@@ -1133,9 +1102,7 @@ QVariantList Application::columnChoices(bool paste)
 void Application::rememberColumns(bool paste, int columns)
 {
     (paste ? m_pasteColumns : m_copyColumns) = columns;
-    if (!m_settingsFile.isEmpty())
-        QSettings(m_settingsFile, QSettings::IniFormat)
-            .setValue(paste ? QStringLiteral("Grid/PasteColumns") : QStringLiteral("Grid/CopyColumns"), columns);
+    m_settings->set(paste ? "grid.pasteColumns" : "grid.copyColumns", columns);
 }
 
 bool Application::copyColumns(int columns)
@@ -1634,11 +1601,8 @@ QVariantMap Application::selectLinesSettings() const
 void Application::saveSelectLinesSettings(const QVariantMap &settings)
 {
     m_selectOptions = application::selectLinesOptions(selectSettings(settings, m_selectOptions));
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
-    ini.setValue(QStringLiteral("SelectLines/Options"), m_selectOptions);
-    ini.setValue(QStringLiteral("SelectLines/Recent"), m_selectRecent);
+    m_settings->set("selectLines.options", m_selectOptions);
+    m_settings->set("selectLines.recentSelections", m_selectRecent);
 }
 
 QString Application::selectLines(const QVariantMap &map, bool allTabs)
@@ -1695,7 +1659,7 @@ void Application::checkResolution()
 {
     auto *session = targetSession();
     const auto &video = m_video->session();
-    if (!m_askForBadResolution || !session || targetUntitled() ||
+    if (!askForBadResolution() || !session || targetUntitled() ||
         session->document().format() != core::SubtitleFormat::Ass ||
         video.state() != application::VideoSession::State::Ready || !video.lastFrame())
         return;
@@ -1763,30 +1727,23 @@ bool Application::matchVideoResolution(int option)
 
 void Application::setAskForBadResolution(bool on)
 {
-    if (m_askForBadResolution == on)
-        return;
-    m_askForBadResolution = on;
-    if (!m_settingsFile.isEmpty())
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Video/DontAskForBadResolution"), !on);
-    emit askForBadResolutionChanged();
+    m_settings->set("video.dontAskForBadResolution", !on); // settingChanged announces it
 }
 
 namespace {
 
-// Legacy defaults (config.cpp) for the CONVERT_* options.
-QVariant conversionOption(const QVariantMap &options, const QString &key)
-{
-    static const QVariantMap defaults{{QStringLiteral("fps"), QStringLiteral("23.976")},
-                                      {QStringLiteral("fpsFromVideo"), false},
-                                      {QStringLiteral("style"), QStringLiteral("Default")},
-                                      {QStringLiteral("styleCatalog"), QStringLiteral("Default")},
-                                      {QStringLiteral("newEndTimes"), false},
-                                      {QStringLiteral("timePerCharacter"), 110},
-                                      {QStringLiteral("prefix"), QString()},
-                                      {QStringLiteral("resolutionWidth"), QStringLiteral("1280")},
-                                      {QStringLiteral("resolutionHeight"), QStringLiteral("720")}};
-    return options.value(key, defaults.value(key));
-}
+// The conversion dialog's options and their CONVERT_* settings.
+constexpr std::pair<const char *, const char *> kConversionOptions[] = {
+    {"fps", "convert.fps"},
+    {"fpsFromVideo", "convert.fpsFromVideo"},
+    {"style", "convert.style"},
+    {"styleCatalog", "convert.styleCatalog"},
+    {"newEndTimes", "convert.newEndTimes"},
+    {"timePerCharacter", "convert.timePerCharacter"},
+    {"prefix", "convert.assTagsToInsertInLine"},
+    {"resolutionWidth", "convert.resolutionWidth"},
+    {"resolutionHeight", "convert.resolutionHeight"},
+};
 
 std::optional<core::SubtitleFormat> formatNamed(const QString &name)
 {
@@ -1808,23 +1765,19 @@ std::optional<core::SubtitleFormat> formatNamed(const QString &name)
 QVariantMap Application::conversionOptions() const
 {
     QVariantMap out;
-    for (const char *key : {"fps", "fpsFromVideo", "style", "styleCatalog", "newEndTimes", "timePerCharacter", "prefix",
-                            "resolutionWidth", "resolutionHeight"})
-        out.insert(QLatin1String(key), conversionOption(m_conversionOptions, QLatin1String(key)));
+    for (const auto &[key, setting] : kConversionOptions) {
+        const QVariant v = m_settings->value(QLatin1String(setting));
+        out.insert(QLatin1String(key), v.typeId() == QMetaType::LongLong ? QVariant(v.toInt()) : v);
+    }
     return out;
 }
 
 void Application::setConversionOptions(const QVariantMap &options)
 {
-    for (auto it = options.begin(); it != options.end(); ++it)
-        m_conversionOptions.insert(it.key(), it.value());
+    for (const auto &[key, setting] : kConversionOptions)
+        if (options.contains(QLatin1String(key)))
+            m_settings->set(setting, options.value(QLatin1String(key)));
     m_conversionPlan.reset(); // a changed option invalidates the preview (C02)
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
-    ini.beginGroup(QStringLiteral("Convert"));
-    for (auto it = m_conversionOptions.begin(); it != m_conversionOptions.end(); ++it)
-        ini.setValue(it.key(), it.value());
 }
 
 QString Application::activeLineStyle() const
@@ -1983,10 +1936,7 @@ QVariantMap Application::scriptProperties()
         videoWidth = frame->width;
         videoHeight = frame->height;
     }
-    const bool link = m_settingsFile.isEmpty() ? false
-                                               : QSettings(m_settingsFile, QSettings::IniFormat)
-                                                     .value(QStringLiteral("ScriptInfo/LinkResolutions"), false)
-                                                     .toBool();
+    const bool link = m_settings->boolean("scriptProperties.linkResolutions");
     return {{QStringLiteral("title"), q(p.title)},
             {QStringLiteral("originalScript"), q(p.originalScript)},
             {QStringLiteral("originalTranslation"), q(p.originalTranslation)},
@@ -2012,8 +1962,7 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     auto *session = targetSession();
     if (!session)
         return false;
-    if (!m_settingsFile.isEmpty())
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("ScriptInfo/LinkResolutions"), linkResolutions);
+    m_settings->set("scriptProperties.linkResolutions", linkResolutions);
     application::ScriptProperties p;
     p.title = toU8(values.value(QStringLiteral("title")).toString());
     p.originalScript = toU8(values.value(QStringLiteral("originalScript")).toString());
@@ -2135,7 +2084,9 @@ bool Application::duplicateLines()
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
         return false;
-    const bool done = application::duplicateLines(*session).has_value();
+    // Legacy SubsGrid::OnDuplicate: GRID_DUPLICATION_DONT_CHANGE_SELECTION.
+    const bool done =
+        application::duplicateLines(*session, {}, m_settings->boolean("grid.duplicationDontChangeSelection")).has_value();
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -2220,6 +2171,138 @@ void Application::waitForWrites()
 {
     m_port->waitIdle();
     QCoreApplication::processEvents();
+}
+
+// O1: live application of changed settings, where legacy reads the option
+// when it acts (the others are read at their next use).
+void Application::settingChanged(const QString &id)
+{
+    if (id == QLatin1String("subtitles.saveWithVideoName"))
+        emit saveWithVideoNameChanged();
+    else if (id == QLatin1String("video.dontAskForBadResolution"))
+        emit askForBadResolutionChanged();
+    else if (id.startsWith(QLatin1String("convert.")))
+        m_conversionPlan.reset(); // a changed option invalidates the preview (C02)
+    else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
+        m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
+    else if (id == QLatin1String("grid.hideColumns"))
+        m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+}
+
+namespace {
+
+// Legacy config::FindLanguage: the shipped names, then the locale's own.
+QString languageName(const QString &tag)
+{
+    static const std::map<QString, QString> shipped{{QStringLiteral("en"), QStringLiteral("English")},
+                                                    {QStringLiteral("ko"), QStringLiteral("한국어")},
+                                                    {QStringLiteral("pl"), QStringLiteral("Polski")},
+                                                    {QStringLiteral("ta"), QStringLiteral("தமிழ்")},
+                                                    {QStringLiteral("th"), QStringLiteral("ไทย")}};
+    auto it = shipped.find(tag);
+    if (it == shipped.end())
+        it = shipped.find(tag.section(u'_', 0, 0));
+    if (it != shipped.end())
+        return it->second;
+    const QLocale locale(tag);
+    const QString name = locale.language() == QLocale::C ? QString() : locale.nativeLanguageName();
+    return name.isEmpty() ? tag : name;
+}
+
+} // namespace
+
+QVariantMap Application::settingsDialogValues()
+{
+    // OptionsDialog: an FFMS2 seeking method outside the four choices becomes
+    // 2 ("Unsafe (always fast)", the default) and is saved at once.
+    const auto seeking = m_settings->integer("video.ffms2Seeking");
+    if (seeking < 0 || seeking > 3)
+        m_settings->set("video.ffms2Seeking", 2);
+    QVariantMap out;
+    for (const auto &setting : application::settingDefinitions()) {
+        if (setting.disposition == application::SettingDisposition::Excluded)
+            continue;
+        const QString id = QString::fromUtf8(setting.id.data(), qsizetype(setting.id.size()));
+        const auto value = m_settings->settings().value(setting.id);
+        if (const auto *field = application::findSettingsNumberField(setting.id))
+            out.insert(id, int(application::settingsDialogNumber(*field, value)));
+        else
+            out.insert(id, ui::SettingsStore::toVariant(value));
+    }
+    return out;
+}
+
+void Application::applySettings(const QVariantMap &values)
+{
+    for (auto it = values.begin(); it != values.end(); ++it) {
+        const std::string id = it.key().toStdString();
+        const auto *setting = application::findSetting(id);
+        if (!setting)
+            continue;
+        auto &settings = m_settings->settings();
+        if (const auto *field = application::findSettingsNumberField(id)) {
+            // NumCtrl::GetInt against Options.GetInt, then SetInt.
+            const auto n = application::settingsDialogCommit(*field, it.value().toLongLong());
+            if (settings.integer(id) != n)
+                settings.set(id, n);
+            continue;
+        }
+        auto next = application::convertSetting(ui::SettingsStore::fromVariant(it.value()), setting->type);
+        if (id == "fonts.externalDirectory" && settings.value(id) != next) {
+            // HikariNormalizePath and a trailing separator (fonts reload: not yet).
+            QString path = QString::fromStdString(std::get<std::string>(next));
+#ifndef _WIN32
+            path.replace(u'\\', u'/');
+#endif
+            const QChar separator = QDir::separator();
+            if (!path.isEmpty() && !path.endsWith(separator))
+                path += separator;
+            next = path.toStdString();
+        }
+        if (settings.value(id) != next)
+            settings.set(id, next);
+    }
+}
+
+void Application::resetSettings()
+{
+    // Legacy keeps the recent list in the main window and writes it back at
+    // exit, so Set default does not clear it; hotkeys are the shortcut editor's (O2).
+    const auto recent = m_settings->settings().value("recent.subtitles");
+    const auto macros = m_settings->settings().value(application::kAutomationHotkeysSetting);
+    m_settings->resetAll();
+    m_settings->settings().set("recent.subtitles", recent);
+    m_settings->settings().set(application::kAutomationHotkeysSetting, macros);
+    m_selectOptions = m_settings->integer("selectLines.options");
+    m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
+    m_copyColumns = m_settings->integer("grid.copyColumns");
+    m_pasteColumns = m_settings->integer("grid.pasteColumns");
+    m_tagButtons->reload();
+    m_colourPicker->loadFromString(m_settings->text("colourPicker.recentColours"));
+    m_shiftTimes->reload();
+    m_gridFilter->reload();
+    m_updates->reload();
+}
+
+QVariantList Application::settingsLanguages() const
+{
+    // No translation catalogues ship with the rewrite yet: English only.
+    return {QVariantMap{{QStringLiteral("tag"), QStringLiteral("en")}, {QStringLiteral("name"), QStringLiteral("English")}}};
+}
+
+QVariantList Application::settingsDictionaries() const
+{
+    // AvailableDics pairs the i-th .dic with the i-th .aff by name.
+    const QDir dir(m_dictionaryDir);
+    const QStringList dic = dir.entryList({QStringLiteral("*.dic")}, QDir::Files, QDir::Name);
+    const QStringList aff = dir.entryList({QStringLiteral("*.aff")}, QDir::Files, QDir::Name);
+    QVariantList out;
+    for (qsizetype i = 0; i < dic.size() && i < aff.size(); ++i) {
+        const QString symbol = dic[i].section(u'.', 0, -2);
+        if (symbol == aff[i].section(u'.', 0, -2))
+            out << QVariantMap{{QStringLiteral("tag"), symbol}, {QStringLiteral("name"), languageName(symbol)}};
+    }
+    return out;
 }
 
 } // namespace hikari::app

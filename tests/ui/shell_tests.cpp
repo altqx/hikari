@@ -1655,6 +1655,91 @@ private slots:
         }
     }
 
+    // O1: File > Settings, the legacy Options dialog over the settings registry.
+    QQuickItem *settingsButton(const char *name) const
+    {
+        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        auto *footer = popup ? popup->property("footer").value<QQuickItem *>() : nullptr;
+        return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+    }
+    void settingsDialogAppliesChangedValuesLive()
+    {
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        QVERIFY(dialog);
+        settings.set("video.ffms2Seeking", 9);
+        auto *menuItem = root->findChild<QObject *>(QStringLiteral("settingsMenuItem"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        // Opening fixes a seeking method outside the four choices at once.
+        QCOMPARE(settings.integer("video.ffms2Seeking"), 2);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), 2);
+        QCOMPARE(dialogItem("settingsDialog", "setting_autosave.maxFiles")->property("value").toInt(), 3);
+        QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 40);
+        QVERIFY(dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection")->property("checked").toBool());
+        // "Do not warn about resolution mismatch" applies on Apply, not before.
+        QSignalSpy askChanged(application, &app::Application::askForBadResolutionChanged);
+        auto *noWarning = dialogItem("settingsDialog", "setting_video.dontAskForBadResolution");
+        QVERIFY(noWarning);
+        QVERIFY(QMetaObject::invokeMethod(noWarning, "click"));
+        QVERIFY(noWarning->property("checked").toBool());
+        QVERIFY(application->askForBadResolution());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QVERIFY(!application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 1);
+        QVERIFY(dialog->property("visible").toBool());
+        // Only changed values are written: untouched options stay unset, but
+        // the language is written as "en" (legacy writes the chosen tag).
+        QVERIFY(!settings.contains("grid.loadSortedSubs"));
+        QVERIFY(!settings.contains("autosave.maxFiles"));
+        QCOMPARE(settings.text("program.language"), QStringLiteral("en"));
+        QCOMPARE(settings.integer("program.tabTextMaxChars"), 40); // shown as 40 when unset, then written
+        QCOMPARE(settings.integer("video.zoomPercent"), 200);
+        // Numbers are clamped to the NumCtrl range on OK.
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("autosave.maxFiles")),
+                                          Q_ARG(QVariant, 1)));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("fonts.externalDirectory")),
+                                          Q_ARG(QVariant, QStringLiteral("/fonts"))));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put",
+                                          Q_ARG(QVariant, QStringLiteral("grid.duplicationDontChangeSelection")),
+                                          Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.integer("autosave.maxFiles"), 2);
+        QCOMPARE(settings.text("fonts.externalDirectory"), QStringLiteral("/fonts") + QDir::separator());
+        // Live: duplicating now keeps the selection (SubsGrid::OnDuplicate).
+        QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto first = session->document().lines()[0]->id;
+        QVERIFY(application->duplicateLines());
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{first}));
+        // Cancel drops staged changes.
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *changeActive = dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection");
+        QVERIFY(QMetaObject::invokeMethod(changeActive, "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
+        // Set default resets every option at once, even when then cancelled;
+        // the recent list is kept, as legacy writes it back at exit.
+        const auto recent = application->recentEntries();
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 2);
+        QCOMPARE(settings.integer("autosave.maxFiles"), 3);
+        QVERIFY(!settings.contains("grid.duplicationDontChangeSelection"));
+        QCOMPARE(application->recentEntries(), recent);
+        QCOMPARE(settings.list("recent.subtitles").size(), qsizetype(recent.size()));
+        QVERIFY(application->closeEditingTarget());
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

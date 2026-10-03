@@ -1,21 +1,34 @@
 #include "grid_filter_controller.h"
 
-#include <QSettings>
-
 namespace hikari::ui {
 
 GridFilterController::GridFilterController(QString settingsFile, QObject *parent)
-    : QObject(parent), m_settingsFile(std::move(settingsFile))
+    : QObject(parent), m_ownedSettings(std::make_unique<SettingsStore>(std::move(settingsFile))),
+      m_settings(m_ownedSettings.get())
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    const QSettings s(m_settingsFile, QSettings::IniFormat);
-    m_filterBy = s.value(QStringLiteral("Grid/FilterBy"), 0).toInt();
-    m_styles = s.value(QStringLiteral("Grid/FilterStyles")).toStringList();
-    m_inverted = s.value(QStringLiteral("Grid/FilterInverted"), false).toBool();
-    m_addToFilter = s.value(QStringLiteral("Grid/AddToFilter"), false).toBool();
-    m_afterLoad = s.value(QStringLiteral("Grid/FilterAfterLoad"), false).toBool();
-    m_ignore = s.value(QStringLiteral("Grid/IgnoreFiltering"), false).toBool();
+    load();
+}
+
+GridFilterController::GridFilterController(SettingsStore &settings, QObject *parent)
+    : QObject(parent), m_settings(&settings)
+{
+    load();
+}
+
+void GridFilterController::reload()
+{
+    load();
+    emit changed();
+}
+
+void GridFilterController::load()
+{
+    m_filterBy = m_settings->integer("grid.filterBy");
+    m_styles = m_settings->list("grid.filterStyles");
+    m_inverted = m_settings->boolean("grid.filterInverted");
+    m_addToFilter = m_settings->boolean("grid.addToFilter");
+    m_afterLoad = m_settings->boolean("grid.filterAfterLoad");
+    m_ignore = m_settings->boolean("grid.ignoreFiltering");
 }
 
 void GridFilterController::setInverted(bool on)
@@ -68,15 +81,12 @@ void GridFilterController::setStyle(const QString &name, bool on)
 
 void GridFilterController::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings s(m_settingsFile, QSettings::IniFormat);
-    s.setValue(QStringLiteral("Grid/FilterBy"), m_filterBy);
-    s.setValue(QStringLiteral("Grid/FilterStyles"), m_styles);
-    s.setValue(QStringLiteral("Grid/FilterInverted"), m_inverted);
-    s.setValue(QStringLiteral("Grid/AddToFilter"), m_addToFilter);
-    s.setValue(QStringLiteral("Grid/FilterAfterLoad"), m_afterLoad);
-    s.setValue(QStringLiteral("Grid/IgnoreFiltering"), m_ignore);
+    m_settings->set("grid.filterBy", m_filterBy);
+    m_settings->set("grid.filterStyles", m_styles);
+    m_settings->set("grid.filterInverted", m_inverted);
+    m_settings->set("grid.addToFilter", m_addToFilter);
+    m_settings->set("grid.filterAfterLoad", m_afterLoad);
+    m_settings->set("grid.ignoreFiltering", m_ignore);
 }
 
 } // namespace hikari::ui

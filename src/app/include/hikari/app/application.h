@@ -25,6 +25,7 @@
 #include "shift_times_controller.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
+#include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -68,7 +69,7 @@ public:
         QString automationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
-        // INI file holding the recent lists; empty: they are not kept (tests).
+        // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
         // P3: where recovery bundles live; empty: no autosave (tests).
         QString recoveryDir;
@@ -148,9 +149,9 @@ public:
     Q_INVOKABLE bool saveAll();
     // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
     Q_INVOKABLE bool turnOffTranslationMode();
-    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING), kept in the INI file.
+    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
-    bool saveWithVideoName() const { return m_saveWithVideoName; }
+    bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
@@ -225,7 +226,7 @@ public:
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
     // Y5: GLOBAL_CONVERT_TO_ASS/SRT/MDVD/MPL2/TMP with the CONVERT_* options
     // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix,
-    // resolutionWidth, resolutionHeight}, kept in the INI file.
+    // resolutionWidth, resolutionHeight}, kept in the settings registry (convert.*).
     Q_INVOKABLE QVariantMap conversionOptions() const;
     Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
     // The formats the editing target can be converted to ("ass", "srt",
@@ -248,14 +249,14 @@ public:
     // The SubsMismatchResolutionDialog's Change: 0 only the resolution,
     // 1 resample (no stretch), 2 resample (stretch).
     Q_INVOKABLE bool matchVideoResolution(int option);
-    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION), kept in the INI file.
+    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION, video.dontAskForBadResolution).
     Q_PROPERTY(bool askForBadResolution READ askForBadResolution WRITE setAskForBadResolution NOTIFY askForBadResolutionChanged)
-    bool askForBadResolution() const { return m_askForBadResolution; }
+    bool askForBadResolution() const { return !m_settings->boolean("video.dontAskForBadResolution"); }
     void setAskForBadResolution(bool on);
     // F2: GLOBAL_OPEN_SELECT_LINES. The dialog's settings {find, with,
     // matchCase, regex, field, dialogues, comments, mode, action} and its
     // recent searches (legacy SELECT_LINES_OPTIONS and _RECENT_SELECTIONS,
-    // kept in the INI file); selectLines runs on the editing target or on
+    // kept in the settings registry); selectLines runs on the editing target or on
     // every open Document and returns the legacy message.
     Q_INVOKABLE QVariantMap selectLinesSettings() const;
     Q_INVOKABLE void saveSelectLinesSettings(const QVariantMap &settings);
@@ -289,8 +290,30 @@ public:
     // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);
-    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
-    void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
+    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (grid.changeActiveOnSelection, default true).
+    void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
+
+    // O1: GLOBAL_SETTINGS, the Options dialog (legacy OptionsDialog at
+    // 20d647c4) over the settings registry. The dialog reads each page's
+    // values as legacy shows them and writes the changed ones on OK/Apply.
+    Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
+    ui::SettingsStore *settingsStore() const { return m_settings.get(); }
+    // {setting: value} for every control of the dialog's pages; numbers as
+    // NumCtrl shows them. Opening fixes an FFMS2 seeking value outside 0-3
+    // to 2 and stores it at once, as legacy does.
+    Q_INVOKABLE QVariantMap settingsDialogValues();
+    // OK/Apply (legacy SetOptions): each value that differs is stored; numbers
+    // clamped to their range, the external fonts folder normalized with a
+    // trailing separator.
+    Q_INVOKABLE void applySettings(const QVariantMap &values);
+    // "Set default" (legacy ResetDefault): every setting at once, even if the
+    // dialog is then cancelled.
+    Q_INVOKABLE void resetSettings();
+    // The language choice: {tag, name}, English first (legacy programLanguages).
+    Q_INVOKABLE QVariantList settingsLanguages() const;
+    // The spell checker choice: {tag, name} for each .dic with its .aff in the
+    // Dictionary folder (legacy SpellChecker::AvailableDics).
+    Q_INVOKABLE QVariantList settingsDictionaries() const;
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -344,6 +367,10 @@ private:
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
+    // O1: declared before everything that keeps a reference to it.
+    std::unique_ptr<ui::SettingsStore> m_settings;
+    void settingChanged(const QString &id);
+    QString m_dictionaryDir; // legacy "Dictionary" beside the program
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<UpdateChecker> m_updates;
@@ -354,9 +381,6 @@ private:
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    bool m_saveWithVideoName = false;
-    bool m_askForBadResolution = true;
-    QVariantMap m_conversionOptions;
     struct ConversionPlan {
         std::uint64_t document = 0;
         std::uint64_t revision = 0;
@@ -387,7 +411,6 @@ private:
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
-    bool m_changeActiveOnSelection = true;
     struct Closing {
         application::DocumentId document;
         bool save = false;

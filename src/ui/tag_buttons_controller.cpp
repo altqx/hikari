@@ -1,6 +1,5 @@
 #include "tag_buttons_controller.h"
 
-#include <QSettings>
 #include <QVariantMap>
 
 #include <algorithm>
@@ -11,22 +10,35 @@ namespace {
 
 QString key(int index)
 {
-    return QStringLiteral("Editor/TagButton%1").arg(index + 1);
+    return QStringLiteral("editor.tagButton%1").arg(index + 1);
 }
 
 } // namespace
 
 TagButtonsController::TagButtonsController(QString settingsFile, QObject *parent)
-    : QObject(parent), m_settingsFile(std::move(settingsFile))
+    : QObject(parent), m_ownedSettings(std::make_unique<SettingsStore>(std::move(settingsFile))),
+      m_settings(m_ownedSettings.get())
 {
+    load();
+}
+
+TagButtonsController::TagButtonsController(SettingsStore &settings, QObject *parent)
+    : QObject(parent), m_settings(&settings)
+{
+    load();
+}
+
+void TagButtonsController::reload()
+{
+    load();
+    emit changed();
+}
+
+void TagButtonsController::load()
+{
+    m_count = std::clamp(m_settings->integer("editor.tagButtons"), 0, kMaximum);
     for (int i = 0; i < kMaximum; ++i)
-        m_buttons[static_cast<std::size_t>(i)] = fromLegacy(QString(), i);
-    if (m_settingsFile.isEmpty())
-        return;
-    const QSettings settings(m_settingsFile, QSettings::IniFormat);
-    m_count = std::clamp(settings.value(QStringLiteral("Editor/TagButtons"), 0).toInt(), 0, kMaximum);
-    for (int i = 0; i < kMaximum; ++i)
-        m_buttons[static_cast<std::size_t>(i)] = fromLegacy(settings.value(key(i)).toString(), i);
+        m_buttons[static_cast<std::size_t>(i)] = fromLegacy(m_settings->value(key(i)).toString(), i);
 }
 
 QVariantList TagButtonsController::buttons() const
@@ -80,12 +92,9 @@ QString TagButtonsController::toLegacy(const Button &button)
 
 void TagButtonsController::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings settings(m_settingsFile, QSettings::IniFormat);
-    settings.setValue(QStringLiteral("Editor/TagButtons"), m_count);
+    m_settings->set("editor.tagButtons", m_count);
     for (int i = 0; i < kMaximum; ++i)
-        settings.setValue(key(i), toLegacy(m_buttons[static_cast<std::size_t>(i)]));
+        m_settings->setValue(key(i), toLegacy(m_buttons[static_cast<std::size_t>(i)]));
 }
 
 } // namespace hikari::ui
