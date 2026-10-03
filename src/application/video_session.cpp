@@ -1,5 +1,6 @@
 #include "hikari/application/video_session.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace hikari::application {
@@ -55,6 +56,7 @@ void VideoSession::open(const std::string &path)
             return notify();
         }
         m_timeline = core::FrameTimeline::indexed(m_starts);
+        m_keyframes = opened->keyframes;
         m_state = State::Ready;
         notify();
         if (const auto seek = std::exchange(m_pendingSeek, std::nullopt))
@@ -80,6 +82,7 @@ void VideoSession::close()
     m_path.clear();
     m_error.reset();
     m_starts.clear();
+    m_keyframes.clear();
     m_timeline.reset();
     m_requested.reset();
     m_pendingSeek.reset();
@@ -294,6 +297,76 @@ bool VideoSession::stop()
         ++m_playEpoch;
     }
     showFrame(0);
+    return true;
+}
+
+namespace {
+
+std::int64_t msOf(core::DocumentTime t)
+{
+    return t.microseconds() / 1000;
+}
+
+} // namespace
+
+void VideoSession::seekToEnd(core::DocumentTime end)
+{
+    if (!m_timeline)
+        return;
+    // FrameShownAt(end - 1 ms), clamped.
+    const core::DocumentTime before(std::max<std::int64_t>(0, end.microseconds() - 1000));
+    const auto frame = m_timeline->frameContaining(before);
+    showFrame(frame ? static_cast<int>(frame->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1));
+}
+
+bool VideoSession::seekBy(std::int64_t ms)
+{
+    if (m_state != State::Ready || !m_requested)
+        return false;
+    // Tell() is the shown frame's start in whole milliseconds.
+    const std::int64_t target = msOf(m_starts[static_cast<std::size_t>(*m_requested)]) + ms;
+    if (target <= 0) {
+        showFrame(0);
+        return true;
+    }
+    seekTo(core::DocumentTime(target * 1000));
+    return true;
+}
+
+bool VideoSession::isKeyframe(int index) const
+{
+    return std::binary_search(m_keyframes.begin(), m_keyframes.end(), index);
+}
+
+bool VideoSession::nextKeyframe()
+{
+    if (m_state != State::Ready || !m_requested || m_keyframes.empty())
+        return false;
+    // Timebase::NextKeyframe on keyframe times in ms: the first after now, else the first.
+    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*m_requested)]);
+    int target = m_keyframes.front();
+    for (const int k : m_keyframes)
+        if (msOf(m_starts[static_cast<std::size_t>(k)]) > now) {
+            target = k;
+            break;
+        }
+    showFrame(target);
+    return true;
+}
+
+bool VideoSession::previousKeyframe()
+{
+    if (m_state != State::Ready || !m_requested || m_keyframes.empty())
+        return false;
+    // Timebase::PrevKeyframe: the last before now, else the last.
+    const std::int64_t now = msOf(m_starts[static_cast<std::size_t>(*m_requested)]);
+    int target = m_keyframes.back();
+    for (auto it = m_keyframes.rbegin(); it != m_keyframes.rend(); ++it)
+        if (msOf(m_starts[static_cast<std::size_t>(*it)]) < now) {
+            target = *it;
+            break;
+        }
+    showFrame(target);
     return true;
 }
 

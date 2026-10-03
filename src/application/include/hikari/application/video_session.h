@@ -63,6 +63,17 @@ public:
     // A frame the general player delivered, converted to BGRA by the UI.
     void generalFrame(IndexedFrame frame, std::int64_t startUs);
 
+    // V2: legacy VideoBox::Seek and keyframe navigation, from the shown frame.
+    // A start time shows the frame at or after it (Timebase::FrameAt, 0 at or
+    // before 0); an end time the frame showing 1 ms before it
+    // (FrameShownAt(end - 1)); both are clamped to the video.
+    void seekToEnd(core::DocumentTime end);
+    bool seekBy(std::int64_t ms);          // VIDEO_5_SECONDS_* / VIDEO_MINUTE_*
+    bool nextKeyframe();                   // wraps to the first after the last
+    bool previousKeyframe();               // wraps to the last before the first
+    bool isKeyframe(int index) const;
+    const std::vector<int> &keyframes() const { return m_keyframes; }
+
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }
     std::optional<SourceError> error() const { return m_error; }
@@ -104,6 +115,7 @@ private:
     std::uint64_t m_playEpoch = 0;
     std::optional<std::int64_t> m_lastGeneralUs;
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
+    std::vector<int> m_keyframes;
 };
 
 } // namespace hikari::application

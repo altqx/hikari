@@ -129,4 +129,80 @@ bool VideoController::stop()
     return done;
 }
 
+QString VideoController::times() const
+{
+    const auto shown = m_session.shownFrame();
+    const auto start = shown ? m_session.frameStart(*shown) : std::nullopt;
+    if (!start)
+        return {};
+    const std::int64_t ms = start->microseconds() / 1000;
+    // SubsTime::raw(SRT): "%02i:%02i:%02i,%03i".
+    QString out = QStringLiteral("%1:%2:%3,%4;  %5;  ")
+                      .arg(ms / 3'600'000, 2, 10, QLatin1Char('0'))
+                      .arg(ms / 60'000 % 60, 2, 10, QLatin1Char('0'))
+                      .arg(ms / 1000 % 60, 2, 10, QLatin1Char('0'))
+                      .arg(ms % 1000, 3, 10, QLatin1Char('0'))
+                      .arg(*shown);
+    if (m_lineTimes) {
+        // The Line's start frame is the one at or after its start (Timebase::FrameAt).
+        int lineFrame = 0;
+        for (int i = 0; i < m_session.frameCount(); ++i)
+            if (*m_session.frameStart(i) >= m_lineTimes->first) {
+                lineFrame = i;
+                break;
+            }
+        out += QStringLiteral("%1;  ").arg(*shown - lineFrame);
+        auto zeroIt = [](core::DocumentTime t) { return t.microseconds() / 1000 / 10 * 10; };
+        out += QStringLiteral("%1 ms, %2 ms").arg(ms - zeroIt(m_lineTimes->first)).arg(ms - zeroIt(m_lineTimes->second));
+    }
+    return out;
+}
+
+bool VideoController::keyframeShown() const
+{
+    const auto shown = m_session.shownFrame();
+    return shown && m_session.isKeyframe(*shown);
+}
+
+bool VideoController::showFrameAt(int frame)
+{
+    if (!hasVideo() || frame < 0 || frame >= frameCount())
+        return false;
+    m_session.showFrame(frame);
+    return true;
+}
+
+bool VideoController::seekBy(int ms)
+{
+    return m_session.seekBy(ms);
+}
+
+bool VideoController::goToLineStart()
+{
+    if (!hasVideo() || !m_lineTimes)
+        return false;
+    // Seek(MAX(0, start)): the frame at or after it.
+    if (m_lineTimes->first.microseconds() <= 0)
+        m_session.showFrame(0);
+    else
+        m_session.seekTo(m_lineTimes->first);
+    return true;
+}
+
+bool VideoController::goToLineEnd()
+{
+    if (!hasVideo() || !m_lineTimes)
+        return false;
+    m_session.seekToEnd(m_lineTimes->second);
+    return true;
+}
+
+void VideoController::setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times)
+{
+    if (times == m_lineTimes)
+        return;
+    m_lineTimes = times;
+    emit changed();
+}
+
 } // namespace hikari::ui

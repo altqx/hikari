@@ -361,6 +361,13 @@ void Application::refreshVideo()
         m_video->session().setSubtitles(core::encodeAss(session->document()));
     }
     const auto active = session->selection().active;
+    // V2: the times field and the go-to commands follow the active Line.
+    std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
+    if (active)
+        for (const auto *line : session->document().lines())
+            if (line->id == *active)
+                lineTimes = std::pair(line->start.value, line->end.value);
+    m_video->setActiveLineTimes(lineTimes);
     if (active && active != m_videoLine) {
         m_videoLine = active;
         for (const auto *line : session->document().lines())

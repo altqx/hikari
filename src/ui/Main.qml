@@ -389,6 +389,18 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
+        Menu {
+            objectName: "videoMenu"
+            title: qsTr("&Video")
+            Action { text: qsTr("Open &video…"); onTriggered: videoDialog.open() }
+            Action { text: qsTr("Previous frame"); enabled: root.video.hasVideo; onTriggered: root.video.stepFrames(-1) }
+            Action { text: qsTr("Next frame"); enabled: root.video.hasVideo; onTriggered: root.video.stepFrames(1) }
+            Action { text: qsTr("Go to start time"); enabled: root.video.hasVideo; onTriggered: root.video.goToLineStart() }
+            Action { text: qsTr("Go to end time of line"); enabled: root.video.hasVideo; onTriggered: root.video.goToLineEnd() }
+            Action { text: qsTr("Play / Pause"); enabled: root.video.hasVideo; onTriggered: root.video.togglePlay() }
+            Action { text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.previousKeyframe() }
+            Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
+        }
         Menu { title: qsTr("&View") }
         Menu { title: qsTr("&Help") }
     }
@@ -539,6 +551,18 @@ ApplicationWindow {
                 Keys.onRightPressed: root.video.stepFrames(1)
                 // Legacy VIDEO_PLAY_PAUSE (Space in the video).
                 Keys.onSpacePressed: root.video.togglePlay()
+                // Legacy VIDEO_5_SECONDS_* (L / ;) and VIDEO_MINUTE_* (Up / Down).
+                Keys.onUpPressed: root.video.seekBy(60000)
+                Keys.onDownPressed: root.video.seekBy(-60000)
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_L) {
+                        root.video.seekBy(5000)
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_Semicolon) {
+                        root.video.seekBy(-5000)
+                        event.accepted = true
+                    }
+                }
 
                 // The legacy "Associated files" confirmation, inline: the
                 // Document stays editable whatever is chosen.
@@ -580,9 +604,32 @@ ApplicationWindow {
                     visible: !root.video.hasVideo
                     text: root.video.status
                 }
-                RowLayout {
+                // The seek bar and the legacy times field (keyframes highlighted).
+                ColumnLayout {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    spacing: 2
+                Slider {
+                    objectName: "videoSlider"
+                    Layout.fillWidth: true
+                    from: 0
+                    to: Math.max(0, root.video.frameCount - 1)
+                    stepSize: 1
+                    value: Math.max(0, root.video.frame)
+                    enabled: root.video.hasVideo
+                    focusPolicy: Qt.NoFocus
+                    Accessible.name: qsTr("Video position")
+                    onMoved: root.video.showFrameAt(Math.round(value))
+                }
+                Label {
+                    objectName: "videoTimes"
+                    Layout.fillWidth: true
+                    text: root.video.times
+                    color: root.video.keyframeShown ? "#e0a030" : palette.windowText
+                    Accessible.name: qsTr("Video times")
+                }
+                RowLayout {
+                    Layout.fillWidth: true
                     Button {
                         objectName: "playPause"
                         text: root.video.playing ? qsTr("Pause") : qsTr("Play")
@@ -615,6 +662,7 @@ ApplicationWindow {
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
                     }
+                }
                 }
             }
 

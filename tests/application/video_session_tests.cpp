@@ -73,6 +73,7 @@ struct FakeSource : IndexedSourcePort {
         t.timeBaseDenominator = 1000;
         for (int i = 0; i < 10; ++i)
             t.pts.push_back(i * 40);
+        t.keyframes = {0, 4, 8};
         pendingOpen(t);
     }
     void answer(std::size_t which = 0)
@@ -322,4 +323,45 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     ASSERT_TRUE(video.stop());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 0);
+}
+
+TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
+{
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    auto lands = [&](int expected) {
+        if (source.frames.empty())
+            return false;
+        const int asked = source.frames.back().first;
+        while (!source.frames.empty())
+            source.answer();
+        return asked == expected && video.shownFrame() == expected;
+    };
+    video.showFrame(2);
+    EXPECT_TRUE(lands(2));                // 80 ms
+    ASSERT_TRUE(video.seekBy(100));       // 180 ms: the frame at or after is 5 (200 ms)
+    EXPECT_TRUE(lands(5));
+    ASSERT_TRUE(video.seekBy(-5000));     // before the start: the first frame
+    EXPECT_TRUE(lands(0));
+    ASSERT_TRUE(video.seekBy(60'000));    // past the end: the last frame
+    EXPECT_TRUE(lands(9));
+    // An end time shows the frame showing 1 ms before it.
+    video.seekToEnd(core::DocumentTime(200'000));
+    EXPECT_TRUE(lands(4));
+    video.seekToEnd(core::DocumentTime(0));
+    EXPECT_TRUE(lands(0));
+    // Keyframes 0, 4, 8, wrapping at both ends.
+    EXPECT_TRUE(video.isKeyframe(4));
+    EXPECT_FALSE(video.isKeyframe(5));
+    video.showFrame(5);
+    EXPECT_TRUE(lands(5));
+    ASSERT_TRUE(video.nextKeyframe());
+    EXPECT_TRUE(lands(8));
+    ASSERT_TRUE(video.nextKeyframe());
+    EXPECT_TRUE(lands(0));
+    ASSERT_TRUE(video.previousKeyframe());
+    EXPECT_TRUE(lands(8));
+    ASSERT_TRUE(video.previousKeyframe());
+    EXPECT_TRUE(lands(4));
 }

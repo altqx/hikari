@@ -39,6 +39,7 @@ struct SourceTimeline {
     std::vector<std::int64_t> pts; // per frame, in the time base (rational PTS)
     int firstAudioTrack = -1;      // -1: the source has no audio
     std::vector<int> audioTracks;  // every audio track, in container order
+    std::vector<int> keyframes;    // frame indices of keyframes, ascending (V2)
 };
 
 // AudioDecode (N2): immutable PCM for a half-open source sample range.

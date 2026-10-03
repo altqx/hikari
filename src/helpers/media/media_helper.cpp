@@ -123,6 +123,13 @@ void open(Source &source, Reader &in, Responder &r)
     out.i32(static_cast<std::int32_t>(audioTracks.size()));
     for (int t : audioTracks)
         out.i32(t);
+    std::vector<int> keyframes; // V2: legacy ProviderFFMS2 reads FFMS_FrameInfo::KeyFrame
+    for (int i = 0; i < props->NumFrames; ++i)
+        if (FFMS_GetFrameInfo(t, i)->KeyFrame)
+            keyframes.push_back(i);
+    out.i32(static_cast<std::int32_t>(keyframes.size()));
+    for (int k : keyframes)
+        out.i32(k);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);

@@ -125,6 +125,9 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
                 const std::int32_t audioCount = in.i32();
                 for (std::int32_t i = 0; in.ok() && i < audioCount; ++i)
                     t.audioTracks.push_back(in.i32());
+                const std::int32_t keyframeCount = in.i32();
+                for (std::int32_t i = 0; in.ok() && i < keyframeCount; ++i)
+                    t.keyframes.push_back(in.i32());
                 if (!in.ok())
                     return done(std::unexpected(SourceError::BackendFailure));
                 m_open = true;

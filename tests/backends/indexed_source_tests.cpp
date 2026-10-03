@@ -98,6 +98,10 @@ TEST_F(Fixture, ConstantRateFramesAreExact)
     const auto t = open("cfr", &progress);
     ASSERT_TRUE(t);
     EXPECT_EQ(t->pts.size(), 48u);
+    ASSERT_FALSE(t->keyframes.empty());
+    EXPECT_EQ(t->keyframes.front(), 0);
+    EXPECT_TRUE(std::is_sorted(t->keyframes.begin(), t->keyframes.end()));
+    EXPECT_LT(t->keyframes.back(), 48);
     EXPECT_EQ(t->fpsNumerator * 1001, t->fpsDenominator * 24000);
     EXPECT_TRUE(std::ranges::is_sorted(t->pts));
     expectExactFrames(48);
@@ -130,6 +134,8 @@ TEST_F(Fixture, LongGopSeeksAreExact)
     const auto t = open("longgop");
     ASSERT_TRUE(t);
     ASSERT_EQ(t->pts.size(), 300u);
+    // V2: FFMS2's keyframe flags come with the timeline; one GOP, one keyframe.
+    EXPECT_EQ(t->keyframes, std::vector<int>{0});
     // A sample across the single 300-frame GOP, including far backward seeks.
     for (int i : {299, 0, 150, 1, 298, 75, 200, 2})
         EXPECT_EQ(barcode(*frame(i)), i) << i;

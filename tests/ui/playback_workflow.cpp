@@ -112,6 +112,13 @@ protected:
             observed.push_back(expected > 0 ? "moved" : "did not move"); // 5
             mouseClick("mainWindow/stopVideo");
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 6
+            // V2: L is 5 s forward (past this 2 s video: its last frame), ; 5 s back.
+            invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
+            enterKey("mainWindow/videoPanel", Qt::Key_L, spix::KeyModifiers::None);
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 47 && s.accepted; }) ? "frame 47" : "no frame 47"); // 7
+            enterKey("mainWindow/videoPanel", Qt::Key_Semicolon, spix::KeyModifiers::None);
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 8
+            observed.push_back(getStringProperty("mainWindow/videoTimes", "text")); // 9
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -194,8 +201,8 @@ int main(int argc, char **argv)
     const auto &o = test.observed;
     for (std::size_t i = 0; i < o.size(); ++i)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
-    expect(o.size() == 7, "every step observed");
-    if (o.size() == 7) {
+    expect(o.size() == 10, "every step observed");
+    if (o.size() == 10) {
         expect(o[0] == "frame 0", "the first frame is shown");
         expect(o[1] == "Pause", "Play starts playback");
         expect(o[2] == "playing", "the player's frames are shown");
@@ -203,6 +210,9 @@ int main(int argc, char **argv)
         expect(o[4] == "Play", "paused");
         expect(o[5] == "moved", "playback advanced");
         expect(o[6] == "frame 0", "Stop returns to the first frame");
+        expect(o[7] == "frame 47", "L seeks 5 s forward, clamped to the last frame");
+        expect(o[8] == "frame 0", "; seeks 5 s back, clamped to the first frame");
+        expect(o[9] == "00:00:00,000;  0;  0;  0 ms, -2000 ms", "the times field");
     }
     return failures == 0 ? 0 : 1;
 }
