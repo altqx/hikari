@@ -793,18 +793,6 @@ private slots:
         QVERIFY(session->draftLine()); // rearranging does not commit the draft
         QVERIFY(application->workspace().editingTarget());
 
-        // F6 order: Video, Audio, Editor, Grid; back from the Grid is the floating Editor.
-        item("editingGrid")->forceActiveFocus();
-        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
-        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
-        // The Classic shortcuts work in the floating panel's window too.
-        QTRY_VERIFY(root->property("floatingPanelActive").toBool());
-        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
-        QVERIFY(history && !history->isVisible());
-        QTest::keyClick(item("editorPanel")->window(), Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
-        QTRY_VERIFY(history->isVisible());
-        history->close();
-
         QVERIFY(QMetaObject::invokeMethod(menuItem("panelDockEditor"), "triggered"));
         QTRY_VERIFY(!editorDock->property("isFloating").toBool());
         QTRY_COMPARE(item("editorPanel")->window(), window);
@@ -819,6 +807,30 @@ private slots:
         QTRY_VERIFY(item("gridPanel")->hasActiveFocus());
         QCOMPARE(item("editingGrid")->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
         application->editor().discard();
+    }
+
+    // D1: F6 and the Classic shortcuts reach a floating panel. They need the
+    // platform to activate the floating window (X without a window manager does not).
+    void f6AndShortcutsReachAFloatingPanel()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto *editorDock = root->findChild<QObject *>(QStringLiteral("editorDock"));
+        QVERIFY(editorDock->setProperty("isFloating", true));
+        QTRY_VERIFY(item("editorPanel")->window() != window);
+        QWindow *floating = item("editorPanel")->window();
+        // F6 order: Video, Audio, Editor, Grid; back from the Grid is the floating Editor.
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
+        if (!QTest::qWaitForWindowActive(floating, 3000))
+            QSKIP("The platform did not activate the floating panel's window (no window manager)");
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+        QTRY_VERIFY(root->property("floatingPanelActive").toBool());
+        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        QVERIFY(history && !history->isVisible());
+        QTest::keyClick(floating, Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(history->isVisible());
+        history->close();
     }
 
     // D1: the keyboard placement window expresses drag placements and resizes.
