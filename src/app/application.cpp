@@ -8,6 +8,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <cstdlib>
 #include <QFileInfo>
 
 namespace hikari::app {
@@ -27,6 +28,35 @@ QString mediaHelperPath(const QString &configured)
 #ifdef HIKARI_BUILD_MEDIA_HELPER
     if (!QFileInfo::exists(sibling))
         return QStringLiteral(HIKARI_BUILD_MEDIA_HELPER); // running from the build tree
+#endif
+    return sibling;
+}
+
+QString luaHelperPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+#ifdef _WIN32
+    const QString name = QStringLiteral("hikari-lua-helper.exe");
+#else
+    const QString name = QStringLiteral("hikari-lua-helper");
+#endif
+    const QString sibling = QCoreApplication::applicationDirPath() + QLatin1Char('/') + name;
+#ifdef HIKARI_BUILD_LUA_HELPER
+    if (!QFileInfo::exists(sibling))
+        return QStringLiteral(HIKARI_BUILD_LUA_HELPER);
+#endif
+    return sibling;
+}
+
+QString automationPath(const QString &configured)
+{
+    if (!configured.isEmpty())
+        return configured;
+    const QString sibling = QCoreApplication::applicationDirPath() + QStringLiteral("/Automation");
+#ifdef HIKARI_BUILD_AUTOMATION
+    if (!QFileInfo::exists(sibling + QStringLiteral("/automation")))
+        return QStringLiteral(HIKARI_BUILD_AUTOMATION);
 #endif
     return sibling;
 }
@@ -54,6 +84,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
+    m_automation = std::make_unique<AutomationShell>(
+        AutomationShell::Paths{luaHelperPath(options.luaHelper), automationPath(options.automationDir)}, *m_files,
+        m_workspace, *m_editor, *m_video, *m_shell, *m_mediaSource);
+    m_automation->setDocumentChanged([this] { refreshViews(); });
+    if (options.autoload)
+        m_automation->autoload();
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
@@ -89,6 +125,23 @@ std::optional<application::DocumentId> Application::open(const QString &path, bo
     auto id = m_files->activate(std::move(*staged));
     if (!id)
         return std::nullopt;
+    // Legacy SubsGrid::LoadSubtitles: the ASS "Active Line" (or the first Line)
+    // is active, selected and the anchor, and the editor shows it.
+    if (auto *session = m_files->session(*id); session && !session->selection().active) {
+        const auto lines = session->document().lines();
+        if (!lines.empty()) {
+            std::size_t active = 0;
+            if (session->document().format() == core::SubtitleFormat::Ass) {
+                const auto value = session->document().scriptInfo(u8"Active Line").value_or(std::u8string());
+                const std::string text(value.begin(), value.end());
+                const long n = std::strtol(text.c_str(), nullptr, 10); // wxAtoi
+                if (n > 0 && static_cast<std::size_t>(n) < lines.size())
+                    active = static_cast<std::size_t>(n);
+            }
+            const auto line = lines[active]->id;
+            session->setSelection(application::Selection{line, {line}, line, {}});
+        }
+    }
     m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
     return *id;
 }
@@ -423,6 +476,10 @@ QVariantMap Application::qmlProperties()
     return {{QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},
             {QStringLiteral("editor"), QVariant::fromValue(m_editor.get())},
             {QStringLiteral("video"), QVariant::fromValue(m_video.get())},
+            {QStringLiteral("automation"), QVariant::fromValue(static_cast<QObject *>(m_automation.get()))},
+            {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
+            {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
+            {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

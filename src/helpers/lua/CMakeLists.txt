@@ -53,10 +53,14 @@ endforeach()
 
 # A staged copy of the bundled automation tree with the modules in place, for
 # the helper's tests and the corpus (the source tree stays untouched).
-set(HIKARI_AUTOMATION_STAGE "${CMAKE_BINARY_DIR}/automation" CACHE INTERNAL "")
+# The legacy install layout: <app>/Automation/automation/{Autoload,Include},
+# with log, autosave and temp beside it (where ?user and ?data resolve).
+set(HIKARI_AUTOMATION_ROOT "${CMAKE_BINARY_DIR}/Automation" CACHE INTERNAL "")
+set(HIKARI_AUTOMATION_STAGE "${HIKARI_AUTOMATION_ROOT}/automation" CACHE INTERNAL "")
 add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/Automation/automation" "${HIKARI_AUTOMATION_STAGE}"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_AUTOMATION_ROOT}/log" "${HIKARI_AUTOMATION_ROOT}/autosave"
+        "${HIKARI_AUTOMATION_ROOT}/temp" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex"
         "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_badmutex>" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_precisetimer>" "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer/"

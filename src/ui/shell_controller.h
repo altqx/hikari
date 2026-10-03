@@ -28,6 +28,8 @@ class ShellController : public QObject {
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
     // "3 Lines selected", with the hidden count when some are hidden (G1).
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
+    // A transient status message (automation's set_status_text).
+    Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
 
 public:
     explicit ShellController(application::Workspace &workspace, QObject *parent = nullptr);
@@ -45,6 +47,14 @@ public:
     QString activeLineText() const { return m_activeText; }
     QString activeLineStyle() const { return m_activeStyle; }
     QString selectionStatus() const { return m_selectionStatus; }
+    QString statusText() const { return m_statusText; }
+    void setStatusText(const QString &text)
+    {
+        if (text != m_statusText) {
+            m_statusText = text;
+            emit statusTextChanged();
+        }
+    }
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
@@ -58,6 +68,7 @@ public:
 signals:
     void targetsChanged();
     void activeLineChanged();
+    void statusTextChanged();
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;
@@ -68,6 +79,7 @@ private:
     QString m_activeText;
     QString m_activeStyle;
     QString m_selectionStatus;
+    QString m_statusText;
 };
 
 } // namespace hikari::ui

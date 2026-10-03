@@ -120,6 +120,14 @@ public:
     // truncated to 10 ms), replaces the selection of the edited field. Refused
     // without video or when the video time is outside the Line.
     Q_INVOKABLE bool insertTimeDifference(bool fromEnd, int selectionStart, int selectionEnd);
+    // The text field reports its caret and selection (for automation's
+    // aegisub.gui); `role` 0 Original, 1 Translated.
+    Q_INVOKABLE void reportFieldSelection(int role, int start, int end);
+    std::pair<int, int> fieldSelection() const { return m_fieldSelection[translationMode() ? 1 : 0]; }
+    // Selects text in the edited field (aegisub.gui.set_cursor/set_selection).
+    void selectInField(int start, int end);
+    // The Document changed outside the editor (a macro): show it again.
+    void reloadFromSession();
     // The video time shown (ms), or nullopt without video.
     void setVideoTimeSource(std::function<std::optional<std::int64_t>()> source) { m_videoTime = std::move(source); }
     // Translation mode: EDITBOX_SET_DOUBTFUL (Alt+Down) toggles Unconfirmed and
@@ -179,6 +187,7 @@ private:
     int m_selectionEnd = 0;
     int m_selectionRole = 0;
     std::function<std::optional<std::int64_t>()> m_videoTime;
+    std::pair<int, int> m_fieldSelection[2] = {{0, 0}, {0, 0}};
 };
 
 } // namespace hikari::ui

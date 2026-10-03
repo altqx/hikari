@@ -36,6 +36,9 @@ public:
     // still running after `deadlineMs` are terminated. Returns those paths.
     std::vector<std::string> shutdown(int deadlineMs = 5000);
     void setGracePeriod(int ms);
+    // Handlers every script's helper gets, now and when loaded later (S1).
+    void setDialogHandler(LuaScriptHost::DialogHandler handler);
+    void setServiceHandler(LuaScriptHost::ServiceHandler handler);
     void setObserver(std::function<void()> changed) override { m_observer = std::move(changed); }
 
     const application::AutomationRegistry &registry() const { return m_registry; }
@@ -45,6 +48,13 @@ public:
 signals:
     void changed();
     void runFinished(const QString &path, hikari::backends::LuaScriptHost::RunOutcome outcome, const QString &message);
+    // The running macro's progress sink (legacy LuaProgressSink).
+    void logged(const QString &path, const QString &text);
+    void progressChanged(const QString &path, double percent);
+    void taskChanged(const QString &path, const QString &task);
+    void titleChanged(const QString &path, const QString &title);
+    void dialogWithdrawn(const QString &path);
+    void servicesWithdrawn(const QString &path);
 
 private:
     struct Entry {
@@ -61,6 +71,8 @@ private:
     std::map<std::string, Entry> m_entries;
     application::AutomationRegistry m_registry;
     std::function<void()> m_observer;
+    LuaScriptHost::DialogHandler m_dialogHandler;
+    LuaScriptHost::ServiceHandler m_serviceHandler;
     int m_graceMs = 3000;
     bool m_shuttingDown = false;
 };

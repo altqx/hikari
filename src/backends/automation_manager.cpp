@@ -99,6 +99,15 @@ void AutomationManager::rebuildRegistry()
 void AutomationManager::attach(const std::string &path, Entry &entry)
 {
     LuaScriptHost *host = entry.host.get();
+    host->setDialogHandler(m_dialogHandler);
+    host->setServiceHandler(m_serviceHandler);
+    const QString qpath = QString::fromStdString(path);
+    connect(host, &LuaScriptHost::logged, this, [this, qpath](const QString &t) { emit logged(qpath, t); });
+    connect(host, &LuaScriptHost::progressChanged, this, [this, qpath](double p) { emit progressChanged(qpath, p); });
+    connect(host, &LuaScriptHost::taskChanged, this, [this, qpath](const QString &t) { emit taskChanged(qpath, t); });
+    connect(host, &LuaScriptHost::titleChanged, this, [this, qpath](const QString &t) { emit titleChanged(qpath, t); });
+    connect(host, &LuaScriptHost::dialogWithdrawn, this, [this, qpath] { emit dialogWithdrawn(qpath); });
+    connect(host, &LuaScriptHost::servicesWithdrawn, this, [this, qpath] { emit servicesWithdrawn(qpath); });
     connect(host, &LuaScriptHost::loaded, this, [this, path] {
         m_entries.at(path).sha256 = fileSha256(path);
         rebuildRegistry();
@@ -180,6 +189,20 @@ bool AutomationManager::forceStop(const std::string &path)
         return false;
     notify();
     return true;
+}
+
+void AutomationManager::setDialogHandler(LuaScriptHost::DialogHandler handler)
+{
+    m_dialogHandler = std::move(handler);
+    for (auto &[path, e] : m_entries)
+        e.host->setDialogHandler(m_dialogHandler);
+}
+
+void AutomationManager::setServiceHandler(LuaScriptHost::ServiceHandler handler)
+{
+    m_serviceHandler = std::move(handler);
+    for (auto &[path, e] : m_entries)
+        e.host->setServiceHandler(m_serviceHandler);
 }
 
 void AutomationManager::setGracePeriod(int ms)

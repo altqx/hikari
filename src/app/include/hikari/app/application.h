@@ -4,6 +4,7 @@
 // workflow tests build the same graph: native file ports, the write
 // coordinator, Documents, the workspace and the shell/editor presenters.
 
+#include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/workspace.h"
@@ -32,6 +33,12 @@ public:
     struct Options {
         // The media helper program; empty: next to the application, else the build tree's.
         QString mediaHelper;
+        // The Lua helper and the Automation directory (holding automation/{Autoload,Include});
+        // empty: next to the application, else the build tree's.
+        QString luaHelper;
+        QString automationDir;
+        // Load the Autoload scripts at start (the application does; tests choose).
+        bool autoload = false;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -80,6 +87,7 @@ public:
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
+    AutomationShell &automation() { return *m_automation; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -109,6 +117,7 @@ private:
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
+    std::unique_ptr<AutomationShell> m_automation;
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;

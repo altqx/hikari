@@ -41,6 +41,10 @@ public:
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end or without video
     void showFrame(int index);
+    // Decodes a frame without showing it (automation get_frame), with the
+    // overlay rendered at its start when asked; nullptr without video.
+    void requestFrame(int index, bool withSubtitles,
+                      std::function<void(std::shared_ptr<const IndexedFrame>)> done);
 
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }

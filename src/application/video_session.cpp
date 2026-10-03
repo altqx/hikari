@@ -150,6 +150,33 @@ void VideoSession::showFrame(int index)
     notify();
 }
 
+void VideoSession::requestFrame(int index, bool withSubtitles,
+                                std::function<void(std::shared_ptr<const IndexedFrame>)> done)
+{
+    if (m_state != State::Ready || index < 0 || index >= frameCount())
+        return done(nullptr);
+    const std::weak_ptr<bool> alive = m_alive;
+    m_source.frame(index, [this, alive, index, withSubtitles, done](std::expected<IndexedFrame, SourceError> frame) {
+        if (alive.expired() || !frame)
+            return done(nullptr);
+        if (withSubtitles && m_hasSubtitles)
+            if (const auto start = frameStart(index))
+                if (auto overlay = m_renderer.render(*start, frame->width, frame->height)) {
+                    // Premultiplied overlay over the opaque frame.
+                    for (int y = 0; y < frame->height; ++y) {
+                        auto *dst = reinterpret_cast<std::uint8_t *>(frame->bgra.data()) + y * frame->stride;
+                        const auto *src = overlay->pixels.data() + y * overlay->stride;
+                        for (int x = 0; x < frame->width * 4; x += 4) {
+                            const unsigned a = src[x + 3];
+                            for (int c = 0; c < 3; ++c)
+                                dst[x + c] = static_cast<std::uint8_t>(src[x + c] + dst[x + c] * (255 - a) / 255);
+                        }
+                    }
+                }
+        done(std::make_shared<const IndexedFrame>(std::move(*frame)));
+    });
+}
+
 void VideoSession::render()
 {
     m_overlay.reset();

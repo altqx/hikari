@@ -21,6 +21,20 @@ ApplicationWindow {
     required property LineEditorController editor
     required property VideoController video
     required property var app
+    required property var automation
+    required property AutomationManagerController automationManager
+    required property AutomationDialogController automationDialogs
+    required property AutomationFilePickerController automationPicker
+
+    // Every registered macro, in load and registration order (the dynamic
+    // part of the legacy Automation menu).
+    readonly property var macroItems: {
+        const out = []
+        for (const script of root.automationManager.scripts)
+            for (const macro of script.macros)
+                out.push({ path: script.path, ordinal: macro.ordinal, name: macro.name })
+        return out
+    }
 
     // Close review (P1): rows of Documents with unsaved work, then `then`.
     function beginClose(then) {
@@ -182,6 +196,53 @@ ApplicationWindow {
                 }
             }
         }
+        Menu {
+            id: automationMenu
+            objectName: "automationMenu"
+            title: qsTr("&Automation")
+            MenuItem {
+                objectName: "loadScriptMenuItem"
+                action: Action {
+                    text: qsTr("&Load script…")
+                    onTriggered: scriptDialog.open()
+                }
+            }
+            MenuItem {
+                objectName: "reloadAutoloadMenuItem"
+                action: Action {
+                    text: qsTr("Refresh autoload scripts")
+                    onTriggered: root.automation.reloadAutoload()
+                }
+            }
+            MenuItem {
+                objectName: "rerunMenuItem"
+                action: Action {
+                    text: qsTr("Rerun last macro")
+                    enabled: root.automation.canRerun
+                    onTriggered: root.automation.rerunLast()
+                }
+            }
+            MenuItem {
+                objectName: "automationManagerMenuItem"
+                action: Action {
+                    text: qsTr("Automation &manager")
+                    onTriggered: automationManagerWindow.show()
+                }
+            }
+            MenuSeparator {}
+            Instantiator {
+                model: root.macroItems
+                delegate: MenuItem {
+                    required property var modelData
+                    objectName: "macro_" + modelData.name
+                    text: modelData.name
+                    enabled: !root.automation.running
+                    onTriggered: root.automationManager.run(modelData.path, modelData.ordinal)
+                }
+                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
+                onObjectRemoved: (index, object) => automationMenu.removeItem(object)
+            }
+        }
         Menu { title: qsTr("&View") }
         Menu { title: qsTr("&Help") }
     }
@@ -220,6 +281,9 @@ ApplicationWindow {
         }
         Component.onCompleted: sync()
         onTextChanged: if (!syncing) Qt.callLater(field.report)
+        onSelectionStartChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
+        onSelectionEndChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
+        onCursorPositionChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         Connections {
             target: root.editor
             function onChanged() { field.sync() }
@@ -599,6 +663,12 @@ ApplicationWindow {
             Layout.fillWidth: true
         }
         Label {
+            objectName: "statusText"
+            padding: 4
+            text: shell.statusText
+            visible: text.length > 0
+        }
+        Label {
             objectName: "selectionStatus"
             padding: 4
             text: shell.selectionStatus
@@ -782,6 +852,91 @@ ApplicationWindow {
             nameFilters: [qsTr("ASS subtitles (*.ass)"), qsTr("All files (*)")]
             onAccepted: closeReview.choices[row].path = root.app.localPath(selectedFile)
         }
+    }
+
+    // Automation windows (S1): the fixed script dialog and picker, the
+    // manager tool and the progress window (legacy LuaProgressDialog).
+    AutomationDialog {
+        objectName: "automationDialog"
+        controller: root.automationDialogs
+    }
+    AutomationFilePicker {
+        picker: root.automationPicker
+    }
+    Window {
+        id: automationManagerWindow
+        objectName: "automationManagerWindow"
+        title: qsTr("Automation manager")
+        width: 560
+        height: 420
+        AutomationManager {
+            anchors.fill: parent
+            controller: root.automationManager
+        }
+    }
+    Window {
+        id: automationProgress
+        objectName: "automationProgress"
+        title: root.automation.runTitle
+        width: 520
+        height: 340
+        flags: Qt.Dialog
+        // Shown while a macro runs; it stays after a failure so its log can be read.
+        property bool keep: false
+        visible: root.automation.running || keep
+        Connections {
+            target: root.automation
+            function onRunCompleted(ok, message) { automationProgress.keep = !ok && message.length > 0 }
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                objectName: "automationTask"
+                text: root.automation.task
+                Layout.fillWidth: true
+            }
+            ProgressBar {
+                from: 0
+                to: 100
+                value: root.automation.progress
+                Layout.fillWidth: true
+            }
+            ScrollView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                TextArea {
+                    objectName: "automationLog"
+                    readOnly: true
+                    wrapMode: TextEdit.Wrap
+                    text: root.automation.log
+                }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "automationForceStop"
+                    text: qsTr("Force stop")
+                    visible: root.automation.forceStopOffered
+                    onClicked: root.automation.forceStopRun()
+                }
+                Button {
+                    objectName: "automationCancel"
+                    text: root.automation.running ? qsTr("Cancel") : qsTr("Close")
+                    onClicked: {
+                        if (root.automation.running)
+                            root.automation.cancelRun()
+                        else
+                            automationProgress.keep = false
+                    }
+                }
+            }
+        }
+    }
+    FileDialog {
+        id: scriptDialog
+        nameFilters: [qsTr("Automation scripts (*.lua *.moon)"), qsTr("All files (*)")]
+        onAccepted: root.automation.loadScript(selectedFile)
     }
 
     FileDialog {

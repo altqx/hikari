@@ -18,7 +18,9 @@ int run(int argc, char **argv, StartupMode mode)
     QGuiApplication::setApplicationName(QStringLiteral("HikariSub"));
     QGuiApplication::setOrganizationName(QStringLiteral("HikariSub"));
 
-    Application application;
+    Application::Options options;
+    options.autoload = true; // legacy: the Autoload scripts load at start
+    Application application(options);
     // A path on the command line opens as the editing target.
     if (argc > 1)
         application.openFile(QString::fromLocal8Bit(argv[1]));

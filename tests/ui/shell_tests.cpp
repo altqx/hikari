@@ -178,18 +178,20 @@ private slots:
     {
         QVERIFY(application->openFile(episode));
         auto *grid = item("editingGrid");
-        grid->forceActiveFocus();
-        press(Qt::Key_Down); // keyboard navigation asks for the next Line
+        // Legacy LoadSubtitles: the first Line (no "Active Line") is active at once.
         QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
         QCOMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("0:00:01.00"));
         QVERIFY(!item<QObject>("lineText")->property("readOnly").toBool());
+        grid->forceActiveFocus();
+        press(Qt::Key_Down); // keyboard navigation asks for the next Line
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
     }
 
     void boldWrapsTheSelectionWithTagsHidden()
     {
         QVERIFY(application->openFile(episode));
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down); // the first Line, "first"
+        press(Qt::Key_Home); // the first Line, "first"
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         text->forceActiveFocus();
@@ -215,7 +217,7 @@ private slots:
     {
         QVERIFY(application->openFile(episode));
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down); // the first Line, "first"
+        press(Qt::Key_Home); // the first Line, "first"
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         text->forceActiveFocus();
@@ -340,7 +342,7 @@ private slots:
                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
         QVERIFY(application->openFile(path));
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down); // "first"
+        press(Qt::Key_Home); // "first"
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         const auto commitText = [&](const char *suffix) {
@@ -418,7 +420,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down);
+        press(Qt::Key_Home);
         auto *original = item("lineText");
         auto *translated = item("translationText");
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate"));
@@ -455,7 +457,7 @@ private slots:
         }
         QVERIFY(application->openFile(path));
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down);
+        press(Qt::Key_Home);
         auto *original = item("lineText");
         auto *translated = item("translationText");
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate keeper"));
@@ -484,7 +486,7 @@ private slots:
     {
         QVERIFY(application->openFile(episode)); // the first Line runs 1.00 to 2.00 s
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down);
+        press(Qt::Key_Home);
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         text->forceActiveFocus();
@@ -521,7 +523,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto &editor = application->editor();
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Down);
+        press(Qt::Key_Home);
         auto *original = item("lineText");
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("one two"));
         auto *session = application->files().session(*application->workspace().editingTarget());
