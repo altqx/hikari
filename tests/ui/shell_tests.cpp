@@ -205,6 +205,38 @@ private slots:
         QVERIFY(!session->draftLine());
     }
 
+    // #99: Undo and Redo put the caret at the end of what changed, so typing
+    // continues where the change was (the field used to keep its old index).
+    void undoAndRedoPlaceTheCaretAtTheChange()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // the first Line, "first"
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 2);
+        QTest::keyClick(window, 'X');
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("fiXrst"));
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("fiXrst"));
+        text->setProperty("cursorPosition", 6); // the caret moved away meanwhile
+        press(Qt::Key_Z, Qt::ControlModifier); // draft Undo
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 2);
+        press(Qt::Key_Y, Qt::ControlModifier); // draft Redo
+        QCOMPARE(text->property("text").toString(), QStringLiteral("fiXrst"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 3);
+        // Committed, then Document Undo and Redo on the same Line.
+        press(Qt::Key_Return, Qt::ControlModifier);
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Z, Qt::ControlModifier);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 2);
+        press(Qt::Key_Y, Qt::ControlModifier);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("fiXrst"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 3);
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

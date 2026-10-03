@@ -45,6 +45,8 @@ class LineEditorController : public QObject {
     // Where the text field's selection should be after a command.
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionRequested)
     Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY selectionRequested)
+    // The field a requested selection belongs to (0 Original, 1 Translated).
+    Q_PROPERTY(int selectionRole READ selectionRole NOTIFY selectionRequested)
 
 public:
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
@@ -102,6 +104,7 @@ public:
     Q_INVOKABLE bool findNextUntranslated();
     int selectionStart() const { return m_selectionStart; }
     int selectionEnd() const { return m_selectionEnd; }
+    int selectionRole() const { return m_selectionRole; }
 
     // The WriteCoordinator listener calls this after DocumentFiles has the result.
     void writeFinished();
@@ -118,6 +121,9 @@ private:
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
     void edit(int role, const QString &newText, int cursor);
+    // After Undo or Redo on the same Line: the caret goes to the end of what
+    // changed, in the field that changed (as in a text editor's own undo).
+    void placeCaretAfterChange(const QString (&before)[2]);
     const std::u8string &roleText(const core::LineRecord &line, int role) const
     {
         return role == 0 ? line.text : line.translation;
@@ -145,6 +151,7 @@ private:
     std::size_t m_nextUntranslated = 0; // legacy CurrentUntranslated
     int m_selectionStart = 0;
     int m_selectionEnd = 0;
+    int m_selectionRole = 0;
 };
 
 } // namespace hikari::ui

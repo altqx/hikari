@@ -415,12 +415,37 @@ void LineEditorController::discard()
     refresh();
 }
 
+void LineEditorController::placeCaretAfterChange(const QString (&before)[2])
+{
+    for (int role = 0; role < 2; ++role) {
+        const QString &a = before[role], &b = m_shown[role];
+        if (a == b)
+            continue;
+        qsizetype prefix = 0;
+        while (prefix < a.size() && prefix < b.size() && a[prefix] == b[prefix])
+            ++prefix;
+        qsizetype suffix = 0;
+        while (suffix < a.size() - prefix && suffix < b.size() - prefix &&
+               a[a.size() - 1 - suffix] == b[b.size() - 1 - suffix])
+            ++suffix;
+        qsizetype caret = b.size() - suffix;
+        if (caret > 0 && caret < b.size() && b[caret].isLowSurrogate())
+            ++caret; // never between the halves of a surrogate pair
+        m_selectionStart = m_selectionEnd = static_cast<int>(caret);
+        m_selectionRole = role;
+        emit selectionRequested();
+        return;
+    }
+}
+
 bool LineEditorController::undo()
 {
     auto *s = session();
     if (!s)
         return false;
     const auto r = record();
+    const QString before[2] = {m_shown[0], m_shown[1]};
+    const auto line = s->selection().active;
     if (!m_draftUndo.empty() && r) {
         m_draftRedo.push_back({r->text, r->translation});
         const Snapshot previous = std::move(m_draftUndo.back());
@@ -437,15 +462,18 @@ bool LineEditorController::undo()
             s->discardDraft();
         m_attempted.clear();
         refresh();
+        placeCaretAfterChange(before);
         return true;
     }
-    const auto before = s->revision();
+    const auto revision = s->revision();
     if (!s->undo()) {
         fail(problemText());
         return false;
     }
-    if (s->revision() != before)
+    if (s->revision() != revision)
         committed();
+    if (s->selection().active == line)
+        placeCaretAfterChange(before);
     if (s->selection().active)
         emit lineChanged(s->selection().active->value);
     return true;
@@ -457,17 +485,22 @@ bool LineEditorController::redo()
     if (!s)
         return false;
     const auto r = record();
+    const QString before[2] = {m_shown[0], m_shown[1]};
+    const auto line = s->selection().active;
     if (!m_draftRedo.empty() && r) {
         m_draftUndo.push_back({r->text, r->translation});
         const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
         s->editDraft(r->id, application::DraftChange{.text = next.text, .translation = next.translation});
         refresh();
+        placeCaretAfterChange(before);
         return true;
     }
     if (!s->redo())
         return false;
     committed();
+    if (s->selection().active == line)
+        placeCaretAfterChange(before);
     if (s->selection().active)
         emit lineChanged(s->selection().active->value);
     return true;
@@ -553,6 +586,7 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
         m_selectionStart = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionStart)));
         m_selectionEnd = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd)));
     }
+    m_selectionRole = role;
     emit selectionRequested();
     return true;
 }
@@ -589,6 +623,7 @@ bool LineEditorController::splitLine(int role, int selectionStart, int selection
     const auto after = core::project(raw);
     m_selectionStart = m_selectionEnd =
         m_showTags ? static_cast<int>(caret) : static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(caret)));
+    m_selectionRole = role;
     emit selectionRequested();
     return true;
 }

@@ -138,7 +138,7 @@ ApplicationWindow {
             target: root.editor
             function onChanged() { field.sync() }
             function onSelectionRequested() {
-                if (field.activeFocus)
+                if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
         }
