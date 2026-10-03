@@ -915,6 +915,24 @@ private slots:
         application->editor().discard();
     }
 
+    // P8: Help > About and Credits show the legacy notices with this build's version.
+    void aboutAndCreditsShowTheNotices()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *about = root->findChild<QObject *>(QStringLiteral("aboutDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(about->property("visible").toBool());
+        const QString text = dialogItem("aboutDialog", "aboutText")->property("text").toString();
+        QVERIFY2(text.contains(QStringLiteral("version %1").arg(application->updates().version())), qPrintable(text));
+        QVERIFY(text.contains(QStringLiteral("Based on Kainote by Marcin Drob")));
+        QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
+        QVERIFY(QMetaObject::invokeMethod(about, "close"));
+        auto *credits = root->findChild<QObject *>(QStringLiteral("creditsDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(credits->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(credits, "close"));
+    }
+
     // P7: the legacy Save routes: the video name, the extension, Save
     // translation, Save all and read-only files.
     void saveVariantsFollowTheLegacySave()

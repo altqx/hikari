@@ -41,6 +41,8 @@ int run(int argc, char **argv, StartupMode mode)
         return 2;
     if (mode == StartupMode::ExitAfterWindowCreated)
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
+    else // legacy CallAfter(CheckOnStartup): once the window is up
+        QTimer::singleShot(0, &application, [&application] { application.updates().checkOnStartup(); });
     return app.exec();
 }
 

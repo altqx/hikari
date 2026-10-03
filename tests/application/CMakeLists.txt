@@ -38,3 +38,5 @@ hikari_add_gtest(hikari_application_shift_times_tests SOURCES shift_times_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_update_check_tests SOURCES update_check_tests.cpp
+    LIBRARIES hikari_application LABELS application)

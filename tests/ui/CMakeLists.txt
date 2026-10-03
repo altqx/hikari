@@ -84,3 +84,4 @@ add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_
 hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
     LIBRARIES KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)

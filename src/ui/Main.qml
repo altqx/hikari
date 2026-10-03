@@ -33,6 +33,7 @@ ApplicationWindow {
     required property ShiftTimesController shiftTimes
     required property GridFilterController gridFilter
     required property var automationHotkeys
+    required property var updates
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -714,10 +715,38 @@ ApplicationWindow {
         Menu {
             title: qsTr("&Help")
             MenuItem {
+                action: Action {
+                    text: qsTr("HikariSub &website")
+                    onTriggered: Qt.openUrlExternally("https://altqx.com")
+                }
+            }
+            MenuItem {
                 objectName: "reportIssueMenuItem"
                 action: Action {
                     text: qsTr("&Report an issue")
                     onTriggered: root.app.reportIssue()
+                }
+            }
+            MenuItem {
+                objectName: "checkForUpdatesMenuItem"
+                action: Action {
+                    text: qsTr("Check for &updates")
+                    enabled: !root.updates.checking
+                    onTriggered: root.updates.checkNow()
+                }
+            }
+            MenuItem {
+                objectName: "aboutMenuItem"
+                action: Action {
+                    text: qsTr("&About")
+                    onTriggered: aboutDialog.open()
+                }
+            }
+            MenuItem {
+                objectName: "creditsMenuItem"
+                action: Action {
+                    text: qsTr("&Credits")
+                    onTriggered: creditsDialog.open()
                 }
             }
         }
@@ -2460,6 +2489,120 @@ ApplicationWindow {
         standardButtons: Dialog.Yes | Dialog.No
         Label { text: qsTr("Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTr("start") : qsTr("end")) }
         onAccepted: shiftMessage.text = root.app.shiftTimes()
+    }
+    // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
+    // and failures; the automatic one speaks only for a newer release.
+    Connections {
+        target: root.updates
+        function onFinished(outcome, release, interactive) {
+            if (outcome === "available") {
+                updateAvailable.release = release
+                updateAvailable.open()
+            } else {
+                updateMessage.text = outcome === "current" ? qsTr("You already have the latest version")
+                                                          : qsTr("Cannot check for updates")
+                updateMessage.open()
+            }
+        }
+    }
+    Dialog {
+        id: updateMessage
+        objectName: "updateMessage"
+        property alias text: updateMessageLabel.text
+        title: qsTr("Update")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        Label { id: updateMessageLabel }
+    }
+    Dialog {
+        id: updateAvailable
+        objectName: "updateAvailable"
+        property var release: ({})
+        title: qsTr("A new version is available")
+        modal: true
+        anchors.centerIn: parent
+        ColumnLayout {
+            anchors.fill: parent
+            Label { text: updateAvailable.release.name || ""; font.bold: true }
+            Label { text: qsTr("You have version %1; version %2 is available").arg(root.updates.version).arg(updateAvailable.release.tag || "") }
+            ScrollView {
+                Layout.preferredWidth: 460
+                Layout.preferredHeight: 220
+                TextArea { objectName: "updateNotes"; text: updateAvailable.release.notes || ""; readOnly: true; wrapMode: TextEdit.Wrap }
+            }
+            Label { text: updateAvailable.release.url || "" }
+            CheckBox {
+                objectName: "updateAutoCheck"
+                text: qsTr("Check for updates automatically")
+                checked: root.updates.autoCheck
+                onToggled: root.updates.autoCheck = checked
+            }
+            CheckBox {
+                objectName: "updateStableOnly"
+                text: qsTr("Stable versions only")
+                checked: root.updates.stableOnly
+                onToggled: root.updates.stableOnly = checked
+            }
+            RowLayout {
+                Button { text: qsTr("Open the download page"); onClicked: root.updates.openReleasePage(updateAvailable.release.url || "") }
+                Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
+                Button { text: qsTr("Close"); onClicked: updateAvailable.close() }
+            }
+        }
+    }
+    Dialog {
+        id: aboutDialog
+        objectName: "aboutDialog"
+        title: qsTr("About HikariSub")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        Label {
+            objectName: "aboutText"
+            text: qsTr("HikariSub subtitle editor by altqx,\nversion %1").arg(root.updates.version) + " \n\n" +
+                  qsTr("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
+                  qsTr("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
+                  qsTr("HikariSub includes parts of the following projects:\n") +
+                  "Qt - Copyright © The Qt Company Ltd. and other contributors.\n" +
+                  "KDDockWidgets - Copyright © Klarälvdalens Datakonsult AB (KDAB).\n" +
+                  qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
+                  "Copyright © Rodrigo Braz Monteiro.\n" +
+                  "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
+                  "FFmpeg - Copyright © the FFmpeg developers.\n" +
+                  "LuaJIT - Copyright © Mike Pall.\n" +
+                  "ICU - Copyright © 1995-2016 International Business Machines Corporation and others.\n" +
+                  "Boost - Copyright © Joe Coder 2004 - 2006.\n" +
+                  "FreeType2 - Copyright © 2006-2019 David Turner, Robert Wilhelm, and Werner Lemberg.\n" +
+                  "Fribidi - Copyright © 1991, 1999 Free Software Foundation, Inc.\n" +
+                  "Libass - Copyright © 2006-2016 libass contributors.\n"
+        }
+    }
+    Dialog {
+        id: creditsDialog
+        objectName: "creditsDialog"
+        title: qsTr("Credits")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        Label {
+            text: qsTr("Graphical help: (buttons, help pictures etc.)\n") +
+                  qsTr("- Xandros (new video buttons).\n") +
+                  qsTr("- Devilkan (menu and toolbar buttons)\n") +
+                  qsTr("- Zły Los (icons for file associations and menu).\n") +
+                  qsTr("Testers:\n") +
+                  qsTr("- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n") +
+                  qsTr("- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n") +
+                  qsTr("helped with typesetting tools and came up with many more improvements).\n") +
+                  qsTr("- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n") +
+                  qsTr("- mas1904 (found some errors and helping with crash debuging).\n") +
+                  qsTr("- Senami (made new themes and found some bugs).\n") +
+                  qsTr("- altinat (Thai translation).\n") +
+                  qsTr("- labrie75 (Korean translation).\n") +
+                  qsTr("- Niskala5570 (Malay translation).\n") +
+                  qsTr("Thanks to other HikariSub users who reported bugs:\n") +
+                  "SoheiMajin, BadRequest, Ognisty321, ZlyLos, Thomas Leigh, TomBit."
+        }
     }
     SelectLinesDialog {
         id: selectLinesDialog

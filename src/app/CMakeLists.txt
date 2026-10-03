@@ -3,14 +3,16 @@
 # test hook in the executable.
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
     automation_shell.cpp include/hikari/app/automation_shell.h
-    automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h)
+    automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
+    update_checker.cpp include/hikari/app/update_checker.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
-    Qt6::Gui Qt6::Qml Qt6::Quick)
+    Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Network)
 # Running from the build tree, the media helper is not next to the executable.
 target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
-    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}")
+    HIKARI_BUILD_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>" HIKARI_BUILD_AUTOMATION="${HIKARI_AUTOMATION_ROOT}"
+    HIKARI_VERSION="${PROJECT_VERSION}")
 add_dependencies(hikari_composition hikari_media_helper hikari_lua_helper hikari_automation_stage)
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
     hikari_application hikari_core "Qt6::*" "hikari_ui*")

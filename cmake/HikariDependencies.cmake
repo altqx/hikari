@@ -8,7 +8,7 @@ include_guard(GLOBAL)
 find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
 
-find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS Core Gui Qml Quick Multimedia)
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS Core Gui Qml Quick Multimedia Network)
 cmake_path(IS_PREFIX HIKARI_QT_PREFIX "${Qt6_DIR}" NORMALIZE _hikari_qt_owned)
 if(NOT _hikari_qt_owned)
     message(FATAL_ERROR "Qt6_DIR ${Qt6_DIR} is not the provisioned Qt at ${HIKARI_QT_PREFIX}")
