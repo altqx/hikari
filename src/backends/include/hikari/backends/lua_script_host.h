@@ -19,6 +19,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 
 namespace hikari::backends {
 
@@ -37,6 +38,14 @@ public:
     ~LuaScriptHost() override;
 
     void setDialogHandler(DialogHandler handler) { m_dialogHandler = std::move(handler); }
+    // Host services (L3): each request carries this script's path and the run
+    // that asked (0 for the top level while loading), and is answered at most
+    // once; an answer after the run or load ended is dropped. Without a
+    // handler every service answers Unavailable.
+    using ServiceReply = std::function<void(application::HostServiceReply)>;
+    using ServiceHandler = std::function<void(const application::HostServiceRequest &, ServiceReply)>;
+    void setServiceHandler(ServiceHandler handler) { m_serviceHandler = std::move(handler); }
+    std::size_t pendingServices() const { return m_pendingServices.size(); }
 
     void load();
     // A new helper generation that loads the script again.
@@ -78,6 +87,8 @@ signals:
     void finished(hikari::backends::LuaScriptHost::RunOutcome outcome, const QString &message);
     // The run ended while its dialog was open: close the dialog.
     void dialogWithdrawn();
+    // The run ended while host services were unanswered (a picker may be open).
+    void servicesWithdrawn();
     void forceStopOffered();
     void unavailable(const QString &reason);
 
@@ -86,6 +97,7 @@ private:
     void sendLoad();
     void onEvent(std::uint64_t request, std::expected<helper::Event, helper::HostError> event);
     void endRun(RunOutcome outcome, const QString &message);
+    void handleHostService(std::uint64_t request, const helper::Event &event);
 
     QString m_helperPath, m_scriptPath, m_sharedInclude;
     int m_traceLevel;
@@ -94,7 +106,8 @@ private:
     application::ScriptInfo m_info;
     QString m_lastError;
     std::uint64_t m_nextRun = 1;
-    std::uint64_t m_runRequest = 0; // the request of the running macro
+    std::uint64_t m_runRequest = 0;  // the request of the running macro
+    std::uint64_t m_loadRequest = 0; // the Load request while the top level runs
     bool m_dialogOpen = false;
     bool m_cancelRequested = false;
     bool m_forceStopOffered = false;
@@ -103,6 +116,8 @@ private:
     double m_loadMs = 0;
     std::int64_t m_loadStartedNs = 0;
     DialogHandler m_dialogHandler;
+    ServiceHandler m_serviceHandler;
+    std::set<std::uint64_t> m_pendingServices; // call ids of the running macro
     std::optional<application::MacroResult> m_lastResult;
 };
 

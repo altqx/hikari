@@ -14,9 +14,13 @@
 // with the legacy field coercions, button IDs truncated, and results typed
 // per control.
 //
+// Host services (L3) keep the legacy argument handling and return shapes and
+// are answered by the application's platform ports, also while the script's
+// top level runs.
+//
 // Not yet here, owned by the A33 automation cards: the native preloads
-// (lpeg, luabins, re/unicode/lfs) and MoonScript, document and media
-// services, and the gettext catalog (identity for now).
+// (lpeg, luabins, re/unicode/lfs) and MoonScript, and the gettext catalog
+// (identity for now).
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/lua_protocol.h"
@@ -31,6 +35,8 @@ extern "C" {
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
+#include <new>
 #include <filesystem>
 #include <type_traits>
 #include <variant>
@@ -60,6 +66,7 @@ struct Script {
 
 Script g_script;
 Responder *g_responder = nullptr; // the running request
+Responder *g_services = nullptr;  // host services: the running request, or the Load while the top level runs
 int g_lastProgress = 0;
 char g_cancelTag; // its address identifies aegisub.cancel()
 
@@ -189,12 +196,6 @@ int gettext(lua_State *L)
 {
     lua_pushstring(L, checkString(L, 1).c_str()); // catalog bridge: A33-compat
     return 1;
-}
-
-int notYetAvailable(lua_State *L)
-{
-    return luaL_error(L, "%s is not yet available in the isolated automation host",
-                      lua_tostring(L, lua_upvalueindex(1)));
 }
 
 int include(lua_State *L)
@@ -528,10 +529,8 @@ int dialogDisplay(lua_State *L)
     return 2;
 }
 
-int fileDialog(lua_State *L)
-{
-    return luaL_error(L, "file dialogs are not yet available in the isolated automation host");
-}
+int openDialog(lua_State *L);
+int saveDialog(lua_State *L);
 
 void installSink(lua_State *L)
 {
@@ -555,9 +554,9 @@ void installSink(lua_State *L)
     lua_createtable(L, 0, 3);
     lua_pushcfunction(L, dialogDisplay);
     lua_setfield(L, -2, "display");
-    lua_pushcfunction(L, fileDialog);
+    lua_pushcfunction(L, openDialog);
     lua_setfield(L, -2, "open");
-    lua_pushcfunction(L, fileDialog);
+    lua_pushcfunction(L, saveDialog);
     lua_setfield(L, -2, "save");
     lua_setfield(L, -2, "dialog");
     lua_pop(L, 1);
@@ -573,6 +572,8 @@ void removeSink(lua_State *L)
     lua_pop(L, 1);
 }
 
+void installHostServices(lua_State *L);
+
 void installAegisub(lua_State *L)
 {
     lua_createtable(L, 0, 24);
@@ -586,21 +587,7 @@ void installAegisub(lua_State *L)
     lua_setfield(L, -2, "gettext");
     lua_pushinteger(L, 4);
     lua_setfield(L, -2, "lua_automation_version");
-    // Host services that arrive with the A33 automation cards.
-    for (const char *name : {"text_extents", "frame_from_ms", "ms_from_frame", "video_size", "keyframes",
-                             "decode_path", "__init_clipboard", "file_name", "project_properties",
-                             "get_audio_selection", "set_status_text", "get_frame"}) {
-        lua_pushstring(L, (std::string("aegisub.") + name).c_str());
-        lua_pushcclosure(L, notYetAvailable, 1);
-        lua_setfield(L, -2, name);
-    }
-    lua_createtable(L, 0, 5);
-    for (const char *name : {"get_cursor", "set_cursor", "get_selection", "set_selection", "is_modified"}) {
-        lua_pushstring(L, (std::string("aegisub.gui.") + name).c_str());
-        lua_pushcclosure(L, notYetAvailable, 1);
-        lua_setfield(L, -2, name);
-    }
-    lua_setfield(L, -2, "gui");
+    installHostServices(L);
     lua_setglobal(L, "aegisub");
 }
 
@@ -638,6 +625,10 @@ void load(Reader &in, Responder &r)
     lua_pop(L, 1);
     installAegisub(L);
     g_script.L = L;
+    g_services = &r;
+    struct EndServices {
+        ~EndServices() { g_services = nullptr; }
+    } endServices;
 
     auto fail = [&](const std::string &message) {
         g_script.info = {};
@@ -1209,6 +1200,479 @@ int setUndoPoint(lua_State *)
     return 0; // a legacy stub (C06): it changes nothing
 }
 
+// ---- host services (L3; legacy HikariSub/Automation.cpp) ------------------
+// Each function keeps the legacy argument handling and return shape; the
+// application answers through its platform ports. Unavailable is the legacy
+// nil (no video, no Document, a cancelled picker).
+
+using hikari::application::HostService;
+using hikari::application::HostServiceReply;
+using hikari::application::HostServiceRequest;
+
+// A synchronous host call. std::nullopt with `failure` set when no request
+// can carry it, the request was cancelled or the host could not answer.
+std::optional<HostServiceReply> askHost(HostServiceRequest request, Outcome *failure = nullptr)
+{
+    Outcome ignored;
+    Outcome &why = failure ? *failure : ignored;
+    if (!g_services) {
+        why = Outcome::Failed;
+        return std::nullopt;
+    }
+    Writer w;
+    w.i32(static_cast<std::int32_t>(lua::Service::Host));
+    auto payload = w.take();
+    const auto body = lua::encodeHostRequest(request);
+    payload.insert(payload.end(), body.begin(), body.end());
+    const auto answer = g_services->call(std::move(payload));
+    if (!answer) {
+        why = answer.error();
+        return std::nullopt;
+    }
+    auto reply = lua::decodeHostReply(*answer);
+    if (!reply)
+        why = Outcome::InvalidInput;
+    return reply;
+}
+
+// From Lua: a cancelled run raises the cancellation, a failed call a script
+// error. std::nullopt means Unavailable (push nil).
+std::optional<HostServiceReply> callHost(lua_State *L, const char *name, HostService service,
+                                         std::vector<std::int64_t> integers = {},
+                                         std::vector<std::string> strings = {},
+                                         std::vector<std::string> style = {})
+{
+    if (!g_services)
+        return std::nullopt;
+    HostServiceRequest request;
+    request.service = service;
+    request.integers = std::move(integers);
+    request.strings = std::move(strings);
+    request.style = std::move(style);
+    Outcome failure = Outcome::Ok;
+    auto reply = askHost(std::move(request), &failure);
+    if (!reply) {
+        if (failure == Outcome::Cancelled)
+            cancelScript(L);
+        luaL_error(L, "the host could not answer aegisub.%s", name);
+    }
+    if (reply->status == HostServiceReply::Status::Unavailable)
+        return std::nullopt;
+    return reply;
+}
+
+std::int64_t integerAt(const HostServiceReply &r, std::size_t i)
+{
+    return i < r.integers.size() ? r.integers[i] : 0;
+}
+
+std::string stringAt(const HostServiceReply &r, std::size_t i)
+{
+    return i < r.strings.size() ? r.strings[i] : std::string();
+}
+
+int pushNil(lua_State *L)
+{
+    lua_pushnil(L);
+    return 1;
+}
+
+int frameFromMs(lua_State *L)
+{
+    const int ms = static_cast<int>(lua_tonumber(L, -1));
+    const auto reply = callHost(L, "frame_from_ms", HostService::FrameFromMs, {ms});
+    if (!reply)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
+    return 1;
+}
+
+int msFromFrame(lua_State *L)
+{
+    const int frame = static_cast<int>(lua_tonumber(L, -1));
+    const auto reply = callHost(L, "ms_from_frame", HostService::MsFromFrame, {frame});
+    if (!reply)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
+    return 1;
+}
+
+int videoSize(lua_State *L)
+{
+    const auto reply = callHost(L, "video_size", HostService::VideoSize);
+    if (!reply)
+        return pushNil(L);
+    const float ar = static_cast<float>(integerAt(*reply, 2)) / static_cast<float>(integerAt(*reply, 3));
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 1)));
+    lua_pushnumber(L, ar);
+    // Legacy's 2.35 test can never hold, so wide frames report 4.
+    lua_pushnumber(L, (ar == 1.0f)                 ? 0
+                      : (ar < 1.34f && ar > 1.33f) ? 1
+                      : (ar < 1.78f && ar > 1.77f) ? 2
+                                                   : 4);
+    return 4;
+}
+
+int keyframes(lua_State *L)
+{
+    const auto reply = callHost(L, "keyframes", HostService::Keyframes);
+    if (!reply)
+        return pushNil(L);
+    lua_createtable(L, static_cast<int>(reply->integers.size()), 0);
+    for (std::size_t i = 0; i < reply->integers.size(); ++i) {
+        lua_pushnumber(L, static_cast<double>(reply->integers[i]));
+        lua_rawseti(L, -2, static_cast<int>(i) + 1);
+    }
+    return 1;
+}
+
+// get_frame's VideoFrame: BGRA rows, never flipped here.
+struct VideoFrame {
+    std::size_t width = 0, height = 0;
+    std::vector<std::byte> data;
+};
+
+VideoFrame *checkFrame(lua_State *L)
+{
+    return static_cast<VideoFrame *>(luaL_checkudata(L, 1, "VideoFrame"));
+}
+
+int frameWidth(lua_State *L)
+{
+    lua_pushnumber(L, static_cast<double>(checkFrame(L)->width));
+    return 1;
+}
+
+int frameHeight(lua_State *L)
+{
+    lua_pushnumber(L, static_cast<double>(checkFrame(L)->height));
+    return 1;
+}
+
+// The pixel at (x, y), the last two arguments; nil outside the frame.
+const unsigned char *framePixel(lua_State *L, VideoFrame *frame)
+{
+    const auto x = static_cast<std::size_t>(lua_tointeger(L, -2));
+    const auto y = static_cast<std::size_t>(lua_tointeger(L, -1));
+    lua_pop(L, 2);
+    if (x >= frame->width || y >= frame->height)
+        return nullptr;
+    return reinterpret_cast<const unsigned char *>(frame->data.data()) + y * frame->width * 4 + x * 4;
+}
+
+int frameGetPixel(lua_State *L)
+{
+    const unsigned char *p = framePixel(L, checkFrame(L));
+    if (!p)
+        return pushNil(L);
+    lua_pushnumber(L, p[2] * 65536 + p[1] * 256 + p[0]); // RGB
+    return 1;
+}
+
+int frameGetPixelFormatted(lua_State *L)
+{
+    const unsigned char *p = framePixel(L, checkFrame(L));
+    if (!p)
+        return pushNil(L);
+    char text[16]; // AssColor::GetAss(false): "&HBBGGRR&"
+    std::snprintf(text, sizeof text, "&H%02X%02X%02X&", p[0], p[1], p[2]);
+    lua_pushstring(L, text);
+    return 1;
+}
+
+int frameCollect(lua_State *L)
+{
+    checkFrame(L)->~VideoFrame();
+    return 0;
+}
+
+int getFrame(lua_State *L)
+{
+    const std::int64_t number = lua_tointeger(L, 1);
+    const bool withSubtitles = lua_gettop(L) >= 2 && lua_toboolean(L, 2);
+    if (luaL_newmetatable(L, "VideoFrame")) {
+        lua_pushvalue(L, -1);
+        lua_setfield(L, -2, "__index");
+        static const luaL_Reg methods[] = {{"width", frameWidth},
+                                           {"height", frameHeight},
+                                           {"getPixel", frameGetPixel},
+                                           {"getPixelFormatted", frameGetPixelFormatted},
+                                           {"__gc", frameCollect},
+                                           {nullptr, nullptr}};
+        luaL_register(L, nullptr, methods);
+    }
+    lua_pop(L, 1);
+    auto reply = callHost(L, "get_frame", HostService::Frame, {number, withSubtitles ? 1 : 0});
+    const auto width = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 0))) : 0;
+    const auto height = reply ? static_cast<std::size_t>(std::max<std::int64_t>(0, integerAt(*reply, 1))) : 0;
+    if (!reply || reply->pixels.size() != width * height * 4)
+        return pushNil(L);
+    auto *frame = new (lua_newuserdata(L, sizeof(VideoFrame))) VideoFrame{width, height, std::move(reply->pixels)};
+    (void)frame;
+    luaL_getmetatable(L, "VideoFrame");
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+int audioSelection(lua_State *L)
+{
+    const auto reply = callHost(L, "get_audio_selection", HostService::AudioSelection);
+    if (!reply)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0)));
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 1)));
+    return 2;
+}
+
+// Legacy looks Script Info up by the Lua field names themselves
+// (GetSInfo("automation_scripts"), ...), so these are empty unless a script
+// carries such keys.
+std::string scriptInfoValue(const char *key)
+{
+    if (!g_subs)
+        return {};
+    for (const auto &info : g_subs->lists.info)
+        if (info.key == key)
+            return info.value;
+    return {};
+}
+
+int projectProperties(lua_State *L)
+{
+    const auto reply = callHost(L, "project_properties", HostService::ProjectProperties);
+    if (!reply)
+        return pushNil(L);
+    lua_createtable(L, 0, 14);
+    for (const char *key : {"automation_scripts", "export_filters", "export_encoding", "style_storage"})
+        setString(L, key, scriptInfoValue(key));
+    setNumber(L, "video_zoom", 1);
+    for (const char *key : {"ar_value", "scroll_position", "active_row", "ar_mode"})
+        setString(L, key, scriptInfoValue(key));
+    setNumber(L, "video_position", static_cast<double>(integerAt(*reply, 0)));
+    setString(L, "audio_file", stringAt(*reply, 0));
+    setString(L, "video_file", stringAt(*reply, 1));
+    setString(L, "timecodes_file", "");
+    setString(L, "keyframes_file", stringAt(*reply, 2));
+    return 1;
+}
+
+int textExtents(lua_State *L)
+{
+    if (!lua_istable(L, 1)) {
+        lua_pushstring(L, "First argument of text_extents must be a table");
+        return lua_error(L);
+    }
+    if (!lua_isstring(L, 2)) {
+        lua_pushfstring(L, "Second argument of text_extents must be a string but is of type %s",
+                        lua_typename(L, lua_type(L, 2)));
+        return lua_error(L);
+    }
+    lua_pushvalue(L, 1);
+    const auto entry = luaToLine(L);
+    lua_pop(L, 1);
+    if (!entry || !std::holds_alternative<MacroStyleLine>(*entry))
+        return 0;
+    const std::string text = lua_tostring(L, 2);
+    if (text.empty()) {
+        for (int i = 0; i < 4; ++i)
+            lua_pushnumber(L, 0);
+        return 4;
+    }
+    const auto reply =
+        callHost(L, "text_extents", HostService::TextExtents, {}, {text}, std::get<MacroStyleLine>(*entry).fields);
+    if (!reply || reply->numbers.size() != 4)
+        return 0;
+    for (const double v : reply->numbers)
+        lua_pushnumber(L, v);
+    return 4;
+}
+
+// Clipboard through LuaJIT FFI function pointers (aegisub.__init_clipboard,
+// used by aegisub/clipboard.lua). They cannot raise Lua errors: a failed or
+// cancelled call reads as an empty clipboard or a failed set.
+char *hikariClipboardGet()
+{
+    HostServiceRequest request;
+    request.service = HostService::ClipboardGet;
+    const auto reply = askHost(std::move(request));
+    if (!reply || reply->status != HostServiceReply::Status::Ok || reply->strings.empty() ||
+        reply->strings[0].empty())
+        return nullptr;
+    const std::string &text = reply->strings[0];
+    auto *copy = static_cast<char *>(std::malloc(text.size() + 1)); // freed by the script (ffi.C.free)
+    if (copy) {
+        std::memcpy(copy, text.data(), text.size());
+        copy[text.size()] = 0;
+    }
+    return copy;
+}
+
+bool hikariClipboardSet(const char *text)
+{
+    HostServiceRequest request;
+    request.service = HostService::ClipboardSet;
+    request.strings = {text ? text : ""};
+    const auto reply = askHost(std::move(request));
+    return reply && reply->status == HostServiceReply::Status::Ok && integerAt(*reply, 0) != 0;
+}
+
+int initClipboard(lua_State *L)
+{
+    lua_getglobal(L, "require");
+    lua_pushstring(L, "ffi");
+    lua_call(L, 1, 1);
+    lua_getfield(L, -1, "cast");
+    lua_remove(L, -2);
+    lua_createtable(L, 0, 2);
+    const auto add = [&](const char *name, const char *type, void *fn) {
+        lua_pushvalue(L, -2);
+        lua_pushstring(L, type);
+        lua_pushlightuserdata(L, fn);
+        lua_call(L, 2, 1);
+        lua_setfield(L, -2, name);
+    };
+    add("get", "char *(*)()", reinterpret_cast<void *>(&hikariClipboardGet));
+    add("set", "bool (*)(const char *)", reinterpret_cast<void *>(&hikariClipboardSet));
+    lua_remove(L, -2);
+    return 1;
+}
+
+int fileName(lua_State *L)
+{
+    const auto reply = callHost(L, "file_name", HostService::FileName);
+    if (!reply)
+        return pushNil(L);
+    lua_pushstring(L, stringAt(*reply, 0).c_str());
+    return 1;
+}
+
+int decodePath(lua_State *L)
+{
+    const std::string path = checkString(L, 1);
+    const auto reply = callHost(L, "decode_path", HostService::DecodePath, {}, {path});
+    lua_pushstring(L, reply ? stringAt(*reply, 0).c_str() : path.c_str());
+    return 1;
+}
+
+int statusText(lua_State *L)
+{
+    const std::string text = checkString(L, 1);
+    lua_pop(L, 1);
+    if (!callHost(L, "set_status_text", HostService::StatusText, {}, {text}))
+        return pushNil(L);
+    return 0;
+}
+
+int openDialog(lua_State *L)
+{
+    // Legacy reads (title, dir, file, wildcard), so the 2nd argument is the
+    // directory and the 3rd the file name.
+    const std::string title = checkString(L, 1), dir = checkString(L, 2), file = checkString(L, 3),
+                      wildcard = checkString(L, 4);
+    const bool multiple = lua_toboolean(L, 5);
+    const bool mustExist = lua_toboolean(L, 6) || lua_isnil(L, 6);
+    const auto reply = callHost(L, "dialog.open", HostService::OpenFiles, {multiple ? 1 : 0, mustExist ? 1 : 0},
+                                {title, dir, file, wildcard});
+    if (!reply || reply->strings.empty())
+        return pushNil(L);
+    if (!multiple) {
+        lua_pushstring(L, reply->strings[0].c_str());
+        return 1;
+    }
+    lua_createtable(L, static_cast<int>(reply->strings.size()), 0);
+    for (std::size_t i = 0; i < reply->strings.size(); ++i) {
+        lua_pushstring(L, reply->strings[i].c_str());
+        lua_rawseti(L, -2, static_cast<int>(i) + 1);
+    }
+    return 1;
+}
+
+int saveDialog(lua_State *L)
+{
+    const std::string title = checkString(L, 1), dir = checkString(L, 2), file = checkString(L, 3),
+                      wildcard = checkString(L, 4);
+    const bool promptOverwrite = !lua_toboolean(L, 5);
+    const auto reply =
+        callHost(L, "dialog.save", HostService::SaveFile, {promptOverwrite ? 1 : 0}, {title, dir, file, wildcard});
+    if (!reply || reply->strings.empty())
+        return pushNil(L);
+    lua_pushstring(L, reply->strings[0].c_str());
+    return 1;
+}
+
+// aegisub.gui: Line editor positions are 1-based in Lua, 0-based on the wire.
+int getCursor(lua_State *L)
+{
+    const auto reply = callHost(L, "gui.get_cursor", HostService::EditorCursor);
+    if (!reply)
+        return pushNil(L);
+    lua_pushnumber(L, static_cast<double>(integerAt(*reply, 0) + 1));
+    return 1;
+}
+
+int setCursor(lua_State *L)
+{
+    const std::int64_t point = lua_tointeger(L, -1) - 1;
+    lua_pop(L, 1);
+    callHost(L, "gui.set_cursor", HostService::SetEditorCursor, {point});
+    return 0;
+}
+
+int getSelection(lua_State *L)
+{
+    const auto reply = callHost(L, "gui.get_selection", HostService::EditorSelection);
+    if (!reply)
+        return pushNil(L);
+    const std::int64_t start = integerAt(*reply, 0) + 1, end = integerAt(*reply, 1) + 1;
+    lua_pushnumber(L, static_cast<double>(std::min(start, end)));
+    lua_pushnumber(L, static_cast<double>(std::max(start, end)));
+    return 2;
+}
+
+int setSelection(lua_State *L)
+{
+    const std::int64_t start = lua_tointeger(L, -2) - 1, end = lua_tointeger(L, -1) - 1;
+    lua_pop(L, 2);
+    callHost(L, "gui.set_selection", HostService::SetEditorSelection, {start, end});
+    return 0;
+}
+
+int isModified(lua_State *L)
+{
+    const auto reply = callHost(L, "gui.is_modified", HostService::EditorModified);
+    if (!reply)
+        return pushNil(L);
+    lua_pushboolean(L, integerAt(*reply, 0) != 0);
+    return 1;
+}
+
+void installHostServices(lua_State *L)
+{
+    static const std::pair<const char *, lua_CFunction> kServices[] = {
+        {"text_extents", textExtents},   {"frame_from_ms", frameFromMs},
+        {"ms_from_frame", msFromFrame},  {"video_size", videoSize},
+        {"keyframes", keyframes},        {"decode_path", decodePath},
+        {"__init_clipboard", initClipboard}, {"file_name", fileName},
+        {"project_properties", projectProperties}, {"get_audio_selection", audioSelection},
+        {"set_status_text", statusText}, {"get_frame", getFrame}};
+    for (const auto &[name, fn] : kServices) {
+        lua_pushcfunction(L, fn);
+        lua_setfield(L, -2, name);
+    }
+    lua_createtable(L, 0, 5);
+    static const std::pair<const char *, lua_CFunction> kGui[] = {{"get_cursor", getCursor},
+                                                                  {"set_cursor", setCursor},
+                                                                  {"get_selection", getSelection},
+                                                                  {"set_selection", setSelection},
+                                                                  {"is_modified", isModified}};
+    for (const auto &[name, fn] : kGui) {
+        lua_pushcfunction(L, fn);
+        lua_setfield(L, -2, name);
+    }
+    lua_setfield(L, -2, "gui");
+}
+
 void run(Reader &in, Responder &r, std::size_t payloadSize)
 {
     const std::int32_t index = in.i32();
@@ -1226,6 +1690,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
     staged.lists = std::move(*snapshot);
     g_subs = &staged;
     g_responder = &r;
+    g_services = &r;
     g_lastProgress = 0;
     installSink(L);
     lua_getglobal(L, "aegisub");
@@ -1266,6 +1731,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
         removeSink(L);
         g_subs = nullptr;
         g_responder = nullptr;
+        g_services = nullptr;
         return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
     }
     const bool cancelled = lua_touserdata(L, -1) == &g_cancelTag;
@@ -1274,6 +1740,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
     removeSink(L);
     g_subs = nullptr;
     g_responder = nullptr;
+    g_services = nullptr;
     r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
 }
 

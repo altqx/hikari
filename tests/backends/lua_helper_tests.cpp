@@ -7,11 +7,20 @@
 #include "hikari/core/ass_load.h"
 
 #include <QCoreApplication>
+#include <QTimer>
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
 #include <cstring>
 #include <functional>
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <signal.h>
+#endif
 #include <optional>
 
 using hikari::application::DialogRequest;
@@ -54,10 +63,11 @@ protected:
             new QCoreApplication(argc, argv);
     }
 
-    std::unique_ptr<LuaScriptHost> load(const QString &script)
+    std::unique_ptr<LuaScriptHost> load(const QString &script, LuaScriptHost::ServiceHandler services = {})
     {
         auto host = std::make_unique<LuaScriptHost>(QStringLiteral(HIKARI_LUA_HELPER), script,
                                                     QStringLiteral(HIKARI_LUA_INCLUDE));
+        host->setServiceHandler(std::move(services));
         QObject::connect(host.get(), &LuaScriptHost::logged, [this](const QString &t) { run.log << t; });
         QObject::connect(host.get(), &LuaScriptHost::progressChanged, [this](double p) { run.progress << p; });
         QObject::connect(host.get(), &LuaScriptHost::dialogWithdrawn, [this] { ++run.withdrawn; });
@@ -461,6 +471,312 @@ TEST_F(LuaHelper, StagedSubtitlesRaiseTheLegacyErrors)
               std::string::npos);
     snapshot.canModify = false;
     EXPECT_NE(failure("Write").find("You cannot modify read-only subtitles"), std::string::npos);
+}
+
+// L3: host services through the real helper. The fake ports answer in code
+// and record every request with the identity the host attached.
+struct FakeServices {
+    std::vector<hikari::application::HostServiceRequest> requests;
+    std::string clipboard;
+    bool available = true;
+
+    LuaScriptHost::ServiceHandler handler()
+    {
+        return [this](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+            using hikari::application::HostService;
+            using hikari::application::HostServiceReply;
+            requests.push_back(r);
+            if (!available)
+                return reply(HostServiceReply::unavailable());
+            HostServiceReply out;
+            switch (r.service) {
+            case HostService::FrameFromMs: out.integers = {r.integers.at(0) / 40}; break;
+            case HostService::MsFromFrame: out.integers = {r.integers.at(0) * 40}; break;
+            case HostService::VideoSize: out.integers = {640, 360, 16, 9}; break;
+            case HostService::Keyframes: out.integers = {0, 24, 48}; break;
+            case HostService::AudioSelection: out.integers = {1000, 2000}; break;
+            case HostService::ProjectProperties:
+                out.integers = {12};
+                out.strings = {"a.wav", "v.mkv", "k.txt"};
+                break;
+            case HostService::FileName: out.strings = {"ep1.ass"}; break;
+            case HostService::DecodePath: out.strings = {"/home/u/" + r.strings.at(0).substr(6)}; break;
+            case HostService::Frame:
+                // 2x1 BGRA: (0,0) black, (1,0) B=0x10 G=0x20 R=0x30 A=0x40.
+                out.integers = {2, 1};
+                out.pixels = {std::byte{0}, std::byte{0}, std::byte{0}, std::byte{0},
+                              std::byte{0x10}, std::byte{0x20}, std::byte{0x30}, std::byte{0x40}};
+                break;
+            case HostService::TextExtents: out.numbers = {10.5, 20, 4, 1}; break;
+            case HostService::ClipboardGet: out.strings = {clipboard}; break;
+            case HostService::ClipboardSet:
+                clipboard = r.strings.at(0);
+                out.integers = {1};
+                break;
+            case HostService::OpenFiles:
+                out.strings = r.integers.at(0) ? std::vector<std::string>{"/d/a.txt", "/d/b.txt"}
+                                               : std::vector<std::string>{"/d/a.txt"};
+                break;
+            case HostService::SaveFile: out.strings = {"/d/out.txt"}; break;
+            case HostService::EditorCursor: out.integers = {7}; break;
+            case HostService::EditorSelection: out.integers = {7, 3}; break;
+            case HostService::EditorModified: out.integers = {1}; break;
+            default: break;
+            }
+            reply(std::move(out));
+        };
+    }
+};
+
+bool runMacro(LuaScriptHost &host, int index, const hikari::application::MacroSnapshot &snapshot, RunRecord &run)
+{
+    run = {};
+    if (!host.run(index, snapshot))
+        return false;
+    return waitFor([&] { return run.outcome.has_value(); });
+}
+
+TEST_F(LuaHelper, MediaServicesAnswerInTheLegacyShapes)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Media"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 7);
+    EXPECT_EQ(run.log[0], "25,1000");
+    EXPECT_EQ(run.log[1], "640,360,2,true");
+    EXPECT_EQ(run.log[2], "3,24");
+    EXPECT_EQ(run.log[3], "1000,2000");
+    // Script Info fields are looked up by their Lua names, as legacy does.
+    EXPECT_EQ(run.log[4], "12,v.mkv,a.wav,k.txt,,1,,");
+    EXPECT_EQ(run.log[5], "ep1.ass,/home/u/x");
+    EXPECT_EQ(run.log[6], QStringLiteral("2,1,%1,&H102030&,nil").arg(0x30 * 65536 + 0x20 * 256 + 0x10));
+    // Every request names the script and the run that asked.
+    for (const auto &r : services.requests) {
+        EXPECT_EQ(r.script, fixture("services.lua").toStdString());
+        EXPECT_EQ(r.run, services.requests.front().run);
+        EXPECT_NE(r.run, 0u);
+    }
+    using hikari::application::HostService;
+    EXPECT_EQ(services.requests.back().service, HostService::Frame);
+    EXPECT_EQ(services.requests.back().integers, (std::vector<std::int64_t>{3, 1}));
+}
+
+TEST_F(LuaHelper, UnavailableServicesReturnNil)
+{
+    FakeServices services;
+    services.available = false;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Unavailable"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 1);
+    EXPECT_EQ(run.log[0], "nil,nil,nil,nil,nil,nil,nil,nil,nil");
+    // Without any handler the host answers Unavailable itself.
+    auto bare = load(fixture("services.lua"));
+    ASSERT_TRUE(runMacro(*bare, macro(*bare, "Unavailable"), {}, run));
+    EXPECT_EQ(run.log.value(0), "nil,nil,nil,nil,nil,nil,nil,nil,nil");
+}
+
+TEST_F(LuaHelper, TextExtentsFollowTheLegacyChecks)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    auto session = macroSession();
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Text"), *snapshot, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 5);
+    EXPECT_EQ(run.log[0], "10.5,20,4,1");
+    EXPECT_EQ(run.log[1], "0,0,0,0"); // empty text: no host call
+    EXPECT_EQ(run.log[2], "0");       // not a style: no values
+    EXPECT_EQ(run.log[3], "First argument of text_extents must be a table");
+    EXPECT_EQ(run.log[4], "Second argument of text_extents must be a string but is of type table");
+    ASSERT_EQ(services.requests.size(), 1u);
+    EXPECT_EQ(services.requests[0].strings, std::vector<std::string>{"Hello"});
+    EXPECT_EQ(services.requests[0].style.at(0), "Default");
+    EXPECT_EQ(services.requests[0].style.at(2), "20");
+}
+
+TEST_F(LuaHelper, ClipboardRoundTripsThroughTheFfiTable)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Clipboard"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"true", "copied"}));
+    EXPECT_EQ(services.clipboard, "copied");
+}
+
+TEST_F(LuaHelper, FilePickersKeepTheLegacyArguments)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Pickers"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"2,/d/a.txt,/d/b.txt", "/d/a.txt", "/d/out.txt"}));
+    ASSERT_EQ(services.requests.size(), 3u);
+    // (title, dir, file, wildcard). Legacy reads must_exist as
+    // toboolean(6) || isnil(6), and isnil is false past the stack top, so an
+    // omitted must_exist is false (only an explicit nil is true).
+    EXPECT_EQ(services.requests[0].strings, (std::vector<std::string>{"Open", "/d", "f.txt", "Text|*.txt"}));
+    EXPECT_EQ(services.requests[0].integers, (std::vector<std::int64_t>{1, 0}));
+    EXPECT_EQ(services.requests[1].integers, (std::vector<std::int64_t>{0, 0}));
+    EXPECT_EQ(services.requests[2].integers, std::vector<std::int64_t>{0}); // true: don't prompt
+}
+
+TEST_F(LuaHelper, EditorServicesUseOneBasedPositions)
+{
+    FakeServices services;
+    auto host = load(fixture("services.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Gui"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"8", "4,8", "true", "0"}));
+    using hikari::application::HostService;
+    std::vector<std::pair<HostService, std::vector<std::int64_t>>> writes;
+    for (const auto &r : services.requests)
+        if (r.service == HostService::SetEditorCursor || r.service == HostService::SetEditorSelection)
+            writes.emplace_back(r.service, r.integers);
+    ASSERT_EQ(writes.size(), 2u);
+    EXPECT_EQ(writes[0].second, std::vector<std::int64_t>{4});
+    EXPECT_EQ(writes[1].second, (std::vector<std::int64_t>{1, 3}));
+    EXPECT_EQ(services.requests.back().strings, std::vector<std::string>{"busy"});
+}
+
+TEST_F(LuaHelper, ServicesAnswerWhileTheTopLevelLoads)
+{
+    FakeServices services;
+    auto host = load(fixture("services-load.lua"), services.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_EQ(host->info().name, "/home/u/name");
+    ASSERT_EQ(services.requests.size(), 1u);
+    EXPECT_EQ(services.requests[0].run, 0u); // the top level, not a run
+}
+
+TEST_F(LuaHelper, TheGuiKeepsRunningWhileAScriptAwaitsAService)
+{
+    std::optional<LuaScriptHost::ServiceReply> pending;
+    auto host = load(fixture("services.lua"),
+                     [&](const hikari::application::HostServiceRequest &, LuaScriptHost::ServiceReply reply) {
+                         pending = std::move(reply);
+                     });
+    int ticks = 0;
+    QTimer ticker;
+    QObject::connect(&ticker, &QTimer::timeout, [&] { ++ticks; });
+    ticker.start(10);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Wait"), {}));
+    ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
+    const int before = ticks;
+    waitFor([] { return false; }, 300);
+    EXPECT_GE(ticks - before, 10); // the event loop ran while the script waited
+    EXPECT_EQ(host->pendingServices(), 1u);
+    hikari::application::HostServiceReply reply;
+    reply.integers = {42};
+    (*pending)(reply);
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    EXPECT_EQ(run.log, QStringList{"42"});
+}
+
+TEST_F(LuaHelper, CancelWhileAServiceWaitsWithdrawsItAndDropsTheLateAnswer)
+{
+    std::optional<LuaScriptHost::ServiceReply> pending;
+    auto host = load(fixture("services.lua"),
+                     [&](const hikari::application::HostServiceRequest &, LuaScriptHost::ServiceReply reply) {
+                         pending = std::move(reply);
+                     });
+    int withdrawn = 0;
+    QObject::connect(host.get(), &LuaScriptHost::servicesWithdrawn, [&] { ++withdrawn; });
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Wait"), {}));
+    ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
+    host->cancel();
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Cancelled);
+    EXPECT_EQ(withdrawn, 1);
+    EXPECT_EQ(host->pendingServices(), 0u);
+    (*pending)({}); // dropped: the run is over
+    EXPECT_EQ(host->state(), LuaScriptHost::State::Ready);
+    // The script still runs afterwards.
+    FakeServices services;
+    host->setServiceHandler(services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Wait"), {}, run));
+    EXPECT_EQ(run.log, QStringList{"0"});
+}
+
+TEST_F(LuaHelper, HelperLossWhileAServiceWaitsEndsTheRunAndDropsTheAnswer)
+{
+    std::optional<LuaScriptHost::ServiceReply> pending;
+    auto host = load(fixture("services.lua"),
+                     [&](const hikari::application::HostServiceRequest &, LuaScriptHost::ServiceReply reply) {
+                         pending = std::move(reply);
+                     });
+    int withdrawn = 0;
+    QObject::connect(host.get(), &LuaScriptHost::servicesWithdrawn, [&] { ++withdrawn; });
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Wait"), {}));
+    ASSERT_TRUE(waitFor([&] { return pending.has_value(); }));
+    const qint64 pid = host->processId();
+    ASSERT_GT(pid, 0);
+#ifdef _WIN32
+    HANDLE process = OpenProcess(PROCESS_TERMINATE, FALSE, static_cast<DWORD>(pid));
+    ASSERT_NE(process, nullptr);
+    TerminateProcess(process, 9);
+    CloseHandle(process);
+#else
+    ::kill(static_cast<pid_t>(pid), SIGKILL);
+#endif
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::HelperLost);
+    EXPECT_EQ(withdrawn, 1);
+    (*pending)({}); // dropped: the helper is gone
+    EXPECT_EQ(host->state(), LuaScriptHost::State::Unavailable);
+}
+
+TEST(LuaProtocol, HostServiceFramesRoundTripAndRejectMalformedOnes)
+{
+    using namespace hikari::application;
+    HostServiceRequest request;
+    request.service = HostService::OpenFiles;
+    request.integers = {1, 0};
+    request.strings = {"t", "/d", "f", "w"};
+    request.style = {"Default"};
+    const auto bytes = lua::encodeHostRequest(request);
+    const auto decoded = lua::decodeHostRequest(bytes);
+    ASSERT_TRUE(decoded);
+    EXPECT_EQ(decoded->service, HostService::OpenFiles);
+    EXPECT_EQ(decoded->integers, request.integers);
+    EXPECT_EQ(decoded->strings, request.strings);
+    EXPECT_EQ(decoded->style, request.style);
+    // Truncated, trailing bytes, an unknown service, an absurd count.
+    EXPECT_FALSE(lua::decodeHostRequest({bytes.begin(), bytes.end() - 1}));
+    auto longer = bytes;
+    longer.push_back(std::byte{0});
+    EXPECT_FALSE(lua::decodeHostRequest(longer));
+    helper::Writer unknown;
+    unknown.i32(kLastHostService + 1).i32(0).i32(0).i32(0);
+    EXPECT_FALSE(lua::decodeHostRequest(unknown.take()));
+    helper::Writer huge;
+    huge.i32(static_cast<std::int32_t>(HostService::Keyframes)).i32(0x7fffffff);
+    EXPECT_FALSE(lua::decodeHostRequest(huge.take()));
+
+    HostServiceReply reply;
+    reply.integers = {2, 1};
+    reply.numbers = {1.5};
+    reply.strings = {"x"};
+    reply.pixels = {std::byte{1}, std::byte{2}};
+    const auto replyBytes = lua::encodeHostReply(reply);
+    const auto back = lua::decodeHostReply(replyBytes);
+    ASSERT_TRUE(back);
+    EXPECT_EQ(back->integers, reply.integers);
+    EXPECT_EQ(back->numbers, reply.numbers);
+    EXPECT_EQ(back->strings, reply.strings);
+    EXPECT_EQ(back->pixels, reply.pixels);
+    EXPECT_FALSE(lua::decodeHostReply({replyBytes.begin(), replyBytes.end() - 1}));
+    helper::Writer status;
+    status.i32(7).i32(0).i32(0).i32(0).bytes({});
+    EXPECT_FALSE(lua::decodeHostReply(status.take()));
 }
 
 } // namespace

@@ -138,6 +138,55 @@ struct MacroResult {
     std::optional<int> active;
 };
 
+// A host service a running macro asks for (L3; docs/qt/automation.md). The
+// helper decodes the Lua arguments with the legacy rules and the application
+// answers asynchronously, once; the GUI keeps running while the script waits.
+// Per service (positions are 0-based UTF-16 offsets in the Line editor):
+//   FrameFromMs, MsFromFrame  integers {ms | frame} -> integers {frame | ms}
+//   VideoSize                 -> integers {width, height, arX, arY}
+//   Keyframes                 -> integers (frame numbers)
+//   Frame                     integers {frame, withSubtitles} -> integers {width, height}, pixels (BGRA rows)
+//   AudioSelection            -> integers {startMs, endMs}
+//   ProjectProperties         -> integers {video frame shown}, strings {audio, video, keyframes file}
+//   TextExtents               style, strings {text} -> numbers {width, height, descent, external leading}
+//   ClipboardGet              -> strings {text}
+//   ClipboardSet              strings {text} -> integers {succeeded}
+//   OpenFiles                 strings {title, dir, file, wildcard}, integers {multiple, mustExist} -> strings (paths)
+//   SaveFile                  strings {title, dir, file, wildcard}, integers {promptOverwrite} -> strings {path}
+//   StatusText                strings {text}
+//   DecodePath                strings {path} -> strings {path}
+//   FileName                  -> strings {subtitle file name}
+//   EditorCursor              -> integers {position};      SetEditorCursor     integers {position}
+//   EditorSelection           -> integers {start, end};    SetEditorSelection  integers {start, end}
+//   EditorModified            -> integers {modified}
+// Unavailable is the legacy nil: no video, no Document, a cancelled picker.
+enum class HostService : std::int32_t {
+    FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
+    ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
+    EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
+};
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::EditorModified);
+
+struct HostServiceRequest {
+    HostService service = HostService::FrameFromMs;
+    // Who asked, set by the application side (never taken from the helper).
+    std::string script;
+    std::uint64_t run = 0;
+    std::vector<std::int64_t> integers;
+    std::vector<std::string> strings;
+    std::vector<std::string> style; // TextExtents: the style's positional fields, Name first
+};
+
+struct HostServiceReply {
+    enum class Status : std::int32_t { Ok = 0, Unavailable = 1 };
+    Status status = Status::Ok;
+    std::vector<std::int64_t> integers;
+    std::vector<double> numbers;
+    std::vector<std::string> strings;
+    std::vector<std::byte> pixels;
+    static HostServiceReply unavailable() { return HostServiceReply{Status::Unavailable, {}, {}, {}, {}}; }
+};
+
 // The automation manager as the UI sees it (L1): loaded scripts, their
 // macros by registration, and one active macro application-wide.
 struct ScriptStatus {

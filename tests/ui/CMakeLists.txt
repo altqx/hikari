@@ -30,3 +30,12 @@ target_compile_definitions(hikari_ui_automation_manager_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
 add_dependencies(hikari_ui_automation_manager_tests hikari_lua_helper)
+# L3: Qt adapters for automation host services.
+hikari_add_qttest(hikari_ui_automation_services_tests SOURCES automation_services_ui_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
+target_compile_definitions(hikari_ui_automation_services_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
+add_dependencies(hikari_ui_automation_services_tests hikari_lua_helper)

@@ -16,7 +16,9 @@
 // Progress payloads start with an i32 ProgressEvent: Log (str), Set (f64
 // percent), Task (str), Title (str).
 // Service payloads start with an i32 Service; Dialog carries a DialogRequest
-// and is answered with a DialogResult.
+// and is answered with a DialogResult; Host carries a HostServiceRequest
+// (without the identity, which the application side fills in) and is
+// answered with a HostServiceReply.
 
 #include "hikari/application/automation.h"
 #include "hikari/backends/helper_protocol.h"
@@ -28,12 +30,12 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 1;
+inline constexpr std::uint32_t kProtocolVersion = 2;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2 };
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4 };
-enum class Service : std::int32_t { Dialog = 1 };
+enum class Service : std::int32_t { Dialog = 1, Host = 2 };
 
 std::vector<std::byte> encodeInfo(const application::ScriptInfo &info);
 std::optional<application::ScriptInfo> decodeInfo(const std::vector<std::byte> &payload);
@@ -46,6 +48,12 @@ std::vector<std::byte> encodeSnapshot(const application::MacroSnapshot &snapshot
 std::optional<application::MacroSnapshot> decodeSnapshot(helper::Reader &in, std::size_t payloadSize);
 std::vector<std::byte> encodeMacroResult(const application::MacroResult &result);
 std::optional<application::MacroResult> decodeMacroResult(const std::vector<std::byte> &payload);
+
+// Without the leading Service field.
+std::vector<std::byte> encodeHostRequest(const application::HostServiceRequest &request);
+std::optional<application::HostServiceRequest> decodeHostRequest(const std::vector<std::byte> &payload);
+std::vector<std::byte> encodeHostReply(const application::HostServiceReply &reply);
+std::optional<application::HostServiceReply> decodeHostReply(const std::vector<std::byte> &payload);
 
 std::vector<std::byte> encodeDialogResult(const application::DialogResult &result);
 // Rejects a result that does not fit its request: a wrong value count or

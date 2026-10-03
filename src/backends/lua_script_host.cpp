@@ -111,9 +111,21 @@ void LuaScriptHost::sendLoad()
         .str(m_scriptPath.toStdString())
         .str(m_sharedInclude.toStdString())
         .i32(m_traceLevel);
-    const auto sent = m_host->request(0, w.take(), [this](std::expected<Event, HostError> e) {
+    // The script's top level may ask for host services while it loads.
+    auto id = std::make_shared<std::uint64_t>(0);
+    const auto sent = m_host->request(0, w.take(), [this, id](std::expected<Event, HostError> e) {
+        if (e && e->kind == Kind::Service && *id == m_loadRequest) {
+            Reader r(e->payload);
+            if (static_cast<lua::Service>(r.i32()) == lua::Service::Host && r.ok())
+                handleHostService(*id, *e);
+            else
+                m_host->answer(*id, e->call, Outcome::Unsupported); // no dialogs at load
+            return;
+        }
         if (!e || e->kind != Kind::Terminal)
             return; // loss is reported through HelperHost::lost
+        m_loadRequest = 0;
+        m_pendingServices.clear();
         if (e->outcome == Outcome::Ok) {
             if (auto info = lua::decodeInfo(e->payload)) {
                 m_info = std::move(*info);
@@ -133,6 +145,10 @@ void LuaScriptHost::sendLoad()
         m_state = State::LoadFailed;
         emit loadFailed(m_lastError);
     });
+    if (sent) {
+        *id = *sent;
+        m_loadRequest = *sent;
+    }
     if (!sent) {
         m_state = State::LoadFailed;
         m_lastError = QStringLiteral("the Lua helper did not accept the script");
@@ -236,6 +252,10 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
         const auto service = static_cast<lua::Service>(r.i32());
         const std::uint64_t call = event->call;
         const std::uint64_t session = m_host->session();
+        if (r.ok() && service == lua::Service::Host) {
+            handleHostService(request, *event);
+            return;
+        }
         std::optional<application::DialogRequest> dialog;
         if (r.ok() && service == lua::Service::Dialog)
             dialog = lua::decodeDialogRequest({event->payload.begin() + 4, event->payload.end()});
@@ -275,6 +295,32 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
     }
 }
 
+void LuaScriptHost::handleHostService(std::uint64_t request, const Event &event)
+{
+    const std::uint64_t call = event.call;
+    auto host = lua::decodeHostRequest({event.payload.begin() + 4, event.payload.end()});
+    if (!host) {
+        m_host->answer(request, call, Outcome::InvalidInput);
+        return;
+    }
+    host->script = m_scriptPath.toStdString();
+    host->run = request == m_loadRequest ? 0 : request; // 0: the script's top level while loading
+    if (!m_serviceHandler) {
+        m_host->answer(request, call, Outcome::Ok, lua::encodeHostReply(application::HostServiceReply::unavailable()));
+        return;
+    }
+    m_pendingServices.insert(call);
+    QPointer<LuaScriptHost> self(this);
+    const std::uint64_t session = m_host->session();
+    m_serviceHandler(*host, [self, session, request, call](application::HostServiceReply reply) {
+        // Resolve once, and only for the request and helper that asked.
+        if (!self || !self->m_host || self->m_host->session() != session ||
+            (request != self->m_runRequest && request != self->m_loadRequest) || !self->m_pendingServices.erase(call))
+            return;
+        self->m_host->answer(request, call, Outcome::Ok, lua::encodeHostReply(reply));
+    });
+}
+
 void LuaScriptHost::endRun(RunOutcome outcome, const QString &message)
 {
     if (m_state != State::Running)
@@ -286,6 +332,10 @@ void LuaScriptHost::endRun(RunOutcome outcome, const QString &message)
     if (m_dialogOpen) {
         m_dialogOpen = false;
         emit dialogWithdrawn();
+    }
+    if (!m_pendingServices.empty()) {
+        m_pendingServices.clear();
+        emit servicesWithdrawn();
     }
     emit finished(outcome, message);
 }

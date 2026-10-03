@@ -9,6 +9,8 @@ using application::DialogRequest;
 using application::DialogResult;
 using application::DialogValue;
 using application::DialogValueType;
+using application::HostServiceReply;
+using application::HostServiceRequest;
 using application::ScriptInfo;
 using helper::Reader;
 using helper::Writer;
@@ -308,6 +310,110 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return result;
+}
+
+namespace {
+
+// Each element takes at least one byte, so a count above the bytes left is malformed.
+bool plausible(std::int32_t count, const std::vector<std::byte> &payload)
+{
+    return count >= 0 && static_cast<std::size_t>(count) <= payload.size();
+}
+
+void writeIntegers(Writer &w, const std::vector<std::int64_t> &v)
+{
+    w.i32(static_cast<std::int32_t>(v.size()));
+    for (const auto x : v)
+        w.i64(x);
+}
+
+void writeStrings(Writer &w, const std::vector<std::string> &v)
+{
+    w.i32(static_cast<std::int32_t>(v.size()));
+    for (const auto &x : v)
+        w.str(x);
+}
+
+bool readIntegers(Reader &r, const std::vector<std::byte> &payload, std::vector<std::int64_t> &out)
+{
+    const auto n = r.i32();
+    if (!r.ok() || !plausible(n, payload))
+        return false;
+    for (std::int32_t i = 0; i < n && r.ok(); ++i)
+        out.push_back(r.i64());
+    return r.ok();
+}
+
+bool readStrings(Reader &r, const std::vector<std::byte> &payload, std::vector<std::string> &out)
+{
+    const auto n = r.i32();
+    if (!r.ok() || !plausible(n, payload))
+        return false;
+    for (std::int32_t i = 0; i < n && r.ok(); ++i)
+        out.push_back(r.str());
+    return r.ok();
+}
+
+} // namespace
+
+std::vector<std::byte> encodeHostRequest(const HostServiceRequest &request)
+{
+    Writer w;
+    w.i32(static_cast<std::int32_t>(request.service));
+    writeIntegers(w, request.integers);
+    writeStrings(w, request.strings);
+    writeStrings(w, request.style);
+    return w.take();
+}
+
+std::optional<HostServiceRequest> decodeHostRequest(const std::vector<std::byte> &payload)
+{
+    Reader r(payload);
+    HostServiceRequest request;
+    const auto service = r.i32();
+    if (!r.ok() || service < 1 || service > application::kLastHostService)
+        return std::nullopt;
+    request.service = static_cast<application::HostService>(service);
+    if (!readIntegers(r, payload, request.integers) || !readStrings(r, payload, request.strings) ||
+        !readStrings(r, payload, request.style) || !r.atEnd())
+        return std::nullopt;
+    return request;
+}
+
+std::vector<std::byte> encodeHostReply(const HostServiceReply &reply)
+{
+    Writer w;
+    w.i32(static_cast<std::int32_t>(reply.status));
+    writeIntegers(w, reply.integers);
+    w.i32(static_cast<std::int32_t>(reply.numbers.size()));
+    for (const double x : reply.numbers)
+        w.f64(x);
+    writeStrings(w, reply.strings);
+    w.bytes(reply.pixels);
+    return w.take();
+}
+
+std::optional<HostServiceReply> decodeHostReply(const std::vector<std::byte> &payload)
+{
+    Reader r(payload);
+    HostServiceReply reply;
+    const auto status = r.i32();
+    if (!r.ok() || (status != 0 && status != 1))
+        return std::nullopt;
+    reply.status = static_cast<HostServiceReply::Status>(status);
+    if (!readIntegers(r, payload, reply.integers))
+        return std::nullopt;
+    const auto numbers = r.i32();
+    if (!r.ok() || !plausible(numbers, payload))
+        return std::nullopt;
+    for (std::int32_t i = 0; i < numbers && r.ok(); ++i)
+        reply.numbers.push_back(r.f64());
+    if (!readStrings(r, payload, reply.strings))
+        return std::nullopt;
+    reply.pixels = r.bytes();
+    if (!r.ok() || !r.atEnd())
+        return std::nullopt;
+    return reply;
 }
 
 } // namespace hikari::backends::lua
