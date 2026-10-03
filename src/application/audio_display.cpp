@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <new>
 
 namespace hikari::application {
 
@@ -35,9 +36,152 @@ bool WaveformPeaks::range(std::int64_t first, std::int64_t count, std::int16_t *
     return true;
 }
 
-DisplayAudio::DisplayAudio(int sampleRate, std::int64_t sampleCount) : m_rate(sampleRate), m_count(sampleCount)
+namespace {
+
+// Legacy RAMCache's blocks: 1 << 22 bytes each.
+class RamStore : public AudioStore {
+public:
+    explicit RamStore(int channels) : m_channels(channels) {}
+
+    bool append(const std::int16_t *interleaved, std::int64_t frames) override
+    {
+        const std::int64_t frameBytes = 2 * m_channels;
+        const std::int64_t perBlock = kBlockBytes / frameBytes;
+        try {
+            while (frames > 0) {
+                const std::int64_t used = m_frames % perBlock;
+                if (used == 0)
+                    m_blocks.emplace_back(std::make_unique<std::int16_t[]>(static_cast<std::size_t>(perBlock * m_channels)));
+                const std::int64_t n = std::min(frames, perBlock - used);
+                std::copy_n(interleaved, n * m_channels, m_blocks.back().get() + used * m_channels);
+                interleaved += n * m_channels;
+                frames -= n;
+                m_frames += n;
+            }
+        } catch (const std::bad_alloc &) {
+            return false;
+        }
+        return true;
+    }
+    void read(std::int64_t start, std::int64_t count, std::int16_t *out) const override
+    {
+        const std::int64_t perBlock = kBlockBytes / (2 * m_channels);
+        while (count > 0) {
+            const std::int64_t block = start / perBlock, offset = start % perBlock;
+            const std::int64_t n = std::min(count, perBlock - offset);
+            std::copy_n(m_blocks[static_cast<std::size_t>(block)].get() + offset * m_channels, n * m_channels, out);
+            out += n * m_channels;
+            start += n;
+            count -= n;
+        }
+    }
+    std::int64_t frames() const override { return m_frames; }
+    int channels() const override { return m_channels; }
+
+private:
+    static constexpr std::int64_t kBlockBytes = std::int64_t(1) << 22;
+    int m_channels;
+    std::int64_t m_frames = 0;
+    std::vector<std::unique_ptr<std::int16_t[]>> m_blocks;
+};
+
+int seekTo(std::FILE *file, std::int64_t offset)
 {
-    m_samples.reserve(static_cast<std::size_t>(std::max<std::int64_t>(sampleCount, 0)));
+#ifdef _WIN32
+    return _fseeki64(file, offset, SEEK_SET);
+#else
+    return fseeko(file, static_cast<off_t>(offset), SEEK_SET);
+#endif
+}
+
+std::FILE *openFile(const std::filesystem::path &path, bool write)
+{
+#ifdef _WIN32
+    return _wfopen(path.c_str(), write ? L"w+b" : L"rb");
+#else
+    return std::fopen(path.c_str(), write ? "w+b" : "rb");
+#endif
+}
+
+// Legacy DiskCache: raw interleaved frames (no header, despite the .w64 name).
+class DiskStore : public AudioStore {
+public:
+    DiskStore(std::filesystem::path path, std::FILE *file, int channels)
+        : m_path(std::move(path)), m_file(file), m_channels(channels)
+    {
+    }
+    ~DiskStore() override
+    {
+        std::fclose(m_file);
+        std::error_code ec;
+        std::filesystem::path part = m_path;
+        part += ".part";
+        if (m_complete)
+            std::filesystem::rename(part, m_path, ec);
+        else
+            std::filesystem::remove(part, ec);
+    }
+
+    bool append(const std::int16_t *interleaved, std::int64_t frames) override
+    {
+        if (seekTo(m_file, m_frames * 2 * m_channels) != 0)
+            return false;
+        const auto n = static_cast<std::size_t>(frames * m_channels);
+        if (std::fwrite(interleaved, sizeof(std::int16_t), n, m_file) != n)
+            return false;
+        m_frames += frames;
+        return true;
+    }
+    void read(std::int64_t start, std::int64_t count, std::int16_t *out) const override
+    {
+        const auto n = static_cast<std::size_t>(count * m_channels);
+        std::size_t got = 0;
+        if (seekTo(m_file, start * 2 * m_channels) == 0)
+            got = std::fread(out, sizeof(std::int16_t), n, m_file);
+        std::fill(out + got, out + n, std::int16_t(0)); // a short read is silence, not stale memory
+    }
+    std::int64_t frames() const override { return m_frames; }
+    int channels() const override { return m_channels; }
+    void complete() override
+    {
+        std::fflush(m_file);
+        m_complete = true;
+    }
+
+private:
+    std::filesystem::path m_path;
+    std::FILE *m_file;
+    int m_channels;
+    std::int64_t m_frames = 0;
+    bool m_complete = false;
+};
+
+} // namespace
+
+std::unique_ptr<AudioStore> ramAudioStore(int channels)
+{
+    return std::make_unique<RamStore>(channels);
+}
+
+std::unique_ptr<AudioStore> diskAudioStore(const std::filesystem::path &path, int channels, std::string *error)
+{
+    std::error_code ec;
+    std::filesystem::create_directories(path.parent_path(), ec);
+    std::filesystem::remove(path, ec); // legacy: a new index makes a new cache
+    std::filesystem::path part = path;
+    part += ".part";
+    std::FILE *file = openFile(part, true);
+    if (!file) {
+        if (error)
+            *error = part.string();
+        return nullptr;
+    }
+    return std::make_unique<DiskStore>(path, file, channels);
+}
+
+DisplayAudio::DisplayAudio(int sampleRate, std::int64_t sampleCount, std::unique_ptr<AudioStore> store)
+    : m_rate(sampleRate), m_count(sampleCount), m_store(std::move(store))
+{
 }
 
 DisplayAudio DisplayAudio::silence(int sampleRate, std::int64_t sampleCount)
@@ -49,33 +193,76 @@ DisplayAudio DisplayAudio::silence(int sampleRate, std::int64_t sampleCount)
     return audio;
 }
 
-void DisplayAudio::appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels)
+bool DisplayAudio::appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels)
 {
-    const std::size_t first = m_samples.size();
-    for (std::int64_t i = 0; i < frames; i++) {
+    if (frames <= 0)
+        return true;
+    if (!m_store)
+        m_store = ramAudioStore(channels);
+    if (channels != m_store->channels())
+        return false;
+    const std::int64_t at = m_store->frames();
+    if (!m_store->append(interleaved, frames))
+        return false;
+    // The peak table covers the samples the display reads (legacy BuildPeaks
+    // over GetNumSamples), not frames a positive delay pushed past the end.
+    const std::int64_t keep = std::clamp<std::int64_t>(m_count - at, 0, frames);
+    std::vector<std::int16_t> mono(static_cast<std::size_t>(keep));
+    for (std::int64_t i = 0; i < keep; i++) {
         if (channels == 1) {
-            m_samples.push_back(interleaved[i]);
+            mono[static_cast<std::size_t>(i)] = interleaved[i];
             continue;
         }
         int sum = 0;
         for (int c = 0; c < channels; c++)
             sum += interleaved[i * channels + c];
-        m_samples.push_back(static_cast<std::int16_t>(sum / channels));
+        mono[static_cast<std::size_t>(i)] = static_cast<std::int16_t>(sum / channels);
     }
-    m_peaks.append(m_samples.data() + first, static_cast<std::int64_t>(m_samples.size() - first));
+    m_peaks.append(mono.data(), keep);
+    return true;
+}
+
+bool DisplayAudio::appendSilence(std::int64_t frames, int channels)
+{
+    constexpr std::int64_t kChunk = 1 << 16;
+    const std::vector<std::int16_t> zero(static_cast<std::size_t>(kChunk * channels), 0);
+    while (frames > 0) {
+        const std::int64_t n = std::min(frames, kChunk);
+        if (!appendFrames(zero.data(), n, channels))
+            return false;
+        frames -= n;
+    }
+    return true;
 }
 
 void DisplayAudio::finish()
 {
+    if (m_store && m_store->frames() >= m_count)
+        m_store->complete();
     m_finished = true;
 }
 
 void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *out) const
 {
-    const std::int64_t have = m_silence ? 0 : static_cast<std::int64_t>(m_samples.size());
-    for (std::int64_t i = 0; i < count; i++) {
-        const std::int64_t at = start + i;
-        out[i] = at >= 0 && at < have ? m_samples[static_cast<std::size_t>(at)] : 0;
+    if (count <= 0)
+        return;
+    const std::int64_t have = m_silence || !m_store ? 0 : std::min(m_store->frames(), m_count);
+    const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
+    const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
+    std::fill(out, out + count, std::int16_t(0));
+    if (last <= first)
+        return;
+    const int channels = m_store->channels();
+    std::int16_t *dst = out + (first - start);
+    if (channels == 1)
+        return m_store->read(first, last - first, dst);
+    m_frames.resize(static_cast<std::size_t>((last - first) * channels));
+    m_store->read(first, last - first, m_frames.data());
+    for (std::int64_t i = 0; i < last - first; i++) {
+        int sum = 0;
+        for (int c = 0; c < channels; c++)
+            sum += m_frames[static_cast<std::size_t>(i * channels + c)];
+        dst[i] = static_cast<std::int16_t>(sum / channels);
     }
 }
 

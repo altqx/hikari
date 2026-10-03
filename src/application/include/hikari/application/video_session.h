@@ -61,6 +61,9 @@ public:
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
     bool playing() const { return m_playing; }
+    // A1: legacy's Stopped state: Stop while playing, until the next Play
+    // (legacy marks the paused video's frame in the audio box only when Paused).
+    bool stopped() const { return m_stopped; }
     // A frame the general player delivered, converted to BGRA by the UI.
     void generalFrame(IndexedFrame frame, std::int64_t startUs);
 
@@ -120,6 +123,7 @@ private:
     GeneralPlayerPort *m_player = nullptr;
     std::string m_playerPath; // what the player has open
     bool m_playing = false;
+    bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;
     std::optional<std::int64_t> m_lastGeneralUs;
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time

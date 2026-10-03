@@ -81,6 +81,9 @@ public:
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
         // file, or a temporary directory without one (tests).
         QString catalogDir;
+        // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
+        // settings file, or a temporary directory without one (tests).
+        QString audioCacheDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -294,7 +297,8 @@ public:
     // A1: the Audio menu. GLOBAL_AUDIO_FROM_VIDEO opens the video's file
     // again as audio; GLOBAL_RECENT_AUDIO lists {path, label} rows (missing
     // local files pruned first, as legacy AppendRecent); the GLOBAL_OPEN_AUDIO
-    // dialog starts in the video's folder (legacy: else the latest video's).
+    // dialog starts in the video's folder (legacy: else the latest recent
+    // video's, which the rewrite does not list yet).
     Q_INVOKABLE void openAudioFromVideo();
     Q_INVOKABLE QVariantList recentAudio();
     Q_INVOKABLE QUrl audioDialogFolder() const;
@@ -423,10 +427,16 @@ private:
     // shows follow the editing target and the video.
     std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
     std::unique_ptr<ui::AudioController> m_audio;
+    QList<QMetaObject::Connection> m_audioConnections; // dropped first on destruction
     application::RecentFiles m_recentAudio;
     QString m_audioFollowedVideo; // the video whose audio the box last followed
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine; // target, active Line, revision
+    // the video's keyframes as the box marks them, worked out once per video
+    std::optional<application::LegacyTimebase> m_audioTimebase;
+    std::string m_audioTimebasePath;
+    std::vector<int> m_audioKeyframes;
     void refreshAudio();
+    void followVideoInAudio();
     void rememberRecentAudio(const QString &path);
 };
 

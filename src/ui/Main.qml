@@ -2563,6 +2563,48 @@ ApplicationWindow {
                       qsTr("All files") + " (*)"]
         onAccepted: root.audio.openAudioUrl(selectedFile)
     }
+    // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
+    // several audio tracks): the first row preselected, OK or a double click
+    // takes a row, Cancel opens no audio.
+    Dialog {
+        id: audioTrackChooser
+        objectName: "audioTrackChooser"
+        title: qsTr("Choose the track")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        ListView {
+            id: audioTrackList
+            objectName: "audioTrackList"
+            implicitWidth: 220
+            implicitHeight: 160
+            clip: true
+            model: root.audio.trackChoices
+            currentIndex: 0
+            delegate: ItemDelegate {
+                required property string modelData
+                required property int index
+                width: ListView.view.width
+                text: modelData
+                highlighted: ListView.isCurrentItem
+                onClicked: audioTrackList.currentIndex = index
+                onDoubleClicked: audioTrackChooser.accept()
+            }
+        }
+        onAccepted: root.audio.chooseTrack(Math.max(0, audioTrackList.currentIndex))
+        onRejected: root.audio.cancelTrackChoice()
+        Connections {
+            target: root.audio
+            function onTrackChoicesChanged() {
+                if (root.audio.trackChoices.length > 0) {
+                    audioTrackList.currentIndex = 0
+                    audioTrackChooser.open()
+                } else if (audioTrackChooser.opened) {
+                    audioTrackChooser.close()
+                }
+            }
+        }
+    }
     FileDialog {
         id: keyframesDialog
         title: qsTr("Choose video file")

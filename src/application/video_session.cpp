@@ -74,6 +74,7 @@ void VideoSession::close()
     if (m_player && m_playing)
         m_player->stop();
     m_playing = false;
+    m_stopped = false;
     ++m_playEpoch;
     m_lastGeneralUs.reset();
     m_overlayTime.reset();
@@ -226,6 +227,7 @@ bool VideoSession::play()
     if (!m_player || m_state != State::Ready || m_playing)
         return false;
     m_playing = true;
+    m_stopped = false;
     const std::uint64_t epoch = ++m_playEpoch;
     const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
                                         : 0;
@@ -296,6 +298,7 @@ bool VideoSession::stop()
     if (m_playing) {
         m_player->pause();
         m_playing = false;
+        m_stopped = true; // legacy Stop acts only while Playing
         ++m_playEpoch;
     }
     showFrame(0);

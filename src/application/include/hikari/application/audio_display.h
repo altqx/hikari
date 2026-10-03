@@ -15,6 +15,8 @@
 // karaoke (A5) are not part of this module.
 
 #include <cstdint>
+#include <filesystem>
+#include <memory>
 #include <functional>
 #include <optional>
 #include <span>
@@ -43,29 +45,58 @@ private:
     std::vector<std::int16_t> m_lo, m_hi;
 };
 
+// Where decoded audio is kept, as legacy ProviderFFMS2 kept it: interleaved
+// 16-bit frames of one or two channels, in RAM (AUDIO_RAM_CACHE) or in a
+// cache file on disk (the default).
+class AudioStore {
+public:
+    virtual ~AudioStore() = default;
+    // Appends frames; false when they cannot be kept (out of memory, a
+    // failed write), which ends the open instead of the program.
+    virtual bool append(const std::int16_t *interleaved, std::int64_t frames) = 0;
+    // Frames [start, start + count), all within what was appended, into `out`.
+    virtual void read(std::int64_t start, std::int64_t count, std::int16_t *out) const = 0;
+    virtual std::int64_t frames() const = 0;
+    virtual int channels() const = 0;
+    // Every frame of the audio is in (legacy m_diskCacheComplete).
+    virtual void complete() {}
+};
+
+// Legacy RAMCache: blocks of 4 MiB (1 << 22 bytes), allocated as they fill.
+std::unique_ptr<AudioStore> ramAudioStore(int channels);
+// Legacy DiskCache: `path` (legacy AudioCache/<name>_track<n>_<c>ch_<delay>.w64)
+// is removed and written again as `path`.part; once every frame is in and the
+// store is dropped, the .part file becomes `path`, otherwise it is removed.
+// Null (and `error` set) when the file cannot be created.
+std::unique_ptr<AudioStore> diskAudioStore(const std::filesystem::path &path, int channels, std::string *error);
+
 // The samples the display reads: one 16-bit channel at the source rate
-// (legacy Provider::GetBuffer, the mixdown of the cached audio). Decoded
-// audio is appended in legacy's decode format; finish() builds nothing more
-// but marks the peak table ready (legacy BuildPeaks, block 256), so zoomed
-// out views read it. Blank audio (legacy ProviderDummy) is silence and never
-// has a peak table.
+// (legacy Provider::GetBuffer, the mixdown of the cached audio: the channels'
+// sum divided by their count). Decoded frames are appended in legacy's
+// decode format; finish() marks the peak table ready (legacy BuildPeaks,
+// block 256), so zoomed out views read it. Blank audio (legacy
+// ProviderDummy) is silence and never has a peak table.
 class DisplayAudio {
 public:
     static constexpr int kPeakBlock = 256;
 
-    DisplayAudio(int sampleRate, std::int64_t sampleCount);
+    // Audio kept in `store` (null: in RAM, with the channels of the first append).
+    DisplayAudio(int sampleRate, std::int64_t sampleCount, std::unique_ptr<AudioStore> store = nullptr);
     static DisplayAudio silence(int sampleRate, std::int64_t sampleCount);
 
-    // Interleaved 16-bit frames of `channels` channels, mixed down as legacy
-    // ProviderFFMS2::GetBuffer does: the channels' sum divided by their count.
-    void appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels);
+    // Interleaved 16-bit frames of `channels` channels (the store's). False
+    // when the store cannot keep them.
+    bool appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels);
+    // Zero frames (a positive AUDIO_DELAY's start, or a block that failed to decode).
+    bool appendSilence(std::int64_t frames, int channels);
     void finish();
 
     int sampleRate() const { return m_rate; }
     std::int64_t sampleCount() const { return m_count; }
-    std::int64_t decoded() const { return m_silence ? m_count : static_cast<std::int64_t>(m_samples.size()); }
+    std::int64_t decoded() const { return m_silence ? m_count : m_store ? m_store->frames() : 0; }
     bool finished() const { return m_finished; }
-    // [start, start + count) into `out`; zero past the end (legacy ReadCache).
+    // [start, start + count) into `out`; zero past what is decoded or past
+    // the end (legacy ReadCache).
     void read(std::int64_t start, std::int64_t count, std::int16_t *out) const;
     const WaveformPeaks *peaks() const { return m_finished && !m_silence ? &m_peaks : nullptr; }
 
@@ -74,7 +105,8 @@ private:
     std::int64_t m_count = 0;
     bool m_silence = false;
     bool m_finished = false;
-    std::vector<std::int16_t> m_samples;
+    std::unique_ptr<AudioStore> m_store;
+    mutable std::vector<std::int16_t> m_frames; // read's interleaved frames
     WaveformPeaks m_peaks{kPeakBlock};
 };
 
@@ -235,6 +267,7 @@ std::string legacyAssTime(int ms);
 struct AudioLineSpan {
     int startMs = 0, endMs = 0;
     bool visible = true; // shown in the Grid (legacy isVisible)
+    bool operator==(const AudioLineSpan &) const = default;
 };
 // Legacy SubsGrid::GetKeyFromPosition over the Lines' visibility.
 int legacyKeyFromPosition(std::span<const AudioLineSpan> lines, int position, int delta);

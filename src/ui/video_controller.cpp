@@ -4,6 +4,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QPointer>
 
 namespace hikari::ui {
 
@@ -87,7 +88,7 @@ void VideoController::loadAssociated()
     const QString path = m_offeredVideo;
     m_offeredVideo.clear();
     if (!path.isEmpty())
-        m_session.open(path.toStdString());
+        open(path);
     emit changed();
 }
 
@@ -99,8 +100,23 @@ void VideoController::dismissOffer()
 void VideoController::openVideo(const QString &path)
 {
     m_offeredVideo.clear();
-    m_session.open(QDir::toNativeSeparators(path).toStdString());
+    open(QDir::toNativeSeparators(path));
     emit changed();
+}
+
+void VideoController::open(const QString &path)
+{
+    const std::uint64_t request = ++m_openRequest;
+    auto asVideo = [self = QPointer<VideoController>(this), request, path] {
+        if (!self || request != self->m_openRequest)
+            return;
+        self->m_session.open(path.toStdString());
+        emit self->changed();
+    };
+    if (m_filter)
+        m_filter(path, std::move(asVideo));
+    else
+        asVideo();
 }
 
 bool VideoController::stepFrames(int frames)

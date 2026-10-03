@@ -7,12 +7,17 @@
 #include <QQuickWindow>
 #include <QSGFlatColorMaterial>
 #include <QSGGeometryNode>
+#include <QPainter>
+#include <QSGImageNode>
+#include <QSGRendererInterface>
 #include <QSGTextNode>
 #include <QTextLayout>
 
 #include <cmath>
 #include <functional>
+#include <memory>
 #include <optional>
+#include <variant>
 
 namespace hikari::ui {
 
@@ -28,8 +33,26 @@ QColor colourOf(std::uint32_t argb)
 // Direct3D 9 puts pixel centres at integers, Qt at half pixels.
 constexpr float kPixelCentre = 0.5f;
 
+// The shapes as triangles of one colour each and laid out texts, in draw
+// order; the scene graph draws them as geometry (RHI) or a painted image
+// (the software adaptation, which has no custom geometry).
+struct Drawing {
+    struct Triangles {
+        std::uint32_t colour = 0;
+        std::vector<QSGGeometry::Point2D> points;
+    };
+    struct Text {
+        std::shared_ptr<QTextLayout> layout;
+        QPointF at;
+        QColor colour;
+        bool outlined = false;
+    };
+    std::vector<std::variant<Triangles, Text>> items;
+};
+
 class Batch {
 public:
+    explicit Batch(Drawing &out) : m_out(out) {}
     void triangle(QPointF a, QPointF b, QPointF c)
     {
         for (QPointF p : {a, b, c})
@@ -53,27 +76,132 @@ public:
         triangle(a, b, c);
         triangle(a, c, d);
     }
-    // Flushes into a node under `parent`.
-    void flush(QSGNode *parent, std::uint32_t colour)
+    void flush(std::uint32_t colour)
     {
         if (m_points.empty())
             return;
-        auto *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), static_cast<int>(m_points.size()));
-        geometry->setDrawingMode(QSGGeometry::DrawTriangles);
-        std::copy(m_points.begin(), m_points.end(), geometry->vertexDataAsPoint2D());
-        auto *material = new QSGFlatColorMaterial;
-        material->setColor(colourOf(colour));
-        auto *node = new QSGGeometryNode;
-        node->setGeometry(geometry);
-        node->setMaterial(material);
-        node->setFlags(QSGNode::OwnsGeometry | QSGNode::OwnsMaterial);
-        parent->appendChildNode(node);
+        m_out.items.emplace_back(Drawing::Triangles{colour, std::move(m_points)});
         m_points.clear();
     }
 
 private:
+    Drawing &m_out;
     std::vector<QSGGeometry::Point2D> m_points;
 };
+
+Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFont(AudioShape::Font)> &fontOf)
+{
+    Drawing out;
+    Batch batch(out);
+    std::optional<std::uint32_t> colour;
+    for (const auto &s : shapes) {
+        if (s.kind == AudioShape::Kind::Text) {
+            if (colour)
+                batch.flush(*colour);
+            colour.reset();
+            auto layout = std::make_shared<QTextLayout>(QString::fromStdString(s.text), fontOf(s.font));
+            layout->beginLayout();
+            QTextLine line = layout->createLine();
+            line.setLineWidth(1e6);
+            layout->endLayout();
+            const qreal w = line.naturalTextWidth(), h = line.height();
+            qreal x = s.x1, y = s.y1;
+            if (s.align != AudioShape::Align::TopLeft)
+                x = s.x1 + (s.x2 - s.x1 - w) / 2;
+            if (s.align == AudioShape::Align::Center)
+                y = s.y1 + (s.y2 - s.y1 - h) / 2;
+            out.items.emplace_back(Drawing::Text{std::move(layout), QPointF(std::round(x), std::round(y)),
+                                                 colourOf(s.colour), s.outlined});
+            continue;
+        }
+        if (colour && *colour != s.colour)
+            batch.flush(*colour);
+        colour = s.colour;
+        switch (s.kind) {
+        case AudioShape::Kind::Fill: batch.rect(s.x1, s.y1, s.x2, s.y2); break;
+        case AudioShape::Kind::Line: batch.line(s.x1, s.y1, s.x2, s.y2, s.width); break;
+        case AudioShape::Kind::Triangle:
+            batch.triangle(QPointF(s.x1, s.y1), QPointF(s.x2, s.y2), QPointF(s.x3, s.y3));
+            break;
+        case AudioShape::Kind::Text: break;
+        }
+    }
+    if (colour)
+        batch.flush(*colour);
+    return out;
+}
+
+// Legacy DRAWOUTTEXT: the text eight times in black one pixel around, then
+// in its colour.
+template <typename Draw> void outlined(const Drawing::Text &text, Draw draw)
+{
+    if (text.outlined)
+        for (int dy = -1; dy <= 1; ++dy)
+            for (int dx = -1; dx <= 1; ++dx)
+                if (dx || dy)
+                    draw(text.at + QPointF(dx, dy), QColor(Qt::black));
+    draw(text.at, text.colour);
+}
+
+// The RHI path: geometry nodes and text nodes.
+void buildNodes(QSGNode *parent, const Drawing &drawing, QQuickWindow *window)
+{
+    for (const auto &item : drawing.items) {
+        if (const auto *t = std::get_if<Drawing::Triangles>(&item)) {
+            auto *geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), static_cast<int>(t->points.size()));
+            geometry->setDrawingMode(QSGGeometry::DrawTriangles);
+            std::copy(t->points.begin(), t->points.end(), geometry->vertexDataAsPoint2D());
+            auto *material = new QSGFlatColorMaterial;
+            material->setColor(colourOf(t->colour));
+            auto *node = new QSGGeometryNode;
+            node->setGeometry(geometry);
+            node->setMaterial(material);
+            node->setFlags(QSGNode::OwnsGeometry | QSGNode::OwnsMaterial);
+            parent->appendChildNode(node);
+            continue;
+        }
+        const auto &text = std::get<Drawing::Text>(item);
+        if (!window)
+            continue;
+        outlined(text, [&](QPointF at, const QColor &colour) {
+            QSGTextNode *node = window->createTextNode();
+            node->setColor(colour);
+            node->addTextLayout(at, text.layout.get());
+            parent->appendChildNode(node);
+        });
+    }
+}
+
+// The software path: the same triangles filled where they cover a pixel's
+// centre (no antialiasing, as the geometry is rasterized) and the same texts.
+QImage paintImage(const Drawing &drawing, QSize size, qreal dpr)
+{
+    QImage image((QSizeF(size) * dpr).toSize(), QImage::Format_ARGB32_Premultiplied);
+    image.setDevicePixelRatio(dpr);
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, false);
+    painter.setPen(Qt::NoPen);
+    for (const auto &item : drawing.items) {
+        if (const auto *t = std::get_if<Drawing::Triangles>(&item)) {
+            painter.setBrush(colourOf(t->colour));
+            for (std::size_t i = 0; i + 2 < t->points.size(); i += 3) {
+                const QPointF tri[3] = {{t->points[i].x, t->points[i].y},
+                                        {t->points[i + 1].x, t->points[i + 1].y},
+                                        {t->points[i + 2].x, t->points[i + 2].y}};
+                painter.drawConvexPolygon(tri, 3);
+            }
+            continue;
+        }
+        const auto &text = std::get<Drawing::Text>(item);
+        outlined(text, [&](QPointF at, const QColor &colour) {
+            painter.setPen(colour);
+            text.layout->draw(&painter, at);
+            painter.setPen(Qt::NoPen);
+        });
+    }
+    return image;
+}
 
 // The image and the cursor, each rebuilt on its own.
 class DisplayNode : public QSGNode {
@@ -95,6 +223,19 @@ void clear(QSGNode *node)
     }
 }
 
+bool softwareScene(QQuickWindow *window)
+{
+    return window && window->rendererInterface() &&
+           window->rendererInterface()->graphicsApi() == QSGRendererInterface::Software;
+}
+
+// The RHI path: `shapes` as geometry and text nodes under `parent`.
+void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow *window,
+           const std::function<QFont(AudioShape::Font)> &fontOf)
+{
+    buildNodes(parent, describe(shapes, fontOf), window);
+}
+
 } // namespace
 
 AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)
@@ -109,6 +250,9 @@ AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)
     m_scale.setPointSizeF(size - 1);
     m_cursor.setPointSizeF(size + 3);
     m_label.setPointSizeF(size + 1);
+    // legacy D3DXCreateFontW: tahoma13 and verdana11 are FW_BOLD, tahoma8 FW_NORMAL
+    m_cursor.setBold(true);
+    m_label.setBold(true);
 }
 
 QObject *AudioDisplayItem::controller() const
@@ -220,61 +364,52 @@ void AudioDisplayItem::focusOutEvent(QFocusEvent *event)
         m_controller->setFocused(false);
 }
 
-namespace {
-
-void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow *window,
-           const std::function<QFont(AudioShape::Font)> &fontOf)
-{
-    Batch batch;
-    std::optional<std::uint32_t> colour;
-    for (const auto &s : shapes) {
-        if (s.kind == AudioShape::Kind::Text) {
-            if (colour)
-                batch.flush(parent, *colour);
-            colour.reset();
-            if (!window)
-                continue;
-            QTextLayout layout(QString::fromStdString(s.text), fontOf(s.font));
-            layout.beginLayout();
-            QTextLine line = layout.createLine();
-            line.setLineWidth(1e6);
-            layout.endLayout();
-            const qreal w = line.naturalTextWidth(), h = line.height();
-            qreal x = s.x1, y = s.y1;
-            if (s.align != AudioShape::Align::TopLeft)
-                x = s.x1 + (s.x2 - s.x1 - w) / 2;
-            if (s.align == AudioShape::Align::Center)
-                y = s.y1 + (s.y2 - s.y1 - h) / 2;
-            QSGTextNode *text = window->createTextNode();
-            text->setColor(colourOf(s.colour));
-            if (s.outlined) {
-                text->setTextStyle(QSGTextNode::Outline);
-                text->setStyleColor(Qt::black);
-            }
-            text->addTextLayout(QPointF(std::round(x), std::round(y)), &layout);
-            parent->appendChildNode(text);
-            continue;
-        }
-        if (colour && *colour != s.colour)
-            batch.flush(parent, *colour);
-        colour = s.colour;
-        switch (s.kind) {
-        case AudioShape::Kind::Fill: batch.rect(s.x1, s.y1, s.x2, s.y2); break;
-        case AudioShape::Kind::Line: batch.line(s.x1, s.y1, s.x2, s.y2, s.width); break;
-        case AudioShape::Kind::Triangle:
-            batch.triangle(QPointF(s.x1, s.y1), QPointF(s.x2, s.y2), QPointF(s.x3, s.y3));
-            break;
-        case AudioShape::Kind::Text: break;
-        }
-    }
-    if (colour)
-        batch.flush(parent, *colour);
-}
-
-} // namespace
-
 QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
+    auto fontOf = [this](AudioShape::Font f) { return font(static_cast<int>(f)); };
+    auto sceneShapes = [this] {
+        return m_controller->scene([this](AudioShape::Font f, std::string_view text) {
+            return QFontMetrics(font(static_cast<int>(f))).horizontalAdvance(QString::fromUtf8(text.data(), qsizetype(text.size())));
+        });
+    };
+    auto cursorShapes = [this] {
+        return m_controller->cursor() && m_controller->ready()
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), false, m_controller->options())
+                   : std::vector<AudioShape>{};
+    };
+    if (softwareScene(window())) {
+        // The software adaptation: one image node, the scene painted once per
+        // revision and the cursor painted over a copy of it.
+        auto *node = static_cast<QSGImageNode *>(oldNode);
+        if (!node) {
+            node = window()->createImageNode();
+            node->setOwnsTexture(true);
+            node->setFiltering(QSGTexture::Nearest);
+            m_drawnRevision = 0;
+        }
+        const QSize pixels = size().toSize();
+        if (!m_controller || pixels.isEmpty()) {
+            node->setTexture(window()->createTextureFromImage(QImage(1, 1, QImage::Format_ARGB32_Premultiplied)));
+            node->setRect(QRectF());
+            return node;
+        }
+        const qreal dpr = window()->effectiveDevicePixelRatio();
+        if (m_drawnRevision != m_controller->revision() || m_sceneImage.deviceIndependentSize().toSize() != pixels) {
+            m_drawnRevision = m_controller->revision();
+            m_sceneImage = paintImage(describe(sceneShapes(), fontOf), pixels, dpr);
+        }
+        QImage image = m_sceneImage;
+        if (const auto cursor = cursorShapes(); !cursor.empty()) {
+            const QImage over = paintImage(describe(cursor, fontOf), pixels, dpr);
+            QPainter painter(&image);
+            painter.drawImage(QPointF(0, 0), over);
+        }
+        QSGTexture *texture = window()->createTextureFromImage(image);
+        node->setTexture(texture);
+        node->setSourceRect(QRectF(QPointF(0, 0), texture->textureSize()));
+        node->setRect(QRectF(QPointF(0, 0), size()));
+        return node;
+    }
     auto *node = static_cast<DisplayNode *>(oldNode);
     if (!node) {
         node = new DisplayNode;
@@ -285,20 +420,13 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
         clear(node->cursor);
         return node;
     }
-    auto fontOf = [this](AudioShape::Font f) { return font(static_cast<int>(f)); };
     if (m_drawnRevision != m_controller->revision()) {
         m_drawnRevision = m_controller->revision();
         clear(node->image);
-        const auto shapes = m_controller->scene([this](AudioShape::Font f, std::string_view text) {
-            return QFontMetrics(font(static_cast<int>(f))).horizontalAdvance(QString::fromUtf8(text.data(), qsizetype(text.size())));
-        });
-        build(node->image, shapes, window(), fontOf);
+        build(node->image, sceneShapes(), window(), fontOf);
     }
     clear(node->cursor);
-    if (m_controller->cursor() && m_controller->ready())
-        build(node->cursor, application::audioCursor(m_controller->view(), *m_controller->cursor(), false,
-                                                     m_controller->options()),
-              window(), fontOf);
+    build(node->cursor, cursorShapes(), window(), fontOf);
     return node;
 }
 

@@ -32,22 +32,34 @@
 // Chapters request: u8 Chapters, str path (any file; independent of Open)
 //         terminal Ok: i32 count, then per chapter i64 startUs, i64 endUs,
 //                      str title
-// OpenDisplayAudio request: u8 OpenDisplayAudio, str path (A1: the audio box)
+// The audio box's requests (A1). Their failures carry u8 stage (0 indexer,
+// 1 indexing, 2 audio source, 3 conversion, 4 read, 5 the helper itself)
+// and str text (FFMS2's error text).
+// Probe   request: u8 Probe, str path (any file; independent of what is open)
+//         terminal Ok: u8 hasVideo, i32 count, then per audio track i32 track,
+//                      u8 hasName, str name, u8 hasLanguage, str language,
+//                      str codec (the indexer's, nothing indexed)
+// OpenDisplayAudio request: u8 OpenDisplayAudio, str path, i32 track
 //         progress: i64 done, i64 total (indexing)
-//         terminal Ok: as OpenAudio, for the file's first audio track in
+//         terminal Ok: as OpenAudio, for that track alone indexed, in
 //                      legacy's decode format (S16; stereo or mono; delay
 //                      FFMS_DELAY_FIRST_VIDEO_TRACK; origin 0). Replaces the
-//                      open source; Audio and PcmBegin then read it.
-//         terminal Unsupported: no audio track
+//                      open source; DisplayRead reads it.
+// OpenSourceDisplayAudio request: u8 OpenSourceDisplayAudio, i32 track
+//         terminal Ok: as OpenDisplayAudio, over the open video's index (a
+//                      second audio source; the video and Audio stay open)
+// DisplayRead request: u8 DisplayRead, i64 start, i64 count
+//         terminal Ok: as Audio, from the box's audio source
 
 #include <cstdint>
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 4; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio
+inline constexpr std::uint32_t kProtocolVersion = 5; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+                                                   // 5: Probe, a chosen track, the video's audio, DisplayRead
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
-                                 OpenDisplayAudio = 8 };
+                                 OpenDisplayAudio = 8, Probe = 9, OpenSourceDisplayAudio = 10, DisplayRead = 11 };
 
 } // namespace hikari::backends::media

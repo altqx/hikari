@@ -36,6 +36,38 @@ SourceError errorOf(Outcome o, const std::vector<std::byte> &message)
     }
 }
 
+// A1: the audio box's failures: u8 stage and str text (media_protocol.h).
+application::AudioFailure failureOf(Outcome o, const std::vector<std::byte> &message)
+{
+    application::AudioFailure failure;
+    Reader in(message);
+    const std::uint8_t stage = in.u8();
+    std::string text = in.str();
+    if (!in.ok() || stage > static_cast<std::uint8_t>(application::AudioStage::Host)) {
+        text = textOf(message);
+        failure.stage = application::AudioStage::Host;
+    } else {
+        failure.stage = static_cast<application::AudioStage>(stage);
+    }
+    switch (o) {
+    case Outcome::Cancelled: failure.error = SourceError::Cancelled; break;
+    case Outcome::Unsupported: failure.error = SourceError::Unsupported; break;
+    case Outcome::InvalidInput:
+        failure.error = text == "EOF" ? SourceError::EndOfStream
+                        : text == "not open" ? SourceError::NotOpen
+                                             : SourceError::InvalidInput;
+        break;
+    default: failure.error = SourceError::BackendFailure; break;
+    }
+    failure.message = std::move(text);
+    return failure;
+}
+
+application::AudioFailure hostFailure(SourceError error)
+{
+    return {error, application::AudioStage::Host, {}};
+}
+
 } // namespace
 
 FfmsIndexedSource::FfmsIndexedSource(QString helperProgram, QObject *parent)
@@ -83,6 +115,7 @@ std::uint64_t FfmsIndexedSource::open(const std::string &path, Progress progress
     m_lost = false;
     m_path = path;
     m_audio.reset();
+    m_display.reset(); // the helper's Open replaces the box's audio too
     ensureHelper([this, generation, path, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
         if (!ok)
             return done(std::unexpected(SourceError::MissingDependency));
@@ -291,62 +324,6 @@ void FfmsIndexedSource::audio(std::int64_t start, std::int64_t count, AudioReady
     m_reads[ticket].request = *request;
 }
 
-// A1: like open(), for the audio box's audio; there is no video to read.
-std::uint64_t FfmsIndexedSource::openDisplayAudio(const std::string &path, Progress progress, AudioOpened done)
-{
-    const std::uint64_t generation = ++m_generation;
-    m_open = false;
-    m_lost = false;
-    m_path = path;
-    m_audio.reset();
-    ensureHelper([this, generation, path, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
-        if (!ok)
-            return done(std::unexpected(SourceError::MissingDependency));
-        if (generation != m_generation)
-            return done(std::unexpected(SourceError::Stale));
-        auto request = m_host->request(generation,
-            Writer().u8(static_cast<std::uint8_t>(media::Command::OpenDisplayAudio)).str(path).take(),
-            [this, generation, progress, done](std::expected<Event, HostError> e) {
-                if (!e)
-                    return done(std::unexpected(errorOf(e.error())));
-                Reader in(e->payload);
-                if (e->kind == Kind::Progress) {
-                    const auto doneCount = in.i64();
-                    const auto total = in.i64();
-                    if (progress && generation == m_generation)
-                        progress(doneCount, total);
-                    return;
-                }
-                if (e->kind != Kind::Terminal)
-                    return;
-                m_openRequest.reset();
-                if (generation != m_generation)
-                    return done(std::unexpected(SourceError::Stale));
-                if (e->outcome != Outcome::Ok)
-                    return done(std::unexpected(errorOf(e->outcome, e->payload)));
-                application::AudioInfo a;
-                a.generation = generation;
-                a.track = in.i32();
-                const int format = in.i32();
-                a.sampleRate = in.i32();
-                a.bitsPerSample = in.i32();
-                a.channels = in.i32();
-                a.channelLayout = in.i64();
-                a.sampleCount = in.i64();
-                a.originMicroseconds = in.i64();
-                if (!in.ok() || format < 0 || format > 4 || a.channels <= 0 || a.bitsPerSample % 8 != 0)
-                    return done(std::unexpected(SourceError::BackendFailure));
-                a.format = static_cast<application::SampleFormat>(format); // FFMS_FMT_* order
-                m_audio = a;
-                done(a);
-            });
-        if (!request)
-            return done(std::unexpected(errorOf(request.error())));
-        m_openRequest = *request;
-    });
-    return generation;
-}
-
 void FfmsIndexedSource::chapters(const std::string &path, Listed done)
 {
     ensureHelper([this, path, done = std::move(done)](bool ok) mutable {
@@ -454,6 +431,198 @@ void FfmsIndexedSource::nextPcm(std::int64_t maxFrames, PcmReady done)
     if (!request)
         return finish(std::unexpected(errorOf(request.error())));
     m_reads[ticket].request = *request;
+}
+
+template <typename R>
+std::pair<std::uint64_t, std::function<void(R)>> FfmsIndexedSource::trackDisplay(std::function<void(R)> done)
+{
+    const std::uint64_t ticket = ++m_nextRead;
+    auto slot = std::make_shared<std::function<void(R)>>(std::move(done));
+    m_displayReads[ticket].cancel = [slot] {
+        if (auto d = std::exchange(*slot, nullptr))
+            d(std::unexpected(hostFailure(SourceError::Cancelled)));
+    };
+    auto finish = [this, ticket, slot](R result) {
+        m_displayReads.erase(ticket);
+        if (auto d = std::exchange(*slot, nullptr))
+            d(std::move(result));
+    };
+    return {ticket, finish};
+}
+
+void FfmsIndexedSource::probe(const std::string &path, Probed done)
+{
+    ensureHelper([this, path, done = std::move(done)](bool ok) mutable {
+        if (!ok)
+            return done(std::unexpected(hostFailure(SourceError::MissingDependency)));
+        auto request = m_host->request(0,
+            Writer().u8(static_cast<std::uint8_t>(media::Command::Probe)).str(path).take(),
+            [done](std::expected<Event, HostError> e) {
+                if (!e)
+                    return done(std::unexpected(hostFailure(errorOf(e.error()))));
+                if (e->kind != Kind::Terminal)
+                    return;
+                if (e->outcome != Outcome::Ok)
+                    return done(std::unexpected(failureOf(e->outcome, e->payload)));
+                Reader in(e->payload);
+                application::MediaProbe probe;
+                probe.hasVideo = in.u8() != 0;
+                const std::int32_t n = in.i32();
+                for (std::int32_t i = 0; in.ok() && i < n; ++i) {
+                    application::AudioTrack t;
+                    t.index = in.i32();
+                    t.hasName = in.u8() != 0;
+                    t.name = in.str();
+                    t.hasLanguage = in.u8() != 0;
+                    t.language = in.str();
+                    t.codec = in.str();
+                    probe.audio.push_back(std::move(t));
+                }
+                if (!in.ok() || n < 0 || !in.atEnd())
+                    return done(std::unexpected(hostFailure(SourceError::BackendFailure)));
+                done(std::move(probe));
+            });
+        if (!request)
+            done(std::unexpected(hostFailure(errorOf(request.error()))));
+    });
+}
+
+void FfmsIndexedSource::parseDisplayOpen(
+    std::uint64_t generation, const Event &e,
+    const std::function<void(std::expected<application::AudioInfo, application::AudioFailure>)> &done)
+{
+    if (generation != m_generation)
+        return done(std::unexpected(hostFailure(SourceError::Stale)));
+    if (e.outcome != Outcome::Ok)
+        return done(std::unexpected(failureOf(e.outcome, e.payload)));
+    Reader in(e.payload);
+    application::AudioInfo a;
+    a.generation = generation;
+    a.track = in.i32();
+    const int format = in.i32();
+    a.sampleRate = in.i32();
+    a.bitsPerSample = in.i32();
+    a.channels = in.i32();
+    a.channelLayout = in.i64();
+    a.sampleCount = in.i64();
+    a.originMicroseconds = in.i64();
+    if (!in.ok() || format < 0 || format > 4 || a.channels <= 0 || a.bitsPerSample % 8 != 0)
+        return done(std::unexpected(hostFailure(SourceError::BackendFailure)));
+    a.format = static_cast<application::SampleFormat>(format); // FFMS_FMT_* order
+    m_display = a;
+    done(a);
+}
+
+// A1: like open(), for the audio box's own file; there is no video to read.
+void FfmsIndexedSource::openDisplayAudio(const std::string &path, int track, Progress progress,
+                                         application::DisplayAudioPort::Opened done)
+{
+    const std::uint64_t generation = ++m_generation;
+    m_open = false;
+    m_lost = false;
+    m_path = path;
+    m_audio.reset();
+    m_display.reset();
+    ensureHelper([this, generation, path, track, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
+        if (!ok)
+            return done(std::unexpected(hostFailure(SourceError::MissingDependency)));
+        if (generation != m_generation)
+            return done(std::unexpected(hostFailure(SourceError::Stale)));
+        auto [ticket, finish] = trackDisplay(std::move(done));
+        auto request = m_host->request(generation,
+            Writer().u8(static_cast<std::uint8_t>(media::Command::OpenDisplayAudio)).str(path).i32(track).take(),
+            [this, generation, progress, finish](std::expected<Event, HostError> e) {
+                if (!e)
+                    return finish(std::unexpected(hostFailure(errorOf(e.error()))));
+                if (e->kind == Kind::Progress) {
+                    Reader in(e->payload);
+                    const auto doneCount = in.i64();
+                    const auto total = in.i64();
+                    if (progress && generation == m_generation)
+                        progress(doneCount, total);
+                    return;
+                }
+                if (e->kind != Kind::Terminal)
+                    return;
+                parseDisplayOpen(generation, *e, finish);
+            });
+        if (!request)
+            return finish(std::unexpected(hostFailure(errorOf(request.error()))));
+        m_displayReads[ticket].request = *request;
+    });
+}
+
+void FfmsIndexedSource::openSourceDisplayAudio(int track, application::DisplayAudioPort::Opened done)
+{
+    if (m_lost)
+        return done(std::unexpected(hostFailure(SourceError::HelperLost)));
+    if (!m_open || !m_host)
+        return done(std::unexpected(hostFailure(SourceError::NotOpen)));
+    const std::uint64_t generation = m_generation;
+    m_display.reset();
+    auto [ticket, finish] = trackDisplay(std::move(done));
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::OpenSourceDisplayAudio)).i32(track).take(),
+        [this, generation, finish](std::expected<Event, HostError> e) {
+            if (!e)
+                return finish(std::unexpected(hostFailure(errorOf(e.error()))));
+            if (e->kind != Kind::Terminal)
+                return;
+            parseDisplayOpen(generation, *e, finish);
+        });
+    if (!request)
+        return finish(std::unexpected(hostFailure(errorOf(request.error()))));
+    m_displayReads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::displayAudio(std::int64_t start, std::int64_t count, Read done)
+{
+    if (m_lost)
+        return done(std::unexpected(hostFailure(SourceError::HelperLost)));
+    if (!m_display || !m_host)
+        return done(std::unexpected(hostFailure(SourceError::NotOpen)));
+    const std::uint64_t generation = m_generation;
+    auto [ticket, finish] = trackDisplay(std::move(done));
+    const application::AudioInfo info = *m_display;
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::DisplayRead)).i64(start).i64(count).take(),
+        [generation, info, finish, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return finish(std::unexpected(hostFailure(errorOf(e.error()))));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return finish(std::unexpected(hostFailure(SourceError::Stale)));
+            if (e->outcome != Outcome::Ok)
+                return finish(std::unexpected(failureOf(e->outcome, e->payload)));
+            Reader in(e->payload);
+            application::AudioBlock b;
+            b.generation = generation;
+            b.start = in.i64();
+            b.count = in.i64();
+            b.format = info.format;
+            b.channels = info.channels;
+            b.samples = in.bytes();
+            const auto expected = static_cast<std::size_t>(b.count) * static_cast<std::size_t>(info.channels) *
+                                  static_cast<std::size_t>(info.bitsPerSample / 8);
+            if (!in.ok() || b.count < 0 || b.samples.size() != expected)
+                return finish(std::unexpected(hostFailure(SourceError::BackendFailure)));
+            finish(std::move(b));
+        });
+    if (!request)
+        return finish(std::unexpected(hostFailure(errorOf(request.error()))));
+    m_displayReads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::cancelDisplay()
+{
+    auto reads = std::move(m_displayReads);
+    m_displayReads.clear();
+    for (auto &[ticket, read] : reads) {
+        if (m_host && read.request)
+            m_host->cancel(read.request);
+        read.cancel();
+    }
 }
 
 void FfmsIndexedSource::cancelReads()

@@ -4,10 +4,12 @@
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "line_grid.h"
+#include "audio_display_item.h"
 
 #include <QAccessible>
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QSignalSpy>
 #include <QQmlApplicationEngine>
 #include <QTemporaryDir>
 #include <QQuickItem>
@@ -17,6 +19,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <filesystem>
 #include <vector>
 #include <set>
 #include <optional>
@@ -1704,6 +1707,29 @@ private slots:
             QCOMPARE(columns.min[std::size_t(c)], toY(hi));
             QCOMPARE(columns.peak[std::size_t(c)], toY(lo));
         }
+        // the same PCM at other zooms (legacy samples per column at 100% and
+        // 10%: 2880 and 288): whole peak blocks from 1024 samples a column up,
+        // every sample below
+        for (const int samples : {2880, 288}) {
+            const auto other = application::legacyWaveform(*pcm, 0, 6, h, samples, 1.f);
+            for (int c = 0; c < 6; ++c) {
+                std::int64_t first = std::int64_t(c) * samples, last = first + samples;
+                if (samples >= 1024) {
+                    first = first / 256 * 256;
+                    last = std::min<std::int64_t>((last - 1) / 256 * 256 + 256, 96256);
+                }
+                int lo = 32767, hi = -32768;
+                for (std::int64_t i = first; i < last; ++i) {
+                    lo = std::min<int>(lo, mono(i));
+                    hi = std::max<int>(hi, mono(i));
+                }
+                QCOMPARE(other.min[std::size_t(c)], toY(hi));
+                QCOMPARE(other.peak[std::size_t(c)], toY(lo));
+            }
+        }
+        // legacy's default disk cache, named for the track, channels and delay
+        const auto cacheFile = audio.box().cacheFile();
+        QCOMPARE(QString::fromStdString(cacheFile.filename().string()), QStringLiteral("audioonly_track0_2ch_0.w64"));
         // the active Line's boundaries: 1.00 s is column 33.3
         const auto scene = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
         bool startMark = false;
@@ -1723,9 +1749,32 @@ private slots:
         // legacy SetRecent(2), then Close audio
         QCOMPARE(application->recentAudio().first().toMap().value(QStringLiteral("path")).toString(),
                  QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        // what the scene graph drew, in whichever renderer this run uses
+        // (offscreen: the software adaptation; xvfb: RHI)
+        QTest::mouseMove(window, QPoint(0, 0));
+        QTRY_VERIFY(!audio.cursor().has_value());
+        QCoreApplication::processEvents();
+        const QImage drawn = window->grabWindow();
+        const QPoint origin = display->mapToScene(QPointF(0, 0)).toPoint();
+        auto pixel = [&](int x, int y) { return drawn.pixel(origin + QPoint(x, y)) | 0xFF000000u; };
+        QCOMPARE(pixel(34, h / 2), audio.options().lineStart);   // the start boundary, over the waveform
+        QCOMPARE(pixel(10, h / 2), audio.options().waveform);    // a column before the Lines
+        QCOMPARE(pixel(10, h / 16), audio.options().background); // above its peak
+        // legacy D3DXCreateFontW: the cursor time and labels bold, the ruler not
+        auto *displayItem = qobject_cast<ui::AudioDisplayItem *>(display);
+        QVERIFY(displayItem);
+        QVERIFY(displayItem->font(int(application::AudioShape::Font::Cursor)).bold());
+        QVERIFY(displayItem->font(int(application::AudioShape::Font::Label)).bold());
+        QVERIFY(!displayItem->font(int(application::AudioShape::Font::Scale)).bold());
         auto *close = item<QObject>("closeAudioMenuItem");
         QVERIFY(close->property("enabled").toBool());
+        auto part = cacheFile;
+        part += ".part";
+        QVERIFY(std::filesystem::exists(part));
         audio.closeAudio();
+        // a complete cache keeps its name (legacy ~ProviderFFMS2)
+        QVERIFY(!std::filesystem::exists(part));
+        QCOMPARE(std::filesystem::file_size(cacheFile), std::uintmax_t(96256) * 4);
         QVERIFY(!audio.hasAudio());
         QVERIFY(!close->property("enabled").toBool());
         QCOMPARE(item<QObject>("audioStatus")->property("text").toString(), QStringLiteral("No audio open"));
@@ -1771,6 +1820,27 @@ private slots:
         QCOMPARE(audio.marks().keyframesMs[1], timebase.msAt(12));
         QTRY_COMPARE(audio.marks().videoMs.value_or(-1),
                      timebase.msAt(application->video().session().shownFrame().value_or(-1)));
+        // read through the video's own helper: the file is indexed once
+        QVERIFY(audio.box().fromVideo());
+        // drawn at ((ms - 20) / 10) * 10 (legacy DrawKeyframes): frames 0, 12,
+        // 24 and 36 at 0, 500.5, 1001 and 1501.5 ms, 1440 samples (30 ms) a column
+        QCOMPARE(audio.view().position(), 0);
+        std::vector<float> drawn;
+        for (const auto &shape : audio.scene([](application::AudioShape::Font, std::string_view) { return 30; }))
+            if (shape.kind == application::AudioShape::Kind::Line && shape.colour == audio.options().keyframe)
+                drawn.push_back(shape.x1);
+        QCOMPARE(drawn, (std::vector<float>{0, 16, 32, 49}));
+        // video frames redraw the box only when a mark moved (legacy redraws
+        // the audio on its own events, not the video's)
+        QSignalSpy redraws(&audio, &ui::AudioController::displayChanged);
+        for (int i = 0; i < 5; ++i)
+            emit application->video().changed();
+        QCOMPARE(redraws.count(), 0);
+        const int shown = application->video().session().shownFrame().value_or(-1);
+        QVERIFY(application->video().stepFrames(1));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), shown + 1);
+        QCOMPARE(audio.marks().videoMs.value_or(-1), timebase.msAt(shown + 1));
+        QCOMPARE(redraws.count(), 1);
         // another file in the same box draws its own waveform
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
@@ -1814,6 +1884,62 @@ private slots:
             if (ms >= audio.view().msAtX(0) && ms <= last)
                 legacy.push_back(float(static_cast<int>(audio.view().xAtMs(((ms - 20) / 10) * 10))));
         QCOMPARE(drawn, legacy);
+        // by hand: keyframes 0, 12, 24 and 36 start at 0, 600, 1200 and 1800 ms
+        // (durations 30, 50, 70 ms); at 44.1 kHz and 1323 samples (30 ms) a
+        // column, -20, 580, 1180 and 1780 ms fall in columns 0, 19, 39 and 59
+        QCOMPARE(expected, (std::vector<int>{0, 600, 1200, 1800}));
+        QCOMPARE(audio.view().position(), 0);
+        QCOMPARE(drawn, (std::vector<float>{0, 19, 39, 59}));
+    }
+
+    // Legacy ProviderFFMS2::Init with several audio tracks: "Choose the
+    // track" lists them; the chosen one opens. For a video, Cancel fails the
+    // video's open as well.
+    void audioTrackChooser()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
+        auto *chooser = item<QObject>("audioTrackChooser");
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(audio.trackChoices(), (QStringList{QStringLiteral("1: Main [eng] (pcm_s16le)"),
+                                                    QStringLiteral("2: Commentary [jpn] (pcm_s16le)")}));
+        auto *list = item<QObject>("audioTrackList");
+        QCOMPARE(list->property("currentIndex").toInt(), 0); // legacy SetSelection(0)
+        list->setProperty("currentIndex", 1);
+        QMetaObject::invokeMethod(chooser, "accept");
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QCOMPARE(audio.box().track(), 2);
+        QCOMPARE(audio.box().audio()->peaks() != nullptr, true);
+        std::int16_t s = -1;
+        audio.box().audio()->read(1000, 1, &s);
+        QCOMPARE(s, std::int16_t(0)); // the second track is silence
+        // a video's audio: Cancel leaves no audio and no video
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QMetaObject::invokeMethod(chooser, "reject");
+        QTRY_VERIFY(!audio.hasAudio());
+        QTRY_VERIFY(!application->video().hasVideo());
+        QVERIFY(audio.trackChoices().isEmpty());
+    }
+
+    // Legacy RendererFFMS2::OpenFile: a file with audio and no video given to
+    // Open video goes to the audio box, and the open video stays.
+    void audioOnlyFileOpenedAsVideo()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        const QString video = QString::fromStdString(application->video().session().path());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QCOMPARE(audio.path(), QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QVERIFY(!audio.box().fromVideo());
+        QVERIFY(application->video().hasVideo());
+        QCOMPARE(QString::fromStdString(application->video().session().path()), video);
+        QCOMPARE(application->recentAudio().first().toMap().value(QStringLiteral("path")).toString(),
+                 QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
     }
 
     void theReferenceIsNeverEdited()

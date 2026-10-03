@@ -12,9 +12,11 @@
 
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -35,8 +37,10 @@ class AudioController : public QObject {
     Q_PROPERTY(int scrollPosition READ scrollPosition NOTIFY displayChanged)
     Q_PROPERTY(int scrollPage READ scrollPage NOTIFY displayChanged)
     Q_PROPERTY(int scrollRange READ scrollRange NOTIFY displayChanged)
+    // Legacy "Choose the track" (HikariListBox): its rows while it is asking.
+    Q_PROPERTY(QStringList trackChoices READ trackChoices NOTIFY trackChoicesChanged)
 public:
-    explicit AudioController(application::IndexedSourcePort &source, QObject *parent = nullptr);
+    explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
 
     application::AudioBox &box() { return m_box; }
     const application::AudioView &view() const { return m_view; }
@@ -53,6 +57,17 @@ public:
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
     Q_INVOKABLE void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
     Q_INVOKABLE void closeAudio();
+    // An indexed video's audio, read through the video's own source (legacy
+    // RendererFFMS2::OpenFile's OpenAudioInTab(40000): the video's provider).
+    void openFromVideo(application::DisplayAudioPort &video, const QString &path);
+    // The options a new open reads (AUDIO_RAM_CACHE, AUDIO_DELAY, the cache
+    // folder and its AUDIO_CACHE_FILES_LIMIT, ACCEPTED_AUDIO_STREAM).
+    void setSettings(std::function<application::AudioCacheSettings()> settings);
+
+    QStringList trackChoices() const { return m_trackChoices; }
+    // The chooser's OK (the row) and Cancel.
+    Q_INVOKABLE void chooseTrack(int row);
+    Q_INVOKABLE void cancelTrackChoice();
 
     // The editing target's Lines (legacy keys, with their Grid visibility) and
     // the active one; `reselect` when legacy would call SetDialogue (another
@@ -87,8 +102,12 @@ signals:
     // A file was opened and is loading (legacy SetRecent(2) after LoadAudio);
     // `created` when there was no box before (legacy then focuses the display).
     void opened(const QString &path, bool created);
-    // An open ended without audio; empty `problem` when legacy says nothing.
-    void failed(const QString &problem);
+    // A message for the log: legacy HikariLog, or HikariLogDebug (`debug`).
+    void logged(const QString &message, bool debug);
+    void trackChoicesChanged();
+    // The chooser was cancelled for a video's audio: legacy's video open
+    // failed with it (ProviderFFMS2::Init returned 0).
+    void videoAudioDeclined();
 
 private:
     void boxChanged();
@@ -98,6 +117,9 @@ private:
     void redraw();
 
     application::AudioBox m_box;
+    std::function<application::AudioCacheSettings()> m_settings;
+    QStringList m_trackChoices;
+    std::function<void(std::optional<int>)> m_trackAnswer;
     application::AudioView m_view;
     application::AudioDisplayOptions m_options;
     application::AudioBox::State m_seenState = application::AudioBox::State::Closed;

@@ -46,6 +46,12 @@ struct Source {
     int sampleRate = 0;
     int channels = 0;
     std::int64_t channelLayout = 0;
+    // A1: the audio box's audio, in legacy's decode format (S16, 1 or 2
+    // channels). A second source beside `audio`, so the box can read the open
+    // video's audio while general playback reads its own.
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> display;
+    std::int64_t displaySamples = 0;
+    int displayChannels = 0;
 };
 
 // One resampled stream over a source range (I3). Chunks continue the same
@@ -196,39 +202,62 @@ void openAudio(Source &source, Reader &in, Responder &r)
                                 .take());
 }
 
-// A1: the audio box's audio, as legacy ProviderFFMS2 opens it: the file's
-// first audio track indexed (decode errors ignored, FFMS_IEH_IGNORE), sample 0
-// at the first video frame (FFMS_DELAY_FIRST_VIDEO_TRACK), converted to S16
-// with front left and right for more than one channel, else front centre.
-void openDisplayAudio(Source &source, Reader &in, Responder &r)
+// A1: failures of the audio box's requests name their stage and carry
+// FFMS2's text (media_protocol.h).
+enum class Stage : std::uint8_t { Indexer = 0, Indexing = 1, Source = 2, Convert = 3, Read = 4, Host = 5 };
+
+void failDisplay(Responder &r, Outcome outcome, Stage stage, const std::string &text)
+{
+    r.terminal(outcome, Writer().u8(static_cast<std::uint8_t>(stage)).str(text).take());
+}
+
+std::string orEmpty(const char *text)
+{
+    return text ? std::string(text) : std::string();
+}
+
+// A1: a file's tracks as legacy ProviderFFMS2::Init lists them from the
+// indexer, before anything is indexed.
+void probe(Reader &in, Responder &r)
 {
     const std::string path = in.str();
     if (!in.ok())
-        return r.terminal(Outcome::InvalidInput, bytesOf("malformed open"));
-    source = {};
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "malformed probe");
     char buffer[1024];
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     FFMS_Indexer *indexer = FFMS_CreateIndexer(path.c_str(), &err);
     if (!indexer)
-        return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
-    int track = -1;
-    for (int i = 0; i < FFMS_GetNumTracksI(indexer) && track < 0; ++i)
-        if (FFMS_GetTrackTypeI(indexer, i) == FFMS_TYPE_AUDIO)
-            track = i;
-    if (track < 0) {
-        FFMS_CancelIndexing(indexer);
-        return r.terminal(Outcome::Unsupported, bytesOf("no audio track"));
+        return failDisplay(r, Outcome::InvalidInput, Stage::Indexer, errorText(err));
+    bool hasVideo = false;
+    Writer tracks;
+    std::int32_t count = 0;
+    for (int i = 0; i < FFMS_GetNumTracksI(indexer); ++i) {
+        const int type = FFMS_GetTrackTypeI(indexer, i);
+        if (type == FFMS_TYPE_VIDEO)
+            hasVideo = true;
+        if (type != FFMS_TYPE_AUDIO)
+            continue;
+        const char *name = FFMS_GetTrackName(indexer, i);
+        const char *language = FFMS_GetTrackLanguage(indexer, i);
+        tracks.i32(i).u8(name ? 1 : 0).str(orEmpty(name)).u8(language ? 1 : 0).str(orEmpty(language))
+            .str(orEmpty(FFMS_GetCodecNameI(indexer, i)));
+        ++count;
     }
-    Progress progress{&r};
-    FFMS_SetProgressCallback(indexer, onProgress, &progress);
-    FFMS_TrackIndexSettings(indexer, track, 1, 0);
-    std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_IGNORE, &err));
-    if (!index)
-        return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
-    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
-        FFMS_CreateAudioSource(path.c_str(), track, index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
-    if (!audio)
-        return r.terminal(Outcome::Unsupported, bytesOf(errorText(err)));
+    FFMS_CancelIndexing(indexer);
+    auto list = tracks.take();
+    Writer out;
+    out.u8(hasVideo ? 1 : 0).i32(count);
+    auto head = out.take();
+    head.insert(head.end(), list.begin(), list.end());
+    r.terminal(Outcome::Ok, std::move(head));
+}
+
+// Legacy's decode format on an audio source: S16, front left and right for
+// more than one channel, else front centre. Writes the Ok reply.
+void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio, int track, Responder &r)
+{
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     const bool stereo = FFMS_GetAudioProperties(audio.get())->Channels > 1;
     FFMS_ResampleOptions *options = FFMS_CreateResampleOptions(audio.get());
     options->ChannelLayout = stereo ? (FFMS_CH_FRONT_LEFT | FFMS_CH_FRONT_RIGHT) : FFMS_CH_FRONT_CENTER;
@@ -237,28 +266,93 @@ void openDisplayAudio(Source &source, Reader &in, Responder &r)
     const int converted = FFMS_SetOutputFormatA(audio.get(), options, &err);
     FFMS_DestroyResampleOptions(options);
     if (converted != 0)
-        return r.terminal(Outcome::Unsupported, bytesOf(errorText(err)));
+        return failDisplay(r, Outcome::Unsupported, Stage::Convert, errorText(err));
     // The properties keep the source's channels; the output is what was asked.
     const FFMS_AudioProperties *a = FFMS_GetAudioProperties(audio.get());
-    source.path = path;
-    source.index = std::move(index);
-    source.channels = stereo ? 2 : 1;
-    source.bytesPerFrame = 2 * source.channels;
-    source.samples = a->NumSamples;
-    source.sampleFormat = FFMS_FMT_S16;
-    source.sampleRate = a->SampleRate;
-    source.channelLayout = layout;
-    source.audio = std::move(audio);
+    source.displayChannels = stereo ? 2 : 1;
+    source.displaySamples = a->NumSamples;
+    source.display = std::move(audio);
     r.terminal(Outcome::Ok, Writer()
                                 .i32(track)
                                 .i32(FFMS_FMT_S16)
-                                .i32(source.sampleRate)
+                                .i32(a->SampleRate)
                                 .i32(16)
-                                .i32(source.channels)
+                                .i32(source.displayChannels)
                                 .i64(layout)
-                                .i64(source.samples)
+                                .i64(source.displaySamples)
                                 .i64(0)
                                 .take());
+}
+
+// A1: the audio box's own file, as legacy ProviderFFMS2 opens it for the box:
+// the chosen audio track indexed (decode errors ignored, FFMS_IEH_IGNORE),
+// sample 0 at the first video frame (FFMS_DELAY_FIRST_VIDEO_TRACK).
+void openDisplayAudio(Source &source, Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    const int track = in.i32();
+    if (!in.ok())
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "malformed open");
+    source = {};
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    FFMS_Indexer *indexer = FFMS_CreateIndexer(path.c_str(), &err);
+    if (!indexer)
+        return failDisplay(r, Outcome::InvalidInput, Stage::Indexer, errorText(err));
+    if (track < 0 || track >= FFMS_GetNumTracksI(indexer) || FFMS_GetTrackTypeI(indexer, track) != FFMS_TYPE_AUDIO) {
+        FFMS_CancelIndexing(indexer);
+        return failDisplay(r, Outcome::Unsupported, Stage::Host, "no audio track");
+    }
+    Progress progress{&r};
+    FFMS_SetProgressCallback(indexer, onProgress, &progress);
+    FFMS_TrackIndexSettings(indexer, track, 1, 0);
+    std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_IGNORE, &err));
+    if (!index)
+        return failDisplay(r, r.cancelled() ? Outcome::Cancelled : Outcome::Failed, Stage::Indexing, errorText(err));
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
+        FFMS_CreateAudioSource(path.c_str(), track, index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
+    if (!audio)
+        return failDisplay(r, Outcome::Unsupported, Stage::Source, errorText(err));
+    source.path = path;
+    source.index = std::move(index);
+    finishDisplay(source, std::move(audio), track, r);
+}
+
+// A1: the open video's audio for the box (legacy SetFile reusing the video's
+// provider): a second source over the video's index, which holds every
+// audio track. The video and general playback's source are left as they are.
+void openSourceDisplayAudio(Source &source, Reader &in, Responder &r)
+{
+    const int track = in.i32();
+    if (!in.ok() || !source.index)
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "not open");
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    source.display.reset();
+    source.displaySamples = 0;
+    source.displayChannels = 0;
+    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
+        FFMS_CreateAudioSource(source.path.c_str(), track, source.index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
+    if (!audio)
+        return failDisplay(r, Outcome::Unsupported, Stage::Source, errorText(err));
+    finishDisplay(source, std::move(audio), track, r);
+}
+
+void displayRead(Source &source, Reader &in, Responder &r)
+{
+    const std::int64_t start = in.i64();
+    std::int64_t count = in.i64();
+    if (!in.ok() || !source.display || count < 0)
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "not open");
+    if (start < 0 || start >= source.displaySamples)
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "EOF");
+    count = std::min(count, source.displaySamples - start);
+    std::vector<std::byte> samples(static_cast<std::size_t>(count) * 2 * source.displayChannels);
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (count > 0 && FFMS_GetAudio(source.display.get(), samples.data(), start, count, &err) != 0)
+        return failDisplay(r, Outcome::Failed, Stage::Read, errorText(err));
+    r.terminal(Outcome::Ok, Writer().i64(start).i64(count).bytes(samples).take());
 }
 
 void audio(Source &source, Reader &in, Responder &r)
@@ -421,6 +515,12 @@ int main()
         case media::Command::OpenDisplayAudio:
             session.reset();
             return openDisplayAudio(source, in, r);
+        case media::Command::Probe:
+            return probe(in, r);
+        case media::Command::OpenSourceDisplayAudio:
+            return openSourceDisplayAudio(source, in, r);
+        case media::Command::DisplayRead:
+            return displayRead(source, in, r);
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });

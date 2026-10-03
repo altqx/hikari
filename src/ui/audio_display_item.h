@@ -1,14 +1,18 @@
 #pragma once
 
 // The Audio panel's display (A1): scene-graph geometry for the shapes the
-// AudioController describes (legacy AudioDisplay's Direct3D drawing), with
-// the mouse cursor in a node of its own so moving it never rebuilds the
-// image. Shapes are in Direct3D 9 coordinates, whose pixel centres are at
-// integers; they are drawn half a pixel to the right and down. Fonts follow
+// AudioController describes (legacy AudioDisplay's Direct3D drawing, the
+// normative look), with the mouse cursor in a node of its own so moving it
+// never rebuilds the image. Shapes are in Direct3D 9 coordinates, whose pixel
+// centres are at integers; they are drawn half a pixel to the right and
+// down. Qt Quick's software adaptation has no custom geometry, so there the
+// same triangles and texts are painted into an image node. Fonts follow
 // legacy's sizes around the application font: the ruler one point smaller,
-// the cursor time three larger, labels one larger.
+// the cursor time three larger and bold, labels one larger and bold; outlined
+// texts are drawn eight times in black one pixel around (DRAWOUTTEXT).
 
 #include <QFont>
+#include <QImage>
 #include <QPointer>
 #include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
@@ -50,6 +54,7 @@ private:
     QPointer<AudioController> m_controller;
     QFont m_scale, m_cursor, m_label;
     quint64 m_drawnRevision = 0;
+    QImage m_sceneImage; // the software adaptation's painted scene
 };
 
 } // namespace hikari::ui

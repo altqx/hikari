@@ -8,6 +8,8 @@
 #include <gtest/gtest.h>
 
 #include <deque>
+#include <filesystem>
+#include <fstream>
 
 using namespace hikari::application;
 
@@ -540,133 +542,496 @@ TEST(AudioLines, InactiveLinesAndSelections)
 namespace {
 
 // The audio box's source: answers are delivered by the test.
-struct FakeAudioSource : IndexedSourcePort {
-    std::uint64_t gen = 0;
-    std::string openedPath;
+struct FakeAudioSource : DisplayAudioPort {
+    std::string probedPath, openedPath;
+    int openedTrack = -1, sourceTrack = -1;
+    Probed pendingProbe;
     Progress progress;
-    AudioOpened pendingOpen;
-    std::deque<std::tuple<std::int64_t, std::int64_t, AudioReady>> reads;
-    int cancelledOpens = 0, cancelledReads = 0;
-    std::uint64_t open(const std::string &, Progress, Opened) override { return ++gen; }
-    void cancelOpen() override { ++cancelledOpens; }
-    void frame(int, FrameReady) override {}
-    void openAudio(int, AudioOpened) override {}
-    void audio(std::int64_t start, std::int64_t count, AudioReady done) override
+    Opened pendingOpen;
+    std::deque<std::tuple<std::int64_t, std::int64_t, Read>> reads;
+    int cancels = 0;
+    void probe(const std::string &path, Probed done) override
+    {
+        probedPath = path;
+        pendingProbe = std::move(done);
+    }
+    void openDisplayAudio(const std::string &path, int track, Progress p, Opened done) override
+    {
+        openedPath = path;
+        openedTrack = track;
+        progress = std::move(p);
+        pendingOpen = std::move(done);
+    }
+    void openSourceDisplayAudio(int track, Opened done) override
+    {
+        sourceTrack = track;
+        pendingOpen = std::move(done);
+    }
+    void displayAudio(std::int64_t start, std::int64_t count, Read done) override
     {
         reads.emplace_back(start, count, std::move(done));
     }
-    std::uint64_t openDisplayAudio(const std::string &path, Progress p, AudioOpened done) override
+    void cancelDisplay() override
     {
-        openedPath = path;
-        progress = std::move(p);
-        pendingOpen = std::move(done);
-        return ++gen;
+        ++cancels;
+        auto pending = std::move(reads);
+        reads.clear();
+        for (auto &[start, count, done] : pending)
+            done(std::unexpected(AudioFailure{SourceError::Cancelled, AudioStage::Host, {}}));
     }
-    void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
-    void nextPcm(std::int64_t, PcmReady) override {}
-    void cancelReads() override { ++cancelledReads; }
-    std::uint64_t generation() const override { return gen; }
 
+    void probed(std::vector<AudioTrack> tracks, bool hasVideo = false)
+    {
+        MediaProbe p;
+        p.hasVideo = hasVideo;
+        p.audio = std::move(tracks);
+        std::exchange(pendingProbe, nullptr)(std::move(p));
+    }
+    void probedOneTrack() { probed({AudioTrack{1, false, false, {}, {}, "aac"}}); }
     void opened(int channels, std::int64_t count)
     {
         AudioInfo info;
-        info.generation = gen;
         info.format = SampleFormat::S16;
         info.bitsPerSample = 16;
         info.sampleRate = 48000;
         info.channels = channels;
         info.sampleCount = count;
-        pendingOpen(info);
+        std::exchange(pendingOpen, nullptr)(info);
     }
-    // Answers the oldest read with frames whose every channel is `value`.
-    void answer(std::int16_t value, int channels)
+    void failOpen(SourceError error, AudioStage stage, std::string text)
+    {
+        std::exchange(pendingOpen, nullptr)(std::unexpected(AudioFailure{error, stage, std::move(text)}));
+    }
+    // Answers the oldest read with frames whose every channel is `value`
+    // (or, with `ramp`, frame i of the source is start + i).
+    void answer(std::int16_t value, int channels, bool ramp = false)
     {
         auto [start, count, done] = std::move(reads.front());
         reads.pop_front();
         AudioBlock b;
-        b.generation = gen;
         b.start = start;
         b.count = count;
         b.channels = channels;
         b.samples.resize(static_cast<std::size_t>(count * channels) * 2);
         auto *p = reinterpret_cast<std::int16_t *>(b.samples.data());
-        for (std::int64_t i = 0; i < count * channels; ++i)
-            p[i] = value;
+        for (std::int64_t i = 0; i < count; ++i)
+            for (int c = 0; c < channels; ++c)
+                p[i * channels + c] = ramp ? static_cast<std::int16_t>((start + i) % 30000) : value;
         done(std::move(b));
+    }
+    void failRead(AudioFailure failure)
+    {
+        auto [start, count, done] = std::move(reads.front());
+        reads.pop_front();
+        done(std::unexpected(std::move(failure)));
     }
 };
 
+// A box with a disk cache in a folder of its own, logging into `logged`.
+struct BoxFixture {
+    FakeAudioSource source;
+    AudioBox box{source};
+    AudioCacheSettings settings;
+    std::vector<std::pair<std::string, AudioBox::LogLevel>> logged;
+    std::vector<std::filesystem::path> cached;
+    explicit BoxFixture(const char *name)
+    {
+        settings.cacheDir = std::filesystem::temp_directory_path() / ("hikari-a1-" + std::string(name));
+        std::filesystem::remove_all(settings.cacheDir);
+        box.setSettings([this] { return settings; });
+        box.setLog([this](const std::string &m, AudioBox::LogLevel l) { logged.emplace_back(m, l); });
+        box.setCached([this](const std::filesystem::path &f) { cached.push_back(f); });
+    }
+    ~BoxFixture() { std::filesystem::remove_all(settings.cacheDir); }
+};
+
+std::int16_t at(const DisplayAudio &audio, std::int64_t i)
+{
+    std::int16_t s = -1;
+    audio.read(i, 1, &s);
+    return s;
+}
+
 } // namespace
 
-// SetFile through the source: indexing, then legacy disk-cache blocks with
-// their progress, then the waveform's peak table.
-TEST(AudioBox, OpensIndexesAndDecodesInBlocks)
+// SetFile through the source: the file's tracks, indexing, then legacy
+// DiskCache blocks of 332768 frames with their progress, the cache file
+// written as .part and named once complete, then the peak table.
+TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
 {
-    FakeAudioSource source;
-    AudioBox box(source);
+    BoxFixture f("disk");
     int changes = 0;
-    box.setObserver([&] { ++changes; });
-    box.open("/media/episode.mkv");
-    EXPECT_EQ(source.openedPath, "/media/episode.mkv");
-    EXPECT_EQ(box.state(), AudioBox::State::Opening);
-    EXPECT_TRUE(box.isOpen());
-    source.progress(40, 100);
-    EXPECT_EQ(box.indexing(), (std::pair<std::int64_t, std::int64_t>{40, 100}));
-    source.opened(2, 400000);
-    EXPECT_EQ(box.state(), AudioBox::State::Loading);
-    ASSERT_EQ(source.reads.size(), 1u);
-    EXPECT_EQ(std::get<0>(source.reads.front()), 0);
-    EXPECT_EQ(std::get<1>(source.reads.front()), 332768);
-    source.answer(-3, 2);
-    EXPECT_FLOAT_EQ(box.progress(), 332768.f / 400000.f);
-    ASSERT_EQ(source.reads.size(), 1u);
-    EXPECT_EQ(std::get<0>(source.reads.front()), 332768);
-    EXPECT_EQ(std::get<1>(source.reads.front()), 400000 - 332768);
-    EXPECT_EQ(box.audio()->peaks(), nullptr);
-    source.answer(100, 2);
-    EXPECT_EQ(box.state(), AudioBox::State::Ready);
-    EXPECT_FLOAT_EQ(box.progress(), 1.f);
-    ASSERT_NE(box.audio()->peaks(), nullptr);
-    std::int16_t s[2];
-    box.audio()->read(332767, 2, s);
-    EXPECT_EQ(s[0], -3);
-    EXPECT_EQ(s[1], 100);
+    f.box.setObserver([&] { ++changes; });
+    f.box.open("/media/episode.mkv");
+    EXPECT_EQ(f.source.probedPath, "/media/episode.mkv");
+    EXPECT_EQ(f.box.state(), AudioBox::State::Opening);
+    f.source.probedOneTrack();
+    EXPECT_EQ(f.source.openedPath, "/media/episode.mkv");
+    EXPECT_EQ(f.source.openedTrack, 1);
+    f.source.progress(40, 100);
+    EXPECT_EQ(f.box.indexing(), (std::pair<std::int64_t, std::int64_t>{40, 100}));
+    f.source.opened(2, 400000);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Loading);
+    const auto file = f.settings.cacheDir / "episode_track1_2ch_0.w64";
+    EXPECT_EQ(f.box.cacheFile(), file);
+    auto part = file;
+    part += ".part";
+    EXPECT_TRUE(std::filesystem::exists(part));
+    ASSERT_EQ(f.source.reads.size(), 1u);
+    EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
+    EXPECT_EQ(std::get<1>(f.source.reads.front()), 332768);
+    f.source.answer(-3, 2);
+    EXPECT_FLOAT_EQ(f.box.progress(), 332768.f / 400000.f);
+    ASSERT_EQ(f.source.reads.size(), 1u);
+    EXPECT_EQ(std::get<0>(f.source.reads.front()), 332768);
+    EXPECT_EQ(std::get<1>(f.source.reads.front()), 400000 - 332768);
+    EXPECT_EQ(f.box.audio()->peaks(), nullptr);
+    f.source.answer(100, 2);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
+    ASSERT_NE(f.box.audio()->peaks(), nullptr);
+    EXPECT_EQ(at(*f.box.audio(), 332767), -3); // read back from the file
+    EXPECT_EQ(at(*f.box.audio(), 332768), 100);
+    EXPECT_EQ(at(*f.box.audio(), 400000), 0); // past the end
+    EXPECT_EQ(f.cached, (std::vector<std::filesystem::path>{file})); // legacy then trims old caches
     EXPECT_GT(changes, 4);
+    // closing renames the complete cache (legacy ~ProviderFFMS2)
+    f.box.close();
+    EXPECT_FALSE(std::filesystem::exists(part));
+    EXPECT_EQ(std::filesystem::file_size(file), 400000u * 4);
+    EXPECT_TRUE(f.logged.empty());
+}
+
+// An incomplete cache is removed; opening again writes it anew (a new index).
+TEST(AudioBox, AnIncompleteDiskCacheIsRemoved)
+{
+    BoxFixture f("incomplete");
+    f.box.open("/media/a.wav");
+    f.source.probedOneTrack();
+    f.source.opened(1, 1'000'000);
+    f.source.answer(5, 1);
+    auto part = f.box.cacheFile();
+    part += ".part";
+    const auto file = f.box.cacheFile();
+    ASSERT_TRUE(std::filesystem::exists(part));
+    f.box.close();
+    EXPECT_EQ(f.source.cancels, 1);
+    EXPECT_FALSE(std::filesystem::exists(part));
+    EXPECT_FALSE(std::filesystem::exists(file));
+}
+
+// AUDIO_RAM_CACHE: legacy RAMCache's 4 MiB blocks (1048576 stereo frames),
+// progress i / (blocks - 1) after block i, no file.
+TEST(AudioBox, RamCacheReadsFourMebibyteBlocks)
+{
+    BoxFixture f("ram");
+    f.settings.ram = true;
+    f.box.open("/media/a.mkv");
+    f.source.probedOneTrack();
+    f.source.opened(2, 1'500'000);
+    EXPECT_TRUE(f.box.cacheFile().empty());
+    ASSERT_EQ(f.source.reads.size(), 1u);
+    EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
+    EXPECT_EQ(std::get<1>(f.source.reads.front()), 1'048'576);
+    f.source.answer(0, 2, true);
+    EXPECT_FLOAT_EQ(f.box.progress(), 0.f); // block 0 of 2
+    EXPECT_EQ(std::get<0>(f.source.reads.front()), 1'048'576);
+    EXPECT_EQ(std::get<1>(f.source.reads.front()), 1'500'000 - 1'048'576);
+    f.source.answer(0, 2, true);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
+    EXPECT_EQ(at(*f.box.audio(), 1'048'577), 1'048'577 % 30000);
+    EXPECT_TRUE(f.cached.empty());
+    EXPECT_FALSE(std::filesystem::exists(f.settings.cacheDir));
+}
+
+// AUDIO_DELAY: a positive delay starts with silence and keeps the length (the
+// last frames fall off); a negative one skips the start. The disk cache's
+// name carries the delay in frames.
+TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
+{
+    {
+        BoxFixture f("delay-plus");
+        f.settings.delayMs = 100;
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.opened(1, 10'000);
+        EXPECT_EQ(f.box.delayFrames(), 4800);
+        EXPECT_EQ(f.box.cacheFile().filename(), "a_track1_1ch_4800.w64");
+        EXPECT_EQ(f.box.audio()->sampleCount(), 10'000);
+        EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
+        EXPECT_EQ(std::get<1>(f.source.reads.front()), 10'000);
+        f.source.answer(0, 1, true);
+        EXPECT_EQ(at(*f.box.audio(), 4799), 0);
+        EXPECT_EQ(at(*f.box.audio(), 4800), 0); // source frame 0
+        EXPECT_EQ(at(*f.box.audio(), 4801), 1);
+        EXPECT_EQ(at(*f.box.audio(), 9999), 5199);
+        EXPECT_EQ(at(*f.box.audio(), 10'000), 0);
+    }
+    {
+        BoxFixture f("delay-minus");
+        f.settings.delayMs = -100;
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.opened(1, 10'000);
+        EXPECT_EQ(f.box.cacheFile().filename(), "a_track1_1ch_-4800.w64");
+        EXPECT_EQ(f.box.audio()->sampleCount(), 5200);
+        EXPECT_EQ(std::get<0>(f.source.reads.front()), 4800);
+        EXPECT_EQ(std::get<1>(f.source.reads.front()), 5200);
+        f.source.answer(0, 1, true);
+        EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
+        EXPECT_EQ(at(*f.box.audio(), 0), 4800);
+    }
+    {
+        // RAM: the silence is counted within the first block
+        BoxFixture f("delay-ram");
+        f.settings.ram = true;
+        f.settings.delayMs = 100;
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.opened(1, 10'000);
+        EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
+        EXPECT_EQ(std::get<1>(f.source.reads.front()), 5200);
+        f.source.answer(0, 1, true);
+        EXPECT_EQ(at(*f.box.audio(), 4801), 1);
+        EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    }
+    {
+        BoxFixture f("delay-long");
+        f.settings.delayMs = 1000;
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.opened(1, 48'000);
+        EXPECT_EQ(f.box.delayFrames(), 0);
+        ASSERT_EQ(f.logged.size(), 1u);
+        EXPECT_EQ(f.logged[0].first, "Delay failed, it's longer than audio duration time");
+    }
+}
+
+// R3-hang-crash-loss: a block FFMS2 cannot decode is silence and caching goes
+// on (legacy logged it for debugging and kept the buffer's old contents); a
+// lost helper ends the open with a message (legacy crashed with it).
+TEST(AudioBox, AFailedBlockIsSilenceAndCachingGoesOn)
+{
+    BoxFixture f("failed-block");
+    f.box.open("/media/a.mkv");
+    f.source.probedOneTrack();
+    f.source.opened(1, 400'000);
+    f.source.answer(7, 1);
+    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke"});
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_EQ(at(*f.box.audio(), 332767), 7);
+    EXPECT_EQ(at(*f.box.audio(), 332768), 0);
+    EXPECT_EQ(at(*f.box.audio(), 399'999), 0);
+    ASSERT_EQ(f.logged.size(), 1u);
+    EXPECT_EQ(f.logged[0], (std::pair<std::string, AudioBox::LogLevel>{"error audiodecode broke", AudioBox::LogLevel::Debug}));
+
+    f.box.open("/media/b.mkv");
+    f.source.probedOneTrack();
+    f.source.opened(1, 400'000);
+    f.source.failRead({SourceError::HelperLost, AudioStage::Host, {}});
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    EXPECT_EQ(f.box.error(), SourceError::HelperLost);
+    EXPECT_EQ(f.logged.back().first, "Cannot open audio /media/b.mkv");
+}
+
+// Legacy ProviderFFMS2::Init's messages, with FFMS2's own text.
+TEST(AudioBox, FailuresLogLegacyMessages)
+{
+    struct Case {
+        SourceError error;
+        AudioStage stage;
+        std::optional<std::pair<std::string, AudioBox::LogLevel>> expected;
+    };
+    const std::vector<Case> cases = {
+        {SourceError::BackendFailure, AudioStage::Indexing, std::pair{std::string("Indexing error occurred: boom"), AudioBox::LogLevel::Shown}},
+        {SourceError::Cancelled, AudioStage::Indexing, std::nullopt},
+        {SourceError::Unsupported, AudioStage::Source, std::pair{std::string("An error occurred when creating audio source: boom"), AudioBox::LogLevel::Shown}},
+        {SourceError::Unsupported, AudioStage::Convert, std::pair{std::string("An error occurred when converting audio: boom"), AudioBox::LogLevel::Shown}},
+        {SourceError::InvalidInput, AudioStage::Indexer, std::pair{std::string("Indexing error occurred: boom"), AudioBox::LogLevel::Debug}},
+    };
+    for (const auto &c : cases) {
+        BoxFixture f("messages");
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.failOpen(c.error, c.stage, "boom");
+        EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+        EXPECT_EQ(f.box.error(), c.error);
+        if (c.expected) {
+            ASSERT_EQ(f.logged.size(), 1u);
+            EXPECT_EQ(f.logged[0], *c.expected);
+        } else {
+            EXPECT_TRUE(f.logged.empty());
+        }
+    }
+    // a file FFMS2 cannot open is a debug message; one without audio says nothing
+    BoxFixture f("probe");
+    f.box.open("/media/missing.wav");
+    std::exchange(f.source.pendingProbe, nullptr)(std::unexpected(AudioFailure{SourceError::InvalidInput, AudioStage::Indexer, "Can't open"}));
+    EXPECT_EQ(f.logged.at(0), (std::pair<std::string, AudioBox::LogLevel>{"Indexing error occurred: Can't open", AudioBox::LogLevel::Debug}));
+    f.box.open("/media/video-only.mkv");
+    f.source.probed({}, true);
+    EXPECT_EQ(f.box.error(), SourceError::Unsupported);
+    EXPECT_EQ(f.logged.size(), 1u);
+}
+
+// A cache file that cannot be made ends the open with a message (legacy
+// waited forever on audio that never came).
+TEST(AudioBox, AnUnwritableCacheEndsTheOpen)
+{
+    BoxFixture f("unwritable");
+    std::filesystem::create_directories(f.settings.cacheDir);
+    const auto blocker = f.settings.cacheDir / "file";
+    { std::ofstream(blocker) << "x"; }
+    f.settings.cacheDir = blocker; // a file, not a folder
+    f.box.open("/media/a.mkv");
+    f.source.probedOneTrack();
+    f.source.opened(1, 1000);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    ASSERT_EQ(f.logged.size(), 1u);
+    EXPECT_TRUE(f.logged[0].first.starts_with("Cannot create the audio cache "));
+    f.settings.cacheDir = blocker.parent_path();
+}
+
+// A store that cannot keep frames (RAM exhausted) stops the append.
+TEST(DisplayAudio, AStoreThatCannotKeepFramesFailsTheAppend)
+{
+    struct Full : AudioStore {
+        bool append(const std::int16_t *, std::int64_t) override { return false; }
+        void read(std::int64_t, std::int64_t, std::int16_t *) const override {}
+        std::int64_t frames() const override { return 0; }
+        int channels() const override { return 1; }
+    };
+    DisplayAudio audio(48000, 10, std::make_unique<Full>());
+    const std::int16_t one[] = {1, 2};
+    EXPECT_FALSE(audio.appendFrames(one, 2, 1));
+    EXPECT_FALSE(audio.appendSilence(5, 1));
+    std::int16_t out[2] = {9, 9};
+    audio.read(0, 2, out);
+    EXPECT_EQ(out[0], 0);
+}
+
+// Legacy ProviderFFMS2::Init with several audio tracks.
+TEST(AudioTracks, LegacyChoiceAndChooserRows)
+{
+    const std::vector<AudioTrack> tracks = {
+        {1, true, true, "Main", "jpn", "aac"},
+        {2, false, true, {}, "Commentary [eng]", "ac3"},
+        {3, false, false, {}, {}, "flac"},
+        {4, true, true, "Dub", "pol", "opus"},
+    };
+    const auto ask = legacyAudioTrackChoice(tracks, {});
+    EXPECT_FALSE(ask.track);
+    EXPECT_EQ(ask.rows, (std::vector<std::string>{"1: Main [jpn] (aac)", "2: eng (ac3)", "3: Untitled (flac)",
+                                                   "4: Dub [pol] (opus)"}));
+    EXPECT_EQ(ask.rowTracks, (std::vector<int>{1, 2, 3, 4}));
+    // the language that comes first in ACCEPTED_AUDIO_STREAM wins, case aside
+    EXPECT_EQ(legacyAudioTrackChoice(tracks, {"POL", "eng"}).track, 4);
+    EXPECT_EQ(legacyAudioTrackChoice(tracks, {"eng", "pol"}).track, 2);
+    EXPECT_TRUE(legacyAudioTrackChoice(tracks, {"eng"}).rows.empty());
+    EXPECT_FALSE(legacyAudioTrackChoice(tracks, {"ger"}).track);
+    // a bracketed language names a track without a name (text before the bracket)
+    // (only past the second character), and an untitled one shows no name
+    const std::vector<AudioTrack> named = {{0, false, true, {}, "Commentary [eng]", "ac3"},
+                                           {5, true, true, "", "xy[ger]", "aac"},
+                                           {6, true, true, "", "x[ger]", "aac"}};
+    EXPECT_EQ(legacyAudioTrackChoice(named, {}).rows,
+              (std::vector<std::string>{"0: eng (ac3)", "5: xy [ger] (aac)", "6:  [ger] (aac)"}));
+    // one track is taken as it is; none gives nothing
+    EXPECT_EQ(legacyAudioTrackChoice({tracks[2]}, {"eng"}).track, 3);
+    EXPECT_FALSE(legacyAudioTrackChoice({}, {}).track);
+    EXPECT_EQ(legacyAcceptedStreams("eng;;pol;"), (std::vector<std::string>{"eng", "pol"}));
+    EXPECT_EQ(legacyAudioCacheName("C:\\media\\ep.01.mkv", 2, 2, -4800), "ep.01_track2_2ch_-4800.w64");
+}
+
+// "Choose the track": a row opens its track; Cancel opens nothing.
+TEST(AudioBox, TheChooserPicksTheTrack)
+{
+    BoxFixture f("chooser");
+    std::vector<std::string> shown;
+    std::function<void(std::optional<int>)> answer;
+    f.box.setChooser([&](const std::vector<std::string> &rows, std::function<void(std::optional<int>)> a) {
+        shown = rows;
+        answer = std::move(a);
+    });
+    const std::vector<AudioTrack> tracks = {{1, true, false, "A", {}, "aac"}, {2, true, false, "B", {}, "aac"}};
+    f.box.open("/media/a.mkv");
+    f.source.probed(tracks);
+    EXPECT_TRUE(f.box.choosing());
+    EXPECT_EQ(shown, (std::vector<std::string>{"1: A (aac)", "2: B (aac)"}));
+    std::exchange(answer, nullptr)(1);
+    EXPECT_EQ(f.source.openedTrack, 2);
+    EXPECT_FALSE(f.box.choosing());
+    f.box.open("/media/b.mkv");
+    f.source.probed(tracks);
+    std::exchange(answer, nullptr)(std::nullopt);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    EXPECT_EQ(f.box.error(), SourceError::Cancelled);
+    EXPECT_TRUE(f.box.declined());
+    EXPECT_TRUE(f.logged.empty());
+    // ACCEPTED_AUDIO_STREAM answers without asking
+    f.settings.acceptedStreams = {"jpn"};
+    f.box.open("/media/c.mkv");
+    f.source.probed({{1, true, true, "A", "eng", "aac"}, {3, true, true, "B", "jpn", "aac"}});
+    EXPECT_FALSE(answer);
+    EXPECT_EQ(f.source.openedTrack, 3);
+}
+
+// The open video's audio is read through the video's source (one index);
+// closing cancels only the box's requests there.
+TEST(AudioBox, TheVideosAudioIsReadThroughTheVideosSource)
+{
+    BoxFixture f("from-video");
+    FakeAudioSource video;
+    f.box.openFromVideo(video, "/media/v.mkv");
+    EXPECT_TRUE(f.box.fromVideo());
+    EXPECT_EQ(video.probedPath, "/media/v.mkv");
+    EXPECT_TRUE(f.source.probedPath.empty());
+    video.probedOneTrack();
+    EXPECT_EQ(video.sourceTrack, 1);
+    EXPECT_TRUE(f.source.openedPath.empty()); // not indexed again
+    video.opened(2, 500'000);
+    ASSERT_EQ(video.reads.size(), 1u);
+    EXPECT_TRUE(f.source.reads.empty());
+    f.box.close();
+    EXPECT_EQ(video.cancels, 1);
+    EXPECT_EQ(f.source.cancels, 0);
 }
 
 TEST(AudioBox, ClosingDropsLateAnswersAndAFailedOpenLeavesNoAudio)
 {
-    FakeAudioSource source;
-    AudioBox box(source);
-    box.open("/media/a.wav");
-    source.opened(1, 1'000'000);
-    box.close();
-    EXPECT_EQ(source.cancelledReads, 1);
-    EXPECT_EQ(box.state(), AudioBox::State::Closed);
-    source.answer(5, 1); // late: ignored
-    EXPECT_EQ(box.audio(), nullptr);
+    BoxFixture f("late");
+    f.box.open("/media/a.wav");
+    f.source.probedOneTrack();
+    f.source.opened(1, 1'000'000);
+    auto late = std::move(std::get<2>(f.source.reads.front()));
+    f.source.reads.clear();
+    f.box.close();
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    late(std::unexpected(AudioFailure{SourceError::HelperLost, AudioStage::Host, {}})); // late: ignored
+    EXPECT_EQ(f.box.audio(), nullptr);
+    EXPECT_TRUE(f.logged.empty());
     // opening again first unloads (legacy SetFile); its failure leaves nothing open
-    box.open("/media/b.wav");
-    box.open("/media/c.wav");
-    EXPECT_EQ(source.cancelledOpens, 1);
-    source.pendingOpen(std::unexpected(SourceError::InvalidInput));
-    EXPECT_EQ(box.state(), AudioBox::State::Closed);
-    EXPECT_EQ(box.error(), SourceError::InvalidInput);
-    EXPECT_EQ(box.path(), "/media/c.wav");
+    f.box.open("/media/b.wav");
+    f.box.open("/media/c.wav");
+    f.source.probedOneTrack();
+    f.source.failOpen(SourceError::InvalidInput, AudioStage::Indexer, "x");
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    EXPECT_EQ(f.box.error(), SourceError::InvalidInput);
+    EXPECT_EQ(f.box.path(), "/media/c.wav");
 }
 
 // GLOBAL_OPEN_DUMMY_AUDIO and Provider::Get's dummy names.
 TEST(AudioBox, BlankAudio)
 {
-    FakeAudioSource source;
-    AudioBox box(source);
-    box.open(AudioBox::kDummyName);
-    EXPECT_EQ(box.state(), AudioBox::State::Ready);
-    EXPECT_TRUE(source.openedPath.empty()); // nothing is indexed
-    EXPECT_EQ(box.audio()->sampleRate(), 44100);
-    EXPECT_EQ(box.audio()->sampleCount(), 396'900'000);
-    EXPECT_EQ(box.audio()->sampleCount() * 1000 / 44100, 9'000'000); // 2 h 30 min
-    box.open("?dummy:23.976000:40000:1280:720:47:163:254:");
-    EXPECT_EQ(box.state(), AudioBox::State::Closed);
-    EXPECT_EQ(box.error(), SourceError::Unsupported);
+    BoxFixture f("blank");
+    f.box.open(AudioBox::kDummyName);
+    EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
+    EXPECT_TRUE(f.source.probedPath.empty()); // nothing is indexed
+    EXPECT_EQ(f.box.audio()->sampleRate(), 44100);
+    EXPECT_EQ(f.box.audio()->sampleCount(), 396'900'000);
+    EXPECT_EQ(f.box.audio()->sampleCount() * 1000 / 44100, 9'000'000); // 2 h 30 min
+    f.box.open("?dummy:23.976000:40000:1280:720:47:163:254:");
+    EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
+    EXPECT_EQ(f.box.error(), SourceError::Unsupported);
 }

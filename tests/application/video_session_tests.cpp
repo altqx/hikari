@@ -94,7 +94,6 @@ struct FakeSource : IndexedSourcePort {
     void frame(int index, FrameReady done) override { frames.emplace_back(index, std::move(done)); }
     void openAudio(int, AudioOpened) override {}
     void audio(std::int64_t, std::int64_t, AudioReady) override {}
-    std::uint64_t openDisplayAudio(const std::string &, Progress, AudioOpened) override { return 0; }
     void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
     void nextPcm(std::int64_t, PcmReady) override {}
     void cancelReads() override {}
@@ -321,9 +320,20 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     ASSERT_TRUE(video.play());
     player.delivered();
     EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 200000");
+    EXPECT_FALSE(video.stopped());
     ASSERT_TRUE(video.stop());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 0);
+    // A1: legacy's Stopped state lasts until the next Play (the audio box
+    // marks the video's frame only while Paused); Stop while paused is not it.
+    EXPECT_TRUE(video.stopped());
+    video.showFrame(3);
+    EXPECT_TRUE(video.stopped());
+    ASSERT_TRUE(video.play());
+    EXPECT_FALSE(video.stopped());
+    ASSERT_TRUE(video.pause());
+    ASSERT_TRUE(video.stop());
+    EXPECT_FALSE(video.stopped());
 }
 
 TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)

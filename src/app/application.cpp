@@ -275,44 +275,71 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return std::nullopt;
         return start->microseconds() / 1000;
     });
-    // A1: the audio box reads through a media helper of its own.
+    // A1: the audio box indexes files of its own through a media helper of its
+    // own; an indexed video's audio is read through the video's helper.
     m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
+    {
+        const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
+                                 : !m_settingsFile.isEmpty()
+                                     ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/AudioCache")
+                                     : QDir::temp().filePath(QStringLiteral("hikari-audio-cache-%1").arg(QCoreApplication::applicationPid()));
+        m_audio->setSettings([this, cacheDir] {
+            // Interim INI keys until the settings registry (O1): legacy
+            // AUDIO_RAM_CACHE, AUDIO_DELAY, AUDIO_CACHE_FILES_LIMIT and
+            // ACCEPTED_AUDIO_STREAM with legacy's defaults.
+            application::AudioCacheSettings settings;
+            settings.cacheDir = std::filesystem::path(cacheDir.toStdU16String());
+            if (!m_settingsFile.isEmpty()) {
+                const QSettings ini(m_settingsFile, QSettings::IniFormat);
+                settings.ram = ini.value(QStringLiteral("Audio/RamCache"), false).toBool();
+                settings.delayMs = ini.value(QStringLiteral("Audio/Delay"), 0).toInt();
+                settings.cacheFilesLimit = ini.value(QStringLiteral("Audio/CacheFilesLimit"), 10).toInt();
+                settings.acceptedStreams = application::legacyAcceptedStreams(
+                    ini.value(QStringLiteral("Video/AcceptedAudioStream")).toString().toStdString());
+            }
+            return settings;
+        });
+    }
     if (!m_settingsFile.isEmpty()) {
         std::vector<std::string> stored;
         for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Audio")).toStringList())
             stored.push_back(path.toStdString());
         m_recentAudio.set(std::move(stored));
     }
-    connect(m_audio.get(), &ui::AudioController::opened, this,
-            [this](const QString &path, bool) { rememberRecentAudio(path); });
-    connect(m_audio.get(), &ui::AudioController::failed, this, [this](const QString &problem) {
-        if (!problem.isEmpty())
-            m_log->log(problem);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
+                                  [this](const QString &path, bool) { rememberRecentAudio(path); });
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::logged, this, [this](const QString &message, bool debug) {
+        if (debug)
+            qDebug().noquote() << message; // legacy HikariLogDebug: debug builds only
+        else
+            m_log->log(message);
     });
-    connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        // Legacy RendererFFMS2::OpenFile (changeAudio): an indexed video brings
-        // its audio into the box, and a video without audio closes the box.
-        const auto &video = m_video->session();
-        if (video.state() == application::VideoSession::State::Opening)
-            m_audioFollowedVideo.clear();
-        if (video.state() == application::VideoSession::State::Ready &&
-            m_audioFollowedVideo != QString::fromStdString(video.path())) {
-            m_audioFollowedVideo = QString::fromStdString(video.path());
-            if (video.hasAudio())
-                m_audio->openAudio(m_audioFollowedVideo);
-            else if (m_audio->hasAudio())
-                m_audio->closeAudio();
-        }
-        refreshAudio();
+    // Legacy: cancelling "Choose the track" fails the video's open.
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::videoAudioDeclined, this,
+                                  [this] { m_video->session().close(); });
+    m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
+    m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
+    // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
+    // the audio box (as audio from video: SetRecent, the box's own provider),
+    // and the open video stays.
+    m_video->setOpenFilter([this](const QString &path, std::function<void()> asVideo) {
+        QPointer<Application> self(this);
+        m_mediaSource->probe(path.toStdString(), [self, path, asVideo = std::move(asVideo)](
+                                                     std::expected<application::MediaProbe, application::AudioFailure> probe) {
+            if (!self)
+                return;
+            if (probe && !probe->hasVideo && !probe->audio.empty())
+                return self->m_audio->openAudio(path);
+            asVideo();
+        });
     });
     refreshViews();
 }
 
 // A1: legacy AudioDisplay::SetDialogue runs when the active Line changes or
 // the editor commits (EditBox::SetLine, Send); every redraw shades the other
-// Lines and marks the keyframes and the paused video's frame.
+// Lines. The controller redraws only when what it shows changed.
 void Application::refreshAudio()
 {
     if (!m_audio)
@@ -325,6 +352,7 @@ void Application::refreshAudio()
     if (session) {
         const auto shown = shownLines();
         const auto activeId = session->selection().active;
+        lines.reserve(session->document().lines().size());
         for (const auto *line : session->document().lines()) {
             if (activeId && line->id == *activeId)
                 active = static_cast<int>(lines.size());
@@ -337,18 +365,49 @@ void Application::refreshAudio()
     const bool select = key && key != m_audioLine;
     m_audioLine = key;
     m_audio->setLines(std::move(lines), active, select);
+}
+
+// A1: the video's marks in the box and legacy RendererFFMS2::OpenFile's
+// changeAudio. The keyframes are worked out again only when the video or its
+// keyframe list changes; the paused frame's time is a lookup, and nothing is
+// marked while playing or stopped (legacy draws it only while Paused).
+void Application::followVideoInAudio()
+{
     const auto &video = m_video->session();
-    std::vector<int> keyframes;
-    std::optional<int> paused;
-    if (video.state() == application::VideoSession::State::Ready) {
-        const auto timebase = video.legacyTimebase();
-        for (const int frame : video.keyframes())
-            keyframes.push_back(timebase.msAt(frame));
-        // legacy VideoBox::Tell while Paused
-        if (!video.playing() && video.shownFrame())
-            paused = timebase.msAt(*video.shownFrame());
+    const auto state = video.state();
+    if (state == application::VideoSession::State::Opening)
+        m_audioFollowedVideo.clear();
+    if (state == application::VideoSession::State::Ready && m_audioFollowedVideo != QString::fromStdString(video.path())) {
+        // an indexed video brings its audio into the box, read through the
+        // video's own helper; a video without audio closes the box
+        m_audioFollowedVideo = QString::fromStdString(video.path());
+        if (video.hasAudio())
+            m_audio->openFromVideo(*m_mediaSource, m_audioFollowedVideo);
+        else if (m_audio->hasAudio())
+            m_audio->closeAudio();
     }
-    m_audio->setKeyframes(std::move(keyframes));
+    if (state != application::VideoSession::State::Ready) {
+        if (m_audioTimebase) {
+            m_audioTimebase.reset();
+            m_audioKeyframes.clear();
+            m_audio->setKeyframes({});
+        }
+        m_audio->setVideoTime(std::nullopt);
+        return;
+    }
+    if (!m_audioTimebase || m_audioTimebasePath != video.path() || m_audioKeyframes != video.keyframes()) {
+        m_audioTimebasePath = video.path();
+        m_audioKeyframes = video.keyframes();
+        m_audioTimebase = video.legacyTimebase();
+        std::vector<int> ms;
+        ms.reserve(m_audioKeyframes.size());
+        for (const int frame : m_audioKeyframes)
+            ms.push_back(m_audioTimebase->msAt(frame));
+        m_audio->setKeyframes(std::move(ms));
+    }
+    std::optional<int> paused; // legacy VideoBox::Tell while Paused
+    if (!video.playing() && !video.stopped() && video.shownFrame())
+        paused = m_audioTimebase->msAt(*video.shownFrame());
     m_audio->setVideoTime(paused);
 }
 
@@ -404,14 +463,23 @@ QVariantList Application::recentAudio()
 
 QUrl Application::audioDialogFolder() const
 {
-    const auto &video = m_video->session();
-    if (video.path().empty())
+    // legacy OpenAudioInTab: the video's folder, else the latest recent
+    // video's (not yet: the rewrite keeps no recent video list)
+    const QString from = QString::fromStdString(m_video->session().path());
+    if (from.isEmpty())
         return {};
-    return QUrl::fromLocalFile(QFileInfo(QString::fromStdString(video.path())).absolutePath());
+    return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
 
 Application::~Application()
 {
+    // A1: the audio box goes first, before the video and helpers it reads
+    // through; its signal connections go with it.
+    for (const auto &connection : std::as_const(m_audioConnections))
+        disconnect(connection);
+    m_video->setOpenFilter(nullptr);
+    m_audio.reset();
+    m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
 }
 

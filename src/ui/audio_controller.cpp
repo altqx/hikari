@@ -1,6 +1,9 @@
 #include "audio_controller.h"
 
+#include <QDir>
 #include <QFileInfo>
+
+#include <map>
 
 #include <utility>
 
@@ -8,11 +11,83 @@ namespace hikari::ui {
 
 using application::AudioBox;
 
-AudioController::AudioController(application::IndexedSourcePort &source, QObject *parent)
-    : QObject(parent), m_box(source)
+namespace {
+
+// Legacy ProviderFFMS2::DeleteOldAudioCache: with more files than the limit
+// in the cache folder, the ones read longest ago go (legacy sorted on the
+// last access time), the file in use excepted.
+void deleteOldAudioCache(const std::filesystem::path &file, int limit)
+{
+    if (limit < 1 || file.empty())
+        return;
+    const QDir dir(QString::fromStdU16String(file.parent_path().u16string()));
+    const QString inUse = QFileInfo(QString::fromStdU16String(file.u16string())).absoluteFilePath();
+    const auto entries = dir.entryInfoList(QDir::Files);
+    if (entries.size() <= limit)
+        return;
+    std::multimap<QDateTime, QString> byAccess;
+    for (const QFileInfo &entry : entries)
+        if (entry.absoluteFilePath() != inUse)
+            byAccess.emplace(entry.fileTime(QFileDevice::FileAccessTime), entry.absoluteFilePath());
+    qsizetype removed = 0;
+    const qsizetype surplus = entries.size() - limit;
+    for (const auto &[when, path] : byAccess) {
+        if (removed >= surplus)
+            break;
+        if (QFile::remove(path))
+            ++removed;
+    }
+}
+
+} // namespace
+
+AudioController::AudioController(application::DisplayAudioPort &own, QObject *parent)
+    : QObject(parent), m_box(own)
 {
     m_box.setObserver([this] { boxChanged(); });
+    m_box.setLog([this](const std::string &message, application::AudioBox::LogLevel level) {
+        emit logged(QString::fromStdString(message), level == application::AudioBox::LogLevel::Debug);
+    });
+    m_box.setSettings([this] { return m_settings ? m_settings() : application::AudioCacheSettings{}; });
+    m_box.setChooser([this](const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer) {
+        m_trackChoices.clear();
+        for (const auto &row : rows)
+            m_trackChoices << QString::fromStdString(row);
+        m_trackAnswer = std::move(answer);
+        emit trackChoicesChanged();
+    });
+    m_box.setCached([this](const std::filesystem::path &file) {
+        deleteOldAudioCache(file, m_settings ? m_settings().cacheFilesLimit : 10);
+    });
     newView();
+}
+
+void AudioController::setSettings(std::function<application::AudioCacheSettings()> settings)
+{
+    m_settings = std::move(settings);
+}
+
+void AudioController::openFromVideo(application::DisplayAudioPort &video, const QString &path)
+{
+    m_box.openFromVideo(video, path.toStdString());
+}
+
+void AudioController::chooseTrack(int row)
+{
+    auto answer = std::exchange(m_trackAnswer, nullptr);
+    m_trackChoices.clear();
+    emit trackChoicesChanged();
+    if (answer)
+        answer(row);
+}
+
+void AudioController::cancelTrackChoice()
+{
+    auto answer = std::exchange(m_trackAnswer, nullptr);
+    m_trackChoices.clear();
+    emit trackChoicesChanged();
+    if (answer)
+        answer(std::nullopt);
 }
 
 // A new legacy AudioBox: zoom and scale from the options, the first Line as
@@ -75,13 +150,15 @@ void AudioController::boxChanged()
         emit opened(path(), std::exchange(m_fresh, false));
         reselect();
     } else if (!loaded && m_box.error()) {
-        // a failed SetFile destroys the box
+        // a failed SetFile destroys the box; the box logged what legacy logs
         newView();
-        const auto error = *m_box.error();
-        const bool silent = error == application::SourceError::Unsupported ||
-                            error == application::SourceError::Cancelled ||
-                            error == application::SourceError::InvalidInput;
-        emit failed(silent ? QString() : tr("Cannot open audio %1").arg(path()));
+        if (!m_trackChoices.isEmpty() || m_trackAnswer) {
+            m_trackAnswer = nullptr;
+            m_trackChoices.clear();
+            emit trackChoicesChanged();
+        }
+        if (m_box.declined() && m_box.fromVideo())
+            emit videoAudioDeclined();
     } else if (!loaded) {
         m_view.clearSource();
     }
@@ -91,6 +168,8 @@ void AudioController::boxChanged()
 
 void AudioController::setLines(std::vector<application::AudioLineSpan> lines, int active, bool select)
 {
+    if (!select && active == m_active && lines == m_lines)
+        return; // nothing the display shows changed
     m_lines = std::move(lines);
     m_active = active;
     if (select && (m_box.state() == AudioBox::State::Loading || m_box.state() == AudioBox::State::Ready))
