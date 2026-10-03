@@ -797,6 +797,13 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
         QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+        // The Classic shortcuts work in the floating panel's window too.
+        QTRY_VERIFY(root->property("floatingPanelActive").toBool());
+        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        QVERIFY(history && !history->isVisible());
+        QTest::keyClick(item("editorPanel")->window(), Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(history->isVisible());
+        history->close();
 
         QVERIFY(QMetaObject::invokeMethod(menuItem("panelDockEditor"), "triggered"));
         QTRY_VERIFY(!editorDock->property("isFloating").toBool());

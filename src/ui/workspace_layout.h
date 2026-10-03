@@ -22,6 +22,9 @@ class WorkspaceLayoutController : public QObject {
     QML_UNCREATABLE("Provided by the application composition")
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     Q_PROPERTY(bool hasBackup READ hasBackup NOTIFY changed)
+    // The application's focus window (QWindow::isActive is also true for the
+    // parent of an active floating panel, so the shell compares windows).
+    Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
 public:
     static constexpr int kSchema = 1;
     static constexpr int kPanelRegistry = 1;
@@ -43,6 +46,7 @@ public:
     Q_INVOKABLE void dismissNotice();
 
     QString notice() const { return m_notice; }
+    QObject *focusWindow() const;
     bool hasBackup() const;
 
     // The envelope around an engine payload, and its validation.
@@ -51,6 +55,7 @@ public:
 
 signals:
     void changed();
+    void focusWindowChanged();
 
 private:
     bool restorePayload(const QByteArray &payload);

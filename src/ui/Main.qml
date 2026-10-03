@@ -178,22 +178,49 @@ ApplicationWindow {
     // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
     Shortcut {
         sequences: ["F4"]
-        context: Qt.WindowShortcut
-        enabled: root.shell.hasEditingTarget
+        context: Qt.ApplicationShortcut
+        enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.joinLines("previous")
     }
     Shortcut {
         sequences: ["F5"]
-        context: Qt.WindowShortcut
-        enabled: root.shell.hasEditingTarget
+        context: Qt.ApplicationShortcut
+        enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.joinLines("next")
     }
     // Legacy GLOBAL_REMOVE_LINES.
     Shortcut {
         sequences: ["Shift+Del"]
-        context: Qt.WindowShortcut
-        enabled: root.shell.hasEditingTarget
+        context: Qt.ApplicationShortcut
+        enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.deleteLines()
+    }
+    // D1: a floating panel's window is part of the shell. The Classic
+    // shortcuts work there too, and not in dialogs or tool windows.
+    readonly property bool floatingPanelActive: {
+        const w = root.workspaceLayout.focusWindow
+        return w !== null && w !== root && panels.some(p => p.visible && p.Window.window === w)
+    }
+    readonly property bool shellActive: root.workspaceLayout.focusWindow === root || floatingPanelActive
+    // The menu's shortcuts belong to the main window; these mirror them while
+    // a floating panel has the focus.
+    Repeater {
+        model: [
+            { keys: [StandardKey.Open], action: openAction },
+            { keys: ["Ctrl+W"], action: closeAction },
+            { keys: [StandardKey.Save], action: saveAction },
+            { keys: ["Ctrl+Shift+S"], action: saveAsAction },
+            { keys: ["Ctrl+Shift+H"], action: historyAction }
+        ]
+        delegate: Item {
+            required property var modelData
+            Shortcut {
+                sequences: modelData.keys
+                context: Qt.ApplicationShortcut
+                enabled: root.floatingPanelActive && modelData.action.enabled
+                onActivated: modelData.action.trigger()
+            }
+        }
     }
     // Application-wide, so F6 also leaves a floating panel group (D1).
     Shortcut {
@@ -216,6 +243,7 @@ ApplicationWindow {
                 title: qsTr("&File")
                 MenuItem {
                     action: Action {
+                        id: openAction
                         text: qsTr("&Open…")
                         shortcut: StandardKey.Open
                         onTriggered: openDialog.open()
@@ -257,6 +285,7 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "closeMenuItem"
                     action: Action {
+                        id: closeAction
                         text: qsTr("&Close")
                         shortcut: "Ctrl+W" // legacy GLOBAL_CLOSE_PAGE
                         enabled: root.shell.hasEditingTarget
@@ -273,6 +302,7 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "saveMenuItem"
                     action: Action {
+                        id: saveAction
                         text: qsTr("&Save")
                         shortcut: StandardKey.Save
                         enabled: root.editor.editable
@@ -287,6 +317,7 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "saveAsMenuItem"
                     action: Action {
+                        id: saveAsAction
                         text: qsTr("Save &as…")
                         shortcut: "Ctrl+Shift+S" // legacy GLOBAL_SAVE_SUBS_AS
                         enabled: root.shell.hasEditingTarget
@@ -381,6 +412,7 @@ ApplicationWindow {
             MenuItem {
                 objectName: "historyMenuItem"
                 action: Action {
+                    id: historyAction
                     text: qsTr("&History")
                     shortcut: "Ctrl+Shift+H" // legacy GLOBAL_HISTORY default
                     enabled: root.editor.hasLine

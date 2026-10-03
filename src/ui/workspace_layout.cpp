@@ -4,6 +4,8 @@
 #include <kddockwidgets/kddockwidgets_version.h>
 
 #include <QFile>
+#include <QGuiApplication>
+#include <QWindow>
 #include <QFileInfo>
 #include <QDir>
 #include <QJsonArray>
@@ -53,6 +55,13 @@ const QStringList &WorkspaceLayoutController::panelIds()
 WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject *parent)
     : QObject(parent), m_file(std::move(layoutFile))
 {
+    if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+        connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::focusWindowChanged);
+}
+
+QObject *WorkspaceLayoutController::focusWindow() const
+{
+    return QGuiApplication::focusWindow();
 }
 
 QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const QString &preset)
