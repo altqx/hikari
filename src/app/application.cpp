@@ -281,6 +281,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
 Application::~Application()
 {
     m_port->waitIdle(); // no write may outlive the services it reports to
+    // F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
+    // UTF-8 with a BOM as OpenWrite::FileWrite writes it).
+    if (m_misspellRules && !m_misspellRules->empty() && !m_settingsFile.isEmpty()) {
+        QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            const auto text = application::writeReplacerRules(*m_misspellRules);
+            file.write("\xEF\xBB\xBF");
+            file.write(reinterpret_cast<const char *>(text.data()), static_cast<qint64>(text.size()));
+        }
+    }
 }
 
 namespace {
@@ -1689,6 +1699,218 @@ QString Application::selectStylesPattern(const QStringList &styles) const
     for (const QString &s : styles)
         names.push_back(utf8(s));
     return fromUtf8(application::stylesPattern(names));
+}
+
+namespace {
+
+// iswupper, towlower and towupper per character (wxString MakeLower/MakeUpper).
+application::ReplacerCase replacerCase()
+{
+    return {[](char16_t c) { return QChar(c).isUpper(); }, [](char16_t c) { return QChar(c).toLower().unicode(); },
+            [](char16_t c) { return QChar(c).toUpper().unicode(); }};
+}
+
+QString fromUtf16(const std::u16string &s)
+{
+    return QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size()));
+}
+
+application::ReplacerRule replacerRule(const QVariantMap &m)
+{
+    return {utf8(m.value(QStringLiteral("description")).toString()), utf8(m.value(QStringLiteral("find")).toString()),
+            utf8(m.value(QStringLiteral("replace")).toString()), m.value(QStringLiteral("options")).toInt(), false};
+}
+
+application::ReplacerScope replacerScope(const QVariantMap &m)
+{
+    using L = application::ReplacerScope::Lines;
+    return {static_cast<L>(std::clamp(m.value(QStringLiteral("lines")).toInt(), 0, 3)),
+            utf8(m.value(QStringLiteral("styles")).toString())};
+}
+
+} // namespace
+
+std::vector<application::ReplacerRule> &Application::misspellRuleList()
+{
+    if (!m_misspellRules) {
+        // FillRulesList: Rules.txt in the configuration folder, else the shipped rules.
+        QByteArray bytes;
+        if (!m_settingsFile.isEmpty()) {
+            QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
+            if (file.open(QIODevice::ReadOnly))
+                bytes = file.readAll();
+        }
+        auto read = application::readReplacerRules(
+            std::u8string_view(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size())));
+        for (const auto &line : read.invalid)
+            m_log->log(tr("Rule \"%1\" is invalid.").arg(fromUtf8(line)));
+        m_misspellRules = std::move(read.rules);
+    }
+    return *m_misspellRules;
+}
+
+QVariantList Application::misspellRules()
+{
+    QVariantList rows;
+    for (const auto &rule : misspellRuleList())
+        rows << QVariantMap{{QStringLiteral("description"), fromUtf8(rule.description)},
+                            {QStringLiteral("find"), fromUtf8(rule.find)},
+                            {QStringLiteral("replace"), fromUtf8(rule.replace)},
+                            {QStringLiteral("options"), rule.options},
+                            {QStringLiteral("checked"), rule.checked}};
+    return rows;
+}
+
+bool Application::addMisspellRule(const QVariantMap &rule)
+{
+    if (m_misspellResultsShown) {
+        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        return false;
+    }
+    misspellRuleList().push_back(replacerRule(rule)); // added unchecked
+    return true;
+}
+
+bool Application::editMisspellRule(int index, const QVariantMap &rule)
+{
+    if (m_misspellResultsShown) {
+        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        return false;
+    }
+    auto &rules = misspellRuleList();
+    if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
+        m_log->log(QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
+        return false;
+    }
+    // The checkbox stays as it was.
+    const bool checked = rules[static_cast<std::size_t>(index)].checked;
+    rules[static_cast<std::size_t>(index)] = replacerRule(rule);
+    rules[static_cast<std::size_t>(index)].checked = checked;
+    return true;
+}
+
+bool Application::removeMisspellRule(int index)
+{
+    if (m_misspellResultsShown) {
+        m_log->log(tr("Cannot change rules\nwhen find results window is open"));
+        return false;
+    }
+    auto &rules = misspellRuleList();
+    if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
+        m_log->log(QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
+        return false;
+    }
+    rules.erase(rules.begin() + index);
+    return true;
+}
+
+void Application::checkMisspellRule(int index, bool checked)
+{
+    auto &rules = misspellRuleList();
+    if (index >= 0 && static_cast<std::size_t>(index) < rules.size())
+        rules[static_cast<std::size_t>(index)].checked = checked;
+}
+
+QVariantList Application::findMisspells(const QVariantMap &scope, bool allTabs)
+{
+    // SeekOnActualTab / SeekOnAllTabs: the list starts empty each time.
+    m_misspellFinds.clear();
+    std::vector<application::DocumentId> documents;
+    if (allTabs)
+        documents = m_workspace.documents();
+    else if (const auto target = m_workspace.editingTarget())
+        documents.push_back(*target);
+    QVariantList rows;
+    for (const auto id : documents) {
+        auto *session = m_files->session(id);
+        if (!session || (m_workspace.reference() && *m_workspace.reference() == id))
+            continue;
+        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase());
+        if (finds.empty())
+            continue;
+        // The header is the tab's SubsPath ("" for an Untitled Document).
+        const auto destination = m_files->destination(id);
+        rows << QVariantMap{{QStringLiteral("header"), true},
+                            {QStringLiteral("text"), destination ? QDir::toNativeSeparators(QString::fromStdString(destination->value))
+                                                                 : QString()}};
+        for (const auto &find : finds) {
+            rows << QVariantMap{{QStringLiteral("header"), false},
+                                {QStringLiteral("find"), static_cast<int>(m_misspellFinds.size())},
+                                {QStringLiteral("line"), find.lineNumber},
+                                {QStringLiteral("text"), fromUtf16(find.text)},
+                                {QStringLiteral("position"), static_cast<int>(find.position)},
+                                {QStringLiteral("length"), static_cast<int>(find.length)}};
+            m_misspellFinds.emplace_back(id, find);
+        }
+    }
+    return rows;
+}
+
+void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
+{
+    std::vector<application::DocumentId> documents;
+    if (allTabs)
+        documents = m_workspace.documents();
+    else if (const auto target = m_workspace.editingTarget())
+        documents.push_back(*target);
+    for (const auto id : documents)
+        if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id))
+            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase());
+    m_editor->reloadFromSession();
+    refreshViews();
+}
+
+void Application::replaceMisspellFinds(const QVariantList &chosen)
+{
+    // ReplaceChecked: the checked finds in list order, one run per Document;
+    // finds in a Document no longer open are skipped.
+    std::vector<std::size_t> indices;
+    for (const auto &v : chosen)
+        if (const int i = v.toInt(); i >= 0 && static_cast<std::size_t>(i) < m_misspellFinds.size())
+            indices.push_back(static_cast<std::size_t>(i));
+    std::ranges::sort(indices);
+    for (std::size_t at = 0; at < indices.size();) {
+        const auto document = m_misspellFinds[indices[at]].first;
+        std::vector<application::ReplacerFind> finds;
+        for (; at < indices.size() && m_misspellFinds[indices[at]].first == document; ++at)
+            finds.push_back(m_misspellFinds[indices[at]].second);
+        auto *session = m_files->session(document);
+        if (!session)
+            continue;
+        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase());
+        if (!result)
+            continue;
+        for (const auto &problem : result->problems) {
+            using K = application::ReplacerProblem::Kind;
+            if (problem.kind == K::Edited)
+                m_log->log(tr("Line %1 cannot be replaced,\ncause it was edited.").arg(problem.lineNumber));
+            else
+                m_log->log(tr("Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
+                               .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
+                               .arg(problem.lineNumber));
+        }
+    }
+    m_editor->reloadFromSession();
+    refreshViews();
+}
+
+void Application::showMisspellFind(int index)
+{
+    // ShowResult: that tab, the Line alone selected, the find selected in the editor.
+    if (index < 0 || static_cast<std::size_t>(index) >= m_misspellFinds.size())
+        return;
+    const auto &[document, find] = m_misspellFinds[static_cast<std::size_t>(index)];
+    auto *session = m_files->session(document);
+    if (!session || find.row >= session->document().lines().size())
+        return;
+    if (m_workspace.editingTarget() != document) {
+        m_workspace.setEditingTarget(document);
+        refreshViews();
+    }
+    const auto line = session->document().lines()[find.row]->id;
+    if (!applySelection(application::Selection{line, {line}, line, {}}))
+        return;
+    m_editor->selectInField(static_cast<int>(find.position), static_cast<int>(find.position + find.length));
 }
 
 void Application::checkResolution()

@@ -11,6 +11,7 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
+#include "hikari/application/misspell_replacer.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/workspace.h"
@@ -262,6 +263,31 @@ public:
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The "+" button: the chosen styles as the legacy anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
+    // F4: GLOBAL_MISSPELLS_REPLACER ("Fix minor errors (experimental)", the
+    // "Multireplacer" dialog). The rules are read from Rules.txt beside the
+    // INI file (the shipped rules without one) when first asked for, and
+    // written back when the application ends unless the list is empty
+    // (legacy: when the dialog is destroyed with the main window). Rows
+    // {description, find, replace, options, checked}.
+    Q_INVOKABLE QVariantList misspellRules();
+    // Add rule / Edit rule / Delete rule: refused with the legacy message in
+    // the log while the results window is shown.
+    Q_INVOKABLE bool addMisspellRule(const QVariantMap &rule);
+    Q_INVOKABLE bool editMisspellRule(int index, const QVariantMap &rule);
+    Q_INVOKABLE bool removeMisspellRule(int index);
+    Q_INVOKABLE void checkMisspellRule(int index, bool checked);
+    Q_INVOKABLE void setMisspellResultsShown(bool shown) { m_misspellResultsShown = shown; }
+    // "Find errors in current tab / in all tabs" with {lines (the "Which
+    // lines" choice 0-3), styles}: the results list, a header row {header:
+    // true, text: the file's path} before each Document's finds {header:
+    // false, find (its index), line, text, position, length}.
+    Q_INVOKABLE QVariantList findMisspells(const QVariantMap &scope, bool allTabs);
+    // "Replace all errors in current tab / in all tabs": one step per Document.
+    Q_INVOKABLE void replaceMisspells(const QVariantMap &scope, bool allTabs);
+    // The results window's Replace with the checked finds' indices.
+    Q_INVOKABLE void replaceMisspellFinds(const QVariantList &finds);
+    // A double click on a find: its Document, Line and text in the editor.
+    Q_INVOKABLE void showMisspellFind(int find);
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -368,6 +394,11 @@ private:
     QString m_resolutionCheckedVideo; // the video whose size was compared
     void checkResolution();
     QStringList m_selectRecent;
+    // F4: the rules once read, and the last search's finds per Document.
+    std::optional<std::vector<application::ReplacerRule>> m_misspellRules;
+    std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
+    bool m_misspellResultsShown = false;
+    std::vector<application::ReplacerRule> &misspellRuleList();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);

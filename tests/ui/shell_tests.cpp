@@ -1167,6 +1167,126 @@ private slots:
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     }
 
+    // F4: Edit > Fix minor errors: check rules, find, review the results and
+    // replace the checked finds as one step; replace all errors in the tab.
+    void misspellReplacerFindsReviewsAndReplaces()
+    {
+        const QString path = writeFile(dir, "misspell.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello , world , again\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,a  b\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,fine\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
+        QVERIFY(dialog);
+        auto *menuItem = root->findChild<QObject *>(QStringLiteral("misspellMenuItem"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("rules").toList().size(), 13);
+        // Check "Remove space before comma or dot" in the list.
+        QQuickItem *check = nullptr;
+        QTRY_VERIFY((check = dialogItem("misspellDialog", "misspellRuleCheck0")));
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(application->misspellRules().at(0).toMap().value(QStringLiteral("checked")).toBool());
+        // Find errors in current tab: a header with the file, then two finds.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("misspellDialog", "misspellFindTab"), "click"));
+        auto *results = root->findChild<QObject *>(QStringLiteral("misspellResults"));
+        QTRY_VERIFY(results->property("visible").toBool());
+        const auto rows = results->property("rows").toList();
+        QCOMPARE(rows.size(), 3);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
+        QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
+        // Rules cannot change while the results are shown.
+        QVERIFY(!application->addMisspellRule({{QStringLiteral("find"), QStringLiteral("x")}}));
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("Cannot change rules\nwhen find results window is open"));
+        // Uncheck the second find, then Replace: one "Fixing minor errors" step.
+        auto *resultsContent = results->property("contentItem").value<QQuickItem *>();
+        QQuickItem *second = nullptr;
+        QTRY_VERIFY((second = findItem(resultsContent, QStringLiteral("misspellResultCheck2"))));
+        QVERIFY(QMetaObject::invokeMethod(second, "click"));
+        const auto steps = session->historySize();
+        auto *replace = findItem(resultsContent, QStringLiteral("misspellReplaceChecked"));
+        QVERIFY(QMetaObject::invokeMethod(replace, "click"));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
+        auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QCOMPARE(text(0), QStringLiteral("Hello, world , again"));
+        QVERIFY(!replace->property("enabled").toBool()); // once per search
+        // A double click on a find shows its Line with the find selected.
+        application->showMisspellFind(1);
+        QCOMPARE(session->selection().active, std::optional(session->document().lines()[0]->id));
+        QCOMPARE(application->editor().selectionStart(), 13);
+        QCOMPARE(application->editor().selectionEnd(), 15);
+        QVERIFY(QMetaObject::invokeMethod(results, "close"));
+        QTRY_VERIFY(!results->property("visible").toBool());
+        // Replace all errors in current tab with "Remove doubled spaces" too.
+        application->checkMisspellRule(1, true);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("misspellDialog", "misspellReplaceTab"), "click"));
+        QCOMPARE(session->historySize(), steps + 2);
+        QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
+        QCOMPARE(text(0), QStringLiteral("Hello, world, again"));
+        QCOMPARE(text(1), QStringLiteral("a b"));
+        // The rule buttons: add (unchecked), edit the chosen one, delete it.
+        auto *find = dialogItem("misspellDialog", "misspellFind");
+        find->setProperty("text", QStringLiteral("fine"));
+        dialogItem("misspellDialog", "misspellReplace")->setProperty("text", QStringLiteral("good"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("misspellDialog", "misspellAddRule"), "click"));
+        auto added = application->misspellRules();
+        QCOMPARE(added.size(), 14);
+        QCOMPARE(added.last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fine"));
+        QVERIFY(!added.last().toMap().value(QStringLiteral("checked")).toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "chooseRule", Q_ARG(QVariant, 13)));
+        find->setProperty("text", QStringLiteral("fin"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("misspellDialog", "misspellEditRule"), "click"));
+        QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fin"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("misspellDialog", "misspellRemoveRule"), "click"));
+        QCOMPARE(application->misspellRules().size(), 13);
+        // The menu hides the dialog again.
+        QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
+    // F4: Rules.txt beside the INI file, written when the application ends
+    // (not when the list is empty) and read back by the next one.
+    void misspellRulesPersist()
+    {
+        QDir().mkpath(dir.filePath(QStringLiteral("rules")));
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("rules/hikari.ini"));
+        const QString rulesFile = dir.filePath(QStringLiteral("rules/Rules.txt"));
+        {
+            app::Application first(options);
+            QCOMPARE(first.misspellRules().size(), 13);
+            first.checkMisspellRule(2, true);
+            QVERIFY(first.addMisspellRule({{QStringLiteral("description"), QStringLiteral("Mine")},
+                                           {QStringLiteral("find"), QStringLiteral("teh")},
+                                           {QStringLiteral("replace"), QStringLiteral("the")},
+                                           {QStringLiteral("options"), 1}}));
+        }
+        QFile file(rulesFile);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QByteArray bytes = file.readAll();
+        file.close();
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBF#HikariSub rules file\r\n0|0|1|0|0|0|0|0|0|0|0|0|0|0\r\n"));
+        QVERIFY(bytes.endsWith("Mine\fteh\fthe\f1\r\n"));
+        {
+            app::Application second(options);
+            const auto rules = second.misspellRules();
+            QCOMPARE(rules.size(), 14);
+            QVERIFY(rules[2].toMap().value(QStringLiteral("checked")).toBool());
+            QCOMPARE(rules[13].toMap().value(QStringLiteral("options")).toInt(), 1);
+            while (!second.misspellRules().isEmpty())
+                QVERIFY(second.removeMisspellRule(0));
+        }
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        QCOMPARE(file.readAll(), bytes); // an empty list is not written
+    }
+
     // F2: Edit > Select lines selects by the dialog's settings and reports the count.
     void selectLinesDialogSelectsAndActs()
     {
