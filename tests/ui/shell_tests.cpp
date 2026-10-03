@@ -425,8 +425,18 @@ private slots:
         QTRY_COMPARE(texts(), (QStringList{"a", "", "b", "b"}));
         press(Qt::Key_Delete, Qt::ShiftModifier);
         QTRY_COMPARE(texts(), (QStringList{"a", "", "b"}));
-        QVERIFY(session->undo());
+        QVERIFY(application->editor().undo()); // through the editor, so the views follow
         QCOMPARE(texts(), (QStringList{"a", "", "b", "b"}));
+        // G5: F4 merges the active Line with the one before it; the menu joins.
+        grid->forceActiveFocus();
+        press(Qt::Key_End);
+        press(Qt::Key_F4);
+        QTRY_COMPARE(texts(), (QStringList{"a", "", "b\\Nb"}));
+        press(Qt::Key_Home);
+        press(Qt::Key_End, Qt::ShiftModifier);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("joinFirst")),
+                                          "triggered"));
+        QTRY_COMPARE(texts(), (QStringList{"a"}));
     }
 
     void enterOnTheLastLineAppendsOne()

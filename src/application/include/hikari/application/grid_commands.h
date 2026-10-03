@@ -42,4 +42,22 @@ std::expected<void, CommandRefusal> duplicateLines(EditSession &session, const L
 // Document gets the default Line. The Line now at the first deleted position becomes active.
 std::expected<void, CommandRefusal> deleteLines(EditSession &session);
 
+enum class JoinKind {
+    Join,         // GRID_JOIN_LINES (2 to 20 selected): earliest Start, latest End, texts joined with \N
+    WithPrevious, // GLOBAL_JOIN_WITH_PREVIOUS (F4): the active Line and the shown one before it
+    WithNext,     // GLOBAL_JOIN_WITH_NEXT (F5): the active Line and the shown one after it
+    KeepFirst,    // GRID_JOIN_TO_FIRST_LINE (2 to 500): the first Line, ending where the last ends
+    KeepLast,     // GRID_JOIN_TO_LAST_LINE: the same with the last Line's text
+};
+// The first participating Line survives with its LineId; under the approved
+// J56-selected-only-join only the other participating Lines are deleted,
+// so unselected Lines between them survive (legacy deleted the whole span).
+std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kind, const LineVisible &visible = {});
+// GRID_SWAP_LINES: exactly two selected Lines trade places; the active row
+// keeps its position, so the active Line becomes the other one (legacy).
+std::expected<void, CommandRefusal> swapLines(EditSession &session);
+// GRID_MAKE_CONTINOUS_PREVIOUS_LINE / _NEXT_LINE: each selected Line starts
+// where the Line before it ends, or ends where the Line after it starts.
+std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool withPrevious, const LineVisible &visible = {});
+
 } // namespace hikari::application

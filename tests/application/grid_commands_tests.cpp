@@ -179,4 +179,96 @@ TEST_F(GridCommandsTest, CommandsAreRefusedOnAReadOnlyTarget)
     EXPECT_EQ(texts().size(), 3u);
 }
 
+// G5: join, swap and continuous timing.
+TEST_F(GridCommandsTest, JoinKeepsTheFirstLineAndOnlyDeletesSelectedOnes)
+{
+    // J56-selected-only-join: with a and c selected, b between them survives.
+    select({a, c}, a);
+    ASSERT_TRUE(joinLines(session, JoinKind::Join));
+    ASSERT_EQ(texts(), (std::vector<std::u8string>{u8"a\\Nc", u8"b"}));
+    EXPECT_EQ(line(0).id, a);
+    EXPECT_EQ(ms(line(0).start.value), 1000);
+    EXPECT_EQ(ms(line(0).end.value), 8000);
+    EXPECT_EQ(line(1).id, b);
+    EXPECT_EQ(session.selection().active, a);
+    EXPECT_EQ(session.history().back().name, "Joining lines");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b", u8"c"}));
+}
+
+TEST_F(GridCommandsTest, JoinSkipsEmptyTextsAfterTheFirst)
+{
+    EditSession s{load("[Events]\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,x\n"
+                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n"
+                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,y\n")};
+    s.setSelection(Selection{core::LineId{1}, {core::LineId{1}, core::LineId{2}, core::LineId{3}, core::LineId{4}}, {}, {}});
+    ASSERT_TRUE(joinLines(s, JoinKind::Join));
+    ASSERT_EQ(s.document().lines().size(), 1u);
+    EXPECT_EQ(s.document().lines()[0]->text, u8"x\\Ny"); // the empty first takes "x" without a separator
+}
+
+TEST_F(GridCommandsTest, JoinKeepFirstAndKeepLast)
+{
+    select({a, b}, a);
+    ASSERT_TRUE(joinLines(session, JoinKind::KeepFirst));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"c"}));
+    EXPECT_EQ(ms(line(0).start.value), 1000);
+    EXPECT_EQ(ms(line(0).end.value), 6000);
+    ASSERT_TRUE(session.undo());
+    select({a, b}, a);
+    ASSERT_TRUE(joinLines(session, JoinKind::KeepLast));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"b", u8"c"}));
+    EXPECT_EQ(line(0).id, a); // the first Line survives with the last one's text
+    EXPECT_EQ(session.history().back().name, "Joining lines and keeping the last");
+}
+
+TEST_F(GridCommandsTest, MergeWithThePreviousOrNextShownLine)
+{
+    select({b}, b);
+    ASSERT_TRUE(joinLines(session, JoinKind::WithNext));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a", u8"b\\Nc"}));
+    ASSERT_TRUE(session.undo());
+    // With b hidden, c's previous shown Line is a; b survives (J56).
+    select({c}, c);
+    ASSERT_TRUE(joinLines(session, JoinKind::WithPrevious, [&](core::LineId id) { return id != b; }));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"a\\Nc", u8"b"}));
+    select({a}, a);
+    EXPECT_FALSE(joinLines(session, JoinKind::WithPrevious)); // nothing before the first Line
+}
+
+TEST_F(GridCommandsTest, JoinNeedsTwoToTwentyLines)
+{
+    select({a}, a);
+    EXPECT_FALSE(joinLines(session, JoinKind::Join));
+}
+
+TEST_F(GridCommandsTest, SwapTradesPlacesAndKeepsTheActiveRow)
+{
+    select({a, c}, a);
+    ASSERT_TRUE(swapLines(session));
+    EXPECT_EQ(texts(), (std::vector<std::u8string>{u8"c", u8"b", u8"a"}));
+    EXPECT_EQ(line(0).id, c); // identities move with the Lines
+    EXPECT_EQ(line(2).id, a);
+    EXPECT_EQ(session.selection().active, c); // the active row stays first
+    EXPECT_EQ(session.history().back().name, "Swapping lines");
+    select({b}, b);
+    EXPECT_FALSE(swapLines(session)); // exactly two
+}
+
+TEST_F(GridCommandsTest, ContinuousTimesFollowTheNeighbours)
+{
+    select({b, c}, b);
+    ASSERT_TRUE(makeContinuous(session, true));
+    EXPECT_EQ(ms(line(1).start.value), 2000); // a's End
+    EXPECT_EQ(ms(line(2).start.value), 6000); // b's End
+    EXPECT_EQ(session.history().back().name, "Setting line times as continuous");
+    ASSERT_TRUE(session.undo());
+    select({a, c}, a);
+    ASSERT_TRUE(makeContinuous(session, false));
+    EXPECT_EQ(ms(line(0).end.value), 5000); // b's Start
+    EXPECT_EQ(ms(line(2).end.value), 8000); // the last Line has no next one
+}
+
 } // namespace

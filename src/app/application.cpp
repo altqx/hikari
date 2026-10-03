@@ -526,6 +526,48 @@ bool Application::deleteLines()
     return done;
 }
 
+bool Application::joinLines(const QString &kind)
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    using application::JoinKind;
+    const JoinKind k = kind == QLatin1String("previous") ? JoinKind::WithPrevious
+                       : kind == QLatin1String("next")   ? JoinKind::WithNext
+                       : kind == QLatin1String("first")  ? JoinKind::KeepFirst
+                       : kind == QLatin1String("last")   ? JoinKind::KeepLast
+                                                         : JoinKind::Join;
+    const bool done = application::joinLines(*session, k).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::swapLines()
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    const bool done = application::swapLines(*session).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::makeContinuous(bool withPrevious)
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    const bool done = application::makeContinuous(*session, withPrevious).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 QVariantMap Application::qmlProperties()
 {
     return {{QStringLiteral("shell"), QVariant::fromValue(m_shell.get())},

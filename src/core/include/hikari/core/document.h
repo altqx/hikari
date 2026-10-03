@@ -194,6 +194,10 @@ public:
     // Removes a Line (its source bytes are no longer written). False when no
     // Line has this id.
     bool removeLine(LineId id);
+    // Moves a Line, keeping its id and source bytes, before `before`, or to
+    // the end of the last Events section when `before` is nullopt. False when
+    // either Line is unknown or they are the same Line.
+    bool moveLine(LineId id, std::optional<LineId> before);
 
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;

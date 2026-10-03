@@ -179,14 +179,12 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
                     }
                     const bool inPlace = previous ? at == prevAt + 1 : at == 0;
                     if (!inPlace) {
-                        core::LineRecord moved = *lines[at];
-                        doc.removeLine(id);
-                        const auto newId = previous ? doc.insertLineAfter(*previous, moved)
-                                                    : (doc.lines().empty() ? doc.appendLine(moved)
-                                                                           : doc.insertLineBefore(doc.lines().front()->id, moved));
-                        if (!newId)
+                        // Moves keep the Line's identity and source bytes.
+                        const std::size_t target = previous ? prevAt + 1 : 0;
+                        const std::optional<core::LineId> before =
+                            target < lines.size() ? std::optional(lines[target]->id) : std::nullopt;
+                        if (!doc.moveLine(id, before))
                             return false;
-                        id = *newId;
                     }
                 } else {
                     core::LineRecord fresh;

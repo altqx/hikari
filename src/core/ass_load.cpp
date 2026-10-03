@@ -119,6 +119,47 @@ bool Document::removeLine(LineId id)
     return false;
 }
 
+bool Document::moveLine(LineId id, std::optional<LineId> before)
+{
+    if (before == id)
+        return false;
+    const auto exists = [&](LineId wanted) {
+        for (const auto &section : m_sections)
+            for (const auto &record : section.records)
+                if (const auto *line = std::get_if<LineRecord>(&record); line && line->id == wanted)
+                    return true;
+        return false;
+    };
+    if (!exists(id) || (before && !exists(*before)) ||
+        (!before && std::none_of(m_sections.begin(), m_sections.end(),
+                                 [](const Section &s) { return s.kind == SectionKind::Events; })))
+        return false;
+    std::optional<Record> moving;
+    for (auto &section : m_sections)
+        for (std::size_t i = 0; i < section.records.size() && !moving; ++i)
+            if (auto *line = std::get_if<LineRecord>(&section.records[i]); line && line->id == id) {
+                moving = std::move(section.records[i]);
+                section.records.erase(section.records.begin() + static_cast<std::ptrdiff_t>(i));
+            }
+    if (!moving)
+        return false;
+    if (before) {
+        for (auto &section : m_sections)
+            for (std::size_t i = 0; i < section.records.size(); ++i)
+                if (auto *line = std::get_if<LineRecord>(&section.records[i]); line && line->id == *before) {
+                    section.records.insert(section.records.begin() + static_cast<std::ptrdiff_t>(i), std::move(*moving));
+                    return true;
+                }
+    } else {
+        for (auto it = m_sections.rbegin(); it != m_sections.rend(); ++it)
+            if (it->kind == SectionKind::Events) {
+                it->records.push_back(std::move(*moving));
+                return true;
+            }
+    }
+    return false; // unreachable: both were checked above
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)

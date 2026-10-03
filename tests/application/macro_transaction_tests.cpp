@@ -102,6 +102,9 @@ TEST_F(MacroTest, AllStagedEditsApplyAsOneUndoStep)
     std::swap(r.dialogues[0], r.dialogues[1]);           // reorder
     ASSERT_TRUE(applyMacroResult(session, s, r, "Blur"));
     EXPECT_EQ(texts(session), (std::vector<std::string>{"three", "{\\be1}one", "added"}));
+    // A reordered Line keeps its identity.
+    EXPECT_EQ(session.document().lines()[0]->id, l3);
+    EXPECT_EQ(session.document().lines()[1]->id, l1);
     EXPECT_EQ(session.historySize(), steps + 1);
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));

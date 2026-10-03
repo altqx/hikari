@@ -85,6 +85,19 @@ ApplicationWindow {
         shown[next].forceActiveFocus(Qt.TabFocusReason)
     }
 
+    // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
+    Shortcut {
+        sequences: ["F4"]
+        context: Qt.WindowShortcut
+        enabled: root.shell.hasEditingTarget
+        onActivated: root.app.joinLines("previous")
+    }
+    Shortcut {
+        sequences: ["F5"]
+        context: Qt.WindowShortcut
+        enabled: root.shell.hasEditingTarget
+        onActivated: root.app.joinLines("next")
+    }
     // Legacy GLOBAL_REMOVE_LINES.
     Shortcut {
         sequences: ["Shift+Del"]
@@ -676,6 +689,18 @@ ApplicationWindow {
                         }
                     }
                     MenuItem { objectName: "duplicateLines"; text: qsTr("&Duplicate lines\tCtrl+D"); onTriggered: root.app.duplicateLines() }
+                    MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: root.app.swapLines() }
+                    MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: root.app.joinLines("join") }
+                    MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: root.app.joinLines("first") }
+                    MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: root.app.joinLines("last") }
+                    MenuItem {
+                        objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
+                        onTriggered: root.app.makeContinuous(true)
+                    }
+                    MenuItem {
+                        objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
+                        onTriggered: root.app.makeContinuous(false)
+                    }
                     MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
                 }
             }

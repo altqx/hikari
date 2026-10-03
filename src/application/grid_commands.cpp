@@ -250,4 +250,164 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
     return {};
 }
 
+namespace {
+
+// Legacy GetSelections: the selected Lines the Grid shows, in Document order.
+std::vector<const core::LineRecord *> shownSelection(const EditSession &session, const LineVisible &visible)
+{
+    std::vector<const core::LineRecord *> out;
+    for (const auto *l : session.document().lines())
+        if (session.selection().selected.contains(l->id) && (!visible || visible(l->id)))
+            out.push_back(l);
+    return out;
+}
+
+std::u8string joined(const std::vector<const core::LineRecord *> &parts, bool translation)
+{
+    // Legacy: while nothing is collected a contributor is taken as it is;
+    // after that each non-empty one follows a \\N.
+    std::u8string out;
+    for (const auto *l : parts) {
+        const std::u8string &t = translation ? l->translation : l->text;
+        if (out.empty())
+            out = t;
+        else if (!t.empty())
+            out += u8"\\N" + t;
+    }
+    return out;
+}
+
+} // namespace
+
+std::expected<void, CommandRefusal> joinLines(EditSession &session, JoinKind kind, const LineVisible &visible)
+{
+    const auto lines = linesOf(session);
+    std::vector<const core::LineRecord *> parts;
+    if (kind == JoinKind::WithPrevious || kind == JoinKind::WithNext) {
+        const auto active = session.selection().active;
+        const int index = active ? indexOf(lines, *active) : -1;
+        if (index < 0)
+            return std::unexpected(CommandRefusal::Invalid);
+        const auto *other = neighbour(lines, index, kind == JoinKind::WithPrevious ? -1 : +1, visible);
+        if (!other)
+            return std::unexpected(CommandRefusal::Invalid);
+        parts = kind == JoinKind::WithPrevious ? std::vector{other, lines[static_cast<std::size_t>(index)]}
+                                               : std::vector{lines[static_cast<std::size_t>(index)], other};
+    } else {
+        parts = shownSelection(session, visible);
+        const std::size_t limit = kind == JoinKind::Join ? 20 : 500;
+        if (parts.size() < 2 || parts.size() > limit)
+            return std::unexpected(CommandRefusal::Invalid);
+    }
+    const core::LineId survivor = parts.front()->id;
+    core::LineRecord result = *parts.front();
+    if (kind == JoinKind::KeepFirst || kind == JoinKind::KeepLast) {
+        result.end.value = parts.back()->end.value;
+        if (kind == JoinKind::KeepLast) {
+            result.text = parts.back()->text;
+            result.translation = parts.back()->translation;
+        }
+    } else {
+        core::DocumentTime start = parts.front()->start.value, end = parts.front()->end.value;
+        for (const auto *l : parts) {
+            start = std::min(start, l->start.value);
+            end = std::max(end, l->end.value);
+        }
+        result.start.value = start;
+        result.end.value = end;
+        result.text = joined(parts, false);
+        result.translation = joined(parts, true);
+    }
+    std::set<core::LineId> touches;
+    for (const auto *l : parts)
+        touches.insert(l->id);
+    const char *name = kind == JoinKind::WithPrevious ? "Joining line with the previous line"
+                       : kind == JoinKind::WithNext   ? "Joining line with the next line"
+                       : kind == JoinKind::KeepFirst  ? "Joining lines and keeping the first"
+                       : kind == JoinKind::KeepLast   ? "Joining lines and keeping the last"
+                                                      : "Joining lines";
+    const auto ran = session.run(Command{name, session.revision(), touches, [&](core::Document &d) {
+                                             if (!d.editLine(survivor, [&](core::LineRecord &l) {
+                                                     l.start.value = result.start.value;
+                                                     l.end.value = result.end.value;
+                                                     l.text = result.text;
+                                                     l.translation = result.translation;
+                                                 }))
+                                                 return false;
+                                             for (std::size_t i = 1; i < parts.size(); ++i)
+                                                 if (!d.removeLine(parts[i]->id))
+                                                     return false;
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    session.setSelection(selectOnly(survivor));
+    return {};
+}
+
+std::expected<void, CommandRefusal> swapLines(EditSession &session)
+{
+    const auto lines = linesOf(session);
+    std::vector<int> rows;
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (session.selection().selected.contains(lines[i]->id))
+            rows.push_back(static_cast<int>(i));
+    if (rows.size() != 2)
+        return std::unexpected(CommandRefusal::Invalid);
+    const core::LineRecord first = *lines[static_cast<std::size_t>(rows[0])];
+    const core::LineRecord second = *lines[static_cast<std::size_t>(rows[1])];
+    const auto active = session.selection().active;
+    const int activeRow = active ? indexOf(lines, *active) : -1;
+    const std::optional<core::LineId> afterSecond =
+        static_cast<std::size_t>(rows[1]) + 1 < lines.size() ? std::optional(lines[static_cast<std::size_t>(rows[1]) + 1]->id)
+                                                             : std::nullopt;
+    const auto ran = session.run(Command{"Swapping lines", session.revision(), {first.id, second.id}, [&](core::Document &d) {
+                                             // Both keep their identity and source bytes.
+                                             return d.moveLine(second.id, first.id) && d.moveLine(first.id, afterSecond);
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    // Selections and the active row are positions in legacy.
+    const auto now = linesOf(session);
+    Selection s;
+    s.selected = {now[static_cast<std::size_t>(rows[0])]->id, now[static_cast<std::size_t>(rows[1])]->id};
+    if (activeRow >= 0 && activeRow < static_cast<int>(now.size()))
+        s.active = s.anchor = now[static_cast<std::size_t>(activeRow)]->id;
+    session.setSelection(s);
+    return {};
+}
+
+std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool withPrevious, const LineVisible &visible)
+{
+    const auto lines = linesOf(session);
+    const auto chosen = shownSelection(session, visible);
+    if (chosen.empty())
+        return std::unexpected(CommandRefusal::Invalid);
+    std::vector<std::pair<core::LineId, core::DocumentTime>> changes;
+    for (const auto *l : chosen) {
+        const int i = indexOf(lines, l->id);
+        if (withPrevious && i >= 1)
+            changes.emplace_back(l->id, lines[static_cast<std::size_t>(i) - 1]->end.value);
+        else if (!withPrevious && i + 1 < static_cast<int>(lines.size()))
+            changes.emplace_back(l->id, lines[static_cast<std::size_t>(i) + 1]->start.value);
+    }
+    std::set<core::LineId> touches;
+    for (const auto *l : chosen)
+        touches.insert(l->id);
+    const auto selection = session.selection();
+    const auto ran = session.run(Command{"Setting line times as continuous", session.revision(), touches,
+                                         [&](core::Document &d) {
+                                             for (const auto &[id, time] : changes)
+                                                 if (!d.editLine(id, [&](core::LineRecord &l) {
+                                                         (withPrevious ? l.start : l.end).value = time;
+                                                     }))
+                                                     return false;
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    session.setSelection(selection);
+    return {};
+}
+
 } // namespace hikari::application

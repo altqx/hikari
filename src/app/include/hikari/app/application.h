@@ -88,6 +88,10 @@ public:
     Q_INVOKABLE bool insertLine(bool before, const QString &timing = {});
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
+    // G5: "join", "previous", "next", "first", "last".
+    Q_INVOKABLE bool joinLines(const QString &kind);
+    Q_INVOKABLE bool swapLines();
+    Q_INVOKABLE bool makeContinuous(bool withPrevious);
     // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
     void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
 
