@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
+#include "hikari/core/editor_font_colour.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
@@ -662,6 +663,284 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
     if (m_onCommitted)
         m_onCommitted();
     return true;
+}
+
+std::optional<core::StyleValues> LineEditorController::lineStyle() const
+{
+    const auto r = record();
+    if (!r)
+        return std::nullopt;
+    // Legacy GetStyle(0, name): the first Style of that name.
+    for (auto &style : core::decodeStyles(session()->document()))
+        if (style.name == r->style)
+            return style;
+    return std::nullopt;
+}
+
+bool LineEditorController::beginDialog(int role, int selectionStart, int selectionEnd)
+{
+    m_dialog.reset();
+    const auto r = record();
+    if (!editable() || !r)
+        return false;
+    auto *s = session();
+    DialogSession d;
+    d.role = role;
+    d.several = s->selection().selected.size() >= 2;
+    const auto format = s->document().format();
+    d.ass = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
+    d.format = format == core::SubtitleFormat::Srt        ? core::legacy::NonAssFormat::Srt
+               : format == core::SubtitleFormat::MicroDvd ? core::legacy::NonAssFormat::MicroDvd
+               : format == core::SubtitleFormat::Mpl2     ? core::legacy::NonAssFormat::Mpl2
+                                                          : core::legacy::NonAssFormat::TmPlayer;
+    d.original = roleText(*r, role);
+    const std::u16string raw = core::toUtf16(d.original);
+    long from = selectionStart, to = selectionEnd;
+    if (!m_showTags) {
+        const auto projection = core::project(raw);
+        from = static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(selectionStart), true));
+        to = selectionEnd == selectionStart
+                 ? from
+                 : static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(selectionEnd), false));
+    }
+    // Several Lines: legacy FindTag searches from position 0.
+    d.state = d.several ? core::legacy::EditorText{raw, 0, 0} : core::legacy::EditorText{raw, from, to};
+    d.draftUndo = m_draftUndo.size();
+    d.hadDraft = s->draftLine().has_value();
+    d.opened = core::legacy::EditorText{raw, from, to};
+    d.historyCursor = s->historyCursor();
+    m_dialog = std::move(d);
+    return true;
+}
+
+void LineEditorController::publishRawSelection(const core::legacy::EditorText &state)
+{
+    if (m_showTags) {
+        m_selectionStart = static_cast<int>(state.selectionStart);
+        m_selectionEnd = static_cast<int>(state.selectionEnd);
+    } else {
+        const auto shown = core::project(state.text);
+        m_selectionStart = static_cast<int>(core::displayOffset(shown, static_cast<std::size_t>(state.selectionStart)));
+        m_selectionEnd = static_cast<int>(core::displayOffset(shown, static_cast<std::size_t>(state.selectionEnd)));
+    }
+    m_selectionRole = m_dialog ? m_dialog->role : 0;
+    emit selectionRequested();
+}
+
+bool LineEditorController::applyDialogChange(
+    const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
+    const std::function<void(std::u16string &, std::u16string &)> &several)
+{
+    if (!m_dialog || !editable())
+        return false;
+    auto &d = *m_dialog;
+    auto *s = session();
+    if (!d.several) {
+        auto result = one(d.state, d.position);
+        if (result.state.text != d.state.text && !setRaw(d.role, core::toUtf8(result.state.text)))
+            return false;
+        d.state = std::move(result.state);
+        d.position = result.position;
+        publishRawSelection(d.state);
+        return true;
+    }
+    // Legacy PutTagInText/PutinNonass with several Lines: every selected Line,
+    // one "Editing multiple lines" step per change.
+    if (s->draftLine() && !s->commitDraft())
+        return false;
+    std::vector<core::LineId> lines;
+    for (const auto *l : s->document().lines())
+        if (s->selection().selected.contains(l->id))
+            lines.push_back(l->id);
+    bool changedAny = false;
+    const auto ran = s->run(application::Command{
+        "Editing multiple lines", s->revision(), {lines.begin(), lines.end()}, [&](core::Document &doc) {
+            for (const auto id : lines)
+                if (!doc.editLine(id, [&](core::LineRecord &l) {
+                        std::u16string text = core::toUtf16(l.text), translation = core::toUtf16(l.translation);
+                        several(text, translation);
+                        const auto t8 = core::toUtf8(text), tr8 = core::toUtf8(translation);
+                        changedAny = changedAny || t8 != l.text || tr8 != l.translation;
+                        l.text = t8;
+                        l.translation = tr8;
+                    }))
+                    return false;
+            return changedAny;
+        }});
+    if (!ran)
+        return !changedAny;
+    reloadFromSession();
+    if (m_onCommitted)
+        m_onCommitted();
+    return true;
+}
+
+namespace {
+
+QVariantMap fontMap(const core::legacy::FontValues &f)
+{
+    return {{QStringLiteral("name"), QString::fromStdU16String(f.name)},
+            {QStringLiteral("size"), QString::fromStdU16String(f.size)},
+            {QStringLiteral("bold"), f.bold},
+            {QStringLiteral("italic"), f.italic},
+            {QStringLiteral("underline"), f.underline},
+            {QStringLiteral("strikeOut"), f.strikeOut}};
+}
+
+core::legacy::FontValues fontOf(const QVariantMap &m)
+{
+    return {m.value(QStringLiteral("name")).toString().toStdU16String(),
+            m.value(QStringLiteral("size")).toString().toStdU16String(),
+            m.value(QStringLiteral("bold")).toBool(),
+            m.value(QStringLiteral("italic")).toBool(),
+            m.value(QStringLiteral("underline")).toBool(),
+            m.value(QStringLiteral("strikeOut")).toBool()};
+}
+
+QVariantMap colourMap(const core::legacy::TagColour &c)
+{
+    return {{QStringLiteral("r"), c.r}, {QStringLiteral("g"), c.g}, {QStringLiteral("b"), c.b}, {QStringLiteral("a"), c.a}};
+}
+
+core::legacy::TagColour colourOf(const QVariantMap &m)
+{
+    return {m.value(QStringLiteral("r")).toInt(), m.value(QStringLiteral("g")).toInt(), m.value(QStringLiteral("b")).toInt(),
+            m.value(QStringLiteral("a")).toInt()};
+}
+
+core::legacy::TagColour tagColour(const core::Colour &c)
+{
+    return {static_cast<int>(c.r), static_cast<int>(c.g), static_cast<int>(c.b), static_cast<int>(c.a)};
+}
+
+} // namespace
+
+QVariantMap LineEditorController::beginFont(int role, int selectionStart, int selectionEnd)
+{
+    if (!beginDialog(role, selectionStart, selectionEnd))
+        return {};
+    auto &d = *m_dialog;
+    core::legacy::FontValues font = core::legacy::defaultFontValues();
+    if (d.ass) {
+        // Legacy GetStyle(0, name) falls back to the default Style.
+        if (const auto style = lineStyle())
+            font = {core::toUtf16(style->fontname), core::toUtf16(style->fontsize), style->bold, style->italic,
+                    style->underline, style->strikeOut};
+        font = core::legacy::fontInEffect(d.state, font, &d.position);
+    }
+    d.actualFont = d.editedFont = font;
+    return fontMap(font);
+}
+
+bool LineEditorController::changeFont(const QVariantMap &font)
+{
+    if (!m_dialog)
+        return false;
+    auto &d = *m_dialog;
+    const auto result = fontOf(font);
+    const auto steps = core::legacy::fontSteps(d.editedFont, result, d.actualFont, d.ass);
+    d.editedFont = result;
+    if (steps.empty())
+        return true;
+    return applyDialogChange(
+        [&](const core::legacy::EditorText &state, long position) {
+            return core::legacy::applySteps(state, steps, d.format, position);
+        },
+        [&](std::u16string &text, std::u16string &translation) {
+            core::legacy::applyStepsToLine(text, translation, steps, d.format);
+        });
+}
+
+QVariantMap LineEditorController::beginColour(int number, int role, int selectionStart, int selectionEnd)
+{
+    if (number < 1 || number > 4 || !beginDialog(role, selectionStart, selectionEnd))
+        return {};
+    m_dialog->number = number;
+    return switchColour(number);
+}
+
+QVariantMap LineEditorController::switchColour(int number)
+{
+    if (!m_dialog || number < 1 || number > 4)
+        return {};
+    auto &d = *m_dialog;
+    d.number = number;
+    if (d.ass) {
+        core::legacy::TagColour style{255, 255, 255, 0};
+        if (const auto s = lineStyle())
+            style = tagColour(number == 1 ? s->primary : number == 2 ? s->secondary : number == 3 ? s->outline : s->back);
+        m_lastColour = core::legacy::colourInEffect(d.state, number, style, &d.position);
+    }
+    // The line formats keep the last colour (legacy actualColor is not read).
+    d.actualColour = m_lastColour;
+    return colourMap(d.actualColour);
+}
+
+bool LineEditorController::changeColour(const QVariantMap &colour)
+{
+    if (!m_dialog)
+        return false;
+    auto &d = *m_dialog;
+    const auto chosen = colourOf(colour);
+    if (!d.ass) {
+        const std::vector<core::legacy::EditStep> steps{core::legacy::colourNonAssStep(chosen)};
+        return applyDialogChange(
+            [&](const core::legacy::EditorText &state, long position) {
+                return core::legacy::applySteps(state, steps, d.format, position);
+            },
+            [&](std::u16string &text, std::u16string &translation) {
+                core::legacy::applyStepsToLine(text, translation, steps, d.format);
+            });
+    }
+    return applyDialogChange(
+        [&](const core::legacy::EditorText &state, long) {
+            return core::legacy::changeColour(state, d.number, d.actualColour, chosen);
+        },
+        [&](std::u16string &text, std::u16string &translation) {
+            std::u16string &field = translation.empty() ? text : translation;
+            field = core::legacy::changeColourInLine(std::move(field), d.number, d.actualColour, chosen);
+        });
+}
+
+void LineEditorController::endDialog(bool accepted)
+{
+    if (!m_dialog)
+        return;
+    DialogSession d = std::move(*m_dialog);
+    m_dialog.reset();
+    auto *s = session();
+    if (!s)
+        return;
+    if (!accepted) {
+        // Legacy DummyUndo: every change of the dialog is taken back.
+        if (d.several) {
+            if (s->historyCursor() != d.historyCursor)
+                s->goTo(d.historyCursor);
+            reloadFromSession();
+            return;
+        }
+        if (d.hadDraft) {
+            setRaw(d.role, d.original);
+            if (m_draftUndo.size() > d.draftUndo)
+                m_draftUndo.resize(d.draftUndo);
+            refresh();
+        } else if (s->draftLine()) {
+            s->discardDraft();
+            m_draftUndo.resize(std::min(m_draftUndo.size(), d.draftUndo));
+            reloadFromSession();
+        }
+        m_dialog = std::move(d);
+        publishRawSelection(m_dialog->opened);
+        m_dialog.reset();
+        return;
+    }
+    if (d.several)
+        return;
+    const long caret = core::legacy::caretAfterDialog(d.state.text, d.position);
+    d.state.selectionStart = d.state.selectionEnd = caret;
+    m_dialog = std::move(d);
+    publishRawSelection(m_dialog->state);
+    m_dialog.reset();
 }
 
 bool LineEditorController::splitLine(int role, int selectionStart, int selectionEnd)

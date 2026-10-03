@@ -16,8 +16,8 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 3019 | `EDITBOX_SET_DOUBTFUL` Mark as unconfirmed and go to the next line | Alt+Down | Alt+Down: toggles Unconfirmed (its own step), then Enter's behaviour | `shell_tests` |
 | — | Undo / Redo in the field | Ctrl+Z / Ctrl+Y | Draft snapshots first, then Document history (accepted transaction policy) | `editor_workflow`, `shell_tests` |
 | — | Discard the draft | — | Esc (accepted transaction policy) | `LineEditorController::discard` |
-| 3000 | `EDITBOX_CHANGE_FONT` Font selection | none | Not yet: needs the font dialog (Styles and fonts work) | — |
-| 3006–3009 | `EDITBOX_CHANGE_COLOR_*` Primary, secondary, outline, shadow colour | none | Not yet: needs the colour picker | — |
+| 3000 | `EDITBOX_CHANGE_FONT` Font selection | none | Fn button: the "Select a font" dialog; each change is tagged at once, Cancel takes it back (E1) | `editor_font_colour_tests`, `shell_tests` |
+| 3006–3009 | `EDITBOX_CHANGE_COLOR_*` Primary, secondary, outline, shadow colour | none | 1c–4c buttons: the "Choose color" picker (spectrum, RGB, alpha, ASS/HTML text, recent colours); each change is tagged at once, Cancel takes it back (E1) | `editor_font_colour_tests`, `shell_tests` |
 | 3015, 3016 | `EDITBOX_START_DIFFERENCE` / `END_DIFFERENCE` | Ctrl+, / Ctrl+. | Ctrl+, / Ctrl+.: the shown frame's time minus Start, or its distance from End, in ms (both truncated to 10 ms), replaces the edited field's selection; refused without video or outside the Line | `shell_tests` |
 | 3003, 3004 | `EDITBOX_PASTE_ALL_TO_TRANSLATION` / `PASTE_SELECTION_TO_TRANSLATION` | none | Paste all and Paste the selected buttons (translation mode): the Original's raw text replaces the Translated text; the Original's selection is inserted at the Translated caret | `shell_tests` |
 | 3005 | `EDITBOX_HIDE_ORIGINAL` (renamed **Comment out original**, E63-comment-original) | none | Comment out original button: wraps the raw Original in braces | `shell_tests` |

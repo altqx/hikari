@@ -12,10 +12,13 @@
 // unchanged and reports the attempted text, so nothing typed is lost.
 
 #include "hikari/application/document_files.h"
+#include "hikari/core/editor_font_colour.h"
+#include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
 
 #include <QObject>
 #include <QStringList>
+#include <QVariantMap>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
@@ -116,6 +119,23 @@ public:
     // with its legacy reset; type 2 inserts plain text there, or with several
     // Lines selected into every selected Line at the caret as one step.
     Q_INVOKABLE bool applyTagButton(int role, const QString &tag, int type, int selectionStart, int selectionEnd);
+    // E1: the font dialog and the colour picker (EDITBOX_CHANGE_FONT,
+    // EDITBOX_CHANGE_COLOR_*). begin* reads the font or colour in effect at
+    // the field's selection (legacy OnFontClick/GetColor) and opens a dialog
+    // session; each change* applies the dialog's new value at once, as the
+    // legacy dialogs do; endDialog(true) puts the caret after the block,
+    // endDialog(false) takes every change back. With several Lines selected
+    // each change is an "Editing multiple lines" step on all of them.
+    // Fonts are {name, size, bold, italic, underline, strikeOut}; colours
+    // {r, g, b, a} with a the ASS alpha; `number` 1 primary, 2 secondary,
+    // 3 outline, 4 shadow.
+    Q_INVOKABLE QVariantMap beginFont(int role, int selectionStart, int selectionEnd);
+    Q_INVOKABLE bool changeFont(const QVariantMap &font);
+    Q_INVOKABLE QVariantMap beginColour(int number, int role, int selectionStart, int selectionEnd);
+    // The picker switched colours (legacy COLOR_TYPE_CHANGED): that colour in effect.
+    Q_INVOKABLE QVariantMap switchColour(int number);
+    Q_INVOKABLE bool changeColour(const QVariantMap &colour);
+    Q_INVOKABLE void endDialog(bool accepted);
     // Translation mode (legacy EditBox OnCopyAll, OnCopySelection, OnHideOriginal):
     // the Original's raw text replaces the Translated text; the Original's
     // selection is inserted at the Translated caret; the Original is wrapped
@@ -167,6 +187,30 @@ private:
     bool editRaw(int role, int selectionStart, int selectionEnd,
                  const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change);
     std::optional<std::u16string> styleTagValue(std::u16string_view tag) const;
+    // E1 dialog sessions.
+    struct DialogSession {
+        int role = 0;
+        bool several = false; // several Lines selected
+        bool ass = true;
+        core::legacy::NonAssFormat format = core::legacy::NonAssFormat::Srt;
+        core::legacy::EditorText state; // raw text and selection of the field
+        long position = 0;              // legacy GetPositionInText
+        std::u8string original;
+        std::size_t draftUndo = 0;
+        bool hadDraft = false;
+        core::legacy::EditorText opened; // the raw state the dialog opened on
+        std::size_t historyCursor = 0;
+        core::legacy::FontValues actualFont, editedFont;
+        int number = 1;
+        core::legacy::TagColour actualColour;
+    };
+    bool beginDialog(int role, int selectionStart, int selectionEnd);
+    bool applyDialogChange(const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
+                           const std::function<void(std::u16string &, std::u16string &)> &several);
+    void publishRawSelection(const core::legacy::EditorText &state);
+    std::optional<core::StyleValues> lineStyle() const;
+    std::optional<DialogSession> m_dialog;
+    core::legacy::TagColour m_lastColour; // legacy EditBox::actualColor (kept between pickers)
     void edit(int role, const QString &newText, int cursor);
     // After Undo or Redo on the same Line: the caret goes to the end of what
     // changed, in the field that changed (as in a text editor's own undo).

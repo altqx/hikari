@@ -36,4 +36,5 @@ hikari_add_gtest(hikari_core_text_projection_tests SOURCES text_projection_tests
     LIBRARIES hikari_core Qt6::Core LABELS core)
 
 hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_editor_font_colour_tests SOURCES editor_font_colour_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.cpp LIBRARIES hikari_core LABELS core)

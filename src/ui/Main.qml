@@ -27,6 +27,7 @@ ApplicationWindow {
     required property AutomationFilePickerController automationPicker
     required property LogController log
     required property TagButtonsController tagButtons
+    required property ColourPickerController colourPicker
     required property GridFilterController gridFilter
     required property var automationHotkeys
 
@@ -761,6 +762,43 @@ ApplicationWindow {
                                     onClicked: {
                                         const field = translationText.activeFocus ? translationText : lineText
                                         root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    }
+                                }
+                            }
+                            // E1: Font selection and the four colours
+                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
+                            ToolButton {
+                                objectName: "changeFont"
+                                text: qsTr("Fn")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                Accessible.name: qsTr("Font selection")
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("Font selection")
+                                onClicked: {
+                                    const field = translationText.activeFocus ? translationText : lineText
+                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
+                                }
+                            }
+                            Repeater {
+                                model: [
+                                    { number: 1, name: qsTr("Primary color") },
+                                    { number: 2, name: qsTr("Secondary color for karaoke") },
+                                    { number: 3, name: qsTr("Border color") },
+                                    { number: 4, name: qsTr("Shadow color") }
+                                ]
+                                ToolButton {
+                                    required property var modelData
+                                    objectName: "changeColour" + modelData.number
+                                    text: modelData.number + "c"
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    Accessible.name: modelData.name
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: modelData.name
+                                    onClicked: {
+                                        const field = translationText.activeFocus ? translationText : lineText
+                                        colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd)
                                     }
                                 }
                             }
@@ -1623,6 +1661,18 @@ ApplicationWindow {
                 onClicked: root.log.close()
             }
         }
+    }
+
+    FontDialog {
+        id: fontDialog
+        editor: root.editor
+        anchors.centerIn: parent
+    }
+    ColourPickerDialog {
+        id: colourDialog
+        editor: root.editor
+        picker: root.colourPicker
+        anchors.centerIn: parent
     }
 
     // Legacy TagButtonDialog ("Enter ASS tag").

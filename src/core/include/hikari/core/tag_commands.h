@@ -31,9 +31,20 @@ public:
     // mode 0: the selection; 1: position 0; 3: keep the previous from/to.
     bool findTag(std::u16string_view pattern, int mode, bool toEndOfSelection);
     void putTagInText(std::u16string_view tag, std::u16string_view resetTag, bool restoreSelection = false);
+    // PutTagInText's `focus` argument: without it the caret goes to the tag's
+    // position instead of after it (inside a block only).
+    void setFocus(bool focus) { m_focus = focus; }
 
     const std::u16string &finding() const { return m_finding; }
     const EditorText &state() const { return m_state; }
+    // FindData positionInText (GetPositionInText/SetPositionInText).
+    std::pair<long, long> position() const { return {m_posX, m_posY}; }
+    void setPosition(long x, long y)
+    {
+        m_posX = x;
+        m_posY = y;
+    }
+    bool inBracket() const { return m_inBracket; }
 
 private:
     EditorText m_state;
@@ -46,7 +57,26 @@ private:
     long m_cursor = 0;
     bool m_inBracket = false;
     bool m_hasSelection = false;
+    bool m_focus = true;
 };
+
+// PutTagInText with several Lines selected: in each Line's text the tag
+// replaces the last pattern's match found from position 0 (FindTag mode 1)
+// or goes into the first block; with no block it is prepended in a new one.
+std::u16string putTagInLine(std::u16string text, std::u16string_view pattern, std::u16string_view tag);
+
+// EditBox::PutinNonass for the line-based formats. `text` is the legacy
+// regex text that finds an existing tag and `tag` what is written (legacy
+// callers pass them in this order). One Line: SRT wraps the selection
+// (<tag> ... </tag>), MicroDVD puts {tag} after the last "|" before the
+// caret; TMPlayer and MPL2 are unchanged.
+enum class NonAssFormat { Srt, MicroDvd, Mpl2, TmPlayer };
+EditorText putInNonAss(EditorText state, NonAssFormat format, std::u16string_view text, std::u16string_view tag);
+// Several Lines: each Line's text gets <text>/{text} in front, with matches
+// of the `tag` regex removed first when the text starts with the bracket.
+// TMPlayer is unchanged.
+std::u16string putInNonAssLine(std::u16string line, NonAssFormat format, std::u16string_view text,
+                               std::u16string_view tag);
 
 // EditBox::OnBoldClick and its Italic/Underline/Strikeout siblings for ASS:
 // the Style's value (or the value of the tag in effect at the caret) is

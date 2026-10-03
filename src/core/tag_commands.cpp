@@ -294,9 +294,9 @@ void TagEditor::putTagInText(u16v tag, u16v resetTag, bool restoreSelection)
     } else {
         if (m_posX < m_posY) {
             txt.erase(static_cast<std::size_t>(m_posX), static_cast<std::size_t>(m_posY - m_posX + 1));
-            where = m_cursor + static_cast<long>(tag.size()) - (m_posY - m_posX);
+            where = m_focus ? m_cursor + static_cast<long>(tag.size()) - (m_posY - m_posX) : m_posX;
         } else {
-            where = m_cursor + 1 + static_cast<long>(tag.size());
+            where = m_focus ? m_cursor + 1 + static_cast<long>(tag.size()) : m_posX;
         }
         txt.insert(static_cast<std::size_t>(m_posX), tag);
     }
@@ -520,6 +520,122 @@ u16 insertTagButtonTextAt(u16 text, long from, u16v insert)
         from = static_cast<long>(text.size());
     text.insert(static_cast<std::size_t>(from), insert);
     return text;
+}
+
+u16 putTagInLine(u16 text, u16v pattern, u16v tag)
+{
+    TagEditor editor(EditorText{text, 0, 0});
+    editor.findTag(pattern, 1, false);
+    if (editor.inBracket() && !text.empty()) {
+        const auto [x, y] = editor.position();
+        if (x < y)
+            text.erase(static_cast<std::size_t>(x), static_cast<std::size_t>(y - x + 1));
+        text.insert(static_cast<std::size_t>(x), tag);
+    } else {
+        text.insert(0, u"{" + u16(tag) + u"}");
+    }
+    return text;
+}
+
+namespace {
+
+// UTF-16 units as wchar_t, so match positions stay UTF-16 offsets.
+std::wstring wide(u16v s)
+{
+    return std::wstring(s.begin(), s.end());
+}
+
+// wxRegEx(pattern, wxRE_ADVANCED | wxRE_ICASE): an invalid pattern matches nothing.
+std::optional<std::wregex> legacyRegex(const std::wstring &pattern)
+{
+    try {
+        return std::wregex(pattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+    } catch (const std::regex_error &) {
+        return std::nullopt;
+    }
+}
+
+} // namespace
+
+EditorText putInNonAss(EditorText state, NonAssFormat format, u16v text, u16v tag)
+{
+    if (format == NonAssFormat::TmPlayer)
+        return state;
+    u16 txt = state.text;
+    long from = state.selectionStart, to = state.selectionEnd;
+    long where = from;
+    const auto matchAt = [](const std::optional<std::wregex> &re, u16v hay, std::size_t &start, std::size_t &len) {
+        std::wsmatch m;
+        const std::wstring h = wide(hay);
+        if (!re || !std::regex_search(h, m, *re))
+            return false;
+        start = static_cast<std::size_t>(m.position(0));
+        len = static_cast<std::size_t>(m.length(0));
+        return true;
+    };
+    if (format == NonAssFormat::Srt) {
+        const auto re = legacyRegex(L"</?" + wide(text) + L">");
+        std::size_t start = 0, len = 0;
+        bool match = false;
+        if (matchAt(re, window(txt, from), start, len) && len + start >= 4 && start <= 4) {
+            where = from - 4 + static_cast<long>(start);
+            txt.erase(static_cast<std::size_t>(where), len);
+            txt.insert(static_cast<std::size_t>(where), u"<" + u16(tag) + u">");
+            where += 3;
+            match = true;
+        }
+        if (!match) {
+            txt.insert(static_cast<std::size_t>(from), u"<" + u16(tag) + u">");
+            from += 3;
+            to += 3;
+            where = from;
+        }
+        if (from != to) {
+            match = false;
+            if (matchAt(re, window(txt, to), start, len) && len + start >= 4 && start <= 4) {
+                txt.erase(static_cast<std::size_t>(to - 4 + static_cast<long>(start)), len);
+                txt.insert(static_cast<std::size_t>(to - 4 + static_cast<long>(start)), u"</" + u16(tag) + u">");
+                where = to + static_cast<long>(start);
+                match = true;
+            }
+            if (!match) {
+                txt.insert(static_cast<std::size_t>(to), u"</" + u16(tag) + u">");
+                where = to + 4;
+            }
+        }
+    } else if (format == NonAssFormat::MicroDvd) {
+        const auto re = legacyRegex(L"\\{" + wide(text) + L"\\}");
+        long wheres = findLast(subString(txt, 0, from), u'|');
+        if (wheres == -1)
+            wheres = 0;
+        std::size_t start = 0, len = 0;
+        if (matchAt(re, u16v(txt).substr(static_cast<std::size_t>(wheres)), start, len)) {
+            where = wheres + static_cast<long>(start);
+            txt.erase(static_cast<std::size_t>(where), len);
+            txt.insert(static_cast<std::size_t>(where), u"{" + u16(tag) + u"}");
+        } else {
+            txt.insert(static_cast<std::size_t>(wheres), u"{" + u16(tag) + u"}");
+            where = wheres + static_cast<long>(tag.size()) + 2;
+        }
+    }
+    // MPL2: the text is set back unchanged.
+    return EditorText{txt, where, where};
+}
+
+u16 putInNonAssLine(u16 line, NonAssFormat format, u16v text, u16v tag)
+{
+    if (format == NonAssFormat::TmPlayer)
+        return line;
+    const bool srt = format == NonAssFormat::Srt;
+    const u16 open = srt ? u"<" : u"{", close = srt ? u">" : u"}";
+    if (line.starts_with(open)) {
+        if (const auto re = legacyRegex(wide(srt ? u16(open) : u"\\{") + wide(tag) + wide(srt ? u16(close) : u"\\}"))) {
+            const std::wstring replaced = std::regex_replace(wide(line), *re, std::wstring());
+            line = u16(replaced.begin(), replaced.end());
+        }
+        return open + u16(text) + close + line;
+    }
+    return open + u16(text) + close + line;
 }
 
 } // namespace hikari::core::legacy

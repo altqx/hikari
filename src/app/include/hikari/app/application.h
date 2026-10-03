@@ -18,6 +18,7 @@
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
 #include "log_controller.h"
+#include "colour_picker_controller.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
 #include "shell_controller.h"
@@ -203,6 +204,7 @@ public:
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
+    ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
@@ -244,6 +246,7 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
+    std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

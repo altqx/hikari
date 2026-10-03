@@ -570,6 +570,125 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    // E1: a control inside a dialog (popups live in the overlay).
+    QQuickItem *dialogItem(const char *dialog, const char *name) const
+    {
+        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog));
+        auto *content = popup ? popup->property("contentItem").value<QQuickItem *>() : nullptr;
+        return content ? findItem(content, QLatin1String(name)) : nullptr;
+    }
+
+    void fontDialogTagsTheSelectionAndCancelTakesItBack()
+    {
+        const QString path = dir.filePath(QStringLiteral("font.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,def\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("fontDialog"));
+        QVERIFY(dialog);
+
+        // Bold on the selection with tags hidden: the tag, and the Style's
+        // value after it, in the raw text; the field still shows "abc".
+        text->forceActiveFocus();
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("fontDialog", "fontName")->property("text").toString(), QStringLiteral("Arial"));
+        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("20"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontBold"), "click"));
+        QTRY_COMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText().value_or(u8"").c_str())),
+                     QStringLiteral("{\\b1}abc{\\b0}"));
+        QCOMPARE(text->property("text").toString(), QStringLiteral("abc"));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\b1}abc{\\b0}"));
+        // A later change in the same dialog replaces the tag in place.
+        dialogItem("fontDialog", "fontSize")->setProperty("text", QStringLiteral("30"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // Cancel takes the dialog's changes back and leaves no draft behind.
+        QVERIFY(application->editor().commit());
+        const auto steps = session->historySize();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("30"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontItalic"), "click"));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\i1")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
+        QVERIFY(!session->draftLine());
+        QCOMPARE(session->historySize(), steps);
+    }
+
+    void colourPickerSetsColourAndAlphaAndRemembersIt()
+    {
+        QVERIFY(application->openFile(episode)); // "first" and "second", no Styles
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("colourDialog"));
+        QVERIFY(dialog);
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour3"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 255); // white without a Style
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H0000FF&}first"));
+        auto *alpha = dialogItem("colourDialog", "alpha");
+        QVERIFY(alpha);
+        alpha->setProperty("value", 128);
+        QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3a&H80&\\3c&H0000FF&}first"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        const auto recent = application->colourPicker().recent();
+        QCOMPARE(recent.first().toMap().value(QStringLiteral("r")).toInt(), 255);
+        QCOMPARE(recent.first().toMap().value(QStringLiteral("a")).toInt(), 128);
+        QCOMPARE(application->colourPicker().storeToString().section(QLatin1Char(' '), 0, 0), QStringLiteral("&H800000FF&"));
+
+        // Several Lines: each change is one step on all of them; Cancel undoes it.
+        QVERIFY(application->editor().commit());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_A, Qt::ControlModifier);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 255), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
+        const auto lines = session->document().lines();
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(lines[1]->text.data()), qsizetype(lines[1]->text.size())),
+                 QStringLiteral("{\\1c&H00FF00&}second"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_COMPARE(session->historyCursor(), steps - 1);
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->document().lines()[1]->text.data())),
+                 QStringLiteral("second"));
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));
