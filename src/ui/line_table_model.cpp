@@ -140,6 +140,9 @@ void LineTableModel::setDocument(const core::Document &document)
         return first <= n && hiddenRun[first] > 0 ? 1 : 0;
     };
     m_headerBlock = markAfter(-1);
+    for (std::size_t r = 0; r + 1 < n; ++r)
+        if (lines[r]->group == core::GroupMarker::Description)
+            m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     // Keep only selection that still names existing Lines.
@@ -243,6 +246,15 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.blockMark;
     case DocumentRowRole:
         return index.row();
+    case GroupRole:
+        switch (line.group) {
+        case core::GroupMarker::Description: return 1;
+        case core::GroupMarker::Opened: return 2;
+        case core::GroupMarker::Closed: return 3;
+        default: return 0;
+        }
+    case GroupClosedRole:
+        return r.groupClosed;
     case CpsTooHighRole:
         return measuresOf(r).cpsTooHigh;
     case BadWrapsRole:

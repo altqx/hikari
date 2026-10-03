@@ -150,6 +150,7 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
 
     if (changed) {
         Command command;
+        command.keepGroups = false; // G56 approves no change to the macro contract
         command.name = "Automation: " + name;
         command.expectedRevision = snapshot.revision;
         for (const auto &d : snapshot.dialogues)

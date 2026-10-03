@@ -1,5 +1,7 @@
 #include "hikari/application/edit_session.h"
 
+#include "hikari/core/line_groups.h"
+
 #include <algorithm>
 
 namespace hikari::application {
@@ -232,6 +234,13 @@ std::expected<void, CommandRefusal> EditSession::run(const Command &command)
     core::Document working = document();
     if (!command.apply || !command.apply(working))
         return std::unexpected(CommandRefusal::Invalid); // C07: content, selection, dirty, history untouched
+    if (command.keepGroups) {
+        m_lastGroupBreak = core::groupBreaks(document(), working);
+        if (!m_lastGroupBreak.empty()) {
+            ++m_groupBreakCount;
+            return std::unexpected(CommandRefusal::GroupBreak); // C07 as above
+        }
+    }
     pushState(std::move(working), command.name);
     return {};
 }

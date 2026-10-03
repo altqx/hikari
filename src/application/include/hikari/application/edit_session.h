@@ -45,6 +45,7 @@ enum class CommandRefusal {
     Invalid,        // the command's own validation failed
     InvalidDraft,   // the overlapping draft can't be committed (E63-invalid-commit)
     ReadOnly,       // a macro owns the Document until it ends (A33-transaction)
+    GroupBreak,     // the result would break a Line group (G56-contiguity); see lastGroupBreak()
 };
 
 // E63-invalid-commit: by default a draft whose End is before its Start, or
@@ -69,6 +70,9 @@ struct Command {
     std::uint64_t expectedRevision = 0;
     std::set<core::LineId> touches;
     std::function<bool(core::Document &)> apply;
+    // G56-contiguity: a result that orphans or moves an existing group member
+    // is rejected. Macros opt out: G56 approves no change to their contract.
+    bool keepGroups = true;
 };
 
 class EditSession {
@@ -140,6 +144,10 @@ public:
         std::uint64_t revision = 0;
     };
     std::expected<SaveSnapshot, DraftProblem> prepareSave();
+    // The members the last command refused with GroupBreak would have broken.
+    const std::vector<core::LineId> &lastGroupBreak() const { return m_lastGroupBreak; }
+    // How many commands GroupBreak has refused, so the shell can offer removal.
+    std::uint64_t groupBreakCount() const { return m_groupBreakCount; }
     void markSaved(ContentId content);
     // No step is saved any more (legacy RemoveLastIterSave: the file was removed).
     void markUnsaved() { m_saved.reset(); }
@@ -169,6 +177,8 @@ private:
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
     bool m_readOnly = false;
+    std::vector<core::LineId> m_lastGroupBreak;
+    std::uint64_t m_groupBreakCount = 0;
     InvalidCommitPolicy m_policy = InvalidCommitPolicy::Block;
 };
 

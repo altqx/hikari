@@ -823,6 +823,25 @@ ApplicationWindow {
                 onSelectAllRequested: root.app.selectAllLines()
                 onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
                 onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
+                onGroupToggleRequested: id => root.app.toggleGroup(id)
+                onGroupMenuRequested: (id, x, y) => {
+                    groupMenu.description = id
+                    groupMenu.popup(grid, x, y)
+                }
+                // Legacy tree description menu (ContextMenuTree).
+                Menu {
+                    id: groupMenu
+                    objectName: "groupMenu"
+                    property var description: 0
+                    MenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                    MenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                    MenuItem {
+                        objectName: "groupRename"; text: qsTr("Change description")
+                        onTriggered: groupDescriptionDialog.edit(groupMenu.description)
+                    }
+                    MenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                    MenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                }
                 // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
                 // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
                 Keys.onPressed: event => {
@@ -877,6 +896,7 @@ ApplicationWindow {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
                     }
+                    MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
                     MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
                     // Legacy Filtering submenu (GRID_FILTER_*).
                     Menu {
@@ -1570,6 +1590,104 @@ ApplicationWindow {
             to: 20
             editable: true
             Accessible.name: qsTr("Number of buttons")
+        }
+    }
+
+    // Legacy TreeDialog ("Tree description").
+    Window {
+        id: groupDescriptionDialog
+        objectName: "groupDescriptionDialog"
+        title: qsTr("Tree description")
+        width: 440
+        height: 120
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property var description: 0
+        function edit(id) {
+            description = id
+            groupDescription.text = root.app.groupTitle(id)
+            show()
+            groupDescription.selectAll()
+            groupDescription.forceActiveFocus()
+        }
+        function accept() {
+            if (groupDescription.text.length > 0 && root.app.renameGroup(description, groupDescription.text))
+                close()
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            TextField {
+                id: groupDescription
+                objectName: "groupDescription"
+                Layout.fillWidth: true
+                maximumLength: 500
+                Accessible.name: qsTr("Tree description")
+                onAccepted: groupDescriptionDialog.accept()
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "groupDescriptionOk"
+                    text: root.app.groupTitle(groupDescriptionDialog.description).length === 0 ? qsTr("Set tree name") : qsTr("Change tree name")
+                    onClicked: groupDescriptionDialog.accept()
+                }
+                Button {
+                    objectName: "groupDescriptionCancel"
+                    text: qsTr("Cancel")
+                    onClicked: groupDescriptionDialog.close()
+                }
+            }
+        }
+    }
+
+    // G56-contiguity: a command that would break a Line group is refused;
+    // Cancel, or remove the group (its description Line is deleted) and retry.
+    Connections {
+        target: root.app
+        function onGroupBreakRefused(description, title) {
+            groupBreakDialog.description = description
+            groupBreakDialog.title2 = title
+            groupBreakDialog.show()
+        }
+    }
+    Window {
+        id: groupBreakDialog
+        objectName: "groupBreakDialog"
+        title: qsTr("Line group")
+        width: 460
+        height: 150
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        property var description: 0
+        property string title2: ""
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: groupBreakDialog.description
+                      ? qsTr("This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
+                      : qsTr("This would leave group members outside a Line group. Nothing was changed.")
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "groupBreakRemove"
+                    visible: groupBreakDialog.description
+                    text: qsTr("Remove group")
+                    onClicked: {
+                        root.app.removeGroup(groupBreakDialog.description)
+                        groupBreakDialog.close()
+                    }
+                }
+                Button {
+                    objectName: "groupBreakCancel"
+                    text: qsTr("Cancel")
+                    onClicked: groupBreakDialog.close()
+                }
+            }
         }
     }
 

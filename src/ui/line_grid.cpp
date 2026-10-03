@@ -301,6 +301,11 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
         forceActiveFocus(Qt::MouseFocusReason);
         // Legacy: a right click on an unselected row selects it first.
         const int row = rowAt(event->position().y());
+        if (row >= 0 && m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
+            emit groupMenuRequested(lineAtRow(row)->value, event->position().x(), event->position().y());
+            event->accept();
+            return;
+        }
         if (const auto id = row >= 0 ? lineAtRow(row) : std::nullopt; id && !isRowSelected(row))
             emit lineClicked(id->value, 0);
         emit contextMenuRequested(event->position().x(), event->position().y());
@@ -330,6 +335,12 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     }
     const int row = rowAt(event->position().y());
     const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
+    if (id && event->modifiers() == Qt::NoModifier &&
+        m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
+        emit groupToggleRequested(id->value); // legacy: the click only opens or closes
+        event->accept();
+        return;
+    }
     m_dragLine = id;
     if (id)
         emit lineClicked(id->value, static_cast<int>(event->modifiers()));
@@ -527,7 +538,16 @@ void LineGrid::paint(QPainter *painter)
             if ((mc == LineTableModel::CpsColumn && idx.data(LineTableModel::CpsTooHighRole).toBool()) ||
                 (mc == LineTableModel::WrapsColumn && idx.data(LineTableModel::BadWrapsRole).toBool()))
                 painter->fillRect(QRectF(x, top, widths[c], rh), QColor(0x7a, 0x2e, 0x2e));
-            const QString text = m_model->index(row, mc).data().toString();
+            QString text = m_model->index(row, mc).data().toString();
+            if (mc == LineTableModel::NumberColumn && idx.data(LineTableModel::GroupRole).toInt() == 1) {
+                // A group description: [+] closed, [-] open.
+                const QRectF box(x + 4, top + (rh - 9) / 2, 9, 9);
+                painter->drawRect(box);
+                painter->drawLine(QPointF(box.left() + 2, box.center().y()), QPointF(box.right() - 2, box.center().y()));
+                if (idx.data(LineTableModel::GroupClosedRole).toBool())
+                    painter->drawLine(QPointF(box.center().x(), box.top() + 2), QPointF(box.center().x(), box.bottom() - 2));
+                text.clear();
+            }
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];

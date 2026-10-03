@@ -3,6 +3,8 @@
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
+#include "hikari/application/grid_groups.h"
+#include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
@@ -249,8 +251,26 @@ bool Application::closeEditingTarget()
     return true;
 }
 
+void Application::reportGroupBreak()
+{
+    auto *session = targetSession();
+    if (!session || session->groupBreakCount() == m_seenGroupBreaks)
+        return;
+    m_seenGroupBreaks = session->groupBreakCount();
+    // The group the first broken member belongs to now (the refused command changed nothing).
+    qulonglong description = 0;
+    const auto owners = core::groupOwners(session->document());
+    for (const auto id : session->lastGroupBreak())
+        if (const auto it = owners.find(id.value); it != owners.end() && it->second) {
+            description = it->second->value;
+            break;
+        }
+    emit groupBreakRefused(description, description ? groupTitle(description) : QString());
+}
+
 void Application::refreshViews()
 {
+    reportGroupBreak();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -959,6 +979,61 @@ QStringList Application::styleNames() const
         for (const auto &style : core::decodeStyles(session->document()))
             out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size()));
     return out;
+}
+
+bool Application::makeGroups()
+{
+    const auto shown = shownLines();
+    return runFilter([&](application::EditSession &s) { return application::makeGroups(s, shown); });
+}
+
+bool Application::toggleGroup(qulonglong description)
+{
+    return runFilter([&](application::EditSession &s) { return application::toggleGroup(s, core::LineId{description}); });
+}
+
+bool Application::renameGroup(qulonglong description, const QString &text)
+{
+    return runFilter([&](application::EditSession &s) {
+        return application::renameGroup(s, core::LineId{description}, toU8(text));
+    });
+}
+
+bool Application::removeGroup(qulonglong description)
+{
+    return runFilter([&](application::EditSession &s) { return application::removeGroup(s, core::LineId{description}); });
+}
+
+bool Application::selectGroup(qulonglong description)
+{
+    return runFilter([&](application::EditSession &s) { return application::selectGroup(s, core::LineId{description}); });
+}
+
+bool Application::addLinesToGroup(qulonglong description)
+{
+    return runFilter(
+        [&](application::EditSession &s) { return application::addLinesToGroup(s, core::LineId{description}); });
+}
+
+bool Application::copyGroup(qulonglong description)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const auto text = application::copyGroup(*session, core::LineId{description});
+    if (text.empty())
+        return false;
+    setClipboardText(text);
+    return true;
+}
+
+QString Application::groupTitle(qulonglong description) const
+{
+    if (auto *session = targetSession())
+        for (const auto *l : session->document().lines())
+            if (l->id.value == description)
+                return QString::fromUtf8(reinterpret_cast<const char *>(l->text.data()), static_cast<qsizetype>(l->text.size()));
+    return {};
 }
 
 bool Application::sortLines(const QString &key, bool selectedOnly)

@@ -82,6 +82,10 @@ signals:
     // The active Line is no longer shown: the nearest shown Line should become
     // active, keeping the selection (accepted announcement policy).
     void activeLineFallbackRequested(qulonglong id);
+    // A plain click on a group description opens or closes the group; a right
+    // click asks for the group's menu (legacy tree description clicks).
+    void groupToggleRequested(qulonglong description);
+    void groupMenuRequested(qulonglong description, qreal x, qreal y);
     // Keyboard navigation asks the application to move the active Line; the
     // Grid never changes selection itself (G1: every gesture is a request).
     void activeLineRequested(qulonglong lineId);

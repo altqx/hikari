@@ -58,6 +58,8 @@ public:
         BadWrapsRole,   // a wrap over 43 characters, or three wraps or more
         HiddenBlockRole, // after this Line: 1 a hidden block (+), 2 a revealed block (-), 0 none
         DocumentRowRole, // the Line's row in the Document
+        GroupRole,       // 0 ordinary, 1 group description, 2 open member, 3 closed member
+        GroupClosedRole, // on a description: its members are closed
     };
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
@@ -92,6 +94,7 @@ private:
         core::LineRecord line;
         mutable std::optional<Measures> measures; // measured when first shown, as legacy does
         int blockMark = 0;
+        bool groupClosed = false; // descriptions: the first member is closed
     };
     const Measures &measuresOf(const Row &row) const;
     void emitStateChanged(const std::vector<core::LineId> &ids);

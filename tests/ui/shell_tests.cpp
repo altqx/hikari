@@ -619,6 +619,38 @@ private slots:
         QCOMPARE(grid->markWidth(), 0.0);
     }
 
+    void groupDescriptionsOpenCloseAndBreaksAreRefused()
+    {
+        const QString path = writeFile(dir, "g9.ass",
+                                       "Dialogue: 0,0:00:04.50,0:00:10.00,Default,,0,0,0,,a\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,m2\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        QCOMPARE(table->rowCount(), 4);
+        // A click on the description row closes the group.
+        const double rh = grid->property("rowHeight").toDouble();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 2);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 4);
+        // Sorting by Start would orphan the members: refused, with the offer.
+        auto *root = engine->rootObjects().first();
+        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
+        QVERIFY(breakDialog);
+        const auto steps = session->historySize();
+        QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+        QTRY_VERIFY(breakDialog->isVisible());
+        QCOMPARE(session->historySize(), steps);
+        // Remove group deletes the description; the sort then works (a lands between m1 and m2).
+        QVERIFY(QMetaObject::invokeMethod(breakDialog->findChild<QObject *>(QStringLiteral("groupBreakRemove")), "clicked"));
+        QTRY_COMPARE(table->rowCount(), 3);
+        QVERIFY(application->sortLines(QStringLiteral("start"), false));
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

@@ -37,6 +37,9 @@ signals:
     void closeFinished(bool done, const QString &problem);
     void quitApprovedChanged();
     void recentChanged();
+    // G56: a command was refused because it would break the group described
+    // by `description` (0 when the break makes a new malformed group).
+    void groupBreakRefused(qulonglong description, const QString &title);
 
 public:
     struct Options {
@@ -140,6 +143,15 @@ public:
     Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
     // The editing target's Style names, for "Hide lines with styles".
     Q_INVOKABLE QStringList styleNames() const;
+    // G9: Line groups (legacy trees). The id is the description Line's.
+    Q_INVOKABLE bool makeGroups();
+    Q_INVOKABLE bool toggleGroup(qulonglong description);
+    Q_INVOKABLE bool renameGroup(qulonglong description, const QString &text);
+    Q_INVOKABLE bool removeGroup(qulonglong description);
+    Q_INVOKABLE bool selectGroup(qulonglong description);
+    Q_INVOKABLE bool addLinesToGroup(qulonglong description);
+    Q_INVOKABLE bool copyGroup(qulonglong description);
+    Q_INVOKABLE QString groupTitle(qulonglong description) const;
     // G6: Edit > Sort all lines / Sort selected lines by "start", "end",
     // "style", "actor", "effect" or "layer"; text keys use the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);
@@ -206,6 +218,8 @@ private:
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
+    std::uint64_t m_seenGroupBreaks = 0;
+    void reportGroupBreak();
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
