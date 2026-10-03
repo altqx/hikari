@@ -772,4 +772,54 @@ bool LineEditorController::insertTimeDifference(bool fromEnd, int selectionStart
     return true;
 }
 
+QStringList LineEditorController::history() const
+{
+    QStringList out;
+    auto *s = session();
+    if (!s)
+        return out;
+    for (const auto &step : s->history()) {
+        const QString name = QString::fromStdString(step.name);
+        out << (step.activeRow ? tr("%1, active line %2").arg(name).arg(step.activeRow) : name);
+    }
+    return out;
+}
+
+int LineEditorController::historyCursor() const
+{
+    auto *s = session();
+    return s ? static_cast<int>(s->historyCursor()) : -1;
+}
+
+bool LineEditorController::canUndoToLastSave() const
+{
+    auto *s = session();
+    const auto saved = s ? s->savedStep() : std::nullopt;
+    return saved && *saved != s->historyCursor();
+}
+
+bool LineEditorController::goToHistory(int step)
+{
+    auto *s = session();
+    if (!s || step < 0)
+        return false;
+    const auto revision = s->revision();
+    if (!s->goTo(static_cast<std::size_t>(step))) {
+        fail(problemText());
+        return false;
+    }
+    if (s->revision() != revision)
+        committed();
+    if (s->selection().active)
+        emit lineChanged(s->selection().active->value);
+    return true;
+}
+
+bool LineEditorController::undoToLastSave()
+{
+    auto *s = session();
+    const auto saved = s ? s->savedStep() : std::nullopt;
+    return saved && goToHistory(static_cast<int>(*saved));
+}
+
 } // namespace hikari::ui

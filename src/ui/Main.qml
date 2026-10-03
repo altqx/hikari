@@ -96,6 +96,23 @@ ApplicationWindow {
                 enabled: root.editor.hasLine
                 onTriggered: root.editor.redo()
             }
+            MenuItem {
+                objectName: "undoToLastSaveMenuItem"
+                action: Action {
+                    text: qsTr("Undo to last save")
+                    enabled: root.editor.canUndoToLastSave
+                    onTriggered: root.editor.undoToLastSave()
+                }
+            }
+            MenuItem {
+                objectName: "historyMenuItem"
+                action: Action {
+                    text: qsTr("&History")
+                    shortcut: "Ctrl+Shift+H" // legacy GLOBAL_HISTORY default
+                    enabled: root.editor.hasLine
+                    onTriggered: historyWindow.show()
+                }
+            }
         }
         Menu { title: qsTr("&View") }
         Menu { title: qsTr("&Help") }
@@ -523,6 +540,64 @@ ApplicationWindow {
             padding: 4
             text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
                   ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
+        }
+    }
+
+    // Legacy HistoryDialog: every step, the current one selected; Set and a
+    // double-click jump there and stay open, OK jumps and closes.
+    Window {
+        id: historyWindow
+        objectName: "historyWindow"
+        title: root.editor.history.length === 1 ? qsTr("History (1 element)")
+                                                : qsTr("History (%1 elements)").arg(root.editor.history.length)
+        width: 360
+        height: 420
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        onVisibleChanged: if (visible) historyList.currentIndex = root.editor.historyCursor
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 6
+            ListView {
+                id: historyList
+                objectName: "historyList"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                focus: true
+                model: root.editor.history
+                keyNavigationEnabled: true
+                Accessible.role: Accessible.List
+                Accessible.name: historyWindow.title
+                delegate: ItemDelegate {
+                    required property int index
+                    required property string modelData
+                    width: ListView.view.width
+                    text: modelData
+                    highlighted: ListView.isCurrentItem
+                    font.bold: index === root.editor.historyCursor
+                    onClicked: historyList.currentIndex = index
+                    onDoubleClicked: root.editor.goToHistory(index)
+                }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "historySet"
+                    text: qsTr("Set")
+                    onClicked: root.editor.goToHistory(historyList.currentIndex)
+                }
+                Button {
+                    objectName: "historyOk"
+                    text: qsTr("OK")
+                    onClicked: { root.editor.goToHistory(historyList.currentIndex); historyWindow.close() }
+                }
+                Button {
+                    objectName: "historyCancel"
+                    text: qsTr("Cancel")
+                    onClicked: historyWindow.close()
+                }
+            }
         }
     }
 

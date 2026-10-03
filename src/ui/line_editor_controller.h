@@ -14,6 +14,7 @@
 #include "hikari/application/document_files.h"
 
 #include <QObject>
+#include <QStringList>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
@@ -45,6 +46,10 @@ class LineEditorController : public QObject {
     // Where the text field's selection should be after a command.
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY selectionRequested)
     Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY selectionRequested)
+    // History (G10): one entry per step, "<name>, active line N" as legacy lists them.
+    Q_PROPERTY(QStringList history READ history NOTIFY changed)
+    Q_PROPERTY(int historyCursor READ historyCursor NOTIFY changed)
+    Q_PROPERTY(bool canUndoToLastSave READ canUndoToLastSave NOTIFY changed)
     // The field a requested selection belongs to (0 Original, 1 Translated).
     Q_PROPERTY(int selectionRole READ selectionRole NOTIFY selectionRequested)
 
@@ -87,6 +92,13 @@ public:
     Q_INVOKABLE void discard();          // Esc
     Q_INVOKABLE bool undo();             // draft history first, then the Document
     Q_INVOKABLE bool redo();
+    // Jumps to a History step (draft committed first); redo steps stay.
+    Q_INVOKABLE bool goToHistory(int step);
+    // Legacy GLOBAL_UNDO_TO_LAST_SAVE: back (or forward) to the saved step.
+    Q_INVOKABLE bool undoToLastSave();
+    QStringList history() const;
+    int historyCursor() const;
+    bool canUndoToLastSave() const;
     Q_INVOKABLE bool save();
     // Legacy Bold/Italic/Underline/Strikeout ('b', 'i', 'u', 's') on the
     // text field's selection, with the Style's value deciding the direction.

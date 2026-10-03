@@ -16,6 +16,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace hikari::application {
 
@@ -114,6 +115,22 @@ public:
     bool undo(); // a pending draft is committed first, so Redo can bring it back
     bool redo();
     std::size_t historySize() const { return m_states.size(); }
+
+    // History (G10; legacy HistoryDialog and GLOBAL_UNDO_TO_LAST_SAVE). Step 0
+    // is the opened Document; each later step names its command and the
+    // active Line it was recorded with.
+    struct HistoryStep {
+        std::string name;
+        std::optional<core::LineId> active;
+        std::size_t activeRow = 0; // 1-based row of that Line in the step's Document, 0 for none
+    };
+    std::vector<HistoryStep> history() const;
+    std::size_t historyCursor() const { return m_cursor; }
+    // The step whose content is saved, while it is still in history.
+    std::optional<std::size_t> savedStep() const;
+    // Jumps to a step as a run of Undo or Redo would (the selection recorded
+    // with it comes back); a pending draft is committed first. Redo steps stay.
+    bool goTo(std::size_t step);
 
     // Save: commits the draft, then gives the exact snapshot to write and the
     // identity that becomes saved once the write is reported as Written.

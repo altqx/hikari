@@ -272,6 +272,51 @@ bool EditSession::redo()
     return true;
 }
 
+std::vector<EditSession::HistoryStep> EditSession::history() const
+{
+    std::vector<HistoryStep> out;
+    for (std::size_t i = 0; i < m_states.size(); ++i) {
+        HistoryStep step{m_states[i].name, m_states[i].selection.active, 0};
+        if (step.active) {
+            const auto lines = m_states[i].document.lines();
+            for (std::size_t row = 0; row < lines.size(); ++row)
+                if (lines[row]->id == *step.active)
+                    step.activeRow = row + 1;
+        }
+        out.push_back(std::move(step));
+    }
+    return out;
+}
+
+std::optional<std::size_t> EditSession::savedStep() const
+{
+    for (std::size_t i = 0; i < m_states.size(); ++i)
+        if (m_states[i].content == m_saved)
+            return i;
+    return std::nullopt;
+}
+
+bool EditSession::goTo(std::size_t step)
+{
+    if (m_readOnly)
+        return false;
+    if (m_draft) {
+        if (draftProblem() && m_policy == InvalidCommitPolicy::Block)
+            return false;
+        commitDraft(); // may drop the redo steps, as any new step does
+    }
+    if (step >= m_states.size())
+        return false;
+    if (step == m_cursor)
+        return true;
+    // As a run of Undo (the selection recorded with the step after the
+    // target) or of Redo (the target's own).
+    m_selection = step < m_cursor ? m_states[step + 1].selection : m_states[step].selection;
+    m_cursor = step;
+    ++m_revision;
+    return true;
+}
+
 std::expected<EditSession::SaveSnapshot, DraftProblem> EditSession::prepareSave()
 {
     if (auto problem = draftProblem(); problem && m_policy == InvalidCommitPolicy::Block)

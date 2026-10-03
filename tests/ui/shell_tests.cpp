@@ -331,6 +331,61 @@ private slots:
         QVERIFY(selected({0, 1}));
     }
 
+    // G10: the History window and Undo to last save.
+    void historyWindowJumpsBetweenSteps()
+    {
+        // Its own file: this test saves.
+        const QString path = writeFile(dir, "history.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+        QVERIFY(application->openFile(path));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // "first"
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        const auto commitText = [&](const char *suffix) {
+            text->forceActiveFocus();
+            text->setProperty("cursorPosition", text->property("text").toString().size());
+            for (const char *c = suffix; *c; ++c)
+                QTest::keyClick(window, *c);
+            QTRY_VERIFY(text->property("text").toString().endsWith(QLatin1String(suffix)));
+            press(Qt::Key_Return, Qt::ControlModifier); // commit, staying on the Line
+        };
+        commitText("1");
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        commitText("2");
+        auto &editor = application->editor();
+        QCOMPARE(editor.history().size(), qsizetype(3));
+        QCOMPARE(editor.history().value(1), QStringLiteral("Edit Line, active line 1"));
+        QCOMPARE(editor.historyCursor(), 2);
+        QVERIFY(editor.canUndoToLastSave());
+
+        // Ctrl+Shift+H opens the window with the current step selected.
+        press(Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
+        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        QVERIFY(history);
+        QTRY_VERIFY(history->isVisible());
+        auto *list = history->findChild<QQuickItem *>(QStringLiteral("historyList"));
+        QVERIFY(list);
+        QCOMPARE(list->property("currentIndex").toInt(), 2);
+        QCOMPARE(history->title(), QStringLiteral("History (3 elements)"));
+        list->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historySet")), "clicked"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QVERIFY(history->isVisible()); // Set keeps the window open
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyCancel")), "clicked"));
+        QTRY_VERIFY(!history->isVisible());
+
+        // Undo to last save: forward to the saved step; redo steps stay.
+        QVERIFY(editor.undoToLastSave());
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first1"));
+        QVERIFY(!editor.dirty());
+        QVERIFY(!editor.canUndoToLastSave());
+        QVERIFY(editor.redo());
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first12"));
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

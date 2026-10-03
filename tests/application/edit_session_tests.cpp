@@ -254,3 +254,83 @@ TEST_F(SessionTest, LegacyPreferenceCommitsAndCorrectsOnLeave)
     ASSERT_TRUE(session.navigateTo(l3));
     EXPECT_EQ(session.document().lines()[1]->end.value, core::DocumentTime(3'000'000));
 }
+
+// G10: History inspection and jumps (legacy HistoryDialog, GLOBAL_UNDO_TO_LAST_SAVE).
+TEST_F(SessionTest, HistoryListsStepsWithTheirActiveLine)
+{
+    session.setSelection(Selection{l2, {l2}});
+    ASSERT_TRUE(session.run(setText(l2, u8"two!")));
+    session.setSelection(Selection{l3, {l3}});
+    ASSERT_TRUE(session.run(setText(l3, u8"three!")));
+    const auto h = session.history();
+    ASSERT_EQ(h.size(), 3u);
+    EXPECT_EQ(h[0].name, "Open");
+    EXPECT_EQ(h[1].name, "Set text");
+    EXPECT_EQ(h[1].active, l2);
+    EXPECT_EQ(h[1].activeRow, 2u);
+    EXPECT_EQ(h[2].activeRow, 3u);
+    EXPECT_EQ(session.historyCursor(), 2u);
+}
+
+TEST_F(SessionTest, GoToJumpsLikeARunOfUndoOrRedo)
+{
+    session.setSelection(Selection{l1, {l1}});
+    ASSERT_TRUE(session.run(setText(l1, u8"one!")));
+    session.setSelection(Selection{l2, {l2}});
+    ASSERT_TRUE(session.run(setText(l2, u8"two!")));
+    ASSERT_TRUE(session.goTo(0));
+    EXPECT_EQ(textOf(session, l1), u8"one");
+    EXPECT_EQ(textOf(session, l2), u8"two");
+    EXPECT_EQ(session.selection().active, l1); // recorded with step 1, as Undo restores it
+    EXPECT_TRUE(session.canRedo());
+    ASSERT_TRUE(session.goTo(2));
+    EXPECT_EQ(textOf(session, l2), u8"two!");
+    EXPECT_EQ(session.selection().active, l2);
+    EXPECT_FALSE(session.goTo(3));
+    session.setReadOnly(true);
+    EXPECT_FALSE(session.goTo(0));
+}
+
+TEST_F(SessionTest, GoToCommitsAPendingDraftFirst)
+{
+    ASSERT_TRUE(session.run(setText(l1, u8"one!")));
+    session.setSelection(Selection{l2, {l2}});
+    ASSERT_TRUE(session.editDraftText(l2, u8"typed"));
+    ASSERT_TRUE(session.goTo(0));
+    EXPECT_FALSE(session.draftLine());
+    ASSERT_EQ(session.history().size(), 3u); // the draft became its own step
+    EXPECT_EQ(textOf(session, l2), u8"two");
+    ASSERT_TRUE(session.goTo(2));
+    EXPECT_EQ(textOf(session, l2), u8"typed");
+}
+
+TEST_F(SessionTest, TheSavedStepIsKnownWhileItIsInHistory)
+{
+    EXPECT_EQ(session.savedStep(), 0u); // a freshly opened Document is saved
+    ASSERT_TRUE(session.run(setText(l1, u8"one!")));
+    auto save = session.prepareSave();
+    ASSERT_TRUE(save);
+    session.markSaved(save->content);
+    ASSERT_TRUE(session.run(setText(l1, u8"one!!")));
+    EXPECT_EQ(session.savedStep(), 1u);
+    ASSERT_TRUE(session.goTo(*session.savedStep()));
+    EXPECT_EQ(textOf(session, l1), u8"one!");
+    EXPECT_FALSE(session.isDirty());
+    // A new step after going back drops the saved step from history.
+    ASSERT_TRUE(session.goTo(0));
+    ASSERT_TRUE(session.run(setText(l1, u8"other")));
+    EXPECT_FALSE(session.savedStep());
+}
+
+TEST_F(SessionTest, HistoryKeepsItsCapacityAndConsistentSteps)
+{
+    for (int i = 0; i < 520; ++i)
+        ASSERT_TRUE(session.run(setText(l1, u8"v" + std::u8string(1, char8_t('a' + i % 26)) +
+                                                std::u8string(reinterpret_cast<const char8_t *>(std::to_string(i).c_str())))));
+    const auto h = session.history();
+    EXPECT_EQ(h.size(), EditSession::kHistoryCapacity);
+    EXPECT_EQ(session.historyCursor(), h.size() - 1);
+    ASSERT_TRUE(session.goTo(0));
+    ASSERT_TRUE(session.goTo(h.size() - 1));
+    EXPECT_EQ(textOf(session, l1), u8"v" + std::u8string(1, char8_t('a' + 519 % 26)) + u8"519");
+}
