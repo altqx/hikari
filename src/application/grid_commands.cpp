@@ -1,6 +1,7 @@
 #include "hikari/application/grid_commands.h"
 
 #include <algorithm>
+#include <cmath>
 #include <set>
 #include <vector>
 
@@ -501,6 +502,86 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
         next.anchor = order[*anchorRow];
     session.setSelection(std::move(next));
     return {};
+}
+
+namespace {
+
+// The Document's own MicroDVD rate in frames per second; nullopt for other
+// formats, 0 when a MicroDVD Document has none yet.
+std::optional<double> microDvdFps(const core::Document &d)
+{
+    if (d.format() != core::SubtitleFormat::MicroDvd)
+        return std::nullopt;
+    if (!d.frameRate())
+        return 0.0;
+    const auto &fps = d.frameRate()->framesPerSecond();
+    return static_cast<double>(fps.numerator()) / static_cast<double>(fps.denominator());
+}
+
+// SubsTime::NewTime: clamped at 0; MicroDVD frames follow (ceil(ms * fps / 1000)).
+void newTime(core::TimeField &field, std::optional<std::int64_t> &frame, std::int64_t value, std::optional<double> fps)
+{
+    const std::int64_t clamped = std::max<std::int64_t>(0, value);
+    field.value = ms(clamped);
+    if (fps)
+        frame = static_cast<std::int64_t>(std::ceil(static_cast<float>(clamped) * (static_cast<float>(*fps) / 1000.f)));
+}
+
+std::expected<void, CommandRefusal> retimeAll(EditSession &session, const std::string &name,
+                                              const std::function<std::int64_t(std::int64_t)> &retime)
+{
+    const auto fps = microDvdFps(session.document());
+    if (fps && *fps <= 0)
+        return std::unexpected(CommandRefusal::Invalid); // C01-fps-isolation: no rate, no frames
+    std::vector<std::pair<core::LineId, std::pair<std::int64_t, std::int64_t>>> times;
+    for (const auto *l : linesOf(session))
+        times.push_back({l->id, {retime(msOf(l->start.value)), retime(msOf(l->end.value))}});
+    std::set<core::LineId> touched;
+    for (const auto &t : times)
+        touched.insert(t.first);
+    const auto ran = session.run(Command{name, session.revision(), touched, [&](core::Document &d) {
+                                             for (const auto &[id, se] : times)
+                                                 if (!d.editLine(id, [&](core::LineRecord &l) {
+                                                         newTime(l.start, l.startFrame, se.first, fps);
+                                                         newTime(l.end, l.endFrame, se.second, fps);
+                                                     }))
+                                                     return false;
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
+    return {};
+}
+
+} // namespace
+
+std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::int64_t videoMs, const LineVisible &visible)
+{
+    std::vector<const core::LineRecord *> chosen;
+    for (const auto *l : linesOf(session))
+        if (session.selection().selected.contains(l->id) && (!visible || visible(l->id)))
+            chosen.push_back(l);
+    if (chosen.size() != 2)
+        return std::unexpected(CommandRefusal::Invalid);
+    const auto firstTime = static_cast<int>(msOf(chosen[0]->start.value));
+    const auto secondTime = static_cast<int>(msOf(chosen[1]->start.value));
+    const auto diffVideo = static_cast<float>(videoMs - secondTime);
+    const auto diffLines = static_cast<float>(secondTime - firstTime);
+    if (diffLines == 0)
+        return std::unexpected(CommandRefusal::Invalid);
+    // SubsTime::Change(int): the float product truncated, added, clamped at 0.
+    return retimeAll(session, "Setting FPS from video", [&](std::int64_t t) {
+        return t + static_cast<int>(diffVideo * (static_cast<float>(t - firstTime) / diffLines));
+    });
+}
+
+std::expected<void, CommandRefusal> setNewFps(EditSession &session, double oldFps, double newFps)
+{
+    if (!(oldFps > 0) || !(newFps > 0))
+        return std::unexpected(CommandRefusal::Invalid);
+    const double sub = oldFps / newFps;
+    return retimeAll(session, "Setting custom FPS",
+                     [&](std::int64_t t) { return static_cast<int>(static_cast<double>(t) * sub); });
 }
 
 } // namespace hikari::application

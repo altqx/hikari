@@ -3,6 +3,7 @@
 
 #include "hikari/application/grid_commands.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/line_formats.h"
 
 #include <gtest/gtest.h>
 
@@ -353,4 +354,61 @@ TEST(SortLines, TextKeysUseTheGivenCollation)
     ASSERT_TRUE(sortLines(session, SortKey::Style, false,
                           [](std::u8string_view a, std::u8string_view b) { return b.compare(a); }));
     EXPECT_EQ(order(session), u8"rpqs");
+}
+
+TEST_F(GridCommandsTest, FpsFromVideoScalesFromTheFirstSelectedLine)
+{
+    // a 1-2 s and b 5-6 s selected; the video shows 9 s: the distance from a
+    // doubles, so b starts at 9 s.
+    select({a, b}, a);
+    const auto steps = session.historySize();
+    ASSERT_TRUE(setFpsFromVideo(session, 9000));
+    EXPECT_EQ(ms(line(0).start.value), 1000);
+    EXPECT_EQ(ms(line(0).end.value), 3000);
+    EXPECT_EQ(ms(line(1).start.value), 9000);
+    EXPECT_EQ(ms(line(1).end.value), 11000);
+    EXPECT_EQ(ms(line(2).start.value), 12000); // unselected Lines too
+    EXPECT_EQ(ms(line(2).end.value), 15000);
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(session.history().back().name, "Setting FPS from video");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(ms(line(1).start.value), 5000);
+    // Exactly two shown Lines with different Starts.
+    select({a}, a);
+    EXPECT_FALSE(setFpsFromVideo(session, 9000));
+    select({a, b}, a);
+    EXPECT_FALSE(setFpsFromVideo(session, 9000, [&](core::LineId id) { return id != b; }));
+    EditSession same{load("[Events]\n"
+                          "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n"
+                          "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,y\n")};
+    same.setSelection(Selection{core::LineId{1}, {core::LineId{1}, core::LineId{2}}, {}, {}});
+    EXPECT_FALSE(setFpsFromVideo(same, 9000));
+}
+
+TEST_F(GridCommandsTest, NewFpsScalesEveryTime)
+{
+    ASSERT_TRUE(setNewFps(session, 25, 23.976));
+    // 1000 * 25 / 23.976 = 1042.7, truncated.
+    EXPECT_EQ(ms(line(0).start.value), 1042);
+    EXPECT_EQ(ms(line(2).end.value), 8341);
+    EXPECT_EQ(session.history().back().name, "Setting custom FPS");
+    EXPECT_FALSE(setNewFps(session, 0, 25));
+}
+
+TEST(NewFps, MicroDvdFramesFollowTheDocumentsOwnRate)
+{
+    const std::string_view text = "{24}{48}first\n";
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    auto document = core::loadLineFormats(bytes).document;
+    ASSERT_EQ(document.format(), core::SubtitleFormat::MicroDvd);
+    EditSession unknown{document};
+    EXPECT_EQ(setNewFps(unknown, 25, 50).error(), CommandRefusal::Invalid); // C01: no rate yet
+    document.setFrameRate(*core::FrameRate::make(25, 1));
+    EditSession session{document};
+    ASSERT_TRUE(setNewFps(session, 25, 50));
+    const auto &l = *session.document().lines()[0];
+    EXPECT_EQ(l.start.value.microseconds(), 480'000); // 960 ms * 0.5
+    EXPECT_EQ(l.startFrame, 12);
+    EXPECT_EQ(l.endFrame, 24);
 }

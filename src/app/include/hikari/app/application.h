@@ -123,6 +123,10 @@ public:
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();
     Q_INVOKABLE bool makeContinuous(bool withPrevious);
+    // G11: GRID_SET_NEW_FPS from the FPS window's texts (digits and '.'), and
+    // GRID_SET_FPS_FROM_VIDEO with the shown video frame's time.
+    Q_INVOKABLE bool setNewFps(const QString &oldFps, const QString &newFps);
+    Q_INVOKABLE bool setFpsFromVideo();
     // G6: Edit > Sort all lines / Sort selected lines by "start", "end",
     // "style", "actor", "effect" or "layer"; text keys use the locale's collation.
     Q_INVOKABLE bool sortLines(const QString &key, bool selectedOnly);

@@ -469,6 +469,33 @@ private slots:
         QTRY_COMPARE(texts(), (QStringList{"middle", "early", "late"}));
     }
 
+    void fpsWindowScalesEveryTime()
+    {
+        const QString path = writeFile(dir, "g11.ass", "Dialogue: 0,0:00:10.00,0:00:20.00,Default,,0,0,0,,x\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *fps = root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow"));
+        QVERIFY(fps);
+        fps->show();
+        auto *oldFps = fps->findChild<QObject *>(QStringLiteral("oldFps"));
+        auto *newFps = fps->findChild<QObject *>(QStringLiteral("newFps"));
+        QVERIFY(oldFps && newFps);
+        oldFps->setProperty("editText", QStringLiteral("25"));
+        newFps->setProperty("editText", QStringLiteral("50"));
+        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 10'000'000);
+        QVERIFY(!fps->isVisible());
+        // Text that is not a number keeps the window open and changes nothing.
+        fps->show();
+        newFps->setProperty("editText", QStringLiteral("."));
+        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QVERIFY(fps->isVisible());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        fps->close();
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));
@@ -586,6 +613,30 @@ private slots:
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 1));
         press(Qt::Key_Period, Qt::ControlModifier); // |1001 - 2000| replaces the selection
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("999first"));
+    }
+
+    void fpsFromVideoMovesTheSecondSelectedLineToTheVideoTime()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 s and 3.00-4.00 s
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame().has_value(), 20000);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_A, Qt::ControlModifier); // both selected
+        auto shownMs = [&]() -> std::int64_t {
+            const auto &video = application->video().session();
+            const auto frame = video.shownFrame();
+            const auto start = frame ? video.frameStart(*frame) : std::nullopt;
+            return start ? start->microseconds() / 1000 : -1;
+        };
+        QTRY_VERIFY_WITH_TIMEOUT(std::abs(shownMs() - 1000) < 50, 20000); // the first Line's frame
+        const auto videoMs = shownMs();
+        auto *menuItem = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("setFpsFromVideo"));
+        QVERIFY(menuItem);
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QTRY_COMPARE(session->document().lines()[1]->start.value.microseconds() / 1000, videoMs);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // the first stays
     }
 
     void editorShortcutsFollowTheLegacyDefaults()

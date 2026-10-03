@@ -8,6 +8,7 @@
 #include <QClipboard>
 #include <QCollator>
 #include <QGuiApplication>
+#include <QLocale>
 #include <QCoreApplication>
 #include <QSettings>
 #include <QStringList>
@@ -834,6 +835,35 @@ bool Application::pasteColumns(int columns)
     rememberColumns(true, columns);
     const bool done =
         application::pasteColumns(*session, toU8(clipboardText()), columns, shownLines()).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::setNewFps(const QString &oldFps, const QString &newFps)
+{
+    auto *session = targetSession();
+    bool okOld = false, okNew = false;
+    // The dialog only takes digits and '.', so read them in the C locale.
+    const double from = QLocale::c().toDouble(oldFps.trimmed(), &okOld);
+    const double to = QLocale::c().toDouble(newFps.trimmed(), &okNew);
+    if (!session || !okOld || !okNew)
+        return false;
+    const bool done = application::setNewFps(*session, from, to).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::setFpsFromVideo()
+{
+    auto *session = targetSession();
+    const auto &video = m_video->session();
+    const auto frame = video.shownFrame();
+    const auto start = frame ? video.frameStart(*frame) : std::nullopt;
+    if (!session || !start)
+        return false;
+    const bool done = application::setFpsFromVideo(*session, start->microseconds() / 1000, shownLines()).has_value();
     m_editor->reloadFromSession();
     refreshViews();
     return done;

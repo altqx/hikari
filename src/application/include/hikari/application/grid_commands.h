@@ -61,6 +61,18 @@ std::expected<void, CommandRefusal> swapLines(EditSession &session);
 // where the Line before it ends, or ends where the Line after it starts.
 std::expected<void, CommandRefusal> makeContinuous(EditSession &session, bool withPrevious, const LineVisible &visible = {});
 
+// GRID_SET_FPS_FROM_VIDEO ("Setting FPS from video"): with exactly two shown
+// selected Lines, every Line is retimed so the second one starts at
+// `videoMs`, scaling the distance from the first one's Start (legacy
+// OnSetFPSFromVideo). Refused when both start at the same time (legacy
+// divides by zero there).
+std::expected<void, CommandRefusal> setFpsFromVideo(EditSession &session, std::int64_t videoMs,
+                                                    const LineVisible &visible = {});
+// GRID_SET_NEW_FPS ("Setting custom FPS"): every time scaled by
+// oldFps / newFps. A MicroDVD Document recomputes its frames from its own
+// rate (C01-fps-isolation) and is refused while that rate is unknown.
+std::expected<void, CommandRefusal> setNewFps(EditSession &session, double oldFps, double newFps);
+
 // GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ("Sorting subtitles"):
 // a stable sort of every Line or of the selected Lines (hidden ones too)
 // among their own rows. Ties go by End for Start, by Start otherwise. The

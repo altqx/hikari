@@ -800,6 +800,11 @@ ApplicationWindow {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
                     }
+                    MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: fpsWindow.show() }
+                    MenuItem {
+                        objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
+                        enabled: root.video.hasVideo; onTriggered: root.app.setFpsFromVideo()
+                    }
                     MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: root.app.copyLines() }
                     MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: root.app.cutLines() }
                     MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: root.app.pasteLines() }
@@ -1133,6 +1138,58 @@ ApplicationWindow {
             const subtitles = root.app.openDropped(drop.urls)
             if (subtitles.length > 0)
                 root.openSubtitles(subtitles)
+        }
+    }
+
+    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
+    Window {
+        id: fpsWindow
+        objectName: "fpsWindow"
+        title: qsTr("Choose new FPS")
+        width: 360
+        height: 140
+        modality: Qt.ApplicationModal
+        flags: Qt.Dialog
+        readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
+        GridLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            columns: 2
+            Label { text: qsTr("Subtitles FPS") }
+            ComboBox {
+                id: oldFps
+                objectName: "oldFps"
+                editable: true
+                model: fpsWindow.presets
+                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
+                Accessible.name: qsTr("Subtitles FPS")
+            }
+            Label { text: qsTr("New FPS") }
+            ComboBox {
+                id: newFps
+                objectName: "newFps"
+                editable: true
+                model: fpsWindow.presets
+                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
+                Accessible.name: qsTr("New FPS")
+            }
+            RowLayout {
+                Layout.columnSpan: 2
+                Layout.alignment: Qt.AlignRight
+                Button {
+                    objectName: "fpsOk"
+                    text: qsTr("OK")
+                    onClicked: {
+                        if (root.app.setNewFps(oldFps.editText, newFps.editText))
+                            fpsWindow.close()
+                    }
+                }
+                Button {
+                    objectName: "fpsCancel"
+                    text: qsTr("Cancel")
+                    onClicked: fpsWindow.close()
+                }
+            }
         }
     }
 
