@@ -1,7 +1,9 @@
 // F4: fix minor errors against legacy MisspellReplacer (FillRulesList, Rule,
 // SaveRules, FillWithDefaultRules, SeekOnTab, ReplaceOnTab, ReplaceChecked,
-// ReplaceBlock, MoveCase, KeepFinding) and wxRegEx (wxWidgets 3.3 on PCRE2:
-// Compile with wxRE_ADVANCED, Matches, Replace) at 20d647c4.
+// ReplaceBlock, MoveCase, KeepFinding) and wxRegEx (wxWidgets 3.3.3 on PCRE2:
+// Compile with wxRE_ADVANCED, Matches, Replace) at 20d647c4, through
+// core::LegacyRegex (R1-pcre2). The approved departures are named where they
+// are pinned: S57-rule-offsets, S57-from-selected and R3-hang-crash-loss.
 
 #include "hikari/application/misspell_replacer.h"
 #include "hikari/core/ass_load.h"
@@ -143,7 +145,7 @@ TEST(MisspellRules, ShippedRulesInLegacyOrder)
     EXPECT_EQ(str(read.rules[6].replace), "się");
     // Every shipped expression compiles.
     for (const auto &r : read.rules)
-        EXPECT_TRUE(ReplacerRegex::compile(core::toUtf16(r.find), false)) << str(r.find);
+        EXPECT_TRUE(compileReplacerRule(r).isValid()) << str(r.find);
 }
 
 // SaveRules and FillRulesList: the header, the checkbox line, \f fields, CRLF.
@@ -208,23 +210,28 @@ TEST(MisspellRules, ShippedRuleFixtures)
     EXPECT_EQ(fix("Będe", shipped({12})), "Będę");
 }
 
-// ReplaceOnTab runs the checked rules in list order; each rule's first search
-// is on the Line's original text while its positions apply to the changed one.
-TEST(MisspellRules, LaterRulesStartFromTheOriginalText)
+// ReplaceOnTab runs the checked rules in list order, each on the text the
+// previous rule produced (S57-rule-offsets, R3-hang-crash-loss). Legacy began
+// each rule's search on the Line's original text and applied those positions
+// to the changed text: wrong places, or std::out_of_range past its end.
+TEST(MisspellRules, LaterRulesSearchTheChangedText)
 {
-    // "Remove doubled spaces" first shortens the text; "XY" is then found at
-    // the original position 5, where the changed text has "Y": nothing is
-    // replaced there and the search goes on past the end.
-    EXPECT_EQ(fix("a  b XY", {rule("(  +)", " "), rule("XY", "z")}), "a b XY");
-    // In the other order both apply ("XY" has two capitals: "Z").
+    // "Remove doubled spaces" first shortens the text; "XY" is then found in
+    // the shortened text (legacy: at the original position 5, "Y", nothing
+    // replaced). "XY" has two capitals: "Z".
+    EXPECT_EQ(fix("a  b XY", {rule("(  +)", " "), rule("XY", "z")}), "a b Z");
     EXPECT_EQ(fix("a  b XY", {rule("XY", "z"), rule("(  +)", " ")}), "a b Z");
-    // Every shipped rule checked: once the first rule shortens the text, the
-    // later rules' first finds land one character off and replace nothing.
+    // A later rule whose original position lies past the end of the changed
+    // text (legacy threw std::out_of_range from wxString::replace).
+    EXPECT_EQ(fix("aaac", {rule("a", ""), rule("c", "x")}), "x");
+    // A length-growing rule before another.
+    EXPECT_EQ(fix("ab cd", {rule("a", "xyz"), rule("cd", "Q")}), "xyzb Q");
+    // Every shipped rule checked: each applies in turn.
     const auto all = shipped({0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
-    EXPECT_EQ(fix("Hello , ty sie  bede..ok", all), "Hello, ty sie  bede..ok");
-    // Found and replaced through the results list, every find applies.
+    EXPECT_EQ(fix("Hello , ty sie  bede..ok", all), "Hello, ty się będę...ok");
+    // Found and replaced through the results list, every find applies too.
     EditSession session{load({dialogue("Hello , ty sie  bede..ok")})};
-    const auto finds = findErrors(session, all, {}, kPolish);
+    const auto finds = findErrors(session, all, {});
     ASSERT_EQ(finds.size(), 5u);
     ASSERT_TRUE(replaceFinds(session, all, finds, kPolish)->changed);
     EXPECT_EQ(texts(session)[0], "Hello, ty się będę...ok");
@@ -269,25 +276,60 @@ TEST(MisspellRules, OnlyTagsOrText)
     EXPECT_TRUE(findErrors(seek, {rule("b| x", "", kReplacerOnlyText)}, {}).empty());
 }
 
-// wxRegEx::Replace on a find, and the expression syntax.
+// wxRegEx::Replace on a find, and the expression syntax: PCRE2 through
+// core::LegacyRegex with wxRE_ADVANCED, | wxRE_ICASE without Match case.
 TEST(MisspellRules, RegexReplaceSyntax)
 {
-    const auto groups = ReplacerRegex::compile(u"(a)(b)", true);
-    ASSERT_TRUE(groups);
-    EXPECT_EQ(str(groups->replace(u"ab", u"\\2\\1&").first), "baab");
-    EXPECT_EQ(str(groups->replace(u"ab", u"\\&\\\\x\\").first), "&\\x\\");
-    EXPECT_EQ(str(groups->replace(u"ab", u"[\\3\\10]").first), "[]"); // past the groups: eaten
-    EXPECT_EQ(groups->replace(u"abab", u"x"), (std::pair<std::u16string, int>{u"xx", 2}));
+    const auto compile = [](std::string_view find, int options = kReplacerMatchCase) {
+        return compileReplacerRule(rule(find, "", options));
+    };
+    const auto groups = compile("(a)(b)");
+    ASSERT_TRUE(groups.isValid());
+    EXPECT_EQ(str(replacerReplace(groups, u"ab", u"\\2\\1&").first), "baab");
+    EXPECT_EQ(str(replacerReplace(groups, u"ab", u"\\&\\\\x\\").first), "&\\x\\");
+    EXPECT_EQ(str(replacerReplace(groups, u"ab", u"[\\3\\10]").first), "[]"); // past the groups: eaten
+    EXPECT_EQ(replacerReplace(groups, u"abab", u"x"), (std::pair<std::u16string, int>{u"xx", 2}));
     // "^" matches only at the first replacement.
-    const auto caret = ReplacerRegex::compile(u"^a", true);
-    EXPECT_EQ(caret->replace(u"aaa", u"X"), (std::pair<std::u16string, int>{u"Xaa", 1}));
+    EXPECT_EQ(replacerReplace(compile("^a"), u"aaa", u"X"), (std::pair<std::u16string, int>{u"Xaa", 1}));
     // \m \M \y \Y are word boundaries; case folding without Match case.
-    const auto words = ReplacerRegex::compile(u"\\mab\\M|\\ycd\\Y", false);
-    EXPECT_EQ(str(words->replace(u"AB xab cde", u"_").first), "_ xab _e");
-    EXPECT_FALSE(ReplacerRegex::compile(u"(", false));
+    EXPECT_EQ(str(replacerReplace(compile("\\mab\\M|\\ycd\\Y", 0), u"AB xab cde", u"_").first), "_ xab _e");
+    EXPECT_EQ(str(replacerReplace(compile("ę", 0), u"Ę", u"e").first), "e"); // PCRE2 UTF case folding
+    EXPECT_EQ(replacerReplace(compile("ę"), u"Ę", u"e").second, 0);
     // A find with no match in the text alone counts nothing.
-    const auto ahead = ReplacerRegex::compile(u"a(?=b)", true);
-    EXPECT_EQ(ahead->replace(u"a", u"x"), (std::pair<std::u16string, int>{u"a", 0}));
+    EXPECT_EQ(replacerReplace(compile("a(?=b)"), u"a", u"x"), (std::pair<std::u16string, int>{u"a", 0}));
+    // PCRE syntax legacy rules may use: look-behind, \Q..\E, \A, and "."
+    // matching a line break (DOTALL).
+    EXPECT_EQ(str(replacerReplace(compile("(?<=a)b"), u"ab cb", u"X").first), "aX cb");
+    EXPECT_EQ(str(replacerReplace(compile("\\Qa.b\\E"), u"a.b axb", u"X").first), "X axb");
+    // wxRegEx::Replace matches the rest of the text as its own subject:
+    // NOTBOL stops "^" there, but \A matches again.
+    EXPECT_EQ(str(replacerReplace(compile("\\Aa"), u"aa", u"X").first), "XX");
+    EXPECT_EQ(replacerSearch(compile("a.b"), u"a\nb"), (std::optional<std::pair<std::size_t, std::size_t>>{{0, 3}}));
+    EXPECT_FALSE(compile("(").isValid());
+}
+
+// wxRegEx::Compile logs "Invalid regular expression '%s': %s" for each rule
+// that does not compile, at the points MisspellReplacer compiles: the checked
+// rules for Find and Replace all (nothing when none is checked), every rule
+// for the results' Replace.
+TEST(MisspellRules, InvalidExpressionsAreReported)
+{
+    const std::vector<ReplacerRule> rules{rule("(", "x"), rule("ok", "x"), rule("[a", "y", 0, false),
+                                          rule("\\mab(", "z")};
+    const auto checked = replacerRegexErrors(rules, true);
+    ASSERT_EQ(checked.size(), 2u);
+    EXPECT_EQ(str(checked[0].expression), "(");
+    EXPECT_FALSE(checked[0].message.empty());
+    // The expression as converted for PCRE2 (\m is the start of a word).
+    EXPECT_EQ(str(checked[1].expression), "[[:<:]]ab(");
+    const auto all = replacerRegexErrors(rules, false);
+    ASSERT_EQ(all.size(), 3u);
+    EXPECT_EQ(str(all[1].expression), "[a");
+    auto none = rules;
+    for (auto &r : none)
+        r.checked = false;
+    EXPECT_TRUE(replacerRegexErrors(none, true).empty());
+    EXPECT_EQ(replacerRegexErrors(none, false).size(), 3u);
 }
 
 // SeekOnTab: finds per Line, rule by rule, with legacy numbering.
@@ -306,7 +348,9 @@ TEST(MisspellFind, FindsRowsNumbersAndPositions)
 }
 
 // The find walk searches the rest of the text alone: "^" matches after each
-// find, an empty match counts one character, and a match at the end stops.
+// find and an empty match counts one character. A find at the end of the
+// text is the last (R3-hang-crash-loss: legacy then searched "" past the end
+// again forever).
 TEST(MisspellFind, SearchesTheRestAlone)
 {
     EditSession session{load({dialogue("aab")})};
@@ -314,7 +358,7 @@ TEST(MisspellFind, SearchesTheRestAlone)
     ASSERT_EQ(finds.size(), 2u);
     EXPECT_EQ(finds[1].position, 1u);
     finds = findErrors(session, {rule("x*", "")}, {});
-    ASSERT_EQ(finds.size(), 4u); // 0, 1, 2 and the end (legacy repeats the end forever)
+    ASSERT_EQ(finds.size(), 4u); // 0, 1, 2 and the end, then stop
     EXPECT_EQ(finds[3].position, 3u);
     EXPECT_EQ(finds[3].length, 1u);
     // Only in tags: the find walk looks back from the find in the whole text.
@@ -345,8 +389,10 @@ TEST(MisspellFind, InvalidRuleShiftsNumbers)
     EXPECT_EQ(texts(direct)[0], "dog");
 }
 
-// "Which lines": all, selected, from the selected Line (nothing: legacy tests
-// only the other three), by styles (",name," in ",text,").
+// "Which lines": all, selected, from the selected Line, by styles (",name,"
+// in ",text,"). From the selected line takes that Line and every later one
+// (S57-from-selected, R3-hang-crash-loss: legacy started its walk there and
+// then took no Line, so it found and replaced nothing).
 TEST(MisspellFind, WhichLines)
 {
     EditSession session{load({dialogue("a", "Default"), dialogue("a", "Sign"), dialogue("a", "Sign Two")})};
@@ -361,12 +407,33 @@ TEST(MisspellFind, WhichLines)
     };
     EXPECT_EQ(rows({L::All, {}}), (std::vector<std::size_t>{0, 1, 2}));
     EXPECT_EQ(rows({L::Selected, {}}), (std::vector<std::size_t>{1}));
-    EXPECT_TRUE(rows({L::FromSelection, {}}).empty());
+    EXPECT_EQ(rows({L::FromSelection, {}}), (std::vector<std::size_t>{1, 2}));
+    EXPECT_EQ(findErrors(session, rules, {L::FromSelection, {}}).front().lineNumber, 2);
     EXPECT_EQ(rows({L::Styles, u8"Default,Sign Two"}), (std::vector<std::size_t>{0, 2}));
     EXPECT_EQ(rows({L::Styles, u8"Default, Sign"}), (std::vector<std::size_t>{0}));
-    EXPECT_FALSE(replaceErrors(session, rules, {L::FromSelection, {}}).value());
     EXPECT_TRUE(replaceErrors(session, rules, {L::Selected, {}}).value());
     EXPECT_EQ(texts(session), (std::vector<std::string>{"a", "b", "a"}));
+    EXPECT_TRUE(replaceErrors(session, {rule("a|b", "c")}, {L::FromSelection, {}}).value());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"a", "c", "c"}));
+    // Without a selection the walk starts at the first Line (FirstSelection -1).
+    session.setSelection(Selection{});
+    EXPECT_EQ(rows({L::FromSelection, {}}), (std::vector<std::size_t>{0}));
+}
+
+// From the selected line skips hidden Lines before and after the selected
+// one and numbers finds by shown Lines (positionId).
+TEST(MisspellFind, FromSelectionNumbersShownLines)
+{
+    EditSession session{load({dialogue("a"), dialogue("a", "Default", "[hidden]"), dialogue("a"),
+                              dialogue("a", "Default", "[hidden]"), dialogue("a")})};
+    const auto lines = session.document().lines();
+    session.setSelection(Selection{lines[2]->id, {lines[2]->id}, lines[2]->id, {}});
+    const auto finds = findErrors(session, {rule("a", "b")}, {L::FromSelection, {}});
+    ASSERT_EQ(finds.size(), 2u);
+    EXPECT_EQ(finds[0].row, 2u);
+    EXPECT_EQ(finds[0].lineNumber, 2);
+    EXPECT_EQ(finds[1].row, 4u);
+    EXPECT_EQ(finds[1].lineNumber, 3);
 }
 
 // The translation is searched and changed when the Line has one.
@@ -458,6 +525,37 @@ TEST(MisspellReplace, EditedLinesAndFindsThatDoNotMatchAlone)
     EXPECT_EQ(replaced->problems, problems);
     // Rows past the end are skipped.
     EXPECT_FALSE(replaceFinds(session, rules, {{9, 9, u"x", 0, 1, 0}})->changed);
+}
+
+// An expression that matches the empty string (R3-hang-crash-loss): legacy's
+// wxRegEx::Replace never moved past an empty match and Replace all searched
+// the end of the text forever. Here an empty match is replaced once, the
+// search moves on by one character and stops at the end of the text.
+TEST(MisspellReplace, EmptyMatchesEnd)
+{
+    EXPECT_EQ(fix("ab", {rule("x*", "-")}), "-a--b--");
+    EXPECT_EQ(fix("", {rule("^$", "empty")}), "empty");
+    EditSession session{load({dialogue("ab")})};
+    const auto finds = findErrors(session, {rule("x*", "-")}, {});
+    ASSERT_EQ(finds.size(), 3u); // 0, 1 and the end
+    ASSERT_TRUE(replaceFinds(session, {rule("x*", "-")}, finds)->changed);
+    EXPECT_EQ(texts(session)[0], "-a--b--");
+}
+
+// A results row whose rule number has no compiled expression (legacy read
+// past its expression list, R3-hang-crash-loss) is not replaced and logged.
+TEST(MisspellReplace, RuleNumberWithoutExpression)
+{
+    EditSession session{load({dialogue("cat")})};
+    const std::vector<ReplacerRule> rules{rule("(", "x"), rule("cat", "dog")};
+    // Finds numbered 1 (legacy checkedRules[k]); only one expression compiles.
+    const auto replaced = replaceFinds(session, rules, {{0, 1, u"cat", 0, 3, 1}, {0, 1, u"cat", 0, 3, 7}});
+    ASSERT_TRUE(replaced);
+    EXPECT_FALSE(replaced->changed);
+    ASSERT_EQ(replaced->problems.size(), 2u);
+    EXPECT_EQ(replaced->problems[0].kind, ReplacerProblem::Kind::NotReplaced);
+    EXPECT_EQ(replaced->problems[1], (ReplacerProblem{ReplacerProblem::Kind::NotReplaced, 1, u"cat", {}, {}}));
+    EXPECT_EQ(texts(session)[0], "cat");
 }
 
 // Finds of several rules on one Line: replaced from the last position back,

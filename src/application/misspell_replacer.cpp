@@ -4,9 +4,6 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
-#include <climits>
-#include <locale>
-#include <regex>
 #include <set>
 
 namespace hikari::application {
@@ -16,11 +13,6 @@ namespace {
 using u16sv = std::u16string_view;
 
 constexpr std::u8string_view kRulesHeader = u8"#HikariSub rules file";
-
-std::wstring wide(u16sv s)
-{
-    return std::wstring(s.begin(), s.end());
-}
 
 char16_t lowerOf(char16_t c, const ReplacerCase &cases)
 {
@@ -49,97 +41,6 @@ std::u16string mid(u16sv s, std::size_t first, std::size_t count = std::u16strin
     if (first > s.size())
         return {};
     return std::u16string(s.substr(first, count));
-}
-
-// PCRE2 without UCP: \w \d \s, the POSIX classes and word boundaries see
-// ASCII only; case folding follows the ReplacerCase functions.
-class LegacyCtype : public std::ctype<wchar_t> {
-public:
-    explicit LegacyCtype(ReplacerCase cases) : std::ctype<wchar_t>(std::size_t(0)), m_cases(std::move(cases)) {}
-
-protected:
-    bool do_is(mask m, char_type c) const override
-    {
-        return c >= 0 && c < 128 && std::ctype<wchar_t>::do_is(m, c);
-    }
-    const char_type *do_is(const char_type *low, const char_type *high, mask *vec) const override
-    {
-        for (; low < high; ++low, ++vec) {
-            *vec = mask();
-            if (*low >= 0 && *low < 128)
-                std::ctype<wchar_t>::do_is(low, low + 1, vec);
-        }
-        return high;
-    }
-    const char_type *do_scan_is(mask m, const char_type *low, const char_type *high) const override
-    {
-        while (low < high && !do_is(m, *low))
-            ++low;
-        return low;
-    }
-    const char_type *do_scan_not(mask m, const char_type *low, const char_type *high) const override
-    {
-        while (low < high && do_is(m, *low))
-            ++low;
-        return low;
-    }
-    char_type do_tolower(char_type c) const override
-    {
-        return c >= 0 && c <= 0xFFFF ? static_cast<char_type>(lowerOf(static_cast<char16_t>(c), m_cases)) : c;
-    }
-    const char_type *do_tolower(char_type *low, const char_type *high) const override
-    {
-        for (; low < high; ++low)
-            *low = do_tolower(*low);
-        return high;
-    }
-    char_type do_toupper(char_type c) const override
-    {
-        return c >= 0 && c <= 0xFFFF ? static_cast<char_type>(upperOf(static_cast<char16_t>(c), m_cases)) : c;
-    }
-    const char_type *do_toupper(char_type *low, const char_type *high) const override
-    {
-        for (; low < high; ++low)
-            *low = do_toupper(*low);
-        return high;
-    }
-
-private:
-    ReplacerCase m_cases;
-};
-
-// wxRegExImpl::Compile with wxRE_ADVANCED: ConvertWordBoundaries turns \m and
-// \M into PCRE's [[:<:]] and [[:>:]] (\b(?=\w), \b(?<=\w)), \y into \b and
-// \Y into \B, without looking at bracket expressions. ECMAScript has no
-// look-behind; at a boundary (?<=\w) is (?!\w).
-std::wstring convertWordBoundaries(u16sv pattern)
-{
-    std::wstring out;
-    for (std::size_t i = 0; i < pattern.size(); ++i) {
-        if (pattern[i] != u'\\') {
-            out += static_cast<wchar_t>(pattern[i]);
-            continue;
-        }
-        if (++i == pattern.size()) {
-            out += L'\\';
-            break;
-        }
-        switch (pattern[i]) {
-        case u'm': out += L"\\b(?=\\w)"; break;
-        case u'M': out += L"\\b(?!\\w)"; break;
-        case u'y': out += L"\\b"; break;
-        case u'Y': out += L"\\B"; break;
-        default:
-            out += L'\\';
-            out += static_cast<wchar_t>(pattern[i]);
-        }
-    }
-    return out;
-}
-
-bool isAsciiDigit(char16_t c)
-{
-    return c >= u'0' && c <= u'9';
 }
 
 std::vector<std::u8string_view> split(std::u8string_view text, char8_t delimiter, bool keepEmpty)
@@ -195,14 +96,14 @@ void setSearchedText(core::LineRecord &line, const std::u16string &text)
 bool inScope(const core::LineRecord &line, const ReplacerScope &scope, const Selection &selection)
 {
     using L = ReplacerScope::Lines;
-    // Legacy tests All, Styles and Selected only: "From the selected line"
-    // starts the walk at the first selected Line and then takes no Line.
     switch (scope.lines) {
     case L::All: return true;
     case L::Styles:
         return (u8"," + scope.styles + u8",").find(u8"," + line.style + u8",") != std::u8string::npos;
     case L::Selected: return selection.selected.contains(line.id);
-    case L::FromSelection: return false;
+    // S57-from-selected / R3-hang-crash-loss: every Line from the first
+    // selected one on (legacy started the walk there and then took no Line).
+    case L::FromSelection: return true;
     }
     return false;
 }
@@ -228,19 +129,18 @@ const core::LineRecord *lineById(const core::Document &d, core::LineId id)
 }
 
 struct CompiledRule {
-    ReplacerRegex regex;
+    core::LegacyRegex regex;
     int rule = 0;
 };
 
 // The checked rules that compile, each with its own index.
-std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules, const ReplacerCase &cases)
+std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules)
 {
     std::vector<CompiledRule> out;
     for (std::size_t i = 0; i < rules.size(); ++i)
         if (rules[i].checked)
-            if (auto re = ReplacerRegex::compile(core::toUtf16(rules[i].find), rules[i].options & kReplacerMatchCase,
-                                                 cases))
-                out.push_back({std::move(*re), static_cast<int>(i)});
+            if (auto re = compileReplacerRule(rules[i]); re.isValid())
+                out.push_back({std::move(re), static_cast<int>(i)});
     return out;
 }
 
@@ -254,23 +154,26 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
         const ReplacerRule &rule = rules[static_cast<std::size_t>(index)];
         const std::u16string replacement = core::toUtf16(rule.replace);
         std::size_t textPos = 0;
-        // Each rule's first search runs on the Line's original text, later
-        // ones on the changed text from the last replacement on (legacy).
-        std::u16string text = lineText;
-        while (const auto match = re.search(text)) {
+        // S57-rule-offsets / R3-hang-crash-loss: each rule searches the text
+        // the previous rule produced, so every position is one in the
+        // changed text. Legacy started each rule on the Line's original text
+        // and applied those positions to the changed one (wrong places, and
+        // std::out_of_range past its end).
+        std::u16string text = changedText;
+        while (const auto match = replacerSearch(re, text)) {
             const std::size_t start = match->first;
             std::size_t length = std::max<std::size_t>(match->second, 1);
             if (rule.options < 16 || keepFinding(text, start, rule.options)) {
                 const std::size_t at = start + textPos;
                 const std::u16string found = mid(changedText, at, length);
-                std::u16string replaced = moveCase(found, re.replace(found, replacement).first, rule.options, cases);
-                // Legacy's replace throws past the end; here it appends.
+                std::u16string replaced = moveCase(found, replacerReplace(re, found, replacement).first, rule.options, cases);
                 changedText.replace(std::min(at, changedText.size()), length, replaced);
                 length = replaced.size();
                 changed = true;
             }
-            // An empty match at the end repeats forever in legacy.
-            if (match->second == 0 && start >= text.size())
+            // R3-hang-crash-loss: a match at the end of the text is the last
+            // (legacy found the empty match there again forever).
+            if (start >= text.size())
                 break;
             textPos += start + length;
             text = mid(changedText, textPos);
@@ -403,101 +306,47 @@ bool keepFinding(std::u16string_view text, std::size_t position, int options)
 
 // ---- the regular expression
 
-struct ReplacerRegex::Impl {
-    std::wregex re;
-};
-
-ReplacerRegex::ReplacerRegex(std::unique_ptr<Impl> impl) : m_impl(std::move(impl)) {}
-ReplacerRegex::ReplacerRegex(ReplacerRegex &&) noexcept = default;
-ReplacerRegex &ReplacerRegex::operator=(ReplacerRegex &&) noexcept = default;
-ReplacerRegex::~ReplacerRegex() = default;
-
-std::optional<ReplacerRegex> ReplacerRegex::compile(std::u16string_view pattern, bool matchCase,
-                                                    const ReplacerCase &cases)
+core::LegacyRegex compileReplacerRule(const ReplacerRule &rule)
 {
-    auto impl = std::make_unique<Impl>();
-    auto flags = std::regex_constants::ECMAScript;
-    if (!matchCase)
-        flags |= std::regex_constants::icase;
-    try {
-        impl->re.imbue(std::locale(std::locale::classic(), new LegacyCtype(cases)));
-        impl->re.assign(convertWordBoundaries(pattern), flags);
-    } catch (const std::regex_error &) {
+    int flags = core::LegacyRegex::Advanced;
+    if (!(rule.options & kReplacerMatchCase))
+        flags |= core::LegacyRegex::IgnoreCase;
+    return core::LegacyRegex(core::toUtf16(rule.find), flags);
+}
+
+std::vector<ReplacerRegexError> replacerRegexErrors(const std::vector<ReplacerRule> &rules, bool checkedOnly)
+{
+    std::vector<ReplacerRegexError> out;
+    if (checkedOnly && std::ranges::none_of(rules, &ReplacerRule::checked))
+        return out; // SeekOnTab / ReplaceOnTab return before compiling anything
+    for (const auto &rule : rules) {
+        if (checkedOnly && !rule.checked)
+            continue;
+        if (const auto re = compileReplacerRule(rule); !re.isValid())
+            out.push_back({re.converted(), re.errorMessage()});
+    }
+    return out;
+}
+
+std::optional<std::pair<std::size_t, std::size_t>> replacerSearch(const core::LegacyRegex &re, std::u16string_view text)
+{
+    if (!re.matches(text))
         return std::nullopt;
-    }
-    return ReplacerRegex(std::move(impl));
+    return re.match(0);
 }
 
-std::optional<std::pair<std::size_t, std::size_t>> ReplacerRegex::search(std::u16string_view text) const
+std::pair<std::u16string, int> replacerReplace(const core::LegacyRegex &re, std::u16string_view text,
+                                               std::u16string_view replacement)
 {
-    const std::wstring w = wide(text);
-    std::wcmatch m;
-    try {
-        if (!std::regex_search(w.data(), w.data() + w.size(), m, m_impl->re))
-            return std::nullopt;
-    } catch (const std::regex_error &) {
-        return std::nullopt; // legacy: "Failed to find match", no match
-    }
-    return std::pair(static_cast<std::size_t>(m.position(0)), static_cast<std::size_t>(m.length(0)));
-}
-
-std::pair<std::u16string, int> ReplacerRegex::replace(std::u16string_view text, std::u16string_view replacement) const
-{
-    const std::wstring w = wide(text);
-    std::u16string result;
-    std::size_t matchStart = 0;
-    int count = 0;
-    while (true) {
-        std::wcmatch m;
-        const auto flags = count ? std::regex_constants::match_not_bol : std::regex_constants::match_default;
-        try {
-            if (!std::regex_search(w.data() + matchStart, w.data() + w.size(), m, m_impl->re, flags))
-                break;
-        } catch (const std::regex_error &) {
-            break;
-        }
-        std::u16string textNew;
-        for (std::size_t i = 0; i < replacement.size(); ++i) {
-            std::optional<std::size_t> index;
-            if (replacement[i] == u'\\') {
-                if (++i == replacement.size()) {
-                    textNew += u'\\'; // a trailing backslash stays
-                    break;
-                }
-                if (isAsciiDigit(replacement[i])) {
-                    // wxStrtoul: every digit; an index past the groups is eaten.
-                    std::size_t n = 0;
-                    for (; i < replacement.size() && isAsciiDigit(replacement[i]); ++i)
-                        n = n > (SIZE_MAX - 9) / 10 ? SIZE_MAX : n * 10 + (replacement[i] - u'0');
-                    --i;
-                    index = n;
-                }
-            } else if (replacement[i] == u'&') {
-                index = 0;
-            }
-            if (!index) {
-                textNew += replacement[i];
-            } else if (*index < m.size() && m[*index].matched) {
-                const auto at = matchStart + static_cast<std::size_t>(m.position(*index));
-                textNew += text.substr(at, static_cast<std::size_t>(m.length(*index)));
-            }
-        }
-        result += text.substr(matchStart, static_cast<std::size_t>(m.position(0)));
-        result += textNew;
-        ++count;
-        matchStart += static_cast<std::size_t>(m.position(0) + m.length(0));
-        // An empty match is found again at the same place forever in legacy.
-        if (m.length(0) == 0)
-            break;
-    }
-    result += text.substr(matchStart);
-    return {result, count};
+    std::u16string out(text);
+    const int count = re.replace(out, replacement);
+    return {std::move(out), std::max(count, 0)};
 }
 
 // ---- find and replace in a Document
 
 std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vector<ReplacerRule> &rules,
-                                     const ReplacerScope &scope, const ReplacerCase &cases)
+                                     const ReplacerScope &scope)
 {
     // SeekOnTab numbers each find with checkedRules[k], k counting only the
     // rules that compile: after an invalid checked rule the numbers shift.
@@ -505,11 +354,11 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
     for (std::size_t i = 0; i < rules.size(); ++i)
         if (rules[i].checked)
             checked.push_back(static_cast<int>(i));
-    std::vector<std::pair<ReplacerRegex, int>> compiled; // {expression, options}
+    std::vector<std::pair<core::LegacyRegex, int>> compiled; // {expression, options}
     for (const int i : checked) {
         const auto &rule = rules[static_cast<std::size_t>(i)];
-        if (auto re = ReplacerRegex::compile(core::toUtf16(rule.find), rule.options & kReplacerMatchCase, cases))
-            compiled.emplace_back(std::move(*re), rule.options);
+        if (auto re = compileReplacerRule(rule); re.isValid())
+            compiled.emplace_back(std::move(re), rule.options);
     }
     std::vector<ReplacerFind> out;
     if (checked.empty())
@@ -531,13 +380,15 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
                 const auto &[re, options] = compiled[k];
                 std::size_t textPos = 0;
                 while (textPos <= lineText.size()) {
-                    const auto match = re.search(u16sv(lineText).substr(textPos));
+                    const auto match = replacerSearch(re, u16sv(lineText).substr(textPos));
                     if (!match)
                         break;
                     const std::size_t length = std::max<std::size_t>(match->second, 1);
                     if (options < 16 || keepFinding(lineText, match->first + textPos, options))
                         out.push_back({row, shown + 1, lineText, match->first + textPos, length, checked[k]});
-                    // Past the end legacy searches "" again (forever if that matches).
+                    // R3-hang-crash-loss: a find at the end of the text is the
+                    // last (legacy searched "" past the end forever when an
+                    // expression matched it).
                     textPos += match->first + length;
                 }
             }
@@ -550,7 +401,7 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
 std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const std::vector<ReplacerRule> &rules,
                                                   const ReplacerScope &scope, const ReplacerCase &cases)
 {
-    const auto compiled = compileChecked(rules, cases);
+    const auto compiled = compileChecked(rules);
     if (compiled.empty())
         return false;
     const auto lines = session.document().lines();
@@ -588,10 +439,10 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
 {
     // ReplaceChecked compiles every rule that compiles and indexes them by
     // the find's rule number: after an invalid rule the expressions shift.
-    std::vector<ReplacerRegex> compiled;
+    std::vector<core::LegacyRegex> compiled;
     for (const auto &rule : rules)
-        if (auto re = ReplacerRegex::compile(core::toUtf16(rule.find), rule.options & kReplacerMatchCase, cases))
-            compiled.push_back(std::move(*re));
+        if (auto re = compileReplacerRule(rule); re.isValid())
+            compiled.push_back(std::move(re));
 
     // Consecutive finds on one row form a block; rows past the end are skipped.
     const auto lines = session.document().lines();
@@ -632,9 +483,12 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                         find.rule >= 0 && static_cast<std::size_t>(find.rule) < rules.size() ? &rules[static_cast<std::size_t>(find.rule)]
                                                                                               : nullptr;
                     const std::u16string found = mid(lineText, find.position, find.length);
-                    // Legacy reads past its expressions here (undefined); none replaces.
-                    const ReplacerRegex *re = static_cast<std::size_t>(find.rule) < compiled.size() ? &compiled[static_cast<std::size_t>(find.rule)] : nullptr;
-                    const auto replaced = re && rule ? re->replace(found, core::toUtf16(rule->replace))
+                    // R3-hang-crash-loss: legacy read past its expressions (and
+                    // rules) here when the number has none; bounds-checked, such
+                    // a find is not replaced and is logged.
+                    const core::LegacyRegex *re =
+                        find.rule >= 0 && static_cast<std::size_t>(find.rule) < compiled.size() ? &compiled[static_cast<std::size_t>(find.rule)] : nullptr;
+                    const auto replaced = re && rule ? replacerReplace(*re, found, core::toUtf16(rule->replace))
                                                      : std::pair<std::u16string, int>{found, 0};
                     if (replaced.second > 0) {
                         lineText.replace(std::min(find.position, lineText.size()), find.length,

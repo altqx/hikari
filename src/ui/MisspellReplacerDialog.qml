@@ -14,6 +14,9 @@ Dialog {
     required property var app
     title: qsTr("Multireplacer")
     modal: false
+    // Modeless like the legacy window: a click elsewhere (the other dialog,
+    // the editor, the grid) does not close it.
+    closePolicy: Popup.CloseOnEscape
     property var rules: []
     property int selectedRule: -1
 
@@ -224,8 +227,11 @@ Dialog {
         parent: Overlay.overlay
         title: qsTr("Search results")
         modal: false
-        x: (parent.width - width) / 2
-        y: (parent.height - height) / 2
+        closePolicy: Popup.CloseOnEscape
+        // A separate window in legacy: placed at the lower left so the
+        // Multireplacer's buttons stay reachable beside it.
+        x: 8
+        y: Math.max(8, parent.height - height - 8)
         property var rows: []
         property var checks: []
         property var folded: []
@@ -310,6 +316,7 @@ Dialog {
                             onToggled: results.toggleRow(resultRow.index)
                         }
                         Label {
+                            objectName: "misspellResultHeader" + resultRow.index
                             visible: resultRow.modelData.header
                             text: resultRow.modelData.header ? resultRow.modelData.text : ""
                             font.bold: true
@@ -342,6 +349,7 @@ Dialog {
                         }
                     }
                     MouseArea {
+                        objectName: "misspellResultRow" + resultRow.index
                         anchors.fill: parent
                         anchors.leftMargin: 40
                         enabled: !resultRow.modelData.header

@@ -1721,6 +1721,15 @@ application::ReplacerRule replacerRule(const QVariantMap &m)
             utf8(m.value(QStringLiteral("replace")).toString()), m.value(QStringLiteral("options")).toInt(), false};
 }
 
+// wxRegEx::Compile's wxLogError for each rule that does not compile, at the
+// points MisspellReplacer compiles its rules.
+void logRegexErrors(ui::LogController &log, const std::vector<application::ReplacerRule> &rules, bool checkedOnly)
+{
+    for (const auto &error : application::replacerRegexErrors(rules, checkedOnly))
+        log.log(QCoreApplication::translate("hikari::app::Application", "Invalid regular expression '%1': %2")
+                    .arg(fromUtf16(error.expression), fromUtf16(error.message)));
+}
+
 application::ReplacerScope replacerScope(const QVariantMap &m)
 {
     using L = application::ReplacerScope::Lines;
@@ -1739,6 +1748,14 @@ std::vector<application::ReplacerRule> &Application::misspellRuleList()
             QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
             if (file.open(QIODevice::ReadOnly))
                 bytes = file.readAll();
+        }
+        // OpenWrite::FileOpen: UTF-8 (with or without a BOM), else the system
+        // code page (wxConvLocal; CheckCharSet's guess is not ported).
+        if (!bytes.startsWith("\xEF\xBB\xBF")) {
+            QStringDecoder utf8(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
+            const QString decoded = utf8.decode(bytes);
+            if (utf8.hasError())
+                bytes = QString::fromLocal8Bit(bytes).toUtf8();
         }
         auto read = application::readReplacerRules(
             std::u8string_view(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size())));
@@ -1825,7 +1842,8 @@ QVariantList Application::findMisspells(const QVariantMap &scope, bool allTabs)
         auto *session = m_files->session(id);
         if (!session || (m_workspace.reference() && *m_workspace.reference() == id))
             continue;
-        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase());
+        logRegexErrors(*m_log, misspellRuleList(), true); // SeekOnTab compiles per tab
+        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope));
         if (finds.empty())
             continue;
         // The header is the tab's SubsPath ("" for an Untitled Document).
@@ -1854,16 +1872,20 @@ void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
     else if (const auto target = m_workspace.editingTarget())
         documents.push_back(*target);
     for (const auto id : documents)
-        if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id))
+        if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id)) {
+            logRegexErrors(*m_log, misspellRuleList(), true); // ReplaceOnTab compiles per tab
             (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase());
+        }
     m_editor->reloadFromSession();
     refreshViews();
 }
 
 void Application::replaceMisspellFinds(const QVariantList &chosen)
 {
-    // ReplaceChecked: the checked finds in list order, one run per Document;
+    // ReplaceChecked: every rule is compiled first (and logged when it does
+    // not compile); the checked finds in list order, one run per Document;
     // finds in a Document no longer open are skipped.
+    logRegexErrors(*m_log, misspellRuleList(), false);
     std::vector<std::size_t> indices;
     for (const auto &v : chosen)
         if (const int i = v.toInt(); i >= 0 && static_cast<std::size_t>(i) < m_misspellFinds.size())
@@ -1907,10 +1929,14 @@ void Application::showMisspellFind(int index)
         m_workspace.setEditingTarget(document);
         refreshViews();
     }
-    const auto line = session->document().lines()[find.row]->id;
+    const auto &record = *session->document().lines()[find.row];
+    const auto line = record.id;
     if (!applySelection(application::Selection{line, {line}, line, {}}))
         return;
-    m_editor->selectInField(static_cast<int>(find.position), static_cast<int>(find.position + find.length));
+    // GetEditor(): the Original field in translation mode when the Line has
+    // no translation (the text that was searched).
+    const int role = m_editor->translationMode() && !record.translation.empty() ? 1 : 0;
+    m_editor->selectInField(static_cast<int>(find.position), static_cast<int>(find.position + find.length), role);
 }
 
 void Application::checkResolution()

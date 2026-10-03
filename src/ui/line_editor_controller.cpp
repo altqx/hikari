@@ -1177,9 +1177,10 @@ void LineEditorController::reportFieldSelection(int role, int start, int end)
         m_fieldSelection[role] = {std::min(start, end), std::max(start, end)};
 }
 
-void LineEditorController::selectInField(int start, int end)
+void LineEditorController::selectInField(int start, int end, int role)
 {
-    const int role = translationMode() ? 1 : 0;
+    if (role != 0 && role != 1)
+        role = translationMode() ? 1 : 0;
     const int size = static_cast<int>(m_shown[role].size());
     m_selectionStart = std::clamp(start, 0, size);
     m_selectionEnd = std::clamp(end, 0, size);

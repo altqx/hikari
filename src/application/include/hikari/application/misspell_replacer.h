@@ -7,14 +7,12 @@
 // in, the Lines of one Document; each replacing run is one "Fixing minor
 // errors" step.
 //
-// Legacy compiled the rules with wxRegEx(wxRE_ADVANCED), which wxWidgets 3.3
-// runs on PCRE2 (UTF, DOTALL, no UCP) after turning \m \M \y \Y into word
-// boundaries. Here they run as ECMAScript (std::wregex, the approximation
-// select_lines.cpp uses) after the same word-boundary translation, with
-// ASCII-only \w \d \s and word boundaries as PCRE2 without UCP has them, and
-// case folding through ReplacerCase (PCRE2 folds Unicode case in UTF mode).
+// Legacy compiled the rules with wxRegEx(wxRE_ADVANCED [| wxRE_ICASE without
+// Match case]), which wxWidgets 3.3.3 runs on PCRE2; here they compile with
+// core::LegacyRegex and the same flags (R1-pcre2).
 
 #include "hikari/application/edit_session.h"
+#include "hikari/core/legacy_regex.h"
 
 #include <expected>
 #include <functional>
@@ -76,30 +74,29 @@ std::u16string moveCase(std::u16string_view original, std::u16string result, int
 // before `position` with no '}' between them means inside tags).
 bool keepFinding(std::u16string_view text, std::size_t position, int options);
 
-// One rule's find phrase compiled as legacy compiled it (see the top note).
-class ReplacerRegex {
-public:
-    // std::nullopt when the phrase is not a valid expression (legacy skips the rule).
-    static std::optional<ReplacerRegex> compile(std::u16string_view pattern, bool matchCase,
-                                                const ReplacerCase &cases = {});
-    // wxRegEx::Matches on `text` alone (its start is the start of a string),
-    // then GetMatch: {position, length}.
-    std::optional<std::pair<std::size_t, std::size_t>> search(std::u16string_view text) const;
-    // wxRegEx::Replace(text, replacement): every match in `text`, "^" only
-    // at the first; \N back references (several digits) and & for the whole
-    // match, another escaped character stands for itself. Returns the text
-    // and how many matches were replaced.
-    std::pair<std::u16string, int> replace(std::u16string_view text, std::u16string_view replacement) const;
+// The rule's find phrase as MisspellReplacer compiles it: wxRegEx(find,
+// wxRE_ADVANCED, plus wxRE_ICASE without "Match case") (R1-pcre2).
+core::LegacyRegex compileReplacerRule(const ReplacerRule &rule);
+// wxRegEx::Matches on `text` alone (its start is the start of a string),
+// then GetMatch: {position, length}.
+std::optional<std::pair<std::size_t, std::size_t>> replacerSearch(const core::LegacyRegex &re, std::u16string_view text);
+// wxRegEx::Replace(&text, replacement) on a find: the text and how many
+// matches were replaced.
+std::pair<std::u16string, int> replacerReplace(const core::LegacyRegex &re, std::u16string_view text,
+                                               std::u16string_view replacement);
 
-    ReplacerRegex(ReplacerRegex &&) noexcept;
-    ReplacerRegex &operator=(ReplacerRegex &&) noexcept;
-    ~ReplacerRegex();
-
-private:
-    struct Impl;
-    explicit ReplacerRegex(std::unique_ptr<Impl> impl);
-    std::unique_ptr<Impl> m_impl;
+// What wxRegEx::Compile logs for a find phrase that does not compile:
+// "Invalid regular expression '%s': %s" with the converted expression and
+// PCRE2's message.
+struct ReplacerRegexError {
+    std::u16string expression;
+    std::u16string message;
+    bool operator==(const ReplacerRegexError &) const = default;
 };
+// The errors in the order legacy compiles the rules: the checked ones when
+// `checkedOnly` (Find and Replace all, which compile nothing when no rule is
+// checked), every rule otherwise (the results' Replace).
+std::vector<ReplacerRegexError> replacerRegexErrors(const std::vector<ReplacerRule> &rules, bool checkedOnly);
 
 // The "Which lines" choice and the styles text beside it.
 struct ReplacerScope {
@@ -120,12 +117,14 @@ struct ReplacerFind {
 };
 
 // SeekOnTab: the checked rules over the shown Lines in scope, rule by rule
-// within each Line, in Document order.
+// within each Line, in Document order. "From the selected line" takes every
+// shown Line from the first selected one (S57-from-selected).
 std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vector<ReplacerRule> &rules,
-                                     const ReplacerScope &scope, const ReplacerCase &cases = {});
+                                     const ReplacerScope &scope);
 
 // ReplaceOnTab: the checked rules replace in the shown Lines in scope, as one
-// "Fixing minor errors" step. False when no Line was changed (no step).
+// "Fixing minor errors" step; each rule searches the text the previous rule
+// left (S57-rule-offsets). False when no Line was changed (no step).
 std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const std::vector<ReplacerRule> &rules,
                                                   const ReplacerScope &scope, const ReplacerCase &cases = {});
 
