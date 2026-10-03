@@ -171,7 +171,12 @@ bool EditSession::commitDraft()
     return commit(false);
 }
 
-bool EditSession::commit(bool leaving)
+bool EditSession::commitDraftAs(std::string name)
+{
+    return commit(false, std::move(name));
+}
+
+bool EditSession::commit(bool leaving, std::string name)
 {
     if (!m_draft)
         return false;
@@ -204,7 +209,7 @@ bool EditSession::commit(bool leaving)
         line.marginRight.value = record->marginRight.value;
         line.marginVertical.value = record->marginVertical.value;
     });
-    pushState(std::move(next), "Edit Line");
+    pushState(std::move(next), std::move(name));
     return true;
 }
 

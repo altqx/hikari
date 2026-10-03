@@ -44,3 +44,6 @@ hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_include_directories(hikari_application_spell_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

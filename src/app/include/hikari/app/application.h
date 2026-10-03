@@ -13,6 +13,7 @@
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/recovery_store.h"
+#include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -57,6 +58,10 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
+    // F3: the spelling options or the dictionary changed (marks are stale),
+    // and legacy's message boxes when the spell checker cannot start.
+    void spellingChanged();
+    void spellingNotice(const QString &message);
 
 public:
     struct Options {
@@ -79,6 +84,12 @@ public:
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
         // file, or a temporary directory without one (tests).
         QString catalogDir;
+        // F3: the spelling backend (legacy Hunspell). None ships yet, so
+        // spell checking reports that it could not start; tests pass a fake.
+        application::SpellingBackendLoader spellingBackend;
+        // The "Dictionary" folder; empty: beside the settings file (none
+        // without one, and then no spell checker).
+        QString dictionaryDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -262,6 +273,49 @@ public:
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The "+" button: the chosen styles as the legacy anchored pattern.
     Q_INVOKABLE QString selectStylesPattern(const QStringList &styles) const;
+    // F3: spelling. SPELLCHECKER_ON, DICTIONARY_LANGUAGE and
+    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK, kept in the INI file (Spelling/*).
+    // Turning spell checking on does not start a spell checker created while
+    // it was off (legacy SpellChecker::Get); choosing a language restarts it.
+    Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
+    Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage WRITE setDictionaryLanguage NOTIFY spellingChanged)
+    Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
+    bool spellingOn() const { return m_spellingOn; }
+    void setSpellingOn(bool on);
+    QString dictionaryLanguage() const { return m_dictionaryLanguage; }
+    void setDictionaryLanguage(const QString &symbol);
+    bool suggestionsOnDoubleClick() const { return m_suggestionsOnDoubleClick; }
+    void setSuggestionsOnDoubleClick(bool on);
+    // The "Dictionary" folder's dictionaries: {symbol, name} (legacy AvailableDics, FindLanguage).
+    Q_INVOKABLE QVariantList dictionaries() const;
+    Q_INVOKABLE QString dictionaryName(const QString &symbol) const;
+    // The Line editor's spell-checked field: 1 (Translated) in translation
+    // mode, else 0. Its marks as flat [start, end) pairs of the field's text
+    // (none while spelling is off); the misspelling at a field position
+    // {word, start, end, suggestions} (empty when none); a suggestion
+    // replacing it ("Correcting spelling errors in the text field"); and
+    // "Add word to dictionary".
+    Q_INVOKABLE int spellingRole() const;
+    Q_INVOKABLE QVariantList editorSpellingMarks(int role);
+    Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
+    Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
+    Q_INVOKABLE bool addEditorWord(const QString &word);
+    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker window. Each call takes the
+    // window's {ignoreComments, ignoreUpperCase} and returns its state
+    // {found, word, suggestions, replacement, changed, problem}; found false
+    // is "No spelling errors were found".
+    Q_INVOKABLE QVariantMap openSpellChecker(const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerActivated(const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerReplace(const QString &replacement, const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
+                                                   const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerIgnore(const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerIgnoreAll(const QString &word, const QVariantMap &options);
+    Q_INVOKABLE QVariantMap spellCheckerAddWord(const QString &word, const QVariantMap &options);
+    Q_INVOKABLE void closeSpellChecker();
+    // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
+    Q_INVOKABLE QStringList addedDictionaryWords() const;
+    Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -409,6 +463,25 @@ private:
     // The last column choices (legacy default: none).
     int m_copyColumns = 0;
     int m_pasteColumns = 0;
+    // F3: spelling. The checker exists when there is a Dictionary folder;
+    // m_spellingStarted is legacy's SpellChecker::SC (created on first use,
+    // initialized then only when spelling is on; Destroy clears it).
+    application::SpellChecker *spellChecker();
+    void restartSpellChecker();
+    void saveSpellingOptions();
+    void spellingRefresh();
+    std::optional<std::u16string> editorRaw(int role) const;
+    QVariantMap spellCheckState(bool changed, const QString &problem = {});
+    void showSpellCheckWord();
+    std::unique_ptr<application::SpellChecker> m_spellChecker;
+    bool m_spellingStarted = false;
+    application::SpellingText m_spellingText;
+    bool m_spellingOn = true;
+    QString m_dictionaryLanguage = QStringLiteral("en_US");
+    bool m_suggestionsOnDoubleClick = false;
+    QString m_dictionaryDir;
+    std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
+    std::optional<application::DocumentId> m_spellWalkDocument;
 };
 
 } // namespace hikari::app

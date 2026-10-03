@@ -40,3 +40,4 @@ hikari_add_gtest(hikari_core_editor_font_colour_tests SOURCES editor_font_colour
 hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_conversion_tests SOURCES conversion_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_legacy_regex_tests SOURCES legacy_regex_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES hikari_core LABELS core)

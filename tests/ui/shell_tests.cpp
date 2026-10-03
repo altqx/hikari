@@ -4,11 +4,14 @@
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "line_grid.h"
+#include "line_table_model.h"
+#include "spelling/fake_spelling.h"
 
 #include <QAccessible>
 #include <QClipboard>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QSettings>
 #include <QTemporaryDir>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -1227,6 +1230,163 @@ private slots:
         QCOMPARE(QGuiApplication::clipboard()->text(),
                  QStringLiteral("Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\r\n"));
         application->editor().discard();
+    }
+
+private:
+    // F3: a session with a Dictionary folder and the fake spelling backend
+    // (Hunspell is not a dependency yet), or none.
+    void restartWithSpelling(const QString &home, bool backend)
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.settingsFile = home + QStringLiteral("/hikari.ini");
+        if (backend)
+            options.spellingBackend = fakes::FakeSpelling::loader();
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+    static void writeDictionary(const QString &home)
+    {
+        QDir().mkpath(home + QStringLiteral("/Dictionary"));
+        QFile aff(home + QStringLiteral("/Dictionary/en_US.aff"));
+        QVERIFY(aff.open(QIODevice::WriteOnly));
+        QFile dic(home + QStringLiteral("/Dictionary/en_US.dic"));
+        QVERIFY(dic.open(QIODevice::WriteOnly));
+        dic.write("5\nHello\nworld\nThe\ntext\ngood\n");
+    }
+    QVariantList appliedMarks(const char *field) const
+    {
+        QVariantList applied;
+        if (auto *marks = item<QObject>(field))
+            QMetaObject::invokeMethod(marks, "appliedRanges", Q_RETURN_ARG(QVariantList, applied));
+        return applied;
+    }
+
+private slots:
+    // F3: the Grid's and the editor's marks, Subtitles > Check spelling
+    // (Replace as one step, then the next word on another Line, then "No
+    // spelling errors were found"), a suggestion from the editor and Add word.
+    void spellCheckerWindowAndEditorMarks()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Teh {\\i1}text\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,good}\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *grid = application->shell().lines();
+        QCOMPARE(grid->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{6, 10}));
+        QCOMPARE(grid->index(1, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{0, 2}));
+        QCOMPARE(grid->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(), (QVariantList{4, 4}));
+        // The editor shows Line 1 with the misspelling marked in its text.
+        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), (QVariantList{6, 11}));
+
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
+        QVERIFY(dialog);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("spellCheckerDialog", "spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+        QCOMPARE(dialogItem("spellCheckerDialog", "spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        QCOMPARE(application->editor().selectionStart(), 6);
+        QCOMPARE(application->editor().selectionEnd(), 11);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellReplace"), "click"));
+        QCOMPARE(session->history().back().name, std::string("Correcting spelling errors"));
+        auto text = [&](std::size_t row) {
+            const auto &t = session->document().lines()[row]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QCOMPARE(text(0), QStringLiteral("Hello world"));
+        // The next word is on the second Line, which becomes active and shows it selected.
+        QCOMPARE(dialogItem("spellCheckerDialog", "spellMisspell")->property("text").toString(), QStringLiteral("Teh"));
+        QCOMPARE(session->selection().active, std::optional(session->document().lines()[1]->id));
+        QCOMPARE(application->editor().text(), QStringLiteral("Teh text"));
+        QCOMPARE(application->editor().selectionStart(), 0);
+        QCOMPARE(application->editor().selectionEnd(), 3);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellIgnore"), "click"));
+        auto *message = root->findChild<QObject *>(QStringLiteral("spellMessage"));
+        QTRY_VERIFY(message->property("visible").toBool());
+        QCOMPARE(message->property("text").toString(), QStringLiteral("No spelling errors were found"));
+        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // The editor (tags hidden): "Teh" marked in the shown text; a
+        // suggestion replaces it as one step.
+        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), (QVariantList{0, 3}));
+        const QVariantMap found = application->editorMisspellAt(0, 1);
+        QCOMPARE(found.value(QStringLiteral("word")).toString(), QStringLiteral("Teh"));
+        QCOMPARE(found.value(QStringLiteral("suggestions")).toStringList().first(), QStringLiteral("The"));
+        QVERIFY(application->replaceEditorMisspell(0, 1, QStringLiteral("The")));
+        QCOMPARE(session->history().back().name, std::string("Correcting spelling errors in the text field"));
+        QCOMPARE(text(1), QStringLiteral("The {\\i1}text"));
+        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), QVariantList{});
+        // Add word: the user dictionary beside the dictionaries.
+        QVERIFY(!application->addEditorWord(QStringLiteral("42")));
+        QVERIFY(application->addEditorWord(QStringLiteral("Hikari")));
+        QFile user(home.filePath(QStringLiteral("Dictionary/UserDic.udic")));
+        QVERIFY(user.open(QIODevice::ReadOnly));
+        QCOMPARE(user.readAll(), QByteArray("\xEF\xBB\xBFHikari"));
+        QCOMPARE(application->addedDictionaryWords(), QStringList{QStringLiteral("Hikari")});
+        // Spelling off: no editor marks; the Grid keeps bracket errors only.
+        application->setSpellingOn(false);
+        QTRY_COMPARE(appliedMarks("lineTextSpellMarks"), QVariantList{});
+        QCOMPARE(application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
+                 QVariantList{});
+        QCOMPARE(application->shell().lines()->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
+                 (QVariantList{4, 4}));
+        QCOMPARE(QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat)
+                     .value(QStringLiteral("Spelling/On")).toBool(),
+                 false);
+        application->editor().discard();
+    }
+
+    // F3: legacy SpellChecker::Get starts the checker once: with spelling off
+    // at that time, turning it on checks nothing until the language is chosen
+    // again; without dictionaries spelling turns itself off and says so.
+    void spellingStartsOnceAndReportsMissingDictionaries()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).setValue(QStringLiteral("Spelling/On"), false);
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling-off.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
+        QVERIFY(application->openFile(path));
+        auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
+        QCOMPARE(marks(), QVariantList{});
+        application->setSpellingOn(true);
+        QCOMPARE(marks(), QVariantList{});
+        QCOMPARE(application->dictionaries(),
+                 (QVariantList{QVariantMap{{QStringLiteral("symbol"), QStringLiteral("en_US")},
+                                           {QStringLiteral("name"), QStringLiteral("English")}}}));
+        application->setDictionaryLanguage(QStringLiteral("en_US"));
+        QCOMPARE(marks(), (QVariantList{0, 4}));
+
+        QTemporaryDir empty;
+        QVERIFY(empty.isValid());
+        restartWithSpelling(empty.path(), true);
+        QVERIFY(application->openFile(path));
+        auto *notice = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"));
+        QTRY_VERIFY(notice->property("visible").toBool());
+        QCOMPARE(notice->property("text").toString(),
+                 QStringLiteral("No dictionary files were found in the \"%1\\Dictionary\" folder.\nSpell checking will be disabled")
+                     .arg(QDir::toNativeSeparators(QFileInfo(empty.path()).absoluteFilePath())));
+        QVERIFY(!application->spellingOn());
+        QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
     }
 
     // F5: Ctrl+I opens the Timing tool; Shift moves the Lines; start-only asks first.

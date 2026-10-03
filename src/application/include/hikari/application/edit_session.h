@@ -116,6 +116,9 @@ public:
     }
     std::optional<DraftProblem> draftProblem() const;
     bool commitDraft(); // one history step; false when there is no draft or it is blocked
+    // The same step under another name (F3: legacy EditBox::Send with an
+    // edition type, such as "Correcting spelling errors in the text field").
+    bool commitDraftAs(std::string name);
     void discardDraft();
 
     std::expected<void, CommandRefusal> run(const Command &command);
@@ -172,7 +175,7 @@ private:
     };
 
     void pushState(core::Document document, std::string name);
-    bool commit(bool leaving);
+    bool commit(bool leaving, std::string name = "Edit Line");
 
     std::deque<State> m_states;
     std::size_t m_cursor = 0;

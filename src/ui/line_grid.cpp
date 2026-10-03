@@ -492,6 +492,29 @@ void LineGrid::drawBlockMark(QPainter *painter, double borderY, int mark, double
     painter->restore();
 }
 
+// F3: legacy TextData::DrawMisspells: behind each error range the width of
+// its text (trailing spaces trimmed), from the width of the text before it;
+// the full row height, in GRID_SPELLCHECKER's colour (dark default).
+void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const
+{
+    if (marks.size() < 2)
+        return;
+    text.replace(QLatin1Char('\t'), QLatin1Char(' '));
+    const QFontMetricsF metrics(painter->font());
+    painter->save();
+    painter->setClipRect(cell, Qt::IntersectClip);
+    for (qsizetype s = 0; s + 1 < marks.size(); s += 2) {
+        const int start = marks[s].toInt(), end = marks[s + 1].toInt();
+        QString error = text.mid(start, end - start + 1);
+        while (!error.isEmpty() && error.back().isSpace() && error.back().unicode() < 127)
+            error.chop(1);
+        const double before = start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0;
+        painter->fillRect(QRectF(cell.x() + before, cell.y(), metrics.horizontalAdvance(error), cell.height()),
+                          QColor(0x94, 0x00, 0x00));
+    }
+    painter->restore();
+}
+
 void LineGrid::paint(QPainter *painter)
 {
     const QRectF bounds = boundingRect();
@@ -548,6 +571,9 @@ void LineGrid::paint(QPainter *painter)
                     painter->drawLine(QPointF(box.center().x(), box.top() + 2), QPointF(box.center().x(), box.bottom() - 2));
                 text.clear();
             }
+            if (mc == LineTableModel::TextColumn)
+                drawSpellMarks(painter, QRectF(x + 4, top, widths[c] - 8, rh), text,
+                               idx.data(LineTableModel::SpellMarksRole).toList());
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];

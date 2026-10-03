@@ -10,6 +10,10 @@
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
 #include "hikari/application/resample.h"
+#include "hikari/application/spell_checker.h"
+#include "hikari/core/spelling.h"
+#include "hikari/core/text_projection.h"
+#include "spelling_text.h"
 #include "hikari/core/conversion.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
@@ -210,6 +214,26 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
+    // F3: spelling options, the Dictionary folder and the Grid's marks.
+    m_spellingText = ui::qtSpellingText();
+    m_dictionaryDir = options.dictionaryDir;
+    if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
+        m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    if (!m_settingsFile.isEmpty()) {
+        const QSettings ini(m_settingsFile, QSettings::IniFormat);
+        m_spellingOn = ini.value(QStringLiteral("Spelling/On"), true).toBool();
+        m_dictionaryLanguage = ini.value(QStringLiteral("Spelling/Language"), QStringLiteral("en_US")).toString();
+        m_suggestionsOnDoubleClick = ini.value(QStringLiteral("Spelling/SuggestionsOnDoubleClick"), false).toBool();
+    }
+    if (!m_dictionaryDir.isEmpty())
+        m_spellChecker = std::make_unique<application::SpellChecker>(
+            std::filesystem::path(m_dictionaryDir.toStdU16String()), options.spellingBackend);
+    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell) {
+        application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
+        return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
+                                                  spell && m_spellingOn && checker ? checker->wordCheck()
+                                                                                   : core::legacy::WordCheck{});
+    });
     // GRID_HIDE_COLUMNS (G7).
     if (!m_settingsFile.isEmpty())
         m_shell->setHiddenColumns(QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns"), 0).toInt());
@@ -387,6 +411,9 @@ void Application::reportGroupBreak()
 
 void Application::refreshViews()
 {
+    // F3: legacy creates the spell checker when the Grid first paints a Line.
+    if (m_workspace.editingTarget())
+        spellChecker();
     reportGroupBreak();
     scheduleAutosave();
     const auto target = m_workspace.editingTarget();
@@ -1689,6 +1716,413 @@ QString Application::selectStylesPattern(const QStringList &styles) const
     for (const QString &s : styles)
         names.push_back(utf8(s));
     return fromUtf8(application::stylesPattern(names));
+}
+
+// F3: spelling.
+
+namespace {
+
+QString qstr(std::u16string_view s)
+{
+    return QString::fromUtf16(s.data(), static_cast<qsizetype>(s.size()));
+}
+
+// A raw inclusive [start, end] of the editor's text in its hidden-tag
+// projection, as [start, end); nothing when it lies in hidden tags.
+std::optional<std::pair<int, int>> displayRange(const core::Projection &projection, int start, int end)
+{
+    auto locate = [&](int raw, bool after) {
+        for (const auto &span : projection.spans) {
+            if (raw < static_cast<int>(span.rawStart) || raw >= static_cast<int>(span.rawEnd))
+                continue;
+            if (span.kind == core::SpanKind::Text)
+                return static_cast<int>(span.displayStart) + raw - static_cast<int>(span.rawStart) + (after ? 1 : 0);
+            if (span.kind == core::SpanKind::HiddenOverride)
+                return static_cast<int>(span.displayStart);
+            return static_cast<int>(after ? span.displayEnd : span.displayStart);
+        }
+        return static_cast<int>(projection.text.size());
+    };
+    const int from = locate(start, false), to = locate(end, true);
+    if (to <= from)
+        return std::nullopt;
+    return std::pair(from, to);
+}
+
+application::SpellCheckWalk::Options walkOptions(const QVariantMap &options)
+{
+    return {options.value(QStringLiteral("ignoreComments")).toBool(),
+            options.value(QStringLiteral("ignoreUpperCase")).toBool()};
+}
+
+} // namespace
+
+application::SpellChecker *Application::spellChecker()
+{
+    if (!m_spellChecker)
+        return nullptr;
+    if (!m_spellingStarted) {
+        m_spellingStarted = true;
+        if (m_spellingOn) {
+            const auto status = m_spellChecker->initialize(m_dictionaryLanguage.toStdU16String());
+            if (status != application::SpellChecker::Status::Ready) {
+                // Legacy turns SPELLCHECKER_ON off and says why.
+                m_spellingOn = false;
+                saveSpellingOptions();
+                const QString message =
+                    status == application::SpellChecker::Status::NoDictionary
+                        ? tr("No dictionary files were found in the \"%1\\Dictionary\" folder.\nSpell checking will be disabled")
+                              .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absolutePath()))
+                        : tr("Failed to initialize spell checker.");
+                QMetaObject::invokeMethod(this, [this, message] {
+                    emit spellingNotice(message);
+                    emit spellingChanged();
+                }, Qt::QueuedConnection);
+            }
+        }
+    }
+    return m_spellChecker.get();
+}
+
+void Application::restartSpellChecker()
+{
+    // SpellChecker::Destroy: the next use creates it again.
+    if (m_spellChecker)
+        m_spellChecker->clear();
+    m_spellingStarted = false;
+}
+
+void Application::saveSpellingOptions()
+{
+    if (m_settingsFile.isEmpty())
+        return;
+    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    ini.setValue(QStringLiteral("Spelling/On"), m_spellingOn);
+    ini.setValue(QStringLiteral("Spelling/Language"), m_dictionaryLanguage);
+    ini.setValue(QStringLiteral("Spelling/SuggestionsOnDoubleClick"), m_suggestionsOnDoubleClick);
+}
+
+void Application::spellingRefresh()
+{
+    // EditBox::ClearErrs: the Grid's and the editor's marks are checked again.
+    refreshViews();
+    emit spellingChanged();
+}
+
+void Application::setSpellingOn(bool on)
+{
+    if (on == m_spellingOn)
+        return;
+    m_spellingOn = on;
+    saveSpellingOptions();
+    spellingRefresh();
+}
+
+void Application::setDictionaryLanguage(const QString &symbol)
+{
+    m_dictionaryLanguage = symbol;
+    saveSpellingOptions();
+    restartSpellChecker();
+    spellingRefresh();
+}
+
+void Application::setSuggestionsOnDoubleClick(bool on)
+{
+    if (on == m_suggestionsOnDoubleClick)
+        return;
+    m_suggestionsOnDoubleClick = on;
+    saveSpellingOptions();
+    emit spellingChanged();
+}
+
+QVariantList Application::dictionaries() const
+{
+    QVariantList out;
+    if (m_dictionaryDir.isEmpty())
+        return out;
+    for (const auto &symbol : application::availableDictionaries(std::filesystem::path(m_dictionaryDir.toStdU16String())))
+        out << QVariantMap{{QStringLiteral("symbol"), qstr(symbol)}, {QStringLiteral("name"), ui::dictionaryName(qstr(symbol))}};
+    return out;
+}
+
+QString Application::dictionaryName(const QString &symbol) const
+{
+    return ui::dictionaryName(symbol);
+}
+
+int Application::spellingRole() const
+{
+    const auto *session = targetSession();
+    return session && application::spellsTranslation(session->document()) ? 1 : 0;
+}
+
+std::optional<std::u16string> Application::editorRaw(int role) const
+{
+    const auto *session = targetSession();
+    if (!session || !session->selection().active)
+        return std::nullopt;
+    const auto active = *session->selection().active;
+    std::optional<core::LineRecord> record;
+    if (session->draftLine() == active)
+        record = session->draftRecord();
+    else
+        for (const auto *line : session->document().lines())
+            if (line->id == active)
+                record = *line;
+    if (!record)
+        return std::nullopt;
+    return core::toUtf16(role == 1 ? record->translation : record->text);
+}
+
+QVariantList Application::editorSpellingMarks(int role)
+{
+    QVariantList out;
+    if (!m_spellingOn || role != spellingRole())
+        return out;
+    const auto raw = editorRaw(role);
+    if (!raw || raw->empty())
+        return out;
+    const auto format = targetSession()->document().format();
+    auto *checker = spellChecker();
+    const auto marks = checker ? application::editorMarks(*raw, format, *checker, m_spellingText)
+                               : core::legacy::checkTextAndBrackets(*raw, format, m_spellingText.segment, {});
+    const bool hidden = !m_editor->showTags();
+    const core::Projection projection = hidden ? core::project(*raw) : core::Projection{};
+    for (std::size_t i = 0; i + 1 < marks.errors.size(); i += 2) {
+        if (!hidden) {
+            out << marks.errors[i] << marks.errors[i + 1] + 1;
+        } else if (const auto range = displayRange(projection, marks.errors[i], marks.errors[i + 1])) {
+            out << range->first << range->second;
+        }
+    }
+    return out;
+}
+
+QVariantMap Application::editorMisspellAt(int role, int position)
+{
+    if (!m_spellingOn || role != spellingRole())
+        return {};
+    const auto raw = editorRaw(role);
+    auto *checker = spellChecker();
+    if (!raw || !checker)
+        return {};
+    const auto marks = application::editorMarks(*raw, targetSession()->document().format(), *checker, m_spellingText);
+    int at = position;
+    if (!m_editor->showTags())
+        at = static_cast<int>(core::rawOffset(core::project(*raw), static_cast<std::size_t>(std::max(position, 0)), true));
+    const auto found = application::misspellAt(marks, at);
+    if (!found)
+        return {};
+    const auto &misspell = marks.misspells[*found];
+    QStringList suggestions;
+    for (const auto &s : checker->suggestions(misspell.word))
+        suggestions << qstr(s);
+    return {{QStringLiteral("word"), qstr(misspell.word)},
+            {QStringLiteral("start"), misspell.start},
+            {QStringLiteral("end"), misspell.end},
+            {QStringLiteral("suggestions"), suggestions}};
+}
+
+bool Application::replaceEditorMisspell(int role, int position, const QString &replacement)
+{
+    auto *session = targetSession();
+    const QVariantMap found = editorMisspellAt(role, position);
+    if (!session || found.isEmpty() || !session->selection().active)
+        return false;
+    const core::legacy::Misspell misspell{found.value(QStringLiteral("word")).toString().toStdU16String(),
+                                          found.value(QStringLiteral("start")).toInt(),
+                                          found.value(QStringLiteral("end")).toInt()};
+    const auto caret = application::replaceInEditor(*session, *session->selection().active, role == 1, misspell,
+                                                    replacement.toStdU16String());
+    if (!caret)
+        return false;
+    m_editor->reloadFromSession();
+    // TextEditor::SetSelection(newto, newto).
+    int shown = *caret;
+    if (!m_editor->showTags())
+        if (const auto raw = editorRaw(role))
+            shown = static_cast<int>(core::displayOffset(core::project(*raw), static_cast<std::size_t>(*caret)));
+    m_editor->selectInField(shown, shown);
+    spellingRefresh();
+    return true;
+}
+
+bool Application::addEditorWord(const QString &word)
+{
+    auto *checker = spellChecker();
+    if (!checker || !checker->addWord(word.toStdU16String()))
+        return false;
+    spellingRefresh();
+    return true;
+}
+
+QVariantMap Application::spellCheckState(bool changed, const QString &problem)
+{
+    const auto *current = m_spellWalk && m_spellWalk->current() ? &*m_spellWalk->current() : nullptr;
+    QStringList suggestions;
+    if (current)
+        for (const auto &s : current->suggestions)
+            suggestions << qstr(s);
+    return {{QStringLiteral("found"), current != nullptr},
+            {QStringLiteral("word"), current ? qstr(current->word) : QString()},
+            {QStringLiteral("suggestions"), suggestions},
+            {QStringLiteral("replacement"), suggestions.isEmpty() ? QString() : suggestions.front()},
+            {QStringLiteral("changed"), changed},
+            {QStringLiteral("problem"), problem}};
+}
+
+void Application::showSpellCheckWord()
+{
+    m_editor->reloadFromSession();
+    const auto *current = m_spellWalk ? &m_spellWalk->current() : nullptr;
+    if (current && *current) {
+        m_editor->showLine((*current)->line.value);
+        // The editor selects the word (TextEdit->SetSelection(posStart, posEnd + 1)).
+        int from = (*current)->start, to = (*current)->end + 1;
+        if (!m_editor->showTags())
+            if (const auto raw = editorRaw(spellingRole()))
+                if (const auto range = displayRange(core::project(*raw), (*current)->start, (*current)->end)) {
+                    from = range->first;
+                    to = range->second;
+                }
+        m_editor->selectInField(from, to);
+    }
+    spellingRefresh();
+}
+
+QVariantMap Application::openSpellChecker(const QVariantMap &options)
+{
+    auto *session = targetSession();
+    auto *checker = spellChecker();
+    m_spellWalk.reset();
+    if (!session || !checker)
+        return spellCheckState(false);
+    m_editor->commit(); // the editor is left for the window: its draft commits
+    m_spellWalk = std::make_unique<application::SpellCheckWalk>(*checker, m_spellingText);
+    m_spellWalkDocument = m_workspace.editingTarget();
+    m_spellWalk->next(*session, walkOptions(options));
+    showSpellCheckWord();
+    return spellCheckState(false);
+}
+
+QVariantMap Application::spellCheckerActivated(const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_editor->commit();
+    const bool other = m_workspace.editingTarget() != m_spellWalkDocument;
+    m_spellWalkDocument = m_workspace.editingTarget();
+    QVariantMap state;
+    if (m_spellWalk->activated(*session, walkOptions(options), other)) {
+        showSpellCheckWord();
+        state = spellCheckState(false);
+        state.insert(QStringLiteral("restarted"), true);
+    } else {
+        state = spellCheckState(false);
+        state.insert(QStringLiteral("restarted"), false);
+    }
+    return state;
+}
+
+namespace {
+
+QString refusalText(application::CommandRefusal refusal)
+{
+    switch (refusal) {
+    case application::CommandRefusal::Protected: return QObject::tr("The reference is protected (read-only).");
+    case application::CommandRefusal::ReadOnly: return QObject::tr("A macro is running on this document.");
+    case application::CommandRefusal::InvalidDraft: return QObject::tr("The edited line cannot be committed.");
+    default: return QObject::tr("The change was refused.");
+    }
+}
+
+} // namespace
+
+QVariantMap Application::spellCheckerReplace(const QString &replacement, const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_editor->commit();
+    const auto result = m_spellWalk->replace(*session, replacement.toStdU16String(), walkOptions(options));
+    if (!result)
+        return spellCheckState(false, refusalText(result.error()));
+    if (*result)
+        showSpellCheckWord();
+    return spellCheckState(*result);
+}
+
+QVariantMap Application::spellCheckerReplaceAll(const QString &misspell, const QString &replacement,
+                                                const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_editor->commit();
+    const auto result = m_spellWalk->replaceAll(*session, misspell.toStdU16String(), replacement.toStdU16String(),
+                                                walkOptions(options));
+    if (!result)
+        return spellCheckState(false, refusalText(result.error()));
+    showSpellCheckWord();
+    return spellCheckState(*result);
+}
+
+QVariantMap Application::spellCheckerIgnore(const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_spellWalk->ignore(*session, walkOptions(options));
+    showSpellCheckWord();
+    return spellCheckState(false);
+}
+
+QVariantMap Application::spellCheckerIgnoreAll(const QString &word, const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_spellWalk->ignoreAll(*session, word.toStdU16String(), walkOptions(options));
+    showSpellCheckWord();
+    return spellCheckState(false);
+}
+
+QVariantMap Application::spellCheckerAddWord(const QString &word, const QVariantMap &options)
+{
+    auto *session = targetSession();
+    if (!m_spellWalk || !session)
+        return spellCheckState(false);
+    m_spellWalk->addWord(*session, word.toStdU16String(), walkOptions(options));
+    showSpellCheckWord();
+    return spellCheckState(false);
+}
+
+void Application::closeSpellChecker()
+{
+    m_spellWalk.reset();
+    m_spellWalkDocument.reset();
+}
+
+QStringList Application::addedDictionaryWords() const
+{
+    QStringList out;
+    if (m_spellChecker)
+        for (const auto &word : m_spellChecker->addedWords())
+            out << qstr(word);
+    return out;
+}
+
+bool Application::removeDictionaryWords(const QStringList &words)
+{
+    auto *checker = spellChecker();
+    std::vector<std::u16string> list;
+    for (const QString &w : words)
+        list.push_back(w.toStdU16String());
+    if (!checker || !checker->removeWords(list))
+        return false;
+    spellingRefresh();
+    return true;
 }
 
 void Application::checkResolution()

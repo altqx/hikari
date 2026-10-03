@@ -8,6 +8,7 @@
 #include "hikari/core/document.h"
 
 #include <QAbstractItemModel>
+#include <QVariantList>
 #include <QPointer>
 #include <QQuickPaintedItem>
 #include <QtQml/qqmlregistration.h>
@@ -118,6 +119,7 @@ private:
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
+    void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     // The model column shown at display position `column`.
     int modelColumn(int column) const;
 

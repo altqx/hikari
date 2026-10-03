@@ -8,6 +8,7 @@
 
 #include "hikari/application/edit_session.h"
 #include "hikari/core/document.h"
+#include "hikari/core/spelling.h"
 
 #include <QAbstractTableModel>
 #include <QSortFilterProxyModel>
@@ -60,6 +61,9 @@ public:
         DocumentRowRole, // the Line's row in the Document
         GroupRole,       // 0 ordinary, 1 group description, 2 open member, 3 closed member
         GroupClosedRole, // on a description: its members are closed
+        // F3: the Text column's spelling marks (legacy SpellErrors): flat
+        // inclusive [start, end] pairs of the shown text; none for comments.
+        SpellMarksRole,
     };
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
@@ -71,6 +75,12 @@ public:
     void setDocument(const core::Document &document);
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setHiddenColumns(int mask);
+    // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
+    // the Document's format, misspellings only when `spell` (bracket errors
+    // always). Unset: no marks. Applied from the next setDocument.
+    using Spelling = std::function<core::legacy::SpellMarks(std::u16string_view text, core::SubtitleFormat format,
+                                                             bool spell)>;
+    void setSpelling(Spelling spelling) { m_spelling = std::move(spelling); }
     int hiddenColumns() const { return m_hidden; }
     bool columnShown(int column) const;
 
@@ -95,8 +105,11 @@ private:
         mutable std::optional<Measures> measures; // measured when first shown, as legacy does
         int blockMark = 0;
         bool groupClosed = false; // descriptions: the first member is closed
+        mutable std::optional<QVariantList> spellMarks; // checked when first shown (F3)
     };
     const Measures &measuresOf(const Row &row) const;
+    const QVariantList &spellMarksOf(const Row &row) const;
+    Spelling m_spelling;
     void emitStateChanged(const std::vector<core::LineId> &ids);
 
     std::vector<Row> m_rows;
