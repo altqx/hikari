@@ -1,8 +1,8 @@
 // O1: the settings registry against legacy config.h/config.cpp at 20d647c4:
 // every CONFIG option with its default (LoadDefaultConfig and
 // LoadDefaultAudioConfig), the AudioConfig.txt partition, typed round trips,
-// legacy "Set default", the interim INI keys and the Options dialog's number
-// ranges (OptionsDialog NumCtrl).
+// legacy "Set default" and the interim INI keys. The Options dialog is
+// options_dialog_tests.
 
 #include "hikari/application/settings.h"
 
@@ -287,32 +287,4 @@ TEST(SettingsRegistry, InterimKeysNameSettingsOfTheirType)
     EXPECT_EQ(findSetting("shiftTimes.options")->legacyKey, "SHIFT_TIMES_OPTIONS");
     ASSERT_NE(findSetting(kAutomationHotkeysSetting), nullptr);
     EXPECT_TRUE(findSetting(kAutomationHotkeysSetting)->legacyKey.empty());
-}
-
-TEST(SettingsDialog, NumbersShowAndCommitAsNumCtrlDoes)
-{
-    const auto *autosave = findSettingsNumberField("autosave.maxFiles");
-    ASSERT_NE(autosave, nullptr);
-    EXPECT_EQ(autosave->min, 2);
-    EXPECT_EQ(autosave->max, 1000000);
-    // NumCtrl clamps what it shows and what it returns.
-    EXPECT_EQ(settingsDialogNumber(*autosave, std::int64_t{1}), 2);
-    EXPECT_EQ(settingsDialogNumber(*autosave, std::int64_t{3}), 3);
-    EXPECT_EQ(settingsDialogCommit(*autosave, 0), 2);
-    EXPECT_EQ(settingsDialogCommit(*autosave, 5000000), 1000000);
-    // An unset tab-name limit shows 40.
-    const auto *tabs = findSettingsNumberField("program.tabTextMaxChars");
-    EXPECT_EQ(settingsDialogNumber(*tabs, std::int64_t{0}), 40);
-    EXPECT_EQ(settingsDialogNumber(*tabs, std::int64_t{5}), 20);
-    // A zoom outside 100-1100 shows 200.
-    const auto *zoom = findSettingsNumberField("video.zoomPercent");
-    EXPECT_EQ(settingsDialogNumber(*zoom, std::int64_t{0}), 200);
-    EXPECT_EQ(settingsDialogNumber(*zoom, std::int64_t{1200}), 200);
-    EXPECT_EQ(settingsDialogNumber(*zoom, std::int64_t{150}), 150);
-    // The conversion resolution is a text option read as a number.
-    const auto *width = findSettingsNumberField("convert.resolutionWidth");
-    EXPECT_EQ(settingsDialogNumber(*width, std::string("1280")), 1280);
-    EXPECT_EQ(settingsDialogNumber(*width, std::string("wide")), 1);
-    for (const auto &f : settingsNumberFields())
-        EXPECT_NE(findSetting(f.setting), nullptr) << f.setting;
 }

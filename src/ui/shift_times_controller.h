@@ -40,14 +40,12 @@ public:
     Q_INVOKABLE void loadProfile(const QString &name);
     Q_INVOKABLE void removeProfile(const QString &name);
 
-    // Reads the settings again (after "Set default").
-    void reload();
-
 signals:
     void changed();
 
 private:
     void load();
+    void assign(const QVariantMap &map);
     void save() const;
 
     std::unique_ptr<SettingsStore> m_ownedStore;

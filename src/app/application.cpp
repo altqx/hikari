@@ -2211,60 +2211,139 @@ QString languageName(const QString &tag)
 
 } // namespace
 
-QVariantMap Application::settingsDialogValues()
+namespace {
+
+QString qs(std::string_view s)
 {
-    // OptionsDialog: an FFMS2 seeking method outside the four choices becomes
-    // 2 ("Unsafe (always fast)", the default) and is saved at once.
-    const auto seeking = m_settings->integer("video.ffms2Seeking");
-    if (seeking < 0 || seeking > 3)
-        m_settings->set("video.ffms2Seeking", 2);
+    return QString::fromUtf8(s.data(), qsizetype(s.size()));
+}
+
+QStringList qList(const std::vector<std::string> &list)
+{
+    QStringList out;
+    for (const auto &entry : list)
+        out << QString::fromStdString(entry);
+    return out;
+}
+
+std::vector<std::string> stdList(const QStringList &list)
+{
+    std::vector<std::string> out;
+    for (const QString &entry : list)
+        out.push_back(entry.toStdString());
+    return out;
+}
+
+// The controls' state crosses to QML by setting id.
+QVariantMap toVariant(const application::OptionsState &state)
+{
     QVariantMap out;
-    for (const auto &setting : application::settingDefinitions()) {
-        if (setting.disposition == application::SettingDisposition::Excluded)
-            continue;
-        const QString id = QString::fromUtf8(setting.id.data(), qsizetype(setting.id.size()));
-        const auto value = m_settings->settings().value(setting.id);
-        if (const auto *field = application::findSettingsNumberField(setting.id))
-            out.insert(id, int(application::settingsDialogNumber(*field, value)));
+    for (const auto &[id, value] : state) {
+        if (const auto *v = std::get_if<std::int64_t>(&value))
+            out.insert(QString::fromStdString(id), int(*v));
         else
-            out.insert(id, ui::SettingsStore::toVariant(value));
+            out.insert(QString::fromStdString(id), ui::SettingsStore::toVariant(value));
     }
     return out;
 }
 
-void Application::applySettings(const QVariantMap &values)
+application::OptionsState fromVariant(const QVariantMap &values)
 {
-    for (auto it = values.begin(); it != values.end(); ++it) {
-        const std::string id = it.key().toStdString();
-        const auto *setting = application::findSetting(id);
-        if (!setting)
+    using application::OptionsControl;
+    application::OptionsState out;
+    for (const auto &b : application::optionsBindings()) {
+        const QString id = qs(b.setting);
+        if (!values.contains(id))
             continue;
-        auto &settings = m_settings->settings();
-        if (const auto *field = application::findSettingsNumberField(id)) {
-            // NumCtrl::GetInt against Options.GetInt, then SetInt.
-            const auto n = application::settingsDialogCommit(*field, it.value().toLongLong());
-            if (settings.integer(id) != n)
-                settings.set(id, n);
-            continue;
+        const QVariant v = values.value(id);
+        switch (b.control) {
+        case OptionsControl::Check:
+            out[std::string(b.setting)] = v.toBool();
+            break;
+        case OptionsControl::Text:
+        case OptionsControl::ZoomText:
+        case OptionsControl::ComboText:
+        case OptionsControl::Font:
+            out[std::string(b.setting)] = v.toString().toStdString();
+            break;
+        default:
+            out[std::string(b.setting)] = std::int64_t(v.toLongLong());
+            break;
         }
-        auto next = application::convertSetting(ui::SettingsStore::fromVariant(it.value()), setting->type);
-        if (id == "fonts.externalDirectory" && settings.value(id) != next) {
-            // HikariNormalizePath and a trailing separator (fonts reload: not yet).
-            QString path = QString::fromStdString(std::get<std::string>(next));
-#ifndef _WIN32
-            path.replace(u'\\', u'/');
-#endif
-            const QChar separator = QDir::separator();
-            if (!path.isEmpty() && !path.endsWith(separator))
-                path += separator;
-            next = path.toStdString();
-        }
-        if (settings.value(id) != next)
-            settings.set(id, next);
+        if (b.control == OptionsControl::Font && values.contains(qs(b.sizeSetting)))
+            out[std::string(b.sizeSetting)] = std::int64_t(values.value(qs(b.sizeSetting)).toLongLong());
     }
+    return out;
 }
 
-void Application::resetSettings()
+} // namespace
+
+QVariantMap Application::openSettingsDialog()
+{
+    auto &lists = m_optionsLists;
+    lists = {};
+    // No translation catalogues ship with the rewrite yet: English only.
+    lists.languageTags = {"en"};
+    lists.languageNames = {"English"};
+    lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
+    // SpellChecker::AvailableDics: the i-th .dic with the i-th .aff of the
+    // Dictionary folder, in the folder's order (NTFS lists names sorted).
+    {
+        const QDir dir(m_dictionaryDir);
+#ifdef _WIN32
+        const QDir::Filters filters = QDir::Files;
+#else
+        const QDir::Filters filters = QDir::Files | QDir::CaseSensitive; // wxDir's wildcards
+#endif
+        const QStringList dic = dir.entryList({QStringLiteral("*.dic")}, filters, QDir::Name | QDir::IgnoreCase);
+        const QStringList aff = dir.entryList({QStringLiteral("*.aff")}, filters, QDir::Name | QDir::IgnoreCase);
+        // R3-hang-crash-loss: legacy reads aff[i] past the list when there are
+        // fewer .aff than .dic files; the pairing stops there instead.
+        for (qsizetype i = 0; i < dic.size() && i < aff.size(); ++i) {
+            const QString symbol = dic[i].section(u'.', 0, -2);
+            if (symbol == aff[i].section(u'.', 0, -2)) {
+                lists.dictionarySymbols.push_back(symbol.toStdString());
+                lists.dictionaryNames.push_back(languageName(symbol).toStdString());
+            }
+        }
+        if (lists.dictionaryNames.empty())
+            lists.dictionaryNames.push_back(tr("Put files .dic and .aff to \"Dictionary\" folder").toStdString());
+    }
+    // The conversion catalog: its option's catalog is loaded (LoadStyles), then
+    // its Styles are listed.
+    lists.catalogs = stdList(m_styleManager->catalogs());
+    lists.currentCatalog = m_styleManager->catalog().toStdString();
+    if (const auto load = application::optionsCatalogToLoad(m_settings->settings(), lists)) {
+        m_styleManager->chooseCatalog(QString::fromStdString(*load));
+        lists.currentCatalog = *load;
+    }
+    lists.styles = stdList(m_styleManager->storeStyles());
+#ifdef _WIN32
+    lists.pathSeparator = '\\';
+    lists.slashesForBackslashes = false;
+#endif
+    const auto open = application::openOptionsDialog(m_settings->settings(), lists);
+    QStringList warnings;
+    // "The selected %s for conversion does not exist\nand will be changed to the default".
+    if (open.catalogMissing)
+        warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+    if (open.styleMissing)
+        warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("style"));
+    return {{QStringLiteral("values"), toVariant(open.state)},
+            {QStringLiteral("languages"), qList(lists.languageNames)},
+            {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
+            {QStringLiteral("catalogs"), qList(lists.catalogs)},
+            {QStringLiteral("styles"), qList(lists.styles)},
+            {QStringLiteral("warnings"), warnings}};
+}
+
+void Application::applySettings(const QVariantMap &values)
+{
+    // Live effects follow from settingChanged.
+    application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
+}
+
+QVariantMap Application::resetSettings(const QVariantMap &values)
 {
     // Legacy keeps the recent list in the main window and writes it back at
     // exit, so Set default does not clear it; hotkeys are the shortcut editor's (O2).
@@ -2273,36 +2352,36 @@ void Application::resetSettings()
     m_settings->resetAll();
     m_settings->settings().set("recent.subtitles", recent);
     m_settings->settings().set(application::kAutomationHotkeysSetting, macros);
+    // Options read when they act take the defaults; the shift times panel
+    // keeps its values and writes them at its next change (legacy writes the
+    // panel back when it shifts or closes).
     m_selectOptions = m_settings->integer("selectLines.options");
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
     m_tagButtons->reload();
     m_colourPicker->loadFromString(m_settings->text("colourPicker.recentColours"));
-    m_shiftTimes->reload();
     m_gridFilter->reload();
     m_updates->reload();
+    return toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
 }
 
-QVariantList Application::settingsLanguages() const
+QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int index)
 {
-    // No translation catalogues ship with the rewrite yet: English only.
-    return {QVariantMap{{QStringLiteral("tag"), QStringLiteral("en")}, {QStringLiteral("name"), QStringLiteral("English")}}};
-}
-
-QVariantList Application::settingsDictionaries() const
-{
-    // AvailableDics pairs the i-th .dic with the i-th .aff by name.
-    const QDir dir(m_dictionaryDir);
-    const QStringList dic = dir.entryList({QStringLiteral("*.dic")}, QDir::Files, QDir::Name);
-    const QStringList aff = dir.entryList({QStringLiteral("*.aff")}, QDir::Files, QDir::Name);
-    QVariantList out;
-    for (qsizetype i = 0; i < dic.size() && i < aff.size(); ++i) {
-        const QString symbol = dic[i].section(u'.', 0, -2);
-        if (symbol == aff[i].section(u'.', 0, -2))
-            out << QVariantMap{{QStringLiteral("tag"), symbol}, {QStringLiteral("name"), languageName(symbol)}};
+    auto state = fromVariant(values);
+    if (index >= 0 && index < qsizetype(m_optionsLists.catalogs.size())) {
+        // Options.SaveOptions(false) then LoadStyles: the current catalog is saved first.
+        m_styleManager->chooseCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
+        m_optionsLists.currentCatalog = m_optionsLists.catalogs[std::size_t(index)];
+        m_optionsLists.styles = stdList(m_styleManager->storeStyles());
     }
-    return out;
+    application::chooseOptionsDialogCatalog(m_optionsLists, state, index);
+    return {{QStringLiteral("values"), toVariant(state)}, {QStringLiteral("styles"), qList(m_optionsLists.styles)}};
+}
+
+QString Application::settingsFolderPath(const QUrl &url) const
+{
+    return QDir::toNativeSeparators(url.toLocalFile());
 }
 
 } // namespace hikari::app

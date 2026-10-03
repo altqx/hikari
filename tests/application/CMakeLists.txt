@@ -46,3 +46,5 @@ hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_settings_tests SOURCES settings_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_options_dialog_tests SOURCES options_dialog_tests.cpp
+    LIBRARIES hikari_application LABELS application)

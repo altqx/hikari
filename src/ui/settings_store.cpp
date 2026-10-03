@@ -20,20 +20,23 @@ QString qs(std::string_view s)
     return QString::fromUtf8(s.data(), static_cast<qsizetype>(s.size()));
 }
 
-// QSettings over the INI file; each call opens it, as the interim code did,
-// so every store and QSettings on the same file sees the same values.
+// One QSettings over the INI file for the store's life: reads come from its
+// cache and writes are batched until Qt syncs it (at the next event loop pass
+// and when the store goes), not one file rewrite per value. Other QSettings on
+// the same file in this process share that data.
 class IniSettingsStorage final : public application::SettingsStorage {
 public:
-    explicit IniSettingsStorage(QString file) : m_file(std::move(file)) {}
+    explicit IniSettingsStorage(const QString &file) : m_ini(file, QSettings::IniFormat) {}
+
+    QSettings &ini() { return m_ini; }
 
     std::optional<SettingValue> read(const SettingDefinition &setting) const override
     {
-        const QSettings ini(m_file, QSettings::IniFormat);
         const QString key = SettingsStore::keyOf(setting);
-        if (!ini.contains(key))
+        if (!m_ini.contains(key))
             return std::nullopt;
         // The QVariant conversions the interim readers used.
-        const QVariant v = ini.value(key);
+        const QVariant v = m_ini.value(key);
         switch (setting.type) {
         case SettingType::Bool:
             return v.toBool();
@@ -53,16 +56,16 @@ public:
 
     void write(const SettingDefinition &setting, const SettingValue &value) override
     {
-        QSettings(m_file, QSettings::IniFormat).setValue(SettingsStore::keyOf(setting), SettingsStore::toVariant(value));
+        m_ini.setValue(SettingsStore::keyOf(setting), SettingsStore::toVariant(value));
     }
 
     void remove(const SettingDefinition &setting) override
     {
-        QSettings(m_file, QSettings::IniFormat).remove(SettingsStore::keyOf(setting));
+        m_ini.remove(SettingsStore::keyOf(setting));
     }
 
 private:
-    QString m_file;
+    mutable QSettings m_ini;
 };
 
 } // namespace
@@ -71,11 +74,12 @@ SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m
 {
     if (m_file.isEmpty())
         m_storage = std::make_unique<application::MemorySettingsStorage>();
-    else
-        m_storage = std::make_unique<IniSettingsStorage>(m_file);
+    else {
+        auto ini = std::make_unique<IniSettingsStorage>(m_file);
+        migrateInterimKeys(ini->ini());
+        m_storage = std::move(ini);
+    }
     m_settings = std::make_unique<application::Settings>(*m_storage);
-    if (!m_file.isEmpty())
-        migrateInterimKeys();
     m_settings->setObserver([this](const SettingDefinition &setting) { emit changed(qs(setting.id)); });
 }
 
@@ -158,6 +162,13 @@ void SettingsStore::reset(const QString &id)
 void SettingsStore::resetAll()
 {
     m_settings->resetAll();
+    sync();
+}
+
+void SettingsStore::sync()
+{
+    if (auto *ini = dynamic_cast<IniSettingsStorage *>(m_storage.get()))
+        ini->ini().sync();
 }
 
 QString SettingsStore::text(const char *id) const
@@ -173,9 +184,8 @@ QStringList SettingsStore::list(const char *id) const
     return out;
 }
 
-void SettingsStore::migrateInterimKeys()
+void SettingsStore::migrateInterimKeys(QSettings &ini)
 {
-    QSettings ini(m_file, QSettings::IniFormat);
     const QString schemaKey = QStringLiteral("registry/schema");
     if (ini.value(schemaKey, 0).toInt() >= kSchema)
         return;

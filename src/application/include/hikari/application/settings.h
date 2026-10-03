@@ -118,20 +118,4 @@ std::span<const InterimBit> interimShiftOptionBits();
 inline constexpr std::string_view kInterimAutomationHotkeysGroup = "AutomationHotkeys";
 inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automationMacros";
 
-// The Options dialog's number fields (legacy NumCtrl ranges): the value shown
-// for a stored one and the value OK/Apply writes for an entered one.
-struct SettingsNumberField {
-    std::string_view setting;
-    std::int64_t min;
-    std::int64_t max;
-};
-std::span<const SettingsNumberField> settingsNumberFields();
-const SettingsNumberField *findSettingsNumberField(std::string_view id);
-// NumCtrl::SetInt/SetString clamp what they show; the Advanced page shows 40
-// for an unset tab-name limit and the Video page 200 for a zoom outside
-// 100-1100 (OptionsDialog constructor).
-std::int64_t settingsDialogNumber(const SettingsNumberField &field, const SettingValue &stored);
-// NumCtrl::GetInt: the entered number clamped to the range.
-std::int64_t settingsDialogCommit(const SettingsNumberField &field, std::int64_t entered);
-
 } // namespace hikari::application

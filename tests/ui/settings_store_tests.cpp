@@ -194,6 +194,25 @@ private slots:
         QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns")).toInt(), 1);
     }
 
+    // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward
+    // when SHIFT_TIMES_OPTIONS is unset) and stores nothing until it changes.
+    void shiftTimesPanelStartsFromTheLegacyOptions()
+    {
+        SettingsStore store;
+        ui::ShiftTimesController shift(store);
+        QCOMPARE(shift.settings().timeMs, 2000);
+        QVERIFY(!shift.settings().forward);
+        QVERIFY(!store.contains("shiftTimes.time"));
+        QVERIFY(!store.contains("shiftTimes.options"));
+        QVERIFY(!store.contains("postprocessor.on"));
+        QVERIFY(!store.contains("shiftTimes.profiles"));
+        auto map = shift.settingsMap();
+        map.insert(QStringLiteral("forward"), true);
+        shift.setSettingsMap(map);
+        QCOMPARE(store.integer("shiftTimes.options"), 1);
+        QCOMPARE(store.integer("shiftTimes.time"), 2000);
+    }
+
     void shiftTimesKeepsBitsLegacyDoesNotKnow()
     {
         QTemporaryDir dir;

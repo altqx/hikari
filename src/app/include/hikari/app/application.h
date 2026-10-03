@@ -11,6 +11,7 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
+#include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/workspace.h"
@@ -298,22 +299,23 @@ public:
     // values as legacy shows them and writes the changed ones on OK/Apply.
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
     ui::SettingsStore *settingsStore() const { return m_settings.get(); }
-    // {setting: value} for every control of the dialog's pages; numbers as
-    // NumCtrl shows them. Opening fixes an FFMS2 seeking value outside 0-3
-    // to 2 and stores it at once, as legacy does.
-    Q_INVOKABLE QVariantMap settingsDialogValues();
-    // OK/Apply (legacy SetOptions): each value that differs is stored; numbers
-    // clamped to their range, the external fonts folder normalized with a
-    // trailing separator.
+    // Opening the dialog (application::openOptionsDialog): {values: the
+    // controls' state by setting id, languages, dictionaries, catalogs,
+    // styles: the choices' entries, warnings: the legacy "does not exist"
+    // messages}. Opening fixes an FFMS2 seeking value outside 0-3 to 2 at
+    // once and loads the conversion catalog, as legacy does.
+    Q_INVOKABLE QVariantMap openSettingsDialog();
+    // OK/Apply (legacy SetOptions): each bound control whose value differs
+    // from the stored one is written; nothing else.
     Q_INVOKABLE void applySettings(const QVariantMap &values);
     // "Set default" (legacy ResetDefault): every setting at once, even if the
-    // dialog is then cancelled.
-    Q_INVOKABLE void resetSettings();
-    // The language choice: {tag, name}, English first (legacy programLanguages).
-    Q_INVOKABLE QVariantList settingsLanguages() const;
-    // The spell checker choice: {tag, name} for each .dic with its .aff in the
-    // Dictionary folder (legacy SpellChecker::AvailableDics).
-    Q_INVOKABLE QVariantList settingsDictionaries() const;
+    // dialog is then cancelled; returns the controls' state as legacy
+    // refreshes them (its defects included).
+    Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
+    // OnChangeCatalog: loads the catalog and returns {values, styles}.
+    Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
+    // wxDirDialog::GetPath: the chosen folder with native separators.
+    Q_INVOKABLE QString settingsFolderPath(const QUrl &url) const;
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -371,6 +373,7 @@ private:
     std::unique_ptr<ui::SettingsStore> m_settings;
     void settingChanged(const QString &id);
     QString m_dictionaryDir; // legacy "Dictionary" beside the program
+    application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<UpdateChecker> m_updates;

@@ -1,10 +1,12 @@
 // O1: legacy OptionsDialog "Options" (GLOBAL_SETTINGS, File > Settings) over
 // the settings registry: the page tree Editor (Conversion, Advanced), Video,
 // Audio (Advanced) and Subtitle properties, with OK, Apply, Cancel and Set
-// default. Values are staged here and written by OK/Apply when they differ
-// (legacy SetOptions). Themes are excluded by the accepted settings decision;
-// Hotkeys belong to the shortcut editor (O2); Associations are Windows only
-// and wait for their platform action.
+// default. `values` is what each control holds (application::OptionsState);
+// OK/Apply write the bound controls whose value differs (legacy SetOptions)
+// and Set default refreshes the controls as legacy ResetDefault does. Themes
+// are excluded by the accepted settings decision; Hotkeys belong to the
+// shortcut editor (O2); Associations are Windows only and wait for their
+// platform card.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -22,27 +24,46 @@ Dialog {
     property var values: ({})
     property var languages: []
     property var dictionaries: []
+    property var catalogs: []
+    property var styles: []
+    property var warnings: []
     signal reloaded()
 
     function openDialog() {
-        load()
+        const r = app.openSettingsDialog()
+        languages = r.languages
+        dictionaries = r.dictionaries
+        catalogs = r.catalogs
+        styles = r.styles
+        values = r.values
+        reloaded()
         pageList.currentIndex = 0 // legacy ChangeSelection(0)
         open()
+        warnings = r.warnings
+        showWarning()
     }
-    function load() {
-        values = app.settingsDialogValues()
-        languages = app.settingsLanguages()
-        dictionaries = app.settingsDictionaries()
-        reloaded()
+    // The legacy constructor's "does not exist" message boxes, one at a time.
+    function showWarning() {
+        if (warnings.length === 0)
+            return
+        warningText.text = warnings[0]
+        warnings = warnings.slice(1)
+        warningDialog.open()
     }
     function put(setting, value) {
         const v = Object.assign({}, values)
         v[setting] = value
         values = v
     }
+    // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
         app.applySettings(values)
-        load()
+    }
+    function chooseCatalog(index) {
+        const r = app.chooseSettingsCatalog(values, index)
+        styles = r.styles
+        values = r.values
+        reloaded()
     }
 
     footer: DialogButtonBox {
@@ -56,8 +77,8 @@ Dialog {
         }
         onApplied: dialog.apply()
         onReset: {
-            dialog.app.resetSettings()
-            dialog.load()
+            dialog.values = dialog.app.resetSettings(dialog.values)
+            dialog.reloaded()
         }
     }
     onAccepted: app.applySettings(values)
@@ -110,20 +131,26 @@ Dialog {
         Connections { target: dialog; function onReloaded() { field.refresh() } }
         onTextEdited: dialog.put(setting, text)
     }
-    // A choice whose index is the setting's integer (legacy ID_HIKARI_CHOICE).
+    // A HikariChoice: `values` holds its selection, which may be -1 (nothing
+    // shown) or past the list; it changes only when an entry is chosen.
     component SettingChoice: ComboBox {
         id: choice
         required property string setting
         objectName: "setting_" + setting
         Layout.fillWidth: true
+        signal chosen(int index)
         function refresh() {
-            const v = dialog.values[setting] ?? 0
+            const v = dialog.values[setting] ?? -1
             currentIndex = v >= 0 && v < count ? v : -1
         }
         Component.onCompleted: refresh()
         onModelChanged: refresh()
+        onCountChanged: refresh()
         Connections { target: dialog; function onReloaded() { choice.refresh() } }
-        onActivated: dialog.put(setting, currentIndex)
+        onActivated: index => {
+            dialog.put(setting, index)
+            chosen(index)
+        }
     }
     // FontPickerButton: the family and point size of a font setting.
     component SettingFont: RowLayout {
@@ -197,49 +224,30 @@ Dialog {
 
             // Editor (legacy GLOBAL_EDITOR page).
             ScrollView {
+                objectName: "settingsPageEditor"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
                     GroupBox {
                         title: qsTr("Language (program restart required)")
                         Layout.fillWidth: true
-                        ComboBox {
-                            id: languageBox
-                            objectName: "setting_program.language"
+                        SettingChoice {
+                            setting: "program.language"
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            model: dialog.languages.map(l => l.name)
+                            model: dialog.languages
                             Accessible.name: qsTr("Language (program restart required)")
-                            function refresh() {
-                                const i = dialog.languages.findIndex(l => l.name === dialog.languageName(dialog.values["program.language"]))
-                                currentIndex = i < 0 ? 0 : i
-                                // Legacy writes the chosen tag when it differs, "en" included.
-                                if (dialog.languages.length > 0)
-                                    dialog.values["program.language"] = dialog.languages[currentIndex].tag
-                            }
-                            Connections { target: dialog; function onReloaded() { languageBox.refresh() } }
-                            onActivated: dialog.put("program.language", dialog.languages[currentIndex].tag)
                         }
                     }
                     GroupBox {
                         title: qsTr("Spell checker language (\"Dictionary\" folder)")
                         Layout.fillWidth: true
-                        ComboBox {
-                            id: dictionaryBox
-                            objectName: "setting_editor.dictionaryLanguage"
+                        SettingChoice {
+                            setting: "editor.dictionaryLanguage"
                             anchors.left: parent.left
                             anchors.right: parent.right
-                            model: dialog.dictionaries.length > 0 ? dialog.dictionaries.map(d => d.name)
-                                                                  : [qsTr("Put files .dic and .aff to \"Dictionary\" folder")]
+                            model: dialog.dictionaries
                             Accessible.name: qsTr("Spell checker language (\"Dictionary\" folder)")
-                            function refresh() {
-                                currentIndex = dialog.dictionaries.findIndex(d => d.name === dialog.languageName(dialog.values["editor.dictionaryLanguage"]))
-                            }
-                            Connections { target: dialog; function onReloaded() { dictionaryBox.refresh() } }
-                            onActivated: {
-                                if (currentIndex >= 0 && currentIndex < dialog.dictionaries.length)
-                                    dialog.put("editor.dictionaryLanguage", dialog.dictionaries[currentIndex].tag)
-                            }
                         }
                     }
                     SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
@@ -265,18 +273,32 @@ Dialog {
 
             // Conversion (legacy ConvOpt page).
             ScrollView {
+                objectName: "settingsPageConversion"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
                     GroupBox {
                         title: qsTr("Choose catalog")
                         Layout.fillWidth: true
-                        SettingText { setting: "convert.styleCatalog"; anchors.left: parent.left; anchors.right: parent.right }
+                        SettingChoice {
+                            setting: "convert.styleCatalog"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.catalogs
+                            Accessible.name: qsTr("Choose catalog")
+                            onChosen: index => dialog.chooseCatalog(index) // OnChangeCatalog
+                        }
                     }
                     GroupBox {
                         title: qsTr("Choose style")
                         Layout.fillWidth: true
-                        SettingText { setting: "convert.style"; anchors.left: parent.left; anchors.right: parent.right }
+                        SettingChoice {
+                            setting: "convert.style"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.styles
+                            Accessible.name: qsTr("Choose style")
+                        }
                     }
                     GroupBox {
                         title: qsTr("Choose FPS")
@@ -325,6 +347,7 @@ Dialog {
 
             // Advanced (legacy EditorAdvanced page).
             ScrollView {
+                objectName: "settingsPageEditorAdvanced"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
@@ -381,6 +404,7 @@ Dialog {
 
             // Video (legacy video page).
             ScrollView {
+                objectName: "settingsPageVideo"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
@@ -406,13 +430,22 @@ Dialog {
                     GroupBox {
                         title: qsTr("Start video zoom in percent.")
                         Layout.fillWidth: true
-                        SettingNumber { setting: "video.zoomPercent"; from: 100; to: 1100; anchors.left: parent.left; anchors.right: parent.right }
+                        // A NumCtrl with its own id: OK stores its digits as typed.
+                        SettingText {
+                            setting: "video.zoomPercent"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            maximumLength: 20
+                            validator: RegularExpressionValidator { regularExpression: /[0-9]*/ }
+                            Accessible.name: qsTr("Start video zoom in percent.")
+                        }
                     }
                 }
             }
 
             // Audio (legacy AudioMain page).
             ScrollView {
+                objectName: "settingsPageAudio"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
@@ -434,6 +467,7 @@ Dialog {
 
             // Audio > Advanced (legacy AudioSecond page).
             ScrollView {
+                objectName: "settingsPageAudioAdvanced"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
@@ -486,6 +520,7 @@ Dialog {
             // Subtitle properties (legacy SubtitlesProperties page): the
             // labels pair with the ASS_PROPERTIES_* options as legacy pairs them.
             ScrollView {
+                objectName: "settingsPageSubtitleProperties"
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
@@ -526,16 +561,21 @@ Dialog {
         id: fontsFolderDialog
         title: qsTr("Choose choose external font folder")
         onAccepted: {
-            const path = dialog.app.localPath(selectedFolder)
+            const path = dialog.app.settingsFolderPath(selectedFolder)
             fontsFolder.text = path
             dialog.put("fonts.externalDirectory", path)
         }
     }
 
-    // The name legacy FindLanguage gives a tag, to find it in a choice.
-    function languageName(tag) {
-        for (const l of languages) if (l.tag === tag) return l.name
-        for (const d of dictionaries) if (d.tag === tag) return d.name
-        return tag
+    Dialog {
+        id: warningDialog
+        objectName: "settingsWarning"
+        title: qsTr("Warning")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        width: 420
+        Label { id: warningText; width: parent.width; wrapMode: Text.Wrap }
+        onClosed: dialog.showWarning()
     }
 }

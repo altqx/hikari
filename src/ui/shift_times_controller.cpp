@@ -61,27 +61,20 @@ ShiftTimesController::ShiftTimesController(SettingsStore &settings, QObject *par
     load();
 }
 
-void ShiftTimesController::reload()
-{
-    m_settings = {};
-    load();
-}
-
-// Only stored values replace the panel's own defaults.
+// The panel reads its options as legacy ShiftTimes does (SHIFT_TIMES_TIME
+// 2000 and backward when SHIFT_TIMES_OPTIONS is unset) and writes nothing
+// until it changes.
 void ShiftTimesController::load()
 {
     QVariantMap map;
     for (const auto &f : kFields)
-        if (m_store->contains(f.setting))
-            map.insert(QLatin1String(f.name), m_store->value(QLatin1String(f.setting)));
-    if (m_store->contains("shiftTimes.options")) {
-        const int options = m_store->integer("shiftTimes.options");
-        for (const auto &b : kBits)
-            map.insert(QLatin1String(b.name), (options & b.bit) != 0);
-    }
-    // Profiles first: setSettingsMap saves them with the settings.
+        map.insert(QLatin1String(f.name), m_store->value(QLatin1String(f.setting)));
+    const int options = m_store->integer("shiftTimes.options");
+    for (const auto &b : kBits)
+        map.insert(QLatin1String(b.name), (options & b.bit) != 0);
     m_profiles = m_store->list("shiftTimes.profiles");
-    setSettingsMap(map);
+    assign(map);
+    emit changed();
 }
 
 QVariantMap ShiftTimesController::settingsMap() const
@@ -111,6 +104,13 @@ QVariantMap ShiftTimesController::settingsMap() const
 }
 
 void ShiftTimesController::setSettingsMap(const QVariantMap &map)
+{
+    assign(map);
+    save();
+    emit changed();
+}
+
+void ShiftTimesController::assign(const QVariantMap &map)
 {
     auto &s = m_settings;
     auto b = [&](const char *key, bool &field) {
@@ -143,8 +143,6 @@ void ShiftTimesController::setSettingsMap(const QVariantMap &map)
     i("keyframeAfterEnd", s.keyframeAfterEnd);
     if (map.contains(QStringLiteral("styles")))
         s.styles = u8(map.value(QStringLiteral("styles")).toString());
-    save();
-    emit changed();
 }
 
 QStringList ShiftTimesController::profileNames() const

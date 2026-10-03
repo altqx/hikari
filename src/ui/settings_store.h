@@ -8,6 +8,7 @@
 #include "hikari/application/settings.h"
 
 #include <QObject>
+#include <QSettings>
 #include <QString>
 #include <QStringList>
 #include <QVariant>
@@ -37,6 +38,9 @@ public:
     Q_INVOKABLE void reset(const QString &id);
     // Legacy "Set default" (config::ResetDefault).
     Q_INVOKABLE void resetAll();
+    // Writes pending values to the file now (Qt also does at the next event
+    // loop pass and when the store goes).
+    void sync();
 
     bool boolean(const char *id) const { return m_settings->boolean(id); }
     int integer(const char *id) const { return static_cast<int>(m_settings->integer(id)); }
@@ -56,7 +60,7 @@ signals:
     void changed(const QString &id);
 
 private:
-    void migrateInterimKeys();
+    void migrateInterimKeys(QSettings &ini);
 
     QString m_file;
     std::unique_ptr<application::SettingsStorage> m_storage;
