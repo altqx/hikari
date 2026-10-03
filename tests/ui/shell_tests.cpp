@@ -3,6 +3,7 @@
 
 #include "hikari/app/application.h"
 
+#include <QAccessible>
 #include <QQmlApplicationEngine>
 #include <QTemporaryDir>
 #include <QQuickItem>
@@ -11,6 +12,8 @@
 #include <QtTest>
 
 #include <cstring>
+#include <vector>
+#include <set>
 #include <optional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -236,6 +239,96 @@ private slots:
         press(Qt::Key_Y, Qt::ControlModifier);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("fiXrst"));
         QCOMPARE(text->property("cursorPosition").toInt(), 3);
+    }
+
+    // G1: Grid gestures through the shell; the application owns the selection.
+    void gridGesturesSelectRanges()
+    {
+        const QString path = writeFile(dir, "five.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,c\n"
+                                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,d\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,e\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(5));
+        std::vector<core::LineId> id;
+        for (const auto *l : lines)
+            id.push_back(l->id);
+        const auto selected = [&](std::initializer_list<int> rows) {
+            std::set<core::LineId> want;
+            for (int r : rows)
+                want.insert(id[static_cast<std::size_t>(r)]);
+            return session->selection().selected == want;
+        };
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(session->selection().active, std::optional(id[0]));
+        // Keyboard Shift extends from the anchor and moves the active Line.
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        QVERIFY(selected({0, 1, 2}));
+        QCOMPARE(session->selection().active, std::optional(id[2]));
+        // The accessible table reports the gesture's multi-selection.
+        if (QAccessibleInterface *table = QAccessible::queryAccessibleInterface(grid); table && table->tableInterface())
+            QCOMPARE(table->tableInterface()->selectedRows(), (QList<int>{0, 1, 2}));
+        else
+            QFAIL("the Grid exposes no accessible table");
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("c"));
+        press(Qt::Key_Up, Qt::ShiftModifier);
+        QVERIFY(selected({0, 1}));
+        // Ctrl+A selects every Line; a plain arrow returns to one.
+        press(Qt::Key_A, Qt::ControlModifier);
+        QVERIFY(selected({0, 1, 2, 3, 4}));
+        press(Qt::Key_Down);
+        QVERIFY(selected({2}));
+
+        // Mouse: the centre of each row in window coordinates.
+        const auto rowPoint = [&](int row) {
+            int found = -1;
+            for (int y = 0; y < int(grid->height()); ++y) {
+                int r = -1;
+                QMetaObject::invokeMethod(grid, "rowAt", Q_RETURN_ARG(int, r), Q_ARG(qreal, qreal(y)));
+                if (r == row) {
+                    found = y;
+                    break;
+                }
+            }
+            return grid->mapToScene(QPointF(grid->width() / 2, found + 3)).toPoint();
+        };
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, rowPoint(4));
+        QTRY_VERIFY(selected({4}));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, rowPoint(1));
+        QTRY_VERIFY(selected({1, 4}));
+        QCOMPARE(session->selection().active, std::optional(id[1]));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ShiftModifier, rowPoint(3));
+        QTRY_VERIFY(selected({1, 2, 3})); // anchor 1 to 3, replacing
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, rowPoint(0));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier | Qt::ShiftModifier, rowPoint(1));
+        QTRY_VERIFY(selected({0, 1}));
+        // Drag selects a block.
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, rowPoint(2));
+        QTest::mouseMove(window, rowPoint(4));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, rowPoint(4));
+        QTRY_VERIFY(selected({2, 3, 4}));
+
+        // Moving the active Line commits a pending draft first (accepted policy).
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("a"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 1);
+        QTest::keyClick(window, 'Z');
+        QTRY_VERIFY(session->draftLine().has_value());
+        grid->forceActiveFocus();
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        QVERIFY(!session->draftLine());
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->document().lines()[0]->text.data())),
+                 QStringLiteral("aZ"));
+        QVERIFY(selected({0, 1}));
     }
 
     void enterOnTheLastLineAppendsOne()

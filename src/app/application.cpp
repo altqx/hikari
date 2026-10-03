@@ -50,6 +50,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
+    // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
+    connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
+        const auto target = m_workspace.editingTarget();
+        auto *session = target ? m_files->session(*target) : nullptr;
+        if (!session)
+            return;
+        session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
+        m_shell->setSelection(session->selection());
+    });
     // The editor's Start/End difference measures from the frame the Video panel shows.
     m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
         const auto &session = m_video->session();
@@ -114,8 +123,8 @@ void Application::refreshViews()
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr);
-    if (targetSession && targetSession->selection().active)
-        m_shell->selectLine(targetSession->selection().active->value);
+    if (targetSession)
+        m_shell->setSelection(targetSession->selection());
     // The editor only ever edits the editing target, never the reference.
     if (target != m_editorDocument) {
         m_editorDocument = target;
@@ -159,6 +168,77 @@ void Application::refreshVideo()
             if (line->id == *active)
                 m_video->session().seekTo(line->start.value);
     }
+}
+
+application::GridSelection Application::gridSelection() const
+{
+    std::vector<core::LineId> document;
+    const auto target = m_workspace.editingTarget();
+    if (auto *session = target ? m_files->session(*target) : nullptr)
+        for (const auto *line : session->document().lines())
+            document.push_back(line->id);
+    application::GridSelection rules(std::move(document), m_shell->displayedLines());
+    rules.setChangeActiveOnSelection(m_changeActiveOnSelection);
+    return rules;
+}
+
+bool Application::applySelection(application::Selection next)
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return false;
+    if (next.active && next.active != session->selection().active && !m_editor->showLine(next.active->value))
+        return false; // e.g. a draft that cannot be committed
+    session->setSelection(std::move(next));
+    m_shell->setSelection(session->selection());
+    refreshVideo();
+    return true;
+}
+
+void Application::selectLine(qulonglong id)
+{
+    const auto target = m_workspace.editingTarget();
+    if (auto *session = target ? m_files->session(*target) : nullptr)
+        applySelection(gridSelection().plain(session->selection(), core::LineId{id}));
+}
+
+void Application::extendSelection(int rows)
+{
+    const auto target = m_workspace.editingTarget();
+    if (auto *session = target ? m_files->session(*target) : nullptr)
+        applySelection(gridSelection().shiftKey(session->selection(), rows));
+}
+
+void Application::clickLine(qulonglong id, int modifiers)
+{
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session)
+        return;
+    const auto rules = gridSelection();
+    const bool ctrl = modifiers & Qt::ControlModifier, shift = modifiers & Qt::ShiftModifier;
+    const core::LineId line{id};
+    if (shift)
+        applySelection(rules.shiftClick(session->selection(), line, ctrl));
+    else if (ctrl)
+        applySelection(rules.ctrlClick(session->selection(), line));
+    else
+        applySelection(rules.plain(session->selection(), line));
+}
+
+void Application::dragSelection(qulonglong id)
+{
+    const auto target = m_workspace.editingTarget();
+    if (auto *session = target ? m_files->session(*target) : nullptr)
+        applySelection(gridSelection().shiftClick(session->selection(), core::LineId{id}, false));
+}
+
+void Application::selectAllLines()
+{
+    const auto target = m_workspace.editingTarget();
+    if (auto *session = target ? m_files->session(*target) : nullptr)
+        applySelection(gridSelection().selectAll(session->selection()));
 }
 
 QVariantMap Application::qmlProperties()

@@ -1,5 +1,7 @@
 #include "shell_controller.h"
 
+#include <algorithm>
+
 namespace hikari::ui {
 
 namespace {
@@ -60,6 +62,35 @@ void ShellController::selectLine(qulonglong id)
     const core::LineId line{id};
     if (m_lines.rowOf(line))
         m_lines.setSelection(application::Selection{line, {line}}, line);
+}
+
+void ShellController::setSelection(const application::Selection &selection)
+{
+    m_lines.setSelection(selection, selection.anchor);
+    const auto row = selection.active ? m_lines.rowOf(*selection.active) : std::nullopt;
+    const core::LineRecord *record = row ? m_lines.recordAt(*row) : nullptr;
+    m_activeText = record ? qs(record->text) : QString();
+    m_activeStyle = record ? qs(record->style) : QString();
+    const auto shown = displayedLines();
+    const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
+        return std::find(shown.begin(), shown.end(), id) == shown.end();
+    });
+    const auto count = static_cast<qsizetype>(selection.selected.size());
+    m_selectionStatus = count == 0 ? QString()
+                        : count == 1 ? tr("1 Line selected")
+                                     : tr("%1 Lines selected").arg(count);
+    if (hidden > 0)
+        m_selectionStatus += tr(" (%1 hidden)").arg(hidden);
+    emit activeLineChanged();
+}
+
+std::vector<core::LineId> ShellController::displayedLines() const
+{
+    std::vector<core::LineId> out;
+    for (int row = 0; row < m_lines.rowCount(); ++row)
+        if (const auto id = m_lines.lineAt(row))
+            out.push_back(*id);
+    return out;
 }
 
 } // namespace hikari::ui

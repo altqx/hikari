@@ -481,14 +481,12 @@ ApplicationWindow {
                 anchors.fill: parent
                 focus: true
                 model: shell.lines
-                onActiveLineRequested: id => {
-                    if (root.editor.showLine(id))
-                        root.shell.selectLine(id)
-                }
-                Connections {
-                    target: root.editor
-                    function onLineChanged(id) { root.shell.selectLine(id) }
-                }
+                // Every gesture is a request; the application owns the selection (G1).
+                onActiveLineRequested: id => root.app.selectLine(id)
+                onExtendRequested: rows => root.app.extendSelection(rows)
+                onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
+                onLineDragged: id => root.app.dragSelection(id)
+                onSelectAllRequested: root.app.selectAllLines()
             }
         }
 
@@ -514,6 +512,11 @@ ApplicationWindow {
             text: (shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No editing target"))
                   + (shell.hasReference ? qsTr("  |  Reference (protected): %1").arg(shell.referenceTitle) : "")
             Layout.fillWidth: true
+        }
+        Label {
+            objectName: "selectionStatus"
+            padding: 4
+            text: shell.selectionStatus
         }
         Label {
             objectName: "saveStatus"

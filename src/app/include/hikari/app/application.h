@@ -5,6 +5,7 @@
 // coordinator, Documents, the workspace and the shell/editor presenters.
 
 #include "hikari/application/document_files.h"
+#include "hikari/application/grid_selection.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -38,6 +39,16 @@ public:
     // Closes the editing target (close review belongs to a later card).
     Q_INVOKABLE bool closeEditingTarget();
 
+    // Grid selection gestures (G1). The active Line moves through the Line
+    // editor (a pending draft commits by policy); a refusal leaves everything as it was.
+    Q_INVOKABLE void selectLine(qulonglong id);
+    Q_INVOKABLE void extendSelection(int rows);
+    Q_INVOKABLE void clickLine(qulonglong id, int modifiers);
+    Q_INVOKABLE void dragSelection(qulonglong id);
+    Q_INVOKABLE void selectAllLines();
+    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
+    void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
+
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
@@ -54,6 +65,8 @@ private:
     // The Video panel follows the editing target: its association when the
     // target changes, its committed content and its active Line.
     void refreshVideo();
+    application::GridSelection gridSelection() const;
+    bool applySelection(application::Selection next);
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
@@ -69,6 +82,7 @@ private:
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
+    bool m_changeActiveOnSelection = true;
 };
 
 } // namespace hikari::app

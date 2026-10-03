@@ -26,6 +26,8 @@ class ShellController : public QObject {
     Q_PROPERTY(QAbstractItemModel *referenceLines READ referenceLines CONSTANT)
     Q_PROPERTY(QString activeLineText READ activeLineText NOTIFY activeLineChanged)
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
+    // "3 Lines selected", with the hidden count when some are hidden (G1).
+    Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
 
 public:
     explicit ShellController(application::Workspace &workspace, QObject *parent = nullptr);
@@ -42,11 +44,16 @@ public:
     QAbstractItemModel *referenceLines() { return &m_referenceLines; }
     QString activeLineText() const { return m_activeText; }
     QString activeLineStyle() const { return m_activeStyle; }
+    QString selectionStatus() const { return m_selectionStatus; }
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);
     // Marks a Line active and selected in the editing target's Grid.
     Q_INVOKABLE void selectLine(qulonglong id);
+    // Shows the editing target's whole selection (G1).
+    void setSelection(const application::Selection &selection);
+    // The editing target's Lines in the order the Grid shows them.
+    std::vector<core::LineId> displayedLines() const;
 
 signals:
     void targetsChanged();
@@ -60,6 +67,7 @@ private:
     LineTableModel m_referenceLines;
     QString m_activeText;
     QString m_activeStyle;
+    QString m_selectionStatus;
 };
 
 } // namespace hikari::ui

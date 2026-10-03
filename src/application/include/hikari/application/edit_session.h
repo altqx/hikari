@@ -22,6 +22,11 @@ namespace hikari::application {
 struct Selection {
     std::optional<core::LineId> active;
     std::set<core::LineId> selected;
+    // Range selection (G1; legacy lastRow / extendRow, as stable identities):
+    // the anchor a Shift range starts from, and the moving end of a keyboard
+    // range when the active Line stays put.
+    std::optional<core::LineId> anchor;
+    std::optional<core::LineId> extent;
     bool operator==(const Selection &) const = default;
 };
 

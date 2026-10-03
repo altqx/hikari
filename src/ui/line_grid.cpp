@@ -7,6 +7,7 @@
 #include <QAccessible>
 #include <QFontMetricsF>
 #include <QKeyEvent>
+#include <QMouseEvent>
 #include <QPainter>
 
 #include <algorithm>
@@ -44,6 +45,7 @@ LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
 {
     setOpaquePainting(true);
     setActiveFocusOnTab(true);
+    setAcceptedMouseButtons(Qt::LeftButton); // click, Ctrl/Shift-click and drag selection (G1)
     setFlag(ItemIsFocusScope, false);
     installGridAccessibility();
     updateRowHeight();
@@ -218,6 +220,29 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
         return;
     }
     const int page = std::max(1, m_geometry.visibleRowCount(m_contentY, height(), rows) - 1);
+    const auto mods = event->modifiers();
+    if (event->matches(QKeySequence::SelectAll)) {
+        emit selectAllRequested();
+        event->accept();
+        return;
+    }
+    if ((mods & Qt::ShiftModifier) && !(mods & (Qt::ControlModifier | Qt::AltModifier))) {
+        int step = 0;
+        switch (event->key()) {
+        case Qt::Key_Up: step = -1; break;
+        case Qt::Key_Down: step = 1; break;
+        case Qt::Key_PageUp: step = -page; break;
+        case Qt::Key_PageDown: step = page; break;
+        case Qt::Key_Home: step = -rows; break;
+        case Qt::Key_End: step = rows; break;
+        default: break;
+        }
+        if (step != 0) {
+            emit extendRequested(step);
+            event->accept();
+            return;
+        }
+    }
     const int current = std::max(0, currentRow());
     int target = current;
     switch (event->key()) {
@@ -237,6 +262,43 @@ void LineGrid::keyPressEvent(QKeyEvent *event)
     scrollToRow(target);
     if (const auto id = lineAtRow(target))
         emit activeLineRequested(id->value);
+    event->accept();
+}
+
+void LineGrid::mousePressEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton) {
+        event->ignore();
+        return;
+    }
+    forceActiveFocus(Qt::MouseFocusReason);
+    const int row = rowAt(event->position().y());
+    const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
+    m_dragLine = id;
+    if (id)
+        emit lineClicked(id->value, static_cast<int>(event->modifiers()));
+    event->accept();
+}
+
+void LineGrid::mouseMoveEvent(QMouseEvent *event)
+{
+    if (!(event->buttons() & Qt::LeftButton) || event->modifiers() != Qt::NoModifier || !m_dragLine) {
+        event->ignore();
+        return;
+    }
+    const int row = rowAt(event->position().y());
+    const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
+    if (id && id != m_dragLine) {
+        m_dragLine = id;
+        scrollToRow(row);
+        emit lineDragged(id->value);
+    }
+    event->accept();
+}
+
+void LineGrid::mouseReleaseEvent(QMouseEvent *event)
+{
+    m_dragLine.reset();
     event->accept();
 }
 

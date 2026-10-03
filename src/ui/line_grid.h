@@ -74,8 +74,15 @@ public:
 
 signals:
     // Keyboard navigation asks the application to move the active Line; the
-    // Grid never changes selection itself.
+    // Grid never changes selection itself (G1: every gesture is a request).
     void activeLineRequested(qulonglong lineId);
+    // Shift with arrows, Page, Home or End: extend by `rows` displayed rows.
+    void extendRequested(int rows);
+    // A mouse press on a Line, with the keyboard modifiers held.
+    void lineClicked(qulonglong lineId, int modifiers);
+    // Dragging with the button held reaches another Line (block select).
+    void lineDragged(qulonglong lineId);
+    void selectAllRequested();
     void modelChanged();
     void contentYChanged();
     void contentHeightChanged();
@@ -84,6 +91,9 @@ signals:
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
 
 private:
@@ -99,6 +109,7 @@ private:
     qreal m_contentY = 0;
     int m_lastPainted = 0;
     int m_currentColumn = 5; // Text
+    std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;
     int m_announcedSelected = 0;
     int m_announcedHidden = 0;
