@@ -61,6 +61,64 @@ std::optional<LineId> Document::insertLineAfter(LineId after, LineRecord line)
     return std::nullopt;
 }
 
+namespace {
+
+void prepareInserted(LineRecord &line, LineId id, std::size_t offset)
+{
+    line.id = id;
+    line.inserted = true;
+    line.edited = true;
+    line.originalSpan.reset();
+    line.span = SourceSpan{offset, 0, 0};
+}
+
+} // namespace
+
+std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line)
+{
+    for (auto &section : m_sections)
+        for (std::size_t i = 0; i < section.records.size(); ++i)
+            if (auto *next = std::get_if<LineRecord>(&section.records[i]); next && next->id == before) {
+                prepareInserted(line, LineId{m_nextLineId++}, next->span.offset);
+                const LineId id = line.id;
+                section.records.insert(section.records.begin() + static_cast<std::ptrdiff_t>(i), std::move(line));
+                return id;
+            }
+    return std::nullopt;
+}
+
+std::optional<LineId> Document::appendLine(LineRecord line)
+{
+    for (auto it = m_sections.rbegin(); it != m_sections.rend(); ++it) {
+        if (it->kind != SectionKind::Events)
+            continue;
+        std::size_t offset = it->headerSpan ? it->headerSpan->offset + it->headerSpan->length +
+                                                  it->headerSpan->terminatorLength
+                                            : 0;
+        for (const auto &record : it->records)
+            std::visit([&](const auto &r) {
+                if constexpr (requires { r.span; })
+                    offset = std::max(offset, r.span.offset + r.span.length + r.span.terminatorLength);
+            }, record);
+        prepareInserted(line, LineId{m_nextLineId++}, offset);
+        const LineId id = line.id;
+        it->records.push_back(std::move(line));
+        return id;
+    }
+    return std::nullopt;
+}
+
+bool Document::removeLine(LineId id)
+{
+    for (auto &section : m_sections)
+        for (std::size_t i = 0; i < section.records.size(); ++i)
+            if (auto *line = std::get_if<LineRecord>(&section.records[i]); line && line->id == id) {
+                section.records.erase(section.records.begin() + static_cast<std::ptrdiff_t>(i));
+                return true;
+            }
+    return false;
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)

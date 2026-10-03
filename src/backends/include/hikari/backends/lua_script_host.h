@@ -41,8 +41,12 @@ public:
     void load();
     // A new helper generation that loads the script again.
     void restart();
-    // False unless Ready (one macro at a time per script).
+    // False unless Ready (one macro at a time per script). The snapshot is the
+    // subtitles object the macro sees; without one it sees an empty Document.
     bool run(int macroIndex);
+    bool run(int macroIndex, const application::MacroSnapshot &snapshot);
+    // What the last successful run staged and returned (set before finished()).
+    const std::optional<application::MacroResult> &lastResult() const { return m_lastResult; }
     // Latches the run as cancelled: it ends Cancelled even if the script then
     // returns normally. If it has not stopped after the grace period, Force
     // stop is offered (forceStopOffered); nothing is killed automatically.
@@ -99,6 +103,7 @@ private:
     double m_loadMs = 0;
     std::int64_t m_loadStartedNs = 0;
     DialogHandler m_dialogHandler;
+    std::optional<application::MacroResult> m_lastResult;
 };
 
 } // namespace hikari::backends

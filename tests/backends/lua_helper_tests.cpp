@@ -3,11 +3,14 @@
 // the QML rendering has its own test.
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/backends/lua_script_host.h"
+#include "hikari/application/macro_transaction.h"
+#include "hikari/core/ass_load.h"
 
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <functional>
 #include <optional>
 
@@ -349,6 +352,115 @@ TEST_F(LuaHelper, LoadFailuresAreReportedWithTheirReasons)
 
     auto missing = load(fixture("no-such-script.lua"));
     EXPECT_EQ(missing->state(), LuaScriptHost::State::LoadFailed);
+}
+
+// L4: macros run against a snapshot of a Document; their staged edits come
+// back as one result that applies as one undo step.
+constexpr std::string_view kMacroScript =
+    "[Script Info]\n"
+    "Title: macro\n"
+    "ScriptType: v4.00+\n"
+    "\n"
+    "[V4+ Styles]\n"
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\n"
+    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+    "\n"
+    "[Events]\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n";
+
+hikari::application::EditSession macroSession()
+{
+    std::vector<std::byte> bytes(kMacroScript.size());
+    std::memcpy(bytes.data(), kMacroScript.data(), bytes.size());
+    return hikari::application::EditSession(hikari::core::loadAss(bytes).document);
+}
+
+std::vector<std::string> texts(const hikari::application::EditSession &s)
+{
+    std::vector<std::string> out;
+    for (const auto *l : s.document().lines())
+        out.emplace_back(l->text.begin(), l->text.end());
+    return out;
+}
+
+TEST_F(LuaHelper, EdgeblurAppliesToTheSelectedLinesAsOneUndoStep)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1}, l2{2}, l3{3};
+    session.setSelection(Selection{l3, {l1, l3}});
+    auto host = load(QStringLiteral(HIKARI_EDGEBLUR_SCRIPT));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    session.setReadOnly(true);
+    ASSERT_TRUE(host->run(0, *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    session.setReadOnly(false);
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_TRUE(host->lastResult());
+    const auto steps = session.historySize();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Add edgeblur"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"{\\be1}one", "two", "{\\be1}three"}));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    // Lines keep their identity, and the selection is unchanged (none returned).
+    EXPECT_EQ(session.document().lines()[1]->id, l2);
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{l1, l3}));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
+}
+
+TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    session.setSelection(Selection{hikari::core::LineId{1}, {hikari::core::LineId{1}}});
+    auto host = load(fixture("subs-api.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Edit"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    const auto &result = *host->lastResult();
+    ASSERT_EQ(result.dialogues.size(), 4u);
+    EXPECT_EQ(result.dialogues[0].id, 0u); // added by the macro
+    EXPECT_EQ(result.dialogues[1].id, 1u); // replaced in its slot
+    EXPECT_EQ(result.selected, std::vector<int>{4});
+    EXPECT_EQ(result.active, 4);
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, result, "Edit"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"negative", "one!", "three", "appended"}));
+    EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
+}
+
+TEST_F(LuaHelper, StagedSubtitlesRaiseTheLegacyErrors)
+{
+    auto session = macroSession();
+    auto host = load(fixture("subs-api.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    auto snapshot = *hikari::application::snapshotForMacro(session);
+    const auto failure = [&](const char *name) {
+        run = {};
+        EXPECT_TRUE(host->run(macro(*host, name), snapshot));
+        EXPECT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Failed) << name;
+        EXPECT_FALSE(host->lastResult()) << name;
+        return run.message.toStdString();
+    };
+    EXPECT_NE(failure("Out of range").find("Line index is out of range"), std::string::npos);
+    EXPECT_NE(failure("Wrong class").find("Cannot add a line of class dialogs to a field of class info"),
+              std::string::npos);
+    EXPECT_NE(failure("Bad field").find("Invalid number 'layer' field in 'dialogue' class subtitle line"),
+              std::string::npos);
+    snapshot.canModify = false;
+    EXPECT_NE(failure("Write").find("You cannot modify read-only subtitles"), std::string::npos);
 }
 
 } // namespace

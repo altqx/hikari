@@ -28,6 +28,8 @@ public:
     bool reload(const std::string &path) override;
     void unload(const std::string &path) override;
     bool run(const std::string &path, int ordinal) override;
+    // L4: the macro runs against `snapshot`; its result is host(path)->lastResult().
+    bool run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot);
     void cancel() override;
     bool forceStop(const std::string &path) override;
     // Application quit: no new runs, running macros are cancelled, and helpers

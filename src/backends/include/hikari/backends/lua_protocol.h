@@ -9,15 +9,17 @@
 //         carries the ScriptInfo; Failed carries the error text. A helper
 //         loads one script once; reloading is a new helper (top-level code
 //         runs again, visibly).
-//   Run:  i32 macro index. Progress events and Service calls while it runs;
-//         Terminal Ok, Failed (error text), or Cancelled (aegisub.cancel() or
-//         a host Cancel).
+//   Run:  i32 macro index, then a MacroSnapshot (the subtitles object).
+//         Progress events and Service calls while it runs; Terminal Ok carries
+//         the MacroResult (staged lists and returned selection), Failed the
+//         error text, or Cancelled (aegisub.cancel() or a host Cancel).
 // Progress payloads start with an i32 ProgressEvent: Log (str), Set (f64
 // percent), Task (str), Title (str).
 // Service payloads start with an i32 Service; Dialog carries a DialogRequest
 // and is answered with a DialogResult.
 
 #include "hikari/application/automation.h"
+#include "hikari/backends/helper_protocol.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -39,6 +41,11 @@ std::optional<application::ScriptInfo> decodeInfo(const std::vector<std::byte> &
 // Without the leading Service field.
 std::vector<std::byte> encodeDialogRequest(const application::DialogRequest &request);
 std::optional<application::DialogRequest> decodeDialogRequest(const std::vector<std::byte> &payload);
+
+std::vector<std::byte> encodeSnapshot(const application::MacroSnapshot &snapshot);
+std::optional<application::MacroSnapshot> decodeSnapshot(helper::Reader &in, std::size_t payloadSize);
+std::vector<std::byte> encodeMacroResult(const application::MacroResult &result);
+std::optional<application::MacroResult> decodeMacroResult(const std::vector<std::byte> &payload);
 
 std::vector<std::byte> encodeDialogResult(const application::DialogResult &result);
 // Rejects a result that does not fit its request: a wrong value count or

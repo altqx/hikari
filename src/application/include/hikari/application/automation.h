@@ -9,6 +9,7 @@
 #include <cfloat>
 #include <cstdint>
 #include <functional>
+#include <optional>
 #include <climits>
 #include <string>
 #include <variant>
@@ -92,6 +93,50 @@ inline DialogResult initialDialogResult(const DialogRequest &request)
     }
     return result;
 }
+
+// A Document as a macro sees it (L4): the legacy subtitles object's three
+// lists. Script indices are 1-based across info, then styles, then
+// dialogue lines, as in legacy.
+struct MacroInfoLine {
+    std::string key, value;
+    bool operator==(const MacroInfoLine &) const = default;
+};
+struct MacroStyleLine {
+    std::vector<std::string> fields; // positional ASS v4+ fields, Name first
+    bool operator==(const MacroStyleLine &) const = default;
+};
+struct MacroDialogueLine {
+    std::uint64_t id = 0; // the Line it came from; 0 for a line the macro added
+    bool comment = false;
+    int layer = 0;
+    std::int64_t startMs = 0, endMs = 0;
+    std::string style, actor;
+    int marginL = 0, marginR = 0, marginV = 0;
+    std::string effect;
+    std::string text;        // as the script sees it (the translation in TLMode)
+    std::string translation; // "text_translation": the original in TLMode, else empty
+    std::string raw;         // the legacy Dialogue::GetRaw line (read-only)
+    bool operator==(const MacroDialogueLine &) const = default;
+};
+
+struct MacroSnapshot {
+    std::uint64_t revision = 0; // the Document revision the macro started from
+    std::vector<MacroInfoLine> info;
+    std::vector<MacroStyleLine> styles;
+    std::vector<MacroDialogueLine> dialogues;
+    std::vector<int> selected; // script indices
+    int active = 0;            // script index of the active Line, 0 for none
+    bool canModify = true;
+};
+
+// What a macro left behind: its staged lists, and the selection it returned.
+struct MacroResult {
+    std::vector<MacroInfoLine> info;
+    std::vector<MacroStyleLine> styles;
+    std::vector<MacroDialogueLine> dialogues;
+    std::optional<std::vector<int>> selected; // nullopt: the macro returned none
+    std::optional<int> active;
+};
 
 // The automation manager as the UI sees it (L1): loaded scripts, their
 // macros by registration, and one active macro application-wide.

@@ -142,13 +142,22 @@ void LuaScriptHost::sendLoad()
 
 bool LuaScriptHost::run(int macroIndex)
 {
+    return run(macroIndex, application::MacroSnapshot{});
+}
+
+bool LuaScriptHost::run(int macroIndex, const application::MacroSnapshot &snapshot)
+{
     if (m_state != State::Ready || macroIndex < 0 || static_cast<std::size_t>(macroIndex) >= m_info.macros.size())
         return false;
+    m_lastResult.reset();
     Writer w;
     w.i32(static_cast<std::int32_t>(lua::Command::Run)).i32(macroIndex);
+    const auto body = lua::encodeSnapshot(snapshot);
+    auto payload = w.take();
+    payload.insert(payload.end(), body.begin(), body.end());
     // Each handler belongs to one request; it learns its ID once request() returns.
     auto id = std::make_shared<std::uint64_t>(0);
-    const auto sent = m_host->request(m_nextRun++, w.take(), [this, id](std::expected<Event, HostError> e) {
+    const auto sent = m_host->request(m_nextRun++, std::move(payload), [this, id](std::expected<Event, HostError> e) {
         onEvent(*id, std::move(e));
     });
     if (!sent)
@@ -253,6 +262,11 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
                                                                     : RunOutcome::Failed;
         if (outcome == RunOutcome::Ok && m_cancelRequested)
             outcome = RunOutcome::Cancelled; // the latch wins over a late success
+        if (outcome == RunOutcome::Ok) {
+            m_lastResult = lua::decodeMacroResult(event->payload);
+            if (!m_lastResult)
+                outcome = RunOutcome::Failed; // a malformed result applies nothing
+        }
         endRun(outcome, message);
         return;
     }

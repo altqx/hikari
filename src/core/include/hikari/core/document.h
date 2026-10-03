@@ -186,6 +186,14 @@ public:
     // Inserts a new Line right after `after`, in the same section. Returns its
     // id, or nullopt when `after` is unknown.
     std::optional<LineId> insertLineAfter(LineId after, LineRecord line);
+    // Inserts a new Line right before `before`, in the same section.
+    std::optional<LineId> insertLineBefore(LineId before, LineRecord line);
+    // Appends a new Line at the end of the last Events section; nullopt when
+    // the Document has none.
+    std::optional<LineId> appendLine(LineRecord line);
+    // Removes a Line (its source bytes are no longer written). False when no
+    // Line has this id.
+    bool removeLine(LineId id);
 
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;

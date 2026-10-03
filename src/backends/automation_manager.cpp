@@ -159,10 +159,15 @@ void AutomationManager::unload(const std::string &path)
 
 bool AutomationManager::run(const std::string &path, int ordinal)
 {
+    return run(path, ordinal, application::MacroSnapshot{});
+}
+
+bool AutomationManager::run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot)
+{
     if (m_shuttingDown || busy())
         return false; // one active macro application-wide
     LuaScriptHost *h = host(path);
-    if (!h || !h->run(ordinal))
+    if (!h || !h->run(ordinal, snapshot))
         return false;
     notify();
     return true;

@@ -38,6 +38,7 @@ enum class CommandRefusal {
     Protected,      // the session is a protected reference
     Invalid,        // the command's own validation failed
     InvalidDraft,   // the overlapping draft can't be committed (E63-invalid-commit)
+    ReadOnly,       // a macro owns the Document until it ends (A33-transaction)
 };
 
 // E63-invalid-commit: by default a draft whose End is before its Start, or
@@ -74,6 +75,11 @@ public:
     const Selection &selection() const { return m_selection; }
     std::uint64_t revision() const { return m_revision; }
     ContentId contentId() const { return m_states[m_cursor].content; }
+
+    // While a macro runs on this Document it is read-only: drafts, commands,
+    // Undo and Redo are refused. Selection still moves.
+    void setReadOnly(bool readOnly) { m_readOnly = readOnly; }
+    bool isReadOnly() const { return m_readOnly; }
 
     // Selection changes are not history steps.
     void setSelection(Selection selection);
@@ -138,6 +144,7 @@ private:
     std::uint64_t m_revision = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
+    bool m_readOnly = false;
     InvalidCommitPolicy m_policy = InvalidCommitPolicy::Block;
 };
 

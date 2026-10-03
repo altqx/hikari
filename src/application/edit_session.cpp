@@ -100,7 +100,7 @@ bool EditSession::navigateTo(core::LineId line)
 
 bool EditSession::editDraft(core::LineId line, const DraftChange &change)
 {
-    if (m_protected || !hasLine(document(), line))
+    if (m_protected || m_readOnly || !hasLine(document(), line))
         return false;
     if (m_draft && m_draft->line != line) {
         if (draftProblem() && m_policy == InvalidCommitPolicy::Block)
@@ -215,6 +215,8 @@ std::expected<void, CommandRefusal> EditSession::run(const Command &command)
 {
     if (m_protected)
         return std::unexpected(CommandRefusal::Protected);
+    if (m_readOnly)
+        return std::unexpected(CommandRefusal::ReadOnly);
     // An overlapping draft is committed first, as its own step; that step stays
     // even if the command is then rejected.
     if (m_draft && command.touches.contains(m_draft->line)) {
@@ -246,6 +248,8 @@ bool EditSession::canRedo() const
 
 bool EditSession::undo()
 {
+    if (m_readOnly)
+        return false;
     if (m_draft && draftProblem() && m_policy == InvalidCommitPolicy::Block)
         return false;
     commitDraft();
@@ -260,7 +264,7 @@ bool EditSession::undo()
 
 bool EditSession::redo()
 {
-    if (m_draft || !canRedo())
+    if (m_readOnly || m_draft || !canRedo())
         return false;
     ++m_cursor;
     m_selection = m_states[m_cursor].selection;

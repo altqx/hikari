@@ -32,6 +32,8 @@ extern "C" {
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <type_traits>
+#include <variant>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -668,10 +670,550 @@ void load(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, lua::encodeInfo(g_script.info));
 }
 
-void run(Reader &in, Responder &r)
+// ---- the subtitles object (legacy AutoToFile, HikariSub/AutomationToFile.cpp) --
+//
+// A staged copy of the Document's info, style and dialogue lists. Script
+// indices run 1-based across the three lists in that order. Reads, writes,
+// deletes, appends and inserts follow the legacy object, including its error
+// messages; nothing reaches the Document until the host applies the result.
+
+using hikari::application::MacroDialogueLine;
+using hikari::application::MacroInfoLine;
+using hikari::application::MacroResult;
+using hikari::application::MacroSnapshot;
+using hikari::application::MacroStyleLine;
+
+struct Staged {
+    MacroSnapshot lists;
+    bool canModify = true;
+    int size() const
+    {
+        return static_cast<int>(lists.info.size() + lists.styles.size() + lists.dialogues.size());
+    }
+};
+Staged *g_subs = nullptr; // the running macro's object
+char g_subsTag;
+
+void checkLive(lua_State *L)
+{
+    if (!g_subs)
+        luaL_error(L, "the subtitles object is no longer valid");
+    if (g_responder && g_responder->cancelled()) {
+        lua_pushlightuserdata(L, &g_cancelTag); // legacy raised "cancelled"
+        lua_error(L);
+    }
+}
+
+void checkAllowModify(lua_State *L)
+{
+    if (!g_subs->canModify)
+        luaL_error(L, "You cannot modify read-only subtitles");
+}
+
+std::string field(const MacroStyleLine &s, std::size_t i)
+{
+    return i < s.fields.size() ? s.fields[i] : std::string();
+}
+
+double toDouble(const std::string &s)
+{
+    return std::strtod(s.c_str(), nullptr);
+}
+
+void setString(lua_State *L, const char *name, const std::string &value)
+{
+    lua_pushlstring(L, value.data(), value.size());
+    lua_setfield(L, -2, name);
+}
+void setNumber(lua_State *L, const char *name, double value)
+{
+    lua_pushnumber(L, value);
+    lua_setfield(L, -2, name);
+}
+void setBool(lua_State *L, const char *name, bool value)
+{
+    lua_pushboolean(L, value);
+    lua_setfield(L, -2, name);
+}
+
+// AssColor::GetAss(alpha = true): "&HAABBGGRR&".
+std::string assOf(const std::string &value)
+{
+    const AssColor c = assColor(value);
+    char text[16];
+    std::snprintf(text, sizeof text, "&H%02lX%02lX%02lX%02lX&", c.a, c.b, c.g, c.r);
+    return text;
+}
+
+bool lineToLua(lua_State *L, int i)
+{
+    const auto &l = g_subs->lists;
+    const int sinfo = static_cast<int>(l.info.size());
+    const int styles = sinfo + static_cast<int>(l.styles.size());
+    if (i < 0 || i >= g_subs->size())
+        return false;
+    lua_newtable(L);
+    if (i < sinfo) {
+        const auto &info = l.info[static_cast<std::size_t>(i)];
+        setString(L, "section", "[Script Info]");
+        setString(L, "raw", info.key + ": " + info.value);
+        setString(L, "key", info.key);
+        setString(L, "value", info.value);
+        lua_pushstring(L, "info");
+    } else if (i < styles) {
+        const auto &s = l.styles[static_cast<std::size_t>(i - sinfo)];
+        std::string raw = "Style: ";
+        for (std::size_t k = 0; k < s.fields.size(); ++k)
+            raw += (k ? "," : "") + s.fields[k];
+        setString(L, "section", "[V4+ Styles]");
+        setString(L, "raw", raw);
+        setString(L, "name", field(s, 0));
+        setString(L, "fontname", field(s, 1));
+        setNumber(L, "fontsize", toDouble(field(s, 2)));
+        setString(L, "color1", assOf(field(s, 3)));
+        setString(L, "color2", assOf(field(s, 4)));
+        setString(L, "color3", assOf(field(s, 5)));
+        setString(L, "color4", assOf(field(s, 6)));
+        setBool(L, "bold", std::atoi(field(s, 7).c_str()) != 0);
+        setBool(L, "italic", std::atoi(field(s, 8).c_str()) != 0);
+        setBool(L, "underline", std::atoi(field(s, 9).c_str()) != 0);
+        setBool(L, "strikeout", std::atoi(field(s, 10).c_str()) != 0);
+        setNumber(L, "scale_x", std::atoi(field(s, 11).c_str()));
+        setNumber(L, "scale_y", std::atoi(field(s, 12).c_str()));
+        setNumber(L, "spacing", toDouble(field(s, 13)));
+        setNumber(L, "angle", toDouble(field(s, 14)));
+        // Legacy keeps BorderStyle as a bool (opaque box) and pushes it as a number.
+        setNumber(L, "borderstyle", std::atoi(field(s, 15).c_str()) == 3 ? 1 : 0);
+        setNumber(L, "outline", toDouble(field(s, 16)));
+        setNumber(L, "shadow", toDouble(field(s, 17)));
+        setNumber(L, "align", std::atoi(field(s, 18).c_str()));
+        setNumber(L, "margin_l", std::atoi(field(s, 19).c_str()));
+        setNumber(L, "margin_r", std::atoi(field(s, 20).c_str()));
+        setNumber(L, "margin_t", std::atoi(field(s, 21).c_str()));
+        setNumber(L, "margin_b", std::atoi(field(s, 21).c_str()));
+        setNumber(L, "encoding", std::atoi(field(s, 22).c_str()));
+        setNumber(L, "relative_to", 2);
+        lua_pushstring(L, "style");
+    } else {
+        const auto &d = l.dialogues[static_cast<std::size_t>(i - styles)];
+        setString(L, "section", "[Events]");
+        setString(L, "raw", d.raw);
+        setBool(L, "comment", d.comment);
+        setNumber(L, "layer", d.layer);
+        setNumber(L, "start_time", static_cast<double>(d.startMs));
+        setNumber(L, "end_time", static_cast<double>(d.endMs));
+        setString(L, "style", d.style);
+        setString(L, "actor", d.actor);
+        setNumber(L, "margin_l", d.marginL);
+        setNumber(L, "margin_r", d.marginR);
+        setNumber(L, "margin_t", d.marginV);
+        setNumber(L, "margin_b", d.marginV);
+        setString(L, "effect", d.effect);
+        setString(L, "text", d.text);
+        if (!d.translation.empty())
+            setString(L, "text_translation", d.translation);
+        lua_newtable(L);
+        lua_setfield(L, -2, "extra");
+        lua_pushstring(L, "dialogue");
+    }
+    lua_setfield(L, -2, "class");
+    return true;
+}
+
+using Entry = std::variant<MacroInfoLine, MacroStyleLine, MacroDialogueLine>;
+
+std::string getString(lua_State *L, const char *name, const char *cls)
+{
+    lua_getfield(L, -1, name);
+    if (!lua_isstring(L, -1))
+        luaL_error(L, "Invalid string '%s' field in '%s' class subtitle line", name, cls);
+    std::string v = lua_tostring(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+double getNumber(lua_State *L, const char *name, const char *cls)
+{
+    lua_getfield(L, -1, name);
+    if (!lua_isnumber(L, -1))
+        luaL_error(L, "Invalid number '%s' field in '%s' class subtitle line", name, cls);
+    const double v = lua_tonumber(L, -1);
+    lua_pop(L, 1);
+    return v;
+}
+bool getBool(lua_State *L, const char *name, const char *cls)
+{
+    lua_getfield(L, -1, name);
+    if (!lua_isboolean(L, -1))
+        luaL_error(L, "Invalid boolean '%s' field in '%s' class subtitle line", name, cls);
+    const bool v = lua_toboolean(L, -1) != 0;
+    lua_pop(L, 1);
+    return v;
+}
+
+std::string numberText(double v)
+{
+    char text[64];
+    std::snprintf(text, sizeof text, "%g", v);
+    return text;
+}
+
+// Legacy LuaToLine: the table on the stack top; std::nullopt for an unknown class.
+std::optional<Entry> luaToLine(lua_State *L)
+{
+    if (!lua_istable(L, -1))
+        luaL_error(L, "Cannot convert non table value");
+    lua_getfield(L, -1, "class");
+    if (!lua_isstring(L, -1))
+        luaL_error(L, "Table do not have class field");
+    std::string cls = lua_tostring(L, -1);
+    lua_pop(L, 1);
+    std::transform(cls.begin(), cls.end(), cls.begin(), [](unsigned char c) { return char(std::tolower(c)); });
+    if (cls == "dialogue") {
+        MacroDialogueLine d;
+        d.comment = getBool(L, "comment", "dialogue");
+        d.layer = static_cast<int>(getNumber(L, "layer", "dialogue"));
+        d.startMs = static_cast<std::int64_t>(getNumber(L, "start_time", "dialogue"));
+        d.endMs = static_cast<std::int64_t>(getNumber(L, "end_time", "dialogue"));
+        d.style = getString(L, "style", "dialogue");
+        d.actor = getString(L, "actor", "dialogue");
+        d.marginL = static_cast<int>(getNumber(L, "margin_l", "dialogue"));
+        d.marginR = static_cast<int>(getNumber(L, "margin_r", "dialogue"));
+        d.marginV = static_cast<int>(getNumber(L, "margin_t", "dialogue"));
+        d.effect = getString(L, "effect", "dialogue");
+        d.text = getString(L, "text", "dialogue");
+        lua_getfield(L, -1, "text_translation");
+        if (lua_isstring(L, -1))
+            d.translation = lua_tostring(L, -1);
+        lua_pop(L, 1);
+        return d;
+    }
+    if (cls == "style") {
+        MacroStyleLine s;
+        const auto str = [&](const char *n) { return getString(L, n, "style"); };
+        const auto num = [&](const char *n) { return getNumber(L, n, "style"); };
+        const auto flag = [&](const char *n) { return getBool(L, n, "style") ? std::string("-1") : std::string("0"); };
+        const std::string name = str("name"), font = str("fontname");
+        const double size = num("fontsize");
+        const std::string c1 = str("color1"), c2 = str("color2"), c3 = str("color3"), c4 = str("color4");
+        const std::string bold = flag("bold"), italic = flag("italic"), underline = flag("underline"),
+                          strike = flag("strikeout");
+        const double sx = num("scale_x"), sy = num("scale_y"), spacing = num("spacing"), angle = num("angle");
+        // Legacy reads BorderStyle back as (borderstyle == -3).
+        const int border = static_cast<int>(num("borderstyle"));
+        const double outline = num("outline"), shadow = num("shadow");
+        const int align = static_cast<int>(num("align")), ml = static_cast<int>(num("margin_l")),
+                  mr = static_cast<int>(num("margin_r")), mt = static_cast<int>(num("margin_t")),
+                  mb = static_cast<int>(num("margin_b")), enc = static_cast<int>(num("encoding"));
+        auto hex = [](const std::string &v) {
+            const AssColor c = assColor(v);
+            char text[16];
+            std::snprintf(text, sizeof text, "&H%02lX%02lX%02lX%02lX", c.a, c.b, c.g, c.r);
+            return std::string(text);
+        };
+        s.fields = {name, font, numberText(size), hex(c1), hex(c2), hex(c3), hex(c4), bold, italic, underline,
+                    strike, numberText(sx), numberText(sy), numberText(spacing), numberText(angle),
+                    border == -3 ? "3" : "1", numberText(outline), numberText(shadow), std::to_string(align),
+                    std::to_string(ml), std::to_string(mr), std::to_string(std::max(mt, mb)), std::to_string(enc)};
+        return s;
+    }
+    if (cls == "info") {
+        MacroInfoLine i;
+        i.key = getString(L, "key", "info");
+        i.value = getString(L, "value", "info");
+        return i;
+    }
+    return std::nullopt;
+}
+
+template <typename T> void insertAt(std::vector<T> &list, int at, T value)
+{
+    at = std::clamp(at, 0, static_cast<int>(list.size()));
+    list.insert(list.begin() + at, std::move(value));
+}
+
+void removeIndex(int i)
+{
+    auto &l = g_subs->lists;
+    const int sinfo = static_cast<int>(l.info.size());
+    const int styles = sinfo + static_cast<int>(l.styles.size());
+    if (i < 0)
+        return;
+    if (i < sinfo)
+        l.info.erase(l.info.begin() + i);
+    else if (i < styles)
+        l.styles.erase(l.styles.begin() + (i - sinfo));
+    else if (i < g_subs->size())
+        l.dialogues.erase(l.dialogues.begin() + (i - styles));
+}
+
+int subsDelete(lua_State *L)
+{
+    checkLive(L);
+    checkAllowModify(L);
+    std::vector<int> ids;
+    const int total = g_subs->size();
+    int count = lua_gettop(L);
+    if (count == 1 && lua_istable(L, 1)) {
+        lua_pushvalue(L, 1);
+        lua_pushnil(L);
+        while (lua_next(L, -2)) {
+            const auto n = static_cast<int>(lua_tointeger(L, -1));
+            luaL_argcheck(L, n > 0 && n <= total, 1, "Line index is out of range");
+            ids.push_back(n - 1);
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+    } else {
+        for (; count > 0; --count) {
+            if (!lua_isnumber(L, count))
+                return luaL_error(L, "You trying to delete non number line");
+            const auto n = static_cast<int>(lua_tointeger(L, count));
+            luaL_argcheck(L, n > 0 && n <= total, count, "Out of range line index");
+            ids.push_back(n - 1);
+        }
+    }
+    std::sort(ids.begin(), ids.end());
+    for (auto it = ids.rbegin(); it != ids.rend(); ++it)
+        removeIndex(*it);
+    return 0;
+}
+
+int subsDeleteRange(lua_State *L)
+{
+    checkLive(L);
+    checkAllowModify(L);
+    if (!lua_isnumber(L, 1) || !lua_isnumber(L, 2))
+        return luaL_error(L, "Non number argument of function DeleteRange");
+    int a = static_cast<int>(lua_tointeger(L, 1)), b = static_cast<int>(lua_tointeger(L, 2));
+    const int all = g_subs->size() + 1;
+    if (a < 1)
+        a = 1;
+    if (b > all)
+        b = all;
+    for (int i = b - 1; i >= a - 1; --i)
+        removeIndex(i);
+    return 0;
+}
+
+int subsAppend(lua_State *L)
+{
+    checkLive(L);
+    checkAllowModify(L);
+    const int n = lua_gettop(L);
+    for (int i = 1; i <= n; ++i) {
+        lua_pushvalue(L, i);
+        auto entry = luaToLine(L);
+        lua_pop(L, 1);
+        if (!entry)
+            continue; // legacy silently drops an unknown class here
+        auto &l = g_subs->lists;
+        std::visit([&](auto &&e) {
+            using T = std::decay_t<decltype(e)>;
+            if constexpr (std::is_same_v<T, MacroInfoLine>)
+                l.info.push_back(e);
+            else if constexpr (std::is_same_v<T, MacroStyleLine>)
+                l.styles.push_back(e);
+            else
+                l.dialogues.push_back(e);
+        }, *entry);
+    }
+    return 0;
+}
+
+int subsInsert(lua_State *L)
+{
+    checkLive(L);
+    checkAllowModify(L);
+    if (!lua_isnumber(L, 1))
+        return luaL_error(L, "Cannot put non numeric index");
+    const int n = lua_gettop(L);
+    int start = static_cast<int>(lua_tonumber(L, 1) - 1);
+    if (start < 0 || start > g_subs->size())
+        return luaL_error(L, "Out of range line index");
+    for (int i = 2; i <= n; ++i) {
+        lua_pushvalue(L, i);
+        auto entry = luaToLine(L);
+        lua_pop(L, 1);
+        if (!entry)
+            return luaL_error(L, "You trying to put line of unknown class");
+        auto &l = g_subs->lists;
+        const int sinfo = static_cast<int>(l.info.size());
+        const int styles = sinfo + static_cast<int>(l.styles.size());
+        std::visit([&](auto &&e) {
+            using T = std::decay_t<decltype(e)>;
+            if constexpr (std::is_same_v<T, MacroInfoLine>)
+                insertAt(l.info, start, e);
+            else if constexpr (std::is_same_v<T, MacroStyleLine>)
+                insertAt(l.styles, start - sinfo, e);
+            else
+                insertAt(l.dialogues, start - styles, e);
+        }, *entry);
+        ++start;
+    }
+    return 0;
+}
+
+int subsLengths(lua_State *L)
+{
+    checkLive(L);
+    lua_pushinteger(L, static_cast<lua_Integer>(g_subs->lists.info.size()));
+    lua_pushinteger(L, static_cast<lua_Integer>(g_subs->lists.styles.size()));
+    lua_pushinteger(L, static_cast<lua_Integer>(g_subs->lists.dialogues.size()));
+    return 3;
+}
+
+int subsScriptResolution(lua_State *L)
+{
+    checkLive(L);
+    int w = 0, h = 0;
+    for (const auto &i : g_subs->lists.info) {
+        if (i.key == "PlayResX")
+            w = std::atoi(i.value.c_str());
+        else if (i.key == "PlayResY")
+            h = std::atoi(i.value.c_str());
+    }
+    lua_pushinteger(L, w);
+    lua_pushinteger(L, h);
+    return 2;
+}
+
+int subsIndex(lua_State *L)
+{
+    checkLive(L);
+    switch (lua_type(L, 2)) {
+    case LUA_TNUMBER:
+        return lineToLua(L, static_cast<int>(lua_tointeger(L, 2)) - 1) ? 1 : 0;
+    case LUA_TSTRING: {
+        const std::string key = lua_tostring(L, 2);
+        if (key == "n") {
+            lua_pushnumber(L, g_subs->size());
+            return 1;
+        }
+        static const std::pair<const char *, lua_CFunction> kMethods[] = {
+            {"delete", subsDelete}, {"deleterange", subsDeleteRange}, {"insert", subsInsert},
+            {"append", subsAppend}, {"lengths", subsLengths}, {"script_resolution", subsScriptResolution}};
+        for (const auto &[name, fn] : kMethods)
+            if (key == name) {
+                lua_pushcfunction(L, fn);
+                return 1;
+            }
+        return luaL_error(L, "Subtitles object do not have index: '%s'", key.c_str());
+    }
+    default:
+        return luaL_error(L, "Subtitles object do not have index type: '%s'.", lua_typename(L, lua_type(L, 2)));
+    }
+}
+
+int subsNewIndex(lua_State *L)
+{
+    checkLive(L);
+    if (!lua_isnumber(L, 2))
+        return luaL_error(L, "You cannot write usnig non number index");
+    checkAllowModify(L);
+    const int n = static_cast<int>(lua_tointeger(L, 2));
+    if (n < 0) {
+        lua_pushcfunction(L, subsInsert);
+        lua_pushinteger(L, -n);
+        lua_pushvalue(L, 3);
+        lua_call(L, 2, 0);
+        return 0;
+    }
+    if (n == 0) {
+        lua_pushcfunction(L, subsAppend);
+        lua_pushvalue(L, 3);
+        lua_call(L, 1, 0);
+        return 0;
+    }
+    if (lua_isnil(L, 3)) {
+        lua_pushcfunction(L, subsDelete);
+        lua_pushvalue(L, 2);
+        lua_call(L, 1, 0);
+        return 0;
+    }
+    lua_pushvalue(L, 3);
+    auto entry = luaToLine(L);
+    lua_pop(L, 1);
+    auto &l = g_subs->lists;
+    const int i = n - 1;
+    const int sinfo = static_cast<int>(l.info.size());
+    const int styles = sinfo + static_cast<int>(l.styles.size());
+    if (i >= g_subs->size())
+        return luaL_error(L, "Line index is out of range");
+    const char *slot = i < sinfo ? "info" : i < styles ? "styles" : "dialogs";
+    if (entry && i < sinfo && std::holds_alternative<MacroInfoLine>(*entry)) {
+        l.info[static_cast<std::size_t>(i)] = std::get<MacroInfoLine>(*entry);
+    } else if (entry && i >= sinfo && i < styles && std::holds_alternative<MacroStyleLine>(*entry)) {
+        l.styles[static_cast<std::size_t>(i - sinfo)] = std::get<MacroStyleLine>(*entry);
+    } else if (entry && i >= styles && std::holds_alternative<MacroDialogueLine>(*entry)) {
+        // The slot keeps the identity of the Line it replaces.
+        auto replacement = std::get<MacroDialogueLine>(*entry);
+        auto &slotLine = l.dialogues[static_cast<std::size_t>(i - styles)];
+        replacement.id = slotLine.id;
+        replacement.raw = slotLine.raw;
+        slotLine = std::move(replacement);
+    } else {
+        const char *given = !entry ? "dialogs"
+                            : std::holds_alternative<MacroInfoLine>(*entry)  ? "info"
+                            : std::holds_alternative<MacroStyleLine>(*entry) ? "styles"
+                                                                             : "dialogs";
+        return luaL_error(L, "Cannot add a line of class %s to a field of class %s", given, slot);
+    }
+    return 0;
+}
+
+int subsLen(lua_State *L)
+{
+    checkLive(L);
+    lua_pushnumber(L, g_subs->size());
+    return 1;
+}
+
+int subsIterNext(lua_State *L)
+{
+    checkLive(L);
+    const auto i = static_cast<int>(luaL_checkinteger(L, 2));
+    if (i >= g_subs->size()) {
+        lua_pushnil(L);
+        return 1;
+    }
+    lua_pushinteger(L, i + 1);
+    lineToLua(L, i);
+    return 2;
+}
+
+int subsIPairs(lua_State *L)
+{
+    lua_pushcfunction(L, subsIterNext);
+    lua_pushvalue(L, 1);
+    lua_pushinteger(L, 0);
+    return 3;
+}
+
+void pushSubtitles(lua_State *L)
+{
+    lua_newuserdata(L, 1);
+    lua_createtable(L, 0, 4);
+    lua_pushcfunction(L, subsIndex);
+    lua_setfield(L, -2, "__index");
+    lua_pushcfunction(L, subsNewIndex);
+    lua_setfield(L, -2, "__newindex");
+    lua_pushcfunction(L, subsLen);
+    lua_setfield(L, -2, "__len");
+    lua_pushcfunction(L, subsIPairs);
+    lua_setfield(L, -2, "__ipairs");
+    lua_setmetatable(L, -2);
+}
+
+int setUndoPoint(lua_State *)
+{
+    return 0; // a legacy stub (C06): it changes nothing
+}
+
+void run(Reader &in, Responder &r, std::size_t payloadSize)
 {
     const std::int32_t index = in.i32();
-    if (!in.ok())
+    auto snapshot = lua::decodeSnapshot(in, payloadSize);
+    if (!in.ok() || !snapshot)
         return r.terminal(Outcome::InvalidInput, bytesOf("malformed Run"));
     lua_State *L = g_script.L;
     if (!L)
@@ -679,29 +1221,58 @@ void run(Reader &in, Responder &r)
     if (index < 0 || static_cast<std::size_t>(index) >= g_script.features.size())
         return r.terminal(Outcome::InvalidInput, bytesOf("no such macro"));
 
+    Staged staged;
+    staged.canModify = snapshot->canModify;
+    staged.lists = std::move(*snapshot);
+    g_subs = &staged;
     g_responder = &r;
     g_lastProgress = 0;
     installSink(L);
+    lua_getglobal(L, "aegisub");
+    lua_pushcfunction(L, setUndoPoint);
+    lua_setfield(L, -2, "set_undo_point");
+    lua_pop(L, 1);
     lua_pushcfunction(L, addStackTrace);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
     lua_getfield(L, -1, "run");
     lua_remove(L, -2);
-    // The document view (subtitles, selection, active line) arrives with the
-    // staged-edit card; an empty view stands in until then.
-    lua_newtable(L);
-    lua_newtable(L);
-    lua_pushinteger(L, 0);
-    const int status = lua_pcall(L, 3, 0, -5);
+    pushSubtitles(L);
+    lua_createtable(L, static_cast<int>(staged.lists.selected.size()), 0);
+    for (std::size_t i = 0; i < staged.lists.selected.size(); ++i) {
+        lua_pushinteger(L, staged.lists.selected[i]);
+        lua_rawseti(L, -2, static_cast<int>(i) + 1);
+    }
+    lua_pushinteger(L, staged.lists.active);
+    const int status = lua_pcall(L, 3, 2, -5);
     if (status == 0) {
-        lua_pop(L, 1);
+        // Legacy reads (selected rows, active row) from the macro's returns.
+        MacroResult result;
+        result.info = std::move(staged.lists.info);
+        result.styles = std::move(staged.lists.styles);
+        result.dialogues = std::move(staged.lists.dialogues);
+        if (lua_isnumber(L, -1))
+            result.active = static_cast<int>(lua_tointeger(L, -1));
+        if (lua_istable(L, -2)) {
+            std::vector<int> selected;
+            lua_pushnil(L);
+            while (lua_next(L, -3)) {
+                if (lua_isnumber(L, -1))
+                    selected.push_back(static_cast<int>(lua_tointeger(L, -1)));
+                lua_pop(L, 1);
+            }
+            result.selected = std::move(selected);
+        }
+        lua_pop(L, 3);
         removeSink(L);
+        g_subs = nullptr;
         g_responder = nullptr;
-        return r.terminal(Outcome::Ok);
+        return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
     }
     const bool cancelled = lua_touserdata(L, -1) == &g_cancelTag;
     const std::string message = cancelled ? std::string() : stringOrEmpty(L, -1);
     lua_pop(L, 2);
     removeSink(L);
+    g_subs = nullptr;
     g_responder = nullptr;
     r.terminal(cancelled ? Outcome::Cancelled : Outcome::Failed, bytesOf(message));
 }
@@ -716,7 +1287,7 @@ int main()
         case lua::Command::Load:
             return load(in, r);
         case lua::Command::Run:
-            return run(in, r);
+            return run(in, r, request.payload.size());
         }
         r.terminal(Outcome::Unsupported);
     });

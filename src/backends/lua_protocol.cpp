@@ -170,4 +170,144 @@ std::optional<DialogResult> decodeDialogResult(const std::vector<std::byte> &pay
     return result;
 }
 
+namespace {
+
+void writeLists(Writer &w, const std::vector<application::MacroInfoLine> &info,
+                const std::vector<application::MacroStyleLine> &styles,
+                const std::vector<application::MacroDialogueLine> &dialogues)
+{
+    w.i32(static_cast<std::int32_t>(info.size()));
+    for (const auto &l : info)
+        w.str(l.key).str(l.value);
+    w.i32(static_cast<std::int32_t>(styles.size()));
+    for (const auto &l : styles) {
+        w.i32(static_cast<std::int32_t>(l.fields.size()));
+        for (const auto &f : l.fields)
+            w.str(f);
+    }
+    w.i32(static_cast<std::int32_t>(dialogues.size()));
+    for (const auto &d : dialogues)
+        w.i64(static_cast<std::int64_t>(d.id)).u8(d.comment).i32(d.layer).i64(d.startMs).i64(d.endMs).str(d.style)
+            .str(d.actor).i32(d.marginL).i32(d.marginR).i32(d.marginV).str(d.effect).str(d.text).str(d.translation)
+            .str(d.raw);
+}
+
+bool readLists(Reader &r, std::size_t size, std::vector<application::MacroInfoLine> &info,
+               std::vector<application::MacroStyleLine> &styles, std::vector<application::MacroDialogueLine> &dialogues)
+{
+    const auto ni = count(r, size);
+    if (!ni)
+        return false;
+    for (std::size_t i = 0; i < *ni && r.ok(); ++i) {
+        application::MacroInfoLine l;
+        l.key = r.str();
+        l.value = r.str();
+        info.push_back(std::move(l));
+    }
+    const auto ns = count(r, size);
+    if (!ns)
+        return false;
+    for (std::size_t i = 0; i < *ns && r.ok(); ++i) {
+        application::MacroStyleLine l;
+        const auto nf = count(r, size);
+        if (!nf)
+            return false;
+        for (std::size_t k = 0; k < *nf; ++k)
+            l.fields.push_back(r.str());
+        styles.push_back(std::move(l));
+    }
+    const auto nd = count(r, size);
+    if (!nd)
+        return false;
+    for (std::size_t i = 0; i < *nd && r.ok(); ++i) {
+        application::MacroDialogueLine d;
+        d.id = static_cast<std::uint64_t>(r.i64());
+        d.comment = r.u8() != 0;
+        d.layer = r.i32();
+        d.startMs = r.i64();
+        d.endMs = r.i64();
+        d.style = r.str();
+        d.actor = r.str();
+        d.marginL = r.i32();
+        d.marginR = r.i32();
+        d.marginV = r.i32();
+        d.effect = r.str();
+        d.text = r.str();
+        d.translation = r.str();
+        d.raw = r.str();
+        dialogues.push_back(std::move(d));
+    }
+    return r.ok();
+}
+
+} // namespace
+
+std::vector<std::byte> encodeSnapshot(const application::MacroSnapshot &snapshot)
+{
+    Writer w;
+    w.i64(static_cast<std::int64_t>(snapshot.revision));
+    writeLists(w, snapshot.info, snapshot.styles, snapshot.dialogues);
+    w.i32(static_cast<std::int32_t>(snapshot.selected.size()));
+    for (int i : snapshot.selected)
+        w.i32(i);
+    w.i32(snapshot.active).u8(snapshot.canModify);
+    return w.take();
+}
+
+std::optional<application::MacroSnapshot> decodeSnapshot(Reader &r, std::size_t size)
+{
+    application::MacroSnapshot s;
+    s.revision = static_cast<std::uint64_t>(r.i64());
+    if (!readLists(r, size, s.info, s.styles, s.dialogues))
+        return std::nullopt;
+    const auto n = count(r, size);
+    if (!n)
+        return std::nullopt;
+    for (std::size_t i = 0; i < *n; ++i)
+        s.selected.push_back(r.i32());
+    s.active = r.i32();
+    s.canModify = r.u8() != 0;
+    if (!r.ok())
+        return std::nullopt;
+    return s;
+}
+
+std::vector<std::byte> encodeMacroResult(const application::MacroResult &result)
+{
+    Writer w;
+    writeLists(w, result.info, result.styles, result.dialogues);
+    w.u8(result.selected.has_value());
+    if (result.selected) {
+        w.i32(static_cast<std::int32_t>(result.selected->size()));
+        for (int i : *result.selected)
+            w.i32(i);
+    }
+    w.u8(result.active.has_value()).i32(result.active.value_or(0));
+    return w.take();
+}
+
+std::optional<application::MacroResult> decodeMacroResult(const std::vector<std::byte> &payload)
+{
+    Reader r(payload);
+    application::MacroResult result;
+    if (!readLists(r, payload.size(), result.info, result.styles, result.dialogues))
+        return std::nullopt;
+    if (r.u8()) {
+        const auto n = count(r, payload.size());
+        if (!n)
+            return std::nullopt;
+        std::vector<int> selected;
+        for (std::size_t i = 0; i < *n; ++i)
+            selected.push_back(r.i32());
+        result.selected = std::move(selected);
+    }
+    const bool hasActive = r.u8() != 0;
+    const int active = r.i32();
+    if (hasActive)
+        result.active = active;
+    if (!r.ok() || !r.atEnd())
+        return std::nullopt;
+    return result;
+}
+
 } // namespace hikari::backends::lua
