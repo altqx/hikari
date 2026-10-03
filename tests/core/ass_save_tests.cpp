@@ -277,3 +277,25 @@ TEST(AssSave, InsertedLinesTakeTheNewlineStyleAroundThem)
     EXPECT_EQ(text(encodeAss(r.document)), "[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,a\n"
                                            "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,b");
 }
+
+// E3: Script Info and Style edits (legacy AddSInfo, DeleteSInfo, AddStyle,
+// DeleteStyle) keep every other byte.
+TEST(AssSave, ScriptInfoAndStyleEdits)
+{
+    const std::string input = "[Script Info]\r\nTitle: t\r\nPlayResX: 640\r\n\r\n[V4+ Styles]\r\n"
+                              "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\r\n"
+                              "\r\n[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x";
+    auto doc = loadAss(bytesOf(input)).document;
+    ASSERT_TRUE(doc.setScriptInfo(u8"Title", u8"new"));     // replaced where it is
+    ASSERT_TRUE(doc.setScriptInfo(u8"TLMode", u8"Yes"));    // added after the last property
+    ASSERT_TRUE(doc.removeScriptInfo(u8"PlayResX"));
+    EXPECT_FALSE(doc.removeScriptInfo(u8"Missing"));
+    ASSERT_TRUE(doc.appendStyle({u8"TL", u8"Arial", u8"20"}));
+    EXPECT_EQ(doc.scriptInfo(u8"Title"), u8"new");
+    EXPECT_EQ(text(encodeAss(doc)), "[Script Info]\r\nTitle: new\r\nTLMode: Yes\r\n\r\n[V4+ Styles]\r\n"
+                                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\r\n"
+                                    "Style: TL,Arial,20\r\n"
+                                    "\r\n[Events]\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x");
+    ASSERT_TRUE(doc.removeStyle(u8"Default"));
+    EXPECT_EQ(text(encodeAss(doc)).find("Style: Default"), std::string::npos);
+}

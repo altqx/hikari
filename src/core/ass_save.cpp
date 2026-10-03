@@ -81,13 +81,53 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         }
         for (const auto &record : section.records) {
             const auto *line = std::get_if<LineRecord>(&record);
+            const auto *property = std::get_if<PropertyRecord>(&record);
+            const auto *style = std::get_if<StyleRecord>(&record);
             const SourceSpan &span = std::visit([](const auto &r) -> const SourceSpan & { return r.span; }, record);
+            // Legacy GetSInfos and Styles::GetRaw text for added or changed records.
+            std::optional<std::u8string> generated;
+            if (property && (property->inserted || property->edited))
+                generated = property->key + u8": " + property->value;
+            if (style && style->inserted) {
+                std::u8string text = u8"Style: ";
+                for (std::size_t i = 0; i < style->fields.size(); ++i)
+                    text += (i ? u8"," : u8"") + style->fields[i];
+                generated = text;
+            }
+            if ((property && property->inserted) || (style && style->inserted)) {
+                append(newlines.wrap(*generated));
+                newlines.openEnd = false;
+                continue;
+            }
             if (line && line->inserted) {
-                append(newlines.wrap(legacy::assLineText(*line)));
+                // In translation mode a Line given a translation is an original
+                // line plus its translation line, as for edited Lines below.
+                if (!tlMode.empty() && tlMode != u8"Translated" && (!line->translation.empty() || line->unconfirmed)) {
+                    LineRecord original = *line;
+                    original.style = tlStyle;
+                    original.comment = line->comment || options.hideOriginalOnVideo;
+                    if (line->unconfirmed)
+                        original.effect = u8"\fD";
+                    append(newlines.wrap(legacy::assLineText(original)));
+                    newlines.openEnd = false;
+                    LineRecord translated = *line;
+                    translated.text = line->translation;
+                    append(newlines.wrap(legacy::assLineText(translated)));
+                } else {
+                    LineRecord single = *line;
+                    if (!tlMode.empty() && !line->translation.empty())
+                        single.text = line->translation;
+                    append(newlines.wrap(legacy::assLineText(single)));
+                }
                 newlines.openEnd = false;
                 continue;
             }
             newlines.see(span);
+            if (generated) {
+                append(*generated);
+                copy(span.offset + span.length, span.terminatorLength);
+                continue;
+            }
             // A TLMode pair, or a Line that was given a translation, is written
             // as an original line plus its translation line.
             if (line && line->edited && (line->originalSpan || !line->translation.empty()) && !tlMode.empty()) {

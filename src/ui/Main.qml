@@ -986,6 +986,12 @@ ApplicationWindow {
                 Menu {
                     id: gridMenu
                     objectName: "gridMenu"
+                    property bool canPasteTranslation: false
+                    property bool canShiftTranslation: false
+                    onAboutToShow: {
+                        canPasteTranslation = root.app.canPasteTranslation()
+                        canShiftTranslation = root.app.canShiftTranslation()
+                    }
                     Menu {
                         title: qsTr("&Insert")
                         MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: root.app.insertLine(true) }
@@ -1052,6 +1058,22 @@ ApplicationWindow {
                         }
                     }
                     MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
+                    // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
+                    MenuItem {
+                        objectName: "pasteTranslation"
+                        text: qsTr("Paste translation text")
+                        enabled: gridMenu.canPasteTranslation
+                        onTriggered: {
+                            translationFileDialog.currentFolder = root.app.targetFolder()
+                            translationFileDialog.open()
+                        }
+                    }
+                    MenuItem {
+                        objectName: "translationDialog"
+                        text: qsTr("Dialogue shifting window")
+                        enabled: gridMenu.canShiftTranslation
+                        onTriggered: translationShiftWindow.show()
+                    }
                     MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
                     // Legacy Filtering submenu (GRID_FILTER_*).
                     Menu {
@@ -1663,6 +1685,61 @@ ApplicationWindow {
         }
     }
 
+    FileDialog {
+        id: translationFileDialog
+        title: qsTr("Choose subtitle file")
+        nameFilters: [qsTr("Subtitle files (*.ass *.srt *.sub *.txt)")]
+        onAccepted: root.app.pasteTranslationFile(selectedFile)
+    }
+    // Legacy TLDialog: moves the translation or the original against the
+    // other from the first selected Line; it stays open while working.
+    Window {
+        id: translationShiftWindow
+        objectName: "translationShiftWindow"
+        title: qsTr("Translation matching options")
+        width: 360
+        height: 250
+        transientParent: root
+        flags: Qt.Dialog
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            RowLayout {
+                Label { text: qsTr("Original"); Layout.fillWidth: true }
+                Label { text: qsTr("Translation"); Layout.fillWidth: true }
+            }
+            GridLayout {
+                columns: 2
+                Layout.fillWidth: true
+                Repeater {
+                    // Legacy layout: Original left, Translation right; mode is MoveTextTL's.
+                    model: [
+                        { mode: 2, name: qsTr("Add line"), tip: qsTr("Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.") },
+                        { mode: 3, name: qsTr("Add line"), tip: qsTr("Adds a blank line before the selected line.\nMoves the translation one line down.") },
+                        { mode: 4, name: qsTr("Join lines"), tip: qsTr("Joins the selected line with the next line.\nMoves the original one line up.") },
+                        { mode: 1, name: qsTr("Join lines"), tip: qsTr("Joins the selected line with the next line.\nMoves the translation one line up.") },
+                        { mode: 5, name: qsTr("Delete line"), tip: qsTr("Deletes the selected line.\nMoves the original one line up.") },
+                        { mode: 0, name: qsTr("Delete line"), tip: qsTr("Deletes the selected line.\nMoves the translation one line up.") }
+                    ]
+                    Button {
+                        required property var modelData
+                        objectName: "translationMove" + modelData.mode
+                        text: modelData.name
+                        Layout.fillWidth: true
+                        Accessible.description: modelData.tip
+                        ToolTip.visible: hovered
+                        ToolTip.text: modelData.tip
+                        onClicked: root.app.shiftTranslation(modelData.mode)
+                    }
+                }
+            }
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.WordWrap
+                text: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
+            }
+        }
+    }
     FontDialog {
         id: fontDialog
         editor: root.editor

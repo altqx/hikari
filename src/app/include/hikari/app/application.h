@@ -170,6 +170,13 @@ public:
     // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
     // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
     Q_INVOKABLE bool splitLines(const QString &kind);
+    // E3: GRID_PASTE_TRANSLATION from a file (ASS Documents with a file), and
+    // the "Dialogue shifting window" moves (TLDialog, legacy MoveTextTL modes 0-5).
+    Q_INVOKABLE bool canPasteTranslation() const;
+    Q_INVOKABLE QUrl targetFolder() const;
+    Q_INVOKABLE bool pasteTranslationFile(const QUrl &file);
+    Q_INVOKABLE bool canShiftTranslation() const;
+    Q_INVOKABLE bool shiftTranslation(int mode);
     // G9: Line groups (legacy trees). The id is the description Line's.
     Q_INVOKABLE bool makeGroups();
     Q_INVOKABLE bool toggleGroup(qulonglong description);

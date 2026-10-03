@@ -31,6 +31,96 @@ std::optional<std::u8string> Document::scriptInfo(std::u8string_view key) const
     return value;
 }
 
+namespace {
+
+// Where a record added after `index` in a section starts: the end of the
+// record before it (or of the header).
+std::size_t endOfRecord(const Section &section, std::size_t count)
+{
+    std::size_t offset =
+        section.headerSpan ? section.headerSpan->offset + section.headerSpan->length + section.headerSpan->terminatorLength : 0;
+    for (std::size_t i = 0; i < count && i < section.records.size(); ++i)
+        std::visit([&](const auto &r) { offset = std::max(offset, r.span.offset + r.span.length + r.span.terminatorLength); },
+                   section.records[i]);
+    return offset;
+}
+
+} // namespace
+
+bool Document::setScriptInfo(std::u8string_view key, std::u8string value)
+{
+    PropertyRecord *last = nullptr;
+    Section *infoSection = nullptr;
+    for (auto &section : m_sections) {
+        if (section.kind != SectionKind::ScriptInfo)
+            continue;
+        infoSection = &section;
+        for (auto &record : section.records)
+            if (auto *p = std::get_if<PropertyRecord>(&record); p && p->key == key)
+                last = p;
+    }
+    if (last) {
+        if (last->value != value) {
+            last->value = std::move(value);
+            last->edited = true;
+        }
+        return true;
+    }
+    if (!infoSection)
+        return false;
+    // After the section's last property (blank lines and comments after it stay after it).
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < infoSection->records.size(); ++i)
+        if (std::holds_alternative<PropertyRecord>(infoSection->records[i]))
+            at = i + 1;
+    PropertyRecord added{std::u8string(key), std::move(value), SourceSpan{endOfRecord(*infoSection, at), 0, 0}, true, true};
+    infoSection->records.insert(infoSection->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+    return true;
+}
+
+bool Document::removeScriptInfo(std::u8string_view key)
+{
+    bool removed = false;
+    for (auto &section : m_sections)
+        if (section.kind == SectionKind::ScriptInfo)
+            removed |= std::erase_if(section.records, [&](const Record &r) {
+                           const auto *p = std::get_if<PropertyRecord>(&r);
+                           return p && p->key == key;
+                       }) > 0;
+    return removed;
+}
+
+bool Document::appendStyle(std::vector<std::u8string> fields)
+{
+    Section *styles = nullptr;
+    for (auto &section : m_sections)
+        if (section.kind == SectionKind::Styles)
+            styles = &section;
+    if (!styles || fields.empty())
+        return false;
+    std::size_t at = 0;
+    for (std::size_t i = 0; i < styles->records.size(); ++i)
+        if (std::holds_alternative<StyleRecord>(styles->records[i]) || std::holds_alternative<FormatRecord>(styles->records[i]))
+            at = i + 1;
+    StyleRecord added{fields.front(), std::move(fields), SourceSpan{endOfRecord(*styles, at), 0, 0}, true};
+    styles->records.insert(styles->records.begin() + static_cast<std::ptrdiff_t>(at), std::move(added));
+    return true;
+}
+
+bool Document::removeStyle(std::u8string_view name)
+{
+    for (auto &section : m_sections) {
+        if (section.kind != SectionKind::Styles && section.kind != SectionKind::SsaStyles)
+            continue;
+        for (std::size_t i = 0; i < section.records.size(); ++i)
+            if (const auto *style = std::get_if<StyleRecord>(&section.records[i]); style && style->name == name) {
+                section.records.erase(section.records.begin() + static_cast<std::ptrdiff_t>(i));
+                return true;
+            }
+    }
+    return false;
+}
+
 bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change)
 {
     for (auto &section : m_sections)

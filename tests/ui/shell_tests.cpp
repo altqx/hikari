@@ -689,6 +689,65 @@ private slots:
                  QStringLiteral("second"));
     }
 
+    void pasteTranslationAndTheShiftingWindow()
+    {
+        const QString path = dir.filePath(QStringLiteral("tl.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n");
+        }
+        const QString tl = dir.filePath(QStringLiteral("tl.txt"));
+        {
+            QFile f(tl);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("a\nb\nc\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(application->canPasteTranslation());
+        QVERIFY(!application->canShiftTranslation());
+        QVERIFY(application->pasteTranslationFile(QUrl::fromLocalFile(tl)));
+        QCOMPARE(session->history().back().name, std::string("Pasting translation"));
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(application->canShiftTranslation());
+        const auto tr = [&](int row) {
+            const auto &t = session->document().lines()[static_cast<std::size_t>(row)]->translation;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QCOMPARE(tr(0), QStringLiteral("a"));
+        QCOMPARE(tr(2), QStringLiteral("c"));
+
+        // The window's "Delete line" (Translation) on the second Line.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down);
+        QTRY_COMPARE(session->selection().active, session->document().lines()[1]->id);
+        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("translationShiftWindow"));
+        QVERIFY(window);
+        QVERIFY(QMetaObject::invokeMethod(window, "show"));
+        auto *button = findItem(window->contentItem(), QStringLiteral("translationMove0"));
+        QVERIFY(button);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(button, "click"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Moving translation text"));
+        QCOMPARE(tr(1), QStringLiteral("c"));
+        QVERIFY(QMetaObject::invokeMethod(window, "close"));
+        // One Undo takes the move back.
+        QVERIFY(session->undo());
+        QCOMPARE(tr(1), QStringLiteral("b"));
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));

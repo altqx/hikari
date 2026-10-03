@@ -51,4 +51,8 @@ struct PasteConversion {
 std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleFormat format,
                                            const PasteConversion &conversion = {}, bool intoTranslation = false);
 
+// Legacy Dialogue(raw) then Convert(format), as GRID_PASTE_TRANSLATION reads
+// each entry of the chosen file: the Line it gives, its text in `format`.
+LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const PasteConversion &conversion = {});
+
 } // namespace hikari::core

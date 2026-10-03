@@ -30,3 +30,5 @@ hikari_add_gtest(hikari_application_grid_split_tests SOURCES grid_split_tests.cp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_recent_files_tests SOURCES recent_files_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_grid_translation_tests SOURCES grid_translation_tests.cpp
+    LIBRARIES hikari_application LABELS application)

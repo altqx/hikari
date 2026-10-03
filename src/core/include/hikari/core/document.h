@@ -106,12 +106,15 @@ struct StyleRecord {
     std::u8string name;
     std::vector<std::u8string> fields; // positional fields after "Style:", untrimmed
     SourceSpan span;
+    bool inserted = false; // added in the editor: written as "Style: " + fields
 };
 
 struct PropertyRecord {
     std::u8string key;   // trimmed text before the first ':'
     std::u8string value; // trimmed text after it
     SourceSpan span;
+    bool edited = false;   // written as "key: value" (legacy GetSInfos)
+    bool inserted = false; // added in the editor
 };
 
 struct FormatRecord {
@@ -201,6 +204,16 @@ public:
 
     // The last Script Info value for key, as the legacy SubsFile::GetSInfo sees it.
     std::optional<std::u8string> scriptInfo(std::u8string_view key) const;
+    // Legacy AddSInfo: the key's (last) value is replaced, or the key is added
+    // after the last Script Info property. False without a Script Info section.
+    bool setScriptInfo(std::u8string_view key, std::u8string value);
+    // Legacy DeleteSInfo: the key is no longer written. False when absent.
+    bool removeScriptInfo(std::u8string_view key);
+    // Legacy AddStyle: a Style line after the last Style; `fields` are its
+    // positional fields, name first. False without a Styles section.
+    bool appendStyle(std::vector<std::u8string> fields);
+    // Legacy DeleteStyle(FindStyle(name)): the first Style of that name.
+    bool removeStyle(std::u8string_view name);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

@@ -806,4 +806,12 @@ std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleForm
     return out;
 }
 
+LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const PasteConversion &conversion)
+{
+    Dialogue d = setRaw(raw);
+    if (d.format != static_cast<int>(format))
+        convert(d, static_cast<int>(format), conversion);
+    return toLine(d, format);
+}
+
 } // namespace hikari::core

@@ -5,6 +5,7 @@
 #include "hikari/application/grid_filtering.h"
 #include "hikari/application/grid_groups.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/grid_translation.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
@@ -13,6 +14,8 @@
 #include "automation_services_qt.h"
 
 #include <QClipboard>
+#include <QFile>
+#include <QStringDecoder>
 #include <QTextBoundaryFinder>
 #include <QImage>
 #include <QVideoFrame>
@@ -1238,6 +1241,75 @@ bool Application::splitLines(const QString &kind)
     };
     ui::QtTextMeasurePort measure;
     return runFilter([&](application::EditSession &s) { return application::splitByText(s, *text, measure, words, shown); });
+}
+
+bool Application::canPasteTranslation() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session || targetUntitled())
+        return false;
+    const auto format = session->document().format();
+    return format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
+}
+
+QUrl Application::targetFolder() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    if (!destination || destination->value.empty())
+        return {};
+    return QUrl::fromLocalFile(QFileInfo(QString::fromStdString(destination->value)).absolutePath());
+}
+
+bool Application::pasteTranslationFile(const QUrl &file)
+{
+    auto *session = targetSession();
+    if (!session || !canPasteTranslation())
+        return false;
+    const QString path = file.toLocalFile();
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly)) {
+        m_log->log(tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName()));
+        return false;
+    }
+    QByteArray bytes = f.readAll();
+    if (bytes.startsWith("\xEF\xBB\xBF"))
+        bytes.remove(0, 3);
+    // Legacy OpenWrite: UTF-8, else the system code page.
+    QStringDecoder utf8(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
+    QString text = utf8.decode(bytes);
+    if (utf8.hasError())
+        text = QString::fromLocal8Bit(bytes);
+    // Legacy compares the extension after the last '.' exactly.
+    const QString extension = path.section(QLatin1Char('.'), -1);
+    const auto shown = shownLines();
+    const bool done = application::pasteTranslation(*session, toU8(text), toU8(extension), shown).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
+bool Application::canShiftTranslation() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    return session && session->document().scriptInfo(u8"TLMode Showtl") == u8"Yes";
+}
+
+bool Application::shiftTranslation(int mode)
+{
+    auto *session = targetSession();
+    if (!session || mode < 0 || mode > 5)
+        return false;
+    const auto shown = shownLines();
+    const bool done =
+        application::moveTranslation(*session, static_cast<application::TranslationMove>(mode), shown).has_value();
+    m_editor->reloadFromSession();
+    if (const auto active = session->selection().active)
+        m_editor->showLine(active->value);
+    refreshViews();
+    return done;
 }
 
 bool Application::makeGroups()

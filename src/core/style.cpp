@@ -250,6 +250,14 @@ std::vector<StyleValues> decodeStyles(const Document &document)
             ssa = true; // never reset: "[V4+" after "[V4" keeps the SSA layout
         for (const auto &record : section.records)
             if (const auto *style = std::get_if<StyleRecord>(&record)) {
+                if (style->inserted) {
+                    // Added in the editor: no source bytes, the fields as written.
+                    std::u8string line = u8"Style: ";
+                    for (std::size_t i = 0; i < style->fields.size(); ++i)
+                        line += (i ? u8"," : u8"") + style->fields[i];
+                    out.push_back(legacy::decodeStyle(line, ssa));
+                    continue;
+                }
                 const u8sv raw(reinterpret_cast<const char8_t *>(bytes.data() + style->span.offset),
                                style->span.length);
                 out.push_back(legacy::decodeStyle(trimLeft(raw), ssa));
