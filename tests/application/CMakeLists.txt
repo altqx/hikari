@@ -10,3 +10,5 @@ hikari_add_gtest(hikari_application_macro_tests SOURCES macro_transaction_tests.
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_video_session_tests SOURCES video_session_tests.cpp
+    LIBRARIES hikari_application LABELS application)

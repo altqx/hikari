@@ -1,0 +1,228 @@
+// I1: indexed video for the editing target over fake ports — association
+// from the Document's own Script Info (C05), seeking to a Line's start frame,
+// the overlay at the frame's start, supersession and stale results.
+
+#include "hikari/application/media_association.h"
+#include "hikari/application/video_session.h"
+#include "hikari/core/ass_load.h"
+
+#include <gtest/gtest.h>
+
+#include <cstring>
+#include <deque>
+#include <set>
+#include <string_view>
+
+using namespace hikari;
+using namespace hikari::application;
+
+namespace {
+
+core::Document load(std::string_view text)
+{
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    return core::loadAss(bytes).document;
+}
+
+TEST(MediaAssociation, ComesFromTheDocumentsOwnScriptInfo)
+{
+    const auto doc = load("[Script Info]\nVideo File: ep1.mkv\nAudio File: /abs/ep1.wav\nKeyframes File: gone.txt\n");
+    const std::set<std::string> files{"/subs/ep1.mkv", "/abs/ep1.wav"};
+    const auto exists = [&](const std::string &p) { return files.contains(p); };
+    const auto a = resolveMediaAssociations(doc, "/subs/ep1.ass", exists, false);
+    ASSERT_TRUE(a.video && a.audio && a.keyframes);
+    EXPECT_EQ(a.video->resolved, "/subs/ep1.mkv"); // relative to the subtitle file
+    EXPECT_EQ(a.audio->resolved, "/abs/ep1.wav");
+    EXPECT_EQ(a.keyframes->authored, "gone.txt");
+    EXPECT_FALSE(a.keyframes->resolved); // missing: nothing is offered for it
+    EXPECT_TRUE(a.offersAnything());
+    // A Document without entries has no association at all (never another tab's).
+    const auto none = resolveMediaAssociations(load("[Script Info]\nTitle: x\n"), "/subs/b.ass", exists, false);
+    EXPECT_FALSE(none.video || none.audio || none.keyframes);
+    EXPECT_FALSE(none.offersAnything());
+}
+
+TEST(MediaAssociation, WindowsDriveLettersAreAbsolute)
+{
+    const auto doc = load("[Script Info]\nVideo File: D:\\media\\ep1.mkv\nAudio File: sub\\ep1.wav\n");
+    const std::set<std::string> files{"D:\\media\\ep1.mkv", "C:\\subs\\sub\\ep1.wav"};
+    const auto a = resolveMediaAssociations(doc, "C:\\subs\\ep1.ass",
+                                            [&](const std::string &p) { return files.contains(p); }, true);
+    EXPECT_EQ(a.video->resolved, "D:\\media\\ep1.mkv");
+    EXPECT_EQ(a.audio->resolved, "C:\\subs\\sub\\ep1.wav");
+}
+
+// 10 frames at 25 fps (40 ms), pts in milliseconds.
+struct FakeSource : IndexedSourcePort {
+    std::uint64_t gen = 0;
+    Opened pendingOpen;
+    std::deque<std::pair<int, FrameReady>> frames;
+    std::uint64_t open(const std::string &, Progress, Opened done) override
+    {
+        pendingOpen = std::move(done);
+        return ++gen;
+    }
+    void finishOpen(bool ok = true)
+    {
+        if (!ok)
+            return pendingOpen(std::unexpected(SourceError::InvalidInput));
+        SourceTimeline t;
+        t.generation = gen;
+        t.timeBaseNumerator = 1;
+        t.timeBaseDenominator = 1000;
+        for (int i = 0; i < 10; ++i)
+            t.pts.push_back(i * 40);
+        pendingOpen(t);
+    }
+    void answer(std::size_t which = 0)
+    {
+        auto [index, done] = std::move(frames[which]);
+        frames.erase(frames.begin() + static_cast<std::ptrdiff_t>(which));
+        IndexedFrame f;
+        f.generation = gen;
+        f.index = index;
+        f.pts = index * 40;
+        f.width = 4;
+        f.height = 2;
+        f.stride = 16;
+        f.bgra.resize(32);
+        done(std::move(f));
+    }
+    void cancelOpen() override {}
+    void frame(int index, FrameReady done) override { frames.emplace_back(index, std::move(done)); }
+    void openAudio(int, AudioOpened) override {}
+    void audio(std::int64_t, std::int64_t, AudioReady) override {}
+    void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+    void nextPcm(std::int64_t, PcmReady) override {}
+    void cancelReads() override {}
+    std::uint64_t generation() const override { return gen; }
+};
+
+struct FakeRenderer : SubtitleRendererPort {
+    std::vector<std::int64_t> renderedAt;
+    std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+    std::expected<OverlayFrame, RenderError> render(core::DocumentTime t, int w, int h) override
+    {
+        renderedAt.push_back(t.microseconds());
+        OverlayFrame o;
+        o.width = w;
+        o.height = h;
+        o.empty = false;
+        return o;
+    }
+};
+
+struct FakePresenter : PresenterPort {
+    std::vector<Presentation> shown;
+    void present(Presentation p, Done done) override
+    {
+        shown.push_back(p);
+        done(PresentResult{p.generation, PresentOutcome::Accepted, PresentStage::Rendered, {}});
+    }
+};
+
+struct VideoTest : ::testing::Test {
+    FakeSource source;
+    FakeRenderer renderer;
+    FakePresenter presenter;
+    VideoSession video{source, renderer};
+};
+
+TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
+{
+    video.setPresenter(&presenter);
+    video.setSubtitles({std::byte{'x'}});
+    video.open("/m/ep1.mkv");
+    EXPECT_EQ(video.state(), VideoSession::State::Opening);
+    video.seekTo(core::DocumentTime(100'000)); // 100 ms: frame 3 starts at 120 ms
+    source.finishOpen();
+    EXPECT_EQ(video.state(), VideoSession::State::Ready);
+    EXPECT_EQ(video.frameCount(), 10);
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 3);
+    source.answer();
+    EXPECT_EQ(video.shownFrame(), 3);
+    ASSERT_EQ(presenter.shown.size(), 1u);
+    EXPECT_EQ(presenter.shown[0].frame->index, 3);
+    ASSERT_TRUE(presenter.shown[0].overlay);
+    EXPECT_EQ(renderer.renderedAt, std::vector<std::int64_t>{120'000}); // the frame's start, not the Line's
+    EXPECT_EQ(video.lastPresent()->outcome, PresentOutcome::Accepted);
+}
+
+TEST_F(VideoTest, ANewerRequestSupersedesAnOlderOne)
+{
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer(); // frame 0
+    video.showFrame(5);
+    video.showFrame(7);
+    source.answer(1); // 7 arrives first
+    source.answer(0); // then the superseded 5
+    EXPECT_EQ(video.shownFrame(), 7);
+    EXPECT_EQ(presenter.shown.back().frame->index, 7);
+    EXPECT_EQ(presenter.shown.size(), 2u);
+}
+
+TEST_F(VideoTest, StepsStopAtTheEnds)
+{
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_FALSE(video.step(-1));
+    EXPECT_TRUE(video.step(1));
+    EXPECT_EQ(video.requestedFrame(), 1);
+    video.showFrame(9);
+    EXPECT_FALSE(video.step(1));
+    // Past the last frame start the last frame is shown.
+    video.seekTo(core::DocumentTime(10'000'000));
+    EXPECT_EQ(video.requestedFrame(), 9);
+}
+
+TEST_F(VideoTest, APresenterAttachedLaterGetsTheShownFrame)
+{
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_TRUE(presenter.shown.empty());
+    video.setPresenter(&presenter);
+    ASSERT_EQ(presenter.shown.size(), 1u);
+    EXPECT_EQ(presenter.shown[0].frame->index, 0);
+}
+
+TEST_F(VideoTest, NewSubtitlesRenderTheShownFrameAgain)
+{
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_FALSE(presenter.shown.back().overlay); // no subtitles yet
+    video.setSubtitles({std::byte{'x'}});
+    EXPECT_EQ(presenter.shown.size(), 2u);
+    EXPECT_TRUE(presenter.shown.back().overlay);
+}
+
+TEST_F(VideoTest, AFailedOpenLeavesTheSessionFailed)
+{
+    video.open("/m/missing.mkv");
+    source.finishOpen(false);
+    EXPECT_EQ(video.state(), VideoSession::State::Failed);
+    EXPECT_EQ(video.error(), SourceError::InvalidInput);
+    video.seekTo(core::DocumentTime(0));
+    EXPECT_FALSE(video.step(1));
+    EXPECT_TRUE(source.frames.empty());
+}
+
+TEST_F(VideoTest, CloseDropsLateFrames)
+{
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    video.close();
+    source.answer();
+    EXPECT_TRUE(presenter.shown.empty());
+    EXPECT_EQ(video.state(), VideoSession::State::Closed);
+}
+
+} // namespace

@@ -6,6 +6,9 @@ set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
     Qt6::Gui Qt6::Qml Qt6::Quick)
+# Running from the build tree, the media helper is not next to the executable.
+target_compile_definitions(hikari_composition PRIVATE HIKARI_BUILD_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>")
+add_dependencies(hikari_composition hikari_media_helper)
 hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_uiplugin hikari_backends
     hikari_application hikari_core "Qt6::*" "hikari_ui*")
 

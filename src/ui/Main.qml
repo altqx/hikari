@@ -19,6 +19,7 @@ ApplicationWindow {
 
     required property ShellController shell
     required property LineEditorController editor
+    required property VideoController video
     required property var app
 
     // Major panels in F6 order; a hidden panel is skipped.
@@ -63,6 +64,13 @@ ApplicationWindow {
                         text: qsTr("&Open…")
                         shortcut: StandardKey.Open
                         onTriggered: openDialog.open()
+                    }
+                }
+                MenuItem {
+                    objectName: "openVideoMenuItem"
+                    action: Action {
+                        text: qsTr("Open &Video…")
+                        onTriggered: videoDialog.open()
                     }
                 }
                 MenuItem {
@@ -223,9 +231,71 @@ ApplicationWindow {
                 objectName: "videoPanel"
                 title: qsTr("Video")
                 SplitView.preferredWidth: 640
+                // Frame stepping while the panel has focus (legacy video arrows).
+                Keys.onLeftPressed: root.video.stepFrames(-1)
+                Keys.onRightPressed: root.video.stepFrames(1)
+
+                // The legacy "Associated files" confirmation, inline: the
+                // Document stays editable whatever is chosen.
+                Frame {
+                    id: associationOffer
+                    objectName: "associationOffer"
+                    visible: root.video.offering
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    z: 1
+                    RowLayout {
+                        anchors.fill: parent
+                        Label {
+                            objectName: "associationText"
+                            text: root.video.offer
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                        }
+                        Button {
+                            objectName: "loadAssociated"
+                            text: qsTr("Load associated")
+                            onClicked: root.video.loadAssociated()
+                        }
+                        Button {
+                            objectName: "dismissAssociation"
+                            text: qsTr("No")
+                            onClicked: root.video.dismissOffer()
+                        }
+                    }
+                }
+                VideoPresenter {
+                    id: presenter
+                    objectName: "videoPresenter"
+                    visible: root.video.hasVideo
+                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: videoControls.top }
+                    Component.onCompleted: root.video.attachPresenter(presenter)
+                }
                 Label {
-                    anchors.centerIn: parent
-                    text: qsTr("No video open")
+                    anchors.centerIn: presenter
+                    visible: !root.video.hasVideo
+                    text: root.video.status
+                }
+                RowLayout {
+                    id: videoControls
+                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    Button {
+                        objectName: "previousFrame"
+                        text: qsTr("Previous frame")
+                        enabled: root.video.hasVideo && root.video.frame > 0
+                        onClicked: root.video.stepFrames(-1)
+                    }
+                    Label {
+                        objectName: "videoStatus"
+                        text: root.video.status
+                        Layout.fillWidth: true
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+                    Button {
+                        objectName: "nextFrame"
+                        text: qsTr("Next frame")
+                        enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
+                        onClicked: root.video.stepFrames(1)
+                    }
                 }
             }
 
@@ -415,6 +485,12 @@ ApplicationWindow {
             text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
                   ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
         }
+    }
+
+    FileDialog {
+        id: videoDialog
+        nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
+        onAccepted: root.video.openVideoUrl(selectedFile)
     }
 
     FileDialog {

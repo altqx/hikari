@@ -6,9 +6,12 @@
 
 #include "hikari/application/document_files.h"
 #include "hikari/application/workspace.h"
+#include "hikari/backends/ffms_indexed_source.h"
+#include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
 #include "shell_controller.h"
+#include "video_controller.h"
 
 #include <QObject>
 #include <QVariantMap>
@@ -20,7 +23,12 @@ namespace hikari::app {
 class Application : public QObject {
     Q_OBJECT
 public:
+    struct Options {
+        // The media helper program; empty: next to the application, else the build tree's.
+        QString mediaHelper;
+    };
     explicit Application(QObject *parent = nullptr);
+    explicit Application(Options options, QObject *parent = nullptr);
     ~Application() override;
 
     // Opens a file as a new Document; the first becomes the editing target.
@@ -32,6 +40,7 @@ public:
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
+    ui::VideoController &video() { return *m_video; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -42,6 +51,9 @@ public:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     void refreshViews();
+    // The Video panel follows the editing target: its association when the
+    // target changes, its committed content and its active Line.
+    void refreshVideo();
 
     std::unique_ptr<application::FileReadPort> m_reader;
     std::unique_ptr<backends::PlatformFilePort> m_port;
@@ -51,6 +63,12 @@ private:
     std::unique_ptr<ui::ShellController> m_shell;
     std::unique_ptr<ui::LineEditorController> m_editor;
     std::optional<application::DocumentId> m_editorDocument;
+    std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
+    backends::LibassRenderer m_renderer;
+    std::unique_ptr<ui::VideoController> m_video;
+    std::optional<application::DocumentId> m_videoDocument;
+    std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
+    std::optional<core::LineId> m_videoLine;
 };
 
 } // namespace hikari::app

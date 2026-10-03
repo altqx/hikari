@@ -170,3 +170,11 @@ target_compile_definitions(hikari_backends_automation_manager_tests PRIVATE
     HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
     HIKARI_EDGEBLUR_SCRIPT="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload/macro-1-edgeblur.lua")
 add_dependencies(hikari_backends_automation_manager_tests hikari_lua_helper)
+
+# I1: the video session over the real media helper and libass.
+hikari_add_gtest(hikari_backends_video_session_tests SOURCES video_session_tests.cpp
+    LIBRARIES hikari_backends Qt6::Gui LABELS backends)
+target_compile_definitions(hikari_backends_video_session_tests PRIVATE
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+add_dependencies(hikari_backends_video_session_tests hikari_media_helper hikari_media_fixtures)
