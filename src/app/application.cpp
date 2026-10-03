@@ -10,8 +10,10 @@
 #include "hikari/core/subtitle_load.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
+#include "automation_services_qt.h"
 
 #include <QClipboard>
+#include <QTextBoundaryFinder>
 #include <QImage>
 #include <QVideoFrame>
 #include <cstring>
@@ -1210,7 +1212,31 @@ bool Application::splitLines(const QString &kind)
     }
     if (kind == QLatin1String("frames"))
         return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, shown); });
-    return false;
+    const auto text = kind == QLatin1String("chars")   ? application::SplitText::Characters
+                      : kind == QLatin1String("words") ? application::SplitText::Words
+                      : kind == QLatin1String("wraps") ? application::SplitText::Wraps
+                                                       : std::optional<application::SplitText>();
+    if (!text)
+        return false;
+    // Qt's word boundaries stand in for legacy boost::locale's.
+    const application::WordSegments words = [](std::u16string_view view) {
+        const QString string = QString::fromUtf16(view.data(), static_cast<qsizetype>(view.size()));
+        QTextBoundaryFinder finder(QTextBoundaryFinder::Word, string);
+        std::vector<std::pair<std::size_t, bool>> segments;
+        qsizetype start = 0;
+        for (qsizetype end = finder.toNextBoundary(); end >= 0; end = finder.toNextBoundary()) {
+            if (end == start)
+                continue;
+            bool word = false;
+            for (const QChar c : QStringView(string).mid(start, end - start))
+                word = word || c.isLetterOrNumber() || c.isSurrogate();
+            segments.emplace_back(static_cast<std::size_t>(end), word);
+            start = end;
+        }
+        return segments;
+    };
+    ui::QtTextMeasurePort measure;
+    return runFilter([&](application::EditSession &s) { return application::splitByText(s, *text, measure, words, shown); });
 }
 
 bool Application::makeGroups()

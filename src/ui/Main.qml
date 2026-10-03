@@ -997,6 +997,21 @@ ApplicationWindow {
                             enabled: root.video.hasVideo
                             onTriggered: root.app.splitLines("frames")
                         }
+                        MenuItem {
+                            objectName: "splitIntoCharacters"
+                            text: qsTr("Split lines into characters")
+                            onTriggered: root.app.splitLines("chars")
+                        }
+                        MenuItem {
+                            objectName: "splitIntoWords"
+                            text: qsTr("Split lines into words")
+                            onTriggered: root.app.splitLines("words")
+                        }
+                        MenuItem {
+                            objectName: "splitByWraps"
+                            text: qsTr("Split lines by wraps")
+                            onTriggered: root.app.splitLines("wraps")
+                        }
                     }
                     MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
                     MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }

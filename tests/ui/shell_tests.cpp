@@ -812,6 +812,22 @@ private slots:
         QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 2'000'000);
     }
 
+    void splitIntoCharactersMakesALinePerCharacter()
+    {
+        QVERIFY(application->openFile(episode)); // "first" and "second"
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("splitIntoCharacters")),
+                                          "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(6));
+        const auto lines = session->document().lines();
+        QVERIFY(lines[0]->text.starts_with(u8"{\\pos("));
+        QVERIFY(lines[4]->text.ends_with(u8"}t"));
+        QCOMPARE(lines[5]->text, std::u8string(u8"second"));
+        QCOMPARE(session->history().back().name, std::string("Splitting lines"));
+    }
+
     void editorShortcutsFollowTheLegacyDefaults()
     {
         const QString path = dir.filePath(QStringLiteral("keys.ass"));
