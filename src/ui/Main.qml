@@ -248,6 +248,13 @@ ApplicationWindow {
                     }
                 }
                 MenuItem {
+                    objectName: "openAutoSaveMenuItem"
+                    action: Action {
+                        text: qsTr("Open auto save")
+                        onTriggered: recoveryWindow.showBundles()
+                    }
+                }
+                MenuItem {
                     objectName: "logMenuItem"
                     action: Action {
                         text: qsTr("Show / Hide log window")
@@ -1687,6 +1694,84 @@ ApplicationWindow {
                     text: qsTr("Cancel")
                     onClicked: groupBreakDialog.close()
                 }
+            }
+        }
+    }
+
+    // P3: work left by a session that did not close cleanly. Each bundle opens
+    // as a new unsaved copy (L58-recovery-copy) or is dismissed.
+    Component.onCompleted: {
+        if (root.app.recoveryBundles().length > 0)
+            recoveryWindow.showBundles()
+    }
+    Window {
+        id: recoveryWindow
+        objectName: "recoveryWindow"
+        title: qsTr("Open auto save")
+        width: 560
+        height: 360
+        flags: Qt.Dialog
+        property var bundles: []
+        function showBundles() {
+            bundles = root.app.recoveryBundles()
+            show()
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: recoveryWindow.bundles.length > 0
+                      ? qsTr("Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.")
+                      : qsTr("There is no unsaved work to recover.")
+            }
+            ListView {
+                objectName: "recoveryList"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: recoveryWindow.bundles
+                delegate: RowLayout {
+                    required property var modelData
+                    required property int index
+                    width: ListView.view.width
+                    Label {
+                        Layout.fillWidth: true
+                        elide: Text.ElideMiddle
+                        text: qsTr("%1 — %2").arg(modelData.title).arg(modelData.written)
+                        ToolTip.visible: hovered
+                        ToolTip.text: modelData.original
+                    }
+                    ComboBox {
+                        id: generationChoice
+                        objectName: "recoveryGeneration" + index
+                        model: modelData.generations.map(g => g.written)
+                        Accessible.name: qsTr("Autosave")
+                    }
+                    Button {
+                        objectName: "recoverBundle" + index
+                        text: qsTr("Open copy")
+                        onClicked: {
+                            if (root.app.recoverBundle(modelData.key, modelData.generations[generationChoice.currentIndex].generation))
+                                recoveryWindow.close()
+                        }
+                    }
+                    Button {
+                        objectName: "dismissBundle" + index
+                        text: qsTr("Dismiss")
+                        onClicked: {
+                            root.app.dismissBundle(modelData.key)
+                            recoveryWindow.bundles = root.app.recoveryBundles()
+                        }
+                    }
+                }
+            }
+            Button {
+                Layout.alignment: Qt.AlignRight
+                objectName: "recoveryClose"
+                text: qsTr("Close")
+                onClicked: recoveryWindow.close()
             }
         }
     }

@@ -137,6 +137,16 @@ DocumentId DocumentFiles::createNew()
     return id;
 }
 
+DocumentId DocumentFiles::createUnsaved(core::Document document)
+{
+    const DocumentId id{m_nextDocument++};
+    Entry entry;
+    entry.session = std::make_unique<EditSession>(std::move(document));
+    entry.session->markUnsaved();
+    m_documents.emplace(id, std::move(entry)); // no destination: Untitled
+    return id;
+}
+
 EditSession *DocumentFiles::session(DocumentId document)
 {
     Entry *entry = find(document);

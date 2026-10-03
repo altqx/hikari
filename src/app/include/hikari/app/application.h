@@ -9,6 +9,7 @@
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/recent_files.h"
+#include "hikari/application/recovery_store.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/libass_renderer.h"
@@ -21,6 +22,8 @@
 #include "video_controller.h"
 
 #include <QDateTime>
+#include <QLockFile>
+#include <QTimer>
 #include <QObject>
 #include <QUrl>
 #include <QVariantMap>
@@ -53,6 +56,8 @@ public:
         bool autoload = false;
         // INI file holding the recent lists; empty: they are not kept (tests).
         QString settingsFile;
+        // P3: where recovery bundles live; empty: no autosave (tests).
+        QString recoveryDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -143,6 +148,15 @@ public:
     Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
     // The editing target's Style names, for "Hide lines with styles".
     Q_INVOKABLE QStringList styleNames() const;
+    // P3: autosave recovery. Bundles left by a session that ended without
+    // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
+    Q_INVOKABLE QVariantList recoveryBundles() const;
+    // Opens a generation as a new unsaved copy with its draft still pending
+    // (L58-recovery-copy); the bundle stays until it is dismissed.
+    Q_INVOKABLE bool recoverBundle(const QString &key, qulonglong generation);
+    Q_INVOKABLE void dismissBundle(const QString &key);
+    // Writes the editing target's recovery now (the autosave timer's work; tests).
+    bool autosaveNow();
     // G9: Line groups (legacy trees). The id is the description Line's.
     Q_INVOKABLE bool makeGroups();
     Q_INVOKABLE bool toggleGroup(qulonglong description);
@@ -219,6 +233,16 @@ private:
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;
+    // P3
+    std::unique_ptr<application::RecoveryStore> m_recovery;
+    std::unique_ptr<QLockFile> m_sessionLock;
+    QString m_recoveryDir;
+    QString m_sessionId;
+    std::map<std::uint64_t, QTimer *> m_autosaveTimers;
+    void scheduleAutosave();
+    bool autosave(application::DocumentId document);
+    void discardRecovery(application::DocumentId document);
+    std::string recoveryKey(application::DocumentId document) const;
     void reportGroupBreak();
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows

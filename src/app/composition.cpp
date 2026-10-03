@@ -24,6 +24,7 @@ int run(int argc, char **argv, StartupMode mode)
     // The recent lists, until the settings registry owns them.
     options.settingsFile =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
+    options.recoveryDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Recovery");
     Application application(options);
     // A path on the command line opens as the editing target.
     if (argc > 1)

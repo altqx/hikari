@@ -89,6 +89,9 @@ public:
     // so its first save needs Save As. It starts saved: an untouched new
     // Document never asks to be saved.
     DocumentId createNew();
+    // An Untitled Document holding `document` with unsaved work (P3: a
+    // recovered copy, L58-recovery-copy).
+    DocumentId createUnsaved(core::Document document);
 
     EditSession *session(DocumentId document);
     std::optional<DestinationKey> destination(DocumentId document) const;

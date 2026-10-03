@@ -16,6 +16,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -108,6 +109,11 @@ public:
     std::optional<std::u8string> draftText() const;
     // The draft's Line with its changes applied, as it would be committed.
     std::optional<core::LineRecord> draftRecord() const;
+    // The pending draft's Line and its changes (recovery keeps them pending).
+    std::optional<std::pair<core::LineId, DraftChange>> draftChange() const
+    {
+        return m_draft ? std::optional(std::pair(m_draft->line, m_draft->change)) : std::nullopt;
+    }
     std::optional<DraftProblem> draftProblem() const;
     bool commitDraft(); // one history step; false when there is no draft or it is blocked
     void discardDraft();

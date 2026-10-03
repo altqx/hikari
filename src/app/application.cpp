@@ -6,6 +6,7 @@
 #include "hikari/application/grid_groups.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
+#include "hikari/core/subtitle_load.h"
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 
@@ -13,6 +14,8 @@
 #include <QCollator>
 #include <QGuiApplication>
 #include <QLocale>
+#include <QDir>
+#include <QUuid>
 #include <QCoreApplication>
 #include <QSettings>
 #include <QStringList>
@@ -118,6 +121,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_settingsFile = options.settingsFile;
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
+    // P3: this session's lock marks it as running; bundles of sessions whose
+    // lock is gone or stale were left by a crash.
+    m_recoveryDir = options.recoveryDir;
+    m_sessionId = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    int capacity = application::RecoveryStore::kDefaultCapacity; // legacy AUTOSAVE_MAX_FILES
+    if (!m_settingsFile.isEmpty())
+        capacity = QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recovery/Capacity"), capacity).toInt();
+    if (!m_recoveryDir.isEmpty()) {
+        QDir().mkpath(m_recoveryDir + QStringLiteral("/sessions"));
+        m_sessionLock = std::make_unique<QLockFile>(m_recoveryDir + QStringLiteral("/sessions/") + m_sessionId + QStringLiteral(".lock"));
+        m_sessionLock->tryLock(0);
+    }
+    m_recovery = std::make_unique<application::RecoveryStore>(
+        m_recoveryDir.isEmpty() ? std::filesystem::path() : std::filesystem::path(m_recoveryDir.toStdU16String()),
+        m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
+    m_recovery->prune(std::chrono::system_clock::now());
     // GRID_HIDE_COLUMNS (G7).
     if (!m_settingsFile.isEmpty())
         m_shell->setHiddenColumns(QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns"), 0).toInt());
@@ -134,7 +153,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_copyColumns = settings.value(QStringLiteral("Grid/CopyColumns"), 0).toInt();
         m_pasteColumns = settings.value(QStringLiteral("Grid/PasteColumns"), 0).toInt();
     }
-    connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
+    connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
+        refreshVideo();
+        scheduleAutosave();
+    });
     // A video that cannot be opened is reported in the log window once.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const bool failed = m_video->session().state() == application::VideoSession::State::Failed;
@@ -245,6 +267,7 @@ bool Application::closeEditingTarget()
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
+    discardRecovery(*target); // reviewed: saved or explicitly discarded
     m_files->close(*target);
     m_workspace.remove(*target);
     refreshViews();
@@ -271,6 +294,7 @@ void Application::reportGroupBreak()
 void Application::refreshViews()
 {
     reportGroupBreak();
+    scheduleAutosave();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -415,6 +439,8 @@ void Application::writeFinished(const application::WriteResult &result)
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value); // legacy SetRecent after a save
+        if (auto *session = m_files->session(result.document); session && !session->isDirty())
+            discardRecovery(result.document); // the work is in the file
         if (const auto destination = m_files->destination(result.document);
             destination && destination->value == result.destination.value)
             recordFileTime(result.document);
@@ -470,6 +496,8 @@ void Application::finishClose()
         return;
     }
     if (then == QLatin1String("quit")) {
+        for (const auto id : m_workspace.documents())
+            discardRecovery(id); // every Document reviewed
         m_quitApproved = true;
         emit quitApprovedChanged();
     } else if (then == QLatin1String("new")) {
@@ -979,6 +1007,147 @@ QStringList Application::styleNames() const
         for (const auto &style : core::decodeStyles(session->document()))
             out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size()));
     return out;
+}
+
+std::string Application::recoveryKey(application::DocumentId document) const
+{
+    return m_sessionId.toStdString() + "-" + std::to_string(document.value);
+}
+
+void Application::scheduleAutosave()
+{
+    if (!m_recovery || !m_recovery->enabled())
+        return;
+    const auto target = m_workspace.editingTarget();
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session || !session->isDirty() || session->isReadOnly())
+        return;
+    // Legacy: 20 s after the first change since the last autosave.
+    QTimer *&timer = m_autosaveTimers[target->value];
+    if (!timer) {
+        timer = new QTimer(this);
+        timer->setSingleShot(true);
+        timer->setInterval(20'000);
+        const auto id = *target;
+        connect(timer, &QTimer::timeout, this, [this, id] { autosave(id); });
+    }
+    if (!timer->isActive())
+        timer->start();
+}
+
+bool Application::autosaveNow()
+{
+    const auto target = m_workspace.editingTarget();
+    return target && autosave(*target);
+}
+
+bool Application::autosave(application::DocumentId document)
+{
+    auto *session = m_files->session(document);
+    if (!session || !m_recovery->enabled())
+        return false;
+    application::RecoveryContent content;
+    content.bytes = core::encodeSubtitle(session->document());
+    const auto format = session->document().format();
+    content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
+                        : format == core::SubtitleFormat::Srt                                            ? "srt"
+                                                                                                         : "txt";
+    const std::string *title = m_workspace.title(document);
+    content.title = title ? *title : std::string();
+    if (const auto destination = m_files->destination(document))
+        content.originalPath = destination->value;
+    if (const auto draft = session->draftChange()) {
+        const auto lines = session->document().lines();
+        for (std::size_t row = 0; row < lines.size(); ++row)
+            if (lines[row]->id == draft->first)
+                content.draftRow = row;
+        content.draft = draft->second;
+    }
+    if (const auto &rate = session->document().frameRate())
+        content.frameRate = std::pair(rate->framesPerSecond().numerator(), rate->framesPerSecond().denominator());
+    content.writtenMs = QDateTime::currentMSecsSinceEpoch();
+    return m_recovery->write(recoveryKey(document), content);
+}
+
+void Application::discardRecovery(application::DocumentId document)
+{
+    if (const auto it = m_autosaveTimers.find(document.value); it != m_autosaveTimers.end() && it->second)
+        it->second->stop();
+    if (m_recovery)
+        m_recovery->discard(recoveryKey(document));
+}
+
+namespace {
+
+// A session's lock is gone or stale: it ended without closing cleanly.
+bool sessionEnded(const QString &dir, const std::string &session)
+{
+    const QString path = dir + QStringLiteral("/sessions/") + QString::fromStdString(session) + QStringLiteral(".lock");
+    QLockFile lock(path);
+    if (!lock.tryLock(0))
+        return false; // still running
+    lock.unlock();
+    return true;
+}
+
+} // namespace
+
+QVariantList Application::recoveryBundles() const
+{
+    QVariantList out;
+    if (!m_recovery)
+        return out;
+    const QString dir = m_recoveryDir;
+    for (const auto &bundle : m_recovery->leftovers([&](const std::string &s) { return sessionEnded(dir, s); })) {
+        QVariantList generations;
+        for (auto it = bundle.generations.rbegin(); it != bundle.generations.rend(); ++it)
+            if (const auto content = m_recovery->read(bundle.key, *it))
+                generations << QVariantMap{{QStringLiteral("generation"), QVariant::fromValue<qulonglong>(*it)},
+                                           {QStringLiteral("written"), QDateTime::fromMSecsSinceEpoch(content->writtenMs).toString(Qt::ISODate)}};
+        out << QVariantMap{{QStringLiteral("key"), QString::fromStdString(bundle.key)},
+                           {QStringLiteral("title"), QString::fromStdString(bundle.latest.title)},
+                           {QStringLiteral("original"), QString::fromStdString(bundle.latest.originalPath)},
+                           {QStringLiteral("written"), QDateTime::fromMSecsSinceEpoch(bundle.latest.writtenMs).toString(Qt::ISODate)},
+                           {QStringLiteral("generations"), generations}};
+    }
+    return out;
+}
+
+bool Application::recoverBundle(const QString &key, qulonglong generation)
+{
+    const auto content = m_recovery ? m_recovery->read(key.toStdString(), generation) : std::nullopt;
+    if (!content)
+        return false;
+    const std::u8string extension(content->extension.begin(), content->extension.end());
+    auto loaded = core::loadSubtitle(content->bytes, extension);
+    if (!loaded)
+        return false;
+    core::Document document = std::move(loaded->document);
+    if (content->frameRate)
+        if (const auto rate = core::FrameRate::make(content->frameRate->first, content->frameRate->second))
+            document.setFrameRate(*rate);
+    // L58-recovery-copy: a new Untitled Document; the original file is untouched.
+    const auto id = m_files->createUnsaved(std::move(document));
+    auto *session = m_files->session(id);
+    selectLegacyActiveLine(*session);
+    if (content->draftRow) {
+        const auto lines = session->document().lines();
+        if (*content->draftRow < lines.size()) {
+            const auto line = lines[*content->draftRow]->id;
+            session->setSelection(application::Selection{line, {line}, line, {}});
+            session->editDraft(line, content->draft); // pending, not committed
+        }
+    }
+    m_workspace.add(id, tr("%1 (recovered)").arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.setEditingTarget(id);
+    refreshViews();
+    return true;
+}
+
+void Application::dismissBundle(const QString &key)
+{
+    if (m_recovery)
+        m_recovery->discard(key.toStdString());
 }
 
 bool Application::makeGroups()
