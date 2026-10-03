@@ -224,10 +224,10 @@ TEST_F(Select, MoveToBeginningAndEndKeepLineIds)
     EXPECT_EQ(session.historySize(), 3u);
 }
 
-TEST_F(Select, MoveDropsHiddenSelectedLines)
+TEST_F(Select, MoveTakesHiddenSelectedLinesToo)
 {
-    // Characterized legacy defect: every selected Line is deleted, but only
-    // the ones the walk saw are inserted again.
+    // Approved F2-move-hidden: legacy deleted a hidden selected Line and
+    // inserted only the Lines its walk saw; every selected Line moves now.
     const auto hidden = row(3);
     const LineVisible visible = [&](core::LineId id) { return id != hidden; };
     select({3}, 0);
@@ -235,7 +235,9 @@ TEST_F(Select, MoveDropsHiddenSelectedLines)
     s.mode = S::Mode::AddToSelection;
     s.action = S::Action::MoveToBeginning;
     EXPECT_EQ(run(s, visible), 1);
-    EXPECT_EQ(texts(), (std::vector<std::string>{"third", "Hello World", "hello sign"}));
+    EXPECT_EQ(texts(), (std::vector<std::string>{"third", "", "Hello World", "hello sign"}));
+    EXPECT_EQ(row(1), hidden);
+    EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 1}));
 }
 
 TEST_F(Select, SetAsCommentAndDelete)

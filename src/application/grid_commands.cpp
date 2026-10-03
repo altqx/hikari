@@ -440,9 +440,9 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
         case SortKey::Actor:
             return i->actor != j->actor ? text(i->actor, j->actor) < 0 : si < sj;
         case SortKey::Effect:
-            // Legacy sorteffect compares the Actors when the Effects differ
-            // (characterized; not a consistent order for every input).
-            return i->effect != j->effect ? text(i->actor, j->actor) < 0 : si < sj;
+            // Approved G6-sort-effect (2026-10-04): by Effect (legacy
+            // sorteffect compared the Actors when the Effects differed).
+            return i->effect != j->effect ? text(i->effect, j->effect) < 0 : si < sj;
         case SortKey::Layer:
             return i->layer.value != j->layer.value ? i->layer.value < j->layer.value : si < sj;
         }

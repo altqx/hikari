@@ -307,10 +307,10 @@ TEST(SortLines, EveryKeyFollowsTheLegacyComparators)
         ASSERT_TRUE(sortLines(session, key, false)) << static_cast<int>(key);
         EXPECT_EQ(order(session), expected) << static_cast<int>(key);
     }
-    // Legacy quirk: Lines with different Effects are ordered by Actor.
+    // Approved G6-sort-effect: by Effect, ties by Start (legacy compared Actors).
     EditSession effect{load(kUnsorted)};
     ASSERT_TRUE(sortLines(effect, SortKey::Effect, false));
-    EXPECT_EQ(order(effect), u8"srpq");
+    EXPECT_EQ(order(effect), u8"qrps"); // e1 (starts 1, 3), e2, e3
 }
 
 TEST(SortLines, OneStepThatKeepsIdentitiesAndUndoes)

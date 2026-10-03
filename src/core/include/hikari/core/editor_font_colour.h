@@ -38,17 +38,26 @@ FontValues fontInEffect(const EditorText &state, FontValues style, long *positio
 // One step of ChangeFont or OnColorChange: FindTag(pattern) and then
 // PutTagInText(tag, reset, focus = false); or, with `nonAss`, PutinNonass with
 // the legacy arguments (`pattern` is its regex text, `tag` what it writes).
+// A `valueFirst` step (font name, size, colour) holds the value in `pattern`
+// and the regex in `tag`, as legacy passed them; approved E1-nonass-font
+// (2026-10-04): one Line gets the value (legacy wrote the regex text), and
+// SRT, which has no such markup, is left unchanged.
 struct EditStep {
     std::u16string pattern;
     std::u16string tag;
     std::u16string reset;
     bool nonAss = false;
+    bool valueFirst = false;
+    // Line formats' bold/italic/underline/strikeout ('b', 'i', 'u', 's'): the
+    // editor buttons' forms (toggleNonAssTag; E1-nonass-font, where legacy
+    // wrote <Y:b> into SRT and ASS \u/\s tags into every line format).
+    char16_t flag = 0;
 };
 
 // ChangeFont for a dialog change from `edited` to `result`; `actual` is the
 // font the dialog opened with, which gives the resets. For the line-based
-// formats (`ass` false) the name, size and bold/italic go through
-// PutinNonass, underline and strikeout through override tags as for ASS.
+// formats (`ass` false) the name and size go through PutinNonass, and
+// bold, italic, underline and strikeout as the editor's buttons do them.
 std::vector<EditStep> fontSteps(const FontValues &edited, const FontValues &result, const FontValues &actual,
                                 bool ass);
 

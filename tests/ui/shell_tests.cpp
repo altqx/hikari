@@ -826,7 +826,16 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
         if (!QTest::qWaitForWindowActive(floating, 3000))
             QSKIP("The platform did not activate the floating panel's window (no window manager)");
-        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+        if (!QTest::qWaitFor([&] { return item("editorPanel")->hasActiveFocus(); }, 5000)) {
+            // Without a window manager X11 may hand activation back to the main window.
+            if (QGuiApplication::focusWindow() != floating)
+                QSKIP("The platform moved activation away from the floating panel's window (no window manager)");
+            auto *quick = qobject_cast<QQuickWindow *>(floating);
+            const auto *focused = quick ? quick->activeFocusItem() : nullptr;
+            QFAIL(qPrintable(QStringLiteral("The floating window is active but focus is on %1")
+                                 .arg(focused ? focused->metaObject()->className() + QStringLiteral(" ") + focused->objectName()
+                                              : QStringLiteral("nothing"))));
+        }
         QTRY_VERIFY(root->property("floatingPanelActive").toBool());
         auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
         QVERIFY(history && !history->isVisible());
@@ -1040,6 +1049,8 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
         }
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ReadUser);
+        if (QFileInfo(locked).isWritable()) // root (CI containers) writes read-only files
+            QSKIP("Read-only files are writable for this user");
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
     }
@@ -1075,6 +1086,14 @@ private slots:
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         QCOMPARE(dialog->property("recent").toStringList(), QStringList{QStringLiteral("alpha")});
+        // F2-style-cancel: Cancel in "Choose styles" leaves the search as it is.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
+        auto *styles = root->findChild<QObject *>(QStringLiteral("selectStylesDialog"));
+        QTRY_VERIFY(styles->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(styles, "reject"));
+        QTRY_VERIFY(!styles->property("visible").toBool());
+        QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
+        QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
         // "Close" in the message closes the Select dialog too.
         QVERIFY(QMetaObject::invokeMethod(result, "accept"));
         QTRY_VERIFY(!dialog->property("visible").toBool());

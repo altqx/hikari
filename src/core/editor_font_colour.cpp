@@ -116,38 +116,43 @@ std::vector<EditStep> fontSteps(const FontValues &edited, const FontValues &resu
         if (ass)
             steps.push_back({u"fn(.*)", u"\\fn" + result.name, u"\\fn" + actual.name});
         else
-            steps.push_back({u"F:" + result.name, u"f:([^}]*)", {}, true});
+            steps.push_back({u"F:" + result.name, u"f:([^}]*)", {}, true, true});
     }
     if (result.size != edited.size) {
         if (ass)
             steps.push_back({u"fs([0-9]+)", u"\\fs" + result.size, u"\\fs" + actual.size});
-        else // legacy writes the font name here
-            steps.push_back({u"S:" + result.name, u"s:([^}]*)", {}, true});
+        else // E1-nonass-font: the size (legacy wrote the font name)
+            steps.push_back({u"S:" + result.size, u"s:([^}]*)", {}, true, true});
     }
-    if (result.bold != edited.bold) {
+    const auto flagStep = [&](bool changed, char16_t tag, bool on, bool actualOn) {
+        if (!changed)
+            return;
+        const u16 name(1, tag);
         if (ass)
-            steps.push_back({u"b(0|1)", u"\\b" + flag(result.bold), u"\\b" + flag(actual.bold)});
+            steps.push_back({name + u"(0|1)", u"\\" + name + flag(on), u"\\" + name + flag(actualOn)});
         else
-            steps.push_back({u"y:b", result.bold ? u16(u"Y:b") : u16(), {}, true});
-    }
-    if (result.italic != edited.italic) {
-        if (ass)
-            steps.push_back({u"i(0|1)", u"\\i" + flag(result.italic), u"\\i" + flag(actual.italic)});
-        else
-            steps.push_back({u"y:i", result.italic ? u16(u"Y:i") : u16(), {}, true});
-    }
-    if (result.underline != edited.underline)
-        steps.push_back({u"u(0|1)", u"\\u" + flag(result.underline), u"\\u" + flag(actual.underline)});
-    if (result.strikeOut != edited.strikeOut)
-        steps.push_back({u"s(0|1)", u"\\s" + flag(result.strikeOut), u"\\s" + flag(actual.strikeOut)});
+            steps.push_back({u"y:" + name, on ? u"Y:" + name : u16(), {}, true, false, tag});
+    };
+    flagStep(result.bold != edited.bold, u'b', result.bold, actual.bold);
+    flagStep(result.italic != edited.italic, u'i', result.italic, actual.italic);
+    flagStep(result.underline != edited.underline, u'u', result.underline, actual.underline);
+    flagStep(result.strikeOut != edited.strikeOut, u's', result.strikeOut, actual.strikeOut);
     return steps;
 }
 
 StepResult applySteps(EditorText state, const std::vector<EditStep> &steps, NonAssFormat format, long position)
 {
     for (const auto &step : steps) {
+        if (step.nonAss && step.flag) {
+            if (format == NonAssFormat::Srt || format == NonAssFormat::MicroDvd)
+                state = toggleNonAssTag(std::move(state), step.flag, format == NonAssFormat::Srt);
+            continue;
+        }
         if (step.nonAss) {
-            state = putInNonAss(std::move(state), format, step.pattern, step.tag);
+            if (step.valueFirst && format == NonAssFormat::Srt)
+                continue;
+            state = step.valueFirst ? putInNonAss(std::move(state), format, step.tag, step.pattern)
+                                    : putInNonAss(std::move(state), format, step.pattern, step.tag);
             continue;
         }
         TagEditor editor(std::move(state));
@@ -163,7 +168,15 @@ StepResult applySteps(EditorText state, const std::vector<EditStep> &steps, NonA
 void applyStepsToLine(u16 &text, u16 &translation, const std::vector<EditStep> &steps, NonAssFormat format)
 {
     for (const auto &step : steps) {
+        if (step.nonAss && step.flag) {
+            // Several Lines: MicroDVD bold and italic as legacy writes them.
+            if (format == NonAssFormat::MicroDvd && (step.flag == u'b' || step.flag == u'i'))
+                text = putInNonAssLine(std::move(text), format, step.pattern, step.tag);
+            continue;
+        }
         if (step.nonAss) {
+            if (step.valueFirst && format == NonAssFormat::Srt)
+                continue;
             text = putInNonAssLine(std::move(text), format, step.pattern, step.tag);
             continue;
         }
@@ -283,7 +296,7 @@ u16 changeColourInLine(u16 text, int n, const TagColour &actual, const TagColour
 
 EditStep colourNonAssStep(const TagColour &chosen)
 {
-    return {u"C:" + assColourText(chosen, false, true).substr(2), u"C:([^}]*)", {}, true};
+    return {u"C:" + assColourText(chosen, false, true).substr(2), u"C:([^}]*)", {}, true, true};
 }
 
 } // namespace hikari::core::legacy

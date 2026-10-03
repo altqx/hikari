@@ -161,8 +161,9 @@ Dialog {
         onAccepted: dialog.close()
     }
 
-    // Legacy Stylelistbox "Choose styles". Whatever it returns, even after
-    // Cancel (nothing checked: "^$"), becomes a Styles regular expression.
+    // Legacy Stylelistbox "Choose styles": OK makes the checked styles a
+    // Styles regular expression. Approved F2-style-cancel (2026-10-04):
+    // Cancel changes nothing (legacy filled in "^$").
     Dialog {
         id: stylesDialog
         objectName: "selectStylesDialog"
@@ -197,6 +198,5 @@ Dialog {
             }
         }
         onAccepted: apply(names.filter(n => checkedNames.indexOf(n) >= 0))
-        onRejected: apply([])
     }
 }

@@ -272,7 +272,11 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
     const bool changes = removes ? !doomed.empty() : action == A::SetAsComment && !acted.empty();
 
     if (changes) {
-        const std::set<core::LineId> movedSet(acted.begin(), acted.end());
+        // Approved F2-move-hidden (2026-10-04): Move takes every selected
+        // Line, hidden ones too, in Document order (legacy deleted the hidden
+        // ones and inserted copies of the walked ones only).
+        const std::vector<core::LineId> &moved = moves ? doomed : acted;
+        const std::set<core::LineId> movedSet(moved.begin(), moved.end());
         std::set<core::LineId> touches(doomed.begin(), doomed.end());
         touches.insert(acted.begin(), acted.end());
         const auto ran = session.run(Command{
@@ -283,9 +287,7 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
                             return false;
                     return true;
                 }
-                // Moved Lines keep their LineIds; the other selected ones
-                // (hidden ones the walk skipped) are deleted, as legacy deletes
-                // every selected Line and inserts copies of the moved ones only.
+                // Moved Lines keep their LineIds.
                 for (const auto id : doomed)
                     if (!(moves && movedSet.contains(id)) && !d.removeLine(id))
                         return false;
@@ -298,7 +300,7 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
                                 break;
                             }
                     if (action == A::MoveToEnd || before)
-                        for (const auto id : acted)
+                        for (const auto id : moved)
                             if (!d.moveLine(id, before))
                                 return false;
                 }
