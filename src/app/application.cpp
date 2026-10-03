@@ -10,6 +10,7 @@
 #include "hikari/application/shift_times.h"
 #include "hikari/application/select_lines.h"
 #include "hikari/application/resample.h"
+#include "hikari/core/conversion.h"
 #include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
@@ -157,10 +158,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_colourPicker = std::make_unique<ui::ColourPickerController>(m_settingsFile);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(m_settingsFile);
     if (!m_settingsFile.isEmpty()) {
-        const QSettings ini(m_settingsFile, QSettings::IniFormat);
+        QSettings ini(m_settingsFile, QSettings::IniFormat);
         m_selectOptions = ini.value(QStringLiteral("SelectLines/Options"), 0).toInt();
         m_saveWithVideoName = ini.value(QStringLiteral("Subtitles/SaveWithVideoName"), false).toBool();
         m_askForBadResolution = !ini.value(QStringLiteral("Video/DontAskForBadResolution"), false).toBool();
+        ini.beginGroup(QStringLiteral("Convert"));
+        for (const QString &key : ini.childKeys())
+            m_conversionOptions.insert(key, ini.value(key));
+        ini.endGroup();
         // Legacy keeps 20 when the dialog opens.
         m_selectRecent = ini.value(QStringLiteral("SelectLines/Recent")).toStringList().mid(0, 20);
     }
@@ -648,7 +653,7 @@ QString Application::saveRoute() const
     const QString video = m_video->session().state() == application::VideoSession::State::Ready
                               ? QString::fromStdString(m_video->session().path())
                               : QString();
-    if (path.isEmpty() || (m_saveWithVideoName && !video.isEmpty() &&
+    if (path.isEmpty() || m_formatChanged.contains(target->value) || (m_saveWithVideoName && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -691,7 +696,11 @@ QString Application::saveChosen(const QUrl &file)
         path += u'.' + ext;
     if (readOnly(path))
         return QStringLiteral("readonly");
-    return saveAs(path) ? QString() : QStringLiteral("failed");
+    if (!saveAs(path))
+        return QStringLiteral("failed");
+    if (const auto target = m_workspace.editingTarget())
+        m_formatChanged.erase(target->value); // legacy originalFormat = subsFormat
+    return {};
 }
 
 bool Application::saveAll()
@@ -1741,6 +1750,185 @@ void Application::setAskForBadResolution(bool on)
     if (!m_settingsFile.isEmpty())
         QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Video/DontAskForBadResolution"), !on);
     emit askForBadResolutionChanged();
+}
+
+namespace {
+
+// Legacy defaults (config.cpp) for the CONVERT_* options.
+QVariant conversionOption(const QVariantMap &options, const QString &key)
+{
+    static const QVariantMap defaults{{QStringLiteral("fps"), QStringLiteral("23.976")},
+                                      {QStringLiteral("fpsFromVideo"), false},
+                                      {QStringLiteral("style"), QStringLiteral("Default")},
+                                      {QStringLiteral("newEndTimes"), false},
+                                      {QStringLiteral("timePerCharacter"), 110},
+                                      {QStringLiteral("prefix"), QString()},
+                                      {QStringLiteral("resolutionWidth"), QStringLiteral("1280")},
+                                      {QStringLiteral("resolutionHeight"), QStringLiteral("720")}};
+    return options.value(key, defaults.value(key));
+}
+
+std::optional<core::SubtitleFormat> formatNamed(const QString &name)
+{
+    if (name == QLatin1String("ass"))
+        return core::SubtitleFormat::Ass;
+    if (name == QLatin1String("srt"))
+        return core::SubtitleFormat::Srt;
+    if (name == QLatin1String("tmp"))
+        return core::SubtitleFormat::TMPlayer;
+    if (name == QLatin1String("mdvd"))
+        return core::SubtitleFormat::MicroDvd;
+    if (name == QLatin1String("mpl2"))
+        return core::SubtitleFormat::Mpl2;
+    return std::nullopt;
+}
+
+} // namespace
+
+QVariantMap Application::conversionOptions() const
+{
+    QVariantMap out;
+    for (const char *key : {"fps", "fpsFromVideo", "style", "newEndTimes", "timePerCharacter", "prefix",
+                            "resolutionWidth", "resolutionHeight"})
+        out.insert(QLatin1String(key), conversionOption(m_conversionOptions, QLatin1String(key)));
+    return out;
+}
+
+void Application::setConversionOptions(const QVariantMap &options)
+{
+    for (auto it = options.begin(); it != options.end(); ++it)
+        m_conversionOptions.insert(it.key(), it.value());
+    m_conversionPlan.reset(); // a changed option invalidates the preview (C02)
+    if (m_settingsFile.isEmpty())
+        return;
+    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    ini.beginGroup(QStringLiteral("Convert"));
+    for (auto it = m_conversionOptions.begin(); it != m_conversionOptions.end(); ++it)
+        ini.setValue(it.key(), it.value());
+}
+
+QStringList Application::conversionTargets() const
+{
+    auto *session = targetSession();
+    // Legacy converts nothing while translation mode is on.
+    if (!session || session->document().scriptInfo(u8"TLMode") == std::optional<std::u8string>(u8"Yes"))
+        return {};
+    const auto format = session->document().format();
+    QStringList out;
+    // Legacy enables "Convert to ASS" only for a format after ASS.
+    if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
+        out << QStringLiteral("ass");
+    if (format != core::SubtitleFormat::Srt)
+        out << QStringLiteral("srt");
+    if (format != core::SubtitleFormat::MicroDvd)
+        out << QStringLiteral("mdvd");
+    if (format != core::SubtitleFormat::Mpl2)
+        out << QStringLiteral("mpl2");
+    if (format != core::SubtitleFormat::TMPlayer)
+        out << QStringLiteral("tmp");
+    return out;
+}
+
+QVariantMap Application::previewConversion(const QString &targetName)
+{
+    m_conversionPlan.reset();
+    auto *session = targetSession();
+    const auto target = formatNamed(targetName);
+    if (!session || !target || !conversionTargets().contains(targetName))
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("This Document can't be converted to that format.")}};
+    const QVariantMap o = conversionOptions();
+    core::ConversionOptions options;
+    const auto &video = m_video->session();
+    const bool hasVideo = video.state() == application::VideoSession::State::Ready;
+    const float frameMs = hasVideo ? video.legacyTimebase().frameDuration() : 0.f;
+    // CONVERT_FPS_FROM_VIDEO takes the open video's rate.
+    options.fps = o.value(QStringLiteral("fpsFromVideo")).toBool() && hasVideo && frameMs > 0.f
+                      ? 1000.0 / frameMs
+                      : o.value(QStringLiteral("fps")).toString().toDouble();
+    if (options.fps < 1)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("Invalid FPS. Correct it in options and try again.")}};
+    options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
+    options.prefix = utf8(o.value(QStringLiteral("prefix")).toString());
+    options.newEndTimes = o.value(QStringLiteral("newEndTimes")).toBool();
+    options.timePerCharacter = o.value(QStringLiteral("timePerCharacter")).toInt();
+    options.resolutionWidth = utf8(o.value(QStringLiteral("resolutionWidth")).toString());
+    options.resolutionHeight = utf8(o.value(QStringLiteral("resolutionHeight")).toString());
+    // The conversion Style: legacy Styles() named CONVERT_STYLE (catalogs are Y2).
+    options.style = core::legacy::decodeStyle(
+        u8"Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1", false);
+    options.style.name = utf8(o.value(QStringLiteral("style")).toString());
+    const QCollator collator;
+    auto result = core::convertDocument(session->document(), *target, options, [&](std::u8string_view a, std::u8string_view b) {
+        return collator.compare(QString::fromUtf8(reinterpret_cast<const char *>(a.data()), qsizetype(a.size())),
+                                QString::fromUtf8(reinterpret_cast<const char *>(b.data()), qsizetype(b.size())));
+    });
+    if (!result)
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), tr("This Document can't be converted to that format.")}};
+    const auto &r = result->report;
+    QStringList losses;
+    if (r.headerDropped)
+        losses << tr("The script properties and styles are removed.");
+    if (r.commentsRemoved)
+        losses << tr("%n comment line(s) removed.", nullptr, r.commentsRemoved);
+    if (r.drawingsCleared)
+        losses << tr("%n drawing(s) removed.", nullptr, r.drawingsCleared);
+    if (r.emptyRemoved)
+        losses << tr("%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+    if (r.duplicatesRemoved)
+        losses << tr("%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+    if (r.reordered)
+        losses << tr("Lines are sorted by time.");
+    if (r.textChanged)
+        losses << tr("Formatting tags converted or removed in %n line(s).", nullptr, r.textChanged);
+    if (r.fieldsDropped)
+        losses << (*target == core::SubtitleFormat::Ass
+                       ? tr("%n line(s) get the conversion style \"%1\".", nullptr, r.fieldsDropped).arg(o.value(QStringLiteral("style")).toString())
+                       : tr("Layer, style, actor, margins or effect removed from %n line(s).", nullptr, r.fieldsDropped));
+    if (r.markersDropped)
+        losses << tr("Bookmarks, hidden lines and groups removed from %n line(s).", nullptr, r.markersDropped);
+    if (r.timesChanged)
+        losses << tr("Times changed (rounding, frames or new end times) in %n line(s).", nullptr, r.timesChanged);
+    m_conversionPlan = std::make_unique<ConversionPlan>(
+        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, std::move(result->document)});
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}};
+}
+
+bool Application::acceptConversion()
+{
+    auto plan = std::move(m_conversionPlan);
+    auto *session = targetSession();
+    const auto target = m_workspace.editingTarget();
+    // A changed Document or options invalidates the plan (C02).
+    if (!plan || !session || !target || target->value != plan->document || session->revision() != plan->revision ||
+        conversionOptions() != plan->options)
+        return false;
+    std::set<core::LineId> touches;
+    for (const auto *line : session->document().lines())
+        touches.insert(line->id);
+    application::Command command{"Subtitles conversion", session->revision(), touches,
+                                 [&](core::Document &d) {
+                                     d = plan->converted;
+                                     return true;
+                                 }};
+    command.keepGroups = false; // groups are among the reported losses
+    if (!session->run(command))
+        return false;
+    // The active Line stays when it survived; otherwise the first Line.
+    const auto lines = session->document().lines();
+    application::Selection selection = session->selection();
+    std::erase_if(selection.selected, [&](core::LineId id) {
+        return std::ranges::none_of(lines, [&](const auto *l) { return l->id == id; });
+    });
+    if (!selection.active || std::ranges::none_of(lines, [&](const auto *l) { return l->id == *selection.active; }))
+        selection.active = lines.empty() ? std::nullopt : std::optional(lines.front()->id);
+    selection.anchor = selection.active;
+    selection.extent.reset();
+    session->setSelection(selection);
+    m_formatChanged.insert(target->value);
+    m_editor->reloadFromSession();
+    refreshViews();
+    checkResolution();
+    return true;
 }
 
 QVariantMap Application::scriptProperties()

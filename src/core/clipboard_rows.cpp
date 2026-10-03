@@ -1,4 +1,6 @@
 #include "hikari/core/clipboard_rows.h"
+#include "hikari/core/conversion.h"
+#include "hikari/core/text_projection.h"
 
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -9,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <cstring>
 #include <unordered_map>
 
 namespace hikari::core {
@@ -813,6 +816,166 @@ LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const 
     if (d.format != static_cast<int>(format))
         convert(d, static_cast<int>(format), conversion);
     return toLine(d, format);
+}
+
+
+std::optional<ConversionResult> convertDocument(const Document &source, SubtitleFormat target,
+                                                const ConversionOptions &options, const ConversionCollate &collate)
+{
+    const int type = static_cast<int>(target);
+    const int from = static_cast<int>(source.format());
+    if (target == source.format() || target == SubtitleFormat::PlainText || options.fps < 1)
+        return std::nullopt;
+    ConversionReport report;
+    PasteConversion conversion;
+    conversion.style = options.style.name;
+    conversion.prefix = options.prefix;
+    conversion.fps = static_cast<float>(options.fps);
+
+    struct Item {
+        LineId id;
+        Dialogue d;
+    };
+    std::vector<Item> items;
+    for (const auto *line : source.lines())
+        items.push_back({line->id, fromLine(*line, source.format())});
+
+    // SubsGrid::Convert's loop.
+    std::vector<Item> out;
+    std::size_t lastIndex = static_cast<std::size_t>(-1);
+    for (std::size_t i = 0; i < items.size(); ++i) {
+        if (type > Ass && from < Srt && items[i].d.comment) {
+            ++report.commentsRemoved;
+            continue;
+        }
+        Item item = items[i];
+        const Dialogue before = item.d;
+        convert(item.d, type, conversion);
+        if (item.d.text != before.text)
+            ++report.textChanged;
+        if (from < Srt && type >= Srt) {
+            if (before.text.find(u8"\\p") != std::u8string::npos && hasDrawing(before.text) && item.d.text.empty())
+                ++report.drawingsCleared;
+            if (before.layer || before.style != u8"Default" || !before.actor.empty() || before.marginLeft ||
+                before.marginRight || before.marginVertical || !before.effect.empty())
+                ++report.fieldsDropped;
+            if (before.bookmark || before.visibility != LineVisibility::Visible || before.group != GroupMarker::None)
+                ++report.markersDropped;
+        } else if (type < Srt) {
+            ++report.fieldsDropped; // every Line gets the conversion Style
+        }
+        if ((options.newEndTimes && type != Tmp) || from == Tmp) {
+            if (lastIndex != static_cast<std::size_t>(-1)) {
+                Dialogue &last = out[lastIndex].d;
+                if (last.end.ms > item.d.start.ms)
+                    last.end = item.d.start;
+            }
+            const auto length = static_cast<std::int64_t>(toUtf16(item.d.text).size());
+            std::int64_t newEnd = options.timePerCharacter * length;
+            if (newEnd < 1000)
+                newEnd = 1000;
+            newEnd += item.d.start.ms;
+            // SubsTime::NewTime: MicroDVD frames at the video's rate.
+            item.d.end.ms = newEnd < 0 ? 0 : newEnd;
+            if (item.d.end.form == Mdvd)
+                item.d.end.frame = static_cast<std::int64_t>(
+                    std::ceil(static_cast<float>(item.d.end.ms) * (static_cast<float>(options.videoFps) / 1000.f)));
+        }
+        out.push_back(std::move(item));
+        lastIndex = out.size() - 1;
+    }
+    for (std::size_t i = 0, j = 0; i < items.size() && j < out.size(); ++i) {
+        if (items[i].id != out[j].id)
+            continue;
+        if (items[i].d.start.ms != out[j].d.start.ms || items[i].d.end.ms != out[j].d.end.ms)
+            ++report.timesChanged;
+        ++j;
+    }
+
+    if (from == Ass) {
+        report.headerDropped = type != Ass;
+        const auto before = out;
+        std::stable_sort(out.begin(), out.end(), [&](const Item &a, const Item &b) {
+            if (a.d.start.ms != b.d.start.ms)
+                return a.d.start.ms < b.d.start.ms;
+            if (a.d.end.ms != b.d.end.ms)
+                return a.d.end.ms < b.d.end.ms;
+            return collate ? collate(a.d.text, b.d.text) < 0 : a.d.text < b.d.text;
+        });
+        for (std::size_t i = 0; i < out.size(); ++i)
+            report.reordered = report.reordered || out[i].id != before[i].id;
+        // Equal neighbours: the earlier one goes; empty texts go (not the first Line).
+        std::size_t last = 0, i = 1;
+        while (i < out.size()) {
+            if (out[last].d.start.ms == out[i].d.start.ms && out[last].d.end.ms == out[i].d.end.ms &&
+                out[last].d.text == out[i].d.text) {
+                out.erase(out.begin() + static_cast<std::ptrdiff_t>(i - 1));
+                ++report.duplicatesRemoved;
+                last = i - 1;
+                continue;
+            }
+            if (out[i].d.text.empty()) {
+                out.erase(out.begin() + static_cast<std::ptrdiff_t>(i));
+                ++report.emptyRemoved;
+                continue;
+            }
+            last = i;
+            ++i;
+        }
+    }
+
+    // The file legacy SaveFile writes for the converted Lines.
+    std::u8string text;
+    if (type == Ass) {
+        // LoadDefault, then CONVERT_RESOLUTION_* (legacy sets the width when
+        // the height is empty) and the conversion Style.
+        std::u8string resx = options.resolutionWidth, resy = options.resolutionHeight;
+        if (resx.empty())
+            resx = u8"1280";
+        if (resy.empty())
+            resx = u8"720";
+        text = u8"[Script Info]\r\nTitle: HikariSub Ass File\r\nPlayResX: " + resx + u8"\r\nPlayResY: " + resy +
+               u8"\r\nScaledBorderAndShadow: yes\r\nWrapStyle: 0\r\nScriptType: v4.00+\r\n"
+               u8"Last Style Storage: Default\r\nYCbCr Matrix: TV.601\r\n\r\n[V4+ Styles]\r\n"
+               u8"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+               u8"Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+               u8"MarginL, MarginR, MarginV, Encoding\r\nStyle: ";
+        const auto fields = legacy::styleRawFields(options.style);
+        for (std::size_t i = 0; i < fields.size(); ++i)
+            text += (i ? u8"," : u8"") + fields[i];
+        text += u8"\r\n\r\n[Events]\r\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n";
+    }
+    for (std::size_t i = 0; i < out.size(); ++i) {
+        if (type == Srt)
+            text += number(static_cast<std::int64_t>(i + 1)) + u8"\r\n";
+        const LineRecord line = toLine(out[i].d, target);
+        text += getRaw(out[i].d, line, false);
+    }
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    LoadResult loaded = type == Ass ? loadAss(bytes) : type == Srt ? loadSrt(bytes) : loadLineFormats(bytes);
+    Document &document = loaded.document;
+    if (target != SubtitleFormat::Ass && target != SubtitleFormat::Srt)
+        DocumentBuilder::setFormat(document, target);
+    if (target == SubtitleFormat::MicroDvd)
+        if (const auto rate = FrameRate::make(std::llround(options.fps * 1000), 1000))
+            document.setFrameRate(*rate);
+    // The surviving Lines keep their LineIds when the file reads back one to one.
+    std::uint64_t next = DocumentBuilder::peekNextLineId(source);
+    std::size_t k = 0;
+    std::vector<LineRecord *> readBack;
+    for (auto &section : DocumentBuilder::sections(document))
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record))
+                readBack.push_back(line);
+    if (readBack.size() == out.size())
+        for (auto *line : readBack)
+            line->id = out[k++].id;
+    else
+        for (auto *line : readBack)
+            line->id = LineId{next++};
+    DocumentBuilder::setNextLineId(document, next);
+    return ConversionResult{std::move(document), report};
 }
 
 } // namespace hikari::core

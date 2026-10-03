@@ -20,6 +20,8 @@ struct DocumentBuilder {
     static std::vector<Section> &sections(Document &d) { return d.m_sections; }
     static LineId nextLineId(Document &d) { return LineId{d.m_nextLineId++}; }
     static void setFormat(Document &d, SubtitleFormat f) { d.m_format = f; }
+    static std::uint64_t peekNextLineId(const Document &d) { return d.m_nextLineId; }
+    static void setNextLineId(Document &d, std::uint64_t next) { d.m_nextLineId = next; }
 };
 
 

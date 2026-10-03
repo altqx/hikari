@@ -924,6 +924,55 @@ private slots:
         application->editor().discard();
     }
 
+    // Y5: Convert to SRT previews its losses, applies the plan as one step,
+    // refuses a stale plan, and Save then asks for a file.
+    void conversionPreviewsAndAppliesThePlan()
+    {
+        const QString path = dir.filePath(QStringLiteral("convert.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,note\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\i1}two{\\i0}\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(application->conversionTargets(),
+                 (QStringList{QStringLiteral("srt"), QStringLiteral("mdvd"), QStringLiteral("mpl2"), QStringLiteral("tmp")}));
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openFor", Q_ARG(QVariant, QStringLiteral("srt")),
+                                          Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const QStringList losses = dialog->property("preview").toMap().value(QStringLiteral("losses")).toStringList();
+        QVERIFY2(losses.contains(QStringLiteral("1 comment line(s) removed.")) ||
+                     losses.join(u'|').contains(QStringLiteral("comment")),
+                 qPrintable(losses.join(u'|')));
+        QVERIFY(losses.join(u'|').contains(QStringLiteral("script properties")));
+        // A Document changed after the preview refuses the plan.
+        QVERIFY(application->selectLines({{QStringLiteral("find"), QStringLiteral("two")}, {QStringLiteral("field"), 0},
+                                          {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 5}, {QStringLiteral("comments"), false}},
+                                         false)
+                    .startsWith(QStringLiteral("1 ")));
+        QVERIFY(!application->acceptConversion());
+        QVERIFY(application->editor().undo());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "refresh"));
+        const auto cursor = session->historyCursor();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionAccept"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->historyCursor(), cursor + 1);
+        QCOMPARE(session->history().back().name, std::string("Subtitles conversion"));
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(session->document().lines().size(), std::size_t(1));
+        const auto &text = session->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())), QStringLiteral("<i>two</i>"));
+        QCOMPARE(application->saveRoute(), QStringLiteral("dialog")); // the file is still .ass
+        QVERIFY(application->editor().undo());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        application->editor().discard();
+    }
+
     // Y4: a video of another size offers to match it; Resample subtitles changes it.
     void resolutionMismatchAndResample()
     {

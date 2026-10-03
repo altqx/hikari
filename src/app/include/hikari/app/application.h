@@ -219,6 +219,20 @@ public:
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
     // opens, as legacy does); otherwise the legacy message.
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
+    // Y5: GLOBAL_CONVERT_TO_ASS/SRT/MDVD/MPL2/TMP with the CONVERT_* options
+    // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix,
+    // resolutionWidth, resolutionHeight}, kept in the INI file.
+    Q_INVOKABLE QVariantMap conversionOptions() const;
+    Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
+    // The formats the editing target can be converted to ("ass", "srt",
+    // "mdvd", "mpl2", "tmp"); none in translation mode.
+    Q_INVOKABLE QStringList conversionTargets() const;
+    // C02-loss-preview: converts a copy and lists what it removes or
+    // synthesizes ({ok, problem, losses}); acceptConversion applies that
+    // plan as one "Subtitles conversion" step unless the Document or the
+    // options changed since.
+    Q_INVOKABLE QVariantMap previewConversion(const QString &target);
+    Q_INVOKABLE bool acceptConversion();
     // Y4: GLOBAL_OPEN_SUBS_RESAMPLE ("Change resolution"): {subsWidth,
     // subsHeight, videoWidth, videoHeight}, the video's being the subtitles'
     // without a video; empty for a Document that is not ASS.
@@ -334,6 +348,15 @@ private:
     int m_selectOptions = 0;
     bool m_saveWithVideoName = false;
     bool m_askForBadResolution = true;
+    QVariantMap m_conversionOptions;
+    struct ConversionPlan {
+        std::uint64_t document = 0;
+        std::uint64_t revision = 0;
+        QVariantMap options;
+        core::Document converted;
+    };
+    std::unique_ptr<ConversionPlan> m_conversionPlan;
+    std::set<std::uint64_t> m_formatChanged; // converted since opened or saved: Save asks for a file
     QString m_resolutionCheckedVideo; // the video whose size was compared
     void checkResolution();
     QStringList m_selectRecent;

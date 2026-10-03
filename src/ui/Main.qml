@@ -711,6 +711,23 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: scriptPropertiesDialog.openFor()
             }
+            Menu {
+                id: conversionMenu
+                objectName: "conversionMenu"
+                title: qsTr("Conversion")
+                property var targets: []
+                onAboutToShow: targets = root.app.conversionTargets()
+                Repeater {
+                    model: [["ass", qsTr("Convert to ASS")], ["srt", qsTr("Convert to SRT")], ["mdvd", qsTr("Convert to MDVD")],
+                            ["mpl2", qsTr("Convert to MPL2")], ["tmp", qsTr("Convert to TMP")]]
+                    MenuItem {
+                        objectName: "convertTo_" + modelData[0]
+                        text: modelData[1]
+                        enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
+                        onTriggered: conversionDialog.openFor(modelData[0], modelData[1])
+                    }
+                }
+            }
             MenuItem {
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
@@ -2608,6 +2625,90 @@ ApplicationWindow {
                   qsTr("- Niskala5570 (Malay translation).\n") +
                   qsTr("Thanks to other HikariSub users who reported bugs:\n") +
                   "SoheiMajin, BadRequest, Ognisty321, ZlyLos, Thomas Leigh, TomBit."
+        }
+    }
+    // Y5: conversion with the approved loss preview (C02-loss-preview): the
+    // legacy CONVERT_* options, then what the conversion removes or
+    // synthesizes; Convert applies exactly the previewed plan.
+    Dialog {
+        id: conversionDialog
+        objectName: "conversionDialog"
+        modal: true
+        anchors.centerIn: parent
+        property string target: ""
+        property var preview: ({})
+        function openFor(t, label) {
+            target = t
+            title = label
+            const o = root.app.conversionOptions()
+            convFps.text = o.fps
+            convFpsFromVideo.checked = o.fpsFromVideo
+            convStyle.text = o.style
+            convNewEnds.checked = o.newEndTimes
+            convPerLetter.value = o.timePerCharacter
+            convPrefix.text = o.prefix
+            convWidth.text = o.resolutionWidth
+            convHeight.text = o.resolutionHeight
+            refresh()
+            open()
+        }
+        function refresh() { preview = root.app.previewConversion(target) }
+        function set(key, value) { root.app.setConversionOptions({[key]: value}); refresh() }
+        ColumnLayout {
+            anchors.fill: parent
+            GridLayout {
+                columns: 2
+                Label { text: qsTr("FPS") }
+                RowLayout {
+                    TextField { id: convFps; objectName: "convFps"; Accessible.name: qsTr("FPS"); onEditingFinished: conversionDialog.set("fps", text) }
+                    CheckBox { id: convFpsFromVideo; text: qsTr("FPS from video"); onToggled: conversionDialog.set("fpsFromVideo", checked) }
+                }
+                Label { text: qsTr("Style") }
+                TextField { id: convStyle; Accessible.name: qsTr("Style"); onEditingFinished: conversionDialog.set("style", text) }
+                Label { text: qsTr("Time for one letter in milliseconds") }
+                RowLayout {
+                    SpinBox { id: convPerLetter; from: 30; to: 1000; editable: true; onValueModified: conversionDialog.set("timePerCharacter", value) }
+                    CheckBox { id: convNewEnds; objectName: "convNewEnds"; text: qsTr("New end times"); onToggled: conversionDialog.set("newEndTimes", checked) }
+                }
+                Label { text: qsTr("Tags to paste at the beginning of every ASS line") }
+                TextField { id: convPrefix; Accessible.name: qsTr("Tags to paste at the beginning of every ASS line"); onEditingFinished: conversionDialog.set("prefix", text) }
+                Label { text: qsTr("Resolution when converting to ASS") }
+                RowLayout {
+                    TextField { id: convWidth; Accessible.name: qsTr("Width"); onEditingFinished: conversionDialog.set("resolutionWidth", text) }
+                    Label { text: " x " }
+                    TextField { id: convHeight; Accessible.name: qsTr("Height"); onEditingFinished: conversionDialog.set("resolutionHeight", text) }
+                }
+            }
+            Label {
+                text: conversionDialog.preview.ok ? qsTr("The conversion will:") : (conversionDialog.preview.problem || "")
+                font.bold: true
+            }
+            ListView {
+                objectName: "conversionLosses"
+                Layout.fillWidth: true
+                Layout.preferredHeight: 160
+                Layout.preferredWidth: 480
+                clip: true
+                model: conversionDialog.preview.ok ? conversionDialog.preview.losses : []
+                Accessible.role: Accessible.List
+                Accessible.name: qsTr("What the conversion changes")
+                delegate: Label { required property string modelData; text: "• " + modelData; Accessible.name: modelData }
+            }
+            RowLayout {
+                Layout.alignment: Qt.AlignHCenter
+                Button {
+                    objectName: "conversionAccept"
+                    text: qsTr("Convert")
+                    enabled: conversionDialog.preview.ok === true
+                    onClicked: {
+                        if (!root.app.acceptConversion())
+                            conversionDialog.refresh() // stale: show the new preview
+                        else
+                            conversionDialog.close()
+                    }
+                }
+                Button { text: qsTr("Cancel"); onClicked: conversionDialog.close() }
+            }
         }
     }
     // Y4: legacy SubsResampleDialog ("Change resolution").
