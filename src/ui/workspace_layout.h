@@ -23,6 +23,9 @@ class WorkspaceLayoutController : public QObject {
     QML_UNCREATABLE("Provided by the application composition")
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
     Q_PROPERTY(bool hasBackup READ hasBackup NOTIFY changed)
+    // The built-in template the arrangement started from (Editing, Timing,
+    // Translation, Typesetting); Reset layout returns to it.
+    Q_PROPERTY(QString preset READ preset WRITE setPreset NOTIFY changed)
     // The application's focus window (QWindow::isActive is also true for the
     // parent of an active floating panel, so the shell compares windows).
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
@@ -52,12 +55,15 @@ public:
     Q_INVOKABLE bool resizePanel(QObject *dock, int width, int height);
 
     QString notice() const { return m_notice; }
+    QString preset() const { return m_preset; }
+    void setPreset(const QString &preset);
+    static const QStringList &presets();
     QObject *focusWindow() const;
     bool hasBackup() const;
 
     // The envelope around an engine payload, and its validation.
     static QByteArray envelope(const QByteArray &payload, const QString &preset = QStringLiteral("Editing"));
-    static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem);
+    static std::optional<QByteArray> payloadOf(const QByteArray &file, QString *problem, QString *preset = nullptr);
 
 signals:
     void changed();
@@ -71,6 +77,7 @@ private:
     QByteArray m_default;
     QByteArray m_lastSaved;
     QString m_notice;
+    QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;
 };
 

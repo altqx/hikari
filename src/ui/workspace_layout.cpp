@@ -78,7 +78,23 @@ QByteArray WorkspaceLayoutController::envelope(const QByteArray &payload, const 
     return QJsonDocument(o).toJson(QJsonDocument::Indented);
 }
 
-std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem)
+const QStringList &WorkspaceLayoutController::presets()
+{
+    static const QStringList names{QStringLiteral("Editing"), QStringLiteral("Timing"), QStringLiteral("Translation"),
+                                   QStringLiteral("Typesetting")};
+    return names;
+}
+
+void WorkspaceLayoutController::setPreset(const QString &preset)
+{
+    if (!presets().contains(preset) || preset == m_preset)
+        return;
+    m_preset = preset;
+    m_lastSaved.clear(); // the envelope changes even when the arrangement does not
+    emit changed();
+}
+
+std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray &file, QString *problem, QString *preset)
 {
     auto fail = [&](const QString &why) {
         if (problem)
@@ -116,6 +132,10 @@ std::optional<QByteArray> WorkspaceLayoutController::payloadOf(const QByteArray 
         if (!panelIds().contains(name))
             return fail(tr("it names an unknown panel (%1)").arg(name));
     }
+    if (preset) {
+        const QString named = o.value(QStringLiteral("preset")).toString();
+        *preset = presets().contains(named) ? named : QStringLiteral("Editing");
+    }
     return QJsonDocument(payload).toJson(QJsonDocument::Compact);
 }
 
@@ -141,8 +161,8 @@ bool WorkspaceLayoutController::restoreSaved()
     const auto bytes = readFile(m_file);
     if (!bytes)
         return false;
-    QString problem;
-    const auto payload = payloadOf(*bytes, &problem);
+    QString problem, preset;
+    const auto payload = payloadOf(*bytes, &problem, &preset);
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = tr("the docking engine could not restore it");
@@ -158,6 +178,10 @@ bool WorkspaceLayoutController::restoreSaved()
         return false;
     }
     m_lastSaved = KDDockWidgets::LayoutSaver().serializeLayout();
+    if (preset != m_preset) {
+        m_preset = preset;
+        emit changed();
+    }
     return true;
 }
 
@@ -171,7 +195,7 @@ bool WorkspaceLayoutController::save()
     // The previous valid file becomes the backup.
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
-    if (!writeAtomically(m_file, envelope(current)))
+    if (!writeAtomically(m_file, envelope(current, m_preset)))
         return false;
     m_lastSaved = current;
     emit changed();

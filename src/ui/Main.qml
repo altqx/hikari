@@ -142,6 +142,18 @@ ApplicationWindow {
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock]
 
+    // A preset is the Editing arrangement with the panels it leaves closed
+    // (Timing: Video; Translation and Typesetting: Audio).
+    function applyPreset(name) {
+        root.workspaceLayout.resetLayout()
+        if (name === "Timing")
+            videoDock.close()
+        else if (name === "Translation" || name === "Typesetting")
+            audioDock.close()
+        root.workspaceLayout.preset = name
+        root.workspaceLayout.save()
+    }
+
     // The dock of the panel with the focus (the Grid's otherwise).
     function focusedDock() {
         const w = root.workspaceLayout.focusWindow
@@ -565,10 +577,35 @@ ApplicationWindow {
                 text: qsTr("&Move panel…")
                 onTriggered: placementWindow.openFor(root.focusedDock())
             }
+            // Built-in starting arrangements (docs/qt/ux/workspaces.md); the
+            // tools they open come with the tool cards.
+            Menu {
+                id: presetMenu
+                objectName: "layoutPresetMenu"
+                title: qsTr("Layout &preset")
+                Instantiator {
+                    model: [
+                        { name: "Editing", label: qsTr("Editing") },
+                        { name: "Timing", label: qsTr("Timing") },
+                        { name: "Translation", label: qsTr("Translation") },
+                        { name: "Typesetting", label: qsTr("Typesetting") }
+                    ]
+                    delegate: MenuItem {
+                        required property var modelData
+                        objectName: "preset" + modelData.name
+                        text: modelData.label
+                        checkable: true
+                        checked: root.workspaceLayout.preset === modelData.name
+                        onTriggered: root.applyPreset(modelData.name)
+                    }
+                    onObjectAdded: (index, object) => presetMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => presetMenu.removeItem(object)
+                }
+            }
             MenuItem {
                 objectName: "resetLayout"
                 text: qsTr("&Reset layout")
-                onTriggered: root.workspaceLayout.resetLayout()
+                onTriggered: root.applyPreset(root.workspaceLayout.preset)
             }
             MenuItem {
                 objectName: "restoreLayoutBackup"

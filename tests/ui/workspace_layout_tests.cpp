@@ -127,6 +127,29 @@ private slots:
         stop();
     }
 
+    void presetsAreStartingArrangementsAndPersist()
+    {
+        start();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Timing"));
+        QTRY_VERIFY(!dock("videoDock")->property("isOpen").toBool());
+        for (const char *name : {"audioDock", "editorDock", "gridDock"})
+            QVERIFY2(dock(name)->property("isOpen").toBool(), name);
+        // Reset layout returns to the chosen preset, not to Editing.
+        QVERIFY(QMetaObject::invokeMethod(dock("videoDock"), "open"));
+        QVERIFY(QMetaObject::invokeMethod(root, "applyPreset", Q_ARG(QVariant, application->workspaceLayout().preset())));
+        QTRY_VERIFY(!dock("videoDock")->property("isOpen").toBool());
+        stop();
+        start();
+        QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Timing"));
+        QVERIFY(!dock("videoDock")->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root = engine->rootObjects().first(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Translation"))));
+        QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
+        QVERIFY(dock("videoDock")->property("isOpen").toBool());
+        stop();
+    }
+
     void anUnusableLayoutIsKeptAndNamed_data()
     {
         QTest::addColumn<QByteArray>("file");
