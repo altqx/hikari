@@ -982,6 +982,22 @@ ApplicationWindow {
                         objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                         onTriggered: root.app.makeContinuous(false)
                     }
+                    // Legacy "Split lines" (GRID_SPLIT_BY_*).
+                    Menu {
+                        title: qsTr("Split lines")
+                        MenuItem {
+                            objectName: "splitAtVideoTime"
+                            text: qsTr("Split line at video time")
+                            enabled: root.video.hasVideo
+                            onTriggered: root.app.splitLines("videoTime")
+                        }
+                        MenuItem {
+                            objectName: "splitIntoFrames"
+                            text: qsTr("Split lines into frames")
+                            enabled: root.video.hasVideo
+                            onTriggered: root.app.splitLines("frames")
+                        }
+                    }
                     MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
                     MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
                     // Legacy Filtering submenu (GRID_FILTER_*).

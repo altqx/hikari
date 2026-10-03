@@ -57,6 +57,7 @@ void VideoSession::open(const std::string &path)
         }
         m_timeline = core::FrameTimeline::indexed(m_starts);
         m_keyframes = opened->keyframes;
+        m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_state = State::Ready;
         notify();
         if (const auto seek = std::exchange(m_pendingSeek, std::nullopt))
@@ -331,6 +332,17 @@ bool VideoSession::seekBy(std::int64_t ms)
     }
     seekTo(core::DocumentTime(target * 1000));
     return true;
+}
+
+LegacyTimebase VideoSession::legacyTimebase() const
+{
+    if (m_state != State::Ready)
+        return {};
+    std::vector<int> timecodes;
+    timecodes.reserve(m_starts.size());
+    for (const auto start : m_starts)
+        timecodes.push_back(static_cast<int>(start.microseconds() / 1000));
+    return LegacyTimebase(std::move(timecodes), m_fps);
 }
 
 bool VideoSession::isKeyframe(int index) const

@@ -18,6 +18,7 @@
 
 #include "hikari/application/general_player.h"
 #include "hikari/application/indexed_source.h"
+#include "hikari/application/legacy_timebase.h"
 #include "hikari/application/presenter.h"
 #include "hikari/application/subtitle_render.h"
 #include "hikari/core/frame_timeline.h"
@@ -73,6 +74,8 @@ public:
     bool previousKeyframe();               // wraps to the last before the first
     bool isKeyframe(int index) const;
     const std::vector<int> &keyframes() const { return m_keyframes; }
+    // The legacy Timebase over this video (empty without one).
+    LegacyTimebase legacyTimebase() const;
 
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }
@@ -116,6 +119,7 @@ private:
     std::optional<std::int64_t> m_lastGeneralUs;
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
+    double m_fps = 0;
 };
 
 } // namespace hikari::application

@@ -4,6 +4,7 @@
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
 #include "hikari/application/grid_groups.h"
+#include "hikari/application/grid_split.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
@@ -1192,6 +1193,24 @@ int Application::removeAutosavesOlderThan(const QDate &date)
         }
     }
     return removed;
+}
+
+bool Application::splitLines(const QString &kind)
+{
+    const auto &video = m_video->session();
+    const auto timebase = video.legacyTimebase();
+    const auto shown = shownLines();
+    if (kind == QLatin1String("videoTime")) {
+        const auto frame = video.shownFrame();
+        const auto start = frame ? video.frameStart(*frame) : std::nullopt;
+        if (!start)
+            return false; // legacy needs the video
+        const std::int64_t tell = start->microseconds() / 1000;
+        return runFilter([&](application::EditSession &s) { return application::splitAtVideoTime(s, timebase, tell, shown); });
+    }
+    if (kind == QLatin1String("frames"))
+        return runFilter([&](application::EditSession &s) { return application::splitIntoFrames(s, timebase, shown); });
+    return false;
 }
 
 bool Application::makeGroups()

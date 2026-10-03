@@ -166,6 +166,9 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     // Writes the editing target's recovery now (the autosave timer's work; tests).
     bool autosaveNow();
+    // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
+    // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
+    Q_INVOKABLE bool splitLines(const QString &kind);
     // G9: Line groups (legacy trees). The id is the description Line's.
     Q_INVOKABLE bool makeGroups();
     Q_INVOKABLE bool toggleGroup(qulonglong description);

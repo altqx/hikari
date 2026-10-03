@@ -794,6 +794,24 @@ private slots:
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // the first stays
     }
 
+    void splitAtVideoTimeUsesTheShownFramesEndTime()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 s and 3.00-4.00 s
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        // The first Line's frame: 24 at 1001 ms; the next starts at 1042 ms.
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("splitAtVideoTime")),
+                                          "triggered"));
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(3));
+        // EndTimeFor(24) = 1001 + (1042 - 1001) / 2 + 5 = 1026, to centiseconds 1020.
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 1'020'000);
+        QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 2'000'000);
+    }
+
     void editorShortcutsFollowTheLegacyDefaults()
     {
         const QString path = dir.filePath(QStringLiteral("keys.ass"));
