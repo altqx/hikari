@@ -1079,6 +1079,7 @@ private slots:
         QVERIFY(written.open(QIODevice::ReadOnly));
         const QByteArray bytes = written.readAll();
         QVERIFY2(bytes.contains(",translated") && !bytes.contains("TLMode:") && !bytes.contains(",original"), bytes.constData());
+        written.close(); // Windows cannot replace a file that is open
         // Save all writes the modified Document to its file.
         QVERIFY(application->selectLines({{QStringLiteral("find"), QString()}, {QStringLiteral("with"), false},
                                           {QStringLiteral("field"), 0}, {QStringLiteral("mode"), 0},
@@ -1088,7 +1089,6 @@ private slots:
         QVERIFY(session->isDirty());
         QVERIFY(!application->saveAll());
         QTRY_VERIFY(!session->isDirty());
-        written.close();
         QVERIFY(written.open(QIODevice::ReadOnly));
         QVERIFY(written.readAll().contains("Comment: 0,0:00:01.00"));
         // A read-only file is refused and asked again.
