@@ -9,6 +9,9 @@
 
 #include <QTextBoundaryFinder>
 
+#include <algorithm>
+#include <cstdlib>
+
 namespace hikari::ui {
 
 namespace {
@@ -705,6 +708,68 @@ void LineEditorController::committed()
     if (m_onCommitted)
         m_onCommitted();
     refresh();
+}
+
+bool LineEditorController::pasteAllToTranslation()
+{
+    const auto r = record();
+    if (!translationMode() || !editable() || !r)
+        return false;
+    return setRaw(1, r->text);
+}
+
+bool LineEditorController::pasteSelectionToTranslation(int originalStart, int originalEnd, int translationCaret)
+{
+    if (!translationMode() || !editable() || originalStart == originalEnd)
+        return false;
+    const QString original = m_shown[0];
+    const int from = std::clamp(std::min(originalStart, originalEnd), 0, static_cast<int>(original.size()));
+    const int to = std::clamp(std::max(originalStart, originalEnd), 0, static_cast<int>(original.size()));
+    const QString piece = original.mid(from, to - from);
+    const int caret = std::clamp(translationCaret, 0, static_cast<int>(m_shown[1].size()));
+    QString translated = m_shown[1];
+    translated.insert(caret, piece);
+    edit(1, translated, caret + static_cast<int>(piece.size()));
+    if (m_shown[1] != translated)
+        return false; // the mapped edit was refused
+    m_selectionStart = m_selectionEnd = caret + static_cast<int>(piece.size());
+    m_selectionRole = 1;
+    emit selectionRequested();
+    return true;
+}
+
+bool LineEditorController::commentOutOriginal()
+{
+    const auto r = record();
+    if (!translationMode() || !editable() || !r)
+        return false;
+    return setRaw(0, u8"{" + r->text + u8"}");
+}
+
+bool LineEditorController::insertTimeDifference(bool fromEnd, int selectionStart, int selectionEnd)
+{
+    const auto r = record();
+    const auto video = m_videoTime ? m_videoTime() : std::nullopt;
+    if (!editable() || !r || !video)
+        return false;
+    const std::int64_t start = r->start.value.microseconds() / 1000, end = r->end.value.microseconds() / 1000;
+    if (*video < start || *video > end)
+        return false; // legacy rings the bell
+    const auto zeroIt = [](std::int64_t ms) { return ms / 10 * 10; };
+    const std::int64_t diff = fromEnd ? std::abs(*video - zeroIt(end)) : *video - zeroIt(start);
+    const int role = translationMode() ? 1 : 0;
+    const QString number = QString::number(diff);
+    const int from = std::clamp(std::min(selectionStart, selectionEnd), 0, static_cast<int>(m_shown[role].size()));
+    const int to = std::clamp(std::max(selectionStart, selectionEnd), 0, static_cast<int>(m_shown[role].size()));
+    QString text = m_shown[role];
+    text.replace(from, to - from, number);
+    edit(role, text, from + static_cast<int>(number.size()));
+    if (m_shown[role] != text)
+        return false;
+    m_selectionStart = m_selectionEnd = from + static_cast<int>(number.size());
+    m_selectionRole = role;
+    emit selectionRequested();
+    return true;
 }
 
 } // namespace hikari::ui

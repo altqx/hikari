@@ -50,6 +50,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
+    // The editor's Start/End difference measures from the frame the Video panel shows.
+    m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
+        const auto &session = m_video->session();
+        const auto frame = session.shownFrame();
+        const auto start = frame ? session.frameStart(*frame) : std::nullopt;
+        if (!start)
+            return std::nullopt;
+        return start->microseconds() / 1000;
+    });
     refreshViews();
 }
 

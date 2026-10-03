@@ -23,7 +23,10 @@ void VideoSession::setPresenter(PresenterPort *presenter)
 
 void VideoSession::open(const std::string &path)
 {
+    // A Line seek made before the video opened still applies to it.
+    const auto pendingSeek = m_pendingSeek;
     close();
+    m_pendingSeek = pendingSeek;
     m_path = path;
     m_state = State::Opening;
     const std::weak_ptr<bool> alive = m_alive;

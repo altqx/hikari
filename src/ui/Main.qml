@@ -111,6 +111,7 @@ ApplicationWindow {
         readOnly: !root.editor.editable
         wrapMode: TextEdit.Wrap
         selectByMouse: true
+        persistentSelection: true // the Original's selection survives for "Paste the selected"
         Layout.fillWidth: true
         Layout.fillHeight: true
 
@@ -159,6 +160,13 @@ ApplicationWindow {
                 event.accepted = true
             } else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Down) {
                 root.editor.toggleUnconfirmedAndAdvance()
+                event.accepted = true
+            } else if (ctrl && (event.key === Qt.Key_Comma || event.key === Qt.Key_Period)) {
+                // Legacy defaults: Ctrl+, Start difference, Ctrl+. End difference.
+                // Legacy writes into the edited field (the Translated one in
+                // translation mode) whichever field has focus.
+                const target = root.editor.translationMode ? translationText : lineText
+                root.editor.insertTimeDifference(event.key === Qt.Key_Period, target.selectionStart, target.selectionEnd)
                 event.accepted = true
             } else if (ctrl && event.key === Qt.Key_D) {
                 root.editor.findNextUnconfirmed()
@@ -410,6 +418,34 @@ ApplicationWindow {
                             role: 1
                             visible: root.editor.translationMode
                             Accessible.name: qsTr("Translated text")
+                        }
+                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
+                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
+                        RowLayout {
+                            visible: root.editor.translationMode
+                            Button {
+                                objectName: "pasteAllToTranslation"
+                                text: qsTr("Paste all")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                onClicked: root.editor.pasteAllToTranslation()
+                            }
+                            Button {
+                                objectName: "pasteSelectionToTranslation"
+                                text: qsTr("Paste the selected")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                onClicked: root.editor.pasteSelectionToTranslation(lineText.selectionStart,
+                                                                                    lineText.selectionEnd,
+                                                                                    translationText.cursorPosition)
+                            }
+                            Button {
+                                objectName: "commentOutOriginal"
+                                text: qsTr("Comment out original")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                onClicked: root.editor.commentOutOriginal()
+                            }
                         }
 
                         Label {

@@ -96,6 +96,20 @@ public:
     // EDITBOX_SPLIT_LINE (Shift+Enter): a hard break replaces the selection,
     // taking an adjacent space on each side.
     Q_INVOKABLE bool splitLine(int role, int selectionStart, int selectionEnd);
+    // Translation mode (legacy EditBox OnCopyAll, OnCopySelection, OnHideOriginal):
+    // the Original's raw text replaces the Translated text; the Original's
+    // selection is inserted at the Translated caret; the Original is wrapped
+    // in braces (E63-comment-original: "Comment out original").
+    Q_INVOKABLE bool pasteAllToTranslation();
+    Q_INVOKABLE bool pasteSelectionToTranslation(int originalStart, int originalEnd, int translationCaret);
+    Q_INVOKABLE bool commentOutOriginal();
+    // Legacy OnPasteDifferents (Ctrl+, and Ctrl+.): the video time minus the
+    // Line's Start, or its distance from the End, in milliseconds (both
+    // truncated to 10 ms), replaces the selection of the edited field. Refused
+    // without video or when the video time is outside the Line.
+    Q_INVOKABLE bool insertTimeDifference(bool fromEnd, int selectionStart, int selectionEnd);
+    // The video time shown (ms), or nullopt without video.
+    void setVideoTimeSource(std::function<std::optional<std::int64_t>()> source) { m_videoTime = std::move(source); }
     // Translation mode: EDITBOX_SET_DOUBTFUL (Alt+Down) toggles Unconfirmed and
     // goes to the next Line; Ctrl+D / Ctrl+R find the next unconfirmed or
     // untranslated visible Line, wrapping once.
@@ -152,6 +166,7 @@ private:
     int m_selectionStart = 0;
     int m_selectionEnd = 0;
     int m_selectionRole = 0;
+    std::function<std::optional<std::int64_t>()> m_videoTime;
 };
 
 } // namespace hikari::ui

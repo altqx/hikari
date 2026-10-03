@@ -150,6 +150,15 @@ TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
     EXPECT_EQ(video.lastPresent()->outcome, PresentOutcome::Accepted);
 }
 
+TEST_F(VideoTest, ASeekMadeBeforeOpeningAppliesToTheVideo)
+{
+    video.seekTo(core::DocumentTime(100'000)); // no video yet: the active Line's start
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 3);
+}
+
 TEST_F(VideoTest, ANewerRequestSupersedesAnOlderOne)
 {
     video.setPresenter(&presenter);

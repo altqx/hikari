@@ -11,6 +11,7 @@
 #include <QtTest>
 
 #include <cstring>
+#include <optional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -290,6 +291,70 @@ private slots:
         QVERIFY2(bytes.contains("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
                                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"),
                  bytes.constData());
+    }
+
+    // #101: the legacy translation-mode buttons.
+    void translationButtonsFollowTheLegacyEditBox()
+    {
+        const QString path = dir.filePath(QStringLiteral("tl-buttons.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate {\\i1}keeper\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        }
+        QVERIFY(application->openFile(path));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate keeper"));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto raw = [&](bool translation) {
+            const auto r = session->draftRecord();
+            const std::u8string t = r ? (translation ? r->translation : r->text) : std::u8string();
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        // Paste the selected: the Original's selection goes in at the Translated caret.
+        QMetaObject::invokeMethod(original, "select", Q_ARG(int, 5), Q_ARG(int, 11));
+        translated->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteSelectionToTranslation"), "clicked"));
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("keeper"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 6);
+        // Paste all: the Original's raw text, tags included.
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteAllToTranslation"), "clicked"));
+        QTRY_COMPARE(raw(true), QStringLiteral("Gate {\\i1}keeper"));
+        // Comment out original wraps the raw Original in braces.
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("commentOutOriginal"), "clicked"));
+        QTRY_COMPARE(raw(false), QStringLiteral("{Gate {\\i1}keeper}"));
+    }
+
+    // #101: Ctrl+, and Ctrl+. write the video time's distance from Start and End.
+    void timeDifferenceMeasuresFromTheVideoFrame()
+    {
+        QVERIFY(application->openFile(episode)); // the first Line runs 1.00 to 2.00 s
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Comma, Qt::ControlModifier); // no video: refused
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        // The active Line's start frame: 24 at 1.001 s (24000/1001 fps).
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        press(Qt::Key_Comma, Qt::ControlModifier);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("1first"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 1);
+        QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 1));
+        press(Qt::Key_Period, Qt::ControlModifier); // |1001 - 2000| replaces the selection
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("999first"));
     }
 
     void editorShortcutsFollowTheLegacyDefaults()
