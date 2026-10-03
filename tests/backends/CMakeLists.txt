@@ -62,11 +62,11 @@ hikari_add_gtest(hikari_backends_lua_helper_tests SOURCES lua_helper_tests.cpp
 target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${CMAKE_CURRENT_SOURCE_DIR}/lua-fixtures"
-    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_EDGEBLUR_SCRIPT="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload/macro-1-edgeblur.lua"
-    HIKARI_AUTOLOAD_DIR="${PROJECT_SOURCE_DIR}/Automation/automation/Autoload"
+    HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
-add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper)
+add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
 # N5: general playback through Qt Multimedia, identified by delivered frames,
 # and chapters through the media helper.

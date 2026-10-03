@@ -3,6 +3,7 @@
 // the QML rendering has its own test.
 #include "hikari/backends/lua_protocol.h"
 #include "hikari/backends/lua_script_host.h"
+#include "hikari/application/automation_services.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
 
@@ -837,7 +838,7 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
 }
 
 // Every bundled Autoload script, loaded unchanged. The results are written to
-// an artifact (A33-compat corpus); first-party scripts must load and register.
+// an artifact (A33-compat corpus); each must load and register its macros.
 TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
 {
     QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));
@@ -845,8 +846,30 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     ASSERT_FALSE(files.isEmpty());
     QJsonArray corpus;
     std::map<QString, std::pair<LuaScriptHost::State, QStringList>> results;
+    // ?user and ?data resolve to an Automation directory laid out as the
+    // package ships it (log and autosave beside the script tree), as legacy
+    // decode_path does; scripts such as DependencyControl write there.
+    QTemporaryDir app;
+    ASSERT_TRUE(app.isValid());
+    const QString automation = app.filePath(QStringLiteral("Automation"));
+    for (const char *sub : {"log", "autosave", "temp"})
+        QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = automation.toStdString();
+    paths.dictionaryDir = app.filePath(QStringLiteral("Dictionary")).toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    const auto services = [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+        hikari::application::HostServiceReply out = hikari::application::HostServiceReply::unavailable();
+        if (r.service == hikari::application::HostService::DecodePath) {
+            out = {};
+            out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+        }
+        reply(out);
+    };
     for (const QString &file : files) {
-        auto host = load(dir.filePath(file));
+        auto host = load(dir.filePath(file), services);
         QStringList macros;
         for (const auto &m : host->info().macros)
             macros << QString::fromStdString(m.name);
@@ -866,9 +889,13 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     QFile out(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-corpus.json"));
     ASSERT_TRUE(out.open(QIODevice::WriteOnly));
     out.write(QJsonDocument(corpus).toJson());
+    // Every bundled script, including the third-party Aegisub-Motion and
+    // DependencyControl Toolbox (with DependencyControl's native modules).
     for (const char *firstParty : {"macro-1-edgeblur.lua", "macro-2-mkfullwitdh.lua", "strip-tags.lua",
                                    "cleantags-autoload.lua", "karaoke-auto-leadin.lua", "kara-templater.lua",
-                                   "select-overlaps.moon"}) {
+                                   "select-overlaps.moon", "BezierToText.lua", "gradient-factory.lua",
+                                   "skew gradient.lua", "a-mo.Aegisub-Motion.moon",
+                                   "l0.DependencyControl.Toolbox.moon"}) {
         const auto it = results.find(QString::fromLatin1(firstParty));
         ASSERT_NE(it, results.end()) << firstParty;
         EXPECT_EQ(it->second.first, LuaScriptHost::State::Ready) << firstParty;

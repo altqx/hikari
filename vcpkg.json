@@ -32,6 +32,7 @@
       ]
     },
     "icu",
+    "curl",
     {
       "name": "pkgconf",
       "host": true,
