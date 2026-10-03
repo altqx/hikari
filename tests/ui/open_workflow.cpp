@@ -4,6 +4,7 @@
 // another program offers a reload, and Yes reloads it.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QDateTime>
 #include <QDeadlineTimer>
@@ -110,6 +111,7 @@ int main(int argc, char **argv)
     hikari::app::Application application;
     expect(application.openFile(first), "open");
     QQmlApplicationEngine engine;
+    hikari::ui::attachDocking(engine);
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())

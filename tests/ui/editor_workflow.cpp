@@ -3,6 +3,7 @@
 // File menu, then reopen it. Every unrelated byte of the file must survive.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QDir>
 #include <QFile>
@@ -112,6 +113,7 @@ int main(int argc, char **argv)
         hikari::app::Application application;
         expect(application.openFile(path), "open the copied file");
         QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
         engine.setInitialProperties(application.qmlProperties());
         engine.loadFromModule("Hikari.Ui", "Main");
         if (engine.rootObjects().isEmpty())

@@ -5,6 +5,7 @@
 // through Save As.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QFile>
 #include <QQmlApplicationEngine>
@@ -207,6 +208,7 @@ private slots:
         QVERIFY(a.openFile(writeFile(dir, "window.ass", "x")));
         edit(a, u8"unsaved");
         QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
         engine.setInitialProperties(a.qmlProperties());
         engine.loadFromModule("Hikari.Ui", "Main");
         auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());

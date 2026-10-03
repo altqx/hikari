@@ -62,3 +62,6 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "luajit=${HIKARI_LUAJIT_VERSION} ${HIKARI_LUAJIT_LINK_LIBRARIES}\n"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"
     "compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\n")
+
+# D1: the docking engine (ports/kddockwidgets: QtQuick frontend, built against the provisioned Qt).
+find_package(KDDockWidgets-qt6 CONFIG REQUIRED)

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import Hikari.Ui
+import com.kdab.dockwidgets 2.0 as KDDW
 
 // Classic shell (V1-S): menus across the top, video left, audio above the
 // Line editor on the right, the Grid across the bottom and, when a protected
@@ -28,6 +29,7 @@ ApplicationWindow {
     required property LogController log
     required property TagButtonsController tagButtons
     required property ColourPickerController colourPicker
+    required property WorkspaceLayoutController workspaceLayout
     required property GridFilterController gridFilter
     required property var automationHotkeys
 
@@ -92,6 +94,7 @@ ApplicationWindow {
             checkExternalChange()
     }
     onClosing: close => {
+        root.workspaceLayout.save()
         if (root.app.quitApproved)
             return
         const rows = root.app.reviewClose("quit")
@@ -113,8 +116,41 @@ ApplicationWindow {
         }
     }
 
+    // D1: the Classic arrangement (also Reset layout): Video beside Audio over
+    // the Line editor, the Grid below, the Reference under it when there is one.
+    function defaultLayout() {
+        dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
+        dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 440))
+        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 160))
+        dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
+        if (!root.shell.hasReference)
+            referenceDock.close()
+    }
+    Connections {
+        target: root.shell
+        function onHasReferenceChanged() {
+            if (root.shell.hasReference)
+                referenceDock.open()
+            else
+                referenceDock.close()
+        }
+    }
+
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel]
+    // D1: their docks, in the same order.
+    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock]
+
+    // View > Panels > Show: open the panel, bring its window up and focus it.
+    function showPanel(dock) {
+        dock.open()
+        dock.raise()
+        const panel = panels[dockList.indexOf(dock)]
+        if (panel.Window.window)
+            panel.Window.window.requestActivate()
+        panel.forceActiveFocus(Qt.OtherFocusReason)
+    }
 
     function panelOf(item) {
         for (let p = item; p; p = p.parent)
@@ -126,10 +162,17 @@ ApplicationWindow {
 
     function cyclePanels(step) {
         const shown = panels.filter(p => p.visible)
-        const current = shown.indexOf(panelOf(root.activeFocusItem))
+        // The panel with focus in the active window: the main one or a
+        // floating panel group (D1).
+        let current = shown.findIndex(p => p.activeFocus && p.Window.active)
+        if (current < 0)
+            current = shown.indexOf(panelOf(root.activeFocusItem))
         const next = current < 0 ? (step > 0 ? 0 : shown.length - 1)
                                  : (current + step + shown.length) % shown.length
-        shown[next].forceActiveFocus(Qt.TabFocusReason)
+        const target = shown[next]
+        if (target.Window.window && !target.Window.active)
+            target.Window.window.requestActivate()
+        target.forceActiveFocus(Qt.TabFocusReason)
     }
 
     // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
@@ -152,14 +195,15 @@ ApplicationWindow {
         enabled: root.shell.hasEditingTarget
         onActivated: root.app.deleteLines()
     }
+    // Application-wide, so F6 also leaves a floating panel group (D1).
     Shortcut {
         sequences: ["F6"]
-        context: Qt.WindowShortcut
+        context: Qt.ApplicationShortcut
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
-        context: Qt.WindowShortcut
+        context: Qt.ApplicationShortcut
         onActivated: root.cyclePanels(-1)
     }
 
@@ -410,7 +454,62 @@ ApplicationWindow {
             Action { text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.previousKeyframe() }
             Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
         }
-        Menu { title: qsTr("&View") }
+        Menu {
+            id: viewMenu
+            objectName: "viewMenu"
+            title: qsTr("&View")
+            // D1: each panel can be shown (and focused), hidden, floated or
+            // docked; Reset layout returns to the Editing arrangement.
+            Menu {
+                id: panelsMenu
+                objectName: "panelsMenu"
+                title: qsTr("&Panels")
+                Instantiator {
+                    model: root.dockList
+                    delegate: Menu {
+                        required property var modelData
+                        objectName: "panelMenu" + modelData.uniqueName
+                        title: modelData.title
+                        MenuItem {
+                            objectName: "panelShow" + modelData.uniqueName
+                            text: qsTr("Show")
+                            onTriggered: root.showPanel(modelData)
+                        }
+                        MenuItem {
+                            objectName: "panelHide" + modelData.uniqueName
+                            text: qsTr("Hide")
+                            enabled: modelData.isOpen
+                            onTriggered: modelData.close()
+                        }
+                        MenuItem {
+                            objectName: "panelFloat" + modelData.uniqueName
+                            text: qsTr("Float")
+                            enabled: modelData.isOpen && !modelData.isFloating
+                            onTriggered: modelData.isFloating = true
+                        }
+                        MenuItem {
+                            objectName: "panelDock" + modelData.uniqueName
+                            text: qsTr("Dock")
+                            enabled: modelData.isOpen && modelData.isFloating
+                            onTriggered: modelData.isFloating = false
+                        }
+                    }
+                    onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
+                    onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
+                }
+            }
+            MenuItem {
+                objectName: "resetLayout"
+                text: qsTr("&Reset layout")
+                onTriggered: root.workspaceLayout.resetLayout()
+            }
+            MenuItem {
+                objectName: "restoreLayoutBackup"
+                text: qsTr("Restore the previous layout")
+                enabled: root.workspaceLayout.hasBackup
+                onTriggered: root.workspaceLayout.restoreBackup()
+            }
+        }
         Menu { title: qsTr("&Help") }
     }
 
@@ -541,20 +640,25 @@ ApplicationWindow {
         }
     }
 
-    SplitView {
+    // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
+    // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
+    // controller and any draft stay.
+    KDDW.DockingArea {
+        id: dockingArea
+        objectName: "dockingArea"
         anchors.fill: parent
-        orientation: Qt.Vertical
+        uniqueName: "Classic"
 
-        SplitView {
-            orientation: Qt.Horizontal
-            SplitView.fillHeight: true
-            SplitView.preferredHeight: 440
-
+        KDDW.DockWidget {
+            id: videoDock
+            objectName: "videoDock"
+            uniqueName: "Video"
+            title: qsTr("Video")
             Panel {
                 id: videoPanel
+                anchors.fill: parent
                 objectName: "videoPanel"
                 title: qsTr("Video")
-                SplitView.preferredWidth: 640
                 // Frame stepping while the panel has focus (legacy video arrows).
                 Keys.onLeftPressed: root.video.stepFrames(-1)
                 Keys.onRightPressed: root.video.stepFrames(1)
@@ -674,545 +778,604 @@ ApplicationWindow {
                 }
                 }
             }
+        }
 
-            SplitView {
-                orientation: Qt.Vertical
-                SplitView.fillWidth: true
-
-                Panel {
-                    id: audioPanel
-                    objectName: "audioPanel"
-                    title: qsTr("Audio")
-                    SplitView.preferredHeight: 160
-                    Label {
-                        anchors.centerIn: parent
-                        text: qsTr("No audio open")
-                    }
+        KDDW.DockWidget {
+            id: audioDock
+            objectName: "audioDock"
+            uniqueName: "Audio"
+            title: qsTr("Audio")
+            Panel {
+                id: audioPanel
+                anchors.fill: parent
+                objectName: "audioPanel"
+                title: qsTr("Audio")
+                Label {
+                    anchors.centerIn: parent
+                    text: qsTr("No audio open")
                 }
+            }
+        }
 
-                Panel {
-                    id: editorPanel
-                    objectName: "editorPanel"
-                    title: shell.hasEditingTarget ? qsTr("Line editor: %1").arg(shell.editingTitle)
-                                                  : qsTr("Line editor")
-                    SplitView.fillHeight: true
-                    ColumnLayout {
-                        anchors.fill: parent
+        KDDW.DockWidget {
+            id: editorDock
+            objectName: "editorDock"
+            uniqueName: "Editor"
+            title: qsTr("Line editor")
+            Panel {
+                id: editorPanel
+                anchors.fill: parent
+                objectName: "editorPanel"
+                title: shell.hasEditingTarget ? qsTr("Line editor: %1").arg(shell.editingTitle)
+                                              : qsTr("Line editor")
+                ColumnLayout {
+                    anchors.fill: parent
 
-                        // Local inspector: timing and margins of the active Line.
-                        RowLayout {
-                            Layout.fillWidth: true
-                            component Field: TextField {
-                                property string value
-                                text: value
-                                enabled: root.editor.editable
-                                selectByMouse: true
-                                Layout.preferredWidth: 90
-                                onValueChanged: text = value
-                            }
-                            Field {
-                                objectName: "startField"
-                                value: root.editor.startText
-                                Accessible.name: qsTr("Start")
-                                onEditingFinished: root.editor.setStartText(text)
-                            }
-                            Field {
-                                objectName: "endField"
-                                value: root.editor.endText
-                                Accessible.name: qsTr("End")
-                                onEditingFinished: root.editor.setEndText(text)
-                            }
-                            Field {
-                                objectName: "marginLeftField"
-                                value: root.editor.marginLeftText
-                                Layout.preferredWidth: 50
-                                Accessible.name: qsTr("Left margin")
-                                onEditingFinished: root.editor.setMarginText(0, text)
-                            }
-                            Field {
-                                objectName: "marginRightField"
-                                value: root.editor.marginRightText
-                                Layout.preferredWidth: 50
-                                Accessible.name: qsTr("Right margin")
-                                onEditingFinished: root.editor.setMarginText(1, text)
-                            }
-                            Field {
-                                objectName: "marginVerticalField"
-                                value: root.editor.marginVerticalText
-                                Layout.preferredWidth: 50
-                                Accessible.name: qsTr("Vertical margin")
-                                onEditingFinished: root.editor.setMarginText(2, text)
-                            }
-                            // Ordinary ASS controls; they keep focus (and the
-                            // selection) in the text field.
-                            Repeater {
-                                model: [
-                                    { tag: "b", label: qsTr("B"), name: qsTr("Bold") },
-                                    { tag: "i", label: qsTr("I"), name: qsTr("Italic") },
-                                    { tag: "u", label: qsTr("U"), name: qsTr("Underline") },
-                                    { tag: "s", label: qsTr("S"), name: qsTr("Strikeout") }
-                                ]
-                                ToolButton {
-                                    required property var modelData
-                                    objectName: "tag_" + modelData.tag
-                                    text: modelData.label
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    Accessible.name: modelData.name
-                                    onClicked: {
-                                        const field = translationText.activeFocus ? translationText : lineText
-                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
-                                    }
-                                }
-                            }
-                            // E1: Font selection and the four colours
-                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
+                    // Local inspector: timing and margins of the active Line.
+                    RowLayout {
+                        Layout.fillWidth: true
+                        component Field: TextField {
+                            property string value
+                            text: value
+                            enabled: root.editor.editable
+                            selectByMouse: true
+                            Layout.preferredWidth: 90
+                            onValueChanged: text = value
+                        }
+                        Field {
+                            objectName: "startField"
+                            value: root.editor.startText
+                            Accessible.name: qsTr("Start")
+                            onEditingFinished: root.editor.setStartText(text)
+                        }
+                        Field {
+                            objectName: "endField"
+                            value: root.editor.endText
+                            Accessible.name: qsTr("End")
+                            onEditingFinished: root.editor.setEndText(text)
+                        }
+                        Field {
+                            objectName: "marginLeftField"
+                            value: root.editor.marginLeftText
+                            Layout.preferredWidth: 50
+                            Accessible.name: qsTr("Left margin")
+                            onEditingFinished: root.editor.setMarginText(0, text)
+                        }
+                        Field {
+                            objectName: "marginRightField"
+                            value: root.editor.marginRightText
+                            Layout.preferredWidth: 50
+                            Accessible.name: qsTr("Right margin")
+                            onEditingFinished: root.editor.setMarginText(1, text)
+                        }
+                        Field {
+                            objectName: "marginVerticalField"
+                            value: root.editor.marginVerticalText
+                            Layout.preferredWidth: 50
+                            Accessible.name: qsTr("Vertical margin")
+                            onEditingFinished: root.editor.setMarginText(2, text)
+                        }
+                        // Ordinary ASS controls; they keep focus (and the
+                        // selection) in the text field.
+                        Repeater {
+                            model: [
+                                { tag: "b", label: qsTr("B"), name: qsTr("Bold") },
+                                { tag: "i", label: qsTr("I"), name: qsTr("Italic") },
+                                { tag: "u", label: qsTr("U"), name: qsTr("Underline") },
+                                { tag: "s", label: qsTr("S"), name: qsTr("Strikeout") }
+                            ]
                             ToolButton {
-                                objectName: "changeFont"
-                                text: qsTr("Fn")
+                                required property var modelData
+                                objectName: "tag_" + modelData.tag
+                                text: modelData.label
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                Accessible.name: qsTr("Font selection")
-                                ToolTip.visible: hovered
-                                ToolTip.text: qsTr("Font selection")
+                                Accessible.name: modelData.name
                                 onClicked: {
                                     const field = translationText.activeFocus ? translationText : lineText
-                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
+                                    root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
                                 }
                             }
-                            Repeater {
-                                model: [
-                                    { number: 1, name: qsTr("Primary color") },
-                                    { number: 2, name: qsTr("Secondary color for karaoke") },
-                                    { number: 3, name: qsTr("Border color") },
-                                    { number: 4, name: qsTr("Shadow color") }
-                                ]
-                                ToolButton {
-                                    required property var modelData
-                                    objectName: "changeColour" + modelData.number
-                                    text: modelData.number + "c"
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    Accessible.name: modelData.name
-                                    ToolTip.visible: hovered
-                                    ToolTip.text: modelData.name
-                                    onClicked: {
-                                        const field = translationText.activeFocus ? translationText : lineText
-                                        colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd)
-                                    }
-                                }
+                        }
+                        // E1: Font selection and the four colours
+                        // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
+                        ToolButton {
+                            objectName: "changeFont"
+                            text: qsTr("Fn")
+                            focusPolicy: Qt.NoFocus
+                            enabled: root.editor.editable
+                            Accessible.name: qsTr("Font selection")
+                            ToolTip.visible: hovered
+                            ToolTip.text: qsTr("Font selection")
+                            onClicked: {
+                                const field = translationText.activeFocus ? translationText : lineText
+                                fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                             }
-                            // E2: custom tag buttons; right click (or a button
-                            // without a tag) edits it.
-                            Repeater {
-                                model: root.tagButtons.buttons
-                                ToolButton {
-                                    required property var modelData
-                                    required property int index
-                                    objectName: "tagButton" + index
-                                    text: modelData.name
-                                    focusPolicy: Qt.NoFocus
-                                    enabled: root.editor.editable
-                                    Accessible.name: modelData.name
-                                    Accessible.description: modelData.tag
-                                    ToolTip.visible: hovered && modelData.tag.length > 0
-                                    ToolTip.text: modelData.tag
-                                    onClicked: {
-                                        if (modelData.tag.length === 0)
-                                            tagButtonDialog.editButton(index)
-                                        else
-                                            root.applyTagButton(index)
-                                    }
-                                    TapHandler {
-                                        acceptedButtons: Qt.RightButton
-                                        onTapped: tagButtonDialog.editButton(index)
-                                    }
-                                }
-                            }
+                        }
+                        Repeater {
+                            model: [
+                                { number: 1, name: qsTr("Primary color") },
+                                { number: 2, name: qsTr("Secondary color for karaoke") },
+                                { number: 3, name: qsTr("Border color") },
+                                { number: 4, name: qsTr("Shadow color") }
+                            ]
                             ToolButton {
-                                objectName: "manageTagButtons"
-                                text: qsTr("Manage tag buttons")
+                                required property var modelData
+                                objectName: "changeColour" + modelData.number
+                                text: modelData.number + "c"
                                 focusPolicy: Qt.NoFocus
-                                onClicked: tagButtonsMenu.popup()
-                                Menu {
-                                    id: tagButtonsMenu
-                                    Instantiator {
-                                        model: root.tagButtons.buttons
-                                        delegate: MenuItem {
-                                            required property var modelData
-                                            required property int index
-                                            text: modelData.name
-                                            onTriggered: root.applyTagButton(index)
-                                        }
-                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
-                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
-                                    }
-                                    MenuItem {
-                                        objectName: "changeTagButtonCount"
-                                        text: qsTr("Change number of buttons")
-                                        onTriggered: tagButtonCountDialog.open()
-                                    }
+                                enabled: root.editor.editable
+                                Accessible.name: modelData.name
+                                ToolTip.visible: hovered
+                                ToolTip.text: modelData.name
+                                onClicked: {
+                                    const field = translationText.activeFocus ? translationText : lineText
+                                    colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
-                            CheckBox {
-                                objectName: "showTags"
-                                text: qsTr("Show tags")
-                                checked: root.editor.showTags
-                                onToggled: root.editor.showTags = checked
+                        }
+                        // E2: custom tag buttons; right click (or a button
+                        // without a tag) edits it.
+                        Repeater {
+                            model: root.tagButtons.buttons
+                            ToolButton {
+                                required property var modelData
+                                required property int index
+                                objectName: "tagButton" + index
+                                text: modelData.name
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                Accessible.name: modelData.name
+                                Accessible.description: modelData.tag
+                                ToolTip.visible: hovered && modelData.tag.length > 0
+                                ToolTip.text: modelData.tag
+                                onClicked: {
+                                    if (modelData.tag.length === 0)
+                                        tagButtonDialog.editButton(index)
+                                    else
+                                        root.applyTagButton(index)
+                                }
+                                TapHandler {
+                                    acceptedButtons: Qt.RightButton
+                                    onTapped: tagButtonDialog.editButton(index)
+                                }
                             }
                         }
+                        ToolButton {
+                            objectName: "manageTagButtons"
+                            text: qsTr("Manage tag buttons")
+                            focusPolicy: Qt.NoFocus
+                            onClicked: tagButtonsMenu.popup()
+                            Menu {
+                                id: tagButtonsMenu
+                                Instantiator {
+                                    model: root.tagButtons.buttons
+                                    delegate: MenuItem {
+                                        required property var modelData
+                                        required property int index
+                                        text: modelData.name
+                                        onTriggered: root.applyTagButton(index)
+                                    }
+                                    onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
+                                    onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
+                                }
+                                MenuItem {
+                                    objectName: "changeTagButtonCount"
+                                    text: qsTr("Change number of buttons")
+                                    onTriggered: tagButtonCountDialog.open()
+                                }
+                            }
+                        }
+                        CheckBox {
+                            objectName: "showTags"
+                            text: qsTr("Show tags")
+                            checked: root.editor.showTags
+                            onToggled: root.editor.showTags = checked
+                        }
+                    }
 
-                        RoleField {
-                            id: lineText
-                            objectName: "lineText"
-                            role: 0
-                            focus: true
-                            Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                    RoleField {
+                        id: lineText
+                        objectName: "lineText"
+                        role: 0
+                        focus: true
+                        Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                    }
+                    RoleField {
+                        id: translationText
+                        objectName: "translationText"
+                        role: 1
+                        visible: root.editor.translationMode
+                        Accessible.name: qsTr("Translated text")
+                    }
+                    // Legacy translation-mode buttons (EDITBOX_PASTE_*,
+                    // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
+                    RowLayout {
+                        visible: root.editor.translationMode
+                        Button {
+                            objectName: "pasteAllToTranslation"
+                            text: qsTr("Paste all")
+                            focusPolicy: Qt.NoFocus
+                            enabled: root.editor.editable
+                            onClicked: root.editor.pasteAllToTranslation()
                         }
-                        RoleField {
-                            id: translationText
-                            objectName: "translationText"
-                            role: 1
-                            visible: root.editor.translationMode
-                            Accessible.name: qsTr("Translated text")
+                        Button {
+                            objectName: "pasteSelectionToTranslation"
+                            text: qsTr("Paste the selected")
+                            focusPolicy: Qt.NoFocus
+                            enabled: root.editor.editable
+                            onClicked: root.editor.pasteSelectionToTranslation(lineText.selectionStart,
+                                                                                lineText.selectionEnd,
+                                                                                translationText.cursorPosition)
                         }
-                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
-                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                        RowLayout {
-                            visible: root.editor.translationMode
-                            Button {
-                                objectName: "pasteAllToTranslation"
-                                text: qsTr("Paste all")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                onClicked: root.editor.pasteAllToTranslation()
-                            }
-                            Button {
-                                objectName: "pasteSelectionToTranslation"
-                                text: qsTr("Paste the selected")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                onClicked: root.editor.pasteSelectionToTranslation(lineText.selectionStart,
-                                                                                    lineText.selectionEnd,
-                                                                                    translationText.cursorPosition)
-                            }
-                            Button {
-                                objectName: "commentOutOriginal"
-                                text: qsTr("Comment out original")
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                onClicked: root.editor.commentOutOriginal()
-                            }
+                        Button {
+                            objectName: "commentOutOriginal"
+                            text: qsTr("Comment out original")
+                            focusPolicy: Qt.NoFocus
+                            enabled: root.editor.editable
+                            onClicked: root.editor.commentOutOriginal()
                         }
+                    }
 
-                        Label {
-                            objectName: "editorProblem"
-                            visible: text.length > 0
-                            text: root.editor.problem
-                            color: "firebrick"
-                            wrapMode: Text.Wrap
-                            Layout.fillWidth: true
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                        Label {
-                            objectName: "editorAttempted"
-                            visible: root.editor.attempted.length > 0
-                            text: qsTr("Not applied: %1").arg(root.editor.attempted)
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
+                    Label {
+                        objectName: "editorProblem"
+                        visible: text.length > 0
+                        text: root.editor.problem
+                        color: "firebrick"
+                        wrapMode: Text.Wrap
+                        Layout.fillWidth: true
+                        Accessible.role: Accessible.AlertMessage
+                    }
+                    Label {
+                        objectName: "editorAttempted"
+                        visible: root.editor.attempted.length > 0
+                        text: qsTr("Not applied: %1").arg(root.editor.attempted)
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
                     }
                 }
             }
         }
 
-        Panel {
-            id: gridPanel
-            objectName: "gridPanel"
-            title: shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No document open")
-            SplitView.preferredHeight: 260
-            focus: true
-            HikariGrid {
-                id: grid
-                objectName: "editingGrid"
+        KDDW.DockWidget {
+            id: gridDock
+            objectName: "gridDock"
+            uniqueName: "Grid"
+            title: qsTr("Grid")
+            Panel {
+                id: gridPanel
                 anchors.fill: parent
+                objectName: "gridPanel"
+                title: shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No document open")
                 focus: true
-                model: shell.lines
-                // Every gesture is a request; the application owns the selection (G1).
-                onActiveLineRequested: id => root.app.selectLine(id)
-                onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
-                onExtendRequested: rows => root.app.extendSelection(rows)
-                onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
-                onLineDragged: id => root.app.dragSelection(id)
-                onSelectAllRequested: root.app.selectAllLines()
-                onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
-                onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
-                onGroupToggleRequested: id => root.app.toggleGroup(id)
-                onGroupMenuRequested: (id, x, y) => {
-                    groupMenu.description = id
-                    groupMenu.popup(grid, x, y)
-                }
-                // Legacy tree description menu (ContextMenuTree).
-                Menu {
-                    id: groupMenu
-                    objectName: "groupMenu"
-                    property var description: 0
-                    MenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                    MenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
-                    MenuItem {
-                        objectName: "groupRename"; text: qsTr("Change description")
-                        onTriggered: groupDescriptionDialog.edit(groupMenu.description)
+                HikariGrid {
+                    id: grid
+                    objectName: "editingGrid"
+                    anchors.fill: parent
+                    focus: true
+                    model: shell.lines
+                    // Every gesture is a request; the application owns the selection (G1).
+                    onActiveLineRequested: id => root.app.selectLine(id)
+                    onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
+                    onExtendRequested: rows => root.app.extendSelection(rows)
+                    onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
+                    onLineDragged: id => root.app.dragSelection(id)
+                    onSelectAllRequested: root.app.selectAllLines()
+                    onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
+                    onHiddenBlockToggleRequested: row => root.app.toggleHiddenBlock(row)
+                    onGroupToggleRequested: id => root.app.toggleGroup(id)
+                    onGroupMenuRequested: (id, x, y) => {
+                        groupMenu.description = id
+                        groupMenu.popup(grid, x, y)
                     }
-                    MenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                    MenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
-                }
-                // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
-                // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
-                Keys.onPressed: event => {
-                    if (!(event.modifiers & Qt.ControlModifier))
-                        return
-                    if (event.key === Qt.Key_D)
-                        root.app.duplicateLines()
-                    else if (event.key === Qt.Key_C)
-                        root.app.copyLines()
-                    else if (event.key === Qt.Key_X)
-                        root.app.cutLines()
-                    else if (event.key === Qt.Key_V)
-                        root.app.pasteLines()
-                    else
-                        return
-                    event.accepted = true
-                }
-                Menu {
-                    id: gridMenu
-                    objectName: "gridMenu"
-                    property bool canPasteTranslation: false
-                    property bool canShiftTranslation: false
-                    onAboutToShow: {
-                        canPasteTranslation = root.app.canPasteTranslation()
-                        canShiftTranslation = root.app.canShiftTranslation()
+                    // Legacy tree description menu (ContextMenuTree).
+                    Menu {
+                        id: groupMenu
+                        objectName: "groupMenu"
+                        property var description: 0
+                        MenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        MenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        MenuItem {
+                            objectName: "groupRename"; text: qsTr("Change description")
+                            onTriggered: groupDescriptionDialog.edit(groupMenu.description)
+                        }
+                        MenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        MenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                    }
+                    // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
+                    // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
+                    Keys.onPressed: event => {
+                        if (!(event.modifiers & Qt.ControlModifier))
+                            return
+                        if (event.key === Qt.Key_D)
+                            root.app.duplicateLines()
+                        else if (event.key === Qt.Key_C)
+                            root.app.copyLines()
+                        else if (event.key === Qt.Key_X)
+                            root.app.cutLines()
+                        else if (event.key === Qt.Key_V)
+                            root.app.pasteLines()
+                        else
+                            return
+                        event.accepted = true
                     }
                     Menu {
-                        title: qsTr("&Insert")
-                        MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: root.app.insertLine(true) }
-                        MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: root.app.insertLine(false) }
-                        MenuItem {
-                            objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
-                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "video")
-                        }
-                        MenuItem {
-                            objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
-                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "video")
-                        }
-                        MenuItem {
-                            objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
-                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "frame")
-                        }
-                        MenuItem {
-                            objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
-                            enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "frame")
-                        }
-                    }
-                    MenuItem { objectName: "duplicateLines"; text: qsTr("&Duplicate lines\tCtrl+D"); onTriggered: root.app.duplicateLines() }
-                    MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: root.app.swapLines() }
-                    MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: root.app.joinLines("join") }
-                    MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: root.app.joinLines("first") }
-                    MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: root.app.joinLines("last") }
-                    MenuItem {
-                        objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
-                        onTriggered: root.app.makeContinuous(true)
-                    }
-                    MenuItem {
-                        objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
-                        onTriggered: root.app.makeContinuous(false)
-                    }
-                    // Legacy "Split lines" (GRID_SPLIT_BY_*).
-                    Menu {
-                        title: qsTr("Split lines")
-                        MenuItem {
-                            objectName: "splitAtVideoTime"
-                            text: qsTr("Split line at video time")
-                            enabled: root.video.hasVideo
-                            onTriggered: root.app.splitLines("videoTime")
-                        }
-                        MenuItem {
-                            objectName: "splitIntoFrames"
-                            text: qsTr("Split lines into frames")
-                            enabled: root.video.hasVideo
-                            onTriggered: root.app.splitLines("frames")
-                        }
-                        MenuItem {
-                            objectName: "splitIntoCharacters"
-                            text: qsTr("Split lines into characters")
-                            onTriggered: root.app.splitLines("chars")
-                        }
-                        MenuItem {
-                            objectName: "splitIntoWords"
-                            text: qsTr("Split lines into words")
-                            onTriggered: root.app.splitLines("words")
-                        }
-                        MenuItem {
-                            objectName: "splitByWraps"
-                            text: qsTr("Split lines by wraps")
-                            onTriggered: root.app.splitLines("wraps")
-                        }
-                    }
-                    MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
-                    // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
-                    MenuItem {
-                        objectName: "pasteTranslation"
-                        text: qsTr("Paste translation text")
-                        enabled: gridMenu.canPasteTranslation
-                        onTriggered: {
-                            translationFileDialog.currentFolder = root.app.targetFolder()
-                            translationFileDialog.open()
-                        }
-                    }
-                    MenuItem {
-                        objectName: "translationDialog"
-                        text: qsTr("Dialogue shifting window")
-                        enabled: gridMenu.canShiftTranslation
-                        onTriggered: translationShiftWindow.show()
-                    }
-                    MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
-                    // Legacy Filtering submenu (GRID_FILTER_*).
-                    Menu {
-                        id: filteringMenu
-                        objectName: "filteringMenu"
-                        title: qsTr("Filtering")
-                        property var styleNames: []
-                        onAboutToShow: styleNames = root.app.styleNames()
-                        MenuItem {
-                            objectName: "filterAfterLoad"
-                            text: qsTr("Filter after loading subtitles")
-                            checkable: true
-                            enabled: root.shell.assColumns
-                            checked: root.gridFilter.afterLoad
-                            onTriggered: root.gridFilter.afterLoad = checked
-                        }
-                        MenuItem {
-                            objectName: "filterInvert"
-                            text: qsTr("Reverse filtering")
-                            checkable: true
-                            checked: root.gridFilter.inverted
-                            onTriggered: root.gridFilter.inverted = checked
-                        }
-                        MenuItem {
-                            objectName: "filterDoNotReset"
-                            text: qsTr("Do not reset previous filtering")
-                            checkable: true
-                            checked: root.gridFilter.addToFilter
-                            onTriggered: root.gridFilter.addToFilter = checked
+                        id: gridMenu
+                        objectName: "gridMenu"
+                        property bool canPasteTranslation: false
+                        property bool canShiftTranslation: false
+                        onAboutToShow: {
+                            canPasteTranslation = root.app.canPasteTranslation()
+                            canShiftTranslation = root.app.canShiftTranslation()
                         }
                         Menu {
-                            id: filterStylesMenu
-                            title: qsTr("Hide lines with styles")
-                            enabled: root.shell.assColumns
-                            Instantiator {
-                                model: filteringMenu.styleNames
-                                delegate: MenuItem {
-                                    required property string modelData
-                                    text: modelData
-                                    checkable: true
-                                    checked: root.gridFilter.styles.indexOf(modelData) >= 0
-                                    onTriggered: root.gridFilter.setStyle(modelData, checked)
-                                }
-                                onObjectAdded: (index, object) => filterStylesMenu.insertItem(index, object)
-                                onObjectRemoved: (index, object) => filterStylesMenu.removeItem(object)
+                            title: qsTr("&Insert")
+                            MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: root.app.insertLine(true) }
+                            MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: root.app.insertLine(false) }
+                            MenuItem {
+                                objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
+                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "video")
+                            }
+                            MenuItem {
+                                objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
+                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "video")
+                            }
+                            MenuItem {
+                                objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
+                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "frame")
+                            }
+                            MenuItem {
+                                objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
+                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "frame")
                             }
                         }
-                        Instantiator {
-                            model: [
-                                { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection" },
-                                { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true },
-                                { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true },
-                                { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true }
-                            ]
-                            delegate: MenuItem {
-                                required property var modelData
-                                objectName: modelData.name
-                                text: modelData.label
-                                checkable: true
-                                enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
-                                checked: (root.gridFilter.filterBy & modelData.bit) !== 0
-                                onTriggered: root.gridFilter.setFilterBy(modelData.bit, checked)
-                            }
-                            onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
-                            onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
-                        }
-                        MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: root.app.filterLines() }
+                        MenuItem { objectName: "duplicateLines"; text: qsTr("&Duplicate lines\tCtrl+D"); onTriggered: root.app.duplicateLines() }
+                        MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: root.app.swapLines() }
+                        MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: root.app.joinLines("join") }
+                        MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: root.app.joinLines("first") }
+                        MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: root.app.joinLines("last") }
                         MenuItem {
-                            objectName: "turnOffFiltering"
-                            text: qsTr("Turn off filtering")
-                            enabled: root.shell.filtered
-                            onTriggered: root.app.turnOffFiltering()
+                            objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
+                            onTriggered: root.app.makeContinuous(true)
                         }
-                    }
-                    MenuItem {
-                        objectName: "ignoreFilteringInActions"
-                        text: qsTr("Ignore filtering in some actions")
-                        checkable: true
-                        checked: root.gridFilter.ignoreInActions
-                        onTriggered: root.gridFilter.ignoreInActions = checked
-                    }
-                    // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
-                    Menu {
-                        id: hideColumnsMenu
-                        objectName: "hideColumnsMenu"
-                        title: qsTr("Hide columns")
-                        Instantiator {
-                            model: [
-                                { bit: 1, label: qsTr("Hide layer"), ass: true },
-                                { bit: 2, label: qsTr("Hide start time"), ass: false },
-                                { bit: 4, label: qsTr("Hide end time"), ass: false, end: true },
-                                { bit: 16, label: qsTr("Hide actor"), ass: true },
-                                { bit: 8, label: qsTr("Hide style"), ass: true },
-                                { bit: 32, label: qsTr("Hide left margin"), ass: true },
-                                { bit: 64, label: qsTr("Hide right margin"), ass: true },
-                                { bit: 128, label: qsTr("Hide vertical margin"), ass: true },
-                                { bit: 256, label: qsTr("Hide effect"), ass: true },
-                                { bit: 512, label: qsTr("Hide characters per second"), ass: false },
-                                { bit: 8192, label: qsTr("Hide line wraps"), ass: false }
-                            ]
-                            delegate: MenuItem {
-                                required property var modelData
-                                objectName: "hideColumn" + modelData.bit
-                                text: modelData.label
-                                checkable: true
-                                checked: (root.shell.hiddenColumns & modelData.bit) !== 0
-                                enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
-                                onTriggered: root.shell.toggleColumn(modelData.bit)
+                        MenuItem {
+                            objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
+                            onTriggered: root.app.makeContinuous(false)
+                        }
+                        // Legacy "Split lines" (GRID_SPLIT_BY_*).
+                        Menu {
+                            title: qsTr("Split lines")
+                            MenuItem {
+                                objectName: "splitAtVideoTime"
+                                text: qsTr("Split line at video time")
+                                enabled: root.video.hasVideo
+                                onTriggered: root.app.splitLines("videoTime")
                             }
-                            onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
-                            onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
+                            MenuItem {
+                                objectName: "splitIntoFrames"
+                                text: qsTr("Split lines into frames")
+                                enabled: root.video.hasVideo
+                                onTriggered: root.app.splitLines("frames")
+                            }
+                            MenuItem {
+                                objectName: "splitIntoCharacters"
+                                text: qsTr("Split lines into characters")
+                                onTriggered: root.app.splitLines("chars")
+                            }
+                            MenuItem {
+                                objectName: "splitIntoWords"
+                                text: qsTr("Split lines into words")
+                                onTriggered: root.app.splitLines("words")
+                            }
+                            MenuItem {
+                                objectName: "splitByWraps"
+                                text: qsTr("Split lines by wraps")
+                                onTriggered: root.app.splitLines("wraps")
+                            }
                         }
+                        MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
+                        // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
+                        MenuItem {
+                            objectName: "pasteTranslation"
+                            text: qsTr("Paste translation text")
+                            enabled: gridMenu.canPasteTranslation
+                            onTriggered: {
+                                translationFileDialog.currentFolder = root.app.targetFolder()
+                                translationFileDialog.open()
+                            }
+                        }
+                        MenuItem {
+                            objectName: "translationDialog"
+                            text: qsTr("Dialogue shifting window")
+                            enabled: gridMenu.canShiftTranslation
+                            onTriggered: translationShiftWindow.show()
+                        }
+                        MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
+                        // Legacy Filtering submenu (GRID_FILTER_*).
+                        Menu {
+                            id: filteringMenu
+                            objectName: "filteringMenu"
+                            title: qsTr("Filtering")
+                            property var styleNames: []
+                            onAboutToShow: styleNames = root.app.styleNames()
+                            MenuItem {
+                                objectName: "filterAfterLoad"
+                                text: qsTr("Filter after loading subtitles")
+                                checkable: true
+                                enabled: root.shell.assColumns
+                                checked: root.gridFilter.afterLoad
+                                onTriggered: root.gridFilter.afterLoad = checked
+                            }
+                            MenuItem {
+                                objectName: "filterInvert"
+                                text: qsTr("Reverse filtering")
+                                checkable: true
+                                checked: root.gridFilter.inverted
+                                onTriggered: root.gridFilter.inverted = checked
+                            }
+                            MenuItem {
+                                objectName: "filterDoNotReset"
+                                text: qsTr("Do not reset previous filtering")
+                                checkable: true
+                                checked: root.gridFilter.addToFilter
+                                onTriggered: root.gridFilter.addToFilter = checked
+                            }
+                            Menu {
+                                id: filterStylesMenu
+                                title: qsTr("Hide lines with styles")
+                                enabled: root.shell.assColumns
+                                Instantiator {
+                                    model: filteringMenu.styleNames
+                                    delegate: MenuItem {
+                                        required property string modelData
+                                        text: modelData
+                                        checkable: true
+                                        checked: root.gridFilter.styles.indexOf(modelData) >= 0
+                                        onTriggered: root.gridFilter.setStyle(modelData, checked)
+                                    }
+                                    onObjectAdded: (index, object) => filterStylesMenu.insertItem(index, object)
+                                    onObjectRemoved: (index, object) => filterStylesMenu.removeItem(object)
+                                }
+                            }
+                            Instantiator {
+                                model: [
+                                    { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection" },
+                                    { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true },
+                                    { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true },
+                                    { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true }
+                                ]
+                                delegate: MenuItem {
+                                    required property var modelData
+                                    objectName: modelData.name
+                                    text: modelData.label
+                                    checkable: true
+                                    enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
+                                    checked: (root.gridFilter.filterBy & modelData.bit) !== 0
+                                    onTriggered: root.gridFilter.setFilterBy(modelData.bit, checked)
+                                }
+                                onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
+                                onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
+                            }
+                            MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: root.app.filterLines() }
+                            MenuItem {
+                                objectName: "turnOffFiltering"
+                                text: qsTr("Turn off filtering")
+                                enabled: root.shell.filtered
+                                onTriggered: root.app.turnOffFiltering()
+                            }
+                        }
+                        MenuItem {
+                            objectName: "ignoreFilteringInActions"
+                            text: qsTr("Ignore filtering in some actions")
+                            checkable: true
+                            checked: root.gridFilter.ignoreInActions
+                            onTriggered: root.gridFilter.ignoreInActions = checked
+                        }
+                        // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
+                        Menu {
+                            id: hideColumnsMenu
+                            objectName: "hideColumnsMenu"
+                            title: qsTr("Hide columns")
+                            Instantiator {
+                                model: [
+                                    { bit: 1, label: qsTr("Hide layer"), ass: true },
+                                    { bit: 2, label: qsTr("Hide start time"), ass: false },
+                                    { bit: 4, label: qsTr("Hide end time"), ass: false, end: true },
+                                    { bit: 16, label: qsTr("Hide actor"), ass: true },
+                                    { bit: 8, label: qsTr("Hide style"), ass: true },
+                                    { bit: 32, label: qsTr("Hide left margin"), ass: true },
+                                    { bit: 64, label: qsTr("Hide right margin"), ass: true },
+                                    { bit: 128, label: qsTr("Hide vertical margin"), ass: true },
+                                    { bit: 256, label: qsTr("Hide effect"), ass: true },
+                                    { bit: 512, label: qsTr("Hide characters per second"), ass: false },
+                                    { bit: 8192, label: qsTr("Hide line wraps"), ass: false }
+                                ]
+                                delegate: MenuItem {
+                                    required property var modelData
+                                    objectName: "hideColumn" + modelData.bit
+                                    text: modelData.label
+                                    checkable: true
+                                    checked: (root.shell.hiddenColumns & modelData.bit) !== 0
+                                    enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
+                                    onTriggered: root.shell.toggleColumn(modelData.bit)
+                                }
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
+                            }
+                        }
+                        MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: fpsWindow.show() }
+                        MenuItem {
+                            objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
+                            enabled: root.video.hasVideo; onTriggered: root.app.setFpsFromVideo()
+                        }
+                        MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: root.app.copyLines() }
+                        MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: root.app.cutLines() }
+                        MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: root.app.pasteLines() }
+                        MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: columnsWindow.choose(false) }
+                        MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: columnsWindow.choose(true) }
+                        MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
                     }
-                    MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: fpsWindow.show() }
-                    MenuItem {
-                        objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
-                        enabled: root.video.hasVideo; onTriggered: root.app.setFpsFromVideo()
-                    }
-                    MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: root.app.copyLines() }
-                    MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: root.app.cutLines() }
-                    MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: root.app.pasteLines() }
-                    MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: columnsWindow.choose(false) }
-                    MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: columnsWindow.choose(true) }
-                    MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
                 }
             }
         }
 
-        Panel {
-            id: referencePanel
-            objectName: "referencePanel"
-            visible: shell.hasReference
-            title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
-            SplitView.preferredHeight: 160
-            HikariGrid {
-                objectName: "referenceGrid"
+        KDDW.DockWidget {
+            id: referenceDock
+            objectName: "referenceDock"
+            uniqueName: "Reference"
+            title: qsTr("Reference")
+            Panel {
+                id: referencePanel
                 anchors.fill: parent
-                focus: true
-                model: shell.referenceLines
+                objectName: "referencePanel"
+                visible: shell.hasReference
+                title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
+                HikariGrid {
+                    objectName: "referenceGrid"
+                    anchors.fill: parent
+                    focus: true
+                    model: shell.referenceLines
+                }
+            }
+        }
+
+        Component.onCompleted: {
+            root.defaultLayout()
+            root.workspaceLayout.captureDefault()
+            root.workspaceLayout.restoreSaved()
+        }
+    }
+    // Completed layout operations are saved, not every drag (D1): a cheap
+    // periodic check writes only when the arrangement changed.
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: root.workspaceLayout.save()
+    }
+
+    // D1: a layout that could not be restored is named here, with the way back.
+    header: Pane {
+        objectName: "layoutNotice"
+        visible: root.workspaceLayout.notice.length > 0
+        padding: 6
+        RowLayout {
+            anchors.fill: parent
+            Label {
+                objectName: "layoutNoticeText"
+                text: root.workspaceLayout.notice
+                wrapMode: Text.WordWrap
+                Layout.fillWidth: true
+                Accessible.role: Accessible.AlertMessage
+            }
+            Button {
+                text: qsTr("Restore the previous layout")
+                visible: root.workspaceLayout.hasBackup
+                onClicked: root.workspaceLayout.restoreBackup()
+            }
+            Button {
+                text: qsTr("Dismiss")
+                onClicked: root.workspaceLayout.dismissNotice()
             }
         }
     }

@@ -3,6 +3,7 @@
 // Line to the opened text.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
@@ -91,6 +92,7 @@ int main(int argc, char **argv)
     hikari::app::Application application;
     expect(application.openFile(path), "open");
     QQmlApplicationEngine engine;
+    hikari::ui::attachDocking(engine);
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())

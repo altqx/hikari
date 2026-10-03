@@ -5,6 +5,7 @@
 // helper leave the Document unchanged and editable.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
@@ -186,6 +187,7 @@ int main(int argc, char **argv)
     expect(application.video().hasVideo(), "the video is open");
 
     QQmlApplicationEngine engine;
+    hikari::ui::attachDocking(engine);
     engine.setInitialProperties(application.qmlProperties());
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())

@@ -148,6 +148,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_settingsFile = options.settingsFile;
     m_tagButtons = std::make_unique<ui::TagButtonsController>(m_settingsFile);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(m_settingsFile);
+    // D1: the panel layout beside the settings (none without a settings file).
+    m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
+        m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(m_settingsFile);
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, m_settingsFile);
     // P3: this session's lock marks it as running; bundles of sessions whose
@@ -1472,6 +1475,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
             {QStringLiteral("tagButtons"), QVariant::fromValue(m_tagButtons.get())},
             {QStringLiteral("colourPicker"), QVariant::fromValue(m_colourPicker.get())},
+            {QStringLiteral("workspaceLayout"), QVariant::fromValue(m_workspaceLayout.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};

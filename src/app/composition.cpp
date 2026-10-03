@@ -1,4 +1,5 @@
 #include "hikari/app/composition.h"
+#include "docking.h"
 
 #include "hikari/app/application.h"
 
@@ -31,6 +32,7 @@ int run(int argc, char **argv, StartupMode mode)
         application.openFile(QString::fromLocal8Bit(argv[1]));
 
     QQmlApplicationEngine engine;
+    hikari::ui::attachDocking(engine);
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

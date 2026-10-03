@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 #include "line_grid.h"
 
 #include <QAccessible>
@@ -44,9 +45,15 @@ class ShellTest : public QObject {
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
+    // Docked panels may live in a floating window: look in every window.
     template <typename T = QQuickItem> T *item(const char *name) const
     {
-        return window->findChild<T *>(QLatin1String(name));
+        if (T *found = window->findChild<T *>(QLatin1String(name)))
+            return found;
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (T *found = w->findChild<T *>(QLatin1String(name)))
+                return found;
+        return nullptr;
     }
     // Repeater delegates are not QObject children of the window: walk the items.
     static QQuickItem *findItem(QQuickItem *from, const QString &name)
@@ -91,6 +98,7 @@ private slots:
     {
         application = new app::Application;
         engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
         engine->setInitialProperties(application->qmlProperties());
         engine->loadFromModule("Hikari.Ui", "Main");
         QVERIFY(!engine->rootObjects().isEmpty());
@@ -108,7 +116,8 @@ private slots:
     void zeroDocumentState()
     {
         QCOMPARE(panelTitle("gridPanel"), QStringLiteral("No document open"));
-        QVERIFY(!item("referencePanel")->isVisible());
+        // D1: the Reference panel's dock is closed while there is no reference.
+        QVERIFY(!item<QObject>("referenceDock")->property("isOpen").toBool());
         QCOMPARE(item<QObject>("statusTargets")->property("text").toString(), QStringLiteral("No editing target"));
     }
 
@@ -117,6 +126,7 @@ private slots:
         QVERIFY(application->openFile(episode));
         QVERIFY(application->openReference(original));
         QCOMPARE(panelTitle("gridPanel"), QStringLiteral("Editing: episode.ass"));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
         QVERIFY(item("referencePanel")->isVisible());
         QCOMPARE(panelTitle("referencePanel"), QStringLiteral("Reference (protected, read-only): original.ass"));
         QCOMPARE(item<QObject>("statusTargets")->property("text").toString(),
@@ -746,6 +756,62 @@ private slots:
         // One Undo takes the move back.
         QVERIFY(session->undo());
         QCOMPARE(tr(1), QStringLiteral("b"));
+    }
+
+    // D1: View > Panels floats, docks, hides and shows panels; a draft and
+    // the editing target survive, and F6 reaches a floating panel.
+    void panelsFloatDockHideAndKeepTheirState()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        press(Qt::Key_End);
+        press(Qt::Key_Exclam, Qt::ShiftModifier);
+        QTRY_VERIFY(session->draftLine());
+        auto *root = engine->rootObjects().first();
+        auto *editorDock = root->findChild<QObject *>(QStringLiteral("editorDock"));
+        auto *gridDock = root->findChild<QObject *>(QStringLiteral("gridDock"));
+        auto menuItem = [&](const char *name) {
+            auto *found = root->findChild<QObject *>(QLatin1String(name));
+            if (!found)
+                for (QObject *o : root->findChildren<QObject *>())
+                    if (o->objectName() == QLatin1String(name))
+                        found = o;
+            return found;
+        };
+
+        QObject *floatEditor = menuItem("panelFloatEditor");
+        QVERIFY(floatEditor);
+        QVERIFY(QMetaObject::invokeMethod(floatEditor, "triggered"));
+        QTRY_VERIFY(editorDock->property("isFloating").toBool());
+        QTRY_VERIFY(item("editorPanel")->window() != window); // its own floating window
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first!"));
+        QVERIFY(session->draftLine()); // rearranging does not commit the draft
+        QVERIFY(application->workspace().editingTarget());
+
+        // F6 order: Video, Audio, Editor, Grid; back from the Grid is the floating Editor.
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+
+        QVERIFY(QMetaObject::invokeMethod(menuItem("panelDockEditor"), "triggered"));
+        QTRY_VERIFY(!editorDock->property("isFloating").toBool());
+        QTRY_COMPARE(item("editorPanel")->window(), window);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first!"));
+
+        // Hide closes the view only; Show brings it back focused.
+        QVERIFY(QMetaObject::invokeMethod(menuItem("panelHideGrid"), "triggered"));
+        QTRY_VERIFY(!gridDock->property("isOpen").toBool());
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(QMetaObject::invokeMethod(menuItem("panelShowGrid"), "triggered"));
+        QTRY_VERIFY(gridDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("gridPanel")->hasActiveFocus());
+        QCOMPARE(item("editingGrid")->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
+        application->editor().discard();
     }
 
     void hideColumnsMenuTogglesGridColumns()
