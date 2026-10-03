@@ -80,3 +80,7 @@ hikari_add_spix_test(hikari_ui_automation_workflow SOURCES automation_workflow.c
                 HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_fixtures hikari_lua_helper
     hikari_automation_stage)
+# D1: the pinned docking engine (KDDockWidgets, QtQuick frontend) qualified with the provisioned Qt.
+find_package(KDDockWidgets-qt6 CONFIG REQUIRED)
+hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
+    LIBRARIES KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)

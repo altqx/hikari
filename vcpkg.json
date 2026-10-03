@@ -18,6 +18,7 @@
     "gtest",
     "spix",
     "portaudio",
+    "kddockwidgets",
     "luajit",
     {
       "name": "boost-regex",
