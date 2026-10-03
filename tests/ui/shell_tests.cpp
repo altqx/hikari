@@ -496,6 +496,31 @@ private slots:
         fps->close();
     }
 
+    void aFailedOpenPopsUpTheLogWindow()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *logWindow = root->findChild<QQuickWindow *>(QStringLiteral("logWindow"));
+        QVERIFY(logWindow);
+        QVERIFY(!logWindow->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(root, "openSubtitles", Q_ARG(QVariant, dir.filePath(QStringLiteral("none.ass")))));
+        QTRY_VERIFY(logWindow->isVisible());
+        QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))
+                    ->property("text").toString().contains(QStringLiteral("none.ass")));
+        QVERIFY(QMetaObject::invokeMethod(logWindow->findChild<QObject *>(QStringLiteral("logClose")), "clicked"));
+        QTRY_VERIFY(!logWindow->isVisible());
+        // File > Show / Hide log window: the whole log.
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("logMenuItem")), "click"));
+        QTRY_VERIFY(logWindow->isVisible());
+        QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logHistory"))
+                    ->property("text").toString().contains(QStringLiteral("none.ass")));
+        application->log().close();
+        // A video that cannot be opened is logged too.
+        application->video().openVideo(dir.filePath(QStringLiteral("missing.mkv")));
+        QTRY_VERIFY_WITH_TIMEOUT(application->log().lastMessage().startsWith(QStringLiteral("Video unavailable")), 20000);
+        QVERIFY(application->log().shown());
+        application->log().close();
+    }
+
     void enterOnTheLastLineAppendsOne()
     {
         QVERIFY(application->openFile(episode));

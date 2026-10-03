@@ -93,6 +93,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         writeFinished(r);
     });
     m_files = std::make_unique<application::DocumentFiles>(*m_reader, *m_writes);
+    m_log = std::make_unique<ui::LogController>();
     m_shell = std::make_unique<ui::ShellController>(m_workspace);
     m_editor = std::make_unique<ui::LineEditorController>(*m_files);
     m_editor->setCommittedListener([this] { refreshViews(); });
@@ -115,6 +116,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_pasteColumns = settings.value(QStringLiteral("Grid/PasteColumns"), 0).toInt();
     }
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] { refreshVideo(); });
+    // A video that cannot be opened is reported in the log window once.
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        const bool failed = m_video->session().state() == application::VideoSession::State::Failed;
+        if (failed && !m_videoFailureLogged)
+            m_log->log(m_video->status());
+        m_videoFailureLogged = failed;
+    });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
         const auto target = m_workspace.editingTarget();
@@ -454,10 +462,11 @@ bool Application::targetUntitled() const
 QVariantMap Application::reviewOpen(const QString &path)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
-    if (!staged)
-        return {{QStringLiteral("ok"), false},
-                {QStringLiteral("problem"), tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName())},
-                {QStringLiteral("rows"), QVariantList()}};
+    if (!staged) {
+        const QString problem = tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName());
+        m_log->log(problem);
+        return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
+    }
     const QVariantList rows = reviewClose(QStringLiteral("open"));
     m_pendingOpen = std::move(*staged);
     m_pendingOpenPath = path;
@@ -584,11 +593,11 @@ bool Application::reloadTarget()
         return false;
     auto staged = m_files->stageReload(*target);
     if (!staged) {
-        m_shell->setStatusText(tr("Could not reload the subtitles; nothing was changed."));
+        m_log->log(tr("Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_shell->setStatusText(tr("The subtitles changed while reloading; nothing was replaced."));
+        m_log->log(tr("The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
     if (auto *session = m_files->session(*target))
@@ -971,6 +980,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("automationManager"), QVariant::fromValue(m_automation->managerController())},
             {QStringLiteral("automationDialogs"), QVariant::fromValue(m_automation->dialogs())},
             {QStringLiteral("automationPicker"), QVariant::fromValue(m_automation->picker())},
+            {QStringLiteral("log"), QVariant::fromValue(m_log.get())},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

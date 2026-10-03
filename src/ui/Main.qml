@@ -25,6 +25,7 @@ ApplicationWindow {
     required property AutomationManagerController automationManager
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
+    required property LogController log
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -58,7 +59,7 @@ ApplicationWindow {
     function openSubtitles(path) {
         const result = root.app.reviewOpen(path)
         if (!result.ok)
-            root.shell.statusText = result.problem
+            return // the log window shows the problem
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
@@ -229,6 +230,13 @@ ApplicationWindow {
                         shortcut: "Ctrl+Shift+S" // legacy GLOBAL_SAVE_SUBS_AS
                         enabled: root.shell.hasEditingTarget
                         onTriggered: saveAsDialog.open()
+                    }
+                }
+                MenuItem {
+                    objectName: "logMenuItem"
+                    action: Action {
+                        text: qsTr("Show / Hide log window")
+                        onTriggered: root.log.toggleWindow()
                     }
                 }
                 MenuItem {
@@ -1251,6 +1259,49 @@ ApplicationWindow {
                     text: qsTr("Cancel")
                     onClicked: columnsWindow.close()
                 }
+            }
+        }
+    }
+
+    // Legacy LogWindow: a message pops it up with just that message; the File
+    // menu entry shows the whole log.
+    Window {
+        id: logWindow
+        objectName: "logWindow"
+        title: qsTr("Log window")
+        width: 520
+        height: root.log.full ? 380 : 140
+        flags: Qt.Dialog
+        visible: root.log.shown
+        onClosing: root.log.close()
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label {
+                objectName: "logLastMessage"
+                visible: !root.log.full
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                horizontalAlignment: Text.AlignHCenter
+                text: root.log.lastMessage
+            }
+            ScrollView {
+                visible: root.log.full
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                TextArea {
+                    objectName: "logHistory"
+                    readOnly: true
+                    text: root.log.history
+                    Accessible.name: qsTr("Log")
+                }
+            }
+            Item { Layout.fillHeight: !root.log.full }
+            Button {
+                objectName: "logClose"
+                Layout.alignment: Qt.AlignHCenter
+                text: qsTr("Close")
+                onClicked: root.log.close()
             }
         }
     }

@@ -14,6 +14,7 @@
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "log_controller.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -149,6 +150,7 @@ public:
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
     AutomationShell &automation() { return *m_automation; }
+    ui::LogController &log() { return *m_log; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -185,6 +187,8 @@ private:
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<AutomationShell> m_automation;
+    std::unique_ptr<ui::LogController> m_log;
+    bool m_videoFailureLogged = false;
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
