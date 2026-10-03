@@ -84,7 +84,8 @@ class RecoveryTests : public QObject {
     app::Application::Options options()
     {
         app::Application::Options o;
-        o.recoveryDir = dir.filePath(QStringLiteral("Recovery"));
+        // Each test its own directory: a session that ends without quitting leaves work.
+        o.recoveryDir = dir.filePath(QStringLiteral("Recovery-") + QLatin1String(QTest::currentTestFunction()));
         return o;
     }
 
@@ -143,6 +144,32 @@ private slots:
         }
         app::Application b(options());
         QVERIFY(b.recoveryBundles().isEmpty());
+    }
+
+    void removingTemporaryFilesTakesOnlyEndedSessionsWork()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("temp.ass")), "x");
+        for (const char *name : {"one", "two"}) {
+            QProcess child;
+            child.start(QCoreApplication::applicationFilePath(),
+                        {QStringLiteral("--crash-child"), options().recoveryDir, path});
+            QVERIFY(child.waitForFinished(60'000));
+            QCOMPARE(child.exitCode(), 0);
+            Q_UNUSED(name);
+        }
+        app::Application running(options());
+        QVERIFY(running.openFile(path));
+        edit(running, u8"live");
+        QVERIFY(running.autosaveNow());
+        app::Application a(options());
+        QCOMPARE(a.recoveryBundles().size(), qsizetype(2));
+        // Older than yesterday: nothing yet.
+        QCOMPARE(a.removeAutosavesOlderThan(QDate::currentDate().addDays(-1)), 0);
+        QCOMPARE(a.removeAutosavesOlderThan(QDate::currentDate().addDays(1)), 2);
+        QVERIFY(a.recoveryBundles().isEmpty());
+        // The running session's work is still there for it.
+        QVERIFY(QFile::exists(options().recoveryDir));
+        QCOMPARE(running.removeAutosavesOlderThan(QDate()), 0);
     }
 
     void aRunningSessionsWorkIsNotOffered()

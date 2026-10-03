@@ -21,6 +21,7 @@
 #include "shell_controller.h"
 #include "video_controller.h"
 
+#include <QDate>
 #include <QDateTime>
 #include <QLockFile>
 #include <QTimer>
@@ -155,6 +156,10 @@ public:
     // (L58-recovery-copy); the bundle stays until it is dismissed.
     Q_INVOKABLE bool recoverBundle(const QString &key, qulonglong generation);
     Q_INVOKABLE void dismissBundle(const QString &key);
+    // P4 (GLOBAL_DELETE_TEMPORARY_FILES): removes the recovery work of ended
+    // sessions whose newest autosave is older than `date` (all when invalid);
+    // a running session's work is never touched. Returns how many were removed.
+    Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     // Writes the editing target's recovery now (the autosave timer's work; tests).
     bool autosaveNow();
     // G9: Line groups (legacy trees). The id is the description Line's.

@@ -255,6 +255,13 @@ ApplicationWindow {
                     }
                 }
                 MenuItem {
+                    objectName: "removeTemporaryMenuItem"
+                    action: Action {
+                        text: qsTr("Remove temporary files")
+                        onTriggered: temporaryFilesWindow.showFiles()
+                    }
+                }
+                MenuItem {
                     objectName: "logMenuItem"
                     action: Action {
                         text: qsTr("Show / Hide log window")
@@ -1772,6 +1779,95 @@ ApplicationWindow {
                 objectName: "recoveryClose"
                 text: qsTr("Close")
                 onClicked: recoveryWindow.close()
+            }
+        }
+    }
+
+    // P4: legacy AutoSavesRemoving for the autosaves this application keeps
+    // (no index or audio caches are written to disk).
+    Window {
+        id: temporaryFilesWindow
+        objectName: "temporaryFilesWindow"
+        title: qsTr("Remove temporary files")
+        width: 520
+        height: 380
+        flags: Qt.Dialog
+        property var bundles: []
+        property var checked: ({})
+        function showFiles() {
+            bundles = root.app.recoveryBundles()
+            checked = ({})
+            // Legacy default: a month before today.
+            const before = new Date()
+            before.setMonth(before.getMonth() - 1)
+            olderDay.currentIndex = before.getDate() - 1
+            olderMonth.currentIndex = before.getMonth()
+            olderYear.text = before.getFullYear()
+            show()
+        }
+        function cutoff() {
+            return new Date(parseInt(olderYear.text), olderMonth.currentIndex, olderDay.currentIndex + 1)
+        }
+        ColumnLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            Label { text: qsTr("Auto save") }
+            ListView {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                model: temporaryFilesWindow.bundles
+                delegate: CheckBox {
+                    required property var modelData
+                    required property int index
+                    objectName: "autosave" + index
+                    text: qsTr("%1 — %2").arg(modelData.title).arg(modelData.written)
+                    onToggled: temporaryFilesWindow.checked[modelData.key] = checked
+                }
+            }
+            RowLayout {
+                Button {
+                    objectName: "removeSelectedAutosaves"
+                    text: qsTr("Remove selected autosave files")
+                    onClicked: {
+                        for (const key in temporaryFilesWindow.checked)
+                            if (temporaryFilesWindow.checked[key])
+                                root.app.dismissBundle(key)
+                        temporaryFilesWindow.showFiles()
+                    }
+                }
+                Button {
+                    objectName: "removeAllAutosaves"
+                    text: qsTr("Remove all auto save files")
+                    onClicked: {
+                        root.app.removeAutosavesOlderThan(new Date(NaN))
+                        temporaryFilesWindow.showFiles()
+                    }
+                }
+            }
+            RowLayout {
+                Label { text: qsTr("Remove files older than") }
+                ComboBox { id: olderDay; model: 31; displayText: currentIndex + 1; Accessible.name: qsTr("Day") }
+                ComboBox {
+                    id: olderMonth
+                    model: [qsTr("January"), qsTr("February"), qsTr("March"), qsTr("April"), qsTr("May"), qsTr("June"),
+                            qsTr("July"), qsTr("August"), qsTr("September"), qsTr("October"), qsTr("November"), qsTr("December")]
+                    Accessible.name: qsTr("Month")
+                }
+                TextField { id: olderYear; Layout.preferredWidth: 60; validator: IntValidator { bottom: 2012 } Accessible.name: qsTr("Year") }
+                Button {
+                    objectName: "removeOlderAutosaves"
+                    text: qsTr("Remove older auto save files")
+                    onClicked: {
+                        root.app.removeAutosavesOlderThan(temporaryFilesWindow.cutoff())
+                        temporaryFilesWindow.showFiles()
+                    }
+                }
+            }
+            Button {
+                Layout.alignment: Qt.AlignRight
+                text: qsTr("Close")
+                onClicked: temporaryFilesWindow.close()
             }
         }
     }

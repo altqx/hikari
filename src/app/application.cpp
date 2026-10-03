@@ -1150,6 +1150,21 @@ void Application::dismissBundle(const QString &key)
         m_recovery->discard(key.toStdString());
 }
 
+int Application::removeAutosavesOlderThan(const QDate &date)
+{
+    int removed = 0;
+    const qint64 cutoff = date.isValid() ? QDateTime(date, QTime(0, 0)).toMSecsSinceEpoch() : -1;
+    for (const QVariant &v : recoveryBundles()) {
+        const auto bundle = v.toMap();
+        const auto written = QDateTime::fromString(bundle.value(QStringLiteral("written")).toString(), Qt::ISODate);
+        if (cutoff < 0 || written.toMSecsSinceEpoch() < cutoff) {
+            dismissBundle(bundle.value(QStringLiteral("key")).toString());
+            ++removed;
+        }
+    }
+    return removed;
+}
+
 bool Application::makeGroups()
 {
     const auto shown = shownLines();
