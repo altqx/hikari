@@ -15,4 +15,7 @@ qt_add_qml_module(hikari_ui
     VERSION 1.0
     QML_FILES Main.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ColourPickerDialog.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE KDAB::kddockwidgets)
+# Some engine headers include their siblings relative to the kddockwidgets directory.
+get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")

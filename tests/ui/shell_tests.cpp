@@ -821,6 +821,48 @@ private slots:
         application->editor().discard();
     }
 
+    // D1: the keyboard placement window expresses drag placements and resizes.
+    void placementWindowMovesTabsAndResizes()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
+        QVERIFY(placement);
+        auto *audioDock = root->findChild<QObject *>(QStringLiteral("audioDock"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("movePanel")), "triggered"));
+        QTRY_VERIFY(placement->isVisible());
+        auto *panelBox = findItem(placement->contentItem(), QStringLiteral("placementPanel"));
+        auto *kindBox = findItem(placement->contentItem(), QStringLiteral("placementKind"));
+        auto *targetBox = findItem(placement->contentItem(), QStringLiteral("placementTarget"));
+        QVERIFY(panelBox && kindBox && targetBox);
+        panelBox->setProperty("currentIndex", 1);  // Audio
+        kindBox->setProperty("currentIndex", 1);   // Left of
+        targetBox->setProperty("currentIndex", 3); // Grid
+        QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
+        // Audio sits left of the Grid, in the Grid's row.
+        auto *audio = item("audioPanel");
+        auto *gridPanel = item("gridPanel");
+        QTRY_VERIFY(audio->mapToScene(QPointF(0, 0)).x() < gridPanel->mapToScene(QPointF(0, 0)).x());
+        QCOMPARE(qRound(audio->mapToScene(QPointF(0, 0)).y()), qRound(gridPanel->mapToScene(QPointF(0, 0)).y()));
+        QTRY_VERIFY(audio->hasActiveFocus()); // the moved panel keeps the focus
+
+        // Numeric resize: wider by 60 px.
+        const QSize before = application->workspaceLayout().panelSize(audioDock);
+        QVERIFY(before.isValid());
+        auto *width = findItem(placement->contentItem(), QStringLiteral("placementWidth"));
+        auto *height = findItem(placement->contentItem(), QStringLiteral("placementHeight"));
+        QCOMPARE(width->property("value").toInt(), before.width());
+        width->setProperty("value", before.width() + 60);
+        QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementResize")), "click"));
+        QTRY_COMPARE(application->workspaceLayout().panelSize(audioDock).width(), before.width() + 60);
+        QCOMPARE(height->property("value").toInt(), application->workspaceLayout().panelSize(audioDock).height());
+
+        // Tab with the Grid: both in one place.
+        kindBox->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
+        QTRY_COMPARE(audio->mapToScene(QPointF(0, 0)), gridPanel->mapToScene(QPointF(0, 0)));
+        placement->close();
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));

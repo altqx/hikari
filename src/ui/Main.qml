@@ -142,6 +142,36 @@ ApplicationWindow {
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock]
 
+    // The dock of the panel with the focus (the Grid's otherwise).
+    function focusedDock() {
+        const w = root.workspaceLayout.focusWindow
+        const i = panels.findIndex(p => p.activeFocus && p.Window.window === w)
+        return dockList[i >= 0 ? i : 3]
+    }
+
+    // D1 keyboard placement: kind 0 tab with, 1 left of, 2 above, 3 right of,
+    // 4 below, 5 float. The moved panel keeps the focus.
+    function placePanel(dock, kind, target) {
+        if (kind === 5) {
+            dock.isFloating = true
+        } else {
+            if (!target || target === dock || !target.isOpen)
+                return false
+            if (kind === 0) {
+                target.addDockWidgetAsTab(dock)
+            } else {
+                const location = [0, KDDW.KDDockWidgets.Location_OnLeft, KDDW.KDDockWidgets.Location_OnTop,
+                                  KDDW.KDDockWidgets.Location_OnRight, KDDW.KDDockWidgets.Location_OnBottom][kind]
+                if (target.isFloating)
+                    target.addDockWidgetToContainingWindow(dock, location, target)
+                else
+                    dockingArea.addDockWidget(dock, location, target)
+            }
+        }
+        root.showPanel(dock)
+        return true
+    }
+
     // View > Panels > Show: open the panel, bring its window up and focus it.
     function showPanel(dock) {
         dock.open()
@@ -529,6 +559,11 @@ ApplicationWindow {
                     onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
                     onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
                 }
+            }
+            MenuItem {
+                objectName: "movePanel"
+                text: qsTr("&Move panel…")
+                onTriggered: placementWindow.openFor(root.focusedDock())
             }
             MenuItem {
                 objectName: "resetLayout"
@@ -1876,6 +1911,95 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 text: qsTr("Close")
                 onClicked: root.log.close()
+            }
+        }
+    }
+
+    // D1: every drag placement from the keyboard, and numeric resizing.
+    Window {
+        id: placementWindow
+        objectName: "placementWindow"
+        title: qsTr("Move panel")
+        width: 420
+        height: 260
+        transientParent: root
+        flags: Qt.Dialog
+        function openFor(dock) {
+            placementPanel.currentIndex = Math.max(0, root.dockList.indexOf(dock))
+            refreshSize()
+            show()
+            requestActivate()
+            placementPanel.forceActiveFocus()
+        }
+        function refreshSize() {
+            const size = root.workspaceLayout.panelSize(root.dockList[placementPanel.currentIndex])
+            placementWidth.value = size.width
+            placementHeight.value = size.height
+        }
+        GridLayout {
+            anchors.fill: parent
+            anchors.margins: 8
+            columns: 2
+            Label { text: qsTr("Panel:") }
+            ComboBox {
+                id: placementPanel
+                objectName: "placementPanel"
+                Layout.fillWidth: true
+                model: root.dockList.map(d => d.title)
+                Accessible.name: qsTr("Panel")
+                onActivated: placementWindow.refreshSize()
+            }
+            Label { text: qsTr("Place:") }
+            ComboBox {
+                id: placementKind
+                objectName: "placementKind"
+                Layout.fillWidth: true
+                model: [qsTr("Tab with"), qsTr("Left of"), qsTr("Above"), qsTr("Right of"), qsTr("Below"), qsTr("Float")]
+                Accessible.name: qsTr("Placement")
+            }
+            Label { text: qsTr("Next to:") }
+            ComboBox {
+                id: placementTarget
+                objectName: "placementTarget"
+                Layout.fillWidth: true
+                enabled: placementKind.currentIndex !== 5
+                model: root.dockList.map(d => d.title)
+                currentIndex: 3
+                Accessible.name: qsTr("Next to panel")
+            }
+            Item { Layout.fillWidth: true }
+            Button {
+                objectName: "placementMove"
+                text: qsTr("Move")
+                onClicked: {
+                    root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
+                                    root.dockList[placementTarget.currentIndex])
+                    placementWindow.refreshSize()
+                }
+            }
+            Label { text: qsTr("Width:") }
+            SpinBox {
+                id: placementWidth
+                objectName: "placementWidth"
+                from: 0; to: 10000; stepSize: 10; editable: true
+                Accessible.name: qsTr("Width")
+            }
+            Label { text: qsTr("Height:") }
+            SpinBox {
+                id: placementHeight
+                objectName: "placementHeight"
+                from: 0; to: 10000; stepSize: 10; editable: true
+                Accessible.name: qsTr("Height")
+            }
+            Item { Layout.fillWidth: true }
+            Button {
+                objectName: "placementResize"
+                text: qsTr("Resize")
+                onClicked: {
+                    root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
+                                                     placementWidth.value, placementHeight.value)
+                    placementWindow.refreshSize()
+                }
             }
         }
     }

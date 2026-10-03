@@ -1,6 +1,8 @@
 #include "workspace_layout.h"
 
 #include <kddockwidgets/LayoutSaver.h>
+#include <kddockwidgets/core/DockWidget.h>
+#include <kddockwidgets/qtquick/DockWidgetInstantiator.h>
 #include <kddockwidgets/kddockwidgets_version.h>
 
 #include <QFile>
@@ -208,6 +210,35 @@ void WorkspaceLayoutController::dismissNotice()
         return;
     m_notice.clear();
     emit changed();
+}
+
+namespace {
+
+KDDockWidgets::Core::DockWidget *controllerOf(QObject *dock)
+{
+    auto *instantiator = qobject_cast<KDDockWidgets::DockWidgetInstantiator *>(dock);
+    return instantiator ? instantiator->controller() : nullptr;
+}
+
+} // namespace
+
+QSize WorkspaceLayoutController::panelSize(QObject *dock) const
+{
+    auto *controller = controllerOf(dock);
+    if (!controller || !controller->isOpen() || controller->isFloating())
+        return {};
+    const auto size = controller->sizeInLayout();
+    return {size.width(), size.height()};
+}
+
+bool WorkspaceLayoutController::resizePanel(QObject *dock, int width, int height)
+{
+    auto *controller = controllerOf(dock);
+    if (!controller || !controller->isOpen() || controller->isFloating() || width <= 0 || height <= 0)
+        return false;
+    const auto size = controller->sizeInLayout();
+    controller->resizeInLayout(0, 0, width - size.width(), height - size.height());
+    return true;
 }
 
 } // namespace hikari::ui

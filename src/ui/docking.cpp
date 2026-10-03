@@ -8,6 +8,7 @@
 #include <kddockwidgets/core/Platform.h>
 #include <kddockwidgets/qtquick/Platform.h>
 
+#include <QGuiApplication>
 #include <QPointer>
 #include <QQmlEngine>
 
@@ -25,7 +26,10 @@ bool attachDocking(QQmlEngine &engine)
     if (g_attached)
         return false; // one engine at a time
     if (g_everAttached && KDDockWidgets::Core::Platform::instance()) {
-        // The previous engine is gone, and its docks with it.
+        // The previous engine is gone, and its docks with it. The platform
+        // connects focusObjectChanged to a lambda on itself with qApp as the
+        // context; that connection would outlive it, so it goes first.
+        QObject::disconnect(qApp, &QGuiApplication::focusObjectChanged, qApp, nullptr);
         delete KDDockWidgets::DockRegistry::self();
         delete KDDockWidgets::Core::Platform::instance();
     }

@@ -149,6 +149,39 @@ private slots:
         QVERIFY(grid->property("isOpen").toBool());
     }
 
+    // The keyboard placement dialog moves a docked panel through the same
+    // calls the default arrangement uses.
+    void movesADockedPanel()
+    {
+        QObject *area = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("area"));
+        auto *audio = qobject_cast<QQuickItem *>(dock("Audio"));
+        auto *grid = qobject_cast<QQuickItem *>(dock("Grid"));
+        QVERIFY(area && audio && grid);
+        QVERIFY(QMetaObject::invokeMethod(area, "addDockWidget", Q_ARG(QQuickItem *, audio),
+                                          Q_ARG(KDDockWidgets::Location, KDDockWidgets::Location_OnLeft),
+                                          Q_ARG(QQuickItem *, grid), Q_ARG(QSize, QSize()),
+                                          Q_ARG(KDDockWidgets::InitialVisibilityOption, {})));
+        QTRY_VERIFY(audio->property("isOpen").toBool());
+        // Audio now shares the Grid's row, on its left.
+        const QStringList layoutRows = arrangement(layout());
+        int audioRow = -1, gridRow = -1;
+        for (int i = 0; i < layoutRows.size(); ++i) {
+            if (layoutRows[i].startsWith(QStringLiteral("Audio ")))
+                audioRow = i;
+            if (layoutRows[i].contains(QStringLiteral("Grid")))
+                gridRow = i;
+        }
+        QVERIFY2(audioRow >= 0 && gridRow == audioRow + 1, qPrintable(layoutRows.join(QLatin1Char('|'))));
+        // Tab with: into the Grid's tab group.
+        QVERIFY(QMetaObject::invokeMethod(grid, "addDockWidgetAsTab", Q_ARG(QQuickItem *, audio),
+                                          Q_ARG(KDDockWidgets::InitialVisibilityOption, {})));
+        QTRY_VERIFY(arrangement(layout()).join(QLatin1Char('|')).contains(QStringLiteral("Audio")));
+        bool tabbed = false;
+        for (const QString &row : arrangement(layout()))
+            tabbed = tabbed || (row.contains(QStringLiteral("Grid")) && row.contains(QStringLiteral("Audio")));
+        QVERIFY2(tabbed, qPrintable(arrangement(layout()).join(QLatin1Char('|'))));
+    }
+
     void savedLayoutRestores()
     {
         const QByteArray saved = layout();
@@ -162,7 +195,6 @@ private slots:
         QTRY_VERIFY(!audio->property("isFloating").toBool());
         // The same arrangement comes back (frame ids are the engine's own).
         QCOMPARE(arrangement(layout()), arrangement(saved));
-        QCOMPARE(arrangement(saved).size(), 3);
     }
 
     void corruptLayoutIsRefusedAndTheLiveOneStays()

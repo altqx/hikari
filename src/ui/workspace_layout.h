@@ -8,6 +8,7 @@
 
 #include <QByteArray>
 #include <QObject>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
@@ -44,6 +45,11 @@ public:
     Q_INVOKABLE bool resetLayout();
     Q_INVOKABLE bool restoreBackup();
     Q_INVOKABLE void dismissNotice();
+    // Keyboard resize (docs/qt/docking.md): a docked panel's size in its
+    // layout, and a new width/height for it (the engine moves the panel's
+    // right and bottom separators, within the neighbours' minimum sizes).
+    Q_INVOKABLE QSize panelSize(QObject *dock) const;
+    Q_INVOKABLE bool resizePanel(QObject *dock, int width, int height);
 
     QString notice() const { return m_notice; }
     QObject *focusWindow() const;
