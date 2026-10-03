@@ -8,6 +8,7 @@
 #include "hikari/application/grid_translation.h"
 #include "hikari/application/script_properties.h"
 #include "hikari/application/shift_times.h"
+#include "hikari/application/keyframe_files.h"
 #include "hikari/core/line_groups.h"
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
@@ -198,6 +199,15 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (failed && !m_videoFailureLogged)
             m_log->log(m_video->status());
         m_videoFailureLogged = failed;
+    });
+    // A keyframe file opened before the video applies once a video is ready.
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        if (m_pendingKeyframes.isEmpty() || m_video->session().state() != application::VideoSession::State::Ready)
+            return;
+        const QString path = std::exchange(m_pendingKeyframes, QString());
+        const QString problem = openKeyframes(QUrl::fromLocalFile(path));
+        if (!problem.isEmpty())
+            m_log->log(problem);
     });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
@@ -1318,6 +1328,26 @@ bool Application::shiftTranslation(int mode)
     return done;
 }
 
+QString Application::openKeyframes(const QUrl &file)
+{
+    const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    auto &video = m_video->session();
+    if (video.state() != application::VideoSession::State::Ready) {
+        m_pendingKeyframes = path; // applied when a video opens
+        return {};
+    }
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly))
+        return tr("Invalid keyframes format");
+    const QByteArray bytes = f.readAll();
+    auto frames = application::parseKeyframes(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())));
+    if (frames.empty())
+        return tr("Invalid keyframes format");
+    video.setKeyframes(std::move(frames));
+    refreshViews();
+    return {};
+}
+
 bool Application::exactTimebase() const
 {
     return m_video->session().state() == application::VideoSession::State::Ready &&
@@ -1336,6 +1366,7 @@ QString Application::shiftTimes()
     if (hasVideo) {
         context.timebase = &timebase;
         // VideoBox::GetFrameTime: the shown frame's midpoint start and end times.
+        context.keyframes = video.keyframes();
         if (const auto frame = video.shownFrame()) {
             context.videoFrame = *frame;
             context.videoFrameStartMs = timebase.startTimeFor(*frame);

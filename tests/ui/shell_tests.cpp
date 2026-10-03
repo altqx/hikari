@@ -960,6 +960,49 @@ private slots:
         application->editor().discard();
     }
 
+    // F6: with a real (indexed) video, Shift runs the postprocessor instead.
+    void timingPanelRunsThePostprocessor()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        auto settings = application->shiftTimesSettings().settingsMap();
+        settings.insert(QStringLiteral("postprocessor"), 16 | 1 | 2);
+        settings.insert(QStringLiteral("leadIn"), 200);
+        settings.insert(QStringLiteral("leadOut"), 300);
+        settings.insert(QStringLiteral("timeMs"), 5000); // not applied while the postprocessor runs
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVERIFY(application->shiftTimes().isEmpty());
+        QCOMPARE(session->history().back().name, std::string("Shifting times"));
+        const auto *a = session->document().lines()[0];
+        QCOMPARE(a->start.value.microseconds() / 1000, 800);
+        QCOMPARE(a->end.value.microseconds() / 1000, 2300);
+    }
+
+    // F6: a keyframe file opened before the video applies when the video is ready.
+    void keyframeFilesReplaceTheVideosKeyframes()
+    {
+        const QString kf = dir.filePath(QStringLiteral("kf.txt"));
+        {
+            QFile f(kf);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 25\n0\n10\n20\n");
+        }
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openKeyframes(QUrl::fromLocalFile(kf)).isEmpty()); // kept until a video opens
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().keyframes() == (std::vector<int>{0, 10, 20}), 20000);
+        const QString bad = dir.filePath(QStringLiteral("bad.txt"));
+        {
+            QFile f(bad);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("nothing here\n");
+        }
+        QCOMPARE(application->openKeyframes(QUrl::fromLocalFile(bad)), QStringLiteral("Invalid keyframes format"));
+        QCOMPARE(application->video().session().keyframes(), (std::vector<int>{0, 10, 20}));
+    }
+
     void hideColumnsMenuTogglesGridColumns()
     {
         QVERIFY(application->openFile(episode));

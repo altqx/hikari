@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <variant>
+#include <vector>
 
 namespace hikari::application {
 
@@ -36,6 +37,14 @@ struct ShiftTimesSettings {
     int correctEndTimes = 0;
     int timePerCharacter = 0;
     std::u8string styles;           // comma-separated, for whichLines 5
+    // F6, the postprocessor (legacy POSTPROCESSOR_*): 1 lead-in, 2 lead-out,
+    // 4 continuous times, 8 snap to keyframes, 16 the postprocessor is the
+    // panel shown. With 16 and any feature the run does no shift: it applies
+    // the features to the chosen Lines (on an exact timebase only).
+    int postprocessor = 0;
+    int leadIn = 0, leadOut = 0;
+    int thresholdStart = 0, thresholdEnd = 0;
+    int keyframeBeforeStart = 0, keyframeAfterStart = 0, keyframeBeforeEnd = 0, keyframeAfterEnd = 0;
 };
 
 // What the video and audio offer the shift.
@@ -44,6 +53,7 @@ struct ShiftContext {
     std::optional<int> videoFrame;            // the shown frame
     std::optional<int> videoFrameStartMs, videoFrameEndMs;
     std::optional<int> audioMarkMs;
+    std::vector<int> keyframes;               // keyframe frame numbers of the video
 };
 
 enum class ShiftProblem {

@@ -382,4 +382,11 @@ bool VideoSession::previousKeyframe()
     return true;
 }
 
+void VideoSession::setKeyframes(std::vector<int> frames)
+{
+    std::sort(frames.begin(), frames.end());
+    frames.erase(std::unique(frames.begin(), frames.end()), frames.end());
+    m_keyframes = std::move(frames);
+}
+
 } // namespace hikari::application

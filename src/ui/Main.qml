@@ -162,7 +162,8 @@ ApplicationWindow {
     // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
-        if (which !== 0) {
+        const pp = root.shiftTimes.settings.postprocessor
+        if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
             shiftConfirm.which = which
             shiftConfirm.open()
             return
@@ -563,6 +564,7 @@ ApplicationWindow {
             Action { text: qsTr("Play / Pause"); enabled: root.video.hasVideo; onTriggered: root.video.togglePlay() }
             Action { text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.previousKeyframe() }
             Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
+            Action { text: qsTr("Open keyframes"); onTriggered: keyframesDialog.open() }
         }
         Menu {
             id: viewMenu
@@ -1626,6 +1628,53 @@ ApplicationWindow {
                             currentIndex: shiftForm.settings.correctEndTimes
                             onActivated: (index) => shiftForm.set("correctEndTimes", index)
                         }
+                        // F6: legacy "Post processor" (the panel switches between shift and postprocessor).
+                        CheckBox {
+                            objectName: "postprocessorOn"
+                            text: qsTr("Run post processor")
+                            checked: (shiftForm.settings.postprocessor & 16) !== 0
+                            onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | 16)
+                                                                              : (shiftForm.settings.postprocessor & ~16))
+                        }
+                        GroupBox {
+                            title: qsTr("Post processor")
+                            Layout.fillWidth: true
+                            visible: (shiftForm.settings.postprocessor & 16) !== 0
+                            GridLayout {
+                                anchors.fill: parent
+                                columns: 2
+                                component FlagBox: CheckBox {
+                                    property int bit
+                                    checked: (shiftForm.settings.postprocessor & bit) !== 0
+                                    onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | bit)
+                                                                                      : (shiftForm.settings.postprocessor & ~bit))
+                                }
+                                component MsBox: SpinBox {
+                                    property string key
+                                    from: 0; to: 100000; stepSize: 10; editable: true
+                                    value: shiftForm.settings[key]
+                                    onValueModified: shiftForm.set(key, value)
+                                }
+                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTr("Lead-in") }
+                                MsBox { key: "leadIn"; Accessible.name: qsTr("Lead-in") }
+                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTr("Lead-out") }
+                                MsBox { key: "leadOut"; Accessible.name: qsTr("Lead-out") }
+                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTr("Set times as continuous"); Layout.columnSpan: 2 }
+                                Label { text: qsTr("Start time threshold") }
+                                MsBox { key: "thresholdStart"; Accessible.name: qsTr("Start time threshold") }
+                                Label { text: qsTr("End time threshold") }
+                                MsBox { key: "thresholdEnd"; Accessible.name: qsTr("End time threshold") }
+                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTr("Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
+                                Label { text: qsTr("Before the start of time") }
+                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTr("Before the start of time") }
+                                Label { text: qsTr("After the start time") }
+                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTr("After the start time") }
+                                Label { text: qsTr("Before the end time") }
+                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTr("Before the end time") }
+                                Label { text: qsTr("After the end time") }
+                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTr("After the end time") }
+                            }
+                        }
                         GroupBox {
                             title: qsTr("Profiles")
                             Layout.fillWidth: true
@@ -2255,6 +2304,16 @@ ApplicationWindow {
         }
     }
 
+    FileDialog {
+        id: keyframesDialog
+        title: qsTr("Choose video file")
+        nameFilters: [qsTr("Keyframes file (*.txt *.pass *.stats *.log)"), qsTr("All files (*)")]
+        onAccepted: {
+            const problem = root.app.openKeyframes(selectedFile)
+            if (problem.length > 0)
+                root.log.log(problem)
+        }
+    }
     FileDialog {
         id: translationFileDialog
         title: qsTr("Choose subtitle file")

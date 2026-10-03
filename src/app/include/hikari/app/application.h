@@ -186,6 +186,9 @@ public:
     // legacy message. Frames need an exact (indexed) timebase.
     Q_INVOKABLE QString shiftTimes();
     Q_INVOKABLE bool exactTimebase() const;
+    // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
+    // opens, as legacy does); otherwise the legacy message.
+    Q_INVOKABLE QString openKeyframes(const QUrl &file);
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -270,6 +273,7 @@ private:
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
+    QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

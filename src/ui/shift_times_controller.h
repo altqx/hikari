@@ -19,7 +19,9 @@ class ShiftTimesController : public QObject {
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
     // {forward, byFrames, timeMs, frames, fromStartTime, moveToVideoTime,
-    //  moveToAudioTime, tagTimes, whichLines, whichTimes, correctEndTimes, styles}
+    //  moveToAudioTime, tagTimes, whichLines, whichTimes, correctEndTimes, styles,
+    //  postprocessor, leadIn, leadOut, thresholdStart, thresholdEnd,
+    //  keyframeBeforeStart, keyframeAfterStart, keyframeBeforeEnd, keyframeAfterEnd}
     Q_PROPERTY(QVariantMap settings READ settingsMap WRITE setSettingsMap NOTIFY changed)
     Q_PROPERTY(QStringList profiles READ profileNames NOTIFY changed)
 public:

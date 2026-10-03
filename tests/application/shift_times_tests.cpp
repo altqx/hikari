@@ -225,3 +225,86 @@ TEST(ShiftProfiles, LegacyProfileText)
     EXPECT_EQ(shifted.styles, u8"Main");
     EXPECT_EQ(shifted.whichTimes, 0); // "WhichTimes:" read as a number
 }
+
+namespace {
+
+EditSession twoLines(std::string_view a, std::string_view b)
+{
+    const std::string text = std::string("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n") +
+                             "Dialogue: 0," + std::string(a) + ",Default,,0,0,0,,a\n" + "Dialogue: 0," + std::string(b) +
+                             ",Default,,0,0,0,,b\n";
+    return EditSession{load(text)};
+}
+
+} // namespace
+
+// F6: the postprocessor (the rest of legacy SubsGrid::ChangeTimes).
+TEST(Postprocessor, LeadInAndOutReplaceTheShift)
+{
+    auto session = twoLines("0:00:01.00,0:00:02.00", "0:00:03.00,0:00:04.00");
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    ShiftTimesSettings s;
+    s.timeMs = 5000; // ignored while the postprocessor is on
+    s.postprocessor = 16 | 1 | 2;
+    s.leadIn = 200;
+    s.leadOut = 300;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{800, 2300}, {2800, 4300}}));
+    EXPECT_EQ(session.history().back().name, "Shifting times");
+    // Without the panel bit (16) it is the ordinary shift.
+    auto plain = twoLines("0:00:01.00,0:00:02.00", "0:00:03.00,0:00:04.00");
+    s.postprocessor = 1 | 2;
+    s.timeMs = 100;
+    ASSERT_TRUE(shiftTimes(plain, s, c));
+    EXPECT_EQ(times(plain)[0], (std::pair{1100, 2100}));
+    // Without an exact timebase legacy logs and changes nothing.
+    s.postprocessor = 16 | 1;
+    EXPECT_EQ(std::get<ShiftProblem>(shiftTimes(plain, s, {}).error()), ShiftProblem::NoExactTimebase);
+}
+
+TEST(Postprocessor, ContinuousTimesCloseSmallGaps)
+{
+    // Gap 300 ms within thresholds 200 + 300: the previous end moves by
+    // 300/500 * 300 = 180 and the next Line starts there.
+    auto session = twoLines("0:00:01.00,0:00:02.00", "0:00:02.30,0:00:03.00");
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    ShiftTimesSettings s;
+    s.postprocessor = 16 | 4;
+    s.thresholdStart = 200;
+    s.thresholdEnd = 300;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session), (std::vector<std::pair<int, int>>{{1000, 2180}, {2180, 3000}}));
+}
+
+TEST(Postprocessor, SnapToKeyframes)
+{
+    EditSession session{load("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")};
+    const auto tb = timebase();
+    ShiftContext c;
+    c.timebase = &tb;
+    c.keyframes = {25, 50}; // start times 980 and 1980 (StartTimeFor, to 10 ms)
+    ShiftTimesSettings s;
+    s.postprocessor = 16 | 8;
+    s.keyframeBeforeStart = s.keyframeAfterStart = s.keyframeBeforeEnd = s.keyframeAfterEnd = 100;
+    ASSERT_TRUE(shiftTimes(session, s, c));
+    EXPECT_EQ(times(session)[0], (std::pair{980, 1980}));
+}
+
+#include "hikari/application/keyframe_files.h"
+
+TEST(KeyframeFiles, LegacyFormats)
+{
+    // Aegisub v1: the "fps" line reads as frame 0 (legacy wxAtoi).
+    EXPECT_EQ(parseKeyframes("# keyframe format v1\nfps 23.976\n0\n120\r\n240\n"), (std::vector<int>{0, 0, 120, 240}));
+    EXPECT_EQ(parseKeyframes("# XviD 2pass stat file\ni 1 2\np 3\nb 4\ni 5\n#comment\np\ni\n"), (std::vector<int>{0, 3, 5}));
+    EXPECT_EQ(parseKeyframes("#options: preset=x\nin:0 out:0 type:I\nin:1 out:1 type:P\nin:2 out:2 type:b\nin:3 out:3 type:i\n"),
+              (std::vector<int>{0, 3}));
+    // DivX: legacy searches for the text "IPB" and finds no frame types.
+    EXPECT_TRUE(parseKeyframes("##map version 1\nI frame\nP frame\n").empty());
+    EXPECT_TRUE(parseKeyframes("not a keyframes file\n1\n").empty());
+}

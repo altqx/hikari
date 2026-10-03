@@ -74,6 +74,9 @@ public:
     bool previousKeyframe();               // wraps to the last before the first
     bool isKeyframe(int index) const;
     const std::vector<int> &keyframes() const { return m_keyframes; }
+    // GLOBAL_OPEN_KEYFRAMES: a keyframe file's frames replace the video's own
+    // (legacy Timebase::SetKeyframes) until the next video opens.
+    void setKeyframes(std::vector<int> frames);
     // The legacy Timebase over this video (empty without one).
     LegacyTimebase legacyTimebase() const;
 

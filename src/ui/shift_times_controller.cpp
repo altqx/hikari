@@ -29,7 +29,8 @@ ShiftTimesController::ShiftTimesController(QString settingsFile, QObject *parent
     for (const QString &key : {QStringLiteral("forward"), QStringLiteral("byFrames"), QStringLiteral("timeMs"),
                                QStringLiteral("frames"), QStringLiteral("fromStartTime"), QStringLiteral("moveToVideoTime"),
                                QStringLiteral("moveToAudioTime"), QStringLiteral("tagTimes"), QStringLiteral("whichLines"),
-                               QStringLiteral("whichTimes"), QStringLiteral("correctEndTimes"), QStringLiteral("styles")})
+                               QStringLiteral("whichTimes"), QStringLiteral("correctEndTimes"), QStringLiteral("styles"),
+                               QStringLiteral("postprocessor"), QStringLiteral("leadIn"), QStringLiteral("leadOut"), QStringLiteral("thresholdStart"), QStringLiteral("thresholdEnd"), QStringLiteral("keyframeBeforeStart"), QStringLiteral("keyframeAfterStart"), QStringLiteral("keyframeBeforeEnd"), QStringLiteral("keyframeAfterEnd")})
         if (ini.contains(QStringLiteral("ShiftTimes/") + key))
             map.insert(key, ini.value(QStringLiteral("ShiftTimes/") + key));
     setSettingsMap(map);
@@ -50,7 +51,16 @@ QVariantMap ShiftTimesController::settingsMap() const
             {QStringLiteral("whichLines"), s.whichLines},
             {QStringLiteral("whichTimes"), s.whichTimes},
             {QStringLiteral("correctEndTimes"), s.correctEndTimes},
-            {QStringLiteral("styles"), q(s.styles)}};
+            {QStringLiteral("styles"), q(s.styles)},
+            {QStringLiteral("postprocessor"), s.postprocessor},
+            {QStringLiteral("leadIn"), s.leadIn},
+            {QStringLiteral("leadOut"), s.leadOut},
+            {QStringLiteral("thresholdStart"), s.thresholdStart},
+            {QStringLiteral("thresholdEnd"), s.thresholdEnd},
+            {QStringLiteral("keyframeBeforeStart"), s.keyframeBeforeStart},
+            {QStringLiteral("keyframeAfterStart"), s.keyframeAfterStart},
+            {QStringLiteral("keyframeBeforeEnd"), s.keyframeBeforeEnd},
+            {QStringLiteral("keyframeAfterEnd"), s.keyframeAfterEnd}};
 }
 
 void ShiftTimesController::setSettingsMap(const QVariantMap &map)
@@ -75,6 +85,15 @@ void ShiftTimesController::setSettingsMap(const QVariantMap &map)
     i("whichLines", s.whichLines);
     i("whichTimes", s.whichTimes);
     i("correctEndTimes", s.correctEndTimes);
+    i("postprocessor", s.postprocessor);
+    i("leadIn", s.leadIn);
+    i("leadOut", s.leadOut);
+    i("thresholdStart", s.thresholdStart);
+    i("thresholdEnd", s.thresholdEnd);
+    i("keyframeBeforeStart", s.keyframeBeforeStart);
+    i("keyframeAfterStart", s.keyframeAfterStart);
+    i("keyframeBeforeEnd", s.keyframeBeforeEnd);
+    i("keyframeAfterEnd", s.keyframeAfterEnd);
     if (map.contains(QStringLiteral("styles")))
         s.styles = u8(map.value(QStringLiteral("styles")).toString());
     save();

@@ -3,6 +3,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <climits>
 #include <cmath>
 #include <cstdlib>
 #include <set>
@@ -137,6 +138,15 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
     const auto fps = microDvdFps(doc);
     if (fps && *fps <= 0)
         return std::unexpected(Fail{CommandRefusal::Invalid}); // C01-fps-isolation
+    // The postprocessor is on only as the panel shown (16) with a feature;
+    // snapping needs an exact timebase.
+    int pp = s.postprocessor;
+    if (pp) {
+        if (doc.format() == core::SubtitleFormat::TMPlayer || pp < 16)
+            pp = 0;
+        else if ((pp & 8) && !exact)
+            pp ^= 8;
+    }
     int time = s.byFrames ? 0 : s.timeMs;
     int frame = s.byFrames ? s.frames : 0;
     const int whichLines = std::max(0, s.whichLines);
@@ -185,6 +195,16 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         }
     }
     const int firsttime = firstSelection ? msOf(lines[*firstSelection]->start.value) : 0;
+    int correctEndTimes = s.correctEndTimes;
+    if (pp) {
+        // ChangeTimes: the postprocessor replaces the shift.
+        time = 0;
+        frame = 0;
+        whichTimes = 0;
+        correctEndTimes = 0;
+    }
+    if (pp > 16 && !exact)
+        return std::unexpected(Fail{ShiftProblem::NoExactTimebase}); // legacy logs and changes nothing
     auto startEndDelay = [&](int start, int end) {
         if (timebase.empty())
             return std::pair{0, 0};
@@ -233,7 +253,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
         shifted.push_back(std::move(l));
     }
     ShiftOutcome outcome;
-    if (s.correctEndTimes > 0) {
+    if (correctEndTimes > 0) {
         if (!exact) {
             outcome.endCorrectionSkipped = true; // legacy logs it and stops before correcting
         } else {
@@ -248,7 +268,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                 Shifted &cur = *order[k];
                 const Shifted &next = *order[k + 1];
                 const bool endGreater = cur.end > next.start || cur.end == next.end || k == 0;
-                if (s.correctEndTimes > 1) {
+                if (correctEndTimes > 1) {
                     if (endGreater)
                         continue;
                     int newEnd = s.timePerCharacter * static_cast<int>(cur.textLength);
@@ -259,6 +279,107 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                 if (cur.end > next.start)
                     cur.end = next.start;
             }
+        }
+    }
+    if (pp > 16) {
+        // The postprocessor loop (SubsGrid::ChangeTimes after "postprocessor:").
+        std::vector<Shifted *> order;
+        for (auto &l : shifted)
+            order.push_back(&l);
+        std::stable_sort(order.begin(), order.end(), [](const Shifted *a, const Shifted *b) {
+            return a->start != b->start ? a->start < b->start : a->end < b->end;
+        });
+        std::vector<int> keyStarts;
+        for (const int kf : context.keyframes)
+            keyStarts.push_back(zeroIt(timebase.startTimeFor(kf)));
+        int newstarttime = -1;
+        bool isPreviousEndGreater = false, isEndGreater = false, previousIsKeyFrame = true, isPreviousEndEdited = false;
+        for (std::size_t k = 0; k < order.size(); ++k) {
+            Shifted &cur = *order[k];
+            // The other Line: the next one for the first, the previous one after.
+            Shifted *it = k + 1 < order.size() ? order[k + 1] : &cur;
+            if (k + 1 < order.size())
+                isEndGreater = cur.end > it->start || cur.end == it->end || k == 0;
+            bool foundStartKeyframe = false, foundEndKeyframe = false;
+            const int oldStart = cur.start, oldEnd = cur.end;
+            int startMods = 0, endMods = 0, previousEnd = 0;
+            if (k != 0) {
+                it = order[k - 1];
+                previousEnd = it->end;
+            }
+            if (pp & 1) {
+                cur.start = std::max(0, cur.start - s.leadIn);
+                ++startMods;
+            }
+            if (pp & 2) {
+                cur.end = std::max(0, cur.end + s.leadOut);
+                ++endMods;
+            }
+            if (pp & 8) {
+                int startRange = cur.start - s.keyframeBeforeStart, startRange1 = oldStart + s.keyframeAfterStart;
+                int endRange = oldEnd - s.keyframeBeforeEnd, endRange1 = cur.end + s.keyframeAfterEnd;
+                int startResult = INT_MAX, endResult = -1;
+                for (const int key : keyStarts) {
+                    if (key >= startRange && key <= startRange1) {
+                        if (oldStart == key) {
+                            startRange = startRange1 = -1;
+                            startResult = INT_MAX;
+                            cur.start = oldStart;
+                            --startMods;
+                        }
+                        if (startResult > key &&
+                            (startResult == INT_MAX || std::abs(startResult - cur.start) > std::abs(key - cur.start)))
+                            startResult = key;
+                    }
+                    if (key >= endRange && key <= endRange1) {
+                        if (oldEnd == key) {
+                            endRange = endRange1 = -1;
+                            endResult = -1;
+                            cur.end = oldEnd;
+                            --endMods;
+                        }
+                        if (endResult < key && key > cur.start &&
+                            (endResult == -1 || std::abs(endResult - cur.end) > std::abs(key - cur.end)))
+                            endResult = key;
+                    }
+                }
+                if (startResult != INT_MAX) {
+                    const int checkEnd = endResult != -1 ? endResult : cur.end;
+                    if (cur.start != startResult && checkEnd - startResult > 600) {
+                        cur.start = startResult;
+                        ++startMods;
+                    }
+                    foundStartKeyframe = true;
+                }
+                if (endResult != -1) {
+                    if (cur.end != endResult && endResult - cur.start > 600) {
+                        cur.end = endResult;
+                        ++endMods;
+                    }
+                    foundEndKeyframe = true;
+                }
+                if (cur.start < previousEnd && !isPreviousEndGreater && previousEnd < oldEnd && isPreviousEndEdited)
+                    it->end = cur.start;
+            }
+            if (pp & 4) {
+                const int cdiff = s.thresholdEnd + s.thresholdStart;
+                const int tdiff = cur.start - it->end;
+                newstarttime = -1;
+                if (tdiff <= cdiff && tdiff > 0 && !previousIsKeyFrame) {
+                    const int coeff = static_cast<int>((static_cast<float>(tdiff) / static_cast<float>(cdiff)) *
+                                                       static_cast<float>(s.thresholdEnd));
+                    it->end = std::max(0, it->end + zeroIt(coeff));
+                    newstarttime = it->end;
+                }
+                if (!foundStartKeyframe && newstarttime != -1) {
+                    cur.start = std::max(0, newstarttime);
+                    newstarttime = -1;
+                    ++startMods;
+                }
+            }
+            previousIsKeyFrame = foundEndKeyframe;
+            isPreviousEndGreater = isEndGreater;
+            isPreviousEndEdited = endMods > 0;
         }
     }
     std::set<core::LineId> touched;
