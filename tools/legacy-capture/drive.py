@@ -331,15 +331,16 @@ def automation(spec, package, display, workdir, probe_source):
             time.sleep(1)
             if k == 0:
                 probe_rec["submenu"] = screenshot(display, workdir, "automation-submenu")
-            # The app-drawn menu misses an instant press and release on an item:
-            # hover it, then press and release apart.
+            # A click on a submenu item never reaches the app-drawn menu under
+            # Xvfb (hover does: the item is highlighted). Legacy's Linux build
+            # routes menu keys through hikarisubApp::FilterEvent whatever has
+            # the focus (MenuBar::HandleNavKeyIfOpen), so Return runs the
+            # highlighted item, as a keyboard user would.
             x(["xdotool", "mousemove", str(sx), str(sy + row * k)], display)
             time.sleep(0.5)
             x(["xdotool", "mousemove", str(sx + 5), str(sy + row * k)], display)
-            time.sleep(0.3)
-            x(["xdotool", "mousedown", "1"], display)
-            time.sleep(0.2)
-            x(["xdotool", "mouseup", "1"], display)
+            time.sleep(0.5)
+            x(["xdotool", "key", "--clearmodifiers", "Return"], display)
             if step.get("keys") is not None:
                 time.sleep(3)  # the dialog takes the focus
                 srec["dialog_windows"] = [t for _, t in popups(display, wid)]
