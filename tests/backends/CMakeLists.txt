@@ -76,6 +76,31 @@ target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
 add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
+# L6: representative third-party scripts (tests/fixtures/automation-thirdparty).
+# The stage test verifies the manifest's sha256s, fetches the projects that are
+# not committed (offline they are skipped with the reason) and stages the
+# corpus with the bundled Include; the corpus tests require it.
+set(_hikari_thirdparty "${PROJECT_SOURCE_DIR}/tests/fixtures/automation-thirdparty")
+set(_hikari_thirdparty_stage "${CMAKE_CURRENT_BINARY_DIR}/automation-thirdparty/stage")
+add_test(NAME automation-thirdparty-stage COMMAND "${CMAKE_COMMAND}"
+    -D "MANIFEST=${_hikari_thirdparty}/manifest.json"
+    -D "FETCH_DIR=${CMAKE_CURRENT_BINARY_DIR}/automation-thirdparty/fetched"
+    -D "OUT=${_hikari_thirdparty_stage}"
+    -D "STAGE_INCLUDE=${HIKARI_AUTOMATION_STAGE}/Include"
+    -P "${_hikari_thirdparty}/stage.cmake")
+set_tests_properties(automation-thirdparty-stage PROPERTIES FIXTURES_SETUP automation_thirdparty
+    LABELS backends TIMEOUT 300)
+hikari_add_gtest(hikari_backends_automation_thirdparty_tests SOURCES automation_thirdparty_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends
+    PROPERTIES FIXTURES_REQUIRED automation_thirdparty TIMEOUT 600)
+target_compile_definitions(hikari_backends_automation_thirdparty_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_THIRDPARTY_DIR="${_hikari_thirdparty}"
+    HIKARI_THIRDPARTY_STAGE="${_hikari_thirdparty_stage}"
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
+    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
+add_dependencies(hikari_backends_automation_thirdparty_tests hikari_lua_helper hikari_automation_stage)
+
 # N5: general playback through Qt Multimedia, identified by delivered frames,
 # and chapters through the media helper.
 hikari_add_qttest(hikari_backends_general_player_tests SOURCES general_player_tests.cpp

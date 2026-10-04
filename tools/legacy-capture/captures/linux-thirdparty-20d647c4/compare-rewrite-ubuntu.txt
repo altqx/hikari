@@ -1,0 +1,330 @@
+legacy 20d647c4 on Linux-7.2.5-4-omarchy-x86_64-with-glibc2.39
+load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate differences
+- host: jit
+    legacy:  "LuaJIT 2.1.1703358377"
+    rewrite: "LuaJIT 2.1.1788856981"
+- module: l0.DependencyControl
+    legacy:  {"error": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:13: FFI could not load \"PT.PreciseTimer.PreciseTimer\". Search paths:", "ok": false, "type": "string"}
+    rewrite: {"ok": true, "type": "table"}
+- script: ILL.ChangeAlign.moon error
+    legacy:  "[string]:32: FFI could not load \"clipper2.clipper2.clipper2\". Search paths:"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: ILL.SplitText.moon error
+    legacy:  "ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: arch.Line2Fbf.moon error
+    legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: arch.NoteBrowser.moon error
+    legacy:  "[string]:1: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: arch.SplitSections.moon error
+    legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.CascadeTransforms.moon error
+    legacy:  "l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.Nudge.moon error
+    legacy:  "l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.SplitLines.moon error
+    legacy:  "l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.VerticalText.moon error
+    legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: lyger.FbfTransform.moon error
+    legacy:  "lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: lyger.GradientByChar.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.GradientByChar.lua error
+    legacy:  "lyger.GradientByChar.lua:25: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.GradientByChar.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Gradient by character/Apply Gradient"], ["macro", "Gradient by character/Remove Gradient"]]
+- script: lyger.GradientEverything.moon error
+    legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: lyger.LayerIncrement.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.LayerIncrement.lua error
+    legacy:  "lyger.LayerIncrement.lua:16: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.LayerIncrement.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Layer increment"]]
+- script: lyger.LuaInterpret.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.LuaInterpret.lua error
+    legacy:  "lyger.LuaInterpret.lua:185: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.LuaInterpret.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Lua Interpreter"]]
+- script: myaa.MergeScripts.moon error
+    legacy:  "myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module myaa.ASSParser: "
+- script: myaa.PasteFromPad.moon error
+    legacy:  "myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: petzku.Accenter.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.Accenter.lua error
+    legacy:  "petzku.Accenter.lua:42: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.Accenter.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Accenter"]]
+- script: petzku.JumpToNextPlus.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.JumpToNextPlus.lua error
+    legacy:  "petzku.JumpToNextPlus.lua:15: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.JumpToNextPlus.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Jump to Next/Start Time"], ["macro", "Jump to Next/End Time"], ["macro", "Jump to Previous/Start Time"], ["macro", "Jump to Previous/End Time"]]
+- script: petzku.Typewriter.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.Typewriter.lua error
+    legacy:  "petzku.Typewriter.lua:36: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.Typewriter.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.FoldOperations.moon error
+    legacy:  "phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: phos.RemoveTags.moon error
+    legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: phos.snap.lua registrations
+    legacy:  [["macro", "PhosCity/Bidirectional Snapping/Snap both to keyframes"], ["macro", "PhosCity/Bidirectional Snapping/Snap start to keyframe"], ["macro", "PhosCity/Bidirectional Snapping/Snap end to keyframe"]]
+    rewrite: [["macro", "Bidirectional Snapping/Snap both"], ["macro", "Bidirectional Snapping/Snap start"], ["macro", "Bidirectional Snapping/Snap end"]]
+- script: phos.wave.lua registrations
+    legacy:  [["macro", "PhosCity/Wave"]]
+    rewrite: [["macro", "Wave"]]
+- script: ua.BlurAndGlow.lua script_version
+    legacy:  "2.5"
+    rewrite: "2.5.0"
+- script: ua.ChangeCase.lua script_version
+    legacy:  "3.0"
+    rewrite: "3.0.0"
+- script: ua.Cycles.lua script_version
+    legacy:  "2.0"
+    rewrite: "2.0.0"
+- script: ua.HYDRA.lua script_version
+    legacy:  "6.1"
+    rewrite: "6.1.0"
+- script: ua.JumpToNext.lua script_version
+    legacy:  "2.0"
+    rewrite: "2.0.0"
+- script: ua.MultiLineEditor.lua script_version
+    legacy:  "1.8"
+    rewrite: "1.8.0"
+- script: ua.iBus.lua script_version
+    legacy:  "1.7"
+    rewrite: "1.7.0"
+macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differences
+- host: jit
+    legacy:  "LuaJIT 2.1.1703358377"
+    rewrite: "LuaJIT 2.1.1788856981"
+- module: l0.DependencyControl
+    legacy:  {"error": "loop or previous error loading module 'l0.DependencyControl'", "ok": false, "type": "string"}
+    rewrite: {"ok": true, "type": "table"}
+- script: ILL.ChangeAlign.moon error
+    legacy:  "ILL.ChangeAlign.moon:26: loop or previous error loading module 'ILL.ILL'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: ILL.SplitText.moon error
+    legacy:  "ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: arch.Line2Fbf.moon error
+    legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: arch.NoteBrowser.moon error
+    legacy:  "arch.NoteBrowser.moon:39: loop or previous error loading module 'l0.Functional'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: arch.SplitSections.moon error
+    legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.CascadeTransforms.moon error
+    legacy:  "l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.Nudge.moon error
+    legacy:  "l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.SplitLines.moon error
+    legacy:  "l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: l0.VerticalText.moon error
+    legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: lyger.FbfTransform.moon error
+    legacy:  "lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: lyger.GradientByChar.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.GradientByChar.lua error
+    legacy:  "lyger.GradientByChar.lua:25: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.GradientByChar.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Gradient by character/Apply Gradient"], ["macro", "Gradient by character/Remove Gradient"]]
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient error
+    legacy:  "probe: the script did not load"
+    rewrite: "[string]:39: bad argument #1 to 'ipairs' (table expected, got userdata)"
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient dialogs
+    legacy:  null
+    rewrite: []
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient log
+    legacy:  null
+    rewrite: ["5|[DependencyControl] Skipping update check for Gradient by character (Updater disabled).\n"]
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient events
+    legacy:  null
+    rewrite: [{"actor": "Alice", "comment": false, "effect": "", "end_time": 3000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient header
+    legacy:  null
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: lyger.GradientEverything.moon error
+    legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: lyger.LayerIncrement.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.LayerIncrement.lua error
+    legacy:  "lyger.LayerIncrement.lua:16: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.LayerIncrement.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Layer increment"]]
+- run: lyger.LayerIncrement.lua | Layer increment ok
+    legacy:  false
+    rewrite: true
+- run: lyger.LayerIncrement.lua | Layer increment error
+    legacy:  "probe: the script did not load"
+    rewrite: ""
+- run: lyger.LayerIncrement.lua | Layer increment returned_selection
+    legacy:  null
+    rewrite: [1, 2, 3]
+- run: lyger.LayerIncrement.lua | Layer increment dialogs
+    legacy:  null
+    rewrite: [{"buttons": ["Go", "Cancel"], "controls": ["dropdown:updown", "label:", "intedit:int"]}]
+- run: lyger.LayerIncrement.lua | Layer increment log
+    legacy:  null
+    rewrite: ["5|[DependencyControl] Skipping update check for Layer increment (Updater disabled).\n"]
+- run: lyger.LayerIncrement.lua | Layer increment events
+    legacy:  null
+    rewrite: [{"actor": "Alice", "comment": false, "effect": "", "end_time": 3000, "layer": 5, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 3, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
+- run: lyger.LayerIncrement.lua | Layer increment header
+    legacy:  null
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: lyger.LuaInterpret.lua loaded
+    legacy:  false
+    rewrite: true
+- script: lyger.LuaInterpret.lua error
+    legacy:  "lyger.LuaInterpret.lua:185: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: lyger.LuaInterpret.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Lua Interpreter"]]
+- script: myaa.MergeScripts.moon error
+    legacy:  "myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module myaa.ASSParser: "
+- script: myaa.PasteFromPad.moon error
+    legacy:  "myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: petzku.Accenter.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.Accenter.lua error
+    legacy:  "petzku.Accenter.lua:42: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.Accenter.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Accenter"]]
+- script: petzku.JumpToNextPlus.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.JumpToNextPlus.lua error
+    legacy:  "petzku.JumpToNextPlus.lua:15: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.JumpToNextPlus.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Jump to Next/Start Time"], ["macro", "Jump to Next/End Time"], ["macro", "Jump to Previous/Start Time"], ["macro", "Jump to Previous/End Time"]]
+- run: petzku.SmartQuotify.moon | SmartQuotify header
+    legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: petzku.Typewriter.lua loaded
+    legacy:  false
+    rewrite: true
+- script: petzku.Typewriter.lua error
+    legacy:  "petzku.Typewriter.lua:36: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: ""
+- script: petzku.Typewriter.lua registrations
+    legacy:  []
+    rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.FoldOperations.moon error
+    legacy:  "phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+- script: phos.RemoveTags.moon error
+    legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: phos.snap.lua registrations
+    legacy:  [["macro", "PhosCity/Bidirectional Snapping/Snap both to keyframes"], ["macro", "PhosCity/Bidirectional Snapping/Snap start to keyframe"], ["macro", "PhosCity/Bidirectional Snapping/Snap end to keyframe"]]
+    rewrite: [["macro", "Bidirectional Snapping/Snap both"], ["macro", "Bidirectional Snapping/Snap start"], ["macro", "Bidirectional Snapping/Snap end"]]
+- script: phos.wave.lua registrations
+    legacy:  [["macro", "PhosCity/Wave"]]
+    rewrite: [["macro", "Wave"]]
+- script: ua.BlurAndGlow.lua script_version
+    legacy:  "2.5"
+    rewrite: "2.5.0"
+- script: ua.ChangeCase.lua script_version
+    legacy:  "3.0"
+    rewrite: "3.0.0"
+- run: ua.ChangeCase.lua | Change Case log
+    legacy:  []
+    rewrite: ["5|[DependencyControl] Skipping update check for Change Case (Updater disabled).\n"]
+- run: ua.ChangeCase.lua | Change Case header
+    legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: ua.Cycles.lua script_version
+    legacy:  "2.0"
+    rewrite: "2.0.0"
+- run: ua.Cycles.lua | Cycles/Blur Cycle log
+    legacy:  []
+    rewrite: ["5|[DependencyControl] Skipping update check for Cycles (Updater disabled).\n"]
+- run: ua.Cycles.lua | Cycles/Blur Cycle header
+    legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: ua.HYDRA.lua script_version
+    legacy:  "6.1"
+    rewrite: "6.1.0"
+- script: ua.JumpToNext.lua script_version
+    legacy:  "2.0"
+    rewrite: "2.0.0"
+- run: ua.JumpToNext.lua | Jump to Next/Style log
+    legacy:  []
+    rewrite: ["5|[DependencyControl] Skipping update check for Jump to Next (Updater disabled).\n"]
+- run: ua.JumpToNext.lua | Jump to Next/Style header
+    legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: ua.MultiLineEditor.lua script_version
+    legacy:  "1.8"
+    rewrite: "1.8.0"
+- run: ua.MultiLineEditor.lua | : Non-GUI macros :/MultiEdit: Reverse log
+    legacy:  []
+    rewrite: ["5|[DependencyControl] Skipping update check for Multi-Line Editor (Updater disabled).\n"]
+- run: ua.MultiLineEditor.lua | : Non-GUI macros :/MultiEdit: Reverse header
+    legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
+    rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: ua.iBus.lua script_version
+    legacy:  "1.7"
+    rewrite: "1.7.0"

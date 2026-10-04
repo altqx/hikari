@@ -1039,6 +1039,25 @@ TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
     EXPECT_EQ(run.log, QStringList{"true,table,"});
 }
 
+// L6 (R5-per-platform): the LuaJIT build as each legacy platform had it.
+// Windows: Lua 5.2 extensions (table.pack, __ipairs, which LibLyger's
+// ipairs(sub) and DependencyControl's Functional need; break anywhere, which
+// MoonScript's `continue` needs) and no string.buffer. Linux: neither, as the
+// legacy package's distribution LuaJIT (its capture: table.pack nil, ipairs
+// of the subtitles object fails).
+TEST_F(LuaHelper, LuaJitBuildMatchesTheLegacyPlatform)
+{
+    auto host = load(fixture("luajit-build.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runToEnd(*host, "Show"));
+    EXPECT_EQ(run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+#ifdef _WIN32
+    EXPECT_EQ(run.log, QStringList{"function,true,true,false,true"});
+#else
+    EXPECT_EQ(run.log, QStringList{"nil,false,false,true,false"});
+#endif
+}
+
 TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
 {
     QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));

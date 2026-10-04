@@ -41,3 +41,20 @@ The rewrite side of the dialog cases is `AutomationDialogTests::captureProbeDial
 Run through [`legacy-capture.yml`](../../.github/workflows/legacy-capture.yml) (manual dispatch). Reviewed observation files are committed under `tests/fixtures/legacy-observations/`. An observation records what the old app did; it is not an expectation for the rewrite. Expectations stay in the fixture manifest and the departure ledger.
 
 To compare a capture with the rewrite, run `LuaHelper.CaptureProbeCorpusRunsInThisHost` (it writes `tests/backends/artifacts/automation-capture-corpus.json` and `automation-capture-corpus-macro.json` in the build tree) and then [`compare_automation.py`](compare_automation.py) `<observations.json> <automation-capture-corpus.json> [--macro-corpus <automation-capture-corpus-macro.json>] [--dialogs <automation-capture-dialogs.json>]`. It lists host, module, C06-stub, API and per-script differences for the load-time (and macro-time) corpus, and for each dialog case the legacy answer (or what the legacy app did instead) beside the rewrite's, as candidates for review; none is a verdict.
+
+### L6 third-party corpus
+
+`drive.py --corpus-dir <dir>` runs only the automation probe, with the scripts in `<dir>` as the corpus (the package's Autoload is emptied), `--include-dir` files added to the package's Include (a bundled file is never replaced), `--document` as the probe's document and `--runs` as `HIKARI_CAPTURE_RUNS`; of the plan's steps only the corpus macro runs (the dialog steps would deadlock, A33-dialog-deadlock). With a runs file the probe's corpus macro runs the listed macros right after each script loads, on its own document, answering their dialogs itself and recording their log, returned selection and the document afterwards, then restoring the events. The probe also records the LuaJIT build's Lua 5.2 extensions and string.buffer (`lua_features`). The corpus comes from [`tests/fixtures/automation-thirdparty`](../../tests/fixtures/automation-thirdparty/manifest.json), staged by its `stage.cmake` (the `automation-thirdparty-stage` test leaves it in the build tree: `Autoload/` and the projects' modules alone in `Modules/`). In the `hikari-legacy-env` container (Xvfb, openbox, the package's wx libraries on `LD_LIBRARY_PATH`):
+
+```
+python3 tools/legacy-capture/drive.py --plan tools/legacy-capture/plan.json \
+    --package hikarisub-linux-x86_64.tar.gz --probe /bin/true --legacy-commit <sha> \
+    --corpus-dir <stage>/Autoload --include-dir <stage>/Modules \
+    --document tests/fixtures/automation-thirdparty/fixture.ass \
+    --runs tests/fixtures/automation-thirdparty/runs.json --out capture/observations.json
+python3 tools/legacy-capture/compare_automation.py capture/observations.json \
+    <build>/tests/backends/artifacts/automation-capture-thirdparty.json \
+    --macro-corpus <build>/tests/backends/artifacts/automation-capture-thirdparty-macro.json
+```
+
+The rewrite side is `ThirdPartyCorpus.CaptureProbeRunsTheCorpus` (`hikari_backends_automation_thirdparty_tests`). The reviewed Linux capture and comparison are in [`captures/linux-thirdparty-20d647c4`](captures/linux-thirdparty-20d647c4/compare-rewrite-ubuntu.txt).

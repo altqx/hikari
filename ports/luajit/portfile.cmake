@@ -30,6 +30,14 @@ if(VCPKG_DETECTED_MSVC)
     if (VCPKG_LIBRARY_LINKAGE STREQUAL "static")
         list(APPEND options "MSVCBUILD_OPTIONS=static")
     endif()
+    # As the legacy Windows build (Thirdparty/Build/LuaJit/LuaJit.vcxproj):
+    # Lua 5.2 extensions on (table.pack, __pairs/__ipairs, break anywhere,
+    # which DependencyControl's Functional, LibLyger and MoonScript's
+    # `continue` rely on) and string.buffer off (L6, R5-per-platform). The
+    # legacy Linux package used its distribution's LuaJIT, built without
+    # them, so the other branch below keeps the defaults.
+    vcpkg_replace_string("${SOURCE_PATH}/src/msvcbuild.bat" "/D_CRT_SECURE_NO_DEPRECATE"
+        "/D_CRT_SECURE_NO_DEPRECATE /DLUAJIT_ENABLE_LUA52COMPAT /DLUAJIT_DISABLE_BUFFER")
 
     vcpkg_install_nmake(SOURCE_PATH "${SOURCE_PATH}"
         PROJECT_NAME "${CMAKE_CURRENT_LIST_DIR}/Makefile.nmake"
