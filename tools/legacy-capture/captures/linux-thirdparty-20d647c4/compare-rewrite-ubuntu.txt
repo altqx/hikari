@@ -1,5 +1,5 @@
 legacy 20d647c4 on Linux-7.2.5-4-omarchy-x86_64-with-glibc2.39
-load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate differences
+load-time corpus: 41 legacy scripts, 41 rewrite scripts, 72 candidate differences
 - host: jit
     legacy:  "LuaJIT 2.1.1703358377"
     rewrite: "LuaJIT 2.1.1788856981"
@@ -15,9 +15,15 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
 - script: ILL.SplitText.moon error
     legacy:  "ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: arch.Line2Fbf.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.Line2Fbf.moon error
     legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: arch.Line2Fbf.moon registrations
+    legacy:  []
+    rewrite: [["macro", "FBF-ifier"]]
 - script: arch.NoteBrowser.moon loaded
     legacy:  false
     rewrite: true
@@ -27,21 +33,51 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
 - script: arch.NoteBrowser.moon registrations
     legacy:  []
     rewrite: [["macro", "Note Browser/Load notes"], ["macro", "Note Browser/Jump to next note"], ["macro", "Note Browser/Jump to previous note"], ["macro", "Note Browser/Jump to next note by author"], ["macro", "Note Browser/Jump to previous note by author"], ["macro", "Note Browser/Clear all markers"]]
+- script: arch.SplitSections.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.SplitSections.moon error
     legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: arch.SplitSections.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Split Tag Sections"]]
+- script: l0.CascadeTransforms.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.CascadeTransforms.moon error
     legacy:  "l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.CascadeTransforms.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Cascade Transforms"]]
+- script: l0.Nudge.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.Nudge.moon error
     legacy:  "l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.Nudge.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Nudge/Configure Nudge"], ["macro", "Nudge/Position Right (+1)"], ["macro", "Nudge/Position Left (-1)"], ["macro", "Nudge/Position Up (-1)"], ["macro", "Nudge/Position Down (+1)"], ["macro", "Nudge/Cycle Blur"], ["macro", "Nudge/Cycle Alpha"], ["macro", "Nudge/Toggle Bold"], ["macro", "Nudge/Cycle Wrap Styles"], ["macro", "Nudge/Align Up"], ["macro", "Nudge/Align Down"], ["macro", "Nudge/Align Left"], ["macro", "Nudge/Align Right"], ["macro", "Nudge/Add Edgeblur"], ["macro", "Nudge/Default Origin"], ["macro", "Nudge/Brightness Up"], ["macro", "Nudge/Brightness Down"], ["macro", "Nudge/Invert First Clip"], ["macro", "Nudge/Remove Comments & Junk"], ["macro", "Nudge/Strip Tags"], ["macro", "Nudge/Clips -> Drawing"]]
+- script: l0.SplitLines.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.SplitLines.moon error
     legacy:  "l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.SplitLines.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Split Lines/Split by Characters"], ["macro", "Split Lines/Split at Even Interval"], ["macro", "Split Lines/Split at Custom Interval"], ["macro", "Split Lines/Split at Indexes"], ["macro", "Split Lines/Split at Tags"]]
+- script: l0.VerticalText.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.VerticalText.moon error
     legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.VerticalText.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Vertical Text"]]
 - script: lyger.FbfTransform.moon loaded
     legacy:  false
     rewrite: true
@@ -50,7 +86,7 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
     rewrite: ""
 - script: lyger.FbfTransform.moon registrations
     legacy:  []
-    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/All"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"]]
+    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"], ["macro", "Frame-by-frame transform/Presets/All"]]
 - script: lyger.GradientByChar.lua loaded
     legacy:  false
     rewrite: true
@@ -60,9 +96,15 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
 - script: lyger.GradientByChar.lua registrations
     legacy:  []
     rewrite: [["macro", "Gradient by character/Apply Gradient"], ["macro", "Gradient by character/Remove Gradient"]]
+- script: lyger.GradientEverything.moon loaded
+    legacy:  false
+    rewrite: true
 - script: lyger.GradientEverything.moon error
     legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module SubInspector.Inspector: "
+    rewrite: ""
+- script: lyger.GradientEverything.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Gradient Everything/Gradient Everything"], ["macro", "Gradient Everything/Presets/Default"], ["macro", "Gradient Everything/Presets/[Last Settings]"], ["macro", "Gradient Everything/Presets/Horizontal all"]]
 - script: lyger.LayerIncrement.lua loaded
     legacy:  false
     rewrite: true
@@ -120,15 +162,21 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
 - script: petzku.Typewriter.lua registrations
     legacy:  []
     rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.EditTags.moon loaded
+    legacy:  false
+    rewrite: true
 - script: phos.EditTags.moon error
     legacy:  "phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
 - script: phos.EditTags.moon script_name
     legacy:  null
     rewrite: "Edit Tags"
 - script: phos.EditTags.moon script_version
     legacy:  null
     rewrite: "1.1.0"
+- script: phos.EditTags.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Edit Tags"]]
 - script: phos.FoldOperations.moon loaded
     legacy:  false
     rewrite: true
@@ -140,7 +188,7 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
     rewrite: [["macro", "Fold Operations/01. Select Fold"], ["macro", "Fold Operations/02. Comment Fold"], ["macro", "Fold Operations/03. Uncomment Fold"], ["macro", "Fold Operations/04. Comment or Uncomment Fold"], ["macro", "Fold Operations/05. Toggle Comments in Fold"], ["macro", "Fold Operations/06. Delete Fold"], ["macro", "Fold Operations/07. Clear Fold"], ["macro", "Fold Operations/08. Cut Fold"], ["macro", "Fold Operations/09. Copy Fold"], ["macro", "Fold Operations/10. Paste Fold"], ["macro", "Fold Operations/11. Create Fold Around Selected Lines"], ["macro", "Fold Operations/GUI"]]
 - script: phos.RemoveTags.moon error
     legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module phos.AssfPlus: "
 - script: phos.snap.lua registrations
     legacy:  [["macro", "PhosCity/Bidirectional Snapping/Snap both to keyframes"], ["macro", "PhosCity/Bidirectional Snapping/Snap start to keyframe"], ["macro", "PhosCity/Bidirectional Snapping/Snap end to keyframe"]]
     rewrite: [["macro", "Bidirectional Snapping/Snap both"], ["macro", "Bidirectional Snapping/Snap start"], ["macro", "Bidirectional Snapping/Snap end"]]
@@ -168,7 +216,7 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate difference
 - script: ua.iBus.lua script_version
     legacy:  "1.7"
     rewrite: "1.7.0"
-macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differences
+macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 98 candidate differences
 - host: jit
     legacy:  "LuaJIT 2.1.1703358377"
     rewrite: "LuaJIT 2.1.1788856981"
@@ -184,9 +232,15 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
 - script: ILL.SplitText.moon error
     legacy:  "ILL.SplitText.moon:22: loop or previous error loading module 'ILL.ILL'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module ILL.ILL: "
+- script: arch.Line2Fbf.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.Line2Fbf.moon error
     legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: arch.Line2Fbf.moon registrations
+    legacy:  []
+    rewrite: [["macro", "FBF-ifier"]]
 - script: arch.NoteBrowser.moon loaded
     legacy:  false
     rewrite: true
@@ -196,21 +250,51 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
 - script: arch.NoteBrowser.moon registrations
     legacy:  []
     rewrite: [["macro", "Note Browser/Load notes"], ["macro", "Note Browser/Jump to next note"], ["macro", "Note Browser/Jump to previous note"], ["macro", "Note Browser/Jump to next note by author"], ["macro", "Note Browser/Jump to previous note by author"], ["macro", "Note Browser/Clear all markers"]]
+- script: arch.SplitSections.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.SplitSections.moon error
     legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: arch.SplitSections.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Split Tag Sections"]]
+- script: l0.CascadeTransforms.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.CascadeTransforms.moon error
     legacy:  "l0.CascadeTransforms.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.CascadeTransforms.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Cascade Transforms"]]
+- script: l0.Nudge.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.Nudge.moon error
     legacy:  "l0.Nudge.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.Nudge.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Nudge/Configure Nudge"], ["macro", "Nudge/Position Right (+1)"], ["macro", "Nudge/Position Left (-1)"], ["macro", "Nudge/Position Up (-1)"], ["macro", "Nudge/Position Down (+1)"], ["macro", "Nudge/Cycle Blur"], ["macro", "Nudge/Cycle Alpha"], ["macro", "Nudge/Toggle Bold"], ["macro", "Nudge/Cycle Wrap Styles"], ["macro", "Nudge/Align Up"], ["macro", "Nudge/Align Down"], ["macro", "Nudge/Align Left"], ["macro", "Nudge/Align Right"], ["macro", "Nudge/Add Edgeblur"], ["macro", "Nudge/Default Origin"], ["macro", "Nudge/Brightness Up"], ["macro", "Nudge/Brightness Down"], ["macro", "Nudge/Invert First Clip"], ["macro", "Nudge/Remove Comments & Junk"], ["macro", "Nudge/Strip Tags"], ["macro", "Nudge/Clips -> Drawing"]]
+- script: l0.SplitLines.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.SplitLines.moon error
     legacy:  "l0.SplitLines.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.SplitLines.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Split Lines/Split by Characters"], ["macro", "Split Lines/Split at Even Interval"], ["macro", "Split Lines/Split at Custom Interval"], ["macro", "Split Lines/Split at Indexes"], ["macro", "Split Lines/Split at Tags"]]
+- script: l0.VerticalText.moon loaded
+    legacy:  false
+    rewrite: true
 - script: l0.VerticalText.moon error
     legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
+- script: l0.VerticalText.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Vertical Text"]]
 - script: lyger.FbfTransform.moon loaded
     legacy:  false
     rewrite: true
@@ -219,7 +303,7 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
     rewrite: ""
 - script: lyger.FbfTransform.moon registrations
     legacy:  []
-    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/All"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"]]
+    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"], ["macro", "Frame-by-frame transform/Presets/All"]]
 - script: lyger.GradientByChar.lua loaded
     legacy:  false
     rewrite: true
@@ -247,9 +331,15 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
 - run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient header
     legacy:  null
     rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
+- script: lyger.GradientEverything.moon loaded
+    legacy:  false
+    rewrite: true
 - script: lyger.GradientEverything.moon error
     legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module SubInspector.Inspector: "
+    rewrite: ""
+- script: lyger.GradientEverything.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Gradient Everything/Gradient Everything"], ["macro", "Gradient Everything/Presets/Default"], ["macro", "Gradient Everything/Presets/[Last Settings]"], ["macro", "Gradient Everything/Presets/Horizontal all"]]
 - script: lyger.LayerIncrement.lua loaded
     legacy:  false
     rewrite: true
@@ -343,15 +433,21 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
 - script: petzku.Typewriter.lua registrations
     legacy:  []
     rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.EditTags.moon loaded
+    legacy:  false
+    rewrite: true
 - script: phos.EditTags.moon error
     legacy:  "phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: ""
 - script: phos.EditTags.moon script_name
     legacy:  null
     rewrite: "Edit Tags"
 - script: phos.EditTags.moon script_version
     legacy:  null
     rewrite: "1.1.0"
+- script: phos.EditTags.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Edit Tags"]]
 - script: phos.FoldOperations.moon loaded
     legacy:  false
     rewrite: true
@@ -363,7 +459,7 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differenc
     rewrite: [["macro", "Fold Operations/01. Select Fold"], ["macro", "Fold Operations/02. Comment Fold"], ["macro", "Fold Operations/03. Uncomment Fold"], ["macro", "Fold Operations/04. Comment or Uncomment Fold"], ["macro", "Fold Operations/05. Toggle Comments in Fold"], ["macro", "Fold Operations/06. Delete Fold"], ["macro", "Fold Operations/07. Clear Fold"], ["macro", "Fold Operations/08. Cut Fold"], ["macro", "Fold Operations/09. Copy Fold"], ["macro", "Fold Operations/10. Paste Fold"], ["macro", "Fold Operations/11. Create Fold Around Selected Lines"], ["macro", "Fold Operations/GUI"]]
 - script: phos.RemoveTags.moon error
     legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module phos.AssfPlus: "
 - script: phos.snap.lua registrations
     legacy:  [["macro", "PhosCity/Bidirectional Snapping/Snap both to keyframes"], ["macro", "PhosCity/Bidirectional Snapping/Snap start to keyframe"], ["macro", "PhosCity/Bidirectional Snapping/Snap end to keyframe"]]
     rewrite: [["macro", "Bidirectional Snapping/Snap both"], ["macro", "Bidirectional Snapping/Snap start"], ["macro", "Bidirectional Snapping/Snap end"]]

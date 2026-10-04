@@ -65,6 +65,23 @@ endforeach()
 # with log, autosave and temp beside it (where ?user and ?data resolve).
 set(HIKARI_AUTOMATION_ROOT "${CMAKE_BINARY_DIR}/Automation" CACHE INTERNAL "")
 set(HIKARI_AUTOMATION_STAGE "${HIKARI_AUTOMATION_ROOT}/automation" CACHE INTERNAL "")
+
+# SubInspector (A33-subinspector-linux): the legacy package shipped its v0.5.1
+# DLL for Windows only; on Linux it builds from the same release
+# (Thirdparty/SubInspector) against the rewrite's libass. Only the si_*
+# functions are exported; the static libass closure stays inside.
+if(NOT WIN32)
+    add_library(hikari_subinspector SHARED "${PROJECT_SOURCE_DIR}/Thirdparty/SubInspector/src/SubInspector.c")
+    target_compile_definitions(hikari_subinspector PRIVATE NO_ZLIB)
+    target_link_libraries(hikari_subinspector PRIVATE Hikari::libass)
+    target_link_options(hikari_subinspector PRIVATE "LINKER:--exclude-libs,ALL")
+    set_target_properties(hikari_subinspector PROPERTIES OUTPUT_NAME SubInspector C_STANDARD 99)
+    set(_hikari_subinspector_stage
+        COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_subinspector>"
+            "${HIKARI_AUTOMATION_STAGE}/Include/SubInspector/Inspector/")
+    set(_hikari_subinspector_target hikari_subinspector)
+endif()
+
 add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/Automation/automation" "${HIKARI_AUTOMATION_STAGE}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_AUTOMATION_ROOT}/log" "${HIKARI_AUTOMATION_ROOT}/autosave"
@@ -73,5 +90,7 @@ add_custom_target(hikari_automation_stage ALL
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_badmutex>" "${HIKARI_AUTOMATION_STAGE}/Include/BM/BadMutex/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_precisetimer>" "${HIKARI_AUTOMATION_STAGE}/Include/PT/PreciseTimer/"
     COMMAND "${CMAKE_COMMAND}" -E copy "$<TARGET_FILE:hikari_depctrl_downloadmanager>" "${HIKARI_AUTOMATION_STAGE}/Include/DM/DownloadManager/"
+    ${_hikari_subinspector_stage}
     DEPENDS hikari_depctrl_badmutex hikari_depctrl_precisetimer hikari_depctrl_downloadmanager
+        ${_hikari_subinspector_target}
     COMMENT "Staging the automation tree with DependencyControl's native modules")

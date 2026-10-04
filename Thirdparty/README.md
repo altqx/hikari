@@ -136,6 +136,7 @@ generate:
 | `uchardet` | Tracks upstream *master*, which is ahead of the 0.0.8 release by seven language models HikariSub compiles; pinning the release would lose them |
 | `BaseClasses` | DirectShow base classes from the Windows SDK samples, locally patched |
 | `DirectX9`, `karahelper`, `DependencyControl`, `LuaJIT`/`luajit` | Windows-only support code |
+| `SubInspector` | The v0.5.1 release (MIT) whose prebuilt DLL the automation tree ships for Windows; the Qt rewrite builds it for Linux from these unchanged sources (A33-subinspector-linux). Origin, commit and hashes in its [README](SubInspector/README.md) |
 
 > `Thirdparty/luajit` and `Thirdparty/LuaJIT` are two directories that differ only
 > in case. They hold disjoint file sets and merge into one directory on Windows
