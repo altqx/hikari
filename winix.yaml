@@ -50,8 +50,8 @@ tasks:
     timeoutSeconds: 600
   audio-hotplug:
     # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device
-    # (silent audiodev) when the test asks. HIKARI_HOTPLUG_API picks the host API; only silence is written.
-    script: $env:HIKARI_TEST_AUDIO_HOTPLUG = 'USB'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = $env:HIKARI_HOTPLUG_API; if (-not $env:HIKARI_TEST_AUDIO_HOTPLUG_API) { $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
+    # (silent audiodev; Windows names it "Speakers (Audio Device)") when the test asks. Only silence is written.
+    script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '(Audio Device)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = $env:HIKARI_HOTPLUG_API; if (-not $env:HIKARI_TEST_AUDIO_HOTPLUG_API) { $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
   inputs:
     # B4: changed pinned inputs are refused by vcpkg's hash check.
