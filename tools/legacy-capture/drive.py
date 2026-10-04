@@ -317,7 +317,10 @@ def automation(spec, package, display, workdir, probe_source):
             # The script hotkeys never fire under Xvfb, so the macro runs from
             # the menu: Automation, the probe's submenu, then macro k (plan
             # "automation_probe_at", "automation_submenu_at", "automation_row").
-            px, py = spec.get("automation_probe_at", [440, 184])
+            # The app's menu bar follows the pointer's x even over an open
+            # menu, so the probe row is hovered below the Automation label
+            # (x 343-427): at x 440 the Help menu opens instead.
+            px, py = spec.get("automation_probe_at", [400, 184])
             sx, sy = spec.get("automation_submenu_at", [700, 184])
             row = spec.get("automation_row", 25)
             x(["xdotool", "mousemove", str(mx), str(my), "click", "1"], display)
