@@ -920,6 +920,21 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
         << run.message.toStdString();
 }
 
+// DependencyControl's first require in a fresh configuration runs its
+// update check, which fetches live third-party feeds; with them reachable,
+// DependencyControl's own UpdateFeed fails on the current Aegisub-Motion feed
+// ("attempt to index a nil value" in its template expansion), in any host and
+// at load or macro time alike (the check runs once per update interval).
+// The tests keep the updater off so what they observe does not depend on the
+// network or on those feeds (the legacy capture's check evidently reached none).
+void disableDependencyControlUpdater(const QString &automationDir)
+{
+    QDir().mkpath(automationDir + QStringLiteral("/config"));
+    QFile f(automationDir + QStringLiteral("/config/l0.DependencyControl.json"));
+    ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+    f.write(R"({"config": {"updaterEnabled": false}})");
+}
+
 // Every bundled Autoload script, loaded unchanged. The results are written to
 // an artifact (A33-compat corpus); each must load and register its macros.
 TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
@@ -937,6 +952,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     const QString automation = app.filePath(QStringLiteral("Automation"));
     for (const char *sub : {"log", "autosave", "temp"})
         QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
     hikari::application::AutomationPathContext paths;
     paths.automationDir = automation.toStdString();
     paths.dictionaryDir = app.filePath(QStringLiteral("Dictionary")).toStdString();
@@ -989,6 +1005,39 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
 // S3/L6: the legacy capture probe (tools/legacy-capture/automation) run in
 // this host over the same corpus; its JSON line is the rewrite side of the
 // legacy comparison (artifacts/automation-capture-corpus.json).
+// L6: the host's load-time environment (aegisub API, decode_path answered
+// during the load, include path, native modules) is enough for
+// DependencyControl, as in legacy, where the capture probe required it from
+// its top level.
+TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
+{
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString automation = work.filePath(QStringLiteral("Automation"));
+    for (const char *sub : {"log", "autosave", "temp"})
+        QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = automation.toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    int decodedWhileLoading = 0;
+    auto host = load(fixture("depctrl-load.lua"),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         if (r.service != hikari::application::HostService::DecodePath)
+                             return reply(hikari::application::HostServiceReply::unavailable());
+                         ++decodedWhileLoading;
+                         hikari::application::HostServiceReply out;
+                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_GT(decodedWhileLoading, 0);
+    ASSERT_TRUE(runToEnd(*host, "Show"));
+    EXPECT_EQ(run.log, QStringList{"true,table,"});
+}
+
 TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
 {
     QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));
@@ -1012,6 +1061,7 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
     const QString automation = work.filePath(QStringLiteral("Automation"));
     for (const char *sub : {"log", "autosave", "temp"})
         QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
     hikari::application::AutomationPathContext paths;
     paths.automationDir = automation.toStdString();
     paths.dictionaryDir = work.filePath(QStringLiteral("Dictionary")).toStdString();
@@ -1058,6 +1108,10 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
             << file << ": " << script.value(QStringLiteral("error")).toString().toStdString();
         EXPECT_FALSE(script.value(QStringLiteral("registrations")).toArray().isEmpty()) << file;
     }
+    // DependencyControl loads from the probe's top level, as in the legacy capture.
+    EXPECT_TRUE(QJsonDocument::fromJson(atLoad).object().value(QStringLiteral("modules")).toObject().value(
+        QStringLiteral("l0.DependencyControl")).toObject().value(QStringLiteral("ok")).toBool())
+        << atLoad.toStdString();
     for (const char *module : {"aegisub.re", "aegisub.unicode", "lfs", "lpeg", "luabins", "ffi"})
         EXPECT_TRUE(result.value(QStringLiteral("modules")).toObject().value(QLatin1String(module)).toObject().value(
             QStringLiteral("ok")).toBool())
