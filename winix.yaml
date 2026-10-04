@@ -99,3 +99,30 @@ tasks:
     # the per-script process cost.
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(LuaHelper|Manager|AutomationRegistry)[.]|automation" -V
     timeoutSeconds: 600
+    # The rewrite side of the S3 legacy comparison (compare_automation.py).
+    artifacts: [out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus.json, out/build/windows-x64-release/tests/backends/artifacts/automation-capture-corpus-macro.json, out/build/windows-x64-release/tests/ui/artifacts/automation-capture-dialogs.json]
+  legacy-win-setup:
+    # S3 on Windows: the legacy release (v0.0.1-rc.1, built from the baseline)
+    # downloaded, checked and extracted into out/legacy-win for
+    # tools/legacy-capture/drive_windows.py; nothing is installed.
+    script: ./tools/legacy-capture/windows/setup.ps1
+    timeoutSeconds: 900
+  legacy-win-output:
+    # The probe's capture lines and the legacy Config it left (drive_windows.py).
+    script: ./tools/legacy-capture/windows/output.ps1
+    timeoutSeconds: 120
+  legacy-win-kill:
+    # Ends a legacy app the desktop could not close.
+    script: Get-Process HikariSub -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Output 'stopped'
+    timeoutSeconds: 120
+  legacy-win-stacks:
+    # The legacy app's thread stacks when it stops responding (a non-invasive
+    # attach of the Windows SDK's cdb, if the VM has it; the release ships its PDBs).
+    script: $p = Get-Process HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $p) { Write-Output 'no HikariSub process'; exit 0 }; Write-Output "pid $($p.Id) responding=$($p.Responding)"; $p.Threads | ForEach-Object { Write-Output "thread $($_.Id) $($_.ThreadState) $($_.WaitReason)" }; $cdb = @("${env:ProgramFiles(x86)}\Windows Kits\10\Debuggers\x64\cdb.exe", "${env:ProgramFiles}\Windows Kits\10\Debuggers\x64\cdb.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1; if (-not $cdb) { Write-Output 'cdb not found'; exit 0 }; $sym = Split-Path $p.Path; & $cdb -pv -p $p.Id -y $sym -c '.symopt+0x40; ~*kc 30; q' 2>&1 | ForEach-Object { "$_" }
+    timeoutSeconds: 300
+  legacy-win-dump:
+    # A minidump of the legacy app (thread stacks, no full memory) through
+    # dbghelp's MiniDumpWriteDump, kept as an artifact for offline stacks.
+    script: $p = Get-Process HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $p) { Write-Output 'no HikariSub process'; exit 1 }; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class Dump { [DllImport("dbghelp.dll", SetLastError=true)] public static extern bool MiniDumpWriteDump(IntPtr hProcess, uint pid, Microsoft.Win32.SafeHandles.SafeFileHandle hFile, uint type, IntPtr e, IntPtr u, IntPtr c); }'; New-Item -ItemType Directory -Force out/legacy-win/dump | Out-Null; $f = [IO.File]::Create("$PWD/out/legacy-win/dump/HikariSub.dmp"); $ok = [Dump]::MiniDumpWriteDump($p.Handle, [uint32]$p.Id, $f.SafeFileHandle, 0x0, [IntPtr]::Zero, [IntPtr]::Zero, [IntPtr]::Zero); $f.Close(); Write-Output "pid $($p.Id) responding=$($p.Responding) dump=$ok size=$((Get-Item out/legacy-win/dump/HikariSub.dmp).Length)"
+    timeoutSeconds: 300
+    artifacts: [out/legacy-win/dump/HikariSub.dmp]
