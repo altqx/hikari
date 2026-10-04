@@ -541,8 +541,10 @@ bool FindReplace::compile(std::u16string_view pattern)
     if (m_regex->compile(pattern, flags))
         return true;
     // wxRegEx::Compile's wxLogError.
-    m_host.log(replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
-                        u8(m_regex->errorMessage())));
+    m_host.logLine({FindLog::Kind::InvalidRegex,
+                    replaced(replaced(u8"Invalid regular expression '%1': %2", u8"%1", u8(pattern)), u8"%2",
+                             u8(m_regex->errorMessage())),
+                    u8(pattern), u8(m_regex->errorMessage())});
     m_regex.reset();
     return false;
 }
@@ -555,7 +557,7 @@ bool FindReplace::search(std::u16string_view text, int &start, int &length) cons
         return false;
     if (!m_regex->matches(text)) {
         if (const auto error = m_regex->matchError(); !error.empty())
-            m_host.log(u8"Failed to find match for regular expression: " + u8(error));
+            m_host.logLine({FindLog::Kind::MatchError, u8"Failed to find match for regular expression: " + u8(error), u8(error), {}});
         return false;
     }
     const auto m = m_regex->match(0);
@@ -574,7 +576,7 @@ int FindReplace::regexReplace(std::u16string &text, std::u16string_view replacem
         return 0;
     const int count = m_regex->replace(text, replacement, maxMatches);
     if (const auto error = m_regex->matchError(); !error.empty())
-        m_host.log(u8"Failed to find match for regular expression: " + u8(error));
+        m_host.logLine({FindLog::Kind::MatchError, u8"Failed to find match for regular expression: " + u8(error), u8(error), {}});
     return std::max(count, 0);
 }
 
@@ -701,6 +703,7 @@ void FindReplace::addRecent(const FindReplaceSettings &window)
         m_recent.filters = addRecentSelection(std::move(m_recent.filters), window.filters);
         m_recent.paths = addRecentSelection(std::move(m_recent.paths), window.folder);
     }
+    m_host.recentAdded(window.tab);
 }
 
 void FindReplace::reset()
@@ -1232,7 +1235,7 @@ void FindReplace::replace(const FindReplaceSettings &window)
     if (!begin(&window))
         return;
     if (window.tab != Tab::Replace) {
-        m_host.log(u8"Replace called outside the replace tab");
+        m_host.logLine({FindLog::Kind::OutsideReplaceTab, u8"Replace called outside the replace tab", {}, {}});
         return finish();
     }
     const auto tab = m_host.current();
@@ -1529,7 +1532,7 @@ FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &pat
     }
     if (fileReplacements) {
         if (!m_host.backupFile(path))
-            m_host.log(u8"Cannot back up " + path + u8".");
+            m_host.logLine({FindLog::Kind::CannotBackUp, u8"Cannot back up " + path + u8".", path, {}});
         // Legacy counted the replacements whether or not the write worked
         // (FileWrite reports nothing); the host logs a failed write.
         m_host.writeFile(path, replacedText);
@@ -1698,7 +1701,9 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
         if (dialtxt != seek->text) {
             // Legacy left this Line out of the file and, never moving on,
             // every later one too (R3-hang-crash-loss): it stays as it is.
-            m_host.log(u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\ncause it was edited.");
+            m_host.logLine({FindLog::Kind::LineEdited,
+                            u8"Line " + u8(number(seek->idLine)) + u8" cannot be replaced,\ncause it was edited.",
+                            u8(number(seek->idLine)), {}});
             unchanged(piece);
             skipLine();
             ++lineNum;
@@ -1718,7 +1723,7 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
     if (!numOfChanges)
         return 0;
     if (!m_host.backupFile(path))
-        m_host.log(u8"Cannot back up " + path + u8".");
+        m_host.logLine({FindLog::Kind::CannotBackUp, u8"Cannot back up " + path + u8".", path, {}});
     return m_host.writeFile(path, replacedText) ? numOfChanges : 0;
 }
 
@@ -1798,7 +1803,9 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         if (oldKeyLine != r.keyLine || r.translation != lastIsTextTl) {
             replacementDiff = 0;
             if (lineText != r.text) {
-                m_host.log(u8"Line " + u8(number(r.idLine)) + u8" cannot be replaced,\ncause it was edited.");
+                m_host.logLine({FindLog::Kind::LineEdited,
+                                u8"Line " + u8(number(r.idLine)) + u8" cannot be replaced,\ncause it was edited.",
+                                u8(number(r.idLine)), {}});
                 skipLine = true;
                 continue;
             }

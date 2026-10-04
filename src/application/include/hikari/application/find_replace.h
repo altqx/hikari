@@ -103,6 +103,22 @@ struct FindQuestion {
 };
 enum class FindAnswer { Ok, Yes, No, Cancel };
 
+// A line for the log (legacy HikariLog / wxLogError): its legacy English
+// text, and what the host needs to translate it.
+struct FindLog {
+    enum class Kind {
+        InvalidRegex,      // wxRegEx::Compile: "Invalid regular expression '%s': %s" (pattern, message)
+        MatchError,        // wx_regexec: "Failed to find match for regular expression: %s" (message)
+        LineEdited,        // "Line %i cannot be replaced,\ncause it was edited." (the line number)
+        CannotBackUp,      // the rewrite's own: "Cannot back up %s." (the path)
+        OutsideReplaceTab, // legacy logged an untranslated Polish debug text here; English
+    };
+    Kind kind;
+    std::u8string text;
+    std::u8string first;
+    std::u8string second;
+};
+
 // A Document the dialog can reach (legacy tab).
 struct FindTab {
     DocumentId id;
@@ -124,6 +140,12 @@ public:
     // (busy()). A message passes an empty `answer`: nothing waits.
     virtual void ask(const FindQuestion &question, std::function<void(FindAnswer)> answer) = 0;
     virtual void log(const std::u8string &) {}
+    // A log line; by default its English text goes to log() above.
+    virtual void logLine(const FindLog &line) { log(line.text); }
+    // FindReplace::AddRecent ran for this tab. Legacy SetTable then writes the
+    // finds, the replacements unless it is the Find tab, and the filters and
+    // paths on the Find in subtitles tab, from FindReplace's lists.
+    virtual void recentAdded(FindReplaceSettings::Tab) {}
     // A match was found: `line` becomes active (and the only selected Line
     // unless `keepSelection`) of `document`, which becomes the editing
     // target; the editor selects [start, end) in the legacy editor `role`:

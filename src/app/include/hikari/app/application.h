@@ -86,6 +86,11 @@ signals:
     // changes: the close review shows these rows (as reviewOpen's), and the
     // result is shown once it finishes or is cancelled.
     void findOpenReview(const QVariantList &rows);
+    // O1: HikariSubFrame::DestroyDialogs (a changed program font). The
+    // Search tool saves its tab (FR->SaveOptions) and closes with its
+    // results; the Multireplacer and its Search results close.
+    void findReplaceDestroyed();
+    void misspellReplacerDestroyed();
 
 public:
     struct Options {
@@ -110,7 +115,7 @@ public:
         QString catalogDir;
         // F3 / R2-hunspell: the spelling backend (Hunspell; tests may pass a
         // fake). Without one there is no spell checker: no marks but bracket
-        // errors, no notice, and Spelling/On is left as it is.
+        // errors, no notice, and SPELLCHECKER_ON is left as it is.
         application::SpellingBackendLoader spellingBackend = backends::hunspellSpellingLoader();
         // The user's "Dictionary" folder (UserDic.udic and dictionaries the
         // user adds); empty: beside the settings file (none without one, and
@@ -342,17 +347,20 @@ public:
     // A double click on a find: its Document, Line and text in the editor.
     Q_INVOKABLE void showMisspellFind(int find);
     // F3: spelling. SPELLCHECKER_ON, DICTIONARY_LANGUAGE and
-    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK, kept in the INI file (Spelling/*).
-    // Turning spell checking on does not start a spell checker created while
-    // it was off (legacy SpellChecker::Get); choosing a language restarts it.
+    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK in the settings registry
+    // (editor.spellchecker, editor.dictionaryLanguage,
+    // editor.suggestionsOnDoubleClick); the Line editor keeps its own switch
+    // (TextEditor::SpellCheckerOnOff) that the menu and the Options dialog
+    // set. Turning spell checking on does not start a spell checker created
+    // while it was off (legacy SpellChecker::Get); choosing a language restarts it.
     Q_PROPERTY(bool spellingOn READ spellingOn WRITE setSpellingOn NOTIFY spellingChanged)
     Q_PROPERTY(QString dictionaryLanguage READ dictionaryLanguage WRITE setDictionaryLanguage NOTIFY spellingChanged)
     Q_PROPERTY(bool suggestionsOnDoubleClick READ suggestionsOnDoubleClick WRITE setSuggestionsOnDoubleClick NOTIFY spellingChanged)
-    bool spellingOn() const { return m_spellingOn; }
+    bool spellingOn() const;
     void setSpellingOn(bool on);
-    QString dictionaryLanguage() const { return m_dictionaryLanguage; }
+    QString dictionaryLanguage() const;
     void setDictionaryLanguage(const QString &symbol);
-    bool suggestionsOnDoubleClick() const { return m_suggestionsOnDoubleClick; }
+    bool suggestionsOnDoubleClick() const;
     void setSuggestionsOnDoubleClick(bool on);
     // The "Dictionary" folder's dictionaries: {symbol, name} (legacy AvailableDics, FindLanguage).
     Q_INVOKABLE QVariantList dictionaries() const;
@@ -394,9 +402,14 @@ public:
     // startOfText, endOfText, includeComments, skipTags, skipText,
     // subfolders, hiddenFolders} plus the recent lists {finds, replacements,
     // filterList, paths}; legacy FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES
-    // and the recent lists live in the INI file. findReplaceSettings is the
-    // dialog as it opens; switchFindReplaceTab saves the tab left
+    // and the recent lists live in the settings registry (find.options,
+    // find.styles, find.recentFinds, find.recentReplacements,
+    // findInSubs.recentFilters, findInSubs.recentPaths). openFindReplace is
+    // the tool's first opening (legacy creates FindReplaceDialog: the recent
+    // lists are read then and kept until it is destroyed); findReplaceSettings
+    // is a tab as it shows; switchFindReplaceTab saves the tab left
     // (SaveValues) and gives the next one (SetValues).
+    Q_INVOKABLE QVariantMap openFindReplace(int tab);
     Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
     Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
     Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
@@ -465,6 +478,8 @@ public:
     // values as legacy shows them and writes the changed ones on OK/Apply.
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
     ui::SettingsStore *settingsStore() const { return m_settings.get(); }
+    // A1: the options the audio box's next open reads.
+    application::AudioCacheSettings audioSettings() const { return m_audioSettings(); }
     // Opening the dialog (application::openOptionsDialog): {values: the
     // controls' state by setting id, languages, dictionaries, catalogs,
     // styles: the choices' entries, warnings: the legacy "does not exist"
@@ -586,13 +601,15 @@ private:
     std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
     bool m_misspellResultsShown = false;
     std::vector<application::ReplacerRule> &misspellRuleList();
+    void saveMisspellRules();
+    void destroyDialogs();
     // F1
     class FindHost;
     friend class FindHost;
     std::unique_ptr<FindHost> m_findHost;
     std::unique_ptr<application::FindReplace> m_find;
-    int m_findOptions = 0;
-    QString m_findStyles;
+    bool m_findOpened = false; // legacy FR exists
+    void createFindReplace();
     QString m_replaceBackup;
     std::function<int(int, const QString &)> m_findQuestionHandler;
     int m_findQuestionId = 0;
@@ -601,7 +618,7 @@ private:
     std::function<void(bool)> m_findOpenDone;
     int m_findProcessors = 0;
     void endFindOpen(bool opened);
-    void saveFindRecent();
+    void saveFindRecent(application::FindReplaceSettings::Tab tab);
     void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
@@ -648,7 +665,6 @@ private:
     // initialized then only when spelling is on; Destroy clears it).
     application::SpellChecker *spellChecker();
     void restartSpellChecker();
-    void saveSpellingOptions();
     void spellingRefresh();
     std::optional<std::u16string> editorRaw(int role) const;
     QVariantMap spellCheckState(bool changed, const QString &problem = {});
@@ -659,9 +675,7 @@ private:
     std::unique_ptr<application::SpellChecker> m_spellChecker;
     bool m_spellingStarted = false;
     application::SpellingText m_spellingText;
-    bool m_spellingOn = true;
-    QString m_dictionaryLanguage = QStringLiteral("en_US");
-    bool m_suggestionsOnDoubleClick = false;
+    bool m_spellingOn = true; // the Line editor's switch (TextEditor::SpellCheckerOnOff)
     QString m_dictionaryDir;
     QString m_bundledDictionaryDir;
     std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
