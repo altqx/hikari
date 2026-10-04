@@ -292,10 +292,9 @@ def automation(spec, package, display, workdir, probe_source):
             x(["xdotool", "windowactivate", "--sync", other], display, 10)
             x(["xdotool", "key", "Return"], display, 5)
             time.sleep(1)
-        # Legacy builds the Automation menu, and with it the macros' menu
-        # accelerators ("Script <path>-<k>"), when that menu first opens. Its
-        # menu bar is drawn by the app (F10 does not reach it), so the label
-        # is clicked at its screen position (plan "automation_menu_at").
+        # Legacy builds the Automation menu when it first opens. Its menu bar
+        # is drawn by the app (F10 does not reach it), so the label is clicked
+        # at its screen position (plan "automation_menu_at").
         x(["xdotool", "windowactivate", "--sync", wid], display)
         mx, my = spec.get("automation_menu_at", [385, 59])
         x(["xdotool", "mousemove", str(mx), str(my), "click", "1"], display)
@@ -309,9 +308,21 @@ def automation(spec, package, display, workdir, probe_source):
             srec = {"case": step["case"], "macro": k, "keys": step.get("keys", []), "status": "timeout"}
             before = len(output.read_text().splitlines())
             x(["xdotool", "windowactivate", "--sync", wid], display)
-            x(["xdotool", "mousemove", "--window", wid, "400", "550", "click", "1"], display)
+            # The script hotkeys never fire under Xvfb, so the macro runs from
+            # the menu: Automation, the probe's submenu, then macro k (plan
+            # "automation_probe_at", "automation_submenu_at", "automation_row").
+            px, py = spec.get("automation_probe_at", [440, 184])
+            sx, sy = spec.get("automation_submenu_at", [700, 184])
+            row = spec.get("automation_row", 25)
+            x(["xdotool", "mousemove", str(mx), str(my), "click", "1"], display)
             time.sleep(1)
-            x(["xdotool", "key", "--clearmodifiers", f"ctrl+shift+F{k + 1}"], display)
+            x(["xdotool", "mousemove", str(px), str(py)], display)
+            time.sleep(1)
+            x(["xdotool", "mousemove", str(sx), str(py)], display)
+            time.sleep(1)
+            if k == 0:
+                probe_rec["submenu"] = screenshot(display, workdir, "automation-submenu")
+            x(["xdotool", "mousemove", str(sx), str(sy + row * k), "click", "1"], display)
             if step.get("keys") is not None:
                 time.sleep(3)  # the dialog takes the focus
                 srec["dialog_windows"] = [t for _, t in popups(display, wid)]

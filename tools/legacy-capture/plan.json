@@ -1,201 +1,201 @@
 {
- "schema": 1,
- "fixtures": "docs/qt/fixtures/approved-departures",
- "routes": {
-  "C03-preservation": {
-   "route": "save-as",
-   "note": "Step 1 only: load and save unchanged. The edited-Line step needs grid interaction and is not captured yet."
+  "schema": 1,
+  "fixtures": "docs/qt/fixtures/approved-departures",
+  "routes": {
+    "C03-preservation": {
+      "route": "save-as",
+      "note": "Step 1 only: load and save unchanged. The edited-Line step needs grid interaction and is not captured yet."
+    },
+    "supplement-TLMode": {
+      "route": "save-as"
+    },
+    "supplement-format-precision": {
+      "route": "save-as",
+      "note": "Same-format save of precision.srt; format-boundaries.json descriptors are not UI inputs."
+    },
+    "C01-equality": {
+      "route": "time"
+    },
+    "T42-A": {
+      "route": "time",
+      "note": "Real legacy Timebase::FrameAt with the SubsGridBase.cpp:534 composition, FrameAt(target - anchor)."
+    },
+    "C02-loss-preview": {
+      "route": "none",
+      "reason": "Needs the conversion dialog flow (cancel, then accept); not driven yet."
+    },
+    "C05-audio-association": {
+      "route": "none",
+      "reason": "Needs Session restore with controlled audio resources bound to scratch paths."
+    },
+    "C01-fps-isolation": {
+      "route": "none",
+      "reason": "Needs two open Documents and explicit frame-rate operations in the grid."
+    }
   },
-  "supplement-TLMode": {
-   "route": "save-as"
+  "extra_cases": {
+    "srt-crlf-blank-lines": {
+      "route": "save-as",
+      "inputs": [
+        "crlf-two-cues.srt"
+      ],
+      "note": "Source reading predicts each CRLF cue but the last gains a trailing \\N (blank CRLF line is a '\\r' token). Capture-only fixture, not part of the approved-departure pack."
+    },
+    "c4-ssa-edge-families": {
+      "route": "save-as",
+      "inputs": [
+        "ass-event-edges.ass",
+        "tlmode-edges.ass",
+        "ssa-v4.ssa"
+      ],
+      "note": "C4-ssa characterization: Dial/Comm prefixes that SetRaw rejects, short events, an event in Script Info, Actor marker precedence, TLMode pairing (form-feed+D Unconfirmed, blank line, comment and missing partner) and SSA v4 styles. Capture-only fixtures."
+    },
+    "editor-tag-commands": {
+      "route": "save-as",
+      "inputs": [
+        "tag-commands.ass"
+      ],
+      "keys": [
+        "Home",
+        "Return",
+        "End",
+        "shift+Home",
+        "ctrl+b",
+        "Return",
+        "End",
+        "ctrl+b",
+        "Return",
+        "Home",
+        "Right",
+        "Right",
+        "Right",
+        "Right",
+        "ctrl+b",
+        "Return",
+        "Home",
+        "Right",
+        "Right",
+        "ctrl+b",
+        "Return"
+      ],
+      "note": "V2-E-grammar: Ctrl+B (EDITBOX_INSERT_BOLD) in the legacy editor on four Lines: a whole-Line selection, the caret after an existing bold tag, the caret inside an italic block, and the caret inside a bold tag. Return in the grid focuses the editor; Return in the editor commits and goes to the next Line."
+    },
+    "editor-tag-commands-srt": {
+      "route": "save-as",
+      "inputs": [
+        "tag-commands.srt"
+      ],
+      "keys": [
+        "Home",
+        "Return",
+        "End",
+        "shift+Home",
+        "ctrl+b",
+        "Return",
+        "End",
+        "ctrl+b",
+        "Return"
+      ],
+      "note": "PutinNonass for SRT: Ctrl+B on a whole-cue selection, then with the caret after an existing </b>."
+    },
+    "editor-tag-commands-microdvd": {
+      "route": "save-as",
+      "inputs": [
+        "tag-commands.sub"
+      ],
+      "keys": [
+        "Home",
+        "Return",
+        "Home",
+        "Right",
+        "Right",
+        "Right",
+        "Right",
+        "Right",
+        "ctrl+b",
+        "Return",
+        "Home",
+        "Right",
+        "Right",
+        "ctrl+b",
+        "Return"
+      ],
+      "note": "PutinNonass for MicroDVD: Ctrl+B with the caret after a '|', then inside a line starting with {y:b}."
+    }
   },
-  "supplement-format-precision": {
-   "route": "save-as",
-   "note": "Same-format save of precision.srt; format-boundaries.json descriptors are not UI inputs."
-  },
-  "C01-equality": {
-   "route": "time"
-  },
-  "T42-A": {
-   "route": "time",
-   "note": "Real legacy Timebase::FrameAt with the SubsGridBase.cpp:534 composition, FrameAt(target - anchor)."
-  },
-  "C02-loss-preview": {
-   "route": "none",
-   "reason": "Needs the conversion dialog flow (cancel, then accept); not driven yet."
-  },
-  "C05-audio-association": {
-   "route": "none",
-   "reason": "Needs Session restore with controlled audio resources bound to scratch paths."
-  },
-  "C01-fps-isolation": {
-   "route": "none",
-   "reason": "Needs two open Documents and explicit frame-rate operations in the grid."
+  "automation": {
+    "id": "S3-automation",
+    "probe": "automation/capture-probe.lua",
+    "note": "L2 dialog subset and L6 corpus (A33-compat). Macro k of the probe runs from Automation > Hikari capture probe (item k); keys are sent to the dialog the macro opens.",
+    "steps": [
+      {
+        "case": "defaults-ok",
+        "macro": 0,
+        "keys": [
+          "Return"
+        ]
+      },
+      {
+        "case": "defaults-escape",
+        "macro": 1,
+        "keys": [
+          "Escape"
+        ]
+      },
+      {
+        "case": "buttons-return",
+        "macro": 2,
+        "keys": [
+          "Return"
+        ]
+      },
+      {
+        "case": "buttons-escape",
+        "macro": 3,
+        "keys": [
+          "Escape"
+        ]
+      },
+      {
+        "case": "button-id-unknown",
+        "macro": 4,
+        "keys": [
+          "Return"
+        ]
+      },
+      {
+        "case": "button-id-invalid",
+        "macro": 5
+      },
+      {
+        "case": "float-step-up",
+        "macro": 6,
+        "keys": [
+          "Up",
+          "Return"
+        ]
+      },
+      {
+        "case": "int-step-up",
+        "macro": 7,
+        "keys": [
+          "Up",
+          "Return"
+        ]
+      },
+      {
+        "case": "edit-typed",
+        "macro": 8,
+        "keys": [
+          "type:héllo",
+          "Return"
+        ]
+      },
+      {
+        "case": "corpus",
+        "macro": 9,
+        "timeout": 120
+      }
+    ]
   }
- },
- "extra_cases": {
-  "srt-crlf-blank-lines": {
-   "route": "save-as",
-   "inputs": [
-    "crlf-two-cues.srt"
-   ],
-   "note": "Source reading predicts each CRLF cue but the last gains a trailing \\N (blank CRLF line is a '\\r' token). Capture-only fixture, not part of the approved-departure pack."
-  },
-  "c4-ssa-edge-families": {
-   "route": "save-as",
-   "inputs": [
-    "ass-event-edges.ass",
-    "tlmode-edges.ass",
-    "ssa-v4.ssa"
-   ],
-   "note": "C4-ssa characterization: Dial/Comm prefixes that SetRaw rejects, short events, an event in Script Info, Actor marker precedence, TLMode pairing (form-feed+D Unconfirmed, blank line, comment and missing partner) and SSA v4 styles. Capture-only fixtures."
-  },
-  "editor-tag-commands": {
-   "route": "save-as",
-   "inputs": [
-    "tag-commands.ass"
-   ],
-   "keys": [
-    "Home",
-    "Return",
-    "End",
-    "shift+Home",
-    "ctrl+b",
-    "Return",
-    "End",
-    "ctrl+b",
-    "Return",
-    "Home",
-    "Right",
-    "Right",
-    "Right",
-    "Right",
-    "ctrl+b",
-    "Return",
-    "Home",
-    "Right",
-    "Right",
-    "ctrl+b",
-    "Return"
-   ],
-   "note": "V2-E-grammar: Ctrl+B (EDITBOX_INSERT_BOLD) in the legacy editor on four Lines: a whole-Line selection, the caret after an existing bold tag, the caret inside an italic block, and the caret inside a bold tag. Return in the grid focuses the editor; Return in the editor commits and goes to the next Line."
-  },
-  "editor-tag-commands-srt": {
-   "route": "save-as",
-   "inputs": [
-    "tag-commands.srt"
-   ],
-   "keys": [
-    "Home",
-    "Return",
-    "End",
-    "shift+Home",
-    "ctrl+b",
-    "Return",
-    "End",
-    "ctrl+b",
-    "Return"
-   ],
-   "note": "PutinNonass for SRT: Ctrl+B on a whole-cue selection, then with the caret after an existing </b>."
-  },
-  "editor-tag-commands-microdvd": {
-   "route": "save-as",
-   "inputs": [
-    "tag-commands.sub"
-   ],
-   "keys": [
-    "Home",
-    "Return",
-    "Home",
-    "Right",
-    "Right",
-    "Right",
-    "Right",
-    "Right",
-    "ctrl+b",
-    "Return",
-    "Home",
-    "Right",
-    "Right",
-    "ctrl+b",
-    "Return"
-   ],
-   "note": "PutinNonass for MicroDVD: Ctrl+B with the caret after a '|', then inside a line starting with {y:b}."
-  }
- },
- "automation": {
-  "id": "S3-automation",
-  "probe": "automation/capture-probe.lua",
-  "note": "L2 dialog subset and L6 corpus (A33-compat). Macro k of the probe is bound to Ctrl+Shift+F(k+1); keys are sent to the dialog the macro opens.",
-  "steps": [
-   {
-    "case": "defaults-ok",
-    "macro": 0,
-    "keys": [
-     "Return"
-    ]
-   },
-   {
-    "case": "defaults-escape",
-    "macro": 1,
-    "keys": [
-     "Escape"
-    ]
-   },
-   {
-    "case": "buttons-return",
-    "macro": 2,
-    "keys": [
-     "Return"
-    ]
-   },
-   {
-    "case": "buttons-escape",
-    "macro": 3,
-    "keys": [
-     "Escape"
-    ]
-   },
-   {
-    "case": "button-id-unknown",
-    "macro": 4,
-    "keys": [
-     "Return"
-    ]
-   },
-   {
-    "case": "button-id-invalid",
-    "macro": 5
-   },
-   {
-    "case": "float-step-up",
-    "macro": 6,
-    "keys": [
-     "Up",
-     "Return"
-    ]
-   },
-   {
-    "case": "int-step-up",
-    "macro": 7,
-    "keys": [
-     "Up",
-     "Return"
-    ]
-   },
-   {
-    "case": "edit-typed",
-    "macro": 8,
-    "keys": [
-     "type:héllo",
-     "Return"
-    ]
-   },
-   {
-    "case": "corpus",
-    "macro": 9,
-    "timeout": 120
-   }
-  ]
- }
 }
