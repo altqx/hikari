@@ -79,7 +79,10 @@ protected:
             observed.push_back(waitForItem("columnsWindow/column9", 5s) ? "columns" : "no columns"); // 3
             mouseClick("columnsWindow/column9"); // Text
             mouseClick("columnsWindow/columnsOk");
-            wait(300ms);
+            // The paste lands after the window closes; under load that can
+            // take longer than a fixed wait, so poll for it (up to 5 s).
+            for (int i = 0; i < 100 && texts().find("pasted text") == std::string::npos; ++i)
+                wait(50ms);
             observed.push_back(texts()); // 4
             observed.push_back(getStringProperty("mainWindow/lineText", "text")); // 5
         }
