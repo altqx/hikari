@@ -1,0 +1,17 @@
+# Stack scan of the legacy app (v0.0.1-rc.1, 20d647c4) after Ctrl+Shift+F1 ran the probe's
+# defaults-ok macro (minidump from legacy-win-dump, job-ff9d1812691d497aaf70a380d11285fe; frames via
+# minidump_stacks.py with the release PDB; a stack scan, filtered to the frames involved).
+== thread 5292
+  HikariSub.exe+0x9e7198  "WaitForTerminate"... @ ??:0:0
+  HikariSub.exe+0x728cf5  wxThreadInternal::WaitForTerminate(class wxCriticalSection &, void **, enum wxThreadWait, class wxThread *) @ D:\a\hikari\hikari\Thirdparty\wxWidgets\src\msw\thread.cpp:795:0
+  HikariSub.exe+0x728b54  wxThread::Wait(enum wxThreadWait) @ D:\a\hikari\hikari\Thirdparty\wxWidgets\src\msw\thread.cpp:1105:0
+  HikariSub.exe+0x86d0a  Auto::LuaCommand::Run(class TabPanel *) @ D:\a\hikari\hikari\HikariSub\Automation.cpp:999:0
+  HikariSub.exe+0x55177  HikariSubFrame::OnRunScript(class wxCommandEvent &) @ D:\a\hikari\hikari\HikariSub\HikariSubFrame.cpp:2639:0
+  HikariSub.exe+0x54cb0  HikariSubFrame::OnRunScript(class wxCommandEvent &) @ D:\a\hikari\hikari\HikariSub\HikariSubFrame.cpp:2610:0
+  HikariSub.exe+0x75298f  wxEvtHandler::ProcessEventIfMatchesId(struct wxEventTableEntryBase const &, class wxEvtHandler *, class wxEvent &) @ D:\a\hikari\hikari\Thirdparty\wxWidgets\src\common\event.cpp:1482:0
+== thread 4928
+  HikariSub.exe+0x9bbd0  Auto::LuaProgressSink::LuaDisplayDialog(struct lua_State *) @ D:\a\hikari\hikari\HikariSub\AutomationProgress.cpp:241:0
+  HikariSub.exe+0x7294bc  wxSemaphoreInternal::WaitTimeout(unsigned long) @ D:\a\hikari\hikari\Thirdparty\wxWidgets\src\msw\thread.cpp:355:0
+  HikariSub.exe+0x9bbd0  Auto::LuaProgressSink::LuaDisplayDialog(struct lua_State *) @ D:\a\hikari\hikari\HikariSub\AutomationProgress.cpp:241:0
+  HikariSub.exe+0x9bc41  Auto::LuaProgressSink::LuaDisplayDialog(struct lua_State *) @ D:\a\hikari\hikari\HikariSub\AutomationProgress.cpp:258:0
+  HikariSub.exe+0x85f97  Auto::LuaThreadedCall::Entry(void) @ D:\a\hikari\hikari\HikariSub\Automation.cpp:802:0
