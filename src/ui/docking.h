@@ -39,6 +39,10 @@ public:
     // On Wayland the engine drags panels with real drag-and-drop and takes a
     // drop through a QML DropArea whose dropAreaCpp property names this view.
     Q_INVOKABLE QObject *mainDropArea(const QString &uniqueName) const;
+    // Grows (or with negative values shrinks) the docked panel `uniqueName`
+    // at its edges, as the engine's DockWidget::resizeInLayout does; false
+    // when it is not docked in a layout.
+    Q_INVOKABLE bool resizeInLayout(const QString &uniqueName, int left, int top, int right, int bottom);
 };
 
 } // namespace hikari::ui

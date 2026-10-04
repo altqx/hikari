@@ -147,6 +147,18 @@ ApplicationWindow {
 
     // D1: the Classic arrangement (also Reset layout): Video beside Audio over
     // the Line editor, the Grid below, the Reference under it when there is one.
+    // Legacy AUDIO_BOX_HEIGHT: the display with its ruler, the search bar
+    // and the button row take 170 px; the Audio dock's request in
+    // defaultLayout() assumes a chrome height (title bars) that fonts change,
+    // so the difference is moved across the dock's bottom edge.
+    function fitAudioBox() {
+        // With audio open the box fills the panel's body (the search bar and
+        // button rows appear then), so the body is what gets 170 px.
+        const deficit = Math.round(170 - audioPanel.bodyHeight)
+        if (deficit !== 0)
+            Docking.resizeInLayout("Audio", 0, 0, 0, deficit)
+    }
+
     function defaultLayout() {
         // Search (its scope rail beside the results) spans the bottom; it is
         // placed and closed first so the panels after it share the whole area.
@@ -1354,6 +1366,7 @@ ApplicationWindow {
         // title names something else (the Grid's names the editing target).
         property string accessibleName: title
         default property alias content: body.data
+        readonly property real bodyHeight: body.height
         activeFocusOnTab: false
         Accessible.role: Accessible.Pane
         Accessible.name: accessibleName
@@ -2787,8 +2800,15 @@ ApplicationWindow {
 
         Component.onCompleted: {
             root.defaultLayout()
-            root.workspaceLayout.captureDefault()
-            root.workspaceLayout.restoreSaved()
+            // Once the arrangement is laid out, give the audio box legacy's
+            // height whatever this platform's fonts make the panel chrome,
+            // then keep that as the default (Reset layout) before a saved
+            // layout replaces it.
+            Qt.callLater(function() {
+                root.fitAudioBox()
+                root.workspaceLayout.captureDefault()
+                root.workspaceLayout.restoreSaved()
+            })
         }
     }
     // Completed layout operations are saved, not every drag (D1): a cheap

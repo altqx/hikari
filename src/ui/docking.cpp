@@ -136,4 +136,14 @@ QObject *Docking::mainDropArea(const QString &uniqueName) const
     return dropArea ? KDDockWidgets::QtQuick::asQQuickItem(dropArea->view()) : nullptr;
 }
 
+bool Docking::resizeInLayout(const QString &uniqueName, int left, int top, int right, int bottom)
+{
+    auto *registry = KDDockWidgets::Core::Platform::instance() ? KDDockWidgets::DockRegistry::self() : nullptr;
+    KDDockWidgets::Core::DockWidget *dock = registry ? registry->dockByName(uniqueName) : nullptr;
+    if (!dock || dock->isFloating() || !dock->isOpen())
+        return false;
+    dock->resizeInLayout(left, top, right, bottom);
+    return true;
+}
+
 } // namespace hikari::ui

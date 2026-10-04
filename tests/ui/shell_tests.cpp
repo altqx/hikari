@@ -4108,7 +4108,7 @@ private slots:
         // (170: the display with its ruler, the search bar and the button
         // row), so the waveform has most of it
         const qreal box = display->height() + item("audioScroll")->height() + 4 + item("audioButtons")->height() + 2;
-        QVERIFY2(std::abs(box - 170) <= 8, qPrintable(QString::number(box)));
+        QVERIFY2(std::abs(box - 170) <= 2, qPrintable(QString::number(box))); // fitAudioBox, whatever the fonts
         QVERIFY2(h >= 90, qPrintable(QString::number(h)));
         // legacy D3DXCreateFontW: the cursor time and labels bold, the ruler not
         auto *displayItem = qobject_cast<ui::AudioDisplayItem *>(display);
