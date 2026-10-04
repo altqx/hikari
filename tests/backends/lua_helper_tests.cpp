@@ -462,6 +462,33 @@ TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
     EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
 }
 
+// A33-subinspector-linux: SubInspector's native library (the Windows DLL
+// legacy shipped; built from the same v0.5.1 source on Linux) loads through
+// requireffi and measures a rendered line through libass. The bounds depend
+// on the fonts found, so only their presence is checked.
+TEST_F(LuaHelper, SubInspectorMeasuresARenderedLine)
+{
+    auto session = macroSession();
+    session.setSelection(hikari::application::Selection{hikari::core::LineId{1}, {hikari::core::LineId{1}}});
+    auto host = load(fixture("subinspector.lua"),
+                     [](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         hikari::application::HostServiceReply out = hikari::application::HostServiceReply::unavailable();
+                         if (r.service == hikari::application::HostService::DecodePath) {
+                             out = {};
+                             out.strings = {r.strings.at(0)};
+                         }
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    const auto snapshot = hikari::application::snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Bounds"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"1,true,true"});
+}
+
 TEST_F(LuaHelper, StagedSubtitlesRaiseTheLegacyErrors)
 {
     auto session = macroSession();

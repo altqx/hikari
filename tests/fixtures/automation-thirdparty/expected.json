@@ -1,5 +1,5 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux; SubInspector built for Linux: A33-subinspector-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
  "unobserved_platforms": [
   "windows"
  ],
@@ -7,7 +7,8 @@
   "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
  },
  "macros_unordered": {
-  "lyger.FbfTransform.moon": "It registers one macro per preset by iterating its presets table with pairs(), whose order LuaJIT does not fix (string hashes are seeded per process), so the macros are pinned by name."
+  "lyger.FbfTransform.moon": "It registers one macro per preset by iterating its presets table with pairs(), whose order LuaJIT does not fix (string hashes are seeded per process), so the macros are pinned by name.",
+  "lyger.GradientEverything.moon": "Like lyger.FbfTransform, one macro per preset in pairs() order."
  },
  "load": {
   "ILL.ChangeAlign.moon": {
@@ -58,9 +59,20 @@
    "version": "1.0.1"
   },
   "arch.Line2Fbf.moon": {
-   "error": "Error initializing Lua script \"arch.Line2Fbf.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "arch1t3cht-Aegisub-Scripts"
+   "author": "arch1t3cht",
+   "description": "Convert lines into frame-by-frame chunks",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "FBF-ifier",
+     "validate": false
+    }
+   ],
+   "name": "FBF-ifier",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "0.1.0"
   },
   "arch.NoteBrowser.moon": {
    "author": "arch1t3cht",
@@ -155,29 +167,228 @@
    "version": "1.3.2"
   },
   "arch.SplitSections.moon": {
-   "error": "Error initializing Lua script \"arch.SplitSections.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "arch1t3cht-Aegisub-Scripts"
+   "author": "arch1t3cht",
+   "description": "Split subtitle lines at tags, creating a separate event for each section",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Tag Sections",
+     "validate": false
+    }
+   ],
+   "name": "Split Tag Sections",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "0.1.1"
   },
   "l0.CascadeTransforms.moon": {
-   "error": "Error initializing Lua script \"l0.CascadeTransforms.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "line0-Aegisub-Scripts"
+   "author": "line0",
+   "description": "Changes transforms in a line to be transformed in a consecutive fashion, with the transform time being split evenly.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cascade Transforms",
+     "validate": false
+    }
+   ],
+   "name": "Cascade Transforms",
+   "project": "line0-Aegisub-Scripts",
+   "version": "0.1.0"
   },
   "l0.Nudge.moon": {
-   "error": "Error initializing Lua script \"l0.Nudge.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "line0-Aegisub-Scripts"
+   "author": "line0",
+   "description": "Provides configurable and hotkeyable tag/line modification macros.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Configure Nudge",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Position Right (+1)",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Position Left (-1)",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Position Up (-1)",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Position Down (+1)",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Cycle Blur",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Cycle Alpha",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Toggle Bold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Cycle Wrap Styles",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Align Up",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Align Down",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Align Left",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Align Right",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Add Edgeblur",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Default Origin",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Brightness Up",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Brightness Down",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Invert First Clip",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Remove Comments & Junk",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Strip Tags",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Nudge/Clips -> Drawing",
+     "validate": false
+    }
+   ],
+   "name": "Nudge",
+   "project": "line0-Aegisub-Scripts",
+   "version": "0.5.0"
   },
   "l0.SplitLines.moon": {
-   "error": "Error initializing Lua script \"l0.SplitLines.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "line0-Aegisub-Scripts"
+   "author": "line0",
+   "description": "Splits a line while maintaining appearance.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Lines/Split by Characters",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Lines/Split at Even Interval",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Lines/Split at Custom Interval",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Lines/Split at Indexes",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split Lines/Split at Tags",
+     "validate": false
+    }
+   ],
+   "name": "Split Lines",
+   "project": "line0-Aegisub-Scripts",
+   "version": "0.2.0"
   },
   "l0.VerticalText.moon": {
-   "error": "Error initializing Lua script \"l0.VerticalText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "line0-Aegisub-Scripts"
+   "author": "line0",
+   "description": "Splits a line into vertical text.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Vertical Text",
+     "validate": false
+    }
+   ],
+   "name": "Vertical Text",
+   "project": "line0-Aegisub-Scripts",
+   "version": "0.2.0"
   },
   "lyger.FbfTransform.moon": {
    "author": "",
@@ -199,12 +410,6 @@
     {
      "description": "",
      "is_active": false,
-     "name": "Frame-by-frame transform/Presets/[Last Settings]",
-     "validate": true
-    },
-    {
-     "description": "",
-     "is_active": false,
      "name": "Frame-by-frame transform/Presets/All",
      "validate": true
     },
@@ -212,6 +417,12 @@
      "description": "",
      "is_active": false,
      "name": "Frame-by-frame transform/Presets/Default",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/[Last Settings]",
      "validate": true
     }
    ],
@@ -242,9 +453,38 @@
    "version": "1.3.1"
   },
   "lyger.GradientEverything.moon": {
-   "error": "Error initializing Lua script \"lyger.GradientEverything.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module SubInspector.Inspector: \n[string \"<chunk>\"]: 80:  FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths: \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:  cannot open shared object file:  No such file or directory)",
-   "loaded": false,
-   "project": "lyger-Aegisub-Scripts"
+   "author": "",
+   "description": "This will gradient everything.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient Everything/Gradient Everything",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient Everything/Presets/Horizontal all",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient Everything/Presets/Default",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient Everything/Presets/[Last Settings]",
+     "validate": true
+    }
+   ],
+   "name": "Gradient Everything",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "2.0.4"
   },
   "lyger.LayerIncrement.lua": {
    "author": "lyger",
@@ -483,9 +723,20 @@
    "version": "0.7.0"
   },
   "phos.EditTags.moon": {
-   "error": "Error initializing Lua script \"phos.EditTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
-   "loaded": false,
-   "project": "PhosCity-Aegisub-Scripts"
+   "author": "PhosCity",
+   "description": "Edit tags of current line.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Edit Tags",
+     "validate": false
+    }
+   ],
+   "name": "Edit Tags",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.1.0"
   },
   "phos.FoldOperations.moon": {
    "author": "PhosCity",
@@ -570,7 +821,7 @@
    "version": "1.3.2"
   },
   "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module phos.AssfPlus: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
    "loaded": false,
    "project": "PhosCity-Aegisub-Scripts"
   },
