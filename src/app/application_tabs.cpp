@@ -11,7 +11,7 @@
 // Sessions use the legacy files unchanged (application/session_file.h).
 // Loading replaces every open tab, as legacy did, but only after the staged
 // subtitles are read and the open Documents' unsaved work is reviewed as for
-// Quit (L58-staged-replacement; legacy destroyed the tabs without asking).
+// Quit (approved P6-session-review; legacy destroyed the tabs without asking).
 // A session entry whose file is missing becomes an unresolved restore that
 // stays visible with Retry, Relink and Remove (the accepted 2026-09-29
 // lifecycle choice) and is written back to the session until removed; the

@@ -566,7 +566,7 @@ public:
     // GLOBAL_LOAD_LAST_SESSION (empty file) and GLOBAL_LOAD_EXTERNAL_SESSION
     // (a .kls file): the session is read and its subtitles staged
     // (L58-staged-replacement), then every open Document's unsaved work is
-    // reviewed as for Quit. Returns {ok, problem, rows}; with ok and no rows,
+    // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
     // finishClose() replaces the open tabs with the session's.
     Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {});
     // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".

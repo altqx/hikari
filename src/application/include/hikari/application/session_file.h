@@ -28,13 +28,15 @@
 // line (numbers through wxAtoi); a tab is finished by the next "Tab: " line
 // other than "Tab: 0" or by the last line, so a session with no tab lines
 // still gives one empty tab, and lines the reader does not know are skipped.
-// On Windows the file was read in text mode (CRLF became LF); the Linux build
-// kept every '\r', so there "Tab: 0\r" also finishes a (first, empty) tab and
-// every path keeps a trailing '\r' (R5-per-platform: reproduced as is).
 //
-// Departure C05-audio-association (approved): legacy never reset the Audio
-// field between tabs, so a tab without an "Audio:" line inherited the
-// previous tab's audio. Here each tab has only its own audio.
+// Departures (approved, docs/qt/compatibility-decisions.md):
+// - C05-audio-association: legacy never reset the Audio field between tabs,
+//   so a tab without an "Audio:" line inherited the previous tab's audio.
+//   Here each tab has only its own audio.
+// - P6-session-crlf: the Windows build read in text mode (CRLF became LF);
+//   the Linux build kept every '\r', so a session it wrote itself restored
+//   as an empty first tab ("Tab: 0\r") with every path ending in '\r'. Here
+//   CRLF is folded on both platforms.
 
 #include <optional>
 #include <string>
@@ -62,20 +64,13 @@ struct Session {
     std::vector<SessionTab> tabs;
 };
 
-enum class SessionPlatform { Windows, Linux };
-
-#ifdef _WIN32
-inline constexpr SessionPlatform kSessionPlatform = SessionPlatform::Windows;
-#else
-inline constexpr SessionPlatform kSessionPlatform = SessionPlatform::Linux;
-#endif
-
 // OpenWrite::FileOpen(path, &text, false): wxFFile::ReadAll through
 // wxConvAuto. A UTF-8, UTF-16 or UTF-32 BOM decides (and is dropped);
-// otherwise valid UTF-8 is UTF-8 and anything else ISO-8859-1. Windows read in
-// text mode, so CRLF became LF first. The text as UTF-8; nullopt when it is
-// empty (FileOpen returned false and the session was ignored).
-std::optional<std::string> decodeSessionBytes(std::string_view bytes, SessionPlatform platform = kSessionPlatform);
+// otherwise valid UTF-8 is UTF-8 and anything else ISO-8859-1. CRLF becomes LF
+// first, as the Windows text-mode read did (on Linux too: P6-session-crlf).
+// The text as UTF-8; nullopt when it is empty (FileOpen returned false and the
+// session was ignored).
+std::optional<std::string> decodeSessionBytes(std::string_view bytes);
 
 // LoadLastSession's reading of `text`: nullopt when the file is corrupt (its
 // first line does not start with "[HikariSub"; legacy logged "Session file is

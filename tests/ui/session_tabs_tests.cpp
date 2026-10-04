@@ -50,14 +50,10 @@ QByteArray hash(const QString &path)
     return QCryptographicHash::hash(readAll(path), QCryptographicHash::Sha256);
 }
 
-// A session file in the legacy format. Windows reads CRLF as LF (text
-// mode); the Linux build kept '\r', so a file meant to restore the same way
-// on both is given with LF line ends there (see the CRLF test for Linux).
-void writeSession(const QString &path, QByteArray text)
+// A session file in the legacy format (CRLF, read the same on every
+// platform under P6-session-crlf).
+void writeSession(const QString &path, const QByteArray &text)
 {
-#ifndef _WIN32
-    text.replace("\r\n", "\n");
-#endif
     QFile f(path);
     QVERIFY(f.open(QIODevice::WriteOnly));
     f.write(text);
@@ -66,8 +62,7 @@ void writeSession(const QString &path, QByteArray text)
 application::Session readSession(const QString &path)
 {
     const QByteArray bytes = readAll(path);
-    auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()),
-                                                application::SessionPlatform::Windows);
+    auto text = application::decodeSessionBytes(std::string_view(bytes.constData(), bytes.size()));
     auto session = application::parseSession(text.value_or(std::string()));
     return session.value_or(application::Session{});
 }
@@ -435,30 +430,19 @@ private slots:
         // shows its video at the position again.
         app::Application b(options(home));
         QCOMPARE(b.startupSession(), QString()); // closed cleanly, not asked for
+        // The session this program wrote (CRLF) restores on every platform,
+        // Linux included (P6-session-crlf; legacy Linux kept each '\r').
         QVERIFY(loadSession(b));
-#ifdef _WIN32
         QCOMPARE(b.tabs().size(), qsizetype(2));
         QCOMPARE(b.currentTab(), 1);
+        QVERIFY(b.unresolvedRestores().isEmpty());
         b.selectTab(0);
         QTRY_VERIFY_WITH_TIMEOUT(b.video().hasVideo(), 30000);
         QTRY_COMPARE_WITH_TIMEOUT(b.video().session().shownFrame().value_or(-1), 12, 10000);
-#else
-        // R5-per-platform: legacy Linux read its own CRLF session with every
-        // '\r' kept: an empty first tab, and the video named "...cfr.mkv\r"
-        // does not resolve (proposed departure P6-session-crlf).
-        QCOMPARE(b.tabs().size(), qsizetype(3));
-        QCOMPARE(b.currentTab(), 2);
-        bool video = false;
-        for (const QVariant &row : b.unresolvedRestores())
-            video = video || row.toMap().value(QStringLiteral("path")).toString() == media("cfr.mkv") + QLatin1Char('\r');
-        QVERIFY(video);
-        b.selectTab(1);
-        QVERIFY(!b.video().hasVideo());
-#endif
     }
 
     // Loading replaces every open tab only after their unsaved work is
-    // reviewed as for Quit (L58-staged-replacement; legacy destroyed the
+    // reviewed as for Quit (approved P6-session-review; legacy destroyed the
     // tabs without asking). Cancel keeps everything.
     void loadingReviewsUnsavedWorkFirst()
     {
@@ -518,19 +502,11 @@ private slots:
         QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
         QCOMPARE(hash(kls), before);
         QCOMPARE(QFile::exists(a.lastSessionPath()), true);
-#ifdef _WIN32
+        // Written with CRLF, read back on every platform (P6-session-crlf).
         QCOMPARE(titles(a), (QStringList{"k1.ass", "k2.ass"}));
+        QVERIFY(a.unresolvedRestores().isEmpty());
         a.selectTab(0);
         QCOMPARE(activeRow(a), 2);
-#else
-        // R5-per-platform: the Linux build kept '\r' from the CRLF it wrote
-        // itself, so "Tab: 0\r" finishes an empty first tab and every path
-        // ends in '\r' ("Video: \r" names a video too): nothing resolves
-        // (proposed departure P6-session-crlf).
-        QCOMPARE(titles(a), (QStringList{"Untitled", "Untitled", "Untitled"}));
-        QCOMPARE(a.unresolvedRestores().size(), qsizetype(4)); // two subtitles, two videos
-        QVERIFY(a.unresolvedRestores().first().toMap().value(QStringLiteral("path")).toString().endsWith(QLatin1Char('\r')));
-#endif
     }
 
     // hikarisubApp::OnInit: LAST_SESSION_CONFIG 2 loads, 1 asks, otherwise a

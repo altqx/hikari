@@ -18,9 +18,9 @@ std::string fixture(const char *name)
     return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 }
 
-Session parse(std::string_view bytes, SessionPlatform platform = SessionPlatform::Windows)
+Session parse(std::string_view bytes)
 {
-    const auto text = decodeSessionBytes(bytes, platform);
+    const auto text = decodeSessionBytes(bytes);
     EXPECT_TRUE(text);
     const auto session = parseSession(text.value_or(std::string()));
     EXPECT_TRUE(session);
@@ -73,22 +73,25 @@ TEST(SessionFile, ExplicitAudioStaysWithItsOwnTab)
     EXPECT_EQ(s->tabs[2].audio, ""); // legacy: b.wav again
 }
 
-// R5-per-platform: the Linux build read without folding CRLF, so "Tab: 0\r"
-// is not "Tab: 0" (it finishes an empty first tab) and every value keeps
-// its '\r'. Reproduced as legacy Linux read its own files.
-TEST(SessionFile, LinuxKeepsCarriageReturnsAsLegacyDid)
+// P6-session-crlf (approved): legacy Linux read without folding CRLF, so
+// "Tab: 0\r" finished an empty first tab and every value kept its '\r'. Here
+// CRLF folds on every platform: the file the program writes itself (CRLF)
+// reads back as written.
+TEST(SessionFile, CrlfFoldsOnEveryPlatform)
 {
-    const Session s = parse(fixture("legacy-two-tabs.txt"), SessionPlatform::Linux);
-    EXPECT_EQ(s.header, "[HikariSub v0.0.1]\r");
+    SessionTab tab;
+    tab.video = "/home/u/episode 1.mkv";
+    tab.position = 1001;
+    tab.subtitles = "/home/u/episode 1.ass";
+    tab.audio = "/home/u/episode 1.flac";
+    SessionTab second;
+    second.subtitles = "/home/u/second.ass";
+    const std::string written = writeSession("HikariSub v0.1.0", true, {tab, second});
+    ASSERT_NE(written.find("\r\n"), std::string::npos);
+    const Session s = parse(written);
+    EXPECT_EQ(s.header, "[HikariSub v0.1.0]");
     EXPECT_TRUE(s.closed);
-    ASSERT_EQ(s.tabs.size(), 3u);
-    EXPECT_EQ(s.tabs[0], SessionTab{});
-    EXPECT_EQ(s.tabs[1].video, "C:\\Video\\episode 1.mkv\r");
-    EXPECT_EQ(s.tabs[1].position, 1001); // wxAtoi stops at '\r'
-    EXPECT_EQ(s.tabs[1].subtitles, "C:\\Subs\\episode 1.ass\r");
-    EXPECT_EQ(s.tabs[1].audio, "C:\\Audio\\episode 1.flac\r");
-    EXPECT_EQ(s.tabs[2].video, "\r"); // "Video: \r": legacy tried to open "\r"
-    EXPECT_EQ(s.tabs[2].audio, "");
+    EXPECT_EQ(s.tabs, (std::vector<SessionTab>{tab, second}));
 }
 
 TEST(SessionFile, WritesTheLegacyBytes)
@@ -177,7 +180,7 @@ TEST(SessionFile, DecodesAsWxConvAutoDid)
     EXPECT_EQ(decodeSessionBytes(utf16), "[HikariSub]\n");
     // Not UTF-8: ISO-8859-1, wxConvAuto's fallback.
     EXPECT_EQ(decodeSessionBytes("Subtitles: \xE9.ass"), "Subtitles: \xC3\xA9.ass");
-    // Windows folds CRLF only; a lone CR stays, as text mode left it.
-    EXPECT_EQ(decodeSessionBytes("a\r\nb\rc", SessionPlatform::Windows), "a\nb\rc");
-    EXPECT_EQ(decodeSessionBytes("a\r\nb", SessionPlatform::Linux), "a\r\nb");
+    // CRLF folds (Windows text mode; Linux too under P6-session-crlf); a
+    // lone CR stays, as text mode left it.
+    EXPECT_EQ(decodeSessionBytes("a\r\nb\rc"), "a\nb\rc");
 }

@@ -127,7 +127,7 @@ int atoi(const std::string &text)
 
 } // namespace
 
-std::optional<std::string> decodeSessionBytes(std::string_view bytes, SessionPlatform platform)
+std::optional<std::string> decodeSessionBytes(std::string_view bytes)
 {
     std::string text;
     auto has = [&](std::string_view bom) { return bytes.substr(0, bom.size()) == bom; };
@@ -142,15 +142,14 @@ std::optional<std::string> decodeSessionBytes(std::string_view bytes, SessionPla
         text = utf16(bytes.substr(2), false);
     } else {
         std::string raw(bytes);
-        // The Windows build's text-mode read folded CRLF before converting.
-        if (platform == SessionPlatform::Windows) {
-            std::string folded;
-            folded.reserve(raw.size());
-            for (std::size_t i = 0; i < raw.size(); ++i)
-                if (!(raw[i] == '\r' && i + 1 < raw.size() && raw[i + 1] == '\n'))
-                    folded += raw[i];
-            raw = std::move(folded);
-        }
+        // The Windows build's text-mode read folded CRLF before converting;
+        // Linux folds too (P6-session-crlf; legacy Linux kept the '\r').
+        std::string folded;
+        folded.reserve(raw.size());
+        for (std::size_t i = 0; i < raw.size(); ++i)
+            if (!(raw[i] == '\r' && i + 1 < raw.size() && raw[i + 1] == '\n'))
+                folded += raw[i];
+        raw = std::move(folded);
         if (raw.starts_with("\xEF\xBB\xBF"))
             text = raw.substr(3);
         else if (validUtf8(raw))
