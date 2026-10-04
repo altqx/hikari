@@ -436,9 +436,13 @@ ApplicationWindow {
         target: root.app
         // P6: the shown tab's Grid scroll (legacy each tab kept its Grid), and
         // legacy ChangePage's ReloadSubsIfModified.
+        // The application ignores the Grid's scroll reports from the tab
+        // change until scrollRestored(), so the model reset's transient 0
+        // never replaces the tab's own scroll.
         function onTabShown(scroll) {
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
+                root.app.scrollRestored()
                 root.checkExternalChange()
             })
         }

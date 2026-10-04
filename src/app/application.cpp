@@ -917,8 +917,17 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
 
 bool Application::openFile(const QString &path)
 {
-    if (!open(path))
+    // P6: an untouched empty tab (legacy's new tab, or the one left after
+    // closing the last) takes the file, as legacy OpenFile loaded into it.
+    const auto previous = m_workspace.editingTarget();
+    auto *previousSession = previous ? m_files->session(*previous) : nullptr;
+    const bool emptyTab = previousSession && targetUntitled() && !previousSession->isDirty() &&
+                          previousSession->historySize() == 1;
+    const auto id = open(path);
+    if (!id)
         return false;
+    if (emptyTab)
+        replaceTarget(*id);
     refreshViews();
     checkResolution();
     trimAudioCache();

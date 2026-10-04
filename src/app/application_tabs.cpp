@@ -137,6 +137,12 @@ void Application::closeDocument(application::DocumentId document)
     m_files->close(document);
     m_workspace.remove(document); // the legacy DeletePage successor becomes active
     forgetTab(document);
+    // Notebook::DeletePage: with no tab left, a new empty (Untitled) one.
+    if (m_workspace.tabs().empty()) {
+        const auto id = m_files->createNew();
+        m_workspace.add(id, tr("Untitled").toStdString());
+        m_workspace.setEditingTarget(id);
+    }
     refreshViews();
     saveLastSession(); // Notebook::DeletePage ends with SaveLastSession
 }
@@ -177,6 +183,8 @@ void Application::replaceTarget(application::DocumentId replacement)
 
 void Application::setTargetScroll(int row)
 {
+    if (m_scrollRestoring)
+        return; // the Grid has not shown this tab's scroll yet
     if (const auto target = m_workspace.editingTarget())
         m_tabMedia[target->value].scroll = std::max(0, row);
 }
@@ -203,10 +211,15 @@ void Application::trackTabMedia()
         }
         // A restored position is shown once the video is ready (legacy LoadVideo then Seek).
         // Queued: the session applies the active Line's seek right after
-        // reporting Ready, and the tab's position comes after it.
-        if (m_pendingTabSeek && m_pendingTabSeek->first == path && video.frameCount() > 0) {
-            const int ms = std::exchange(m_pendingTabSeek, std::nullopt)->second;
-            QMetaObject::invokeMethod(this, [this, path, ms] {
+        // reporting Ready, and the tab's position comes after it. Until it has
+        // landed the tab's position is the pending one (saveLastSession, leaving).
+        if (m_pendingTabSeek && !m_tabSeekQueued && m_pendingTabSeek->first == path && video.frameCount() > 0) {
+            m_tabSeekQueued = true;
+            QMetaObject::invokeMethod(this, [this, path] {
+                if (!m_tabSeekQueued || !m_pendingTabSeek || m_pendingTabSeek->first != path)
+                    return; // another tab became active meanwhile
+                const int ms = std::exchange(m_pendingTabSeek, std::nullopt)->second;
+                m_tabSeekQueued = false;
                 auto &session = m_video->session();
                 if (QString::fromStdString(session.path()) == path &&
                     session.state() == application::VideoSession::State::Ready)
@@ -248,7 +261,8 @@ void Application::leaveTabMedia(std::optional<application::DocumentId> document)
     if (it == m_tabMedia.end())
         return;
     const auto &video = m_video->session();
-    if (!it->second.video.isEmpty() && QString::fromStdString(video.path()) == it->second.video &&
+    // A restored position not shown yet stays the tab's position.
+    if (!m_pendingTabSeek && !it->second.video.isEmpty() && QString::fromStdString(video.path()) == it->second.video &&
         video.state() == application::VideoSession::State::Ready)
         it->second.position = targetVideoPosition();
 }
@@ -257,6 +271,8 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
                                 std::optional<application::DocumentId> document)
 {
     m_pendingTabSeek.reset();
+    m_tabSeekQueued = false;
+    m_scrollRestoring = true; // until the Grid calls scrollRestored()
     m_keepTabAudio.clear();
     const bool known = document && m_tabMedia.contains(document->value);
     if (!known) {
@@ -353,7 +369,10 @@ bool Application::saveLastSession(bool closing, const QString &path)
         };
         tab.video = utf8(media.video);
         tab.position = media.position;
-        if (id == target && !media.video.isEmpty() &&
+        // The shown frame's time, once the video is ready and a restored
+        // position has landed (until then the tab's own position).
+        if (id == target && !media.video.isEmpty() && !m_pendingTabSeek &&
+            m_video->session().state() == application::VideoSession::State::Ready &&
             QString::fromStdString(m_video->session().path()) == media.video)
             tab.position = targetVideoPosition();
         if (const auto *u = unresolved("video"); u && media.video.isEmpty()) {
@@ -430,6 +449,11 @@ bool Application::lastSessionCrashed() const
 QString Application::startupSession() const
 {
     // hikarisubApp::OnInit (release build): only without paths to open.
+    // Legacy also loaded without asking when Options.HasCrashed(), set when
+    // Config.txt ended with "___Program Crashed___"; nothing at 20d647c4
+    // writes that marker (SaveOptions' `crashed` is never passed true, the
+    // Windows exception filter only writes a minidump), so after a crash
+    // legacy reached the CheckLastSession prompt below, as here.
     if (m_startedWithPaths || lastSessionPath().isEmpty())
         return {};
     switch (sessionRestore()) {
@@ -458,9 +482,12 @@ QVariantMap Application::reviewSession(const QUrl &file)
     PendingSession pending;
     for (const auto &tab : session->tabs) {
         std::optional<application::StagedOpen> staged;
-        if (const QString subtitles = qs(tab.subtitles); isFile(subtitles))
-            if (auto s = m_files->stageOpen({QFileInfo(subtitles).absoluteFilePath().toStdString()}))
+        const QString subtitles = qs(tab.subtitles);
+        const QFileInfo info(subtitles);
+        if (isFile(subtitles))
+            if (auto s = m_files->stageOpen({info.absoluteFilePath().toStdString()}))
                 staged = std::move(*s);
+        pending.stamps.emplace_back(staged ? info.lastModified() : QDateTime(), staged ? info.size() : -1);
         pending.staged.push_back(std::move(staged));
     }
     pending.tabs = std::move(session->tabs);
@@ -501,6 +528,18 @@ void Application::applySession()
         const auto &tab = pending.tabs[i];
         const QString subtitles = qs(tab.subtitles);
         std::optional<application::DocumentId> id;
+        // L58-staged-replacement: a file changed (or gone) since it was
+        // staged, while the review waited, is read again now.
+        if (pending.staged[i]) {
+            const QFileInfo info(subtitles);
+            if (!info.isFile()) {
+                pending.staged[i].reset();
+            } else if (info.lastModified() != pending.stamps[i].first || info.size() != pending.stamps[i].second) {
+                pending.staged[i].reset();
+                if (auto again = m_files->stageOpen({info.absoluteFilePath().toStdString()}))
+                    pending.staged[i] = std::move(*again);
+            }
+        }
         if (pending.staged[i])
             id = publish(std::move(*pending.staged[i]), subtitles, false);
         if (id) {

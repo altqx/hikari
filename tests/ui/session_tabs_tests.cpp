@@ -9,6 +9,7 @@
 #include "hikari/application/session_file.h"
 
 #include <QCryptographicHash>
+#include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
 #include <QSignalSpy>
@@ -248,7 +249,11 @@ private slots:
         QCOMPARE(a.shell().editingTitle(), QStringLiteral("c.ass"));
         QVERIFY(a.reviewCloseTab(0).isEmpty());
         a.finishClose();
-        QVERIFY(a.tabs().isEmpty()); // P1's zero-document state, not legacy's new empty tab
+        // Notebook::DeletePage: with no tab left, a new empty one.
+        QCOMPARE(titles(a), (QStringList{"Untitled"}));
+        QVERIFY(a.targetUntitled());
+        QVERIFY(!target(a)->isDirty());
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.size(), std::size_t(1));
     }
 
     // Opening subtitles into the active tab (P2 review) keeps its place.
@@ -463,6 +468,101 @@ private slots:
         QCOMPARE(titles(a), (QStringList{"work.ass", "Untitled"}));
         QVERIFY(loadSession(a, QUrl::fromLocalFile(kls))); // Discard
         QCOMPARE(titles(a), (QStringList{"session.ass"}));
+    }
+
+    // L58-staged-replacement: subtitles staged before the review are read
+    // again when the review has let the load go on and the file changed
+    // meanwhile; a file gone meanwhile becomes an unresolved entry.
+    void staleStagedFilesAreReadAgain()
+    {
+        QTemporaryDir home;
+        QTemporaryDir files;
+        const QString s1 = writeSubtitles(files.filePath(QStringLiteral("s1.ass")), "old", 1);
+        const QString s2 = writeSubtitles(files.filePath(QStringLiteral("s2.ass")), "two", 1);
+        const QString kls = files.filePath(QStringLiteral("stale.kls"));
+        writeSession(kls, QStringLiteral("[HikariSub v0.0.1]\r\nTab: 0\r\nSubtitles: %1\r\nTab: 1\r\nSubtitles: %2\r\n")
+                              .arg(s1, s2)
+                              .toUtf8());
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("busy.ass")), "busy")));
+        edit(a, u8"unsaved");
+        const QVariantMap review = a.reviewSession(QUrl::fromLocalFile(kls));
+        QCOMPARE(review.value(QStringLiteral("rows")).toList().size(), qsizetype(1));
+        // While the review waits: s1 changes, s2 goes.
+        writeSubtitles(s1, "new and longer", 2);
+        QVERIFY(QFile::remove(s2));
+        a.resolveClose(choose(review.value(QStringLiteral("rows")).toList(), false));
+        QCOMPARE(titles(a), (QStringList{"s1.ass", "Untitled"}));
+        a.selectTab(0);
+        QCOMPARE(target(a)->document().lines().size(), std::size_t(2));
+        const std::u8string &text = target(a)->document().lines()[0]->text;
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())),
+                 QStringLiteral("new and longer 0"));
+        QCOMPARE(a.unresolvedRestores().size(), qsizetype(1));
+        QCOMPARE(a.unresolvedRestores().first().toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
+    }
+
+    // The session written right after loading (legacy SaveLastSession at the
+    // end of LoadLastSession) keeps the restored position while the video
+    // opens and its seek has not landed; afterwards it is the shown frame's.
+    void theSavedPositionWaitsForTheRestoredSeek()
+    {
+        QTemporaryDir home;
+        QTemporaryDir files;
+        const QString subs = writeSubtitles(files.filePath(QStringLiteral("pos.ass")), "pos"); // starts at 1.00
+        const QString kls = files.filePath(QStringLiteral("pos.kls"));
+        writeSession(kls, QStringLiteral("[HikariSub v0.0.1]\r\nTab: 0\r\nVideo: %1\r\nPosition: 2002\r\nSubtitles: %2\r\n")
+                              .arg(media("cfr.mkv"), subs)
+                              .toUtf8());
+        app::Application a(options(home));
+        QVERIFY(loadSession(a, QUrl::fromLocalFile(kls)));
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, 2002); // not 0 while opening
+        const auto &video = a.video().session();
+        // While the video indexes (its path set, not Ready): still the session's.
+        QDeadlineTimer deadline(30000);
+        while (video.state() == application::VideoSession::State::Closed && !deadline.hasExpired())
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+        if (video.state() == application::VideoSession::State::Opening) {
+            QVERIFY(a.saveLastSession());
+            QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, 2002);
+        } else {
+            qWarning("the video was ready before the opening state could be observed");
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(a.video().hasVideo(), 30000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.shownFrame() && std::abs(video.legacyTimebase().msAt(*video.shownFrame()) - 2002) < 60,
+                                 10000);
+        QVERIFY(a.saveLastSession());
+        QCOMPARE(readSession(a.lastSessionPath()).tabs.at(0).position, video.legacyTimebase().msAt(*video.shownFrame()));
+    }
+
+    // The Grid's scroll reports are ignored from a tab change until the Grid
+    // has restored that tab's scroll, so a model reset's transient 0 never
+    // replaces it.
+    void aTabsScrollSurvivesTheGridsReset()
+    {
+        QTemporaryDir home;
+        app::Application a(options(home));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("scroll1.ass")), "a", 9)));
+        QVERIFY(a.openFile(writeSubtitles(dir.filePath(QStringLiteral("scroll2.ass")), "b", 9)));
+        a.selectTab(1);
+        a.scrollRestored();
+        a.setTargetScroll(2);
+        QSignalSpy shown(&a, &app::Application::tabShown);
+        a.selectTab(0);
+        a.scrollRestored();
+        a.setTargetScroll(5);
+        a.selectTab(1);
+        QCOMPARE(shown.last().first().toInt(), 2);
+        a.setTargetScroll(0); // the reset model's contentY, before the restore
+        a.scrollRestored();
+        a.selectTab(0);
+        QCOMPARE(shown.last().first().toInt(), 5);
+        a.setTargetScroll(0);
+        a.scrollRestored();
+        QVERIFY(a.saveLastSession());
+        const auto written = readSession(a.lastSessionPath());
+        QCOMPARE(written.tabs.at(0).scroll, 5);
+        QCOMPARE(written.tabs.at(1).scroll, 2);
     }
 
     // A session file whose first line is not "[HikariSub..." is corrupt

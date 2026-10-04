@@ -137,6 +137,7 @@ public:
     ~Application() override;
 
     // Opens a file as a new Document; the first becomes the editing target.
+    // P6: an untouched empty Untitled tab is replaced by it (legacy OpenFile).
     Q_INVOKABLE bool openFile(const QString &path);
     // Opens a file as the protected comparison reference.
     Q_INVOKABLE bool openReference(const QString &path);
@@ -582,8 +583,12 @@ public:
     Q_INVOKABLE bool retryRestore(int row);
     Q_INVOKABLE bool relinkRestore(int row, const QUrl &file);
     Q_INVOKABLE void removeRestore(int row);
-    // The Grid's first shown row for the active tab (legacy Scroll).
+    // The Grid's first shown row for the active tab (legacy Scroll). Ignored
+    // from a tab change (tabShown) until the Grid has restored that tab's
+    // scroll and called scrollRestored(), so a model reset's transient 0
+    // never overwrites it.
     Q_INVOKABLE void setTargetScroll(int row);
+    Q_INVOKABLE void scrollRestored() { m_scrollRestoring = false; }
     // The program closes: the session is written with "[Close session]".
     Q_INVOKABLE void endSession();
     QString lastSessionPath() const;
@@ -598,7 +603,6 @@ signals:
     // A session finished loading with `unresolved` entries left.
     void sessionRestored(int unresolved);
 
-public:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
@@ -790,13 +794,18 @@ private:
     struct PendingSession {
         std::vector<application::SessionTab> tabs;
         std::vector<std::optional<application::StagedOpen>> staged;
+        // Each staged file as it was read (L58-staged-replacement: a file
+        // changed or gone by the time the review allows the load is read again).
+        std::vector<std::pair<QDateTime, qint64>> stamps;
     };
     std::map<std::uint64_t, TabMedia> m_tabMedia;
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::optional<application::DocumentId> m_closingTab; // reviewCloseTab's
     QString m_keepTabAudio;  // a restored video whose audio must not replace the tab's own
-    std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms
+    std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms; until the seek has landed
+    bool m_tabSeekQueued = false;
+    bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);
