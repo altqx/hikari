@@ -47,7 +47,12 @@ struct Drawing {
         QColor colour;
         bool outlined = false;
     };
-    std::vector<std::variant<Triangles, Text>> items;
+    // A2: the spectrum, pixel for pixel
+    struct Picture {
+        QImage image;
+        QPointF at;
+    };
+    std::vector<std::variant<Triangles, Text, Picture>> items;
 };
 
 class Batch {
@@ -95,6 +100,18 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
     Batch batch(out);
     std::optional<std::uint32_t> colour;
     for (const auto &s : shapes) {
+        if (s.kind == AudioShape::Kind::Image) {
+            if (colour)
+                batch.flush(*colour);
+            colour.reset();
+            if (s.image && s.image->width > 0 && s.image->height > 0) {
+                // BGRA bytes are QImage's RGB32 on little-endian machines
+                const QImage view(s.image->bgra.data(), s.image->width, s.image->height, s.image->width * 4,
+                                  QImage::Format_RGB32);
+                out.items.emplace_back(Drawing::Picture{view.copy(), QPointF(s.x1, s.y1)});
+            }
+            continue;
+        }
         if (s.kind == AudioShape::Kind::Text) {
             if (colour)
                 batch.flush(*colour);
@@ -123,7 +140,8 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
         case AudioShape::Kind::Triangle:
             batch.triangle(QPointF(s.x1, s.y1), QPointF(s.x2, s.y2), QPointF(s.x3, s.y3));
             break;
-        case AudioShape::Kind::Text: break;
+        case AudioShape::Kind::Text:
+        case AudioShape::Kind::Image: break;
         }
     }
     if (colour)
@@ -160,6 +178,17 @@ void buildNodes(QSGNode *parent, const Drawing &drawing, QQuickWindow *window)
             parent->appendChildNode(node);
             continue;
         }
+        if (const auto *p = std::get_if<Drawing::Picture>(&item)) {
+            if (!window)
+                continue;
+            QSGImageNode *node = window->createImageNode();
+            node->setTexture(window->createTextureFromImage(p->image));
+            node->setOwnsTexture(true);
+            node->setFiltering(QSGTexture::Nearest);
+            node->setRect(QRectF(p->at, QSizeF(p->image.size())));
+            parent->appendChildNode(node);
+            continue;
+        }
         const auto &text = std::get<Drawing::Text>(item);
         if (!window)
             continue;
@@ -191,6 +220,10 @@ QImage paintImage(const Drawing &drawing, QSize size, qreal dpr)
                                         {t->points[i + 2].x, t->points[i + 2].y}};
                 painter.drawConvexPolygon(tri, 3);
             }
+            continue;
+        }
+        if (const auto *p = std::get_if<Drawing::Picture>(&item)) {
+            painter.drawImage(p->at, p->image);
             continue;
         }
         const auto &text = std::get<Drawing::Text>(item);
@@ -342,11 +375,18 @@ void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
     event->accept();
 }
 
+// Legacy OnMouseEvent's wheel: Ctrl alone zooms vertically, Shift
+// horizontally around the mouse (A2), otherwise it scrolls. Some platforms
+// turn a modified wheel into a horizontal one; either axis counts.
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)
 {
-    // Shift and Ctrl zoom (A2)
-    if (m_controller && event->modifiers() == Qt::NoModifier && event->angleDelta().y() != 0)
-        m_controller->wheel(event->angleDelta().y());
+    const QPoint delta = event->angleDelta();
+    const int rotation = delta.y() != 0 ? delta.y() : delta.x();
+    if (m_controller && rotation != 0) {
+        const auto modifiers = event->modifiers();
+        m_controller->wheel(rotation, modifiers == Qt::ControlModifier, modifiers.testFlag(Qt::ShiftModifier),
+                            static_cast<float>(static_cast<int>(event->position().x())));
+    }
     event->accept();
 }
 

@@ -1435,7 +1435,7 @@ ApplicationWindow {
                     visible: root.audio.loaded
                     focus: true
                     clip: true
-                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: audioScroll.top }
+                    anchors { left: parent.left; right: audioSliders.left; top: parent.top; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTr("Audio display")
                     Accessible.description: root.audio.status
@@ -1447,7 +1447,7 @@ ApplicationWindow {
                     orientation: Qt.Horizontal
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    anchors { left: parent.left; right: audioSliders.left; bottom: parent.bottom }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
                     Binding on position {
@@ -1459,6 +1459,133 @@ ApplicationWindow {
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
                     ToolTip.text: qsTr("Search bar")
+                }
+                // A2: legacy AudioBox's sliders beside the display: the
+                // horizontal zoom (0 at the top), the vertical zoom and the
+                // volume (1 to 100, 100 at the top) and their link.
+                RowLayout {
+                    id: audioSliders
+                    objectName: "audioSliders"
+                    visible: root.audio.loaded
+                    anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                    width: visible ? implicitWidth : 0
+                    spacing: 0
+                    Slider {
+                        objectName: "audioHorizontalZoom"
+                        orientation: Qt.Vertical
+                        Layout.fillHeight: true
+                        from: 100; to: 0; stepSize: 1
+                        value: root.audio.horizontalZoom
+                        onMoved: root.audio.setHorizontalZoom(Math.round(value))
+                        ToolTip.text: qsTr("Horizontal stretching")
+                        ToolTip.visible: hovered
+                        Accessible.name: ToolTip.text
+                    }
+                    ColumnLayout {
+                        Layout.fillHeight: true
+                        spacing: 0
+                        RowLayout {
+                            Layout.fillHeight: true
+                            spacing: 0
+                            Slider {
+                                objectName: "audioVerticalZoom"
+                                orientation: Qt.Vertical
+                                Layout.fillHeight: true
+                                from: 1; to: 100; stepSize: 1
+                                value: root.audio.verticalZoom
+                                onMoved: root.audio.setVerticalZoom(Math.round(value))
+                                ToolTip.text: qsTr("Vertical stretching")
+                                ToolTip.visible: hovered
+                                Accessible.name: ToolTip.text
+                            }
+                            Slider {
+                                objectName: "audioVolume"
+                                orientation: Qt.Vertical
+                                Layout.fillHeight: true
+                                from: 1; to: 100; stepSize: 1
+                                value: root.audio.volume
+                                onMoved: root.audio.setVolume(Math.round(value))
+                                ToolTip.text: qsTr("Volume")
+                                ToolTip.visible: hovered
+                                Accessible.name: ToolTip.text
+                            }
+                        }
+                        ToolButton {
+                            objectName: "audioLink"
+                            Layout.fillWidth: true
+                            text: qsTr("Link")
+                            checkable: true
+                            checked: root.audio.linked
+                            focusPolicy: Qt.NoFocus
+                            onToggled: root.audio.setLinked(checked)
+                            ToolTip.text: qsTr("Link the volume and stretch sliders")
+                            ToolTip.visible: hovered
+                            Accessible.name: ToolTip.text
+                        }
+                    }
+                }
+                // A2: legacy AudioBox's AutoScroll, SpectrumMode and
+                // SpectrumNonLinear switches (each focuses the display, as
+                // legacy's handlers do), in the panel's title strip so the
+                // display keeps its height.
+                Row {
+                    id: audioSwitches
+                    objectName: "audioSwitches"
+                    visible: root.audio.loaded
+                    anchors { right: parent.right; bottom: parent.top; bottomMargin: 2 }
+                    spacing: 2
+                    ToolButton {
+                        objectName: "audioAutoScroll"
+                        topPadding: 0; bottomPadding: 0
+                        implicitHeight: 20
+                        text: qsTr("Auto-scroll")
+                        checkable: true
+                        checked: root.audio.autoScroll
+                        focusPolicy: Qt.NoFocus
+                        onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
+                        ToolTip.text: qsTr("Auto-scroll to the active line")
+                        ToolTip.visible: hovered
+                        Accessible.name: ToolTip.text
+                    }
+                    ToolButton {
+                        objectName: "audioSpectrumMode"
+                        topPadding: 0; bottomPadding: 0
+                        implicitHeight: 20
+                        text: qsTr("Spectrum")
+                        checkable: true
+                        checked: root.audio.spectrumOn
+                        focusPolicy: Qt.NoFocus
+                        onToggled: { root.audio.setSpectrumOn(checked); audioDisplay.forceActiveFocus() }
+                        ToolTip.text: qsTr("Spectrum mode")
+                        ToolTip.visible: hovered
+                        Accessible.name: ToolTip.text
+                    }
+                    ToolButton {
+                        objectName: "audioSpectrumNonLinear"
+                        topPadding: 0; bottomPadding: 0
+                        implicitHeight: 20
+                        text: qsTr("Speech")
+                        checkable: true
+                        checked: root.audio.spectrumNonLinear
+                        focusPolicy: Qt.NoFocus
+                        onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
+                        ToolTip.text: qsTr("Enhance speech frequencies in the spectrum")
+                        ToolTip.visible: hovered
+                        Accessible.name: ToolTip.text
+                    }
+                }
+                // A2: legacy AUDIO_SCROLL_RIGHT ("Scroll left", A) and
+                // AUDIO_SCROLL_LEFT ("Scroll right", F) in the audio box.
+                Keys.onPressed: event => {
+                    if (event.modifiers !== Qt.NoModifier || !root.audio.loaded)
+                        return
+                    if (event.key === Qt.Key_A)
+                        root.audio.scrollLeft()
+                    else if (event.key === Qt.Key_F)
+                        root.audio.scrollRight()
+                    else
+                        return
+                    event.accepted = true
                 }
                 Label {
                     objectName: "audioStatus"

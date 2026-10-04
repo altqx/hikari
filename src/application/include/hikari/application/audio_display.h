@@ -158,6 +158,10 @@ struct AudioDisplayOptions {
     std::uint32_t waveformSelected = 0xFFDCDAFF;      // AUDIO_WAVEFORM_SELECTED
     std::uint32_t timescaleBackground = 0xFF202225;   // WINDOW_BACKGROUND
     std::uint32_t timescaleText = 0xFFAEAFB2;         // WINDOW_TEXT
+    // A2: the spectrum's palette (legacy AudioSpectrum::ChangeColours)
+    std::uint32_t spectrumBackground = 0xFF000000;    // AUDIO_SPECTRUM_BACKGROUND
+    std::uint32_t spectrumEcho = 0xFF674FD7;          // AUDIO_SPECTRUM_ECHO
+    std::uint32_t spectrumInner = 0xFFF4F4F4;         // AUDIO_SPECTRUM_INNER
 };
 
 // Legacy AudioDisplayScaleFromSlider: a cubic response, 50 is 100%.
@@ -224,9 +228,15 @@ private:
     Scrollbar m_bar;
 };
 
+// A2: an opaque picture (the spectrum), BGRA bytes with row 0 at the top.
+struct AudioImage {
+    int width = 0, height = 0;
+    std::vector<std::uint8_t> bgra;
+};
+
 // One shape of the drawn image, in legacy draw order.
 struct AudioShape {
-    enum class Kind { Fill, Line, Triangle, Text };
+    enum class Kind { Fill, Line, Triangle, Text, Image };
     enum class Font { Scale, Cursor, Label }; // legacy tahoma8, tahoma13, verdana11
     enum class Align { TopLeft, TopCenter, Center };
 
@@ -241,6 +251,8 @@ struct AudioShape {
     Font font = Font::Scale;
     Align align = Align::TopLeft;
     bool outlined = false; // legacy DRAWOUTTEXT: a black outline one pixel around
+    // Image: drawn pixel for pixel with its top left corner at (x1, y1).
+    std::shared_ptr<const AudioImage> image;
 };
 
 // Text widths in a font, for the ruler's label spacing (legacy GetTextExtent).
@@ -258,9 +270,12 @@ struct AudioMarks {
 };
 
 // Legacy DoUpdateImage: everything but the cursor. `columns` are the
-// waveform's (legacyWaveform over the view).
+// waveform's (legacyWaveform over the view). With a `spectrum` (A2, legacy
+// spectrum mode) the picture is drawn over the background in place of the
+// waveform and the inactive Lines' waveform.
 std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns &columns, const AudioMarks &marks,
-                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth);
+                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth,
+                                   std::shared_ptr<const AudioImage> spectrum = nullptr);
 // Legacy DrawProgress while the audio is still loading (`progress` 0..1).
 std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress, const AudioDisplayOptions &options);
 // Legacy DrawCursor: the mouse cursor's line and, when not playing, its time.
