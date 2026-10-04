@@ -31,6 +31,7 @@ AutomationHotkeysController::AutomationHotkeysController(AutomationShell &automa
 {
     load();
     m_staged = m_committed;
+    m_installed = m_committed;
     // Scripts loading or reloading change what resolves (the manager's single
     // observer belongs to the manager tool, which announces each change).
     connect(m_automation.managerController(), &ui::AutomationManagerController::changed, this, [this] {
@@ -112,7 +113,7 @@ QVariantList AutomationHotkeysController::rows() const
 QVariantList AutomationHotkeysController::shortcuts() const
 {
     QVariantList out;
-    for (const auto &[name, b] : m_committed)
+    for (const auto &[name, b] : m_installed)
         if (resolve(b))
             out << QVariantMap{{QStringLiteral("legacyName"), qs(name)}, {QStringLiteral("keys"), qs(b.keys)}};
     return out;
@@ -159,10 +160,63 @@ void AutomationHotkeysController::clearKeys(const QString &legacyName)
 
 void AutomationHotkeysController::commit()
 {
+    // Legacy's OK acts on the whole map only after a change in the window.
+    std::map<std::string, std::string> staged;
+    for (const auto &[name, b] : m_staged)
+        staged[name] = b.keys;
+    const bool changed = staged != committedKeys();
     m_committed = m_staged;
     save();
+    m_installed = m_committed;
     emit rowsChanged();
     emit shortcutsChanged();
+    if (changed)
+        emit committed();
+}
+
+std::map<std::string, std::string> AutomationHotkeysController::committedKeys() const
+{
+    std::map<std::string, std::string> out;
+    for (const auto &[name, b] : m_committed)
+        out[name] = b.keys;
+    return out;
+}
+
+void AutomationHotkeysController::replaceCommitted(const std::map<std::string, std::string> &keys)
+{
+    std::map<std::string, application::MacroBinding> next;
+    for (const auto &[name, k] : keys) {
+        if (k.empty())
+            continue;
+        const auto kept = m_committed.find(name);
+        application::MacroBinding b;
+        if (kept != m_committed.end()) {
+            b = kept->second; // the registration it was made for
+        } else {
+            b.legacyName = name;
+            for (const auto &m : m_automation.manager().registry().macros())
+                if (application::legacyNameOf(fileNameOf(m.scriptPath).toStdString(), m.ordinal) == name) {
+                    b.macroName = m.name;
+                    b.scriptSha256 = m.scriptSha256;
+                }
+        }
+        b.keys = k;
+        next[name] = std::move(b);
+    }
+    m_committed = std::move(next);
+    m_staged = m_committed;
+    emit rowsChanged();
+}
+
+void AutomationHotkeysController::install()
+{
+    m_installed = m_committed;
+    emit shortcutsChanged();
+}
+
+QString AutomationHotkeysController::legacyNameFor(const QString &scriptPath, int ordinal) const
+{
+    return qs(application::legacyNameOf(QFileInfo(scriptPath).fileName().toStdString(), ordinal));
 }
 
 void AutomationHotkeysController::cancel()

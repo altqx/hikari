@@ -117,5 +117,8 @@ std::span<const InterimBit> interimShiftOptionBits();
 // The group the automation hotkeys used ("AutomationHotkeys/<legacy name>").
 inline constexpr std::string_view kInterimAutomationHotkeysGroup = "AutomationHotkeys";
 inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automationMacros";
+// O2: the hotkeys' (legacy SaveHkeys lines; see hotkeys.h).
+inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
+inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
 } // namespace hikari::application

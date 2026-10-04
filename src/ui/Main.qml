@@ -36,6 +36,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var styleManager
+    required property var hotkeys // O2: the shortcut editor (HotkeysController)
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -289,27 +290,27 @@ ApplicationWindow {
     // Legacy GLOBAL_SHOW_SHIFT_TIMES ("Time shift window", Ctrl+I). In the
     // Line editor Ctrl+I is italic: the editor's own hotkey wins there.
     Shortcut {
-        sequences: ["Ctrl+I"]
+        sequences: [root.globalKeys("GLOBAL_SHOW_SHIFT_TIMES")]
         context: Qt.ApplicationShortcut
         enabled: root.shellActive && !editorPanel.activeFocus
         onActivated: root.showPanel(timingDock)
     }
     // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
     Shortcut {
-        sequences: ["F4"]
+        sequences: [root.globalKeys("GLOBAL_JOIN_WITH_PREVIOUS")]
         context: Qt.ApplicationShortcut
         enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.joinLines("previous")
     }
     Shortcut {
-        sequences: ["F5"]
+        sequences: [root.globalKeys("GLOBAL_JOIN_WITH_NEXT")]
         context: Qt.ApplicationShortcut
         enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.joinLines("next")
     }
     // Legacy GLOBAL_REMOVE_LINES.
     Shortcut {
-        sequences: ["Shift+Del"]
+        sequences: [root.globalKeys("GLOBAL_REMOVE_LINES")]
         context: Qt.ApplicationShortcut
         enabled: root.shell.hasEditingTarget && root.shellActive
         onActivated: root.app.deleteLines()
@@ -325,11 +326,11 @@ ApplicationWindow {
     // a floating panel has the focus.
     Repeater {
         model: [
-            { keys: [StandardKey.Open], action: openAction },
-            { keys: ["Ctrl+W"], action: closeAction },
-            { keys: [StandardKey.Save], action: saveAction },
-            { keys: ["Ctrl+Shift+S"], action: saveAsAction },
-            { keys: ["Ctrl+Shift+H"], action: historyAction }
+            { keys: [root.globalKeys("GLOBAL_OPEN_SUBS")], action: openAction },
+            { keys: [root.globalKeys("GLOBAL_CLOSE_PAGE")], action: closeAction },
+            { keys: [root.globalKeys("GLOBAL_SAVE_SUBS")], action: saveAction },
+            { keys: [root.globalKeys("GLOBAL_SAVE_SUBS_AS")], action: saveAsAction },
+            { keys: [root.globalKeys("GLOBAL_HISTORY")], action: historyAction }
         ]
         delegate: Item {
             required property var modelData
@@ -364,8 +365,8 @@ ApplicationWindow {
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
-                        shortcut: StandardKey.Open
-                        onTriggered: openDialog.open()
+                        shortcut: root.globalKeys("GLOBAL_OPEN_SUBS")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.open()
                     }
                 }
                 Menu {
@@ -398,7 +399,8 @@ ApplicationWindow {
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
                         text: qsTr("Remove subtitles from the &editor")
-                        onTriggered: root.beginClose("new")
+                        shortcut: root.globalKeys("GLOBAL_REMOVE_SUBS")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
                     }
                 }
                 MenuItem {
@@ -406,16 +408,17 @@ ApplicationWindow {
                     action: Action {
                         id: closeAction
                         text: qsTr("&Close")
-                        shortcut: "Ctrl+W" // legacy GLOBAL_CLOSE_PAGE
+                        shortcut: root.globalKeys("GLOBAL_CLOSE_PAGE")
                         enabled: root.shell.hasEditingTarget
-                        onTriggered: root.beginClose("close")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
                     }
                 }
                 MenuItem {
                     objectName: "openVideoMenuItem"
                     action: Action {
                         text: qsTr("Open &Video…")
-                        onTriggered: videoDialog.open()
+                        shortcut: root.globalKeys("GLOBAL_OPEN_VIDEO")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
                     }
                 }
                 MenuItem {
@@ -423,17 +426,20 @@ ApplicationWindow {
                     action: Action {
                         id: saveAction
                         text: qsTr("&Save")
-                        shortcut: StandardKey.Save
+                        shortcut: root.globalKeys("GLOBAL_SAVE_SUBS")
                         enabled: root.editor.editable
-                        onTriggered: root.saveSubtitles()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
                     }
                 }
                 MenuItem {
                     objectName: "saveAllMenuItem"
                     action: Action {
                         text: qsTr("Save &all")
+                        shortcut: root.globalKeys("GLOBAL_SAVE_ALL_SUBS")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: {
+                            if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
+                                return
                             if (root.app.saveAll())
                                 root.openSaveDialog()
                         }
@@ -444,17 +450,20 @@ ApplicationWindow {
                     action: Action {
                         id: saveAsAction
                         text: qsTr("Save &as…")
-                        shortcut: "Ctrl+Shift+S" // legacy GLOBAL_SAVE_SUBS_AS
+                        shortcut: root.globalKeys("GLOBAL_SAVE_SUBS_AS")
                         enabled: root.shell.hasEditingTarget
-                        onTriggered: root.openSaveDialog()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
                     }
                 }
                 MenuItem {
                     objectName: "saveTranslationMenuItem"
                     action: Action {
                         text: qsTr("Save &translation")
+                        shortcut: root.globalKeys("GLOBAL_SAVE_TRANSLATION")
                         enabled: root.shell.hasEditingTarget && root.editor.translationMode
                         onTriggered: {
+                            if (root.hotkeyGesture("GLOBAL_SAVE_TRANSLATION"))
+                                return
                             if (root.app.turnOffTranslationMode())
                                 root.openSaveDialog()
                         }
@@ -473,14 +482,16 @@ ApplicationWindow {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         text: qsTr("Open auto save")
-                        onTriggered: recoveryWindow.showBundles()
+                        shortcut: root.globalKeys("GLOBAL_OPEN_AUTO_SAVE")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) recoveryWindow.showBundles()
                     }
                 }
                 MenuItem {
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
                         text: qsTr("Remove temporary files")
-                        onTriggered: temporaryFilesWindow.showFiles()
+                        shortcut: root.globalKeys("GLOBAL_DELETE_TEMPORARY_FILES")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
                     }
                 }
                 MenuItem {
@@ -495,7 +506,8 @@ ApplicationWindow {
                     objectName: "settingsMenuItem"
                     action: Action {
                         text: qsTr("&Settings")
-                        onTriggered: settingsDialog.openDialog()
+                        shortcut: root.globalKeys("GLOBAL_SETTINGS")
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
                 }
                 MenuItem {
@@ -511,13 +523,15 @@ ApplicationWindow {
             title: qsTr("&Edit")
             Action {
                 text: qsTr("&Undo")
+                shortcut: root.globalKeys("GLOBAL_UNDO")
                 enabled: root.editor.hasLine
-                onTriggered: root.editor.undo()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
             }
             Action {
                 text: qsTr("&Redo")
+                shortcut: root.globalKeys("GLOBAL_REDO")
                 enabled: root.editor.hasLine
-                onTriggered: root.editor.redo()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
             }
             // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
             Menu {
@@ -558,8 +572,9 @@ ApplicationWindow {
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
                     text: qsTr("Undo to last save")
+                    shortcut: root.globalKeys("GLOBAL_UNDO_TO_LAST_SAVE")
                     enabled: root.editor.canUndoToLastSave
-                    onTriggered: root.editor.undoToLastSave()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
                 }
             }
             MenuItem {
@@ -567,24 +582,26 @@ ApplicationWindow {
                 action: Action {
                     id: historyAction
                     text: qsTr("&History")
-                    shortcut: "Ctrl+Shift+H" // legacy GLOBAL_HISTORY default
+                    shortcut: root.globalKeys("GLOBAL_HISTORY")
                     enabled: root.editor.hasLine
-                    onTriggered: historyWindow.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
                 }
             }
             MenuItem {
                 objectName: "misspellMenuItem"
                 action: Action {
                     text: qsTr("Fix minor errors (experimental)")
-                    onTriggered: misspellDialog.toggle()
+                    shortcut: root.globalKeys("GLOBAL_MISSPELLS_REPLACER")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
                 }
             }
             MenuItem {
                 objectName: "selectLinesMenuItem"
                 action: Action {
                     text: qsTr("Select &lines")
+                    shortcut: root.globalKeys("GLOBAL_OPEN_SELECT_LINES")
                     enabled: root.editor.hasLine
-                    onTriggered: selectLinesDialog.openDialog()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) selectLinesDialog.openDialog()
                 }
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
@@ -592,28 +609,28 @@ ApplicationWindow {
                 objectName: "findReplaceMenuItem"
                 action: Action {
                     text: qsTr("Find and re&place")
-                    shortcut: "Ctrl+H"
+                    shortcut: root.globalKeys("GLOBAL_FIND_REPLACE")
                     enabled: root.editor.hasLine
-                    onTriggered: root.openSearch(1)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
                 }
             }
             MenuItem {
                 objectName: "findMenuItem"
                 action: Action {
                     text: qsTr("&Find")
-                    shortcut: "Ctrl+F"
+                    shortcut: root.globalKeys("GLOBAL_SEARCH")
                     enabled: root.editor.hasLine
-                    onTriggered: root.openSearch(0)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
                 }
             }
             MenuItem {
                 objectName: "findNextMenuItem"
                 action: Action {
                     text: qsTr("Find next")
-                    shortcut: "F3"
+                    shortcut: root.globalKeys("GLOBAL_FIND_NEXT")
                     // A question box waits: nothing re-enters the search (legacy's are modal).
                     enabled: root.editor.hasLine && !root.app.findBusy
-                    onTriggered: root.app.findNext()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
                 }
             }
         }
@@ -1108,41 +1125,29 @@ ApplicationWindow {
                 }
             }
         }
+        // Legacy EDITBOX bindings (O2, HotkeysController::actionFor): the
+        // text field's own plain Enter (commit and go to the next line) and
+        // TabPanel's fixed numpad Enter and Ctrl+numpad Enter first, then the
+        // Editor's bindings, which act before the application's shortcuts;
+        // composition keeps its own Enter. Escape discards the draft and
+        // Ctrl+Z / Ctrl+Y undo and redo it (accepted transaction policy).
+        function hotkeyAction(event) {
+            const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
+            const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+            if (enter && field.inputMethodComposing)
+                return ""
+            if (enter && mods === 0)
+                return "EDITBOX_COMMIT_GO_NEXT_LINE"
+            if (event.key === Qt.Key_Enter && mods === Qt.ControlModifier)
+                return "EDITBOX_COMMIT"
+            return root.hotkeys.actionFor(2, event.key, event.modifiers)
+        }
+        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== ""
         Keys.onPressed: event => {
             const ctrl = event.modifiers & Qt.ControlModifier
-            const enter = event.key === Qt.Key_Return || event.key === Qt.Key_Enter
-            // Legacy EDITBOX defaults; composition keeps its own Enter.
-            if (enter && field.inputMethodComposing) {
-                return
-            } else if (enter && (event.modifiers & Qt.ShiftModifier)) {
-                root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd)
-                event.accepted = true
-            } else if (enter && ctrl) {
-                root.editor.commit()
-                event.accepted = true
-            } else if (enter) {
-                root.editor.commitAndAdvance()
-                event.accepted = true
-            } else if ((event.modifiers & Qt.AltModifier) && event.key === Qt.Key_Down) {
-                root.editor.toggleUnconfirmedAndAdvance()
-                event.accepted = true
-            } else if (ctrl && (event.key === Qt.Key_Comma || event.key === Qt.Key_Period)) {
-                // Legacy defaults: Ctrl+, Start difference, Ctrl+. End difference.
-                // Legacy writes into the edited field (the Translated one in
-                // translation mode) whichever field has focus.
-                const target = root.editor.translationMode ? translationText : lineText
-                root.editor.insertTimeDifference(event.key === Qt.Key_Period, target.selectionStart, target.selectionEnd)
-                event.accepted = true
-            } else if (ctrl && event.key === Qt.Key_D) {
-                root.editor.findNextUnconfirmed()
-                event.accepted = true
-            } else if (ctrl && event.key === Qt.Key_R) {
-                root.editor.findNextUntranslated()
-                event.accepted = true
-            } else if (ctrl && (event.key === Qt.Key_B || event.key === Qt.Key_I)) {
-                // Legacy defaults: Ctrl+B Bold, Ctrl+I Italic.
-                root.editor.toggleTagIn(field.role, event.key === Qt.Key_B ? "b" : "i",
-                                        field.selectionStart, field.selectionEnd)
+            const action = hotkeyAction(event)
+            if (action !== "") {
+                root.runEditorHotkey(action, field) // an action not here yet still takes the key
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape) {
                 root.editor.discard()
@@ -1212,17 +1217,14 @@ ApplicationWindow {
                 // Frame stepping while the panel has focus (legacy video arrows).
                 Keys.onLeftPressed: root.video.stepFrames(-1)
                 Keys.onRightPressed: root.video.stepFrames(1)
-                // Legacy VIDEO_PLAY_PAUSE (Space in the video).
-                Keys.onSpacePressed: root.video.togglePlay()
-                // Legacy VIDEO_5_SECONDS_* (L / ;) and VIDEO_MINUTE_* (Up / Down).
-                Keys.onUpPressed: root.video.seekBy(60000)
-                Keys.onDownPressed: root.video.seekBy(-60000)
+                // O2: the Video window's bindings (VideoBox's table; by default
+                // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
+                // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
+                Keys.onShortcutOverride: event => event.accepted = root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                 Keys.onPressed: event => {
-                    if (event.key === Qt.Key_L) {
-                        root.video.seekBy(5000)
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_Semicolon) {
-                        root.video.seekBy(-5000)
+                    const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
+                    if (action !== "") {
+                        root.runVideoHotkey(action)
                         event.accepted = true
                     }
                 }
@@ -1452,11 +1454,13 @@ ApplicationWindow {
                         // Ordinary ASS controls; they keep focus (and the
                         // selection) in the text field.
                         Repeater {
+                            // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
+                            // maps the hotkey, the tooltip shows it.
                             model: [
-                                { tag: "b", label: qsTr("B"), name: qsTr("Bold") },
-                                { tag: "i", label: qsTr("I"), name: qsTr("Italic") },
-                                { tag: "u", label: qsTr("U"), name: qsTr("Underline") },
-                                { tag: "s", label: qsTr("S"), name: qsTr("Strikeout") }
+                                { tag: "b", label: qsTr("B"), name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                { tag: "i", label: qsTr("I"), name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                { tag: "u", label: qsTr("U"), name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                { tag: "s", label: qsTr("S"), name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
                             ]
                             ToolButton {
                                 required property var modelData
@@ -1465,7 +1469,11 @@ ApplicationWindow {
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
                                 Accessible.name: modelData.name
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
+                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                        return
                                     const field = translationText.activeFocus ? translationText : lineText
                                     root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
                                 }
@@ -1480,18 +1488,20 @@ ApplicationWindow {
                             enabled: root.editor.editable
                             Accessible.name: qsTr("Font selection")
                             ToolTip.visible: hovered
-                            ToolTip.text: qsTr("Font selection")
+                            ToolTip.text: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
                             onClicked: {
+                                if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
+                                    return
                                 const field = translationText.activeFocus ? translationText : lineText
                                 fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                             }
                         }
                         Repeater {
                             model: [
-                                { number: 1, name: qsTr("Primary color") },
-                                { number: 2, name: qsTr("Secondary color for karaoke") },
-                                { number: 3, name: qsTr("Border color") },
-                                { number: 4, name: qsTr("Shadow color") }
+                                { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
+                                { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
+                                { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
+                                { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
                             ]
                             ToolButton {
                                 required property var modelData
@@ -1501,8 +1511,10 @@ ApplicationWindow {
                                 enabled: root.editor.editable
                                 Accessible.name: modelData.name
                                 ToolTip.visible: hovered
-                                ToolTip.text: modelData.name
+                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
+                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                        return
                                     const field = translationText.activeFocus ? translationText : lineText
                                     if (colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd))
                                         root.app.colourPickerOpened()
@@ -1523,8 +1535,10 @@ ApplicationWindow {
                                 Accessible.name: modelData.name
                                 Accessible.description: modelData.tag
                                 ToolTip.visible: hovered && modelData.tag.length > 0
-                                ToolTip.text: modelData.tag
+                                ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
                                 onClicked: {
+                                    if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
+                                        return
                                     if (modelData.tag.length === 0)
                                         tagButtonDialog.editButton(index)
                                     else
@@ -1592,23 +1606,32 @@ ApplicationWindow {
                             text: qsTr("Paste all")
                             focusPolicy: Qt.NoFocus
                             enabled: root.editor.editable
-                            onClicked: root.editor.pasteAllToTranslation()
+                            ToolTip.visible: hovered
+                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
+                            onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
                         }
                         Button {
                             objectName: "pasteSelectionToTranslation"
                             text: qsTr("Paste the selected")
                             focusPolicy: Qt.NoFocus
                             enabled: root.editor.editable
-                            onClicked: root.editor.pasteSelectionToTranslation(lineText.selectionStart,
-                                                                                lineText.selectionEnd,
-                                                                                translationText.cursorPosition)
+                            ToolTip.visible: hovered
+                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
+                            onClicked: {
+                                if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
+                                    return
+                                root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
+                                                                        translationText.cursorPosition)
+                            }
                         }
                         Button {
                             objectName: "commentOutOriginal"
                             text: qsTr("Comment out original")
                             focusPolicy: Qt.NoFocus
                             enabled: root.editor.editable
-                            onClicked: root.editor.commentOutOriginal()
+                            ToolTip.visible: hovered
+                            ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
+                            onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
                         }
                     }
 
@@ -1677,21 +1700,34 @@ ApplicationWindow {
                         MenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         MenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
-                    // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
-                    // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
+                    // The Grid's accelerators (TabPanel::SetAccels): the fixed
+                    // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
+                    // GRID_PASTE Ctrl+V) first, then the Subtitles bindings
+                    // (O2; GRID_DUPLICATE_LINES Ctrl+D by default) with the
+                    // Editor and Video actions bound for the Grid and Video's
+                    // play and seek bindings, before the application's shortcuts.
+                    function clipboardKey(event) {
+                        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
+                        return mods === Qt.ControlModifier && (event.key === Qt.Key_C || event.key === Qt.Key_X || event.key === Qt.Key_V)
+                    }
+                    Keys.onShortcutOverride: event => {
+                        event.accepted = clipboardKey(event) || root.hotkeys.actionFor(1, event.key, event.modifiers) !== ""
+                    }
                     Keys.onPressed: event => {
-                        if (!(event.modifiers & Qt.ControlModifier))
+                        if (clipboardKey(event)) {
+                            if (event.key === Qt.Key_C)
+                                root.app.copyLines()
+                            else if (event.key === Qt.Key_X)
+                                root.app.cutLines()
+                            else
+                                root.app.pasteLines()
+                            event.accepted = true
                             return
-                        if (event.key === Qt.Key_D)
-                            root.app.duplicateLines()
-                        else if (event.key === Qt.Key_C)
-                            root.app.copyLines()
-                        else if (event.key === Qt.Key_X)
-                            root.app.cutLines()
-                        else if (event.key === Qt.Key_V)
-                            root.app.pasteLines()
-                        else
+                        }
+                        const action = root.hotkeys.actionFor(1, event.key, event.modifiers)
+                        if (action === "")
                             return
+                        root.runGridHotkey(action)
                         event.accepted = true
                     }
                     Menu {
@@ -1724,7 +1760,13 @@ ApplicationWindow {
                                 enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "frame")
                             }
                         }
-                        MenuItem { objectName: "duplicateLines"; text: qsTr("&Duplicate lines\tCtrl+D"); onTriggered: root.app.duplicateLines() }
+                        MenuItem {
+                            objectName: "duplicateLines"
+                            // SetAccMenu: the binding's keys after the tab.
+                            readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
+                            text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
+                            onTriggered: if (!root.hotkeyGesture("GRID_DUPLICATE_LINES", 1)) root.app.duplicateLines()
+                        }
                         MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: root.app.swapLines() }
                         MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: root.app.joinLines("join") }
                         MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: root.app.joinLines("first") }
@@ -3268,6 +3310,7 @@ ApplicationWindow {
     SettingsDialog {
         id: settingsDialog
         app: root.app
+        hotkeys: root.hotkeys
         anchors.centerIn: parent
     }
     SelectLinesDialog {
@@ -3723,6 +3766,156 @@ ApplicationWindow {
                 onClicked: temporaryFilesWindow.close()
             }
         }
+    }
+
+    // O2: the shortcut editor. The installed bindings of a Global action as
+    // a Qt sequence ("" when none).
+    function globalKeys(symbol) {
+        return root.hotkeys.keys.global[symbol] ?? ""
+    }
+    // An installed binding as legacy text ("Ctrl-D"), following installs.
+    function boundKeys(symbol, window) {
+        return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
+    }
+    // A mapped button's tooltip (MappedButton::SetToolTip).
+    function mappedTip(text, symbol, window) {
+        const key = root.boundKeys(symbol, window)
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTr("Shortcut can be set using Shift + Click")
+    }
+    // Hotkeys::OnMapHkey: a Shift+click on a menu item (with the window
+    // choice) or a mapped button (Shift held, its own window) maps the
+    // action's hotkey instead of running it; the bindings are installed and
+    // saved at once.
+    function hotkeyGesture(symbol, window, mappedButton) {
+        if (!root.hotkeys.shiftClicked(!mappedButton))
+            return false
+        const target = root.hotkeys.gestureTarget(symbol)
+        hotkeyMapping.capture(target.name, window ?? 0, !mappedButton, (accel, type) => {
+            const conflict = root.hotkeys.gestureConflict(target.id, accel, type)
+            if (conflict.message === undefined)
+                root.hotkeys.gestureMap(target.id, target.name, accel, type, "cancel")
+            else
+                hotkeyMapping.ask(conflict, answer => root.hotkeys.gestureMap(target.id, target.name, accel, type, answer))
+        })
+        return true
+    }
+    // EditBox::OnAccelerator for an Editor binding in `field` (the focused
+    // text field); Video actions bound for the Editor go to the video.
+    // False for an action the rewrite does not have yet.
+    function runEditorHotkey(action, field) {
+        const tags = { EDITBOX_INSERT_BOLD: "b", EDITBOX_INSERT_ITALIC: "i", EDITBOX_CHANGE_UNDERLINE: "u",
+                       EDITBOX_CHANGE_STRIKEOUT: "s" }
+        const colours = { EDITBOX_CHANGE_COLOR_PRIMARY: 1, EDITBOX_CHANGE_COLOR_SECONDARY: 2,
+                          EDITBOX_CHANGE_COLOR_OUTLINE: 3, EDITBOX_CHANGE_COLOR_SHADOW: 4 }
+        // Legacy writes time differences into the edited field (the
+        // Translated one in translation mode) whichever field has focus.
+        const edited = root.editor.translationMode ? translationText : lineText
+        if (tags[action] !== undefined) {
+            root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
+            return true
+        }
+        if (colours[action] !== undefined) {
+            if (colourDialog.openFor(colours[action], field.role, field.selectionStart, field.selectionEnd))
+                root.app.colourPickerOpened()
+            return true
+        }
+        if (action.startsWith("EDITBOX_TAG_BUTTON")) {
+            const index = Number(action.substring(18)) - 1
+            if (index < root.tagButtons.buttons.length)
+                root.applyTagButton(index)
+            return true
+        }
+        switch (action) {
+        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.editor.commitAndAdvance(); return true
+        case "EDITBOX_COMMIT": root.editor.commit(); return true
+        case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
+        case "EDITBOX_START_DIFFERENCE":
+        case "EDITBOX_END_DIFFERENCE":
+            root.editor.insertTimeDifference(action === "EDITBOX_END_DIFFERENCE", edited.selectionStart, edited.selectionEnd)
+            return true
+        case "EDITBOX_FIND_NEXT_DOUBTFUL": root.editor.findNextUnconfirmed(); return true
+        case "EDITBOX_FIND_NEXT_UNTRANSLATED": root.editor.findNextUntranslated(); return true
+        case "EDITBOX_CHANGE_FONT": fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_PASTE_ALL_TO_TRANSLATION": root.editor.pasteAllToTranslation(); return true
+        case "EDITBOX_PASTE_SELECTION_TO_TRANSLATION":
+            root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd, translationText.cursorPosition)
+            return true
+        case "EDITBOX_HIDE_ORIGINAL": root.editor.commentOutOriginal(); return true
+        }
+        return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
+    }
+    // VideoBox::OnAccelerator; Editor and Grid actions bound for the Video
+    // window go to theirs.
+    function runVideoHotkey(action) {
+        switch (action) {
+        case "VIDEO_PLAY_PAUSE": root.video.togglePlay(); return true
+        case "VIDEO_5_SECONDS_FORWARD": root.video.seekBy(5000); return true
+        case "VIDEO_5_SECONDS_BACKWARD": root.video.seekBy(-5000); return true
+        case "VIDEO_MINUTE_FORWARD": root.video.seekBy(60000); return true
+        case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
+        }
+        if (action.startsWith("EDITBOX_"))
+            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+        return action.startsWith("GRID_") && root.runGridHotkey(action)
+    }
+    // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
+    // go to theirs.
+    function runGridHotkey(action) {
+        // GRID_HIDE_*: the column's bit (id - 4000; CPS 512, wraps 8192).
+        const columns = { GRID_HIDE_LAYER: 1, GRID_HIDE_START: 2, GRID_HIDE_END: 4, GRID_HIDE_STYLE: 8,
+                          GRID_HIDE_ACTOR: 16, GRID_HIDE_MARGINL: 32, GRID_HIDE_MARGINR: 64, GRID_HIDE_MARGINV: 128,
+                          GRID_HIDE_EFFECT: 256, GRID_HIDE_CPS: 512, GRID_HIDE_WRAPS: 8192 }
+        const filterBits = { GRID_FILTER_BY_STYLES: 1, GRID_FILTER_BY_SELECTIONS: 2, GRID_FILTER_BY_DIALOGUES: 4,
+                             GRID_FILTER_BY_DOUBTFUL: 8, GRID_FILTER_BY_UNTRANSLATED: 16 }
+        if (columns[action] !== undefined) {
+            root.shell.toggleColumn(columns[action])
+            return true
+        }
+        if (filterBits[action] !== undefined) {
+            root.gridFilter.setFilterBy(filterBits[action], (root.gridFilter.filterBy & filterBits[action]) === 0)
+            return true
+        }
+        const video = root.video.hasVideo
+        switch (action) {
+        case "GRID_DUPLICATE_LINES": root.app.duplicateLines(); return true
+        case "GRID_INSERT_BEFORE": root.app.insertLine(true); return true
+        case "GRID_INSERT_AFTER": root.app.insertLine(false); return true
+        case "GRID_INSERT_BEFORE_VIDEO": if (video) root.app.insertLine(true, "video"); return true
+        case "GRID_INSERT_AFTER_VIDEO": if (video) root.app.insertLine(false, "video"); return true
+        case "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME": if (video) root.app.insertLine(true, "frame"); return true
+        case "GRID_INSERT_AFTER_WITH_VIDEO_FRAME": if (video) root.app.insertLine(false, "frame"); return true
+        case "GRID_SWAP_LINES": root.app.swapLines(); return true
+        case "GRID_JOIN_LINES": root.app.joinLines("join"); return true
+        case "GRID_JOIN_TO_FIRST_LINE": root.app.joinLines("first"); return true
+        case "GRID_JOIN_TO_LAST_LINE": root.app.joinLines("last"); return true
+        case "GRID_MAKE_CONTINOUS_PREVIOUS_LINE": root.app.makeContinuous(true); return true
+        case "GRID_MAKE_CONTINOUS_NEXT_LINE": root.app.makeContinuous(false); return true
+        case "GRID_SPLIT_BY_VIDEO_TIME": if (video) root.app.splitLines("videoTime"); return true
+        case "GRID_SPLIT_BY_FRAME": if (video) root.app.splitLines("frames"); return true
+        case "GRID_SPLIT_BY_CHARS": root.app.splitLines("chars"); return true
+        case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
+        case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
+        case "GRID_TREE_MAKE": root.app.makeGroups(); return true
+        case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
+        case "GRID_FILTER": root.app.filterLines(); return true
+        case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true
+        case "GRID_FILTER_INVERT": root.gridFilter.inverted = !root.gridFilter.inverted; return true
+        case "GRID_FILTER_DO_NOT_RESET": root.gridFilter.addToFilter = !root.gridFilter.addToFilter; return true
+        case "GRID_FILTER_AFTER_SUBS_LOAD": root.gridFilter.afterLoad = !root.gridFilter.afterLoad; return true
+        // The hotkey toggles from the stored option, not from the Grid's own
+        // "ignore filtering" (which "Set default" leaves as it was).
+        case "GRID_FILTER_IGNORE_IN_ACTIONS":
+            root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
+            return true
+        }
+        if (action.startsWith("EDITBOX_"))
+            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+        return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
+    }
+    HotkeyMapping {
+        id: hotkeyMapping
+        hotkeys: root.hotkeys
     }
 
     // S2: committed automation shortcuts, application-wide.

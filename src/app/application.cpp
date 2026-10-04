@@ -505,6 +505,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
+    // O2: legacy LoadHkeys at startup, then SetAccels.
+    m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings);
     m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION));
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
@@ -3816,6 +3818,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
+            {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
@@ -3980,6 +3983,8 @@ QVariantMap Application::openSettingsDialog()
     lists.slashesForBackslashes = false;
 #endif
     const auto open = application::openOptionsDialog(m_settings->settings(), lists);
+    // O2: the Hotkeys page's list (AddHotkeysOnList).
+    m_hotkeys->beginOptions();
     QStringList warnings;
     // "The selected %s for conversion does not exist\nand will be changed to the default".
     if (open.catalogMissing)
@@ -4014,6 +4019,8 @@ void Application::applySettings(const QVariantMap &values)
     // A changed program font runs HikariSubFrame::DestroyDialogs.
     if (wrote("program.font") || wrote("program.fontSize"))
         destroyDialogs();
+    // O2: the Hotkeys page's list, a bound control of SetOptions.
+    m_hotkeys->commitOptions();
 }
 
 // HikariSubFrame::DestroyDialogs: FindReplaceDialog and SelectLines save
@@ -4054,12 +4061,14 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     // legacy objects hold is not reset, and they write it back later:
     // - HikariSubFrame's recent subtitles, video and audio lists (SetRecent
     //   at the next addition, OnClose at exit), kept here at once;
-    // - automation hotkeys: the shortcut editor's (O2; legacy Set default
-    //   also runs Hkeys.ResetDefaults(), which O2 owns).
+    // - the hotkey files (Hotkeys.txt, AudioHotkeys.txt): Hkeys.ResetDefaults()
+    //   (below) resets the bindings in memory only; they are written when
+    //   legacy next saves them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     for (const std::string_view id : {std::string_view("recent.subtitles"), std::string_view("recent.video"),
-                                      std::string_view("recent.audio"), application::kAutomationHotkeysSetting})
+                                      std::string_view("recent.audio"), application::kAutomationHotkeysSetting,
+                                      application::kHotkeysSetting, application::kAudioHotkeysSetting})
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
     m_resettingSettings = true;
@@ -4099,6 +4108,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     // and the spell checker its dictionary (no SpellChecker::Destroy); the
     // Grid and the menus read the reset options.
     emit spellingChanged();
+    // O2: Hkeys.ResetDefaults(), then the Hotkeys list again.
+    m_hotkeys->resetDefaults();
     return toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
 }
 

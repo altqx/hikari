@@ -101,3 +101,5 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # O1: the settings registry over the INI file and the interim keys' move.
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+# O2: remapping a command in the shortcut editor and using it (Spix workflow).
+hikari_add_spix_test(hikari_ui_shortcuts_workflow SOURCES shortcuts_workflow.cpp LIBRARIES hikari_composition)

@@ -5,6 +5,7 @@
 // coordinator, Documents, the workspace and the shell/editor presenters.
 
 #include "hikari/app/automation_hotkeys_controller.h"
+#include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/automation_shell.h"
@@ -513,6 +514,8 @@ public:
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
+    // O2: the shortcut editor and the bindings in effect.
+    HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
     StyleManagerController &styleManager() { return *m_styleManager; }
     ui::LogController &log() { return *m_log; }
@@ -577,6 +580,7 @@ private:
     application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
+    std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<ui::LogController> m_log;
