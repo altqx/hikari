@@ -12,6 +12,7 @@
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <array>
@@ -44,17 +45,23 @@ public:
     QVariantList buttons() const;
     const Button &button(int index) const { return m_buttons[static_cast<std::size_t>(index)]; }
 
-    // "Change number of buttons".
+    // "Change number of buttons": the stored count it starts from, and OK.
+    Q_INVOKABLE int storedCount() const;
     Q_INVOKABLE void setCount(int count);
     // The TagButtonDialog's "Save tag".
     Q_INVOKABLE void edit(int index, const QString &name, const QString &tag, int type);
+    // Pressing a button or its menu entry (EditBox::OnButtonTag): its option
+    // as it is stored now, {tag, type}, or nothing (legacy wxBell) when it
+    // has fewer than two entries. The shown buttons are what SetTagButtons
+    // built; after "Set default" they stay while their options are reset.
+    Q_INVOKABLE QVariantMap pressed(int index) const;
 
     // config::GetTable with empty entries kept: "{\n\t<tag>\n\t<type>\n\t<name>\n}";
     // a missing name is "T<n>" (1-based), a missing type 0.
     static Button fromLegacy(const QString &value, int index);
     static QString toLegacy(const Button &button);
 
-    // Reads the settings again (after "Set default").
+    // Reads the settings again.
     void reload();
 
 signals:
@@ -62,7 +69,6 @@ signals:
 
 private:
     void load();
-    void save() const;
 
     std::unique_ptr<SettingsStore> m_ownedSettings;
     SettingsStore *m_settings;

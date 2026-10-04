@@ -48,6 +48,8 @@ class Application : public QObject {
     Q_OBJECT
 signals:
     void closeFinished(bool done, const QString &problem);
+    // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
+    void selectLinesDestroyed();
     void quitApprovedChanged();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
@@ -260,6 +262,12 @@ public:
     // kept in the settings registry); selectLines runs on the editing target or on
     // every open Document and returns the legacy message.
     Q_INVOKABLE QVariantMap selectLinesSettings() const;
+    // The dialog opens (legacy creates SelectLines once and keeps it until
+    // the app closes or DestroyDialogs): selectLinesSettings, and from now
+    // on the dialog's options and recent searches survive "Set default".
+    Q_INVOKABLE QVariantMap openSelectLines();
+    // The dialog closes: its options are written (not the recent searches,
+    // which legacy writes only when a selection runs).
     Q_INVOKABLE void saveSelectLinesSettings(const QVariantMap &settings);
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The "+" button: the chosen styles as the legacy anchored pattern.
@@ -327,6 +335,9 @@ public:
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
+    // E1/O1: the Line editor's colour picker opens for the editing target
+    // (legacy DialogColorPicker::Get(EditBox of that tab)).
+    Q_INVOKABLE void colourPickerOpened();
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
     ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
@@ -372,7 +383,14 @@ private:
     // O1: declared before everything that keeps a reference to it.
     std::unique_ptr<ui::SettingsStore> m_settings;
     void settingChanged(const QString &id);
-    QString m_dictionaryDir; // legacy "Dictionary" beside the program
+    // R6-dictionary-location: the settings folder's Dictionary (user
+    // dictionaries), then the program folder's (bundled ones).
+    QStringList m_dictionaryDirs;
+    // The process locale legacy CmpNoCase runs under: a translation language
+    // initialized at startup folds every letter, "C" only ASCII letters.
+    bool m_foldsEveryLetter = false;
+    bool m_resettingSettings = false; // "Set default" is resetting the registry
+    bool m_selectLinesOpened = false; // legacy SelectLines exists
     application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;

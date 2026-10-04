@@ -153,9 +153,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
-    m_dictionaryDir = QDir(automationPath(options.automationDir)).filePath(QStringLiteral("../Dictionary"));
+    // R6-dictionary-location: user dictionaries in the settings folder's
+    // Dictionary, bundled ones in the program folder's (legacy's only one).
+    if (!m_settingsFile.isEmpty())
+        m_dictionaryDirs << QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
+    if (const QString bundled = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
+        !m_dictionaryDirs.contains(bundled))
+        m_dictionaryDirs << bundled;
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
+    {
+        // hikarisubApp::OnInit: a PROGRAM_LANGUAGE other than English (and
+        // the legacy "0"/"1", read as none) that wxLocale knows initializes
+        // wxLocale, which sets the process locale; otherwise it stays "C".
+        const QString language = m_settings->text("program.language");
+        m_foldsEveryLetter = !language.isEmpty() && language != QLatin1String("0") && language != QLatin1String("1") &&
+                             language != QLatin1String("en") && QLocale(language).language() != QLocale::C;
+    }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
@@ -1598,11 +1612,22 @@ QVariantMap Application::selectLinesSettings() const
             {QStringLiteral("recent"), m_selectRecent}};
 }
 
+void Application::colourPickerOpened()
+{
+    const auto target = m_workspace.editingTarget();
+    m_colourPicker->opened(target ? QString::number(target->value) : QString());
+}
+
+QVariantMap Application::openSelectLines()
+{
+    m_selectLinesOpened = true;
+    return selectLinesSettings();
+}
+
 void Application::saveSelectLinesSettings(const QVariantMap &settings)
 {
     m_selectOptions = application::selectLinesOptions(selectSettings(settings, m_selectOptions));
     m_settings->set("selectLines.options", m_selectOptions);
-    m_settings->set("selectLines.recentSelections", m_selectRecent);
 }
 
 QString Application::selectLines(const QVariantMap &map, bool allTabs)
@@ -1640,6 +1665,7 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
     m_selectRecent.clear();
     for (const auto &r : application::addRecentSelection(std::move(recent), settings.find))
         m_selectRecent << fromUtf8(r);
+    m_settings->set("selectLines.recentSelections", m_selectRecent); // AddRecent's SetTable
     saveSelectLinesSettings(map);
     using M = application::SelectLinesSettings::Mode;
     return settings.mode == M::Select           ? tr("%1 lines selected.").arg(count)
@@ -2185,7 +2211,7 @@ void Application::settingChanged(const QString &id)
         m_conversionPlan.reset(); // a changed option invalidates the preview (C02)
     else if (id == QLatin1String("autosave.maxFiles") && !m_recoveryDir.isEmpty() && m_recovery)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
-    else if (id == QLatin1String("grid.hideColumns"))
+    else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
 }
 
@@ -2286,10 +2312,17 @@ QVariantMap Application::openSettingsDialog()
     lists.languageTags = {"en"};
     lists.languageNames = {"English"};
     lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
+    if (m_foldsEveryLetter)
+        lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {
+            const QString x = qs(a), y = qs(b);
+            return x.size() == y.size() && x.compare(y, Qt::CaseInsensitive) == 0;
+        };
     // SpellChecker::AvailableDics: the i-th .dic with the i-th .aff of the
-    // Dictionary folder, in the folder's order (NTFS lists names sorted).
-    {
-        const QDir dir(m_dictionaryDir);
+    // Dictionary folder, in the folder's order (NTFS lists names sorted);
+    // R6-dictionary-location: the settings folder's, then the program
+    // folder's, a symbol listed once.
+    for (const QString &folder : std::as_const(m_dictionaryDirs)) {
+        const QDir dir(folder);
 #ifdef _WIN32
         const QDir::Filters filters = QDir::Files;
 #else
@@ -2301,11 +2334,13 @@ QVariantMap Application::openSettingsDialog()
         // fewer .aff than .dic files; the pairing stops there instead.
         for (qsizetype i = 0; i < dic.size() && i < aff.size(); ++i) {
             const QString symbol = dic[i].section(u'.', 0, -2);
-            if (symbol == aff[i].section(u'.', 0, -2)) {
+            if (symbol == aff[i].section(u'.', 0, -2) && std::ranges::find(lists.dictionarySymbols, symbol.toStdString()) == lists.dictionarySymbols.end()) {
                 lists.dictionarySymbols.push_back(symbol.toStdString());
                 lists.dictionaryNames.push_back(languageName(symbol).toStdString());
             }
         }
+    }
+    {
         if (lists.dictionaryNames.empty())
             lists.dictionaryNames.push_back(tr("Put files .dic and .aff to \"Dictionary\" folder").toStdString());
     }
@@ -2340,29 +2375,60 @@ QVariantMap Application::openSettingsDialog()
 void Application::applySettings(const QVariantMap &values)
 {
     // Live effects follow from settingChanged.
-    application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
+    const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
+    // A changed program font runs HikariSubFrame::DestroyDialogs: SelectLines
+    // saves its options and is destroyed, so its next opening reads the
+    // settings again.
+    if (std::ranges::any_of(written, [](const std::string &id) { return id == "program.font" || id == "program.fontSize"; })
+        && m_selectLinesOpened) {
+        m_settings->set("selectLines.options", m_selectOptions);
+        m_selectLinesOpened = false;
+        m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
+        emit selectLinesDestroyed();
+    }
 }
 
 QVariantMap Application::resetSettings(const QVariantMap &values)
 {
-    // Legacy keeps the recent list in the main window and writes it back at
-    // exit, so Set default does not clear it; hotkeys are the shortcut editor's (O2).
-    const auto recent = m_settings->settings().value("recent.subtitles");
-    const auto macros = m_settings->settings().value(application::kAutomationHotkeysSetting);
+    // config::ResetDefault resets every option in memory. What long-lived
+    // legacy objects hold is not reset, and they write it back later:
+    // - HikariSubFrame's recent subtitles, video and audio lists (SetRecent
+    //   at the next addition, OnClose at exit), kept here at once;
+    // - automation hotkeys: the shortcut editor's (O2; legacy Set default
+    //   also runs Hkeys.ResetDefaults(), which O2 owns).
+    auto &store = m_settings->settings();
+    std::vector<std::pair<std::string_view, application::SettingValue>> kept;
+    for (const std::string_view id : {std::string_view("recent.subtitles"), std::string_view("recent.video"),
+                                      std::string_view("recent.audio"), application::kAutomationHotkeysSetting})
+        if (store.isSet(id))
+            kept.emplace_back(id, store.value(id));
+    m_resettingSettings = true;
     m_settings->resetAll();
-    m_settings->settings().set("recent.subtitles", recent);
-    m_settings->settings().set(application::kAutomationHotkeysSetting, macros);
-    // Options read when they act take the defaults; the shift times panel
-    // keeps its values and writes them at its next change (legacy writes the
-    // panel back when it shifts or closes).
-    m_selectOptions = m_settings->integer("selectLines.options");
-    m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
+    for (const auto &[id, value] : kept)
+        store.set(id, value);
+    m_resettingSettings = false;
+    // Options legacy reads when it acts take the defaults at once: copy and
+    // paste columns, the grid filter, the update checker.
     m_copyColumns = m_settings->integer("grid.copyColumns");
     m_pasteColumns = m_settings->integer("grid.pasteColumns");
-    m_tagButtons->reload();
-    m_colourPicker->loadFromString(m_settings->text("colourPicker.recentColours"));
-    m_gridFilter->reload();
+    m_gridFilter->settingsReset(); // per-grid "ignore filtering" is kept (SubsGrid::ignoreFiltered)
     m_updates->reload();
+    // SelectLines, once created, keeps its controls and recent searches:
+    // the options go back at its close (legacy: at exit or DestroyDialogs),
+    // the recent searches at its next selection. Before that, the dialog
+    // reads the defaults when it opens.
+    if (!m_selectLinesOpened) {
+        m_selectOptions = m_settings->integer("selectLines.options");
+        m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
+    }
+    // The Line editor's tag buttons stay as built (EditBox::SetTagButtons);
+    // pressing one reads its reset option (TagButtonsController::pressed).
+    // DialogColorPicker, once created, keeps its recent colours and writes
+    // them at its next colour; before that, AddRecent edits the option.
+    m_colourPicker->settingsReset();
+    // The shift times panel keeps its values and writes them at its next
+    // change; the Grid keeps its hidden columns (SubsGrid::visibleColumns)
+    // and writes them at the next toggle.
     return toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
 }
 

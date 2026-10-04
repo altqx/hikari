@@ -49,15 +49,17 @@ public:
     // whether any Style is chosen (legacy ID_FILTERING_STYLES).
     Q_INVOKABLE void setStyle(const QString &name, bool on);
 
-    // Reads the settings again (after "Set default").
+    // Reads the settings again.
     void reload();
+    // After "Set default": the filter takes the defaults, "Ignore filtering
+    // in some actions" stays as it was (legacy keeps it per open grid).
+    void settingsReset();
 
 signals:
     void changed();
 
 private:
     void load();
-    void save() const;
 
     std::unique_ptr<SettingsStore> m_ownedSettings;
     SettingsStore *m_settings;

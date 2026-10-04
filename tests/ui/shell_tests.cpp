@@ -1991,6 +1991,173 @@ private slots:
         QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
     }
 
+    // O1: HikariChoice::FindString (wxArrayString::Index without case) is
+    // CmpNoCase, the C runtime's under the process locale: "C" (ASCII
+    // letters only) for English, every letter once a translation language
+    // initialized wxLocale at startup.
+    void settingsChoicesIgnoreCaseAsTheLegacyLocaleDoes()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        const QString accented = QStringLiteral(u"Ćwiczenia");
+        const QString lower = QStringLiteral(u"ćwiczenia");
+        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+        {
+            app::Application a(options);
+            auto &styles = a.styleManager();
+            QVERIFY(styles.createCatalog(accented));
+            styles.saveCatalog();
+            QVERIFY(styles.createCatalog(QStringLiteral("Abc")));
+            styles.saveCatalog();
+            QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+            auto &settings = *a.settingsStore();
+            settings.set("convert.styleCatalog", lower);
+            auto open = a.openSettingsDialog();
+            QVERIFY(open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            settings.set("convert.styleCatalog", QStringLiteral("aBC"));
+            open = a.openSettingsDialog();
+            QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                     int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(QStringLiteral("Abc"))));
+            settings.set("program.language", QStringLiteral("pl"));
+        }
+        app::Application b(options);
+        b.settingsStore()->set("convert.styleCatalog", lower);
+        const auto open = b.openSettingsDialog();
+        QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+        QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                 int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(accented)));
+    }
+
+    // R6-dictionary-location: the Main page lists the settings folder's
+    // Dictionary first (user dictionaries), then the program folder's.
+    void settingsDictionariesComeFromTheSettingsFolder()
+    {
+        QTemporaryDir own;
+        QVERIFY(QDir(own.path()).mkdir(QStringLiteral("Dictionary")));
+        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic"}) {
+            QFile file(own.filePath(QStringLiteral("Dictionary/") + QLatin1String(name)));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("x\n");
+        }
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        app::Application a(options);
+        a.settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("pl_PL"));
+        const auto open = a.openSettingsDialog();
+        // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
+        // shifts every pair, so none matches (the pairing stops at the
+        // shorter list, R3-hang-crash-loss) and the placeholder is shown.
+        QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(),
+                 (QStringList{QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder")}));
+        QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
+        const auto again = a.openSettingsDialog();
+        QCOMPARE(again.value(QStringLiteral("dictionaries")).toStringList(),
+                 (QStringList{QStringLiteral("English"), QStringLiteral("Polski")}));
+        QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(), 1);
+    }
+
+    // O1: "Set default" resets the registry at once; what long-lived legacy
+    // objects hold survives and is written back by them later.
+    void setDefaultKeepsWhatLegacyWindowsHold()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        app::Application a(options);
+        auto &settings = *a.settingsStore();
+        // HikariSubFrame's recent lists: subtitles, video and audio are kept;
+        // the keyframes list is not written back at exit, so it resets.
+        settings.set("recent.video", QStringList{QStringLiteral("/v.mkv")});
+        settings.set("recent.audio", QStringList{QStringLiteral("/a.wav")});
+        settings.set("recent.keyframes", QStringList{QStringLiteral("/k.txt")});
+        // Select lines, not opened yet: the dialog will read the defaults.
+        QVariantMap select{{QStringLiteral("find"), QStringLiteral("abc")}, {QStringLiteral("matchCase"), true}};
+        a.saveSelectLinesSettings(select);
+        QVERIFY(a.selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        // The shown tag buttons, the colour picker and the Grid.
+        a.tagButtons().setCount(2);
+        a.tagButtons().edit(0, QStringLiteral("Bold"), QStringLiteral("\\b1"), 0);
+        a.gridFilter().setIgnoreInActions(true);
+        a.gridFilter().setInverted(true);
+        a.shell().toggleColumn(1);
+        const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
+        a.colourPicker().addRecent(red); // no picker yet: the option is the list
+
+        a.resetSettings({});
+        QCOMPARE(settings.list("recent.video"), QStringList{QStringLiteral("/v.mkv")});
+        QCOMPARE(settings.list("recent.audio"), QStringList{QStringLiteral("/a.wav")});
+        QVERIFY(!settings.contains("recent.keyframes"));
+        QVERIFY(!a.selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 0);
+        // EditBox keeps the buttons SetTagButtons built; pressing one reads
+        // its reset option (wxBell); "Change number of buttons" starts from
+        // the stored 0 and adds buttons past the shown ones from their options.
+        QCOMPARE(a.tagButtons().count(), 2);
+        QCOMPARE(a.tagButtons().buttons().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Bold"));
+        QVERIFY(a.tagButtons().pressed(0).isEmpty());
+        QCOMPARE(a.tagButtons().storedCount(), 0);
+        a.tagButtons().setCount(3);
+        QCOMPARE(settings.integer("editor.tagButtons"), 3);
+        QCOMPARE(a.tagButtons().buttons().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Bold"));
+        QCOMPARE(a.tagButtons().buttons().last().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("T3"));
+        QVERIFY(!settings.contains("editor.tagButton1"));
+        // SubsGrid keeps ignoreFiltered and its hidden columns; the filter
+        // itself takes the defaults; each toggle writes its own option.
+        QVERIFY(a.gridFilter().ignoreInActions());
+        QVERIFY(!a.gridFilter().inverted());
+        QVERIFY(!settings.contains("grid.ignoreFiltering"));
+        a.gridFilter().setInverted(true);
+        QVERIFY(!settings.contains("grid.ignoreFiltering"));
+        QCOMPARE(a.shell().hiddenColumns(), 1);
+        QVERIFY(!settings.contains("grid.hideColumns"));
+        a.shell().toggleColumn(8192);
+        QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+
+        // Once opened, SelectLines keeps its options and recent searches:
+        // the options go back when it closes, the recent searches at the
+        // next selection.
+        a.openSelectLines();
+        QVERIFY(a.selectLines(select, false).size() > 0);
+        QCOMPARE(settings.list("selectLines.recentSelections"), QStringList{QStringLiteral("abc")});
+        // A created DialogColorPicker keeps its recent colours.
+        a.colourPickerOpened();
+        a.colourPicker().addRecent(red);
+        a.resetSettings({});
+        QVERIFY(!settings.contains("selectLines.options"));
+        QVERIFY(!settings.contains("selectLines.recentSelections"));
+        auto shown = a.openSelectLines();
+        QVERIFY(shown.value(QStringLiteral("matchCase")).toBool());
+        QCOMPARE(shown.value(QStringLiteral("recent")).toStringList(), QStringList{QStringLiteral("abc")});
+        a.saveSelectLinesSettings(select); // closed: the options only
+        QVERIFY(settings.contains("selectLines.options"));
+        QVERIFY(!settings.contains("selectLines.recentSelections"));
+        select.insert(QStringLiteral("find"), QStringLiteral("def"));
+        a.selectLines(select, false);
+        QCOMPARE(settings.list("selectLines.recentSelections"), (QStringList{QStringLiteral("def"), QStringLiteral("abc")}));
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 255);
+        QVERIFY(!settings.contains("colourPicker.recentColours"));
+        // Opened for another tab's Line editor, the picker is created again
+        // from the option.
+        QVERIFY(a.openFile(episode));
+        a.colourPickerOpened();
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 0);
+        QVERIFY(a.closeEditingTarget());
+
+        // A changed program font runs DestroyDialogs: SelectLines saves its
+        // options and is gone, so it reads the settings again.
+        a.resetSettings({});
+        QVERIFY(!settings.contains("selectLines.options"));
+        QSignalSpy destroyed(&a, &app::Application::selectLinesDestroyed);
+        a.applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
+        QCOMPARE(destroyed.count(), 1);
+        QVERIFY(app::Application(options).selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        QVERIFY(a.openSelectLines().value(QStringLiteral("recent")).toStringList().isEmpty());
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected

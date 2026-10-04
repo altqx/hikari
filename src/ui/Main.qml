@@ -59,8 +59,9 @@ ApplicationWindow {
     // Bold; plain text (type 2) goes, as in legacy, into the main field (the
     // translation in translation mode, unless it is empty).
     function applyTagButton(index) {
-        const b = root.tagButtons.buttons[index]
-        if (!b || b.tag.length === 0)
+        // EditBox::OnButtonTag reads the button's option as stored now.
+        const b = root.tagButtons.pressed(index)
+        if (b.tag === undefined || b.tag.length === 0)
             return false
         let field = translationText.activeFocus ? translationText : lineText
         if (b.type === 2)
@@ -1187,7 +1188,8 @@ ApplicationWindow {
                                 ToolTip.text: modelData.name
                                 onClicked: {
                                     const field = translationText.activeFocus ? translationText : lineText
-                                    colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd)
+                                    if (colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd))
+                                        root.app.colourPickerOpened()
                                 }
                             }
                         }
@@ -2880,6 +2882,14 @@ ApplicationWindow {
         id: selectLinesDialog
         app: root.app
         anchors.centerIn: parent
+        // DestroyDialogs (a changed program font): SaveOptions, then gone.
+        Connections {
+            target: root.app
+            function onSelectLinesDestroyed() {
+                if (selectLinesDialog.visible)
+                    selectLinesDialog.close()
+            }
+        }
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog
@@ -2971,7 +2981,7 @@ ApplicationWindow {
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok | Dialog.Cancel
-        onAboutToShow: tagButtonCount.value = root.tagButtons.count
+        onAboutToShow: tagButtonCount.value = root.tagButtons.storedCount()
         onAccepted: root.tagButtons.setCount(tagButtonCount.value)
         SpinBox {
             id: tagButtonCount

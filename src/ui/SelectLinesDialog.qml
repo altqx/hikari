@@ -16,7 +16,7 @@ Dialog {
     property var recent: []
 
     function openDialog() {
-        const s = app.selectLinesSettings()
+        const s = app.openSelectLines()
         withButton.checked = s.with
         withoutButton.checked = !s.with
         matchCase.checked = s.matchCase

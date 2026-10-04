@@ -77,6 +77,13 @@ struct OptionsLists {
     std::string currentCatalog;                 // actualStyleDir
     // config::FindLanguage.
     std::function<std::string(std::string_view)> findLanguage;
+    // HikariChoice::FindString's wxArrayString::Index(text, false):
+    // wxString::IsSameAs without case, that is equal lengths and then
+    // CmpNoCase, which is the C runtime's _wcsicmp (Windows) or wcscasecmp
+    // (Linux) under the process locale. Legacy leaves that locale "C" (ASCII
+    // letters only) unless a translation language set it at startup
+    // (wxLocale::Init), when every letter folds. Unset: ASCII letters only.
+    std::function<bool(std::string_view, std::string_view)> sameIgnoringCase;
     // EXTERNAL_FONTS_DIRECTORY: wxFileName::GetPathSeparator, and whether
     // HikariNormalizePath turns backslashes into slashes (not on Windows).
     char pathSeparator = '/';

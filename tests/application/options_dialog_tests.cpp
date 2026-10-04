@@ -234,6 +234,39 @@ TEST(OptionsDialog, MissingCatalogOrStyleFallsBackAndWarns)
     EXPECT_EQ(settings.text("convert.style"), "Default");
 }
 
+// FindString is wxArrayString::Index(text, false): CmpNoCase under the
+// process locale. Without a comparator only ASCII letters fold (legacy's "C"
+// locale); the application passes one that folds every letter when a
+// translation language set the locale at startup.
+TEST(OptionsDialog, ChoicesFindEntriesWithoutCaseAsTheLocaleFolds)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    auto l = lists();
+    l.catalogs = {"Default", "\xC4\x86wiczenia"}; // "Ćwiczenia"
+    settings.set("convert.styleCatalog", std::string("\xC4\x87wiczenia")); // "ćwiczenia"
+    EXPECT_EQ(optionsCatalogToLoad(settings, l), std::nullopt);
+    EXPECT_TRUE(openOptionsDialog(settings, l).catalogMissing);
+    settings.set("convert.style", std::string("sIGN"));
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "convert.style"), 1);
+    int calls = 0;
+    l.sameIgnoringCase = [&](std::string_view a, std::string_view b) {
+        ++calls;
+        // Stands in for full folding: the two forms of the letter compare equal.
+        const auto fold = [](std::string s) {
+            if (s.starts_with("\xC4\x86"))
+                s[1] = '\x87';
+            return s;
+        };
+        return fold(std::string(a)) == fold(std::string(b));
+    };
+    EXPECT_EQ(optionsCatalogToLoad(settings, l), std::optional<std::string>("\xC4\x86wiczenia"));
+    const auto open = openOptionsDialog(settings, l);
+    EXPECT_FALSE(open.catalogMissing);
+    EXPECT_EQ(intOf(open.state, "convert.styleCatalog"), 1);
+    EXPECT_GT(calls, 0);
+}
+
 TEST(OptionsDialog, OkWritesOnlyBoundControlsThatDiffer)
 {
     MemorySettingsStorage storage;

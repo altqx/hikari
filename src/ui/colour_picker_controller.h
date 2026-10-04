@@ -15,6 +15,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <memory>
+#include <optional>
 
 namespace hikari::ui {
 
@@ -44,6 +45,16 @@ public:
     QString storeToString() const;
     void loadFromString(const QString &text);
 
+    // The picker opens for `owner` (legacy DialogColorPicker::Get with the
+    // window it belongs to: the tab's Line editor). Legacy creates the picker
+    // once and keeps it while it is opened for the same window; opened for
+    // another one, it is created again from the option.
+    void opened(const QString &owner);
+    // After "Set default": the list takes the reset option unless a picker
+    // exists, which keeps its recent colours and writes them at its next
+    // colour.
+    void settingsReset();
+
 signals:
     void changed();
 
@@ -53,6 +64,7 @@ private:
     std::unique_ptr<SettingsStore> m_ownedSettings;
     SettingsStore *m_settings;
     QVariantList m_recent;
+    std::optional<QString> m_owner; // the window the legacy picker was created for
 };
 
 } // namespace hikari::ui

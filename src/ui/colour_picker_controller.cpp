@@ -45,6 +45,23 @@ void ColourPickerController::loadFromString(const QString &text)
     emit changed();
 }
 
+void ColourPickerController::opened(const QString &owner)
+{
+    // DialogColorPicker::Get: a picker kept for another window is destroyed,
+    // and the new one reads COLORPICKER_RECENT_COLORS.
+    if (!m_owner || *m_owner != owner)
+        loadFromString(m_settings->text(kKey));
+    m_owner = owner;
+}
+
+void ColourPickerController::settingsReset()
+{
+    // Without a DialogColorPicker the option is the list (AddRecent edits
+    // it); a created picker keeps its recent_box.
+    if (!m_owner)
+        loadFromString(m_settings->text(kKey));
+}
+
 QString ColourPickerController::storeToString() const
 {
     QStringList tokens;

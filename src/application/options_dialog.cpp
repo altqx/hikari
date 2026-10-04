@@ -116,14 +116,23 @@ char asciiLower(char c)
     return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c;
 }
 
-// HikariChoice::FindString: wxArrayString::Index without case (CmpNoCase;
-// letters outside ASCII compare exactly here), -1 for an empty text.
-int findString(const std::vector<std::string> &list, std::string_view text)
+// wxString::IsSameAs(text, false) under the legacy process locale (see
+// OptionsLists::sameIgnoringCase).
+bool sameIgnoringCase(const OptionsLists &lists, std::string_view a, std::string_view b)
+{
+    if (lists.sameIgnoringCase)
+        return lists.sameIgnoringCase(a, b);
+    return std::ranges::equal(a, b, {}, asciiLower, asciiLower);
+}
+
+// HikariChoice::FindString: wxArrayString::Index without case, -1 for an
+// empty text.
+int findString(const OptionsLists &lists, const std::vector<std::string> &list, std::string_view text)
 {
     if (text.empty())
         return -1;
     for (std::size_t i = 0; i < list.size(); ++i)
-        if (std::ranges::equal(list[i], text, {}, asciiLower, asciiLower))
+        if (sameIgnoringCase(lists, list[i], text))
             return int(i);
     return -1;
 }
@@ -231,7 +240,7 @@ std::int64_t numCtrlValue(std::string_view text, std::int64_t min, std::int64_t 
 std::optional<std::string> optionsCatalogToLoad(const Settings &settings, const OptionsLists &lists)
 {
     const std::string option = settings.text("convert.styleCatalog");
-    const int sel = findString(lists.catalogs, option);
+    const int sel = findString(lists, lists.catalogs, option);
     if (sel >= 0 && lists.currentCatalog != option)
         return lists.catalogs[std::size_t(sel)];
     return std::nullopt;
@@ -276,24 +285,24 @@ OptionsOpening openOptionsDialog(Settings &settings, const OptionsLists &lists)
             break;
         }
         case Language: {
-            const int sel = findString(lists.languageNames, lists.findLanguage(settings.text(id)));
+            const int sel = findString(lists, lists.languageNames, lists.findLanguage(settings.text(id)));
             state[id] = select(std::int64_t{-1}, std::max(sel, 0), lists.languageNames.size());
             break;
         }
         case Dictionary:
-            state[id] = std::int64_t(findString(lists.dictionaryNames, lists.findLanguage(settings.text(id))));
+            state[id] = std::int64_t(findString(lists, lists.dictionaryNames, lists.findLanguage(settings.text(id))));
             break;
         case Catalog: {
-            int sel = findString(lists.catalogs, settings.text(id));
+            int sel = findString(lists, lists.catalogs, settings.text(id));
             if (sel < 0) {
-                sel = std::max(findString(lists.catalogs, lists.currentCatalog), 0);
+                sel = std::max(findString(lists, lists.catalogs, lists.currentCatalog), 0);
                 out.catalogMissing = true;
             }
             state[id] = select(std::int64_t{-1}, sel, lists.catalogs.size());
             break;
         }
         case Style: {
-            int sel = findString(lists.styles, settings.text(id));
+            int sel = findString(lists, lists.styles, settings.text(id));
             if (sel < 0) {
                 sel = 0;
                 out.styleMissing = true;
@@ -304,7 +313,7 @@ OptionsOpening openOptionsDialog(Settings &settings, const OptionsLists &lists)
         case ComboText: {
             const std::string text = settings.text(id);
             const auto it = std::ranges::find_if(kFps, [&](std::string_view f) {
-                return !text.empty() && std::ranges::equal(f, text, {}, asciiLower, asciiLower);
+                return !text.empty() && sameIgnoringCase(lists, f, text);
             });
             state[id] = it == std::end(kFps) ? text : std::string(*it);
             break;
