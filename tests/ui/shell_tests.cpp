@@ -1189,10 +1189,6 @@ private slots:
             QVERIFY(item && item->isVisible());
             QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(item));
         };
-        const auto rect = [](QObject *popup) {
-            return QRectF(popup->property("x").toReal(), popup->property("y").toReal(), popup->property("width").toReal(),
-                          popup->property("height").toReal());
-        };
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("misspellMenuItem"));
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -1211,9 +1207,42 @@ private slots:
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
         QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
-        // The results window leaves the Multireplacer's buttons uncovered.
+        // Legacy placement: the Multireplacer centred, the results at the
+        // default position (top left). The results leave the rules list and
+        // the Multireplacer's buttons uncovered, so rules can be checked while
+        // they are shown.
+        const auto sceneRect = [](QQuickItem *item) { return item->mapRectToScene(QRectF(0, 0, item->width(), item->height())); };
+        const auto popupRect = [&](QObject *popup) { return sceneRect(popup->property("background").value<QQuickItem *>()); };
         auto *addRule = dialogItem("misspellDialog", "misspellAddRule");
-        QVERIFY(!rect(results).contains(centre(addRule)));
+        const QRectF resultsArea = popupRect(results);
+        QCOMPARE(resultsArea.topLeft(), QPointF(0, 0));
+        QVERIFY(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", "misspellRules"))));
+        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule", "misspellFindTab",
+                                   "misspellFindAllTabs", "misspellReplaceTab", "misspellReplaceAllTabs"})
+            QVERIFY2(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", button))), button);
+        QVERIFY(qAbs(popupRect(dialog).center().x() - window->width() / 2.0) < 2);
+        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        QTRY_VERIFY(application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
+        QVERIFY(results->property("visible").toBool());
+        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        QTRY_VERIFY(!application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
+        // Dragging a title moves its window (legacy HTCAPTION), and it stays
+        // there when shown again.
+        auto *resultsTitle = results->property("header").value<QQuickItem *>();
+        QVERIFY(resultsTitle);
+        const QPoint grab = centre(resultsTitle);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, grab);
+        QTest::mouseMove(window, grab + QPoint(20, 10));
+        QTest::mouseMove(window, grab + QPoint(40, 30));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, grab + QPoint(40, 30));
+        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(40, 30));
+        QVERIFY(QMetaObject::invokeMethod(results, "close"));
+        QTRY_VERIFY(!results->property("visible").toBool());
+        click(dialogItem("misspellDialog", "misspellFindTab"));
+        QTRY_VERIFY(results->property("opened").toBool());
+        QCOMPARE(popupRect(results).topLeft(), QPointF(40, 30));
+        results->setProperty("x", 0);
+        results->setProperty("y", 0);
         // Rules cannot change while the results are shown: a press on Add rule
         // keeps both windows open and is refused.
         click(addRule);
@@ -1241,7 +1270,7 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 15);
         // A click in the main window outside both dialogs closes neither.
         const QPoint outside(window->width() - 12, window->height() / 2);
-        QVERIFY(!rect(results).contains(outside) && !rect(dialog).contains(outside));
+        QVERIFY(!popupRect(results).contains(outside) && !popupRect(dialog).contains(outside));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, outside);
         QTest::qWait(50);
         QVERIFY(results->property("visible").toBool());
@@ -1377,19 +1406,29 @@ private slots:
         QVERIFY(file.open(QIODevice::ReadOnly));
         QCOMPARE(file.readAll(), bytes); // an empty list is not written
         file.close();
-        // A file that is not UTF-8 is read in the system code page (legacy
-        // OpenWrite::FileOpen falls back to wxConvLocal).
+        // R4-uchardet: a file that is not UTF-8 is read in the charset uchardet
+        // names (legacy OpenWrite::FileOpen and CheckCharSet), here cp1250.
+        const QByteArray polish("Za\xBF\xF3\xB3\xE6 g\xEA\x9Cl\xB9 ja\x9F\xF1. Pchn\xB9\xE6 w t\xEA \xB3\xF3"
+                                "d\x9F je\xBF"
+                                "a lub o\x9Cm skrzy\xF1 fig.");
         QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Truncate));
-        file.write("#HikariSub rules file\r\n1\r\nPolish \xB3\fabc\fd\f0\r\n");
+        file.write("#HikariSub rules file\r\n1|1\r\n" + polish + "\fabc\fd\f0\r\n" + polish + "\fdef\fg\f0\r\n");
         file.close();
         {
             app::Application third(options);
             const auto rules = third.misspellRules();
-            QCOMPARE(rules.size(), 1);
+            QCOMPARE(rules.size(), 2);
             QCOMPARE(rules[0].toMap().value(QStringLiteral("find")).toString(), QStringLiteral("abc"));
             QCOMPARE(rules[0].toMap().value(QStringLiteral("description")).toString(),
-                     QStringLiteral("Polish ") + QString::fromLocal8Bit("\xB3"));
+                     QString::fromUtf8("Zażółć gęślą jaźń. Pchnąć w tę łódź jeża lub ośm skrzyń fig."));
             QVERIFY(rules[0].toMap().value(QStringLiteral("checked")).toBool());
+            // R5-per-platform: the Linux build keeps "\r", so the last checkbox
+            // token is "1\r" and that rule comes back unchecked.
+#ifdef Q_OS_WIN
+            QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
+#else
+            QVERIFY(!rules[1].toMap().value(QStringLiteral("checked")).toBool());
+#endif
         }
     }
 

@@ -2878,7 +2878,6 @@ ApplicationWindow {
     MisspellReplacerDialog {
         id: misspellDialog
         app: root.app
-        anchors.centerIn: parent
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

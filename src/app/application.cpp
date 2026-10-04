@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/backends/legacy_text_file.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -1742,23 +1743,16 @@ application::ReplacerScope replacerScope(const QVariantMap &m)
 std::vector<application::ReplacerRule> &Application::misspellRuleList()
 {
     if (!m_misspellRules) {
-        // FillRulesList: Rules.txt in the configuration folder, else the shipped rules.
-        QByteArray bytes;
-        if (!m_settingsFile.isEmpty()) {
-            QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
-            if (file.open(QIODevice::ReadOnly))
-                bytes = file.readAll();
-        }
-        // OpenWrite::FileOpen: UTF-8 (with or without a BOM), else the system
-        // code page (wxConvLocal; CheckCharSet's guess is not ported).
-        if (!bytes.startsWith("\xEF\xBB\xBF")) {
-            QStringDecoder utf8(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
-            const QString decoded = utf8.decode(bytes);
-            if (utf8.hasError())
-                bytes = QString::fromLocal8Bit(bytes).toUtf8();
-        }
+        // FillRulesList: Rules.txt in the configuration folder through
+        // OpenWrite::FileOpen (R4-uchardet: UTF-8, else uchardet's charset,
+        // else wxConvLocal; R5-per-platform line ends), else the shipped rules.
+        QByteArray text;
+        if (!m_settingsFile.isEmpty())
+            text = backends::legacyFileOpen(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"))
+                       .value_or(QString())
+                       .toUtf8();
         auto read = application::readReplacerRules(
-            std::u8string_view(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size())));
+            std::u8string_view(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size())));
         for (const auto &line : read.invalid)
             m_log->log(tr("Rule \"%1\" is invalid.").arg(fromUtf8(line)));
         m_misspellRules = std::move(read.rules);

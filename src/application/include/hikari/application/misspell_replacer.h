@@ -44,10 +44,12 @@ struct ReplacerRule {
     bool operator==(const ReplacerRule &) const = default;
 };
 
-// Rules.txt as FillRulesList reads it: the text as a text-mode read gives it
-// (CRLF read as LF, a UTF-8 BOM dropped); empty gives the shipped rules. A
-// line Rule() cannot read whole is kept as far as it got and listed in
-// `invalid` (legacy logs "Rule \"%s\" is invalid.").
+// Rules.txt as FillRulesList reads it, from the text OpenWrite::FileOpen
+// gives (backends::legacyFileOpen: on Windows CRLF is already LF, on Linux
+// each line keeps its "\r", so the last checkbox reads "1\r", not "1", and a
+// blank CRLF line is a rule). Empty text gives the shipped rules. A line
+// Rule() cannot read whole is kept as far as it got and listed in `invalid`
+// (legacy logs "Rule \"%s\" is invalid.").
 struct ReplacerRules {
     std::vector<ReplacerRule> rules;
     std::vector<std::u8string> invalid;

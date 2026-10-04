@@ -42,6 +42,11 @@ add_library(Hikari::media_deps ALIAS hikari_media_deps)
 find_package(portaudio CONFIG REQUIRED)
 # R1-pcre2 / R2-hunspell: legacy wxRegEx's PCRE2 and the spell checker.
 find_package(PCRE2 CONFIG REQUIRED COMPONENTS 16BIT)
+# R4-uchardet: legacy OpenWrite::CheckCharSet's charset detection (static).
+find_package(uchardet CONFIG REQUIRED)
+if(NOT TARGET Hikari::uchardet)
+    add_library(Hikari::uchardet ALIAS uchardet::libuchardet)
+endif()
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)
 add_library(Hikari::portaudio ALIAS hikari_portaudio)

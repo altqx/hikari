@@ -155,10 +155,31 @@ TEST(MisspellRules, FileRoundTrip)
                                     {u8"C", u8"y", u8"z", 48, true}};
     const auto file = writeReplacerRules(rules);
     EXPECT_EQ(str(file), "#HikariSub rules file\r\n1|0|1\r\nA\fa+\fb\f3\r\nB\fx\f\f0\r\nC\fy\fz\f48\r\n");
-    // A text-mode read turns CRLF into LF; the BOM FileWrite adds is dropped.
-    const auto read = readReplacerRules(u8"\xEF\xBB\xBF" + file);
+    // Read back as the Windows build reads it (FileOpen's text-mode read has
+    // already turned CRLF into LF and wxConvAuto dropped the BOM).
+    std::u8string folded;
+    for (std::size_t i = 0; i < file.size(); ++i)
+        if (!(file[i] == u8'\r' && i + 1 < file.size() && file[i + 1] == u8'\n'))
+            folded += file[i];
+    const auto read = readReplacerRules(folded);
     EXPECT_EQ(read.rules, rules);
     EXPECT_TRUE(read.invalid.empty());
+    // R5-per-platform: the Linux build reads the bytes as they are, so each
+    // line keeps its "\r". The header still matches (StartsWith) and wxAtoi
+    // stops at the "\r", but the last checkbox token is "1\r", not "1": the
+    // last rule comes back unchecked.
+    const auto kept = readReplacerRules(file);
+    ASSERT_EQ(kept.rules.size(), 3u);
+    EXPECT_TRUE(kept.invalid.empty());
+    EXPECT_EQ(kept.rules[0], rules[0]);
+    EXPECT_EQ(kept.rules[1], rules[1]);
+    EXPECT_EQ(kept.rules[2], (ReplacerRule{u8"C", u8"y", u8"z", 48, false}));
+    // ...and a blank CRLF line is a "\r" token, an invalid rule of its own.
+    const auto blank = readReplacerRules(u8"#HikariSub rules file\r\n1|1\r\n\r\nA\fa\fb\f0\r\n");
+    ASSERT_EQ(blank.rules.size(), 2u);
+    EXPECT_EQ(blank.invalid, (std::vector<std::u8string>{u8"\r"}));
+    EXPECT_EQ(blank.rules[0], (ReplacerRule{u8"\r", u8"", u8"", 0, true}));
+    EXPECT_EQ(blank.rules[1], (ReplacerRule{u8"A", u8"a", u8"b", 0, false}));
     // Without the header the first line is the checkbox line; missing
     // checkbox entries are unchecked, empty lines skipped.
     const auto bare = readReplacerRules(u8"1\n\nD\fd\fe\f1\nE\fe\ff\f0\n");

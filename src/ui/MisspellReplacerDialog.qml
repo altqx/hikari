@@ -19,9 +19,17 @@ Dialog {
     closePolicy: Popup.CloseOnEscape
     property var rules: []
     property int selectedRule: -1
+    property bool placed: false
 
+    // Legacy creates the window once, CenterOnParent, and shows or hides it;
+    // where the user moves it, it stays.
     function openDialog() {
         reloadRules()
+        if (!placed) {
+            x = Math.round((parent.width - implicitWidth) / 2)
+            y = Math.round((parent.height - implicitHeight) / 2)
+            placed = true
+        }
         open()
     }
     // The menu shows or hides it (MR->Show(!MR->IsShown())).
@@ -63,6 +71,33 @@ Dialog {
     function find(allTabs) {
         results.show(app.findMisspells(scope(), allTabs))
     }
+
+    // Legacy HikariDialog answers WM_NCHITTEST with HTCAPTION on its title
+    // area, so both windows move when their title is dragged.
+    component TitleBar: Label {
+        id: titleBar
+        required property var popup
+        text: popup.title
+        font.bold: true
+        padding: 12
+        elide: Label.ElideRight
+        MouseArea {
+            objectName: titleBar.objectName + "Drag"
+            anchors.fill: parent
+            property point pressed
+            property point origin
+            onPressed: mouse => {
+                pressed = mapToItem(null, mouse.x, mouse.y)
+                origin = Qt.point(titleBar.popup.x, titleBar.popup.y)
+            }
+            onPositionChanged: mouse => {
+                const p = mapToItem(null, mouse.x, mouse.y)
+                titleBar.popup.x = origin.x + p.x - pressed.x
+                titleBar.popup.y = origin.y + p.y - pressed.y
+            }
+        }
+    }
+    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog }
 
     RowLayout {
         anchors.fill: parent
@@ -228,10 +263,12 @@ Dialog {
         title: qsTr("Search results")
         modal: false
         closePolicy: Popup.CloseOnEscape
-        // A separate window in legacy: placed at the lower left so the
-        // Multireplacer's buttons stay reachable beside it.
-        x: 8
-        y: Math.max(8, parent.height - height - 8)
+        header: TitleBar { objectName: "misspellResultsTitle"; popup: results }
+        // Legacy creates FindResultDialog once at wxDefaultPosition, which for
+        // a popup window is the top-left corner of the screen, away from the
+        // centred Multireplacer's rules list and buttons; it keeps the place
+        // the user moves it to.
+        property bool placed: false
         property var rows: []
         property var checks: []
         property var folded: []
@@ -242,6 +279,11 @@ Dialog {
             checks = list.map(() => true)
             folded = list.map(() => false)
             canReplace = true
+            if (!placed) {
+                x = 0
+                y = 0
+                placed = true
+            }
             if (!visible)
                 open()
         }

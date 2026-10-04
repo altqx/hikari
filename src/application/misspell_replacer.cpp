@@ -208,13 +208,7 @@ std::u8string defaultReplacerRules()
 
 ReplacerRules readReplacerRules(std::u8string_view fileText)
 {
-    // A text-mode read: CRLF becomes LF; wxConvAuto drops the BOM.
-    std::u8string text;
-    if (fileText.starts_with(u8"\xEF\xBB\xBF"))
-        fileText.remove_prefix(3);
-    for (std::size_t i = 0; i < fileText.size(); ++i)
-        if (!(fileText[i] == u8'\r' && i + 1 < fileText.size() && fileText[i + 1] == u8'\n'))
-            text += fileText[i];
+    std::u8string text(fileText);
     if (text.empty())
         text = defaultReplacerRules();
 

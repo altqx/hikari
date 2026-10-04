@@ -17,6 +17,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cp
     libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
     automation_manager.cpp include/hikari/backends/automation_manager.h process_metrics.cpp
+    legacy_text_file.cpp include/hikari/backends/legacy_text_file.h
     include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h
     include/hikari/backends/helper_host.h
@@ -28,10 +29,10 @@ target_include_directories(hikari_backends PUBLIC include)
 set_target_properties(hikari_backends PROPERTIES AUTOMOC ON)
 target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol Qt6::Core
     Qt6::Multimedia
-    PRIVATE Hikari::media_deps Hikari::portaudio)
+    PRIVATE Hikari::media_deps Hikari::portaudio Hikari::uchardet)
 hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper_endpoint hikari_lua_protocol
     Hikari::media_deps
-    Hikari::portaudio "Qt6::*")
+    Hikari::portaudio Hikari::uchardet "Qt6::*")
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE dwrite) # FontService system faces
 endif()
