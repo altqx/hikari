@@ -1666,7 +1666,7 @@ private slots:
         QCOMPARE(application->shell().lines()->index(2, 0).data(ui::LineTableModel::SpellMarksRole).toList(),
                  (QVariantList{4, 4}));
         QCOMPARE(QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat)
-                     .value(QStringLiteral("Spelling/On")).toBool(),
+                     .value(QStringLiteral("profile/editor.spellchecker")).toBool(),
                  false);
         application->editor().discard();
     }
@@ -1679,7 +1679,7 @@ private slots:
         QTemporaryDir home;
         QVERIFY(home.isValid());
         writeDictionary(home.path());
-        QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).setValue(QStringLiteral("Spelling/On"), false);
+        QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).setValue(QStringLiteral("profile/editor.spellchecker"), false);
         restartWithSpelling(home.path(), true);
         const QString path = writeFile(dir, "spelling-off.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
         QVERIFY(application->openFile(path));
@@ -1707,7 +1707,7 @@ private slots:
     }
 
     // F3: without a spelling backend there is no spell checker: no notice,
-    // no Spelling/On change, bracket marks only. The bundled Dictionary
+    // no SPELLCHECKER_ON change, bracket marks only. The bundled Dictionary
     // folder (legacy's, beside the executable) is read after the user's.
     void spellingWithoutBackendAndBundledDictionaries()
     {
@@ -1722,7 +1722,7 @@ private slots:
         QTest::qWait(50);
         QVERIFY(!engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"))->property("visible").toBool());
         QVERIFY(application->spellingOn());
-        QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("Spelling/On")));
+        QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("profile/editor.spellchecker")));
         QVERIFY(application->dictionaries().isEmpty());
 
         // Only the bundled folder has a dictionary: it loads, and the user's
@@ -3302,6 +3302,181 @@ private slots:
         QCOMPARE(destroyed.count(), 1);
         QVERIFY(app::Application(options).selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
         QVERIFY(a.openSelectLines().value(QStringLiteral("recent")).toStringList().isEmpty());
+    }
+
+    // O1 with F1 and F4: FindReplaceDialog keeps what it holds through Set
+    // default once created and reads the defaults when it is created after
+    // it; DestroyDialogs (a changed program font) saves its options and
+    // drops it with its recent lists, and destroys MisspellReplacer, whose
+    // destructor writes Rules.txt (HikariSubFrame::DestroyDialogs, OnClose).
+    void findAndMultireplacerFollowLegacyOwnersThroughSetDefault()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        restartWithSpelling(home.path(), false);
+        auto &settings = *application->settingsStore();
+        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
+        const QString path = writeFile(dir, "owners.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,alpha\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,beta\n");
+        QVERIFY(application->openFile(path));
+        application->setFindQuestionHandler([](int, const QString &) { return 2; });
+        auto *dock = item<QObject>("searchDock");
+        QVERIFY(dock);
+
+        // Never created: Set default leaves it the defaults to read.
+        settings.set("find.options", 1); // CASE_SENSITIVE
+        settings.set("find.styles", QStringLiteral("Sign"));
+        settings.set("find.recentFinds", QStringList{QStringLiteral("old")});
+        application->resetSettings({});
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = item<QObject>("searchTool");
+        auto *matchCase = item("findMatchCase");
+        QVERIFY(tool && matchCase);
+        QVERIFY(tool->property("opened").toBool());
+        QVERIFY(tool->property("finds").toStringList().isEmpty());
+        QVERIFY(!matchCase->property("checked").toBool());
+        QCOMPARE(item("findStyles")->property("text").toString(), QString());
+
+        // Created: AddRecent writes the lists as SetTable does, from
+        // FindReplace's own lists; the tab's options at its next save.
+        item("findText")->setProperty("editText", QStringLiteral("alpha"));
+        item("findReplaceText")->setProperty("editText", QStringLiteral("ALPHA"));
+        matchCase->setProperty("checked", true);
+        QVERIFY(QMetaObject::invokeMethod(item("replaceAllButton"), "click"));
+        QCOMPARE(settings.list("find.recentFinds"), QStringList{QStringLiteral("alpha")});
+        QCOMPARE(settings.list("find.recentReplacements"), QStringList{QStringLiteral("ALPHA")});
+        QVERIFY(!settings.contains("findInSubs.recentFilters")); // only the Find in subtitles tab writes them
+        QCOMPARE(settings.integer("find.options") & 1, 1);
+        settings.sync();
+        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
+                 QStringList{QStringLiteral("alpha")});
+        application->resetSettings({});
+        QVERIFY(!settings.contains("find.options"));
+        QVERIFY(!settings.contains("find.recentFinds"));
+        QVERIFY(matchCase->property("checked").toBool()); // the dialog's controls stay
+        // Ctrl+F: SaveValues writes the tab left, SetValues reads it back;
+        // the recent lists are FindReplace's, not the reset options.
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_COMPARE(tool->property("tab").toInt(), 0);
+        QCOMPARE(settings.integer("find.options") & 1, 1);
+        QVERIFY(matchCase->property("checked").toBool());
+        QCOMPARE(tool->property("finds").toStringList(), QStringList{QStringLiteral("alpha")});
+        QVERIFY(!settings.contains("find.recentFinds"));
+        // The next AddRecent (the Find tab): the finds only.
+        item("findText")->setProperty("editText", QStringLiteral("beta"));
+        application->resetFindReplace(); // a Lines button: the search starts over (fromstart)
+        QVERIFY(QMetaObject::invokeMethod(item("findButton"), "click"));
+        QCOMPARE(settings.list("find.recentFinds"), (QStringList{QStringLiteral("beta"), QStringLiteral("alpha")}));
+        QVERIFY(!settings.contains("find.recentReplacements"));
+
+        // The Multireplacer, once shown, holds its rules.
+        auto *root = engine->rootObjects().first();
+        auto *misspell = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
+        QVERIFY(QMetaObject::invokeMethod(misspell, "openDialog"));
+        QTRY_VERIFY(misspell->property("opened").toBool());
+        QVERIFY(application->addMisspellRule({{QStringLiteral("description"), QStringLiteral("Owner rule")},
+                                              {QStringLiteral("find"), QStringLiteral("zz")},
+                                              {QStringLiteral("replace"), QStringLiteral("z")},
+                                              {QStringLiteral("options"), 0}}));
+        const QString rules = home.filePath(QStringLiteral("Rules.txt"));
+        QVERIFY(!QFile::exists(rules));
+
+        // A changed program font: DestroyDialogs.
+        matchCase->setProperty("checked", false);
+        application->resetSettings({});
+        QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
+        QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
+        application->applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
+        QCOMPARE(findDestroyed.count(), 1);
+        QCOMPARE(misspellDestroyed.count(), 1);
+        // FR->SaveOptions(): the tab's options are written; the tool is gone.
+        QVERIFY(settings.contains("find.options"));
+        QCOMPARE(settings.integer("find.options") & 1, 0);
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(!tool->property("opened").toBool());
+        // ~MisspellReplacer wrote the rules; the window is closed and built
+        // again (empty fields, centred) from Rules.txt at the next opening.
+        QTRY_VERIFY(!misspell->property("visible").toBool());
+        QVERIFY(!misspell->property("placed").toBool());
+        QVERIFY(QFile::exists(rules));
+        QVERIFY(application->misspellRules().last().toMap().value(QStringLiteral("description")).toString()
+                == QStringLiteral("Owner rule"));
+        // The next opening reads the recent lists again (reset to the defaults
+        // before the destruction, so empty) and the stored options.
+        press(Qt::Key_F, Qt::ControlModifier);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QVERIFY(tool->property("finds").toStringList().isEmpty());
+        QVERIFY(!matchCase->property("checked").toBool());
+        application->editor().discard();
+    }
+
+    // O1 with F3 and A1: the spelling and audio options are registry
+    // settings the Options dialog writes. SetOptions acts on the spell
+    // checker as legacy does (ClearErrs(true, value), SpellChecker::Destroy);
+    // Set default leaves the Line editor's own switch; the audio box reads
+    // its options when it opens.
+    void spellingAndAudioOptionsComeFromTheRegistry()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        auto &settings = *application->settingsStore();
+        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
+        const QString path = writeFile(dir, "options-spelling.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,wrold\n");
+        QVERIFY(application->openFile(path));
+        auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
+        QCOMPARE(marks(), (QVariantList{0, 4}));
+        QCOMPARE(application->editorSpellingMarks(0), (QVariantList{0, 5}));
+        QSignalSpy spelling(application, &app::Application::spellingChanged);
+        application->applySettings({{QStringLiteral("editor.spellchecker"), false}});
+        QVERIFY(spelling.count() > 0);
+        QVERIFY(!application->spellingOn());
+        QCOMPARE(marks(), QVariantList{});
+        QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
+        settings.sync();
+        QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/editor.spellchecker")).toBool(), false);
+        application->applySettings({{QStringLiteral("editor.spellchecker"), true}});
+        QCOMPARE(marks(), (QVariantList{0, 4}));
+        QCOMPARE(application->editorSpellingMarks(0), (QVariantList{0, 5}));
+        application->applySettings({{QStringLiteral("editor.suggestionsOnDoubleClick"), true}});
+        QVERIFY(application->suggestionsOnDoubleClick());
+        // Set default: SPELLCHECKER_ON is on again for the menus and the
+        // Grid, but the Line editor keeps the switch the menu turned off.
+        application->setSpellingOn(false);
+        QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
+        application->resetSettings({});
+        QVERIFY(application->spellingOn());
+        QVERIFY(!application->suggestionsOnDoubleClick());
+        QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
+        // The menu turns both on again.
+        application->setSpellingOn(true);
+        QCOMPARE(application->editorSpellingMarks(0), (QVariantList{0, 5}));
+
+        // AUDIO_RAM_CACHE, AUDIO_DELAY, AUDIO_CACHE_FILES_LIMIT and
+        // ACCEPTED_AUDIO_STREAM as the next open reads them, legacy defaults first.
+        auto audio = application->audioSettings();
+        QVERIFY(!audio.ram);
+        QCOMPARE(audio.delayMs, 0);
+        QCOMPARE(audio.cacheFilesLimit, 10);
+        QVERIFY(audio.acceptedStreams.empty());
+        application->applySettings({{QStringLiteral("audio.ramCache"), true},
+                                    {QStringLiteral("audio.delay"), -250},
+                                    {QStringLiteral("audio.cacheFilesLimit"), 3},
+                                    {QStringLiteral("video.acceptedAudioStream"), QStringLiteral("jpn;eng")}});
+        audio = application->audioSettings();
+        QVERIFY(audio.ram);
+        QCOMPARE(audio.delayMs, -250);
+        QCOMPARE(audio.cacheFilesLimit, 3);
+        QCOMPARE(audio.acceptedStreams, (std::vector<std::string>{"jpn", "eng"}));
+        settings.sync();
+        const QSettings stored(ini, QSettings::IniFormat);
+        QCOMPARE(stored.value(QStringLiteral("profile/audio.delay")).toInt(), -250);
+        QVERIFY(!stored.contains(QStringLiteral("Audio/Delay")));
+        application->editor().discard();
     }
 
     // A1: GLOBAL_OPEN_AUDIO through the real media helper. The audio-only

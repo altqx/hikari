@@ -33,7 +33,7 @@ Item {
     // Ctrl+F / Ctrl+H / Edit menu: the tab to show (legacy ShowDialog).
     function showTab(which) {
         if (!opened) {
-            apply(app.findReplaceSettings(which))
+            apply(app.openFindReplace(which))
             opened = true
         } else if (which !== tab) {
             apply(app.switchFindReplaceTab(settings(), which))
@@ -57,6 +57,15 @@ Item {
     function save() {
         if (opened)
             app.saveFindReplaceSettings(settings())
+    }
+    // DestroyDialogs: FR->SaveOptions(), then the dialog and its FindReplace
+    // go; the next opening reads the options and recent lists again.
+    function destroyTool() {
+        save()
+        opened = false
+        showResults = false
+        resultsReplace.initialized = false
+        refreshResults()
     }
     function apply(s) {
         finds = s.finds

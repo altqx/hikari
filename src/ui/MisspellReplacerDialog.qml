@@ -32,6 +32,26 @@ Dialog {
         }
         open()
     }
+    // DestroyDialogs (a changed program font): MR->Destroy(). The next
+    // opening builds the window again: empty rule fields, "All lines",
+    // centred. The results window goes with it (legacy left it open over the
+    // destroyed MisspellReplacer, R3-hang-crash-loss) and a new one opens at
+    // the top left at the next search.
+    function destroyDialog() {
+        results.close()
+        results.placed = false
+        close()
+        placed = false
+        selectedRule = -1
+        rules = []
+        description.text = ""
+        findPhrase.text = ""
+        replacePhrase.text = ""
+        for (const box of [matchCase, lowerCase, upperCase, unchangedCase, onlyTags, onlyText])
+            box.checked = false
+        whichLines.currentIndex = 0
+        styles.text = ""
+    }
     // The menu shows or hides it (MR->Show(!MR->IsShown())).
     function toggle() {
         if (visible)

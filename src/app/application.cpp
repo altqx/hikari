@@ -216,7 +216,21 @@ public:
         return title;
     }
     void finished() override { m_app.findFinished(); }
-    void log(const std::u8string &text) override { m_app.m_log->log(qs(text)); }
+    // The legacy log lines, translated (the engine's English is the source).
+    void logLine(const application::FindLog &line) override { m_app.m_log->log(logText(line)); }
+    static QString logText(const application::FindLog &line)
+    {
+        using K = application::FindLog::Kind;
+        switch (line.kind) {
+        case K::InvalidRegex: return tr("Invalid regular expression '%1': %2").arg(qs(line.first), qs(line.second));
+        case K::MatchError: return tr("Failed to find match for regular expression: %1").arg(qs(line.first));
+        case K::LineEdited: return tr("Line %1 cannot be replaced,\ncause it was edited.").arg(qs(line.first));
+        case K::CannotBackUp: return tr("Cannot back up %1.").arg(qs(line.first));
+        case K::OutsideReplaceTab: break; // legacy's untranslated debug text
+        }
+        return qs(line.text);
+    }
+    void recentAdded(application::FindReplaceSettings::Tab tab) override { m_app.saveFindRecent(tab); }
     void showLine(application::DocumentId document, core::LineId line, bool keepSelection, int role, int start,
                   int end) override
     {
@@ -477,30 +491,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
-    // F1: find and replace, its options and recent lists (legacy
-    // FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES and the four recent tables).
+    // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
+    // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
+    // tab; its recent lists when the tool is first opened (openFindReplace).
     m_findHost = std::make_unique<FindHost>(*this);
-    m_find = std::make_unique<application::FindReplace>(*m_findHost, [](std::u16string_view s) {
-        // wxString::Lower: one unit at a time.
-        std::u16string out(s);
-        for (auto &c : out)
-            c = QChar(c).toLower().unicode();
-        return out;
-    });
-    if (!m_settingsFile.isEmpty()) {
-        const QSettings ini(m_settingsFile, QSettings::IniFormat);
-        m_findOptions = ini.value(QStringLiteral("FindReplace/Options"), 0).toInt();
-        m_findStyles = ini.value(QStringLiteral("FindReplace/Styles")).toString();
-        const auto list = [&](const char *key) {
-            std::vector<std::u8string> out;
-            for (const QString &s : ini.value(QLatin1String(key)).toStringList())
-                out.push_back(toU8(s));
-            return out;
-        };
-        m_find->setRecent({list("FindReplace/Finds"), list("FindReplace/Replacements"), list("FindReplace/Filters"),
-                           list("FindReplace/Paths")});
+    createFindReplace();
+    if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
-    }
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION));
     {
@@ -542,12 +539,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
         m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
     m_bundledDictionaryDir = options.bundledDictionaryDir;
-    if (!m_settingsFile.isEmpty()) {
-        const QSettings ini(m_settingsFile, QSettings::IniFormat);
-        m_spellingOn = ini.value(QStringLiteral("Spelling/On"), true).toBool();
-        m_dictionaryLanguage = ini.value(QStringLiteral("Spelling/Language"), QStringLiteral("en_US")).toString();
-        m_suggestionsOnDoubleClick = ini.value(QStringLiteral("Spelling/SuggestionsOnDoubleClick"), false).toBool();
-    }
+    // The Line editor's own switch (legacy TextEditor::SpellCheckerOnOff, from
+    // SPELLCHECKER_ON when the editor is built); the Grid and the menus read
+    // the option itself.
+    m_spellingOn = m_settings->boolean("editor.spellchecker");
     // The user's Dictionary folder first (UserDic.udic lives there), then the
     // bundled one beside the executable (legacy's only folder).
     if (!m_dictionaryDir.isEmpty() && options.spellingBackend) {
@@ -559,7 +554,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
-                                                  spell && m_spellingOn && checker ? checker->wordCheck()
+                                                  spell && m_settings->boolean("editor.spellchecker") && checker ? checker->wordCheck()
                                                                                    : core::legacy::WordCheck{});
     });
     // GRID_HIDE_COLUMNS (G7).
@@ -633,31 +628,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                      : !m_settingsFile.isEmpty() ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Indices")
                                                  : QString();
         m_audioSettings = [this, cacheDir] {
-            // Interim INI keys until the settings registry (O1): legacy
-            // AUDIO_RAM_CACHE, AUDIO_DELAY, AUDIO_CACHE_FILES_LIMIT and
-            // ACCEPTED_AUDIO_STREAM with legacy's defaults.
+            // Legacy AUDIO_RAM_CACHE, AUDIO_DELAY, AUDIO_CACHE_FILES_LIMIT and
+            // ACCEPTED_AUDIO_STREAM, read from the registry when the box uses
+            // them (as the legacy provider reads Options), so an Options
+            // dialog change reaches the next opening.
             application::AudioCacheSettings settings;
             settings.cacheDir = std::filesystem::path(cacheDir.toStdU16String());
             if (!m_indexDir.isEmpty())
                 settings.indexDir = std::filesystem::path(m_indexDir.toStdU16String());
-            if (!m_settingsFile.isEmpty()) {
-                const QSettings ini(m_settingsFile, QSettings::IniFormat);
-                settings.ram = ini.value(QStringLiteral("Audio/RamCache"), false).toBool();
-                settings.delayMs = ini.value(QStringLiteral("Audio/Delay"), 0).toInt();
-                settings.cacheFilesLimit = ini.value(QStringLiteral("Audio/CacheFilesLimit"), 10).toInt();
-                settings.acceptedStreams = application::legacyAcceptedStreams(
-                    ini.value(QStringLiteral("Video/AcceptedAudioStream")).toString().toStdString());
-            }
+            settings.ram = m_settings->boolean("audio.ramCache");
+            settings.delayMs = m_settings->integer("audio.delay");
+            settings.cacheFilesLimit = m_settings->integer("audio.cacheFilesLimit");
+            settings.acceptedStreams = application::legacyAcceptedStreams(m_settings->settings().text("video.acceptedAudioStream"));
             return settings;
         };
         m_audio->setSettings(m_audioSettings);
     }
-    if (!m_settingsFile.isEmpty()) {
-        std::vector<std::string> stored;
-        for (const QString &path : QSettings(m_settingsFile, QSettings::IniFormat).value(QStringLiteral("Recent/Audio")).toStringList())
-            stored.push_back(path.toStdString());
-        m_recentAudio.set(std::move(stored));
-    }
+    m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::logged, this, [this](const QString &message, bool debug) {
@@ -779,12 +766,7 @@ void Application::followVideoInAudio()
 void Application::rememberRecentAudio(const QString &path)
 {
     m_recentAudio.add(path.toStdString());
-    if (!m_settingsFile.isEmpty()) {
-        QStringList list;
-        for (const auto &entry : m_recentAudio.entries())
-            list << QString::fromStdString(entry);
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Audio"), list);
-    }
+    m_settings->settings().set("recent.audio", m_recentAudio.entries()); // SetRecent's SetTable
 }
 
 // Legacy OpenAudioInTab with no path: the video's file (a provider of its own).
@@ -810,12 +792,8 @@ QVariantList Application::recentAudio()
 #endif
             });
     });
-    if (pruned && !m_settingsFile.isEmpty()) {
-        QStringList list;
-        for (const auto &entry : m_recentAudio.entries())
-            list << QString::fromStdString(entry);
-        QSettings(m_settingsFile, QSettings::IniFormat).setValue(QStringLiteral("Recent/Audio"), list);
-    }
+    if (pruned)
+        m_settings->settings().set("recent.audio", m_recentAudio.entries());
     QVariantList rows;
     int n = 0;
     for (const auto &entry : m_recentAudio.entries()) {
@@ -846,8 +824,13 @@ Application::~Application()
     m_audio.reset();
     m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
-    // F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
-    // UTF-8 with a BOM as OpenWrite::FileWrite writes it).
+    saveMisspellRules();
+}
+
+// F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
+// UTF-8 with a BOM as OpenWrite::FileWrite writes it).
+void Application::saveMisspellRules()
+{
     if (m_misspellRules && !m_misspellRules->empty() && !m_settingsFile.isEmpty()) {
         QFile file(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Rules.txt"));
         if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -2647,12 +2630,12 @@ application::SpellChecker *Application::spellChecker()
         return nullptr;
     if (!m_spellingStarted) {
         m_spellingStarted = true;
-        if (m_spellingOn) {
-            const auto status = m_spellChecker->initialize(m_dictionaryLanguage.toStdU16String());
+        if (m_settings->boolean("editor.spellchecker")) {
+            const auto status = m_spellChecker->initialize(dictionaryLanguage().toStdU16String());
             if (status != application::SpellChecker::Status::Ready) {
-                // Legacy turns SPELLCHECKER_ON off and says why.
-                m_spellingOn = false;
-                saveSpellingOptions();
+                // Legacy turns SPELLCHECKER_ON off and says why. The Line
+                // editor's switch stays: with no dictionary it marks brackets only.
+                m_settings->set("editor.spellchecker", false);
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
                         ? tr("No dictionary files were found in the \"%1\\Dictionary\" folder.\nSpell checking will be disabled")
@@ -2676,16 +2659,6 @@ void Application::restartSpellChecker()
     m_spellingStarted = false;
 }
 
-void Application::saveSpellingOptions()
-{
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
-    ini.setValue(QStringLiteral("Spelling/On"), m_spellingOn);
-    ini.setValue(QStringLiteral("Spelling/Language"), m_dictionaryLanguage);
-    ini.setValue(QStringLiteral("Spelling/SuggestionsOnDoubleClick"), m_suggestionsOnDoubleClick);
-}
-
 void Application::spellingRefresh()
 {
     // EditBox::ClearErrs: the Grid's and the editor's marks are checked again.
@@ -2693,29 +2666,46 @@ void Application::spellingRefresh()
     emit spellingChanged();
 }
 
+bool Application::spellingOn() const
+{
+    return m_settings->boolean("editor.spellchecker");
+}
+
+QString Application::dictionaryLanguage() const
+{
+    return m_settings->text("editor.dictionaryLanguage");
+}
+
+bool Application::suggestionsOnDoubleClick() const
+{
+    return m_settings->boolean("editor.suggestionsOnDoubleClick");
+}
+
+// The editor menu's "Spellchecker" (TextEditor::OnAccelerator): the
+// editor's switch and SPELLCHECKER_ON, then ClearErrs(true, on).
 void Application::setSpellingOn(bool on)
 {
-    if (on == m_spellingOn)
+    if (on == m_spellingOn && on == spellingOn())
         return;
     m_spellingOn = on;
-    saveSpellingOptions();
+    m_settings->set("editor.spellchecker", on);
     spellingRefresh();
 }
 
+// A language from the editor menu: DICTIONARY_LANGUAGE, SpellChecker::Destroy
+// and ClearErrs, also for the language already chosen.
 void Application::setDictionaryLanguage(const QString &symbol)
 {
-    m_dictionaryLanguage = symbol;
-    saveSpellingOptions();
+    m_settings->set("editor.dictionaryLanguage", symbol);
     restartSpellChecker();
     spellingRefresh();
 }
 
 void Application::setSuggestionsOnDoubleClick(bool on)
 {
-    if (on == m_suggestionsOnDoubleClick)
+    if (on == suggestionsOnDoubleClick())
         return;
-    m_suggestionsOnDoubleClick = on;
-    saveSpellingOptions();
+    m_settings->set("editor.suggestionsOnDoubleClick", on);
     emit spellingChanged();
 }
 
@@ -3048,49 +3038,79 @@ bool Application::removeDictionaryWords(const QStringList &words)
     return true;
 }
 
+void Application::createFindReplace()
+{
+    m_find = std::make_unique<application::FindReplace>(*m_findHost, [](std::u16string_view s) {
+        // wxString::Lower: one unit at a time.
+        std::u16string out(s);
+        for (auto &c : out)
+            c = QChar(c).toLower().unicode();
+        return out;
+    });
+}
+
+QVariantMap Application::openFindReplace(int tab)
+{
+    // FindReplaceDialog's FindReplace reads the four recent tables when the
+    // dialog is created (cut to 20), and keeps them until it is destroyed.
+    if (!m_findOpened) {
+        const auto list = [this](const char *id) {
+            std::vector<std::u8string> out;
+            for (const QString &entry : m_settings->list(id))
+                out.push_back(toU8(entry));
+            return out;
+        };
+        m_find->setRecent({list("find.recentFinds"), list("find.recentReplacements"), list("findInSubs.recentFilters"),
+                           list("findInSubs.recentPaths")});
+        m_findOpened = true;
+    }
+    return findReplaceSettings(tab);
+}
+
 QVariantMap Application::findReplaceSettings(int tab) const
 {
-    auto s = application::findReplaceFromOptions(m_findOptions);
+    // TabWindow's constructor and SetValues read FIND_REPLACE_OPTIONS and
+    // FIND_REPLACE_STYLES from the options.
+    auto s = application::findReplaceFromOptions(m_settings->integer("find.options"));
     s.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
     findFirstEntries(s, m_find->recent());
-    s.styles = toU8(m_findStyles);
+    s.styles = toU8(m_settings->text("find.styles"));
     return findMap(s, m_find->recent());
 }
 
 void Application::saveFindReplaceSettings(const QVariantMap &settings)
 {
-    // TabWindow::SaveValues (legacy writes them when the application closes).
+    // TabWindow::SaveValues: the Find in subtitles tab keeps the stored
+    // option's bits from 512 up; the styles of the other tabs.
     const auto s = findSettings(settings);
-    m_findOptions = application::findReplaceOptions(s, m_findOptions);
+    m_settings->set("find.options", application::findReplaceOptions(s, m_settings->integer("find.options")));
     if (s.tab != application::FindReplaceSettings::Tab::FindInFiles)
-        m_findStyles = findQs(s.styles);
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
-    ini.setValue(QStringLiteral("FindReplace/Options"), m_findOptions);
-    ini.setValue(QStringLiteral("FindReplace/Styles"), m_findStyles);
+        m_settings->set("find.styles", findQs(s.styles));
 }
 
 QVariantMap Application::switchFindReplaceTab(const QVariantMap &settings, int tab)
 {
     saveFindReplaceSettings(settings);
-    auto next = application::findReplaceSetValues(m_findOptions, findSettings(settings));
+    auto next = application::findReplaceSetValues(m_settings->integer("find.options"), findSettings(settings));
     next.tab = static_cast<application::FindReplaceSettings::Tab>(std::clamp(tab, 0, 2));
     findFirstEntries(next, m_find->recent());
-    next.styles = toU8(m_findStyles);
+    next.styles = toU8(m_settings->text("find.styles"));
     return findMap(next, m_find->recent());
 }
 
-void Application::saveFindRecent()
+void Application::saveFindRecent(application::FindReplaceSettings::Tab tab)
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
+    // FindReplace::AddRecent's SetTable calls, from its own lists (which
+    // survive Set default while the tool exists).
+    using Tab = application::FindReplaceSettings::Tab;
     const auto &r = m_find->recent();
-    ini.setValue(QStringLiteral("FindReplace/Finds"), findList(r.finds));
-    ini.setValue(QStringLiteral("FindReplace/Replacements"), findList(r.replacements));
-    ini.setValue(QStringLiteral("FindReplace/Filters"), findList(r.filters));
-    ini.setValue(QStringLiteral("FindReplace/Paths"), findList(r.paths));
+    m_settings->set("find.recentFinds", findList(r.finds));
+    if (tab != Tab::Find)
+        m_settings->set("find.recentReplacements", findList(r.replacements));
+    if (tab == Tab::FindInFiles) {
+        m_settings->set("findInSubs.recentFilters", findList(r.filters));
+        m_settings->set("findInSubs.recentPaths", findList(r.paths));
+    }
 }
 
 void Application::runFindReplace(const QString &action, const QVariantMap &settings)
@@ -3116,7 +3136,6 @@ void Application::runFindReplace(const QString &action, const QVariantMap &setti
 
 void Application::findFinished()
 {
-    saveFindRecent();
     emit findResultsChanged();
     emit findBusyChanged();
     emit findFinished(findMap(m_find->window(), m_find->recent()));
@@ -3933,17 +3952,55 @@ QVariantMap Application::openSettingsDialog()
 
 void Application::applySettings(const QVariantMap &values)
 {
-    // Live effects follow from settingChanged.
+    // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
+    // for the options it acts on itself (below).
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
-    // A changed program font runs HikariSubFrame::DestroyDialogs: SelectLines
-    // saves its options and is destroyed, so its next opening reads the
-    // settings again.
-    if (std::ranges::any_of(written, [](const std::string &id) { return id == "program.font" || id == "program.fontSize"; })
-        && m_selectLinesOpened) {
+    const auto wrote = [&](std::string_view id) { return std::ranges::find(written, id) != written.end(); };
+    // SPELLCHECKER_ON: EditBox::ClearErrs(true, value), the Line editor's
+    // switch follows. DICTIONARY_LANGUAGE: SpellChecker::Destroy and
+    // ClearErrs. EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK is read at the double click.
+    if (wrote("editor.spellchecker"))
+        m_spellingOn = m_settings->boolean("editor.spellchecker");
+    if (wrote("editor.dictionaryLanguage"))
+        restartSpellChecker();
+    if (wrote("editor.spellchecker") || wrote("editor.dictionaryLanguage"))
+        spellingRefresh();
+    else if (wrote("editor.suggestionsOnDoubleClick"))
+        emit spellingChanged();
+    // A changed program font runs HikariSubFrame::DestroyDialogs.
+    if (wrote("program.font") || wrote("program.fontSize"))
+        destroyDialogs();
+}
+
+// HikariSubFrame::DestroyDialogs: FindReplaceDialog and SelectLines save
+// their options and are destroyed, MisspellReplacer is destroyed (its
+// destructor saves the rules); each reads its settings again at its next
+// opening.
+void Application::destroyDialogs()
+{
+    // FR->SaveOptions(), FR->Destroy(). The tool saves its tab and closes
+    // (findReplaceDestroyed). Legacy's modal boxes kept this from happening
+    // while a question waits; here the tool then stays.
+    if (m_findOpened && !m_find->busy()) {
+        emit findReplaceDestroyed();
+        m_findOpened = false;
+        createFindReplace();
+        emit findResultsChanged();
+    }
+    if (m_selectLinesOpened) {
         m_settings->set("selectLines.options", m_selectOptions);
         m_selectLinesOpened = false;
         m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
         emit selectLinesDestroyed();
+    }
+    // MR->Destroy(): ~MisspellReplacer saves a non-empty list; the next
+    // opening reads Rules.txt again.
+    if (m_misspellRules) {
+        saveMisspellRules();
+        m_misspellRules.reset();
+        m_misspellFinds.clear();
+        m_misspellResultsShown = false;
+        emit misspellReplacerDestroyed();
     }
 }
 
@@ -3988,6 +4045,16 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     // The shift times panel keeps its values and writes them at its next
     // change; the Grid keeps its hidden columns (SubsGrid::visibleColumns)
     // and writes them at the next toggle.
+    // FindReplaceDialog, once created, keeps its controls (written back at
+    // the next tab change, run or closing; SaveValues takes the reset
+    // option's bits from 512 up) and FindReplace its recent lists (written
+    // at the next AddRecent, each list as legacy SetTable writes it); never
+    // created, it reads the defaults when it opens (openFindReplace).
+    // MisspellReplacer has no options (Rules.txt).
+    // Spelling: the Line editor keeps its switch (TextEditor::SpellCheckerOnOff)
+    // and the spell checker its dictionary (no SpellChecker::Destroy); the
+    // Grid and the menus read the reset options.
+    emit spellingChanged();
     return toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
 }
 

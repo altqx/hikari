@@ -100,13 +100,16 @@ ApplicationWindow {
     }
     onClosing: close => {
         root.workspaceLayout.save()
-        if (root.app.quitApproved)
-            return
-        const rows = root.app.reviewClose("quit")
-        if (rows.length === 0)
-            return
-        close.accepted = false
-        closeReview.review(rows)
+        if (!root.app.quitApproved) {
+            const rows = root.app.reviewClose("quit")
+            if (rows.length > 0) {
+                close.accepted = false
+                closeReview.review(rows)
+                return
+            }
+        }
+        // HikariSubFrame::OnClose: FR->SaveOptions().
+        searchTool.save()
     }
     Connections {
         target: root.app
@@ -122,6 +125,12 @@ ApplicationWindow {
         // F1: a file result opens into the changed Untitled Document.
         function onFindOpenReview(rows) {
             closeReview.review(rows)
+        }
+        // DestroyDialogs (a changed program font): the Search tool saves its
+        // tab (FR->SaveOptions) and closes with its results.
+        function onFindReplaceDestroyed() {
+            searchTool.destroyTool()
+            searchDock.close()
         }
     }
 
@@ -3277,6 +3286,11 @@ ApplicationWindow {
     MisspellReplacerDialog {
         id: misspellDialog
         app: root.app
+        // DestroyDialogs (a changed program font): MR->Destroy().
+        Connections {
+            target: root.app
+            function onMisspellReplacerDestroyed() { misspellDialog.destroyDialog() }
+        }
     }
     // F3: the Spellchecker window, legacy's spelling message boxes and the
     // editor's "Fix suggestions" list.
