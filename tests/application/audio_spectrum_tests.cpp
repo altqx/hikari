@@ -4,6 +4,7 @@
 // column and row by row, over the transforms of the lines legacy reads; the
 // transform itself is checked against a direct DFT.
 
+#include "hikari/application/audio_playback.h"
 #include "hikari/application/audio_spectrum.h"
 
 #include <gtest/gtest.h>

@@ -177,7 +177,7 @@ void AudioBox::open(const std::string &path)
     m_videoIndexFile.clear();
     // legacy Provider::Get
     if (path.starts_with("dummy")) {
-        m_audio = DisplayAudio::silence(kDummyRate, kDummySamples);
+        m_audio = std::make_shared<DisplayAudio>(DisplayAudio::silence(kDummyRate, kDummySamples));
         m_progress = 1.f;
         m_state = State::Ready;
         return notify();
@@ -328,7 +328,7 @@ void AudioBox::opened(std::uint64_t request, const AudioInfo &info, bool newInde
             }
         }
     }
-    m_audio.emplace(info.sampleRate, sampleCount, std::move(store));
+    m_audio = std::make_shared<DisplayAudio>(info.sampleRate, sampleCount, std::move(store));
     // a positive delay starts with silence, a negative one skips the start
     m_sourceFrame = std::max<std::int64_t>(0, -m_delay);
     m_sourceEnd = sampleCount + m_sourceFrame;

@@ -73,6 +73,9 @@ public:
     Q_INVOKABLE bool pause();
     Q_INVOKABLE bool togglePlay() { return playing() ? pause() : play(); }
     Q_INVOKABLE bool stop();
+    // A4: GLOBAL_PLAY_ACTUAL_LINE (legacy VideoBox's "Play the current
+    // line"): the active Line from its start to the frame before its end.
+    Q_INVOKABLE bool playActualLine();
     // V2 navigation.
     QString times() const;
     bool keyframeShown() const;

@@ -11,15 +11,18 @@
 #include "hikari/application/audio_display.h"
 #include "hikari/application/audio_spectrum.h"
 #include "hikari/application/audio_timing.h"
+#include "hikari/application/audio_playback.h"
 
 #include <QObject>
 #include <QPointer>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -57,6 +60,8 @@ class AudioController : public QObject {
     Q_PROPERTY(bool autoScroll READ autoScroll NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumOn READ spectrumOn NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
+    // A4: the player is playing (legacy player->IsPlaying()).
+    Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
 public:
     explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
 
@@ -105,7 +110,7 @@ public:
 
     // The display item: its size, the mouse cursor, focus and the wheel.
     void resize(int width, int height, int timelineHeight, int scrollbarThickness);
-    void setCursor(std::optional<float> x);
+    void setCursor(std::optional<float> x); // the mouse's; not while playing (A4)
     std::optional<float> cursor() const { return m_cursor; }
     void setFocused(bool focused);
     // Legacy OnMouseEvent's wheel (`rotation` in eighths of a degree, 120 a
@@ -152,6 +157,44 @@ public:
     quint64 revision() const { return m_revision; }
     const application::WaveformColumns &columns();
 
+    // A4: playback (legacy AudioBox's play handlers, AudioDisplay::Play,
+    // Stop and UpdateTimer). The player plays the box's audio (none: no
+    // playback); AUDIO_MARK_PLAY_TIME is read at each play. The player's
+    // volume is the volume slider's (A2): AUDIO_VOLUME when the box's audio
+    // is set (legacy AudioBox::SetFile), then each move of the slider (or of
+    // the vertical zoom while linked).
+    void setPlayer(application::AudioPlayerPort *player);
+    void setPlaybackSettings(std::function<int()> markPlayTimeMs);
+    // The video's Playing state and its Pause: legacy Play pauses a playing
+    // video, and Stop pauses it instead of touching the audio.
+    void setVideoPlayback(std::function<bool()> playing, std::function<void()> pause);
+    bool playing() const { return m_player && m_player->playing(); }
+    // AUDIO_PLAY (and _ALT, the middle double click), AUDIO_PLAY_LINE (and
+    // _ALT), AUDIO_PLAY_500MS_BEFORE/AFTER/FIRST/LAST, AUDIO_PLAY_BEFORE_MARK,
+    // AUDIO_PLAY_AFTER_MARK, AUDIO_PLAY_TO_END and AUDIO_STOP.
+    Q_INVOKABLE void playSelection() { play(application::PlayMode::Selection); }
+    Q_INVOKABLE void playLine() { play(application::PlayMode::Line); }
+    Q_INVOKABLE void play500Before() { play(application::PlayMode::Before500); }
+    Q_INVOKABLE void play500After() { play(application::PlayMode::After500); }
+    Q_INVOKABLE void play500First() { play(application::PlayMode::First500); }
+    Q_INVOKABLE void play500Last() { play(application::PlayMode::Last500); }
+    Q_INVOKABLE void playBeforeMark() { play(application::PlayMode::BeforeMark); }
+    Q_INVOKABLE void playAfterMark() { play(application::PlayMode::AfterMark); }
+    Q_INVOKABLE void playToEnd() { play(application::PlayMode::ToEnd); }
+    Q_INVOKABLE void stopPlayback();
+    void play(application::PlayMode mode);
+    // Legacy AudioDisplay::Play(start, end): a playing video is paused
+    // first, then nothing without the audio; -1 as the end plays to the end.
+    void playRange(int startMs, int endMs);
+    // Legacy AudioBox::OnAccelerator: an AUDIO_HOTKEY action by its symbol
+    // (an _ALT id arrives as its main id, as legacy's accelerator gave it
+    // id + 10). The installed bindings decide which key sends which action
+    // (HotkeysController::actionFor). False for a symbol that is not one.
+    Q_INVOKABLE bool runHotkey(const QString &symbol);
+    // The last range handed to the player, and legacy's Stop memory.
+    std::optional<application::PlayRange> lastPlayRange() const { return m_lastRange; }
+    const application::AudioPlayback *playback() const { return m_playback.get(); }
+
     int scrollPosition() const { return m_scrollbar.position; }
     int scrollPage() const { return m_scrollbar.page; }
     int scrollRange() const { return m_scrollbar.range; }
@@ -174,11 +217,9 @@ public:
         std::function<void(int key)> setActive;
         // tab->video->Seek (Ctrl+left or middle click).
         std::function<void(int ms)> seekVideo;
-        // A4: legacy Play after Next/Previous (unless
-        // AUDIO_DONT_PLAY_WHEN_LINE_CHANGES) and on a middle double click,
-        // and the player's end while a boundary is dragged. Unset: nothing plays.
-        std::function<void(int startMs, int endMs)> play;
-        std::function<void(std::int64_t sample)> setPlayEnd;
+        // (Playback is the box's own since A4: Play after Next/Previous
+        // unless AUDIO_DONT_PLAY_WHEN_LINE_CHANGES, the middle double click's
+        // Play and the player's end while a boundary is dragged.)
     };
     void setTimingHooks(TimingHooks hooks) { m_hooks = std::move(hooks); }
     // AUDIO_AUTO_COMMIT, the snap options, AUDIO_START_DRAG_SENSITIVITY, the
@@ -230,6 +271,7 @@ signals:
     // A2: a slider or switch moved; `volume` also when the player's volume changed.
     void boxControlsChanged();
     void volumeChanged(float playbackVolume);
+    void playingChanged();
 
 private:
     void loadBoxControls(); // legacy AudioBox's constructor
@@ -248,6 +290,10 @@ private:
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None);
     void changeLine(int delta);
     void addLead(bool in, bool out);
+    void tick();         // legacy UpdateTimer
+    void focusAndPlay(application::PlayMode mode);
+    void playbackStateChanged();
+    void releasePlayer(); // legacy SetFile's unload: Stop, then the player goes
 
     application::AudioBox m_box;
     std::function<application::AudioCacheSettings()> m_settings;
@@ -302,6 +348,16 @@ private:
     std::function<application::AudioTimingOptions()> m_timingSettings;
     TimingHooks m_hooks;
     int m_markTextHeight = 0;
+    // A4
+    application::AudioPlayerPort *m_player = nullptr;
+    std::unique_ptr<application::AudioPlayback> m_playback;
+    std::function<int()> m_markPlayTime;
+    std::function<bool()> m_videoPlaying;
+    std::function<void()> m_pauseVideo;
+    std::optional<application::PlayRange> m_lastRange;
+    QTimer m_playTimer;
+    bool m_wasPlaying = false;
+    std::uint64_t m_playedSerial = 0; // the audio the player last played
 };
 
 } // namespace hikari::ui

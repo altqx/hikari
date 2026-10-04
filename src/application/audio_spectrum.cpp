@@ -174,15 +174,6 @@ std::array<std::uint8_t, 256 * 3> legacySpectrumPalette(std::uint32_t background
     return palette;
 }
 
-// Legacy AudioBox.cpp: the player gets at most 150%.
-float playbackVolumeFromSlider(int position)
-{
-    constexpr float kMaxPlaybackVolume = 1.5f;
-    if (position <= 50)
-        return audioScaleFromSlider(position);
-    return 1.0f + ((kMaxPlaybackVolume - 1.0f) * (float(position - 50) / 50.0f));
-}
-
 AudioSpectrum::AudioSpectrum(int threads)
 {
     // legacy AudioSpectrumMultiThreading: the processors, 2 when unknown

@@ -431,6 +431,8 @@ void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
     mouse.alt = modifiers & Qt::AltModifier;
     m_controller->setMarkTextHeight(QFontMetrics(m_label).height());
     const auto result = m_controller->mouse(mouse);
+    if (result.focus && !hasActiveFocus()) // legacy SetFocus on a button (and the middle double click)
+        forceActiveFocus(Qt::MouseFocusReason);
     if (result.sizeCursor) {
         if (*result.sizeCursor)
             setCursor(Qt::SizeHorCursor); // wxCURSOR_SIZEWE
@@ -478,7 +480,8 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     };
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
-                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), false, m_controller->options())
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
+                                                         m_controller->options())
                    : std::vector<AudioShape>{};
     };
     if (softwareScene(window())) {

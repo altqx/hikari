@@ -61,8 +61,10 @@ public:
     // tables route it ("" when none): Editor (EditBox: the Editor bindings
     // and Video actions bound for it; not the keys the text field keeps),
     // Subtitles (the Grid: its own and the Editor and Video actions bound for
-    // it, and Video's play and seek bindings), Video (VideoBox: its own, and
-    // Editor and Grid actions bound for it).
+    // it, Video's play and seek bindings, and the Audio bindings but
+    // AUDIO_COMMIT to AUDIO_NEXT), Video (VideoBox: its own, and Editor and
+    // Grid actions bound for it), Audio (AudioBox: the Audio bindings). An
+    // _ALT audio id answers as its main id (legacy GetHKey's id + 10).
     Q_INVOKABLE QString actionFor(int window, int key, int modifiers) const;
 
     // The Options page (legacy OptionsDialog's constructor, AddHotkeysOnList).

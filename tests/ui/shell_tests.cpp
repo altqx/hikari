@@ -1961,6 +1961,26 @@ private:
         return applied;
     }
 
+    // A4: a session whose players make no sound (playbackAudio off): the
+    // audio box plays through the output without a device, at its pace.
+    void restartWithoutSound()
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+
 private slots:
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
@@ -4006,7 +4026,9 @@ private slots:
         auto pixel = [&](int x, int y) { return drawn.pixel(origin + QPoint(x, y)) | 0xFF000000u; };
         QCOMPARE(pixel(34, h / 2), audio.options().lineStart);   // the start boundary, over the waveform
         QCOMPARE(pixel(10, h / 2), audio.options().waveform);    // a column before the Lines
-        QCOMPARE(pixel(10, h / 16), audio.options().background); // above its peak
+        // above its peak, below the focus border (A4's play buttons leave
+        // the default dock a short waveform)
+        QCOMPARE(pixel(10, std::max(1, audio.columns().min[10] / 2)), audio.options().background);
         // legacy D3DXCreateFontW: the cursor time and labels bold, the ruler not
         auto *displayItem = qobject_cast<ui::AudioDisplayItem *>(display);
         QVERIFY(displayItem);
@@ -4050,7 +4072,7 @@ private slots:
         audio.openDummy();
         QVERIFY(audio.ready());
         QVERIFY(item("audioSliders")->isVisible());
-        QVERIFY(item("audioSwitches")->isVisible());
+        QVERIFY(item("audioAutoScroll")->isVisible()); // the switches, in the button row
         const auto &view = audio.view();
         QCOMPARE(view.samples(), 1323);
 
@@ -5188,6 +5210,161 @@ private slots:
         scripts.commit();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QStringLiteral("Ctrl-F"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SEARCH G=Ctrl-F")));
+    }
+
+    // A4: legacy AudioBox's play commands hand the player the frames each
+    // asks for (AudioDisplay::Play at 48 kHz: ms * 48); the cursor follows
+    // the output's clock and the player stops 8192 frames past the end.
+    void audioBoxPlaybackModes()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 active, 3.00-4.00
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv")); // 96256 frames
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        QVERIFY(!audio.playing());
+        item("audioDisplay")->forceActiveFocus();
+
+        // AUDIO_PLAY (Down): the selection; the cursor is drawn from 50
+        // columns in (1440 frames a column) and goes at the end, and the
+        // player stops by itself
+        press(Qt::Key_Down);
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        QVERIFY(audio.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursor() && *audio.cursor() >= 50.f, 3000);
+        // the mouse does not move the cursor while playing
+        auto *display = item("audioDisplay");
+        QTest::mouseMove(window, display->mapToScene(QPointF(10, 10)).toPoint());
+        QVERIFY(!audio.cursor() || *audio.cursor() != 10.f);
+        // (the mouse leaves, or its hover would draw it once playback ends)
+        QTest::mouseMove(window, QPoint(0, 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 5000);
+        QVERIFY(!audio.cursor());
+        QCOMPARE(audio.playback()->lastPositionMs(), 0); // not a Stop
+
+        // each mode's keys (legacy AUDIO_HOTKEY defaults)
+        const std::vector<std::tuple<Qt::Key, Qt::KeyboardModifiers, PlayRange>> keys{
+            {Qt::Key_S, Qt::NoModifier, {48000, 48000}},       // AUDIO_PLAY_ALT
+            {Qt::Key_Up, Qt::NoModifier, {48000, 48000}},      // AUDIO_PLAY_LINE
+            {Qt::Key_R, Qt::NoModifier, {48000, 48000}},       // AUDIO_PLAY_LINE_ALT
+            {Qt::Key_Q, Qt::NoModifier, {24000, 24000}},       // 500 ms before
+            {Qt::Key_W, Qt::NoModifier, {96000, 255}},         // 500 ms after, cut at the last frame
+            {Qt::Key_E, Qt::NoModifier, {48000, 24000}},       // first 500 ms
+            {Qt::Key_D, Qt::NoModifier, {72000, 24000}},       // last 500 ms
+            {Qt::Key_T, Qt::NoModifier, {48000, 96255 - 48000}}, // to the end, less its last frame
+        };
+        for (const auto &[key, mods, expected] : keys) {
+            press(key, mods);
+            QCOMPARE(range(), expected);
+            // a range under legacy's 100 ms plays once and may already have
+            // ended on the player's own thread
+            if (expected.count >= 4800)
+                QVERIFY(audio.playing());
+        }
+        // the mark plays need a mark: without one nothing plays
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{48000, 96255 - 48000}));
+        // the ruler's mark (A3: a right click on the ruler, 30 ms a column)
+        QCOMPARE(audio.view().position(), 0);
+        QTest::mouseClick(window, Qt::RightButton, {},
+                          item("audioDisplay")->mapToScene(QPointF(50, audio.view().height() + 5)).toPoint());
+        QVERIFY(audio.hasMark());
+        QCOMPARE(audio.markMs(), 1500);
+        QTest::mouseMove(window, QPoint(0, 0));
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_0, Qt::KeypadModifier); // AUDIO_MARK_PLAY_TIME (1000) before
+        QCOMPARE(range(), (PlayRange{24000, 48000}));
+        press(Qt::Key_Period, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{72000, 96255 - 72000}));
+        application->settingsStore()->set("audio.markPlayTime", 250);
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{60000, 12000}));
+        // modified keys are not the audio box's
+        press(Qt::Key_T, Qt::ShiftModifier);
+        QCOMPARE(range(), (PlayRange{60000, 12000}));
+
+        // AUDIO_STOP (H): while playing it stops and remembers where; again,
+        // it plays from there to the last end
+        press(Qt::Key_T);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.playback()->lastPositionMs() == 0 && audio.cursor(), 3000);
+        press(Qt::Key_H);
+        QVERIFY(!audio.playing());
+        QVERIFY(!audio.cursor());
+        const int at = audio.playback()->lastPositionMs();
+        QVERIFY(at > 1000);
+        press(Qt::Key_H);
+        QVERIFY(audio.playing());
+        QCOMPARE(range(), (PlayRange{at * 48, 96255 - at * 48}));
+        press(Qt::Key_H);
+        QVERIFY(!audio.playing());
+
+        // the buttons, which focus the display
+        item("editingGrid")->forceActiveFocus();
+        auto *first = visualItem("audioPlay500First"); // Repeater delegates
+        auto *stop = visualItem("audioStop");
+        QVERIFY(first && stop);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, first->mapToScene(QPointF(4, 4)).toPoint());
+        QCOMPARE(range(), (PlayRange{48000, 24000}));
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          stop->mapToScene(QPointF(4, 4)).toPoint());
+        QVERIFY(!audio.playing());
+        // the middle double click plays the selection
+        QTest::mouseDClick(window, Qt::MiddleButton, Qt::NoModifier, display->mapToScene(QPointF(200, 10)).toPoint());
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        press(Qt::Key_H);
+        // (the mouse leaves: over the waveform it takes the focus, AUDIO_AUTO_FOCUS)
+        QTest::mouseMove(window, QPoint(0, 0));
+
+        // from the Grid: the letters and the keypad (not Down and Up, which
+        // move there), and the display takes the focus
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // the second Line, 3.00-4.00
+        QVERIFY(!audio.playing());
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        press(Qt::Key_S);
+        QCOMPARE(range(), (PlayRange{96255, 0})); // past the audio: its last frame, nothing
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 3000); // silence until 8192 frames on
+
+        // a new file in the box stops the player; Close resets Stop's memory
+        press(Qt::Key_T);
+        QVERIFY(audio.playing());
+        audio.closeAudio();
+        QVERIFY(!audio.playing());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.playback()->lastEndMs(), 5000);
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_H); // legacy's default: 0 to 5000 ms
+        QCOMPARE(range(), (PlayRange{0, 220500}));
+        press(Qt::Key_H);
+    }
+
+    // A4: legacy Play pauses a playing video; Stop pauses it and leaves the
+    // audio alone.
+    void audioPlaybackPausesThePlayingVideo()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(video.play());
+        QVERIFY(video.playing());
+        audio.playToEnd();
+        QVERIFY(!video.playing());
+        QVERIFY(audio.playing());
+        QVERIFY(video.play());
+        audio.stopPlayback();
+        QVERIFY(!video.playing());
+        QVERIFY(audio.playing());
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
     }
 
     void theReferenceIsNeverEdited()

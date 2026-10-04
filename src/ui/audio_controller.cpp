@@ -60,6 +60,17 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
         ask(rows, std::move(answer), true);
     });
     m_box.setDefer([this](std::function<void()> step) { QTimer::singleShot(0, this, std::move(step)); });
+    // A4: legacy's playback timer (16 ms on Windows, 17 on Linux)
+    m_playTimer.setTimerType(Qt::PreciseTimer);
+    m_playTimer.setInterval(16);
+    connect(&m_playTimer, &QTimer::timeout, this, &AudioController::tick);
+    // A2 with A4: the volume slider (and the vertical zoom while linked)
+    // sets the player's volume as it moves (legacy OnVolume, OnVerticalZoom,
+    // OnVerticalLink: player->SetVolume).
+    connect(this, &AudioController::volumeChanged, this, [this](float volume) {
+        if (m_player)
+            m_player->setVolume(volume);
+    });
     newView();
 }
 
@@ -139,6 +150,9 @@ void AudioController::newView()
     m_needCommit = false;
     if (hadMark)
         emit markChanged();
+    // A4: a new box plays with legacy's defaults
+    if (m_player)
+        m_playback = std::make_unique<application::AudioPlayback>(*m_player);
 }
 
 QString AudioController::status() const
@@ -176,6 +190,8 @@ void AudioController::closeAudio()
 
 void AudioController::boxChanged()
 {
+    if (m_player && m_box.serial() != m_playedSerial)
+        releasePlayer();
     const auto state = m_box.state();
     const bool loaded = state == AudioBox::State::Loading || state == AudioBox::State::Ready;
     const bool wasLoaded = m_seenState == AudioBox::State::Loading || m_seenState == AudioBox::State::Ready;
@@ -185,6 +201,11 @@ void AudioController::boxChanged()
         const auto *audio = m_box.audio();
         m_view.setSource(audio->sampleRate(), audio->sampleCount());
         m_view.updateSamples();
+        // AudioBox::SetFile: the player starts at AUDIO_VOLUME's volume (the
+        // option as stored, which the slider may show clamped)
+        if (m_player)
+            m_player->setVolume(
+                application::playbackVolumeFromSlider(m_store ? m_store->integer("audio.volume") : m_volume));
         emit opened(path(), std::exchange(m_fresh, false));
         reselect();
     } else if (!loaded && m_box.error()) {
@@ -278,6 +299,8 @@ void AudioController::resize(int width, int height, int timelineHeight, int scro
 
 void AudioController::setCursor(std::optional<float> x)
 {
+    if (playing())
+        return; // legacy draws the mouse's cursor only while not playing
     if (x == m_cursor)
         return;
     m_cursor = x;
@@ -543,6 +566,166 @@ std::vector<application::AudioShape> AudioController::scene(const application::A
     return application::audioScene(m_view, columns(), marks(), m_options, textWidth);
 }
 
+// A4: the player for the box's audio.
+void AudioController::setPlayer(application::AudioPlayerPort *player)
+{
+    m_playTimer.stop();
+    m_player = player;
+    m_playback = player ? std::make_unique<application::AudioPlayback>(*player) : nullptr;
+    m_playedSerial = m_box.serial();
+}
+
+void AudioController::setPlaybackSettings(std::function<int()> markPlayTimeMs)
+{
+    m_markPlayTime = std::move(markPlayTimeMs);
+}
+
+void AudioController::setVideoPlayback(std::function<bool()> playing, std::function<void()> pause)
+{
+    m_videoPlaying = std::move(playing);
+    m_pauseVideo = std::move(pause);
+}
+
+// Legacy AudioBox's play handlers: a mark play without a mark returns
+// first; the others ask AudioDisplay::Play for their range.
+void AudioController::play(application::PlayMode mode)
+{
+    if (!hasAudio())
+        return;
+    const std::optional<int> mark = m_timing.hasMark() ? std::optional(m_timing.markMs()) : std::nullopt;
+    const auto request =
+        application::legacyPlayRequest(mode, m_startMs, m_endMs, mark, m_markPlayTime ? m_markPlayTime() : 1000);
+    if (!request)
+        return;
+    playRange(request->startMs, request->endMs);
+}
+
+// Legacy AudioDisplay::Play(start, end, pause = true): a playing video is
+// paused before anything else, then nothing plays without the audio's
+// provider (here: the box's audio and a player).
+void AudioController::playRange(int startMs, int endMs)
+{
+    if (m_videoPlaying && m_videoPlaying() && m_pauseVideo)
+        m_pauseVideo();
+    const auto *audio = m_box.audio();
+    if (!audio || !m_playback)
+        return;
+    m_playedSerial = m_box.serial();
+    m_lastRange = m_playback->play(audio->sampleRate(), audio->sampleCount(), startMs, endMs);
+    m_playTimer.start();
+    playbackStateChanged();
+}
+
+// Legacy AudioBox::OnStop: AudioDisplay::Stop(true).
+void AudioController::stopPlayback()
+{
+    if (!hasAudio())
+        return;
+    if (m_videoPlaying && m_videoPlaying()) {
+        if (m_pauseVideo)
+            m_pauseVideo();
+        return;
+    }
+    const auto *audio = m_box.audio();
+    if (!audio || !m_playback)
+        return;
+    m_playedSerial = m_box.serial();
+    if (const auto range = m_playback->stop(audio->sampleRate(), audio->sampleCount())) {
+        m_lastRange = range; // the remembered position to the last end, again
+        m_playTimer.start();
+    } else {
+        m_playTimer.stop();
+        m_cursor.reset();
+        emit cursorChanged();
+    }
+    playbackStateChanged();
+}
+
+// Legacy AudioBox::OnAccelerator. AUDIO_PLAY and AUDIO_PLAY_LINE both run
+// OnPlaySelection; GetTimesSelection's karaoke flag (A5) is the event's id
+// == AUDIO_PLAY_LINE, and an AUDIO_PLAY_LINE_ALT key arrives as that id.
+bool AudioController::runHotkey(const QString &symbol)
+{
+    using application::PlayMode;
+    static const std::map<QString, std::function<void(AudioController &)>> actions = {
+        {QStringLiteral("AUDIO_PLAY"), [](AudioController &c) { c.focusAndPlay(PlayMode::Selection); }},
+        {QStringLiteral("AUDIO_PLAY_LINE"), [](AudioController &c) { c.focusAndPlay(PlayMode::Line); }},
+        {QStringLiteral("AUDIO_STOP"), [](AudioController &c) { emit c.focusRequested(); c.stopPlayback(); }},
+        {QStringLiteral("AUDIO_NEXT"), [](AudioController &c) { c.nextLine(); }},
+        {QStringLiteral("AUDIO_PREVIOUS"), [](AudioController &c) { c.previousLine(); }},
+        {QStringLiteral("AUDIO_PLAY_BEFORE_MARK"), [](AudioController &c) { c.focusAndPlay(PlayMode::BeforeMark); }},
+        {QStringLiteral("AUDIO_PLAY_AFTER_MARK"), [](AudioController &c) { c.focusAndPlay(PlayMode::AfterMark); }},
+        {QStringLiteral("AUDIO_PLAY_500MS_BEFORE"), [](AudioController &c) { c.focusAndPlay(PlayMode::Before500); }},
+        {QStringLiteral("AUDIO_PLAY_500MS_AFTER"), [](AudioController &c) { c.focusAndPlay(PlayMode::After500); }},
+        {QStringLiteral("AUDIO_PLAY_500MS_FIRST"), [](AudioController &c) { c.focusAndPlay(PlayMode::First500); }},
+        {QStringLiteral("AUDIO_PLAY_500MS_LAST"), [](AudioController &c) { c.focusAndPlay(PlayMode::Last500); }},
+        {QStringLiteral("AUDIO_PLAY_TO_END"), [](AudioController &c) { c.focusAndPlay(PlayMode::ToEnd); }},
+        {QStringLiteral("AUDIO_COMMIT"), [](AudioController &c) { c.commit(); }},
+        {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
+        {QStringLiteral("AUDIO_LEAD_IN"), [](AudioController &c) { c.leadIn(); }},
+        {QStringLiteral("AUDIO_LEAD_OUT"), [](AudioController &c) { c.leadOut(); }},
+        {QStringLiteral("AUDIO_SCROLL_LEFT"), [](AudioController &c) { c.scrollRight(); }},
+        {QStringLiteral("AUDIO_SCROLL_RIGHT"), [](AudioController &c) { c.scrollLeft(); }},
+    };
+    const auto found = actions.find(symbol);
+    if (found == actions.end())
+        return false;
+    if (hasAudio())
+        found->second(*this);
+    return true;
+}
+
+// The play buttons' and keys' handlers focus the display first (SetFocus).
+void AudioController::focusAndPlay(application::PlayMode mode)
+{
+    emit focusRequested();
+    play(mode);
+}
+
+// Legacy UpdateTimer: the cursor follows the player, the view scrolls to
+// keep it in sight; while the player is not playing the cursor is cleared
+// without a redraw.
+void AudioController::tick()
+{
+    if (!m_playback)
+        return m_playTimer.stop();
+    const auto redrawn = m_playback->tick(m_view, m_scrollbarThickness);
+    m_cursor = m_playback->cursorPainted() ? std::optional(m_playback->cursorX()) : std::nullopt;
+    if (redrawn == application::AudioPlayback::Redraw::Image)
+        redraw();
+    if (redrawn != application::AudioPlayback::Redraw::None)
+        emit cursorChanged();
+    if (!m_playback->timerRunning() || !playing())
+        m_playTimer.stop();
+    playbackStateChanged();
+}
+
+void AudioController::playbackStateChanged()
+{
+    if (playing() == m_wasPlaying)
+        return;
+    m_wasPlaying = playing();
+    emit playingChanged();
+}
+
+// Legacy SetFile's unload: a playing player is stopped (Stop: a playing
+// video is paused instead), then the player is closed with the audio.
+void AudioController::releasePlayer()
+{
+    if (playing())
+        stopPlayback();
+    m_playedSerial = m_box.serial();
+    m_playTimer.stop();
+    m_player->stop();
+    m_player->close();
+    if (m_cursor && m_playback && m_playback->cursorPainted()) {
+        m_playback->hideCursor();
+        m_cursor.reset();
+        emit cursorChanged();
+    }
+    playbackStateChanged();
+}
+
 // Legacy UpdateImage: the samples per column first, then a new image.
 void AudioController::redraw()
 {
@@ -624,8 +807,8 @@ void AudioController::nextLine()
     if (play)
         emit focusRequested();
     changeLine(1);
-    if (play && m_hooks.play && loaded())
-        m_hooks.play(m_startMs, m_endMs);
+    if (play && loaded()) // AudioDisplay::Next: GetTimesSelection, then Play
+        playRange(m_startMs, m_endMs);
 }
 
 void AudioController::previousLine()
@@ -634,8 +817,8 @@ void AudioController::previousLine()
     if (play)
         emit focusRequested();
     changeLine(-1);
-    if (play && m_hooks.play && loaded())
-        m_hooks.play(m_startMs, m_endMs);
+    if (play && loaded()) // AudioDisplay::Prev: GetTimesSelection, then Play
+        playRange(m_startMs, m_endMs);
 }
 
 // AudioBox::OnGoto: MakeDialogueVisible(true).
@@ -697,10 +880,14 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
         emit markChanged();
     if (result.seekVideoMs && m_hooks.seekVideo)
         m_hooks.seekVideo(*result.seekVideoMs);
-    if (result.playEnd && m_hooks.setPlayEnd)
-        m_hooks.setPlayEnd(*result.playEnd);
-    if (result.playSelection && m_hooks.play)
-        m_hooks.play(m_startMs, m_endMs);
+    // legacy: a boundary moved while not playing to the end moves the
+    // player's end (SetEndPosition, which stops a player already past it)
+    if (result.playEnd && m_player && m_playback && !m_playback->playingToEnd()) {
+        m_player->setEndPosition(*result.playEnd);
+        playbackStateChanged();
+    }
+    if (result.playSelection) // the middle double click: Play(GetTimesSelection)
+        playRange(m_startMs, m_endMs);
     if (result.commit) // legacy Commit(moveToEnd): CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
         commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent);
     else if (result.redraw)

@@ -1,6 +1,8 @@
 #include "hikari/app/application.h"
 
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/portaudio_output.h"
+#include "hikari/backends/simulated_output.h"
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
@@ -656,6 +658,32 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // A2: the box's zoom, volume, link, auto-scroll and spectrum switches
     // start from the registry and are written back as they change.
     m_audio->setSettingsStore(m_settings.get());
+    // A4: the box's player through the editor output; PortAudio starts at
+    // the first play. Without playbackAudio (tests) an output with no device
+    // runs the same clock, so nothing sounds through a desktop's speakers.
+    {
+        const bool device = options.playbackAudio;
+        m_audioPlayer = std::make_unique<backends::AudioBoxPlayer>(
+            [this, device]() -> application::AudioOutputPort & {
+                if (!m_audioOutput) {
+                    if (device)
+                        m_audioOutput = std::make_unique<backends::PortAudioOutput>();
+                    else
+                        m_audioOutput = std::make_unique<backends::SimulatedOutput>();
+                }
+                return *m_audioOutput;
+            },
+            backends::AudioBoxPlayer::SharedAudio([this]() -> std::shared_ptr<const application::DisplayAudio> {
+                return m_audio ? m_audio->box().sharedAudio() : nullptr;
+            }));
+        m_audio->setPlayer(m_audioPlayer.get());
+        // AUDIO_MARK_PLAY_TIME, read at each play (the volume is the
+        // slider's: AUDIO_VOLUME when the audio is set, then each move)
+        m_audio->setPlaybackSettings([this] { return m_settings->integer("audio.markPlayTime"); });
+        m_audio->setVideoPlayback([this] { return m_video->playing(); }, [this] { m_video->pause(); });
+        m_audioConnections << connect(m_audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
+                                      [this](const QString &message) { m_log->log(message); });
+    }
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
@@ -670,7 +698,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
     // A3: the box's timing options from the registry, read when used (legacy
     // Options), and what legacy's AudioDisplay did through the edit box, the
-    // grid and the video. Playback (A4) adds its own hooks.
+    // grid and the video. Playback (A4) is the box's own.
     m_audio->setTimingSettings([this] {
         application::AudioTimingOptions timing;
         timing.autoCommit = m_settings->boolean("audio.autoCommit");
@@ -926,6 +954,8 @@ Application::~Application()
         disconnect(connection);
     m_video->setOpenFilter(nullptr);
     m_audio.reset();
+    m_audioPlayer.reset(); // A4: the player stops before its output goes
+    m_audioOutput.reset();
     m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
     saveMisspellRules();

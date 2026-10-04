@@ -1404,6 +1404,21 @@ ApplicationWindow {
                         focusPolicy: Qt.NoFocus
                         onClicked: root.video.togglePlay()
                     }
+                    // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
+                    // Line editor's text.
+                    Button {
+                        objectName: "playActualLine"
+                        text: qsTr("Play line")
+                        enabled: root.video.hasVideo
+                        focusPolicy: Qt.NoFocus
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Play the current line")
+                        Accessible.name: qsTr("Play the current line")
+                        onClicked: {
+                            lineText.forceActiveFocus()
+                            root.video.playActualLine()
+                        }
+                    }
                     Button {
                         objectName: "stopVideo"
                         text: qsTr("Stop")
@@ -1444,8 +1459,11 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "audioPanel"
                 title: qsTr("Audio")
-                // A1: the waveform with its time ruler and marks (legacy
-                // AudioDisplay), the search bar below it (legacy audioScroll).
+                // The audio box in legacy AudioBox's layout: the display with
+                // the search bar below it (DisplaySizer), the horizontal zoom
+                // and the vertical zoom, volume and link beside them
+                // (TopSizer), the button row across the bottom (ButtonSizer).
+                // A1: the waveform with its time ruler and marks (legacy AudioDisplay).
                 AudioDisplay {
                     id: audioDisplay
                     objectName: "audioDisplay"
@@ -1465,7 +1483,8 @@ ApplicationWindow {
                     orientation: Qt.Horizontal
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
-                    anchors { left: parent.left; right: audioSliders.left; bottom: audioButtons.top }
+                    // legacy DisplaySizer: wxBOTTOM 4 under the search bar
+                    anchors { left: parent.left; right: audioSliders.left; bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
                     Binding on position {
@@ -1531,6 +1550,7 @@ ApplicationWindow {
                         ToolButton {
                             objectName: "audioLink"
                             Layout.fillWidth: true
+                            Layout.bottomMargin: 2 // legacy wxBOTTOM 2
                             text: qsTr("Link")
                             checkable: true
                             checked: root.audio.linked
@@ -1542,135 +1562,145 @@ ApplicationWindow {
                         }
                     }
                 }
-                // A2: legacy AudioBox's AutoScroll, SpectrumMode and
-                // SpectrumNonLinear switches (each focuses the display, as
-                // legacy's handlers do), in the panel's title strip so the
-                // display keeps its height.
-                Row {
-                    id: audioSwitches
-                    objectName: "audioSwitches"
-                    visible: root.audio.loaded
-                    anchors { right: parent.right; bottom: parent.top; bottomMargin: 2 }
-                    spacing: 2
-                    ToolButton {
-                        objectName: "audioAutoScroll"
-                        topPadding: 0; bottomPadding: 0
-                        implicitHeight: 20
-                        text: qsTr("Auto-scroll")
-                        checkable: true
-                        checked: root.audio.autoScroll
-                        focusPolicy: Qt.NoFocus
-                        onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
-                        ToolTip.text: qsTr("Auto-scroll to the active line")
-                        ToolTip.visible: hovered
-                        Accessible.name: ToolTip.text
-                    }
-                    ToolButton {
-                        objectName: "audioSpectrumMode"
-                        topPadding: 0; bottomPadding: 0
-                        implicitHeight: 20
-                        text: qsTr("Spectrum")
-                        checkable: true
-                        checked: root.audio.spectrumOn
-                        focusPolicy: Qt.NoFocus
-                        onToggled: { root.audio.setSpectrumOn(checked); audioDisplay.forceActiveFocus() }
-                        ToolTip.text: qsTr("Spectrum mode")
-                        ToolTip.visible: hovered
-                        Accessible.name: ToolTip.text
-                    }
-                    ToolButton {
-                        objectName: "audioSpectrumNonLinear"
-                        topPadding: 0; bottomPadding: 0
-                        implicitHeight: 20
-                        text: qsTr("Speech")
-                        checkable: true
-                        checked: root.audio.spectrumNonLinear
-                        focusPolicy: Qt.NoFocus
-                        onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
-                        ToolTip.text: qsTr("Enhance speech frequencies in the spectrum")
-                        ToolTip.visible: hovered
-                        Accessible.name: ToolTip.text
-                    }
-                }
-                // A2: legacy AUDIO_SCROLL_RIGHT ("Scroll left", A) and
-                // AUDIO_SCROLL_LEFT ("Scroll right", F) in the audio box.
-                Keys.onPressed: event => {
-                    if (event.modifiers !== Qt.NoModifier || !root.audio.loaded)
-                        return
-                    if (event.key === Qt.Key_A)
-                        root.audio.scrollLeft()
-                    else if (event.key === Qt.Key_F)
-                        root.audio.scrollRight()
-                    else
-                        return
-                    event.accepted = true
-                }
                 Label {
                     objectName: "audioStatus"
                     anchors.centerIn: parent
                     visible: !root.audio.loaded
                     text: root.audio.status
                 }
-                // The box's buttons (legacy AudioBox's ButtonSizer, in its order).
+                // Legacy MappedButton's tooltip for an AUDIO_HOTKEY action:
+                // the bindings ("A or B" for the buttons with two,
+                // SetTwoHotkeys: the id and the id - 10) and the gesture.
+                function audioTip(text, symbol, alt) {
+                    let key = root.boundKeys(symbol, 4)
+                    if (alt) {
+                        const second = root.boundKeys(alt, 4)
+                        key = key + qsTr(" or ") + second
+                    }
+                    let tip = key.length ? text + " (" + key + ")" : text
+                    tip += "\n" + qsTr("Shortcut can be set using Shift + Click")
+                    if (alt)
+                        tip += "\n" + qsTr("Second shortcut can be set using Control + Click")
+                    return tip
+                }
+                // The box's buttons (legacy AudioBox's ButtonSizer, in its
+                // order, with its gaps: 2 between buttons, 8 after a group).
                 RowLayout {
                     id: audioButtons
                     objectName: "audioButtons"
                     visible: root.audio.loaded
                     height: visible ? implicitHeight : 0
-                    spacing: 2
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                    // Legacy MappedButton's small square buttons, their tooltips the names
+                    spacing: 0
+                    // legacy MainSizer: a 2-pixel spacer under the buttons
+                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
+                    // Legacy MappedButton's small square buttons; a Shift+click
+                    // maps the action's Audio hotkey instead (Hotkeys::OnMapHkey).
                     component AudioButton: ToolButton {
+                        property string symbol: ""
+                        property string altSymbol: ""
+                        property string tip: ""
+                        property int gap: 2
+                        signal run()
                         focusPolicy: Qt.NoFocus
                         padding: 2
                         implicitHeight: 22
                         implicitWidth: Math.max(22, implicitContentWidth + 8)
+                        Layout.rightMargin: gap
+                        Accessible.name: tip
+                        ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
                         ToolTip.visible: hovered
+                        onClicked: {
+                            if (symbol.length && root.hotkeyGesture(symbol, 4, true))
+                                return
+                            run()
+                        }
                     }
-                    // A3: AUDIO_PREVIOUS, AUDIO_NEXT
+                    // A3, A4: AUDIO_PREVIOUS, AUDIO_NEXT, AUDIO_PLAY,
+                    // AUDIO_PLAY_LINE (two hotkeys each), AUDIO_STOP
                     AudioButton {
-                        objectName: "audioPrevious"
-                        text: "\u25C0"
-                        Accessible.name: qsTr("Play the previous line")
-                        ToolTip.text: qsTr("Play the previous line")
-                        onClicked: root.audio.previousLine()
+                        objectName: "audioPrevious"; text: "◀"
+                        symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTr("Play the previous line")
+                        onRun: root.audio.previousLine()
                     }
                     AudioButton {
-                        objectName: "audioNext"
-                        text: "\u25B6"
-                        Accessible.name: qsTr("Play the next line")
-                        ToolTip.text: qsTr("Play the next line")
-                        onClicked: root.audio.nextLine()
+                        objectName: "audioNext"; text: "▶"
+                        symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTr("Play the next line")
+                        onRun: root.audio.nextLine()
+                    }
+                    AudioButton {
+                        objectName: "audioPlay"; text: qsTr("Play")
+                        symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTr("Play the current syllable / line")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY")
+                    }
+                    AudioButton {
+                        objectName: "audioPlayLine"; text: qsTr("Play line")
+                        symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTr("Play the current line")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
+                    }
+                    AudioButton {
+                        objectName: "audioStop"; text: qsTr("Stop"); gap: 8
+                        symbol: "AUDIO_STOP"; tip: qsTr("Stop playback")
+                        onRun: root.audio.runHotkey("AUDIO_STOP")
+                    }
+                    // A4: the mark plays (the ruler's mark, A3)
+                    AudioButton {
+                        objectName: "audioPlayBeforeMark"; text: qsTr("Before mark")
+                        symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTr("Play before the tag")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_BEFORE_MARK")
+                    }
+                    AudioButton {
+                        objectName: "audioPlayAfterMark"; text: qsTr("After mark"); gap: 8
+                        symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTr("Play after the tag")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_AFTER_MARK")
+                    }
+                    // A4: the 500 ms plays and to the end
+                    AudioButton {
+                        objectName: "audioPlay500Before"; text: qsTr("500 before")
+                        symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTr("Play 500ms before the start time")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_BEFORE")
+                    }
+                    AudioButton {
+                        objectName: "audioPlay500First"; text: qsTr("500 first")
+                        symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTr("Play 500 ms after the start time")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_FIRST")
+                    }
+                    AudioButton {
+                        objectName: "audioPlay500Last"; text: qsTr("500 last")
+                        symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTr("Play 500ms before the end time")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_LAST")
+                    }
+                    AudioButton {
+                        objectName: "audioPlay500After"; text: qsTr("500 after")
+                        symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTr("Play 500ms after the end time")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_AFTER")
+                    }
+                    AudioButton {
+                        objectName: "audioPlayToEnd"; text: qsTr("To end"); gap: 8
+                        symbol: "AUDIO_PLAY_TO_END"; tip: qsTr("Play to the end")
+                        onRun: root.audio.runHotkey("AUDIO_PLAY_TO_END")
                     }
                     // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT, AUDIO_GOTO
                     AudioButton {
-                        objectName: "audioLeadIn"
-                        text: qsTr("In")
-                        Accessible.name: qsTr("Add lead-in to the active line")
-                        ToolTip.text: qsTr("Add lead-in to the active line")
-                        onClicked: root.audio.leadIn()
+                        objectName: "audioLeadIn"; text: qsTr("In")
+                        symbol: "AUDIO_LEAD_IN"; tip: qsTr("Add lead-in to the active line")
+                        onRun: root.audio.leadIn()
                     }
                     AudioButton {
-                        objectName: "audioLeadOut"
-                        text: qsTr("Out")
-                        Accessible.name: qsTr("Add lead-out to the active line")
-                        ToolTip.text: qsTr("Add lead-out to the active line")
-                        onClicked: root.audio.leadOut()
+                        objectName: "audioLeadOut"; text: qsTr("Out"); gap: 8
+                        symbol: "AUDIO_LEAD_OUT"; tip: qsTr("Add lead-out to the active line")
+                        onRun: root.audio.leadOut()
                     }
                     AudioButton {
-                        objectName: "audioCommit"
-                        text: "\u2713"
-                        Accessible.name: qsTr("Apply changes")
-                        ToolTip.text: qsTr("Apply changes")
-                        onClicked: root.audio.commit()
+                        objectName: "audioCommit"; text: "✓"
+                        symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTr("Apply changes")
+                        onRun: root.audio.commit()
                     }
                     AudioButton {
-                        objectName: "audioGoto"
-                        text: qsTr("Go")
-                        Accessible.name: qsTr("Go to selection")
-                        ToolTip.text: qsTr("Go to selection")
-                        onClicked: root.audio.goToSelection()
+                        objectName: "audioGoto"; text: qsTr("Go"); gap: 8
+                        symbol: "AUDIO_GOTO"; tip: qsTr("Go to selection")
+                        onRun: root.audio.goToSelection()
                     }
+                    // (Legacy's karaoke switches come here: A5.)
                     // A3: AUDIO_AUTO_COMMIT and AUDIO_NEXT_LINE_ON_COMMIT
                     // (AudioBox::OnAutoCommit / OnNextLineCommit save the
                     // option; legacy's commit never reads the second).
@@ -1680,8 +1710,7 @@ ApplicationWindow {
                         text: qsTr("Auto")
                         checkable: true
                         checked: root.app.settings.value("audio.autoCommit")
-                        Accessible.name: qsTr("Automatically apply changes")
-                        ToolTip.text: qsTr("Automatically apply changes")
+                        tip: qsTr("Automatically apply changes")
                         onToggled: {
                             root.app.settings.setValue("audio.autoCommit", checked)
                             audioDisplay.forceActiveFocus()
@@ -1700,8 +1729,7 @@ ApplicationWindow {
                         text: qsTr("Next")
                         checkable: true
                         checked: root.app.settings.value("audio.nextLineOnCommit")
-                        Accessible.name: qsTr("Go to the next line after applying changes")
-                        ToolTip.text: qsTr("Go to the next line after applying changes")
+                        tip: qsTr("Go to the next line after applying changes")
                         onToggled: {
                             root.app.settings.setValue("audio.nextLineOnCommit", checked)
                             audioDisplay.forceActiveFocus()
@@ -1714,32 +1742,51 @@ ApplicationWindow {
                             }
                         }
                     }
+                    // A2: legacy AudioBox's AutoScroll, SpectrumMode and
+                    // SpectrumNonLinear switches (each focuses the display, as
+                    // legacy's handlers do).
+                    AudioButton {
+                        objectName: "audioAutoScroll"
+                        text: qsTr("Auto-scroll")
+                        checkable: true
+                        checked: root.audio.autoScroll
+                        tip: qsTr("Auto-scroll to the active line")
+                        onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
+                    }
+                    AudioButton {
+                        objectName: "audioSpectrumMode"
+                        text: qsTr("Spectrum")
+                        checkable: true
+                        checked: root.audio.spectrumOn
+                        tip: qsTr("Spectrum mode")
+                        onToggled: { root.audio.setSpectrumOn(checked); audioDisplay.forceActiveFocus() }
+                    }
+                    AudioButton {
+                        objectName: "audioSpectrumNonLinear"
+                        text: qsTr("Speech")
+                        checkable: true
+                        checked: root.audio.spectrumNonLinear
+                        tip: qsTr("Enhance speech frequencies in the spectrum")
+                        onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
+                    }
                     Item { Layout.fillWidth: true }
                 }
-                // A3: legacy AudioBox's accelerators (AUDIO_HOTKEY defaults in
-                // Hotkeys.cpp; each _ALT id is the same command), active while
-                // the display has the focus.
-                Repeater {
-                    model: [
-                        { id: "AUDIO_COMMIT", key: "Return", run: () => root.audio.commit() },
-                        { id: "AUDIO_COMMIT_ALT", key: "G", run: () => root.audio.commit() },
-                        { id: "AUDIO_PREVIOUS", key: "Left", run: () => root.audio.previousLine() },
-                        { id: "AUDIO_PREVIOUS_ALT", key: "Z", run: () => root.audio.previousLine() },
-                        { id: "AUDIO_NEXT", key: "Right", run: () => root.audio.nextLine() },
-                        { id: "AUDIO_NEXT_ALT", key: "X", run: () => root.audio.nextLine() },
-                        { id: "AUDIO_GOTO", key: "B", run: () => root.audio.goToSelection() },
-                        { id: "AUDIO_LEAD_IN", key: "C", run: () => root.audio.leadIn() },
-                        { id: "AUDIO_LEAD_OUT", key: "V", run: () => root.audio.leadOut() }
-                    ]
-                    delegate: Item {
-                        required property var modelData
-                        Shortcut {
-                            sequence: modelData.key
-                            context: Qt.WindowShortcut
-                            enabled: audioDisplay.activeFocus && root.audio.loaded
-                            onActivated: modelData.run()
-                        }
-                    }
+                // Legacy AudioBox's accelerator table (AudioBox::SetAccels:
+                // its window's bindings in the hotkey registry, O2), acting
+                // while the focus is in the box; the registry routes the key
+                // (HotkeysController::actionFor), so a remapped key acts and
+                // the old one no longer does.
+                Keys.onShortcutOverride: event => {
+                    event.accepted = root.audio.loaded && root.hotkeys.actionFor(4, event.key, event.modifiers) !== ""
+                }
+                Keys.onPressed: event => {
+                    if (!root.audio.loaded)
+                        return
+                    const action = root.hotkeys.actionFor(4, event.key, event.modifiers)
+                    if (action === "")
+                        return
+                    root.runAudioHotkey(action)
+                    event.accepted = true
                 }
                 Connections {
                     target: root.audio
@@ -4273,9 +4320,24 @@ ApplicationWindow {
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
         }
+        // SubsGrid::OnAccelerator hands audio ids to the audio box (when
+        // there is one; the key is the Grid's either way).
+        if (action.startsWith("AUDIO_"))
+            return root.audio.runHotkey(action)
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
+    }
+    // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
+    // Audio window go to theirs (AudioBox::SetAccels).
+    function runAudioHotkey(action) {
+        if (action.startsWith("AUDIO_"))
+            return root.audio.runHotkey(action)
+        if (action.startsWith("VIDEO_"))
+            return root.runVideoHotkey(action)
+        if (action.startsWith("EDITBOX_"))
+            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+        return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
     HotkeyMapping {
         id: hotkeyMapping

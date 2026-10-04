@@ -53,10 +53,6 @@ inline constexpr std::uint32_t kSpectrumInnerDefault = 0xFFF4F4F4;
 std::array<std::uint8_t, 256 * 3> legacySpectrumPalette(std::uint32_t background, std::uint32_t echo,
                                                         std::uint32_t inner);
 
-// Legacy PlaybackVolumeFromSlider: the volume slider's player volume, the
-// cubic curve up to 50 and a linear 100% - 150% ramp above.
-float playbackVolumeFromSlider(int position);
-
 // Legacy AudioSpectrum::CreateRange's output: with `peek` 0 one time per
 // line and the strongest bin of the band range as an intensity (0-100 of a
 // full-scale bin); otherwise the times where a run of lines reaching `peek`

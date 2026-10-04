@@ -62,6 +62,14 @@ public:
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
     bool playing() const { return m_playing; }
+    // A4: legacy RendererVideo::PlayLine (GLOBAL_PLAY_ACTUAL_LINE with
+    // Timebase::PlayEndBefore): from the frame at `startMs` (FrameAt) until a
+    // frame at or after the start of the frame before the one at `endMs` is
+    // shown, then paused (PlaybackReachedEnd, OnEndFile). Nothing when the
+    // start is not before that end or not before the video's duration (its
+    // last frame's time); the end is clamped to the duration, an end of 0
+    // plays on; a playing video is paused first.
+    bool playLine(int startMs, int endMs);
     // A1: legacy's Stopped state: Stop while playing, until the next Play
     // (legacy marks the paused video's frame in the audio box only when Paused).
     bool stopped() const { return m_stopped; }
@@ -136,6 +144,8 @@ private:
     bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;
     std::optional<std::int64_t> m_lastGeneralUs;
+    int m_playEndMs = 0; // A4: legacy m_PlayEndTime (0: none)
+    bool startPlayback(std::int64_t fromUs);
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
     bool m_hasAudio = false;

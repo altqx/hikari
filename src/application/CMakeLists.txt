@@ -5,6 +5,8 @@ add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_sess
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 # A3: the audio box's timing.
 target_sources(hikari_application PRIVATE audio_timing.cpp)
+# A4: the audio box's playback.
+target_sources(hikari_application PRIVATE audio_playback.cpp)
 target_include_directories(hikari_application PUBLIC include)
 # F1: find and replace.
 target_sources(hikari_application PRIVATE find_replace.cpp)

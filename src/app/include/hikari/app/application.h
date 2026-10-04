@@ -19,6 +19,7 @@
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
+#include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
@@ -706,6 +707,10 @@ private:
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir; // legacy Indices; empty: no index files
+    // A4: the box's player and the editor output it plays through (PortAudio,
+    // made at the first play; without playbackAudio an output with no device)
+    std::unique_ptr<application::AudioOutputPort> m_audioOutput;
+    std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
     void refreshAudio();
     void followVideoInAudio();
     void rememberRecentAudio(const QString &path);
