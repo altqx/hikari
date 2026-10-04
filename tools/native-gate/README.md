@@ -62,6 +62,23 @@ recorded as a pass.
   window (for example the bare KDDockWidgets shell of
   `hikari_ui_docking_qualification_tests`) can be driven from outside. This
   separates engine behaviour from the shell's.
+- `trace_drop.py`: gdb script (`gdb -x trace_drop.py --args $APP`) that logs
+  what KDDockWidgets' DragController finds under the cursor during a drag
+  (`qtTopLevelUnderCursor`, `dropAreaUnderCursor`); with `HIDE_DROPAREA=1`
+  and a `kill -INT` to the app it first hides the shell's file-drop
+  `DropArea` (objectName `dropArea`) through `qt_qFindChild_helper` and
+  `QQuickItem::setVisible`, without rebuilding anything.
+- `review.py EVIDENCE_DIR`: adds the screenshot reviews (items a script
+  cannot judge, such as 2x rendering) to `results.json` and writes
+  `summary.txt`.
 - `probe_*.py`: single questions asked during the gate (F6 after Float, F6
-  into a floating panel, closing the main window with a floating panel).
-- `sessions/enter.sh SESSION CMD...`: run a command inside a session.
+  into a floating panel, the third-level View menu, fullscreen, closing the
+  main window with a floating panel).
+- `sessions/enter.sh SESSION CMD...`: run a command inside a session;
+  `sessions/stop.sh SESSION` ends one. Sessions share the container, so
+  `app.sh` only touches the HikariSub of its own session.
+
+Harness lessons: sway needs one virtual keyboard that stays (each `wtype`
+run otherwise toggles the seat's keyboard and the client loses focus);
+mutter and KWin replace their libei devices when outputs change
+(`eiinject` follows the newest); PID 1 must reap (`docker run --init`).
