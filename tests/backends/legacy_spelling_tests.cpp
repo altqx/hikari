@@ -5,6 +5,7 @@
 // (SpellChecker::Check / CheckText at 20d647c4).
 
 #include "hikari/backends/legacy_spelling.h"
+#include "hikari/application/misspell_replacer.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/srt.h"
@@ -193,9 +194,46 @@ TEST(LegacyWordSegmentation, TagAwareMarks)
     EXPECT_EQ(marks.errors, (std::vector<int>{5, 10, 30, 33}));
     ASSERT_EQ(marks.misspells.size(), 2u);
     EXPECT_EQ(marks.misspells[0].word, u"Zażółć");
-    // Per-unit case functions: GetRightCase keeps a capital.
-    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", spelling.cases), u"Żółw");
-    EXPECT_TRUE(core::legacy::isAllUpperCase(u"ŻÓŁW", spelling.cases));
+    // Per-unit case functions, English interface (the "C" locale): only A-Z
+    // count as capitals and change, so GetRightCase lower-cases ASCII and
+    // leaves "ż"; another interface language maps every letter.
+    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", spelling.cases), u"żółw");
+    EXPECT_FALSE(core::legacy::isAllUpperCase(u"ŻÓŁW", spelling.cases));
+    const auto everyLetter = backends::legacySpellingText(true);
+    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", everyLetter.cases), u"Żółw");
+    EXPECT_TRUE(core::legacy::isAllUpperCase(u"ŻÓŁW", everyLetter.cases));
+}
+
+// legacyCaseMapping: towlower / towupper / iswupper as glibc's "C" locale
+// has them with the English interface (checked against glibc 2.39 and 2.44:
+// U+0141 is neither lowered nor upper there), every letter otherwise; the
+// misspell replacer's MoveCase and SelectLines' MakeLower use the same.
+TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
+{
+    const auto c = backends::legacyCaseMapping(false);
+    EXPECT_EQ(c.toLower(u'A'), u'a');
+    EXPECT_EQ(c.toUpper(u'z'), u'Z');
+    EXPECT_EQ(c.toLower(u'Ł'), u'Ł');
+    EXPECT_EQ(c.toUpper(u'ł'), u'ł');
+    EXPECT_EQ(c.toLower(u'À'), u'À');
+    EXPECT_FALSE(c.isUpper(u'Ł'));
+    EXPECT_TRUE(c.isUpper(u'Q'));
+    const auto e = backends::legacyCaseMapping(true);
+    EXPECT_EQ(e.toLower(u'Ł'), u'ł');
+    EXPECT_EQ(e.toUpper(u'ł'), u'Ł');
+    EXPECT_EQ(e.toLower(u'Σ'), u'σ');
+    EXPECT_TRUE(e.isUpper(u'Ł'));
+    // MoveCase: one capital in the found text capitalizes the replacement's
+    // first character; "Change to upper case" upper-cases it.
+    const auto replacer = [](const core::legacy::CaseMapping &m) {
+        return application::ReplacerCase{m.isUpper, m.toLower, m.toUpper};
+    };
+    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(c)), u"xy");
+    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(e)), u"Xy");
+    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(c)), u"żółW");
+    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(e)), u"ŻÓŁW");
+    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(c)), u"źdź");
+    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(e)), u"Źdź");
 }
 
 // F3: the legacy Spellchecker window's walk captured on the Linux build

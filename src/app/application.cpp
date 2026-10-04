@@ -540,7 +540,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
     // F3: spelling options, the Dictionary folder and the Grid's marks.
-    m_spellingText = backends::legacySpellingText();
+    // GetRightCase, IsAllUpperCase and Ignore All's comparison: the case
+    // functions of the interface language's C locale (legacyCaseMapping).
+    m_spellingText = backends::legacySpellingText(m_foldsEveryLetter);
     m_dictionaryDir = options.dictionaryDir;
     if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
         m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
@@ -2255,10 +2257,15 @@ void Application::saveSelectLinesSettings(const QVariantMap &settings)
 QString Application::selectLines(const QVariantMap &map, bool allTabs)
 {
     const auto settings = selectSettings(map, m_selectOptions);
-    // wxString::MakeLower, character by character.
-    const application::TextFold fold = [](std::u16string_view s) {
-        const QString lower = QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size())).toLower();
-        return std::u16string(reinterpret_cast<const char16_t *>(lower.utf16()), static_cast<std::size_t>(lower.size()));
+    // SelectLines: wxString::MakeLower, towlower one unit at a time, as the
+    // interface language's C locale has it (A-Z only in English, captured
+    // for Find and replace's wxString::Lower: F1-unicode-case).
+    const application::TextFold fold = [lower = backends::legacyCaseMapping(m_foldsEveryLetter).toLower](
+                                           std::u16string_view s) {
+        std::u16string out(s);
+        for (auto &c : out)
+            c = lower(c);
+        return out;
     };
     std::vector<application::EditSession *> sessions;
     if (allTabs) {
@@ -2311,11 +2318,13 @@ QString Application::selectStylesPattern(const QStringList &styles) const
 
 namespace {
 
-// iswupper, towlower and towupper per character (wxString MakeLower/MakeUpper).
-application::ReplacerCase replacerCase()
+// MisspellReplacer::MoveCase: iswupper, and towlower / towupper through
+// wxString MakeLower / MakeUpper and wxToupper, as the interface language's
+// C locale has them (backends::legacyCaseMapping: A-Z only in English).
+application::ReplacerCase replacerCase(bool everyLetter)
 {
-    return {[](char16_t c) { return QChar(c).isUpper(); }, [](char16_t c) { return QChar(c).toLower().unicode(); },
-            [](char16_t c) { return QChar(c).toUpper().unicode(); }};
+    const auto cases = backends::legacyCaseMapping(everyLetter);
+    return {cases.isUpper, cases.toLower, cases.toUpper};
 }
 
 QString fromUtf16(const std::u16string &s)
@@ -2605,7 +2614,7 @@ void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
         if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id)) {
             logRegexErrors(*m_log, misspellRuleList(), true); // ReplaceOnTab compiles per tab
             application::ReplacerMatchErrors matchErrors;
-            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(),
+            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(m_foldsEveryLetter),
                                              &matchErrors);
             logMatchErrors(*m_log, matchErrors);
         }
@@ -2632,7 +2641,7 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
         auto *session = m_files->session(document);
         if (!session)
             continue;
-        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase());
+        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase(m_foldsEveryLetter));
         if (!result)
             continue;
         for (const auto &problem : result->problems) {
@@ -3095,17 +3104,14 @@ void Application::createFindReplace()
     // wxString::Lower, one unit at a time, is towlower: in the "C" locale
     // legacy keeps with an English interface it changes A-Z only (captured on
     // Linux: a plain "łódź" never finds "ŁÓDŹ"); with another language
-    // wxLocale set the process locale and every letter folds. Without a
-    // folding function FindReplace folds ASCII.
-    application::CaseFold fold;
-    if (m_foldsEveryLetter)
-        fold = [](std::u16string_view s) {
+    // wxLocale set the process locale and every letter folds.
+    m_find = std::make_unique<application::FindReplace>(
+        *m_findHost, [lower = backends::legacyCaseMapping(m_foldsEveryLetter).toLower](std::u16string_view s) {
             std::u16string out(s);
             for (auto &c : out)
-                c = QChar(c).toLower().unicode();
+                c = lower(c);
             return out;
-        };
-    m_find = std::make_unique<application::FindReplace>(*m_findHost, std::move(fold));
+        });
 }
 
 QVariantMap Application::openFindReplace(int tab)
@@ -3248,13 +3254,10 @@ QString Application::findReplaceActivated(const QString &find)
         const QString selected = shown.mid(from, to - from);
         m_find->selectionAdopted();
         // OnActivate compares with wxString::Lower (see createFindReplace).
-        const auto lower = [this](const QString &t) {
-            if (m_foldsEveryLetter)
-                return t.toLower();
+        const auto lower = [map = backends::legacyCaseMapping(m_foldsEveryLetter).toLower](const QString &t) {
             QString out = t;
             for (QChar &c : out)
-                if (c >= QLatin1Char('A') && c <= QLatin1Char('Z'))
-                    c = QChar(c.unicode() + 32);
+                c = QChar(map(c.unicode()));
             return out;
         };
         return lower(selected) != lower(find) ? selected : find;
