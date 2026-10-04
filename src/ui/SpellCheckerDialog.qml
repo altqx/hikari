@@ -119,7 +119,7 @@ Dialog {
                     highlighted: ListView.isCurrentItem
                     // A click brings the window back, as any click on
                     // legacy's window does (OnActive); see actionPressed().
-                    focusPolicy: Qt.StrongFocus
+                    focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
                     onClicked: {
                         suggestionList.currentIndex = index
                         replacement.text = modelData

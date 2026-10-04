@@ -1078,6 +1078,30 @@ TEST_F(Files, ReplaceInFilesWritesOnlyChangedTargetsAfterABackup)
               "[Events]\r\nComment: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,a dog comment\r\n");
 }
 
+// The file walks run the expression through the same wxRegEx calls
+// (FindInSubsLine's Matches, ReplaceInSubsLine's Matches and Replace): a
+// PCRE2 match error is logged and the Line counts as not matching, so the
+// file gets no result and is not written.
+TEST_F(Files, RegexMatchErrorsAreLoggedAsNoMatch)
+{
+    host.files[u8"/subs/long.ass"] =
+        u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," + std::string(40, 'a') + "b\n");
+    host.listed = {u8"/subs/long.ass"};
+    window.find = u8"(a+)+$";
+    window.regex = true;
+    fr.findInFiles(window);
+    EXPECT_TRUE(fr.results().empty());
+    ASSERT_EQ(host.logs.size(), 1u);
+    EXPECT_TRUE(host.logs[0].starts_with("Failed to find match for regular expression: ")) << host.logs[0];
+    host.logs.clear();
+    window.replace = u8"x";
+    host.answers = {FindAnswer::Yes};
+    fr.replaceInFiles(window);
+    EXPECT_TRUE(host.writes.empty());
+    ASSERT_EQ(host.logs.size(), 1u);
+    EXPECT_TRUE(host.logs[0].starts_with("Failed to find match for regular expression: ")) << host.logs[0];
+}
+
 TEST_F(Files, OtherFieldsSearchOnlyAssFiles)
 {
     window.find = u8"Default";

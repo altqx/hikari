@@ -3277,6 +3277,9 @@ ApplicationWindow {
     MisspellReplacerDialog {
         id: misspellDialog
         app: root.app
+        // The main window's client origin is below its menu bar (legacy's
+        // native menu bar was outside the client area).
+        clientTop: root.menuBar ? root.menuBar.height : 0
     }
     // F3: the Spellchecker window, legacy's spelling message boxes and the
     // editor's "Fix suggestions" list.

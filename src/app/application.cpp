@@ -12,6 +12,7 @@
 #include "hikari/application/select_lines.h"
 #include "hikari/application/resample.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/legacy_dir.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "spelling_text.h"
@@ -360,6 +361,11 @@ public:
 
 private:
     static QString tr(const char *text) { return Application::tr(text); }
+    // wxDir::Traverse through application::legacy_dir (R5-per-platform):
+    // the subfolders (listed with no pattern) walked first, then this
+    // folder's own files matching `filter`; on Windows FindFirstFileW with
+    // wx's PathMatchSpec check and the entries' own hidden/system
+    // attributes, on Linux readdir and wxMatchWild.
     void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, QStringList &path,
                  std::vector<std::u8string> &out)
     {
@@ -367,35 +373,18 @@ private:
         if (path.contains(canonical))
             return; // a cycle
         path.push_back(canonical);
-        QDir::Filters common = QDir::NoDotAndDotDot;
-        if (hidden)
-            common |= QDir::Hidden;
-#ifndef _WIN32
-        common |= QDir::CaseSensitive; // wxMatchWild
-#endif
-        // wxDir on Windows hides system entries as hidden ones.
-        const auto shown = [hidden](const QFileInfo &entry) {
-#ifdef _WIN32
-            if (!hidden) {
-                const DWORD attributes =
-                    ::GetFileAttributesW(reinterpret_cast<const wchar_t *>(entry.absoluteFilePath().utf16()));
-                return attributes == INVALID_FILE_ATTRIBUTES || !(attributes & FILE_ATTRIBUTE_SYSTEM);
-            }
-#endif
-            Q_UNUSED(entry);
-            Q_UNUSED(hidden);
-            return true;
-        };
+        const std::filesystem::path folder = QFileInfo(dir.absolutePath()).filesystemAbsoluteFilePath();
+        const int shown = hidden ? application::legacy_dir::Hidden : 0;
         if (subfolders)
-            for (const QFileInfo &sub : dir.entryInfoList(QDir::Dirs | common, QDir::Unsorted))
-                if (shown(sub))
-                    collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, path, out);
-        // wxDir takes every entry that is not a folder (QDir::System: broken
-        // links, fifos and the like too).
-        const QStringList names = filter.isEmpty() ? QStringList() : QStringList{filter};
-        for (const QFileInfo &file : dir.entryInfoList(names, QDir::Files | QDir::System | common, QDir::Unsorted))
-            if (!file.isDir() && shown(file))
-                out.push_back(toU8(QDir::toNativeSeparators(file.absoluteFilePath())));
+            for (const auto &sub : application::legacy_dir::entries(folder, {}, application::legacy_dir::Dirs | shown)
+                                       .value_or(std::vector<std::filesystem::path>{}))
+                collect(QDir(QFileInfo(sub).absoluteFilePath()), filter, subfolders, hidden, path, out);
+        // wxDir takes every entry that is not a folder (broken links, fifos
+        // and the like too).
+        for (const auto &file : application::legacy_dir::entries(folder, filter.toStdU16String(),
+                                                                 application::legacy_dir::Files | shown)
+                                    .value_or(std::vector<std::filesystem::path>{}))
+            out.push_back(toU8(QDir::toNativeSeparators(QFileInfo(file).absoluteFilePath())));
         path.pop_back();
     }
 
@@ -2326,6 +2315,20 @@ void logRegexErrors(ui::LogController &log, const std::vector<application::Repla
                     .arg(fromUtf16(error.expression), fromUtf16(error.message)));
 }
 
+// wx_regexec's wxLogError for each Matches or Replace that failed with a
+// PCRE2 error (the match or heap limit), counted as no match.
+QString regexMatchError(const std::u16string &error)
+{
+    return QCoreApplication::translate("hikari::app::Application", "Failed to find match for regular expression: %1")
+        .arg(fromUtf16(error));
+}
+
+void logMatchErrors(ui::LogController &log, const application::ReplacerMatchErrors &errors)
+{
+    for (const auto &error : errors)
+        log.log(regexMatchError(error));
+}
+
 application::ReplacerScope replacerScope(const QVariantMap &m)
 {
     using L = application::ReplacerScope::Lines;
@@ -2545,7 +2548,9 @@ QVariantList Application::findMisspells(const QVariantMap &scope, bool allTabs)
         if (!session || (m_workspace.reference() && *m_workspace.reference() == id))
             continue;
         logRegexErrors(*m_log, misspellRuleList(), true); // SeekOnTab compiles per tab
-        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope));
+        application::ReplacerMatchErrors matchErrors;
+        const auto finds = application::findErrors(*session, misspellRuleList(), replacerScope(scope), &matchErrors);
+        logMatchErrors(*m_log, matchErrors);
         if (finds.empty())
             continue;
         // The header is the tab's SubsPath ("" for an Untitled Document).
@@ -2576,7 +2581,10 @@ void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
     for (const auto id : documents)
         if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id)) {
             logRegexErrors(*m_log, misspellRuleList(), true); // ReplaceOnTab compiles per tab
-            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase());
+            application::ReplacerMatchErrors matchErrors;
+            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(),
+                                             &matchErrors);
+            logMatchErrors(*m_log, matchErrors);
         }
     m_editor->reloadFromSession();
     refreshViews();
@@ -2608,6 +2616,8 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
             using K = application::ReplacerProblem::Kind;
             if (problem.kind == K::Edited)
                 m_log->log(tr("Line %1 cannot be replaced,\ncause it was edited.").arg(problem.lineNumber));
+            else if (problem.kind == K::MatchError)
+                m_log->log(regexMatchError(problem.found));
             else
                 m_log->log(tr("Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
                                .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
@@ -3876,27 +3886,21 @@ QVariantMap Application::openSettingsDialog()
             const QString x = qs(a), y = qs(b);
             return x.size() == y.size() && x.compare(y, Qt::CaseInsensitive) == 0;
         };
-    // SpellChecker::AvailableDics: the i-th .dic with the i-th .aff of the
-    // Dictionary folder, in the folder's order (NTFS lists names sorted);
+    // SpellChecker::AvailableDics through F3's availableDictionaries: the
+    // i-th .dic with the i-th .aff of each Dictionary folder, in the order
+    // wxDir lists it on each platform (R5-per-platform, legacy_dir.h:
+    // FindFirstFileW on Windows, readdir on Linux, no sorting); the pairing
+    // stops at the shorter list (R3-hang-crash-loss).
     // R6-dictionary-location: the settings folder's, then the program
     // folder's, a symbol listed once.
-    for (const QString &folder : std::as_const(m_dictionaryDirs)) {
-        const QDir dir(folder);
-#ifdef _WIN32
-        const QDir::Filters filters = QDir::Files;
-#else
-        const QDir::Filters filters = QDir::Files | QDir::CaseSensitive; // wxDir's wildcards
-#endif
-        const QStringList dic = dir.entryList({QStringLiteral("*.dic")}, filters, QDir::Name | QDir::IgnoreCase);
-        const QStringList aff = dir.entryList({QStringLiteral("*.aff")}, filters, QDir::Name | QDir::IgnoreCase);
-        // R3-hang-crash-loss: legacy reads aff[i] past the list when there are
-        // fewer .aff than .dic files; the pairing stops there instead.
-        for (qsizetype i = 0; i < dic.size() && i < aff.size(); ++i) {
-            const QString symbol = dic[i].section(u'.', 0, -2);
-            if (symbol == aff[i].section(u'.', 0, -2) && std::ranges::find(lists.dictionarySymbols, symbol.toStdString()) == lists.dictionarySymbols.end()) {
-                lists.dictionarySymbols.push_back(symbol.toStdString());
-                lists.dictionaryNames.push_back(languageName(symbol).toStdString());
-            }
+    {
+        std::vector<std::filesystem::path> folders;
+        for (const QString &folder : std::as_const(m_dictionaryDirs))
+            folders.emplace_back(folder.toStdU16String());
+        for (const auto &symbol : application::availableDictionaries(folders)) {
+            const QString name = qstr(symbol);
+            lists.dictionarySymbols.push_back(name.toStdString());
+            lists.dictionaryNames.push_back(languageName(name).toStdString());
         }
     }
     {

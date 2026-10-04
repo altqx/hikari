@@ -20,6 +20,9 @@ Dialog {
     property var rules: []
     property int selectedRule: -1
     property bool placed: false
+    // Where the main window's client area starts in the window (below the
+    // menu bar), for the results' legacy position on Windows.
+    property real clientTop: 0
 
     // Legacy creates the window once, CenterOnParent, and shows or hides it;
     // where the user moves it, it stays.
@@ -73,7 +76,10 @@ Dialog {
     }
 
     // Legacy HikariDialog answers WM_NCHITTEST with HTCAPTION on its title
-    // area, so both windows move when their title is dragged.
+    // area, so both windows move when their title is dragged. The system kept
+    // a native caption reachable; here the drag stops where the title would
+    // leave the window: its top stays inside, and at least `kept` pixels of
+    // the window stay on screen sideways.
     component TitleBar: Label {
         id: titleBar
         required property var popup
@@ -90,10 +96,19 @@ Dialog {
                 pressed = mapToItem(null, mouse.x, mouse.y)
                 origin = Qt.point(titleBar.popup.x, titleBar.popup.y)
             }
+            readonly property real kept: 48
             onPositionChanged: mouse => {
                 const p = mapToItem(null, mouse.x, mouse.y)
-                titleBar.popup.x = origin.x + p.x - pressed.x
-                titleBar.popup.y = origin.y + p.y - pressed.y
+                const popup = titleBar.popup
+                let x = origin.x + p.x - pressed.x
+                let y = origin.y + p.y - pressed.y
+                const area = popup.parent
+                if (area) {
+                    x = Math.max(kept - popup.width, Math.min(x, area.width - kept))
+                    y = Math.max(0, Math.min(y, area.height - titleBar.height))
+                }
+                popup.x = x
+                popup.y = y
             }
         }
     }
@@ -264,10 +279,21 @@ Dialog {
         modal: false
         closePolicy: Popup.CloseOnEscape
         header: TitleBar { objectName: "misspellResultsTitle"; popup: results }
-        // Legacy creates FindResultDialog once at wxDefaultPosition, which for
-        // a popup window is the top-left corner of the screen, away from the
-        // centred Multireplacer's rules list and buttons; it keeps the place
-        // the user moves it to.
+        // Legacy creates FindResultDialog once, at wxDefaultPosition, and it
+        // keeps the place the user moves it to (R5-per-platform):
+        //  - Windows: HikariDialog sets wxTOPLEVEL_EX_DIALOG, so wx builds a
+        //    DLGTEMPLATE at x 34, y 22 dialog units without DS_ABSALIGN and
+        //    CreateDialog leaves it there (msw/toplevel.cpp): 34x22 DLUs from
+        //    the main window's client origin, below its menu bar. With the
+        //    template's system font (8x16 dialog base units) that is 68x44
+        //    pixels. In a window as small as 1280x800 the results then reach
+        //    the Multireplacer's rules list, as legacy's did; they are moved
+        //    aside by their title.
+        //  - Linux: wxGTK gives the window manager no position, so its
+        //    placement policy chose. One window cannot ask a window manager; the results open at the
+        //    window's top-left corner, clear of the centred Multireplacer's
+        //    rules list and buttons (near-legacy, named in the F4 coverage
+        //    row).
         property bool placed: false
         property var rows: []
         property var checks: []
@@ -280,8 +306,13 @@ Dialog {
             folded = list.map(() => false)
             canReplace = true
             if (!placed) {
-                x = 0
-                y = 0
+                if (Qt.platform.os === "windows") {
+                    x = 68
+                    y = dialog.clientTop + 44
+                } else {
+                    x = 0
+                    y = 0
+                }
                 placed = true
             }
             if (!visible)
