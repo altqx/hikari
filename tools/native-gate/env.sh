@@ -2,8 +2,8 @@
 # HikariSub build under test, and accessibility always on for Qt.
 set -u
 : "${HIKARI_TREE:=/home/altq/Work/hikari-qt}"
-: "${GATE_DIR:=/home/altq/Work/hikari-wt/D1-gate/tools/native-gate}"
-: "${EVIDENCE:=/home/altq/Work/hikari-wt/D1-gate/out/native-gate-evidence}"
+: "${GATE_DIR:=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+: "${EVIDENCE:=$(cd "$GATE_DIR/../.." && pwd)/out/native-gate-evidence}"
 BUILD="$HIKARI_TREE/out/build/ubuntu-x64-release"
 APP="$BUILD/src/app/hikarisub"
 UI_TESTS="$BUILD/tests/ui"

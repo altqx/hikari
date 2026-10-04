@@ -300,7 +300,18 @@ class X11(Backend):
         return (fr["x"], fr["y"], fr["w"], fr["h"], "screen0") if fr else None
 
 
-BACKENDS = {"sway": Sway, "kwin": KWin, "mutter": Mutter, "x11": X11}
+class SwayActivate(Sway):
+    """sway with focus_on_window_activation focus: sway's default policy
+    ("urgent") marks a window that asks for activation (xdg_activation_v1,
+    with a token from the focused surface and its input serial) urgent
+    instead of focusing it, so cross-window F6 needs this setting there.
+    Evidence goes to its own directory (sway-activate)."""
+
+    def __init__(self):
+        sh(["swaymsg", "focus_on_window_activation", "focus"])
+
+
+BACKENDS = {"sway": Sway, "sway-activate": SwayActivate, "kwin": KWin, "mutter": Mutter, "x11": X11}
 B = BACKENDS[sys.argv[1]]()
 
 
@@ -336,9 +347,24 @@ def episode():
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
 
 
+def open_view():
+    """Alt+V opens the View menu. The menu bar has two Alt+V mnemonics
+    (&Video and &View, as legacy); Qt cycles between ambiguous mnemonics, so
+    press again until the View menu (its "Move panel…" item) shows."""
+    for _ in range(3):
+        B.keys("alt+v", 0.4)
+        dump = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
+        if any("'Move panel…'" in l and "showing" in l for l in dump.splitlines()):
+            return True
+        B.keys("escape", 0.3)
+    log("open_view: the View menu did not open")
+    return False
+
+
 def panel_menu(panel, item):
     """View > Panels > PANEL > ITEM (Show, Hide, Float, Dock) from the keyboard."""
-    seq = ["alt+v", 0.3, "down", "right", 0.3] + ["down"] * PANELS.index(panel) + ["right", 0.3]
+    open_view()
+    seq = ["down", "right", 0.3] + ["down"] * PANELS.index(panel) + ["right", 0.3]
     seq += ["down"] * ["Show", "Hide", "Float", "Dock"].index(item) + ["return"]
     B.keys(*seq)
     time.sleep(1.2)
@@ -354,7 +380,8 @@ def float_panel(name, tag):
     log(f"{tag}: View > Panels > {name} > Float did not float it; using View > Move panel…")
     B.keys("escape", "escape", "escape", "escape")
     focus_main_compositor()
-    B.keys("alt+v", 0.3, "down", "down", "return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
+    open_view()
+    B.keys("down", "down", "return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
            *(["down"] * 5), "tab", "space", 1.5)
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if "Move panel" in frames(st):
@@ -367,7 +394,8 @@ def close_window(title):
     if B.name == "sway":
         B.msg(f'[title="{rx}"] kill')
     elif B.name == "x11":
-        w = sh(f"xdotool search --name '{rx}'").split()
+        # Visible windows only: Qt keeps hidden windows titled HikariSub too.
+        w = sh(f"xdotool search --onlyvisible --name '{rx}'").split()
         for wid in w:
             sh(["xdotool", "windowclose", wid]) if False else sh(["xdotool", "windowactivate", "--sync", wid, "key", "alt+F4"])
     elif B.name == "kwin":
@@ -422,9 +450,10 @@ def f6_walk(n=5, key="f6"):
 def panel_of(path):
     if not path:
         return None
-    for name in ["Video", "Audio", "Line editor", "Editing:", "No document open", "Reference", "Timing", "Search"]:
+    for name in ["Video", "Audio", "Line editor", "Grid", "Editing:", "No document open", "Reference", "Timing",
+                 "Search"]:
         if f"panel:'{name}" in path or f"panel:\"{name}" in path:
-            return "Grid" if name in ("Editing:", "No document open") else name
+            return "Grid" if name in ("Grid", "Editing:", "No document open") else name
     return None
 
 
@@ -491,7 +520,8 @@ def step_keyboard_float_dock():
         log("Dock at the 4th position did not dock; trying the 3rd (disabled items skipped)")
         B.keys("escape", "escape", "escape")
         focus_main()
-        B.keys("alt+v", 0.3, "down", "right", 0.3, "down", "down", "right", 0.3, "down", "down", "return")
+        open_view()
+        B.keys("down", "right", 0.3, "down", "down", "right", 0.3, "down", "down", "return")
         st = wait_for(lambda s: "Line editor" not in frames(s))
     ev2, st = B.snap("kbd-2-docked")
     docked = "Line editor" not in frames(st) and panel_frame(st, "Line editor") == "HikariSub"
@@ -563,7 +593,8 @@ def combo_texts():
 
 def step_move_panel():
     fresh()
-    B.keys("alt+v", 0.3, "down", "down", "return", 1.2)
+    open_view()
+    B.keys("down", "down", "return", 1.2)
     st = wait_for(lambda s: "Move panel" in frames(s))
     combos_open = combo_texts()
     ev0, st = B.snap("move-panel-0-open", extra="# combo boxes\n" + combos_open)
@@ -721,7 +752,8 @@ def step_video():
     if "Video" in frames(st):
         B.keys("escape", "escape", "escape", "escape")
         focus_main_compositor()
-        B.keys("alt+v", 0.3, "down", "right", 0.3, "right", 0.3, "down", "down", "return")
+        open_view()
+        B.keys("down", "right", 0.3, "right", 0.3, "down", "down", "return")
         st = wait_for(lambda s: "Video" not in frames(s), timeout=4)
     time.sleep(2)
     ev4, l4 = state("4-redocked")
@@ -821,7 +853,12 @@ def step_menu_from_text():
 def step_test_executables():
     ui = os.environ["UI_TESTS"]
     runs = [("hikari_ui_shell_tests", ["f6AndShortcutsReachAFloatingPanel", "panelsFloatDockHideAndKeepTheirState",
-                                       "placementWindowMovesTabsAndResizes"]),
+                                       "placementWindowMovesTabsAndResizes",
+                                       "floatF6AndShowActivateTheFloatingPanelsWindow",
+                                       "placementWindowShowsItsDefaultsAndKeyboardChanges",
+                                       "fileDropAreaLeavesPanelDragsToTheDockingEngine",
+                                       "dockingControlsAndTheGridAreAccessible",
+                                       "floatingPanelsOffEveryScreenComeBack"]),
             ("hikari_ui_docking_qualification_tests", []),
             ("hikari_ui_workspace_layout_tests", [])]
     out = []
@@ -837,7 +874,9 @@ def step_test_executables():
     open(os.path.join(EVID, "test-executables.txt"), "w").write("\n".join(out))
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", "\n".join(out)))
     skips = re.findall(r"SKIP\s*:.*", "\n".join(out))
-    verdict("test-executables", "observed" if ok and not skips else "failed",
+    # Expected on Wayland: the compositor places windows, so the shell does not move them.
+    unexpected = [k for k in skips if "the compositor places windows" not in k]
+    verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"{summary}; skips: {skips}", ["test-executables.txt"])
 
 
@@ -855,7 +894,8 @@ def step_orca():
     time.sleep(8)
     focus_main_compositor()
     f6_walk(4)
-    B.keys("alt+v", 0.6, "down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6,
+    open_view()
+    B.keys("down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6, "right", 0.6, "down", 0.6, "down", 0.6,
            "return", 2.0)
     f6_walk(3)
     time.sleep(2)
@@ -938,7 +978,12 @@ def step_outputs():
             sh(["xdotool", "windowmove", w[0], "2000", "300"])
         time.sleep(1)
         B.snap("outputs-0-x11-right-monitor", extra=sh("xrandr --listmonitors"))
-        sh("xrandr --delmonitor right")
+        # The right monitor goes away: without its RandR monitor Xvfb's own
+        # output monitor (the whole 3200 px framebuffer) would still cover
+        # x 1600..3200, so the output shrinks to the left monitor's size.
+        sh("xrandr --delmonitor right; xrandr --delmonitor left")
+        sh("xrandr --newmode 1600x1000 0 1600 0 0 1600 1000 0 0 1000; xrandr --addmode screen 1600x1000")
+        sh("xrandr --output screen --mode 1600x1000 --fb 1600x1000")
         time.sleep(2)
     ev1, st = B.snap("outputs-1-after-removal")
     fr = frames(st)
@@ -968,10 +1013,68 @@ def step_outputs():
             f"(active windows {[f['id'] for f in st['frames'] if f['active']]})", ev2)
 
 
+def atspi_find(role, name):
+    return [l for l in sh(["python3", f"{GATE}/atspi_tool.py", "find", role, name]).splitlines() if l.strip()]
+
+
+def step_a11y():
+    """What a screen reader finds of the docking controls and the Grid:
+    named title-bar buttons, named tabs with their own Float and Close, the
+    Grid's table inside the panel named Grid; the buttons pressed through
+    AT-SPI float and dock a panel."""
+    path = episode()
+    fresh(path)
+    dismiss_notices()
+    tree = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
+    open(os.path.join(EVID, "a11y-tree.txt"), "w").write(tree)
+    table = atspi_find("table", "Subtitle lines")
+    grid_panel = atspi_find("panel", "Grid")
+    in_grid = bool(table) and "panel:'Grid'" in table[0]
+    verdict("grid-accessible", "observed" if in_grid and grid_panel else "failed",
+            f"table 'Subtitle lines': {table[:1]}; panel 'Grid': {grid_panel[:1]}", ["a11y-tree.txt"])
+    names = ["Float Audio", "Close Audio", "Float Video", "Close Video", "Float Line editor", "Close Line editor",
+             "Float Grid", "Close Grid"]
+    found = {n: bool(atspi_find("button", n)) for n in names}
+    press = [l for n in ("Float Audio",) for l in atspi_find("button", n)]
+    out = sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Float Audio"])
+    st = wait_for(lambda s: "Audio" in frames(s))
+    floated = "Audio" in frames(st)
+    ev0, st = B.snap("a11y-0-float-audio-by-atspi")
+    dock_btn = atspi_find("button", "Dock Audio")
+    sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Dock Audio"])
+    st = wait_for(lambda s: "Audio" not in frames(s))
+    docked = "Audio" not in frames(st)
+    verdict("title-bar-buttons-accessible",
+            "observed" if all(found.values()) and press and "Press" in press[0] and floated and dock_btn and docked
+            else "failed",
+            f"named buttons {found}; {press[:1]}; pressed 'Float Audio' -> own window={floated} ({out.strip()!r}); "
+            f"then 'Dock Audio' {dock_btn[:1]} -> docked={docked}", ["a11y-tree.txt"] + ev0)
+    # Timing opens as a tab beside the Line editor.
+    focus_main()
+    panel_menu("Timing", "Show")
+    time.sleep(1)
+    tabs = {n: atspi_find("page tab", n) for n in ("Line editor", "Timing")}
+    tab_buttons = {n: bool(atspi_find("button", n)) for n in ("Float Timing", "Close Timing", "Float Line editor",
+                                                                "Close Line editor")}
+    ev1, st = B.snap("a11y-1-tabs")
+    selected = [n for n, hits in tabs.items() if hits and ("selected" in hits[0] or "checked" in hits[0])]
+    sh(["python3", f"{GATE}/atspi_tool.py", "do", "button", "Float Timing"])
+    st = wait_for(lambda s: "Timing" in frames(s))
+    tab_floated = "Timing" in frames(st)
+    ev2, st = B.snap("a11y-2-float-timing-tab")
+    open(os.path.join(EVID, "a11y-tabs.txt"), "w").write(
+        json.dumps({"tabs": tabs, "buttons": tab_buttons, "selected": selected}, indent=1))
+    verdict("tabs-accessible",
+            "observed" if all(tabs.values()) and all(tab_buttons.values()) and tab_floated else "failed",
+            f"page tabs { {n: bool(h) for n, h in tabs.items()} }: {[h[:1] for h in tabs.values()]}; "
+            f"tab buttons {tab_buttons}; pressed 'Float Timing' -> own window={tab_floated}",
+            ev1 + ev2 + ["a11y-tabs.txt"])
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "menutext": step_menu_from_text, "tests": step_test_executables, "orca": step_orca,
-         "outputs": step_outputs}
+         "outputs": step_outputs, "a11y": step_a11y}
 
 if __name__ == "__main__":
     wanted = sys.argv[2:] or list(STEPS)

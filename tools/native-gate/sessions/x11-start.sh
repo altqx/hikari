@@ -3,7 +3,7 @@
 # scenario) with openbox as the window manager and a private session bus.
 export GATE_SESSION=x11
 "$(dirname "$0")/stop.sh" x11
-. /home/altq/Work/hikari-wt/D1-gate/tools/native-gate/env.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
 dbus-daemon --session --address=unix:path=$XDG_RUNTIME_DIR/bus --fork
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 Xvfb :7 -screen 0 3200x1000x24 +extension RANDR -nolisten tcp > /tmp/xvfb.log 2>&1 &

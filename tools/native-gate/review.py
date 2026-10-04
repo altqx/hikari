@@ -17,13 +17,18 @@ REVIEWS = {
         "main window fullscreen (sway): the floating Line editor stays visible above it", ["fullscreen-0-main-fullscreen.png"]),
     ("kwin", "fullscreen-visible"): ("observed",
         "main window fullscreen (KWin): the floating Line editor stays visible above it", ["fullscreen-0-main-fullscreen.png"]),
+    ("sway-activate", "fullscreen-visible"): ("observed",
+        "main window fullscreen (sway, focus_on_window_activation focus): the floating Line editor stays visible above it",
+        ["fullscreen-0-main-fullscreen.png"]),
+    ("sway-activate", "mixed-dpi-rendering"): ("observed",
+        "floating Line editor on HEADLESS-2 (scale 2) renders at 2x while the main window stays on HEADLESS-1 at scale 1",
+        ["outputs-0-scale2-output.png", "outputs-0-on-scale2.png"]),
     ("x11", "fullscreen-visible"): ("observed",
         "main window fullscreen (openbox, _NET_WM_STATE_FULLSCREEN): the floating Line editor stays visible above it",
         ["fullscreen-0-main-fullscreen.png"]),
     ("sway", "mixed-dpi-rendering"): ("observed",
         "floating Line editor on HEADLESS-2 (scale 2) renders at 2x (crisp text and title-bar icons) while the main window "
-        "stays on HEADLESS-1 at scale 1; typing into it failed only because the floating window had no focused item "
-        "(see focus-after-float)", ["outputs-0-scale2-output.png", "outputs-0-on-scale2.png"]),
+        "stays on HEADLESS-1 at scale 1", ["outputs-0-scale2-output.png", "outputs-0-on-scale2.png"]),
     ("kwin", "mixed-dpi-rendering"): ("observed",
         "floating Line editor on Virtual-1 (scale 2) renders at 2x next to the main window on Virtual-0 (scale 1); "
         "typing reached it", ["outputs-0-on-scale2.png"]),
@@ -41,8 +46,8 @@ ITEMS = ["default-arrangement", "keyboard-float", "keyboard-float-move-panel", "
          "pointer-dblclick-float-redock", "pointer-drag-dock", "video-float-redock", "layout-persistence",
          "fullscreen-coexistence", "fullscreen-visible", "mixed-dpi", "mixed-dpi-rendering", "monitor-removal",
          "monitor-removal-reviewed", "monitor-removal-show-focus", "orca", "menu-mnemonic-from-text-field",
-         "test-executables"]
-SESSIONS = ["sway", "kwin", "mutter", "x11"]
+         "test-executables", "grid-accessible", "title-bar-buttons-accessible", "tabs-accessible"]
+SESSIONS = ["sway", "sway-activate", "kwin", "mutter", "x11"]
 
 for (session, item), (status, detail, ev) in REVIEWS.items():
     path = os.path.join(EVID, session, "results.json")

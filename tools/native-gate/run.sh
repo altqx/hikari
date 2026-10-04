@@ -24,11 +24,18 @@ render=()
 if [ -e /dev/dri/renderD128 ]; then
     render=(--device /dev/dri/renderD128 --group-add "$(stat -c %g /dev/dri/renderD128)")
 fi
+# The build tree read-only (unless it is this worktree), and the Qt SDK it
+# links when out/sdk is a link to another checkout's.
+mounts=(-v "$wt:$wt")
+[ "$tree" != "$wt" ] && mounts+=(-v "$tree:$tree:ro")
+sdk=$(readlink -f "$tree/out/sdk")
+case "$sdk" in "$tree"/*|"$wt"/*) ;; *) mounts+=(-v "$sdk:$sdk:ro") ;; esac
 docker run -d --init --name d1gate --cpus=3 --shm-size=1g "${render[@]}" \
-    -v "$tree:$tree:ro" -v "$wt:$wt" \
+    "${mounts[@]}" \
     -e HIKARI_TREE="$tree" -e GATE_DIR="$here" -e EVIDENCE="$wt/out/native-gate-evidence" \
     hikari-d1-gate sleep infinity >/dev/null
 docker exec d1gate "$here/build-tools.sh"
+mkdir -p "$wt/out/native-gate-evidence"
 
 for s in "${sessions[@]}"; do
     case $s in

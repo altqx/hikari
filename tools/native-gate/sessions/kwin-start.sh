@@ -3,7 +3,7 @@
 # Input comes through KWin's EIS (libei) remote-desktop D-Bus entry point.
 export GATE_SESSION=kwin
 "$(dirname "$0")/stop.sh" kwin
-. /home/altq/Work/hikari-wt/D1-gate/tools/native-gate/env.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
 dbus-daemon --session --address=unix:path=$XDG_RUNTIME_DIR/bus --fork
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 export KWIN_WAYLAND_NO_PERMISSION_CHECKS=1

@@ -3,7 +3,7 @@
 # scale 2), a virtual pointer fed through a FIFO, a private session bus.
 export GATE_SESSION=sway
 "$(dirname "$0")/stop.sh" sway
-. /home/altq/Work/hikari-wt/D1-gate/tools/native-gate/env.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
 dbus-daemon --session --address=unix:path=$XDG_RUNTIME_DIR/bus --fork
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 WLR_BACKENDS=headless WLR_HEADLESS_OUTPUTS=2 WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 \

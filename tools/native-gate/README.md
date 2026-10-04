@@ -23,7 +23,9 @@ tools/native-gate/run.sh                 # all four sessions, every step
 tools/native-gate/run.sh kwin -- video   # one session, chosen steps
 ```
 
-`run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
+`HIKARI_TREE` names the checkout whose build is tested (default
+`/home/altq/Work/hikari-qt`; `HIKARI_TREE=$PWD tools/native-gate/run.sh` tests
+this worktree's build). `run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
 the host-built binaries and the Qt SDK under `out/sdk` run unchanged), starts
 a container with the build tree mounted read-only at its own path, starts
 each session and runs `gate.py`. It only needs the build tree
@@ -54,6 +56,7 @@ recorded as a pass.
 | `orca` | Orca's speech while F6 moves through the panels and a panel is floated from the menu |
 | `menutext` | Alt+V from the Line text field |
 | `tests` | `hikari_ui_shell_tests` (D1 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
+| `a11y` | what AT-SPI exposes of the docking controls: named title-bar buttons and tabs (each with Float and Close), the Grid's table in the panel named Grid; pressing them through AT-SPI floats and docks |
 
 ## Other tools
 
@@ -78,7 +81,18 @@ recorded as a pass.
   `sessions/stop.sh SESSION` ends one. Sessions share the container, so
   `app.sh` only touches the HikariSub of its own session.
 
-Harness lessons: sway needs one virtual keyboard that stays (each `wtype`
+`gate.py sway-activate STEP...` (run inside the sway session) repeats steps
+with `focus_on_window_activation focus`: sway's default (`urgent`) marks a
+window that asks for activation through xdg_activation_v1 urgent instead of
+focusing it, so cross-window F6 there depends on that setting. Its evidence
+goes to `sway-activate/`.
+
+Harness lessons: the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
+cycles between them, so `open_view()` presses Alt+V until the View menu shows;
+Qt keeps hidden windows titled HikariSub, so X11 window searches use
+`--onlyvisible`; removing a RandR monitor on Xvfb leaves the output's own
+monitor covering the whole framebuffer, so the X11 monitor removal also
+shrinks the output; sway needs one virtual keyboard that stays (each `wtype`
 run otherwise toggles the seat's keyboard and the client loses focus);
 mutter and KWin replace their libei devices when outputs change
 (`eiinject` follows the newest); PID 1 must reap (`docker run --init`).

@@ -2,7 +2,7 @@
 # enter.sh SESSION CMD...: run CMD inside a running session's environment
 # (its private HOME/XDG tree, session bus and display).
 export GATE_SESSION="$1"; shift
-. /home/altq/Work/hikari-wt/D1-gate/tools/native-gate/env.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/env.sh"
 export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
 [ -f "$XDG_RUNTIME_DIR/display.env" ] && . "$XDG_RUNTIME_DIR/display.env"
 if [ -z "${WAYLAND_DISPLAY:-}" ] && [ -z "${DISPLAY:-}" ]; then
