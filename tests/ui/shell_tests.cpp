@@ -3,6 +3,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/application/options_dialog.h"
+#include "hikari/application/spell_checker.h"
 #include "docking.h"
 #include "line_grid.h"
 #include "line_table_model.h"
@@ -1265,13 +1266,25 @@ private slots:
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
         QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
-        // Legacy placement: the Multireplacer centred, the results at the
-        // default position (top left). The results leave the rules list and
-        // the Multireplacer's buttons uncovered, so rules can be checked while
-        // they are shown.
+        // Legacy placement: the Multireplacer centred; the results at
+        // wxDefaultPosition (R5-per-platform): on Windows 34x22 dialog units
+        // (68x44 pixels) from the client origin below the menu bar, on Linux
+        // the window manager's choice, here the window's top left. At the top
+        // left the results leave the rules list and the Multireplacer's
+        // buttons uncovered, so rules can be checked while they are shown; on
+        // Windows they reach the rules list in this window, as legacy's did,
+        // and are moved there first.
         const auto sceneRect = [](QQuickItem *item) { return item->mapRectToScene(QRectF(0, 0, item->width(), item->height())); };
         const auto popupRect = [&](QObject *popup) { return sceneRect(popup->property("background").value<QQuickItem *>()); };
         auto *addRule = dialogItem("misspellDialog", "misspellAddRule");
+        auto *menuBar = root->property("menuBar").value<QQuickItem *>();
+        QVERIFY(menuBar && menuBar->height() > 0);
+        QCOMPARE(dialog->property("clientTop").toReal(), menuBar->height());
+#ifdef _WIN32
+        QCOMPARE(popupRect(results).topLeft(), QPointF(68, menuBar->height() + 44));
+        results->setProperty("x", 0);
+        results->setProperty("y", 0);
+#endif
         const QRectF resultsArea = popupRect(results);
         QCOMPARE(resultsArea.topLeft(), QPointF(0, 0));
         QVERIFY(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", "misspellRules"))));
@@ -1299,6 +1312,15 @@ private slots:
         click(dialogItem("misspellDialog", "misspellFindTab"));
         QTRY_VERIFY(results->property("opened").toBool());
         QCOMPARE(popupRect(results).topLeft(), QPointF(40, 30));
+        // The drag stops where the title would leave the window: its top
+        // stays inside, and 48 pixels of the window stay in view sideways.
+        const QPoint title = centre(resultsTitle);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, title);
+        QTest::mouseMove(window, title - QPoint(10, 10));
+        QTest::mouseMove(window, title - QPoint(5000, 5000));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, title - QPoint(5000, 5000));
+        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(48 - popupRect(results).width(), 0));
+        QVERIFY(sceneRect(resultsTitle).right() > 0); // part of the title is still there to grab
         results->setProperty("x", 0);
         results->setProperty("y", 0);
         // Rules cannot change while the results are shown: a press on Add rule
@@ -3231,17 +3253,51 @@ private slots:
         options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
         app::Application a(options);
         a.settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("pl_PL"));
+        // The list is F3's availableDictionaries over the same folders, in
+        // the order wxDir lists them on this platform (R5-per-platform: no
+        // sorting; F3's own tests pin that order against readdir and
+        // FindFirstFile), each symbol shown by its language name.
+        const std::filesystem::path folder(own.filePath(QStringLiteral("Dictionary")).toStdU16String());
+        const auto expected = [&] {
+            QStringList names;
+            for (const auto &symbol : application::availableDictionaries(folder))
+                names << (symbol == u"en_US" ? QStringLiteral("English") : QStringLiteral("Polski"));
+            if (names.isEmpty())
+                names << QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder");
+            return names;
+        };
         const auto open = a.openSettingsDialog();
         // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
-        // shifts every pair, so none matches (the pairing stops at the
-        // shorter list, R3-hang-crash-loss) and the placeholder is shown.
-        QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(),
-                 (QStringList{QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder")}));
+        // shifts the pairs that follow it in the listing (the pairing stops
+        // at the shorter list, R3-hang-crash-loss).
+        QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(), expected());
         QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
         const auto again = a.openSettingsDialog();
-        QCOMPARE(again.value(QStringLiteral("dictionaries")).toStringList(),
-                 (QStringList{QStringLiteral("English"), QStringLiteral("Polski")}));
-        QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(), 1);
+        const QStringList shown = again.value(QStringLiteral("dictionaries")).toStringList();
+        QCOMPARE(shown, expected());
+        if (shown.contains(QStringLiteral("Polski")))
+            QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(),
+                     shown.indexOf(QStringLiteral("Polski")));
+#ifndef _WIN32
+        // Linux: the pairing follows readdir order, as legacy Linux's wxDir
+        // did, not a name sort.
+        std::vector<std::u16string> readdirDic, readdirAff;
+        if (DIR *d = ::opendir(folder.c_str())) {
+            while (const dirent *e = ::readdir(d)) {
+                const std::string name = e->d_name;
+                if (name.size() > 4 && name.ends_with(".dic"))
+                    readdirDic.push_back(QString::fromStdString(name.substr(0, name.size() - 4)).toStdU16String());
+                if (name.size() > 4 && name.ends_with(".aff"))
+                    readdirAff.push_back(QString::fromStdString(name.substr(0, name.size() - 4)).toStdU16String());
+            }
+            ::closedir(d);
+        }
+        std::vector<std::u16string> pairs;
+        for (std::size_t i = 0; i < readdirDic.size() && i < readdirAff.size(); ++i)
+            if (readdirDic[i] == readdirAff[i])
+                pairs.push_back(readdirDic[i]);
+        QVERIFY(application::availableDictionaries(folder) == pairs);
+#endif
     }
 
     // O1: "Set default" resets the registry at once; what long-lived legacy

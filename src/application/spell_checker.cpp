@@ -1,4 +1,5 @@
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/legacy_dir.h"
 
 #include "hikari/core/text_projection.h"
 
@@ -31,56 +32,14 @@ std::u16string pathText(const fs::path &p)
     return core::toUtf16(s);
 }
 
-#ifdef _WIN32
-char16_t asciiUpper(char16_t c)
+// wxDir::GetAllFiles(folder, ..., "*.dic", wxDIR_FILES): the folder's own
+// entries that are not folders and match the pattern, unhidden, in the order
+// each legacy platform listed them (R5-per-platform, legacy_dir.h):
+// FindFirstFileW with wx's PathMatchSpec check on Windows, readdir and
+// wxMatchWild on Linux. No sorting.
+std::vector<fs::path> listFiles(const fs::path &folder, std::u16string_view pattern)
 {
-    return c >= u'a' && c <= u'z' ? static_cast<char16_t>(c - 32) : c;
-}
-#endif
-
-// wxDir's "*.dic" match: any case on Windows, exact elsewhere.
-bool hasExtension(const fs::path &file, std::u16string_view extension)
-{
-    const std::u16string name = pathText(file.filename());
-    if (name.size() <= extension.size())
-        return false;
-    const std::u16string_view tail = std::u16string_view(name).substr(name.size() - extension.size());
-#ifdef _WIN32
-    return std::ranges::equal(tail, extension, [](char16_t a, char16_t b) { return asciiUpper(a) == asciiUpper(b); });
-#else
-    return tail == extension;
-#endif
-}
-
-// wxDir without wxDIR_HIDDEN skips hidden entries: a name starting with '.'
-// on Linux (wxMatchWild), the hidden or system attribute on Windows.
-bool hiddenEntry(const fs::path &file)
-{
-#ifdef _WIN32
-    const DWORD attributes = GetFileAttributesW(file.c_str());
-    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) != 0;
-#else
-    const std::u8string name = file.filename().u8string();
-    return !name.empty() && name.front() == u8'.';
-#endif
-}
-
-// wxDir::GetAllFiles(folder, ..., wxDIR_FILES): the folder's own entries that
-// are not directories (links followed, as wxDirExists does), in the file
-// system's own order, as each legacy platform listed them
-// (R5-per-platform): readdir on Linux, FindFirstFile on Windows (NTFS lists
-// names in upper-cased order). std::filesystem walks the same calls.
-std::vector<fs::path> listFiles(const fs::path &folder, std::u16string_view extension)
-{
-    std::vector<fs::path> out;
-    std::error_code ec;
-    for (fs::directory_iterator it(folder, ec), end; !ec && it != end; it.increment(ec)) {
-        std::error_code type;
-        if (it->is_directory(type) || !hasExtension(it->path(), extension) || hiddenEntry(it->path()))
-            continue;
-        out.push_back(it->path());
-    }
-    return out;
+    return legacy_dir::entries(folder, pattern, legacy_dir::Files).value_or(std::vector<fs::path>{});
 }
 
 // wxString::BeforeLast('.'): everything before the last dot (the full path).
@@ -121,8 +80,8 @@ std::ptrdiff_t activeRow(const EditSession &session)
 
 std::vector<std::u16string> availableDictionaries(const fs::path &folder)
 {
-    const auto dics = listFiles(folder, u".dic");
-    const auto affs = listFiles(folder, u".aff");
+    const auto dics = listFiles(folder, u"*.dic");
+    const auto affs = listFiles(folder, u"*.aff");
     std::vector<std::u16string> out;
     // R3-hang-crash-loss: legacy reads aff[i] past a shorter .aff list
     // (undefined); here the pairing stops at its end.

@@ -4,6 +4,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <map>
 #include <set>
 
 namespace hikari::application {
@@ -133,6 +134,16 @@ struct CompiledRule {
     int rule = 0;
 };
 
+// wx_regexec's wxLogError after a Matches or Replace that failed with an
+// error (PCRE2's match or heap limit), which then counted as no match.
+void noteMatchError(const core::LegacyRegex &re, ReplacerMatchErrors *errors)
+{
+    if (!errors)
+        return;
+    if (auto error = re.matchError(); !error.empty())
+        errors->push_back(std::move(error));
+}
+
 // The checked rules that compile, each with its own index.
 std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules)
 {
@@ -146,7 +157,8 @@ std::vector<CompiledRule> compileChecked(const std::vector<ReplacerRule> &rules)
 
 // ReplaceOnTab's work on one Line's text; nullopt when no find was replaced.
 std::optional<std::u16string> replaceInText(const std::u16string &lineText, const std::vector<CompiledRule> &compiled,
-                                            const std::vector<ReplacerRule> &rules, const ReplacerCase &cases)
+                                            const std::vector<ReplacerRule> &rules, const ReplacerCase &cases,
+                                            ReplacerMatchErrors *errors)
 {
     std::u16string changedText = lineText;
     bool changed = false;
@@ -160,13 +172,20 @@ std::optional<std::u16string> replaceInText(const std::u16string &lineText, cons
         // and applied those positions to the changed one (wrong places, and
         // std::out_of_range past its end).
         std::u16string text = changedText;
-        while (const auto match = replacerSearch(re, text)) {
+        for (;;) {
+            const auto match = replacerSearch(re, text);
+            if (!match) {
+                noteMatchError(re, errors);
+                break;
+            }
             const std::size_t start = match->first;
             std::size_t length = std::max<std::size_t>(match->second, 1);
             if (rule.options < 16 || keepFinding(text, start, rule.options)) {
                 const std::size_t at = start + textPos;
                 const std::u16string found = mid(changedText, at, length);
-                std::u16string replaced = moveCase(found, replacerReplace(re, found, replacement).first, rule.options, cases);
+                auto result = replacerReplace(re, found, replacement).first;
+                noteMatchError(re, errors);
+                std::u16string replaced = moveCase(found, std::move(result), rule.options, cases);
                 changedText.replace(std::min(at, changedText.size()), length, replaced);
                 length = replaced.size();
                 changed = true;
@@ -342,7 +361,7 @@ std::pair<std::u16string, int> replacerReplace(const core::LegacyRegex &re, std:
 // ---- find and replace in a Document
 
 std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vector<ReplacerRule> &rules,
-                                     const ReplacerScope &scope)
+                                     const ReplacerScope &scope, ReplacerMatchErrors *matchErrors)
 {
     // SeekOnTab numbers each find with checkedRules[k], k counting only the
     // rules that compile: after an invalid checked rule the numbers shift.
@@ -377,8 +396,10 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
                 std::size_t textPos = 0;
                 while (textPos <= lineText.size()) {
                     const auto match = replacerSearch(re, u16sv(lineText).substr(textPos));
-                    if (!match)
+                    if (!match) {
+                        noteMatchError(re, matchErrors);
                         break;
+                    }
                     const std::size_t length = std::max<std::size_t>(match->second, 1);
                     if (options < 16 || keepFinding(lineText, match->first + textPos, options))
                         out.push_back({row, shown + 1, lineText, match->first + textPos, length, checked[k]});
@@ -395,7 +416,8 @@ std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vect
 }
 
 std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const std::vector<ReplacerRule> &rules,
-                                                  const ReplacerScope &scope, const ReplacerCase &cases)
+                                                  const ReplacerScope &scope, const ReplacerCase &cases,
+                                                  ReplacerMatchErrors *matchErrors)
 {
     const auto compiled = compileChecked(rules);
     if (compiled.empty())
@@ -403,14 +425,32 @@ std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const st
     const auto lines = session.document().lines();
     const Selection &selection = session.selection();
     std::set<core::LineId> touches;
+    // Legacy walked each Line once and logged its match errors as it went.
+    // Each Line's errors come from the walk that decides its text: this one,
+    // or for a changed Line the command's walk below.
+    std::map<std::size_t, ReplacerMatchErrors> lineErrors; // by row
+    std::map<core::LineId, std::size_t> rowOf;
     for (std::size_t row = startRow(lines, scope, selection); row < lines.size(); ++row) {
         const auto &line = *lines[row];
-        if (line.visibility != core::LineVisibility::Hidden && inScope(line, scope, selection) &&
-            replaceInText(searchedText(line), compiled, rules, cases))
+        if (line.visibility == core::LineVisibility::Hidden || !inScope(line, scope, selection))
+            continue;
+        ReplacerMatchErrors errors;
+        if (replaceInText(searchedText(line), compiled, rules, cases, &errors)) {
             touches.insert(line.id);
+            rowOf[line.id] = row;
+        }
+        if (!errors.empty())
+            lineErrors[row] = std::move(errors);
     }
-    if (touches.empty())
+    const auto report = [&] {
+        if (matchErrors)
+            for (const auto &[row, errors] : lineErrors)
+                matchErrors->insert(matchErrors->end(), errors.begin(), errors.end());
+    };
+    if (touches.empty()) {
+        report();
         return false;
+    }
     // The Lines are worked out again on the content the command sees (a
     // pending draft on one of them is committed first).
     const auto ran = session.run(Command{"Fixing minor errors", session.revision(), touches, [&](core::Document &d) {
@@ -418,12 +458,18 @@ std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const st
                                                  const auto *line = lineById(d, id);
                                                  if (!line)
                                                      return false;
-                                                 const auto text = replaceInText(searchedText(*line), compiled, rules, cases);
+                                                 ReplacerMatchErrors errors;
+                                                 const auto text = replaceInText(searchedText(*line), compiled, rules, cases, &errors);
+                                                 if (errors.empty())
+                                                     lineErrors.erase(rowOf[id]);
+                                                 else
+                                                     lineErrors[rowOf[id]] = std::move(errors);
                                                  if (text && !d.editLine(id, [&](core::LineRecord &l) { setSearchedText(l, *text); }))
                                                      return false;
                                              }
                                              return true;
                                          }});
+    report();
     if (!ran)
         return std::unexpected(ran.error());
     return true;
@@ -486,6 +532,9 @@ std::expected<ReplacedFinds, CommandRefusal> replaceFinds(EditSession &session, 
                         find.rule >= 0 && static_cast<std::size_t>(find.rule) < compiled.size() ? &compiled[static_cast<std::size_t>(find.rule)] : nullptr;
                     const auto replaced = re && rule ? replacerReplace(*re, found, core::toUtf16(rule->replace))
                                                      : std::pair<std::u16string, int>{found, 0};
+                    if (re && rule)
+                        if (auto error = re->matchError(); !error.empty())
+                            out.problems.push_back({ReplacerProblem::Kind::MatchError, find.lineNumber, std::move(error), {}, {}});
                     if (replaced.second > 0) {
                         lineText.replace(std::min(find.position, lineText.size()), find.length,
                                          moveCase(found, replaced.first, rule->options, cases));

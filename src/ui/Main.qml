@@ -3286,6 +3286,9 @@ ApplicationWindow {
     MisspellReplacerDialog {
         id: misspellDialog
         app: root.app
+        // The main window's client origin is below its menu bar (legacy's
+        // native menu bar was outside the client area).
+        clientTop: root.menuBar ? root.menuBar.height : 0
         // DestroyDialogs (a changed program font): MR->Destroy().
         Connections {
             target: root.app

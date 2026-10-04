@@ -592,3 +592,44 @@ TEST(MisspellReplace, BlockFromTheLastPositionBack)
     // "A" has one capital: "Xyz"; "bb" none: "C" as written.
     EXPECT_EQ(texts(session)[0], "Xyzxyz C");
 }
+
+// A rule that reaches PCRE2's match limit (catastrophic backtracking):
+// wxRegEx::Matches and Replace log "Failed to find match for regular
+// expression: %s" through wx_regexec and count it as no match, so the walk
+// over that Line ends for the rule and the others go on. Each error is
+// reported once, in walk order.
+TEST(MisspellReplace, MatchErrorsAreReportedAsNoMatch)
+{
+    const std::string longText = std::string(40, 'a') + "b";
+    EditSession session{load({dialogue(longText), dialogue("x  y")})};
+    const std::vector<ReplacerRule> rules{rule("(a+)+$", "Z"), rule("(  +)", " ")};
+    ReplacerMatchErrors errors;
+    const auto finds = findErrors(session, rules, {}, &errors);
+    ASSERT_EQ(finds.size(), 1u);
+    EXPECT_EQ(finds[0].row, 1u);
+    ASSERT_EQ(errors.size(), 1u);
+    EXPECT_FALSE(errors[0].empty());
+
+    // Replace all: the other rule still replaces; the error is reported once
+    // although the changed Line is worked out twice.
+    errors.clear();
+    EXPECT_TRUE(replaceErrors(session, rules, {}, {}, &errors).value());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{longText, "x y"}));
+    EXPECT_EQ(errors.size(), 1u);
+    // Nothing else to replace: the error is still reported.
+    errors.clear();
+    EXPECT_FALSE(replaceErrors(session, {rules[0]}, {}, {}, &errors).value());
+    EXPECT_EQ(errors.size(), 1u);
+
+    // The results' Replace: wxRegEx::Replace logs the error, then
+    // ReplaceBlock logs "Cannot replace ..." for the find it did not replace.
+    const auto replaced = replaceFinds(session, rules, {{0, 1, u16(longText), 0, longText.size(), 0}});
+    ASSERT_TRUE(replaced);
+    EXPECT_FALSE(replaced->changed);
+    ASSERT_EQ(replaced->problems.size(), 2u);
+    EXPECT_EQ(replaced->problems[0].kind, ReplacerProblem::Kind::MatchError);
+    EXPECT_EQ(replaced->problems[0].lineNumber, 1);
+    EXPECT_FALSE(replaced->problems[0].found.empty());
+    EXPECT_EQ(replaced->problems[1], (ReplacerProblem{ReplacerProblem::Kind::NotReplaced, 1, u16(longText), u8"Z", u8"(a+)+$"}));
+    EXPECT_EQ(texts(session)[0], longText);
+}

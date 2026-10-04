@@ -129,23 +129,32 @@ struct ReplacerFind {
     bool operator==(const ReplacerFind &) const = default;
 };
 
+// PCRE2's text for each wxRegEx::Matches or Replace that failed with an
+// error other than "no match" (the match or heap limit), in the order legacy
+// ran them: wx logs each one as "Failed to find match for regular
+// expression: %s" and counts it as no match.
+using ReplacerMatchErrors = std::vector<std::u16string>;
+
 // SeekOnTab: the checked rules over the shown Lines in scope, rule by rule
 // within each Line, in Document order. "From the selected line" takes every
 // shown Line from the first selected one (S57-from-selected).
 std::vector<ReplacerFind> findErrors(const EditSession &session, const std::vector<ReplacerRule> &rules,
-                                     const ReplacerScope &scope);
+                                     const ReplacerScope &scope, ReplacerMatchErrors *matchErrors = nullptr);
 
 // ReplaceOnTab: the checked rules replace in the shown Lines in scope, as one
 // "Fixing minor errors" step; each rule searches the text the previous rule
 // left (S57-rule-offsets). False when no Line was changed (no step).
 std::expected<bool, CommandRefusal> replaceErrors(EditSession &session, const std::vector<ReplacerRule> &rules,
-                                                  const ReplacerScope &scope, const ReplacerCase &cases = {});
+                                                  const ReplacerScope &scope, const ReplacerCase &cases = {},
+                                                  ReplacerMatchErrors *matchErrors = nullptr);
 
 // What ReplaceBlock logs.
 struct ReplacerProblem {
     enum class Kind {
         Edited,        // "Line %i cannot be replaced,\ncause it was edited."
         NotReplaced,   // "Cannot replace \"%s\" to \"%s\", with rule \"%s\" in line %i."
+        MatchError,    // "Failed to find match for regular expression: %s" (found: PCRE2's text),
+                       // logged by wxRegEx::Replace before its NotReplaced
     };
     Kind kind = Kind::Edited;
     int lineNumber = 0;
