@@ -1,7 +1,7 @@
 // P3: autosave recovery through the composition (accepted
 // L58-recovery-copy and the 2026-09-29 retention choices). A child process
-// edits, autosaves and dies without closing (std::_Exit, as a crash or kill
-// would leave it); a new session offers the work as a new unsaved copy with
+// edits, autosaves and dies without closing (as a crash or kill would leave
+// it); a new session offers the work as a new unsaved copy with
 // the draft still pending and the original file unchanged. A clean close
 // and a written save remove the work; a running session's work is not offered.
 
@@ -17,6 +17,13 @@
 #include <QtTest>
 
 #include <cstdlib>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -71,7 +78,15 @@ int crashChild(const QString &recovery, const QString &path)
         return 3;
     if (!a.autosaveNow())
         return 4;
-    std::_Exit(0); // no destructors: the session lock stays, its process gone
+    // No destructors: the session lock stays, its process gone.
+#ifdef _WIN32
+    // As a kill ends it. std::_Exit ends through ExitProcess, which stops the
+    // other threads wherever they are and then runs the DLLs' detach code
+    // (Qt's static destructors among it); there the first child hung until
+    // the test gave up on it.
+    TerminateProcess(GetCurrentProcess(), 0);
+#endif
+    std::_Exit(0);
 }
 
 } // namespace
