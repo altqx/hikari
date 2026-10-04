@@ -468,12 +468,15 @@ if ((!SKIP_AUDITION)); then
             "four fast ticks only; no whoop" 5000 5500
 
         heading "A7  Resampled source (44.1 kHz fixture on the 48 kHz output)"
+        say "First Line 2 from the 48 kHz file as a reference, then the same Line from the 44.1 kHz"
+        say "file, which the media helper resamples to the output's rate. They should sound identical."
+        audition_step A7.reference "Reference: Line 2 from the 48 kHz fixture (9.000-11.000 s)" \
+            "the same whoop as in A2" 9000 11000
         from="$(drv_lines)"
         drv media "$FIX/h2-44k1.mkv"
         driver_wait 'media|error' "$from" 60 >/dev/null
-        audition_step A7.resampled "Play Line 2 from the 44.1 kHz fixture (9.000-11.000 s)" \
-            "the same whoop as in A2: same pitch, same length, no crackle" 9000 11000
-        say "(Replay A2 for comparison if you need to: answer r to hear A7 again.)"
+        audition_step A7.resampled "Line 2 from the 44.1 kHz fixture (9.000-11.000 s)" \
+            "identical to the reference: same pitch, same length, no crackle" 9000 11000
 
         heading "A8  Stop while playing"
         say "Plays Line 1 onward to the end of the file; press Enter while the whoop sounds."
@@ -486,7 +489,8 @@ if ((!SKIP_AUDITION)); then
             if ((DRY_RUN)); then sleep 0.2; else read -r -p "${B}Press Enter to STOP.${N} " _ </dev/tty; fi
             stop_at="$(now_iso)"
             drv stop
-            driver_wait 'finished|failed' "$from" 5 >/dev/null
+            report="$(driver_wait 'finished|failed' "$from" 5)" || report='{"event":"no report"}'
+            say "driver: $(jq -r '"\(.event) drained=\(.drained) logicalStopAt=\(.logicalStopAt)"' <<<"$report" 2>/dev/null)"
             ask "Did the sound stop at once when you pressed Enter?"
             [[ "$ANSWER" == replay ]] && continue
             record A8.stop audition "Stop during playback" "sound stops promptly; the report says not drained" \
