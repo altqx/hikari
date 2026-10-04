@@ -5,11 +5,17 @@
 #include "automation_dialog_controller.h"
 #include "hikari/backends/lua_script_host.h"
 
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QDir>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <optional>
@@ -216,6 +222,118 @@ private slots:
         QCOMPARE(*outcome, LuaScriptHost::RunOutcome::Cancelled);
         QTRY_VERIFY(!window->isVisible());
         QVERIFY(!controller->isOpen());
+    }
+
+    // S3/L2: the legacy capture probe's dialog cases (tools/legacy-capture
+    // plan.json "automation") run through this dialog with the plan's keys,
+    // as drive.py/drive_windows.py send them to the legacy app. Each case's
+    // JSON line is the rewrite side of the legacy comparison
+    // (artifacts/automation-capture-dialogs.json); only that every case
+    // answers is asserted here (the legacy baseline hangs on all of them).
+    void captureProbeDialogCasesAnswer()
+    {
+        QFile planFile(QStringLiteral(HIKARI_LEGACY_CAPTURE_PLAN));
+        QVERIFY(planFile.open(QIODevice::ReadOnly));
+        const QJsonArray steps =
+            QJsonDocument::fromJson(planFile.readAll()).object().value(QStringLiteral("automation")).toObject().value(
+                QStringLiteral("steps")).toArray();
+        QVERIFY(!steps.isEmpty());
+        QTemporaryDir work;
+        QVERIFY(work.isValid());
+        const QString output = work.filePath(QStringLiteral("capture.jsonl"));
+        // The helper process inherits the environment, as the legacy app's Lua does.
+        qputenv("HIKARI_CAPTURE_OUT", output.toLocal8Bit());
+        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_CAPTURE_PROBE),
+                           QStringLiteral(HIKARI_LUA_INCLUDE));
+        host.setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
+            controller->present(QString::fromStdString(host.info().name), request, std::move(reply));
+        });
+        connect(&host, &LuaScriptHost::dialogWithdrawn, controller, &AutomationDialogController::withdraw);
+        std::optional<LuaScriptHost::RunOutcome> outcome;
+        QString message;
+        connect(&host, &LuaScriptHost::finished, this, [&](LuaScriptHost::RunOutcome o, const QString &m) {
+            outcome = o;
+            message = m;
+        });
+        host.load();
+        QTRY_COMPARE(host.state(), LuaScriptHost::State::Ready);
+        qunsetenv("HIKARI_CAPTURE_OUT");
+
+        auto lines = [&] {
+            QFile f(output);
+            QList<QByteArray> got;
+            if (f.open(QIODevice::ReadOnly))
+                for (const QByteArray &line : f.readAll().split('\n'))
+                    if (!line.trimmed().isEmpty())
+                        got << line;
+            return got;
+        };
+        QJsonArray cases;
+        for (const auto &value : steps) {
+            const QJsonObject step = value.toObject();
+            if (step.value(QStringLiteral("case")).toString() == QStringLiteral("corpus"))
+                continue; // L6: the corpus has its own capture (LuaHelper.CaptureProbeCorpusRunsInThisHost)
+            const QString name = step.value(QStringLiteral("case")).toString();
+            QJsonObject record{{QStringLiteral("case"), name},
+                               {QStringLiteral("macro"), step.value(QStringLiteral("macro"))},
+                               {QStringLiteral("keys"), step.value(QStringLiteral("keys"))},
+                               {QStringLiteral("status"), QStringLiteral("timeout")}};
+            const qsizetype before = lines().size();
+            outcome.reset();
+            QVERIFY(host.run(step.value(QStringLiteral("macro")).toInt()));
+            QTest::qWait(300);
+            record.insert(QStringLiteral("dialog_shown"), window->isVisible());
+            if (window->isVisible()) {
+                window->requestActivate();
+                QTRY_VERIFY(QGuiApplication::focusWindow() == window);
+                record.insert(QStringLiteral("dialog_title"), window->title());
+                record.insert(QStringLiteral("dialog_buttons"), QJsonArray::fromStringList(controller->buttons()));
+                QQuickItem *focus = window->activeFocusItem();
+                record.insert(QStringLiteral("focus"), focus ? QString::fromLatin1(focus->metaObject()->className())
+                                                             : QString());
+                for (const auto &key : step.value(QStringLiteral("keys")).toArray()) {
+                    const QString chord = key.toString();
+                    if (chord.startsWith(QStringLiteral("type:"))) {
+                        for (const QChar c : chord.mid(5))
+                            QTest::sendKeyEvent(QTest::Click, window, Qt::Key_unknown, QString(c), Qt::NoModifier);
+                    } else {
+                        const Qt::Key code = chord == QStringLiteral("Return")   ? Qt::Key_Return
+                                             : chord == QStringLiteral("Escape") ? Qt::Key_Escape
+                                             : chord == QStringLiteral("Up")     ? Qt::Key_Up
+                                                                                 : Qt::Key_unknown;
+                        QVERIFY2(code != Qt::Key_unknown, qPrintable(chord));
+                        QTest::keyClick(window, code);
+                    }
+                    QTest::qWait(50);
+                }
+            }
+            if (!QTest::qWaitFor([&] { return outcome.has_value(); }, 5000)) {
+                // No keys answer it (the plan sends none): withdraw it, as a
+                // user cancelling the run would.
+                record.insert(QStringLiteral("dialog_open_after_keys"), window->isVisible());
+                host.cancel();
+                QTRY_VERIFY(outcome.has_value());
+            }
+            record.insert(QStringLiteral("outcome"), static_cast<int>(*outcome));
+            // An Ok run's message is its binary result payload, not text.
+            if (*outcome != LuaScriptHost::RunOutcome::Ok && !message.trimmed().remove(QChar(0)).isEmpty())
+                record.insert(QStringLiteral("message"), message.section(QLatin1Char('\n'), 0, 2));
+            const QList<QByteArray> got = lines();
+            if (got.size() > before) {
+                record.insert(QStringLiteral("status"), QStringLiteral("captured"));
+                record.insert(QStringLiteral("result"), QJsonDocument::fromJson(got.at(before)).object());
+            }
+            cases.append(record);
+            QTRY_VERIFY(!window->isVisible());
+        }
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QFile artifact(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-capture-dialogs.json"));
+        QVERIFY(artifact.open(QIODevice::WriteOnly));
+        artifact.write(QJsonDocument(QJsonObject{{QStringLiteral("cases"), cases}}).toJson());
+        for (const auto &c : cases)
+            QVERIFY2(c.toObject().value(QStringLiteral("status")).toString() == QStringLiteral("captured") ||
+                         c.toObject().contains(QStringLiteral("dialog_open_after_keys")),
+                     qPrintable(c.toObject().value(QStringLiteral("case")).toString()));
     }
 };
 

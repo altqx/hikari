@@ -24,7 +24,10 @@ hikari_add_qttest(hikari_ui_automation_dialog_tests SOURCES automation_dialog_te
 target_compile_definitions(hikari_ui_automation_dialog_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
-    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include")
+    HIKARI_LUA_INCLUDE="${PROJECT_SOURCE_DIR}/Automation/automation/Include"
+    HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua"
+    HIKARI_LEGACY_CAPTURE_PLAN="${PROJECT_SOURCE_DIR}/tools/legacy-capture/plan.json"
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 add_dependencies(hikari_ui_automation_dialog_tests hikari_lua_helper)
 # N7: the scene-graph presenter against the CPU composite (start of M50-present).
 hikari_add_qttest(hikari_ui_presenter_tests SOURCES presenter_tests.cpp
