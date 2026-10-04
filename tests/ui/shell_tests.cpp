@@ -1542,6 +1542,71 @@ private slots:
         application->editor().discard();
     }
 
+    // F3: legacy's other Replace path, a double click on a suggestion
+    // (ID_SUGGESTIONS_LIST), after typing in the editor. The press that
+    // brings the window back does not swap the list under the pointer, so the
+    // double click lands on the suggestion the user saw; that Replace finds
+    // its word stale (the draft committed) and starts the walk again instead
+    // of acting, as the Replace button does.
+    void spellCheckerSuggestionDoubleClickAfterEditorTyping()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling-suggestion.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *misspell = dialogItem("spellCheckerDialog", "spellMisspell");
+        auto *list = dialogItem("spellCheckerDialog", "spellSuggestions");
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
+        const auto suggestion = [&](const QString &text) -> QQuickItem * {
+            auto *content = list->property("contentItem").value<QQuickItem *>();
+            for (QQuickItem *delegate : content->childItems())
+                if (delegate->property("text").toString() == text)
+                    return delegate;
+            return nullptr;
+        };
+        QTRY_VERIFY(suggestion(QStringLiteral("world")));
+        auto *world = suggestion(QStringLiteral("world"));
+        const QPoint at = world->mapToScene(QPointF(world->width() / 2, world->height() / 2)).toPoint();
+
+        auto *field = item("lineText");
+        field->forceActiveFocus();
+        application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
+        // The first press of the double click brings the window back.
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+        QCoreApplication::processEvents();
+        QTRY_VERIFY(dialog->property("activeFocus").toBool());
+        QTest::qWait(20);
+        QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
+        QCOMPARE(suggestion(QStringLiteral("world")), world);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at);
+        QCoreApplication::processEvents();
+        QCOMPARE(dialogItem("spellCheckerDialog", "spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        // The second press and its double click (Qt sends both).
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+        QMouseEvent doubleClick(QEvent::MouseButtonDblClick, QPointF(at), window->mapToGlobal(QPointF(at)), Qt::LeftButton,
+                                Qt::LeftButton, Qt::NoModifier);
+        QCoreApplication::sendEvent(window, &doubleClick);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at);
+        QTRY_COMPARE(misspell->property("text").toString(), QStringLiteral("Helo"));
+        const auto text = [&] {
+            const auto &raw = session->document().lines()[0]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(raw.data()), qsizetype(raw.size()));
+        };
+        QCOMPARE(text(), QStringLiteral("Helo wrold"));
+        QCOMPARE(session->history().back().name, std::string("Edit Line"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        application->editor().discard();
+    }
+
     // F3: the editor's spelling menu and the double-click suggestion list.
     // The suggestions come first; "Spellchecker" and "Installed languages"
     // are only in the spell-checked field (the Translated one in translation

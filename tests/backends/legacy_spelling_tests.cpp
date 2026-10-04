@@ -97,6 +97,31 @@ TEST(HunspellSpelling, MissingFilesCheckNothingAsCorrect)
 }
 
 // The SpellChecker over Hunspell and a folder holding the fixtures.
+// On Windows Hunspell gets the long-path form (UTF-8 names, no MAX_PATH);
+// a UNC location (a redirected AppData under \\server\share) takes the
+// \\?\UNC\ form, since \\?\\\server\share names nothing.
+TEST(HunspellSpelling, WindowsLongPathForm)
+{
+    EXPECT_EQ(backends::windowsLongPath("C:\\Users\\a\\Dictionary\\en_US.aff"), "\\\\?\\C:\\Users\\a\\Dictionary\\en_US.aff");
+    EXPECT_EQ(backends::windowsLongPath("\\\\server\\share\\AppData\\Dictionary\\en_US.dic"),
+              "\\\\?\\UNC\\server\\share\\AppData\\Dictionary\\en_US.dic");
+    EXPECT_EQ(backends::windowsLongPath("\\\\?\\C:\\a.aff"), "\\\\?\\C:\\a.aff");
+    EXPECT_EQ(backends::windowsLongPath("\\\\?\\UNC\\server\\share\\a.aff"), "\\\\?\\UNC\\server\\share\\a.aff");
+    EXPECT_EQ(backends::windowsLongPath("\\\\.\\C:\\a.aff"), "\\\\.\\C:\\a.aff");
+}
+
+#ifdef _WIN32
+// The loader normalizes the path before prefixing it (the prefix turns off
+// Windows' own handling of "." and ".."), so a relative-looking route opens.
+TEST(HunspellSpelling, WindowsPathWithDotsOpens)
+{
+    const fs::path base = kFixtures / "subdir-that-does-not-exist" / ".." / "en_TEST";
+    auto backend = backends::hunspellSpellingLoader()(fs::path(base).concat(".aff"), fs::path(base).concat(".dic"));
+    ASSERT_TRUE(backend);
+    EXPECT_TRUE(backend->spell(u"Hello")); // an unopened pair knows no word
+}
+#endif
+
 TEST(HunspellSpelling, SpellCheckerInitializesFromTheFolder)
 {
     std::random_device random;

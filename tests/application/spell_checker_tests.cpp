@@ -18,6 +18,18 @@
 #include <iterator>
 #include <random>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#else
+#include <dirent.h>
+#endif
+
 using namespace hikari;
 using namespace hikari::application;
 namespace fs = std::filesystem;
@@ -78,6 +90,32 @@ struct Spelling : ::testing::Test {
     }
 };
 
+#ifndef _WIN32
+// Legacy's Linux AvailableDics: wxDir lists readdir's order, without hidden
+// names or directories, and the n-th .dic pairs with the n-th .aff.
+std::vector<std::string> readdirPairs(const fs::path &folder)
+{
+    std::vector<std::string> dics, affs;
+    if (DIR *dir = opendir(folder.c_str())) {
+        while (const dirent *entry = readdir(dir)) {
+            const std::string name = entry->d_name;
+            if (name.front() == '.' || fs::is_directory(folder / name))
+                continue;
+            if (name.size() > 4 && name.ends_with(".dic"))
+                dics.push_back(name.substr(0, name.size() - 4));
+            else if (name.size() > 4 && name.ends_with(".aff"))
+                affs.push_back(name.substr(0, name.size() - 4));
+        }
+        closedir(dir);
+    }
+    std::vector<std::string> out;
+    for (std::size_t i = 0; i < dics.size() && i < affs.size(); ++i)
+        if (dics[i] == affs[i])
+            out.push_back(dics[i]);
+    return out;
+}
+#endif
+
 std::vector<std::string> names(const std::vector<std::u16string> &words)
 {
     std::vector<std::string> out;
@@ -91,15 +129,38 @@ std::vector<std::string> names(const std::vector<std::u16string> &words)
 // AvailableDics pairs the n-th .dic with the n-th .aff of the listing: a
 // .dic without its .aff shifts every later pair out of step. Legacy then
 // reads past the shorter .aff list (undefined); the pairing stops at its end
-// (R3-hang-crash-loss).
+// (R3-hang-crash-loss). The listing is the file system's own order on each
+// platform (R5-per-platform): NTFS's upper-cased order on Windows, readdir's
+// on Linux; directories and hidden entries are not listed.
 TEST_F(Spelling, AvailableDictionariesPairByPosition)
 {
     writeFile(folder / "pl.dic", "1\nkot\n");
     writeFile(folder / "pl.aff", "");
     writeFile(folder / "readme.txt", "");
+    fs::create_directories(folder / "dir.dic");
+    fs::create_directories(folder / "dir.aff");
+#ifdef _WIN32
+    EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl"}));
+    writeFile(folder / "hidden.dic", "1\nx\n");
+    writeFile(folder / "hidden.aff", "");
+    SetFileAttributesW((folder / "hidden.dic").c_str(), FILE_ATTRIBUTE_HIDDEN);
+    SetFileAttributesW((folder / "hidden.aff").c_str(), FILE_ATTRIBUTE_HIDDEN);
     EXPECT_EQ(names(availableDictionaries(folder)), (std::vector<std::string>{"en_US", "pl"}));
     writeFile(folder / "de.dic", "1\nHaus\n");
     EXPECT_TRUE(availableDictionaries(folder).empty());
+#else
+    writeFile(folder / ".hidden.dic", "1\nx\n");
+    writeFile(folder / ".hidden.aff", "");
+    const auto listed = names(availableDictionaries(folder));
+    EXPECT_EQ(listed, readdirPairs(folder));
+    EXPECT_TRUE(std::ranges::find(listed, ".hidden") == listed.end());
+    writeFile(folder / "de.dic", "1\nHaus\n");
+    EXPECT_EQ(names(availableDictionaries(folder)), readdirPairs(folder));
+    // Case matters on Linux: "*.dic" does not match EN.DIC.
+    writeFile(folder / "EN.DIC", "");
+    writeFile(folder / "EN.AFF", "");
+    EXPECT_EQ(names(availableDictionaries(folder)), readdirPairs(folder));
+#endif
     EXPECT_TRUE(availableDictionaries(folder / "missing").empty());
 }
 
@@ -140,9 +201,14 @@ TEST_F(Spelling, UserWordsPersist)
     EXPECT_EQ(names(backend->removed), (std::vector<std::string>{"wrold"}));
     EXPECT_FALSE(checker->checkWord(u"wrold"));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\r\n");
-    // The next AddWord reads the CRLF as LF (text mode) and appends "\n" + word.
+    // The next AddWord appends "\n" + word to the text as read: Windows text
+    // mode reads the CRLF as LF, the Linux build keeps "\r" (R5-per-platform).
     EXPECT_TRUE(checker->addWord(u"zzz"));
+#ifdef _WIN32
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\n\nzzz");
+#else
+    EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBFGda\xC5\x84sk\r\n\nzzz");
+#endif
     // Removing every word leaves a BOM-only file; FileOpen reads it as a
     // failure, so the next AddWord writes the word alone.
     EXPECT_TRUE(checker->removeWords({u"Gda\u0144sk", u"zzz"}));
@@ -154,6 +220,27 @@ TEST_F(Spelling, UserWordsPersist)
     writeFile(checker->userDictionary(), "");
     EXPECT_TRUE(checker->addWord(u"beta"));
     EXPECT_EQ(readFile(checker->userDictionary()), "\xEF\xBB\xBF" "beta");
+}
+
+// UserDic.udic is read as each legacy build read it (R5-per-platform):
+// Windows text mode folds CR LF byte pairs and stops at Ctrl+Z, before
+// decoding; Linux keeps every byte, so a "\r"-only line is a blank entry in
+// the removal list there (wxStringTokenizer skips only empty tokens).
+TEST_F(Spelling, UserDictionaryReadsPerPlatform)
+{
+    writeFile(checker->userDictionary(), "\xEF\xBB\xBF" "alpha\r\n\r\nbeta\x1Agamma\r");
+#ifdef _WIN32
+    EXPECT_EQ(readUserDictionary(checker->userDictionary()), std::u16string(u"alpha\n\nbeta"));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"alpha", "beta"}));
+#else
+    EXPECT_EQ(readUserDictionary(checker->userDictionary()), std::u16string(u"alpha\r\n\r\nbeta\x1Agamma\r"));
+    EXPECT_EQ(names(checker->addedWords()), (std::vector<std::string>{"alpha", "", "beta\x1Agamma"}));
+#endif
+    // A UTF-16 file: the CRT folds bytes, so "\r\0\n\0" stays as it is.
+    writeFile(checker->userDictionary(), std::string("\xFF\xFE" "a\0\r\0\n\0b\0", 10));
+    EXPECT_EQ(readUserDictionary(checker->userDictionary()), std::u16string(u"a\r\nb"));
+    ASSERT_EQ(checker->initialize(u"en_US"), SpellChecker::Status::Ready);
+    EXPECT_EQ(names(backend->added), (std::vector<std::string>{"a", "b"}));
 }
 
 // Two Dictionary folders: the user's (UserDic.udic) first, then the bundled

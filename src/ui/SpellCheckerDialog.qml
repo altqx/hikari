@@ -50,11 +50,19 @@ Dialog {
 
     // OnActive: back in the window after the editor or the Grid. Handled
     // once the focusing event is done: when it was a press on one of the
-    // window's actions, that action checks the word itself (the editor's
+    // window's actions (the five action buttons, or a suggestion, whose
+    // click picks the replacement and whose double click replaces, legacy's
+    // ID_SUGGESTIONS_LIST), that action checks the word itself (the editor's
     // draft commits first and a changed Line starts the walk again instead of
-    // acting), so the press cannot swap the word under the click.
+    // acting), so the press cannot swap the word or the list under the click.
     function actionPressed() {
-        return [replaceButton, replaceAllButton, ignoreButton, ignoreAllButton, addWordButton].some(b => b.pressed)
+        if ([replaceButton, replaceAllButton, ignoreButton, ignoreAllButton, addWordButton].some(b => b.pressed))
+            return true
+        const delegates = suggestionList.contentItem.children
+        for (let i = 0; i < delegates.length; ++i)
+            if (delegates[i].pressed === true)
+                return true
+        return false
     }
     function activate() {
         if (!activeFocus || !opened || message.opened || addedWords.opened || actionPressed())
@@ -109,6 +117,9 @@ Dialog {
                     width: ListView.view.width
                     text: modelData
                     highlighted: ListView.isCurrentItem
+                    // A click brings the window back, as any click on
+                    // legacy's window does (OnActive); see actionPressed().
+                    focusPolicy: Qt.StrongFocus
                     onClicked: {
                         suggestionList.currentIndex = index
                         replacement.text = modelData

@@ -20,12 +20,26 @@
 
 namespace hikari::backends {
 
+std::string windowsLongPath(std::string_view path)
+{
+    constexpr std::string_view prefixed = "\\\\?\\";
+    constexpr std::string_view device = "\\\\.\\";
+    constexpr std::string_view unc = "\\\\";
+    if (path.starts_with(prefixed) || path.starts_with(device))
+        return std::string(path);
+    // \\server\share\... is \\?\UNC\server\share\...
+    if (path.starts_with(unc))
+        return std::string("\\\\?\\UNC\\").append(path.substr(unc.size()));
+    return std::string(prefixed).append(path);
+}
+
 namespace {
 
 namespace fs = std::filesystem;
 
 // Hunspell opens its files with narrow paths; on Windows (MSVC) a path with
-// the long-path prefix is read as UTF-8, so any name opens.
+// the long-path prefix is read as UTF-8, so any name opens. The prefix turns
+// off Windows' own normalization, so the path is normalized first.
 std::string hunspellPath(const fs::path &file)
 {
 #ifdef _WIN32
@@ -33,9 +47,10 @@ std::string hunspellPath(const fs::path &file)
     fs::path full = fs::absolute(file, ec);
     if (ec)
         full = file;
+    full = full.lexically_normal();
     full.make_preferred();
     const std::u8string utf8 = full.u8string();
-    return "\\\\?\\" + std::string(utf8.begin(), utf8.end());
+    return windowsLongPath(std::string(utf8.begin(), utf8.end()));
 #else
     return file.string();
 #endif

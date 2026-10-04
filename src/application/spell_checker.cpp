@@ -8,6 +8,16 @@
 #include <set>
 #include <system_error>
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 namespace hikari::application {
 
 namespace {
@@ -21,10 +31,12 @@ std::u16string pathText(const fs::path &p)
     return core::toUtf16(s);
 }
 
+#ifdef _WIN32
 char16_t asciiUpper(char16_t c)
 {
     return c >= u'a' && c <= u'z' ? static_cast<char16_t>(c - 32) : c;
 }
+#endif
 
 // wxDir's "*.dic" match: any case on Windows, exact elsewhere.
 bool hasExtension(const fs::path &file, std::u16string_view extension)
@@ -40,22 +52,34 @@ bool hasExtension(const fs::path &file, std::u16string_view extension)
 #endif
 }
 
-// wxDir::GetAllFiles(folder, ..., wxDIR_FILES): the folder's own files. The
-// listing order is the file system's; NTFS (legacy's platform) lists names
-// in upper-cased order, which is used here on every platform.
+// wxDir without wxDIR_HIDDEN skips hidden entries: a name starting with '.'
+// on Linux (wxMatchWild), the hidden or system attribute on Windows.
+bool hiddenEntry(const fs::path &file)
+{
+#ifdef _WIN32
+    const DWORD attributes = GetFileAttributesW(file.c_str());
+    return attributes != INVALID_FILE_ATTRIBUTES && (attributes & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM)) != 0;
+#else
+    const std::u8string name = file.filename().u8string();
+    return !name.empty() && name.front() == u8'.';
+#endif
+}
+
+// wxDir::GetAllFiles(folder, ..., wxDIR_FILES): the folder's own entries that
+// are not directories (links followed, as wxDirExists does), in the file
+// system's own order, as each legacy platform listed them
+// (R5-per-platform): readdir on Linux, FindFirstFile on Windows (NTFS lists
+// names in upper-cased order). std::filesystem walks the same calls.
 std::vector<fs::path> listFiles(const fs::path &folder, std::u16string_view extension)
 {
     std::vector<fs::path> out;
     std::error_code ec;
-    for (fs::directory_iterator it(folder, ec), end; !ec && it != end; it.increment(ec))
-        if (it->is_regular_file(ec) && hasExtension(it->path(), extension))
-            out.push_back(it->path());
-    std::ranges::sort(out, [](const fs::path &a, const fs::path &b) {
-        const std::u16string x = pathText(a.filename()), y = pathText(b.filename());
-        return std::ranges::lexicographical_compare(x, y, [](char16_t l, char16_t r) {
-            return asciiUpper(l) < asciiUpper(r);
-        });
-    });
+    for (fs::directory_iterator it(folder, ec), end; !ec && it != end; it.increment(ec)) {
+        std::error_code type;
+        if (it->is_directory(type) || !hasExtension(it->path(), extension) || hiddenEntry(it->path()))
+            continue;
+        out.push_back(it->path());
+    }
     return out;
 }
 
@@ -123,7 +147,24 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
     std::ifstream in(file, std::ios::binary);
     if (!in)
         return std::nullopt;
-    const std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+    std::string bytes((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+#ifdef _WIN32
+    // wxFFile "r" is the CRT's text mode on Windows (R5-per-platform): CR LF
+    // byte pairs read as LF, and Ctrl+Z ends the file, before decoding. The
+    // Linux build reads the bytes as they are ("\r" kept).
+    {
+        std::string folded;
+        folded.reserve(bytes.size());
+        for (std::size_t i = 0; i < bytes.size(); ++i) {
+            if (bytes[i] == '\x1A')
+                break;
+            if (bytes[i] == '\r' && i + 1 < bytes.size() && bytes[i + 1] == '\n')
+                continue;
+            folded += bytes[i];
+        }
+        bytes.swap(folded);
+    }
+#endif
     std::u16string text;
     auto byteAt = [&](std::size_t i) { return static_cast<unsigned char>(bytes[i]); };
     // wxConvAuto: a byte-order mark decides; else UTF-8, else its default
@@ -143,16 +184,10 @@ std::optional<std::u16string> readUserDictionary(const fs::path &file)
                 text += static_cast<char16_t>(byteAt(i));
         }
     }
-    // The file is read in text mode (wxFFile "r" on Windows): CRLF becomes LF.
-    std::u16string out;
-    out.reserve(text.size());
-    for (std::size_t i = 0; i < text.size(); ++i)
-        if (!(text[i] == u'\r' && i + 1 < text.size() && text[i + 1] == u'\n'))
-            out += text[i];
     // OpenWrite::FileOpen: empty text (an empty or BOM-only file) is a failed read.
-    if (out.empty())
+    if (text.empty())
         return std::nullopt;
-    return out;
+    return text;
 }
 
 bool writeUserDictionary(const fs::path &file, std::u16string_view text)
