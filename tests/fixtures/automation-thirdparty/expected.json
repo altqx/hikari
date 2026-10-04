@@ -1,8 +1,14 @@
 {
- "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-04): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
  "unobserved_platforms": [
   "windows"
  ],
+ "loaded_only": {
+  "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
+ },
+ "macros_unordered": {
+  "lyger.FbfTransform.moon": "It registers one macro per preset by iterating its presets table with pairs(), whose order LuaJIT does not fix (string hashes are seeded per process), so the macros are pinned by name."
+ },
  "load": {
   "ILL.ChangeAlign.moon": {
    "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
@@ -52,14 +58,55 @@
    "version": "1.0.1"
   },
   "arch.Line2Fbf.moon": {
-   "error": "Error initializing Lua script \"arch.Line2Fbf.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"arch.Line2Fbf.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "arch1t3cht-Aegisub-Scripts"
   },
   "arch.NoteBrowser.moon": {
-   "error": "Error initializing Lua script \"arch.NoteBrowser.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.Functional: \n[string \"<chunk>\"]: 1221:  attempt to call field 'pack' (a nil value)",
-   "loaded": false,
-   "project": "arch1t3cht-Aegisub-Scripts"
+   "author": "arch1t3cht",
+   "description": "Loads a set of timestamped notes and adds options to mark them or jump between them.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Load notes",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to next note",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to previous note",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to next note by author",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to previous note by author",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Clear all markers",
+     "validate": false
+    }
+   ],
+   "name": "Note Browser",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.3.6"
   },
   "arch.RWTools.lua": {
    "author": "arch1t3cht",
@@ -108,34 +155,69 @@
    "version": "1.3.2"
   },
   "arch.SplitSections.moon": {
-   "error": "Error initializing Lua script \"arch.SplitSections.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"arch.SplitSections.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "arch1t3cht-Aegisub-Scripts"
   },
   "l0.CascadeTransforms.moon": {
-   "error": "Error initializing Lua script \"l0.CascadeTransforms.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"l0.CascadeTransforms.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "line0-Aegisub-Scripts"
   },
   "l0.Nudge.moon": {
-   "error": "Error initializing Lua script \"l0.Nudge.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"l0.Nudge.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "line0-Aegisub-Scripts"
   },
   "l0.SplitLines.moon": {
-   "error": "Error initializing Lua script \"l0.SplitLines.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"l0.SplitLines.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "line0-Aegisub-Scripts"
   },
   "l0.VerticalText.moon": {
-   "error": "Error initializing Lua script \"l0.VerticalText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"l0.VerticalText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "line0-Aegisub-Scripts"
   },
   "lyger.FbfTransform.moon": {
-   "error": "Error initializing Lua script \"lyger.FbfTransform.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.Functional: \n[string \"<chunk>\"]: 1221:  attempt to call field 'pack' (a nil value)",
-   "loaded": false,
-   "project": "lyger-Aegisub-Scripts"
+   "author": "",
+   "description": "Smoothly transforms between the first and last selected lines.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Frame-by-frame transform",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Remove tags",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/[Last Settings]",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/All",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/Default",
+     "validate": true
+    }
+   ],
+   "name": "Frame-by-frame transform",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "2.0.1"
   },
   "lyger.GradientByChar.lua": {
    "author": "lyger",
@@ -160,7 +242,7 @@
    "version": "1.3.1"
   },
   "lyger.GradientEverything.moon": {
-   "error": "Error initializing Lua script \"lyger.GradientEverything.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.Functional: \n[string \"<chunk>\"]: 1221:  attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"lyger.GradientEverything.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module SubInspector.Inspector: \n[string \"<chunk>\"]: 80:  FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths: \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:  cannot open shared object file:  No such file or directory)",
    "loaded": false,
    "project": "lyger-Aegisub-Scripts"
   },
@@ -202,14 +284,31 @@
    "project": "Myaamori-Aegisub-Scripts"
   },
   "myaa.MergeScripts.moon": {
-   "error": "Error initializing Lua script \"myaa.MergeScripts.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module myaa.ASSParser: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.Functional:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"myaa.MergeScripts.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl/Logger.moon\", line 65 error\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl.moon\", line 372 requireModules\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Autoload/myaa.MergeScripts.moon\", line 21  <main>\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\n.",
    "loaded": false,
    "project": "Myaamori-Aegisub-Scripts"
   },
   "myaa.PasteFromPad.moon": {
-   "error": "Error initializing Lua script \"myaa.PasteFromPad.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.Functional: \n[string \"<chunk>\"]: 1221:  attempt to call field 'pack' (a nil value)",
-   "loaded": false,
-   "project": "Myaamori-Aegisub-Scripts"
+   "author": "Myaamori",
+   "description": "Paste text from pad over existing lines",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Paste From Pad/Paste over from pad",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Paste From Pad/Copy to pad",
+     "validate": false
+    }
+   ],
+   "name": "Paste From Pad",
+   "project": "Myaamori-Aegisub-Scripts",
+   "version": "0.0.2"
   },
   "petzku.Accenter.lua": {
    "author": "petzku",
@@ -384,17 +483,94 @@
    "version": "0.7.0"
   },
   "phos.EditTags.moon": {
-   "error": "[string \"<chunk>\"]:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'",
+   "error": "Error initializing Lua script \"phos.EditTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "PhosCity-Aegisub-Scripts"
   },
   "phos.FoldOperations.moon": {
-   "error": "Error initializing Lua script \"phos.FoldOperations.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.Functional: \n[string \"<chunk>\"]: 1221:  attempt to call field 'pack' (a nil value)",
-   "loaded": false,
-   "project": "PhosCity-Aegisub-Scripts"
+   "author": "PhosCity",
+   "description": "Different operations on folds",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/01. Select Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/02. Comment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/03. Uncomment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/04. Comment or Uncomment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/05. Toggle Comments in Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/06. Delete Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/07. Clear Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/08. Cut Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/09. Copy Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/10. Paste Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/11. Create Fold Around Selected Lines",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/GUI",
+     "validate": false
+    }
+   ],
+   "name": "Fold Operations",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.3.2"
   },
   "phos.RemoveTags.moon": {
-   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module l0.ASSFoundation.ClassFactory:  \n[string \"<chunk>\"]:  1221:   attempt to call field 'pack' (a nil value)",
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
    "loaded": false,
    "project": "PhosCity-Aegisub-Scripts"
   },
@@ -981,16 +1157,186 @@
    "undo_steps": 0
   },
   "petzku.SmartQuotify.moon | SmartQuotify": {
+   "active": 1,
+   "applied": true,
    "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "[check possible starting single quote -- assumed apostrophe]",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}“Hello,” she said. “It’s ’fine’.”"
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
    "log": [],
-   "message": "File \"<C function>\", line -1 ipairs?\nbad argument #1 to 'ipairs' (table expected, got userdata)\n\nFile \"<stage>/Autoload/petzku.SmartQuotify.moon\", line 10  <anonymous function at lines 9-10>\nbad argument #1 to 'ipairs' (table expected, got userdata)\n\n",
-   "outcome": "failed"
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
   },
   "lyger.GradientByChar.lua | Gradient by character/Apply Gradient": {
+   "active": 3,
+   "applied": true,
    "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}G{*\\c&H0040BF&}r{*\\c&H008080&}a{*\\c&H00BF40&}d{\\c&H00FF00&}i{*\\c&H33CC00&}e{*\\c&H669900&}n{*\\c&H996600&}t {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
    "log": [],
-   "message": "File \"<C function>\", line -1 ipairs?\nbad argument #1 to 'ipairs' (table expected, got userdata)\n\nFile \"<stage>/Include/lyger/LibLyger.moon\", line 40 set_sub\nbad argument #1 to 'ipairs' (table expected, got userdata)\n\nFile \"<stage>/Autoload/lyger.GradientByChar.lua\", line 37  <anonymous function at lines 36-212>\nbad argument #1 to 'ipairs' (table expected, got userdata)\n\n",
-   "outcome": "failed"
+   "outcome": "ok",
+   "selected": [
+    3
+   ],
+   "undo_steps": 1
   },
   "ua.ChangeCase.lua | Change Case": {
    "active": 2,

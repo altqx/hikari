@@ -32,6 +32,7 @@
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -242,7 +243,36 @@ void compare(const QJsonObject &all, const QString &section, const QString &key,
         std::fprintf(stderr, "%s %s: recorded, not pinned on this platform\n", qPrintable(section), qPrintable(key));
         return;
     }
-    EXPECT_EQ(compact(*want), compact(actual)) << section.toStdString() << " " << key.toStdString();
+    // An entry whose details depend on the network (expected.json
+    // "loaded_only": the reason) pins only whether it loaded.
+    const QJsonValue loadedOnly = all.value(QStringLiteral("loaded_only")).toObject().value(key);
+    if (loadedOnly.isString()) {
+        std::fprintf(stderr, "%s %s: only its load result is pinned: %s\n", qPrintable(section), qPrintable(key),
+                     qPrintable(loadedOnly.toString()));
+        EXPECT_EQ(want->toObject().value("loaded"), actual.value("loaded")) << key.toStdString();
+        return;
+    }
+    // A script that registers macros in pairs() order (expected.json
+    // "macros_unordered": the reason) pins them by name, not by order.
+    QJsonValue pinned = *want;
+    if (all.value(QStringLiteral("macros_unordered")).toObject().value(key).isString()) {
+        const auto byName = [](QJsonObject o) {
+            QJsonArray macros = o.value("macros").toArray();
+            std::vector<QJsonValue> v(macros.begin(), macros.end());
+            std::ranges::sort(v, {}, [](const QJsonValue &m) { return m.toObject().value("name").toString(); });
+            o.insert("macros", QJsonArray::fromVariantList([&] {
+                         QVariantList l;
+                         for (const auto &m : v)
+                             l << m.toVariant();
+                         return l;
+                     }()));
+            return o;
+        };
+        pinned = byName(want->toObject());
+        actual = byName(actual);
+    }
+    EXPECT_EQ(compact(pinned).toStdString(), compact(actual).toStdString())
+        << section.toStdString() << " " << key.toStdString();
 }
 
 QJsonObject expectations() { return readJson(fixtureDir() + QStringLiteral("/expected.json")).object(); }

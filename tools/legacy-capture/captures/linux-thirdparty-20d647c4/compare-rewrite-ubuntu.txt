@@ -1,8 +1,11 @@
 legacy 20d647c4 on Linux-7.2.5-4-omarchy-x86_64-with-glibc2.39
-load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate differences
+load-time corpus: 41 legacy scripts, 41 rewrite scripts, 56 candidate differences
 - host: jit
     legacy:  "LuaJIT 2.1.1703358377"
     rewrite: "LuaJIT 2.1.1788856981"
+- host: lua_features
+    legacy:  {"break_anywhere": false, "ipairs_metamethod": false, "string_buffer": true, "table_pack": "nil"}
+    rewrite: {"break_anywhere": true, "ipairs_metamethod": true, "string_buffer": false, "table_pack": "function"}
 - module: l0.DependencyControl
     legacy:  {"error": "[string \"/t/legacy/cap-e1f5o081/hikarisub-linux-x86_64...\"]:13: FFI could not load \"PT.PreciseTimer.PreciseTimer\". Search paths:", "ok": false, "type": "string"}
     rewrite: {"ok": true, "type": "table"}
@@ -15,9 +18,15 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
 - script: arch.Line2Fbf.moon error
     legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: arch.NoteBrowser.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.NoteBrowser.moon error
     legacy:  "[string]:1: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: arch.NoteBrowser.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Note Browser/Load notes"], ["macro", "Note Browser/Jump to next note"], ["macro", "Note Browser/Jump to previous note"], ["macro", "Note Browser/Jump to next note by author"], ["macro", "Note Browser/Jump to previous note by author"], ["macro", "Note Browser/Clear all markers"]]
 - script: arch.SplitSections.moon error
     legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
@@ -33,9 +42,15 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
 - script: l0.VerticalText.moon error
     legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: lyger.FbfTransform.moon loaded
+    legacy:  false
+    rewrite: true
 - script: lyger.FbfTransform.moon error
     legacy:  "lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: lyger.FbfTransform.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/All"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"]]
 - script: lyger.GradientByChar.lua loaded
     legacy:  false
     rewrite: true
@@ -47,7 +62,7 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
     rewrite: [["macro", "Gradient by character/Apply Gradient"], ["macro", "Gradient by character/Remove Gradient"]]
 - script: lyger.GradientEverything.moon error
     legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module SubInspector.Inspector: "
 - script: lyger.LayerIncrement.lua loaded
     legacy:  false
     rewrite: true
@@ -68,10 +83,16 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
     rewrite: [["macro", "Lua Interpreter"]]
 - script: myaa.MergeScripts.moon error
     legacy:  "myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module myaa.ASSParser: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: "
+- script: myaa.PasteFromPad.moon loaded
+    legacy:  false
+    rewrite: true
 - script: myaa.PasteFromPad.moon error
     legacy:  "myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: myaa.PasteFromPad.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Paste From Pad/Paste over from pad"], ["macro", "Paste From Pad/Copy to pad"]]
 - script: petzku.Accenter.lua loaded
     legacy:  false
     rewrite: true
@@ -99,9 +120,24 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
 - script: petzku.Typewriter.lua registrations
     legacy:  []
     rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.EditTags.moon error
+    legacy:  "phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: phos.EditTags.moon script_name
+    legacy:  null
+    rewrite: "Edit Tags"
+- script: phos.EditTags.moon script_version
+    legacy:  null
+    rewrite: "1.1.0"
+- script: phos.FoldOperations.moon loaded
+    legacy:  false
+    rewrite: true
 - script: phos.FoldOperations.moon error
     legacy:  "phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: phos.FoldOperations.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Fold Operations/01. Select Fold"], ["macro", "Fold Operations/02. Comment Fold"], ["macro", "Fold Operations/03. Uncomment Fold"], ["macro", "Fold Operations/04. Comment or Uncomment Fold"], ["macro", "Fold Operations/05. Toggle Comments in Fold"], ["macro", "Fold Operations/06. Delete Fold"], ["macro", "Fold Operations/07. Clear Fold"], ["macro", "Fold Operations/08. Cut Fold"], ["macro", "Fold Operations/09. Copy Fold"], ["macro", "Fold Operations/10. Paste Fold"], ["macro", "Fold Operations/11. Create Fold Around Selected Lines"], ["macro", "Fold Operations/GUI"]]
 - script: phos.RemoveTags.moon error
     legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
@@ -132,10 +168,13 @@ load-time corpus: 41 legacy scripts, 41 rewrite scripts, 44 candidate difference
 - script: ua.iBus.lua script_version
     legacy:  "1.7"
     rewrite: "1.7.0"
-macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differences
+macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 82 candidate differences
 - host: jit
     legacy:  "LuaJIT 2.1.1703358377"
     rewrite: "LuaJIT 2.1.1788856981"
+- host: lua_features
+    legacy:  {"break_anywhere": false, "ipairs_metamethod": false, "string_buffer": true, "table_pack": "nil"}
+    rewrite: {"break_anywhere": true, "ipairs_metamethod": true, "string_buffer": false, "table_pack": "function"}
 - module: l0.DependencyControl
     legacy:  {"error": "loop or previous error loading module 'l0.DependencyControl'", "ok": false, "type": "string"}
     rewrite: {"ok": true, "type": "table"}
@@ -148,9 +187,15 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
 - script: arch.Line2Fbf.moon error
     legacy:  "arch.Line2Fbf.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: arch.NoteBrowser.moon loaded
+    legacy:  false
+    rewrite: true
 - script: arch.NoteBrowser.moon error
     legacy:  "arch.NoteBrowser.moon:39: loop or previous error loading module 'l0.Functional'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: arch.NoteBrowser.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Note Browser/Load notes"], ["macro", "Note Browser/Jump to next note"], ["macro", "Note Browser/Jump to previous note"], ["macro", "Note Browser/Jump to next note by author"], ["macro", "Note Browser/Jump to previous note by author"], ["macro", "Note Browser/Clear all markers"]]
 - script: arch.SplitSections.moon error
     legacy:  "arch.SplitSections.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
@@ -166,9 +211,15 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
 - script: l0.VerticalText.moon error
     legacy:  "l0.VerticalText.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: lyger.FbfTransform.moon loaded
+    legacy:  false
+    rewrite: true
 - script: lyger.FbfTransform.moon error
     legacy:  "lyger.FbfTransform.moon:82: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: lyger.FbfTransform.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Frame-by-frame transform/Frame-by-frame transform"], ["macro", "Frame-by-frame transform/Remove tags"], ["macro", "Frame-by-frame transform/Presets/All"], ["macro", "Frame-by-frame transform/Presets/Default"], ["macro", "Frame-by-frame transform/Presets/[Last Settings]"]]
 - script: lyger.GradientByChar.lua loaded
     legacy:  false
     rewrite: true
@@ -178,9 +229,12 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
 - script: lyger.GradientByChar.lua registrations
     legacy:  []
     rewrite: [["macro", "Gradient by character/Apply Gradient"], ["macro", "Gradient by character/Remove Gradient"]]
+- run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient ok
+    legacy:  false
+    rewrite: true
 - run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient error
     legacy:  "probe: the script did not load"
-    rewrite: "[string]:39: bad argument #1 to 'ipairs' (table expected, got userdata)"
+    rewrite: ""
 - run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient dialogs
     legacy:  null
     rewrite: []
@@ -189,13 +243,13 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
     rewrite: ["5|[DependencyControl] Skipping update check for Gradient by character (Updater disabled).\n"]
 - run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient events
     legacy:  null
-    rewrite: [{"actor": "Alice", "comment": false, "effect": "", "end_time": 3000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
+    rewrite: [{"actor": "Alice", "comment": false, "effect": "", "end_time": 3000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}G{*\\c&H0040BF&}r{*\\c&H008080&}a{*\\c&H00BF40&}d{\\c&H00FF00&}i{*\\c&H33CC00&}e{*\\c&H669900&}n{*\\c&H996600&}t {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
 - run: lyger.GradientByChar.lua | Gradient by character/Apply Gradient header
     legacy:  null
     rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
 - script: lyger.GradientEverything.moon error
     legacy:  "lyger.GradientEverything.moon:60: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module SubInspector.Inspector: "
 - script: lyger.LayerIncrement.lua loaded
     legacy:  false
     rewrite: true
@@ -237,10 +291,16 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
     rewrite: [["macro", "Lua Interpreter"]]
 - script: myaa.MergeScripts.moon error
     legacy:  "myaa.MergeScripts.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module myaa.ASSParser: "
+    rewrite: "[string]:66: Error: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: "
+- script: myaa.PasteFromPad.moon loaded
+    legacy:  false
+    rewrite: true
 - script: myaa.PasteFromPad.moon error
     legacy:  "myaa.PasteFromPad.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: myaa.PasteFromPad.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Paste From Pad/Paste over from pad"], ["macro", "Paste From Pad/Copy to pad"]]
 - script: petzku.Accenter.lua loaded
     legacy:  false
     rewrite: true
@@ -259,6 +319,18 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
 - script: petzku.JumpToNextPlus.lua registrations
     legacy:  []
     rewrite: [["macro", "Jump to Next/Start Time"], ["macro", "Jump to Next/End Time"], ["macro", "Jump to Previous/Start Time"], ["macro", "Jump to Previous/End Time"]]
+- run: petzku.SmartQuotify.moon | SmartQuotify ok
+    legacy:  false
+    rewrite: true
+- run: petzku.SmartQuotify.moon | SmartQuotify error
+    legacy:  "petzku.SmartQuotify.moon:9: bad argument #1 to 'ipairs' (table expected, got userdata)"
+    rewrite: ""
+- run: petzku.SmartQuotify.moon | SmartQuotify log
+    legacy:  []
+    rewrite: ["5|dialogue line: %s\n|{\\blur1}\"Hello,\" she said. \"It's 'fine'.\"", "5|... has quotes\n", "5|... is now %s\n|{\\blur1}“Hello,” she said. “It’s ’fine’.”", "5|dialogue line: %s\n|{\\an8\\bord2}two words\\Nand a break", "5|dialogue line: %s\n|{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign", "5|dialogue line: %s\n|{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke", "5|dialogue line: %s\n|Äpfel und straße, ½ 日本語 text"]
+- run: petzku.SmartQuotify.moon | SmartQuotify events
+    legacy:  [{"actor": "Alice", "comment": false, "effect": "", "end_time": 3000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
+    rewrite: [{"actor": "Alice", "comment": false, "effect": "[check possible starting single quote -- assumed apostrophe]", "end_time": 3000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 1000, "style": "Default", "text": "{\\blur1}“Hello,” she said. “It’s ’fine’.”"}, {"actor": "Bob", "comment": false, "effect": "", "end_time": 5500, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 3000, "style": "Default", "text": "{\\an8\\bord2}two words\\Nand a break"}, {"actor": "", "comment": false, "effect": "", "end_time": 8000, "layer": 1, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 5500, "style": "Sign", "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"}, {"actor": "", "comment": true, "effect": "", "end_time": 9000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 8000, "style": "Default", "text": "note: a comment line"}, {"actor": "", "comment": false, "effect": "karaoke", "end_time": 11000, "layer": 0, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 9000, "style": "Default", "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"}, {"actor": "Alice", "comment": false, "effect": "", "end_time": 13000, "layer": 2, "margin_l": 0, "margin_r": 0, "margin_t": 0, "start_time": 11000, "style": "Sign", "text": "Äpfel und straße, ½ 日本語 text"}]
 - run: petzku.SmartQuotify.moon | SmartQuotify header
     legacy:  ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "info YCbCr Matrix=TV.601", "style Default", "style Sign"]
     rewrite: ["info Title=L6 third-party fixture", "info ScriptType=v4.00+", "info PlayResX=1920", "info PlayResY=1080", "info WrapStyle=0", "info ScaledBorderAndShadow=yes", "style Default", "style Sign"]
@@ -271,9 +343,24 @@ macro-time corpus: 41 legacy scripts, 41 rewrite scripts, 65 candidate differenc
 - script: petzku.Typewriter.lua registrations
     legacy:  []
     rewrite: [["macro", "Typewriter/fbf"], ["macro", "Typewriter/line"], ["macro", "Unscramble/line"], ["macro", "Unscramble/half"], ["macro", "Unscramble/N fade"], ["macro", "Unscramble/N static"]]
+- script: phos.EditTags.moon error
+    legacy:  "phos.EditTags.moon:1011: 'until' expected (to close 'repeat' at line 1001) near '_continue_0'"
+    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "
+- script: phos.EditTags.moon script_name
+    legacy:  null
+    rewrite: "Edit Tags"
+- script: phos.EditTags.moon script_version
+    legacy:  null
+    rewrite: "1.1.0"
+- script: phos.FoldOperations.moon loaded
+    legacy:  false
+    rewrite: true
 - script: phos.FoldOperations.moon error
     legacy:  "phos.FoldOperations.moon:6: loop or previous error loading module 'l0.DependencyControl'"
-    rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.Functional: "
+    rewrite: ""
+- script: phos.FoldOperations.moon registrations
+    legacy:  []
+    rewrite: [["macro", "Fold Operations/01. Select Fold"], ["macro", "Fold Operations/02. Comment Fold"], ["macro", "Fold Operations/03. Uncomment Fold"], ["macro", "Fold Operations/04. Comment or Uncomment Fold"], ["macro", "Fold Operations/05. Toggle Comments in Fold"], ["macro", "Fold Operations/06. Delete Fold"], ["macro", "Fold Operations/07. Clear Fold"], ["macro", "Fold Operations/08. Cut Fold"], ["macro", "Fold Operations/09. Copy Fold"], ["macro", "Fold Operations/10. Paste Fold"], ["macro", "Fold Operations/11. Create Fold Around Selected Lines"], ["macro", "Fold Operations/GUI"]]
 - script: phos.RemoveTags.moon error
     legacy:  "phos.RemoveTags.moon:6: loop or previous error loading module 'l0.DependencyControl'"
     rewrite: "[string]:66: Error: [DependencyControl] Error in required module l0.ASSFoundation: "

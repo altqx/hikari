@@ -1,8 +1,8 @@
--- L6 fixture: the LuaJIT build's Lua 5.2 extensions and string.buffer, as
--- each legacy platform had them (R5-per-platform): the legacy Windows build
--- defines LUAJIT_ENABLE_LUA52COMPAT and LUAJIT_DISABLE_BUFFER
--- (Thirdparty/Build/LuaJit/LuaJit.vcxproj); the legacy Linux package used its
--- distribution's LuaJIT, built with neither.
+-- L6 fixture: the LuaJIT build's Lua 5.2 extensions and string.buffer. The
+-- legacy Windows build defines LUAJIT_ENABLE_LUA52COMPAT and
+-- LUAJIT_DISABLE_BUFFER (Thirdparty/Build/LuaJit/LuaJit.vcxproj); the rewrite
+-- does on every platform (L6-lua52-linux; the legacy Linux package's
+-- distribution LuaJIT had neither).
 script_name = "LuaJIT build"
 
 aegisub.register_macro("Show", "", function(subs)
