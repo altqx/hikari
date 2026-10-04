@@ -5958,7 +5958,7 @@ private slots:
     // the edit). The rewrite's video shows the committed Document, and the
     // box's commit is one: the video takes the new times either way.
     // A5: karaoke mode in the audio box with the real mouse and keys: the
-    // Karaoke button (zoom in by 20, legacy's AUDIO_VERTICAL_ZOOM slip), the
+    // Karaoke button (zoom in by 20, into AUDIO_HORIZONTAL_ZOOM), the
     // syllables' plays through the player (the output without a device),
     // Next through the syllables into the next Line, a boundary dragged, a
     // letter split and a boundary joined, each one "Changing time on audio
@@ -6004,8 +6004,10 @@ private slots:
         QCOMPARE(audio.horizontalZoom(), 30);
         QCOMPARE(view.samplesPercent(), 30);
         QVERIFY(store->boolean("audio.karaoke"));
-        QCOMPARE(store->integer("audio.verticalZoom"), 30); // legacy wrote the zoom there
-        QCOMPARE(audio.verticalZoom(), 50);                 // the slider itself stays
+        // A5-karaoke-zoom-option: the horizontal zoom's setting (legacy wrote AUDIO_VERTICAL_ZOOM)
+        QCOMPARE(store->integer("audio.horizontalZoom"), 30);
+        QCOMPARE(store->integer("audio.verticalZoom"), 50);
+        QCOMPARE(audio.verticalZoom(), 50);
         QVERIFY(item("audioKaraoke")->property("checked").toBool());
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
 
@@ -6107,7 +6109,7 @@ private slots:
         QVERIFY(!audio.karaoke());
         QCOMPARE(audio.horizontalZoom(), 50);
         QVERIFY(!store->boolean("audio.karaoke"));
-        QCOMPARE(store->integer("audio.verticalZoom"), 50);
+        QCOMPARE(store->integer("audio.horizontalZoom"), 50);
         press(Qt::Key_H);
     }
 

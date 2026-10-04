@@ -173,8 +173,60 @@ QJsonObject state(const AudioKaraoke &k, int curStart)
 
 } // namespace
 
+namespace {
+
+// The approved departures the capture shows (docs/qt/compatibility-decisions.md):
+// where the rewrite's state or answer is not legacy's, the outcome approved.
+struct Departure {
+    const char *name;
+    QJsonObject state; // the keys that differ from legacy's, as the rewrite has them
+    QJsonValue result; // an answer that differs, as the rewrite gives it
+};
+QJsonArray strs(std::initializer_list<const char *> values)
+{
+    QJsonArray out;
+    for (const char *v : values)
+        out.append(QString::fromUtf8(v));
+    return out;
+}
+const std::map<std::pair<std::string, std::string>, Departure> &departures()
+{
+    static const std::map<std::pair<std::string, std::string>, Departure> table{
+        // legacy kept one time for two syllables and its GetText read past it
+        {{"k-unclosed-end", "split"},
+         {"A5-kara-unclosed", {{"times", QJsonArray{200, 1000}}, {"text", "{\\k20}ka{\\k80}{0"}}, {}}},
+        // legacy lost "b{c"
+        {{"auto-unclosed", "split"},
+         {"A5-auto-unclosed",
+          {{"syls", strs({"a", "b{c"})}, {"tags", strs({"k", "k"})}, {"times", QJsonArray{500, 1000}},
+           {"stripped", strs({"a", "bb{c"})}, {"text", "{\\k50}a{\\k50}b{c"}},
+          {}}},
+        // legacy split "{}o" into "{" and "}o"
+        {{"kf-ko-K", "splitsyl 1 1"},
+         {"A5-split-last-letter",
+          {{"syls", strs({"kara", "{}o", "", "{}ke"})}, {"stripped", strs({"kara", "o", "", "ke"})},
+           {"text", "{\\kf50}kara{\\K25}o{\\k25}{\\k40}ke"}},
+          {}}},
+        // legacy split "{}ka" into "{}" and "ka", and the next split followed it
+        {{"k-split-end", "splitsyl 0 2"},
+         {"A5-split-last-letter",
+          {{"syls", strs({"{}ka", ""})}, {"stripped", strs({"ka", ""})}, {"text", "{\\k10}ka{\\k10}"}},
+          {}}},
+        {{"k-split-end", "splitsyl 0 0"},
+         {"A5-split-last-letter",
+          {{"syls", strs({"", "{}ka", ""})}, {"stripped", strs({"", "ka", ""})},
+           {"text", "{\\k5}{\\k5}ka{\\k10}"}},
+          {}}},
+        {{"letters-quirk", "letters 0 2"}, {"A5-split-last-letter", {}, strs({"{}ka", ""})}},
+        {{"letters-quirk", "letters 1 2"}, {"A5-split-last-letter", {}, strs({"{}ra", ""})}},
+    };
+    return table;
+}
+
+} // namespace
+
 // Every case of the probe replayed through AudioKaraoke: each state and
-// answer is legacy's, but for the proposed A5-kara-unclosed (the README).
+// answer is legacy's, but for the approved departures above (the README).
 TEST(AudioKaraokeCapture, ReplaysTheLegacyObservations)
 {
     const auto cases = readCases(HIKARI_KARAOKE_CASES);
@@ -189,32 +241,42 @@ TEST(AudioKaraokeCapture, ReplaysTheLegacyObservations)
         }
     ASSERT_EQ(observed.size(), cases.size());
     const AudioView view = minuteView();
-    int compared = 0;
+    int compared = 0, departed = 0;
     for (const auto &c : cases) {
         SCOPED_TRACE(c.name);
         const auto ops = observed.at(c.name);
         AudioKaraoke k;
         k.split({u(c.tl.empty() ? c.text : c.tl), c.start, c.end}, c.autoSplit, c.everyN);
         int curStart = c.start;
-        auto compare = [&](const QJsonObject &expected, const std::string &op) {
+        auto compare = [&](const QJsonObject &expected, const std::string &op, const QJsonValue &result) {
             SCOPED_TRACE(op);
             auto actual = state(k, curStart);
             QJsonObject legacy = expected["state"].toObject();
-            if (c.name == "k-unclosed-end") {
-                // A5-kara-unclosed (proposed): legacy kept one time for two syllables
-                EXPECT_EQ(legacy["times"].toArray(), QJsonArray({200}));
-                EXPECT_EQ(actual["times"].toArray(), QJsonArray({200, 1000}));
-                EXPECT_FALSE(legacy.contains("text"));
-                actual.remove("times");
-                actual.remove("text");
-                legacy.remove("times");
+            const auto found = departures().find({c.name, op});
+            if (found != departures().end()) {
+                const Departure &d = found->second;
+                SCOPED_TRACE(d.name);
+                ++departed;
+                for (auto it = d.state.begin(); it != d.state.end(); ++it) {
+                    EXPECT_EQ(actual[it.key()], it.value()) << it.key().toStdString();
+                    actual.remove(it.key());
+                    legacy.remove(it.key());
+                }
+                if (!d.result.isNull()) {
+                    EXPECT_NE(expected["result"], d.result); // legacy's answer is the departure's premise
+                    EXPECT_EQ(result, d.result);
+                } else if (expected.contains("result")) {
+                    EXPECT_EQ(result, expected["result"]);
+                }
+            } else if (expected.contains("result")) {
+                EXPECT_EQ(result, expected["result"]);
             }
             EXPECT_EQ(QJsonDocument(actual).toJson(QJsonDocument::Compact).toStdString(),
                       QJsonDocument(legacy).toJson(QJsonDocument::Compact).toStdString());
             ++compared;
         };
         ASSERT_EQ(ops.size(), qsizetype(c.ops.size()) + 1);
-        compare(ops[0].toObject(), "split");
+        compare(ops[0].toObject(), "split", {});
         for (std::size_t i = 0; i < c.ops.size(); i++) {
             std::istringstream in(c.ops[i]);
             std::string op;
@@ -254,12 +316,11 @@ TEST(AudioKaraokeCapture, ReplaysTheLegacyObservations)
             } else {
                 FAIL() << "unknown op " << op;
             }
-            if (expected.contains("result"))
-                EXPECT_EQ(result, expected["result"]) << c.ops[i];
-            compare(expected, c.ops[i]);
+            compare(expected, c.ops[i], result);
         }
     }
     EXPECT_GE(compared, 60);
+    EXPECT_EQ(departed, static_cast<int>(departures().size())); // each one met
 }
 
 // ---- the syllable model ------------------------------------------------------
@@ -312,10 +373,14 @@ TEST(AudioKaraoke, SplittingASyllableHalvesItsTime)
     ASSERT_TRUE(k.splitSyllable(0, 0, 0));
     EXPECT_EQ(s(k.syllables()[0]), "");
     EXPECT_FALSE(k.splitSyllable(0, 0, 0));
-    // after the last letter legacy splits at the raw position (kept)
-    auto quirk = split("{\\k20}o", 0, 1000);
-    ASSERT_TRUE(quirk.splitSyllable(0, 1, 0));
-    EXPECT_EQ(s(quirk.text(0)), "{\\k10}{{\\k10}}o");
+    // A5-split-last-letter (approved): after the last letter the split is
+    // right after it (legacy split at the raw position: "{\k10}{{\k10}}o")
+    auto last = split("{\\k20}o", 0, 1000);
+    ASSERT_TRUE(last.splitSyllable(0, 1, 0));
+    EXPECT_EQ(s(last.text(0)), "{\\k10}o{\\k10}");
+    auto tags = split("{\\k20}ke{\\i0}", 0, 1000);
+    EXPECT_EQ(tags.letters(0, 2), std::pair(std::u16string(u"{}ke"), std::u16string(u"{\\i0}")));
+    EXPECT_EQ(tags.letters(0, 5), std::pair(std::u16string(u"{}ke"), std::u16string(u"{\\i0}")));
 }
 
 TEST(AudioKaraoke, RetimingAndTheGetTextRounding)
@@ -359,13 +424,31 @@ TEST(AudioKaraoke, TheCharacterClassesComeFromTheCaller)
 
 TEST(AudioKaraoke, DeparturesAndKeptLosses)
 {
-    // A5-kara-unclosed (proposed): the missing time ends at the Line's end
+    // A5-kara-unclosed (approved): the missing time ends at the Line's end
     const auto unclosed = split("{\\k20}ka{\\k30", 0, 1000);
     EXPECT_EQ(unclosed.times(), (std::vector<int>{200, 1000}));
     EXPECT_EQ(unclosed.tags().size(), 2u);
-    // kept (A5-auto-unclosed, proposed): an unclosed block loses the rest
-    EXPECT_EQ(s(split("ab{c", 0, 1000, true).text(0)), "{\\k100}a");
+    // A5-auto-unclosed (approved): an unclosed block stays in the last
+    // syllable (legacy lost it: "{\k100}a")
+    EXPECT_EQ(s(split("ab{c", 0, 1000, true).text(0)), "{\\k50}a{\\k50}b{c");
+    EXPECT_EQ(s(split("kara{c", 0, 1000, true).text(0)), "{\\k50}ka{\\k50}ra{c");
+    EXPECT_EQ(s(split("ka{c", 0, 1000, true).text(0)), "{\\k100}ka{c"); // no split: the whole text, as legacy
     EXPECT_EQ(s(split("ab{c", 0, 1000, false).text(0)), "{\\k100}ab{c");
+}
+
+TEST(AudioKaraoke, TheSplitComparesTheCallersLowerCase)
+{
+    // U1-unicode-case: the UI's lower case is Unicode's; ASCII's folds A-Z only
+    EXPECT_EQ(strings(split("KARA", 0, 1000, true).syllables()), (std::vector<std::string>{"KA", "RA"}));
+    const std::string text = "K\xC3\x81RA"; // KÁRA: neither lower case makes Á an "a"
+    EXPECT_EQ(strings(split(text, 0, 1000, true).syllables()), (std::vector<std::string>{"K\xC3\x81RA"}));
+    auto classes = KaraokeCharClass::ascii();
+    classes.lower = [](char16_t c) { return c == u'\u0130' ? u'i' : KaraokeCharClass::ascii().lower(c); };
+    AudioKaraoke k; // "İKİ": İ lowers to i, a vowel
+    k.split({u"\u0130K\u0130", 0, 900}, true, false, classes);
+    EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"\xC4\xB0", "K\xC4\xB0"}));
+    k.split({u"\u0130K\u0130", 0, 900}, true, false);
+    EXPECT_EQ(k.count(), 1);
 }
 
 TEST(AudioKaraoke, LegacyHelpers)

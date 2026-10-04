@@ -306,11 +306,12 @@ void AudioController::toggleKaraoke()
     const int value = application::legacyKaraokeZoom(m_hasKara, m_horizontalZoom, m_lastHorizontalZoom);
     if (m_hasKara)
         splitKaraoke();
-    // SetSamplesPercent, the slider, and (legacy's slip) AUDIO_VERTICAL_ZOOM
+    // SetSamplesPercent, the slider and its setting (A5-karaoke-zoom-option:
+    // legacy wrote AUDIO_VERTICAL_ZOOM)
     m_view.setSamplesPercent(value, true, 0.5f, m_scrollbarThickness);
     m_horizontalZoom = std::clamp(value, 0, 100);
     if (m_store) {
-        m_store->set("audio.verticalZoom", value);
+        m_store->set("audio.horizontalZoom", value);
         m_store->set("audio.karaoke", m_hasKara);
     }
     if (m_view.hasSource())

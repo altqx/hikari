@@ -273,6 +273,7 @@ void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow 
 // A5: legacy iswctype(ch, _SPACE) and (ch, _SPACE | _PUNCT) as the Windows
 // CRT answers them: ASCII by the C tables; past it GetStringTypeW's C1_SPACE
 // and C1_PUNCT, Unicode's spaces and its punctuation and symbol categories.
+// Lower case by Unicode (U1-unicode-case).
 application::KaraokeCharClass karaokeCharClass()
 {
     const auto ascii = application::KaraokeCharClass::ascii();
@@ -284,6 +285,8 @@ application::KaraokeCharClass karaokeCharClass()
         const QChar ch(c);
         return ch.isPunct() || ch.isSymbol();
     };
+    // U1-unicode-case: Unicode's lower case (one unit to one, as wx's Lower)
+    classes.lower = [](char16_t c) { return static_cast<char16_t>(QChar(c).toLower().unicode()); };
     return classes;
 }
 

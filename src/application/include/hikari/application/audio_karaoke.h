@@ -24,11 +24,14 @@ namespace hikari::application {
 
 // Legacy iswctype(ch, _SPACE) and iswctype(ch, _SPACE | _PUNCT) as the
 // Windows CRT answers them (GetStringTypeW's C1_SPACE and C1_PUNCT for
-// characters past Latin-1). The default answers ASCII only; the UI gives
-// Unicode's space, punctuation and symbol categories.
+// characters past Latin-1), and the lower case Split compares (legacy
+// wxString::Lower; U1-unicode-case: every letter by Unicode, one UTF-16 unit
+// to one). The default answers ASCII only; the UI gives Unicode's space,
+// punctuation and symbol categories and its lower case.
 struct KaraokeCharClass {
     std::function<bool(char16_t)> space;
     std::function<bool(char16_t)> punct;
+    std::function<char16_t(char16_t)> lower;
     static KaraokeCharClass ascii();
 };
 
@@ -58,7 +61,8 @@ public:
     // otherwise split automatically (AUDIO_KARAOKE_SPLIT_MODE, `autoSplit`:
     // after a vowel, n, space or punctuation not followed by space or
     // punctuation, with AUDIO_MERGE_EVERY_N_WITH_SYLLABLE's `everyN`) or at
-    // spaces and \N \h \n, the Line's duration shared out.
+    // spaces and \N \h \n, the Line's duration shared out. A5-auto-unclosed:
+    // what an unclosed "{" kept from the last split stays in the last syllable.
     void split(const Line &line, bool autoSplit, bool everyN, const KaraokeCharClass &classes = KaraokeCharClass::ascii());
     void clear();
     // Legacy GetText: each syllable with its \k tag (the time from the
@@ -66,12 +70,13 @@ public:
     std::u16string text(int curStartMs) const;
     // Legacy Join: syllable `i` takes the next one's text (every "{}" in the
     // result removed), its end and keeps its own tag. False (nothing done)
-    // for the last syllable (A5-join-last, proposed).
+    // for the last syllable (A5-join-last).
     bool join(int i);
     // Legacy SplitSyl: syllable `i` split before its `letters`th visible
     // character, the new boundary half way (ZEROIT), the second half a \k.
     bool splitSyllable(int i, int letters, int curStartMs);
-    // Legacy GetLetters and GetTextStripped.
+    // Legacy GetLetters (A5-split-last-letter: after the last letter the split
+    // is right after it, not at the raw position) and GetTextStripped.
     std::pair<std::u16string, std::u16string> letters(int i, int letters) const;
     std::u16string stripped(int i) const;
 

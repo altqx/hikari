@@ -155,7 +155,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     const int w = view.width(), h = view.height();
     AudioKaraoke *karaoke = kara.karaoke; // legacy hasKara
     const bool hasKara = karaoke != nullptr;
-    // A5-stale-syllable (R3, proposed): Grabbed can be left from a Line with
+    // A5-stale-syllable (R3, approved): Grabbed can be left from a Line with
     // more syllables; legacy then read and wrote past the syllable times.
     // Such an index reads and moves nothing.
     auto validGrab = [&] { return hasKara && m_grabbed >= 0 && m_grabbed < karaoke->count(); };

@@ -208,7 +208,8 @@ public:
     // A5: karaoke mode (legacy AudioBox::OnKaraoke and OnSplitMode, and the
     // display's Karaoke). Switching it on splits the active Line into
     // syllables and zooms in by 20 (legacy lastHorizontalZoom); off, the zoom
-    // goes back. Legacy wrote that zoom into AUDIO_VERTICAL_ZOOM (kept).
+    // goes back, and AUDIO_HORIZONTAL_ZOOM takes it (A5-karaoke-zoom-option:
+    // legacy wrote it into AUDIO_VERTICAL_ZOOM).
     bool karaoke() const { return m_hasKara; }
     bool karaokeSplitMode() const { return m_karaAuto; }
     Q_INVOKABLE void toggleKaraoke();

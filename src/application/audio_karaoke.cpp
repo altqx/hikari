@@ -40,12 +40,17 @@ void wxReplaceAll(u16 &s, std::u16string_view from, std::u16string_view to)
     s = out + s.substr(at);
 }
 
-// wxString::Lower on the characters the split compares (ASCII letters).
-u16 lowerAscii(u16 s)
+char16_t lowerAscii(char16_t c)
+{
+    return c >= u'A' && c <= u'Z' ? static_cast<char16_t>(c - u'A' + u'a') : c;
+}
+
+// wxString::Lower, one UTF-16 unit to one (U1-unicode-case: by Unicode, the
+// classes' lower case; ASCII without one).
+u16 lowered(u16 s, const KaraokeCharClass &classes)
 {
     for (auto &c : s)
-        if (c >= u'A' && c <= u'Z')
-            c = static_cast<char16_t>(c - u'A' + u'a');
+        c = classes.lower ? classes.lower(c) : lowerAscii(c);
     return s;
 }
 
@@ -113,6 +118,7 @@ KaraokeCharClass KaraokeCharClass::ascii()
     classes.punct = [](char16_t c) {
         return c > 32 && c < 127 && !(c >= u'0' && c <= u'9') && !(c >= u'a' && c <= u'z') && !(c >= u'A' && c <= u'Z');
     };
+    classes.lower = lowerAscii;
     return classes;
 }
 
@@ -156,9 +162,9 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, bool everyN, const Ka
     u16 Text = line.text;
     const int len = static_cast<int>(Text.size());
     int stime = line.startMs;
-    const u16 textlow = lowerAscii(Text);
+    const u16 textlow = lowered(Text, classes);
 
-    // A5-kara-unclosed (R3, proposed): a text ending inside a \k tag left
+    // A5-kara-unclosed (R3, approved): a text ending inside a \k tag left
     // legacy with fewer times (and tags) than syllables, which GetText, the
     // drawing and the mouse then read past; the missing ones end at the
     // Line's end, as a \k.
@@ -259,6 +265,12 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, bool everyN, const Ka
             start = i;
         }
     }
+    // A5-auto-unclosed (approved): inside an unclosed "{" the closing split
+    // never comes and legacy lost the rest; it is the last syllable instead
+    if (!m_syls.empty() && start < Text.size()) {
+        m_syls.push_back(Text.substr(start));
+        m_tags.push_back(u"k");
+    }
     const int dur = line.endMs - line.startMs;
     // legacy divides before it checks for no syllables (the result is unused then)
     const int times = m_syls.empty() ? 0 : static_cast<int>(float(dur) / float(m_syls.size()));
@@ -298,7 +310,7 @@ std::u16string AudioKaraoke::text(int curStartMs) const
 
 bool AudioKaraoke::join(int i)
 {
-    // A5-join-last (R3, proposed): legacy joined the last syllable with the
+    // A5-join-last (R3, approved): legacy joined the last syllable with the
     // one past the end (an out-of-range read); nothing happens instead.
     if (i < 0 || static_cast<std::size_t>(i) + 1 >= m_syls.size())
         return false;
@@ -330,9 +342,21 @@ std::pair<std::u16string, std::u16string> AudioKaraoke::letters(int i, int nlett
         else if (!block)
             counter++;
     }
-    // after the last letter legacy splits at the raw position, braces or not
-    const auto n = static_cast<std::size_t>(std::max(nletters, 0));
-    return {wxMid(syl, 0, n), wxMid(syl, n)};
+    // A5-split-last-letter (approved): legacy split at the raw position here,
+    // inside the tags; the split is right after the last letter instead (all
+    // the syllable before it when it has none)
+    std::size_t after = syl.size();
+    block = false;
+    for (std::size_t c = 0; c < syl.size(); c++) {
+        const char16_t ch = syl[c];
+        if (ch == u'{')
+            block = true;
+        else if (ch == u'}')
+            block = false;
+        else if (!block)
+            after = c + 1;
+    }
+    return {wxMid(syl, 0, after), wxMid(syl, after)};
 }
 
 std::u16string AudioKaraoke::stripped(int i) const
