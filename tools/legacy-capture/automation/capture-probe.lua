@@ -156,10 +156,144 @@ local modules = { "aegisub.re", "aegisub.unicode", "aegisub.lfs", "lfs", "lpeg",
                   "aegisub.util", "aegisub.clipboard", "karaskel", "utils", "unicode", "re", "clipboard",
                   "moonscript", "l0.DependencyControl", "json" }
 
-local function capture_corpus()
+-- Macro runs (L6 third-party corpus): with HIKARI_CAPTURE_RUNS naming a runs
+-- file (tests/fixtures/automation-thirdparty/runs.json) and a subtitles
+-- object (the corpus macro, not the load-time capture), each listed macro
+-- runs right after its script loads, on the probe's own document, with the
+-- selection given as event ordinals (Dialogue and Comment lines, from 1).
+-- aegisub.dialog.display is answered by the probe from the run's entry, so
+-- no dialog is shown (legacy would deadlock: A33-dialog-deadlock), and
+-- aegisub.log is recorded instead of shown. The run's document is recorded
+-- and the document restored before the next run.
+local function load_runs()
+    local path = setting("HIKARI_CAPTURE_RUNS")
+    if path == nil or path == "" then return {} end
+    local f = assert(io.open(path, "rb"))
+    local text = f:read("*a")
+    f:close()
+    local by_script = {}
+    for _, run in ipairs(require("json").decode(text).runs) do
+        by_script[run.script] = by_script[run.script] or {}
+        table.insert(by_script[run.script], run)
+    end
+    return by_script
+end
+
+local function events_of(subs)
+    local idx = {}
+    for i = 1, #subs do
+        if subs[i].class == "dialogue" then idx[#idx + 1] = i end
+    end
+    return idx
+end
+
+local function dump_document(subs)
+    local events, header = {}, {}
+    for i = 1, #subs do
+        local l = subs[i]
+        if l.class == "dialogue" then
+            events[#events + 1] = { comment = l.comment, layer = l.layer, start_time = l.start_time,
+                end_time = l.end_time, style = l.style, actor = l.actor, margin_l = l.margin_l,
+                margin_r = l.margin_r, margin_t = l.margin_t, effect = l.effect, text = l.text }
+        elseif l.class == "style" then
+            header[#header + 1] = "style " .. tostring(l.name)
+        elseif l.class == "info" then
+            header[#header + 1] = "info " .. tostring(l.key) .. "=" .. tostring(l.value)
+        end
+    end
+    return { events = events, header = header }
+end
+
+-- The answer to a dialog: each named control's initial value, then the
+-- run's values; the button by label (true/false for the default OK/Cancel).
+local function answer_dialog(run, record)
+    local n = 0
+    return function(controls, buttons, ids)
+        n = n + 1
+        local request = { buttons = buttons or {}, controls = {} }
+        for _, c in ipairs(controls) do
+            request.controls[#request.controls + 1] = tostring(c.class) .. ":" .. tostring(c.name or "")
+        end
+        record.dialogs[#record.dialogs + 1] = request
+        local answer = run.dialogs and run.dialogs[n]
+        if not answer then error("probe: no answer for dialog " .. n) end
+        local values = {}
+        for _, c in ipairs(controls) do
+            if c.name then
+                local class = tostring(c.class):lower()
+                local v
+                if class == "edit" or class == "textbox" then v = c.text or c.value or ""
+                elseif class == "checkbox" then v = c.value and true or false
+                elseif class == "intedit" or class == "floatedit" then v = tonumber(c.value) or 0
+                else v = c.value or c.text or "" end
+                values[c.name] = v
+            end
+        end
+        for k, v in pairs(answer.values or {}) do values[k] = v end
+        local button = answer.button
+        if buttons == nil or #buttons == 0 then button = (button == "OK") end
+        return button, values
+    end
+end
+
+local function run_macro(subs, run, procs)
+    local record = { macro = run.macro, selection = run.selection, active = run.active, dialogs = {}, log = {} }
+    local proc = procs[run.macro]
+    if not proc then
+        record.ok = false
+        record.error = "probe: the script registered no macro named " .. run.macro
+        return record
+    end
+    local saved = {}
+    for i = 1, #subs do saved[i] = subs[i] end
+    local first = events_of(subs)
+    local sel = {}
+    for _, o in ipairs(run.selection) do sel[#sel + 1] = first[o] end
+    local real_display, real_log = aegisub.dialog.display, aegisub.log
+    aegisub.dialog.display = answer_dialog(run, record)
+    aegisub.log = function(...)
+        local parts = {}
+        for i = 1, select("#", ...) do parts[i] = tostring((select(i, ...))) end
+        record.log[#record.log + 1] = table.concat(parts, "|")
+    end
+    local ok, a, b = xpcall(function() return proc(subs, sel, first[run.active]) end, debug.traceback)
+    aegisub.dialog.display, aegisub.log = real_display, real_log
+    record.ok = ok
+    if not ok then
+        record.error = tostring(a):match("[^\n]*")
+    else
+        local after = events_of(subs)
+        local base = (after[1] or (#subs + 1)) - 1
+        if type(a) == "table" then
+            record.returned_selection = {}
+            for _, i in ipairs(a) do record.returned_selection[#record.returned_selection + 1] = i - base end
+        end
+        if type(b) == "number" then record.returned_active = b - base end
+    end
+    record.document = dump_document(subs)
+    -- Back to the document as it was: the events are deleted and appended
+    -- again in order (the header is left as the run left it).
+    local now = events_of(subs)
+    if #now > 0 then subs.deleterange(now[1], #subs) end
+    for i = first[1] or (#saved + 1), #saved do subs.append(saved[i]) end
+    return record
+end
+
+local function capture_corpus(subs)
+    local runs = subs and load_runs() or {}
     local result = { case = "corpus", lua_version = _VERSION, jit = jit and jit.version or nil,
                      package_path = package.path, package_cpath = package.cpath, modules = {}, scripts = {},
                      shared_package_loaded = true }
+    -- The LuaJIT build's Lua 5.2 extensions (LUAJIT_ENABLE_LUA52COMPAT: the
+    -- legacy Windows build has them, the Linux package's distribution LuaJIT
+    -- does not) and string.buffer (LUAJIT_DISABLE_BUFFER on legacy Windows).
+    local ipairs_meta = false
+    pcall(function()
+        for _ in ipairs(setmetatable({}, { __ipairs = function() ipairs_meta = true; return function() end end })) do end
+    end)
+    result.lua_features = { table_pack = type(table.pack), ipairs_metamethod = ipairs_meta,
+                            break_anywhere = loadstring("repeat break; local x = 1 until true") ~= nil,
+                            string_buffer = (pcall(require, "string.buffer")) }
     local api = {}
     for k, v in pairs(aegisub) do api[#api + 1] = k .. ":" .. type(v) end
     table.sort(api)
@@ -181,6 +315,7 @@ local function capture_corpus()
     for path in list:lines() do
         if path ~= "" then
             local rec = { file = path:match("[^/\\]+$"), registrations = {} }
+            local procs = {}
             -- Each legacy script has a Lua state of its own; here a script runs
             -- in the real globals (modules such as DependencyControl read
             -- script_* from them), cleared of the probe's own script_* and
@@ -189,6 +324,7 @@ local function capture_corpus()
             for k, v in pairs(_G) do saved[k] = v end
             script_name, script_description, script_author, script_version, script_namespace = nil, nil, nil, nil, nil
             aegisub.register_macro = function(name, desc, proc, valid, active)
+                if type(name) == "string" then procs[name] = proc end
                 rec.registrations[#rec.registrations + 1] = { kind = "macro", name = typed(name), description = typed(desc),
                     processing = type(proc), validation = type(valid), is_active = type(active) }
             end
@@ -226,6 +362,17 @@ local function capture_corpus()
             rec.script_author = typed(rawget(_G, "script_author"))
             rec.script_version = typed(rawget(_G, "script_version"))
             rec.script_namespace = typed(rawget(_G, "script_namespace"))
+            -- The script's macros run in its globals, before they are restored.
+            if runs[rec.file] then
+                rec.runs = {}
+                for _, run in ipairs(runs[rec.file]) do
+                    if rec.loaded then
+                        rec.runs[#rec.runs + 1] = run_macro(subs, run, procs)
+                    else
+                        rec.runs[#rec.runs + 1] = { macro = run.macro, ok = false, error = "probe: the script did not load" }
+                    end
+                end
+            end
             for k in pairs(_G) do
                 if saved[k] == nil then rawset(_G, k, nil) end
             end
@@ -238,8 +385,8 @@ local function capture_corpus()
     out(json(result))
 end
 
-aegisub.register_macro("Capture " .. (#cases + 1) .. " corpus", "corpus", function()
-    local ok, err = pcall(capture_corpus)
+aegisub.register_macro("Capture " .. (#cases + 1) .. " corpus", "corpus", function(subs)
+    local ok, err = pcall(capture_corpus, subs)
     if not ok then out(json({ case = "corpus", ok = false, error = tostring(err) })) end
 end)
 

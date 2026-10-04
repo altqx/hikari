@@ -1,0 +1,22 @@
+[Script Info]
+; L6 third-party corpus: the document the macro runs start from
+Title: L6 third-party fixture
+ScriptType: v4.00+
+PlayResX: 1920
+PlayResY: 1080
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,60,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1
+Style: Sign,Arial,48,&H0000FFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,1,0,8,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:01.00,0:00:03.00,Default,Alice,0,0,0,,{\blur1}"Hello," she said. "It's 'fine'."
+Dialogue: 0,0:00:03.00,0:00:05.50,Default,Bob,0,0,0,,{\an8\bord2}two words\Nand a break
+Dialogue: 1,0:00:05.50,0:00:08.00,Sign,,0,0,0,,{\pos(960,540)\c&H0000FF&}Grad{\c&H00FF00&}ient {\c&HFF0000&}sign
+Comment: 0,0:00:08.00,0:00:09.00,Default,,0,0,0,,note: a comment line
+Dialogue: 0,0:00:09.00,0:00:11.00,Default,,0,0,0,karaoke,{\k20}ka{\k30}ra{\k25}o{\k40}ke
+Dialogue: 2,0:00:11.00,0:00:13.00,Sign,Alice,0,0,0,,Äpfel und straße, ½ 日本語 text

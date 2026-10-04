@@ -215,20 +215,32 @@ def finish(proc):
     return (log or "")[-3000:]
 
 
-def automation(spec, package, display, workdir, probe_source):
-    """S3: the legacy automation host, observed through the app itself."""
+def automation(spec, package, display, workdir, probe_source, corpus=None):
+    """S3: the legacy automation host, observed through the app itself.
+
+    corpus (L6 third-party corpus, --corpus-dir): a dict with "scripts" (the
+    directory whose scripts become the corpus instead of the bundled Autoload,
+    which is then only emptied), "include" (files added to the package's
+    Include; a bundled file is never replaced), "document" (the probe's
+    document) and "runs" (HIKARI_CAPTURE_RUNS for the corpus macro). The
+    bundled-startup part is skipped then.
+    """
     obs = []
     doc_text = "[Script Info]\nScriptType: v4.00+\n\n[Events]\n" \
                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n" \
                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,probe\n"
+    if corpus and corpus.get("document"):
+        doc_text = Path(corpus["document"]).read_text(encoding="utf-8")
 
     # 1. Startup with the bundled Autoload scripts as shipped: what the user sees.
+    if corpus:
+        return automation_probe(spec, package, display, workdir, probe_source, obs, doc_text, corpus)
     scratch, app = unpack(package, workdir)
     autoload = app.parent / "Automation" / "automation" / "Autoload"
     shipped = sorted(p.name for p in autoload.glob("*") if p.is_file())
     doc = scratch / "doc" / "probe.ass"
     doc.parent.mkdir()
-    doc.write_text(doc_text)
+    doc.write_text(doc_text, encoding="utf-8")
     rec = {"part": "bundled-autoload-startup", "autoload_scripts": shipped, "status": "timeout", "popups": []}
     proc = subprocess.Popen([str(app), str(doc)], cwd=app.parent,
                             env={**os.environ, "DISPLAY": display, "HOME": str(scratch / "home")},
@@ -247,17 +259,36 @@ def automation(spec, package, display, workdir, probe_source):
         rec["app_log_tail"] = finish(proc)
         obs.append(rec)
         shutil.rmtree(scratch, ignore_errors=True)
+    return automation_probe(spec, package, display, workdir, probe_source, obs, doc_text, None)
 
-    # 2. The probe: Autoload emptied (its scripts become the corpus), the
-    # probe's macros bound to Ctrl+Shift+F<k+1> in the app's own Hotkeys.txt.
+
+def automation_probe(spec, package, display, workdir, probe_source, obs, doc_text, extra):
+    # 2. The probe: Autoload emptied (its scripts become the corpus, or the
+    # --corpus-dir scripts do), the probe's macros bound to Ctrl+Shift+F<k+1>
+    # in the app's own Hotkeys.txt.
     scratch, app = unpack(package, workdir)
     autoload = app.parent / "Automation" / "automation" / "Autoload"
     corpus_dir = scratch / "corpus"
     corpus_dir.mkdir()
     for p in sorted(autoload.glob("*")):
         if p.is_file():
-            shutil.copyfile(p, corpus_dir / p.name)
+            if not extra:
+                shutil.copyfile(p, corpus_dir / p.name)
             p.unlink()
+    if extra:
+        for p in sorted(Path(extra["scripts"]).glob("*")):
+            if p.is_file():
+                shutil.copyfile(p, corpus_dir / p.name)
+        include = app.parent / "Automation" / "automation" / "Include"
+        added = []
+        if extra.get("include"):
+            root = Path(extra["include"])
+            for p in sorted(root.rglob("*")):
+                target = include / p.relative_to(root)
+                if p.is_file() and not target.exists():
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(p, target)
+                    added.append(str(p.relative_to(root)))
     corpus = sorted(corpus_dir.glob("*"))
     (scratch / "corpus.txt").write_text("".join(f"{c}\n" for c in corpus))
     # The probe goes into the emptied Autoload: the host loads it (running the
@@ -272,16 +303,23 @@ def automation(spec, package, display, workdir, probe_source):
     (config / "Hotkeys.txt").write_text("\r\n".join(lines) + "\r\n")
     doc = scratch / "doc" / "probe.ass"
     doc.parent.mkdir()
-    doc.write_text(doc_text)
+    doc.write_text(doc_text, encoding="utf-8")
     output = scratch / "capture.jsonl"
     output.touch()
     proc = subprocess.Popen([str(app), str(doc)], cwd=app.parent,
                             env={**os.environ, "DISPLAY": display, "HOME": str(scratch / "home"),
                                  "HIKARI_CAPTURE_OUT": str(output), "HIKARI_CAPTURE_CORPUS": str(scratch / "corpus.txt"),
-                                 "HIKARI_CAPTURE_AT_LOAD": "1"},
+                                 "HIKARI_CAPTURE_AT_LOAD": "1",
+                                 **({"HIKARI_CAPTURE_RUNS": str(Path(extra["runs"]).resolve())}
+                                    if extra and extra.get("runs") else {})},
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
     probe_rec = {"part": "probe", "probe_sha256": sha256(probe_source), "corpus": [c.name for c in corpus],
                  "status": "timeout", "steps": []}
+    if extra:
+        probe_rec["include_added"] = added
+        probe_rec["document_sha256"] = hashlib.sha256(doc_text.encode("utf-8")).hexdigest()
+        if extra.get("runs"):
+            probe_rec["runs_sha256"] = sha256(extra["runs"])
     try:
         win = x(["xdotool", "search", "--sync", "--onlyvisible", "--name", "HikariSub v[0-9]"], display, 90)
         wid = win.stdout.split()[0] if win.stdout.split() else None
@@ -312,7 +350,8 @@ def automation(spec, package, display, workdir, probe_source):
             time.sleep(0.5)
 
         close_menu()
-        for step in spec["steps"]:
+        steps = [st for st in spec["steps"] if not extra or st["case"] in extra.get("steps", ["corpus"])]
+        for step in steps:
             k = step["macro"]
             srec = {"case": step["case"], "macro": k, "keys": step.get("keys", []), "status": "timeout"}
             before = len(output.read_text().splitlines())
@@ -395,14 +434,33 @@ def automation(spec, package, display, workdir, probe_source):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--fixtures", required=True, type=Path)
+    ap.add_argument("--fixtures", type=Path)  # required unless --corpus-dir
     ap.add_argument("--plan", required=True, type=Path)
     ap.add_argument("--package", required=True, type=Path)
     ap.add_argument("--probe", required=True, type=Path)
     ap.add_argument("--legacy-commit", required=True)
     ap.add_argument("--display", default=":99")
     ap.add_argument("--out", required=True, type=Path)
+    # L6 third-party corpus: only the automation route, with these scripts as
+    # the corpus (see automation()); the plan's dialog steps are skipped.
+    ap.add_argument("--corpus-dir", type=Path)
+    ap.add_argument("--include-dir", type=Path)
+    ap.add_argument("--document", type=Path)
+    ap.add_argument("--runs", type=Path)
     a = ap.parse_args()
+    if a.corpus_dir:
+        plan = json.loads(a.plan.read_text())
+        auto = plan["automation"]
+        probe_source = a.plan.parent / auto["probe"]
+        extra = {"scripts": a.corpus_dir, "include": a.include_dir, "document": a.document, "runs": a.runs}
+        result = {"schema": 1, "legacy_commit": a.legacy_commit, "package_sha256": sha256(a.package),
+                  "probe_sha256": sha256(probe_source), "host": platform.platform(),
+                  "captured_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                  "cases": [{"id": auto["id"] + "-thirdparty", "route": "automation",
+                             "observations": automation(auto, a.package, a.display, a.out.parent, probe_source, extra)}]}
+        a.out.write_text(json.dumps(result, indent=1, ensure_ascii=False) + "\n")
+        print(json.dumps({"status": [o["status"] for o in result["cases"][0]["observations"]]}))
+        return
     manifest = json.loads((a.fixtures / "manifest.json").read_text())
     # Inputs must still match the manifest: a changed fixture is not the same case.
     for i in manifest["inputs"]:

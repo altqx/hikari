@@ -18,6 +18,7 @@ none is fixed silently (A33-compat).
 """
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -46,11 +47,30 @@ def legacy_corpus(path, when="load"):
     sys.exit(f"no captured {when}-time corpus record in the legacy observations")
 
 
+def norm_error(text):
+    """An error's first line without the directories of a run's own paths."""
+    line = (text or "").split("\n")[0]
+    line = re.sub(r'\[string "[^"]*"\]', '[string]', line)
+    # Directories (also Lua's shortened "...tail/" chunk names) up to the file name.
+    line = re.sub(r'[^\s"\'()\[\]]*[/\\]', '', line)
+    return re.sub(r'(^|\s)\.\.\.', r'\1', line)
+
+
+def run_summary(run):
+    out = {k: (norm_error(run.get(k)) if k == "error" else run.get(k))
+           for k in ("ok", "error", "returned_selection", "returned_active", "dialogs", "log")}
+    # The document afterwards: its events and its header (Script Info, styles) apart.
+    out["events"] = (run.get("document") or {}).get("events")
+    out["header"] = (run.get("document") or {}).get("header")
+    return out
+
+
 def summary(script):
     regs = [(r.get("kind"), (r.get("name") or {}).get("value")) for r in script.get("registrations", [])]
     return {
         "loaded": script.get("loaded"),
-        "error": (script.get("error") or "").split("\n")[0],
+        "error": norm_error(script.get("error")),
+        "runs": {r.get("macro"): run_summary(r) for r in script.get("runs", [])},
         "script_name": (script.get("script_name") or {}).get("value"),
         "script_version": (script.get("script_version") or {}).get("value"),
         "registrations": regs,
@@ -59,8 +79,9 @@ def summary(script):
 
 def compare_corpus(legacy, rewrite):
     rows = []
-    for key in ("lua_version", "jit"):
-        if legacy.get(key) != rewrite.get(key):
+    for key in ("lua_version", "jit", "lua_features"):
+        # Captures taken before the probe recorded lua_features lack it.
+        if key in legacy and legacy.get(key) != rewrite.get(key):
             rows.append(("host", key, legacy.get(key), rewrite.get(key)))
     for name in sorted(set(legacy.get("modules", {})) | set(rewrite.get("modules", {}))):
         l = legacy.get("modules", {}).get(name, {})
@@ -86,8 +107,19 @@ def compare_corpus(legacy, rewrite):
             rows.append(("script", file, l, r))
             continue
         for field in l:
+            if field == "runs":
+                continue
             if l[field] != r[field]:
                 rows.append(("script", f"{file} {field}", l[field], r[field]))
+        # Macro runs (the L6 third-party runs): each field of each run.
+        for macro in sorted(set(l["runs"]) | set(r["runs"])):
+            lr, rr = l["runs"].get(macro), r["runs"].get(macro)
+            if lr is None or rr is None:
+                rows.append(("run", f"{file} | {macro}", lr, rr))
+                continue
+            for field in lr:
+                if lr[field] != rr[field]:
+                    rows.append(("run", f"{file} | {macro} {field}", lr[field], rr[field]))
     return len(l_scripts), len(r_scripts), rows
 
 
