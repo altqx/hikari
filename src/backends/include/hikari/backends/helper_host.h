@@ -10,6 +10,11 @@
 // answered at most once, and never after its request has ended. The helper's
 // stderr is kept as bounded diagnostics, separate from the protocol.
 //
+// Frames sent in one turn of the event loop reach the helper in one write,
+// so a Cancel sent right after its request arrives with it on every
+// platform (QProcess on Windows writes each write() call to the pipe only
+// once the previous one has completed, a round trip later).
+//
 // Runs on the thread that owns it, with a Qt event loop.
 
 #include "hikari/backends/helper_protocol.h"
@@ -87,12 +92,15 @@ private:
     void readDiagnostics();
     void fail();
     void write(const Frame &frame);
+    void flush(); // hands the frames sent so far to the process in one write
 
     QString m_program;
     QStringList m_arguments;
     std::uint32_t m_version;
     Limits m_limits;
     QProcess m_process;
+    QByteArray m_outgoing; // frames not yet handed to the process
+    bool m_flushQueued = false;
     Decoder m_decoder;
     State m_state = State::Idle;
     std::uint64_t m_session = 0;
