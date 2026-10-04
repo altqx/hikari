@@ -12,7 +12,8 @@
 // on its endpoints and is `width` pixels wide. The waveform area is
 // [0, width) x [0, height); the time ruler takes the `timelineHeight` rows
 // below it. Spectrum and zoom controls (A2), timing (A3), playback (A4) and
-// karaoke (A5) are not part of this module.
+// karaoke (A5) are not part of this module; the karaoke drawing is
+// audio_karaoke's, called from the scene.
 
 #include <cstdint>
 #include <filesystem>
@@ -175,6 +176,8 @@ struct AudioDisplayOptions {
     std::uint32_t spectrumEcho = 0xFF674FD7;          // AUDIO_SPECTRUM_ECHO
     std::uint32_t spectrumInner = 0xFFF4F4F4;         // AUDIO_SPECTRUM_INNER
     std::uint32_t lineBoundaryMark = 0xFFFFFFFF;      // AUDIO_LINE_BOUNDARY_MARK (A3)
+    std::uint32_t syllableBoundaries = 0xFF202225;    // AUDIO_SYLLABLE_BOUNDARIES (A5)
+    std::uint32_t syllableText = 0xFF8791FD;          // AUDIO_SYLLABLE_TEXT (A5)
 };
 
 // Legacy AudioDisplayScaleFromSlider: a cubic response, 50 is 100%.
@@ -204,6 +207,10 @@ public:
     void setPosition(int pos); // the scrollbar (legacy SetPosition)
     // Legacy MakeDialogueVisible without karaoke, for the selection [startMs, endMs].
     void makeVisible(int startMs, int endMs, bool force, bool moveToEnd, int scrollbarThickness);
+    // A5: legacy MakeDialogueVisible in karaoke mode, for the current
+    // syllable's visible times (GetSylVisibleTimes): centred when its start
+    // is within 50 columns of the left edge or its end within 100 of the right.
+    void makeVisibleKaraoke(int startMs, int endMs, int scrollbarThickness);
 
     struct Scrollbar {
         int position = 0, page = 0, range = 0;
@@ -242,6 +249,7 @@ private:
 };
 
 // A2: an opaque picture (the spectrum), BGRA bytes with row 0 at the top.
+struct AudioKaraokeMarks; // A5, audio_karaoke.h
 struct AudioImage {
     int width = 0, height = 0;
     std::vector<std::uint8_t> bgra;
@@ -284,6 +292,9 @@ struct AudioMarks {
     // height (wx GetTextExtent with verdana11), which places its time.
     std::optional<int> markMs;
     int markTextHeight = 0;
+    // A5: karaoke mode (legacy hasKara) and what it draws; the label font's
+    // text height (markTextHeight) is its syllables' too.
+    std::shared_ptr<const AudioKaraokeMarks> karaoke;
 };
 
 // Legacy DoUpdateImage: everything but the cursor. `columns` are the
@@ -295,8 +306,10 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                                    std::shared_ptr<const AudioImage> spectrum = nullptr);
 // Legacy DrawProgress while the audio is still loading (`progress` 0..1).
 std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress, const AudioDisplayOptions &options);
-// Legacy DrawCursor: the mouse cursor's line and, when not playing, its time.
-std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing, const AudioDisplayOptions &options);
+// Legacy DrawCursor: the mouse cursor's line and, when not playing, its time
+// (20 rows down in karaoke mode, under the syllables, else 5).
+std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing, const AudioDisplayOptions &options,
+                                    bool karaoke = false);
 
 // Legacy DrawDashedLine: the dashes of a line, `dash` pixels on and off.
 std::vector<std::pair<float, float>> legacyDashes(float from, float to, int dash);

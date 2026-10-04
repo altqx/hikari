@@ -7,6 +7,8 @@ target_sources(hikari_application PRIVATE hotkeys.cpp)
 target_sources(hikari_application PRIVATE audio_timing.cpp)
 # A4: the audio box's playback.
 target_sources(hikari_application PRIVATE audio_playback.cpp)
+# A5: the audio box's karaoke mode.
+target_sources(hikari_application PRIVATE audio_karaoke.cpp)
 target_include_directories(hikari_application PUBLIC include)
 # F1: find and replace.
 target_sources(hikari_application PRIVATE find_replace.cpp)

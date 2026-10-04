@@ -1,4 +1,5 @@
 #include "hikari/application/audio_display.h"
+#include "hikari/application/audio_karaoke.h"
 
 #include <algorithm>
 #include <cmath>
@@ -533,6 +534,20 @@ void AudioView::makeVisible(int startShow, int endShow, bool force, bool moveToE
     updateSamples(); // legacy UpdateImage
 }
 
+// Legacy MakeDialogueVisible with hasKara: force and moveToEnd are not read.
+void AudioView::makeVisibleKaraoke(int startShow, int endShow, int scrollbarThickness)
+{
+    if (!m_hasSource || m_samples <= 0)
+        return;
+    const int startPos = static_cast<int>(sampleAtMs(startShow));
+    const int endPos = static_cast<int>(sampleAtMs(endShow));
+    const int startX = static_cast<int>(xAtMs(startShow));
+    const int endX = static_cast<int>(xAtMs(endShow));
+    if (startX < 50 || endX > (m_w - 100))
+        updatePosition((startPos + endPos - m_w * m_samples) / 2, true, scrollbarThickness);
+    updateSamples(); // legacy UpdateImage
+}
+
 float AudioView::xAtMs(std::int64_t ms) const
 {
     if (!m_samples)
@@ -878,6 +893,11 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
         startDraw = static_cast<int>(lineEnd + (options.lineBoundaryWidth / 2));
         out.push_back(line(float(startDraw), 0, float(startDraw), float(h), options.lineEnd, boundary));
         flags(float(startDraw), -10);
+
+        // A5: karaoke (legacy draws it with the boundaries)
+        if (marks.karaoke)
+            karaokeShapes(out, view, lineStart, *marks.karaoke, karaokeLabelMeasure(textWidth), marks.markTextHeight,
+                          options.syllableBoundaries, options.syllableText);
     }
 
     // Keyframes (legacy DrawKeyframes)
@@ -955,7 +975,8 @@ std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress
     return out;
 }
 
-std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing, const AudioDisplayOptions &options)
+std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing, const AudioDisplayOptions &options,
+                                    bool karaoke)
 {
     std::vector<AudioShape> out;
     AudioShape cursor = line(x, 0, x, float(view.height()), options.cursor, 2);
@@ -963,7 +984,7 @@ std::vector<AudioShape> audioCursor(const AudioView &view, float x, bool playing
     out.push_back(cursor);
     if (!playing) {
         const int ms = view.msAtX(static_cast<std::int64_t>(x));
-        const float top = 5; // 20 with karaoke (A5)
+        const float top = karaoke ? 20 : 5;
         const float left = float(static_cast<long>(x - 150)); // a RECT holds integers
         out.push_back(text(legacyAssTime(ms), left, top, left + 300, top + 100, AudioShape::Font::Cursor,
                            AudioShape::Align::TopCenter, 0xFFFFFFFF, true));

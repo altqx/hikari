@@ -1852,7 +1852,31 @@ ApplicationWindow {
                         symbol: "AUDIO_GOTO"; tip: qsTr("Go to selection")
                         onRun: root.audio.goToSelection()
                     }
-                    // (Legacy's karaoke switches come here: A5.)
+                    // A5: legacy AudioBox's KaraSwitch and KaraMode (toggle
+                    // buttons, no hotkeys): karaoke mode and its automatic
+                    // splitting; each handler focuses the display.
+                    AudioButton {
+                        objectName: "audioKaraoke"
+                        text: qsTr("Karaoke")
+                        checkable: true
+                        checked: root.audio.karaoke
+                        tip: qsTr("Enable / disable karaoke creation")
+                        onToggled: {
+                            root.audio.toggleKaraoke()
+                            checked = Qt.binding(() => root.audio.karaoke)
+                        }
+                    }
+                    AudioButton {
+                        objectName: "audioKaraokeSplit"
+                        text: qsTr("Auto split"); gap: 8
+                        checkable: true
+                        checked: root.audio.karaokeSplitMode
+                        tip: qsTr("Enable / Disable automatic splitting of syllables")
+                        onToggled: {
+                            root.audio.toggleKaraokeSplitMode()
+                            checked = Qt.binding(() => root.audio.karaokeSplitMode)
+                        }
+                    }
                     // A3: AUDIO_AUTO_COMMIT and AUDIO_NEXT_LINE_ON_COMMIT
                     // (AudioBox::OnAutoCommit / OnNextLineCommit save the
                     // option; legacy's commit never reads the second).

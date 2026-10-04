@@ -270,6 +270,23 @@ void build(QSGNode *parent, const std::vector<AudioShape> &shapes, QQuickWindow 
     buildNodes(parent, describe(shapes, fontOf), window);
 }
 
+// A5: legacy iswctype(ch, _SPACE) and (ch, _SPACE | _PUNCT) as the Windows
+// CRT answers them: ASCII by the C tables; past it GetStringTypeW's C1_SPACE
+// and C1_PUNCT, Unicode's spaces and its punctuation and symbol categories.
+application::KaraokeCharClass karaokeCharClass()
+{
+    const auto ascii = application::KaraokeCharClass::ascii();
+    application::KaraokeCharClass classes;
+    classes.space = [ascii](char16_t c) { return c < 128 ? ascii.space(c) : QChar(c).isSpace(); };
+    classes.punct = [ascii](char16_t c) {
+        if (c < 128)
+            return ascii.punct(c);
+        const QChar ch(c);
+        return ch.isPunct() || ch.isSymbol();
+    };
+    return classes;
+}
+
 } // namespace
 
 AudioDisplayItem::AudioDisplayItem(QQuickItem *parent) : QQuickItem(parent)
@@ -306,6 +323,14 @@ void AudioDisplayItem::setController(QObject *object)
         connect(m_controller, &AudioController::displayChanged, this, &QQuickItem::update);
         connect(m_controller, &AudioController::cursorChanged, this, &QQuickItem::update);
         m_controller->setMarkTextHeight(QFontMetrics(m_label).height()); // A3
+        // A5: legacy GetTextExtentPixel's font (verdana11, the label font):
+        // D3DX measured without the leading and trailing spaces
+        m_controller->setKaraokeMeasure(application::karaokeLabelMeasure(
+            [label = m_label](AudioShape::Font, std::string_view text) {
+                return QFontMetrics(label).horizontalAdvance(
+                    QString::fromUtf8(text.data(), qsizetype(text.size())));
+            }));
+        m_controller->setKaraokeClasses(karaokeCharClass());
         pushSize();
     }
     emit controllerChanged();
@@ -353,14 +378,18 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
         return;
     const QPointF p = event->position();
     const int h = m_controller->view().height();
-    if (p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h) {
-        if (!hasActiveFocus())
-            forceActiveFocus(Qt::MouseFocusReason);
+    const bool over = p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h;
+    if (over && !hasActiveFocus())
+        forceActiveFocus(Qt::MouseFocusReason);
+    const auto result = timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
+    // A5: in karaoke mode legacy can return before the cursor is drawn, and
+    // draws none over the syllables' letters
+    if (result.keepCursor)
+        return;
+    if (over && !result.hideCursor)
         m_controller->setCursor(static_cast<float>(static_cast<int>(p.x())));
-    } else {
+    else
         m_controller->setCursor(std::nullopt);
-    }
-    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
 }
 
 void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
@@ -405,10 +434,10 @@ void AudioDisplayItem::mouseUngrabEvent()
         m_controller->lostCapture();
 }
 
-void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
+application::AudioMouseResult AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
 {
     if (!m_controller)
-        return;
+        return {};
     using Mouse = application::AudioMouse;
     Mouse mouse;
     mouse.type = static_cast<Mouse::Type>(type);
@@ -439,6 +468,7 @@ void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
         else
             unsetCursor();
     }
+    return result;
 }
 
 // Legacy OnMouseEvent's wheel: Ctrl alone zooms vertically, Shift
@@ -484,7 +514,7 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
                    ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
-                                                         m_controller->options())
+                                                         m_controller->options(), m_controller->karaoke())
                    : std::vector<AudioShape>{};
     };
     if (softwareScene(window())) {

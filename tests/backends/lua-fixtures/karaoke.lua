@@ -44,6 +44,16 @@ aegisub.register_macro("Karaoke", "", function()
     end
 end)
 
+-- A5: the text the audio box's karaoke mode writes (legacy Karaoke::GetText)
+-- parses into the same syllables and times.
+aegisub.register_macro("Karaoke text", "", function()
+    for _, text in ipairs({ "{\\kf20}ka{\\ko30}ra{\\K50}o{\\k40}ke",
+                            "{\\k20\\fs20}ka{\\k30\\fs30}ra{\\k10}{\\i1}o{\\k40}ke{\\i0}",
+                            "{\\k33}ka\\N{\\k33}ra\\h{\\k34}oke" }) do
+        aegisub.log("%s", syllables(aegisub.parse_karaoke_data(dialogue(text))))
+    end
+end)
+
 local function report(ok, ...)
     if not ok then return show((...)) end
     local times, intensities = ...

@@ -9,6 +9,7 @@
 
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
+#include "hikari/application/audio_karaoke.h"
 #include "hikari/application/audio_spectrum.h"
 #include "hikari/application/audio_timing.h"
 #include "hikari/application/audio_playback.h"
@@ -62,6 +63,11 @@ class AudioController : public QObject {
     Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
     // A4: the player is playing (legacy player->IsPlaying()).
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
+    // A5: legacy AudioBox's KaraSwitch (hasKara, AUDIO_KARAOKE) and KaraMode
+    // (karaAuto, AUDIO_KARAOKE_SPLIT_MODE).
+    Q_PROPERTY(bool karaoke READ karaoke NOTIFY boxControlsChanged)
+    Q_PROPERTY(bool karaokeSplitMode READ karaokeSplitMode NOTIFY boxControlsChanged)
+    Q_PROPERTY(int currentSyllable READ currentSyllable NOTIFY displayChanged)
 public:
     explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
 
@@ -199,6 +205,27 @@ public:
     int scrollPage() const { return m_scrollbar.page; }
     int scrollRange() const { return m_scrollbar.range; }
 
+    // A5: karaoke mode (legacy AudioBox::OnKaraoke and OnSplitMode, and the
+    // display's Karaoke). Switching it on splits the active Line into
+    // syllables and zooms in by 20 (legacy lastHorizontalZoom); off, the zoom
+    // goes back. Legacy wrote that zoom into AUDIO_VERTICAL_ZOOM (kept).
+    bool karaoke() const { return m_hasKara; }
+    bool karaokeSplitMode() const { return m_karaAuto; }
+    Q_INVOKABLE void toggleKaraoke();
+    Q_INVOKABLE void toggleKaraokeSplitMode();
+    const application::AudioKaraoke &karaokeModel() const { return m_karaoke; }
+    int currentSyllable() const { return m_karaoke.current; }
+    // The active Line's text as legacy's SetDialogue read it (the edit box's
+    // Line: its translation when it has one, else its text), set before
+    // setLines; the label font's measure (GetTextExtentPixel) and Windows'
+    // character classes for the automatic split.
+    void setActiveText(std::u16string text) { m_activeText = std::move(text); }
+    void setKaraokeMeasure(application::KaraokeMeasure measure) { m_measure = std::move(measure); }
+    void setKaraokeClasses(application::KaraokeCharClass classes) { m_classes = std::move(classes); }
+    // Legacy GetTimesSelection: the current syllable's times in karaoke mode
+    // (with `rangeEnd`, to the next syllable's end), else the selection.
+    std::pair<int, int> timesSelection(bool rangeEnd = false, bool ignoreKara = false);
+
     // A3: timing (legacy AudioDisplay's selection and mouse timing,
     // CommitChanges, AddLead, ChangeLine, SetMark and ChangePosition; the
     // AudioBox buttons and hotkeys). What legacy did through the edit box,
@@ -288,7 +315,10 @@ private:
     application::AudioTimingOptions timingOptions() const;
     application::AudioSnapContext snapContext() const;
     void commitChanges(bool nextLine, bool save, bool moveToEnd,
-                       application::AudioAdjacent adjacent = application::AudioAdjacent::None);
+                       application::AudioAdjacent adjacent = application::AudioAdjacent::None,
+                       std::optional<std::u16string> karaokeText = std::nullopt);
+    void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
+    void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);
     void addLead(bool in, bool out);
     void tick();         // legacy UpdateTimer
@@ -359,6 +389,13 @@ private:
     QTimer m_playTimer;
     bool m_wasPlaying = false;
     std::uint64_t m_playedSerial = 0; // the audio the player last played
+    // A5
+    application::AudioKaraoke m_karaoke;
+    bool m_hasKara = false, m_karaAuto = true;
+    int m_lastHorizontalZoom = -1; // legacy AudioBox::lastHorizontalZoom
+    std::u16string m_activeText;
+    application::KaraokeMeasure m_measure;
+    application::KaraokeCharClass m_classes = application::KaraokeCharClass::ascii();
 };
 
 } // namespace hikari::ui
