@@ -6,6 +6,7 @@
 // until an explicit open() or restart() starts a new helper (I6). Runs on its
 // owner's thread with a Qt event loop.
 
+#include "hikari/application/display_audio_port.h"
 #include "hikari/application/general_player.h"
 #include "hikari/application/indexed_source.h"
 #include "hikari/backends/helper_host.h"
@@ -20,14 +21,22 @@
 namespace hikari::backends {
 
 // It also lists container chapters for general playback (N5), so FFmpeg
-// stays out of the application process.
-class FfmsIndexedSource : public QObject, public application::IndexedSourcePort, public application::ChapterPort {
+// stays out of the application process, and serves the audio box (A1).
+class FfmsIndexedSource : public QObject,
+                          public application::IndexedSourcePort,
+                          public application::ChapterPort,
+                          public application::DisplayAudioPort {
     Q_OBJECT
 public:
+    using Progress = application::IndexedSourcePort::Progress;
+    using Opened = application::IndexedSourcePort::Opened;
+
     explicit FfmsIndexedSource(QString helperProgram, QObject *parent = nullptr);
     ~FfmsIndexedSource() override;
 
     std::uint64_t open(const std::string &path, Progress progress, Opened done) override;
+    std::uint64_t openIndexed(const std::string &path, const application::IndexRequest &index, Progress progress,
+                              Opened done) override;
     void cancelOpen() override;
     void frame(int index, FrameReady done) override;
     void openAudio(int track, AudioOpened done) override;
@@ -38,7 +47,15 @@ public:
     void chapters(const std::string &path, Listed done) override;
     std::uint64_t generation() const override { return m_generation; }
 
-    // Reopens the last opened path in a new helper (a new session); returns
+    // DisplayAudioPort (A1). Opening the box's file starts a new generation
+    // like open(); the audio box uses an instance of its own.
+    void probe(const std::string &path, Probed done) override;
+    void openDisplayAudio(const std::string &path, int track, const std::string &indexFile, Progress progress,
+                          application::DisplayAudioPort::Opened done) override;
+    void displayAudio(std::int64_t start, std::int64_t count, Read done) override;
+    void cancelDisplay() override;
+
+    // Reopens the last opened path (with its index request) in a new helper (a new session); returns
     // its generation, or 0 (and NotOpen) when nothing was opened.
     std::uint64_t restart(Progress progress, Opened done);
     bool isHelperLost() const { return m_lost; }
@@ -65,15 +82,22 @@ private:
     std::optional<application::AudioInfo> m_audio;
     std::optional<std::uint64_t> m_openRequest;
     std::string m_path;
+    application::IndexRequest m_index; // the last open's
     bool m_lost = false;
     int m_pcmChannels = 0; // channels of the current PCM stream
     double m_startupMs = 0;
-    struct Read {
+    struct Pending {
         std::uint64_t request = 0;
         std::function<void()> cancel;
     };
-    std::map<std::uint64_t, Read> m_reads; // outstanding frame and audio requests
+    std::map<std::uint64_t, Pending> m_reads; // outstanding frame and audio requests
+    std::map<std::uint64_t, Pending> m_displayReads; // the audio box's, cancelled on their own
     std::uint64_t m_nextRead = 0;
+    std::optional<application::AudioInfo> m_display; // the box's audio
+    template <typename R>
+    std::pair<std::uint64_t, std::function<void(R)>> trackDisplay(std::function<void(R)> done);
+    void parseDisplayOpen(std::uint64_t generation, const helper::Event &e,
+                          const std::function<void(std::expected<application::DisplayAudioOpened, application::AudioFailure>)> &done);
 };
 
 } // namespace hikari::backends

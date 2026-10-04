@@ -13,6 +13,10 @@
 //          tracks    the audio fixture with a second audio track (languages
 //                    eng and jpn, titled), a SubRip track with one cue
 //                    "Hello" from 0.5 s to 1.5 s, and two chapters (N5)
+//          audiodelay the audio fixture with its audio starting 0.5 s after
+//                    the video (A1: legacy's FFMS_DELAY_FIRST_VIDEO_TRACK)
+//          audioonly 2 s of 48 kHz stereo PCM and no video: left is
+//                    audioOnlySample(i), right half of it (A1)
 //          unknown   the cfr video written as a live stream: no duration
 //          color601, color709, color709full
 //                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
@@ -64,10 +68,74 @@ void drawColor(AVFrame *f)
                     std::uint8_t(kColorPatches[(y >= kHeight / 4) * 2 + (x >= kWidth / 4)][p]);
 }
 
+// A sawtooth over the whole 16-bit range (A1's audio-only fixture).
+std::int16_t audioOnlySample(std::int64_t i)
+{
+    return static_cast<std::int16_t>(((i * 37) % 65536) - 32768);
+}
+
 int fail(const char *what)
 {
     std::fprintf(stderr, "media_fixture: %s\n", what);
     return 1;
+}
+
+// A1: audio without video.
+int writeAudioOnly(const std::string &out)
+{
+    AVFormatContext *fmt = nullptr;
+    if (avformat_alloc_output_context2(&fmt, nullptr, "matroska", out.c_str()) < 0)
+        return fail("output context");
+    const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
+    AVCodecContext *aenc = avcodec_alloc_context3(acodec);
+    aenc->sample_rate = 48000;
+    aenc->sample_fmt = AV_SAMPLE_FMT_S16;
+    av_channel_layout_default(&aenc->ch_layout, 2);
+    aenc->time_base = AVRational{1, 48000};
+    if (avcodec_open2(aenc, acodec, nullptr) < 0)
+        return fail("audio encoder");
+    AVStream *as = avformat_new_stream(fmt, nullptr);
+    avcodec_parameters_from_context(as->codecpar, aenc);
+    as->time_base = aenc->time_base;
+    if (avio_open(&fmt->pb, out.c_str(), AVIO_FLAG_WRITE) < 0 || avformat_write_header(fmt, nullptr) < 0)
+        return fail("open output");
+    AVPacket *pkt = av_packet_alloc();
+    AVFrame *a = av_frame_alloc();
+    a->format = aenc->sample_fmt;
+    av_channel_layout_copy(&a->ch_layout, &aenc->ch_layout);
+    a->sample_rate = 48000;
+    a->nb_samples = 1024;
+    av_frame_get_buffer(a, 0);
+    auto drain = [&](AVFrame *f) {
+        if (avcodec_send_frame(aenc, f) < 0)
+            return false;
+        while (avcodec_receive_packet(aenc, pkt) == 0) {
+            av_packet_rescale_ts(pkt, aenc->time_base, as->time_base);
+            pkt->stream_index = as->index;
+            av_interleaved_write_frame(fmt, pkt);
+        }
+        return true;
+    };
+    for (std::int64_t s = 0; s < 96000; s += 1024) {
+        av_frame_make_writable(a);
+        auto *samples = reinterpret_cast<std::int16_t *>(a->data[0]);
+        for (int k = 0; k < 1024; ++k) {
+            const std::int16_t v = audioOnlySample(s + k);
+            samples[2 * k] = v;
+            samples[2 * k + 1] = static_cast<std::int16_t>(v / 2);
+        }
+        a->pts = s;
+        if (!drain(a))
+            return fail("encode audio");
+    }
+    drain(nullptr);
+    av_write_trailer(fmt);
+    avio_closep(&fmt->pb);
+    av_frame_free(&a);
+    av_packet_free(&pkt);
+    avcodec_free_context(&aenc);
+    avformat_free_context(fmt);
+    return 0;
 }
 
 } // namespace
@@ -75,8 +143,11 @@ int fail(const char *what)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|tracks|unknown|color601|color709|color709full>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full>");
     const std::string out = argv[1], kind = argv[2];
+    if (kind == "audioonly")
+        return writeAudioOnly(out);
+    const bool delayed = kind == "audiodelay";
     const bool vfr = kind == "vfr";
     const bool tracks = kind == "tracks";
     const bool color = kind.starts_with("color");
@@ -114,7 +185,7 @@ int main(int argc, char **argv)
 
     AVCodecContext *aenc = nullptr;
     AVStream *as = nullptr, *as2 = nullptr, *ss = nullptr;
-    if (kind == "audio" || tracks) {
+    if (kind == "audio" || tracks || delayed) {
         const AVCodec *acodec = avcodec_find_encoder(AV_CODEC_ID_PCM_S16LE);
         aenc = avcodec_alloc_context3(acodec);
         aenc->sample_rate = 48000;
@@ -206,7 +277,7 @@ int main(int argc, char **argv)
                 samples[2 * k] = v;
                 samples[2 * k + 1] = static_cast<std::int16_t>(-v);
             }
-            a->pts = s;
+            a->pts = delayed ? s + 24000 : s;
             if (!drain(aenc, as, a))
                 return fail("encode audio");
         }

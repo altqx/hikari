@@ -11,7 +11,9 @@
 #include <cstdio>
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
+#include <filesystem>
 #include <numeric>
 #include <random>
 
@@ -568,4 +570,255 @@ TEST_F(AudioFixture, SourcesWithoutAudioReportIt)
     ASSERT_TRUE(t);
     EXPECT_EQ(t->firstAudioTrack, -1);
     EXPECT_EQ(openAudio(0).error(), SourceError::Unsupported); // track 0 is video
+}
+
+// A1: the audio box's audio in legacy's decode format (ProviderFFMS2: S16,
+// stereo or mono, FFMS_DELAY_FIRST_VIDEO_TRACK), from files with or without
+// video, or from the open video's index.
+struct DisplayAudioFixture : AudioFixture {
+    std::expected<MediaProbe, AudioFailure> probe(const std::string &path)
+    {
+        std::optional<std::expected<MediaProbe, AudioFailure>> result;
+        source.probe(path, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(AudioFailure{}));
+    }
+    std::expected<DisplayAudioOpened, AudioFailure> openDisplayPath(backends::FfmsIndexedSource &from,
+                                                                    const std::string &path, int track,
+                                                                    const std::string &indexFile,
+                                                                    std::vector<std::int64_t> *progress = nullptr)
+    {
+        std::optional<std::expected<DisplayAudioOpened, AudioFailure>> result;
+        from.openDisplayAudio(path, track, indexFile,
+                              [&](std::int64_t done, std::int64_t) { if (progress) progress->push_back(done); },
+                              [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(AudioFailure{}));
+    }
+    std::expected<AudioInfo, AudioFailure> openDisplay(const char *kind, int track = 1,
+                                                       std::vector<std::int64_t> *progress = nullptr)
+    {
+        const auto opened = openDisplayPath(source, fixture(kind), track, {}, progress);
+        if (!opened)
+            return std::unexpected(opened.error());
+        EXPECT_TRUE(opened->newIndex); // no index file: indexed now
+        return opened->info;
+    }
+    std::expected<SourceTimeline, SourceError> openIndexed(const std::string &path, int track,
+                                                           const std::string &indexFile,
+                                                           std::vector<std::int64_t> *progress = nullptr)
+    {
+        std::optional<std::expected<SourceTimeline, SourceError>> result;
+        source.openIndexed(path, IndexRequest{track, indexFile},
+                           [&](std::int64_t done, std::int64_t) { if (progress) progress->push_back(done); },
+                           [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(SourceError::BackendFailure));
+    }
+    std::expected<AudioBlock, AudioFailure> display(std::int64_t start, std::int64_t count)
+    {
+        std::optional<std::expected<AudioBlock, AudioFailure>> result;
+        source.displayAudio(start, count, [&](auto r) { result = std::move(r); });
+        EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
+        return result.value_or(std::unexpected(AudioFailure{}));
+    }
+};
+
+TEST_F(DisplayAudioFixture, AudioWithoutVideoOpensInTheLegacyFormat)
+{
+    const auto tracks = probe(fixture("audioonly"));
+    ASSERT_TRUE(tracks);
+    EXPECT_FALSE(tracks->hasVideo);
+    ASSERT_EQ(tracks->audio.size(), 1u);
+    std::vector<std::int64_t> progress;
+    const auto info = openDisplay("audioonly", tracks->audio[0].index, &progress);
+    ASSERT_TRUE(info) << info.error().message;
+    EXPECT_EQ(info->format, SampleFormat::S16);
+    EXPECT_EQ(info->bitsPerSample, 16);
+    EXPECT_EQ(info->channels, 2);
+    EXPECT_EQ(info->channelLayout, 3); // front left and right
+    EXPECT_EQ(info->sampleRate, 48000);
+    EXPECT_EQ(info->sampleCount, 96256);
+    EXPECT_EQ(info->originMicroseconds, 0);
+    for (std::int64_t start : {0, 1771, 50000, 96200}) {
+        const auto b = display(start, 56);
+        ASSERT_TRUE(b) << start;
+        ASSERT_EQ(b->count, 56);
+        for (std::int64_t i = 0; i < 56; ++i) {
+            const auto v = static_cast<std::int16_t>((((start + i) * 37) % 65536) - 32768);
+            ASSERT_EQ(left(*b, i), v) << start + i;
+            ASSERT_EQ(right(*b, i), static_cast<std::int16_t>(v / 2)) << start + i;
+        }
+    }
+    // there is no video to read, and general playback's audio is not this one
+    EXPECT_EQ(frame(0).error(), SourceError::NotOpen);
+    EXPECT_EQ(audio(0, 4).error(), SourceError::NotOpen);
+    EXPECT_EQ(display(96256, 4).error().error, SourceError::EndOfStream);
+}
+
+TEST_F(DisplayAudioFixture, SampleZeroIsTheFirstVideoFrame)
+{
+    // The audio starts 0.5 s after the video: legacy's delay mode pads 24000
+    // silent frames before it (the N2 source range would start at the audio).
+    const auto info = openDisplay("audiodelay");
+    ASSERT_TRUE(info);
+    EXPECT_EQ(info->sampleCount, 96256 + 24000);
+    const auto before = display(23990, 10);
+    ASSERT_TRUE(before);
+    for (std::int64_t i = 0; i < 10; ++i)
+        EXPECT_EQ(left(*before, i), 0);
+    const auto b = display(24000, 40);
+    ASSERT_TRUE(b);
+    for (std::int64_t i = 0; i < 40; ++i) {
+        EXPECT_EQ(left(*b, i), static_cast<std::int16_t>(i % 32768));
+        EXPECT_EQ(right(*b, i), static_cast<std::int16_t>(-(i % 32768)));
+    }
+}
+
+// Legacy ProviderFFMS2::Init lists tracks from the indexer: name, language
+// and codec, before any indexing; the chosen track alone is indexed.
+TEST_F(DisplayAudioFixture, ProbeListsTheAudioTracks)
+{
+    const auto tracks = probe(fixture("tracks"));
+    ASSERT_TRUE(tracks);
+    EXPECT_TRUE(tracks->hasVideo);
+    ASSERT_EQ(tracks->audio.size(), 2u);
+    EXPECT_EQ(tracks->audio[0].index, 1);
+    EXPECT_TRUE(tracks->audio[0].hasName);
+    EXPECT_EQ(tracks->audio[0].name, "Main");
+    EXPECT_EQ(tracks->audio[0].language, "eng");
+    EXPECT_EQ(tracks->audio[0].codec, "pcm_s16le");
+    EXPECT_EQ(tracks->audio[1].index, 2);
+    EXPECT_EQ(tracks->audio[1].name, "Commentary");
+    EXPECT_EQ(tracks->audio[1].language, "jpn");
+    const auto second = openDisplay("tracks", 2);
+    ASSERT_TRUE(second);
+    const auto b = display(1000, 8);
+    ASSERT_TRUE(b);
+    EXPECT_EQ(left(*b, 0), 0); // the second track is silence
+    EXPECT_TRUE(openDisplay("tracks", 1));
+    EXPECT_EQ(left(*display(1000, 8), 0), 1000);
+}
+
+// A copy of a fixture in a folder of its own, with an Indices folder beside
+// it, so modification times can be changed.
+struct IndexFolder {
+    std::filesystem::path dir;
+    explicit IndexFolder(const char *name)
+        : dir(std::filesystem::temp_directory_path() / ("hikari-a1-index-" + std::string(name)))
+    {
+        std::filesystem::remove_all(dir);
+        std::filesystem::create_directories(dir);
+    }
+    ~IndexFolder() { std::filesystem::remove_all(dir); }
+    std::string copy(const char *kind)
+    {
+        const auto to = dir / (std::string(kind) + ".mkv");
+        std::filesystem::copy_file(fixture(kind), to);
+        return to.string();
+    }
+    std::string index(const char *name) const { return (dir / "Indices" / name).string(); }
+};
+
+// Legacy ProviderFFMS2::Init's index cache: the video is indexed with the
+// chosen audio track alone and the index written to Indices/<name>_<track>
+// .ffindex (the folder made); the next open reads it instead of indexing.
+TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
+{
+    IndexFolder folder("video");
+    const auto path = folder.copy("tracks");
+    const auto file = folder.index("tracks_2.ffindex");
+    std::vector<std::int64_t> progress;
+    const auto first = openIndexed(path, 2, file, &progress);
+    ASSERT_TRUE(first);
+    EXPECT_TRUE(first->newIndex);
+    EXPECT_FALSE(progress.empty());
+    EXPECT_TRUE(std::filesystem::exists(file));
+    EXPECT_EQ(first->firstAudioTrack, 1); // every audio track is still listed
+    EXPECT_EQ(first->audioTracks, (std::vector<int>{1, 2}));
+    // the chosen track was indexed and opens
+    ASSERT_TRUE(openAudio(2));
+    progress.clear();
+    const auto again = openIndexed(path, 2, file, &progress);
+    ASSERT_TRUE(again);
+    EXPECT_FALSE(again->newIndex);
+    EXPECT_TRUE(progress.empty()); // nothing indexed
+    EXPECT_EQ(again->pts, first->pts);
+    ASSERT_TRUE(frame(3));
+    EXPECT_EQ(barcode(*frame(3)), 3);
+}
+
+// The box opens the video's audio in a helper of its own, from the index file
+// the video wrote: nothing is indexed again, and the video's helper keeps
+// serving frames while the box reads.
+TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
+{
+    IndexFolder folder("box");
+    const auto path = folder.copy("tracks");
+    const auto file = folder.index("tracks_1.ffindex");
+    ASSERT_TRUE(openIndexed(path, 1, file));
+    backends::FfmsIndexedSource box{QStringLiteral(HIKARI_MEDIA_HELPER)};
+    std::vector<std::int64_t> progress;
+    const auto opened = openDisplayPath(box, path, 1, file, &progress);
+    ASSERT_TRUE(opened) << opened.error().message;
+    EXPECT_FALSE(opened->newIndex);
+    EXPECT_TRUE(progress.empty());
+    EXPECT_EQ(opened->info.sampleCount, 96256);
+    std::optional<std::expected<AudioBlock, AudioFailure>> block;
+    box.displayAudio(1000, 4, [&](auto r) { block = std::move(r); });
+    std::optional<std::expected<IndexedFrame, SourceError>> shown;
+    source.frame(5, [&](auto r) { shown = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return block.has_value() && shown.has_value(); }));
+    ASSERT_TRUE(*block);
+    EXPECT_EQ(left(**block, 0), 1000);
+    ASSERT_TRUE(*shown);
+    EXPECT_EQ(barcode(**shown), 5);
+    EXPECT_NE(box.helperHost(), source.helperHost());
+    // another track has an index file of its own, made by the box
+    const auto other = openDisplayPath(box, path, 2, folder.index("tracks_2.ffindex"));
+    ASSERT_TRUE(other);
+    EXPECT_TRUE(other->newIndex);
+    EXPECT_TRUE(std::filesystem::exists(folder.index("tracks_2.ffindex")));
+}
+
+// An index file older than its file, or one FFMS2 says belongs to another
+// file, is not used: the file is indexed again and the index rewritten.
+TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
+{
+    IndexFolder folder("stale");
+    const auto path = folder.copy("tracks");
+    const auto file = folder.index("tracks_1.ffindex");
+    ASSERT_TRUE(openIndexed(path, 1, file));
+    std::filesystem::last_write_time(path, std::filesystem::last_write_time(file) + std::chrono::seconds(5));
+    const auto stale = openIndexed(path, 1, file);
+    ASSERT_TRUE(stale);
+    EXPECT_TRUE(stale->newIndex);
+    // a newer index of another file under this name
+    const auto otherPath = folder.copy("audio");
+    ASSERT_TRUE(openIndexed(otherPath, 1, file));
+    std::filesystem::last_write_time(file, std::filesystem::last_write_time(path) + std::chrono::seconds(5));
+    const auto foreign = openIndexed(path, 1, file);
+    ASSERT_TRUE(foreign);
+    EXPECT_TRUE(foreign->newIndex);
+    EXPECT_EQ(foreign->audioTracks, (std::vector<int>{1, 2}));
+    // without an index file nothing is read or written (and every audio track is indexed)
+    const auto plain = open("tracks");
+    ASSERT_TRUE(plain);
+    EXPECT_TRUE(plain->newIndex);
+    EXPECT_TRUE(openAudio(1));
+    EXPECT_TRUE(openAudio(2));
+}
+
+// FFMS2's error text and the failing stage reach the box (legacy messages).
+TEST_F(DisplayAudioFixture, FailuresCarryTheStageAndFfms2sText)
+{
+    const auto missing = probe("/nonexistent/missing.wav");
+    ASSERT_FALSE(missing);
+    EXPECT_EQ(missing.error().stage, AudioStage::Indexer);
+    EXPECT_FALSE(missing.error().message.empty());
+    const auto noAudio = openDisplay("cfr", 0); // track 0 is video
+    ASSERT_FALSE(noAudio);
+    EXPECT_EQ(noAudio.error().error, SourceError::Unsupported);
+    // a later open of the same source still works
+    EXPECT_TRUE(openDisplay("audio"));
 }

@@ -9,6 +9,8 @@
 #include "hikari/application/video_session.h"
 
 #include <QObject>
+
+#include <functional>
 #include <QString>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
@@ -36,6 +38,15 @@ public:
                     QObject *parent = nullptr);
 
     application::VideoSession &session() { return m_session; }
+    // A1: legacy RendererFFMS2::OpenFile gives a file with audio but no video
+    // to the audio box, and its provider chooses the audio track before it
+    // indexes; either way the current video stays until the new one opens.
+    // The filter sees every file before the video session does and calls
+    // `asVideo` with the track and index file to open it as video; when it
+    // never calls it (audio only, "Choose the track" cancelled), the current
+    // video stays. A later open supersedes one the filter has not let through.
+    using OpenFilter = std::function<void(const QString &path, std::function<void(application::IndexRequest)> asVideo)>;
+    void setOpenFilter(OpenFilter filter) { m_filter = std::move(filter); }
 
     // The editing target changed: closes the video and offers the new
     // target's resolved association, if any.
@@ -79,7 +90,11 @@ signals:
     void changed();
 
 private:
+    void open(const QString &path);
+
     application::VideoSession m_session;
+    OpenFilter m_filter;
+    std::uint64_t m_openRequest = 0;
     QString m_offeredVideo;
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> m_lineTimes;
 };

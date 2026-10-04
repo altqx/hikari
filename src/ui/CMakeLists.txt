@@ -10,7 +10,8 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h shift_times_controller.cpp shift_times_controller.h
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
-    settings_store.cpp settings_store.h)
+    settings_store.cpp settings_store.h
+    audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui

@@ -33,6 +33,7 @@
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
+#include "audio_controller.h"
 
 #include <QDate>
 #include <QDateTime>
@@ -46,6 +47,7 @@
 #include <map>
 #include <memory>
 #include <set>
+#include <tuple>
 
 namespace hikari::app {
 
@@ -117,6 +119,12 @@ public:
         // Bundled dictionaries, searched after the user's folder (legacy
         // <executable dir>/Dictionary; the composition sets it).
         QString bundledDictionaryDir;
+        // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
+        // settings file, or a temporary directory without one (tests).
+        QString audioCacheDir;
+        // A1: legacy's FFMS2 index files (Indices); empty: "Indices" beside
+        // the settings file, or none without one (tests).
+        QString indexDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -475,9 +483,19 @@ public:
     // wxDirDialog::GetPath: the chosen folder with native separators.
     Q_INVOKABLE QString settingsFolderPath(const QUrl &url) const;
 
+    // A1: the Audio menu. GLOBAL_AUDIO_FROM_VIDEO opens the video's file
+    // again as audio; GLOBAL_RECENT_AUDIO lists {path, label} rows (missing
+    // local files pruned first, as legacy AppendRecent); the GLOBAL_OPEN_AUDIO
+    // dialog starts in the video's folder (legacy: else the latest recent
+    // video's, which the rewrite does not list yet).
+    Q_INVOKABLE void openAudioFromVideo();
+    Q_INVOKABLE QVariantList recentAudio();
+    Q_INVOKABLE QUrl audioDialogFolder() const;
+
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
+    ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
     UpdateChecker &updates() { return *m_updates; }
@@ -648,6 +666,26 @@ private:
     QString m_bundledDictionaryDir;
     std::unique_ptr<application::SpellCheckWalk> m_spellWalk;
     std::optional<application::DocumentId> m_spellWalkDocument;
+    // A1: the audio box, with its own media helper; the Lines and marks it
+    // shows follow the editing target and the video.
+    std::unique_ptr<backends::FfmsIndexedSource> m_audioSource;
+    std::unique_ptr<ui::AudioController> m_audio;
+    QList<QMetaObject::Connection> m_audioConnections; // dropped first on destruction
+    application::RecentFiles m_recentAudio;
+    QString m_audioFollowedVideo; // the video whose audio the box last followed
+    std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine; // target, active Line, revision
+    // the video's keyframes as the box marks them, worked out once per video
+    std::optional<application::LegacyTimebase> m_audioTimebase;
+    std::string m_audioTimebasePath;
+    std::vector<int> m_audioKeyframes;
+    std::function<application::AudioCacheSettings()> m_audioSettings;
+    QString m_indexDir; // legacy Indices; empty: no index files
+    void refreshAudio();
+    void followVideoInAudio();
+    void rememberRecentAudio(const QString &path);
+    void trimAudioCache();
+    // Legacy's index file for `path` and an audio track (-1: none).
+    QString indexFile(const QString &path, int track) const;
 };
 
 } // namespace hikari::app

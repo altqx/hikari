@@ -57,6 +57,15 @@ TEST(MediaAssociation, WindowsDriveLettersAreAbsolute)
 struct FakeSource : IndexedSourcePort {
     std::uint64_t gen = 0;
     Opened pendingOpen;
+    IndexRequest lastRequest;
+    std::vector<int> audioTracks; // the timeline's (the first is firstAudioTrack)
+    bool newIndex = true;
+    std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
+                              Opened done) override
+    {
+        lastRequest = request;
+        return open(path, std::move(progress), std::move(done));
+    }
     std::deque<std::pair<int, FrameReady>> frames;
     std::uint64_t open(const std::string &, Progress, Opened done) override
     {
@@ -74,6 +83,9 @@ struct FakeSource : IndexedSourcePort {
         for (int i = 0; i < 10; ++i)
             t.pts.push_back(i * 40);
         t.keyframes = {0, 4, 8};
+        t.audioTracks = audioTracks;
+        t.firstAudioTrack = audioTracks.empty() ? -1 : audioTracks.front();
+        t.newIndex = newIndex;
         pendingOpen(t);
     }
     void answer(std::size_t which = 0)
@@ -258,7 +270,11 @@ struct FakePlayer : GeneralPlayerPort {
     void play() override { calls.push_back("play"); }
     void pause() override { calls.push_back("pause"); }
     void stop() override { calls.push_back("stop"); }
-    bool selectAudioTrack(int) override { return true; }
+    bool selectAudioTrack(int index) override
+    {
+        calls.push_back("audio track " + std::to_string(index));
+        return true;
+    }
     bool selectSubtitleTrack(int) override { return true; }
     PlaybackState playbackState() const override { return PlaybackState::Stopped; }
     MediaStatus mediaStatus() const override { return MediaStatus::Loaded; }
@@ -266,7 +282,7 @@ struct FakePlayer : GeneralPlayerPort {
     PlayerClock clock() const override { return {}; }
     MediaDescription description() const override { return {}; }
     std::uint64_t generation() const override { return 1; }
-    void opened() { pendingOpen(MediaDescription{}); }
+    void opened(MediaDescription description = {}) { pendingOpen(std::move(description)); }
     void delivered() { pendingSeek(SeekResult{1, soughtUs, soughtUs, {}}); }
 };
 
@@ -320,9 +336,20 @@ TEST_F(VideoTest, PlaybackShowsThePlayersFramesAndPausesOnTheExactIndexedFrame)
     ASSERT_TRUE(video.play());
     player.delivered();
     EXPECT_EQ(player.calls[player.calls.size() - 2], "seek 200000");
+    EXPECT_FALSE(video.stopped());
     ASSERT_TRUE(video.stop());
     source.answer();
     EXPECT_EQ(video.shownFrame(), 0);
+    // A1: legacy's Stopped state lasts until the next Play (the audio box
+    // marks the video's frame only while Paused); Stop while paused is not it.
+    EXPECT_TRUE(video.stopped());
+    video.showFrame(3);
+    EXPECT_TRUE(video.stopped());
+    ASSERT_TRUE(video.play());
+    EXPECT_FALSE(video.stopped());
+    ASSERT_TRUE(video.pause());
+    ASSERT_TRUE(video.stop());
+    EXPECT_FALSE(video.stopped());
 }
 
 TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
@@ -364,4 +391,49 @@ TEST_F(VideoTest, SeeksAndKeyframesFollowTheLegacyRules)
     EXPECT_TRUE(lands(8));
     ASSERT_TRUE(video.previousKeyframe());
     EXPECT_TRUE(lands(4));
+}
+
+// A1: the track the video's open chose (legacy's provider track, from the
+// chooser or ACCEPTED_AUDIO_STREAM) is the one general playback plays, as
+// legacy played the audio box's track; its index request reaches the source.
+TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    source.audioTracks = {1, 2, 4};
+    source.newIndex = false;
+    video.open("/m/ep1.mkv", IndexRequest{4, "/cfg/Indices/ep1_4.ffindex"});
+    EXPECT_EQ(source.lastRequest.audioTrack, 4);
+    EXPECT_EQ(source.lastRequest.indexFile, "/cfg/Indices/ep1_4.ffindex");
+    source.finishOpen();
+    source.answer();
+    EXPECT_EQ(video.audioTrack(), 4);
+    EXPECT_FALSE(video.newIndex());
+    EXPECT_TRUE(video.hasAudio());
+    ASSERT_TRUE(video.play());
+    MediaDescription d;
+    d.audioTracks.resize(3);
+    player.opened(d);
+    player.delivered();
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "audio track 2", "seek 0", "play"}));
+    ASSERT_TRUE(video.pause());
+    source.answer();
+    // the same file reopened with another track: the open player switches
+    video.open("/m/ep1.mkv", IndexRequest{1, {}});
+    source.newIndex = true;
+    source.finishOpen();
+    source.answer();
+    EXPECT_EQ(video.audioTrack(), 1);
+    EXPECT_TRUE(video.newIndex());
+    player.calls.clear();
+    ASSERT_TRUE(video.play());
+    EXPECT_EQ(player.calls.front(), "audio track 0");
+    // without a choice: the first audio track, and an open with the default request
+    video.open("/m/ep2.mkv");
+    EXPECT_EQ(source.lastRequest.audioTrack, IndexRequest::kEveryAudioTrack);
+    EXPECT_TRUE(source.lastRequest.indexFile.empty());
+    source.finishOpen();
+    EXPECT_EQ(video.audioTrack(), 1);
+    video.close();
+    EXPECT_EQ(video.audioTrack(), -1);
 }

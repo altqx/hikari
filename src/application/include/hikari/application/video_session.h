@@ -42,7 +42,8 @@ public:
     void setPresenter(PresenterPort *presenter);
     void setObserver(std::function<void()> changed) { m_observer = std::move(changed); }
 
-    void open(const std::string &path);
+    // A1: `index` carries legacy's chosen audio track and index file.
+    void open(const std::string &path, IndexRequest index = {});
     void close();
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
@@ -61,6 +62,9 @@ public:
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
     bool playing() const { return m_playing; }
+    // A1: legacy's Stopped state: Stop while playing, until the next Play
+    // (legacy marks the paused video's frame in the audio box only when Paused).
+    bool stopped() const { return m_stopped; }
     // A frame the general player delivered, converted to BGRA by the UI.
     void generalFrame(IndexedFrame frame, std::int64_t startUs);
 
@@ -82,6 +86,14 @@ public:
 
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }
+    // A1: the opened video has an audio track (legacy GetSampleRate() > 0).
+    bool hasAudio() const { return m_state == State::Ready && m_hasAudio; }
+    // A1: the video's audio track: the one its open chose (legacy's provider
+    // track, chooser or ACCEPTED_AUDIO_STREAM), else the first; -1 without.
+    // General playback plays it, as legacy played the box's track.
+    int audioTrack() const { return m_state == State::Ready ? m_audioTrack : -1; }
+    // A1: the open indexed now instead of reading legacy's index file.
+    bool newIndex() const { return m_newIndex; }
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
     std::optional<int> requestedFrame() const { return m_requested; }
@@ -118,10 +130,15 @@ private:
     GeneralPlayerPort *m_player = nullptr;
     std::string m_playerPath; // what the player has open
     bool m_playing = false;
+    bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;
     std::optional<std::int64_t> m_lastGeneralUs;
     std::optional<core::DocumentTime> m_overlayTime; // a general frame's time
     std::vector<int> m_keyframes;
+    bool m_hasAudio = false;
+    int m_audioTrack = -1;
+    int m_audioOrdinal = -1; // the track among the audio tracks (the general player's numbering)
+    bool m_newIndex = true;
     double m_fps = 0;
 };
 
