@@ -4426,6 +4426,7 @@ private slots:
     // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO; each commit one named step.
     void audioTimingByMouseAndKeys()
     {
+        keysNeverRepeat(); // O2's CheckLastKeyEvent: fast runners press within 100 ms
         QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
         auto &audio = application->audio();
         auto &editor = application->editor();
