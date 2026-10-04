@@ -2501,6 +2501,36 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 1);
     }
 
+    // F1: with the English interface legacy stays in the "C" locale, where
+    // wxString::Lower folds A-Z only (captured: a plain "łódź" never finds
+    // "ŁÓDŹ", tools/legacy-capture case F1-unicode-case); a regular
+    // expression folds every letter (wxRE_ICASE over PCRE2).
+    void searchFoldsAsciiOnlyWithTheEnglishInterface()
+    {
+        const QString path = writeFile(dir, "fold.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,żółw ŁÓDŹ\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QStringList questions;
+        application->setFindQuestionHandler([&](int, const QString &text) {
+            questions << text;
+            return 2;
+        });
+        const auto text = [&] {
+            const auto &t = session->document().lines()[0]->text;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QVariantMap replace{{QStringLiteral("tab"), 1},
+                            {QStringLiteral("find"), QString::fromUtf8("łódź")},
+                            {QStringLiteral("replace"), QStringLiteral("x")}};
+        application->runFindReplace(QStringLiteral("replaceAll"), replace);
+        QCOMPARE(questions.back(), QStringLiteral("Replaced 0 times."));
+        QCOMPARE(text(), QString::fromUtf8("żółw ŁÓDŹ"));
+        replace[QStringLiteral("regex")] = true;
+        application->runFindReplace(QStringLiteral("replaceAll"), replace);
+        QCOMPARE(questions.back(), QStringLiteral("Replaced 1 times."));
+        QCOMPARE(text(), QString::fromUtf8("żółw x"));
+    }
+
     // F1: Replace in subtitles rewrites only the listed subtitle files that
     // changed, each after its backup; links are followed as legacy wxDir
     // follows them (a link cycle is cut), the charset is detected with

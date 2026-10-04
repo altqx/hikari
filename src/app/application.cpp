@@ -3092,13 +3092,20 @@ bool Application::removeDictionaryWords(const QStringList &words)
 
 void Application::createFindReplace()
 {
-    m_find = std::make_unique<application::FindReplace>(*m_findHost, [](std::u16string_view s) {
-        // wxString::Lower: one unit at a time.
-        std::u16string out(s);
-        for (auto &c : out)
-            c = QChar(c).toLower().unicode();
-        return out;
-    });
+    // wxString::Lower, one unit at a time, is towlower: in the "C" locale
+    // legacy keeps with an English interface it changes A-Z only (captured on
+    // Linux: a plain "łódź" never finds "ŁÓDŹ"); with another language
+    // wxLocale set the process locale and every letter folds. Without a
+    // folding function FindReplace folds ASCII.
+    application::CaseFold fold;
+    if (m_foldsEveryLetter)
+        fold = [](std::u16string_view s) {
+            std::u16string out(s);
+            for (auto &c : out)
+                c = QChar(c).toLower().unicode();
+            return out;
+        };
+    m_find = std::make_unique<application::FindReplace>(*m_findHost, std::move(fold));
 }
 
 QVariantMap Application::openFindReplace(int tab)
@@ -3240,7 +3247,17 @@ QString Application::findReplaceActivated(const QString &find)
         const QString shown = role == 1 ? m_editor->translationText() : m_editor->text();
         const QString selected = shown.mid(from, to - from);
         m_find->selectionAdopted();
-        return selected.toLower() != find.toLower() ? selected : find;
+        // OnActivate compares with wxString::Lower (see createFindReplace).
+        const auto lower = [this](const QString &t) {
+            if (m_foldsEveryLetter)
+                return t.toLower();
+            QString out = t;
+            for (QChar &c : out)
+                if (c >= QLatin1Char('A') && c <= QLatin1Char('Z'))
+                    c = QChar(c.unicode() + 32);
+            return out;
+        };
+        return lower(selected) != lower(find) ? selected : find;
     }
     return find;
 }

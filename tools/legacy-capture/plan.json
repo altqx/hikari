@@ -197,5 +197,688 @@
         "timeout": 120
       }
     ]
+  },
+  "ui": {
+    "id": "F1-F3-ui",
+    "note": "F1 #159 and F3 #161: the legacy Find and replace dialog and spell checker on capture-only fixtures (inputs/), observed through automation/state-dump.lua. See ui_capture.py.",
+    "dump_script": "automation/state-dump.lua",
+    "dictionaries": "../../tests/fixtures/spelling",
+    "config": {"SPELLCHECKER_ON": "true", "DICTIONARY_LANGUAGE": "en_US"},
+    "positions": {
+      "automation_menu_at": [385, 59],
+      "dump_script_at": [400, 184],
+      "dump_macro_at": [700, 184],
+      "focus_at": [900, 259],
+      "subtitles_menu_at": [298, 59],
+      "check_spelling_at": [300, 259],
+      "grid_row0_at": [90, 310],
+      "grid_row_height": 21,
+      "dialog": {
+        "find": {"find": [530, 75], "find_in_all_open": [530, 114], "find_all_current": [530, 162]},
+        "replace": {
+          "replace_text": [282, 106],
+          "find": [530, 73],
+          "replace_next": [530, 100],
+          "replace_all": [530, 127],
+          "replace_in_all_open": [530, 162]
+        }
+      },
+      "results": {"replace": [339, 544], "replace_text": [597, 544]},
+      "spellchecker": {"ignore": [545, 207]}
+    },
+    "cases": [
+      {
+        "id": "F1-next-text",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "find_replace_tests Find.NextWalksMatchesSkippingCommentsAndSelectsTheRow",
+        "steps": [
+          {"do": "dump"},
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "HELLO"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-wrap-from-selected",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 2064, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.WrapYesStartsAtTheSelectionAndTheNextEndJustReportsNotFound",
+        "steps": [
+          {"do": "select", "rows": [2]},
+          {"do": "dump"},
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "yes"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-beginning-of-text",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 532, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.BeginningOfTextWithoutRegexFindsTheFirstMatchAnywhere (plain part)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-beginning-of-text-regex",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 534, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.BeginningOfTextWithoutRegexFindsTheFirstMatchAnywhere (regex part)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-end-of-text",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 536, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.EndOfTextAndRegexOnTheRestOfTheText (plain part)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "HELLO"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-regex-rest-of-text",
+        "card": "F1",
+        "inputs": ["find-lll.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.EndOfTextAndRegexOnTheRestOfTheText (regex part: ^ on the rest of the text)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "^l"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-skip-tags",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 51216, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.SkipTagsChecksOnlyTheFirstMatchOfALine (Skip tags part)",
+        "steps": [
+          {"do": "select", "rows": [2]},
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "b"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-skip-text",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 83984, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.SkipTagsChecksOnlyTheFirstMatchOfALine (Skip text part)",
+        "steps": [
+          {"do": "select", "rows": [2]},
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "b"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-styles-or-selected",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 1040, "FIND_REPLACE_STYLES": "Sign"},
+        "note": "Find.StylesOrSelectedLinesAndTheStylesQuestion (first part)",
+        "steps": [
+          {"do": "select", "rows": [0]},
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-styles-missing",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": "Sign,Nope,Gone"},
+        "note": "the missing-styles question; Escape is its Cancel",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-styles-none-found",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": "Nope"},
+        "note": "no style found: the question; Return answers its first button",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find"},
+          {"do": "answer", "answer": "yes"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-invalid-regex",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.InvalidRegularExpressionIsLoggedAndFindsNothing",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "("},
+          {"do": "find"},
+          {"do": "shot", "label": "invalid"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-regex-lookbehind",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.RegularExpressionsRunAsWxRegExOverPcre2 (lookbehind)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "(?<=hel)LO"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-unicode-case",
+        "card": "F1",
+        "inputs": ["find-unicode.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "plain search, Match case off, under LANG=C.UTF-8: the legacy Linux build (English) never sets the C library's locale (wxGTK 3.3 calls gtk_disable_setlocale), so wxString::Lower folds ASCII only",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "łódź"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-unicode-case-c-locale",
+        "card": "F1",
+        "inputs": ["find-unicode.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "env": {"LANG": "C"},
+        "note": "the same search under LANG=C: the same result, LANG is not read",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "łódź"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-unicode-match-case",
+        "card": "F1",
+        "inputs": ["find-unicode.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 529, "FIND_REPLACE_STYLES": ""},
+        "note": "Match case on: nothing matches",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "łódź"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-unicode-regex",
+        "card": "F1",
+        "inputs": ["find-unicode.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "wxRE_ICASE over PCRE2 UTF: Unicode case folding in a regular expression",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "łó.ź"},
+          {"do": "find"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-field-style",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 576, "FIND_REPLACE_STYLES": ""},
+        "note": "Find next in the Styles field",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "SIGN"},
+          {"do": "find"},
+          {"do": "shot", "label": "style-match"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-field-actor",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 640, "FIND_REPLACE_STYLES": ""},
+        "note": "Find next in the Actor field (the Actor edit's selection is in the screenshots)",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "n"},
+          {"do": "find"},
+          {"do": "shot", "label": "actor-match-1"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "shot", "label": "actor-match-2"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-field-effect",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 768, "FIND_REPLACE_STYLES": ""},
+        "note": "Find next in the Effect field",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "X"},
+          {"do": "find"},
+          {"do": "shot", "label": "effect-match"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-tlmode",
+        "card": "F1",
+        "inputs": ["find-tl.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.TranslationModeMarksTheOriginalOrTheTranslation; the original editor's selection is in the screenshot",
+        "steps": [
+          {"do": "dump"},
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "aa"},
+          {"do": "find"},
+          {"do": "shot", "label": "tl-original"},
+          {"do": "dump"},
+          {"do": "find"},
+          {"do": "dump"},
+          {"do": "replace_text", "text": "b"},
+          {"do": "replace_next"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-next",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceNextReplacesTheMatchAsOneStepAndMovesOn (plain part, then the moved active Line)",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "replace_text", "text": "bye"},
+          {"do": "replace_next"},
+          {"do": "dump"},
+          {"do": "replace_next"},
+          {"do": "dump"},
+          {"do": "select", "rows": [0]},
+          {"do": "replace_next"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-next-regex",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceNextReplacesTheMatchAsOneStepAndMovesOn (regular expression part)",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "(h)ello"},
+          {"do": "replace_text", "text": "\\1i"},
+          {"do": "replace_next"},
+          {"do": "dump"},
+          {"do": "replace_next"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-next-stale",
+        "card": "F1",
+        "inputs": ["find-stale.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "F1-stale-replace (R3): the last match replaced again after the search found nothing",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "cat"},
+          {"do": "replace_text", "text": "c"},
+          {"do": "replace_next"},
+          {"do": "dump"},
+          {"do": "replace_next"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"},
+          {"do": "replace_next"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceAllIsOneStepWithTheLegacyCount",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "replace_text", "text": "bye"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"},
+          {"do": "find_text", "text": "zzz"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-styles-and-selected",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 17424, "FIND_REPLACE_STYLES": "Sign"},
+        "note": "Find.ReplaceAllScopesStylesHiddenAndComments (styles AND selected)",
+        "steps": [
+          {"do": "select", "rows": [2, 0]},
+          {"do": "dump"},
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "replace_text", "text": "X"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-from-selected",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 18448, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceAllScopesStylesHiddenAndComments (from the first selected Line, comments included)",
+        "steps": [
+          {"do": "select", "rows": [1]},
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "replace_text", "text": "X"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-anchored-regex",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 538, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceAllAnchoredRegexReplacesNothingAndThePatternLengthQuirk (regex with End of text)",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "replace_text", "text": "X"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-beginning",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 532, "FIND_REPLACE_STYLES": ""},
+        "note": "plain Beginning of text replaces at the start of each Line",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "the"},
+          {"do": "replace_text", "text": "X"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-end-empty",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 536, "FIND_REPLACE_STYLES": ""},
+        "note": "an empty search with End of text appends",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "replace_text", "text": "!"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-replace-all-pattern-length",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 1042, "FIND_REPLACE_STYLES": ""},
+        "note": "a regular expression continues after the pattern's length",
+        "steps": [
+          {"do": "select", "rows": [0]},
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "(l)"},
+          {"do": "replace_text", "text": "L"},
+          {"do": "replace_all"},
+          {"do": "answer", "answer": "ok"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-find-all-current",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.FindAllListsOverlappingMatchesWithShownRowNumbers / ReplaceChecked...: the results list (screenshot), then Replace checked",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find_all_current"},
+          {"do": "shot", "label": "results", "window": "Search results"},
+          {"do": "results_replace", "text": "Bye!"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-find-all-comments-overlap",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 16912, "FIND_REPLACE_STYLES": ""},
+        "note": "Find all of a one-letter search: overlapping and repeated matches, comments included; Replace checked with offsets shifted",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "l"},
+          {"do": "find_all_current"},
+          {"do": "shot", "label": "results", "window": "Search results"},
+          {"do": "results_replace", "text": "LL"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-find-all-tlmode",
+        "card": "F1",
+        "inputs": ["find-tl.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 528, "FIND_REPLACE_STYLES": ""},
+        "note": "Find all in a translation mode Document: overlapping matches one character apart",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "aa"},
+          {"do": "find_all_current"},
+          {"do": "shot", "label": "results", "window": "Search results"}
+        ]
+      },
+      {
+        "id": "F1-find-all-actor",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 640, "FIND_REPLACE_STYLES": ""},
+        "note": "Find all in another field: field  ->  text",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "bo"},
+          {"do": "find_all_current"},
+          {"do": "shot", "label": "results", "window": "Search results"},
+          {"do": "results_replace", "text": "X"},
+          {"do": "answer", "answer": "no"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-find-all-regex-lookahead",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "Find.ReplaceCheckedEditsOnlyTheLinesItChanged: a lookahead found by Find all no longer matches alone",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "l(?=o)|d"},
+          {"do": "find_all_current"},
+          {"do": "shot", "label": "results", "window": "Search results"},
+          {"do": "results_replace", "text": "Y"},
+          {"do": "dump"}
+        ]
+      },
+      {
+        "id": "F1-find-all-end-of-text",
+        "card": "F1",
+        "inputs": ["find-replace.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 536, "FIND_REPLACE_STYLES": ""},
+        "note": "F1-end-of-text (R3): legacy records a plain End of text match without leaving the Line",
+        "steps": [
+          {"do": "open", "tab": "find"},
+          {"do": "find_text", "text": "hello"},
+          {"do": "find_all_current", "settle": 8},
+          {"do": "shot", "label": "after"},
+          {"do": "dump", "timeout": 15, "may_hang": true}
+        ]
+      },
+      {
+        "id": "F1-replace-all-empty-match",
+        "card": "F1",
+        "inputs": ["find-empty-match.ass"],
+        "config": {"FIND_REPLACE_OPTIONS": 530, "FIND_REPLACE_STYLES": ""},
+        "note": "F1-empty-match (R3): an empty regex match in Replace all",
+        "steps": [
+          {"do": "open", "tab": "replace"},
+          {"do": "find_text", "text": "x*"},
+          {"do": "replace_text", "text": "-"},
+          {"do": "replace_all", "settle": 8},
+          {"do": "shot", "label": "after"},
+          {"do": "dump", "timeout": 15, "may_hang": true}
+        ]
+      },
+      {
+        "id": "F3-window-walk",
+        "card": "F3",
+        "inputs": ["spell-walk.ass"],
+        "config": {"DICTIONARY_LANGUAGE": "en_TEST"},
+        "note": "SpellCheckerDialog: every misspelled word from the active Line (row 0) on, by Ignore; then the Grid's and editor's marks",
+        "steps": [
+          {"do": "shot", "label": "grid-marks", "delay": 3},
+          {"do": "spell_open"},
+          {"do": "spell_walk", "limit": 80, "screens": true},
+          {"do": "answer", "answer": "ok"},
+          {"do": "shot", "label": "end"}
+        ]
+      },
+      {
+        "id": "F3-window-walk-srt",
+        "card": "F3",
+        "inputs": ["spell-walk.srt"],
+        "config": {"DICTIONARY_LANGUAGE": "en_TEST"},
+        "note": "SRT: <...> tags, {...} is text, \\N",
+        "steps": [
+          {"do": "shot", "label": "grid-marks", "delay": 3},
+          {"do": "spell_open"},
+          {"do": "spell_walk", "limit": 20, "screens": true},
+          {"do": "answer", "answer": "ok"}
+        ]
+      }
+    ],
+    "env": {"LANG": "C.UTF-8"}
   }
 }
