@@ -104,11 +104,17 @@ std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio);
 // LoadHkeys' reading of those lines into `map`: "<SYMBOL or id> <G|S|E|V|A>=<accel>";
 // a symbol it does not know becomes id 0 (GetIdValue), a window letter it
 // does not know window -1, and an empty binding is skipped. A numeric label
-// (an optional sign and digits, wxString::IsNumber) is read with wxAtoi,
-// which never fails (past the int range: core::legacy::atoi). Script lines
+// (an optional sign and digits, wxString::IsNumber) is read with that
+// platform's legacy wxAtoi (hotkeyLabelNumber), which never fails. Script lines
 // ("Script ...") belong to the automation hotkeys and are skipped. The
 // version header and the record count rule are the importer's (C04).
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines);
+void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines, bool windows);
+// wxAtoi of a numeric label per legacy build (R5-per-platform): the Windows
+// build's _wtoi clamps past the int range to INT_MAX / INT_MIN; the Linux
+// build's atoi is strtol on a 64-bit long truncated to int
+// (core::legacy::atoi).
+int hotkeyLabelNumber(std::string_view label, bool windows);
 
 // Hotkeys::GetHKey's reading of accelerator text: the modifiers found
 // anywhere in it ("Alt-", "Ctrl-", "Shift-") and the key after the last '-'

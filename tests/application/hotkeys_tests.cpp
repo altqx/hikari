@@ -721,21 +721,50 @@ TEST(Hotkeys, InvalidKeysAreReportedAsGetHKeyLogsThem)
     EXPECT_EQ(invalidHotkeyKey(""), "");
 }
 
-// LoadHkeys (Hotkeys.cpp:300-304): a numeric label is Labels.IsNumber()
-// (a sign, then digits) read with wxAtoi, which never fails.
-TEST(Hotkeys, NumericLabelsAreReadWithWxAtoi)
+// LoadHkeys (Hotkeys.cpp:300-301): a numeric label is Labels.IsNumber()
+// (a sign, then digits) read with wxAtoi, which never fails. Past the int
+// range each legacy build reads it its own way (R5-per-platform): Windows'
+// _wtoi clamps, Linux's atoi truncates a 64-bit strtol.
+TEST(Hotkeys, NumericLabelsAreReadWithEachPlatformsWxAtoi)
 {
-    HotkeyMap map;
-    EXPECT_NO_THROW(readHotkeyLines(map, {"99999999999 G=Ctrl-K", "-5 S=F2", "+4527 S=F3", "12a G=F4"}));
-    // strtol on a 64-bit long, truncated to int (core::legacy::atoi)
-    EXPECT_EQ(map.at(HotkeyId{1215752191, GlobalHotkey}).accel, "Ctrl-K");
-    EXPECT_EQ(map.at(HotkeyId{-5, GridHotkey}).accel, "F2");
-    EXPECT_EQ(map.at(HotkeyId{kDuplicate, GridHotkey}).accel, "F3");
-    EXPECT_EQ(map.at(HotkeyId{0, GlobalHotkey}).accel, "F4"); // not a number: GetIdValue
-    // Neither is written back: an id under 100, and one in the scripts' range
-    // (legacy writes it as "=Ctrl-K", which it cannot read again).
-    const auto lines = hotkeyLines(map, false);
-    EXPECT_EQ(lines, (std::vector<std::string>{"GRID_DUPLICATE_LINES S=F3"}));
+    EXPECT_EQ(hotkeyLabelNumber("99999999999", true), 2147483647);
+    EXPECT_EQ(hotkeyLabelNumber("99999999999", false), 1215752191);
+    EXPECT_EQ(hotkeyLabelNumber("-99999999999", true), -2147483647 - 1);
+    EXPECT_EQ(hotkeyLabelNumber("-99999999999", false), -1215752191);
+    EXPECT_EQ(hotkeyLabelNumber("4294971297", true), 2147483647);
+    EXPECT_EQ(hotkeyLabelNumber("4294971297", false), 4001); // GRID_HIDE_LAYER on Linux
+    EXPECT_EQ(hotkeyLabelNumber("99999999999999999999999", true), 2147483647);
+    EXPECT_EQ(hotkeyLabelNumber("99999999999999999999999", false), -1); // strtol saturates at LONG_MAX
+    for (const bool windows : {true, false}) {
+        EXPECT_EQ(hotkeyLabelNumber("+4527", windows), kDuplicate);
+        EXPECT_EQ(hotkeyLabelNumber("-5", windows), -5);
+        EXPECT_EQ(hotkeyLabelNumber("-", windows), 0);
+        EXPECT_EQ(hotkeyLabelNumber("2147483647", windows), 2147483647);
+    }
+    for (const bool windows : {true, false}) {
+        HotkeyMap map;
+        EXPECT_NO_THROW(readHotkeyLines(
+            map, {"99999999999 G=Ctrl-K", "4294971297 S=F1", "-5 S=F2", "+4527 S=F3", "12a G=F4"}, windows));
+        EXPECT_EQ(map.at(HotkeyId{windows ? 2147483647 : 1215752191, GlobalHotkey}).accel, "Ctrl-K");
+        EXPECT_EQ(map.contains(HotkeyId{4001, GridHotkey}), !windows);
+        EXPECT_EQ(map.at(HotkeyId{-5, GridHotkey}).accel, "F2");
+        EXPECT_EQ(map.at(HotkeyId{kDuplicate, GridHotkey}).accel, "F3");
+        EXPECT_EQ(map.at(HotkeyId{0, GlobalHotkey}).accel, "F4"); // not a number: GetIdValue
+        // An id under 100 or in the scripts' range is not written back (legacy
+        // writes the latter as "=Ctrl-K", which it cannot read again).
+        std::vector<std::string> expected{"GRID_DUPLICATE_LINES S=F3"};
+        if (!windows)
+            expected.insert(expected.begin(), "GRID_HIDE_LAYER S=F1");
+        EXPECT_EQ(hotkeyLines(map, false), expected);
+    }
+    // The host's build: Windows on Windows, Linux elsewhere.
+    HotkeyMap host;
+    readHotkeyLines(host, {"99999999999 G=Ctrl-K"});
+#ifdef _WIN32
+    EXPECT_TRUE(host.contains(HotkeyId{2147483647, GlobalHotkey}));
+#else
+    EXPECT_TRUE(host.contains(HotkeyId{1215752191, GlobalHotkey}));
+#endif
 }
 
 // HikariListCtrl's gutter (CheckIfHasHiddenBlock, ShowOrHideBlock) over

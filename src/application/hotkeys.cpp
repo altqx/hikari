@@ -3,6 +3,7 @@
 #include "hikari/core/ass_load.h" // core::legacy::atoi (wxAtoi)
 
 #include <algorithm>
+#include <limits>
 #include <array>
 
 namespace hikari::application {
@@ -814,7 +815,37 @@ std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio)
     return out;
 }
 
+int hotkeyLabelNumber(std::string_view label, bool windows)
+{
+    if (!windows)
+        return static_cast<int>(core::legacy::atoi(
+            std::u8string_view(reinterpret_cast<const char8_t *>(label.data()), label.size())));
+    // _wtoi: leading blanks, a sign, then digits; out of range INT_MAX / INT_MIN.
+    std::size_t i = 0;
+    while (i < label.size() && (label[i] == ' ' || (label[i] >= '\t' && label[i] <= '\r')))
+        ++i;
+    bool negative = false;
+    if (i < label.size() && (label[i] == '+' || label[i] == '-'))
+        negative = label[i++] == '-';
+    constexpr std::int64_t limit = std::int64_t(std::numeric_limits<int>::max()) + 1;
+    std::int64_t magnitude = 0;
+    for (; i < label.size() && label[i] >= '0' && label[i] <= '9'; ++i)
+        magnitude = std::min<std::int64_t>(magnitude * 10 + (label[i] - '0'), limit);
+    if (negative)
+        return magnitude >= limit ? std::numeric_limits<int>::min() : -int(magnitude);
+    return magnitude >= limit ? std::numeric_limits<int>::max() : int(magnitude);
+}
+
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines)
+{
+#ifdef _WIN32
+    readHotkeyLines(map, lines, true);
+#else
+    readHotkeyLines(map, lines, false);
+#endif
+}
+
+void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines, bool windows)
 {
     for (const auto &line : lines) {
         const std::string token = trim(line);
@@ -830,16 +861,14 @@ void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines)
         if (values.empty())
             continue;
         // Labels.IsNumber() (wxString::IsNumber: an optional sign, then
-        // digits; "" counts too) and wxAtoi, which never fails: a number past
-        // the int range is read as the rewrite reads wxAtoi elsewhere
-        // (core::legacy::atoi), not thrown about.
+        // digits; "" counts too) and wxAtoi (Hotkeys.cpp:300-301), which
+        // never fails: past the int range each legacy build reads it its
+        // own way (R5-per-platform, hotkeyLabelNumber).
         std::string_view digits = label;
         if (!digits.empty() && (digits.front() == '-' || digits.front() == '+'))
             digits.remove_prefix(1);
         const bool number = std::ranges::all_of(digits, [](char c) { return c >= '0' && c <= '9'; });
-        const int id = number ? static_cast<int>(core::legacy::atoi(std::u8string_view(
-                                    reinterpret_cast<const char8_t *>(label.data()), label.size())))
-                              : hotkeyIdOf(label);
+        const int id = number ? hotkeyLabelNumber(label, windows) : hotkeyIdOf(label);
         map[HotkeyId{id, type}] = Hotkey{std::string(), values};
     }
 }
