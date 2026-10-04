@@ -6,6 +6,7 @@
 // the GUI thread; a file picker answers later, and a run that ends first
 // withdraws it.
 
+#include "hikari/application/audio_display.h"
 #include "hikari/application/automation.h"
 
 #include <functional>
@@ -40,6 +41,11 @@ public:
     virtual std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const = 0;
     virtual std::optional<Project> project() const = 0;
     virtual std::optional<std::string> fileName() const = 0; // nullopt: the Document has no file
+    // The audio aegisub.get_frequency_peaks reads (legacy: the video's FFMS2
+    // provider, else the audio box's): nullopt without audio (legacy "needs
+    // loaded audio by FFMS2"), a null pointer while the audio box has none
+    // yet ("cannot get audio provider").
+    virtual std::optional<const DisplayAudio *> peakAudio() const { return std::nullopt; }
 };
 
 class ClipboardPort {

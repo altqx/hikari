@@ -159,13 +159,16 @@ struct MacroResult {
 //   EditorCursor              -> integers {position};      SetEditorCursor     integers {position}
 //   EditorSelection           -> integers {start, end};    SetEditorSelection  integers {start, end}
 //   EditorModified            -> integers {modified}
+//   FrequencyPeaks            integers {start, end, freqStart, freqEnd, peek} -> integers {status, times...},
+//                             numbers {intensities} (status 1: an audio box without audio yet; Unavailable: none)
 // Unavailable is the legacy nil: no video, no Document, a cancelled picker.
 enum class HostService : std::int32_t {
     FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
     ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
     EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
+    FrequencyPeaks,
 };
-inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::EditorModified);
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::FrequencyPeaks);
 
 struct HostServiceRequest {
     HostService service = HostService::FrameFromMs;

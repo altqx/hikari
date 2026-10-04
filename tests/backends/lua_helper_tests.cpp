@@ -491,6 +491,8 @@ struct FakeServices {
     std::vector<hikari::application::HostServiceRequest> requests;
     std::string clipboard;
     bool available = true;
+    bool audio = true;        // FrequencyPeaks: Unavailable without audio
+    std::int64_t peaksStatus = 0; // 1: an audio box without audio yet
 
     LuaScriptHost::ServiceHandler handler()
     {
@@ -533,6 +535,12 @@ struct FakeServices {
             case HostService::EditorCursor: out.integers = {7}; break;
             case HostService::EditorSelection: out.integers = {7, 3}; break;
             case HostService::EditorModified: out.integers = {1}; break;
+            case HostService::FrequencyPeaks:
+                if (!audio)
+                    return reply(HostServiceReply::unavailable());
+                out.integers = {peaksStatus, 10, 20};
+                out.numbers = {5, 6};
+                break;
             default: break;
             }
             reply(std::move(out));
@@ -653,6 +661,80 @@ TEST_F(LuaHelper, EditorServicesUseOneBasedPositions)
     EXPECT_EQ(writes[0].second, std::vector<std::int64_t>{4});
     EXPECT_EQ(writes[1].second, (std::vector<std::int64_t>{1, 3}));
     EXPECT_EQ(services.requests.back().strings, std::vector<std::string>{"busy"});
+}
+
+// L6: legacy AutoToFile adds parse_karaoke_data and get_frequency_peaks
+// (with set_undo_point) to the aegisub table for a run; they are absent
+// while the script loads and stay afterwards (legacy capture: present during
+// a macro run).
+TEST_F(LuaHelper, KaraokeAndPeaksExistFromTheFirstRun)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Presence"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"nil,nil,function,function"});
+}
+
+// Legacy LuaParseKaraokeData at 20d647c4: the syllables go into the line
+// table passed in, from index 0 (an empty one), and that table comes back.
+// Text before a tag and after its value up to the next block is the
+// syllable's; "{}" is dropped and blocks are stripped for text_stripped.
+TEST_F(LuaHelper, ParseKaraokeDataFollowsTheLegacyParser)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Karaoke"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 8);
+    EXPECT_EQ(run.log[0].toStdString(), "0:0,0,0,,| 1:100,0,100,k,a|a 2:200,100,300,k,b|b 3:300,300,600,kf,c|c");
+    EXPECT_EQ(run.log[1].toStdString(), "0:0,0,0,,| 1:100,0,100,k,{\\b1}ab{\\i1}c|abc 2:50,100,150,k,d|d");
+    // No karaoke tag: the whole line, timed as the line, as one "k" syllable.
+    EXPECT_EQ(run.log[2].toStdString(), "0:0,0,0,,| 1:2500,1000,3500,k,Hello {\\b1}world|Hello world");
+    // An empty text with text_translation parses the translation (TextTl/Text swap).
+    EXPECT_EQ(run.log[3].toStdString(), "0:0,0,0,,| 1:50,0,50,k,x|x");
+    EXPECT_EQ(run.log[4].toStdString(), "true,dialogue,a");
+    EXPECT_EQ(run.log[5].toStdString(), "You try to parse karaoke from non dialogue line");
+    EXPECT_EQ(run.log[6].toStdString(), "You try to parse karaoke from non dialogue line");
+    EXPECT_EQ(run.log[7].toStdString(), "Cannot convert non table value");
+}
+
+// Legacy LuaGetFreqencyReach's argument checks, error texts and returns; the
+// host answers the spectrum (application tests cover the computation).
+TEST_F(LuaHelper, GetFrequencyPeaksKeepsTheLegacyChecks)
+{
+    FakeServices services;
+    auto host = load(fixture("karaoke.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"n=2,t=10;20,i=5;6", "n=1,t=10;20,i=", "n=2,t=10;20,i=5;6",
+                                    "n=2,t=10;20,i=5;6", "n=1,t=,i=",
+                                    "get_frequency_peaks start or end time less than zero",
+                                    "Non number argument of function get_frequency_peaks",
+                                    "Non number argument of function get_frequency_peaks"}));
+    using hikari::application::HostService;
+    std::vector<std::vector<std::int64_t>> asked;
+    for (const auto &r : services.requests)
+        if (r.service == HostService::FrequencyPeaks)
+            asked.push_back(r.integers);
+    // The peek clamped to [0, 1000]; numbers truncated (lua_tointeger), a
+    // numeric string taken; no request after a non-number argument.
+    EXPECT_EQ(asked, (std::vector<std::vector<std::int64_t>>{{0, 1000, 0, 100, 0},
+                                                             {0, 1000, 0, 100, 1000},
+                                                             {0, 1000, 0, 100, 0},
+                                                             {1, 2000, 3, 4, 0},
+                                                             {500, 500, 0, 0, 0},
+                                                             {-1, 10, 0, 0, 0}}));
+
+    // An audio box still without audio, then no audio: checked before the times.
+    services.peaksStatus = 1;
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    EXPECT_EQ(run.log.value(0), "get_frequency_peaks cannot get audio provider");
+    EXPECT_EQ(run.log.value(5), "get_frequency_peaks cannot get audio provider");
+    services.audio = false;
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    EXPECT_EQ(run.log.value(0), "get_frequency_peaks needs loaded audio by FFMS2");
+    EXPECT_EQ(run.log.value(5), "get_frequency_peaks needs loaded audio by FFMS2");
+    EXPECT_EQ(run.log.value(6), "Non number argument of function get_frequency_peaks");
 }
 
 TEST_F(LuaHelper, ServicesAnswerWhileTheTopLevelLoads)
@@ -838,6 +920,21 @@ TEST_F(LuaHelper, MoonScriptMacrosLoadAndMapErrorLines)
         << run.message.toStdString();
 }
 
+// DependencyControl's first require in a fresh configuration runs its
+// update check, which fetches live third-party feeds; with them reachable,
+// DependencyControl's own UpdateFeed fails on the current Aegisub-Motion feed
+// ("attempt to index a nil value" in its template expansion), in any host and
+// at load or macro time alike (the check runs once per update interval).
+// The tests keep the updater off so what they observe does not depend on the
+// network or on those feeds (the legacy capture's check evidently reached none).
+void disableDependencyControlUpdater(const QString &automationDir)
+{
+    QDir().mkpath(automationDir + QStringLiteral("/config"));
+    QFile f(automationDir + QStringLiteral("/config/l0.DependencyControl.json"));
+    ASSERT_TRUE(f.open(QIODevice::WriteOnly));
+    f.write(R"({"config": {"updaterEnabled": false}})");
+}
+
 // Every bundled Autoload script, loaded unchanged. The results are written to
 // an artifact (A33-compat corpus); each must load and register its macros.
 TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
@@ -855,6 +952,7 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
     const QString automation = app.filePath(QStringLiteral("Automation"));
     for (const char *sub : {"log", "autosave", "temp"})
         QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
     hikari::application::AutomationPathContext paths;
     paths.automationDir = automation.toStdString();
     paths.dictionaryDir = app.filePath(QStringLiteral("Dictionary")).toStdString();
@@ -907,6 +1005,39 @@ TEST_F(LuaHelper, BundledScriptsLoadUnchanged)
 // S3/L6: the legacy capture probe (tools/legacy-capture/automation) run in
 // this host over the same corpus; its JSON line is the rewrite side of the
 // legacy comparison (artifacts/automation-capture-corpus.json).
+// L6: the host's load-time environment (aegisub API, decode_path answered
+// during the load, include path, native modules) is enough for
+// DependencyControl, as in legacy, where the capture probe required it from
+// its top level.
+TEST_F(LuaHelper, DependencyControlLoadsWhileTheScriptLoads)
+{
+    QTemporaryDir work;
+    ASSERT_TRUE(work.isValid());
+    const QString automation = work.filePath(QStringLiteral("Automation"));
+    for (const char *sub : {"log", "autosave", "temp"})
+        QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
+    hikari::application::AutomationPathContext paths;
+    paths.automationDir = automation.toStdString();
+#ifdef _WIN32
+    paths.windows = true;
+#endif
+    int decodedWhileLoading = 0;
+    auto host = load(fixture("depctrl-load.lua"),
+                     [&](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+                         if (r.service != hikari::application::HostService::DecodePath)
+                             return reply(hikari::application::HostServiceReply::unavailable());
+                         ++decodedWhileLoading;
+                         hikari::application::HostServiceReply out;
+                         out.strings = {hikari::application::decodeAutomationPath(r.strings.at(0), paths)};
+                         reply(out);
+                     });
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_GT(decodedWhileLoading, 0);
+    ASSERT_TRUE(runToEnd(*host, "Show"));
+    EXPECT_EQ(run.log, QStringList{"true,table,"});
+}
+
 TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
 {
     QDir dir(QStringLiteral(HIKARI_AUTOLOAD_DIR));
@@ -930,6 +1061,7 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
     const QString automation = work.filePath(QStringLiteral("Automation"));
     for (const char *sub : {"log", "autosave", "temp"})
         QDir().mkpath(automation + QLatin1Char('/') + QLatin1String(sub));
+    disableDependencyControlUpdater(automation);
     hikari::application::AutomationPathContext paths;
     paths.automationDir = automation.toStdString();
     paths.dictionaryDir = work.filePath(QStringLiteral("Dictionary")).toStdString();
@@ -976,6 +1108,10 @@ TEST_F(LuaHelper, CaptureProbeCorpusRunsInThisHost)
             << file << ": " << script.value(QStringLiteral("error")).toString().toStdString();
         EXPECT_FALSE(script.value(QStringLiteral("registrations")).toArray().isEmpty()) << file;
     }
+    // DependencyControl loads from the probe's top level, as in the legacy capture.
+    EXPECT_TRUE(QJsonDocument::fromJson(atLoad).object().value(QStringLiteral("modules")).toObject().value(
+        QStringLiteral("l0.DependencyControl")).toObject().value(QStringLiteral("ok")).toBool())
+        << atLoad.toStdString();
     for (const char *module : {"aegisub.re", "aegisub.unicode", "lfs", "lpeg", "luabins", "ffi"})
         EXPECT_TRUE(result.value(QStringLiteral("modules")).toObject().value(QLatin1String(module)).toObject().value(
             QStringLiteral("ok")).toBool())

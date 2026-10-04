@@ -9,6 +9,7 @@
 // (L3). Progress, the log and Cancel / Force stop are exposed for the
 // progress window.
 
+#include "hikari/application/audio_box.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
 #include "hikari/application/document_files.h"
@@ -54,6 +55,8 @@ public:
 
     // Called after a macro changed the Document (the views show it again).
     void setDocumentChanged(std::function<void()> changed) { m_documentChanged = std::move(changed); }
+    // The audio box whose audio aegisub.get_frequency_peaks reads (null: none).
+    void setAudioBox(std::function<const application::AudioBox *()> box);
 
     // AutomationServicePort: run() goes through the editing target's transaction.
     std::vector<application::ScriptStatus> scripts() const override { return m_manager.scripts(); }

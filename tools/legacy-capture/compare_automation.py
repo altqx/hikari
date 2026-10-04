@@ -116,9 +116,13 @@ def compare_dialogs(legacy_obs, rewrite):
             # The legacy app gave no answer: what it did instead is the observation.
             legacy = {"status": step.get("status"), "responding_after": step.get("responding_after"),
                       "dialog_windows": step.get("dialog_windows")}
-            rows.append(("dialog", f"{name} (keys {step.get('keys')})", legacy,
-                         {"status": r.get("status"), "dialog_shown": r.get("dialog_shown"),
-                          "answer": answer(r.get("result"))}))
+            rewrite = {"status": r.get("status"), "dialog_shown": r.get("dialog_shown")}
+            # Keys that left the rewrite's dialog open, and how it was then closed.
+            for key in ("dialog_open_after_keys", "focus_after_keys", "closed_by"):
+                if key in r:
+                    rewrite[key] = r[key]
+            rewrite["answer"] = answer(r.get("result"))
+            rows.append(("dialog", f"{name} (keys {step.get('keys')})", legacy, rewrite))
             continue
         l_answer, r_answer = answer(step.get("result")), answer(r.get("result"))
         if l_answer != r_answer:

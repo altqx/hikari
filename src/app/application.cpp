@@ -624,6 +624,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // it open the video's audio without indexing it again.
     m_audioSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
     m_audio = std::make_unique<ui::AudioController>(*m_audioSource);
+    m_automation->setAudioBox([this]() -> const application::AudioBox * { return m_audio ? &m_audio->box() : nullptr; });
     {
         const QString cacheDir = !options.audioCacheDir.isEmpty() ? options.audioCacheDir
                                  : !m_settingsFile.isEmpty()
