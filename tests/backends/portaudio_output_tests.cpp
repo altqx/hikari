@@ -230,7 +230,7 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     // Some hosts report the endpoint gone a little after its callbacks stop.
     const auto stalled = std::chrono::steady_clock::now();
     feedUntil(out, [&] { return out.status().deviceLost; }, 10s);
-    say("DeviceLost after the stall: " +
+    say("waited for DeviceLost after the stall: " +
         std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - stalled)
                            .count()) +
         " ms");
