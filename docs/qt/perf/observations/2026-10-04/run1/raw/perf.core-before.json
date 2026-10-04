@@ -1,0 +1,1 @@
+{"at":"2026-10-04T13:18:56,764988953+07:00","load1":6.37,"load5":8.38,"load15":12.27,"cpuPressureSome10":2.79,"cpuTempC":69.9,"busiest":[{"pid":2318005,"cpu":88.6,"command":"qemu-system-x86"},{"pid":2492295,"cpu":72.0,"command":"python"},{"pid":2258930,"cpu":5.8,"command":"kworker/u48:5-btrfs-endio"},{"pid":2700959,"cpu":5.8,"command":"hikarisub"}]}

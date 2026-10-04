@@ -16,6 +16,15 @@ sapphire exceeds the accepted reference class: 6 physical cores rather than 4, 3
 
 The harness reports `calibrated: true` only for a fingerprint listed in `tests/perf/reference-hosts.json`. That list stays empty: binding records the host, while calibration needs measurement tooling that does not exist yet.
 
+## 2026-10-04 observations
+
+[Summary](observations/2026-10-04/summary.md). Two runs were taken. Both are **contaminated** under the rule below:
+
+- run1: concurrent agent builds, at a load average of 6.4.
+- run2: the idle Winix VM and agent-launched application instances, at a load average of 1.2–1.9 with others' median CPU at 29–33 %.
+
+The binaries were copied from the shared build tree, with their hashes in `raw/*-run.json`. `hikari_core_perf` was built at 11:51 and `hikari_ui_perf` at 12:10. Their measured sources (`tests/perf`, `tests/support/perf`, ASS load, frame timeline, Grid model and paint) are identical at `c8db96c4`. A clean run needs the host idle, with no builds, no Winix VM and no other agents.
+
 ## Rules the scripts apply
 
 - Repetitions follow the contract: five runs, at least 1,000 timed operations, 10 s warmup for W, and nearest-rank p95/p99/max per run, never pooled. The harness enforces the minimums.

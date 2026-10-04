@@ -1,0 +1,257 @@
+{
+  "host": "sapphire",
+  "recordedAt": "2026-10-04T14:15:24+07:00",
+  "platform": "linux",
+  "cpu": {
+    "model": "AMD Ryzen 5 5600 6-Core Processor",
+    "physicalCores": 6,
+    "logicalCores": 12,
+    "threadsPerCore": 2,
+    "maxMHz": "4470.5078",
+    "minMHz": "565.5470",
+    "boost": "enabled",
+    "microcode": "0xa20102e",
+    "l3": "32 MiB (1 instance)",
+    "virtualization": "AMD-V"
+  },
+  "memory": {
+    "totalGiB": 31.26,
+    "swapGiB": 62.52,
+    "speedAndModules": null,
+    "note": "module speed and layout need root (dmidecode); not read"
+  },
+  "storage": {
+    "disks": [
+      {
+        "name": "sda",
+        "model": "ST6000VX0003-1ZH110",
+        "size": "5.5T",
+        "rotational": true,
+        "transport": "sata"
+      },
+      {
+        "name": "sdb",
+        "model": "WDC WD5000AAKX-001CA0",
+        "size": "465.8G",
+        "rotational": true,
+        "transport": "sata"
+      },
+      {
+        "name": "zram0",
+        "model": null,
+        "size": "31.3G",
+        "rotational": false,
+        "transport": null
+      },
+      {
+        "name": "nvme1n1",
+        "model": "Seagate BarraCuda 510 SSD ZP250CM30001",
+        "size": "232.9G",
+        "rotational": false,
+        "transport": "nvme"
+      },
+      {
+        "name": "nvme0n1",
+        "model": "HS-SSD-FUTURE 1024G",
+        "size": "953.9G",
+        "rotational": false,
+        "transport": "nvme"
+      }
+    ],
+    "repository": {
+      "path": "/home/altq/Work/hikari-wt/human-kits",
+      "source": "/dev/mapper/root",
+      "filesystem": "btrfs",
+      "disk": "nvme0n1 HS-SSD-FUTURE 1024G nvme"
+    },
+    "buildTree": {
+      "path": "/home/altq/Work/hikari-qt/out/build/ubuntu-x64-release",
+      "source": "/dev/mapper/root",
+      "filesystem": "btrfs",
+      "disk": "nvme0n1 HS-SSD-FUTURE 1024G nvme"
+    }
+  },
+  "gpu": {
+    "devices": [
+      {
+        "device": "08:00.0 VGA compatible controller [0300]: NVIDIA Corporation GP104 [GeForce GTX 1070 Ti] [10de:1b82] (rev a1)",
+        "kernelDriver": "nvidia"
+      }
+    ],
+    "nvidiaSmi": "NVIDIA GeForce GTX 1070 Ti, 580.178.04, 8192 MiB, 180.00 W",
+    "openglRenderer": "NVIDIA GeForce GTX 1070 Ti/PCIe/SSE2",
+    "openglVersion": "4.6.0 NVIDIA 580.178.04",
+    "vulkanDevices": "NVIDIA GeForce GTX 1070 Ti",
+    "integratedPresent": false
+  },
+  "displays": [
+    {
+      "name": "HDMI-A-1",
+      "description": "AOC 22E1W",
+      "width": 1920,
+      "height": 1080,
+      "refreshRate": 60.00000,
+      "scale": 1,
+      "transform": 0,
+      "vrr": false
+    }
+  ],
+  "os": {
+    "name": "Omarchy",
+    "build": "4.0.0.r6713.ga85e29a",
+    "kernel": "7.2.5-4-omarchy",
+    "arch": "x86_64"
+  },
+  "session": {
+    "type": "wayland",
+    "desktop": "Hyprland",
+    "waylandDisplay": "wayland-1",
+    "x11Display": ":0",
+    "compositor": {
+      "name": "Hyprland",
+      "version": "v0.56.2",
+      "commit": "efb50993780079460b0cbed1363e2166a2de1d9f"
+    }
+  },
+  "graphicsBackend": {
+    "qtPlatform": "wayland;xcb",
+    "sceneGraphBackend": "opengl (Qt default on Linux)",
+    "environment": {
+      "QT_QPA_PLATFORM": "wayland;xcb",
+      "QSG_RHI_BACKEND": ""
+    }
+  },
+  "audio": {
+    "server": "PulseAudio (on PipeWire 1.6.9)",
+    "defaultSink": "alsa_output.usb-Razer_Razer_BlackShark_V2_X_USB_000000000001-00.analog-stereo",
+    "sinks": [
+      {
+        "name": "alsa_output.usb-Razer_Razer_BlackShark_V2_X_USB_000000000001-00.analog-stereo",
+        "description": "Razer BlackShark V2 X USB Analog Stereo",
+        "sampleSpec": "s24le 2ch 48000Hz",
+        "state": "SUSPENDED"
+      },
+      {
+        "name": "alsa_output.pci-0000_08_00.1.hdmi-stereo",
+        "description": "AOC 22E1W (HDA NVidia)",
+        "sampleSpec": "s32le 2ch 48000Hz",
+        "state": "SUSPENDED"
+      },
+      {
+        "name": "alsa_output.pci-0000_0a_00.4.iec958-stereo",
+        "description": "Starship/Matisse HD Audio Controller Digital Stereo (IEC958)",
+        "sampleSpec": "s32le 2ch 48000Hz",
+        "state": "SUSPENDED"
+      }
+    ],
+    "alsaCards": " 0 [Set            ]: USB-Audio - USB Headphone Set\n                      USB Headphone Set at usb-0000:0a:00.3-2, full speed\n 1 [NVidia         ]: HDA-Intel - HDA NVidia\n                      HDA NVidia at 0xfc080000 irq 86\n 2 [Generic        ]: HDA-Intel - HD-Audio Generic\n                      HD-Audio Generic at 0xfc400000 irq 88\n 3 [USB            ]: USB-Audio - Razer BlackShark V2 X USB\n                      Razer Razer BlackShark V2 X USB at usb-0000:02:00.0-6, full speed",
+    "editorOutput": "PortAudio, ALSA host API (the Linux build links libasound only)",
+    "generalPlayer": "Qt Multimedia (FFmpeg backend; PipeWire or PulseAudio audio sink)"
+  },
+  "power": {
+    "powerProfile": "performance",
+    "scalingDriver": "amd-pstate-epp",
+    "governors": "performance x12",
+    "energyPerformancePreference": "performance",
+    "amdPstate": "active",
+    "boost": "1",
+    "powerSupplies": null,
+    "acOnline": null,
+    "acNote": "no battery or mains supply reported: a desktop on mains power",
+    "cpuTemperatureAtInventory": "+63.2°C"
+  },
+  "softwareBuild": {
+    "gitRevision": "bdf8ae522b43a1ed64328b0bb53664441e443f52",
+    "uncommittedFiles": 0,
+    "sourceTree": "/home/altq/Work/hikari-qt",
+    "buildTree": "/home/altq/Work/hikari-qt/out/build/ubuntu-x64-release",
+    "buildType": "Release",
+    "binariesBuiltAt": {
+      "hikarisub": "2026-10-04T13:40:21+07:00",
+      "mediaHelper": "2026-10-04T13:29:22+07:00",
+      "coreperf": "2026-10-04T11:51:10+07:00",
+      "uiPerf": "2026-10-04T13:34:24+07:00",
+      "sourceHeadCommitted": "2026-10-04T13:40:39+07:00"
+    },
+    "commitsAfterOldestBinary": [
+      "bdf8ae52 2026-10-04T13:40:39+07:00 A1 row: the in-use cache trim is the approved A1-trim-in-use",
+      "69ae6195 2026-10-04T13:40:31+07:00 F1-win-charsets: decode the charsets wx had no converter for with ICU on Windows; record O1-destroyed-results and A1-trim-in-use under R3",
+      "3121b555 2026-10-04T13:35:52+07:00 S3 capture: press and release a probe macro's menu item apart",
+      "9ccfdb0d 2026-10-04T13:35:23+07:00 Select lines logs wxRegEx's invalid-expression and match errors; coverage for N6 on Windows; the F1-utf16-bom row states what legacy Linux did",
+      "8e0283b0 2026-10-04T13:33:11+07:00 Merge integration stream: audio",
+      "e9e3bc80 2026-10-04T13:28:21+07:00 Merge integration stream: search",
+      "530d6155 2026-10-04T13:26:03+07:00 Merge integration stream: wave-4 settings into the registry",
+      "c9565732 2026-10-04T13:24:27+07:00 Merge integration stream: legacy text files and charsets",
+      "0561ed82 2026-10-04T13:19:27+07:00 N6 hot-plug test: say what the wait measured",
+      "4d7f17b6 2026-10-04T13:18:47+07:00 Audio box: hand the video's index over, read blocks into a kept buffer (A1)",
+      "c2018ae6 2026-10-04T13:17:10+07:00 N6: DirectSound's unplugged stream only stalls; record it per host API",
+      "a99b0596 2026-10-04T13:16:02+07:00 N6: real device loss and return on Windows through a hot-plugged USB audio device",
+      "80094b63 2026-10-04T13:13:48+07:00 Search stream: regex match errors, wxDir listings per platform, dialog minors",
+      "db21f0a7 2026-10-04T12:59:43+07:00 Move the wave-4 interim INI keys into the settings registry",
+      "3be9e157 2026-10-04T12:57:22+07:00 S3 capture: hover the probe row under the Automation label",
+      "8e243ba6 2026-10-04T12:55:43+07:00 N6: a stream that stops being active without a stop is DeviceLost; the hot-plug test finds the returning device by what was missing",
+      "0f653fd3 2026-10-04T12:51:59+07:00 N6 hot-plug task: match the name Windows gives the QEMU USB audio device",
+      "909a0c31 2026-10-04T12:48:59+07:00 Legacy text files: iconv on Linux, wx's code pages on Windows, Rules.txt CR, paste through FileOpen",
+      "68d6e57b 2026-10-04T12:40:30+07:00 S3 capture: close the app-drawn menu with a Grid click before each probe macro",
+      "6bfd4c52 2026-10-04T12:38:28+07:00 N6: real device loss and return through a hot-plugged USB device; fix the MSVC-ambiguous SpellChecker calls in tests",
+      "2d21c1a3 2026-10-04T12:31:13+07:00 N6: pick the test device by id too, and a WASAPI Winix task",
+      "c8db96c4 2026-10-04T12:16:59+07:00 Record the R3 extension and F1-utf16-bom approvals",
+      "ef73c9fe 2026-10-04T12:13:58+07:00 Merge A1: Audio",
+      "94237b53 2026-10-04T12:09:47+07:00 Merge F1: Find and replace"
+    ],
+    "compiler": {
+      "path": "/home/altq/.local/lib/kache/shims/c++",
+      "version": "16.2.1",
+      "gnuVersion": "16.2.1 20260810"
+    },
+    "qt": {
+      "version": "6.11.2",
+      "dir": "/home/altq/Work/hikari-qt/out/sdk/qt-6.11.2-linux/6.11.2/gcc_64/lib/cmake/Qt6",
+      "multimediaFfmpegLibraries": "libavcodec.so.61.19.101,libavformat.so.61.7.103,libavutil.so.59.39.100"
+    },
+    "ffmpeg": "7.1.2#5",
+    "ffms2": "5.1.0-hikari-45d5f721",
+    "libass": "0.17.5#102",
+    "portaudio": "19.7#100",
+    "freetype": "2.14.3",
+    "harfbuzz": "14.5.0",
+    "fribidi": "1.0.17",
+    "fontconfig": "2.17.1#2",
+    "luajit": "2026-09-08#1",
+    "kddockwidgets": "2.4.1#101",
+    "perfHarnessFingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+  },
+  "referenceClass": {
+    "physicalCores": {
+      "reference": 4,
+      "host": 6,
+      "matches": false
+    },
+    "ramGiB": {
+      "reference": 8,
+      "host": 31.26,
+      "matches": false
+    },
+    "ssd": {
+      "reference": true,
+      "host": true,
+      "matches": true
+    },
+    "integratedGraphics": {
+      "reference": true,
+      "host": false,
+      "matches": false
+    },
+    "refresh60Hz": {
+      "reference": 60,
+      "host": [
+        60
+      ],
+      "matches": true
+    }
+  },
+  "calibration": {
+    "status": "uncalibrated",
+    "note": "No measurement tooling calibration, presentation traces or A/V loopback capture are bound to this host; its harness results are observations."
+  }
+}

@@ -1,0 +1,1 @@
+{"at":"2026-10-04T14:08:52,140227911+07:00","load1":1.73,"load5":3.98,"load15":5.95,"cpuPressureSome10":0.00,"cpuTempC":62.5,"busiest":[{"pid":2318005,"cpu":22.9,"command":"qemu-system-x86"},{"pid":10632,"cpu":6.7,"command":"Discord"}]}

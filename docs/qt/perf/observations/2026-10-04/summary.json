@@ -1,0 +1,919 @@
+{
+ "card": "H3 #126",
+ "contract": "docs/qt/performance.md",
+ "label": "uncalibrated observation",
+ "host": {
+  "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+  "logicalCores": 12,
+  "os": "Linux 7.2.5-4-omarchy",
+  "compiler": "gcc 16.2.1 20260810",
+  "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+ },
+ "hostInventory": "docs/qt/perf/hosts/sapphire.json",
+ "contaminationRule": {
+  "load1AtStartAbove": 1.5,
+  "otherCpuMedianAbovePercent": 25.0,
+  "otherCpuPeakAbovePercent": 100.0,
+  "note": "other processes' CPU from top's one-second samples every ~2 s, the workload's own pid excluded"
+ },
+ "workloadRuns": [
+  {
+   "workload": "core.ass_load.50k_lines",
+   "binaryRun": "perf.core",
+   "run": "run1",
+   "started": "2026-10-04T13:18:56,768365235+07:00",
+   "ended": "2026-10-04T13:20:08,985138041+07:00",
+   "binarySha256": "30c1ff3213d849fc392c2abff4b17990ea1b2e2a2e77ff67dbc578346e8c4638",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 10.8,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 58.327,
+     "p95Ms": 62.189,
+     "p99Ms": 64.529,
+     "maxMs": 68.264,
+     "meanMs": 59.039
+    },
+    {
+     "operations": 200,
+     "p50Ms": 59.105,
+     "p95Ms": 62.149,
+     "p99Ms": 71.842,
+     "maxMs": 77.445,
+     "meanMs": 59.258
+    },
+    {
+     "operations": 200,
+     "p50Ms": 46.651,
+     "p95Ms": 63.014,
+     "p99Ms": 68.068,
+     "maxMs": 79.036,
+     "meanMs": 49.27
+    },
+    {
+     "operations": 200,
+     "p50Ms": 48.32,
+     "p95Ms": 59.849,
+     "p99Ms": 62.6,
+     "maxMs": 65.586,
+     "meanMs": 49.781
+    },
+    {
+     "operations": 200,
+     "p50Ms": 41.739,
+     "p95Ms": 56.86,
+     "p99Ms": 58.405,
+     "maxMs": 60.961,
+     "meanMs": 43.377
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 31,
+    "load1Start": 6.37,
+    "load1Min": 4.36,
+    "load1Max": 6.37,
+    "load1Mean": 5.08,
+    "otherCpuMedian": 158.3,
+    "otherCpuPeak": 267.9,
+    "busiestOthers": [
+     [
+      "qemu-system-x86",
+      125.3
+     ],
+     [
+      "hikarisub",
+      103.1
+     ],
+     [
+      "hikari_core_per",
+      100.0
+     ],
+     [
+      "helium",
+      98.1
+     ],
+     [
+      "dockerd",
+      95.0
+     ]
+    ],
+    "cpuTempC": [
+     65.6,
+     72.6
+    ],
+    "contaminated": true,
+    "reasons": [
+     "load average 6.37 at start (limit 1.5)",
+     "other processes used a median 158% CPU (limit 25%)",
+     "other processes peaked at 268% CPU (limit 100%)"
+    ]
+   },
+   "verdict": "inconclusive",
+   "verdictDetail": "worst run p95 63.014 ms, p99 71.842 ms against G open → parsed, selectable visible grid, W p95 2000 ms / p99 4000 ms: component within the bound; measures only in-process parse of a generated 50,000-Line ASS script (no process start, file read, model, grid or presentation); uncalibrated host; contaminated by other CPU work",
+   "label": "uncalibrated observation"
+  },
+  {
+   "workload": "core.frame_lookup.ntsc.x1000",
+   "binaryRun": "perf.core",
+   "run": "run1",
+   "started": "2026-10-04T13:18:56,768365235+07:00",
+   "ended": "2026-10-04T13:20:08,985138041+07:00",
+   "binarySha256": "30c1ff3213d849fc392c2abff4b17990ea1b2e2a2e77ff67dbc578346e8c4638",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 85.6,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.013,
+     "maxMs": 0.015,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.01,
+     "maxMs": 0.013,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.016,
+     "maxMs": 0.019,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.018,
+     "maxMs": 0.019,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.019,
+     "p99Ms": 0.02,
+     "maxMs": 0.025,
+     "meanMs": 0.014
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 31,
+    "load1Start": 6.37,
+    "load1Min": 4.36,
+    "load1Max": 6.37,
+    "load1Mean": 5.08,
+    "otherCpuMedian": 158.3,
+    "otherCpuPeak": 267.9,
+    "busiestOthers": [
+     [
+      "qemu-system-x86",
+      125.3
+     ],
+     [
+      "hikarisub",
+      103.1
+     ],
+     [
+      "hikari_core_per",
+      100.0
+     ],
+     [
+      "helium",
+      98.1
+     ],
+     [
+      "dockerd",
+      95.0
+     ]
+    ],
+    "cpuTempC": [
+     65.6,
+     72.6
+    ],
+    "contaminated": true,
+    "reasons": [
+     "load average 6.37 at start (limit 1.5)",
+     "other processes used a median 158% CPU (limit 25%)",
+     "other processes peaked at 268% CPU (limit 100%)"
+    ]
+   },
+   "verdict": "diagnostic",
+   "verdictDetail": "no budget row",
+   "label": "uncalibrated observation"
+  },
+  {
+   "workload": "ui.grid_paint.50k_lines.1280x720",
+   "binaryRun": "perf.ui",
+   "run": "run1",
+   "started": "2026-10-04T13:20:11,639766554+07:00",
+   "ended": "2026-10-04T13:20:23,878129694+07:00",
+   "binarySha256": "60bd13fbc975e15c8ae38f5b369281712dc2f34c532510c5c90ba0b0a6279fb9",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 30.3,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 1.974,
+     "p95Ms": 2.633,
+     "p99Ms": 2.702,
+     "maxMs": 2.943,
+     "meanMs": 2.058
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.986,
+     "p95Ms": 2.668,
+     "p99Ms": 2.722,
+     "maxMs": 2.751,
+     "meanMs": 2.083
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.982,
+     "p95Ms": 2.683,
+     "p99Ms": 2.776,
+     "maxMs": 2.89,
+     "meanMs": 2.09
+    },
+    {
+     "operations": 200,
+     "p50Ms": 2.001,
+     "p95Ms": 2.768,
+     "p99Ms": 2.948,
+     "maxMs": 3.791,
+     "meanMs": 2.14
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.973,
+     "p95Ms": 2.125,
+     "p99Ms": 2.262,
+     "maxMs": 2.886,
+     "meanMs": 1.993
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 5,
+    "load1Start": 4.49,
+    "load1Min": 4.29,
+    "load1Max": 4.35,
+    "load1Mean": 4.32,
+    "otherCpuMedian": 165.2,
+    "otherCpuPeak": 222.6,
+    "busiestOthers": [
+     [
+      "hikari_core_per",
+      100.0
+     ],
+     [
+      "hikarisub",
+      93.4
+     ],
+     [
+      "helium",
+      30.1
+     ],
+     [
+      "qemu-system-x86",
+      22.4
+     ],
+     [
+      "2.1.288",
+      7.8
+     ]
+    ],
+    "cpuTempC": [
+     69.9,
+     70.8
+    ],
+    "contaminated": true,
+    "reasons": [
+     "load average 4.49 at start (limit 1.5)",
+     "other processes used a median 165% CPU (limit 25%)",
+     "other processes peaked at 223% CPU (limit 100%)"
+    ]
+   },
+   "verdict": "inconclusive",
+   "verdictDetail": "worst run p95 2.768 ms, p99 2.948 ms against G scroll, W: presented-frame interval p95 20 ms / p99 34 ms: component within the bound; measures only CPU paint of one 1280×720 Grid frame into a QImage at scattered scroll positions over 50,000 Lines (offscreen; no scene graph, GPU or presented frames); uncalibrated host; contaminated by other CPU work",
+   "label": "uncalibrated observation"
+  },
+  {
+   "workload": "core.ass_load.50k_lines",
+   "binaryRun": "perf.core",
+   "run": "run2",
+   "started": "2026-10-04T14:07:26,992518024+07:00",
+   "ended": "2026-10-04T14:08:31,629736987+07:00",
+   "binarySha256": "30c1ff3213d849fc392c2abff4b17990ea1b2e2a2e77ff67dbc578346e8c4638",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 16.3,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 46.105,
+     "p95Ms": 50.398,
+     "p99Ms": 56.359,
+     "maxMs": 60.052,
+     "meanMs": 45.883
+    },
+    {
+     "operations": 200,
+     "p50Ms": 41.525,
+     "p95Ms": 45.476,
+     "p99Ms": 48.529,
+     "maxMs": 50.671,
+     "meanMs": 41.936
+    },
+    {
+     "operations": 200,
+     "p50Ms": 43.79,
+     "p95Ms": 48.212,
+     "p99Ms": 50.965,
+     "maxMs": 57.218,
+     "meanMs": 43.923
+    },
+    {
+     "operations": 200,
+     "p50Ms": 41.594,
+     "p95Ms": 45.455,
+     "p99Ms": 46.496,
+     "maxMs": 50.592,
+     "meanMs": 42.011
+    },
+    {
+     "operations": 200,
+     "p50Ms": 49.95,
+     "p95Ms": 52.857,
+     "p99Ms": 54.388,
+     "maxMs": 58.711,
+     "meanMs": 49.115
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 27,
+    "load1Start": 1.2,
+    "load1Min": 1.53,
+    "load1Max": 2.07,
+    "load1Mean": 1.75,
+    "otherCpuMedian": 33.3,
+    "otherCpuPeak": 176.1,
+    "busiestOthers": [
+     [
+      "hikarisub",
+      141.8
+     ],
+     [
+      "qemu-system-x86",
+      61.2
+     ],
+     [
+      "helium",
+      54.4
+     ],
+     [
+      "2.1.288",
+      32.4
+     ],
+     [
+      "hikari-lua-help",
+      19.1
+     ]
+    ],
+    "cpuTempC": [
+     58.2,
+     69.6
+    ],
+    "contaminated": true,
+    "reasons": [
+     "other processes used a median 33% CPU (limit 25%)",
+     "other processes peaked at 176% CPU (limit 100%)"
+    ]
+   },
+   "verdict": "inconclusive",
+   "verdictDetail": "worst run p95 52.857 ms, p99 56.359 ms against G open → parsed, selectable visible grid, W p95 2000 ms / p99 4000 ms: component within the bound; measures only in-process parse of a generated 50,000-Line ASS script (no process start, file read, model, grid or presentation); uncalibrated host; contaminated by other CPU work",
+   "label": "uncalibrated observation"
+  },
+  {
+   "workload": "core.frame_lookup.ntsc.x1000",
+   "binaryRun": "perf.core",
+   "run": "run2",
+   "started": "2026-10-04T14:07:26,992518024+07:00",
+   "ended": "2026-10-04T14:08:31,629736987+07:00",
+   "binarySha256": "30c1ff3213d849fc392c2abff4b17990ea1b2e2a2e77ff67dbc578346e8c4638",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 93.9,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.01,
+     "maxMs": 0.015,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.01,
+     "maxMs": 0.014,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.01,
+     "p99Ms": 0.01,
+     "maxMs": 0.014,
+     "meanMs": 0.01
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.02,
+     "p99Ms": 0.02,
+     "maxMs": 0.02,
+     "meanMs": 0.012
+    },
+    {
+     "operations": 200,
+     "p50Ms": 0.01,
+     "p95Ms": 0.015,
+     "p99Ms": 0.019,
+     "maxMs": 0.019,
+     "meanMs": 0.011
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 27,
+    "load1Start": 1.2,
+    "load1Min": 1.53,
+    "load1Max": 2.07,
+    "load1Mean": 1.75,
+    "otherCpuMedian": 33.3,
+    "otherCpuPeak": 176.1,
+    "busiestOthers": [
+     [
+      "hikarisub",
+      141.8
+     ],
+     [
+      "qemu-system-x86",
+      61.2
+     ],
+     [
+      "helium",
+      54.4
+     ],
+     [
+      "2.1.288",
+      32.4
+     ],
+     [
+      "hikari-lua-help",
+      19.1
+     ]
+    ],
+    "cpuTempC": [
+     58.2,
+     69.6
+    ],
+    "contaminated": true,
+    "reasons": [
+     "other processes used a median 33% CPU (limit 25%)",
+     "other processes peaked at 176% CPU (limit 100%)"
+    ]
+   },
+   "verdict": "diagnostic",
+   "verdictDetail": "no budget row",
+   "label": "uncalibrated observation"
+  },
+  {
+   "workload": "ui.grid_paint.50k_lines.1280x720",
+   "binaryRun": "perf.ui",
+   "run": "run2",
+   "started": "2026-10-04T14:08:34,357854331+07:00",
+   "ended": "2026-10-04T14:08:46,565375715+07:00",
+   "binarySha256": "60bd13fbc975e15c8ae38f5b369281712dc2f34c532510c5c90ba0b0a6279fb9",
+   "warmupMs": 10000,
+   "p95SpreadPercent": 8.5,
+   "runs": [
+    {
+     "operations": 200,
+     "p50Ms": 1.945,
+     "p95Ms": 1.978,
+     "p99Ms": 2.026,
+     "maxMs": 2.028,
+     "meanMs": 1.943
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.944,
+     "p95Ms": 1.984,
+     "p99Ms": 2.085,
+     "maxMs": 2.324,
+     "meanMs": 1.945
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.945,
+     "p95Ms": 2.001,
+     "p99Ms": 2.093,
+     "maxMs": 2.218,
+     "meanMs": 1.948
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.944,
+     "p95Ms": 1.964,
+     "p99Ms": 2.009,
+     "maxMs": 2.039,
+     "meanMs": 1.942
+    },
+    {
+     "operations": 200,
+     "p50Ms": 1.945,
+     "p95Ms": 2.131,
+     "p99Ms": 2.217,
+     "maxMs": 2.338,
+     "meanMs": 1.973
+    }
+   ],
+   "calibrated": false,
+   "harnessNote": "uncalibrated host: observations only, not budget passes",
+   "host": {
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor",
+    "logicalCores": 12,
+    "os": "Linux 7.2.5-4-omarchy",
+    "compiler": "gcc 16.2.1 20260810",
+    "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"
+   },
+   "contention": {
+    "samples": 5,
+    "load1Start": 1.85,
+    "load1Min": 1.78,
+    "load1Max": 1.85,
+    "load1Mean": 1.8,
+    "otherCpuMedian": 28.7,
+    "otherCpuPeak": 43.0,
+    "busiestOthers": [
+     [
+      "qemu-system-x86",
+      22.9
+     ],
+     [
+      "2.1.288",
+      9.5
+     ],
+     [
+      "tailscaled",
+      6.7
+     ],
+     [
+      "kache",
+      5.7
+     ]
+    ],
+    "cpuTempC": [
+     65.8,
+     67.6
+    ],
+    "contaminated": true,
+    "reasons": [
+     "load average 1.85 at start (limit 1.5)",
+     "other processes used a median 29% CPU (limit 25%)"
+    ]
+   },
+   "verdict": "inconclusive",
+   "verdictDetail": "worst run p95 2.131 ms, p99 2.217 ms against G scroll, W: presented-frame interval p95 20 ms / p99 34 ms: component within the bound; measures only CPU paint of one 1280×720 Grid frame into a QImage at scattered scroll positions over 50,000 Lines (offscreen; no scene graph, GPU or presented frames); uncalibrated host; contaminated by other CPU work",
+   "label": "uncalibrated observation"
+  }
+ ],
+ "budgetRows": [
+  {
+   "row": "Empty startup → input-ready workspace, C / W",
+   "release": "4 s / 1.5 s",
+   "coverage": "missing",
+   "detail": "no harness workload (needs a cold-state method and 20 process launches)",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "G open → parsed, selectable visible grid, C / W",
+   "release": "4 s / 2 s",
+   "coverage": "partial",
+   "detail": "core.ass_load.50k_lines (parse only)",
+   "verdict": "inconclusive",
+   "basedOn": "run2 (contaminated)"
+  },
+  {
+   "row": "G scroll, W: presented-frame interval p95 / p99",
+   "release": "20 / 34 ms",
+   "coverage": "partial",
+   "detail": "ui.grid_paint.50k_lines.1280x720 (CPU paint only)",
+   "verdict": "inconclusive",
+   "basedOn": "run2 (contaminated)"
+  },
+  {
+   "row": "G select/reveal; E keystroke/composition update → visible, W",
+   "release": "50 ms",
+   "coverage": "missing",
+   "detail": "no workload; E fixture (10,000-character lines, IME) not packaged",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "V exact indexed step, W",
+   "release": "100 ms",
+   "coverage": "missing",
+   "detail": "no seek/frame-delivery workload; V fixture not packaged",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "V seeded random seek → correct frame, W / M",
+   "release": "500 / 1,500 ms",
+   "coverage": "missing",
+   "detail": "no seek workload; V fixture not packaged",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "A waveform zoom → complete viewport, W / M",
+   "release": "50 / 250 ms",
+   "coverage": "missing",
+   "detail": "no workload; A fixture not packaged",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "A spectrum zoom → complete viewport, W / M",
+   "release": "100 / 500 ms",
+   "coverage": "missing",
+   "detail": "no workload (spectrum not built yet)",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "A/V offset p95 / max; drift (three 30-minute wired runs)",
+   "release": "40 / 80 ms; 20 ms",
+   "coverage": "needs-calibration",
+   "detail": "needs calibrated audio-loopback/video capture (≤5 ms uncertainty); callback clocks cannot pass",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "G+V+A active peak CPU / attributable GPU memory",
+   "release": "1.5 GiB / 256 MiB",
+   "coverage": "missing",
+   "detail": "no workload; no GPU allocation tracking",
+   "verdict": "inconclusive"
+  },
+  {
+   "row": "Memory growth over 30 open/edit/zoom/close cycles (final idle; fitted slope)",
+   "release": "≤32 MiB CPU / 16 MiB GPU; ≤0.5 / 0.25 MiB per cycle",
+   "coverage": "missing",
+   "detail": "no cycle workload (helper resource growth included); Linux PSS sampling not implemented",
+   "verdict": "inconclusive"
+  }
+ ],
+ "missingWorkloads": [
+  {
+   "asked": "seek",
+   "needs": "V exact indexed step and seeded random seek (W/M)"
+  },
+  {
+   "asked": "frame delivery",
+   "needs": "presented-frame timing for indexed and general playback; native presentation traces"
+  },
+  {
+   "asked": "overlay rendering",
+   "needs": "libass overlay render/composite timing per frame (part of seek/step/scroll endpoints)"
+  },
+  {
+   "asked": "audio latency",
+   "needs": "A/V offset and drift; needs calibrated loopback capture"
+  },
+  {
+   "asked": "helper resource growth",
+   "needs": "30-cycle memory growth for the application and its media/Lua helpers (PSS)"
+  }
+ ],
+ "diagnostics": [
+  {
+   "run": "run1",
+   "name": "indexed-source-1",
+   "load1Start": 4.32,
+   "lines": [
+    "helper startup to handshake: 8.5 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 41.8 ms (0.87 ms per frame)"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "indexed-source-2",
+   "load1Start": 4.12,
+   "lines": [
+    "helper startup to handshake: 1.7 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 43.7 ms (0.91 ms per frame)"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "indexed-source-3",
+   "load1Start": 4.03,
+   "lines": [
+    "helper startup to handshake: 1.9 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 46.0 ms (0.96 ms per frame)"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "indexed-source-4",
+   "load1Start": 3.95,
+   "lines": [
+    "helper startup to handshake: 2.0 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 45.4 ms (0.95 ms per frame)"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "indexed-source-5",
+   "load1Start": 4.04,
+   "lines": [
+    "helper startup to handshake: 1.8 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 41.7 ms (0.87 ms per frame)"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "line-audition-1",
+   "load1Start": 4.14,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "line-audition-2",
+   "load1Start": 4.12,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "line-audition-3",
+   "load1Start": 4.03,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "line-audition-4",
+   "load1Start": 3.95,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run1",
+   "name": "line-audition-5",
+   "load1Start": 4.03,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "indexed-source-1",
+   "load1Start": 1.73,
+   "lines": [
+    "helper startup to handshake: 1.7 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 41.5 ms (0.86 ms per frame)"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "indexed-source-2",
+   "load1Start": 1.59,
+   "lines": [
+    "helper startup to handshake: 1.6 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 40.8 ms (0.85 ms per frame)"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "indexed-source-3",
+   "load1Start": 1.46,
+   "lines": [
+    "helper startup to handshake: 1.6 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 44.8 ms (0.93 ms per frame)"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "indexed-source-4",
+   "load1Start": 1.43,
+   "lines": [
+    "helper startup to handshake: 1.7 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 42.8 ms (0.89 ms per frame)"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "indexed-source-5",
+   "load1Start": 1.31,
+   "lines": [
+    "helper startup to handshake: 1.8 ms",
+    "frame transfer: 48 frames, 14745600 bytes, 40.6 ms (0.85 ms per frame)"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "line-audition-1",
+   "load1Start": 1.73,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "line-audition-2",
+   "load1Start": 1.46,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "line-audition-3",
+   "load1Start": 1.43,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "line-audition-4",
+   "load1Start": 1.31,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  },
+  {
+   "run": "run2",
+   "name": "line-audition-5",
+   "load1Start": 1.45,
+   "lines": [
+    "tail after logical stop: 149.0 ms, latency 54.0 ms"
+   ]
+  }
+ ]
+}

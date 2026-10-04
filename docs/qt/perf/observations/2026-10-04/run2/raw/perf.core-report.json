@@ -1,0 +1,9 @@
+{
+ "host": {"cpu": "AMD Ryzen 5 5600 6-Core Processor", "logicalCores": 12, "os": "Linux 7.2.5-4-omarchy", "compiler": "gcc 16.2.1 20260810", "fingerprint": "AMD Ryzen 5 5600 6-Core Processor|12|Linux 7.2.5-4-omarchy|gcc 16.2.1 20260810"},
+ "calibrated": false,
+ "note": "uncalibrated host: observations only, not budget passes",
+ "benchmarks": [
+  {"name": "core.ass_load.50k_lines", "warmupMs": 10000, "p95SpreadPercent": 16.2855, "runs": [{"operations": 200, "p50Us": 46104.5, "p95Us": 50398.2, "p99Us": 56359.4, "maxUs": 60051.6, "meanUs": 45882.9}, {"operations": 200, "p50Us": 41525.3, "p95Us": 45475.9, "p99Us": 48528.6, "maxUs": 50671.4, "meanUs": 41935.9}, {"operations": 200, "p50Us": 43790.3, "p95Us": 48212.5, "p99Us": 50964.5, "maxUs": 57218.1, "meanUs": 43923.2}, {"operations": 200, "p50Us": 41593.6, "p95Us": 45454.5, "p99Us": 46496.4, "maxUs": 50591.5, "meanUs": 42011.2}, {"operations": 200, "p50Us": 49950.5, "p95Us": 52857, "p99Us": 54388.1, "maxUs": 58710.9, "meanUs": 49114.7}]},
+  {"name": "core.frame_lookup.ntsc.x1000", "warmupMs": 10000, "p95SpreadPercent": 93.8604, "runs": [{"operations": 200, "p50Us": 10.13, "p95Us": 10.131, "p99Us": 10.171, "maxUs": 15.01, "meanUs": 10.175}, {"operations": 200, "p50Us": 10.13, "p95Us": 10.131, "p99Us": 10.14, "maxUs": 14.1, "meanUs": 10.1669}, {"operations": 200, "p50Us": 10.13, "p95Us": 10.131, "p99Us": 10.14, "maxUs": 14.07, "meanUs": 10.1679}, {"operations": 200, "p50Us": 10.13, "p95Us": 19.64, "p99Us": 20.1, "maxUs": 20.351, "meanUs": 11.9354}, {"operations": 200, "p50Us": 10.13, "p95Us": 15.27, "p99Us": 18.86, "maxUs": 19.431, "meanUs": 10.622}]}
+ ]
+}
