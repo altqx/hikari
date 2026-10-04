@@ -101,6 +101,13 @@ jobs:
           DISPLAY=:99 openbox > /dev/null 2>&1 &
           sleep 1
           export LD_LIBRARY_PATH="$PWD/legacy/build-wx-linux/prefix/lib:${LD_LIBRARY_PATH:-}"
+          free -m; df -h .
+          # A backstop under ui_capture.py's memory watchdog: legacy's
+          # End-of-text Find all and empty-match Replace all grow without
+          # bound (about 0.8 GB a second); with no limit they took the
+          # runner and the job was lost with its artifacts. 6 GiB of address
+          # space per process (the app needs under 1 GiB).
+          ulimit -v 6291456
           python3 rewrite/tools/legacy-capture/drive.py \
             --fixtures rewrite/docs/qt/fixtures/approved-departures \
             --plan rewrite/tools/legacy-capture/plan.json \
@@ -108,6 +115,7 @@ jobs:
             --probe probe/legacy_time_capture \
             --legacy-commit "$LEGACY_COMMIT" \
             --out capture/observations.json | tee capture/summary.json
+          free -m; df -h .
 
       # The legacy package and its wx libraries, so a capture route can be
       # reproduced outside CI (an Ubuntu 24.04 container with Xvfb and openbox).

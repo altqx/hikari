@@ -1,0 +1,16 @@
+{
+ "document": "fixture.ass",
+ "note": "Macro runs of the L6 third-party corpus on fixture.ass. selection and active are event ordinals (Dialogue and Comment lines, from 1). A dialog entry answers the macro's n-th aegisub.dialog.display: the button by its label (OK or Cancel for the default pair) and the values of the named controls (the others keep their initial values). The rewrite runs each through its host (automation_thirdparty_tests) and, with the capture probe, in both hosts (the probe answers the dialogs itself).",
+ "runs": [
+  {"script": "ua.Cycles.lua", "macro": "Cycles/Blur Cycle", "selection": [1, 2, 3, 5, 6], "active": 1},
+  {"script": "ua.JumpToNext.lua", "macro": "Jump to Next/Style", "selection": [1], "active": 1},
+  {"script": "petzku.SmartQuotify.moon", "macro": "SmartQuotify", "selection": [1], "active": 1},
+  {"script": "lyger.GradientByChar.lua", "macro": "Gradient by character/Apply Gradient", "selection": [3], "active": 3},
+  {"script": "ua.ChangeCase.lua", "macro": "Change Case", "selection": [2, 6], "active": 2,
+   "dialogs": [{"button": "UPPERCASE", "values": {}}]},
+  {"script": "lyger.LayerIncrement.lua", "macro": "Layer increment", "selection": [1, 2, 3], "active": 1,
+   "dialogs": [{"button": "Go", "values": {"updown": "Count down", "int": 2}}]},
+  {"script": "ua.MultiLineEditor.lua", "macro": ": Non-GUI macros :/MultiEdit: Reverse", "selection": [1, 2, 3], "active": 1,
+   "dialogs": [{"button": "OK", "values": {"rv": "text"}}]}
+ ]
+}

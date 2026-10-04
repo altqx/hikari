@@ -1,0 +1,1663 @@
+{
+ "note": "Reviewed results of automation_thirdparty_tests on Ubuntu (2026-10-05, LuaJIT with the Lua 5.2 extensions: L6-lua52-linux): load is ThirdPartyCorpus.ScriptsLoadAsAutoloadDoes per script, runs is ThirdPartyCorpus.MacrosApplyToTheFixtureDocument per run (\"<script> | <macro>\"). Paths read <stage>. Windows results are recorded by the tests but not pinned until they are observed there (unobserved_platforms).",
+ "unobserved_platforms": [
+  "windows"
+ ],
+ "loaded_only": {
+  "myaa.MergeScripts.moon": "DependencyControl tries to install its missing module myaa.pl (Myaamori's Penlight, not in this corpus) from the module's feed while the script loads, even with the updater off, so the reason it gives depends on the network; it fails to load either way."
+ },
+ "macros_unordered": {
+  "lyger.FbfTransform.moon": "It registers one macro per preset by iterating its presets table with pairs(), whose order LuaJIT does not fix (string hashes are seeded per process), so the macros are pinned by name."
+ },
+ "load": {
+  "ILL.ChangeAlign.moon": {
+   "error": "Error initializing Lua script \"ILL.ChangeAlign.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
+   "loaded": false,
+   "project": "ILL-Aegisub-Scripts"
+  },
+  "ILL.SplitText.moon": {
+   "error": "Error initializing Lua script \"ILL.SplitText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module ILL.ILL: \n[string \"<chunk>\"]: 32:  FFI could not load \"clipper2.clipper2.clipper2\". Search paths: \n  - \"<stage>/Autoload/clipper2/clipper2/libclipper2.so\" (<stage>/Autoload/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/clipper2/clipper2/libclipper2.so\" (<stage>/Include/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/clipper2/clipper2/libclipper2.so\" (<stage>/automation/tests/clipper2/clipper2/libclipper2.so:  cannot open shared object file:  No such file or directory)\n  - \"clipper2\" (libclipper2.so:  cannot open shared object file:  No such file or directory)",
+   "loaded": false,
+   "project": "ILL-Aegisub-Scripts"
+  },
+  "arch.CenterTimes.lua": {
+   "author": "arch1t3cht",
+   "description": "Centering times of lines in frame ranges",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Center Times",
+     "validate": true
+    }
+   ],
+   "name": "Center Times",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.1"
+  },
+  "arch.ConvertFolds.moon": {
+   "error": "Failed to parse:\n [36] >>    button, results = aegisub.dialog.display({{",
+   "loaded": false,
+   "project": "arch1t3cht-Aegisub-Scripts"
+  },
+  "arch.FocusLines.moon": {
+   "author": "arch1t3cht",
+   "description": "Draws moving focus lines.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Focus Lines",
+     "validate": true
+    }
+   ],
+   "name": "Focus Lines",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.0.1"
+  },
+  "arch.Line2Fbf.moon": {
+   "error": "Error initializing Lua script \"arch.Line2Fbf.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "arch1t3cht-Aegisub-Scripts"
+  },
+  "arch.NoteBrowser.moon": {
+   "author": "arch1t3cht",
+   "description": "Loads a set of timestamped notes and adds options to mark them or jump between them.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Load notes",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to next note",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to previous note",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to next note by author",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Jump to previous note by author",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Note Browser/Clear all markers",
+     "validate": false
+    }
+   ],
+   "name": "Note Browser",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.3.6"
+  },
+  "arch.RWTools.lua": {
+   "author": "arch1t3cht",
+   "description": "Shortcuts for managing multiple rewrites of a line in one .ass event line.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Switch Active Lines",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Prepare Rewrite",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Shift Line Break Forward",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Shift Line Break Backward",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Clean Up Styling Tag Escapes",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Rewriting Tools/Configure",
+     "validate": false
+    }
+   ],
+   "name": "Rewriting Tools",
+   "project": "arch1t3cht-Aegisub-Scripts",
+   "version": "1.3.2"
+  },
+  "arch.SplitSections.moon": {
+   "error": "Error initializing Lua script \"arch.SplitSections.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "arch1t3cht-Aegisub-Scripts"
+  },
+  "l0.CascadeTransforms.moon": {
+   "error": "Error initializing Lua script \"l0.CascadeTransforms.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "line0-Aegisub-Scripts"
+  },
+  "l0.Nudge.moon": {
+   "error": "Error initializing Lua script \"l0.Nudge.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "line0-Aegisub-Scripts"
+  },
+  "l0.SplitLines.moon": {
+   "error": "Error initializing Lua script \"l0.SplitLines.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "line0-Aegisub-Scripts"
+  },
+  "l0.VerticalText.moon": {
+   "error": "Error initializing Lua script \"l0.VerticalText.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "line0-Aegisub-Scripts"
+  },
+  "lyger.FbfTransform.moon": {
+   "author": "",
+   "description": "Smoothly transforms between the first and last selected lines.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Frame-by-frame transform",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Remove tags",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/[Last Settings]",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/All",
+     "validate": true
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Frame-by-frame transform/Presets/Default",
+     "validate": true
+    }
+   ],
+   "name": "Frame-by-frame transform",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "2.0.1"
+  },
+  "lyger.GradientByChar.lua": {
+   "author": "lyger",
+   "description": "Smoothly transforms tags across your line, by character.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient by character/Apply Gradient",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Gradient by character/Remove Gradient",
+     "validate": false
+    }
+   ],
+   "name": "Gradient by character",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "1.3.1"
+  },
+  "lyger.GradientEverything.moon": {
+   "error": "Error initializing Lua script \"lyger.GradientEverything.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module SubInspector.Inspector: \n[string \"<chunk>\"]: 80:  FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths: \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:  cannot open shared object file:  No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:  cannot open shared object file:  No such file or directory)",
+   "loaded": false,
+   "project": "lyger-Aegisub-Scripts"
+  },
+  "lyger.LayerIncrement.lua": {
+   "author": "lyger",
+   "description": "Makes increasing or decreasing layer numbers.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Layer increment",
+     "validate": false
+    }
+   ],
+   "name": "Layer increment",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "1.1.0"
+  },
+  "lyger.LuaInterpret.lua": {
+   "author": "lyger",
+   "description": "Run Lua code on the fly.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Lua Interpreter",
+     "validate": false
+    }
+   ],
+   "name": "Lua Interpreter",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "1.3.1"
+  },
+  "myaa.Bounce.moon": {
+   "error": "Failed to parse:\n [95] >>    cur_shift = math.max(0, math.min((2 * anim_size - anim_stop) / (2 * anim_size),",
+   "loaded": false,
+   "project": "Myaamori-Aegisub-Scripts"
+  },
+  "myaa.MergeScripts.moon": {
+   "error": "Error initializing Lua script \"myaa.MergeScripts.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl/Logger.moon\", line 65 error\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Include/l0/DependencyControl.moon\", line 372 requireModules\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\nFile \"<stage>/Autoload/myaa.MergeScripts.moon\", line 21  <main>\nError: [DependencyControl] Error:  one or more of the modules required by Merge Scripts could not be found on your system: \n— myaa.pl  (v1.6.0):  https: //github.com/Myaamori/Penlight\n—— Reason:  fetch of module 'myaa.pl' succeeded, couldn't be located by the module loader.\nnil\n\n.",
+   "loaded": false,
+   "project": "Myaamori-Aegisub-Scripts"
+  },
+  "myaa.PasteFromPad.moon": {
+   "author": "Myaamori",
+   "description": "Paste text from pad over existing lines",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Paste From Pad/Paste over from pad",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Paste From Pad/Copy to pad",
+     "validate": false
+    }
+   ],
+   "name": "Paste From Pad",
+   "project": "Myaamori-Aegisub-Scripts",
+   "version": "0.0.2"
+  },
+  "petzku.Accenter.lua": {
+   "author": "petzku",
+   "description": "Automatically create accents for lines",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Accenter",
+     "validate": false
+    }
+   ],
+   "name": "Accenter",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.2.6"
+  },
+  "petzku.CellsBox.lua": {
+   "author": "petzku",
+   "description": "Generate info boxes for Cells at Work",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cells Box",
+     "validate": false
+    }
+   ],
+   "name": "Cells Box",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.3.0"
+  },
+  "petzku.JumpToNextPlus.lua": {
+   "author": "petzku",
+   "description": "Jumps to next 'sign' in the subtitle grid",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Start Time",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/End Time",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Start Time",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/End Time",
+     "validate": false
+    }
+   ],
+   "name": "Jump to Next++",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.1.5"
+  },
+  "petzku.NewClipShape.moon": {
+   "author": "petzku",
+   "description": "Converts the last point of a vectorial clip into a new origin point",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "New Clip Shape",
+     "validate": true
+    }
+   ],
+   "name": "New Clip Shape",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.3.2"
+  },
+  "petzku.SmartQuotify.moon": {
+   "author": "petzku",
+   "description": "Change all your \"normal\" quotes into “smart” ones",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "SmartQuotify",
+     "validate": false
+    }
+   ],
+   "name": "SmartQuotify",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.2.1"
+  },
+  "petzku.Snapper.moon": {
+   "author": "petzku",
+   "description": "Snaps line start and end times to keyframes",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Snapper/start",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Snapper/end",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Snapper/both",
+     "validate": false
+    }
+   ],
+   "name": "Snapper",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "1.0.1"
+  },
+  "petzku.Typewriter.lua": {
+   "author": "petzku",
+   "description": "Makes text appear one character at a time",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Typewriter/fbf",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Typewriter/line",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Unscramble/line",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Unscramble/half",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Unscramble/N fade",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Unscramble/N static",
+     "validate": false
+    }
+   ],
+   "name": "Typewriter",
+   "project": "petzku-Aegisub-Scripts",
+   "version": "0.7.0"
+  },
+  "phos.EditTags.moon": {
+   "error": "Error initializing Lua script \"phos.EditTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "PhosCity-Aegisub-Scripts"
+  },
+  "phos.FoldOperations.moon": {
+   "author": "PhosCity",
+   "description": "Different operations on folds",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/01. Select Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/02. Comment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/03. Uncomment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/04. Comment or Uncomment Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/05. Toggle Comments in Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/06. Delete Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/07. Clear Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/08. Cut Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/09. Copy Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/10. Paste Fold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/11. Create Fold Around Selected Lines",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Fold Operations/GUI",
+     "validate": false
+    }
+   ],
+   "name": "Fold Operations",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.3.2"
+  },
+  "phos.RemoveTags.moon": {
+   "error": "Error initializing Lua script \"phos.RemoveTags.moon\":\n\nFile \"<C function>\", line -1 assert?\nError: [DependencyControl] Error in required module l0.ASSFoundation: \n[string \"<chunk>\"]: 66:  Error:  [DependencyControl] Error in required module SubInspector.Inspector:  \n[string \"<chunk>\"]:  80:   FFI could not load \"SubInspector.Inspector.SubInspector\". Search paths:  \n  - \"<stage>/Autoload/SubInspector/Inspector/libSubInspector.so\" (<stage>/Autoload/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/Include/SubInspector/Inspector/libSubInspector.so\" (<stage>/Include/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so\" (<stage>/automation/tests/SubInspector/Inspector/libSubInspector.so:   cannot open shared object file:   No such file or directory)\n  - \"SubInspector\" (libSubInspector.so:   cannot open shared object file:   No such file or directory)",
+   "loaded": false,
+   "project": "PhosCity-Aegisub-Scripts"
+  },
+  "phos.snap.lua": {
+   "author": "PhosCity",
+   "description": "Snap to close keyframes during timing.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Bidirectional Snapping/Snap both",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Bidirectional Snapping/Snap start",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Bidirectional Snapping/Snap end",
+     "validate": false
+    }
+   ],
+   "name": "Bidirectional Snapping",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.0.3"
+  },
+  "phos.wave.lua": {
+   "author": "PhosCity",
+   "description": "Make the string wavy",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Wave",
+     "validate": false
+    }
+   ],
+   "name": "Wave",
+   "project": "PhosCity-Aegisub-Scripts",
+   "version": "1.0.3"
+  },
+  "split-tags.lua": {
+   "author": "",
+   "description": "Splits the line into separate lines based on tag boundaries",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Split at tags",
+     "validate": false
+    }
+   ],
+   "name": "Split at tags",
+   "project": "lyger-Aegisub-Scripts",
+   "version": "0.3"
+  },
+  "ua.BlurAndGlow.lua": {
+   "author": "unanimated",
+   "description": "Add blur and/or glow to signs",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Blur and Glow",
+     "validate": false
+    }
+   ],
+   "name": "Blur and Glow",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "2.5.0"
+  },
+  "ua.ChangeCase.lua": {
+   "author": "unanimated",
+   "description": "Capitalises text or makes it lowercase / uppercase",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Change Case",
+     "validate": false
+    }
+   ],
+   "name": "Change Case",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "3.0.0"
+  },
+  "ua.Cycles.lua": {
+   "author": "unanimated",
+   "description": "Cycles blur, border, shadow, alpha, alignment, font spacing",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Blur Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Border Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Shadow Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Alpha Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Alignment Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/FontSpacing Cycle",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Cycles/Switch",
+     "validate": false
+    }
+   ],
+   "name": "Cycles",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "2.0.0"
+  },
+  "ua.HYDRA.lua": {
+   "author": "unanimated",
+   "description": "A multi-headed typesetting beast. Scary as Hell.",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "HYDRA",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": HELP : / HYDRA",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Sort tags in set order",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Move colour tag to 1st block",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Convert clip <-> iclip",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: shad -> xshad+yshad",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Create shadow from clip",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Convert clip to drawing",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Convert drawing to clip",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Bell Shifter",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Wave Shifter",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Arrow Shifter",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/HYDRA: Comment on-off",
+     "validate": false
+    }
+   ],
+   "name": "HYDRA",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "6.1.0"
+  },
+  "ua.JumpToNext.lua": {
+   "author": "unanimated",
+   "description": "Jumps to next 'sign' in the subtitle grid",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/_GUI",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Text",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Style",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Actor",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Effect",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Layer",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Next/Commented Line",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Text",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Style",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Actor",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Effect",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Layer",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Jump to Previous/Commented Line",
+     "validate": false
+    }
+   ],
+   "name": "Jump to Next",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "2.0.0"
+  },
+  "ua.MultiLineEditor.lua": {
+   "author": "unanimated",
+   "description": "Multi-Line Editor",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "Multi-Line Editor",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/MultiEdit: ReSplit - Backward",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/MultiEdit: ReSplit - Forward",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/MultiEdit: Reverse",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": ": Non-GUI macros :/MultiEdit: Switch style",
+     "validate": false
+    }
+   ],
+   "name": "Multi-Line Editor",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "1.8.0"
+  },
+  "ua.iBus.lua": {
+   "author": "unanimated",
+   "description": "Italy Bold Under Strike",
+   "loaded": true,
+   "macros": [
+    {
+     "description": "",
+     "is_active": false,
+     "name": "iBus/Italics",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "iBus/Bold",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "iBus/Underline",
+     "validate": false
+    },
+    {
+     "description": "",
+     "is_active": false,
+     "name": "iBus/Strikeout",
+     "validate": false
+    }
+   ],
+   "name": "iBus",
+   "project": "unanimated-Aegisub-Scripts",
+   "version": "1.7.0"
+  }
+ },
+ "runs": {
+  "ua.Cycles.lua | Cycles/Blur Cycle": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1.2}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\blur0.6\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\blur0.6\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\blur0.6\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "{\\blur0.6}Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1,
+    2,
+    3,
+    5,
+    6
+   ],
+   "undo_steps": 1
+  },
+  "ua.JumpToNext.lua | Jump to Next/Style": {
+   "active": 3,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    3
+   ],
+   "undo_steps": 0
+  },
+  "petzku.SmartQuotify.moon | SmartQuotify": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "[check possible starting single quote -- assumed apostrophe]",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}“Hello,” she said. “It’s ’fine’.”"
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1
+   ],
+   "undo_steps": 1
+  },
+  "lyger.GradientByChar.lua | Gradient by character/Apply Gradient": {
+   "active": 3,
+   "applied": true,
+   "dialogs": [],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}G{*\\c&H0040BF&}r{*\\c&H008080&}a{*\\c&H00BF40&}d{\\c&H00FF00&}i{*\\c&H33CC00&}e{*\\c&H669900&}n{*\\c&H996600&}t {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    3
+   ],
+   "undo_steps": 1
+  },
+  "ua.ChangeCase.lua | Change Case": {
+   "active": 2,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "Words",
+      "Lines",
+      "Sentences",
+      "lowercase",
+      "UPPERCASE",
+      "Cancel"
+     ],
+     "controls": [
+      "label:",
+      "label:",
+      "label:",
+      "label:",
+      "label:",
+      "label:",
+      "checkbox:mod"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}TWO WORDS\\NAND A BREAK"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "ÄPFEL UND STRASSE, ½ 日本語 TEXT"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    2,
+    6
+   ],
+   "undo_steps": 1
+  },
+  "lyger.LayerIncrement.lua | Layer increment": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "Go",
+      "Cancel"
+     ],
+     "controls": [
+      "dropdown:updown",
+      "label:",
+      "intedit:int"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 5,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 3,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1,
+    2,
+    3
+   ],
+   "undo_steps": 1
+  },
+  "ua.MultiLineEditor.lua | : Non-GUI macros :/MultiEdit: Reverse": {
+   "active": 1,
+   "applied": true,
+   "dialogs": [
+    {
+     "buttons": [
+      "OK",
+      "Cancel"
+     ],
+     "controls": [
+      "label:",
+      "dropdown:rv"
+     ]
+    }
+   ],
+   "events": [
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 3000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 1000,
+     "style": "Default",
+     "text": "{\\pos(960,540)\\c&H0000FF&}Grad{\\c&H00FF00&}ient {\\c&HFF0000&}sign"
+    },
+    {
+     "actor": "Bob",
+     "comment": false,
+     "effect": "",
+     "end_time": 5500,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 3000,
+     "style": "Default",
+     "text": "{\\an8\\bord2}two words\\Nand a break"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "",
+     "end_time": 8000,
+     "layer": 1,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 5500,
+     "style": "Sign",
+     "text": "{\\blur1}\"Hello,\" she said. \"It's 'fine'.\""
+    },
+    {
+     "actor": "",
+     "comment": true,
+     "effect": "",
+     "end_time": 9000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 8000,
+     "style": "Default",
+     "text": "note: a comment line"
+    },
+    {
+     "actor": "",
+     "comment": false,
+     "effect": "karaoke",
+     "end_time": 11000,
+     "layer": 0,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 9000,
+     "style": "Default",
+     "text": "{\\k20}ka{\\k30}ra{\\k25}o{\\k40}ke"
+    },
+    {
+     "actor": "Alice",
+     "comment": false,
+     "effect": "",
+     "end_time": 13000,
+     "layer": 2,
+     "margin_l": 0,
+     "margin_r": 0,
+     "margin_t": 0,
+     "start_time": 11000,
+     "style": "Sign",
+     "text": "Äpfel und straße, ½ 日本語 text"
+    }
+   ],
+   "log": [],
+   "outcome": "ok",
+   "selected": [
+    1,
+    2,
+    3
+   ],
+   "undo_steps": 1
+  }
+ }
+}

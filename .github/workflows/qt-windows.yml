@@ -123,6 +123,7 @@ jobs:
             if (Test-Path $d) { Copy-Item -Recurse $d "out/evidence/$(Split-Path (Split-Path $d -Parent) -Leaf)" }
           }
           Copy-Item out/build/windows-x64-release/Testing/Temporary/LastTest.log out/evidence/ -ErrorAction SilentlyContinue
+          Copy-Item out/build/windows-x64-release/qttest-*.txt out/evidence/ -ErrorAction SilentlyContinue
           # Deepest path reached in the SDK and build trees (B48-winpath evidence).
           Get-ChildItem -Recurse -Force out/sdk, out/build -ErrorAction SilentlyContinue |
             Sort-Object { $_.FullName.Length } -Descending | Select-Object -First 5 |
@@ -183,6 +184,7 @@ jobs:
             Copy-Item -Recurse out/build/windows-x64-release/provision-evidence out/evidence/windows-x64-release
           }
           Copy-Item out/build/windows-x64-release/Testing/Temporary/LastTest.log out/evidence/ -ErrorAction SilentlyContinue
+          Copy-Item out/build/windows-x64-release/qttest-*.txt out/evidence/ -ErrorAction SilentlyContinue
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()

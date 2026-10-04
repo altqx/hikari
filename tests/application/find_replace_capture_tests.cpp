@@ -208,8 +208,8 @@ TEST(FindReplaceCapture, ReplaysTheLegacyCaptures)
         const auto lines = host.session->document().lines();
         host.session->setSelection(Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
         // The captures ran the English interface, where legacy stays in the
-        // "C" locale and wxString::Lower folds A-Z only: the shell's fold
-        // then (Application::createFindReplace) is FindReplace's own.
+        // "C" locale and wxString::Lower folds A-Z only: FindReplace's own
+        // fold. The shell folds every letter (U1-unicode-case).
         FindReplace fr(host);
         const QJsonObject config = c[QStringLiteral("config")].toObject();
         S window = findReplaceFromOptions(config[QStringLiteral("FIND_REPLACE_OPTIONS")].toInt());
