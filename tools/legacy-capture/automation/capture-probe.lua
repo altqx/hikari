@@ -18,8 +18,31 @@ script_description = "Legacy automation capture (S3)"
 script_author = "hikari"
 script_version = "1"
 
+-- The settings come from the environment (drive.py). A desktop launch
+-- cannot set it (drive_windows.py), so when a setting is unset it is read
+-- from capture-probe.cfg next to this script: KEY=VALUE lines.
+local cfg
+local function setting(key)
+    local v = os.getenv(key)
+    if v ~= nil then return v end
+    if cfg == nil then
+        cfg = {}
+        local source = debug.getinfo(1, "S").source:gsub("^@", "")
+        local dir = source:match("^(.*)[/\\][^/\\]*$")
+        local f = dir and io.open(dir .. "/capture-probe.cfg", "r")
+        if f then
+            for line in f:lines() do
+                local k, val = line:gsub("\r$", ""):match("^%s*([%w_]+)%s*=(.*)$")
+                if k then cfg[k] = val end
+            end
+            f:close()
+        end
+    end
+    return cfg[key]
+end
+
 local function out(record)
-    local path = os.getenv("HIKARI_CAPTURE_OUT")
+    local path = setting("HIKARI_CAPTURE_OUT")
     local f = assert(io.open(path, "a"))
     f:write(record, "\n")
     f:close()
@@ -64,7 +87,7 @@ local function typed(v)
     return { type = type(v), value = (type(v) == "number" or type(v) == "string" or type(v) == "boolean") and v or nil }
 end
 
--- The dialog subset (L2 / A33-compat): drive.py sends the keys named in
+-- The dialog subset (L2 / A33-compat): drive.py (drive_windows.py) sends the keys named in
 -- plan.json for each case, in this order.
 local function all_controls()
     return {
@@ -128,7 +151,7 @@ for index, case in ipairs(cases) do
     end)
 end
 
--- The corpus (L6 / A33-compat): $HIKARI_CAPTURE_CORPUS lists one script path per line.
+-- The corpus (L6 / A33-compat): HIKARI_CAPTURE_CORPUS lists one script path per line.
 local modules = { "aegisub.re", "aegisub.unicode", "aegisub.lfs", "lfs", "lpeg", "luabins", "ffi", "bit",
                   "aegisub.util", "aegisub.clipboard", "karaskel", "utils", "unicode", "re", "clipboard",
                   "moonscript", "l0.DependencyControl", "json" }
@@ -153,7 +176,7 @@ local function capture_corpus()
     local ok_undo, undo = pcall(function() return aegisub.set_undo_point("probe") end)
     result.stubs.set_undo_point_call = { ok = ok_undo, result = typed(undo) }
 
-    local list = assert(io.open(os.getenv("HIKARI_CAPTURE_CORPUS")))
+    local list = assert(io.open(setting("HIKARI_CAPTURE_CORPUS")))
     local real_macro, real_filter = aegisub.register_macro, aegisub.register_filter
     for path in list:lines() do
         if path ~= "" then
@@ -222,7 +245,7 @@ end)
 
 -- In Autoload with HIKARI_CAPTURE_AT_LOAD set, the corpus capture also runs
 -- while the host loads this script, so it needs no hotkey.
-if os.getenv("HIKARI_CAPTURE_AT_LOAD") then
+if setting("HIKARI_CAPTURE_AT_LOAD") then
     local ok, err = pcall(capture_corpus)
     if not ok then out(json({ case = "corpus", ok = false, error = tostring(err), at_load = true })) end
 end

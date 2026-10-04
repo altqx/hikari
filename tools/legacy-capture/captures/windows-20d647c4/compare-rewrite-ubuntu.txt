@@ -1,0 +1,43 @@
+legacy 20d647c4 on windows (Winix VM dev, Windows build 26200)
+load-time corpus: 12 legacy scripts, 12 rewrite scripts, 2 candidate differences
+- host: jit
+    legacy:  "LuaJIT 2.1.ROLLING"
+    rewrite: "LuaJIT 2.1.1788856981"
+- module: l0.DependencyControl
+    legacy:  {"ok": true, "type": "table"}
+    rewrite: {"error": "[string \"/home/altq/Work/hikari-wt/legacy-win-capture/...\"]:279: attempt to index a nil value", "ok": false, "type": "string"}
+macro-time corpus: 12 legacy scripts, 12 rewrite scripts, 2 candidate differences
+- host: jit
+    legacy:  "LuaJIT 2.1.ROLLING"
+    rewrite: "LuaJIT 2.1.1788856981"
+- aegisub api: only legacy / only rewrite
+    legacy:  ["get_frequency_peaks:function", "parse_karaoke_data:function"]
+    rewrite: []
+dialog cases: 9 candidate differences
+- dialog: defaults-ok (keys ['Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"alpha": {"type": "string", "value": "&H40&"}, "check_on": {"type": "boolean", "value": true}, "check_unset": {"type": "boolean"}, "color_ass": {"type": "string", "value": "#FF8000"}, "color_html": {"type": "string", "value": "#FF8000"}, "coloralpha": {"type": "string", "value": "#FF800040"}, "drop": {"type": "string", "value": "b"}, "drop_missing": {"type": "string", "value": "zzz"}, "edit": {"type": "string", "value": "abc"}, "float": {"type": "number", "value": 1.5}, "float_minmax_swapped": {"type": "number", "value": 3}, "int": {"type": "number", "value": 5}, "int_fraction": {"type": "number", "value": 2}, "int_over": {"type": "number", "value": 10}, "textbox": {"type": "string", "value": "line1\nline2"}}, "extra": []}}
+- dialog: defaults-escape (keys ['Escape'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "boolean"}, "values": {"alpha": {"type": "string", "value": "&H40&"}, "check_on": {"type": "boolean", "value": true}, "check_unset": {"type": "boolean"}, "color_ass": {"type": "string", "value": "#FF8000"}, "color_html": {"type": "string", "value": "#FF8000"}, "coloralpha": {"type": "string", "value": "#FF800040"}, "drop": {"type": "string", "value": "b"}, "drop_missing": {"type": "string", "value": "zzz"}, "edit": {"type": "string", "value": "abc"}, "float": {"type": "number", "value": 1.5}, "float_minmax_swapped": {"type": "number", "value": 3}, "int": {"type": "number", "value": 5}, "int_fraction": {"type": "number", "value": 2}, "int_over": {"type": "number", "value": 10}, "textbox": {"type": "string", "value": "line1\nline2"}}, "extra": []}}
+- dialog: buttons-return (keys ['Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "Apply"}, "values": [], "extra": []}}
+- dialog: buttons-escape (keys ['Escape'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "Close"}, "values": [], "extra": []}}
+- dialog: button-id-unknown (keys ['Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "A"}, "values": [], "extra": []}}
+- dialog: button-id-invalid (keys [])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": null}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": false, "error": "0x…"}}
+- dialog: float-step-up (keys ['Up', 'Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"f": {"type": "number", "value": 1}}, "extra": []}}
+- dialog: int-step-up (keys ['Up', 'Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"i": {"type": "number", "value": 1}}, "extra": []}}
+- dialog: edit-typed (keys ['type:héllo', 'Return'])
+    legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"e": {"type": "string", "value": ""}}, "extra": []}}
