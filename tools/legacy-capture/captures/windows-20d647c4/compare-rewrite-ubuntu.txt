@@ -19,19 +19,19 @@ dialog cases: 9 candidate differences
     rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "Apply"}, "values": [], "extra": []}}
 - dialog: buttons-escape (keys ['Escape'])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
-    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "Close"}, "values": [], "extra": []}}
+    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "boolean"}, "values": [], "extra": []}}
 - dialog: button-id-unknown (keys ['Return'])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
     rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": "A"}, "values": [], "extra": []}}
 - dialog: button-id-invalid (keys [])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": null}
-    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": false, "error": "0x…"}}
+    rewrite: {"status": "captured", "dialog_shown": true, "dialog_open_after_keys": true, "answer": {"ok": false, "error": "0x…"}}
 - dialog: float-step-up (keys ['Up', 'Return'])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
-    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"f": {"type": "number", "value": 1}}, "extra": []}}
+    rewrite: {"status": "captured", "dialog_shown": true, "dialog_open_after_keys": true, "focus_after_keys": "control_0", "closed_by": "click dialogButton0", "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"f": {"type": "number", "value": 1}}, "extra": []}}
 - dialog: int-step-up (keys ['Up', 'Return'])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
-    rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"i": {"type": "number", "value": 1}}, "extra": []}}
+    rewrite: {"status": "captured", "dialog_shown": true, "dialog_open_after_keys": true, "focus_after_keys": "control_0", "closed_by": "click dialogButton0", "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"i": {"type": "number", "value": 1}}, "extra": []}}
 - dialog: edit-typed (keys ['type:héllo', 'Return'])
     legacy:  {"status": "timeout", "responding_after": false, "dialog_windows": []}
     rewrite: {"status": "captured", "dialog_shown": true, "answer": {"ok": true, "button": {"type": "string", "value": ""}, "values": {"e": {"type": "string", "value": ""}}, "extra": []}}
