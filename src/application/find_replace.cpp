@@ -235,14 +235,25 @@ std::u8string replaced(std::u8string text, std::u8string_view from, std::u8strin
     return text;
 }
 
+// A line without the CR of its CR LF end (the Linux build read the CR).
+std::u16string withoutCr(std::u16string_view line)
+{
+    if (!line.empty() && line.back() == u'\r')
+        line.remove_suffix(1);
+    return std::u16string(line);
+}
+
 // One line of a file on disk as the legacy loops take it. Legacy tokenized
 // with wxTOKEN_STRTOK, which drops empty lines; they are kept here as blank
 // pieces, written back as they were (R3-hang-crash-loss) and not counted.
-// An SRT piece is a whole cue (legacy collects lines until the next number).
+// The Linux build read the CR of each CR LF (R5-per-platform), so there a
+// CRLF file's blank line is "\r": not empty, so a counted Line, as legacy.
+// An SRT piece is a whole cue (legacy collects lines until the next number;
+// "1\r" is no number, so on Linux a CRLF file is one piece, as legacy read it).
 struct FilePiece {
     bool blank = false;
-    std::u16string token; // trimmed (legacy Trim()); an SRT cue with CRLF inside
-    std::u16string raw;   // the line as read (not for SRT)
+    std::u16string token; // legacy's token: trimmed (Trim()); an SRT cue's lines each with CRLF appended
+    std::u16string raw;   // as read, without CRs of CR LF ends (an SRT cue's lines joined by CRLF, trimmed)
 };
 
 std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
@@ -250,19 +261,23 @@ std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
     std::vector<FilePiece> out;
     if (srt) {
         const auto tokens = lineTokens(text);
-        std::u16string token;
+        std::u16string token, raw;
         for (std::size_t next = 0; next < tokens.size();) {
             const std::u16string &t = tokens[next++];
             const bool noMoreTokens = next >= tokens.size();
             if (isNumber(t) || noMoreTokens) {
-                if (noMoreTokens)
+                if (noMoreTokens) {
                     token += t + u"\r\n";
+                    raw += withoutCr(t) + u"\r\n";
+                }
                 if (token.empty())
                     continue;
-                out.push_back({false, trimRight(std::move(token)), {}});
+                out.push_back({false, trimRight(std::move(token)), trimRight(std::move(raw))});
                 token.clear();
+                raw.clear();
             } else {
                 token += t + u"\r\n";
+                raw += withoutCr(t) + u"\r\n";
             }
         }
         return out;
@@ -275,10 +290,44 @@ std::vector<FilePiece> filePieces(std::u16string_view text, bool srt)
         if (line.empty())
             out.push_back({true, {}, {}});
         else
-            out.push_back({false, trimRight(line), line});
+            out.push_back({false, trimRight(line), withoutCr(line)});
         i = j + 1;
     }
     return out;
+}
+
+// SetTextElement + GetRaw of a changed piece. Legacy parsed an SRT cue's
+// Start from the start of the piece, so lines before its " --> " line went
+// into the hours (atoi("1\r\r\n00") is 1: on Linux every CRLF file's first
+// cue moved by an hour) and were lost. Here (R3-hang-crash-loss,
+// F1-srt-leading-lines) the times come from the " --> " line; a leading cue
+// number gives way to the count legacy writes in its place, other leading
+// lines stay as they were.
+std::u16string changedPiece(const FilePiece &piece, bool srt, int column, const std::u16string &value)
+{
+    if (srt) {
+        std::vector<std::u16string> lines;
+        for (std::size_t i = 0; i <= piece.raw.size();) {
+            std::size_t j = piece.raw.find(u"\r\n", i);
+            if (j == npos)
+                j = piece.raw.size();
+            lines.emplace_back(piece.raw.substr(i, j - i));
+            i = j + 2;
+        }
+        std::size_t timeLine = 0;
+        while (timeLine < lines.size() && lines[timeLine].find(u" --> ") == npos)
+            ++timeLine;
+        if (timeLine > 0 && timeLine < lines.size()) {
+            std::u16string kept, rest;
+            for (std::size_t i = 0; i < timeLine; ++i)
+                if (i > 0 || !isNumber(lines[i]))
+                    kept += lines[i] + u"\r\n";
+            for (std::size_t i = timeLine; i < lines.size(); ++i)
+                rest += lines[i] + (i + 1 < lines.size() ? u"\r\n" : u"");
+            return kept + u16(core::rawDialogueWithField(u8(rest), column, u8(value)));
+        }
+    }
+    return u16(core::rawDialogueWithField(u8(piece.token), column, u8(value)));
 }
 
 // The text before the first Dialogue/Comment line of an .ass file (written
@@ -294,11 +343,18 @@ std::optional<std::size_t> assEventsStart(std::u16string_view text)
     return result;
 }
 
+// The header with CRLF (legacy Replace("\n", "\r\n")). A line that ends
+// with CR LF as read (the Linux build kept the CR) keeps one CR: legacy
+// wrote "\r\r\n", changing every header line of a file it only replaced
+// Line text in (R3-hang-crash-loss, F1-file-header-cr).
 std::u16string crlf(std::u16string_view text)
 {
     std::u16string out;
-    for (char16_t c : text)
-        out += c == u'\n' ? std::u16string(u"\r\n") : std::u16string(1, c);
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == u'\n' && (i == 0 || text[i - 1] != u'\r'))
+            out += u'\r';
+        out += text[i];
+    }
     return out;
 }
 
@@ -1355,9 +1411,33 @@ void FindReplace::findReplaceInFiles(bool find)
         m_resultsInFiles = true;
         clearResults();
     }
-    int replacements = 0;
-    for (const auto &path : paths)
-        findReplaceInFile(path, find, replacements);
+    // Legacy ran one thread per processor over consecutive slices of the
+    // paths (the first n % processors one longer). Each thread's
+    // SubsAllReplacements was never reset between its files, so after its
+    // first replacement every later file of the slice that reached the write
+    // was copied to ReplaceBackup and rewritten (unchanged files too, as
+    // UTF-8 with a BOM, CRLF and trimmed lines), and the running total was
+    // added again for each. Only files with a replacement are written here
+    // (R3-hang-crash-loss, F1-file-untouched); the total shown is legacy's.
+    // The results are the threads' lists in thread order, which is the path
+    // order the serial walk gives.
+    const int processors = std::max(1, m_host.processorCount());
+    const std::size_t count = paths.size();
+    const std::size_t perThread = count / static_cast<std::size_t>(processors);
+    const std::size_t modulo = count % static_cast<std::size_t>(processors);
+    const std::size_t threads = perThread == 0 ? count : static_cast<std::size_t>(processors);
+    long long replacements = 0;
+    std::size_t at = 0;
+    for (std::size_t thread = 0; thread < threads; ++thread) {
+        const std::size_t end = at + perThread + (thread < modulo ? 1 : 0);
+        long long subsAllReplacements = 0;
+        for (; at < end && at < count; ++at) {
+            const FileOutcome outcome = findReplaceInFile(paths[at], find);
+            subsAllReplacements += outcome.replacements;
+            if (outcome.reachedWrite && subsAllReplacements)
+                replacements += subsAllReplacements;
+        }
+    }
     if (!find && replacements) {
         const auto text = u8(number(replacements));
         tell({FindQuestion::Kind::Message, u8"Replaced " + text + u8" times.", text, u8"Find and Replace",
@@ -1369,12 +1449,14 @@ void FindReplace::findReplaceInFiles(bool find)
     addRecent(window);
 }
 
-void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &replacements)
+FindReplace::FileOutcome FindReplace::findReplaceInFile(const std::u8string &path, bool find)
 {
     const auto ext = extension(path);
     const auto read = m_host.readFile(path);
+    // Legacy FileOpen gave "" and nothing matched: an .ass file has no
+    // dialogues, any other reaches the write with nothing replaced.
     if (!read)
-        return; // legacy FileOpen gave "" and nothing matched
+        return {ext != u"ass", 0};
     std::u16string subsText = *read;
     std::u16string replacedText;
     int tabLinePosition = 0;
@@ -1393,7 +1475,7 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
         }
         const auto events = assEventsStart(subsText);
         if (!events)
-            return; // no dialogues
+            return {false, 0}; // no dialogues: legacy went on to the next file
         if (!find)
             replacedText = crlf(subsText.substr(0, *events));
         subsText = subsText.substr(*events);
@@ -1431,7 +1513,7 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
             if (isSRT)
                 replacedText += number(tabLinePosition + 1) + u"\r\n";
             if (reps) {
-                replacedText += u16(core::rawDialogueWithField(u8(token), column, u8(dialtxt)));
+                replacedText += changedPiece(piece, isSRT, column, dialtxt);
                 fileReplacements += reps;
             } else {
                 // An unchanged line is written as it was read (legacy wrote it trimmed).
@@ -1448,10 +1530,11 @@ void FindReplace::findReplaceInFile(const std::u8string &path, bool find, int &r
     if (fileReplacements) {
         if (!m_host.backupFile(path))
             m_host.log(u8"Cannot back up " + path + u8".");
-        // A file that could not be written counts no replacements.
-        if (m_host.writeFile(path, replacedText))
-            replacements += fileReplacements;
+        // Legacy counted the replacements whether or not the write worked
+        // (FileWrite reports nothing); the host logs a failed write.
+        m_host.writeFile(path, replacedText);
     }
+    return {true, fileReplacements};
 }
 
 // --- The results dialog -----------------------------------------------------
@@ -1499,27 +1582,44 @@ void FindReplace::showResult(std::size_t row)
     if (m_waiting || row >= m_results.size() || m_results[row].header)
         return;
     const FindResult r = m_results[row];
-    std::optional<FindTab> tab;
     if (r.document) {
-        tab = tabById(*r.document);
-    } else if (m_host.fileExists(r.path)) {
-        if (const auto id = m_host.openFile(r.path))
-            tab = tabById(*id);
-    }
-    if (!tab || !tab->session)
+        if (const auto tab = tabById(*r.document))
+            showResultIn(*tab, r);
         return;
-    const auto lines = tab->session->document().lines();
+    }
+    if (!m_host.fileExists(r.path))
+        return;
+    // OpenFile's save question is modal in legacy: nothing else runs until
+    // it is answered.
+    m_waiting = true;
+    auto answered = std::make_shared<bool>(false);
+    m_host.openFile(r.path, [this, answered, r](std::optional<DocumentId> id) {
+        if (*answered)
+            return;
+        *answered = true;
+        m_waiting = false;
+        if (id)
+            if (const auto tab = tabById(*id))
+                showResultIn(*tab, r);
+    });
+}
+
+void FindReplace::showResultIn(const FindTab &tab, const FindResult &r)
+{
+    if (!tab.session)
+        return;
+    const auto lines = tab.session->document().lines();
     if (r.keyLine < 0 || r.keyLine >= static_cast<int>(lines.size()))
         return;
     // EditBox::GetEditor(text): the original's editor when it shows this text.
     const core::LineRecord &line = *lines[static_cast<std::size_t>(r.keyLine)];
-    const bool tl = translationMode(*tab->session);
+    const bool tl = translationMode(*tab.session);
     int role = 1;
     if (!r.text.empty())
         role = tl && r.text == u16(line.text) ? 0 : 1;
     else if (tl && line.translation.empty())
         role = 0;
-    m_host.showLine(tab->id, line.id, false, role, r.start, r.start + r.length);
+    m_host.showLine(tab.id, line.id, false, role, r.start, r.start + r.length);
 }
 
 int FindReplace::replaceCheckedLine(std::u16string &line, int position, int length, int *diff) const
@@ -1612,7 +1712,7 @@ int FindReplace::replaceCheckedInFile(const std::vector<const FindResult *> &res
         }
         if (isSRT)
             replacedText += number(lineNum + 1) + u"\r\n";
-        replacedText += u16(core::rawDialogueWithField(u8(piece.token), column, u8(dialtxt)));
+        replacedText += changedPiece(piece, isSRT, column, dialtxt);
         ++lineNum;
     }
     if (!numOfChanges)
@@ -1661,7 +1761,11 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         DocumentId id;
         EditSession *session = nullptr;
         int changes = 0;
-        std::map<std::uint64_t, std::pair<std::u16string, std::u16string>> lines; // text, translation
+        // Working texts (text, translation) of the Lines the results reach.
+        std::map<std::uint64_t, std::pair<std::u16string, std::u16string>> lines;
+        // The Lines a replacement changed: only these are edited, so a
+        // skipped or unreplaced Line keeps its saved bytes.
+        std::set<std::uint64_t> changed;
     };
     std::vector<Pending> pending;
     const auto tabs = m_host.tabs();
@@ -1702,7 +1806,10 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         }
         if (skipLine)
             continue;
-        p->changes += replaceCheckedLine(lineText, r.start, r.length, &replacementDiff);
+        const int reps = replaceCheckedLine(lineText, r.start, r.length, &replacementDiff);
+        p->changes += reps;
+        if (reps > 0)
+            p->changed.insert(line.id.value);
         oldTab = *r.document;
         oldKeyLine = r.keyLine;
         lastIsTextTl = r.translation;
@@ -1715,18 +1822,20 @@ void FindReplace::replaceChecked(const std::u8string &replacement)
         if (!p.changes)
             continue;
         EditSession &session = *p.session;
-        if (const auto draft = session.draftLine(); draft && p.lines.contains(draft->value))
+        if (const auto draft = session.draftLine(); draft && p.changed.contains(draft->value))
             session.commitDraft();
         std::set<core::LineId> touches;
-        for (const auto &[id, texts] : p.lines)
+        for (const auto id : p.changed)
             touches.insert(core::LineId{id});
         const auto ran = session.run(Command{"Replace all", session.revision(), touches, [&](core::Document &d) {
-                                                 for (const auto &[id, texts] : p.lines)
+                                                 for (const auto id : p.changed) {
+                                                     const auto &texts = p.lines.at(id);
                                                      if (!d.editLine(core::LineId{id}, [&](core::LineRecord &l) {
                                                              l.text = u8(texts.first);
                                                              l.translation = u8(texts.second);
                                                          }))
                                                          return false;
+                                                 }
                                                  return true;
                                              }});
         if (ran)

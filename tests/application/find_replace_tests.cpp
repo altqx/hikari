@@ -176,11 +176,22 @@ struct Host : FindReplaceHost {
         files[path] = text;
         return true;
     }
-    std::optional<DocumentId> openFile(const std::u8string &path) override
+    // ShowResult's open: answered at once with `openAnswer`, or kept until
+    // the test answers `pendingOpen` when `holdOpen` is set.
+    std::optional<DocumentId> openAnswer;
+    bool holdOpen = false;
+    std::function<void(std::optional<DocumentId>)> pendingOpen;
+    void openFile(const std::u8string &path, std::function<void(std::optional<DocumentId>)> done) override
     {
         opened.push_back(path);
-        return std::nullopt;
+        if (holdOpen) {
+            pendingOpen = std::move(done);
+            return;
+        }
+        done(openAnswer);
     }
+    int processors = 4;
+    int processorCount() override { return processors; }
 };
 
 struct Find : ::testing::Test {
@@ -945,6 +956,27 @@ TEST_F(Find, ReplaceCheckedAppliesTheCheckedMatchesAsOneStepPerDocument)
     EXPECT_EQ(texts()[0], "HeLLLLo heLLLLo");
 }
 
+TEST_F(Find, ReplaceCheckedEditsOnlyTheLinesItChanged)
+{
+    // "b(?=c)" finds the b of "abc" but no longer matches the b alone, so
+    // that Line is not replaced; it must not be edited (or lose its saved
+    // bytes) because the z of another Line was.
+    // Loaded from bytes: nothing edited yet.
+    const std::string text = std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"
+                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,z\n";
+    host.docs.clear();
+    session = &host.add(text);
+    window.find = u8"b(?=c)|z";
+    window.regex = true;
+    fr.findAllInCurrent(window);
+    ASSERT_EQ(fr.results().size(), 3u);
+    fr.replaceChecked(u8"Y");
+    EXPECT_EQ(texts(), (std::vector<std::string>{"abc", "Y"}));
+    EXPECT_FALSE(session->document().lines()[0]->edited);
+    EXPECT_TRUE(session->document().lines()[1]->edited);
+    EXPECT_EQ(session->history().back().name, "Replace all");
+}
+
 TEST_F(Find, ReplaceCheckedOnlyReplacesTextResults)
 {
     // A result in another field never equals the Line's text: skipped.
@@ -1100,17 +1132,156 @@ TEST_F(Files, ReplaceCheckedInFilesKeepsAnEditedLineAndTheRest)
     EXPECT_EQ(host.logs[0], "Line 2 cannot be replaced,\ncause it was edited.");
 }
 
-TEST_F(Files, AFileThatCannotBeWrittenCountsNoReplacements)
+TEST_F(Files, AFileThatCannotBeWrittenIsStillCountedAsLegacyCountedIt)
 {
+    // Legacy FileWrite reports nothing, so its count includes a file it
+    // could not write (the host logs the failure).
     window.find = u8"cat";
     window.replace = u8"dog";
     host.unwritable = {u8"/subs/a.ass"};
     host.answers = {FindAnswer::Yes};
     fr.replaceInFiles(window);
-    // a.ass (1) is not counted; b.srt and c.txt are.
-    EXPECT_EQ(str(host.questions.back().text), "Replaced 2 times.");
+    EXPECT_EQ(str(host.questions.back().text), "Replaced 3 times.");
     EXPECT_EQ(host.questions.back().info, FindQuestion::Info::Replaced);
-    EXPECT_EQ(str(host.questions.back().argument), "2");
+    EXPECT_EQ(str(host.questions.back().argument), "3");
+    EXPECT_EQ(host.writes.size(), 2u);
+}
+
+TEST_F(Files, TheTotalAddsEachSlicesRunningCountButOnlyChangedFilesAreWritten)
+{
+    // Legacy FindReplaceInFiles: one thread per processor over consecutive
+    // slices; SubsAllReplacements is never reset within a slice, so each
+    // file after the slice's first replacement adds the running total again
+    // and (F1-file-untouched, R3-hang-crash-loss) was rewritten even
+    // unchanged. The paths are a.ass (1), d.ass (0), b.srt (1), c.txt (1).
+    window.find = u8"cat";
+    window.replace = u8"dog";
+    const auto run = [&](int processors) {
+        host.processors = processors;
+        host.writes.clear();
+        host.backups.clear();
+        host.files[u8"/subs/a.ass"] =
+            u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat\n");
+        host.files[u8"/subs/b.srt"] = u16("1\n00:00:01,000 --> 00:00:02,000\ncat\n");
+        host.files[u8"/subs/c.txt"] = u16("cat\n");
+        host.answers = {FindAnswer::Yes};
+        fr.replaceInFiles(window);
+        return str(host.questions.back().argument);
+    };
+    // One slice: 1 + 1 (d.ass, unchanged) + 2 + 3.
+    EXPECT_EQ(run(1), "7");
+    std::vector<std::string> written;
+    for (const auto &[path, text] : host.writes)
+        written.push_back(str(path));
+    EXPECT_EQ(written, (std::vector<std::string>{"/subs/a.ass", "/subs/b.srt", "/subs/c.txt"}));
+    EXPECT_EQ(host.backups.size(), 3u);
+    // Two slices [a, d] and [b, c]: (1 + 1) + (1 + 2).
+    EXPECT_EQ(run(2), "5");
+    // Three: [a, d], [b], [c] (the first slice takes the remainder).
+    EXPECT_EQ(run(3), "4");
+    // A slice per file (4 processors, or more processors than files): the true count.
+    EXPECT_EQ(run(4), "3");
+    EXPECT_EQ(run(16), "3");
+    // An .ass file without dialogues never reaches the write and adds
+    // nothing; an unreadable .srt file reaches it and adds the running total.
+    host.files[u8"/subs/d.ass"] = u16("[Script Info]\nTitle: none\n");
+    host.processors = 1;
+    host.answers = {FindAnswer::Yes};
+    host.files.erase(u8"/subs/b.srt");
+    host.files[u8"/subs/a.ass"] = u16("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,cat\n");
+    host.files[u8"/subs/c.txt"] = u16("cat\n");
+    host.writes.clear();
+    fr.replaceInFiles(window);
+    // a: 1; d: none; b (unreadable): 1; c: 2.
+    EXPECT_EQ(str(host.questions.back().argument), "4");
+    EXPECT_EQ(host.writes.size(), 2u);
+}
+
+// The Linux build read each CR of a CR LF file (R5-per-platform); the host
+// hands those CRs over as read.
+TEST_F(Files, LinuxCrlfAssFilesCountTheirBlankLinesAndKeepEveryLineEnd)
+{
+    host.files[u8"/subs/a.ass"] =
+        u16("[Script Info]\r\nTitle: x\r\n\r\n[Events]\r\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\r\n\r\n"
+            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,cat  \r\n"
+            "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,last \r\n");
+    host.listed = {u8"/subs/a.ass"};
+    window.find = u8"cat";
+    fr.findInFiles(window);
+    ASSERT_EQ(fr.results().size(), 2u);
+    // The blank line is "\r", a Line legacy counted: the match is Line 3.
+    EXPECT_EQ(fr.results()[1].idLine, 3);
+    EXPECT_EQ(fr.results()[1].keyLine, 2);
+    EXPECT_EQ(str(fr.results()[1].text), "cat");
+    window.replace = u8"dog";
+    host.answers = {FindAnswer::Yes};
+    fr.replaceInFiles(window);
+    ASSERT_EQ(host.writes.size(), 1u);
+    // Legacy wrote the header's CR LF as CR CR LF (F1-file-header-cr) and
+    // trimmed unchanged lines; here each unchanged line keeps its one CR LF.
+    EXPECT_EQ(str(host.writes[0].second),
+              "[Script Info]\r\nTitle: x\r\n\r\n[Events]\r\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\r\n\r\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,dog\r\n"
+              "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,last \r\n");
+}
+
+TEST_F(Files, LinuxCrlfSrtFilesAreOneCueAsLegacyReadThem)
+{
+    // "1\r" is no number, so legacy collected the whole file into one cue
+    // whose text holds every later cue.
+    host.files[u8"/subs/b.srt"] = u16("1\r\n00:00:01,000 --> 00:00:02,000\r\nfirst\r\n\r\n2\r\n"
+                                      "00:00:03,000 --> 00:00:04,000\r\ncat\r\n");
+    host.listed = {u8"/subs/b.srt"};
+    window.find = u8"cat";
+    fr.findInFiles(window);
+    ASSERT_EQ(fr.results().size(), 2u);
+    EXPECT_EQ(fr.results()[1].idLine, 1);
+    EXPECT_EQ(str(fr.results()[1].text), "first\\N\\N2\\N00:00:03,000 --> 00:00:04,000\\Ncat");
+    // Legacy then read the Start from "1\r\r\n00:00:01,000" (hours: atoi
+    // gives 1, so 1:00:01) and lost the cue number line into it; here the times come
+    // from the " --> " line and the count replaces the number
+    // (F1-srt-leading-lines, R3-hang-crash-loss).
+    window.replace = u8"dog";
+    host.answers = {FindAnswer::Yes};
+    fr.replaceInFiles(window);
+    ASSERT_EQ(host.writes.size(), 1u);
+    EXPECT_EQ(str(host.writes[0].second), "1\r\n00:00:01,000 --> 00:00:02,000\r\nfirst\r\n\r\n2\r\n"
+                                          "00:00:03,000 --> 00:00:04,000\r\ndog\r\n\r\n");
+}
+
+TEST_F(Files, ShowingAFileResultWaitsForItsOpen)
+{
+    window.find = u8"cat";
+    fr.findInFiles(window);
+    ASSERT_EQ(str(fr.results()[1].path), "/subs/a.ass");
+    host.holdOpen = true;
+    fr.showResult(1);
+    EXPECT_EQ(host.opened, (std::vector<std::u8string>{u8"/subs/a.ass"}));
+    // The save question is modal: nothing else runs meanwhile.
+    EXPECT_TRUE(fr.busy());
+    fr.findInFiles(window);
+    fr.showResult(1);
+    EXPECT_EQ(host.opened.size(), 1u);
+    // The opened Document (here a copy of the file): the result's Line.
+    auto &opened = host.add(
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello cat\n",
+        u8"a.ass");
+    host.pendingOpen(host.docs.back().id);
+    EXPECT_FALSE(fr.busy());
+    ASSERT_EQ(host.shown.size(), 1u);
+    EXPECT_EQ(host.shown[0].document, host.docs.back().id.value);
+    EXPECT_EQ(host.shown[0].line, opened.document().lines()[0]->id);
+    EXPECT_EQ(host.shown[0].start, 6);
+    EXPECT_EQ(host.shown[0].end, 9);
+    // An open that gave nothing shows nothing and frees the dialog.
+    host.holdOpen = false;
+    host.openAnswer.reset();
+    fr.showResult(1);
+    EXPECT_EQ(host.shown.size(), 1u);
+    EXPECT_FALSE(fr.busy());
 }
 
 TEST_F(Files, ResultsFromTabsAfterAFilesSearchAreNotReplaced)
@@ -1143,7 +1314,10 @@ TEST(FindReplaceRecent, AddRecentPerTabAndTwentyWhenLoaded)
         bool fileExists(const std::u8string &) override { return false; }
         bool backupFile(const std::u8string &) override { return true; }
         bool writeFile(const std::u8string &, const std::u16string &) override { return true; }
-        std::optional<DocumentId> openFile(const std::u8string &) override { return std::nullopt; }
+        void openFile(const std::u8string &, std::function<void(std::optional<DocumentId>)> done) override
+        {
+            done(std::nullopt);
+        }
     } host;
     FindReplace fr{host};
     FindReplace::Recent recent;

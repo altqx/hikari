@@ -136,9 +136,10 @@ public:
     // its questions were answered: window() and the results are final.
     virtual void finished() {}
     // Files on disk. The host enumerates (legacy wxDir::GetAllFiles: nullopt
-    // for an invalid folder), reads (the detected charset, CRLF read as LF,
-    // BOM removed; nullopt when unreadable or empty), backs up and writes
-    // (UTF-8 with BOM); both report whether they succeeded.
+    // for an invalid folder), reads (legacy OpenWrite::FileOpen: the charset
+    // uchardet detects, BOM removed, CRLF as the platform's build read it:
+    // LF on Windows, CR LF on Linux; nullopt when unreadable or empty),
+    // backs up and writes (UTF-8 with BOM); both report whether they succeeded.
     virtual std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder,
                                                                 const std::u8string &filter, bool subfolders,
                                                                 bool hidden) = 0;
@@ -146,8 +147,16 @@ public:
     virtual bool fileExists(const std::u8string &path) = 0;
     virtual bool backupFile(const std::u8string &path) = 0;
     virtual bool writeFile(const std::u8string &path, const std::u16string &text) = 0;
-    // ShowResult for a file: the open Document with this path, or the file opened.
-    virtual std::optional<DocumentId> openFile(const std::u8string &path) = 0;
+    // Legacy numOfProcessors (GetSystemInfo, 4 when it gave none): the
+    // number of slices replacing in files counts over.
+    virtual int processorCount() { return 4; }
+    // ShowResult for a file: `done` gets the open Document with this path,
+    // else the file opened as legacy did (a new tab when the editing target
+    // has a file; otherwise into the editing target, after the save question
+    // when it has changes), else the Document legacy then took the result's
+    // Line from (the editing target when that open was cancelled or failed),
+    // or nullopt. It may answer later; FindReplace waits meanwhile (busy()).
+    virtual void openFile(const std::u8string &path, std::function<void(std::optional<DocumentId>)> done) = 0;
 };
 
 class FindReplace {
@@ -193,7 +202,7 @@ public:
     void checkAll(bool check);                       // Check all / Uncheck all
     void toggleChecked(std::size_t row);             // a checkbox: a header checks its group
     void toggleGroup(std::size_t header);            // a header's text: shows or hides its group
-    void showResult(std::size_t row);                // double click
+    void showResult(std::size_t row);                // double click (a file may wait for the save question)
     // "Replace" with the results dialog's replacement text.
     void replaceChecked(const std::u8string &replacement);
 
@@ -227,8 +236,15 @@ private:
     int replaceCheckedLine(std::u16string &line, int position, int length, int *diff) const;
     void findAllInTab(const FindTab &tab, bool allLines, bool selectedOnly);
     int replaceAllInTab(const FindTab &tab, bool allLines, bool selectedOnly);
+    void showResultIn(const FindTab &tab, const FindResult &result);
     void findReplaceInFiles(bool find);
-    void findReplaceInFile(const std::u8string &path, bool find, int &replacements);
+    // One file of FindReplaceInFiles: whether legacy reached the write at its
+    // end (an .ass file without dialogues did not) and what it replaced.
+    struct FileOutcome {
+        bool reachedWrite = false;
+        int replacements = 0;
+    };
+    FileOutcome findReplaceInFile(const std::u8string &path, bool find);
     int replaceCheckedInFile(const std::vector<const FindResult *> &results);
     void addRecent(const FindReplaceSettings &window);
     void clearResults();

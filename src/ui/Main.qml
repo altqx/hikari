@@ -117,6 +117,10 @@ ApplicationWindow {
                 closeReview.problem = problem
             }
         }
+        // F1: a file result opens into the changed Untitled Document.
+        function onFindOpenReview(rows) {
+            closeReview.review(rows)
+        }
     }
 
     // D1: the Classic arrangement (also Reset layout): Video beside Audio over
@@ -2063,6 +2067,8 @@ ApplicationWindow {
         property var rows: []
         property var choices: []
         property string problem: ""
+        // Closing the window is Cancel (a waiting file result is then shown).
+        onClosing: root.app.cancelClose()
         function review(list) {
             choices = list.map(r => ({ id: r.id, save: true, path: "" }))
             rows = list

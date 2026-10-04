@@ -18,6 +18,7 @@
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
+#include "hikari/backends/legacy_text_file.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -26,6 +27,7 @@
 #include <QSet>
 #include <QStringDecoder>
 #include <QTextBoundaryFinder>
+#include <QThread>
 #include <QImage>
 #include <QVideoFrame>
 #include <cstring>
@@ -242,10 +244,13 @@ public:
         m_app.m_editor->reloadFromSession();
         m_app.refreshViews();
     }
-    // wxDir::GetAllFiles: subfolders first, then the files (each folder in
-    // name order); hidden ones only when asked. Links to files and folders
-    // are followed as wxDir follows them; a folder reached again through a
-    // link is not listed twice (legacy recursed until the path was too long).
+    // wxDir::GetAllFiles: subfolders first, then the files, each in the
+    // order the file system lists them (readdir, FindFirstFile; no sorting,
+    // R5-per-platform); hidden ones only when asked. Links are followed as
+    // wxDir follows them, so a folder reached twice through links is listed
+    // twice. Only a real cycle (a folder inside itself) is cut: legacy
+    // recursed until the path was too long, listing and replacing the same
+    // files dozens of times at once (R3-hang-crash-loss, F1-link-loop).
     std::optional<std::vector<std::u8string>> listFiles(const std::u8string &folder, const std::u8string &filter,
                                                         bool subfolders, bool hidden) override
     {
@@ -253,47 +258,14 @@ public:
         if (folder.empty() || !dir.exists())
             return std::nullopt;
         std::vector<std::u8string> out;
-        QSet<QString> visited;
-        collect(dir, qs(filter), subfolders, hidden, visited, out);
+        QStringList path;
+        collect(dir, qs(filter), subfolders, hidden, path, out);
         return out;
     }
-    // OpenWrite::FileOpen: UTF-8 (with or without its BOM), UTF-16 with a
-    // BOM, else the system code page (legacy asked uchardet first, which the
-    // rewrite does not have). A file that decodes in none of them is left
-    // alone, so writing it back cannot lose its bytes. Text-mode reading
-    // turns CRLF into LF.
+    // OpenWrite::FileOpen (R4-uchardet, R5-per-platform): see legacy_text_file.h.
     std::optional<std::u16string> readFile(const std::u8string &path) override
     {
-        QFile file(qs(path));
-        if (!file.open(QIODevice::ReadOnly))
-            return std::nullopt;
-        const QByteArray bytes = file.readAll();
-        QString text;
-        bool decoded = false;
-        const auto tryDecode = [&](QStringDecoder::Encoding encoding, qsizetype skip) {
-            QStringDecoder decoder(encoding, QStringDecoder::Flag::Stateless);
-            text = decoder.decode(bytes.mid(skip));
-            decoded = !decoder.hasError();
-        };
-        if (bytes.startsWith("\xEF\xBB\xBF"))
-            tryDecode(QStringDecoder::Utf8, 3);
-        else if (bytes.startsWith("\xFF\xFE"))
-            tryDecode(QStringDecoder::Utf16LE, 2);
-        else if (bytes.startsWith("\xFE\xFF"))
-            tryDecode(QStringDecoder::Utf16BE, 2);
-        else {
-            tryDecode(QStringDecoder::Utf8, 0);
-            if (!decoded)
-                tryDecode(QStringDecoder::System, 0);
-        }
-        if (!decoded) {
-            m_app.m_log->log(tr("%1 could not be read in a known character set; it was left alone.").arg(qs(path)));
-            return std::nullopt;
-        }
-        text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
-        if (text.isEmpty())
-            return std::nullopt;
-        return std::u16string(reinterpret_cast<const char16_t *>(text.utf16()), static_cast<std::size_t>(text.size()));
+        return backends::readLegacyTextFile(qs(path));
     }
     bool fileExists(const std::u8string &path) override { return QFileInfo(qs(path)).isFile(); }
     // The legacy copy into ReplaceBackup beside the settings file, the one
@@ -339,53 +311,89 @@ public:
             m_app.m_log->log(tr("%1 could not be restored; its backup is in %2.").arg(name, m_app.m_replaceBackup));
         return false;
     }
-    std::optional<application::DocumentId> openFile(const std::u8string &path) override
+    // FindReplace::ShowResult for a file: the tab that has it, else legacy
+    // InsertTab + OpenFile when the current tab has a file, else OpenFile
+    // into the current (Untitled) tab, which asks to save its changes first
+    // (the close review, P2's reviewOpen). Legacy then took the result's Line
+    // from whatever tab was current: after a cancelled or failed open, the
+    // Untitled Document (or the new empty tab).
+    void openFile(const std::u8string &path, std::function<void(std::optional<application::DocumentId>)> done) override
     {
-        const QString wanted = QFileInfo(qs(path)).canonicalFilePath();
+        const QString name = qs(path);
+        const QString wanted = QFileInfo(name).canonicalFilePath();
         std::optional<application::DocumentId> found;
         for (const auto id : m_app.m_workspace.documents())
             if (const auto destination = m_app.m_files->destination(id);
                 destination && QFileInfo(QString::fromStdString(destination->value)).canonicalFilePath() == wanted)
                 found = id;
         if (found)
-            return found;
-        // Legacy opened the file in the current tab when it had no path
-        // (InsertTab only otherwise): an untouched Untitled Document gives
-        // way to it. One with changes stays and the file opens beside it
-        // (legacy OpenFile would ask to save it first).
+            return done(found);
         const auto target = m_app.m_workspace.editingTarget();
-        const auto *session = target ? m_app.m_files->session(*target) : nullptr;
-        const bool reuse = session && m_app.targetUntitled() && !session->isDirty();
-        const auto id = m_app.open(qs(path));
-        if (id && reuse && *id != *target) {
-            m_app.discardRecovery(*target);
-            m_app.m_files->close(*target);
-            m_app.m_workspace.remove(*target);
+        if (!target || !m_app.targetUntitled()) {
+            if (const auto id = m_app.open(name))
+                return done(id);
+            m_app.newDocument(); // InsertTab came first
+            return done(m_app.m_workspace.editingTarget());
         }
-        return id;
+        const QVariantMap review = m_app.reviewOpen(name);
+        if (!review.value(QStringLiteral("ok")).toBool())
+            return done(target);
+        const QVariantList rows = review.value(QStringLiteral("rows")).toList();
+        if (rows.isEmpty()) {
+            m_app.finishClose();
+            return done(m_app.m_workspace.editingTarget());
+        }
+        m_app.m_findOpenDone = [this, target, done = std::move(done)](bool opened) {
+            done(opened ? m_app.m_workspace.editingTarget() : std::optional(*target));
+        };
+        emit m_app.findOpenReview(rows);
+        emit m_app.findBusyChanged();
+    }
+    // Legacy numOfProcessors (GetSystemInfo's logical processors).
+    int processorCount() override
+    {
+        return m_app.m_findProcessors > 0 ? m_app.m_findProcessors : std::max(1, QThread::idealThreadCount());
     }
 
 private:
     static QString tr(const char *text) { return Application::tr(text); }
-    void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, QSet<QString> &visited,
+    void collect(const QDir &dir, const QString &filter, bool subfolders, bool hidden, QStringList &path,
                  std::vector<std::u8string> &out)
     {
-        if (visited.contains(dir.canonicalPath()))
-            return;
-        visited.insert(dir.canonicalPath());
+        const QString canonical = dir.canonicalPath();
+        if (path.contains(canonical))
+            return; // a cycle
+        path.push_back(canonical);
         QDir::Filters common = QDir::NoDotAndDotDot;
         if (hidden)
             common |= QDir::Hidden;
 #ifndef _WIN32
         common |= QDir::CaseSensitive; // wxMatchWild
 #endif
-        const QDir::SortFlags order = QDir::Name | QDir::IgnoreCase;
+        // wxDir on Windows hides system entries as hidden ones.
+        const auto shown = [hidden](const QFileInfo &entry) {
+#ifdef _WIN32
+            if (!hidden) {
+                const DWORD attributes =
+                    ::GetFileAttributesW(reinterpret_cast<const wchar_t *>(entry.absoluteFilePath().utf16()));
+                return attributes == INVALID_FILE_ATTRIBUTES || !(attributes & FILE_ATTRIBUTE_SYSTEM);
+            }
+#endif
+            Q_UNUSED(entry);
+            Q_UNUSED(hidden);
+            return true;
+        };
         if (subfolders)
-            for (const QFileInfo &sub : dir.entryInfoList(QDir::Dirs | common, order))
-                collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, visited, out);
+            for (const QFileInfo &sub : dir.entryInfoList(QDir::Dirs | common, QDir::Unsorted))
+                if (shown(sub))
+                    collect(QDir(sub.absoluteFilePath()), filter, subfolders, hidden, path, out);
+        // wxDir takes every entry that is not a folder (QDir::System: broken
+        // links, fifos and the like too).
         const QStringList names = filter.isEmpty() ? QStringList() : QStringList{filter};
-        for (const QFileInfo &file : dir.entryInfoList(names, QDir::Files | common, order))
-            out.push_back(toU8(QDir::toNativeSeparators(file.absoluteFilePath())));
+        for (const QFileInfo &file : dir.entryInfoList(names, QDir::Files | QDir::System | common, QDir::Unsorted))
+            if (!file.isDir() && shown(file))
+                out.push_back(toU8(QDir::toNativeSeparators(file.absoluteFilePath())));
+        path.pop_back();
     }
 
     Application &m_app;
@@ -777,8 +785,19 @@ void Application::newDocument()
     refreshViews();
 }
 
+void Application::endFindOpen(bool opened)
+{
+    if (!m_findOpenDone)
+        return;
+    auto done = std::move(m_findOpenDone);
+    m_findOpenDone = nullptr;
+    done(opened);
+    emit findBusyChanged();
+}
+
 QVariantList Application::reviewClose(const QString &then)
 {
+    endFindOpen(false); // another review replaces the file result's
     m_closeThen = then;
     m_closing.clear();
     if (then != QLatin1String("open")) {
@@ -929,6 +948,8 @@ void Application::finishClose()
     } else {
         closeEditingTarget();
     }
+    // Before closeFinished: the review window closing on it counts as Cancel.
+    endFindOpen(then == QLatin1String("open"));
     emit closeFinished(true, QString());
 }
 
@@ -939,6 +960,7 @@ void Application::cancelClose()
     m_closeThen.clear();
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
+    endFindOpen(false);
 }
 
 bool Application::targetUntitled() const

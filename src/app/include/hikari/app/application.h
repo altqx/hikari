@@ -69,6 +69,10 @@ signals:
     // (the styles question may have changed its styles) with the recent lists.
     void findFinished(const QVariantMap &settings);
     void findBusyChanged();
+    // F1: a file result opens into the Untitled editing target, which has
+    // changes: the close review shows these rows (as reviewOpen's), and the
+    // result is shown once it finishes or is cancelled.
+    void findOpenReview(const QVariantList &rows);
 
 public:
     struct Options {
@@ -316,6 +320,8 @@ public:
     // (default: ReplaceBackup beside the settings file, none without one).
     void setFindQuestionHandler(std::function<int(int kind, const QString &text)> handler);
     void setReplaceBackupFolder(const QString &folder) { m_replaceBackup = folder; }
+    // Legacy numOfProcessors for replacing in files (0: this machine's).
+    void setFindProcessorCount(int count) { m_findProcessors = count; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -433,6 +439,10 @@ private:
     std::function<int(int, const QString &)> m_findQuestionHandler;
     int m_findQuestionId = 0;
     std::map<int, std::function<void(application::FindAnswer)>> m_findAnswers; // questions shown, by id
+    // A file result waiting for the close review of its open (true: opened).
+    std::function<void(bool)> m_findOpenDone;
+    int m_findProcessors = 0;
+    void endFindOpen(bool opened);
     void saveFindRecent();
     void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
