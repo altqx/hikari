@@ -4,13 +4,15 @@
 // owns the audio box's audio and view, follows the active Line the way
 // legacy SetDialogue/Update do, and keeps the marks the application hands it
 // (other Lines, keyframes, the paused video's time). The AudioDisplay item
-// draws what scene() describes. Options are legacy's defaults until the
-// settings registry (O1) exists.
+// draws what scene() describes. Display options and colours are legacy's
+// defaults; the box's sliders and switches (A2) come from the settings registry.
 
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
+#include "hikari/application/audio_spectrum.h"
 
 #include <QObject>
+#include <QPointer>
 #include <QString>
 #include <QStringList>
 #include <QUrl>
@@ -21,6 +23,8 @@
 #include <vector>
 
 namespace hikari::ui {
+
+class SettingsStore;
 
 // Legacy DeleteOldAudioCache over `folder`, `inUse` (and its .part) excepted.
 void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesystem::path &inUse, int limit);
@@ -42,6 +46,16 @@ class AudioController : public QObject {
     Q_PROPERTY(int scrollRange READ scrollRange NOTIFY displayChanged)
     // Legacy "Choose the track" (HikariListBox): its rows while it is asking.
     Q_PROPERTY(QStringList trackChoices READ trackChoices NOTIFY trackChoicesChanged)
+    // A2: the box's sliders and switches (legacy AudioBox's HorizontalZoom,
+    // VerticalZoom, VolumeBar, VerticalLink, AutoScroll, SpectrumMode and
+    // SpectrumNonLinear), as the box was made from the settings and changed since.
+    Q_PROPERTY(int horizontalZoom READ horizontalZoom NOTIFY boxControlsChanged)
+    Q_PROPERTY(int verticalZoom READ verticalZoom NOTIFY boxControlsChanged)
+    Q_PROPERTY(int volume READ volume NOTIFY boxControlsChanged)
+    Q_PROPERTY(bool linked READ linked NOTIFY boxControlsChanged)
+    Q_PROPERTY(bool autoScroll READ autoScroll NOTIFY boxControlsChanged)
+    Q_PROPERTY(bool spectrumOn READ spectrumOn NOTIFY boxControlsChanged)
+    Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
 public:
     explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
 
@@ -93,8 +107,43 @@ public:
     void setCursor(std::optional<float> x);
     std::optional<float> cursor() const { return m_cursor; }
     void setFocused(bool focused);
-    void wheel(int rotation); // legacy: scrolls by -rotation * w / 360 columns
+    // Legacy OnMouseEvent's wheel (`rotation` in eighths of a degree, 120 a
+    // notch): Ctrl alone the vertical zoom, Shift (or no Shift with
+    // AUDIO_WHEEL_DEFAULT_TO_ZOOM) the horizontal zoom around column `x`,
+    // otherwise a scroll by -rotation * w / 360 columns.
+    void wheel(int rotation, bool controlOnly = false, bool shift = false, float x = 0);
     Q_INVOKABLE void setScrollPosition(int position); // legacy AudioBox::OnScrollbar
+
+    // A2: the settings the box's controls start from and write
+    // (AUDIO_HORIZONTAL_ZOOM, AUDIO_VERTICAL_ZOOM, AUDIO_VOLUME, AUDIO_LINK,
+    // AUDIO_AUTO_SCROLL, AUDIO_SPECTRUM_ON, AUDIO_SPECTRUM_NON_LINEAR_ON,
+    // AUDIO_WHEEL_DEFAULT_TO_ZOOM); without one, legacy's defaults.
+    void setSettingsStore(SettingsStore *store);
+    int horizontalZoom() const { return m_horizontalZoom; }
+    int verticalZoom() const { return m_verticalZoom; }
+    int volume() const { return m_volume; }
+    bool linked() const { return m_linked; }
+    bool autoScroll() const { return m_autoScroll; }
+    bool spectrumOn() const { return m_spectrumOn; }
+    bool spectrumNonLinear() const { return m_spectrumNonLinear; }
+    // Legacy OnHorizontalZoom, OnVerticalZoom, OnVolume and OnVerticalLink.
+    Q_INVOKABLE void setHorizontalZoom(int position);
+    Q_INVOKABLE void setVerticalZoom(int position);
+    Q_INVOKABLE void setVolume(int position);
+    Q_INVOKABLE void setLinked(bool linked);
+    // Legacy OnAutoGoto, OnSpectrumMode and OnSpectrumNonLinear.
+    Q_INVOKABLE void setAutoScroll(bool on);
+    Q_INVOKABLE void setSpectrumOn(bool on);
+    Q_INVOKABLE void setSpectrumNonLinear(bool on);
+    // Legacy OnScrollSpectrum: AUDIO_SCROLL_RIGHT ("Scroll left", A) moves
+    // the view 50 columns back, AUDIO_SCROLL_LEFT ("Scroll right", F) forward.
+    Q_INVOKABLE void scrollLeft();
+    Q_INVOKABLE void scrollRight();
+    // What the player gets for the volume slider (legacy PlaybackVolumeFromSlider).
+    float playbackVolume() const { return application::playbackVolumeFromSlider(m_volume); }
+    // The spectrum picture over the view (legacy DrawSpectrum), kept until the view changes.
+    std::shared_ptr<const application::AudioImage> spectrumImage();
+    const application::AudioSpectrum *spectrum() const { return m_spectrum.get(); }
 
     // What to draw (legacy DoUpdateImage, or DrawProgress while loading),
     // and its revision; the waveform columns are kept until the view changes.
@@ -116,8 +165,14 @@ signals:
     // A message for the log: legacy HikariLog, or HikariLogDebug (`debug`).
     void logged(const QString &message, bool debug);
     void trackChoicesChanged();
+    // A2: a slider or switch moved; `volume` also when the player's volume changed.
+    void boxControlsChanged();
+    void volumeChanged(float playbackVolume);
 
 private:
+    void loadBoxControls(); // legacy AudioBox's constructor
+    void applyVerticalZoom(int position, bool fromVolume);
+    bool autoScrollSetting() const;
     void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);
     void boxChanged();
     void newView();
@@ -156,6 +211,21 @@ private:
         float scale = 0;
         bool operator==(const ColumnsKey &) const = default;
     } m_columnsKey;
+    // A2: the box's controls, and the spectrum with its last picture
+    QPointer<SettingsStore> m_store;
+    int m_horizontalZoom = 50, m_verticalZoom = 50, m_volume = 50;
+    bool m_linked = false, m_autoScroll = true, m_spectrumOn = false, m_spectrumNonLinear = false;
+    std::unique_ptr<application::AudioSpectrum> m_spectrum;
+    std::uint64_t m_spectrumSerial = 0;
+    std::shared_ptr<const application::AudioImage> m_spectrumImage;
+    struct SpectrumKey {
+        std::uint64_t serial = 0;
+        std::int64_t start = -1;
+        int w = 0, h = 0, samples = 0, percent = 0;
+        float scale = 0;
+        bool nonLinear = false;
+        bool operator==(const SpectrumKey &) const = default;
+    } m_spectrumKey;
 };
 
 } // namespace hikari::ui

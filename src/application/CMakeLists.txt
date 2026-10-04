@@ -4,6 +4,9 @@ add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_sess
 target_include_directories(hikari_application PUBLIC include)
 # F1: find and replace.
 target_sources(hikari_application PRIVATE find_replace.cpp)
+# A2: the audio box's spectrum; legacy's float FFT, so no fused multiply-adds.
+target_sources(hikari_application PRIVATE audio_spectrum.cpp)
+set_source_files_properties(audio_spectrum.cpp PROPERTIES COMPILE_OPTIONS "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>")
 # wxDir listing per platform (F1 find in files, F3 dictionaries).
 target_sources(hikari_application PRIVATE legacy_dir.cpp)
 if(WIN32)

@@ -732,7 +732,8 @@ std::string legacyAssTime(int ms)
 }
 
 std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns &columns, const AudioMarks &marks,
-                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth)
+                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth,
+                                   std::shared_ptr<const AudioImage> spectrum)
 {
     std::vector<AudioShape> out;
     const int w = view.width(), h = view.height(), displayH = h + view.timelineHeight();
@@ -746,6 +747,17 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     const std::int64_t selStart = lineStart, selEnd = lineEnd;
     const bool hasSel = true; // legacy sets it before every draw
 
+    // A2: legacy DrawSpectrum copies the rendered spectrum over the background
+    if (spectrum) {
+        AudioShape picture;
+        picture.kind = AudioShape::Kind::Image;
+        picture.x2 = float(spectrum->width);
+        picture.y2 = float(spectrum->height);
+        picture.image = std::move(spectrum);
+        out.push_back(std::move(picture));
+    }
+    const bool waveform = !out.back().image; // legacy: no waveform in spectrum mode
+
     // Selection background
     if (hasSel && lineStart < lineEnd && options.drawSelectionBackground)
         out.push_back(fill(float(lineStart), 0, float(lineEnd + 1), float(h),
@@ -755,7 +767,7 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     std::uint32_t waveformSel = options.waveform;
     if (hasSel && options.drawSelectionBackground)
         waveformSel = marks.modified ? options.waveformModified : options.waveformSelected;
-    const int drawn = std::min<int>(w, static_cast<int>(columns.min.size()));
+    const int drawn = waveform ? std::min<int>(w, static_cast<int>(columns.min.size())) : 0;
     for (int i = 0; i < drawn; i++) {
         const bool selected = hasSel && i >= selStartCap && i < selEndCap;
         const float x = i + 0.5f;

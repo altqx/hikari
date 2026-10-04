@@ -28,6 +28,7 @@
 #include <dirent.h>
 #endif
 
+#include <cmath>
 #include <cstring>
 #include <algorithm>
 #include <filesystem>
@@ -3737,6 +3738,255 @@ private slots:
         audio.openAudio(dir.filePath(QStringLiteral("missing.wav")));
         QTRY_VERIFY_WITH_TIMEOUT(!audio.hasAudio(), 20000);
         QVERIFY(audio.box().error().has_value());
+    }
+
+    // A2: legacy AudioBox's horizontal zoom, AUDIO_SCROLL_LEFT/RIGHT, the
+    // wheel, the vertical zoom and volume sliders and their link, and
+    // auto-scroll, on blank audio (44.1 kHz): each starts from the registry
+    // when a box is made and is written back as it changes.
+    void audioBoxZoomScrollAndGain()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        QCOMPARE(audio.horizontalZoom(), 50);
+        QCOMPARE(audio.verticalZoom(), 50);
+        QCOMPARE(audio.volume(), 50);
+        QVERIFY(!audio.linked());
+        QVERIFY(audio.autoScroll());
+        QVERIFY(!audio.spectrumOn());
+        QVERIFY(!audio.spectrumNonLinear());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(item("audioSliders")->isVisible());
+        QVERIFY(item("audioSwitches")->isVisible());
+        const auto &view = audio.view();
+        QCOMPARE(view.samples(), 1323);
+
+        // the zoom slider: 100% is two minutes over 500 columns (legacy w1)
+        audio.setHorizontalZoom(100);
+        QCOMPARE(view.samples(), 10584);
+        QCOMPARE(settings.integer("audio.horizontalZoom"), 100);
+        QCOMPARE(item("audioHorizontalZoom")->property("value").toInt(), 100);
+
+        // A (AUDIO_SCROLL_RIGHT, "Scroll left") and F in the display: 50 columns
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 100);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_A);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 0);
+        // and in the Grid (legacy TabPanel::SetAccels gives it the audio keys)
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 0);
+
+        // zooming keeps the view's centre (legacy SetSamplesPercent, pivot 0.5)
+        audio.setScrollPosition(83); // the search bar's units are 12 columns
+        QCOMPARE(view.position(), 996);
+        audio.setHorizontalZoom(50);
+        QCOMPARE(view.samples(), 1323);
+        QCOMPARE(view.position(), (996LL * 10584 + (10584 - 1323) * 250) / 1323);
+
+        // the wheel: a notch scrolls a third of the display, Shift zooms
+        // around the mouse, and the zoom setting keeps a value past the slider
+        const int w = view.width();
+        std::int64_t before = view.position();
+        audio.wheel(-120);
+        QCOMPARE(view.position(), before + 120 * w / 360);
+        before = view.positionSample();
+        audio.wheel(120, false, true, 0); // zoom in one step, pivot at column 0
+        QCOMPARE(audio.horizontalZoom(), 49);
+        QCOMPARE(view.samples(), int(int(44100 * 120 / 500) * std::pow(0.49, 3)));
+        QCOMPARE(view.positionSample() / view.samples(), view.position());
+        QCOMPARE(view.position(), before / view.samples());
+        audio.setHorizontalZoom(100);
+        audio.wheel(-120, false, true, 0);
+        QCOMPARE(audio.horizontalZoom(), 100);
+        QCOMPARE(settings.integer("audio.horizontalZoom"), 101);
+        QCOMPARE(view.samples(), 10584);
+        // AUDIO_WHEEL_DEFAULT_TO_ZOOM swaps scrolling and zooming
+        settings.set("audio.wheelDefaultToZoom", true);
+        audio.wheel(120);
+        QCOMPARE(audio.horizontalZoom(), 99);
+        before = view.position();
+        audio.wheel(-120, false, true, 0);
+        QCOMPARE(audio.horizontalZoom(), 99);
+        QCOMPARE(view.position(), before + 120 * w / 360);
+        settings.set("audio.wheelDefaultToZoom", false);
+
+        // Ctrl and the wheel over the display: the vertical zoom slider
+        auto *display = item("audioDisplay");
+        const QPointF at = display->mapToScene(QPointF(100, 10));
+        QWheelEvent wheel(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::ControlModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QCOMPARE(audio.verticalZoom(), 51);
+        QCOMPARE(view.scale(), application::audioScaleFromSlider(51));
+        QCOMPARE(settings.integer("audio.verticalZoom"), 51);
+        QCOMPARE(audio.volume(), 50); // not linked
+
+        // linking moves the volume to the vertical zoom; each then moves both
+        QSignalSpy volumes(&audio, &ui::AudioController::volumeChanged);
+        audio.setLinked(true);
+        QCOMPARE(audio.volume(), 51);
+        QCOMPARE(settings.integer("audio.volume"), 51);
+        QVERIFY(settings.boolean("audio.link"));
+        audio.setVolume(30);
+        QCOMPARE(audio.verticalZoom(), 30);
+        QCOMPARE(view.scale(), 0.216f);
+        QCOMPARE(audio.playbackVolume(), 0.216f);
+        QCOMPARE(settings.integer("audio.verticalZoom"), 30);
+        audio.setVerticalZoom(80);
+        QCOMPARE(audio.volume(), 80);
+        QCOMPARE(audio.playbackVolume(), 1.3f); // the player's ramp above 50
+        QCOMPARE(volumes.size(), 3);
+        QCOMPARE(volumes.last().first().toFloat(), 1.3f);
+        QCOMPARE(item("audioVolume")->property("value").toInt(), 80);
+        audio.wheel(1200, true); // ten notches, the slider stops at 100
+        QCOMPARE(audio.verticalZoom(), 90);
+        QCOMPARE(audio.volume(), 90);
+        audio.wheel(1200, true);
+        QCOMPARE(audio.verticalZoom(), 100);
+        audio.setVerticalZoom(80);
+
+        // a new box starts from the settings: a zoom stored past the
+        // slider's range, and a linked volume takes the vertical zoom's value
+        settings.set("audio.horizontalZoom", 101);
+        settings.set("audio.volume", 10);
+        audio.closeAudio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.horizontalZoom(), 100);
+        QCOMPARE(audio.view().samples(), 10584);
+        QCOMPARE(audio.volume(), 80);
+        QCOMPARE(settings.integer("audio.volume"), 80);
+        QCOMPARE(audio.view().scale(), application::audioScaleFromSlider(80));
+        audio.setLinked(false);
+        audio.setVolume(20);
+        QCOMPARE(audio.verticalZoom(), 80);
+        QCOMPARE(settings.integer("audio.volume"), 20);
+
+        // auto-scroll (AUDIO_AUTO_SCROLL): another active Line is brought into view
+        audio.setHorizontalZoom(10); // 10 samples a column: 3.00 is column 13230
+        QCOMPARE(audio.view().samples(), 10);
+        audio.setScrollPosition(0);
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
+        // legacy MakeDialogueVisible: the start 50 columns from the left
+        const auto followed = audio.view().position();
+        QCOMPARE(followed, (132300 - 50 * 10) / 10);
+        audio.setAutoScroll(false);
+        QVERIFY(!settings.boolean("audio.autoScroll"));
+        QVERIFY(!item<QObject>("audioAutoScroll")->property("checked").toBool());
+        grid->forceActiveFocus();
+        press(Qt::Key_Up);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(audio.view().position(), followed);
+        audio.setAutoScroll(true);
+        application->editor().discard();
+    }
+
+    // A2: spectrum mode (AUDIO_SPECTRUM_ON) and its speech layout
+    // (AUDIO_SPECTRUM_NON_LINEAR_ON): legacy RenderRange's picture over the
+    // background in place of the waveform, drawn as it is by whichever
+    // renderer this run uses.
+    void audioSpectrumIsDrawn()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        auto *toggle = item("audioSpectrumMode");
+        QVERIFY(!toggle->property("checked").toBool());
+        // the switch as a click toggles it (not hovered: a tooltip's popup
+        // window upsets offscreen RHI grabs)
+        QVERIFY(QMetaObject::invokeMethod(toggle, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(toggle, "toggled"));
+        QTRY_VERIFY(audio.spectrumOn());
+        QVERIFY(toggle->property("checked").toBool());
+        QVERIFY(settings.boolean("audio.spectrumOn"));
+        QVERIFY(item("audioDisplay")->hasActiveFocus()); // legacy OnSpectrumMode focuses the display
+        const auto picture = audio.spectrumImage();
+        QVERIFY(picture);
+        const auto &view = audio.view();
+        QCOMPARE(picture->width, view.width());
+        QCOMPARE(picture->height, view.height());
+        // the same view draws the same picture again without new transforms
+        const auto lines = audio.spectrum()->transformedLines();
+        QVERIFY(lines > 0);
+        QCOMPARE(audio.spectrumImage(), picture);
+        // zoom 50: 1440 samples a column, two transforms per 2048 samples
+        QCOMPARE(audio.spectrum()->overlaps(), 2);
+        // a fresh render of the view gives the same pixels
+        application::AudioSpectrum fresh(1);
+        std::vector<std::uint8_t> again(picture->bgra.size(), 0);
+        fresh.render(*audio.box().audio(), 0, std::int64_t(view.width()) * 1440, again.data(), view.width(),
+                     view.width(), view.height(), 50);
+        for (std::size_t i = 0; i < again.size(); i += 4)
+            QVERIFY(std::equal(again.begin() + i, again.begin() + i + 3, picture->bgra.begin() + i));
+
+        // the scene: the picture, no waveform columns
+        const auto scene = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
+        QCOMPARE(scene.at(1).kind, application::AudioShape::Kind::Image);
+        // what the scene graph drew, before the active Line (column 10, 20)
+        QTest::mouseMove(window, QPoint(0, 0));
+        QTRY_VERIFY(!audio.cursor().has_value());
+        QCoreApplication::processEvents();
+        auto *display = item("audioDisplay");
+        const QPoint origin = display->mapToScene(QPointF(0, 0)).toPoint();
+        const int h = view.height();
+        auto expected = [&](int x, int y) {
+            const std::uint8_t *p = picture->bgra.data() + (std::size_t(y) * picture->width + x) * 4;
+            return qRgb(p[2], p[1], p[0]);
+        };
+        int lit = 0;
+        auto drawnAsRendered = [&] {
+            const QImage drawn = window->grabWindow();
+            lit = 0;
+            for (int x : {10, 20})
+                for (int y : {h / 8, h / 4, h / 2, 3 * h / 4, h - 4}) {
+                    if ((drawn.pixel(origin + QPoint(x, y)) | 0xFF000000u) != expected(x, y))
+                        return false;
+                    lit += expected(x, y) != qRgb(0, 0, 0);
+                }
+            return true;
+        };
+        QTRY_VERIFY(drawnAsRendered()); // a grab can come before the window is ready again
+        QVERIFY(lit > 0); // the fixture's sawtooth is broadband
+
+        // the speech layout spreads the low bands over more rows
+        audio.setSpectrumNonLinear(true);
+        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        const auto speech = audio.spectrumImage();
+        QVERIFY(speech != picture);
+        QVERIFY(speech->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines); // same transforms, other rows
+
+        // the vertical zoom scales the power (legacy SetScaling)
+        audio.setVerticalZoom(100);
+        QVERIFY(audio.spectrumImage()->bgra != speech->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        // off again: the waveform
+        audio.setSpectrumOn(false);
+        QVERIFY(!settings.boolean("audio.spectrumOn"));
+        const auto waveform = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
+        for (const auto &shape : waveform)
+            QVERIFY(shape.kind != application::AudioShape::Kind::Image);
+        audio.setVerticalZoom(50);
+        audio.setSpectrumNonLinear(false);
+        audio.closeAudio();
+        application->editor().discard();
     }
 
     // GLOBAL_OPEN_DUMMY_AUDIO: 2 h 30 min of 44.1 kHz silence, ready at once;

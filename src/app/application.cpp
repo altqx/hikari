@@ -650,6 +650,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         m_audio->setSettings(m_audioSettings);
     }
+    // A2: the box's zoom, volume, link, auto-scroll and spectrum switches
+    // start from the registry and are written back as they change.
+    m_audio->setSettingsStore(m_settings.get());
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
