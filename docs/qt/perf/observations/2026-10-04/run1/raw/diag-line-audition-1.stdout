@@ -1,0 +1,13 @@
+Running main() from /home/altq/Work/hikari-qt/out/sdk/vcpkg/buildtrees/gtest/src/v1.18.0-e6987f02b9.clean/googletest/src/gtest_main.cc
+Note: Google Test filter = Audition.StopTailAndDrainAreSeparateMoments
+[==========] Running 1 test from 1 test suite.
+[----------] Global test environment set-up.
+[----------] 1 test from Audition
+[ RUN      ] Audition.StopTailAndDrainAreSeparateMoments
+[       OK ] Audition.StopTailAndDrainAreSeparateMoments (112 ms)
+[----------] 1 test from Audition (112 ms total)
+
+[----------] Global test environment tear-down
+[==========] 1 test from 1 test suite ran. (112 ms total)
+[  PASSED  ] 1 test.
+exit 0

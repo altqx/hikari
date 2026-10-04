@@ -4,7 +4,7 @@
 
 ## Reference class and binding
 
-The accepted reference class is **four physical CPU cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display**. No actual Windows or Linux reference machine has been selected or qualified. This is not a guarantee that every computer meeting those broad characteristics performs identically, an approved hardware purchase or an external service-level promise.
+The accepted reference class is **four physical CPU cores, 8 GiB RAM, SSD, integrated graphics and a 60 Hz display**. No Windows reference machine has been selected. On 2026-10-04 altqx bound the Linux host [sapphire](perf/hosts/sapphire.md) for [H3](https://github.com/altqx/hikari/issues/126). It is not calibrated or qualified, and it exceeds the class: six cores, 31 GiB RAM and a discrete GPU. Its results are observations ([perf evidence](perf/README.md)). This is not a guarantee that every computer meeting those broad characteristics performs identically, an approved hardware purchase or an external service-level promise.
 
 Before qualifying measurements, bind named Windows/Linux reference machines or documented equivalents to a recorded inventory: CPU model, core/thread configuration, RAM, storage, GPU and driver, display, OS/build, Linux compositor and Wayland/X11 session, graphics/audio backend and device, power settings and the pinned software build. Establish the measurement tooling and calibration alongside fixture hashes. A hardware description without those bindings is insufficient to claim a pass. A Windows result cannot certify Linux or macOS.
 

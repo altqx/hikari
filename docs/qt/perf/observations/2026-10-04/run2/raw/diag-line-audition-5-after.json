@@ -1,0 +1,1 @@
+{"at":"2026-10-04T14:09:16,676926293+07:00","load1":1.45,"load5":3.72,"load15":5.81,"cpuPressureSome10":0.00,"cpuTempC":61.2,"busiest":[{"pid":2318005,"cpu":21.0,"command":"qemu-system-x86"},{"pid":2869481,"cpu":11.5,"command":"cc1plus"},{"pid":2869484,"cpu":7.6,"command":"cc1plus"},{"pid":594575,"cpu":6.7,"command":"2.1.288"},{"pid":2869451,"cpu":6.7,"command":"ninja"}]}

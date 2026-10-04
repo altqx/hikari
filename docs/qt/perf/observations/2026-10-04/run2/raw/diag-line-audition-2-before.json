@@ -1,0 +1,1 @@
+{"at":"2026-10-04T14:08:57,897259498+07:00","load1":1.46,"load5":3.85,"load15":5.88,"cpuPressureSome10":0.00,"cpuTempC":58.6,"busiest":[{"pid":2318005,"cpu":22.0,"command":"qemu-system-x86"},{"pid":594575,"cpu":10.5,"command":"2.1.288"}]}

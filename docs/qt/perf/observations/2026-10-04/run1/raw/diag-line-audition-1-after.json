@@ -1,0 +1,1 @@
+{"at":"2026-10-04T13:20:30,717422623+07:00","load1":4.14,"load5":7.08,"load15":11.45,"cpuPressureSome10":0.66,"cpuTempC":72.0,"busiest":[{"pid":2705345,"cpu":99.1,"command":"hikari_core_per"},{"pid":2318005,"cpu":22.4,"command":"qemu-system-x86"},{"pid":2707744,"cpu":6.8,"command":"hikarisub"}]}
