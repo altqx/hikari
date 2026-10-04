@@ -1,6 +1,7 @@
 #include "hikari/application/audio_timing.h"
 
 #include "hikari/core/checked.h"
+#include "hikari/core/text_projection.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -145,13 +146,19 @@ void AudioTiming::lostCapture()
 
 AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Selection &selection,
                                     const AudioSnapContext &snap, const AudioTimingOptions &options,
-                                    int scrollbarThickness)
+                                    int scrollbarThickness, const AudioKaraokeMouse &kara)
 {
     using Type = AudioMouse::Type;
     using Button = AudioMouse::Button;
     AudioMouseResult result;
     const std::int64_t x = event.x, y = event.y;
     const int w = view.width(), h = view.height();
+    AudioKaraoke *karaoke = kara.karaoke; // legacy hasKara
+    const bool hasKara = karaoke != nullptr;
+    // A5-stale-syllable (R3, approved): Grabbed can be left from a Line with
+    // more syllables; legacy then read and wrote past the syllable times.
+    // Such an index reads and moves nothing.
+    auto validGrab = [&] { return hasKara && m_grabbed >= 0 && m_grabbed < karaoke->count(); };
 
     // Is inside? (AUDIO_AUTO_FOCUS and the cursor are the display's)
     bool onScale = false;
@@ -179,6 +186,8 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     const bool controlOnly = event.ctrl && !event.alt && !event.shift; // GetModifiers() == wxMOD_CONTROL
     if (buttonDown || middleDown)
         result.focus = true;
+    if (karaoke)
+        karaoke->hover = -1; // syllableHover
 
     if (buttonUP && m_holding)
         m_holding = false;
@@ -219,6 +228,8 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     // Timing (hasSel: the selection is drawn)
     if (!(event.ctrl && !event.alt && m_hold == 0)) {
         bool updated = false;
+        if (karaoke)
+            karaoke->character = -1; // currentCharacter
         if (m_hold == 0) {
             if (m_hasMark && std::abs(x - m_selMark) < 6) {
                 result.sizeCursor = true;
@@ -230,6 +241,78 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 m_defCursor = false;
                 if (buttonDown)
                     m_hold = 1;
+            } else if (hasKara && y > 20) {
+                // A5: the syllables' boundaries (legacy's "yellow lines of karaoke")
+                m_grabbed = karaoke->boundaryAt(static_cast<int>(x), view);
+                if (m_grabbed < 0) {
+                    const int tmpsyl = karaoke->syllableAt(static_cast<int>(x), view, selection.startMs);
+                    const bool hasSyl = tmpsyl >= 0;
+                    int &current = karaoke->current;
+                    if (kara.moveOnClick && hasSyl && !(tmpsyl < current - 1 || tmpsyl > current + 1) &&
+                        (leftDown || rightDown)) {
+                        // AUDIO_KARAOKE_MOVE_ON_CLICK: the nearer boundary of the current syllable moves here
+                        m_grabbed = tmpsyl < current ? current - 1 : current;
+                        m_hold = 5;
+                    } else if (leftDown && tmpsyl >= 0) {
+                        current = tmpsyl;
+                        updated = true;
+                    } else if (std::abs(x - m_selEnd) < 6) {
+                        result.sizeCursor = true;
+                        m_defCursor = false;
+                        if (leftDown) {
+                            m_hold = 2;
+                        } else if (rightDown) {
+                            m_grabbed = current = static_cast<int>(karaoke->times().size()) - 1;
+                            m_hold = 5;
+                        }
+                        result.keepCursor = true;
+                        return result;
+                    }
+                    if (!m_defCursor) {
+                        result.sizeCursor = false;
+                        m_defCursor = true;
+                    }
+                } else {
+                    result.sizeCursor = true;
+                    m_defCursor = false;
+                    if (middleDown || (event.shift && leftDown)) {
+                        // a boundary's middle click or Shift+click joins its syllables
+                        if (karaoke->join(m_grabbed))
+                            result.commit = false; // Commit()
+                        result.redraw = true;
+                        result.keepCursor = true;
+                        return result;
+                    }
+                    if (buttonDown)
+                        m_hold = 5;
+                }
+            } else if (hasKara) {
+                // A5: the syllables' letters (the top 20 rows)
+                if (const auto letter =
+                        karaoke->letterAt(static_cast<int>(x), view, selection.startMs, kara.measure)) {
+                    std::tie(karaoke->hover, karaoke->character) = *letter;
+                    if (leftDown && karaoke->splitSyllable(karaoke->hover, karaoke->character, selection.startMs)) {
+                        // a click splits the syllable before the letter
+                        karaoke->current = karaoke->hover;
+                        result.commit = false; // Commit()
+                    }
+                    if (!m_defCursor) {
+                        result.sizeCursor = false;
+                        m_defCursor = true;
+                    }
+                } else if (std::abs(x - m_selEnd) < 6) {
+                    karaoke->hover = -1;
+                    result.sizeCursor = true;
+                    m_defCursor = false;
+                    if (buttonDown)
+                        m_hold = 2;
+                } else {
+                    karaoke->hover = -1;
+                    if (!m_defCursor) {
+                        result.sizeCursor = false;
+                        m_defCursor = true;
+                    }
+                }
             } else if (std::abs(x - m_selEnd) < 6) {
                 result.sizeCursor = true;
                 m_defCursor = false;
@@ -247,16 +330,28 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
 
         if (m_hold != 0) {
             if (buttonUP) {
-                // Prevent negative times
-                selection.startMs = legacyZeroIt(std::max(0, selection.startMs));
-                selection.endMs = legacyZeroIt(std::max(0, selection.endMs));
-                m_selStart = std::max<std::int64_t>(0, m_selStart);
-                m_selEnd = std::max<std::int64_t>(0, m_selEnd);
-                // Alt: the next Line starts at the end, the previous one ends at the start
-                if (m_hold == 2 && event.alt)
-                    result.adjacent = AudioAdjacent::Next;
-                else if ((m_hold == 1 || m_hold == 3) && event.alt)
-                    result.adjacent = AudioAdjacent::Previous;
+                if (m_grabbed == -1) {
+                    // Prevent negative times
+                    selection.startMs = legacyZeroIt(std::max(0, selection.startMs));
+                    selection.endMs = legacyZeroIt(std::max(0, selection.endMs));
+                    m_selStart = std::max<std::int64_t>(0, m_selStart);
+                    m_selEnd = std::max<std::int64_t>(0, m_selEnd);
+                    // Alt: the next Line starts at the end, the previous one ends at the start
+                    if (m_hold == 2 && event.alt)
+                        result.adjacent = AudioAdjacent::Next;
+                    else if ((m_hold == 1 || m_hold == 3) && event.alt)
+                        result.adjacent = AudioAdjacent::Previous;
+                }
+                // A5: the grabbed boundary lands between its neighbours
+                if (validGrab()) {
+                    auto &times = karaoke->times();
+                    const int last = karaoke->count() - 1;
+                    const int newpos = legacyZeroIt(view.msAtX(x));
+                    const int prev = m_grabbed == 0 ? selection.startMs : times[static_cast<std::size_t>(m_grabbed) - 1];
+                    const int next = m_grabbed == last ? selection.endMs : times[static_cast<std::size_t>(m_grabbed) + 1];
+                    times[static_cast<std::size_t>(m_grabbed)] = std::max(prev, std::min(newpos, next));
+                    karaoke->current = m_grabbed;
+                }
                 if (m_hold != 4)
                     result.commit = m_hold == 2;
                 m_hold = 0;
@@ -288,6 +383,18 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
             if (m_hold == 1 && x != m_selStart) {
                 const int snapped = legacyBoundarySnap(snap, view.msAtX(x), 16, event.shift, false, !event.alt);
                 m_selStart = static_cast<std::int64_t>(view.xAtMs(snapped));
+                // A5: with the right button the syllables (all but the last) move with the start
+                if (hasKara && (event.rightHeld || rightDown)) {
+                    auto &times = karaoke->times();
+                    const int sizes = karaoke->count() - 1;
+                    const int addtime = snapped - selection.startMs;
+                    for (int i = 0; i < sizes; i++) {
+                        auto &t = times[static_cast<std::size_t>(i)];
+                        t = legacyZeroIt(t + addtime);
+                        if (t > times[static_cast<std::size_t>(i) + 1])
+                            t = times[static_cast<std::size_t>(i) + 1];
+                    }
+                }
                 selection.startMs = snapped;
                 updated = true;
                 selection.modified = true;
@@ -300,9 +407,36 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 updated = true;
                 selection.modified = true;
             }
+            // A5: a syllable boundary dragged
+            if (m_hold == 5 && validGrab()) {
+                auto &times = karaoke->times();
+                const int newpos = legacyZeroIt(view.msAtX(x));
+                const int sizes = karaoke->count() - 1;
+                const auto g = static_cast<std::size_t>(m_grabbed);
+                const int prev = m_grabbed == 0 ? selection.startMs : times[g - 1];
+                const int next = m_grabbed == sizes ? 2147483646 : times[g + 1];
+                const int prevpos = times[g];
+                times[g] = std::max(prev, std::min(newpos, next));
+                if (m_grabbed == sizes && (leftDown || event.leftHeld)) {
+                    // the last one takes the end with it
+                    selection.endMs = times[g];
+                } else if ((rightDown || event.rightHeld) && m_grabbed != sizes) {
+                    // with the right button the later ones (all but the last) move with it
+                    const int addtime = times[g] - prevpos;
+                    for (int i = m_grabbed + 1; i < karaoke->count() - 1; i++) {
+                        auto &t = times[static_cast<std::size_t>(i)];
+                        t = legacyZeroIt(t + addtime);
+                        if (t > times[static_cast<std::size_t>(i) + 1])
+                            t = times[static_cast<std::size_t>(i) + 1];
+                    }
+                    selection.endMs = times[static_cast<std::size_t>(sizes)];
+                }
+                updated = true;
+            }
         }
         if (updated) {
-            result.playEnd = view.sampleAtX(static_cast<int>(m_selEnd));
+            result.playEnd = validGrab() ? view.sampleAtMs(karaoke->times()[static_cast<std::size_t>(m_grabbed)])
+                                         : view.sampleAtX(static_cast<int>(m_selEnd));
             result.redraw = true;
             return result;
         }
@@ -310,11 +444,25 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
         m_hold = 0;
     }
 
+    // A5: a right click plays the syllable under it, which becomes the current one
+    if (rightDown && hasKara) {
+        result.focus = true;
+        const int syl = karaoke->syllableAt(static_cast<int>(x), view, selection.startMs);
+        if (syl >= 0) {
+            result.playMs = karaoke->syllableTimes(syl, selection.startMs);
+            karaoke->current = syl;
+            result.redraw = true;
+        }
+    }
+
     // Middle double click plays the selection
     if (event.type == Type::DoubleClick && event.button == Button::Middle) {
         result.focus = true;
         result.playSelection = true;
     }
+    // the cursor is not drawn over the syllables' letters
+    if (hasKara && karaoke->character != -1)
+        result.hideCursor = true;
     return result;
 }
 
@@ -377,7 +525,16 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         fields.start = start;
     if (current.end.value != end)
         fields.end = end;
-    if ((fields.start || fields.end) && !session.editDraft(*active, fields))
+    // A5: Commit's karaoke text goes into the text field first (TextEdit:
+    // the translation's in a TLMode file), always marked modified
+    const bool tlMode = session.document().scriptInfo(u8"TLMode") == u8"Yes";
+    if (request.karaokeText) {
+        if (tlMode)
+            fields.translation = core::toUtf8(*request.karaokeText);
+        else
+            fields.text = core::toUtf8(*request.karaokeText);
+    }
+    if ((fields.start || fields.end || fields.text || fields.translation) && !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
 
     // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
@@ -429,8 +586,8 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         record = session.draftRecord();
     }
     const core::LineRecord &line = **at;
-    const bool textChanged = record && record->text != line.text;
-    const bool translationChanged = record && record->translation != line.translation;
+    const bool textChanged = record && (record->text != line.text || (request.karaokeText && !tlMode));
+    const bool translationChanged = record && (record->translation != line.translation || (request.karaokeText && tlMode));
     const bool startChanged = record && record->start.value != line.start.value;
     const bool endChanged = record && record->end.value != line.end.value;
     const bool marginLChanged = record && record->marginLeft.value != line.marginLeft.value;

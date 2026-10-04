@@ -699,6 +699,25 @@ TEST_F(LuaHelper, ParseKaraokeDataFollowsTheLegacyParser)
     EXPECT_EQ(run.log[7].toStdString(), "Cannot convert non table value");
 }
 
+// A5: what the audio box's karaoke mode writes (Karaoke::GetText) parses
+// into the syllables and times the box had: the durations and their order
+// agree with audio_karaoke_tests' captures, the times start from 0.
+TEST_F(LuaHelper, TheAudioBoxKaraokeTextParses)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Karaoke text"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok)
+        << run.message.toStdString() << "\nlogged:\n" << run.log.join(QLatin1Char('\n')).toStdString();
+    ASSERT_EQ(run.log.size(), 3);
+    EXPECT_EQ(run.log[0].toStdString(),
+              "0:0,0,0,,| 1:200,0,200,kf,ka|ka 2:300,200,500,ko,ra|ra 3:500,500,1000,K,o|o 4:400,1000,1400,k,ke|ke");
+    // the tags after a \k stay with their syllable (the box's "{\fs20}ka")
+    EXPECT_EQ(run.log[1].toStdString(), "0:0,0,0,,| 1:200,0,200,k,{\\fs20}ka|ka 2:300,200,500,k,{\\fs30}ra|ra "
+                                        "3:100,500,600,k,{\\i1}o|o 4:400,600,1000,k,ke{\\i0}|ke");
+    EXPECT_EQ(run.log[2].toStdString(), "0:0,0,0,,| 1:330,0,330,k,ka\\N|ka\\N 2:330,330,660,k,ra\\h|ra\\h "
+                                        "3:340,660,1000,k,oke|oke");
+}
+
 // Legacy LuaGetFreqencyReach's argument checks, error texts and returns; the
 // host answers the spectrum (application tests cover the computation).
 TEST_F(LuaHelper, GetFrequencyPeaksKeepsTheLegacyChecks)

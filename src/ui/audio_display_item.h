@@ -11,6 +11,8 @@
 // the cursor time three larger and bold, labels one larger and bold; outlined
 // texts are drawn eight times in black one pixel around (DRAWOUTTEXT).
 
+#include "hikari/application/audio_timing.h"
+
 #include <QFont>
 #include <QImage>
 #include <QPointer>
@@ -57,7 +59,8 @@ protected:
 
 private:
     void pushSize();
-    void timingEvent(const QSinglePointEvent *event, int type); // A3: application::AudioMouse::Type
+    // A3: application::AudioMouse::Type; answers what the controller did.
+    application::AudioMouseResult timingEvent(const QSinglePointEvent *event, int type);
 
     QPointer<AudioController> m_controller;
     QFont m_scale, m_cursor, m_label;

@@ -153,6 +153,10 @@ void AudioController::newView()
     // A4: a new box plays with legacy's defaults
     if (m_player)
         m_playback = std::make_unique<application::AudioPlayback>(*m_player);
+    // A5: a new display has no syllables until its first Line; a new box
+    // has no zoom to go back to
+    m_karaoke = {};
+    m_lastHorizontalZoom = -1;
 }
 
 QString AudioController::status() const
@@ -243,9 +247,12 @@ void AudioController::reselect()
     if (m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
         return redraw();
     m_needCommit = false; // A3: SetDialogue
+    m_karaoke.current = 0; // A5
     if (m_options.grabTimesOnSelect)
         std::tie(m_startMs, m_endMs) = application::legacyLineSelection(m_lines, m_active, m_previousActive);
     m_previousActive = m_active;
+    if (m_hasKara) // A5: SetDialogue splits the new Line
+        splitKaraoke();
     update();
 }
 
@@ -253,7 +260,77 @@ void AudioController::reselect()
 void AudioController::update(bool moveToEnd)
 {
     if (autoScrollSetting())
-        m_view.makeVisible(m_startMs, m_endMs, false, moveToEnd, m_scrollbarThickness);
+        makeDialogueVisible(false, moveToEnd);
+    redraw();
+}
+
+// Legacy MakeDialogueVisible: the selection, or in karaoke mode the current
+// syllable as far as the next one's end (GetTimesSelection(rangeEnd)).
+void AudioController::makeDialogueVisible(bool force, bool moveToEnd)
+{
+    const auto [start, end] = timesSelection(true);
+    if (m_hasKara)
+        m_view.makeVisibleKaraoke(start, end, m_scrollbarThickness);
+    else
+        m_view.makeVisible(start, end, force, moveToEnd, m_scrollbarThickness);
+}
+
+std::pair<int, int> AudioController::timesSelection(bool rangeEnd, bool ignoreKara)
+{
+    if (m_hasKara && m_karaoke.count() && !ignoreKara) {
+        m_karaoke.current = std::clamp(m_karaoke.current, 0, m_karaoke.count() - 1);
+        return rangeEnd ? m_karaoke.visibleTimes(m_karaoke.current, m_startMs, m_endMs)
+                        : m_karaoke.syllableTimes(m_karaoke.current, m_startMs);
+    }
+    return {m_startMs, m_endMs};
+}
+
+// Legacy Karaoke::Split over the active Line (the edit box's): its text or
+// translation and its own times, with AUDIO_MERGE_EVERY_N_WITH_SYLLABLE read now.
+void AudioController::splitKaraoke()
+{
+    if (m_active < 0 || m_active >= static_cast<int>(m_lines.size())) {
+        m_karaoke.clear(); // (legacy has no Line before the first SetDialogue)
+        return;
+    }
+    const auto &line = m_lines[static_cast<std::size_t>(m_active)];
+    const bool everyN = m_store && m_store->boolean("audio.mergeEveryNWithSyllable");
+    m_karaoke.split({m_activeText, line.startMs, line.endMs}, m_karaAuto, everyN, m_classes);
+}
+
+// Legacy AudioBox::OnKaraoke.
+void AudioController::toggleKaraoke()
+{
+    emit focusRequested();
+    m_hasKara = !m_hasKara;
+    const int value = application::legacyKaraokeZoom(m_hasKara, m_horizontalZoom, m_lastHorizontalZoom);
+    if (m_hasKara)
+        splitKaraoke();
+    // SetSamplesPercent, the slider and its setting (A5-karaoke-zoom-option:
+    // legacy wrote AUDIO_VERTICAL_ZOOM)
+    m_view.setSamplesPercent(value, true, 0.5f, m_scrollbarThickness);
+    m_horizontalZoom = std::clamp(value, 0, 100);
+    if (m_store) {
+        m_store->set("audio.horizontalZoom", value);
+        m_store->set("audio.karaoke", m_hasKara);
+    }
+    if (m_view.hasSource())
+        makeDialogueVisible();
+    emit boxControlsChanged();
+    redraw();
+}
+
+// Legacy AudioBox::OnSplitMode: the Line split again the other way (the
+// current syllable kept).
+void AudioController::toggleKaraokeSplitMode()
+{
+    emit focusRequested();
+    m_karaAuto = !m_karaAuto;
+    if (m_hasKara)
+        splitKaraoke();
+    if (m_store)
+        m_store->set("audio.karaokeSplitMode", m_karaAuto);
+    emit boxControlsChanged();
     redraw();
 }
 
@@ -287,6 +364,18 @@ application::AudioMarks AudioController::marks() const
     if (m_timing.hasMark())
         marks.markMs = m_timing.markMs();
     marks.markTextHeight = m_markTextHeight;
+    // A5
+    if (m_hasKara) {
+        auto karaoke = std::make_shared<application::AudioKaraokeMarks>();
+        karaoke->times = m_karaoke.times();
+        for (int i = 0; i < m_karaoke.count(); i++)
+            karaoke->stripped.push_back(m_karaoke.stripped(i));
+        karaoke->current = m_karaoke.current;
+        karaoke->hover = m_karaoke.hover;
+        karaoke->character = m_karaoke.character;
+        karaoke->curStartMs = m_startMs;
+        marks.karaoke = std::move(karaoke);
+    }
     return marks;
 }
 
@@ -404,6 +493,9 @@ void AudioController::loadBoxControls()
         m_autoScroll = m_store->boolean("audio.autoScroll");
         m_spectrumOn = m_store->boolean("audio.spectrumOn");
         m_spectrumNonLinear = m_store->boolean("audio.spectrumNonLinearOn");
+        // A5: legacy AudioDisplay's constructor
+        m_hasKara = m_store->boolean("audio.karaoke");
+        m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
     }
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
@@ -625,8 +717,13 @@ void AudioController::play(application::PlayMode mode)
     if (!hasAudio())
         return;
     const std::optional<int> mark = m_timing.hasMark() ? std::optional(m_timing.markMs()) : std::nullopt;
+    // A5: GetTimesSelection, the current syllable in karaoke mode but for
+    // AUDIO_PLAY_LINE (the mark plays do not read it)
+    using application::PlayMode;
+    const bool marks = mode == PlayMode::BeforeMark || mode == PlayMode::AfterMark;
+    const auto [start, end] = marks ? std::pair(m_startMs, m_endMs) : timesSelection(false, mode == PlayMode::Line);
     const auto request =
-        application::legacyPlayRequest(mode, m_startMs, m_endMs, mark, m_markPlayTime ? m_markPlayTime() : 1000);
+        application::legacyPlayRequest(mode, start, end, mark, m_markPlayTime ? m_markPlayTime() : 1000);
     if (!request)
         return;
     playRange(request->startMs, request->endMs);
@@ -794,14 +891,15 @@ application::AudioSnapContext AudioController::snapContext() const
 
 // Legacy CommitChanges: the times go into the editor's fields and, with
 // `save`, to the Line (EditBox::Send); then Update(moveToEnd).
-void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent)
+void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
+                                    std::optional<std::u16string> karaokeText)
 {
     if (!loaded())
         return;
     if (save)
         m_needCommit = false;
     if (m_hooks.commit)
-        m_hooks.commit({m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent});
+        m_hooks.commit({m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent, std::move(karaokeText)});
     update(moveToEnd);
 }
 
@@ -833,24 +931,53 @@ void AudioController::changeLine(int delta)
 
 // AudioBox::OnNext / OnPrev: the display takes the focus when the new Line
 // plays (A4's hook), and the new Line's selection plays.
+// AudioDisplay::Next: in karaoke mode the next syllable, past the last the
+// next Line's first.
 void AudioController::nextLine()
 {
     const bool play = !timingOptions().dontPlayWhenLineChanges;
     if (play)
         emit focusRequested();
-    changeLine(1);
-    if (play && loaded()) // AudioDisplay::Next: GetTimesSelection, then Play
-        playRange(m_startMs, m_endMs);
+    if (m_hasKara) {
+        m_karaoke.current++;
+        if (m_karaoke.current >= m_karaoke.count()) {
+            m_karaoke.current = 0;
+            changeLine(1);
+        }
+        redraw();
+    } else {
+        changeLine(1);
+    }
+    if (play && loaded()) { // GetTimesSelection, then Play
+        const auto [start, end] = timesSelection();
+        playRange(start, end);
+    }
 }
 
+// AudioDisplay::Prev: the previous syllable only when it plays (legacy's
+// `hasKara && play`), before the first the previous Line's last one;
+// otherwise the previous Line.
 void AudioController::previousLine()
 {
     const bool play = !timingOptions().dontPlayWhenLineChanges;
     if (play)
         emit focusRequested();
-    changeLine(-1);
-    if (play && loaded()) // AudioDisplay::Prev: GetTimesSelection, then Play
-        playRange(m_startMs, m_endMs);
+    if (m_hasKara && play) {
+        m_karaoke.current--;
+        if (m_karaoke.current < 0) {
+            changeLine(-1);
+            m_karaoke.current = m_karaoke.count() - 1;
+            if (m_view.hasSource())
+                makeDialogueVisible();
+        }
+        redraw();
+    } else {
+        changeLine(-1);
+    }
+    if (play && loaded()) {
+        const auto [start, end] = timesSelection();
+        playRange(start, end);
+    }
 }
 
 // AudioBox::OnGoto: MakeDialogueVisible(true).
@@ -859,7 +986,7 @@ void AudioController::goToSelection()
     emit focusRequested();
     if (!m_view.hasSource())
         return;
-    m_view.makeVisible(m_startMs, m_endMs, true, false, m_scrollbarThickness);
+    makeDialogueVisible(true, false);
     redraw();
 }
 
@@ -904,7 +1031,18 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
     application::AudioTiming::Selection selection{m_startMs, m_endMs, m_needCommit};
     const bool hadMark = m_timing.hasMark();
     const int mark = m_timing.markMs();
-    auto result = m_timing.mouse(event, m_view, selection, snapContext(), timingOptions(), m_scrollbarThickness);
+    // A5: karaoke mode's syllables, with AUDIO_KARAOKE_MOVE_ON_CLICK read now
+    application::AudioKaraokeMouse karaoke;
+    if (m_hasKara) {
+        karaoke.karaoke = &m_karaoke;
+        karaoke.moveOnClick = m_store && m_store->boolean("audio.karaokeMoveOnClick");
+        karaoke.measure = m_measure;
+    }
+    const auto hover = std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current);
+    auto result =
+        m_timing.mouse(event, m_view, selection, snapContext(), timingOptions(), m_scrollbarThickness, karaoke);
+    if (std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current) != hover)
+        result.redraw = true; // the letter's mark and the current syllable are drawn
     m_startMs = selection.startMs;
     m_endMs = selection.endMs;
     m_needCommit = selection.modified;
@@ -918,10 +1056,17 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
         m_player->setEndPosition(*result.playEnd);
         playbackStateChanged();
     }
-    if (result.playSelection) // the middle double click: Play(GetTimesSelection)
-        playRange(m_startMs, m_endMs);
-    if (result.commit) // legacy Commit(moveToEnd): CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
-        commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent);
+    if (result.playSelection) { // the middle double click: Play(GetTimesSelection)
+        const auto [start, end] = timesSelection();
+        playRange(start, end);
+    }
+    if (result.playMs) // A5: the right click's syllable
+        playRange(result.playMs->first, result.playMs->second);
+    // legacy Commit(moveToEnd): in karaoke mode the syllables' text into the
+    // editor, then CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
+    if (result.commit)
+        commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent,
+                      m_hasKara ? std::optional(m_karaoke.text(m_startMs)) : std::nullopt);
     else if (result.redraw)
         redraw();
     return result;

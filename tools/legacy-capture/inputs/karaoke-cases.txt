@@ -1,0 +1,179 @@
+case k-basic
+text {\k20}ka{\k30}ra{\k50}o{\k40}ke
+times 1000 3000
+join 1
+splitsyl 0 1
+settime 0 1050
+curstart 900
+end
+case kf-ko-K
+text {\kf20}ka{\ko30}ra{\K50}o{\k40}ke
+times 0 2000
+join 0
+splitsyl 1 1
+end
+case k-with-tags
+text {\k20\fs20}ka{\fs30\k30}ra{\k10}{\i1}o{\k40}ke{\i0}
+times 0 2000
+join 0
+join 0
+splitsyl 0 2
+end
+case k-leading-text
+text ab{\k20}cd{\k30}ef
+times 500 1500
+splitsyl 0 1
+end
+case k-unclosed-end
+text {\k20}ka{\k30
+times 0 1000
+end
+case k-no-digit
+text {\k}ka ra
+times 0 1000
+end
+case k-uppercase-regex
+text {\K15}ka{\K25}ra
+times 0 1000
+end
+case k-drawing
+text {\k20\p1}m 0 0 l 10 0 10 10{\p0\k30}ra
+times 0 1000
+splitsyl 0 3
+end
+case k-tl
+text {\k20}ka{\k30}ra
+tl {\k10}ta{\k10}ka
+times 0 1000
+end
+case k-join-all
+text {\k20}a{\k20}b{\k20}c
+times 0 600
+join 0
+join 0
+end
+case k-split-end
+text {\k20}ka
+times 0 200
+splitsyl 0 2
+splitsyl 0 0
+end
+case k-geometry
+text {\k60}ka{\k90}ra{\k150}o ke
+times 3000 6000
+sylat 98
+sylat 99
+sylat 120
+sylat 121
+sylat 160
+sylat 201
+sylat 202
+over 115
+over 114
+over 125
+over 145
+over 205
+letterat 101
+letterat 103
+letterat 110
+letterat 125
+letterat 130
+letterat 160
+letterat 170
+letterat 175
+letterat 199
+end
+case auto-kara
+text karaoke
+times 0 1000
+auto 1
+end
+case auto-konnichiwa
+text konnichiwa sayonara
+times 0 2000
+auto 1
+end
+case auto-n-everyn-off
+text kantan anime
+times 0 2000
+auto 1
+end
+case auto-n-everyn-on
+text kantan anime
+times 0 2000
+auto 1
+everyn 1
+end
+case auto-punct
+text hello, world! "quoted" end.
+times 0 3000
+auto 1
+end
+case auto-breaks
+text ka\Nra\hoke\nend
+times 0 2000
+auto 1
+end
+case auto-tags
+text {\b1}ka{\b0}ra {\i1}oke{\i0}
+times 0 1000
+auto 1
+end
+case auto-unclosed
+text ab{c
+times 0 1000
+auto 1
+end
+case auto-uppercase
+text KARAOKE Nani
+times 0 1000
+auto 1
+end
+case auto-empty
+text 
+times 0 1000
+auto 1
+end
+case auto-odd-duration
+text a b c
+times 0 1001
+auto 1
+end
+case manual-spaces
+text one two  three
+times 0 1500
+auto 0
+end
+case manual-breaks
+text one\Ntwo\hthree\nfour
+times 0 2000
+auto 0
+end
+case manual-unclosed
+text ab{c d
+times 0 1000
+auto 0
+end
+case manual-tags
+text {\b1}one {\i1}two{\i0} three
+times 0 900
+auto 0
+splitsyl 1 1
+end
+case manual-nonascii
+text żółw é café naïve
+times 0 1000
+auto 1
+end
+case stripped-unclosed
+text {\k20}ab{c
+times 0 1000
+end
+case letters-quirk
+text {\k20}ka{\k30}ra
+times 0 1000
+letters 0 0
+letters 0 1
+letters 0 2
+letters 1 2
+end

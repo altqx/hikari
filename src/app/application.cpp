@@ -785,8 +785,11 @@ void Application::refreshAudio()
         const auto activeId = session->selection().active;
         lines.reserve(session->document().lines().size());
         for (const auto *line : session->document().lines()) {
-            if (activeId && line->id == *activeId)
+            if (activeId && line->id == *activeId) {
                 active = static_cast<int>(lines.size());
+                // A5: the Line karaoke splits (legacy's edit box Line: TextTl when set, else Text)
+                m_audio->setActiveText(core::toUtf16(line->translation.empty() ? line->text : line->translation));
+            }
             lines.push_back({static_cast<int>(line->start.value.microseconds() / 1000),
                              static_cast<int>(line->end.value.microseconds() / 1000), shown(line->id)});
         }
