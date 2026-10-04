@@ -855,6 +855,18 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
 
     timescale(out, view, options, textWidth);
 
+    // A3: the mark, two pixels wide, with its time centred above the bottom
+    if (marks.markMs) {
+        const auto selMark = static_cast<std::int64_t>(view.xAtMs(*marks.markMs));
+        if (selMark >= 0 && selMark < w) {
+            out.push_back(line(float(selMark + 1), 0, float(selMark + 1), float(h), options.lineBoundaryMark, 2));
+            const float top = float(h - marks.markTextHeight - 2);
+            const float left = float(selMark - 150);
+            out.push_back(text(legacyAssTime(*marks.markMs), left, top, left + 300, top + 100,
+                               AudioShape::Font::Label, AudioShape::Align::TopCenter, 0xFFFFFFFF, true));
+        }
+    }
+
     // The paused video's frame
     if (options.drawVideoPosition && marks.videoMs)
         dashedVertical(out, view.xAtMs(*marks.videoMs), 0, float(h), options.cursor, 2);

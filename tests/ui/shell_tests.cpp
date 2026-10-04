@@ -3754,6 +3754,99 @@ private slots:
         QVERIFY(application->recentAudio().isEmpty());
     }
 
+    // A3: timing in the audio box over blank audio (44.1 kHz at zoom 50:
+    // 1323 samples, 30 ms a column, the view at 0): legacy OnMouseEvent's
+    // boundary drag, AudioBox's hotkeys (AUDIO_LEAD_IN C, AUDIO_LEAD_OUT V,
+    // AUDIO_COMMIT Enter, AUDIO_PREVIOUS_ALT Z, AUDIO_NEXT_ALT X) with
+    // AUDIO_AUTO_COMMIT on and off, the ruler's mark and
+    // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO; each commit one named step.
+    void audioTimingByMouseAndKeys()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.selectionStart(), 1000);
+        QCOMPARE(audio.view().position(), 0);
+        auto *display = item("audioDisplay");
+        const int h = audio.view().height();
+        auto at = [&](int x, int y = 10) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const auto steps = editor.history().size();
+        auto lastStep = [&] { return editor.history().last(); };
+
+        // the end (column 66) dragged to column 100: one step
+        QTest::mousePress(window, Qt::LeftButton, {}, at(66));
+        QCOMPARE(audio.timing().hold(), 2);
+        QTest::mouseMove(window, at(100));
+        QCOMPARE(audio.selectionEnd(), 3000);
+        QVERIFY(audio.modified());
+        QCOMPARE(display->cursor().shape(), Qt::SizeHorCursor);
+        QTest::mouseRelease(window, Qt::LeftButton, {}, at(100));
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(lastStep(), QStringLiteral("Changing time on audio spectrum, active line 1"));
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:03.00"));
+        QVERIFY(!audio.modified());
+        QVERIFY(display->hasActiveFocus());
+
+        // the keys: lead-in and lead-out commit, Enter goes to the next Line
+        QTest::keyClick(window, Qt::Key_C);
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:00.80"));
+        QTest::keyClick(window, Qt::Key_V);
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:03.30"));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QTest::keyClick(window, Qt::Key_Return);
+        QCOMPARE(editor.history().size(), steps + 3); // nothing left to commit
+        QCOMPARE(editor.text(), QStringLiteral("second"));
+        QCOMPARE(audio.selectionStart(), 3000);
+        QTest::keyClick(window, Qt::Key_Z);
+        QCOMPARE(editor.text(), QStringLiteral("first"));
+        QCOMPARE(audio.selectionStart(), 800);
+        QTest::keyClick(window, Qt::Key_X);
+        QCOMPARE(editor.text(), QStringLiteral("second"));
+
+        // the ruler's right click sets the mark
+        QTest::mouseClick(window, Qt::RightButton, {}, at(200, h + 5));
+        QVERIFY(audio.hasMark());
+        QCOMPARE(audio.markMs(), 6000);
+        QCOMPARE(editor.history().size(), steps + 3);
+        // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO without video: VideoBox::Tell is 0
+        application->setAudioFromVideo(true);
+        QCOMPARE(audio.markMs(), 0);
+        QCOMPARE(audio.view().position(), 0);
+
+        // without AUDIO_AUTO_COMMIT the times wait in the editor until Enter
+        auto *autoCommit = item<QObject>("audioAutoCommit");
+        QVERIFY(autoCommit->property("checked").toBool());
+        application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), false);
+        QVERIFY(!autoCommit->property("checked").toBool());
+        QTest::mousePress(window, Qt::LeftButton, {}, at(100));
+        QCOMPARE(audio.timing().hold(), 1);
+        QTest::mouseMove(window, at(90));
+        QTest::mouseRelease(window, Qt::LeftButton, {}, at(90));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QVERIFY(audio.modified());
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:02.70"));
+        QTest::keyClick(window, Qt::Key_Return);
+        // the last Line: the commit and the appended Line are one step
+        QCOMPARE(editor.history().size(), steps + 4);
+        QCOMPARE(lastStep(), QStringLiteral("Adding a new line, active line 2"));
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:04.00"));
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:09.00"));
+        QVERIFY(!audio.modified());
+        // Undo takes both back
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.history().size(), steps + 4);
+        QCOMPARE(editor.historyCursor(), int(steps + 2));
+        // with a mark the Timing tool may move the marker to audio time
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_I, Qt::ControlModifier);
+        QTRY_VERIFY(item<QObject>("shiftToAudio"));
+        QVERIFY(item<QObject>("shiftToAudio")->property("enabled").toBool());
+        audio.closeAudio();
+        QVERIFY(!item<QObject>("shiftToAudio")->property("enabled").toBool());
+    }
+
     // GLOBAL_AUDIO_FROM_VIDEO and legacy RendererFFMS2::OpenFile: a video with
     // audio brings it into the box (sample 0 at the first frame), a video
     // without closes it; the box marks the video's keyframes and paused frame.

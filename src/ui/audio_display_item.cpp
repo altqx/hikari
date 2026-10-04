@@ -3,6 +3,7 @@
 #include "audio_controller.h"
 
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QGuiApplication>
 #include <QQuickWindow>
 #include <QSGFlatColorMaterial>
@@ -271,6 +272,7 @@ void AudioDisplayItem::setController(QObject *object)
     if (m_controller) {
         connect(m_controller, &AudioController::displayChanged, this, &QQuickItem::update);
         connect(m_controller, &AudioController::cursorChanged, this, &QQuickItem::update);
+        m_controller->setMarkTextHeight(QFontMetrics(m_label).height()); // A3
         pushSize();
     }
     emit controllerChanged();
@@ -325,6 +327,7 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     } else {
         m_controller->setCursor(std::nullopt);
     }
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
 }
 
 void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
@@ -339,7 +342,68 @@ void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
     forceActiveFocus(Qt::MouseFocusReason);
     if (m_controller)
         m_controller->setCursor(std::nullopt);
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Press));
     event->accept();
+}
+
+// A3: the buttons' timing (legacy OnMouseEvent: the display has the mouse
+// captured while a button is down).
+void AudioDisplayItem::mouseMoveEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseReleaseEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Release));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::DoubleClick));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseUngrabEvent()
+{
+    if (m_controller)
+        m_controller->lostCapture();
+}
+
+void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
+{
+    if (!m_controller)
+        return;
+    using Mouse = application::AudioMouse;
+    Mouse mouse;
+    mouse.type = static_cast<Mouse::Type>(type);
+    switch (event->button()) {
+    case Qt::LeftButton: mouse.button = Mouse::Button::Left; break;
+    case Qt::RightButton: mouse.button = Mouse::Button::Right; break;
+    case Qt::MiddleButton: mouse.button = Mouse::Button::Middle; break;
+    default: break;
+    }
+    const QPointF p = event->position();
+    mouse.x = static_cast<int>(std::floor(p.x()));
+    mouse.y = static_cast<int>(std::floor(p.y()));
+    const auto buttons = event->buttons();
+    mouse.leftHeld = buttons & Qt::LeftButton;
+    mouse.rightHeld = buttons & Qt::RightButton;
+    mouse.middleHeld = buttons & Qt::MiddleButton;
+    const auto modifiers = event->modifiers();
+    mouse.shift = modifiers & Qt::ShiftModifier;
+    mouse.ctrl = modifiers & Qt::ControlModifier;
+    mouse.alt = modifiers & Qt::AltModifier;
+    m_controller->setMarkTextHeight(QFontMetrics(m_label).height());
+    const auto result = m_controller->mouse(mouse);
+    if (result.sizeCursor) {
+        if (*result.sizeCursor)
+            setCursor(Qt::SizeHorCursor); // wxCURSOR_SIZEWE
+        else
+            unsetCursor();
+    }
 }
 
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)

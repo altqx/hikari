@@ -662,6 +662,27 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    // A3: the box's timing options from the registry, read when used (legacy
+    // Options), and what legacy's AudioDisplay did through the edit box, the
+    // grid and the video. Playback (A4) adds its own hooks.
+    m_audio->setTimingSettings([this] {
+        application::AudioTimingOptions timing;
+        timing.autoCommit = m_settings->boolean("audio.autoCommit");
+        timing.snapToKeyframes = m_settings->boolean("audio.snapToKeyframes");
+        timing.snapToOtherLines = m_settings->boolean("audio.snapToOtherLines");
+        timing.startDragSensitivity = m_settings->integer("audio.startDragSensitivity");
+        timing.leadIn = m_settings->integer("audio.leadInValue");
+        timing.leadOut = m_settings->integer("audio.leadOutValue");
+        timing.dontPlayWhenLineChanges = m_settings->boolean("audio.dontPlayWhenLineChanges");
+        return timing;
+    });
+    {
+        ui::AudioController::TimingHooks hooks;
+        hooks.commit = [this](const application::AudioCommitRequest &request) { commitAudioTimes(request); };
+        hooks.setActive = [this](int key) { setAudioActive(key); };
+        hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
+        m_audio->setTimingHooks(std::move(hooks));
+    }
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
     // and the open video stays. Otherwise legacy ProviderFFMS2::Init chose the
@@ -720,7 +741,11 @@ void Application::refreshAudio()
         if (activeId)
             key = std::tuple(target->value, activeId->value, session->revision());
     }
-    const bool select = key && key != m_audioLine;
+    bool select = key && key != m_audioLine;
+    // A3: a box commit on the same Line runs no SetDialogue (legacy CommitChanges)
+    if (select && m_audioCommitting && m_audioLine && std::get<0>(*key) == std::get<0>(*m_audioLine) &&
+        std::get<1>(*key) == std::get<1>(*m_audioLine))
+        select = false;
     m_audioLine = key;
     m_audio->setLines(std::move(lines), active, select);
 }
@@ -755,6 +780,7 @@ void Application::followVideoInAudio()
             m_audioTimebase.reset();
             m_audioKeyframes.clear();
             m_audio->setKeyframes({});
+            m_audio->setKeyframeSnapTimes({}); // A3
         }
         m_audio->setVideoTime(std::nullopt);
         return;
@@ -767,6 +793,12 @@ void Application::followVideoInAudio()
         ms.reserve(m_audioKeyframes.size());
         for (const int frame : m_audioKeyframes)
             ms.push_back(m_audioTimebase->msAt(frame));
+        // A3: GetBoundarySnap's keyframe times, StartTimeFor(FrameAt(keyframe))
+        std::vector<int> snap;
+        snap.reserve(ms.size());
+        for (const int keyMs : ms)
+            snap.push_back(m_audioTimebase->startTimeFor(m_audioTimebase->frameAt(keyMs)));
+        m_audio->setKeyframeSnapTimes(std::move(snap));
         m_audio->setKeyframes(std::move(ms));
     }
     std::optional<int> paused; // legacy VideoBox::Tell while Paused
@@ -779,6 +811,60 @@ void Application::rememberRecentAudio(const QString &path)
 {
     m_recentAudio.add(path.toStdString());
     m_settings->settings().set("recent.audio", m_recentAudio.entries()); // SetRecent's SetTable
+}
+
+// A3: legacy AudioDisplay::CommitChanges' edit-box part.
+void Application::commitAudioTimes(const application::AudioCommitRequest &request)
+{
+    auto *session = targetSession();
+    if (!session || !m_editor->editable())
+        return;
+    const bool before = std::exchange(m_audioCommitting, true);
+    const auto outcome = application::commitAudioTimes(*session, request, shownLines());
+    m_editor->reloadFromSession();
+    if (outcome && outcome->stepped)
+        refreshViews();
+    m_audioCommitting = before;
+    // SubsGrid::NextLine: the next Line, selected alone
+    if (outcome && outcome->next)
+        applySelection(gridSelection().plain(session->selection(), *outcome->next));
+}
+
+// A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).
+void Application::setAudioActive(int key)
+{
+    auto *session = targetSession();
+    if (!session || key < 0)
+        return;
+    const auto lines = session->document().lines();
+    if (key >= static_cast<int>(lines.size()))
+        return;
+    applySelection(gridSelection().plain(session->selection(), lines[static_cast<std::size_t>(key)]->id));
+}
+
+// A3: legacy tab->video->Seek(time) (Ctrl+left or middle click in the box).
+void Application::seekVideoFromAudio(int ms)
+{
+    auto &video = m_video->session();
+    if (video.state() != application::VideoSession::State::Ready)
+        return;
+    if (ms <= 0)
+        video.showFrame(0);
+    else
+        video.seekTo(core::DocumentTime(static_cast<std::int64_t>(ms) * 1000));
+}
+
+void Application::setAudioFromVideo(bool mark)
+{
+    if (!m_audio->hasAudio())
+        return;
+    // VideoBox::Tell: the shown frame's time, 0 without video
+    int time = 0;
+    const auto &video = m_video->session();
+    if (video.state() == application::VideoSession::State::Ready)
+        if (const auto frame = video.shownFrame())
+            time = video.legacyTimebase().msAt(*frame);
+    m_audio->showTime(time, mark);
 }
 
 // Legacy OpenAudioInTab with no path: the video's file (a provider of its own).
@@ -2153,6 +2239,9 @@ QString Application::shiftTimes()
             context.videoFrameEndMs = timebase.endTimeFor(*frame);
         }
     }
+    // A3: the audio box's mark (legacy ChangeTimes' moveTimeOptions & 8 with ABox->hasMark)
+    if (m_audio && m_audio->hasMark())
+        context.audioMarkMs = m_audio->markMs();
     const auto result = application::shiftTimes(*session, m_shiftTimes->settings(), context, actionLines(*session));
     m_editor->reloadFromSession();
     refreshViews();

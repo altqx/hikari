@@ -128,6 +128,12 @@ void AudioController::newView()
     m_fresh = true;
     m_cursor.reset();
     m_scrollbar = {};
+    // A3: a new display has no mark and holds nothing
+    const bool hadMark = m_timing.hasMark();
+    m_timing.reset();
+    m_needCommit = false;
+    if (hadMark)
+        emit markChanged();
 }
 
 QString AudioController::status() const
@@ -210,6 +216,7 @@ void AudioController::reselect()
 {
     if (m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
         return redraw();
+    m_needCommit = false; // A3: SetDialogue
     if (m_options.grabTimesOnSelect)
         std::tie(m_startMs, m_endMs) = application::legacyLineSelection(m_lines, m_active, m_previousActive);
     m_previousActive = m_active;
@@ -217,10 +224,10 @@ void AudioController::reselect()
 }
 
 // Legacy Update: with auto-scroll the Line is made visible.
-void AudioController::update()
+void AudioController::update(bool moveToEnd)
 {
     if (m_options.autoScroll)
-        m_view.makeVisible(m_startMs, m_endMs, false, false, m_scrollbarThickness);
+        m_view.makeVisible(m_startMs, m_endMs, false, moveToEnd, m_scrollbarThickness);
     redraw();
 }
 
@@ -249,6 +256,11 @@ application::AudioMarks AudioController::marks() const
     marks.keyframesMs = m_keyframes;
     marks.videoMs = m_videoMs;
     marks.focused = m_focused;
+    // A3
+    marks.modified = m_needCommit;
+    if (m_timing.hasMark())
+        marks.markMs = m_timing.markMs();
+    marks.markTextHeight = m_markTextHeight;
     return marks;
 }
 
@@ -325,9 +337,164 @@ void AudioController::redraw()
 {
     if (m_view.hasSource())
         m_view.updateSamples();
+    m_timing.drawn(m_view, {m_startMs, m_endMs, m_needCommit}); // A3: DoUpdateImage's selStart, selEnd, selMark
     m_scrollbar = m_view.scrollbar();
     ++m_revision;
     emit displayChanged();
+}
+
+// A3: timing.
+
+application::AudioTimingOptions AudioController::timingOptions() const
+{
+    return m_timingSettings ? m_timingSettings() : application::AudioTimingOptions{};
+}
+
+application::AudioSnapContext AudioController::snapContext() const
+{
+    const auto options = timingOptions();
+    application::AudioSnapContext snap;
+    snap.view = &m_view;
+    snap.snapToKeyframes = options.snapToKeyframes;
+    snap.snapToOtherLines = options.snapToOtherLines;
+    snap.drawKeyframes = m_options.drawKeyframes;
+    snap.inactiveLines = m_options.inactiveLines;
+    snap.keyframesMs = m_keyframes;
+    snap.keyframeSnapMs = m_keyframeSnap;
+    snap.lines = m_lines;
+    snap.active = m_active;
+    return snap;
+}
+
+// Legacy CommitChanges: the times go into the editor's fields and, with
+// `save`, to the Line (EditBox::Send); then Update(moveToEnd).
+void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent)
+{
+    if (!loaded())
+        return;
+    if (save)
+        m_needCommit = false;
+    if (m_hooks.commit)
+        m_hooks.commit({m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent});
+    update(moveToEnd);
+}
+
+// AudioBox::OnCommit: CommitChanges(true), so the next Line follows whatever
+// AUDIO_NEXT_LINE_ON_COMMIT says (legacy never reads it).
+void AudioController::commit()
+{
+    emit focusRequested();
+    commitChanges(true, true, false);
+}
+
+// Legacy ChangeLine: nothing past either end; otherwise the shown Line
+// `delta` away becomes active (SubsGrid::SetActive, which runs SetDialogue
+// again for the same Line).
+void AudioController::changeLine(int delta)
+{
+    const int count = static_cast<int>(m_lines.size());
+    if (m_active < 0 || m_active >= count)
+        return;
+    if ((m_active == 0 && delta < 0) || (m_active == count - 1 && delta > 0))
+        return;
+    const int before = m_active;
+    const int next = application::legacyKeyFromPosition(m_lines, m_active, delta);
+    if (m_hooks.setActive)
+        m_hooks.setActive(next);
+    if (next == before && m_active == before && loaded())
+        reselect();
+}
+
+// AudioBox::OnNext / OnPrev: the display takes the focus when the new Line
+// plays (A4's hook), and the new Line's selection plays.
+void AudioController::nextLine()
+{
+    const bool play = !timingOptions().dontPlayWhenLineChanges;
+    if (play)
+        emit focusRequested();
+    changeLine(1);
+    if (play && m_hooks.play && loaded())
+        m_hooks.play(m_startMs, m_endMs);
+}
+
+void AudioController::previousLine()
+{
+    const bool play = !timingOptions().dontPlayWhenLineChanges;
+    if (play)
+        emit focusRequested();
+    changeLine(-1);
+    if (play && m_hooks.play && loaded())
+        m_hooks.play(m_startMs, m_endMs);
+}
+
+// AudioBox::OnGoto: MakeDialogueVisible(true).
+void AudioController::goToSelection()
+{
+    emit focusRequested();
+    if (!m_view.hasSource())
+        return;
+    m_view.makeVisible(m_startMs, m_endMs, true, false, m_scrollbarThickness);
+    redraw();
+}
+
+// Legacy AddLead: the editor's fields take the times (UpdateTimeEditCtrls),
+// the selection is modified, and AUDIO_AUTO_COMMIT commits it.
+void AudioController::addLead(bool in, bool out)
+{
+    emit focusRequested();
+    if (!loaded())
+        return;
+    const auto options = timingOptions();
+    std::tie(m_startMs, m_endMs) =
+        application::legacyAddLead(m_startMs, m_endMs, in, out, options.leadIn, options.leadOut);
+    if (m_hooks.commit)
+        m_hooks.commit({m_startMs, m_endMs, false, false, m_timing.hold() != 0, application::AudioAdjacent::None});
+    m_needCommit = true;
+    if (options.autoCommit)
+        commitChanges(false, true, false);
+    update();
+}
+
+// GLOBAL_SET_AUDIO_FROM_VIDEO / GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: SetMark,
+// then ChangePosition(time) (the time in the middle of the view).
+void AudioController::showTime(int ms, bool mark)
+{
+    if (!m_view.hasSource() || m_view.samples() <= 0)
+        return;
+    if (mark) {
+        m_timing.setMark(ms);
+        emit markChanged();
+    }
+    std::int64_t samplepos = m_view.sampleAtMs(ms);
+    samplepos = (samplepos / m_view.samples()) - (m_view.width() / 2);
+    m_view.updatePosition(samplepos, false, m_scrollbarThickness);
+    redraw();
+}
+
+application::AudioMouseResult AudioController::mouse(const application::AudioMouse &event)
+{
+    if (m_box.state() != AudioBox::State::Ready || !m_view.hasSource())
+        return {}; // legacy: nothing without a player and provider
+    application::AudioTiming::Selection selection{m_startMs, m_endMs, m_needCommit};
+    const bool hadMark = m_timing.hasMark();
+    const int mark = m_timing.markMs();
+    auto result = m_timing.mouse(event, m_view, selection, snapContext(), timingOptions(), m_scrollbarThickness);
+    m_startMs = selection.startMs;
+    m_endMs = selection.endMs;
+    m_needCommit = selection.modified;
+    if (m_timing.hasMark() != hadMark || m_timing.markMs() != mark)
+        emit markChanged();
+    if (result.seekVideoMs && m_hooks.seekVideo)
+        m_hooks.seekVideo(*result.seekVideoMs);
+    if (result.playEnd && m_hooks.setPlayEnd)
+        m_hooks.setPlayEnd(*result.playEnd);
+    if (result.playSelection && m_hooks.play)
+        m_hooks.play(m_startMs, m_endMs);
+    if (result.commit) // legacy Commit(moveToEnd): CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
+        commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent);
+    else if (result.redraw)
+        redraw();
+    return result;
 }
 
 } // namespace hikari::ui

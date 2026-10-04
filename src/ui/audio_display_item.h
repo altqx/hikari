@@ -17,6 +17,8 @@
 #include <QQuickItem>
 #include <QtQml/qqmlregistration.h>
 
+class QSinglePointEvent;
+
 namespace hikari::ui {
 
 class AudioController;
@@ -47,9 +49,15 @@ protected:
     void wheelEvent(QWheelEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void focusOutEvent(QFocusEvent *event) override;
+    // A3: timing with the mouse (legacy OnMouseEvent, OnLostCapture).
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
+    void mouseUngrabEvent() override;
 
 private:
     void pushSize();
+    void timingEvent(const QSinglePointEvent *event, int type); // A3: application::AudioMouse::Type
 
     QPointer<AudioController> m_controller;
     QFont m_scale, m_cursor, m_label;
