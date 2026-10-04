@@ -17,6 +17,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/recovery_store.h"
+#include "hikari/application/session_file.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
@@ -147,6 +148,7 @@ public:
     ~Application() override;
 
     // Opens a file as a new Document; the first becomes the editing target.
+    // P6: an untouched empty Untitled tab is replaced by it (legacy OpenFile).
     Q_INVOKABLE bool openFile(const QString &path);
     // Opens a file as the protected comparison reference.
     Q_INVOKABLE bool openReference(const QString &path);
@@ -548,6 +550,76 @@ public:
     // Tests: waits for running writes and delivers their results.
     void waitForWrites();
 
+    // P6: tabs and session restore (legacy Notebook, HikariSubFrame at
+    // 20d647c4). The tabs are the Workspace's Documents but the protected
+    // reference, in order; the editing target is the active tab. Each tab
+    // keeps its own media (video and its position, its own audio file,
+    // keyframes) and Grid scroll, shown again when it becomes active.
+    // Rows {id, label ("<step>*name" when modified, at most TAB_TEXT_MAX_CHARS
+    // characters), title, current, tip (subtitles and video paths)}.
+    Q_PROPERTY(QVariantList tabs READ tabs NOTIFY tabsChanged)
+    Q_PROPERTY(int currentTab READ currentTab NOTIFY tabsChanged)
+    // LAST_SESSION_CONFIG (session.restore): 0 nothing, 1 ask, 2 load at start.
+    Q_PROPERTY(int sessionRestore READ sessionRestore WRITE setSessionRestore NOTIFY sessionRestoreChanged)
+    // Session entries a restore could not resolve (L58 "unresolved restores
+    // stay visible"): {row, tab, title, kind ("subtitles", "video", "audio",
+    // "keyframes"), path}.
+    Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
+    QVariantList tabs() const;
+    int currentTab() const;
+    int sessionRestore() const;
+    void setSessionRestore(int value);
+    QVariantList unresolvedRestores() const;
+    // GLOBAL_ADD_PAGE (Ctrl+T): a new Untitled tab after the last, shown.
+    // The tab bar's "+" (fromTabBar) also writes the session, as legacy's did.
+    Q_INVOKABLE void addPage(bool fromTabBar = false);
+    // GLOBAL_NEXT_TAB (+1, Ctrl+PgDown) / GLOBAL_PREVIOUS_TAB (-1, Ctrl+PgUp),
+    // wrapping; nothing with fewer than two tabs.
+    Q_INVOKABLE void changeTab(int step);
+    // A click on a tab.
+    Q_INVOKABLE void selectTab(int index);
+    // A middle click on a tab (legacy DeletePage of that tab): its review
+    // rows as reviewClose's; with none, finishClose() closes it.
+    Q_INVOKABLE QVariantList reviewCloseTab(int index);
+    // GLOBAL_LOAD_LAST_SESSION (empty file) and GLOBAL_LOAD_EXTERNAL_SESSION
+    // (a .kls file): the session is read and its subtitles staged
+    // (L58-staged-replacement), then every open Document's unsaved work is
+    // reviewed as for Quit (P6-session-review). Returns {ok, problem, rows}; with ok and no rows,
+    // finishClose() replaces the open tabs with the session's.
+    Q_INVOKABLE QVariantMap reviewSession(const QUrl &file = {});
+    // GLOBAL_SAVE_EXTERNAL_SESSION: "readonly" (legacy asks again), "failed" or "".
+    Q_INVOKABLE QString saveSessionTo(const QUrl &file);
+    // Where the session dialogs start (legacy Options.configPath).
+    Q_INVOKABLE QUrl sessionFolder() const;
+    // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
+    // last session did not end with "[Close session]"), or "".
+    Q_INVOKABLE QString startupSession() const;
+    Q_INVOKABLE bool lastSessionCrashed() const;
+    void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
+    // The unresolved entry `row`: try again, choose another file, or forget it.
+    Q_INVOKABLE bool retryRestore(int row);
+    Q_INVOKABLE bool relinkRestore(int row, const QUrl &file);
+    Q_INVOKABLE void removeRestore(int row);
+    // The Grid's first shown row for the active tab (legacy Scroll). Ignored
+    // from a tab change (tabShown) until the Grid has restored that tab's
+    // scroll and called scrollRestored(), so a model reset's transient 0
+    // never overwrites it.
+    Q_INVOKABLE void setTargetScroll(int row);
+    Q_INVOKABLE void scrollRestored() { m_scrollRestoring = false; }
+    // The program closes: the session is written with "[Close session]".
+    Q_INVOKABLE void endSession();
+    QString lastSessionPath() const;
+    // Writes LastSession.txt (legacy SaveLastSession), or `path`.
+    bool saveLastSession(bool closing = false, const QString &path = {});
+signals:
+    void tabsChanged();
+    void sessionRestoreChanged();
+    void unresolvedRestoresChanged();
+    // A tab became active: its Grid scroll to show again.
+    void tabShown(int scroll);
+    // A session finished loading with `unresolved` entries left.
+    void sessionRestored(int unresolved);
+
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
@@ -733,6 +805,48 @@ private:
     void addThemeColours(QVariantMap &values) const;
     void setAudioActive(int key);
     void seekVideoFromAudio(int ms);
+    // P6
+    struct TabMedia {
+        QString video;      // legacy VideoPath (native separators)
+        int position = 0;   // ms, kept while another tab is shown
+        QString audio;      // legacy AudioPath: an audio file of the tab's own ("" from the video, or none)
+        QString keyframes;  // legacy KeyframesPath
+        int scroll = 0;     // the Grid's first row
+    };
+    struct UnresolvedRestore {
+        application::DocumentId document;
+        QString kind;
+        QString path;
+        int active = 0;   // subtitles: the session's active row
+        int position = 0; // video: the session's position
+    };
+    struct PendingSession {
+        std::vector<application::SessionTab> tabs;
+        std::vector<std::optional<application::StagedOpen>> staged;
+        // Each staged file as it was read (L58-staged-replacement: a file
+        // changed or gone by the time the review allows the load is read again).
+        std::vector<std::pair<QDateTime, qint64>> stamps;
+    };
+    std::map<std::uint64_t, TabMedia> m_tabMedia;
+    std::vector<UnresolvedRestore> m_unresolved;
+    std::optional<PendingSession> m_pendingSession;
+    std::optional<application::DocumentId> m_closingTab; // reviewCloseTab's
+    QString m_keepTabAudio;  // a restored video whose audio must not replace the tab's own
+    std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms; until the seek has landed
+    bool m_tabSeekQueued = false;
+    bool m_scrollRestoring = false;
+    bool m_startedWithPaths = false;
+    int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
+    void leaveTabMedia(std::optional<application::DocumentId> document);
+    void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);
+    void closeDocument(application::DocumentId document);
+    void replaceTarget(application::DocumentId replacement);
+    void applySession();
+    void forgetTab(application::DocumentId document);
+    void selectRow(application::DocumentId document, int row);
+    bool keepTabAudio(const QString &videoPath);
+    void trackTabMedia();
+    int targetVideoPosition() const;
 };
 
 } // namespace hikari::app

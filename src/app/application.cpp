@@ -763,6 +763,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             });
         });
     });
+    trackTabMedia(); // P6
     refreshViews();
 }
 
@@ -816,7 +817,9 @@ void Application::followVideoInAudio()
         // an indexed video brings its track into the box, opened from the
         // index file the video wrote; a video without audio closes the box
         m_audioFollowedVideo = QString::fromStdString(video.path());
-        if (video.hasAudio()) {
+        if (keepTabAudio(m_audioFollowedVideo)) {
+            // P6: a restored tab's own audio file stays (legacy dontLoadAudio)
+        } else if (video.hasAudio()) {
             m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));
             m_pendingIndexHandoff = video.indexHandoff();
@@ -964,6 +967,9 @@ QUrl Application::audioDialogFolder() const
 
 Application::~Application()
 {
+    // P6: an orderly end writes the session with "[Close session]" (legacy
+    // HikariSubFrame::OnClose); only a crash leaves it without.
+    endSession();
     // A1: the audio box goes first, before the video and helpers it reads
     // through; its signal connections go with it.
     for (const auto &connection : std::as_const(m_audioConnections))
@@ -1049,11 +1055,21 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
 
 bool Application::openFile(const QString &path)
 {
-    if (!open(path))
+    // P6: an untouched empty tab (legacy's new tab, or the one left after
+    // closing the last) takes the file, as legacy OpenFile loaded into it.
+    const auto previous = m_workspace.editingTarget();
+    auto *previousSession = previous ? m_files->session(*previous) : nullptr;
+    const bool emptyTab = previousSession && targetUntitled() && !previousSession->isDirty() &&
+                          previousSession->historySize() == 1;
+    const auto id = open(path);
+    if (!id)
         return false;
+    if (emptyTab)
+        replaceTarget(*id);
     refreshViews();
     checkResolution();
     trimAudioCache();
+    saveLastSession(); // P6: legacy OpenFile ends with SaveLastSession
     return true;
 }
 
@@ -1095,10 +1111,7 @@ bool Application::closeEditingTarget()
     const auto target = m_workspace.editingTarget();
     if (!target)
         return false;
-    discardRecovery(*target); // reviewed: saved or explicitly discarded
-    m_files->close(*target);
-    m_workspace.remove(*target);
-    refreshViews();
+    closeDocument(*target); // P6: legacy DeletePage (also writes the session)
     return true;
 }
 
@@ -1144,6 +1157,7 @@ void Application::refreshViews()
     }
     refreshVideo();
     refreshAudio();
+    emit tabsChanged(); // P6: titles, modified marks and the active tab
 }
 
 void Application::refreshVideo()
@@ -1151,6 +1165,8 @@ void Application::refreshVideo()
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (target != m_videoDocument) {
+        const auto previous = m_videoDocument;
+        leaveTabMedia(previous); // P6: the tab shown so far keeps its video position
         m_videoDocument = target;
         m_videoRevision.reset();
         m_videoLine.reset();
@@ -1167,6 +1183,7 @@ void Application::refreshVideo()
                 [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, windows);
         }
         m_video->offer(associations);
+        enterTabMedia(previous, target); // P6: the tab's own video, audio and keyframes
     }
     if (!session)
         return;
@@ -1227,8 +1244,14 @@ QVariantList Application::reviewClose(const QString &then)
         m_pendingOpenPath.clear();
     }
     std::vector<application::DocumentId> scope;
-    if (then == QLatin1String("quit"))
+    if (then != QLatin1String("tab"))
+        m_closingTab.reset(); // P6
+    if (then != QLatin1String("session"))
+        m_pendingSession.reset(); // P6
+    if (then == QLatin1String("quit") || then == QLatin1String("session")) // P6: a session replaces every tab
         scope = m_workspace.documents();
+    else if (then == QLatin1String("tab")) // P6: a middle-clicked tab
+        scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -1305,6 +1328,7 @@ void Application::writeFinished(const application::WriteResult &result)
             if (destination && destination->value == result.destination.value) {
                 m_workspace.setTitle(result.document, fileTitle(result.destination.value).toStdString());
                 refreshViews();
+                saveLastSession(); // P6: legacy Save writes the session when the name changed
             }
         }
     if (m_closing.empty())
@@ -1354,19 +1378,29 @@ void Application::finishClose()
         m_quitApproved = true;
         emit quitApprovedChanged();
     } else if (then == QLatin1String("new")) {
-        closeEditingTarget();
-        newDocument();
+        // P6: the Untitled Document takes the tab's place (legacy same tab).
+        const auto id = m_files->createNew();
+        m_workspace.add(id, tr("Untitled").toStdString());
+        replaceTarget(id);
     } else if (then == QLatin1String("open")) {
-        closeEditingTarget();
-        if (m_pendingOpen) {
-            if (const auto id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false)) {
-                m_workspace.setEditingTarget(*id);
-                QTimer::singleShot(0, this, [this] { checkResolution(); });
-            }
-            m_pendingOpen.reset();
-            m_pendingOpenPath.clear();
+        std::optional<application::DocumentId> id;
+        if (m_pendingOpen)
+            id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
+        if (id) {
+            replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
+            QTimer::singleShot(0, this, [this] { checkResolution(); });
+        } else {
+            closeEditingTarget();
         }
+        m_pendingOpen.reset();
+        m_pendingOpenPath.clear();
         refreshViews();
+        saveLastSession(); // legacy OpenFile ends with SaveLastSession
+    } else if (then == QLatin1String("session")) {
+        applySession(); // P6
+    } else if (then == QLatin1String("tab")) {
+        if (const auto tab = std::exchange(m_closingTab, std::nullopt))
+            closeDocument(*tab); // P6
     } else {
         closeEditingTarget();
     }
@@ -1382,6 +1416,8 @@ void Application::cancelClose()
     m_closeThen.clear();
     m_pendingOpen.reset();
     m_pendingOpenPath.clear();
+    m_pendingSession.reset(); // P6
+    m_closingTab.reset();
     endFindOpen(false);
 }
 
@@ -2249,6 +2285,8 @@ bool Application::shiftTranslation(int mode)
 QString Application::openKeyframes(const QUrl &file)
 {
     const QString path = file.isLocalFile() ? file.toLocalFile() : file.toString();
+    if (const auto target = m_workspace.editingTarget())
+        m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path); // P6: legacy KeyframesPath
     auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready) {
         m_pendingKeyframes = path; // applied when a video opens

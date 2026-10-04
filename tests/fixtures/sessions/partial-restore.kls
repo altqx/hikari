@@ -1,0 +1,36 @@
+﻿[HikariSub v0.0.1]
+Tab: 0
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: @DIR@/first.ass
+Active: 1
+Scroll: 0
+Editor: 1
+Audio: @DIR@/first.wav
+Tab: 1
+Video: @DIR@/missing.mkv
+Position: 2002
+FFMS2: 1
+Subtitles: @DIR@/missing.ass
+Active: 2
+Scroll: 0
+Editor: 1
+Audio: @DIR@/missing.wav
+Tab: 2
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: @DIR@/second.ass
+Active: 7
+Scroll: 0
+Editor: 1
+Keyframes: @DIR@/missing_keyframes.txt
+Tab: 3
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: 
+Active: 0
+Scroll: 0
+Editor: 1

@@ -141,7 +141,8 @@ int main(int argc, char **argv)
     if (o.size() == 5) {
         expect(o[0] == "review", "Ctrl+W with unsaved work shows the review");
         expect(o[1].rfind("Editing: first.ass", 0) == 0, "Cancel keeps the Document open");
-        expect(o[2] == "No editing target", "Discard all closes it");
+        // P6: legacy DeletePage leaves a new empty tab when the last closes.
+        expect(o[2].rfind("Editing: Untitled", 0) == 0, "Discard all closes it (a new Untitled tab)");
         expect(o[3] == "quit review", "closing the window reviews the quit");
         expect(o[4] == "false", "the window closes after Save all");
     }

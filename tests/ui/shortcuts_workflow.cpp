@@ -117,7 +117,8 @@ int main(int argc, char **argv)
         expect(o[2] == "Please enter a hotkey for \"Close current tab\".", "the mapping window names the action");
         expect(o[3] == "false", "a key with modifiers closes the mapping window");
         expect(o[4] == "shortcuts.ass - HikariSub", "the old keys no longer close the tab");
-        expect(o[5] == "HikariSub", "the new keys close it");
+        // Closing the last tab leaves a new Untitled tab (P6, legacy DeletePage).
+        expect(o[5] == "Untitled - HikariSub", "the new keys close it");
     }
     expect(application.hotkeys().accelOf(QStringLiteral("GLOBAL_CLOSE_PAGE"), 0) == QStringLiteral("Ctrl-Shift-J"),
            "the binding is installed");

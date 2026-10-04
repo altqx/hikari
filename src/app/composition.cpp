@@ -34,6 +34,7 @@ int run(int argc, char **argv, StartupMode mode)
     options.spellingBackend = backends::hunspellSpellingLoader();
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
     Application application(options);
+    application.setStartedWithPaths(argc > 1); // P6: no session at start then
     // A path on the command line opens as the editing target.
     if (argc > 1)
         application.openFile(QString::fromLocal8Bit(argv[1]));

@@ -70,6 +70,15 @@ class CloseReviewTests : public QObject {
                                             [&](core::Document &d) { return d.setLineText(line, text); }}));
     }
 
+    // P6: closing the last tab leaves a new empty Untitled tab (legacy
+    // Notebook::DeletePage), not an empty workspace.
+    bool closedToUntitled(app::Application &a)
+    {
+        const auto t = a.workspace().editingTarget();
+        return t && a.workspace().documents().size() == 1 && *a.workspace().title(*t) == "Untitled" &&
+               !target(a)->isDirty() && a.targetUntitled();
+    }
+
 private slots:
     void aCleanDocumentClosesWithoutReview()
     {
@@ -77,7 +86,7 @@ private slots:
         QVERIFY(a.openFile(writeFile(dir, "clean.ass", "x")));
         QVERIFY(a.reviewClose(QStringLiteral("close")).isEmpty());
         a.finishClose();
-        QVERIFY(!a.workspace().editingTarget());
+        QVERIFY(closedToUntitled(a));
     }
 
     void discardClosesWithoutWriting()
@@ -93,7 +102,7 @@ private slots:
         a.resolveClose(choose(rows, false));
         QCOMPARE(finished.size(), 1);
         QVERIFY(finished.first().at(0).toBool());
-        QVERIFY(!a.workspace().editingTarget());
+        QVERIFY(closedToUntitled(a));
         QCOMPARE(readAll(path), before);
     }
 
@@ -109,7 +118,7 @@ private slots:
         a.waitForWrites();
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(finished.first().at(0).toBool());
-        QVERIFY(!a.workspace().editingTarget());
+        QVERIFY(closedToUntitled(a));
         QVERIFY(readAll(path).contains(",,saved"));
     }
 

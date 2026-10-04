@@ -31,18 +31,43 @@ bool Workspace::remove(DocumentId id)
     const auto it = std::ranges::find(m_documents, id, &Entry::id);
     if (it == m_documents.end())
         return false;
+    const auto before = tabs();
+    const auto position = static_cast<std::size_t>(std::ranges::find(before, id) - before.begin());
     m_documents.erase(it);
     if (m_reference == id)
         m_reference.reset();
     if (m_target == id) {
+        // Legacy DeletePage: the tab now at the closed one's index, else the last.
         m_target.reset();
-        for (const auto &entry : m_documents)
-            if (entry.id != m_reference) {
-                m_target = entry.id;
-                break;
-            }
+        if (const auto after = tabs(); !after.empty())
+            m_target = after[std::min(position, after.size() - 1)];
     }
     return true;
+}
+
+bool Workspace::replace(DocumentId id, DocumentId replacement)
+{
+    const auto it = std::ranges::find(m_documents, id, &Entry::id);
+    const auto with = std::ranges::find(m_documents, replacement, &Entry::id);
+    if (it == m_documents.end() || with == m_documents.end() || id == replacement)
+        return false;
+    Entry entry = *with;
+    m_documents.erase(with);
+    *std::ranges::find(m_documents, id, &Entry::id) = std::move(entry);
+    if (m_target == id)
+        m_target = replacement;
+    if (m_reference == id)
+        m_reference = replacement;
+    return true;
+}
+
+std::vector<DocumentId> Workspace::tabs() const
+{
+    std::vector<DocumentId> out;
+    for (const auto &e : m_documents)
+        if (e.id != m_reference)
+            out.push_back(e.id);
+    return out;
 }
 
 const Workspace::Entry *Workspace::find(DocumentId id) const

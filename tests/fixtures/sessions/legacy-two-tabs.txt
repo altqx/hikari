@@ -1,0 +1,20 @@
+﻿[HikariSub v0.0.1]
+[Close session]
+Tab: 0
+Video: C:\Video\episode 1.mkv
+Position: 1001
+FFMS2: 1
+Subtitles: C:\Subs\episode 1.ass
+Active: 3
+Scroll: 1
+Editor: 1
+Audio: C:\Audio\episode 1.flac
+Keyframes: C:\Video\episode 1_keyframes.txt
+Tab: 1
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: C:\Subs\żółw.srt
+Active: 0
+Scroll: 0
+Editor: 1
