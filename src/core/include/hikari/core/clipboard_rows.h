@@ -57,4 +57,21 @@ std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleForm
 // each entry of the chosen file: the Line it gives, its text in `format`.
 LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const PasteConversion &conversion = {});
 
+// F1 (find and replace in files, legacy FindReplaceInFiles and
+// ReplaceCheckedInSubs): one line of a subtitle file read as legacy
+// Dialogue(raw). A ";..." or lone "{...}" line is a non-dialogue comment
+// whose text is the whole line.
+struct RawDialogueFields {
+    bool comment = false;
+    std::u8string style;
+    std::u8string actor;
+    std::u8string effect;
+    std::u8string text;
+};
+RawDialogueFields rawDialogueFields(std::u8string_view raw);
+// SetTextElement(column, value) then GetRaw: the line in its own format,
+// "\r\n" included (a plain-text line comes back as an ASS Dialogue line, as
+// legacy writes Format 0 Lines). `column` is column::Text, Style, Actor or Effect.
+std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8string_view value);
+
 } // namespace hikari::core

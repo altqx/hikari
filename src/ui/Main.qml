@@ -118,11 +118,19 @@ ApplicationWindow {
                 closeReview.problem = problem
             }
         }
+        // F1: a file result opens into the changed Untitled Document.
+        function onFindOpenReview(rows) {
+            closeReview.review(rows)
+        }
     }
 
     // D1: the Classic arrangement (also Reset layout): Video beside Audio over
     // the Line editor, the Grid below, the Reference under it when there is one.
     function defaultLayout() {
+        // Search (its scope rail beside the results) spans the bottom; it is
+        // placed and closed first so the panels after it share the whole area.
+        dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
+        searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 440))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
@@ -146,9 +154,10 @@ ApplicationWindow {
     }
 
     // Major panels in F6 order; a hidden panel is skipped.
-    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel]
+    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel,
+                                          searchPanel]
     // D1: their docks, in the same order.
-    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock]
+    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
 
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio).
@@ -160,6 +169,21 @@ ApplicationWindow {
             audioDock.close()
         root.workspaceLayout.preset = name
         root.workspaceLayout.save()
+    }
+
+    // F1: GLOBAL_SEARCH (0) and GLOBAL_FIND_REPLACE (1) open the Search tool
+    // on that tab; the same shortcut again while the tool has the focus on
+    // that tab hides it (legacy ShowDialog). The focus coming in from
+    // elsewhere takes the editor's selection (legacy OnActivate).
+    function openSearch(which) {
+        if (searchDock.isOpen && searchPanel.activeFocus && searchTool.tab === which) {
+            searchDock.close()
+            root.focusPanel(editorPanel, Qt.OtherFocusReason)
+            return
+        }
+        searchTool.showTab(which)
+        root.showPanel(searchDock)
+        searchTool.focusFind()
     }
 
     // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
@@ -551,6 +575,35 @@ ApplicationWindow {
                     text: qsTr("Select &lines")
                     enabled: root.editor.hasLine
                     onTriggered: selectLinesDialog.openDialog()
+                }
+            }
+            // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
+            MenuItem {
+                objectName: "findReplaceMenuItem"
+                action: Action {
+                    text: qsTr("Find and re&place")
+                    shortcut: "Ctrl+H"
+                    enabled: root.editor.hasLine
+                    onTriggered: root.openSearch(1)
+                }
+            }
+            MenuItem {
+                objectName: "findMenuItem"
+                action: Action {
+                    text: qsTr("&Find")
+                    shortcut: "Ctrl+F"
+                    enabled: root.editor.hasLine
+                    onTriggered: root.openSearch(0)
+                }
+            }
+            MenuItem {
+                objectName: "findNextMenuItem"
+                action: Action {
+                    text: qsTr("Find next")
+                    shortcut: "F3"
+                    // A question box waits: nothing re-enters the search (legacy's are modal).
+                    enabled: root.editor.hasLine && !root.app.findBusy
+                    onTriggered: root.app.findNext()
                 }
             }
         }
@@ -1965,6 +2018,28 @@ ApplicationWindow {
             }
         }
 
+        // F1: the Search tool (find and replace; docs/qt/ux/reviewed-surface-layouts.md B).
+        KDDW.DockWidget {
+            id: searchDock
+            objectName: "searchDock"
+            uniqueName: "Search"
+            title: qsTr("Search")
+            // TabWindow::SaveValues when the tool closes.
+            onIsOpenChanged: if (!isOpen) searchTool.save()
+            Panel {
+                id: searchPanel
+                objectName: "searchPanel"
+                anchors.fill: parent
+                title: qsTr("Find and replace")
+                onActiveFocusChanged: if (activeFocus) searchTool.activated()
+                SearchTool {
+                    id: searchTool
+                    anchors.fill: parent
+                    app: root.app
+                }
+            }
+        }
+
         Component.onCompleted: {
             root.defaultLayout()
             root.workspaceLayout.captureDefault()
@@ -2147,6 +2222,8 @@ ApplicationWindow {
         property var rows: []
         property var choices: []
         property string problem: ""
+        // Closing the window is Cancel (a waiting file result is then shown).
+        onClosing: root.app.cancelClose()
         function review(list) {
             choices = list.map(r => ({ id: r.id, save: true, path: "" }))
             rows = list

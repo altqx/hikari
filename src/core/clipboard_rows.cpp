@@ -810,6 +810,27 @@ std::vector<LineRecord> parseClipboardRows(std::u8string_view text, SubtitleForm
     return out;
 }
 
+RawDialogueFields rawDialogueFields(std::u8string_view raw)
+{
+    const Dialogue d = setRaw(raw);
+    return {d.comment, d.style, d.actor, d.effect, d.text};
+}
+
+std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8string_view value)
+{
+    Dialogue d = setRaw(raw);
+    switch (column) {
+    case column::Style: d.style = value; break;
+    case column::Actor: d.actor = value; break;
+    case column::Effect: d.effect = value; break;
+    default: d.text = value; break;
+    }
+    // GetRaw: a non-dialogue line is its text alone.
+    if (d.nonDialogue)
+        return d.text + u8"\r\n";
+    return getRaw(d, toLine(d, static_cast<SubtitleFormat>(d.format)), false);
+}
+
 LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const PasteConversion &conversion)
 {
     Dialogue d = setRaw(raw);

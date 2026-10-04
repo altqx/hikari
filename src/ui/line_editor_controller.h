@@ -152,9 +152,16 @@ public:
     // aegisub.gui); `role` 0 Original, 1 Translated.
     Q_INVOKABLE void reportFieldSelection(int role, int start, int end);
     std::pair<int, int> fieldSelection() const { return m_fieldSelection[translationMode() ? 1 : 0]; }
+    std::pair<int, int> fieldSelectionOf(int role) const { return m_fieldSelection[role == 1 ? 1 : 0]; }
     // Selects text in the edited field (aegisub.gui.set_cursor/set_selection),
     // or in `role` (0 Original, 1 Translated) when given.
     void selectInField(int start, int end, int role = -1);
+    // F1: selects [start, end) of the raw text of `role` (0 Original, 1
+    // Translated) as find marks a match; offsets move past hidden tags.
+    void selectRaw(int role, int start, int end);
+    // F1: [start, end) of the raw text of `role` where the field shows it
+    // (past hidden tags), as selectRaw would select it.
+    std::pair<int, int> displaySpan(int role, int start, int end) const;
     // The Document changed outside the editor (a macro): show it again.
     void reloadFromSession();
     // The video time shown (ms), or nullopt without video.

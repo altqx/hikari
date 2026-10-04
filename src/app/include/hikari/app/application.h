@@ -9,6 +9,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
+#include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/misspell_replacer.h"
@@ -41,6 +42,7 @@
 #include <QUrl>
 #include <QVariantMap>
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -68,6 +70,20 @@ signals:
     // and legacy's message boxes when the spell checker cannot start.
     void spellingChanged();
     void spellingNotice(const QString &message);
+    // F1: find and replace shows a legacy message box (kind: 0 message, 1
+    // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
+    // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
+    // needs no answer. Nothing blocks meanwhile.
+    void findQuestion(int id, int kind, const QString &text, const QString &title);
+    void findResultsChanged();
+    // An operation finished (also after its questions): the tab as it is now
+    // (the styles question may have changed its styles) with the recent lists.
+    void findFinished(const QVariantMap &settings);
+    void findBusyChanged();
+    // F1: a file result opens into the Untitled editing target, which has
+    // changes: the close review shows these rows (as reviewOpen's), and the
+    // result is shown once it finishes or is cancelled.
+    void findOpenReview(const QVariantList &rows);
 
 public:
     struct Options {
@@ -178,6 +194,8 @@ public:
     Q_INVOKABLE void reportIssue();
     // Quit was reviewed and may proceed (the window then closes for good).
     Q_PROPERTY(bool quitApproved READ quitApproved NOTIFY quitApprovedChanged)
+    // F1: a find and replace question waits for its answer.
+    Q_PROPERTY(bool findBusy READ findBusy NOTIFY findBusyChanged)
     bool quitApproved() const { return m_quitApproved; }
 
     // Grid selection gestures (G1). The active Line moves through the Line
@@ -362,6 +380,48 @@ public:
     // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
+    // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
+    // the dialog as {tab (0 Find, 1 Find and replace, 2 Find in subtitles),
+    // find, replace, styles, filters, folder, field, lines, matchCase, regex,
+    // startOfText, endOfText, includeComments, skipTags, skipText,
+    // subfolders, hiddenFolders} plus the recent lists {finds, replacements,
+    // filterList, paths}; legacy FIND_REPLACE_OPTIONS, FIND_REPLACE_STYLES
+    // and the recent lists live in the INI file. findReplaceSettings is the
+    // dialog as it opens; switchFindReplaceTab saves the tab left
+    // (SaveValues) and gives the next one (SetValues).
+    Q_INVOKABLE QVariantMap findReplaceSettings(int tab) const;
+    Q_INVOKABLE QVariantMap switchFindReplaceTab(const QVariantMap &settings, int tab);
+    Q_INVOKABLE void saveFindReplaceSettings(const QVariantMap &settings);
+    // A button: "find", "findAllCurrent", "findAllTabs", "replace",
+    // "replaceAll", "replaceAllTabs", "findInFiles" or "replaceInFiles". The
+    // legacy messages and questions come as findQuestion; findFinished
+    // gives the tab afterwards (the styles may change) with the recent lists.
+    // Ignored while a question waits (findBusy).
+    Q_INVOKABLE void runFindReplace(const QString &action, const QVariantMap &settings);
+    Q_INVOKABLE void findNext();
+    // The answer to question `id`: 0 Ok, 1 Yes, 2 No, 3 Cancel.
+    Q_INVOKABLE void answerFindQuestion(int id, int answer);
+    bool findBusy() const;
+    // The Search tool gains the focus (FindReplaceDialog::OnActivate): the text selected
+    // in the Line editor, or `find` as it is.
+    Q_INVOKABLE QString findReplaceActivated(const QString &find);
+    // A Lines radio button (TabWindow::Reset): the next search starts over.
+    Q_INVOKABLE void resetFindReplace();
+    // The results dialog: rows {header, text, line, before, match, after, checked, visible}.
+    Q_INVOKABLE QVariantList findResults() const;
+    Q_INVOKABLE bool findResultsShown() const;
+    Q_INVOKABLE bool canReplaceFindResults() const;
+    Q_INVOKABLE void checkFindResults(bool check);
+    Q_INVOKABLE void toggleFindResult(int row);
+    Q_INVOKABLE void toggleFindGroup(int row);
+    Q_INVOKABLE void showFindResult(int row);
+    Q_INVOKABLE void replaceFindResults(const QString &replacement);
+    // Tests answer the questions themselves; backups go to this folder
+    // (default: ReplaceBackup beside the settings file, none without one).
+    void setFindQuestionHandler(std::function<int(int kind, const QString &text)> handler);
+    void setReplaceBackupFolder(const QString &folder) { m_replaceBackup = folder; }
+    // Legacy numOfProcessors for replacing in files (0: this machine's).
+    void setFindProcessorCount(int count) { m_findProcessors = count; }
     Q_INVOKABLE QVariantMap scriptProperties();
     Q_INVOKABLE bool applyScriptProperties(const QVariantMap &values, const QVariantMap &edits, bool linkResolutions);
     Q_INVOKABLE bool shiftTranslation(int mode);
@@ -508,6 +568,23 @@ private:
     std::vector<std::pair<application::DocumentId, application::ReplacerFind>> m_misspellFinds;
     bool m_misspellResultsShown = false;
     std::vector<application::ReplacerRule> &misspellRuleList();
+    // F1
+    class FindHost;
+    friend class FindHost;
+    std::unique_ptr<FindHost> m_findHost;
+    std::unique_ptr<application::FindReplace> m_find;
+    int m_findOptions = 0;
+    QString m_findStyles;
+    QString m_replaceBackup;
+    std::function<int(int, const QString &)> m_findQuestionHandler;
+    int m_findQuestionId = 0;
+    std::map<int, std::function<void(application::FindAnswer)>> m_findAnswers; // questions shown, by id
+    // A file result waiting for the close review of its open (true: opened).
+    std::function<void(bool)> m_findOpenDone;
+    int m_findProcessors = 0;
+    void endFindOpen(bool opened);
+    void saveFindRecent();
+    void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
