@@ -442,12 +442,15 @@ void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
 }
 
 // Legacy OnMouseEvent's wheel: Ctrl alone zooms vertically, Shift
-// horizontally around the mouse (A2), otherwise it scrolls. Some platforms
-// turn a modified wheel into a horizontal one; either axis counts.
+// horizontally around the mouse (A2), otherwise it scrolls. Legacy read
+// GetWheelRotation() without GetWheelAxis(), so a horizontal wheel acts as
+// the vertical one with its rotation; on Windows (the normative build) that
+// rotation is positive for a tilt to the right, which Qt reports as a
+// negative x (QWindowsMouseHandler reverses WM_MOUSEHWHEEL's delta).
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)
 {
     const QPoint delta = event->angleDelta();
-    const int rotation = delta.y() != 0 ? delta.y() : delta.x();
+    const int rotation = delta.y() != 0 ? delta.y() : -delta.x();
     if (m_controller && rotation != 0) {
         const auto modifiers = event->modifiers();
         m_controller->wheel(rotation, modifiers == Qt::ControlModifier, modifiers.testFlag(Qt::ShiftModifier),

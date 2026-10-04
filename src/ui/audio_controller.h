@@ -275,6 +275,7 @@ signals:
 
 private:
     void loadBoxControls(); // legacy AudioBox's constructor
+    void loadSpectrumColours(); // legacy AudioSpectrum::ChangeColours
     void applyVerticalZoom(int position, bool fromVolume);
     bool autoScrollSetting() const;
     void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);

@@ -351,10 +351,42 @@ void AudioController::wheel(int rotation, bool controlOnly, bool shift, float x)
 
 void AudioController::setSettingsStore(SettingsStore *store)
 {
+    if (m_store)
+        disconnect(m_store, nullptr, this, nullptr);
     m_store = store;
     loadBoxControls();
+    loadSpectrumColours();
+    // Legacy ChangeOptions after the Options dialog (OK/Apply: ChangeColors):
+    // the spectrum renderer reads its colours again (ChangeColours).
+    if (m_store)
+        connect(m_store, &SettingsStore::changed, this, [this](const QString &id) {
+            if (id == QLatin1StringView(application::kSpectrumBackgroundSetting) ||
+                id == QLatin1StringView(application::kSpectrumEchoSetting) ||
+                id == QLatin1StringView(application::kSpectrumInnerSetting)) {
+                loadSpectrumColours();
+                redraw();
+            }
+        });
     emit boxControlsChanged();
     redraw();
+}
+
+// Legacy AudioSpectrum::ChangeColours: AUDIO_SPECTRUM_BACKGROUND, _ECHO and
+// _INNER (an unreadable value keeps legacy's default).
+void AudioController::loadSpectrumColours()
+{
+    const auto colour = [this](std::string_view id, std::uint32_t fallback) {
+        if (!m_store)
+            return fallback;
+        const QString text = m_store->value(QString::fromLatin1(id.data(), qsizetype(id.size()))).toString();
+        return application::parseSettingColour(text.toStdString()).value_or(fallback);
+    };
+    m_options.spectrumBackground = colour(application::kSpectrumBackgroundSetting, application::kSpectrumBackgroundDefault);
+    m_options.spectrumEcho = colour(application::kSpectrumEchoSetting, application::kSpectrumEchoDefault);
+    m_options.spectrumInner = colour(application::kSpectrumInnerSetting, application::kSpectrumInnerDefault);
+    if (m_spectrum)
+        m_spectrum->setColours(m_options.spectrumBackground, m_options.spectrumEcho, m_options.spectrumInner);
+    m_spectrumImage.reset(); // drawn again with the new palette
 }
 
 // Legacy AudioBox's constructor: the zoom and scale from the settings, the

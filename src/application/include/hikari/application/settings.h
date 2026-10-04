@@ -121,4 +121,16 @@ inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automat
 inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
 inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
+// A2: the audio spectrum's colours, legacy's theme colours
+// AUDIO_SPECTRUM_BACKGROUND, AUDIO_SPECTRUM_ECHO and AUDIO_SPECTRUM_INNER
+// (config.cpp's defaults). They were theme entries, not Config.txt options;
+// theme files are excluded from migration (compatibility.md), so they are
+// settings of the rewrite's own, as "#RRGGBB" text.
+inline constexpr std::string_view kSpectrumBackgroundSetting = "audio.spectrumBackground";
+inline constexpr std::string_view kSpectrumEchoSetting = "audio.spectrumEcho";
+inline constexpr std::string_view kSpectrumInnerSetting = "audio.spectrumInner";
+// wxColour::Set's "#RRGGBB" (and "#RRGGBBAA") as 0xAARRGGBB; nothing when it
+// is not one.
+std::optional<std::uint32_t> parseSettingColour(std::string_view text);
+
 } // namespace hikari::application

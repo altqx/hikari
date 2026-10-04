@@ -423,6 +423,35 @@ TEST_F(CommitTest, WithoutSaveTheTimesWaitInTheEditor)
     EXPECT_EQ(ms(line(1).start.value), 4800);
 }
 
+// EditBox::Send carries every field of the Line's own pending draft that
+// differs from the Line (SubsGrid::ChangeLine's cells), to each selected Line;
+// the rewrite's draft holds the text, the translation, the times and the
+// margins (the Line editor has no Comment, Layer, Style, Actor or Effect
+// field yet), and fields the draft leaves alone stay each Line's own.
+TEST_F(CommitTest, TheLinesOwnDraftGoesWithTheCommitFieldByField)
+{
+    select({a, c}, a);
+    DraftChange change;
+    change.text = u8"a2";
+    change.marginLeft = 12;
+    ASSERT_TRUE(session.editDraft(a, change));
+    const auto steps = session.historySize();
+    ASSERT_TRUE(commitAudioTimes(session, {1000, 2500, true, false}, shown));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(lastStep(), "Changing time on audio spectrum");
+    EXPECT_FALSE(session.draftLine());
+    for (const std::size_t i : {std::size_t(0), std::size_t(2)}) {
+        EXPECT_EQ(line(i).text, u8"a2") << i;
+        EXPECT_EQ(line(i).marginLeft.value, 12) << i;
+        EXPECT_EQ(ms(line(i).end.value), 2500) << i;
+    }
+    // the start was not changed: c keeps its own; so do the fields no draft holds
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+    EXPECT_EQ(line(2).style, u8"Default");
+    EXPECT_EQ(line(1).text, u8"b");
+    EXPECT_EQ(line(1).marginLeft.value, 0);
+}
+
 TEST_F(CommitTest, TheNextLineIsTheNextShownOne)
 {
     hidden = {b};

@@ -4116,7 +4116,9 @@ QVariantMap Application::openSettingsDialog()
         warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
     if (open.styleMissing)
         warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("style"));
-    return {{QStringLiteral("values"), toVariant(open.state)},
+    auto values = toVariant(open.state);
+    addThemeColours(values);
+    return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
@@ -4124,8 +4126,33 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("warnings"), warnings}};
 }
 
+// The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
+// rewrite keeps theme colours: the audio spectrum's three (A2).
+namespace {
+constexpr std::string_view kThemeColours[] = {application::kSpectrumBackgroundSetting,
+                                              application::kSpectrumEchoSetting,
+                                              application::kSpectrumInnerSetting};
+} // namespace
+
+void Application::addThemeColours(QVariantMap &values) const
+{
+    for (const auto id : kThemeColours)
+        values.insert(qs(id), qs(m_settings->settings().text(id)));
+}
+
 void Application::applySettings(const QVariantMap &values)
 {
+    // SetOptions' ID_COLOR_CONFIG list: the changed colours are saved and
+    // ChangeColors runs (the audio display's ChangeOptions: the spectrum
+    // reads its colours again, through settingChanged).
+    for (const auto id : kThemeColours) {
+        const auto found = values.constFind(qs(id));
+        if (found == values.cend())
+            continue;
+        const std::string colour = found->toString().toStdString();
+        if (application::parseSettingColour(colour) && colour != m_settings->settings().text(id))
+            m_settings->settings().set(id, colour);
+    }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
@@ -4191,9 +4218,12 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     //   legacy next saves them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
+    // The theme's colours are not options: ResetDefault leaves them.
     for (const std::string_view id : {std::string_view("recent.subtitles"), std::string_view("recent.video"),
                                       std::string_view("recent.audio"), application::kAutomationHotkeysSetting,
-                                      application::kHotkeysSetting, application::kAudioHotkeysSetting})
+                                      application::kHotkeysSetting, application::kAudioHotkeysSetting,
+                                      application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
+                                      application::kSpectrumInnerSetting})
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
     m_resettingSettings = true;
@@ -4235,7 +4265,13 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     emit spellingChanged();
     // O2: Hkeys.ResetDefaults(), then the Hotkeys list again.
     m_hotkeys->resetDefaults();
-    return toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
+    auto refreshed =
+        toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
+    // the colour list keeps what it shows
+    for (const auto id : kThemeColours)
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            refreshed.insert(qs(id), *found);
+    return refreshed;
 }
 
 QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int index)

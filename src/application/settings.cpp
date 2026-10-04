@@ -236,6 +236,10 @@ const std::vector<SettingDefinition> &definitions()
         // unset, LoadDefault's.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // A2: the spectrum's colours (legacy theme colours, config.cpp's defaults).
+        {kSpectrumBackgroundSetting, "", String, Profile, Mapped, false, std::string("#000000")},
+        {kSpectrumEchoSetting, "", String, Profile, Mapped, false, std::string("#674FD7")},
+        {kSpectrumInnerSetting, "", String, Profile, Mapped, false, std::string("#F4F4F4")},
     };
     return table;
 }
@@ -256,6 +260,28 @@ std::optional<std::int64_t> parseInteger(std::string_view text)
 }
 
 } // namespace
+
+std::optional<std::uint32_t> parseSettingColour(std::string_view text)
+{
+    if ((text.size() != 7 && text.size() != 9) || text.front() != '#')
+        return std::nullopt;
+    std::uint32_t rgba = 0;
+    for (const char c : text.substr(1)) {
+        int digit = 0;
+        if (c >= '0' && c <= '9')
+            digit = c - '0';
+        else if (c >= 'a' && c <= 'f')
+            digit = c - 'a' + 10;
+        else if (c >= 'A' && c <= 'F')
+            digit = c - 'A' + 10;
+        else
+            return std::nullopt;
+        rgba = rgba << 4 | std::uint32_t(digit);
+    }
+    if (text.size() == 7)
+        return 0xFF000000u | rgba;
+    return (rgba & 0xFFu) << 24 | rgba >> 8; // #RRGGBBAA
+}
 
 std::span<const SettingDefinition> settingDefinitions()
 {

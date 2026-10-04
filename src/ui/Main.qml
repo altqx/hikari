@@ -143,9 +143,13 @@ ApplicationWindow {
         dockingArea.addDockWidget(searchDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 280))
         searchDock.close()
         dockingArea.addDockWidget(gridDock, KDDW.KDDockWidgets.Location_OnBottom)
-        dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 440))
+        // The top row and the Audio dock are sized so that at the default
+        // window (1280 x 800) the audio box gets legacy's AUDIO_BOX_HEIGHT
+        // (170 px for the display, search bar and buttons) above a usable
+        // Line editor; the docking engine shares the row by these requests.
+        dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
-        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 160))
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
@@ -740,12 +744,13 @@ ApplicationWindow {
             Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
             Action { text: qsTr("Open keyframes"); onTriggered: keyframesDialog.open() }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
-            // (enabled while the audio box exists).
+            // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
+            // no GLOBAL_EDITOR switch, and its editor is the editing target's).
             MenuItem {
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
                     text: qsTr("Set audio position to video time")
-                    enabled: root.audio.hasAudio
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: root.app.setAudioFromVideo(false)
                 }
             }
@@ -753,7 +758,7 @@ ApplicationWindow {
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
                     text: qsTr("Set audio marker to video time")
-                    enabled: root.audio.hasAudio
+                    enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: root.app.setAudioFromVideo(true)
                 }
             }
