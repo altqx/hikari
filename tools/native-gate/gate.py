@@ -348,11 +348,10 @@ PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Searc
 
 
 def open_view():
-    """Alt+V opens the View menu. The menu bar has two Alt+V mnemonics
-    (&Video and &View, as legacy); Qt cycles between ambiguous mnemonics, so
-    press again until the View menu (its "Move panel…" item) shows."""
+    """Alt+W opens the View menu ("Vie&w": Alt+V stays with legacy's &Video).
+    Retried until the View menu (its "Move panel…" item) shows."""
     for _ in range(3):
-        B.keys("alt+v", 0.4)
+        B.keys("alt+w", 0.4)
         dump = sh(["python3", f"{GATE}/atspi_tool.py", "dump"])
         if any("'Move panel…'" in l and "showing" in l for l in dump.splitlines()):
             return True

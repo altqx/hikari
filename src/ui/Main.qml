@@ -791,7 +791,7 @@ ApplicationWindow {
         Menu {
             id: viewMenu
             objectName: "viewMenu"
-            title: qsTr("&View")
+            title: qsTr("Vie&w") // legacy has no View menu; Alt+V stays with &Video
             // D1: each panel can be shown (and focused), hidden, floated or
             // docked; Reset layout returns to the Editing arrangement.
             Menu {
