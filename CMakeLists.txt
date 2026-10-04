@@ -38,4 +38,5 @@ if(BUILD_TESTING)
     add_subdirectory(tests/application)
     add_subdirectory(tests/backends)
     add_subdirectory(tests/ui)
+    add_subdirectory(tools/human/h2-listening) # H2 listening driver, built on request
 endif()
