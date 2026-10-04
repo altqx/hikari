@@ -1300,6 +1300,21 @@ ApplicationWindow {
                         focusPolicy: Qt.NoFocus
                         onClicked: root.video.togglePlay()
                     }
+                    // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
+                    // Line editor's text.
+                    Button {
+                        objectName: "playActualLine"
+                        text: qsTr("Play line")
+                        enabled: root.video.hasVideo
+                        focusPolicy: Qt.NoFocus
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Play the current line")
+                        Accessible.name: qsTr("Play the current line")
+                        onClicked: {
+                            lineText.forceActiveFocus()
+                            root.video.playActualLine()
+                        }
+                    }
                     Button {
                         objectName: "stopVideo"
                         text: qsTr("Stop")
@@ -1353,6 +1368,11 @@ ApplicationWindow {
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTr("Audio display")
                     Accessible.description: root.audio.status
+                    // A4: legacy's default audio hotkeys for playback.
+                    Keys.onPressed: event => {
+                        if (root.audio.playbackKey(event.key, event.modifiers, false))
+                            event.accepted = true
+                    }
                 }
                 ScrollBar {
                     id: audioScroll
@@ -1361,7 +1381,7 @@ ApplicationWindow {
                     orientation: Qt.Horizontal
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
-                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    anchors { left: parent.left; right: parent.right; bottom: audioButtons.top }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
                     Binding on position {
@@ -1373,6 +1393,45 @@ ApplicationWindow {
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
                     ToolTip.text: qsTr("Search bar")
+                }
+                // A4: legacy AudioBox's play buttons (MappedButtons with
+                // their tooltips); each focuses the display first, as the
+                // legacy handlers do.
+                RowLayout {
+                    id: audioButtons
+                    objectName: "audioButtons"
+                    visible: root.audio.loaded
+                    height: visible ? implicitHeight : 0
+                    anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                    spacing: 2
+                    Repeater {
+                        model: [
+                            { name: "audioPlay", text: qsTr("Play"), tip: qsTr("Play the current syllable / line"), run: () => root.audio.playSelection() },
+                            { name: "audioPlayLine", text: qsTr("Play line"), tip: qsTr("Play the current line"), run: () => root.audio.playLine() },
+                            { name: "audioStop", text: qsTr("Stop"), tip: qsTr("Stop playback"), run: () => root.audio.stopPlayback() },
+                            { name: "audioPlayBeforeMark", text: qsTr("Before mark"), tip: qsTr("Play before the tag"), run: () => root.audio.playBeforeMark() },
+                            { name: "audioPlayAfterMark", text: qsTr("After mark"), tip: qsTr("Play after the tag"), run: () => root.audio.playAfterMark() },
+                            { name: "audioPlay500Before", text: qsTr("500 before"), tip: qsTr("Play 500ms before the start time"), run: () => root.audio.play500Before() },
+                            { name: "audioPlay500First", text: qsTr("500 first"), tip: qsTr("Play 500 ms after the start time"), run: () => root.audio.play500First() },
+                            { name: "audioPlay500Last", text: qsTr("500 last"), tip: qsTr("Play 500ms before the end time"), run: () => root.audio.play500Last() },
+                            { name: "audioPlay500After", text: qsTr("500 after"), tip: qsTr("Play 500ms after the end time"), run: () => root.audio.play500After() },
+                            { name: "audioPlayToEnd", text: qsTr("To end"), tip: qsTr("Play to the end"), run: () => root.audio.playToEnd() }
+                        ]
+                        ToolButton {
+                            required property var modelData
+                            objectName: modelData.name
+                            text: modelData.text
+                            focusPolicy: Qt.NoFocus
+                            ToolTip.visible: hovered
+                            ToolTip.text: modelData.tip
+                            Accessible.name: modelData.tip
+                            onClicked: {
+                                audioDisplay.forceActiveFocus()
+                                modelData.run()
+                            }
+                        }
+                    }
+                    Item { Layout.fillWidth: true }
                 }
                 Label {
                     objectName: "audioStatus"
@@ -1680,6 +1739,14 @@ ApplicationWindow {
                     // Legacy GRID_DUPLICATE_LINES (Ctrl+D) and the clipboard
                     // (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X, GRID_PASTE Ctrl+V) in the Grid.
                     Keys.onPressed: event => {
+                        // A4: the audio box's hotkeys reach it from the Grid
+                        // while it exists, focusing its display (legacy
+                        // TabPanel::SetAccels, SubsGrid::OnAccelerator).
+                        if (root.audio.loaded && root.audio.playbackKey(event.key, event.modifiers, true)) {
+                            audioDisplay.forceActiveFocus()
+                            event.accepted = true
+                            return
+                        }
                         if (!(event.modifiers & Qt.ControlModifier))
                             return
                         if (event.key === Qt.Key_D)

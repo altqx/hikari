@@ -342,6 +342,15 @@ void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
     event->accept();
 }
 
+// A4: legacy OnMouseEvent's middle double click plays the selection.
+void AudioDisplayItem::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    forceActiveFocus(Qt::MouseFocusReason);
+    if (m_controller && event->button() == Qt::MiddleButton)
+        m_controller->playSelection();
+    event->accept();
+}
+
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)
 {
     // Shift and Ctrl zoom (A2)
@@ -374,7 +383,8 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     };
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
-                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), false, m_controller->options())
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
+                                                         m_controller->options())
                    : std::vector<AudioShape>{};
     };
     if (softwareScene(window())) {

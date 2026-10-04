@@ -106,6 +106,12 @@ public:
     // the end (legacy ReadCache).
     void read(std::int64_t start, std::int64_t count, std::int16_t *out) const;
     const WaveformPeaks *peaks() const { return m_finished && !m_silence ? &m_peaks : nullptr; }
+    // A4: the cached frames' channels (1 for blank audio and before the
+    // first frames), and legacy ProviderFFMS2::ReadCache for playback: the
+    // interleaved frames [start, start + count), zero past the end and past
+    // what is decoded.
+    int channels() const { return m_store && !m_silence ? m_store->channels() : 1; }
+    void readFrames(std::int64_t start, std::int64_t count, std::int16_t *out) const;
 
 private:
     int m_rate = 0;

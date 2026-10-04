@@ -315,6 +315,21 @@ void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *ou
     }
 }
 
+// A4: legacy ReadCache (ProviderDummy's playback is silence). Frames not
+// yet decoded read as silence; legacy read whatever its cache held there.
+void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16_t *out) const
+{
+    if (count <= 0)
+        return;
+    const int channels = this->channels();
+    const std::int64_t have = m_silence || !m_store ? 0 : std::min(m_store->frames(), m_count);
+    const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
+    const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
+    std::fill(out, out + count * channels, std::int16_t(0));
+    if (last > first)
+        m_store->read(first, last - first, out + (first - start) * channels);
+}
+
 // Legacy Provider::GetWaveForm.
 WaveformColumns legacyWaveform(const DisplayAudio &audio, std::int64_t start, int w, int h, int samples, float scale)
 {

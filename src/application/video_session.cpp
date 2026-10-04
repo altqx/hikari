@@ -82,6 +82,7 @@ void VideoSession::close()
         m_player->stop();
     m_playing = false;
     m_stopped = false;
+    m_playEndMs = 0;
     ++m_playEpoch;
     m_lastGeneralUs.reset();
     m_overlayTime.reset();
@@ -238,11 +239,36 @@ bool VideoSession::play()
 {
     if (!m_player || m_state != State::Ready || m_playing)
         return false;
+    m_playEndMs = 0;
+    const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
+                                        : 0;
+    return startPlayback(fromUs);
+}
+
+bool VideoSession::playLine(int startMs, int endMs)
+{
+    if (!m_player || m_state != State::Ready || m_starts.empty())
+        return false;
+    const LegacyTimebase timebase = legacyTimebase();
+    int end = timebase.msAt(timebase.frameAt(endMs) - 1); // PlayEndBefore
+    const int duration = static_cast<int>(m_starts.back().microseconds() / 1000);
+    if (startMs >= end || startMs >= duration)
+        return false;
+    if (duration < end)
+        end = duration;
+    if (m_playing)
+        pause();
+    const int frame = timebase.clampFrame(timebase.frameAt(startMs)); // SeekFrame
+    showFrame(frame);
+    m_playEndMs = end;
+    return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
+}
+
+bool VideoSession::startPlayback(std::int64_t fromUs)
+{
     m_playing = true;
     m_stopped = false;
     const std::uint64_t epoch = ++m_playEpoch;
-    const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
-                                        : 0;
     const std::weak_ptr<bool> alive = m_alive;
     auto start = [this, alive, epoch, fromUs] {
         m_player->seek(fromUs, [this, alive, epoch](std::expected<SeekResult, PlayerError> sought) {
@@ -290,12 +316,19 @@ void VideoSession::generalFrame(IndexedFrame frame, std::int64_t startUs)
     render();
     present();
     notify();
+    // A4: a Line's playback pauses once its end frame is shown
+    if (m_playEndMs > 0 && m_timeline)
+        if (const auto at = m_timeline->frameContaining(core::DocumentTime(startUs)))
+            if (static_cast<std::size_t>(at->value()) < m_starts.size()
+                && m_starts[static_cast<std::size_t>(at->value())].microseconds() / 1000 >= m_playEndMs)
+                pause();
 }
 
 bool VideoSession::pause()
 {
     if (!m_playing)
         return false;
+    m_playEndMs = 0;
     m_player->pause();
     m_playing = false;
     ++m_playEpoch;
@@ -315,6 +348,7 @@ bool VideoSession::stop()
     if (m_playing) {
         m_player->pause();
         m_playing = false;
+        m_playEndMs = 0;
         m_stopped = true; // legacy Stop acts only while Playing
         ++m_playEpoch;
     }

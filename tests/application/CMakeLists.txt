@@ -57,5 +57,8 @@ hikari_add_gtest(hikari_application_find_replace_tests SOURCES find_replace_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# A4: the audio box's playback modes, Stop and the playback cursor.
+hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)

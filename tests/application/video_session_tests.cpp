@@ -442,3 +442,55 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     EXPECT_EQ(video.audioTrack(), -1);
     EXPECT_TRUE(video.indexHandoff().empty());
 }
+
+// A4: GLOBAL_PLAY_ACTUAL_LINE (legacy RendererVideo::PlayLine with
+// Timebase::PlayEndBefore): frames every 40 ms, 0..360 ms.
+TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    EXPECT_FALSE(video.playLine(100, 300)); // no video
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    // 300 ms is in frame 8 (320 ms): the end is frame 7's start, 280 ms;
+    // the start shows frame 3 (FrameAt(100): 120 ms) and plays from it
+    ASSERT_TRUE(video.playLine(100, 300));
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 3);
+    player.opened();
+    player.delivered();
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "seek 120000", "play"}));
+    video.generalFrame(playerFrame(), 245'000); // frame 6
+    EXPECT_TRUE(video.playing());
+    video.generalFrame(playerFrame(), 285'000); // frame 7: the end, paused there
+    EXPECT_FALSE(video.playing());
+    EXPECT_EQ(player.calls.back(), "pause");
+    EXPECT_EQ(source.frames.back().first, 7);
+    // a start at or after that end, or at or after the last frame, plays nothing
+    EXPECT_FALSE(video.playLine(280, 300));
+    EXPECT_FALSE(video.playLine(360, 2000));
+    // an end past the video is the last frame's time
+    player.calls.clear();
+    ASSERT_TRUE(video.playLine(0, 2000));
+    player.delivered();
+    video.generalFrame(playerFrame(), 330'000);
+    EXPECT_TRUE(video.playing());
+    // a Line played while playing pauses first
+    ASSERT_TRUE(video.playLine(40, 200));
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"seek 0", "play", "pause", "seek 40000"}));
+    player.delivered();
+    video.generalFrame(playerFrame(), 165'000); // frame 4 (160 ms): the end
+    EXPECT_FALSE(video.playing());
+    // an end in the first frame gives 0: legacy plays on
+    ASSERT_TRUE(video.playLine(-100, 20));
+    player.delivered();
+    video.generalFrame(playerFrame(), 365'000);
+    EXPECT_TRUE(video.playing());
+    // a plain Play has no end
+    ASSERT_TRUE(video.pause());
+    ASSERT_TRUE(video.play());
+    player.delivered();
+    video.generalFrame(playerFrame(), 300'000);
+    EXPECT_TRUE(video.playing());
+}
