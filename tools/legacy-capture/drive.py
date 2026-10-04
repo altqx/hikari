@@ -340,7 +340,14 @@ def automation(spec, package, display, workdir, probe_source):
             time.sleep(0.5)
             x(["xdotool", "mousemove", str(sx + 5), str(sy + row * k)], display)
             time.sleep(0.5)
+            # The popup never has the keyboard focus; give it to the main
+            # window without moving the pointer, so the key reaches the app.
+            x(["xdotool", "windowfocus", "--sync", wid], display)
+            time.sleep(0.3)
             x(["xdotool", "key", "--clearmodifiers", "Return"], display)
+            if k == 0:
+                time.sleep(1)
+                probe_rec["after_return"] = screenshot(display, workdir, "automation-after-return")
             if step.get("keys") is not None:
                 time.sleep(3)  # the dialog takes the focus
                 srec["dialog_windows"] = [t for _, t in popups(display, wid)]
