@@ -164,9 +164,11 @@ TEST(LegacyText, KoreanAndRomanianAsEachPlatformsWxCSConvReadThem)
     const QString romanian =
         u(kDialogue) + u("Știința și țara românească, în această dimineață însorită, păstrează tradițiile străbunilor.\r\n");
 #ifdef _WIN32
-    // wx knows neither name, so wxCSConv had no converter: Latin-1.
-    EXPECT_EQ(q(decodeLegacyText(kUhc, P::Windows)), folded(QString::fromLatin1(kUhc)));
-    EXPECT_EQ(q(decodeLegacyText(kRomanian, P::Windows)), folded(QString::fromLatin1(kRomanian)));
+    // wx knows neither name, so legacy read both as Latin-1 (F1-win-charsets:
+    // ICU decodes UHC; it has no ISO-8859-16 converter, so that file is
+    // skipped rather than read as mojibake).
+    EXPECT_EQ(q(decodeLegacyText(kUhc, P::Windows)), folded(korean));
+    EXPECT_EQ(decodeLegacyText(kRomanian, P::Windows), std::nullopt);
 #else
     // glibc iconv opens both (Qt's ICU opened neither).
     EXPECT_EQ(q(decodeLegacyText(kUhc, P::Linux)), korean);
@@ -200,12 +202,12 @@ TEST(LegacyText, Iso2022JpAsEachPlatformReadIt)
     // wx maps the name to code page 50222. wxEncodingToCodepage keeps it only
     // when GetCPInfo accepts it, and MultiByteToWideChar then refuses
     // MB_ERR_INVALID_CHARS for it: the read fails. Otherwise wx had no
-    // converter (no wxEncodingConverter table): Latin-1.
+    // converter (no wxEncodingConverter table).
     CPINFO info;
     if (::IsValidCodePage(50222) && ::GetCPInfo(50222, &info))
         EXPECT_EQ(decodeLegacyText(kIso2022Jp, P::Windows), std::nullopt);
-    else
-        EXPECT_EQ(q(decodeLegacyText(kIso2022Jp, P::Windows)), QString::fromLatin1(kIso2022Jp));
+    else // F1-win-charsets: ICU's ISO-2022-JP, where legacy read Latin-1
+        EXPECT_EQ(q(decodeLegacyText(kIso2022Jp, P::Windows)), folded(u(kDialogue) + u("こんにちは、世界。今日はいい天気ですね。\n")));
 #else
     EXPECT_EQ(q(decodeLegacyText(kIso2022Jp, P::Linux)),
               u(kDialogue) + u("こんにちは、世界。今日はいい天気ですね。\n"));

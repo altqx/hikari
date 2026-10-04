@@ -9,7 +9,8 @@
 // uchardet names it, and with no name the system code page (wxConvLocal)
 // decodes. A named charset is decoded as wxCSConv did on each platform: Win32
 // code pages on Windows, glibc iconv elsewhere (ASCII and ISO-8859-1 as
-// Latin-1 on both; a name with no converter as Latin-1). Bytes the charset
+// Latin-1 on both; a name with no converter as Latin-1 on Linux, through ICU
+// on Windows, F1-win-charsets). Bytes the charset
 // cannot decode give nullopt (wxCSConv failed and FileOpen read ""), as does
 // an empty file.
 //
@@ -34,6 +35,11 @@
 //   U+FEFF and byte-swapping a big-endian file; legacy Linux's iconv, used
 //   twice on one handle by wxString's conversion, failed on any UTF-16 or
 //   UTF-32 file with a BOM. Here the BOM decides and is removed on both.
+// - F1-win-charsets (its own approved row): legacy Windows read a charset wx
+//   had no converter for (UHC, TIS-620, IBM8xx, MAC-*, GB18030, HZ, EUC-TW,
+//   ISO-2022-CN/KR, ...) as Latin-1, and a file replace wrote that mojibake
+//   back; here ICU decodes it, and a charset ICU lacks (ISO-8859-16, VISCII,
+//   GEORGIAN-*) or bytes it cannot decode read as nothing.
 
 #include <QByteArray>
 #include <QString>

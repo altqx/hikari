@@ -13,6 +13,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#include <unicode/ucnv.h>
 #include <windows.h>
 #else
 #include <cerrno>
@@ -98,6 +99,31 @@ unsigned codePageOf(std::string_view name)
     if (name == "UTF-8")
         return CP_UTF8; // strict: invalid bytes fail
     return 0;
+}
+
+// F1-win-charsets: a name wx had no converter for, which legacy read as
+// Latin-1 (and a file replace wrote that back), decoded by ICU; a name ICU
+// has no converter for (ISO-8859-16, VISCII, GEORGIAN-*), or bytes it cannot
+// decode, read as nothing and the file is skipped.
+std::optional<std::u16string> icuDecode(std::string_view name, QByteArrayView bytes)
+{
+    if (bytes.isEmpty())
+        return std::u16string();
+    const std::string icuName = name == "UHC" ? std::string("windows-949") : std::string(name);
+    UErrorCode status = U_ZERO_ERROR;
+    UConverter *converter = ucnv_open(icuName.c_str(), &status);
+    if (U_FAILURE(status))
+        return std::nullopt;
+    ucnv_setToUCallBack(converter, UCNV_TO_U_CALLBACK_STOP, nullptr, nullptr, nullptr, &status);
+    // At most two UTF-16 units per byte.
+    std::u16string out(static_cast<std::size_t>(bytes.size()) * 2, u'\0');
+    const int32_t n = ucnv_toUChars(converter, reinterpret_cast<UChar *>(out.data()), static_cast<int32_t>(out.size()),
+                                    bytes.data(), static_cast<int32_t>(bytes.size()), &status);
+    ucnv_close(converter);
+    if (U_FAILURE(status))
+        return std::nullopt;
+    out.resize(static_cast<std::size_t>(n));
+    return out;
 }
 
 // The encodings wxEncodingConverter has its own tables for (encconv.cpp),
@@ -224,15 +250,16 @@ std::optional<std::u16string> namedDecode(const std::string &name, QByteArrayVie
 #ifdef _WIN32
     const unsigned cp = codePageOf(name);
     if (!cp)
-        return latin1(bytes);
+        return icuDecode(name, bytes); // F1-win-charsets (legacy: Latin-1)
     CPINFO info;
     if (!::IsValidCodePage(cp) || !::GetCPInfo(cp, &info)) {
         // wxEncodingToCodepage gave -1: wxMBConv_wxwin's own table where it
-        // has one (Qt's decoder for the name stands in), else Latin-1.
+        // has one (Qt's decoder for the name stands in), else no converter
+        // (F1-win-charsets: ICU, where legacy read Latin-1).
         if (wxTableEncoding(name))
             if (QStringDecoder decoder(name.c_str(), kWhole); decoder.isValid())
                 return qtDecode(std::move(decoder), bytes);
-        return latin1(bytes);
+        return icuDecode(name, bytes);
     }
     return win32Decode(cp, bytes);
 #else
