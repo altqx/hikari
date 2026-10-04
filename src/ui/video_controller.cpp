@@ -107,16 +107,16 @@ void VideoController::openVideo(const QString &path)
 void VideoController::open(const QString &path)
 {
     const std::uint64_t request = ++m_openRequest;
-    auto asVideo = [self = QPointer<VideoController>(this), request, path] {
+    auto asVideo = [self = QPointer<VideoController>(this), request, path](application::IndexRequest index) {
         if (!self || request != self->m_openRequest)
             return;
-        self->m_session.open(path.toStdString());
+        self->m_session.open(path.toStdString(), std::move(index));
         emit self->changed();
     };
     if (m_filter)
         m_filter(path, std::move(asVideo));
     else
-        asVideo();
+        asVideo({});
 }
 
 bool VideoController::stepFrames(int frames)

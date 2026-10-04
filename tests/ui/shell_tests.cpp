@@ -1820,7 +1820,7 @@ private slots:
         QCOMPARE(audio.marks().keyframesMs[1], timebase.msAt(12));
         QTRY_COMPARE(audio.marks().videoMs.value_or(-1),
                      timebase.msAt(application->video().session().shownFrame().value_or(-1)));
-        // read through the video's own helper: the file is indexed once
+        // the video's track, opened in the box's own helper from the video's index file
         QVERIFY(audio.box().fromVideo());
         // drawn at ((ms - 20) / 10) * 10 (legacy DrawKeyframes): frames 0, 12,
         // 24 and 36 at 0, 500.5, 1001 and 1501.5 ms, 1440 samples (30 ms) a column
@@ -1893,8 +1893,10 @@ private slots:
     }
 
     // Legacy ProviderFFMS2::Init with several audio tracks: "Choose the
-    // track" lists them; the chosen one opens. For a video, Cancel fails the
-    // video's open as well.
+    // track" lists them; the chosen one opens. For a video it asks before the
+    // video is indexed: Cancel fails the open and the open video stays
+    // (legacy "safe mode"); a chosen track is the video's, the box's and
+    // general playback's.
     void audioTrackChooser()
     {
         QVERIFY(application->openFile(episode));
@@ -1914,13 +1916,127 @@ private slots:
         std::int16_t s = -1;
         audio.box().audio()->read(1000, 1, &s);
         QCOMPARE(s, std::int16_t(0)); // the second track is silence
-        // a video's audio: Cancel leaves no audio and no video
-        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
+        // a video's tracks: asked before the open video is replaced
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(video.session().state(), application::VideoSession::State::Ready);
+        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QMetaObject::invokeMethod(chooser, "reject");
-        QTRY_VERIFY(!audio.hasAudio());
-        QTRY_VERIFY(!application->video().hasVideo());
+        QTRY_VERIFY(!chooser->property("opened").toBool());
         QVERIFY(audio.trackChoices().isEmpty());
+        QTest::qWait(200);
+        QVERIFY(video.hasVideo()); // the open failed; the open video stays
+        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        // the chosen track goes to the video, its playback and the box
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        list->setProperty("currentIndex", 1);
+        QMetaObject::invokeMethod(chooser, "accept");
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()),
+                                  QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(video.session().audioTrack(), 2);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && audio.box().fromVideo(), 20000);
+        QCOMPARE(audio.box().track(), 2);
+        QVERIFY(audio.trackChoices().isEmpty()); // asked once, for the video
+    }
+
+    // A1: legacy's index files (Indices/<name>_<track>.ffindex). The video's
+    // open writes one; the box opens the video's audio from it in its own
+    // helper. On the next open of the video the index is read back, so the
+    // box reads its complete cache file back instead of decoding (legacy
+    // DiskCache(newIndex)). Opening files with a video open trims the cache
+    // folder to AUDIO_CACHE_FILES_LIMIT (10) by last access, never the cache
+    // in use.
+    void indexFilesLetTheBoxReuseItsCache()
+    {
+        delete engine;
+        engine = nullptr;
+        delete application;
+        QTemporaryDir folder;
+        app::Application::Options options;
+        options.indexDir = folder.filePath(QStringLiteral("Indices"));
+        options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
+        application = new app::Application(options);
+        const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(video.session().newIndex());
+        QCOMPARE(video.session().audioTrack(), 1);
+        QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("Indices/clip_1.ffindex"))));
+        QVERIFY(audio.box().fromVideo());
+        QVERIFY(!audio.box().cacheReused());
+        // a video without audio closes the box; the complete cache keeps its name
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!audio.hasAudio(), 20000);
+        const QString cache = folder.filePath(QStringLiteral("AudioCache/clip_track1_2ch_0.w64"));
+        QVERIFY(QFileInfo::exists(cache));
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(!video.session().newIndex());
+        QVERIFY(audio.box().cacheReused());
+        QCOMPARE(QString::fromStdU16String(audio.box().cacheFile().u16string()), cache);
+        // eleven older caches beside it, the one in use read longest ago
+        const auto setAccessed = [](const QString &path, const QDateTime &when) {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::ReadWrite));
+            QVERIFY(f.setFileTime(when, QFileDevice::FileAccessTime));
+        };
+        const QDateTime base = QDateTime::currentDateTime().addDays(-30);
+        for (int i = 0; i < 11; ++i) {
+            const QString old = folder.filePath(QStringLiteral("AudioCache/old%1.w64").arg(i));
+            QFile f(old);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("x");
+            f.close();
+            setAccessed(old, base.addDays(i));
+        }
+        setAccessed(cache, base.addDays(-1));
+        application->openDropped({}); // legacy OpenFiles ends with DeleteAudioCache
+        QVERIFY(QFileInfo::exists(cache));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old0.w64"))));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old1.w64"))));
+        QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old2.w64"))));
+        QCOMPARE(QDir(folder.filePath(QStringLiteral("AudioCache"))).entryList(QDir::Files).size(), 10);
+        delete application;
+        application = nullptr;
+    }
+
+    // Legacy DeleteOldAudioCache: the files read longest ago go until the
+    // folder holds the limit; the cache in use, under its final name or still
+    // being written (.part), is never one of them (legacy on Windows could not
+    // remove an open file and took the next; on Linux it lost the cache: R3).
+    void audioCacheTrimSkipsTheCacheInUse()
+    {
+        QTemporaryDir folder;
+        const QDateTime base = QDateTime::currentDateTime().addDays(-30);
+        const auto make = [&](const QString &name, int day) {
+            QFile f(folder.filePath(name));
+            QVERIFY(f.open(QIODevice::ReadWrite));
+            f.write("x");
+            QVERIFY(f.setFileTime(base.addDays(day), QFileDevice::FileAccessTime));
+        };
+        make(QStringLiteral("a.w64.part"), 0);
+        make(QStringLiteral("b.w64"), 1);
+        make(QStringLiteral("c.w64"), 2);
+        make(QStringLiteral("d.w64"), 3);
+        make(QStringLiteral("e.w64"), 4);
+        const std::filesystem::path dir(folder.path().toStdU16String());
+        ui::deleteOldAudioCache(dir, dir / "a.w64", 0); // a limit below 1 keeps everything
+        QCOMPARE(QDir(folder.path()).entryList(QDir::Files).size(), 5);
+        ui::deleteOldAudioCache(dir, dir / "a.w64", 2);
+        QCOMPARE(QDir(folder.path()).entryList(QDir::Files),
+                 (QStringList{QStringLiteral("a.w64.part"), QStringLiteral("e.w64")}));
+        make(QStringLiteral("f.w64"), 5);
+        ui::deleteOldAudioCache(dir, {}, 2); // nothing in use: the oldest goes
+        QCOMPARE(QDir(folder.path()).entryList(QDir::Files),
+                 (QStringList{QStringLiteral("e.w64"), QStringLiteral("f.w64")}));
     }
 
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video given to

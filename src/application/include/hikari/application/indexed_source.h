@@ -40,6 +40,17 @@ struct SourceTimeline {
     int firstAudioTrack = -1;      // -1: the source has no audio
     std::vector<int> audioTracks;  // every audio track, in container order
     std::vector<int> keyframes;    // frame indices of keyframes, ascending (V2)
+    bool newIndex = true;          // A1: indexed now, not read from an index file
+};
+
+// How an open indexes (A1; legacy ProviderFFMS2::Init). Legacy indexed the
+// video with the one audio track it chose and kept the index in
+// <settings folder>/Indices/<name>_<track>.ffindex, read again on the next
+// open of the same file and track while it is not older than the file.
+struct IndexRequest {
+    static constexpr int kEveryAudioTrack = -2;
+    int audioTrack = kEveryAudioTrack; // -1: no audio track; n: track n alone
+    std::string indexFile;             // empty: no index file
 };
 
 // AudioDecode (N2): immutable PCM for a half-open source sample range.
@@ -103,6 +114,14 @@ public:
     virtual ~IndexedSourcePort() = default;
     // Starts indexing; replaces any open source (its pending results go Stale).
     virtual std::uint64_t open(const std::string &path, Progress progress, Opened done) = 0;
+    // The same with legacy's track choice and index file; a port without
+    // index files indexes as open() does.
+    virtual std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
+                                      Opened done)
+    {
+        (void)request;
+        return open(path, std::move(progress), std::move(done));
+    }
     virtual void cancelOpen() = 0;
     virtual void frame(int index, FrameReady done) = 0;
     // Opens an audio track of the open source (its timeline's firstAudioTrack).

@@ -3,14 +3,20 @@
 // Messages of the isolated FFMS2 media helper (N1/N2; ADR 0016). Shared by
 // hikari-media-helper and the host adapter.
 //
-// Open    request: u8 Open, str path
+// Open    request: u8 Open, str path, i32 audioTrack (-2: every audio track;
+//                  -1: none; n: track n alone, as legacy ProviderFFMS2::Init
+//                  indexed the chosen track), str indexFile (legacy's index
+//                  cache, Indices/<name>_<track>.ffindex; empty: none). An
+//                  index file newer than the source that belongs to it is read
+//                  instead of indexing; a new index is written to it.
 //         progress: i64 done, i64 total
 //         terminal Ok: i32 track, i64 fpsNum, i64 fpsDen, i64 timeBaseNum,
 //                      i64 timeBaseDen, i32 frameCount, i64 pts[frameCount],
 //                      i32 firstAudioTrack (-1: none), i32 audioCount,
 //                      i32 audioTracks[audioCount] (every audio track, in order),
 //                      i32 keyframeCount, i32 keyframes[keyframeCount] (frame
-//                      indices FFMS2 marks as keyframes, ascending)
+//                      indices FFMS2 marks as keyframes, ascending),
+//                      u8 newIndex (1: indexed now, 0: read from indexFile)
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open
@@ -39,15 +45,15 @@
 //         terminal Ok: u8 hasVideo, i32 count, then per audio track i32 track,
 //                      u8 hasName, str name, u8 hasLanguage, str language,
 //                      str codec (the indexer's, nothing indexed)
-// OpenDisplayAudio request: u8 OpenDisplayAudio, str path, i32 track
+// OpenDisplayAudio request: u8 OpenDisplayAudio, str path, i32 track,
+//                  str indexFile (as Open's)
 //         progress: i64 done, i64 total (indexing)
 //         terminal Ok: as OpenAudio, for that track alone indexed, in
 //                      legacy's decode format (S16; stereo or mono; delay
-//                      FFMS_DELAY_FIRST_VIDEO_TRACK; origin 0). Replaces the
-//                      open source; DisplayRead reads it.
-// OpenSourceDisplayAudio request: u8 OpenSourceDisplayAudio, i32 track
-//         terminal Ok: as OpenDisplayAudio, over the open video's index (a
-//                      second audio source; the video and Audio stay open)
+//                      FFMS_DELAY_FIRST_VIDEO_TRACK; origin 0), then u8
+//                      newIndex. Replaces the open source; DisplayRead reads it.
+// (10, OpenSourceDisplayAudio, read the open video's audio in the video's own
+// helper in protocol 5; removed in 6: the box has a helper of its own.)
 // DisplayRead request: u8 DisplayRead, i64 start, i64 count
 //         terminal Ok: as Audio, from the box's audio source
 
@@ -55,11 +61,12 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 5; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
-                                                   // 5: Probe, a chosen track, the video's audio, DisplayRead
+inline constexpr std::uint32_t kProtocolVersion = 6; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+                                                   // 5: Probe, a chosen track, the video's audio, DisplayRead;
+                                                   // 6: index files and the audio track in Open, no shared display audio
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
-                                 OpenDisplayAudio = 8, Probe = 9, OpenSourceDisplayAudio = 10, DisplayRead = 11 };
+                                 OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11 };
 
 } // namespace hikari::backends::media

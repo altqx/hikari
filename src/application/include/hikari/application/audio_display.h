@@ -69,6 +69,10 @@ std::unique_ptr<AudioStore> ramAudioStore(int channels);
 // store is dropped, the .part file becomes `path`, otherwise it is removed.
 // Null (and `error` set) when the file cannot be created.
 std::unique_ptr<AudioStore> diskAudioStore(const std::filesystem::path &path, int channels, std::string *error);
+// Legacy DiskCache reusing a complete cache file: `path` read as it is (its
+// size gives the frames; reads past it are silence). Never renamed or removed.
+// Null when it cannot be opened.
+std::unique_ptr<AudioStore> cachedAudioStore(const std::filesystem::path &path, int channels);
 
 // The samples the display reads: one 16-bit channel at the source rate
 // (legacy Provider::GetBuffer, the mixdown of the cached audio: the channels'
@@ -89,6 +93,9 @@ public:
     bool appendFrames(const std::int16_t *interleaved, std::int64_t frames, int channels);
     // Zero frames (a positive AUDIO_DELAY's start, or a block that failed to decode).
     bool appendSilence(std::int64_t frames, int channels);
+    // A store that already holds the audio (a reused cache file): the peak
+    // table gets its next `frames` frames; false once every frame is in.
+    bool scanStored(std::int64_t frames);
     void finish();
 
     int sampleRate() const { return m_rate; }
@@ -107,6 +114,7 @@ private:
     bool m_finished = false;
     std::unique_ptr<AudioStore> m_store;
     mutable std::vector<std::int16_t> m_frames; // read's interleaved frames
+    std::int64_t m_scanned = 0;                 // scanStored's position
     WaveformPeaks m_peaks{kPeakBlock};
 };
 

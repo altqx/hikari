@@ -6,12 +6,12 @@
 // stage they happened at and FFMS2's own text, so the box can log legacy's
 // messages ("Indexing error occurred: %s" and the others).
 //
-// Two ways to open: a file of its own (indexed for that one track, replacing
-// whatever the helper had open: legacy Provider::Get for the box), or a
-// second audio source over the video the helper already has open (legacy
-// AudioDisplay::SetFile reusing the video's provider), which needs no second
-// index. Either way displayAudio() reads it, and cancelDisplay() resolves only
-// the box's own outstanding requests, never the video's.
+// The box has a media helper of its own, so its reads never wait behind the
+// video's frames (legacy decoded the cache on a thread of its own). Opening
+// uses legacy's index file (Indices/<name>_<track>.ffindex): for the open
+// video's audio the video has just written it, so nothing is indexed twice.
+// displayAudio() reads the open track, and cancelDisplay() resolves the box's
+// outstanding requests.
 
 #include "hikari/application/indexed_source.h"
 
@@ -53,24 +53,30 @@ struct AudioFailure {
     std::string message; // FFMS2's error text, when it gave one
 };
 
+// An opened track and whether its index was made now (legacy newIndex: a
+// disk cache is reused only with an index read from its file).
+struct DisplayAudioOpened {
+    AudioInfo info;
+    bool newIndex = true;
+};
+
 class DisplayAudioPort {
 public:
     using Progress = IndexedSourcePort::Progress;
     using Probed = std::function<void(std::expected<MediaProbe, AudioFailure>)>;
-    using Opened = std::function<void(std::expected<AudioInfo, AudioFailure>)>;
+    using Opened = std::function<void(std::expected<DisplayAudioOpened, AudioFailure>)>;
     using Read = std::function<void(std::expected<AudioBlock, AudioFailure>)>;
 
     virtual ~DisplayAudioPort() = default;
     // Lists a file's tracks without indexing it or touching what is open.
     virtual void probe(const std::string &path, Probed done) = 0;
-    // Indexes `path` for `track` alone (decode errors ignored) and opens it:
-    // S16, front left and right when the track has more than one channel,
-    // else mono, at the track's rate, sample 0 at the first video frame's time
+    // Reads `indexFile` when it can be used, else indexes `path` for `track`
+    // alone (decode errors ignored) and writes it; then opens the track: S16,
+    // front left and right when the track has more than one channel, else
+    // mono, at the track's rate, sample 0 at the first video frame's time
     // (FFMS_DELAY_FIRST_VIDEO_TRACK). Replaces whatever the helper had open.
-    virtual void openDisplayAudio(const std::string &path, int track, Progress progress, Opened done) = 0;
-    // The same over the video the helper has open (its index already holds
-    // every audio track); the video stays open.
-    virtual void openSourceDisplayAudio(int track, Opened done) = 0;
+    virtual void openDisplayAudio(const std::string &path, int track, const std::string &indexFile, Progress progress,
+                                  Opened done) = 0;
     // A half-open range of sample frames of the box's audio.
     virtual void displayAudio(std::int64_t start, std::int64_t count, Read done) = 0;
     // Resolves the box's outstanding open and reads as Cancelled now.

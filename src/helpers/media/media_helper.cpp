@@ -15,7 +15,9 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -47,8 +49,7 @@ struct Source {
     int channels = 0;
     std::int64_t channelLayout = 0;
     // A1: the audio box's audio, in legacy's decode format (S16, 1 or 2
-    // channels). A second source beside `audio`, so the box can read the open
-    // video's audio while general playback reads its own.
+    // channels), in the box's own helper.
     std::unique_ptr<FFMS_AudioSource, AudioDeleter> display;
     std::int64_t displaySamples = 0;
     int displayChannels = 0;
@@ -81,9 +82,59 @@ int FFMS_CC onProgress(int64_t current, int64_t total, void *opaque)
     return p->responder->cancelled() ? 1 : 0; // non-zero cancels indexing
 }
 
+// Paths arrive as UTF-8 (FFMS2 takes UTF-8 on every platform).
+std::filesystem::path fsPath(const std::string &utf8)
+{
+    return std::filesystem::path(std::u8string(utf8.begin(), utf8.end()));
+}
+
+// Legacy ProviderFFMS2::Init's index cache: an index file is used when it is
+// not older than the source (FFMS2 matches an index only by size and a hash
+// of the file's ends) and FFMS2 says it belongs to the file.
+FFMS_Index *readIndexFile(const std::string &path, const std::string &indexFile)
+{
+    if (indexFile.empty())
+        return nullptr;
+    std::error_code ec;
+    const auto index = fsPath(indexFile);
+    if (!std::filesystem::exists(index, ec))
+        return nullptr;
+    std::error_code sourceError, indexError;
+    const auto sourceTime = std::filesystem::last_write_time(fsPath(path), sourceError);
+    const auto indexTime = std::filesystem::last_write_time(index, indexError);
+    if (!sourceError && !indexError && sourceTime > indexTime)
+        return nullptr; // legacy: a source changed after indexing is indexed again
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    FFMS_Index *read = FFMS_ReadIndex(indexFile.c_str(), &err);
+    if (read && FFMS_IndexBelongsToFile(read, path.c_str(), &err) != 0) {
+        FFMS_DestroyIndex(read);
+        return nullptr;
+    }
+    return read;
+}
+
+// Legacy: the folder is made when missing; a failed write is a debug message
+// ("Cannot save index, error %s occurred") and the open goes on.
+void writeIndexFile(const std::string &indexFile, FFMS_Index *index)
+{
+    if (indexFile.empty())
+        return;
+    std::error_code ec;
+    std::filesystem::create_directories(fsPath(indexFile).parent_path(), ec);
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (FFMS_WriteIndex(indexFile.c_str(), index, &err) != 0)
+        std::fprintf(stderr, "Cannot save index, error %s occurred\n", errorText(err).c_str());
+}
+
+constexpr int kEveryAudioTrack = -2;
+
 void open(Source &source, Reader &in, Responder &r)
 {
     const std::string path = in.str();
+    const int audioTrack = in.i32();
+    const std::string indexFile = in.str();
     if (!in.ok())
         return r.terminal(Outcome::InvalidInput, bytesOf("malformed open"));
     source = {};
@@ -92,12 +143,24 @@ void open(Source &source, Reader &in, Responder &r)
     FFMS_Indexer *indexer = FFMS_CreateIndexer(path.c_str(), &err);
     if (!indexer)
         return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
-    Progress progress{&r};
-    FFMS_SetProgressCallback(indexer, onProgress, &progress);
-    FFMS_TrackTypeIndexSettings(indexer, FFMS_TYPE_AUDIO, 1, 0); // audio is not indexed by default
-    std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_ABORT, &err));
-    if (!index)
-        return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
+    std::unique_ptr<FFMS_Index, IndexDeleter> index(readIndexFile(path, indexFile));
+    const bool newIndex = !index;
+    if (index) {
+        FFMS_CancelIndexing(indexer); // legacy: the index file stands in for indexing
+    } else {
+        Progress progress{&r};
+        FFMS_SetProgressCallback(indexer, onProgress, &progress);
+        // audio is not indexed by default; legacy indexes the chosen track alone
+        if (audioTrack == kEveryAudioTrack)
+            FFMS_TrackTypeIndexSettings(indexer, FFMS_TYPE_AUDIO, 1, 0);
+        else if (audioTrack >= 0 && audioTrack < FFMS_GetNumTracksI(indexer) &&
+                 FFMS_GetTrackTypeI(indexer, audioTrack) == FFMS_TYPE_AUDIO)
+            FFMS_TrackIndexSettings(indexer, audioTrack, 1, 0);
+        index.reset(FFMS_DoIndexing2(indexer, FFMS_IEH_ABORT, &err));
+        if (!index)
+            return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
+        writeIndexFile(indexFile, index.get());
+    }
     const int track = FFMS_GetFirstTrackOfType(index.get(), FFMS_TYPE_VIDEO, &err);
     if (track < 0)
         return r.terminal(Outcome::Unsupported, bytesOf("no video track"));
@@ -136,6 +199,7 @@ void open(Source &source, Reader &in, Responder &r)
     out.i32(static_cast<std::int32_t>(keyframes.size()));
     for (int k : keyframes)
         out.i32(k);
+    out.u8(newIndex ? 1 : 0);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -254,7 +318,8 @@ void probe(Reader &in, Responder &r)
 
 // Legacy's decode format on an audio source: S16, front left and right for
 // more than one channel, else front centre. Writes the Ok reply.
-void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio, int track, Responder &r)
+void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio, int track, bool newIndex,
+                   Responder &r)
 {
     char buffer[1024];
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
@@ -281,16 +346,20 @@ void finishDisplay(Source &source, std::unique_ptr<FFMS_AudioSource, AudioDelete
                                 .i64(layout)
                                 .i64(source.displaySamples)
                                 .i64(0)
+                                .u8(newIndex ? 1 : 0)
                                 .take());
 }
 
-// A1: the audio box's own file, as legacy ProviderFFMS2 opens it for the box:
-// the chosen audio track indexed (decode errors ignored, FFMS_IEH_IGNORE),
-// sample 0 at the first video frame (FFMS_DELAY_FIRST_VIDEO_TRACK).
+// A1: the audio box's file, as legacy ProviderFFMS2 opens it: the index file
+// when it can be used (an open video wrote it for the same track), else the
+// chosen audio track indexed (decode errors ignored, FFMS_IEH_IGNORE) and the
+// index written; sample 0 at the first video frame
+// (FFMS_DELAY_FIRST_VIDEO_TRACK).
 void openDisplayAudio(Source &source, Reader &in, Responder &r)
 {
     const std::string path = in.str();
     const int track = in.i32();
+    const std::string indexFile = in.str();
     if (!in.ok())
         return failDisplay(r, Outcome::InvalidInput, Stage::Host, "malformed open");
     source = {};
@@ -303,39 +372,27 @@ void openDisplayAudio(Source &source, Reader &in, Responder &r)
         FFMS_CancelIndexing(indexer);
         return failDisplay(r, Outcome::Unsupported, Stage::Host, "no audio track");
     }
-    Progress progress{&r};
-    FFMS_SetProgressCallback(indexer, onProgress, &progress);
-    FFMS_TrackIndexSettings(indexer, track, 1, 0);
-    std::unique_ptr<FFMS_Index, IndexDeleter> index(FFMS_DoIndexing2(indexer, FFMS_IEH_IGNORE, &err));
-    if (!index)
-        return failDisplay(r, r.cancelled() ? Outcome::Cancelled : Outcome::Failed, Stage::Indexing, errorText(err));
+    std::unique_ptr<FFMS_Index, IndexDeleter> index(readIndexFile(path, indexFile));
+    const bool newIndex = !index;
+    if (index) {
+        FFMS_CancelIndexing(indexer);
+    } else {
+        Progress progress{&r};
+        FFMS_SetProgressCallback(indexer, onProgress, &progress);
+        FFMS_TrackIndexSettings(indexer, track, 1, 0);
+        index.reset(FFMS_DoIndexing2(indexer, FFMS_IEH_IGNORE, &err));
+        if (!index)
+            return failDisplay(r, r.cancelled() ? Outcome::Cancelled : Outcome::Failed, Stage::Indexing,
+                               errorText(err));
+        writeIndexFile(indexFile, index.get());
+    }
     std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
         FFMS_CreateAudioSource(path.c_str(), track, index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
     if (!audio)
         return failDisplay(r, Outcome::Unsupported, Stage::Source, errorText(err));
     source.path = path;
     source.index = std::move(index);
-    finishDisplay(source, std::move(audio), track, r);
-}
-
-// A1: the open video's audio for the box (legacy SetFile reusing the video's
-// provider): a second source over the video's index, which holds every
-// audio track. The video and general playback's source are left as they are.
-void openSourceDisplayAudio(Source &source, Reader &in, Responder &r)
-{
-    const int track = in.i32();
-    if (!in.ok() || !source.index)
-        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "not open");
-    char buffer[1024];
-    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
-    source.display.reset();
-    source.displaySamples = 0;
-    source.displayChannels = 0;
-    std::unique_ptr<FFMS_AudioSource, AudioDeleter> audio(
-        FFMS_CreateAudioSource(source.path.c_str(), track, source.index.get(), FFMS_DELAY_FIRST_VIDEO_TRACK, &err));
-    if (!audio)
-        return failDisplay(r, Outcome::Unsupported, Stage::Source, errorText(err));
-    finishDisplay(source, std::move(audio), track, r);
+    finishDisplay(source, std::move(audio), track, newIndex, r);
 }
 
 void displayRead(Source &source, Reader &in, Responder &r)
@@ -517,8 +574,6 @@ int main()
             return openDisplayAudio(source, in, r);
         case media::Command::Probe:
             return probe(in, r);
-        case media::Command::OpenSourceDisplayAudio:
-            return openSourceDisplayAudio(source, in, r);
         case media::Command::DisplayRead:
             return displayRead(source, in, r);
         }

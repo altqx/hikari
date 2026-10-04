@@ -2,6 +2,7 @@
 
 #include <QDir>
 #include <QFileInfo>
+#include <QTimer>
 
 #include <map>
 
@@ -11,23 +12,28 @@ namespace hikari::ui {
 
 using application::AudioBox;
 
-namespace {
-
 // Legacy ProviderFFMS2::DeleteOldAudioCache: with more files than the limit
 // in the cache folder, the ones read longest ago go (legacy sorted on the
-// last access time), the file in use excepted.
-void deleteOldAudioCache(const std::filesystem::path &file, int limit)
+// last access time) until the surplus is gone. The cache file in use, under
+// its final name or as it is being written (.part), is never removed: legacy
+// on Windows could not remove an open file and went on to the next oldest
+// (R5); legacy on Linux unlinked it and lost the cache (R3, data loss).
+void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesystem::path &inUse, int limit)
 {
-    if (limit < 1 || file.empty())
+    if (limit < 1 || folder.empty())
         return;
-    const QDir dir(QString::fromStdU16String(file.parent_path().u16string()));
-    const QString inUse = QFileInfo(QString::fromStdU16String(file.u16string())).absoluteFilePath();
+    const QDir dir(QString::fromStdU16String(folder.u16string()));
+    QString used, usedPart;
+    if (!inUse.empty()) {
+        used = QFileInfo(QString::fromStdU16String(inUse.u16string())).absoluteFilePath();
+        usedPart = used + QStringLiteral(".part");
+    }
     const auto entries = dir.entryInfoList(QDir::Files);
     if (entries.size() <= limit)
         return;
     std::multimap<QDateTime, QString> byAccess;
     for (const QFileInfo &entry : entries)
-        if (entry.absoluteFilePath() != inUse)
+        if (used.isEmpty() || (entry.absoluteFilePath() != used && entry.absoluteFilePath() != usedPart))
             byAccess.emplace(entry.fileTime(QFileDevice::FileAccessTime), entry.absoluteFilePath());
     qsizetype removed = 0;
     const qsizetype surplus = entries.size() - limit;
@@ -39,8 +45,6 @@ void deleteOldAudioCache(const std::filesystem::path &file, int limit)
     }
 }
 
-} // namespace
-
 AudioController::AudioController(application::DisplayAudioPort &own, QObject *parent)
     : QObject(parent), m_box(own)
 {
@@ -50,16 +54,39 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
     });
     m_box.setSettings([this] { return m_settings ? m_settings() : application::AudioCacheSettings{}; });
     m_box.setChooser([this](const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer) {
-        m_trackChoices.clear();
-        for (const auto &row : rows)
-            m_trackChoices << QString::fromStdString(row);
-        m_trackAnswer = std::move(answer);
-        emit trackChoicesChanged();
+        ask(rows, std::move(answer), true);
     });
-    m_box.setCached([this](const std::filesystem::path &file) {
-        deleteOldAudioCache(file, m_settings ? m_settings().cacheFilesLimit : 10);
-    });
+    m_box.setDefer([this](std::function<void()> step) { QTimer::singleShot(0, this, std::move(step)); });
     newView();
+}
+
+void AudioController::ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer,
+                          bool forBox)
+{
+    if (auto earlier = std::exchange(m_trackAnswer, nullptr))
+        earlier(std::nullopt); // a newer question replaces an unanswered one
+    m_trackChoices.clear();
+    for (const auto &row : rows)
+        m_trackChoices << QString::fromStdString(row);
+    m_trackAnswer = std::move(answer);
+    m_trackForBox = forBox;
+    emit trackChoicesChanged();
+}
+
+void AudioController::askTrack(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer)
+{
+    ask(rows, std::move(answer), false);
+}
+
+void AudioController::trimCache()
+{
+    if (m_box.state() == AudioBox::State::Opening) {
+        m_trimPending = true; // the cache file in use is known once the track is open
+        return;
+    }
+    m_trimPending = false;
+    const auto settings = m_settings ? m_settings() : application::AudioCacheSettings{};
+    deleteOldAudioCache(settings.cacheDir, m_box.cacheFile(), settings.cacheFilesLimit);
 }
 
 void AudioController::setSettings(std::function<application::AudioCacheSettings()> settings)
@@ -67,9 +94,9 @@ void AudioController::setSettings(std::function<application::AudioCacheSettings(
     m_settings = std::move(settings);
 }
 
-void AudioController::openFromVideo(application::DisplayAudioPort &video, const QString &path)
+void AudioController::openFromVideo(const QString &path, int track, bool videoNewIndex)
 {
-    m_box.openFromVideo(video, path.toStdString());
+    m_box.openFromVideo(path.toStdString(), track, videoNewIndex);
 }
 
 void AudioController::chooseTrack(int row)
@@ -152,16 +179,16 @@ void AudioController::boxChanged()
     } else if (!loaded && m_box.error()) {
         // a failed SetFile destroys the box; the box logged what legacy logs
         newView();
-        if (!m_trackChoices.isEmpty() || m_trackAnswer) {
+        if (m_trackForBox && (!m_trackChoices.isEmpty() || m_trackAnswer)) {
             m_trackAnswer = nullptr;
             m_trackChoices.clear();
             emit trackChoicesChanged();
         }
-        if (m_box.declined() && m_box.fromVideo())
-            emit videoAudioDeclined();
     } else if (!loaded) {
         m_view.clearSource();
     }
+    if (m_trimPending && state != AudioBox::State::Opening)
+        trimCache();
     emit changed();
     redraw();
 }

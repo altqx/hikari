@@ -5,24 +5,32 @@
 // does, so a failed open leaves no audio. The file's tracks are listed; with
 // several audio tracks one is taken by ACCEPTED_AUDIO_STREAM's languages or
 // chosen by the user ("Choose the track"; cancelling ends the open). The
-// track is then opened through the source in legacy's decode format and
+// track is then opened through the box's own source in legacy's decode
+// format, with legacy's index file (Indices/<name>_<track>.ffindex), and
 // cached the way legacy caches it: in a disk cache file by default, block
 // after block of 332768 frames (DiskCache), or in RAM with AUDIO_RAM_CACHE
 // in blocks of 4 MiB (RAMCache), with AUDIO_DELAY's silence or skip and the
-// progress legacy draws; the waveform shows once every block is in.
+// progress legacy draws; the waveform shows once every block is in. A disk
+// cache file is read again instead of decoding when the index was read from
+// its file and was not made now (legacy DiskCache(newIndex)).
 //
-// A file of the box's own is indexed through `own`; the open video's audio is
-// read through the video's source (legacy reused the video's provider), so
-// a file is never indexed twice. Once cached, the audio needs neither.
+// The open video's audio is the video's track (the one the video's open
+// chose), opened from the index file the video's open wrote, so nothing is
+// indexed twice and the video's helper never waits for the box. Its cache is
+// made again when the video's index was new.
 //
 // A name starting with "dummy" opens blank audio (legacy ProviderDummy):
 // 2 h 30 min of 44.1 kHz mono silence, ready at once; "?dummy" (a dummy
 // video's name) has no audio. Answers for an earlier open are dropped.
 //
-// Approved departures (R3-hang-crash-loss): a block FFMS2 fails to decode is
-// silence (legacy cached whatever the buffer held) and caching goes on; a
-// cache that cannot be allocated or written, or a media helper that ends,
-// ends the open with a message (legacy crashed or read garbage).
+// A block FFMS2 fails to decode is cached as legacy cached it: in a disk cache
+// the previous block's frames again (legacy reused its block buffer; zeros
+// before the first block), and caching goes on.
+//
+// Approved departures (R3-hang-crash-loss): in a RAM cache that block is
+// silence (legacy left the new block's memory uninitialised: an undefined
+// read); a cache that cannot be allocated or written, or a media helper that
+// ends, ends the open with a message (legacy crashed or read garbage).
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/display_audio_port.h"
@@ -43,6 +51,7 @@ struct AudioCacheSettings {
     int delayMs = 0;                          // AUDIO_DELAY
     int cacheFilesLimit = 10;                 // AUDIO_CACHE_FILES_LIMIT
     std::filesystem::path cacheDir;           // <config>/AudioCache
+    std::filesystem::path indexDir;           // <config>/Indices (empty: no index files)
     std::vector<std::string> acceptedStreams; // ACCEPTED_AUDIO_STREAM, split on ';'
 };
 
@@ -62,6 +71,9 @@ AudioTrackChoice legacyAudioTrackChoice(const std::vector<AudioTrack> &tracks, c
 std::vector<std::string> legacyAcceptedStreams(const std::string &value);
 // Legacy AudioLoad's cache file name: <name>_track<n>_<c>ch_<delay>.w64.
 std::string legacyAudioCacheName(const std::string &path, int track, int channels, std::int64_t delayFrames);
+// Legacy ProviderFFMS2::Init's index file name: <name>_<track>.ffindex (track
+// -1 without audio).
+std::string legacyIndexName(const std::string &path, int track);
 
 class AudioBox {
 public:
@@ -88,13 +100,15 @@ public:
     void setLog(Log log) { m_log = std::move(log); }
     void setChooser(Chooser chooser) { m_chooser = std::move(chooser); }
     void setSettings(std::function<AudioCacheSettings()> settings) { m_settings = std::move(settings); }
-    // A disk cache was filled (legacy then trims old caches, DeleteOldAudioCache).
-    void setCached(std::function<void(const std::filesystem::path &)> cached) { m_cached = std::move(cached); }
+    // Runs `step` later (the UI's event loop), so reading back a long cache
+    // file does not hold the caller; unset, it runs at once.
+    void setDefer(std::function<void(std::function<void()>)> defer) { m_defer = std::move(defer); }
 
     // A file of the box's own (GLOBAL_OPEN_AUDIO, recent audio, Open audio from video).
     void open(const std::string &path);
-    // The open video's audio, read through the video's source.
-    void openFromVideo(DisplayAudioPort &video, const std::string &path);
+    // The open video's audio: the track the video's open chose, with the
+    // index file it wrote (`videoNewIndex`: the video indexed it now).
+    void openFromVideo(const std::string &path, int track, bool videoNewIndex);
     void close();
 
     State state() const { return m_state; }
@@ -114,8 +128,11 @@ public:
     const DisplayAudio *audio() const { return m_audio ? &*m_audio : nullptr; }
     int track() const { return m_track; }
     std::int64_t delayFrames() const { return m_delay; }
-    // The disk cache file being filled (empty with a RAM cache).
+    // The disk cache file in use (empty with a RAM cache): written as
+    // cacheFile().part until complete, or read back as it is.
     const std::filesystem::path &cacheFile() const { return m_cacheFile; }
+    // The cache file was read back instead of decoded.
+    bool cacheReused() const { return m_reused; }
     // Changes with every open and close, so a view can tell its audio apart.
     std::uint64_t serial() const { return m_request; }
 
@@ -123,7 +140,9 @@ private:
     void start(std::uint64_t request);
     void choose(std::uint64_t request, const MediaProbe &probe);
     void openTrack(std::uint64_t request, int track);
-    void opened(std::uint64_t request, const AudioInfo &info);
+    void opened(std::uint64_t request, const AudioInfo &info, bool newIndex);
+    void scanNext(std::uint64_t request);
+    void ready();
     void readNext(std::uint64_t request);
     void readSource(std::uint64_t request, std::int64_t start, std::int64_t count);
     void notify();
@@ -132,15 +151,16 @@ private:
     template <typename F> auto guard(std::uint64_t request, F f);
 
     DisplayAudioPort &m_own;
-    DisplayAudioPort *m_reader = nullptr; // the source of the open in progress
     std::function<void()> m_observer;
     Log m_log;
     Chooser m_chooser;
     std::function<AudioCacheSettings()> m_settings;
-    std::function<void(const std::filesystem::path &)> m_cached;
+    std::function<void(std::function<void()>)> m_defer;
     State m_state = State::Closed;
     std::string m_path;
     bool m_fromVideo = false;
+    bool m_videoNewIndex = false;
+    bool m_reused = false;
     bool m_choosing = false;
     bool m_declined = false;
     std::optional<SourceError> m_error;
@@ -156,6 +176,7 @@ private:
     std::int64_t m_written = 0;                      // RAM: frames of the cache filled
     std::int64_t m_silence = 0;                      // RAM: a positive delay's leading frames
     int m_block = 0, m_blocks = 0;                   // RAM: the current block, blocks in all
+    std::vector<std::int16_t> m_blockBuffer;         // disk: legacy DiskCache's reused block buffer
     float m_progress = 0;
     std::uint64_t m_request = 0; // the newest open; older answers are dropped
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

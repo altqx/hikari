@@ -22,7 +22,7 @@ void VideoSession::setPresenter(PresenterPort *presenter)
     present();
 }
 
-void VideoSession::open(const std::string &path)
+void VideoSession::open(const std::string &path, IndexRequest index)
 {
     // A Line seek made before the video opened still applies to it.
     const auto pendingSeek = m_pendingSeek;
@@ -31,7 +31,8 @@ void VideoSession::open(const std::string &path)
     m_path = path;
     m_state = State::Opening;
     const std::weak_ptr<bool> alive = m_alive;
-    m_source.open(path, nullptr, [this, alive](std::expected<SourceTimeline, SourceError> opened) {
+    const int chosen = index.audioTrack;
+    m_source.openIndexed(path, index, nullptr, [this, alive, chosen](std::expected<SourceTimeline, SourceError> opened) {
         if (alive.expired() || m_state != State::Opening)
             return;
         if (!opened) {
@@ -58,6 +59,11 @@ void VideoSession::open(const std::string &path)
         m_timeline = core::FrameTimeline::indexed(m_starts);
         m_keyframes = opened->keyframes;
         m_hasAudio = opened->firstAudioTrack >= 0;
+        m_audioTrack = chosen >= 0 ? chosen : opened->firstAudioTrack;
+        const auto ordinal = std::find(opened->audioTracks.begin(), opened->audioTracks.end(), m_audioTrack);
+        m_audioOrdinal = ordinal == opened->audioTracks.end() ? -1
+                                                              : static_cast<int>(ordinal - opened->audioTracks.begin());
+        m_newIndex = opened->newIndex;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_state = State::Ready;
         notify();
@@ -86,6 +92,10 @@ void VideoSession::close()
     m_error.reset();
     m_starts.clear();
     m_keyframes.clear();
+    m_hasAudio = false;
+    m_audioTrack = -1;
+    m_audioOrdinal = -1;
+    m_newIndex = true;
     m_timeline.reset();
     m_requested.reset();
     m_pendingSeek.reset();
@@ -244,6 +254,8 @@ bool VideoSession::play()
         });
     };
     if (m_playerPath == m_path) {
+        if (m_audioOrdinal >= 0) // the same file reopened may have another track chosen
+            m_player->selectAudioTrack(m_audioOrdinal);
         start();
     } else {
         m_player->open(m_path, [this, alive, epoch, start](std::expected<MediaDescription, PlayerError> opened) {
@@ -254,6 +266,9 @@ bool VideoSession::play()
                 return notify();
             }
             m_playerPath = m_path;
+            // A1: the video's chosen audio track (legacy played the box's)
+            if (m_audioOrdinal >= 0 && m_audioOrdinal < static_cast<int>(opened->audioTracks.size()))
+                m_player->selectAudioTrack(m_audioOrdinal);
             start();
         });
     }

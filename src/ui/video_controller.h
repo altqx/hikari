@@ -39,10 +39,13 @@ public:
 
     application::VideoSession &session() { return m_session; }
     // A1: legacy RendererFFMS2::OpenFile gives a file with audio but no video
-    // to the audio box and keeps the current video. The filter sees every
-    // file before the video session does and calls `asVideo` to open it as
-    // video; a later open supersedes one the filter has not let through.
-    using OpenFilter = std::function<void(const QString &path, std::function<void()> asVideo)>;
+    // to the audio box, and its provider chooses the audio track before it
+    // indexes; either way the current video stays until the new one opens.
+    // The filter sees every file before the video session does and calls
+    // `asVideo` with the track and index file to open it as video; when it
+    // never calls it (audio only, "Choose the track" cancelled), the current
+    // video stays. A later open supersedes one the filter has not let through.
+    using OpenFilter = std::function<void(const QString &path, std::function<void(application::IndexRequest)> asVideo)>;
     void setOpenFilter(OpenFilter filter) { m_filter = std::move(filter); }
 
     // The editing target changed: closes the video and offers the new

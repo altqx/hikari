@@ -84,6 +84,9 @@ public:
         // A1: legacy's AudioCache folder; empty: "AudioCache" beside the
         // settings file, or a temporary directory without one (tests).
         QString audioCacheDir;
+        // A1: legacy's FFMS2 index files (Indices); empty: "Indices" beside
+        // the settings file, or none without one (tests).
+        QString indexDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -435,9 +438,14 @@ private:
     std::optional<application::LegacyTimebase> m_audioTimebase;
     std::string m_audioTimebasePath;
     std::vector<int> m_audioKeyframes;
+    std::function<application::AudioCacheSettings()> m_audioSettings;
+    QString m_indexDir; // legacy Indices; empty: no index files
     void refreshAudio();
     void followVideoInAudio();
     void rememberRecentAudio(const QString &path);
+    void trimAudioCache();
+    // Legacy's index file for `path` and an audio track (-1: none).
+    QString indexFile(const QString &path, int track) const;
 };
 
 } // namespace hikari::app

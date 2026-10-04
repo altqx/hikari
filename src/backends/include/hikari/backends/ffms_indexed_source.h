@@ -35,6 +35,8 @@ public:
     ~FfmsIndexedSource() override;
 
     std::uint64_t open(const std::string &path, Progress progress, Opened done) override;
+    std::uint64_t openIndexed(const std::string &path, const application::IndexRequest &index, Progress progress,
+                              Opened done) override;
     void cancelOpen() override;
     void frame(int index, FrameReady done) override;
     void openAudio(int track, AudioOpened done) override;
@@ -45,16 +47,15 @@ public:
     void chapters(const std::string &path, Listed done) override;
     std::uint64_t generation() const override { return m_generation; }
 
-    // DisplayAudioPort (A1). Opening a file of its own starts a new
-    // generation like open(); the video's audio belongs to the open video's.
+    // DisplayAudioPort (A1). Opening the box's file starts a new generation
+    // like open(); the audio box uses an instance of its own.
     void probe(const std::string &path, Probed done) override;
-    void openDisplayAudio(const std::string &path, int track, Progress progress,
+    void openDisplayAudio(const std::string &path, int track, const std::string &indexFile, Progress progress,
                           application::DisplayAudioPort::Opened done) override;
-    void openSourceDisplayAudio(int track, application::DisplayAudioPort::Opened done) override;
     void displayAudio(std::int64_t start, std::int64_t count, Read done) override;
     void cancelDisplay() override;
 
-    // Reopens the last opened path in a new helper (a new session); returns
+    // Reopens the last opened path (with its index request) in a new helper (a new session); returns
     // its generation, or 0 (and NotOpen) when nothing was opened.
     std::uint64_t restart(Progress progress, Opened done);
     bool isHelperLost() const { return m_lost; }
@@ -81,6 +82,7 @@ private:
     std::optional<application::AudioInfo> m_audio;
     std::optional<std::uint64_t> m_openRequest;
     std::string m_path;
+    application::IndexRequest m_index; // the last open's
     bool m_lost = false;
     int m_pcmChannels = 0; // channels of the current PCM stream
     double m_startupMs = 0;
@@ -95,7 +97,7 @@ private:
     template <typename R>
     std::pair<std::uint64_t, std::function<void(R)>> trackDisplay(std::function<void(R)> done);
     void parseDisplayOpen(std::uint64_t generation, const helper::Event &e,
-                          const std::function<void(std::expected<application::AudioInfo, application::AudioFailure>)> &done);
+                          const std::function<void(std::expected<application::DisplayAudioOpened, application::AudioFailure>)> &done);
 };
 
 } // namespace hikari::backends

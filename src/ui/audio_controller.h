@@ -22,6 +22,9 @@
 
 namespace hikari::ui {
 
+// Legacy DeleteOldAudioCache over `folder`, `inUse` (and its .part) excepted.
+void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesystem::path &inUse, int limit);
+
 class AudioController : public QObject {
     Q_OBJECT
     QML_ELEMENT
@@ -57,9 +60,17 @@ public:
     Q_INVOKABLE void openAudioUrl(const QUrl &url) { openAudio(url.toLocalFile()); }
     Q_INVOKABLE void openDummy() { openAudio(QString::fromLatin1(application::AudioBox::kDummyName)); }
     Q_INVOKABLE void closeAudio();
-    // An indexed video's audio, read through the video's own source (legacy
-    // RendererFFMS2::OpenFile's OpenAudioInTab(40000): the video's provider).
-    void openFromVideo(application::DisplayAudioPort &video, const QString &path);
+    // An indexed video's audio (legacy RendererFFMS2::OpenFile's
+    // OpenAudioInTab(40000): the video's provider and track): the video's
+    // track, from the index file the video's open wrote.
+    void openFromVideo(const QString &path, int track, bool videoNewIndex);
+    // Asks "Choose the track" for a video's open (legacy asked inside the
+    // video's indexing); answers the row, or nothing on Cancel.
+    void askTrack(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer);
+    // Legacy DeleteOldAudioCache (when files open with a video open): the
+    // cache folder trimmed to AUDIO_CACHE_FILES_LIMIT, the cache in use
+    // excepted; while the box is still opening, once its cache is known.
+    void trimCache();
     // The options a new open reads (AUDIO_RAM_CACHE, AUDIO_DELAY, the cache
     // folder and its AUDIO_CACHE_FILES_LIMIT, ACCEPTED_AUDIO_STREAM).
     void setSettings(std::function<application::AudioCacheSettings()> settings);
@@ -105,11 +116,9 @@ signals:
     // A message for the log: legacy HikariLog, or HikariLogDebug (`debug`).
     void logged(const QString &message, bool debug);
     void trackChoicesChanged();
-    // The chooser was cancelled for a video's audio: legacy's video open
-    // failed with it (ProviderFFMS2::Init returned 0).
-    void videoAudioDeclined();
 
 private:
+    void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);
     void boxChanged();
     void newView();
     void reselect();     // legacy SetDialogue
@@ -120,6 +129,8 @@ private:
     std::function<application::AudioCacheSettings()> m_settings;
     QStringList m_trackChoices;
     std::function<void(std::optional<int>)> m_trackAnswer;
+    bool m_trackForBox = false; // the box asked (its failure withdraws the question)
+    bool m_trimPending = false;
     application::AudioView m_view;
     application::AudioDisplayOptions m_options;
     application::AudioBox::State m_seenState = application::AudioBox::State::Closed;

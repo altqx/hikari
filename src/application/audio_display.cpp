@@ -110,9 +110,16 @@ public:
         : m_path(std::move(path)), m_file(file), m_channels(channels)
     {
     }
+    // A complete cache file read back as it is (legacy DiskCache opening it "rb").
+    DiskStore(std::filesystem::path path, std::FILE *file, int channels, std::int64_t frames)
+        : m_path(std::move(path)), m_file(file), m_channels(channels), m_frames(frames), m_reused(true)
+    {
+    }
     ~DiskStore() override
     {
         std::fclose(m_file);
+        if (m_reused)
+            return; // neither renamed nor removed
         std::error_code ec;
         std::filesystem::path part = m_path;
         part += ".part";
@@ -124,7 +131,7 @@ public:
 
     bool append(const std::int16_t *interleaved, std::int64_t frames) override
     {
-        if (seekTo(m_file, m_frames * 2 * m_channels) != 0)
+        if (m_reused || seekTo(m_file, m_frames * 2 * m_channels) != 0)
             return false;
         const auto n = static_cast<std::size_t>(frames * m_channels);
         if (std::fwrite(interleaved, sizeof(std::int16_t), n, m_file) != n)
@@ -154,6 +161,7 @@ private:
     int m_channels;
     std::int64_t m_frames = 0;
     bool m_complete = false;
+    bool m_reused = false;
 };
 
 } // namespace
@@ -173,10 +181,25 @@ std::unique_ptr<AudioStore> diskAudioStore(const std::filesystem::path &path, in
     std::FILE *file = openFile(part, true);
     if (!file) {
         if (error)
-            *error = part.string();
+        {
+            const auto text = part.u8string();
+            *error = std::string(text.begin(), text.end());
+        }
         return nullptr;
     }
     return std::make_unique<DiskStore>(path, file, channels);
+}
+
+std::unique_ptr<AudioStore> cachedAudioStore(const std::filesystem::path &path, int channels)
+{
+    std::error_code ec;
+    const auto size = std::filesystem::file_size(path, ec);
+    if (ec)
+        return nullptr;
+    std::FILE *file = openFile(path, false);
+    if (!file)
+        return nullptr;
+    return std::make_unique<DiskStore>(path, file, channels, static_cast<std::int64_t>(size) / (2 * channels));
 }
 
 DisplayAudio::DisplayAudio(int sampleRate, std::int64_t sampleCount, std::unique_ptr<AudioStore> store)
@@ -233,6 +256,32 @@ bool DisplayAudio::appendSilence(std::int64_t frames, int channels)
         frames -= n;
     }
     return true;
+}
+
+bool DisplayAudio::scanStored(std::int64_t frames)
+{
+    if (!m_store)
+        return false;
+    const int channels = m_store->channels();
+    const std::int64_t keep = std::clamp<std::int64_t>(m_count - m_scanned, 0, frames);
+    if (keep > 0) {
+        m_frames.resize(static_cast<std::size_t>(keep * channels));
+        std::fill(m_frames.begin(), m_frames.end(), std::int16_t(0));
+        // past the end of a short file the frames stay zero
+        const std::int64_t stored = std::clamp<std::int64_t>(m_store->frames() - m_scanned, 0, keep);
+        if (stored > 0)
+            m_store->read(m_scanned, stored, m_frames.data());
+        std::vector<std::int16_t> mono(static_cast<std::size_t>(keep));
+        for (std::int64_t i = 0; i < keep; i++) {
+            int sum = 0;
+            for (int c = 0; c < channels; c++)
+                sum += m_frames[static_cast<std::size_t>(i * channels + c)];
+            mono[static_cast<std::size_t>(i)] = static_cast<std::int16_t>(sum / channels);
+        }
+        m_peaks.append(mono.data(), keep);
+        m_scanned += keep;
+    }
+    return m_scanned < m_count;
 }
 
 void DisplayAudio::finish()
