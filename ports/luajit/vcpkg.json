@@ -1,8 +1,8 @@
 {
   "name": "luajit",
   "version-date": "2026-09-08",
-  "port-version": 2,
-  "description": "LuaJIT (Hikari-owned overlay: no x86 XLOAD fusion across C calls; MSVC: Lua 5.2 extensions, no string.buffer)",
+  "port-version": 3,
+  "description": "LuaJIT (Hikari-owned overlay: no x86 XLOAD fusion across C calls; Lua 5.2 extensions, no string.buffer)",
   "homepage": "https://github.com/LuaJIT/LuaJIT",
   "license": "MIT",
   "supports": "!uwp",

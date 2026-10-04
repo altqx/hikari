@@ -33,9 +33,8 @@ if(VCPKG_DETECTED_MSVC)
     # As the legacy Windows build (Thirdparty/Build/LuaJit/LuaJit.vcxproj):
     # Lua 5.2 extensions on (table.pack, __pairs/__ipairs, break anywhere,
     # which DependencyControl's Functional, LibLyger and MoonScript's
-    # `continue` rely on) and string.buffer off (L6, R5-per-platform). The
-    # legacy Linux package used its distribution's LuaJIT, built without
-    # them, so the other branch below keeps the defaults.
+    # `continue` rely on) and string.buffer off. The other branch does the
+    # same on every other platform (L6-lua52-linux).
     vcpkg_replace_string("${SOURCE_PATH}/src/msvcbuild.bat" "/D_CRT_SECURE_NO_DEPRECATE"
         "/D_CRT_SECURE_NO_DEPRECATE /DLUAJIT_ENABLE_LUA52COMPAT /DLUAJIT_DISABLE_BUFFER")
 
@@ -105,6 +104,9 @@ else()
         MAKEFILE "Makefile.vcpkg"
         OPTIONS
             ${make_options}
+            # L6-lua52-linux: the Windows build's Lua 5.2 extensions and no
+            # string.buffer (XCFLAGS reaches the target and buildvm alike).
+            "XCFLAGS=-DLUAJIT_ENABLE_LUA52COMPAT -DLUAJIT_DISABLE_BUFFER"
             "TARGET_AR=${VCPKG_DETECTED_CMAKE_AR} rcus"
             "TARGET_STRIP=${VCPKG_DETECTED_CMAKE_STRIP}${strip_options}"
     )
