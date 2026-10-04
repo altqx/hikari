@@ -4424,8 +4424,12 @@ private slots:
     // AUDIO_COMMIT Enter, AUDIO_PREVIOUS_ALT Z, AUDIO_NEXT_ALT X) with
     // AUDIO_AUTO_COMMIT on and off, the ruler's mark and
     // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO; each commit one named step.
+    // Z and X play the new Line, so the session's player has no device: a
+    // host without one (Windows CI) fails the play, and the log window it
+    // pops up takes the focus from the audio box.
     void audioTimingByMouseAndKeys()
     {
+        restartWithoutSound();
         keysNeverRepeat(); // O2's CheckLastKeyEvent: fast runners press within 100 ms
         QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
         auto &audio = application->audio();
