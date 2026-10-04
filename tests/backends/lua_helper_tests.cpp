@@ -684,7 +684,8 @@ TEST_F(LuaHelper, ParseKaraokeDataFollowsTheLegacyParser)
 {
     auto host = load(fixture("karaoke.lua"));
     ASSERT_TRUE(runMacro(*host, macro(*host, "Karaoke"), {}, run));
-    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok)
+        << run.message.toStdString() << "\nlogged:\n" << run.log.join(QLatin1Char('\n')).toStdString();
     ASSERT_EQ(run.log.size(), 8);
     EXPECT_EQ(run.log[0].toStdString(), "0:0,0,0,,| 1:100,0,100,k,a|a 2:200,100,300,k,b|b 3:300,300,600,kf,c|c");
     EXPECT_EQ(run.log[1].toStdString(), "0:0,0,0,,| 1:100,0,100,k,{\\b1}ab{\\i1}c|abc 2:50,100,150,k,d|d");
