@@ -5651,7 +5651,9 @@ private slots:
         QTRY_VERIFY(audio.lastPlayRange().has_value());
         QCOMPARE(audio.lastPlayRange()->start, 48000);
         press(Qt::Key_H);
-        // Ctrl+click on Play line (AUDIO_PLAY_LINE / AUDIO_PLAY_LINE_ALT)
+        // Ctrl+click on Play line (AUDIO_PLAY_LINE / AUDIO_PLAY_LINE_ALT) maps
+        // the second hotkey (O2-second-hotkey).
+        const QString mainBefore = h.accelOf(QStringLiteral("AUDIO_PLAY_LINE"), 4);
         auto *mapping = mappingWindow("hotkeyMapping");
         auto *playLine = visualItem("audioPlayLine");
         QVERIFY(playLine);
@@ -5659,12 +5661,12 @@ private slots:
         clickWith(playLine, Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
         QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Play line\"."));
+                 QStringLiteral("Please enter a hotkey for \"Play line alt\"."));
         QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE"), 4), QStringLiteral("U"));
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("R"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE"), 4), mainBefore);
         // Ctrl on a one-hotkey button acts.
         auto *stop = visualItem("audioStop");
         clickWith(stop, Qt::ControlModifier);

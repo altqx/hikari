@@ -621,7 +621,7 @@ bool HotkeysController::shiftClicked(bool exact) const
     return exact ? m_lastClickShift : m_lastClickShiftHeld;
 }
 
-QVariantMap HotkeysController::gestureTarget(const QString &symbolOrScript) const
+QVariantMap HotkeysController::gestureTarget(const QString &symbolOrScript, bool second) const
 {
     const std::string s = symbolOrScript.toStdString();
     if (s.starts_with("Script ")) {
@@ -635,7 +635,7 @@ QVariantMap HotkeysController::gestureTarget(const QString &symbolOrScript) cons
             }
         return {{QStringLiteral("id"), id}, {QStringLiteral("name"), symbolOrScript}};
     }
-    const int id = application::hotkeyIdOf(s);
+    const int id = application::hotkeyIdOf(s) - (second ? 10 : 0);
     return {{QStringLiteral("id"), id}, {QStringLiteral("name"), qs(application::hotkeyName(id))}};
 }
 

@@ -4397,17 +4397,19 @@ ApplicationWindow {
     //   (HikariSubFrame::OnMenuSelected/OnMenuSelected1, the Grid's menu);
     // - "macro": Shift alone, no window choice (Automation.cpp:1376-1379);
     // - a mapped button (true, "mapped"): Shift held, no window choice; with
-    //   `two` (MappedButton's twoHotkeys) Ctrl held too, which maps the same
-    //   (main) hotkey: legacy computes id - 10 and does not use it
-    //   (MappedButton.cpp:437-445);
+    //   `two` (MappedButton's twoHotkeys) Ctrl held maps the second hotkey,
+    //   the main id - 10 (O2-second-hotkey; legacy computed that id and then
+    //   mapped the main one, MappedButton.cpp:437-445);
     // - "bitmap": the video panel's buttons (BitmapButton.cpp:97-106), Shift
     //   held, with the window choice.
     function hotkeyGesture(symbol, window, kind, two) {
         const mapped = kind === true || kind === "mapped"
         const held = mapped || kind === "bitmap"
-        if (!root.hotkeys.shiftClicked(!held) && !(mapped && two && root.hotkeys.ctrlClicked()))
+        const shift = root.hotkeys.shiftClicked(!held)
+        const second = !shift && mapped && two && root.hotkeys.ctrlClicked()
+        if (!shift && !second)
             return false
-        const target = root.hotkeys.gestureTarget(symbol)
+        const target = root.hotkeys.gestureTarget(symbol, second)
         hotkeyMapping.capture(target.name, window ?? 0, !(mapped || kind === "macro"), (accel, type) => {
             const conflict = root.hotkeys.gestureConflict(target.id, accel, type)
             if (conflict.message === undefined)

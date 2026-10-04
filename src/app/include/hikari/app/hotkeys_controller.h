@@ -135,7 +135,10 @@ public:
     Q_INVOKABLE bool ctrlClicked() const { return m_lastClickCtrlHeld; }
     // {id, name}: the action's id and the name the mapping window shows (the
     // names table's; for a script, its legacy name).
-    Q_INVOKABLE QVariantMap gestureTarget(const QString &symbolOrScript) const;
+    // `second`: a two-hotkey button's Ctrl+click names its second hotkey,
+    // the main id - 10 (O2-second-hotkey; legacy computed it and mapped the
+    // main one anyway).
+    Q_INVOKABLE QVariantMap gestureTarget(const QString &symbolOrScript, bool second = false) const;
     Q_INVOKABLE QVariantMap gestureConflict(int id, const QString &accel, int type) const;
     Q_INVOKABLE void gestureMap(int id, const QString &name, const QString &accel, int type, const QString &answer);
 
