@@ -705,16 +705,28 @@ TEST_F(DisplayAudioFixture, ProbeListsTheAudioTracks)
 }
 
 // A copy of a fixture in a folder of its own, with an Indices folder beside
-// it, so modification times can be changed.
+// it, so modification times can be changed. The folder outlives the test's
+// own sources but not the fixture's, whose helper still has a copy open when
+// the test ends: that helper ends first, as Windows does not remove a file a
+// process has open.
 struct IndexFolder {
     std::filesystem::path dir;
-    explicit IndexFolder(const char *name)
-        : dir(std::filesystem::temp_directory_path() / ("hikari-a1-index-" + std::string(name)))
+    backends::FfmsIndexedSource &holder;
+    IndexFolder(const char *name, backends::FfmsIndexedSource &source)
+        : dir(std::filesystem::temp_directory_path() / ("hikari-a1-index-" + std::string(name))), holder(source)
     {
         std::filesystem::remove_all(dir);
         std::filesystem::create_directories(dir);
     }
-    ~IndexFolder() { std::filesystem::remove_all(dir); }
+    ~IndexFolder()
+    {
+        if (auto *host = holder.helperHost())
+            host->stop();
+        std::error_code ec; // a destructor must not throw
+        std::filesystem::remove_all(dir, ec);
+        if (ec)
+            ADD_FAILURE() << "cannot remove " << dir << ": " << ec.message();
+    }
     std::string copy(const char *kind)
     {
         const auto to = dir / (std::string(kind) + ".mkv");
@@ -729,7 +741,7 @@ struct IndexFolder {
 // .ffindex (the folder made); the next open reads it instead of indexing.
 TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
 {
-    IndexFolder folder("video");
+    IndexFolder folder("video", source);
     const auto path = folder.copy("tracks");
     const auto file = folder.index("tracks_2.ffindex");
     std::vector<std::int64_t> progress;
@@ -758,7 +770,7 @@ TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
 // serving frames while the box reads.
 TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
 {
-    IndexFolder folder("box");
+    IndexFolder folder("box", source);
     const auto path = folder.copy("tracks");
     const auto file = folder.index("tracks_1.ffindex");
     ASSERT_TRUE(openIndexed(path, 1, file));
@@ -790,7 +802,7 @@ TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
 // file, is not used: the file is indexed again and the index rewritten.
 TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
 {
-    IndexFolder folder("stale");
+    IndexFolder folder("stale", source);
     const auto path = folder.copy("tracks");
     const auto file = folder.index("tracks_1.ffindex");
     ASSERT_TRUE(openIndexed(path, 1, file));
@@ -877,7 +889,7 @@ TEST_F(DisplayAudioFixture, BlocksAreReadIntoTheBlockBufferAsLegacyReadThem)
 // and when the source ends.
 TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
 {
-    IndexFolder folder("handoff");
+    IndexFolder folder("handoff", source);
     const auto path = folder.copy("tracks");
     const auto indices = folder.dir / "Indices";
     std::filesystem::create_directories(indices);
