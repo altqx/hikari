@@ -31,10 +31,12 @@ std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session)
 // GRID_PASTE_TRANSLATION ("Pasting translation"): each entry of the chosen
 // file becomes the translation of the next shown Line, from the first; once
 // they run out, new Lines are appended (zero times, the Default Style, the
-// entry as the translation and no text). The text is read as legacy reads
-// it on Windows, CRLF as LF. An ".srt" file is read as numbered blocks, and
-// as in legacy its last block is never pasted; an ".ass" file
-// gives its Dialogue lines; other files give every non-empty line.
+// entry as the translation and no text). `fileText` is what
+// OpenWrite::FileOpen read (backends::readLegacyTextFile: CRLF is LF on
+// Windows, the Linux build keeps "\r"). An ".srt" file is read as numbered
+// blocks, and as in legacy its last block is pasted only when a blank CRLF
+// line ("\r", Linux) follows it; an ".ass" file gives its Dialogue lines;
+// other files give every non-empty line (a Linux "\r" line included).
 // Translation mode is turned on and the original shown ("TLMode Showtl:
 // Yes"). Refused for the line formats.
 std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::u8string_view fileText,

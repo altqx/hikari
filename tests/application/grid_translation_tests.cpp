@@ -123,12 +123,24 @@ TEST(PasteTranslation, SrtBlocksAndTheLegacyLastBlock)
                                  u8"srt"));
     EXPECT_EQ(texts(session)[0], "A/Hello\\Nthere");
     EXPECT_EQ(texts(session)[1], "B/");
-    // CRLF reads as LF (legacy's text-mode read on Windows): the same.
+    // A CRLF file as the Linux build read it (R5-per-platform; Windows' text
+    // mode gave the LF text above): a blank line is "\r", which trims to an
+    // empty "number" and ends the block, so the last block is pasted too.
     EditSession crlf{load(kScript)};
     ASSERT_TRUE(pasteTranslation(crlf, u8"1\r\n00:00:01,000 --> 00:00:02,000\r\nHello\r\n\r\n2\r\n00:00:03,000 --> 00:00:04,000\r\nWorld\r\n\r\n",
                                  u8"srt"));
     EXPECT_EQ(texts(crlf)[0], "A/Hello");
-    EXPECT_EQ(texts(crlf)[1], "B/");
+    EXPECT_EQ(texts(crlf)[1], "B/World");
+}
+
+TEST(PasteTranslation, LinuxCrlfTextKeepsItsBlankLinesAsEntries)
+{
+    // R5-per-platform: the Linux build kept "\r", so wxTOKEN_STRTOK did not
+    // skip a blank CRLF line; its "\r" is an entry with no text. (Windows
+    // read LF text, where the blank line is skipped.)
+    EditSession session{load(kScript)};
+    ASSERT_TRUE(pasteTranslation(session, u8"one\r\ntwo\r\n\r\nthree\r\n", u8"txt"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"A/one", "B/two", "C/", "D/three"}));
 }
 
 TEST(PasteTranslation, AssFilesGiveTheirDialogueLinesAndShownLinesOnly)

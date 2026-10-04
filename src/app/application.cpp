@@ -54,6 +54,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <thread>
+#include <unistd.h>
 #endif
 
 namespace hikari::app {
@@ -352,10 +355,24 @@ public:
         emit m_app.findOpenReview(rows);
         emit m_app.findBusyChanged();
     }
-    // Legacy numOfProcessors (GetSystemInfo's logical processors).
+    // Legacy numOfProcessors (findreplace.cpp): GetSystemInfo's
+    // dwNumberOfProcessors, 4 when it is 0. The Linux build's GetSystemInfo
+    // (platform.h) is sysconf(_SC_NPROCESSORS_ONLN), the online processors
+    // whatever the affinity mask, else hardware_concurrency, at least 1.
     int processorCount() override
     {
-        return m_app.m_findProcessors > 0 ? m_app.m_findProcessors : std::max(1, QThread::idealThreadCount());
+        if (m_app.m_findProcessors > 0)
+            return m_app.m_findProcessors;
+#ifdef _WIN32
+        SYSTEM_INFO info{};
+        ::GetSystemInfo(&info);
+        return info.dwNumberOfProcessors > 0 ? static_cast<int>(info.dwNumberOfProcessors) : 4;
+#else
+        long processors = ::sysconf(_SC_NPROCESSORS_ONLN);
+        if (processors < 1)
+            processors = static_cast<long>(std::thread::hardware_concurrency());
+        return static_cast<int>(std::max<long>(1, processors));
+#endif
     }
 
 private:
@@ -2062,19 +2079,16 @@ bool Application::pasteTranslationFile(const QUrl &file)
     if (!session || !canPasteTranslation())
         return false;
     const QString path = file.toLocalFile();
-    QFile f(path);
-    if (!f.open(QIODevice::ReadOnly)) {
+    // SubsGrid::OnPasteTextTl reads through OpenWrite::FileOpen (test = true):
+    // R4-uchardet's charset and R5-per-platform line ends (CRLF is LF on
+    // Windows, the Linux build keeps "\r"). A file it cannot read, decode, or
+    // that is empty changes nothing.
+    const auto read = backends::readLegacyTextFile(path);
+    if (!read) {
         m_log->log(tr("Could not open %1; nothing was changed.").arg(QFileInfo(path).fileName()));
         return false;
     }
-    QByteArray bytes = f.readAll();
-    if (bytes.startsWith("\xEF\xBB\xBF"))
-        bytes.remove(0, 3);
-    // Legacy OpenWrite: UTF-8, else the system code page.
-    QStringDecoder utf8(QStringDecoder::Utf8, QStringDecoder::Flag::Stateless);
-    QString text = utf8.decode(bytes);
-    if (utf8.hasError())
-        text = QString::fromLocal8Bit(bytes);
+    const QString text = QString::fromStdU16String(*read);
     // Legacy compares the extension after the last '.' exactly.
     const QString extension = path.section(QLatin1Char('.'), -1);
     const auto shown = shownLines();

@@ -14,6 +14,9 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+#else
+#include <cerrno>
+#include <iconv.h>
 #endif
 
 namespace hikari::backends {
@@ -45,6 +48,13 @@ std::optional<std::u16string> qtDecode(QStringConverter::Encoding encoding, QByt
     return qtDecode(QStringDecoder(encoding, kWhole), bytes);
 }
 
+// wxCSConv's last resort: with no converter for the name (or for ASCII and
+// ISO-8859-1, which it never converts), each byte is the character.
+std::optional<std::u16string> latin1(QByteArrayView bytes)
+{
+    return toU16(QString::fromLatin1(bytes));
+}
+
 #ifdef _WIN32
 // wxMBConv_win32::MB2WC: MultiByteToWideChar with MB_ERR_INVALID_CHARS
 // (which some code pages refuse, so their files fail as they did).
@@ -63,27 +73,133 @@ std::optional<std::u16string> win32Decode(unsigned codePage, QByteArrayView byte
     return out;
 }
 
-// wxCSConv's code page for uchardet's names (wxFontMapper / the registry's
-// MIME database); 0 when Windows has none.
+// wxCSConv(name) on Windows: wxFontMapperBase::CharsetToEncoding(name) then
+// wxEncodingToCodepage (wxWidgets src/common/fmapbase.cpp, src/msw/utils.cpp),
+// for the names uchardet 0.0.8 gives. 0: wx knows no encoding for the name
+// (IBM852, IBM855, IBM865, IBM866, MAC-CENTRALEUROPE, MAC-CYRILLIC, TIS-620,
+// GB18030, HZ-GB-2312, EUC-TW, ISO-2022-CN, ISO-2022-KR, UHC, VISCII,
+// GEORGIAN-*, ISO-8859-16), so there is no converter.
 unsigned codePageOf(std::string_view name)
 {
-    static constexpr std::array<std::pair<std::string_view, unsigned>, 41> table{{
-        {"ISO-8859-1", 28591},      {"ISO-8859-2", 28592},  {"ISO-8859-3", 28593},  {"ISO-8859-4", 28594},
-        {"ISO-8859-5", 28595},      {"ISO-8859-6", 28596},  {"ISO-8859-7", 28597},  {"ISO-8859-8", 28598},
-        {"ISO-8859-9", 28599},      {"ISO-8859-13", 28603}, {"ISO-8859-15", 28605}, {"WINDOWS-1250", 1250},
-        {"WINDOWS-1251", 1251},     {"WINDOWS-1252", 1252}, {"WINDOWS-1253", 1253}, {"WINDOWS-1254", 1254},
-        {"WINDOWS-1255", 1255},     {"WINDOWS-1256", 1256}, {"WINDOWS-1257", 1257}, {"WINDOWS-1258", 1258},
-        {"IBM852", 852},            {"IBM855", 855},        {"IBM862", 862},        {"IBM865", 865},
-        {"IBM866", 866},            {"KOI8-R", 20866},      {"KOI8-U", 21866},      {"MAC-CENTRALEUROPE", 10029},
-        {"MAC-CYRILLIC", 10007},    {"TIS-620", 874},       {"BIG5", 950},          {"EUC-JP", 20932},
-        {"EUC-KR", 51949},          {"GB18030", 54936},     {"ISO-2022-JP", 50220}, {"ISO-2022-KR", 50225},
-        {"ISO-2022-CN", 50227},     {"HZ-GB-2312", 52936},  {"SHIFT_JIS", 932},     {"UHC", 949},
-        {"CP949", 949},
+    static constexpr std::array<std::pair<std::string_view, unsigned>, 26> table{{
+        {"ISO-8859-2", 28592},   {"ISO-8859-3", 28593},   {"ISO-8859-4", 28594},   {"ISO-8859-5", 28595},
+        {"ISO-8859-6", 28596},   {"ISO-8859-7", 28597},   {"ISO-8859-8", 28598},   {"ISO-8859-9", 28599},
+        {"ISO-8859-10", 28600},  {"ISO-8859-11", 874},    {"ISO-8859-13", 28603},  {"ISO-8859-15", 28605},
+        {"WINDOWS-1250", 1250},  {"WINDOWS-1251", 1251},  {"WINDOWS-1252", 1252},  {"WINDOWS-1253", 1253},
+        {"WINDOWS-1254", 1254},  {"WINDOWS-1255", 1255},  {"WINDOWS-1256", 1256},  {"WINDOWS-1257", 1257},
+        {"WINDOWS-1258", 1258},  {"KOI8-R", 20866},       {"SHIFT_JIS", 932},      {"BIG5", 950},
+        {"EUC-KR", 949},         {"EUC-JP", 20932},
     }};
     for (const auto &[n, cp] : table)
         if (n == name)
             return cp;
+    if (name == "ISO-2022-JP")
+        return 50222; // which refuses MB_ERR_INVALID_CHARS, so the read fails
+    if (name == "UTF-8")
+        return CP_UTF8; // strict: invalid bytes fail
     return 0;
+}
+
+// The encodings wxEncodingConverter has its own tables for (encconv.cpp),
+// where wxCSConv went when wxEncodingToCodepage found the code page missing
+// (IsValidCodePage or GetCPInfo failed).
+bool wxTableEncoding(std::string_view name)
+{
+    return name.starts_with("ISO-8859-") || name.starts_with("WINDOWS-125") || name == "KOI8-R";
+}
+#else
+// wxMBConv_iconv: the wchar_t charset wx picked (UTF-32 in this byte order).
+constexpr const char *kIconvWide = Q_BYTE_ORDER == Q_LITTLE_ENDIAN ? "UTF-32LE" : "UTF-32BE";
+
+struct Iconv {
+    iconv_t cd;
+    explicit Iconv(const char *from) : cd(::iconv_open(kIconvWide, from)) {}
+    ~Iconv()
+    {
+        if (ok())
+            ::iconv_close(cd);
+    }
+    Iconv(const Iconv &) = delete;
+    Iconv &operator=(const Iconv &) = delete;
+    bool ok() const { return cd != reinterpret_cast<iconv_t>(-1); }
+};
+
+// wxString(buf, wxCSConv, length) through wxMBConv::cMB2WC and
+// wxMBConv_iconv::ToWChar: a first pass into a 256-character scratch buffer
+// counts the characters, then a second pass on the same, never reset, iconv
+// handle fills a buffer of exactly that size. Any iconv failure (EILSEQ,
+// EINVAL for a sequence cut off at the end, E2BIG when the second pass gives
+// more than the first, as a charset with a pending character such as
+// WINDOWS-1258 or a stateful one such as ISO-2022-JP left mid-shift can) fails
+// the whole conversion.
+std::optional<std::u32string> iconvTwoPass(iconv_t cd, QByteArrayView bytes)
+{
+    std::size_t count = 0;
+    {
+        char *in = const_cast<char *>(bytes.data());
+        std::size_t inLeft = static_cast<std::size_t>(bytes.size());
+        std::size_t result = 0;
+        std::array<char32_t, 256> scratch{};
+        do {
+            char *out = reinterpret_cast<char *>(scratch.data());
+            std::size_t outLeft = sizeof(scratch);
+            result = ::iconv(cd, &in, &inLeft, &out, &outLeft);
+            count += (sizeof(scratch) - outLeft) / sizeof(char32_t);
+        } while (result == static_cast<std::size_t>(-1) && errno == E2BIG);
+        if (result == static_cast<std::size_t>(-1))
+            return std::nullopt;
+    }
+    std::u32string text(count, U'\0');
+    char *in = const_cast<char *>(bytes.data());
+    std::size_t inLeft = static_cast<std::size_t>(bytes.size());
+    char32_t scratch = 0;
+    char *out = reinterpret_cast<char *>(count ? text.data() : &scratch);
+    std::size_t outLeft = count * sizeof(char32_t);
+    if (::iconv(cd, &in, &inLeft, &out, &outLeft) == static_cast<std::size_t>(-1))
+        return std::nullopt;
+    text.resize(count - outLeft / sizeof(char32_t));
+    return text;
+}
+
+// F1-sjis-backslash (R3-hang-crash-loss): the character this charset's iconv
+// gives the single ASCII byte, when that is not the ASCII character (glibc's
+// SHIFT_JIS reads 0x5C as U+00A5 and 0x7E as U+203E; of uchardet's names only
+// SHIFT_JIS does, and no other SHIFT_JIS sequence gives those two).
+char32_t asciiAs(const std::string &name, char byte)
+{
+    Iconv probe(name.c_str());
+    if (!probe.ok())
+        return U'\0';
+    char *in = &byte;
+    std::size_t inLeft = 1;
+    char32_t c = 0;
+    char *out = reinterpret_cast<char *>(&c);
+    std::size_t outLeft = sizeof(c);
+    if (::iconv(probe.cd, &in, &inLeft, &out, &outLeft) == static_cast<std::size_t>(-1) || outLeft != 0 ||
+        c == static_cast<char32_t>(byte))
+        return U'\0';
+    return c;
+}
+
+// wxCSConv(name) on Linux: glibc iconv as wxMBConv_iconv used it. A name
+// iconv cannot open (of uchardet's, HZ-GB-2312) is one wx has no alias or
+// table for either, so it reads as Latin-1.
+std::optional<std::u16string> iconvDecode(const std::string &name, QByteArrayView bytes)
+{
+    const Iconv cd(name.c_str());
+    if (!cd.ok())
+        return latin1(bytes);
+    auto text = iconvTwoPass(cd.cd, bytes);
+    if (!text)
+        return std::nullopt;
+    // Legacy then read every "\\" in such a file as U+00A5, so a file
+    // replace rewrote every tag; the ASCII characters are kept here.
+    for (const char ascii : {'\\', '~'})
+        if (const char32_t as = asciiAs(name, ascii))
+            for (char32_t &c : *text)
+                if (c == as)
+                    c = static_cast<char32_t>(ascii);
+    return toU16(QString::fromUcs4(text->data(), static_cast<qsizetype>(text->size())));
 }
 #endif
 
@@ -101,13 +217,27 @@ std::optional<std::u16string> localDecode(QByteArrayView bytes)
 // A named single- or multi-byte charset (wxCSConv(name)).
 std::optional<std::u16string> namedDecode(const std::string &name, QByteArrayView bytes)
 {
-    if (name == "ASCII")
-        return qtDecode(QStringConverter::Latin1, bytes); // uchardet says ASCII only for 7-bit bytes
+    // wxCSConv converts neither: ISO-8859-1 is its own encoding and ASCII is
+    // wxFONTENCODING_DEFAULT, which it takes as ISO-8859-1.
+    if (name == "ASCII" || name == "ISO-8859-1")
+        return latin1(bytes);
 #ifdef _WIN32
-    if (const unsigned cp = codePageOf(name))
-        return win32Decode(cp, bytes);
+    const unsigned cp = codePageOf(name);
+    if (!cp)
+        return latin1(bytes);
+    CPINFO info;
+    if (!::IsValidCodePage(cp) || !::GetCPInfo(cp, &info)) {
+        // wxEncodingToCodepage gave -1: wxMBConv_wxwin's own table where it
+        // has one (Qt's decoder for the name stands in), else Latin-1.
+        if (wxTableEncoding(name))
+            if (QStringDecoder decoder(name.c_str(), kWhole); decoder.isValid())
+                return qtDecode(std::move(decoder), bytes);
+        return latin1(bytes);
+    }
+    return win32Decode(cp, bytes);
+#else
+    return iconvDecode(name, bytes);
 #endif
-    return qtDecode(QStringDecoder(name.c_str(), kWhole), bytes);
 }
 
 bool wideCharset(std::string_view name)

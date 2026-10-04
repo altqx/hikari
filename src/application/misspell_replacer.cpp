@@ -206,7 +206,7 @@ std::u8string defaultReplacerRules()
            u8"Fixing Polish \"bede\"\f\\mbęde\\M\fbędę\f0";
 }
 
-ReplacerRules readReplacerRules(std::u8string_view fileText)
+ReplacerRules readReplacerRules(std::u8string_view fileText, RulesReadBy build)
 {
     std::u8string text(fileText);
     if (text.empty())
@@ -219,6 +219,8 @@ ReplacerRules readReplacerRules(std::u8string_view fileText)
     std::u8string_view header = next < lines.size() ? lines[next++] : std::u8string_view();
     if (header.starts_with(kRulesHeader))
         header = next < lines.size() ? lines[next++] : std::u8string_view();
+    if (build == RulesReadBy::Linux && header.ends_with(u8'\r'))
+        header.remove_suffix(1); // F4-rules-cr
     const auto onOff = split(header, u8'|', false);
 
     ReplacerRules out;
