@@ -1,5 +1,7 @@
 #include "hikari/application/automation_services.h"
 
+#include "hikari/application/audio_spectrum.h"
+
 #include <algorithm>
 #include <memory>
 
@@ -178,6 +180,24 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         return reply({});
     case HostService::EditorModified:
         return m_editor ? reply(integers({m_editor->modified() ? 1 : 0})) : unavailable();
+    case HostService::FrequencyPeaks: {
+        const auto audio = m_media ? m_media->peakAudio() : std::nullopt;
+        if (!audio)
+            return unavailable();
+        if (!*audio)
+            return reply(integers({1}));
+        // Legacy reads the spectrum only for times it accepts (the helper
+        // raises or answers {} for the others).
+        HostServiceReply out = integers({0});
+        const std::int64_t start = integer(r, 0), end = integer(r, 1);
+        if (start >= 0 && end >= 0 && start < end) {
+            const auto peaks = legacyFrequencyPeaks(**audio, start, end, static_cast<int>(integer(r, 2)),
+                                                    static_cast<int>(integer(r, 3)), static_cast<int>(integer(r, 4)));
+            out.integers.insert(out.integers.end(), peaks.times.begin(), peaks.times.end());
+            out.numbers.assign(peaks.intensities.begin(), peaks.intensities.end());
+        }
+        return reply(std::move(out));
+    }
     }
     unavailable();
 }

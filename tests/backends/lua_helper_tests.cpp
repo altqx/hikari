@@ -491,6 +491,8 @@ struct FakeServices {
     std::vector<hikari::application::HostServiceRequest> requests;
     std::string clipboard;
     bool available = true;
+    bool audio = true;        // FrequencyPeaks: Unavailable without audio
+    std::int64_t peaksStatus = 0; // 1: an audio box without audio yet
 
     LuaScriptHost::ServiceHandler handler()
     {
@@ -533,6 +535,12 @@ struct FakeServices {
             case HostService::EditorCursor: out.integers = {7}; break;
             case HostService::EditorSelection: out.integers = {7, 3}; break;
             case HostService::EditorModified: out.integers = {1}; break;
+            case HostService::FrequencyPeaks:
+                if (!audio)
+                    return reply(HostServiceReply::unavailable());
+                out.integers = {peaksStatus, 10, 20};
+                out.numbers = {5, 6};
+                break;
             default: break;
             }
             reply(std::move(out));
@@ -653,6 +661,80 @@ TEST_F(LuaHelper, EditorServicesUseOneBasedPositions)
     EXPECT_EQ(writes[0].second, std::vector<std::int64_t>{4});
     EXPECT_EQ(writes[1].second, (std::vector<std::int64_t>{1, 3}));
     EXPECT_EQ(services.requests.back().strings, std::vector<std::string>{"busy"});
+}
+
+// L6: legacy AutoToFile adds parse_karaoke_data and get_frequency_peaks
+// (with set_undo_point) to the aegisub table for a run; they are absent
+// while the script loads and stay afterwards (legacy capture: present during
+// a macro run).
+TEST_F(LuaHelper, KaraokeAndPeaksExistFromTheFirstRun)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Presence"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, QStringList{"nil,nil,function,function"});
+}
+
+// Legacy LuaParseKaraokeData at 20d647c4: the syllables go into the line
+// table passed in, from index 0 (an empty one), and that table comes back.
+// Text before a tag and after its value up to the next block is the
+// syllable's; "{}" is dropped and blocks are stripped for text_stripped.
+TEST_F(LuaHelper, ParseKaraokeDataFollowsTheLegacyParser)
+{
+    auto host = load(fixture("karaoke.lua"));
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Karaoke"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 8);
+    EXPECT_EQ(run.log[0].toStdString(), "0:0,0,0,,| 1:100,0,100,k,a|a 2:200,100,300,k,b|b 3:300,300,600,kf,c|c");
+    EXPECT_EQ(run.log[1].toStdString(), "0:0,0,0,,| 1:100,0,100,k,{\\b1}ab{\\i1}c|abc 2:50,100,150,k,d|d");
+    // No karaoke tag: the whole line, timed as the line, as one "k" syllable.
+    EXPECT_EQ(run.log[2].toStdString(), "0:0,0,0,,| 1:2500,1000,3500,k,Hello {\\b1}world|Hello world");
+    // An empty text with text_translation parses the translation (TextTl/Text swap).
+    EXPECT_EQ(run.log[3].toStdString(), "0:0,0,0,,| 1:50,0,50,k,x|x");
+    EXPECT_EQ(run.log[4].toStdString(), "true,dialogue,a");
+    EXPECT_EQ(run.log[5].toStdString(), "You try to parse karaoke from non dialogue line");
+    EXPECT_EQ(run.log[6].toStdString(), "You try to parse karaoke from non dialogue line");
+    EXPECT_EQ(run.log[7].toStdString(), "Cannot convert non table value");
+}
+
+// Legacy LuaGetFreqencyReach's argument checks, error texts and returns; the
+// host answers the spectrum (application tests cover the computation).
+TEST_F(LuaHelper, GetFrequencyPeaksKeepsTheLegacyChecks)
+{
+    FakeServices services;
+    auto host = load(fixture("karaoke.lua"), services.handler());
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log, (QStringList{"n=2,t=10;20,i=5;6", "n=1,t=10;20,i=", "n=2,t=10;20,i=5;6",
+                                    "n=2,t=10;20,i=5;6", "n=1,t=,i=",
+                                    "get_frequency_peaks start or end time less than zero",
+                                    "Non number argument of function get_frequency_peaks",
+                                    "Non number argument of function get_frequency_peaks"}));
+    using hikari::application::HostService;
+    std::vector<std::vector<std::int64_t>> asked;
+    for (const auto &r : services.requests)
+        if (r.service == HostService::FrequencyPeaks)
+            asked.push_back(r.integers);
+    // The peek clamped to [0, 1000]; numbers truncated (lua_tointeger), a
+    // numeric string taken; no request after a non-number argument.
+    EXPECT_EQ(asked, (std::vector<std::vector<std::int64_t>>{{0, 1000, 0, 100, 0},
+                                                             {0, 1000, 0, 100, 1000},
+                                                             {0, 1000, 0, 100, 0},
+                                                             {1, 2000, 3, 4, 0},
+                                                             {500, 500, 0, 0, 0},
+                                                             {-1, 10, 0, 0, 0}}));
+
+    // An audio box still without audio, then no audio: checked before the times.
+    services.peaksStatus = 1;
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    EXPECT_EQ(run.log.value(0), "get_frequency_peaks cannot get audio provider");
+    EXPECT_EQ(run.log.value(5), "get_frequency_peaks cannot get audio provider");
+    services.audio = false;
+    ASSERT_TRUE(runMacro(*host, macro(*host, "Peaks"), {}, run));
+    EXPECT_EQ(run.log.value(0), "get_frequency_peaks needs loaded audio by FFMS2");
+    EXPECT_EQ(run.log.value(5), "get_frequency_peaks needs loaded audio by FFMS2");
+    EXPECT_EQ(run.log.value(6), "Non number argument of function get_frequency_peaks");
 }
 
 TEST_F(LuaHelper, ServicesAnswerWhileTheTopLevelLoads)

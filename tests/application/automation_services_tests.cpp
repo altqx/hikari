@@ -1,9 +1,13 @@
 // L3: host service routing through platform ports, and legacy decode_path
 // (HikariSub/Automation.cpp decode_path at 20d647c4).
 
+#include "hikari/application/audio_spectrum.h"
 #include "hikari/application/automation_services.h"
 
 #include <gtest/gtest.h>
+
+#include <cmath>
+#include <memory>
 
 using namespace hikari::application;
 
@@ -77,6 +81,8 @@ struct FakeMedia : MacroMediaPort {
     std::optional<std::pair<std::int64_t, std::int64_t>> audioSelection() const override { return std::nullopt; }
     std::optional<Project> project() const override { return Project{12, "a.wav", "v.mkv", ""}; }
     std::optional<std::string> fileName() const override { return "ep1.ass"; }
+    std::optional<const DisplayAudio *> audio;
+    std::optional<const DisplayAudio *> peakAudio() const override { return audio; }
 };
 
 struct FakePicker : FilePickerPort {
@@ -186,6 +192,108 @@ TEST_F(RouterTest, DecodePathUsesTheCurrentContext)
     router.handle(request(HostService::DecodePath, {}, {"?user/x"}), collect());
     ASSERT_EQ(replies.size(), 1u);
     EXPECT_EQ(replies[0].strings, std::vector<std::string>{"/opt/hikari/Automation/x"});
+}
+
+// L6: aegisub.get_frequency_peaks over legacy AudioSpectrum::CreateRange
+// (HikariSub/AudioSpectrum.cpp and GFFT at 20d647c4).
+
+// Mono audio at 48 kHz: `level` for the first `levelSamples` samples, then silence.
+std::unique_ptr<DisplayAudio> levelAudio(std::int64_t samples, std::int16_t level, std::int64_t levelSamples)
+{
+    auto audio = std::make_unique<DisplayAudio>(48000, samples);
+    std::vector<std::int16_t> data(static_cast<std::size_t>(samples), 0);
+    std::fill_n(data.begin(), levelSamples, level);
+    EXPECT_TRUE(audio->appendFrames(data.data(), samples, 1));
+    audio->finish();
+    return audio;
+}
+
+TEST(FrequencyPeaks, ALineIsTheMagnitudeOfLegacysFft)
+{
+    // Against a plain DFT: bins 0..1023 of 2048 samples.
+    std::vector<std::int16_t> samples(kSpectrumDoubleLength);
+    std::uint32_t seed = 12345;
+    for (auto &s : samples) {
+        seed = seed * 1664525u + 1013904223u;
+        s = static_cast<std::int16_t>(static_cast<int>(seed >> 16) - 32768);
+    }
+    const SpectrumLine line = legacySpectrumLine(samples.data());
+    const double pi = std::acos(-1.0);
+    double largest = 0, worst = 0;
+    for (std::size_t k = 0; k < kSpectrumLineLength; k += 37) {
+        double re = 0, im = 0;
+        for (std::size_t n = 0; n < kSpectrumDoubleLength; ++n) {
+            const double a = 2 * pi * static_cast<double>(k * n % kSpectrumDoubleLength) / kSpectrumDoubleLength;
+            re += samples[n] * std::cos(a);
+            im -= samples[n] * std::sin(a);
+        }
+        const double magnitude = std::hypot(re, im);
+        largest = std::max(largest, magnitude);
+        worst = std::max(worst, std::abs(magnitude - line[k]));
+    }
+    EXPECT_LT(worst, largest * 1e-3); // float, with legacy's twiddle recurrence
+
+    // A constant is exact: everything in the first bin.
+    std::fill(samples.begin(), samples.end(), std::int16_t{50});
+    const SpectrumLine flat = legacySpectrumLine(samples.data());
+    EXPECT_EQ(flat[0], 2048.f * 50);
+    for (std::size_t k = 1; k < kSpectrumLineLength; ++k)
+        ASSERT_EQ(flat[k], 0.f) << k;
+}
+
+TEST(FrequencyPeaks, IntensitiesPerLineAndPeakRunsFollowCreateRange)
+{
+    // Ten lines (2048 samples each) at level 50: the first bin's intensity
+    // is 100 * (2048 * 50 * 16) / (32768 * 100) = 50.
+    const auto audio = levelAudio(48000, 50, 10 * 2048);
+    // 900 ms: lines 0 (0 ms) to 21 (43200 / 2048), each at line * 2048000 / 48000 ms;
+    // bands 0 / (48000 / 2048) = 0 to 100 / 23 = 4, the strongest of them.
+    auto peaks = legacyFrequencyPeaks(*audio, 0, 900, 0, 100, 0);
+    EXPECT_EQ(peaks.times, (std::vector<int>{0, 42, 85, 128, 170, 213, 256, 298, 341, 384, 426, 469, 512, 554, 597,
+                                             640, 682, 725, 768, 810, 853, 896}));
+    std::vector<int> expected(22, 0);
+    std::fill_n(expected.begin(), 10, 50);
+    EXPECT_EQ(peaks.intensities, expected);
+    // From the line holding the start time.
+    peaks = legacyFrequencyPeaks(*audio, 400, 500, 0, 0, 0);
+    EXPECT_EQ(peaks.times, (std::vector<int>{384, 426, 469}));
+    EXPECT_EQ(peaks.intensities, (std::vector<int>{50, 0, 0}));
+    // An end band below the start band is the start band (band 4: nothing).
+    peaks = legacyFrequencyPeaks(*audio, 0, 100, 100, 0, 0);
+    EXPECT_EQ(peaks.intensities, (std::vector<int>{0, 0, 0}));
+
+    // With a peek: the time where each run of lines reaching it was
+    // strongest (its first line at equal intensities), once the run ends.
+    peaks = legacyFrequencyPeaks(*audio, 0, 900, 0, 0, 40);
+    EXPECT_EQ(peaks.times, std::vector<int>{0});
+    EXPECT_TRUE(peaks.intensities.empty());
+    EXPECT_TRUE(legacyFrequencyPeaks(*audio, 0, 900, 0, 0, 60).times.empty());
+    // A run still going at the last line is never reported (legacy).
+    EXPECT_TRUE(legacyFrequencyPeaks(*audio, 0, 300, 0, 0, 40).times.empty());
+}
+
+TEST_F(RouterTest, FrequencyPeaksReadTheAudioBox)
+{
+    FakeMedia media;
+    router.setMedia(&media);
+    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect()); // no audio
+    media.audio = nullptr;                                                           // a box without audio yet
+    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect());
+    const auto audio = levelAudio(48000, 50, 2048);
+    media.audio = audio.get();
+    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 0}), collect());
+    router.handle(request(HostService::FrequencyPeaks, {0, 100, 0, 0, 40}), collect());
+    router.handle(request(HostService::FrequencyPeaks, {-5, 100, 0, 0, 0}), collect()); // the helper raises
+    router.handle(request(HostService::FrequencyPeaks, {100, 100, 0, 0, 0}), collect()); // the helper answers {}
+    ASSERT_EQ(replies.size(), 6u);
+    EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
+    EXPECT_EQ(replies[1].integers, std::vector<std::int64_t>{1});
+    EXPECT_EQ(replies[2].integers, (std::vector<std::int64_t>{0, 0, 42, 85}));
+    EXPECT_EQ(replies[2].numbers, (std::vector<double>{50, 0, 0}));
+    EXPECT_EQ(replies[3].integers, (std::vector<std::int64_t>{0, 0}));
+    EXPECT_TRUE(replies[3].numbers.empty());
+    EXPECT_EQ(replies[4].integers, std::vector<std::int64_t>{0});
+    EXPECT_EQ(replies[5].integers, std::vector<std::int64_t>{0});
 }
 
 } // namespace

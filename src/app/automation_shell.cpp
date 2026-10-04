@@ -91,6 +91,19 @@ public:
             return std::nullopt;
         return QFileInfo(QString::fromStdString(destination->value)).fileName().toStdString();
     }
+    // Legacy reads the video's FFMS2 provider first, else the audio box's;
+    // the box holds the video's audio when it opened it, and is the only
+    // audio here (a video whose audio legacy had not loaded gave it
+    // uninitialised samples: R3, no audio).
+    std::optional<const application::DisplayAudio *> peakAudio() const override
+    {
+        const application::AudioBox *box = audioBox ? audioBox() : nullptr;
+        if (!box || !box->isOpen())
+            return std::nullopt;
+        return box->audio();
+    }
+
+    std::function<const application::AudioBox *()> audioBox;
 
 private:
     ui::VideoController &m_video;
@@ -202,6 +215,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::servicesWithdrawn, this, [this] { m_router.withdraw(); });
     m_managerController = std::make_unique<ui::AutomationManagerController>(*this);
+}
+
+void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
+{
+    static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
 }
 
 AutomationShell::~AutomationShell()

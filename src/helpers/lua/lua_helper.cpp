@@ -24,6 +24,7 @@
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/lua_protocol.h"
+#include "hikari/core/text_projection.h"
 #include "lua_native.h"
 
 extern "C" {
@@ -1348,6 +1349,237 @@ int setUndoPoint(lua_State *)
     return 0; // a legacy stub (C06): it changes nothing
 }
 
+// Legacy `laf->was_cancelled`: a cancelled run raises the cancellation.
+void checkCancelled(lua_State *L)
+{
+    if (g_responder && g_responder->cancelled())
+        cancelScript(L);
+}
+
+// ---- aegisub.parse_karaoke_data (legacy AutoToFile::LuaParseKaraokeData) ----
+// wxString arithmetic over UTF-16 units, as wxString holds them on Windows.
+
+using u16 = std::u16string;
+
+// wxString::Mid: out of range gives "", the count is clamped.
+u16 wxMid(const u16 &s, std::size_t first, std::size_t count)
+{
+    const std::size_t len = s.size();
+    if (first > len)
+        return {};
+    if (count > len - first)
+        count = len - first;
+    return s.substr(first, count);
+}
+
+// wxString::Find(ch, true): the last position, or wxNOT_FOUND (-1).
+int wxFindLast(const u16 &s, char16_t ch)
+{
+    const auto at = s.rfind(ch);
+    return at == u16::npos ? -1 : static_cast<int>(at);
+}
+
+// wxString::Replace(old, new) for every occurrence, left to right.
+void wxReplaceAll(u16 &s, const u16 &from, const u16 &to)
+{
+    u16 out;
+    std::size_t at = 0;
+    for (std::size_t hit; (hit = s.find(from, at)) != u16::npos; at = hit + from.size())
+        out += s.substr(at, hit - at) + to;
+    s = out + s.substr(at);
+}
+
+// wxRegEx("\\{[^\\}]*\\}").ReplaceAll(&text, ""): every override block removed.
+u16 withoutBlocks(const u16 &s)
+{
+    u16 out;
+    std::size_t at = 0;
+    for (;;) {
+        const auto open = s.find(u'{', at);
+        const auto close = open == u16::npos ? u16::npos : s.find(u'}', open);
+        if (close == u16::npos)
+            break;
+        out += s.substr(at, open - at);
+        at = close + 1;
+    }
+    return out + s.substr(at);
+}
+
+// wxString::ToCDouble: the whole text as a C-locale number.
+bool wxToCDouble(const u16 &text)
+{
+    std::string ascii;
+    for (const char16_t c : text) {
+        if (c > 0x7F)
+            return false;
+        ascii += static_cast<char>(c);
+    }
+    if (ascii.empty())
+        return false;
+    char *end = nullptr;
+    std::strtod(ascii.c_str(), &end);
+    return end != ascii.c_str() && *end == '\0';
+}
+
+struct KaraokeTag {
+    u16 name, value;
+    unsigned int startTextPos = 0; // where the value starts
+};
+
+// Dialogue::ParseTags({"kf", "ko", "k", "K"}, 4) (plainText false, no \p
+// among the names): the karaoke tags inside override blocks.
+std::vector<KaraokeTag> karaokeTags(const u16 &txt)
+{
+    static const u16 names[] = {u"kf", u"ko", u"k", u"K"};
+    std::vector<KaraokeTag> out;
+    const std::size_t len = txt.size();
+    std::size_t pos = 0;
+    bool tagsBlock = false;
+    if (len < 1)
+        return out;
+    while (pos < len) {
+        const char16_t ch = txt[pos];
+        if (ch == u'}') {
+            tagsBlock = false;
+        } else if (ch == u'{' || pos >= len - 1) {
+            tagsBlock = true;
+            if (pos >= len - 1)
+                ++pos;
+        } else if (tagsBlock && ch == u'\\') {
+            ++pos;
+            const std::size_t slash = txt.find(u'\\', pos), bracket = txt.find(u'}', pos);
+            const std::size_t tagEnd = slash == u16::npos && bracket == u16::npos ? len
+                                       : slash == u16::npos                     ? bracket
+                                       : bracket == u16::npos                   ? slash
+                                                                                : std::min(slash, bracket);
+            u16 tag = txt.substr(pos, tagEnd - pos);
+            if (!tag.empty() && tag.back() == u')')
+                tag.pop_back();
+            for (const u16 &name : names) {
+                if (tag.size() <= name.size() || tag.compare(0, name.size(), name) != 0)
+                    continue;
+                const char16_t first = tag[name.size()];
+                if (!(first == u'(' || (first >= u'0' && first <= u'9') || first == u'.' || first == u'-' ||
+                      first == u'+'))
+                    continue;
+                KaraokeTag data{name, {}, static_cast<unsigned int>(pos + name.size())};
+                u16 value = tag.substr(name.size());
+                if (first == u'(') {
+                    ++data.startTextPos;
+                    // tagValue.After('(').BeforeFirst(')')
+                    const u16 after = value.substr(value.find(u'(') + 1);
+                    data.value = after.substr(0, after.find(u')'));
+                } else {
+                    if (!wxToCDouble(value)) {
+                        u16 digits;
+                        for (const char16_t c : value) {
+                            if (!(c >= u'0' && c <= u'9') && c != u'.' && c != u'-' && c != u'+')
+                                break;
+                            digits += c;
+                        }
+                        value = digits;
+                    }
+                    data.value = value;
+                }
+                out.push_back(std::move(data));
+                pos = tagEnd - 1;
+                break;
+            }
+        }
+        ++pos;
+    }
+    return out;
+}
+
+std::string utf8Of(const u16 &s)
+{
+    const auto u8 = hikari::core::toUtf8(s);
+    return std::string(u8.begin(), u8.end());
+}
+
+void pushSyllable(lua_State *L, int duration, int start, int end, const std::string &tag, const u16 &text,
+                  const u16 &stripped)
+{
+    lua_createtable(L, 0, 6);
+    lua_pushinteger(L, duration);
+    lua_setfield(L, -2, "duration");
+    lua_pushinteger(L, start);
+    lua_setfield(L, -2, "start_time");
+    lua_pushinteger(L, end);
+    lua_setfield(L, -2, "end_time");
+    setString(L, "tag", tag);
+    setString(L, "text", utf8Of(text));
+    setString(L, "text_stripped", utf8Of(stripped));
+}
+
+// Legacy stores the syllables in the line table it was given (from index 0,
+// an empty syllable first) and returns that table: it never made one of its
+// own. With no karaoke tag, index 1 is the whole line as one "k" syllable.
+int parseKaraokeData(lua_State *L)
+{
+    checkCancelled(L);
+    const auto entry = luaToLine(L);
+    if (!entry || !std::holds_alternative<MacroDialogueLine>(*entry)) {
+        lua_pushstring(L, "You try to parse karaoke from non dialogue line");
+        return lua_error(L);
+    }
+    const auto &line = std::get<MacroDialogueLine>(*entry);
+    // LuaToLine keeps "text" as TextTl when "text_translation" is set; the
+    // parsed text is TextTl when it is not empty, else Text.
+    const std::string &raw = line.text.empty() ? line.translation : line.text;
+    const u16 text =
+        hikari::core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(raw.data()), raw.size()));
+
+    int kcount = 0;
+    int ktime = 0;
+    pushSyllable(L, 0, 0, 0, "", {}, {});
+    lua_rawseti(L, -2, kcount++);
+    const auto tags = karaokeTags(text);
+    std::size_t lastPosition = 0;
+    const std::size_t tagssize = tags.size();
+    for (std::size_t i = 0; i < tagssize; i++) {
+        const KaraokeTag &tdata = tags[i];
+        long long nextKstart = static_cast<long long>(lastPosition);
+        if (i < tagssize - 1) {
+            nextKstart = tags[i + 1].startTextPos;
+            const u16 newtxt = wxMid(text, lastPosition, static_cast<std::size_t>(nextKstart) - lastPosition);
+            const std::size_t bracketstartpos = static_cast<std::size_t>(wxFindLast(newtxt, u'{'));
+            // A part without '{' (legacy: "should not happen") ends before the
+            // first '\' after its last '}', taken as a position in the line.
+            if (bracketstartpos == static_cast<std::size_t>(-1)) {
+                const std::size_t bracketendpos = static_cast<std::size_t>(wxFindLast(newtxt, u'}'));
+                const std::size_t firstSlash = newtxt.find(u'\\', bracketendpos + 1);
+                if (firstSlash != u16::npos)
+                    nextKstart = static_cast<long long>(firstSlash - 1);
+            } else {
+                nextKstart = static_cast<long long>(lastPosition + bracketstartpos - 1);
+            }
+        } else {
+            nextKstart = static_cast<long long>(text.length());
+        }
+        int kdur = std::atoi(utf8Of(tdata.value).c_str()); // wxAtoi
+        kdur *= 10;
+        u16 ktext;
+        if (nextKstart >= 0) {
+            ktext = wxMid(text, lastPosition, tdata.startTextPos - lastPosition - tdata.name.length() - 1);
+            const std::size_t newStart = tdata.startTextPos + tdata.value.length();
+            ktext += wxMid(text, newStart, static_cast<std::size_t>(nextKstart) - newStart + 1);
+            wxReplaceAll(ktext, u"{}", u"");
+        }
+        const int start = ktime;
+        ktime += kdur;
+        pushSyllable(L, kdur, start, ktime, utf8Of(tdata.name), ktext, withoutBlocks(ktext));
+        lua_rawseti(L, -2, kcount++);
+        lastPosition = static_cast<std::size_t>(nextKstart + 1);
+    }
+    if (kcount < 2) {
+        const int startMs = static_cast<int>(line.startMs), endMs = static_cast<int>(line.endMs);
+        pushSyllable(L, endMs - startMs, startMs, endMs, "k", text, withoutBlocks(text));
+        lua_rawseti(L, -2, kcount++);
+    }
+    return 1;
+}
+
 // ---- host services (L3; legacy HikariSub/Automation.cpp) ------------------
 // Each function keeps the legacy argument handling and return shape; the
 // application answers through its platform ports. Unavailable is the legacy
@@ -1561,6 +1793,56 @@ int getFrame(lua_State *L)
     luaL_getmetatable(L, "VideoFrame");
     lua_setmetatable(L, -2);
     return 1;
+}
+
+// aegisub.get_frequency_peaks (legacy AutoToFile::LuaGetFreqencyReach): the
+// host reads the open audio's spectrum (legacy AudioSpectrum::CreateRange);
+// the argument checks and their errors keep legacy's order.
+int frequencyPeaks(lua_State *L)
+{
+    checkCancelled(L);
+    for (int i = 1; i <= 5; ++i) {
+        if (!lua_isnumber(L, i)) {
+            lua_pushstring(L, "Non number argument of function get_frequency_peaks");
+            return lua_error(L);
+        }
+    }
+    const int start = static_cast<int>(lua_tointeger(L, 1)), end = static_cast<int>(lua_tointeger(L, 2)),
+              freqStart = static_cast<int>(lua_tointeger(L, 3)), freqEnd = static_cast<int>(lua_tointeger(L, 4));
+    const lua_Integer asked = lua_tointeger(L, 5);
+    const int peek = static_cast<int>(asked < 0 ? 0 : asked > 1000 ? 1000 : asked); // MID(0, peek, 1000)
+    const auto reply =
+        callHost(L, "get_frequency_peaks", HostService::FrequencyPeaks, {start, end, freqStart, freqEnd, peek});
+    if (!reply) {
+        lua_pushstring(L, "get_frequency_peaks needs loaded audio by FFMS2");
+        return lua_error(L);
+    }
+    if (integerAt(*reply, 0) != 0) {
+        lua_pushstring(L, "get_frequency_peaks cannot get audio provider");
+        return lua_error(L);
+    }
+    if (start < 0 || end < 0) {
+        lua_pushstring(L, "get_frequency_peaks start or end time less than zero");
+        return lua_error(L);
+    }
+    // push_value(std::vector<int>): a 1-based list.
+    const auto pushList = [L](const auto &values, std::size_t from) {
+        const std::size_t count = values.size() > from ? values.size() - from : 0;
+        lua_createtable(L, static_cast<int>(count), 0);
+        for (std::size_t i = 0; i < count; ++i) {
+            lua_pushinteger(L, static_cast<lua_Integer>(values[from + i]));
+            lua_rawseti(L, -2, static_cast<int>(i) + 1);
+        }
+    };
+    if (start >= end) {
+        pushList(std::vector<int>{}, 0);
+        return 1;
+    }
+    pushList(reply->integers, 1);
+    if (peek > 0)
+        return 1;
+    pushList(reply->numbers, 0);
+    return 2;
 }
 
 int audioSelection(lua_State *L)
@@ -1842,6 +2124,12 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
     g_lastProgress = 0;
     installSink(L);
     lua_getglobal(L, "aegisub");
+    // Legacy AutoToFile's constructor, made for each run: these three stay
+    // in the aegisub table after the run.
+    lua_pushcfunction(L, parseKaraokeData);
+    lua_setfield(L, -2, "parse_karaoke_data");
+    lua_pushcfunction(L, frequencyPeaks);
+    lua_setfield(L, -2, "get_frequency_peaks");
     lua_pushcfunction(L, setUndoPoint);
     lua_setfield(L, -2, "set_undo_point");
     lua_pop(L, 1);
