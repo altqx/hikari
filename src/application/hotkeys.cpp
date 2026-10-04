@@ -1,6 +1,9 @@
 #include "hikari/application/hotkeys.h"
 
+#include "hikari/core/ass_load.h" // core::legacy::atoi (wxAtoi)
+
 #include <algorithm>
+#include <limits>
 #include <array>
 
 namespace hikari::application {
@@ -622,14 +625,37 @@ std::string keyTextOf(std::string_view accel)
     return std::string(dash == std::string_view::npos ? accel : accel.substr(dash + 1));
 }
 
-// GetHKey's key code: FillTable's by name, else the one character; 0 is invalid.
+// The UTF-16 length and the code point of `text` (UTF-8): wxString counts
+// UTF-16 units on Windows.
+std::pair<std::size_t, char32_t> utf16LengthAndFirst(std::string_view text)
+{
+    std::size_t units = 0;
+    char32_t first = 0;
+    for (std::size_t i = 0; i < text.size();) {
+        const auto c = static_cast<unsigned char>(text[i]);
+        const std::size_t n = c < 0x80 ? 1 : (c >> 5) == 6 ? 2 : (c >> 4) == 14 ? 3 : (c >> 3) == 30 ? 4 : 1;
+        char32_t cp = n == 1 ? c : c & (0x7f >> n);
+        for (std::size_t k = 1; k < n && i + k < text.size(); ++k)
+            cp = (cp << 6) | (static_cast<unsigned char>(text[i + k]) & 0x3f);
+        if (units == 0)
+            first = cp;
+        units += cp > 0xffff ? 2 : 1;
+        i += n;
+    }
+    return {units, first};
+}
+
+// GetHKey's key code (Hotkeys.cpp:362-375): FillTable's by name, else the
+// one character (akey.length() < 2, UTF-16 units); 0 is invalid, and legacy
+// logs it ('Shortcut "%s" is invalid').
 int keyCodeOf(const std::string &keyText)
 {
     for (const auto &[code, name] : hotkeyKeyNames())
         if (name == keyText)
             return code;
-    if (keyText.size() == 1)
-        return static_cast<unsigned char>(keyText[0]);
+    const auto [units, first] = utf16LengthAndFirst(keyText);
+    if (units < 2)
+        return static_cast<int>(first); // "" reads akey[0], the terminating 0
     return 0;
 }
 
@@ -789,7 +815,37 @@ std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio)
     return out;
 }
 
+int hotkeyLabelNumber(std::string_view label, bool windows)
+{
+    if (!windows)
+        return static_cast<int>(core::legacy::atoi(
+            std::u8string_view(reinterpret_cast<const char8_t *>(label.data()), label.size())));
+    // _wtoi: leading blanks, a sign, then digits; out of range INT_MAX / INT_MIN.
+    std::size_t i = 0;
+    while (i < label.size() && (label[i] == ' ' || (label[i] >= '\t' && label[i] <= '\r')))
+        ++i;
+    bool negative = false;
+    if (i < label.size() && (label[i] == '+' || label[i] == '-'))
+        negative = label[i++] == '-';
+    constexpr std::int64_t limit = std::int64_t(std::numeric_limits<int>::max()) + 1;
+    std::int64_t magnitude = 0;
+    for (; i < label.size() && label[i] >= '0' && label[i] <= '9'; ++i)
+        magnitude = std::min<std::int64_t>(magnitude * 10 + (label[i] - '0'), limit);
+    if (negative)
+        return magnitude >= limit ? std::numeric_limits<int>::min() : -int(magnitude);
+    return magnitude >= limit ? std::numeric_limits<int>::max() : int(magnitude);
+}
+
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines)
+{
+#ifdef _WIN32
+    readHotkeyLines(map, lines, true);
+#else
+    readHotkeyLines(map, lines, false);
+#endif
+}
+
+void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines, bool windows)
 {
     for (const auto &line : lines) {
         const std::string token = trim(line);
@@ -804,8 +860,15 @@ void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines)
         values = values.size() > 2 ? values.substr(2) : std::string();
         if (values.empty())
             continue;
-        const bool number = !label.empty() && std::ranges::all_of(label, [](char c) { return c >= '0' && c <= '9'; });
-        const int id = number ? std::stoi(label) : hotkeyIdOf(label);
+        // Labels.IsNumber() (wxString::IsNumber: an optional sign, then
+        // digits; "" counts too) and wxAtoi (Hotkeys.cpp:300-301), which
+        // never fails: past the int range each legacy build reads it its
+        // own way (R5-per-platform, hotkeyLabelNumber).
+        std::string_view digits = label;
+        if (!digits.empty() && (digits.front() == '-' || digits.front() == '+'))
+            digits.remove_prefix(1);
+        const bool number = std::ranges::all_of(digits, [](char c) { return c >= '0' && c <= '9'; });
+        const int id = number ? hotkeyLabelNumber(label, windows) : hotkeyIdOf(label);
         map[HotkeyId{id, type}] = Hotkey{std::string(), values};
     }
 }
@@ -844,6 +907,19 @@ const std::map<int, std::string> &hotkeyKeyNames()
         return k;
     }();
     return names;
+}
+
+std::string invalidHotkeyKey(std::string_view accel)
+{
+    if (accel.empty())
+        return {};
+    // Hotkeys.cpp:372-375: logged when the key is no FillTable name and
+    // longer than one character.
+    std::string key = keyTextOf(accel);
+    for (const auto &[code, name] : hotkeyKeyNames())
+        if (name == key)
+            return {};
+    return utf16LengthAndFirst(key).first >= 2 ? key : std::string();
 }
 
 std::string qtKeysOfAccel(std::string_view accel)
@@ -1082,6 +1158,7 @@ void HotkeyList::filter(int mode)
     // FilterList(1, mode) with ItemHotkey::OnVisibilityChange.
     m_filterMode = mode;
     m_sel = 0;
+    m_isFiltered = false;
     for (auto &r : m_rows) {
         bool visible = true;
         switch (mode) {
@@ -1093,7 +1170,53 @@ void HotkeyList::filter(int mode)
         case 6: visible = r->key.type == AudioHotkey; break;
         default: break;
         }
-        r->visible = visible;
+        r->visible = visible ? 1 : 0;
+        if (!visible)
+            m_isFiltered = true;
+    }
+    rebuildFiltered();
+}
+
+int HotkeyList::findKey(int position) const
+{
+    if (position < 0 || std::size_t(position) >= m_filtered.size())
+        return -1;
+    const auto &r = m_filtered[std::size_t(position)];
+    for (std::size_t i = std::size_t(position); i < m_rows.size(); ++i)
+        if (m_rows[i] == r)
+            return int(i);
+    return -1;
+}
+
+int HotkeyList::hiddenBlock(int position) const
+{
+    // HikariListCtrl::CheckIfHasHiddenBlock (HikariListCtrl.cpp:968-986).
+    const int actual = findKey(position);
+    const int plusOne = findKey(position + 1);
+    const int plusOneSafe = plusOne < 0 ? int(m_rows.size()) : plusOne;
+    if (actual + 1 < plusOneSafe)
+        return 1;
+    if (plusOne < 0)
+        return 0;
+    if ((actual < 0 || m_rows[std::size_t(actual)]->visible != 2) && m_rows[std::size_t(plusOne)]->visible == 2)
+        return 2;
+    return 0;
+}
+
+void HotkeyList::toggleBlock(int position)
+{
+    // HikariListCtrl::OnMouseEvent's gutter click: ShowOrHideBlock(FindKey)
+    // when CheckIfHasHiddenBlock finds a block (HikariListCtrl.cpp:712-724, 988-1001).
+    if (!m_isFiltered || !hiddenBlock(position))
+        return;
+    for (std::size_t i = std::size_t(findKey(position) + 1); i < m_rows.size(); ++i) {
+        auto &r = m_rows[i];
+        if (r->visible == 0)
+            r->visible = 2;
+        else if (r->visible == 2)
+            r->visible = 0;
+        else
+            break;
     }
     rebuildFiltered();
 }
@@ -1148,7 +1271,7 @@ int HotkeyList::find(const std::string &text) const
 HotkeyList::Row &HotkeyList::copyRow(int y, bool pushBack)
 {
     auto row = std::make_shared<Row>(*m_rows[std::size_t(y)]);
-    row->visible = true; // a new ItemRow
+    row->visible = 1; // a new ItemRow
     if (pushBack) {
         m_rows.push_back(row);
         m_filtered.push_back(row);
@@ -1414,6 +1537,12 @@ HotkeyNowResult mapHotkeyNow(HotkeyMap &live, int id, const std::string &name, c
                 if (scan.doubled && k.type != type)
                     continue;
                 if (answer == HotkeyAnswer::Switch) {
+                    // Hotkeys.cpp:497-509, in map order: the binding is
+                    // cleared, then given (id, window)'s keys as they are
+                    // now. When (id, window) is among them it clears itself
+                    // there, so the bindings after it get nothing; SetHKey
+                    // gives it the new keys afterwards.
+                    live[k].accel.clear();
                     const auto mine = live.find(HotkeyId{id, type});
                     live[k].accel = mine != live.end() ? mine->second.accel : std::string();
                 } else {

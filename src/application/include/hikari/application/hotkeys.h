@@ -103,10 +103,18 @@ std::string defaultHotkey(const HotkeyId &key);
 std::vector<std::string> hotkeyLines(const HotkeyMap &map, bool audio);
 // LoadHkeys' reading of those lines into `map`: "<SYMBOL or id> <G|S|E|V|A>=<accel>";
 // a symbol it does not know becomes id 0 (GetIdValue), a window letter it
-// does not know window -1, and an empty binding is skipped. Script lines
+// does not know window -1, and an empty binding is skipped. A numeric label
+// (an optional sign and digits, wxString::IsNumber) is read with that
+// platform's legacy wxAtoi (hotkeyLabelNumber), which never fails. Script lines
 // ("Script ...") belong to the automation hotkeys and are skipped. The
 // version header and the record count rule are the importer's (C04).
 void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines);
+void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines, bool windows);
+// wxAtoi of a numeric label per legacy build (R5-per-platform): the Windows
+// build's _wtoi clamps past the int range to INT_MAX / INT_MIN; the Linux
+// build's atoi is strtol on a 64-bit long truncated to int
+// (core::legacy::atoi).
+int hotkeyLabelNumber(std::string_view label, bool windows);
 
 // Hotkeys::GetHKey's reading of accelerator text: the modifiers found
 // anywhere in it ("Alt-", "Ctrl-", "Shift-") and the key after the last '-'
@@ -115,6 +123,11 @@ void readHotkeyLines(HotkeyMap &map, const std::vector<std::string> &lines);
 // "Return"), or "" when the key is invalid (legacy logs "Shortcut ... is
 // invalid" and installs nothing).
 std::string qtKeysOfAccel(std::string_view accel);
+// The key text GetHKey logs as invalid ('Shortcut "%s" is invalid',
+// Hotkeys.cpp:372-374): neither a FillTable name nor one character (UTF-16
+// units, as wxString counts on Windows); "" when legacy logs nothing. A key
+// of one non-ASCII character is valid for legacy but has no Qt sequence here.
+std::string invalidHotkeyKey(std::string_view accel);
 // The other way, for bindings captured as Qt portable sequences (the
 // automation hotkeys'): legacy names and modifier order ("Alt-Ctrl-Shift-").
 std::string accelOfQtKeys(std::string_view keys);
@@ -177,7 +190,9 @@ public:
         std::string accel; // the Hotkey column
         bool keyModified = false;
         HotkeyId key;
-        bool visible = true; // ItemRow::isVisible
+        // ItemRow::isVisible: NOT_VISIBLE 0, VISIBLE 1, VISIBLE_BLOCK 2 (a
+        // filtered-out row shown again from the gutter).
+        int visible = 1;
     };
 
     explicit HotkeyList(HotkeyMap &copy) : m_copy(copy) {}
@@ -204,6 +219,15 @@ public:
     void selectShown(int position);
     // The row whose Function column reads `text` (FindItem), or -1.
     int find(const std::string &text) const;
+    // HikariListCtrl's gutter while the list is filtered (isFiltered: some
+    // row is not VISIBLE). CheckIfHasHiddenBlock for the gap after the shown
+    // position (-1: above the first): 0 none, 1 hidden rows ("+"), 2 rows
+    // shown from a block ("-"). ShowOrHideBlock: the rows after that shown
+    // position switch between NOT_VISIBLE and VISIBLE_BLOCK up to the next
+    // VISIBLE one.
+    bool filtered() const { return m_isFiltered; }
+    int hiddenBlock(int position) const;
+    void toggleBlock(int position);
 
     // The "Hotkey mapping" window's title name and whether it offers the
     // window choice (not for scripts).
@@ -246,6 +270,8 @@ private:
     bool m_modified = false;
     int m_sel = 0; // a position in m_filtered; -1 for none
     int m_filterMode = 0;
+    bool m_isFiltered = false;
+    int findKey(int position) const; // FindKey: the row at a shown position, or -1
 };
 
 // Hotkeys::OnMapHkey (the Shift+click gesture): `id` gets `accel` for `type`

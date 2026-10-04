@@ -509,7 +509,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
-    m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings);
+    m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
+                                                    [this](const QString &message) { m_log->log(message); });
     m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION));
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir

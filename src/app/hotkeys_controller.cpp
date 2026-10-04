@@ -4,9 +4,12 @@
 #include "hikari/application/settings.h"
 
 #include <QCoreApplication>
-#include <algorithm>
+#include <QDateTime>
 #include <QKeyEvent>
+#include <QKeySequence>
 #include <QMouseEvent>
+#include <algorithm>
+#include <set>
 
 namespace hikari::app {
 
@@ -175,12 +178,14 @@ std::string symbolOf(int id)
 
 } // namespace
 
-HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings, QObject *parent)
-    : QObject(parent), m_scripts(scripts), m_settings(settings)
+HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
+                                     std::function<void(const QString &)> log, QObject *parent)
+    : QObject(parent), m_scripts(scripts), m_settings(settings), m_log(std::move(log))
 {
     load();
     m_installed = m_live;
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
+    logInvalid(); // the frame's SetAccels(false) at startup
     // OK in the automation hotkeys window: SetHotkeysMap, SetAccels(true), SaveHkeys().
     connect(&m_scripts, &AutomationHotkeysController::committed, this, [this] {
         m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
@@ -227,7 +232,26 @@ void HotkeysController::setAccels()
     // TabPanel::SetAccels reads the tag button count when it installs.
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     m_scripts.install();
+    logInvalid();
     emit installedChanged();
+}
+
+// Hotkeys::GetHKey (Hotkeys.cpp:372-375) for every binding SetAccels
+// installs: a key that is neither a FillTable name nor one character is
+// logged and installs nothing. Legacy logs it once per accelerator table the
+// binding goes to (the frame's, each tab's, the audio box's); the rewrite
+// once per binding at each install.
+void HotkeysController::logInvalid() const
+{
+    if (!m_log)
+        return;
+    for (const auto &[key, hotkey] : m_installed) {
+        if (key.type < 0 || key.type >= application::kHotkeyWindows)
+            continue;
+        const auto bad = application::invalidHotkeyKey(hotkey.accel);
+        if (!bad.empty())
+            m_log(tr("Shortcut \"%1\" is invalid").arg(qs(bad)));
+    }
 }
 
 HotkeyMap HotkeysController::bindings() const
@@ -245,9 +269,13 @@ void HotkeysController::split(const HotkeyMap &combined)
     m_live.clear();
     std::map<std::string, std::string> scripts;
     for (const auto &[key, hotkey] : combined) {
-        if (key.id >= application::kFirstScriptHotkey)
-            scripts[hotkey.name] = application::qtKeysOfAccel(hotkey.accel);
-        else
+        if (key.id >= application::kFirstScriptHotkey) {
+            // A nameless binding there came from a numeric line past the
+            // static ids (LoadHkeys); legacy saves it as "=<keys>", which it
+            // cannot read back, so it is gone at the next start either way.
+            if (!hotkey.name.empty())
+                scripts[hotkey.name] = application::qtKeysOfAccel(hotkey.accel);
+        } else
             m_live[key] = hotkey;
     }
     m_scripts.replaceCommitted(scripts);
@@ -270,6 +298,55 @@ QVariantMap HotkeysController::keys() const
     return out;
 }
 
+QVariantList HotkeysController::globalShortcuts() const
+{
+    using namespace application;
+    QVariantList out;
+    std::set<QString> taken;
+    for (const auto &[key, hotkey] : m_installed) {
+        if (key.type != GlobalHotkey || key.id >= kFirstScriptHotkey || hotkey.accel.empty())
+            continue;
+        const auto seq = qtKeysOfAccel(hotkey.accel);
+        if (seq.empty())
+            continue;
+        // GetHKey sends an id under AUDIO_COMMIT as id + 10; the frame
+        // handles it only when it bound that id (an installed Global binding).
+        int id = key.id;
+        if (id < kAudioCommit) {
+            id += 10;
+            const auto main = m_installed.find(HotkeyId{id, GlobalHotkey});
+            if (main == m_installed.end() || main->second.accel.empty())
+                continue;
+        }
+        const QString keys = QKeySequence::fromString(qs(seq), QKeySequence::PortableText).toString(QKeySequence::PortableText);
+        if (keys.isEmpty() || !taken.insert(keys).second)
+            continue;
+        out << QVariantMap{{QStringLiteral("symbol"), qs(symbolOf(id))}, {QStringLiteral("keys"), keys}};
+    }
+    return out;
+}
+
+QStringList HotkeysController::globalSequences() const
+{
+    QStringList out;
+    for (const auto &v : globalShortcuts())
+        out << v.toMap().value(QStringLiteral("keys")).toString();
+    return out;
+}
+
+bool HotkeysController::repeatedKey(const QString &action, int interval)
+{
+    // config::CheckLastKeyEvent: an ignored key does not move lastCheckedTime.
+    const qint64 now = m_keyClock ? m_keyClock() : QDateTime::currentMSecsSinceEpoch();
+    if (now < m_lastCheckedTime && m_lastCheckedTime != 0)
+        m_lastCheckedTime = now;
+    else if (action == m_lastCheckedId && now < m_lastCheckedTime + interval)
+        return true;
+    m_lastCheckedTime = now;
+    m_lastCheckedId = action;
+    return false;
+}
+
 QString HotkeysController::accelOf(const QString &symbol, int window) const
 {
     const int id = application::hotkeyIdOf(symbol.toStdString());
@@ -277,14 +354,15 @@ QString HotkeysController::accelOf(const QString &symbol, int window) const
     return it == m_installed.end() ? QString() : qs(it->second.accel);
 }
 
-QString HotkeysController::actionFor(int window, int key, int modifiers) const
+QString HotkeysController::actionFor(int window, int key, int modifiers, bool textField) const
 {
     using namespace application;
     const std::string pressed = accelOfPress(pressOf(key, modifiers));
     if (pressed.empty())
         return {};
     // The text field's own accelerators act first in the Line editor.
-    if (window == EditorHotkey && textFieldOwnsKey(pressed, m_settings.boolean("editor.allowNumpadHotkeys")))
+    if (window == EditorHotkey && textField &&
+        textFieldOwnsKey(pressed, m_settings.boolean("editor.allowNumpadHotkeys")))
         return {};
     // TabPanel::SetAccels: which window's table each binding goes to.
     const auto routed = [&](const HotkeyId &k) -> int {
@@ -347,15 +425,38 @@ QVariantList HotkeysController::rows() const
     QVariantList out;
     if (!m_list)
         return out;
+    const bool filtered = m_list->filtered();
+    int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
         out << QVariantMap{{QStringLiteral("row"), i},
                            {QStringLiteral("text"), qs(r.text)},
                            {QStringLiteral("accel"), qs(r.accel)},
                            {QStringLiteral("textModified"), r.textModified},
-                           {QStringLiteral("keyModified"), r.keyModified}};
+                           {QStringLiteral("keyModified"), r.keyModified},
+                           {QStringLiteral("block"), filtered ? m_list->hiddenBlock(position) : 0},
+                           {QStringLiteral("inBlock"), filtered && r.visible == 2}};
+        ++position;
     }
     return out;
+}
+
+bool HotkeysController::listFiltered() const
+{
+    return m_list && m_list->filtered();
+}
+
+int HotkeysController::topBlock() const
+{
+    return m_list && m_list->filtered() ? m_list->hiddenBlock(-1) : 0;
+}
+
+void HotkeysController::toggleBlock(int position)
+{
+    if (!m_list)
+        return;
+    m_list->toggleBlock(position);
+    emit rowsChanged();
 }
 
 int HotkeysController::selected() const
@@ -500,12 +601,14 @@ bool HotkeysController::eventFilter(QObject *watched, QEvent *event)
         const bool button = watched->inherits("QQuickAbstractButton");
         m_lastClickShift = button && mods == Qt::ShiftModifier;
         m_lastClickShiftHeld = button && (mods & Qt::ShiftModifier);
+        m_lastClickCtrlHeld = button && (mods & Qt::ControlModifier);
         break;
     }
     case QEvent::KeyPress:
     case QEvent::ShortcutOverride:
         m_lastClickShift = false;
         m_lastClickShiftHeld = false;
+        m_lastClickCtrlHeld = false;
         break;
     default:
         break;
