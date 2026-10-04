@@ -482,6 +482,23 @@ Dialog {
                     SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge all the \"n\" with the previous syllable") }
                     SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move syllable line after click") }
                     SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
+                    // A4-wasapi-default (Windows): the audio box's output API;
+                    // a change applies when the output next opens.
+                    Loader {
+                        active: Qt.platform.os === "windows"
+                        Layout.fillWidth: true
+                        sourceComponent: GroupBox {
+                            objectName: "audioOutputHostApiBox"
+                            title: qsTr("Audio output")
+                            SettingChoice {
+                                setting: "audio.outputHostApi"
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                model: ["WASAPI", "DirectSound"]
+                                Accessible.name: qsTr("Audio output")
+                            }
+                        }
+                    }
                 }
             }
 

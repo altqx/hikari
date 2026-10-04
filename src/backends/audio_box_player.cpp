@@ -181,6 +181,26 @@ void AudioBoxPlayer::halt()
     m_started = false;
     m_pending.clear();
     m_playingAudio.reset();
+    if (m_reopen)
+        releaseOutput();
+}
+
+void AudioBoxPlayer::reopenOutput()
+{
+    const std::scoped_lock lock(m_lock);
+    if (m_playing)
+        m_reopen = true;
+    else
+        releaseOutput();
+}
+
+void AudioBoxPlayer::releaseOutput()
+{
+    m_reopen = false;
+    if (m_output && m_srcFormat.sampleRate > 0)
+        m_output->close();
+    m_output = nullptr;
+    m_srcFormat = m_outFormat = {0, 0};
 }
 
 // Legacy SetEndFrame: stopped when the frames written already reach the new end.

@@ -20,6 +20,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
+#include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
@@ -110,6 +111,14 @@ public:
         QString recoveryDir;
         // V1: whether video playback may open an audio device.
         bool playbackAudio = true;
+        // A4: makes the audio box's output with the options the settings
+        // give (tests record them); unset: PortAudio, or with playbackAudio
+        // off an output without a device.
+        std::function<std::unique_ptr<application::AudioOutputPort>(const backends::PortAudioOutput::Options &)>
+            makeAudioOutput;
+        // Whether audio.outputHostApi chooses the host API (Windows; tests
+        // elsewhere may say so).
+        bool outputHostApiSetting = backends::PortAudioOutput::onWindows;
         // P8: the release list the update check reads (tests: a file).
         QUrl updateFeed = UpdateChecker::defaultFeed();
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
@@ -707,6 +716,7 @@ private:
     // A4: the box's player and the editor output it plays through (PortAudio,
     // made at the first play; without playbackAudio an output with no device)
     std::unique_ptr<application::AudioOutputPort> m_audioOutput;
+    std::string m_audioOutputHostApi; // the host API m_audioOutput was made for
     std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
     void refreshAudio();
     void followVideoInAudio();

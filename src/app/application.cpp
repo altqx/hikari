@@ -665,14 +665,27 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // the first play. Without playbackAudio (tests) an output with no device
     // runs the same clock, so nothing sounds through a desktop's speakers.
     {
+        // A4-wasapi-default: on Windows the output's host API is
+        // audio.outputHostApi's (WASAPI, or DirectSound); the player asks for
+        // the output when it next opens one, so a changed choice takes effect
+        // then (reopenOutput: at once while idle, else after playback stops).
         const bool device = options.playbackAudio;
+        auto make = options.makeAudioOutput;
+        const bool windowsApis = options.outputHostApiSetting;
         m_audioPlayer = std::make_unique<backends::AudioBoxPlayer>(
-            [this, device]() -> application::AudioOutputPort & {
-                if (!m_audioOutput) {
-                    if (device)
-                        m_audioOutput = std::make_unique<backends::PortAudioOutput>();
+            [this, device, make, windowsApis]() -> application::AudioOutputPort & {
+                backends::PortAudioOutput::Options output;
+                output.hostApi = backends::PortAudioOutput::hostApiForSetting(m_settings->integer("audio.outputHostApi"),
+                                                                              windowsApis);
+                if (!m_audioOutput || output.hostApi != m_audioOutputHostApi) {
+                    m_audioOutput.reset(); // the player let it go (closed)
+                    if (make)
+                        m_audioOutput = make(output);
+                    else if (device)
+                        m_audioOutput = std::make_unique<backends::PortAudioOutput>(output);
                     else
                         m_audioOutput = std::make_unique<backends::SimulatedOutput>();
+                    m_audioOutputHostApi = output.hostApi;
                 }
                 return *m_audioOutput;
             },
@@ -3962,6 +3975,8 @@ void Application::waitForWrites()
 // when it acts (the others are read at their next use).
 void Application::settingChanged(const QString &id)
 {
+    if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
+        m_audioPlayer->reopenOutput();
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
     else if (id == QLatin1String("video.dontAskForBadResolution"))

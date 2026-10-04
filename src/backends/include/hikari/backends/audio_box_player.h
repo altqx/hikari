@@ -71,6 +71,10 @@ public:
     void setDevice(std::string id) { m_device = std::move(id); }
     // Closes the output; the next play opens it again.
     void close() override;
+    // The output is made again (the factory asked anew) at the next play:
+    // let go now while idle, else once playback stops (a changed
+    // audio.outputHostApi takes effect when the output next opens).
+    void reopenOutput();
 
     void play(std::int64_t start, std::int64_t count) override;
     void stop() override;
@@ -103,6 +107,7 @@ private:
     void fill();
     void stopLocked();
     void halt(); // legacy SetStopped
+    void releaseOutput();
     std::int64_t consumed() const;
     void fail(const QString &message);
     void fillThread();
@@ -139,6 +144,7 @@ private:
     std::thread m_thread;
     std::thread::id m_threadId;
     bool m_quit = false;
+    bool m_reopen = false; // reopenOutput while playing
     Pumping m_pumping = Pumping::Thread;
 };
 

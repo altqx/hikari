@@ -134,6 +134,13 @@ std::string PortAudioOutput::defaultHostApi()
 #endif
 }
 
+std::string PortAudioOutput::hostApiForSetting(std::int64_t value, bool windows)
+{
+    if (!windows)
+        return defaultHostApi();
+    return value == 1 ? "Windows DirectSound" : "Windows WASAPI";
+}
+
 PortAudioOutput::PortAudioOutput() : PortAudioOutput(Options{}) {}
 
 PortAudioOutput::PortAudioOutput(Options options) : d(std::make_unique<Impl>())

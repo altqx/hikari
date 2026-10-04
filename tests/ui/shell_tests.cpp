@@ -5,6 +5,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "line_grid.h"
 #include "line_table_model.h"
@@ -3459,7 +3460,11 @@ private slots:
               {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
               {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move syllable line after click"},
-              {"audio.ramCache", "Load audio into RAM"}}},
+              {"audio.ramCache", "Load audio into RAM"},
+#ifdef _WIN32
+              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
+#endif
+             }},
             {"settingsPageAudioAdvanced",
              {{"audio.delay", nullptr},
               {"audio.markPlayTime", nullptr},
@@ -3514,6 +3519,8 @@ private slots:
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
+        // and the Themes page's colours (A2), which are not bound options
+        bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -5662,6 +5669,62 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#112233"));
+    }
+
+    // A4-wasapi-default: the audio box's output is made with the host API
+    // audio.outputHostApi names (Windows: 0 WASAPI, 1 DirectSound; here the
+    // Windows choice is asked for and the output recorded). A change takes
+    // effect when the output next opens: at once while idle, after the
+    // playback while playing.
+    void audioOutputFollowsTheHostApiSetting()
+    {
+        delete engine;
+        delete application;
+        std::vector<std::string> made;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.outputHostApiSetting = true;
+        options.makeAudioOutput = [&made](const backends::PortAudioOutput::Options &o) {
+            made.push_back(o.hostApi);
+            return std::make_unique<backends::SimulatedOutput>();
+        };
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(made.empty()); // PortAudio starts at the first play
+        audio.playLine();
+        QVERIFY(audio.playing());
+        QCOMPARE(made, std::vector<std::string>{"Windows WASAPI"});
+        // while playing the output stays; after the stop the next play makes it again
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("audio.outputHostApi"), 1);
+        audio.stopPlayback();
+        QCOMPARE(made.size(), std::size_t(1));
+        audio.playLine();
+        QCOMPARE(made, (std::vector<std::string>{"Windows WASAPI", "Windows DirectSound"}));
+        // while idle the output is let go at once
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+        settings.setValue(QStringLiteral("audio.outputHostApi"), 0);
+        audio.playLine();
+        QCOMPARE(made, (std::vector<std::string>{"Windows WASAPI", "Windows DirectSound", "Windows WASAPI"}));
+        audio.stopPlayback();
+        // the same choice again keeps the output
+        audio.playLine();
+        QCOMPARE(made.size(), std::size_t(3));
+        audio.stopPlayback();
+        // elsewhere the setting does nothing: PortAudio's own default
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, false), backends::PortAudioOutput::defaultHostApi());
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, true), std::string("Windows DirectSound"));
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(0, true), std::string("Windows WASAPI"));
     }
 
     void theReferenceIsNeverEdited()
