@@ -661,6 +661,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
     // and the open video stays. Otherwise legacy ProviderFFMS2::Init chose the
@@ -732,15 +733,20 @@ void Application::followVideoInAudio()
 {
     const auto &video = m_video->session();
     const auto state = video.state();
-    if (state == application::VideoSession::State::Opening)
+    if (state == application::VideoSession::State::Opening) {
         m_audioFollowedVideo.clear();
+        m_pendingIndexHandoff.clear(); // the source's new open removed it
+    }
     if (state == application::VideoSession::State::Ready && m_audioFollowedVideo != QString::fromStdString(video.path())) {
         // an indexed video brings its track into the box, opened from the
         // index file the video wrote; a video without audio closes the box
         m_audioFollowedVideo = QString::fromStdString(video.path());
-        if (video.hasAudio())
-            m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex());
-        else if (m_audio->hasAudio())
+        if (video.hasAudio()) {
+            m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
+                                   QString::fromStdString(video.indexHandoff()));
+            m_pendingIndexHandoff = video.indexHandoff();
+            releaseReadIndexHandoff();
+        } else if (m_audio->hasAudio())
             m_audio->closeAudio();
         m_audio->trimCache(); // legacy OpenFile, once the video's provider exists
     }
@@ -911,6 +917,16 @@ bool Application::openFile(const QString &path)
     checkResolution();
     trimAudioCache();
     return true;
+}
+
+// A1: the video's index handed over in a temporary file is needed only while
+// the box opens from it; once the box has opened (or stopped opening) the
+// file goes. The video's source removes it anyway when it opens again or ends.
+void Application::releaseReadIndexHandoff()
+{
+    if (m_pendingIndexHandoff.empty() || (m_audio->hasAudio() && !m_audio->loaded()))
+        return; // none, or the box is still opening
+    m_mediaSource->releaseIndexHandoff(std::exchange(m_pendingIndexHandoff, std::string()));
 }
 
 // A1: legacy OpenFile, OpenFiles and LoadLastSession end with the tab's

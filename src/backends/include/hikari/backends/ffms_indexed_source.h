@@ -52,8 +52,13 @@ public:
     void probe(const std::string &path, Probed done) override;
     void openDisplayAudio(const std::string &path, int track, const std::string &indexFile, Progress progress,
                           application::DisplayAudioPort::Opened done) override;
-    void displayAudio(std::int64_t start, std::int64_t count, Read done) override;
+    void displayAudio(const application::BlockRead &read, Read done) override;
     void cancelDisplay() override;
+
+    // A1: removes the open's handoffIndexFile (SourceTimeline) once the audio
+    // box has read it, when it is still this source's; it also goes when the
+    // source opens again or ends.
+    void releaseIndexHandoff(const std::string &handoffIndexFile);
 
     // Reopens the last opened path (with its index request) in a new helper (a new session); returns
     // its generation, or 0 (and NotOpen) when nothing was opened.
@@ -70,6 +75,7 @@ signals:
     void helperLost(quint64 generation);
 
 private:
+    void dropHandoff();
     void ensureHelper(std::function<void(bool)> ready);
     // Registers a read: the returned callback resolves it once (later calls
     // are ignored); cancelReads() resolves it as Cancelled.
@@ -83,6 +89,7 @@ private:
     std::optional<std::uint64_t> m_openRequest;
     std::string m_path;
     application::IndexRequest m_index; // the last open's
+    QString m_handoff; // the last open's index handoff file (A1), or the one its open may write
     bool m_lost = false;
     int m_pcmChannels = 0; // channels of the current PCM stream
     double m_startupMs = 0;

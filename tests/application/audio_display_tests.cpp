@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cstring>
 #include <deque>
 #include <filesystem>
 #include <fstream>
@@ -549,8 +550,12 @@ struct FakeAudioSource : DisplayAudioPort {
     Probed pendingProbe;
     Progress progress;
     Opened pendingOpen;
-    std::deque<std::tuple<std::int64_t, std::int64_t, Read>> reads;
+    // start, frames, the answer, and the whole request
+    std::deque<std::tuple<std::int64_t, std::int64_t, Read, BlockRead>> reads;
     int cancels = 0;
+    // the media helper's block buffer (legacy DiskCache's `data`), zeroed
+    // when a track opens
+    std::vector<std::int16_t> block;
     void probe(const std::string &path, Probed done) override
     {
         probedPath = path;
@@ -563,20 +568,42 @@ struct FakeAudioSource : DisplayAudioPort {
         openedPath = path;
         openedTrack = track;
         openedIndexFile = indexFile;
+        block.clear();
         progress = std::move(p);
         pendingOpen = std::move(done);
     }
-    void displayAudio(std::int64_t start, std::int64_t count, Read done) override
+    void displayAudio(const BlockRead &read, Read done) override
     {
-        reads.emplace_back(start, count, std::move(done));
+        reads.emplace_back(read.start, read.frames, std::move(done), read);
     }
     void cancelDisplay() override
     {
         ++cancels;
         auto pending = std::move(reads);
         reads.clear();
-        for (auto &[start, count, done] : pending)
-            done(std::unexpected(AudioFailure{SourceError::Cancelled, AudioStage::Host, {}}));
+        for (auto &[start, count, done, read] : pending)
+            done(std::unexpected(AudioFailure{SourceError::Cancelled, AudioStage::Host, {}, {}}));
+    }
+    // The helper's DisplayRead: the buffer (kept, or new and zeroed), legacy's
+    // zero fill of samples [decode, frames), then `decoded` frames written
+    // from the start, whose every channel is `value` (or, with `ramp`, frame
+    // i of the source is start + i). Returns the buffer's frames.
+    std::vector<std::byte> read(const BlockRead &r, std::int64_t decoded, std::int16_t value, int channels, bool ramp)
+    {
+        std::vector<std::int16_t> fresh;
+        auto &buffer = r.fresh ? fresh : block;
+        const auto samples = static_cast<std::size_t>(r.frames * channels);
+        if (buffer.size() < samples)
+            buffer.resize(samples, 0);
+        for (std::int64_t i = r.decode; i < r.frames; ++i)
+            buffer[static_cast<std::size_t>(i)] = 0;
+        for (std::int64_t i = 0; i < decoded; ++i)
+            for (int c = 0; c < channels; ++c)
+                buffer[static_cast<std::size_t>(i * channels + c)] =
+                    ramp ? static_cast<std::int16_t>((r.start + i) % 30000) : value;
+        std::vector<std::byte> out(samples * 2);
+        std::memcpy(out.data(), buffer.data(), out.size());
+        return out;
     }
 
     void probed(std::vector<AudioTrack> tracks, bool hasVideo = false)
@@ -600,29 +627,30 @@ struct FakeAudioSource : DisplayAudioPort {
     }
     void failOpen(SourceError error, AudioStage stage, std::string text)
     {
-        std::exchange(pendingOpen, nullptr)(std::unexpected(AudioFailure{error, stage, std::move(text)}));
+        std::exchange(pendingOpen, nullptr)(std::unexpected(AudioFailure{error, stage, std::move(text), {}}));
     }
     // Answers the oldest read with frames whose every channel is `value`
     // (or, with `ramp`, frame i of the source is start + i).
     void answer(std::int16_t value, int channels, bool ramp = false)
     {
-        auto [start, count, done] = std::move(reads.front());
+        auto [start, count, done, r] = std::move(reads.front());
         reads.pop_front();
         AudioBlock b;
         b.start = start;
         b.count = count;
         b.channels = channels;
-        b.samples.resize(static_cast<std::size_t>(count * channels) * 2);
-        auto *p = reinterpret_cast<std::int16_t *>(b.samples.data());
-        for (std::int64_t i = 0; i < count; ++i)
-            for (int c = 0; c < channels; ++c)
-                p[i * channels + c] = ramp ? static_cast<std::int16_t>((start + i) % 30000) : value;
+        b.samples = read(r, r.decode, value, channels, ramp);
         done(std::move(b));
     }
-    void failRead(AudioFailure failure)
+    // A read FFMS2 fails: a Read failure carries the buffer as FFMS2 left it,
+    // `decoded` frames of `value` (FFMS2 copies what it decoded as it goes)
+    // and then what it held.
+    void failRead(AudioFailure failure, int channels = 1, std::int64_t decoded = 0, std::int16_t value = 0)
     {
-        auto [start, count, done] = std::move(reads.front());
+        auto [start, count, done, r] = std::move(reads.front());
         reads.pop_front();
+        if (failure.stage == AudioStage::Read)
+            failure.samples = read(r, decoded, value, channels, false);
         done(std::unexpected(std::move(failure)));
     }
 };
@@ -687,6 +715,8 @@ TEST(AudioBox, OpensIndexesAndCachesOnDiskInBlocks)
     ASSERT_EQ(f.source.reads.size(), 1u);
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
     EXPECT_EQ(std::get<1>(f.source.reads.front()), 332768);
+    EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 332768);
+    EXPECT_FALSE(std::get<3>(f.source.reads.front()).fresh); // DiskCache's reused block buffer
     f.source.answer(-3, 2);
     EXPECT_FLOAT_EQ(f.box.progress(), 332768.f / 400000.f);
     ASSERT_EQ(f.source.reads.size(), 1u);
@@ -739,6 +769,7 @@ TEST(AudioBox, RamCacheReadsFourMebibyteBlocks)
     ASSERT_EQ(f.source.reads.size(), 1u);
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 0);
     EXPECT_EQ(std::get<1>(f.source.reads.front()), 1'048'576);
+    EXPECT_TRUE(std::get<3>(f.source.reads.front()).fresh); // RAMCache's new block
     f.source.answer(0, 2, true);
     EXPECT_FLOAT_EQ(f.box.progress(), 0.f); // block 0 of 2
     EXPECT_EQ(std::get<0>(f.source.reads.front()), 1'048'576);
@@ -783,9 +814,41 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
         EXPECT_EQ(f.box.audio()->sampleCount(), 5200);
         EXPECT_EQ(std::get<0>(f.source.reads.front()), 4800);
         EXPECT_EQ(std::get<1>(f.source.reads.front()), 5200);
+        // legacy GetAudio stops at m_numSamples, which DiskCache had reduced
+        // by the skipped start: the last 4800 frames are not decoded
+        EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 400);
         f.source.answer(0, 1, true);
         EXPECT_FLOAT_EQ(f.box.progress(), 1.f);
         EXPECT_EQ(at(*f.box.audio(), 0), 4800);
+        EXPECT_EQ(at(*f.box.audio(), 399), 5199);
+        EXPECT_EQ(at(*f.box.audio(), 400), 0); // legacy's fill beyond
+        EXPECT_EQ(at(*f.box.audio(), 5199), 0);
+    }
+    {
+        // Stereo: legacy's fill beyond counts samples, not frames, so it clears
+        // frames [decode / 2, frames / 2); past both the reused block buffer
+        // keeps the previous block's frames.
+        BoxFixture f("delay-minus-stereo");
+        f.settings.delayMs = -3000; // 144000 frames
+        f.box.open("/media/a.mkv");
+        f.source.probedOneTrack();
+        f.source.opened(2, 700'000);
+        EXPECT_EQ(f.box.audio()->sampleCount(), 556'000);
+        EXPECT_EQ(std::get<3>(f.source.reads.front()).decode, 332768);
+        f.source.answer(0, 2, true); // source frames 144000..476767
+        const auto second = std::get<3>(f.source.reads.front());
+        EXPECT_EQ(second.start, 476'768);
+        EXPECT_EQ(second.frames, 700'000 - 476'768);
+        EXPECT_EQ(second.decode, 556'000 - 476'768);
+        f.source.answer(0, 2, true);
+        ASSERT_EQ(f.box.state(), AudioBox::State::Ready);
+        // (the mixdown of equal channels is their value)
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 50'000), (476'768 + 50'000) % 30000); // decoded
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 79'231), (476'768 + 79'231) % 30000);
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 79'232), 0);  // cleared
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'615), 0); // the last cleared frame
+        EXPECT_EQ(at(*f.box.audio(), 332'768 + 111'616), (144'000 + 111'616) % 30000); // block 1's frame again
+        EXPECT_EQ(at(*f.box.audio(), 556'000 - 1), (144'000 + 223'231) % 30000);
     }
     {
         // RAM: the silence is counted within the first block
@@ -814,21 +877,25 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
 }
 
 // A block FFMS2 cannot decode: legacy logged it for debugging and cached what
-// its buffer held. On disk DiskCache reuses one block buffer, so the block is
-// the previous block's frames again (zeros before the first); a lost helper
-// ends the open with a message (legacy crashed with it).
-TEST(AudioBox, AFailedDiskBlockRepeatsThePreviousBlockAsLegacyCachesIt)
+// its buffer held. FFMS_GetAudio copies decoded frames into the buffer as it
+// goes before it throws, and DiskCache reuses one block buffer, so the block is
+// the frames decoded before the failure followed by the previous block's
+// (zeros before the first); a lost helper ends the open with a message (legacy
+// crashed with it).
+TEST(AudioBox, AFailedDiskBlockKeepsWhatTheBlockBufferHeldAsLegacyCachesIt)
 {
     BoxFixture f("failed-block");
     f.box.open("/media/a.mkv");
     f.source.probedOneTrack();
     f.source.opened(1, 800'000);
     f.source.answer(0, 1, true);
-    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke"});
+    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke", {}}, 1, 1000, 77);
     f.source.answer(9, 1);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_EQ(at(*f.box.audio(), 332767), 332767 % 30000);
-    EXPECT_EQ(at(*f.box.audio(), 332768), 0); // block 0's frames again
+    EXPECT_EQ(at(*f.box.audio(), 332768), 77); // decoded before the failure
+    EXPECT_EQ(at(*f.box.audio(), 332768 + 999), 77);
+    EXPECT_EQ(at(*f.box.audio(), 332768 + 1000), 1000); // block 0's frames again
     EXPECT_EQ(at(*f.box.audio(), 332768 + 1234), 1234);
     EXPECT_EQ(at(*f.box.audio(), 2 * 332768), 9);
     ASSERT_EQ(f.logged.size(), 1u);
@@ -838,22 +905,23 @@ TEST(AudioBox, AFailedDiskBlockRepeatsThePreviousBlockAsLegacyCachesIt)
     f.box.open("/media/first.mkv");
     f.source.probedOneTrack();
     f.source.opened(1, 1000);
-    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "x"});
+    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "x", {}});
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_EQ(at(*f.box.audio(), 10), 0);
 
     f.box.open("/media/b.mkv");
     f.source.probedOneTrack();
     f.source.opened(1, 400'000);
-    f.source.failRead({SourceError::HelperLost, AudioStage::Host, {}});
+    f.source.failRead({SourceError::HelperLost, AudioStage::Host, {}, {}});
     EXPECT_EQ(f.box.state(), AudioBox::State::Closed);
     EXPECT_EQ(f.box.error(), SourceError::HelperLost);
     EXPECT_EQ(f.logged.back().first, "Cannot open audio /media/b.mkv");
 }
 
-// R3-hang-crash-loss (an undefined read): in a RAM cache legacy's failed
-// block was a new, uninitialised allocation; it is silence here.
-TEST(AudioBox, AFailedRamBlockIsSilence)
+// R3-hang-crash-loss (extended to A1): in a RAM cache legacy's failed block
+// was a new allocation; the frames FFMS2 decoded before failing stay, and the
+// rest, uninitialised memory in legacy, is silence here.
+TEST(AudioBox, AFailedRamBlockKeepsTheDecodedFramesAndIsSilenceAfter)
 {
     BoxFixture f("failed-ram-block");
     f.settings.ram = true;
@@ -861,10 +929,12 @@ TEST(AudioBox, AFailedRamBlockIsSilence)
     f.source.probedOneTrack();
     f.source.opened(1, 3'000'000); // two blocks of 2097152 mono frames
     f.source.answer(7, 1);
-    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke"});
+    f.source.failRead({SourceError::BackendFailure, AudioStage::Read, "decode broke", {}}, 1, 500, 5);
     EXPECT_EQ(f.box.state(), AudioBox::State::Ready);
     EXPECT_EQ(at(*f.box.audio(), 2'097'151), 7);
-    EXPECT_EQ(at(*f.box.audio(), 2'097'152), 0);
+    EXPECT_EQ(at(*f.box.audio(), 2'097'152), 5);
+    EXPECT_EQ(at(*f.box.audio(), 2'097'651), 5);
+    EXPECT_EQ(at(*f.box.audio(), 2'097'652), 0); // not block 0's 7: a new block
     EXPECT_EQ(at(*f.box.audio(), 2'999'999), 0);
 }
 
@@ -1104,6 +1174,25 @@ TEST(AudioBox, TheVideosAudioOpensTheVideosTrackFromItsIndexFile)
     // closing while it caches cancels the box's own requests
     f.box.close();
     EXPECT_EQ(f.source.cancels, 1);
+}
+
+// When the video's index file could not be written, its helper handed the
+// index over in a temporary file: the box opens from that file instead
+// (legacy's box shared the video's index), and the cache is made again since
+// the video indexed now. A file of the box's own uses its index file.
+TEST(AudioBox, TheVideosHandedOverIndexStandsInForItsIndexFile)
+{
+    BoxFixture f("from-video-handoff");
+    f.box.openFromVideo("/media/v.mkv", 3, true, "/tmp/hikari-index-abc123.ffindex");
+    EXPECT_EQ(f.source.openedIndexFile, "/tmp/hikari-index-abc123.ffindex");
+    f.source.opened(2, 1000, false); // read from the handed-over file
+    EXPECT_FALSE(f.box.cacheReused());
+    ASSERT_EQ(f.source.reads.size(), 1u);
+    f.box.open("/media/v.mkv");
+    f.source.probedOneTrack();
+    EXPECT_EQ(std::filesystem::path(f.source.openedIndexFile), f.settings.indexDir / "v_1.ffindex");
+    f.box.openFromVideo("/media/v.mkv", 3, false);
+    EXPECT_EQ(std::filesystem::path(f.source.openedIndexFile), f.settings.indexDir / "v_3.ffindex");
 }
 
 TEST(AudioBox, ClosingDropsLateAnswersAndAFailedOpenLeavesNoAudio)

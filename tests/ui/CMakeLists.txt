@@ -9,6 +9,13 @@ hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp 
 target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper)
+# The whole shell suite runs in one process (about a minute here, more on CI
+# runners), so it gets more than the default 60 s.
+foreach(mode offscreen xvfb)
+    if(TEST hikari_ui_shell_tests.${mode})
+        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
 # N8: script dialogs in fixed QML controls, round-tripped through the Lua helper.

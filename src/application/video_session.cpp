@@ -64,6 +64,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_audioOrdinal = ordinal == opened->audioTracks.end() ? -1
                                                               : static_cast<int>(ordinal - opened->audioTracks.begin());
         m_newIndex = opened->newIndex;
+        m_indexHandoff = opened->handoffIndexFile;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_state = State::Ready;
         notify();
@@ -96,6 +97,7 @@ void VideoSession::close()
     m_audioTrack = -1;
     m_audioOrdinal = -1;
     m_newIndex = true;
+    m_indexHandoff.clear();
     m_timeline.reset();
     m_requested.reset();
     m_pendingSeek.reset();

@@ -1,7 +1,11 @@
 #include "hikari/backends/ffms_indexed_source.h"
 
+#include <QDir>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QTemporaryFile>
 
+#include <algorithm>
 #include <cstring>
 
 #include "hikari/backends/media_protocol.h"
@@ -60,6 +64,12 @@ application::AudioFailure failureOf(Outcome o, const std::vector<std::byte> &mes
     default: failure.error = SourceError::BackendFailure; break;
     }
     failure.message = std::move(text);
+    // a failed read carries the block's buffer as FFMS2 left it
+    if (failure.stage == application::AudioStage::Read && in.ok() && !in.atEnd()) {
+        auto samples = in.bytes();
+        if (in.ok())
+            failure.samples = std::move(samples);
+    }
     return failure;
 }
 
@@ -75,7 +85,23 @@ FfmsIndexedSource::FfmsIndexedSource(QString helperProgram, QObject *parent)
 {
 }
 
-FfmsIndexedSource::~FfmsIndexedSource() = default;
+FfmsIndexedSource::~FfmsIndexedSource()
+{
+    dropHandoff();
+}
+
+void FfmsIndexedSource::dropHandoff()
+{
+    if (!m_handoff.isEmpty())
+        QFile::remove(m_handoff);
+    m_handoff.clear();
+}
+
+void FfmsIndexedSource::releaseIndexHandoff(const std::string &handoffIndexFile)
+{
+    if (!handoffIndexFile.empty() && m_handoff.toStdString() == handoffIndexFile)
+        dropHandoff();
+}
 
 void FfmsIndexedSource::ensureHelper(std::function<void(bool)> ready)
 {
@@ -123,17 +149,45 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
     m_index = index;
     m_audio.reset();
     m_display.reset(); // the helper's Open replaces the box's audio too
-    ensureHelper([this, generation, path, index, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
-        if (!ok)
-            return done(std::unexpected(SourceError::MissingDependency));
+    // A1: the index the source held goes with it. For a chosen audio track
+    // with an index file, a temporary file is made (exclusively, in the temp
+    // folder) for the helper to hand a new index over in when that file
+    // cannot be written; it is removed again when unused.
+    dropHandoff();
+    if (!index.indexFile.empty() && index.audioTrack >= 0) {
+        QTemporaryFile handoff(QDir::temp().filePath(QStringLiteral("hikari-index-XXXXXX.ffindex")));
+        handoff.setAutoRemove(false);
+        if (handoff.open()) {
+            m_handoff = handoff.fileName();
+            handoff.close();
+        }
+    }
+    const std::string handoffFile = m_handoff.toStdString();
+    ensureHelper([this, generation, path, index, handoffFile, progress = std::move(progress), done = std::move(done)](bool ok) mutable {
         if (generation != m_generation)
-            return done(std::unexpected(SourceError::Stale));
+            return done(std::unexpected(ok ? SourceError::Stale : SourceError::MissingDependency));
+        if (!ok) {
+            dropHandoff();
+            return done(std::unexpected(SourceError::MissingDependency));
+        }
         auto request = m_host->request(generation,
             Writer().u8(static_cast<std::uint8_t>(media::Command::Open)).str(path).i32(index.audioTrack)
-                .str(index.indexFile).take(),
-            [this, generation, progress, done](std::expected<Event, HostError> e) {
-                if (!e)
+                .str(index.indexFile).str(handoffFile).take(),
+            [this, generation, handoffFile, progress, done](std::expected<Event, HostError> e) {
+                // an unused handoff file goes, also one a superseded open's
+                // helper wrote after the later open had removed it
+                const auto unused = [&] {
+                    if (handoffFile.empty())
+                        return;
+                    if (m_handoff.toStdString() == handoffFile)
+                        dropHandoff();
+                    else
+                        QFile::remove(QString::fromStdString(handoffFile));
+                };
+                if (!e) {
+                    unused();
                     return done(std::unexpected(errorOf(e.error())));
+                }
                 Reader in(e->payload);
                 if (e->kind == Kind::Progress) {
                     const auto doneCount = in.i64();
@@ -145,10 +199,14 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 if (e->kind != Kind::Terminal)
                     return;
                 m_openRequest.reset();
-                if (generation != m_generation)
+                if (generation != m_generation) {
+                    unused();
                     return done(std::unexpected(SourceError::Stale));
-                if (e->outcome != Outcome::Ok)
+                }
+                if (e->outcome != Outcome::Ok) {
+                    unused();
                     return done(std::unexpected(errorOf(e->outcome, e->payload)));
+                }
                 application::SourceTimeline t;
                 t.generation = generation;
                 t.track = in.i32();
@@ -170,13 +228,22 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 for (std::int32_t i = 0; in.ok() && i < keyframeCount; ++i)
                     t.keyframes.push_back(in.i32());
                 t.newIndex = in.u8() != 0;
-                if (!in.ok())
+                const bool handedOff = in.u8() != 0;
+                if (!in.ok()) {
+                    unused();
                     return done(std::unexpected(SourceError::BackendFailure));
+                }
+                if (handedOff && !handoffFile.empty())
+                    t.handoffIndexFile = handoffFile;
+                else
+                    unused();
                 m_open = true;
                 done(std::move(t));
             });
-        if (!request)
+        if (!request) {
+            dropHandoff();
             return done(std::unexpected(errorOf(request.error())));
+        }
         m_openRequest = *request;
     });
     return generation;
@@ -533,6 +600,7 @@ void FfmsIndexedSource::openDisplayAudio(const std::string &path, int track, con
     m_path = path;
     m_audio.reset();
     m_display.reset();
+    dropHandoff(); // the helper's source, and the index it stood for, are replaced
     ensureHelper([this, generation, path, track, indexFile, progress = std::move(progress),
                   done = std::move(done)](bool ok) mutable {
         if (!ok)
@@ -564,7 +632,7 @@ void FfmsIndexedSource::openDisplayAudio(const std::string &path, int track, con
     });
 }
 
-void FfmsIndexedSource::displayAudio(std::int64_t start, std::int64_t count, Read done)
+void FfmsIndexedSource::displayAudio(const application::BlockRead &read, Read done)
 {
     if (m_lost)
         return done(std::unexpected(hostFailure(SourceError::HelperLost)));
@@ -573,17 +641,29 @@ void FfmsIndexedSource::displayAudio(std::int64_t start, std::int64_t count, Rea
     const std::uint64_t generation = m_generation;
     auto [ticket, finish] = trackDisplay(std::move(done));
     const application::AudioInfo info = *m_display;
+    const auto expected = static_cast<std::size_t>(std::max<std::int64_t>(read.frames, 0)) *
+                          static_cast<std::size_t>(info.channels) * static_cast<std::size_t>(info.bitsPerSample / 8);
     auto request = m_host->request(generation,
-        Writer().u8(static_cast<std::uint8_t>(media::Command::DisplayRead)).i64(start).i64(count).take(),
-        [generation, info, finish, this](std::expected<Event, HostError> e) {
+        Writer()
+            .u8(static_cast<std::uint8_t>(media::Command::DisplayRead))
+            .i64(read.start)
+            .i64(read.frames)
+            .i64(read.decode)
+            .u8(read.fresh ? 1 : 0)
+            .take(),
+        [generation, info, expected, finish, this](std::expected<Event, HostError> e) {
             if (!e)
                 return finish(std::unexpected(hostFailure(errorOf(e.error()))));
             if (e->kind != Kind::Terminal)
                 return;
             if (generation != m_generation)
                 return finish(std::unexpected(hostFailure(SourceError::Stale)));
-            if (e->outcome != Outcome::Ok)
-                return finish(std::unexpected(failureOf(e->outcome, e->payload)));
+            if (e->outcome != Outcome::Ok) {
+                auto failure = failureOf(e->outcome, e->payload);
+                if (!failure.samples.empty() && failure.samples.size() != expected)
+                    failure.samples.clear();
+                return finish(std::unexpected(std::move(failure)));
+            }
             Reader in(e->payload);
             application::AudioBlock b;
             b.generation = generation;
@@ -592,8 +672,6 @@ void FfmsIndexedSource::displayAudio(std::int64_t start, std::int64_t count, Rea
             b.format = info.format;
             b.channels = info.channels;
             b.samples = in.bytes();
-            const auto expected = static_cast<std::size_t>(b.count) * static_cast<std::size_t>(info.channels) *
-                                  static_cast<std::size_t>(info.bitsPerSample / 8);
             if (!in.ok() || b.count < 0 || b.samples.size() != expected)
                 return finish(std::unexpected(hostFailure(SourceError::BackendFailure)));
             finish(std::move(b));

@@ -94,9 +94,9 @@ void AudioController::setSettings(std::function<application::AudioCacheSettings(
     m_settings = std::move(settings);
 }
 
-void AudioController::openFromVideo(const QString &path, int track, bool videoNewIndex)
+void AudioController::openFromVideo(const QString &path, int track, bool videoNewIndex, const QString &handoffIndexFile)
 {
-    m_box.openFromVideo(path.toStdString(), track, videoNewIndex);
+    m_box.openFromVideo(path.toStdString(), track, videoNewIndex, handoffIndexFile.toStdString());
 }
 
 void AudioController::chooseTrack(int row)

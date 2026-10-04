@@ -687,6 +687,10 @@ private:
     QList<QMetaObject::Connection> m_audioConnections; // dropped first on destruction
     application::RecentFiles m_recentAudio;
     QString m_audioFollowedVideo; // the video whose audio the box last followed
+    // A1: the video's index handed over in a temporary file, until the box
+    // has opened from it (then the video's source removes it)
+    std::string m_pendingIndexHandoff;
+    void releaseReadIndexHandoff();
     std::optional<std::tuple<std::uint64_t, std::uint64_t, std::uint64_t>> m_audioLine; // target, active Line, revision
     // the video's keyframes as the box marks them, worked out once per video
     std::optional<application::LegacyTimebase> m_audioTimebase;
