@@ -11,6 +11,7 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
+#include <QTimer>
 #include <QtQml/qqmlregistration.h>
 
 #include <optional>
@@ -53,6 +54,9 @@ public:
     // right and bottom separators, within the neighbours' minimum sizes).
     Q_INVOKABLE QSize panelSize(QObject *dock) const;
     Q_INVOKABLE bool resizePanel(QObject *dock, int width, int height);
+    // Floating panel windows whose title bar no screen shows move onto the
+    // main window's screen (also done when screens change and after a restore).
+    Q_INVOKABLE int keepFloatingPanelsOnScreen();
 
     QString notice() const { return m_notice; }
     QString preset() const { return m_preset; }
@@ -79,6 +83,7 @@ private:
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;
+    QTimer m_screenCheck;
 };
 
 } // namespace hikari::ui

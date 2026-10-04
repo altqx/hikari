@@ -1,5 +1,7 @@
 #include "workspace_layout.h"
 
+#include "docking.h"
+
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/core/DockWidget.h>
 #include <kddockwidgets/qtquick/DockWidgetInstantiator.h>
@@ -14,6 +16,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSaveFile>
+#include <QScreen>
+#include <QTimer>
 
 namespace hikari::ui {
 
@@ -58,8 +62,21 @@ const QStringList &WorkspaceLayoutController::panelIds()
 WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject *parent)
     : QObject(parent), m_file(std::move(layoutFile))
 {
-    if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+    if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::focusWindowChanged);
+        // A screen that goes away or shrinks can leave a floating panel
+        // where no screen shows it: bring it back (docs/qt/docking.md).
+        m_screenCheck.setSingleShot(true);
+        m_screenCheck.setInterval(250); // after the platform has moved its windows
+        connect(&m_screenCheck, &QTimer::timeout, this, &WorkspaceLayoutController::keepFloatingPanelsOnScreen);
+        auto watch = [this](QScreen *screen) {
+            connect(screen, &QScreen::availableGeometryChanged, &m_screenCheck, qOverload<>(&QTimer::start));
+        };
+        for (QScreen *screen : QGuiApplication::screens())
+            watch(screen);
+        connect(app, &QGuiApplication::screenAdded, this, watch);
+        connect(app, &QGuiApplication::screenRemoved, &m_screenCheck, qOverload<>(&QTimer::start));
+    }
 }
 
 QObject *WorkspaceLayoutController::focusWindow() const
@@ -152,6 +169,9 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload)
     if (!restored && !m_default.isEmpty())
         KDDockWidgets::LayoutSaver().restoreLayout(m_default); // rebuild a known arrangement
     m_restoring = false;
+    // A layout saved with another set of screens may place a floating panel
+    // where none shows it.
+    hikari::ui::keepFloatingPanelsOnScreen();
     return restored;
 }
 
@@ -264,6 +284,11 @@ bool WorkspaceLayoutController::resizePanel(QObject *dock, int width, int height
     const auto size = controller->sizeInLayout();
     controller->resizeInLayout(0, 0, width - size.width(), height - size.height());
     return true;
+}
+
+int WorkspaceLayoutController::keepFloatingPanelsOnScreen()
+{
+    return hikari::ui::keepFloatingPanelsOnScreen();
 }
 
 } // namespace hikari::ui

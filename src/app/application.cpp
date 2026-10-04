@@ -2688,8 +2688,10 @@ application::SpellChecker *Application::spellChecker()
                 m_settings->set("editor.spellchecker", false);
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
-                        ? tr("No dictionary files were found in the \"%1\\Dictionary\" folder.\nSpell checking will be disabled")
-                              .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absolutePath()))
+                        // Legacy names "<settings folder>\Dictionary"; the path
+                        // takes the platform's separators.
+                        ? tr("No dictionary files were found in the \"%1\" folder.\nSpell checking will be disabled")
+                              .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
                         : tr("Failed to initialize spell checker.");
                 QMetaObject::invokeMethod(this, [this, message] {
                     emit spellingNotice(message);
