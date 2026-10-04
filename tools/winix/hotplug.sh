@@ -4,16 +4,17 @@
 # audio device (backed by the VM's silent "none" audiodev, so nothing is ever
 # heard); on HOTPLUG-LOST it plugs it back. Approved by the user on
 # 2026-10-04 for the Winix VM only.
-#   tools/winix/hotplug.sh [domain] [usb device id]
+#   tools/winix/hotplug.sh [domain] [usb device id] [task]
 set -euo pipefail
 domain=${1:-winix-dev}
 dev=${2:-hikariusbaudio}
+task=${3:-audio-hotplug}
 monitor() { virsh qemu-monitor-command "$domain" --hmp "$1"; }
 plug() {
     monitor "info usb" | grep -q "ID: $dev" || monitor "device_add usb-audio,id=$dev,audiodev=audio1,bus=usb.0"
 }
 plug
-job=$(winix --config winix.yaml --json run audio-hotplug | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+job=$(winix --config winix.yaml --json run "$task" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
 echo "job $job"
 state=ready
 while :; do

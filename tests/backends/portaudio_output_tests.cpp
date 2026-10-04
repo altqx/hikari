@@ -238,8 +238,13 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     say(std::string("loss seen: deviceLost ") + (lost.deviceLost ? "1" : "0") + ", running " +
         (lost.running ? "1" : "0") + ", callbacks " + std::to_string(lost.callbacks));
     EXPECT_FALSE(out.clock().valid);
-    EXPECT_TRUE(lost.deviceLost) << "the owner reports the loss as DeviceLost";
-    EXPECT_EQ(out.start().error(), application::OutputError::DeviceLost);
+    // DirectSound keeps an unplugged device's stream active with no error:
+    // there the loss is only the stall (HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY).
+    const char *stallOnly = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY");
+    if (!stallOnly || !*stallOnly) {
+        EXPECT_TRUE(lost.deviceLost) << "the owner reports the loss as DeviceLost";
+        EXPECT_EQ(out.start().error(), application::OutputError::DeviceLost);
+    }
     out.close();
     ASSERT_TRUE(waitFor([&] { return find(out).empty(); }, 30s)) << "the device is still listed";
     EXPECT_EQ(out.open(id, {48000, 2}).error(), application::OutputError::DeviceUnavailable);

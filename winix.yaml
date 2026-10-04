@@ -51,7 +51,12 @@ tasks:
   audio-hotplug:
     # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device
     # (silent audiodev; Windows names it "Speakers (Audio Device)", "(2- Audio Device)" after a replug) when the test asks. Only silence is written.
-    script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = $env:HIKARI_HOTPLUG_API; if (-not $env:HIKARI_TEST_AUDIO_HOTPLUG_API) { $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI' }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
+    script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
+    timeoutSeconds: 600
+  audio-hotplug-directsound:
+    # The same through DirectSound (tools/winix/hotplug.sh winix-dev hikariusbaudio audio-hotplug-directsound),
+    # where the loss shows only as stalled callbacks.
+    script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows DirectSound'; $env:HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY = '1'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
   inputs:
     # B4: changed pinned inputs are refused by vcpkg's hash check.
