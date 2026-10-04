@@ -29,6 +29,7 @@ HelperHost::~HelperHost()
 {
     disconnect(&m_process, nullptr, this, nullptr);
     if (m_process.state() != QProcess::NotRunning) {
+        flush();
         m_process.closeWriteChannel();
         if (!m_process.waitForFinished(2000)) {
             m_process.kill();
@@ -52,7 +53,21 @@ void HelperHost::start()
 void HelperHost::write(const Frame &frame)
 {
     const auto bytes = encode(frame);
-    m_process.write(reinterpret_cast<const char *>(bytes.data()), static_cast<qint64>(bytes.size()));
+    m_outgoing.append(reinterpret_cast<const char *>(bytes.data()), static_cast<qsizetype>(bytes.size()));
+    if (!m_flushQueued) {
+        m_flushQueued = true;
+        QMetaObject::invokeMethod(this, &HelperHost::flush, Qt::QueuedConnection);
+    }
+}
+
+void HelperHost::flush()
+{
+    m_flushQueued = false;
+    if (m_outgoing.isEmpty())
+        return;
+    if (m_process.state() != QProcess::NotRunning)
+        m_process.write(m_outgoing);
+    m_outgoing.clear();
 }
 
 void HelperHost::readOutput()
@@ -72,6 +87,7 @@ void HelperHost::readOutput()
                 // Refuse before any work: the helper exits on Refuse.
                 write(Frame{Kind::Refuse, static_cast<std::uint16_t>(m_version), 0, 0, 0, {}});
                 m_state = State::Refused;
+                flush();
                 m_process.closeWriteChannel();
                 emit refused(frame->code);
                 return;
@@ -166,6 +182,7 @@ void HelperHost::stop()
     // Requests pending now resolve HelperLost, even if their replies are
     // already in the pipe (waitForFinished reads output while it waits).
     m_stopping = true;
+    m_outgoing.clear(); // the helper is killed; nothing more reaches it
     if (m_process.state() != QProcess::NotRunning) {
         m_process.kill();
         m_process.waitForFinished(2000);

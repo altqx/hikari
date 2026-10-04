@@ -53,6 +53,13 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+// A media fixture's name as Open video hands it on: in the platform's form
+// (VideoController::openVideo; legacy's wxFileName paths were native).
+QString nativeFixture(const char *name)
+{
+    return QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name));
+}
+
 } // namespace
 
 class ShellTest : public QObject {
@@ -1274,25 +1281,38 @@ private slots:
         // left the results leave the rules list and the Multireplacer's
         // buttons uncovered, so rules can be checked while they are shown; on
         // Windows they reach the rules list in this window, as legacy's did,
-        // and are moved there first.
+        // and are moved aside first.
         const auto sceneRect = [](QQuickItem *item) { return item->mapRectToScene(QRectF(0, 0, item->width(), item->height())); };
         const auto popupRect = [&](QObject *popup) { return sceneRect(popup->property("background").value<QQuickItem *>()); };
         auto *addRule = dialogItem("misspellDialog", "misspellAddRule");
         auto *menuBar = root->property("menuBar").value<QQuickItem *>();
         QVERIFY(menuBar && menuBar->height() > 0);
         QCOMPARE(dialog->property("clientTop").toReal(), menuBar->height());
+        const QRectF rulesArea = sceneRect(dialogItem("misspellDialog", "misspellRules"));
 #ifdef _WIN32
         QCOMPARE(popupRect(results).topLeft(), QPointF(68, menuBar->height() + 44));
-        results->setProperty("x", 0);
+        QVERIFY(popupRect(results).intersects(rulesArea)); // as legacy's did here
+        // moved aside: as far left as their title drag goes (48 px stay on screen)
+        results->setProperty("x", 48 - results->property("width").toReal());
         results->setProperty("y", 0);
-#endif
+        const QRectF resultsArea = popupRect(results);
+#else
         const QRectF resultsArea = popupRect(results);
         QCOMPARE(resultsArea.topLeft(), QPointF(0, 0));
-        QVERIFY(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", "misspellRules"))));
+#endif
+        QVERIFY2(!resultsArea.intersects(rulesArea),
+                 qPrintable(QStringLiteral("results %1,%2 %3x%4, rules %5,%6 %7x%8")
+                                .arg(resultsArea.x()).arg(resultsArea.y()).arg(resultsArea.width()).arg(resultsArea.height())
+                                .arg(rulesArea.x()).arg(rulesArea.y()).arg(rulesArea.width()).arg(rulesArea.height())));
         for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule", "misspellFindTab",
                                    "misspellFindAllTabs", "misspellReplaceTab", "misspellReplaceAllTabs"})
             QVERIFY2(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", button))), button);
-        QVERIFY(qAbs(popupRect(dialog).center().x() - window->width() / 2.0) < 2);
+        QVERIFY2(qAbs(popupRect(dialog).center().x() - window->width() / 2.0) < 2,
+                 qPrintable(QStringLiteral("dialog %1,%2 %3x%4 (implicit %5x%6, x %7), window %8")
+                                .arg(popupRect(dialog).x()).arg(popupRect(dialog).y()).arg(popupRect(dialog).width())
+                                .arg(popupRect(dialog).height()).arg(dialog->property("implicitWidth").toReal())
+                                .arg(dialog->property("implicitHeight").toReal()).arg(dialog->property("x").toReal())
+                                .arg(window->width())));
         click(dialogItem("misspellDialog", "misspellRuleCheck2"));
         QTRY_VERIFY(application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
         QVERIFY(results->property("visible").toBool());
@@ -1300,6 +1320,8 @@ private slots:
         QTRY_VERIFY(!application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
         // Dragging a title moves its window (legacy HTCAPTION), and it stays
         // there when shown again.
+        results->setProperty("x", 0); // from the top left
+        results->setProperty("y", 0);
         auto *resultsTitle = results->property("header").value<QQuickItem *>();
         QVERIFY(resultsTitle);
         const QPoint grab = centre(resultsTitle);
@@ -2224,8 +2246,20 @@ private slots:
         put(folder.filePath(QStringLiteral("latin.txt")),
             "Voil\xE0 l'\xE9t\xE9, \xE7" "a va tr\xE8s bien \xE0 la fa\xE7" "ade du caf\xE9 et du cat.\n");
         put(outside.filePath(QStringLiteral("far.ass")), ass);
+#ifdef _WIN32
+        // QFile::link makes a shortcut on Windows (.lnk data under this name),
+        // a file rather than a link: real links, where this user may make them.
+        std::error_code linkError, loopError;
+        std::filesystem::create_symlink(outside.filePath(QStringLiteral("far.ass")).toStdU16String(),
+                                        folder.filePath(QStringLiteral("link.ass")).toStdU16String(), linkError);
+        std::filesystem::create_directory_symlink(folder.path().toStdU16String(),
+                                                  folder.filePath(QStringLiteral("sub/loop")).toStdU16String(), loopError);
+        const bool linked = !linkError;
+        const bool looped = !loopError;
+#else
         const bool linked = QFile::link(outside.filePath(QStringLiteral("far.ass")), folder.filePath(QStringLiteral("link.ass")));
         const bool looped = QFile::link(folder.path(), folder.filePath(QStringLiteral("sub/loop")));
+#endif
         const auto snapshot = [&] {
             std::map<QString, QByteArray> files;
             for (const QString &base : {folder.path(), outside.path()}) {
@@ -2256,18 +2290,23 @@ private slots:
                                      {QStringLiteral("replace"), QStringLiteral("dog")},
                                      {QStringLiteral("folder"), folder.path()},
                                      {QStringLiteral("subfolders"), true}});
+        std::set<QString> expected{QStringLiteral("one.ass"), QStringLiteral("two.srt"), QStringLiteral("wide.txt"),
+                                   QStringLiteral("latin.txt")};
+        if (linked)
+            expected.insert(QStringLiteral("far.ass")); // through link.ass, which stays a link
+#ifdef _WIN32
+        // wxDir skips files with the hidden attribute on Windows; a leading
+        // dot hides nothing there (R5-per-platform)
+        expected.insert(QStringLiteral(".hidden.ass"));
+#endif
         QCOMPARE(questions.size(), 2);
-        QCOMPARE(questions[1], QStringLiteral("Replaced %1 times.").arg(linked ? 5 : 4));
+        QCOMPARE(questions[1], QStringLiteral("Replaced %1 times.").arg(expected.size())); // once in each file
         const auto after = snapshot();
         QCOMPARE(after.size(), before.size()); // no file appeared or vanished
         std::set<QString> changed;
         for (const auto &[p, bytes] : after)
             if (before.at(p) != bytes)
                 changed.insert(QFileInfo(p).fileName());
-        std::set<QString> expected{QStringLiteral("one.ass"), QStringLiteral("two.srt"), QStringLiteral("wide.txt"),
-                                   QStringLiteral("latin.txt")};
-        if (linked)
-            expected.insert(QStringLiteral("far.ass")); // through link.ass, which stays a link
         QCOMPARE(changed, expected);
         if (linked)
             QVERIFY(QFileInfo(folder.filePath(QStringLiteral("link.ass"))).isSymLink());
@@ -2287,7 +2326,7 @@ private slots:
         QVERIFY(copy.open(QIODevice::ReadOnly));
         QCOMPARE(copy.readAll(), before.at(folder.filePath(QStringLiteral("one.ass"))));
         QVERIFY(QFileInfo::exists(backup.filePath(QStringLiteral("two.srt"))));
-        QCOMPARE(QDir(backup.path()).entryList(QDir::Files | QDir::Hidden).size(), linked ? 5 : 4);
+        QCOMPARE(QDir(backup.path()).entryList(QDir::Files | QDir::Hidden).size(), qsizetype(expected.size()));
         Q_UNUSED(looped);
         // A file result opens the file in place of an untouched Untitled
         // Document (legacy loaded it into a tab without a path).
@@ -3728,7 +3767,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QVERIFY(fromVideo->property("enabled").toBool());
         QCOMPARE(audio.box().audio()->sampleCount(), std::int64_t(96256 + 24000));
-        QCOMPARE(audio.path(), QStringLiteral(HIKARI_MEDIA_FIXTURES "/audiodelay.mkv"));
+        QCOMPARE(audio.path(), nativeFixture("audiodelay.mkv"));
         // CFR keyframes every 12 frames at 24000/1001: the legacy timebase's ms
         const auto timebase = application->video().session().legacyTimebase();
         QTRY_VERIFY(!audio.marks().keyframesMs.empty());
@@ -3839,20 +3878,19 @@ private slots:
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(video.session().state(), application::VideoSession::State::Ready);
-        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QCOMPARE(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"));
         QMetaObject::invokeMethod(chooser, "reject");
         QTRY_VERIFY(!chooser->property("opened").toBool());
         QVERIFY(audio.trackChoices().isEmpty());
         QTest::qWait(200);
         QVERIFY(video.hasVideo()); // the open failed; the open video stays
-        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QCOMPARE(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"));
         // the chosen track goes to the video, its playback and the box
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         list->setProperty("currentIndex", 1);
         QMetaObject::invokeMethod(chooser, "accept");
-        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()),
-                                  QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("tracks.mkv"), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QCOMPARE(video.session().audioTrack(), 2);
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && audio.box().fromVideo(), 20000);
@@ -3897,7 +3935,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QVERIFY(!video.session().newIndex());
         QVERIFY(audio.box().cacheReused());
-        QCOMPARE(QString::fromStdU16String(audio.box().cacheFile().u16string()), cache);
+        QCOMPARE(audio.box().cacheFile(), std::filesystem::path(cache.toStdU16String())); // either separator
         // eleven older caches beside it, the one in use read longest ago
         const auto setAccessed = [](const QString &path, const QDateTime &when) {
             QFile f(path);
@@ -4012,12 +4050,12 @@ private slots:
         const QString video = QString::fromStdString(application->video().session().path());
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
-        QCOMPARE(audio.path(), QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QCOMPARE(audio.path(), nativeFixture("audioonly.mkv"));
         QVERIFY(!audio.box().fromVideo());
         QVERIFY(application->video().hasVideo());
         QCOMPARE(QString::fromStdString(application->video().session().path()), video);
         QCOMPARE(application->recentAudio().first().toMap().value(QStringLiteral("path")).toString(),
-                 QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+                 nativeFixture("audioonly.mkv"));
     }
 
     void theReferenceIsNeverEdited()

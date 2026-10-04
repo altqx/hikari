@@ -673,8 +673,12 @@ struct BoxFixture {
     }
     ~BoxFixture()
     {
-        std::filesystem::remove_all(settings.cacheDir);
-        std::filesystem::remove_all(settings.indexDir);
+        // The box's open cache file goes first: Windows does not remove a file
+        // that is still open, and a destructor must not throw.
+        box.close();
+        std::error_code ec;
+        std::filesystem::remove_all(settings.cacheDir, ec);
+        std::filesystem::remove_all(settings.indexDir, ec);
     }
 };
 

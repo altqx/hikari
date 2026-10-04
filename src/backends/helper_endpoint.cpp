@@ -168,8 +168,12 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
             if (n <= 0)
                 break;
             decoder.feed(buffer, static_cast<std::size_t>(n));
+            // Every frame of a read is taken in before the handler wakes, so
+            // a Cancel that arrived with its request is seen from the start.
+            std::lock_guard lock(inbox.mutex);
+            bool arrived = false;
             while (auto frame = decoder.next()) {
-                std::lock_guard lock(inbox.mutex);
+                arrived = true;
                 if (frame->kind == Kind::Cancel) {
                     inbox.cancelRequest = frame->request;
                 } else if (frame->kind == Kind::ServiceReply) {
@@ -178,8 +182,9 @@ int runHelper(const std::string &name, std::uint32_t protocolVersion, const Requ
                 } else {
                     inbox.frames.push_back(std::move(*frame));
                 }
-                inbox.ready.notify_all();
             }
+            if (arrived)
+                inbox.ready.notify_all();
             if (decoder.failed())
                 break;
         }
