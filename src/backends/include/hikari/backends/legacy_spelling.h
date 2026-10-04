@@ -17,10 +17,20 @@ namespace hikari::backends {
 // that encoding cannot hold is misspelled and has no suggestions.
 application::SpellingBackendLoader hunspellSpellingLoader();
 
+// Legacy's iswupper, towlower / towupper and wxString::Lower / Upper (which
+// call them), one UTF-16 unit at a time. With the English interface legacy
+// never sets the C library's locale (hikarisubApp::OnInit creates no
+// wxLocale; wxGTK 3.3 calls gtk_disable_setlocale), and in the "C" locale
+// glibc's functions change and classify A-Z only; with another interface
+// language wxLocale::Init sets the process locale and every letter maps
+// (`everyLetter`, the shell's program.language rule).
+core::legacy::CaseMapping legacyCaseMapping(bool everyLetter);
+
 // boost::locale boundary::word segmentation (ICU backend, the system locale
 // as legacy's HikariSubFrame makes global) with word_letters / word_number
-// rules, on UTF-16 text; and per-UTF-16-unit case functions.
-application::SpellingText legacySpellingText();
+// rules, on UTF-16 text; and legacyCaseMapping(everyLetter) as the case
+// functions.
+application::SpellingText legacySpellingText(bool everyLetter = false);
 
 // The Windows long-path form of an absolute, normalized path with
 // backslashes, as Hunspell gets it there: C:\a becomes \\?\C:\a, a UNC

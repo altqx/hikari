@@ -5,12 +5,18 @@
 // (SpellChecker::Check / CheckText at 20d647c4).
 
 #include "hikari/backends/legacy_spelling.h"
+#include "hikari/application/misspell_replacer.h"
+#include "hikari/core/ass_load.h"
 #include "hikari/core/spelling.h"
+#include "hikari/core/srt.h"
 #include "hikari/core/text_projection.h"
 
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstring>
+#include <iterator>
+#include <ostream>
 #include <filesystem>
 #include <fstream>
 #include <random>
@@ -188,7 +194,121 @@ TEST(LegacyWordSegmentation, TagAwareMarks)
     EXPECT_EQ(marks.errors, (std::vector<int>{5, 10, 30, 33}));
     ASSERT_EQ(marks.misspells.size(), 2u);
     EXPECT_EQ(marks.misspells[0].word, u"Zażółć");
-    // Per-unit case functions: GetRightCase keeps a capital.
-    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", spelling.cases), u"Żółw");
-    EXPECT_TRUE(core::legacy::isAllUpperCase(u"ŻÓŁW", spelling.cases));
+    // Per-unit case functions, English interface (the "C" locale): only A-Z
+    // count as capitals and change, so GetRightCase lower-cases ASCII and
+    // leaves "ż"; another interface language maps every letter.
+    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", spelling.cases), u"żółw");
+    EXPECT_FALSE(core::legacy::isAllUpperCase(u"ŻÓŁW", spelling.cases));
+    const auto everyLetter = backends::legacySpellingText(true);
+    EXPECT_EQ(core::legacy::rightCase(u"żółw", u"Zólw", everyLetter.cases), u"Żółw");
+    EXPECT_TRUE(core::legacy::isAllUpperCase(u"ŻÓŁW", everyLetter.cases));
+}
+
+// legacyCaseMapping: towlower / towupper / iswupper as glibc's "C" locale
+// has them with the English interface (checked against glibc 2.39 and 2.44:
+// U+0141 is neither lowered nor upper there), every letter otherwise; the
+// misspell replacer's MoveCase and SelectLines' MakeLower use the same.
+TEST(LegacyCaseMapping, FollowsTheInterfaceLanguage)
+{
+    const auto c = backends::legacyCaseMapping(false);
+    EXPECT_EQ(c.toLower(u'A'), u'a');
+    EXPECT_EQ(c.toUpper(u'z'), u'Z');
+    EXPECT_EQ(c.toLower(u'Ł'), u'Ł');
+    EXPECT_EQ(c.toUpper(u'ł'), u'ł');
+    EXPECT_EQ(c.toLower(u'À'), u'À');
+    EXPECT_FALSE(c.isUpper(u'Ł'));
+    EXPECT_TRUE(c.isUpper(u'Q'));
+    const auto e = backends::legacyCaseMapping(true);
+    EXPECT_EQ(e.toLower(u'Ł'), u'ł');
+    EXPECT_EQ(e.toUpper(u'ł'), u'Ł');
+    EXPECT_EQ(e.toLower(u'Σ'), u'σ');
+    EXPECT_TRUE(e.isUpper(u'Ł'));
+    // MoveCase: one capital in the found text capitalizes the replacement's
+    // first character; "Change to upper case" upper-cases it.
+    const auto replacer = [](const core::legacy::CaseMapping &m) {
+        return application::ReplacerCase{m.isUpper, m.toLower, m.toUpper};
+    };
+    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(c)), u"xy");
+    EXPECT_EQ(application::moveCase(u"Ąb", u"xy", 0, replacer(e)), u"Xy");
+    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(c)), u"żółW");
+    EXPECT_EQ(application::moveCase(u"x", u"żółw", application::kReplacerUpperCase, replacer(e)), u"ŻÓŁW");
+    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(c)), u"źdź");
+    EXPECT_EQ(application::moveCase(u"Ab", u"źdź", 0, replacer(e)), u"Źdź");
+}
+
+// F3: the legacy Spellchecker window's walk captured on the Linux build
+// (tools/legacy-capture plan "ui" cases F3-window-walk and
+// F3-window-walk-srt, tests/fixtures/legacy-observations/local-f1f3-20261004):
+// from the active row 0, Ignore after Ignore, every misspelled word as the
+// window selected it in the editor (SetNextMisspell: posStart to posEnd).
+// The same walk here: CheckText over each Line (comments included, as with
+// "Ignore comments" unchecked) with Hunspell over en_TEST and boost::locale's
+// segmentation. Offsets are compared in code points: the Linux build's
+// wxString counts UTF-32 units, the rewrite UTF-16 ones (the Windows build
+// counted UTF-16 units too).
+namespace {
+
+struct Walked {
+    int row;
+    int start, end; // inclusive, code points
+    bool operator==(const Walked &) const = default;
+};
+
+std::ostream &operator<<(std::ostream &os, const Walked &w)
+{
+    return os << "{" << w.row << ", " << w.start << ", " << w.end << "}";
+}
+
+int codePoints(std::u16string_view text, int units)
+{
+    int n = 0;
+    for (int i = 0; i < units; ++i)
+        if (!(text[i] >= 0xDC00 && text[i] <= 0xDFFF))
+            ++n;
+    return n;
+}
+
+std::vector<Walked> windowWalk(const char *input, core::SubtitleFormat format)
+{
+    std::random_device random;
+    const fs::path user = fs::temp_directory_path() / ("hikari-walk-" + std::to_string(random()));
+    fs::create_directories(user);
+    application::SpellChecker checker(std::vector<std::filesystem::path>{user, kFixtures},
+                                      backends::hunspellSpellingLoader());
+    EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
+    std::ifstream in(fs::path(HIKARI_CAPTURE_INPUTS) / input, std::ios::binary);
+    const std::string text((std::istreambuf_iterator<char>(in)), {});
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    const auto doc = format == core::SubtitleFormat::Srt ? core::loadSrt(bytes).document : core::loadAss(bytes).document;
+    const auto spelling = backends::legacySpellingText();
+    const core::legacy::WordCheck check = [&](std::u16string_view w) { return checker.checkWord(w); };
+    std::vector<Walked> out;
+    const auto lines = doc.lines();
+    for (std::size_t row = 0; row < lines.size(); ++row) {
+        const std::u16string t = core::toUtf16(lines[row]->text);
+        for (const auto &m : core::legacy::checkText(t, format, spelling.segment, check))
+            out.push_back({static_cast<int>(row), codePoints(t, m.start), codePoints(t, m.end + 1) - 1});
+    }
+    std::error_code ec;
+    fs::remove_all(user, ec);
+    return out;
+}
+
+} // namespace
+
+TEST(LegacySpellingCapture, WindowWalkMatchesTheLinuxCapture)
+{
+    // spell-walk.ass: the legacy selections, 0-based and inclusive.
+    const std::vector<Walked> legacy{
+        {0, 6, 10},   {0, 16, 20},  {1, 0, 8},    {1, 10, 11},  {2, 23, 25},  {3, 6, 8},    {3, 17, 18},
+        {4, 0, 1},    {4, 3, 5},    {5, 6, 9},    {5, 23, 27},  {6, 0, 5},    {6, 7, 8},    {6, 10, 14},
+        {7, 0, 0},    {7, 2, 3},    {7, 5, 5},    {8, 0, 8},    {8, 17, 19},  {10, 12, 14}, {10, 16, 20},
+        {11, 0, 4},   {11, 6, 12},  {12, 0, 3},   {12, 5, 11},  {12, 14, 19}, {12, 22, 27}, {13, 26, 30},
+        {13, 39, 42}, {13, 44, 46}, {15, 20, 28}, {15, 30, 30}, {15, 32, 35}, {16, 14, 16}, {17, 0, 2},
+    };
+    EXPECT_EQ(windowWalk("spell-walk.ass", core::SubtitleFormat::Ass), legacy);
+    // spell-walk.srt: <...> are tags, {x} is text, "|" is not a wrap in SRT.
+    EXPECT_EQ(windowWalk("spell-walk.srt", core::SubtitleFormat::Srt),
+              (std::vector<Walked>{{0, 3, 5}, {0, 12, 12}, {0, 15, 19}, {1, 6, 10}}));
 }

@@ -55,6 +55,15 @@ hikari_add_gtest(hikari_application_options_dialog_tests SOURCES options_dialog_
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_find_replace_tests SOURCES find_replace_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# F1: the legacy Find and replace captures (tools/legacy-capture ui cases)
+# replayed through FindReplace. Qt Core only reads the JSON.
+hikari_add_gtest(hikari_application_find_replace_capture_tests SOURCES find_replace_capture_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_find_replace_capture_tests PRIVATE
+    HIKARI_LEGACY_CAPTURE_PLAN="${PROJECT_SOURCE_DIR}/tools/legacy-capture/plan.json"
+    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs"
+    HIKARI_F1F3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-f1f3-20261004/observations.json"
+    HIKARI_CAPTURE_ARTIFACTS="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp

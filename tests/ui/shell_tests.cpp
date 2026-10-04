@@ -2502,6 +2502,68 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 1);
     }
 
+    // F1, F2-select, F4: with the English interface legacy stays in the "C"
+    // locale, where towlower / towupper / iswupper (wxString Lower / Upper)
+    // change and classify A-Z only (captured: a plain "łódź" never finds
+    // "ŁÓDŹ", tools/legacy-capture case F1-unicode-case); with another
+    // interface language wxLocale sets the process locale and every letter
+    // maps. Find and replace, Select lines and the misspell replacer's
+    // MoveCase follow program.language; a regular expression folds every
+    // letter either way (wxRE_ICASE over PCRE2).
+    void caseFoldingFollowsTheInterfaceLanguage()
+    {
+        const QString path = writeFile(dir, "fold.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Ąb żółw ŁÓDŹ\n"
+                                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,abc\n");
+        for (const bool polish : {false, true}) {
+            QTemporaryDir own;
+            app::Application::Options options;
+            options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+            options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+            if (polish) {
+                app::Application first(options);
+                first.settingsStore()->set("program.language", QStringLiteral("pl"));
+            }
+            app::Application a(options);
+            QVERIFY(a.openFile(path));
+            auto *session = a.files().session(*a.workspace().editingTarget());
+            const auto text = [&] {
+                const auto &t = session->document().lines()[0]->text;
+                return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+            };
+            // Select lines, plain and case folded (SelectLines' MakeLower).
+            QCOMPARE(a.selectLines({{QStringLiteral("find"), QString::fromUtf8("łódź")}, {QStringLiteral("field"), 0},
+                                    {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 0}},
+                                   false),
+                     polish ? QStringLiteral("1 lines selected.") : QStringLiteral("0 lines selected."));
+            // The misspell replacer: MoveCase's iswupper and MakeUpper.
+            for (int i = 0; i < a.misspellRules().size(); ++i)
+                a.checkMisspellRule(i, false);
+            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("ąb")},
+                                       {QStringLiteral("replace"), QStringLiteral("xy")}, {QStringLiteral("options"), 0}}));
+            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("żółw")},
+                                       {QStringLiteral("replace"), QString::fromUtf8("żółw")}, {QStringLiteral("options"), 4}}));
+            const int rules = int(a.misspellRules().size());
+            a.checkMisspellRule(rules - 2, true);
+            a.checkMisspellRule(rules - 1, true);
+            a.replaceMisspells({{QStringLiteral("lines"), 0}}, false);
+            QCOMPARE(text(), QString::fromUtf8(polish ? "Xy ŻÓŁW ŁÓDŹ" : "xy żółW ŁÓDŹ"));
+            // Find and replace: plain, then a regular expression.
+            QStringList questions;
+            a.setFindQuestionHandler([&](int, const QString &q) {
+                questions << q;
+                return 2;
+            });
+            QVariantMap replace{{QStringLiteral("tab"), 1},
+                                {QStringLiteral("find"), QString::fromUtf8("łódź")},
+                                {QStringLiteral("replace"), QStringLiteral("x")}};
+            a.runFindReplace(QStringLiteral("replaceAll"), replace);
+            QCOMPARE(questions.back(), polish ? QStringLiteral("Replaced 1 times.") : QStringLiteral("Replaced 0 times."));
+            replace[QStringLiteral("regex")] = true;
+            a.runFindReplace(QStringLiteral("replaceAll"), replace);
+            QCOMPARE(text(), QString::fromUtf8(polish ? "Xy ŻÓŁW x" : "xy żółW x"));
+        }
+    }
+
     // F1: Replace in subtitles rewrites only the listed subtitle files that
     // changed, each after its backup; links are followed as legacy wxDir
     // follows them (a link cycle is cut), the charset is detected with
