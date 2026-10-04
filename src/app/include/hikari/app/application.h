@@ -572,9 +572,6 @@ private:
     // R6-dictionary-location: the settings folder's Dictionary (user
     // dictionaries), then the program folder's (bundled ones).
     QStringList m_dictionaryDirs;
-    // The process locale legacy CmpNoCase runs under: a translation language
-    // initialized at startup folds every letter, "C" only ASCII letters.
-    bool m_foldsEveryLetter = false;
     bool m_resettingSettings = false; // "Set default" is resetting the registry
     bool m_selectLinesOpened = false; // legacy SelectLines exists
     application::OptionsLists m_optionsLists; // what the open Options dialog lists

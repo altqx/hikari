@@ -2502,15 +2502,11 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 1);
     }
 
-    // F1, F2-select, F4: with the English interface legacy stays in the "C"
-    // locale, where towlower / towupper / iswupper (wxString Lower / Upper)
-    // change and classify A-Z only (captured: a plain "łódź" never finds
-    // "ŁÓDŹ", tools/legacy-capture case F1-unicode-case); with another
-    // interface language wxLocale sets the process locale and every letter
-    // maps. Find and replace, Select lines and the misspell replacer's
-    // MoveCase follow program.language; a regular expression folds every
-    // letter either way (wxRE_ICASE over PCRE2).
-    void caseFoldingFollowsTheInterfaceLanguage()
+    // U1-unicode-case: Find and replace, Select lines and the misspell
+    // replacer's MoveCase ignore case for every letter whatever the interface
+    // language (legacy's English interface folded A-Z only: captured, a plain
+    // "łódź" never found "ŁÓDŹ"). A regular expression folds every letter too.
+    void caseFoldingIgnoresCaseForEveryLetter()
     {
         const QString path = writeFile(dir, "fold.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Ąb żółw ŁÓDŹ\n"
                                                         "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,abc\n");
@@ -2534,7 +2530,7 @@ private slots:
             QCOMPARE(a.selectLines({{QStringLiteral("find"), QString::fromUtf8("łódź")}, {QStringLiteral("field"), 0},
                                     {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 0}},
                                    false),
-                     polish ? QStringLiteral("1 lines selected.") : QStringLiteral("0 lines selected."));
+                     QStringLiteral("1 lines selected."));
             // The misspell replacer: MoveCase's iswupper and MakeUpper.
             for (int i = 0; i < a.misspellRules().size(); ++i)
                 a.checkMisspellRule(i, false);
@@ -2546,7 +2542,7 @@ private slots:
             a.checkMisspellRule(rules - 2, true);
             a.checkMisspellRule(rules - 1, true);
             a.replaceMisspells({{QStringLiteral("lines"), 0}}, false);
-            QCOMPARE(text(), QString::fromUtf8(polish ? "Xy ŻÓŁW ŁÓDŹ" : "xy żółW ŁÓDŹ"));
+            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW ŁÓDŹ"));
             // Find and replace: plain, then a regular expression.
             QStringList questions;
             a.setFindQuestionHandler([&](int, const QString &q) {
@@ -2557,10 +2553,10 @@ private slots:
                                 {QStringLiteral("find"), QString::fromUtf8("łódź")},
                                 {QStringLiteral("replace"), QStringLiteral("x")}};
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
-            QCOMPARE(questions.back(), polish ? QStringLiteral("Replaced 1 times.") : QStringLiteral("Replaced 0 times."));
+            QCOMPARE(questions.back(), QStringLiteral("Replaced 1 times."));
             replace[QStringLiteral("regex")] = true;
             a.runFindReplace(QStringLiteral("replaceAll"), replace);
-            QCOMPARE(text(), QString::fromUtf8(polish ? "Xy ŻÓŁW x" : "xy żółW x"));
+            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW x"));
         }
     }
 
@@ -3591,11 +3587,10 @@ private slots:
         QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
     }
 
-    // O1: HikariChoice::FindString (wxArrayString::Index without case) is
-    // CmpNoCase, the C runtime's under the process locale: "C" (ASCII
-    // letters only) for English, every letter once a translation language
-    // initialized wxLocale at startup.
-    void settingsChoicesIgnoreCaseAsTheLegacyLocaleDoes()
+    // O1: HikariChoice::FindString (wxArrayString::Index without case)
+    // ignores case for every letter whatever the interface language
+    // (U1-unicode-case; legacy's English interface compared A-Z only).
+    void settingsChoicesIgnoreCaseForEveryLetter()
     {
         QTemporaryDir own;
         app::Application::Options options;
@@ -3615,7 +3610,9 @@ private slots:
             auto &settings = *a.settingsStore();
             settings.set("convert.styleCatalog", lower);
             auto open = a.openSettingsDialog();
-            QVERIFY(open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                     int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(accented)));
             settings.set("convert.styleCatalog", QStringLiteral("aBC"));
             open = a.openSettingsDialog();
             QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
