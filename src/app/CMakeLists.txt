@@ -2,6 +2,7 @@
 # order. The library lets tests start the same composition without shipping a
 # test hook in the executable.
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
+    application_tabs.cpp # P6: tabs and session restore
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     update_checker.cpp include/hikari/app/update_checker.h

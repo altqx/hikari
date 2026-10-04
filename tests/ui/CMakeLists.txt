@@ -101,3 +101,11 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # O1: the settings registry over the INI file and the interim keys' move.
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+# P6: tabs and session restore through the composition.
+hikari_add_qttest(hikari_ui_session_tabs_tests SOURCES session_tabs_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
+    HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
+add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
+# P6: tab traversal and close review through the real UI (Spix workflow).
+hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)

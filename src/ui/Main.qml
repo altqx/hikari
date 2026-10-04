@@ -110,6 +110,7 @@ ApplicationWindow {
         }
         // HikariSubFrame::OnClose: FR->SaveOptions().
         searchTool.save()
+        root.app.endSession() // P6: SaveLastSession(true)
     }
     Connections {
         target: root.app
@@ -391,6 +392,57 @@ ApplicationWindow {
         context: Qt.ApplicationShortcut
         onActivated: root.cyclePanels(-1)
     }
+    // P6: legacy GLOBAL_ADD_PAGE (Ctrl+T), GLOBAL_NEXT_TAB (Ctrl+PgDown) and
+    // GLOBAL_PREVIOUS_TAB (Ctrl+PgUp), global hotkeys without menu items.
+    Shortcut {
+        objectName: "addPageShortcut"
+        sequences: ["Ctrl+T"]
+        context: Qt.ApplicationShortcut
+        enabled: root.shellActive
+        onActivated: root.app.addPage()
+    }
+    Shortcut {
+        objectName: "nextTabShortcut"
+        sequences: ["Ctrl+PgDown"]
+        context: Qt.ApplicationShortcut
+        enabled: root.shellActive
+        onActivated: root.app.changeTab(1)
+    }
+    Shortcut {
+        objectName: "previousTabShortcut"
+        sequences: ["Ctrl+PgUp"]
+        context: Qt.ApplicationShortcut
+        enabled: root.shellActive
+        onActivated: root.app.changeTab(-1)
+    }
+    // P6: a tab closed from the tab bar (its close mark or a middle click).
+    function closeTab(index) {
+        if (index === root.app.currentTab) {
+            root.beginClose("close")
+            return
+        }
+        const rows = root.app.reviewCloseTab(index)
+        if (rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(rows)
+    }
+    SessionWindows {
+        id: sessionWindows
+        app: root.app
+        review: rows => closeReview.review(rows)
+    }
+    Connections {
+        target: root.app
+        // P6: the shown tab's Grid scroll (legacy each tab kept its Grid), and
+        // legacy ChangePage's ReloadSubsIfModified.
+        function onTabShown(scroll) {
+            Qt.callLater(() => {
+                grid.contentY = scroll * grid.rowHeight
+                root.checkExternalChange()
+            })
+        }
+    }
 
     // Classic menus. Commands join through the shared action system as their
     // cards land.
@@ -527,6 +579,40 @@ ApplicationWindow {
                     action: Action {
                         text: qsTr("Show / Hide log window")
                         onTriggered: root.log.toggleWindow()
+                    }
+                }
+                // P6: legacy "Last session" submenu.
+                Menu {
+                    objectName: "lastSessionMenu"
+                    title: qsTr("Last session")
+                    MenuItem {
+                        objectName: "loadLastSessionMenuItem"
+                        text: qsTr("Load last session")
+                        onTriggered: sessionWindows.load()
+                    }
+                    MenuItem {
+                        objectName: "loadSessionFileMenuItem"
+                        text: qsTr("Load session from file")
+                        onTriggered: sessionWindows.chooseSessionToLoad()
+                    }
+                    MenuItem {
+                        objectName: "saveSessionFileMenuItem"
+                        text: qsTr("Save session to file")
+                        onTriggered: sessionWindows.chooseSessionToSave()
+                    }
+                    MenuItem {
+                        objectName: "askForLastSessionMenuItem"
+                        text: qsTr("Ask whether to load the last session at program startup")
+                        checkable: true
+                        checked: root.app.sessionRestore === 1
+                        onToggled: root.app.sessionRestore = checked ? 1 : 0
+                    }
+                    MenuItem {
+                        objectName: "loadLastSessionOnStartMenuItem"
+                        text: qsTr("Load last session after program start")
+                        checkable: true
+                        checked: root.app.sessionRestore === 2
+                        onToggled: root.app.sessionRestore = checked ? 2 : 0
                     }
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
@@ -1739,6 +1825,7 @@ ApplicationWindow {
                     // answers for it.
                     Accessible.role: Accessible.Table
                     model: shell.lines
+                    onContentYChanged: root.app.setTargetScroll(Math.floor(contentY / rowHeight)) // P6
                     // Every gesture is a request; the application owns the selection (G1).
                     onActiveLineRequested: id => root.app.selectLine(id)
                     onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
@@ -2291,7 +2378,15 @@ ApplicationWindow {
         }
     }
 
-    footer: RowLayout {
+    footer: ColumnLayout {
+      spacing: 0
+      // P6: the open Documents' tabs (legacy Notebook's bar).
+      DocumentTabBar {
+        app: root.app
+        Layout.fillWidth: true
+        onCloseRequested: index => root.closeTab(index)
+      }
+      RowLayout {
         Label {
             objectName: "statusTargets"
             padding: 4
@@ -2316,6 +2411,7 @@ ApplicationWindow {
             text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
                   ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
         }
+      }
     }
 
     // Legacy HistoryDialog: every step, the current one selected; Set and a

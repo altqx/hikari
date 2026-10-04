@@ -11,3 +11,5 @@ if(WIN32)
 endif()
 target_link_libraries(hikari_application PUBLIC hikari_core)
 hikari_module(hikari_application ALLOW hikari_core)
+# P6: legacy session files (LastSession.txt, .kls).
+target_sources(hikari_application PRIVATE session_file.cpp)

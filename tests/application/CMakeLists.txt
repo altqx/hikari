@@ -59,3 +59,8 @@ hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# P6: legacy session files against fixtures in the legacy format.
+hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_session_file_tests PRIVATE
+    HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")

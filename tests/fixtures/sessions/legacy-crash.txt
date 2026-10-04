@@ -1,0 +1,9 @@
+﻿[HikariSub v0.0.1]
+Tab: 0
+Video: 
+Position: 0
+FFMS2: 1
+Subtitles: 
+Active: 0
+Scroll: 0
+Editor: 1

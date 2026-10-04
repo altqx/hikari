@@ -28,9 +28,15 @@ public:
     // Adds a Document that already has an identity (from DocumentFiles). As
     // the protected reference it never becomes the editing target.
     bool add(DocumentId id, std::string title, bool asReference = false);
-    // Removes a Document. Removing the editing target hands it to the first
-    // remaining unprotected Document, if any.
+    // Removes a Document. Removing the editing target hands it to the tab
+    // that takes its place (legacy Notebook::DeletePage: the next tab, or the
+    // last one when it was the last), never to the reference.
     bool remove(DocumentId id);
+    // P6: `replacement` (already added) takes `id`'s tab position and roles,
+    // and `id` goes (legacy loads new subtitles into the same tab).
+    bool replace(DocumentId id, DocumentId replacement);
+    // P6: the tabs, in order: every Document but the protected reference.
+    std::vector<DocumentId> tabs() const;
 
     std::optional<DocumentId> editingTarget() const { return m_target; }
     std::optional<DocumentId> reference() const { return m_reference; }

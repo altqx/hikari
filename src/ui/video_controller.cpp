@@ -45,6 +45,7 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
 
 void VideoController::offer(const application::MediaAssociations &associations)
 {
+    ++m_openRequest; // P6: an open still in the filter belonged to the previous target
     m_session.close();
     m_offeredVideo.clear();
     if (associations.video && associations.video->resolved)
