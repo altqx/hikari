@@ -53,19 +53,32 @@ public:
     // ("" for a lone modifier).
     Q_INVOKABLE QString keysOf(int key, int modifiers) const;
 
+    // O2: the script bindings are the script lines of legacy's one hotkey map,
+    // which the shortcut editor also edits. The committed keys by legacy name;
+    // replacing them changes neither the stored nor the installed bindings
+    // until save() and install() (legacy SaveHkeys, SetAccels).
+    std::map<std::string, std::string> committedKeys() const;
+    void replaceCommitted(const std::map<std::string, std::string> &keys);
+    void save() const;
+    void install();
+    // "Script <file name>-<ordinal>" for a registered macro.
+    Q_INVOKABLE QString legacyNameFor(const QString &scriptPath, int ordinal) const;
+
 signals:
     void rowsChanged();
     void shortcutsChanged();
+    // OK in the window after a change (legacy then saves and installs the whole map).
+    void committed();
 
 private:
     void load();
-    void save() const;
     std::optional<std::pair<std::string, int>> resolve(const application::MacroBinding &binding) const;
 
     AutomationShell &m_automation;
     ui::SettingsStore &m_settings;
     std::map<std::string, application::MacroBinding> m_committed;
     std::map<std::string, application::MacroBinding> m_staged;
+    std::map<std::string, application::MacroBinding> m_installed; // the shortcuts in effect
 };
 
 } // namespace hikari::app

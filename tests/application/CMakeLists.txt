@@ -59,3 +59,9 @@ hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# O2: hotkeys and the shortcut editor, against the legacy sources.
+hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
+    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
+    HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")

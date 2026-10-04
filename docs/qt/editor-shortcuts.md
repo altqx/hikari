@@ -1,6 +1,6 @@
 # Line editor actions and shortcuts (E28-shortcuts)
 
-Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) by the Qt Line editor. Default keys come from `Hotkeys.cpp` at `20d647c4`. Shortcut remapping and conflict handling belong to the settings and shortcut work. Until then the defaults are fixed, and the action IDs stay as the importer's aliases.
+Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.com/altqx/hikari/blob/6f91fd28eab4c42d2c00f848606b47585c2b6bc8/docs/research/ui-inventory.md) by the Qt Line editor. Default keys come from `Hotkeys.cpp` at `20d647c4`. The keys are the Editor's bindings, remapped in the shortcut editor (O2: the Options dialog's Hotkeys page and Shift+click on the mapped buttons); the action IDs stay as the importer's aliases. The text field's own keys (plain Enter, numpad Enter, editing and selection keys) stay fixed, as in legacy.
 
 | ID | Action | Legacy default | Rewrite | Evidence |
 | --- | --- | --- | --- | --- |

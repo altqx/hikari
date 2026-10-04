@@ -3,6 +3,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/application/options_dialog.h"
+#include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
 #include "docking.h"
 #include "line_grid.h"
@@ -4346,6 +4347,504 @@ private slots:
         QCOMPARE(QString::fromStdString(application->video().session().path()), video);
         QCOMPARE(application->recentAudio().first().toMap().value(QStringLiteral("path")).toString(),
                  nativeFixture("audioonly.mkv"));
+    }
+
+    // ---- O2: the shortcut editor ----
+
+    QVariantMap installedKeys(const char *window) const
+    {
+        return application->hotkeys().keys().value(QLatin1String(window)).toMap();
+    }
+    // The Options page's shown rows.
+    QVariantList hotkeyRows() const { return application->hotkeys().rows(); }
+    int hotkeyPosition(const QString &text) const
+    {
+        const auto rows = hotkeyRows();
+        for (int i = 0; i < rows.size(); ++i)
+            if (rows[i].toMap().value(QStringLiteral("text")).toString() == text)
+                return i;
+        return -1;
+    }
+    QVariantMap hotkeyRow(const QString &text) const
+    {
+        const int i = hotkeyPosition(text);
+        return i < 0 ? QVariantMap() : hotkeyRows()[i].toMap();
+    }
+    QQuickWindow *mappingWindow(const char *name) const
+    {
+        return engine->rootObjects().first()->findChild<QQuickWindow *>(QLatin1String(name));
+    }
+    void keyTo(QQuickItem *target, int key, Qt::KeyboardModifiers mods = Qt::NoModifier)
+    {
+        QKeyEvent press(QEvent::KeyPress, key, mods);
+        QCoreApplication::sendEvent(target, &press);
+        QKeyEvent release(QEvent::KeyRelease, key, mods);
+        QCoreApplication::sendEvent(target, &release);
+        QCoreApplication::processEvents();
+    }
+    QQuickItem *in(QQuickWindow *w, const char *name) const { return findItem(w->contentItem(), QLatin1String(name)); }
+    void clickButton(QQuickWindow *w, const char *name)
+    {
+        auto *b = in(w, name);
+        QVERIFY2(b, name);
+        QVERIFY(QMetaObject::invokeMethod(b, "clicked"));
+        QCoreApplication::processEvents();
+    }
+    void clickWith(QQuickItem *target, Qt::KeyboardModifiers mods)
+    {
+        const QPoint at = target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint();
+        QTest::mouseClick(target->window(), Qt::LeftButton, mods, at);
+        QCoreApplication::processEvents();
+    }
+
+    // Legacy OptionsDialog's Hotkeys page: after the Audio pages, every
+    // action listed as AddHotkeysOnList lists it, filtered by window, and a
+    // mapped key stays staged until OK, which saves and installs it.
+    void hotkeysPageMapsAndOkInstalls()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        QVERIFY(!settings.contains("shortcuts.hotkeys")); // the defaults until saved
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+H"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *pages = dialogItem("settingsDialog", "settingsPages");
+        QVERIFY(pages);
+        const auto model = pages->property("model").toList();
+        QStringList names;
+        for (const auto &p : model)
+            names << p.toMap().value(QStringLiteral("name")).toString();
+        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Hotkeys",
+                                     "Subtitle properties"}));
+        QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
+        QCOMPARE(hotkeyRows().size(), 226);
+        QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
+        QCOMPARE(application->hotkeys().selected(), 0);
+        // Choose filtering: Video shortcuts.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 5)));
+        QCOMPARE(hotkeyRows().size(), int(std::ranges::count_if(application::hotkeyNames(), [](const auto &n) {
+                     return application::hotkeyType(n.first) == application::VideoHotkey;
+                 })));
+        QCOMPARE(hotkeyRow(QStringLiteral("Video Play / Pause")).value(QStringLiteral("accel")).toString(), QStringLiteral("Space"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 0)));
+        // Map hotkey on Global History: the mapping window with the window choice.
+        application->hotkeys().select(hotkeyPosition(QStringLiteral("Global History")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyMap"), "clicked"));
+        auto *mapping = mappingWindow("settingsHotkeyMapping");
+        QVERIFY(mapping);
+        QTRY_VERIFY(mapping->isVisible());
+        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                 QStringLiteral("Please enter a hotkey for \"History\"."));
+        QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
+        QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 0);
+        // A lone modifier waits; Ctrl+Shift+K is taken.
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Control, Qt::ControlModifier);
+        QVERIFY(mapping->isVisible());
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        auto row = hotkeyRow(QStringLiteral("Global History"));
+        QCOMPARE(row.value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-K"));
+        QVERIFY(row.value(QStringLiteral("keyModified")).toBool());
+        QVERIFY(row.value(QStringLiteral("textModified")).toBool());
+        // Staged: nothing installed or stored yet.
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+H"));
+        QVERIFY(!settings.contains("shortcuts.hotkeys"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
+        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 23);
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
+        auto *historyAction = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("historyMenuItem"))
+                                  ->property("action").value<QObject *>();
+        QCOMPARE(historyAction->property("shortcut").toString(), QStringLiteral("Ctrl+Shift+K"));
+        // The new keys open History; the old ones do nothing.
+        auto *history = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
+        QVERIFY(history);
+        item<QQuickItem>("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        press(Qt::Key_H, Qt::ControlModifier | Qt::ShiftModifier);
+        QVERIFY(!history->isVisible());
+        press(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(history->isVisible());
+        history->close();
+        // The next start reads the stored bindings.
+        app::HotkeysController again(application->automationHotkeys(), settings);
+        QCOMPARE(again.accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QStringLiteral("Ctrl-Shift-K"));
+        QCOMPARE(again.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("Enter"));
+    }
+
+    // HkeysDialog's refusals keep the window open; taken keys ask first
+    // (ItemHotkey::OnMapHotkey), per window.
+    void hotkeysMappingRefusesAndAsks()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *mapping = mappingWindow("settingsHotkeyMapping");
+        auto *keys = in(mapping, "hotkeyMappingKeys");
+        auto *refusal = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyRefusal"));
+        auto *question = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyQuestion"));
+        QVERIFY(refusal && question);
+        const auto map = [&](const QString &text) {
+            application->hotkeys().select(hotkeyPosition(text));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyMap"), "clicked"));
+            QTRY_VERIFY(mapping->isVisible());
+        };
+        map(QStringLiteral("Global History"));
+        keyTo(keys, Qt::Key_K); // a Global key without modifiers
+        QTRY_VERIFY(refusal->isVisible());
+        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
+                 QStringLiteral("Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt)."));
+        QVERIFY(mapping->isVisible());
+        clickButton(refusal, "hotkeyRefusalOk");
+        keyTo(keys, Qt::Key_V, Qt::ControlModifier);
+        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
+                 QStringLiteral("You cannot use shortcuts for copying, cutting, and pasting."));
+        clickButton(refusal, "hotkeyRefusalOk");
+        keyTo(keys, Qt::Key_F4, Qt::AltModifier);
+        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
+                 QStringLiteral("You cannot use the program exit shortcut."));
+        clickButton(refusal, "hotkeyRefusalOk");
+        // Ctrl+S is Save's: the same window asks, without "Set anyway".
+        keyTo(keys, Qt::Key_S, Qt::ControlModifier);
+        QTRY_VERIFY(question->isVisible());
+        QVERIFY(!mapping->isVisible());
+        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
+                 QStringLiteral("This hotkey already exists for \"Save\".\nWhat to do?"));
+        QVERIFY(in(question, "hotkeySwitch")->isVisible());
+        QVERIFY(!in(question, "hotkeySetAnyway")->isVisible());
+        clickButton(question, "hotkeyCancel");
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        map(QStringLiteral("Global History"));
+        keyTo(keys, Qt::Key_S, Qt::ControlModifier);
+        QTRY_VERIFY(question->isVisible());
+        clickButton(question, "hotkeySwitch");
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        // Another window: Subtitles Duplicate lines with the Editor's Ctrl+R.
+        map(QStringLiteral("Subtitles Duplicate lines"));
+        QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
+        keyTo(keys, Qt::Key_R, Qt::ControlModifier);
+        QTRY_VERIFY(question->isVisible());
+        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
+                 QStringLiteral("This shortcut already exists in another window as a shortcut for \"Editor Next "
+                                "untranslated line\".\nWhat would you like to do?"));
+        QVERIFY(in(question, "hotkeySetAnyway")->isVisible());
+        clickButton(question, "hotkeySetAnyway");
+        QCOMPARE(hotkeyRow(QStringLiteral("Subtitles Duplicate lines")).value(QStringLiteral("accel")).toString(),
+                 QStringLiteral("Ctrl-R"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Editor Next untranslated line")).value(QStringLiteral("accel")).toString(),
+                 QStringLiteral("Ctrl-R"));
+        // The window choice: Save as a Video hotkey adds a row at the end.
+        map(QStringLiteral("Global Save"));
+        in(mapping, "hotkeyWindowChoice")->setProperty("currentIndex", 3);
+        keyTo(keys, Qt::Key_F6);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(hotkeyRows().last().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Video Save"));
+        QCOMPARE(application->hotkeys().selected(), -1);
+        // Restore default, Delete, and undo in the list.
+        application->hotkeys().select(hotkeyPosition(QStringLiteral("Global History")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRestore"), "clicked"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QString());
+        auto *list = dialogItem("settingsDialog", "hotkeyList");
+        keyTo(list, Qt::Key_Z, Qt::ControlModifier);
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        keyTo(list, Qt::Key_Y, Qt::ControlModifier);
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QString());
+        // Escape closes the mapping window without a binding.
+        map(QStringLiteral("Global Find"));
+        keyTo(keys, Qt::Key_Escape);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Find")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-F"));
+        // Cancel: nothing installed or stored.
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
+        QVERIFY(!application->settingsStore()->contains("shortcuts.hotkeys"));
+        // The copy outlives the dialog (legacy's static hotkeysCopy): the
+        // next dialog's OK writes the cancelled edits too.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
+        application->hotkeys().select(hotkeyPosition(QStringLiteral("Global Find")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QString());
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Shift-H"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QStringLiteral("F6"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
+        // Apply clears the changed marks and keeps the dialog.
+        QVERIFY(!hotkeyRow(QStringLiteral("Global Find")).value(QStringLiteral("keyModified")).toBool());
+        QVERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+    }
+
+    // "Set default": Hkeys.ResetDefaults() in memory only; nothing is saved
+    // or installed until legacy next saves (OK with a change, a gesture).
+    void hotkeysSetDefaultResetsInMemoryOnly()
+    {
+        auto &store = *application->settingsStore();
+        // Stored bindings are read as stored, however few (C04-short-file);
+        // a file never written takes the defaults.
+        store.set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-K")});
+        {
+            app::HotkeysController fresh(application->automationHotkeys(), store);
+            QCOMPARE(fresh.accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-K"));
+            QCOMPARE(fresh.accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QString());
+            QCOMPARE(fresh.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("Enter"));
+        }
+        store.reset(QStringLiteral("shortcuts.hotkeys"));
+        // Changed and saved bindings, the scripts' included.
+        auto &h = application->hotkeys();
+        application->automationHotkeys().replaceCommitted({{"Script a.lua-1", "Ctrl+J"}});
+        application->automationHotkeys().save();
+        application->automationHotkeys().install();
+        h.beginOptions();
+        h.select(hotkeyPosition(QStringLiteral("Global Save")));
+        h.optionsMap(QStringLiteral("Ctrl-K"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-K")));
+        const QStringList saved = store.list("shortcuts.hotkeys");
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-J"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
+        QVERIFY(hotkeyRow(QStringLiteral("Global Script a.lua-1")).isEmpty()); // the scripts' go too
+        QVERIFY(application->automationHotkeys().committedKeys().empty());
+        // Stored and installed bindings stay as they were, even after Cancel.
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(store.list("shortcuts.hotkeys"), saved);
+        QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 1);
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+K"));
+        // The next save writes them (a gesture saves the main file).
+        h.gestureMap(application::hotkeyIdOf("GLOBAL_OPEN_SUBS"), QStringLiteral("Open subtitles"),
+                     QStringLiteral("Ctrl-Shift-Q"), 0, QStringLiteral("cancel"));
+        QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")));
+        QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_SUBS G=Ctrl-Shift-Q")));
+        QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 0);
+        QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
+    }
+
+    // Hotkeys::OnMapHkey: Shift+click on a menu item (with the window
+    // choice) or a mapped button (its own window) maps at once.
+    void hotkeyGestureOnMappedButtonAndMenu()
+    {
+        QVERIFY(application->openFile(episode));
+        item<QQuickItem>("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().editable());
+        auto *bold = visualItem("tag_b");
+        QVERIFY(bold);
+        clickWith(bold, Qt::ShiftModifier);
+        auto *mapping = mappingWindow("hotkeyMapping");
+        QVERIFY(mapping);
+        QTRY_VERIFY(mapping->isVisible());
+        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                 QStringLiteral("Please enter a hotkey for \"Add bold\"."));
+        QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_B, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        // Installed and saved at once.
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("EDITBOX_INSERT_BOLD"), 2), QStringLiteral("Ctrl-Shift-B"));
+        QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("EDITBOX_INSERT_BOLD E=Ctrl-Shift-B")));
+        // In the Line editor the new keys bold (the draft has the tags); Ctrl+B no longer does.
+        auto *line = item<QQuickItem>("lineText");
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto draft = [&] {
+            const std::u8string d = session->draftText().value_or(u8"");
+            return QString::fromUtf8(reinterpret_cast<const char *>(d.data()), qsizetype(d.size()));
+        };
+        line->forceActiveFocus();
+        QMetaObject::invokeMethod(line, "select", Q_ARG(int, 0), Q_ARG(int, 5));
+        press(Qt::Key_B, Qt::ControlModifier);
+        QVERIFY(!draft().contains(QLatin1String("\\b1")));
+        press(Qt::Key_B, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_COMPARE(draft(), QStringLiteral("{\\b1}first{\\b0}"));
+        // A plain click acts.
+        clickWith(bold, Qt::NoModifier);
+        QVERIFY(!mapping->isVisible());
+        QVERIFY(draft() != QStringLiteral("{\\b1}first{\\b0}"));
+        application->editor().discard();
+
+        // A menu item: the Grid's Duplicate lines, with the window choice.
+        auto *grid = item<QQuickItem>("editingGrid");
+        auto *menu = grid->findChild<QObject *>(QStringLiteral("gridMenu"));
+        QVERIFY(menu);
+        const auto openMenu = [&] {
+            const QPoint centre = grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint();
+            QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centre);
+        };
+        openMenu();
+        auto *duplicate = engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("duplicateLines"));
+        QVERIFY(duplicate);
+        QTRY_VERIFY(duplicate->isVisible() && duplicate->width() > 0);
+        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("&Duplicate lines\tCtrl-D"));
+        const int lines = application->files().session(*application->workspace().editingTarget())->document().lines().size();
+        clickWith(duplicate, Qt::ShiftModifier);
+        QTRY_VERIFY(mapping->isVisible());
+        QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
+        QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
+        QCOMPARE(int(application->files().session(*application->workspace().editingTarget())->document().lines().size()), lines);
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GRID_DUPLICATE_LINES"), 1), QStringLiteral("Ctrl-Shift-D"));
+        QCOMPARE(duplicate->property("text").toString(), QStringLiteral("&Duplicate lines\tCtrl-Shift-D"));
+        // The question when the keys are taken (here by itself: every
+        // binding holding them counts).
+        openMenu();
+        QTRY_VERIFY(duplicate->isVisible() && duplicate->width() > 0);
+        clickWith(duplicate, Qt::ShiftModifier);
+        QTRY_VERIFY(mapping->isVisible());
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
+        auto *question = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyQuestion"));
+        QVERIFY(question);
+        QTRY_VERIFY(question->isVisible());
+        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
+                 QStringLiteral("This hotkey already exists for \"Duplicate lines\".\nWhat to do?"));
+        clickButton(question, "hotkeyCancel");
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GRID_DUPLICATE_LINES"), 1), QStringLiteral("Ctrl-Shift-D"));
+        // In the Grid the new keys duplicate.
+        QTRY_VERIFY(window->isActive()); // the question gave the activation back
+        QCOMPARE(application->hotkeys().actionFor(1, Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier),
+                 QStringLiteral("GRID_DUPLICATE_LINES"));
+        grid->forceActiveFocus();
+        press(Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_COMPARE(int(application->files().session(*application->workspace().editingTarget())->document().lines().size()),
+                     lines + 1);
+    }
+
+    // The Editor, Grid and Video windows route their own bindings first; a
+    // binding copied to another window acts there too (TabPanel::SetAccels).
+    void hotkeysRouteByWindow()
+    {
+        auto &h = application->hotkeys();
+        h.beginOptions();
+        // Next untranslated line as a Subtitles hotkey, Duplicate lines as a Video one.
+        h.select(hotkeyPosition(QStringLiteral("Editor Next unconfirmed line")));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-U"), 1, QStringLiteral("cancel"));
+        h.select(hotkeyPosition(QStringLiteral("Subtitles Duplicate lines")));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-L"), 3, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(h.actionFor(1, Qt::Key_U, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("EDITBOX_FIND_NEXT_DOUBTFUL"));
+        QCOMPARE(h.actionFor(2, Qt::Key_U, Qt::ControlModifier | Qt::ShiftModifier), QString());
+        QCOMPARE(h.actionFor(3, Qt::Key_L, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("GRID_DUPLICATE_LINES"));
+        QCOMPARE(h.actionFor(1, Qt::Key_L, Qt::ControlModifier | Qt::ShiftModifier), QString());
+        // Video play and seek bindings also act in the Grid; Editor keys the
+        // text field keeps do not reach the bindings.
+        QCOMPARE(h.actionFor(1, Qt::Key_Space, Qt::NoModifier), QStringLiteral("VIDEO_PLAY_PAUSE"));
+        QCOMPARE(h.actionFor(1, Qt::Key_Up, Qt::NoModifier), QString()); // 1 minute forward: Video only
+        QCOMPARE(h.actionFor(3, Qt::Key_Up, Qt::NoModifier), QStringLiteral("VIDEO_MINUTE_FORWARD"));
+        QCOMPARE(h.actionFor(2, Qt::Key_B, Qt::ControlModifier), QStringLiteral("EDITBOX_INSERT_BOLD"));
+        QCOMPARE(h.actionFor(2, Qt::Key_Return, Qt::ShiftModifier), QStringLiteral("EDITBOX_SPLIT_LINE"));
+        QCOMPARE(h.actionFor(2, Qt::Key_Colon, Qt::ShiftModifier), QString());
+        QCOMPARE(h.actionFor(3, Qt::Key_Semicolon, Qt::NoModifier), QStringLiteral("VIDEO_5_SECONDS_BACKWARD"));
+        QCOMPARE(h.actionFor(2, Qt::Key_0, Qt::KeypadModifier), QString());
+        // A Grid binding for the Editor window is dropped (legacy's
+        // unreachable branch); hidden tag buttons have no hotkey.
+        h.beginOptions();
+        h.select(hotkeyPosition(QStringLiteral("Subtitles Swap lines")));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-W"), 2, QStringLiteral("cancel"));
+        h.select(hotkeyPosition(QStringLiteral("Editor First tag button")));
+        h.optionsMap(QStringLiteral("Alt-1"), 2, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(h.actionFor(2, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier), QString());
+        QCOMPARE(h.actionFor(2, Qt::Key_1, Qt::AltModifier), QString()); // EDITBOX_TAG_BUTTONS is 0
+        // Duplicate lines bound for the Video window does nothing in the Grid.
+        QVERIFY(application->openFile(episode));
+        item<QQuickItem>("editingGrid")->forceActiveFocus();
+        press(Qt::Key_L, Qt::ControlModifier | Qt::ShiftModifier);
+        QCOMPARE(int(application->files().session(*application->workspace().editingTarget())->document().lines().size()), 2);
+    }
+
+    // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey toggles from the stored
+    // option (SubsGrid::OnAccelerator), while the menu item toggles what the
+    // Grid shows; "Set default" resets the option only.
+    void ignoreFilteringHotkeyTogglesFromTheOption()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &h = application->hotkeys();
+        h.beginOptions();
+        h.select(hotkeyPosition(QStringLiteral("Subtitles Ignore filtering in some actions")));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-G"), 1, QStringLiteral("cancel"));
+        h.commitOptions();
+        auto &filter = application->gridFilter();
+        auto &settings = *application->settingsStore();
+        filter.setIgnoreInActions(true);
+        // "Set default": the option resets, the Grid keeps ignoring.
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!settings.boolean("grid.ignoreFiltering"));
+        QVERIFY(filter.ignoreInActions());
+        // Set default reset the bindings in memory, not the installed ones.
+        QCOMPARE(h.accelOf(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS"), 1), QStringLiteral("Ctrl-Shift-G"));
+        item<QQuickItem>("editingGrid")->forceActiveFocus();
+        press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
+        QVERIFY(filter.ignoreInActions()); // !option: still on
+        QVERIFY(settings.boolean("grid.ignoreFiltering"));
+        press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
+        QVERIFY(!filter.ignoreInActions());
+        QVERIFY(!settings.boolean("grid.ignoreFiltering"));
+    }
+
+    // S2's bindings are the script lines of the same map: listed after the
+    // Global actions, asked about, and written back by name.
+    void hotkeysShareTheAutomationBindings()
+    {
+        auto &scripts = application->automationHotkeys();
+        scripts.replaceCommitted({{"Script a.lua-1", "Ctrl+K"}});
+        scripts.save();
+        scripts.install();
+        auto &h = application->hotkeys();
+        h.beginOptions();
+        const int script = hotkeyPosition(QStringLiteral("Global Script a.lua-1"));
+        QVERIFY(script > 0);
+        QCOMPARE(hotkeyRows()[script].toMap().value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
+        QCOMPARE(hotkeyRows()[script + 1].toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Subtitles Set new FPS"));
+        h.select(script);
+        QCOMPARE(h.mapTarget().value(QStringLiteral("windows")).toBool(), false); // no window choice for scripts
+        h.select(hotkeyPosition(QStringLiteral("Global History")));
+        const auto c = h.optionsConflict(QStringLiteral("Ctrl-K"), 0);
+        QCOMPARE(c.value(QStringLiteral("message")).toString(),
+                 QStringLiteral("This hotkey already exists for \"Script a.lua-1\".\nWhat to do?"));
+        h.optionsMap(QStringLiteral("Ctrl-K"), 0, QStringLiteral("delete"));
+        // Its row is not found by name, so the script keeps its keys.
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
+        h.select(hotkeyPosition(QStringLiteral("Global Script a.lua-1")));
+        h.optionsMap(QStringLiteral("Ctrl-Shift-M"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(scripts.committedKeys().at("Script a.lua-1"), std::string("Ctrl+Shift+M"));
+        QCOMPARE(application->settingsStore()->list(application::kAutomationHotkeysSetting.data()).first().split(QLatin1Char('\t')).value(1),
+                 QStringLiteral("Ctrl+Shift+M"));
+        // The gesture on a macro (OnMapHkey(-1, name)): its binding, or the next script id.
+        h.gestureMap(application::hotkeyIdOf("GLOBAL_SEARCH"), QStringLiteral("Find"), QStringLiteral("Ctrl-Shift-F"), 0,
+                     QStringLiteral("cancel"));
+        QCOMPARE(h.gestureTarget(QStringLiteral("Script a.lua-1")).value(QStringLiteral("id")).toInt(), 30100);
+        QCOMPARE(h.gestureTarget(QStringLiteral("Script b.lua-0")).value(QStringLiteral("id")).toInt(), 30101);
+        h.gestureMap(30101, QStringLiteral("Script b.lua-0"), QStringLiteral("Ctrl-Shift-F"), 0, QStringLiteral("switch"));
+        QCOMPARE(scripts.committedKeys().at("Script b.lua-0"), std::string("Ctrl+Shift+F"));
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString()); // switched with b's none
+        // The automation window's OK after a change saves and installs the
+        // whole map, here the defaults "Set default" left in memory.
+        h.resetDefaults();
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
+        scripts.begin();
+        scripts.commit(); // no change: nothing else
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
+        scripts.setKeys(QStringLiteral("Script c.lua-0"), QStringLiteral("Ctrl+Shift+Y"));
+        scripts.commit();
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QStringLiteral("Ctrl-F"));
+        QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SEARCH G=Ctrl-F")));
     }
 
     void theReferenceIsNeverEdited()

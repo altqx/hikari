@@ -4,9 +4,9 @@
 // default. `values` is what each control holds (application::OptionsState);
 // OK/Apply write the bound controls whose value differs (legacy SetOptions)
 // and Set default refreshes the controls as legacy ResetDefault does. Themes
-// are excluded by the accepted settings decision; Hotkeys belong to the
-// shortcut editor (O2); Associations are Windows only and wait for their
-// platform card.
+// are excluded by the accepted settings decision; the Hotkeys page is the
+// shortcut editor's (O2, `hotkeys`); Associations are Windows only and wait
+// for their platform card.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -17,6 +17,7 @@ Dialog {
     id: dialog
     objectName: "settingsDialog"
     required property var app
+    property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     title: qsTr("Options")
     modal: true
     width: 640
@@ -37,6 +38,7 @@ Dialog {
         styles = r.styles
         values = r.values
         reloaded()
+        hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
         pageList.currentIndex = 0 // legacy ChangeSelection(0)
         open()
         warnings = r.warnings
@@ -58,6 +60,21 @@ Dialog {
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
         app.applySettings(values)
+    }
+    // O2: OnMapHkey for the selected row: the mapping window, then the
+    // question when the keys are taken (ItemHotkey::OnMapHotkey).
+    readonly property color warningColour: "#e0a030" // WINDOW_WARNING_ELEMENTS
+    function mapHotkey() {
+        const target = hotkeys.mapTarget()
+        if (target.name === undefined)
+            return
+        settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
+            const conflict = hotkeys.optionsConflict(accel, window)
+            if (conflict.message === undefined)
+                hotkeys.optionsMap(accel, window, "cancel")
+            else
+                settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
+        })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
@@ -203,6 +220,7 @@ Dialog {
                 {name: qsTr("Video"), depth: 0},
                 {name: qsTr("Audio"), depth: 0},
                 {name: qsTr("Advanced"), depth: 1},
+                {name: qsTr("Hotkeys"), depth: 0},
                 {name: qsTr("Subtitle properties"), depth: 0}
             ]
             delegate: ItemDelegate {
@@ -517,6 +535,109 @@ Dialog {
                 }
             }
 
+            // O2: Hotkeys (legacy Hotkeyss page): "Choose filtering", the
+            // Function / Hotkey list (a double click maps; Ctrl+Z / Ctrl+Y
+            // undo and redo in it), Map hotkey, Restore default hotkey and
+            // Delete hotkey. Changed rows show in the warning colour until
+            // OK/Apply.
+            ColumnLayout {
+                objectName: "settingsPageHotkeys"
+                GroupBox {
+                    title: qsTr("Choose filtering")
+                    Layout.fillWidth: true
+                    ComboBox {
+                        id: hotkeyFilter
+                        objectName: "hotkeyFilter"
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
+                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts")]
+                        ToolTip.text: qsTr("Filtering mode:")
+                        ToolTip.visible: hovered
+                        Accessible.name: qsTr("Choose filtering")
+                        onActivated: index => dialog.hotkeys.filter(index)
+                    }
+                }
+                ListView {
+                    id: hotkeyList
+                    objectName: "hotkeyList"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    focus: true
+                    model: dialog.hotkeys ? dialog.hotkeys.rows : []
+                    // The list's selection (a shown position, -1 for none).
+                    readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
+                    ScrollBar.vertical: ScrollBar {}
+                    Accessible.name: qsTr("Hotkeys")
+                    header: RowLayout {
+                        width: hotkeyList.width
+                        Label { text: qsTr("Function"); Layout.preferredWidth: hotkeyList.width * 0.7 }
+                        Label { text: qsTr("Hotkey"); Layout.fillWidth: true }
+                    }
+                    delegate: ItemDelegate {
+                        required property var modelData
+                        required property int index
+                        width: hotkeyList.width
+                        highlighted: index === hotkeyList.selectedRow
+                        onClicked: {
+                            hotkeyList.forceActiveFocus()
+                            dialog.hotkeys.select(index)
+                        }
+                        onDoubleClicked: {
+                            dialog.hotkeys.select(index)
+                            dialog.mapHotkey()
+                        }
+                        Accessible.name: modelData.text + " " + modelData.accel
+                        contentItem: RowLayout {
+                            Label {
+                                text: modelData.text
+                                color: modelData.textModified ? dialog.warningColour : palette.windowText
+                                elide: Text.ElideRight
+                                Layout.preferredWidth: hotkeyList.width * 0.7
+                            }
+                            Label {
+                                text: modelData.accel
+                                color: modelData.keyModified ? dialog.warningColour : palette.windowText
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                        }
+                    }
+                    // HikariListCtrl's accelerators: undo, redo, and the selection.
+                    function ownKey(event) {
+                        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                        return (mods === Qt.ControlModifier && (event.key === Qt.Key_Z || event.key === Qt.Key_Y))
+                            || (mods === 0 && (event.key === Qt.Key_Up || event.key === Qt.Key_Down))
+                    }
+                    Keys.onShortcutOverride: event => event.accepted = ownKey(event)
+                    Keys.onPressed: event => {
+                        const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier)
+                        if (mods === Qt.ControlModifier && event.key === Qt.Key_Z)
+                            dialog.hotkeys.optionsUndo()
+                        else if (mods === Qt.ControlModifier && event.key === Qt.Key_Y)
+                            dialog.hotkeys.optionsRedo()
+                        else if (mods === 0 && event.key === Qt.Key_Up)
+                            dialog.hotkeys.select(dialog.hotkeys.selected - 1)
+                        else if (mods === 0 && event.key === Qt.Key_Down)
+                            dialog.hotkeys.select(dialog.hotkeys.selected + 1)
+                        else
+                            return
+                        event.accepted = true
+                    }
+                }
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    Button { objectName: "hotkeyMap"; text: qsTr("Map hotkey"); onClicked: dialog.mapHotkey() }
+                    Button {
+                        objectName: "hotkeyRestore"
+                        text: qsTr("Restore default hotkey")
+                        onClicked: dialog.hotkeys.optionsReset()
+                    }
+                    Button { objectName: "hotkeyRemove"; text: qsTr("Delete hotkey"); onClicked: dialog.hotkeys.optionsDelete() }
+                }
+            }
+
             // Subtitle properties (legacy SubtitlesProperties page): the
             // labels pair with the ASS_PROPERTIES_* options as legacy pairs them.
             ScrollView {
@@ -565,6 +686,12 @@ Dialog {
             fontsFolder.text = path
             dialog.put("fonts.externalDirectory", path)
         }
+    }
+
+    HotkeyMapping {
+        id: settingsHotkeyMapping
+        objectName: "settingsHotkeyMapping"
+        hotkeys: dialog.hotkeys
     }
 
     Dialog {

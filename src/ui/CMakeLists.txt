@@ -22,3 +22,5 @@ target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE KDA
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
+# O2: the "Hotkey mapping" window and its questions.
+qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)

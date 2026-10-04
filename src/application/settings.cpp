@@ -232,6 +232,10 @@ const std::vector<SettingDefinition> &definitions()
         {"editor.tagButton20", "EDITBOX_TAG_BUTTON_VALUE20", String, Collection, Mapped, false, std::string()},
         // The rewrite's own: automation hotkeys (S2), one "name\tkeys\tmacro\tsha256" row each.
         {kAutomationHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // O2: Hotkeys.txt's and AudioHotkeys.txt's lines (legacy SaveHkeys);
+        // unset, LoadDefault's.
+        {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
     };
     return table;
 }
