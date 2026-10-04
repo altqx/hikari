@@ -22,7 +22,7 @@ python3 tools/legacy-capture/compare_ui.py capture/observations.json \
     <build>/tests/application/artifacts/find-replace-capture.json
 ```
 
-[`compare_ui.py`](compare_ui.py) prints each F1 dump and box beside the rewrite's replay and the F3 walk; the reviewed capture is [`local-f1f3-20261004`](../../tests/fixtures/legacy-observations/local-f1f3-20261004/README.md).
+[`compare_ui.py`](compare_ui.py) prints each F1 dump and box beside the rewrite's replay and the F3 walk; the reviewed capture is [`run-37216509697`](../../tests/fixtures/legacy-observations/run-37216509697/README.md).
 
 ### Windows route
 

@@ -62,7 +62,7 @@ hikari_add_gtest(hikari_application_find_replace_capture_tests SOURCES find_repl
 target_compile_definitions(hikari_application_find_replace_capture_tests PRIVATE
     HIKARI_LEGACY_CAPTURE_PLAN="${PROJECT_SOURCE_DIR}/tools/legacy-capture/plan.json"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs"
-    HIKARI_F1F3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-f1f3-20261004/observations.json"
+    HIKARI_F1F3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/run-37216509697/observations.json"
     HIKARI_CAPTURE_ARTIFACTS="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_tests.cpp
     LIBRARIES hikari_application LABELS application)

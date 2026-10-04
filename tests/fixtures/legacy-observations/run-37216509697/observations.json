@@ -1,10 +1,1413 @@
 {
  "schema": 1,
  "legacy_commit": "20d647c4c769ab7f5d383cf3c1c33f03876a94e9",
- "package_sha256": "e8d901b3ff73d0af520f047bef213655cfde812cbd5c37ef00e88f87c611c0ed",
- "host": "Linux-7.2.5-4-omarchy-x86_64-with-glibc2.39",
- "captured_utc": "2026-10-04T14:01:59Z",
+ "package_sha256": "a4ee0aaa8501a151aa8f22aa021a0ca5357603e502156abcdd2013eff9830b84",
+ "probe_sha256": "ecadc68fa3ee26bf512cba07306e611d9a95e32545e3219d9444d04925f5dcbb",
+ "host": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+ "captured_utc": "2026-10-04T16:36:41Z",
  "cases": [
+  {
+   "id": "C03-preservation",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "unknown-sections.ass",
+     "input_sha256": "e9776521ca7e1360ad2aff8499369dbaeb200dfe8e1a625ec88327917a2a476e",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-unknown-sections.ass",
+     "output_bytes": 935,
+     "output_sha256": "765d058664b9cab766044c119e29638682c82a40a9e22370a37211e360862863",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14321): dbind-WARNING **: 16:36:42.759: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "supplement-TLMode",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "tlmode-pairs.ass",
+     "input_sha256": "a21923298b11d55bb503671ba44aa76ff9ab9b0a592474f29eeac18b3991ea9f",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-tlmode-pairs.ass",
+     "output_bytes": 1001,
+     "output_sha256": "e01a98eba071d6ed514ac14a11814449f05c7f791140497beb464446eaea5a30",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14359): dbind-WARNING **: 16:36:55.310: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "supplement-format-precision",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "precision.srt",
+     "input_sha256": "0d233d1622b444ea58c9fc0dcdca7ae3575918dbb82ff213a5c0ebbd50ee44ca",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-precision.srt",
+     "output_bytes": 76,
+     "output_sha256": "e1465e47d57bd24da793e4815ce2d808dba0f3bef88ba6394a11f30627a62676",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14390): dbind-WARNING **: 16:37:07.531: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "C01-equality",
+   "route": "time",
+   "observations": [
+    {
+     "input": {
+      "lhs": "0",
+      "rhs": "0",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 0 0",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "lhs": "1000",
+      "rhs": "1000",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 1 1",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "lhs": "1123000",
+      "rhs": "1123000",
+      "expected": {
+       "ge": true,
+       "le": true,
+       "eq": true,
+       "gt": false,
+       "lt": false
+      }
+     },
+     "probe_command": "cmp 1123 1123",
+     "observed": {
+      "ge": 0,
+      "le": 0,
+      "eq": 1,
+      "gt": 0,
+      "lt": 0
+     },
+     "status": "captured"
+    }
+   ]
+  },
+  {
+   "id": "T42-A",
+   "route": "time",
+   "observations": [
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 40000,
+      "target": 81000,
+      "expected_offset": 1,
+      "source_predicted_old_offset": 2
+     },
+     "probe_command": "offset 40 81 0 40 81 120",
+     "observed": {
+      "legacy": 2
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 81000,
+      "target": 40000,
+      "expected_offset": -1
+     },
+     "probe_command": "offset 81 40 0 40 81 120",
+     "observed": {
+      "legacy": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       1000000,
+       1040000,
+       1081000,
+       1120000
+      ],
+      "anchor": 1040000,
+      "target": 1081000,
+      "expected_offset": 1
+     },
+     "probe_command": "offset 1040 1081 1000 1040 1081 1120",
+     "observed": {
+      "legacy": 0
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       80000,
+       120000
+      ],
+      "anchor": 40000,
+      "target": 80000,
+      "expected_offset": 1
+     },
+     "probe_command": "offset 40 80 0 40 80 120",
+     "observed": {
+      "legacy": 1
+     },
+     "status": "captured"
+    },
+    {
+     "input": {
+      "starts": [
+       0,
+       40000,
+       81000,
+       120000
+      ],
+      "anchor": 41000,
+      "target": 81000,
+      "expected_offset": 0
+     },
+     "probe_command": "offset 41 81 0 40 81 120",
+     "observed": {
+      "legacy": 1
+     },
+     "status": "captured"
+    }
+   ]
+  },
+  {
+   "id": "C02-loss-preview",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs the conversion dialog flow (cancel, then accept); not driven yet."
+  },
+  {
+   "id": "C05-audio-association",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs Session restore with controlled audio resources bound to scratch paths."
+  },
+  {
+   "id": "C01-fps-isolation",
+   "route": "none",
+   "status": "not-captured",
+   "reason": "Needs two open Documents and explicit frame-rate operations in the grid."
+  },
+  {
+   "id": "srt-crlf-blank-lines",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "crlf-two-cues.srt",
+     "input_sha256": "6ee937aadaca073b2ec318e35baf644a40449d2e9536a141f5d3e9eb56b19052",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-crlf-two-cues.srt",
+     "output_bytes": 89,
+     "output_sha256": "e826fdcf7a3aed423a9fdb84a07e75c285c9d9b788d44693eb6c8da704c5c6ac",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14420): dbind-WARNING **: 16:37:19.728: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "c4-ssa-edge-families",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "ass-event-edges.ass",
+     "input_sha256": "546e176183b1f3d9ca9b01c390bb575ca713be7a45e2937257cbaed96b1fec66",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-ass-event-edges.ass",
+     "output_bytes": 1628,
+     "output_sha256": "96f11a71542da9c7ea6d4ccd1c706f063cfd2bfaf9b7cf431a22f451141fcdcc",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14446): dbind-WARNING **: 16:37:31.966: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    },
+    {
+     "input": "tlmode-edges.ass",
+     "input_sha256": "5f4557f8282edfdc3025643128d1b8ad5deb07e608a808bd8f0ed48eec468e58",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-tlmode-edges.ass",
+     "output_bytes": 1264,
+     "output_sha256": "7df7d096fb3d2eed2b57db6db25d80fe85c4d767a5282eb2b9c99b4e8842faf1",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14473): dbind-WARNING **: 16:37:44.212: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    },
+    {
+     "input": "ssa-v4.ssa",
+     "input_sha256": "5e921fa90ac8a93c50d95d4b894d1339f149e792704280c6bff658f4d56ad880",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "output_name": "saved-ssa-v4.ssa.ass",
+     "output_bytes": 951,
+     "output_sha256": "0cfe2a83a23b2e66553a1cac1f713389bae2c75563425e4d0afece88fe76b2a5",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14503): dbind-WARNING **: 16:37:56.443: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "editor-tag-commands",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "tag-commands.ass",
+     "input_sha256": "971084d920da26b6390408af0939f8051f95725d5eb0331c3a99fa8df472772b",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "keys": [
+      "Home",
+      "Return",
+      "End",
+      "shift+Home",
+      "ctrl+b",
+      "Return",
+      "End",
+      "ctrl+b",
+      "Return",
+      "Home",
+      "Right",
+      "Right",
+      "Right",
+      "Right",
+      "ctrl+b",
+      "Return",
+      "Home",
+      "Right",
+      "Right",
+      "ctrl+b",
+      "Return"
+     ],
+     "output_name": "saved-tag-commands.ass",
+     "output_bytes": 928,
+     "output_sha256": "09dd6de6d5b390abafd4c310108272ef646f05936fa69cc47b9cfded52794bfe",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14529): dbind-WARNING **: 16:38:08.614: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "editor-tag-commands-srt",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "tag-commands.srt",
+     "input_sha256": "67e39bb4f2943cb4994afe6bdf9ee71aff680c44bc8c10ebf5adb24a92b17ea4",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "keys": [
+      "Home",
+      "Return",
+      "End",
+      "shift+Home",
+      "ctrl+b",
+      "Return",
+      "End",
+      "ctrl+b",
+      "Return"
+     ],
+     "output_name": "saved-tag-commands.srt",
+     "output_bytes": 136,
+     "output_sha256": "8f33063192b8a001e7636f7a7a4cd4c6d2912630f166110c147f6363bf1f4366",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14579): dbind-WARNING **: 16:38:30.648: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "editor-tag-commands-microdvd",
+   "route": "save-as",
+   "observations": [
+    {
+     "input": "tag-commands.sub",
+     "input_sha256": "c80f17a22edac2de1778693e4442930a6cba34b96af69184664c6ffe0b6da23b",
+     "status": "captured",
+     "autoload_scripts_removed": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "dismissed_popups": [],
+     "keys": [
+      "Home",
+      "Return",
+      "Home",
+      "Right",
+      "Right",
+      "Right",
+      "Right",
+      "Right",
+      "ctrl+b",
+      "Return",
+      "Home",
+      "Right",
+      "Right",
+      "ctrl+b",
+      "Return"
+     ],
+     "output_name": "saved-tag-commands.sub.txt",
+     "output_bytes": 54,
+     "output_sha256": "d218bf899473004cb5c20b8283d579a8c4f5fde0bc574109009ac9b668273ac1",
+     "byte_identical": false,
+     "app_log_tail": "\n(hikarisub:14613): dbind-WARNING **: 16:38:47.658: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    }
+   ]
+  },
+  {
+   "id": "S3-automation",
+   "route": "automation",
+   "observations": [
+    {
+     "part": "bundled-autoload-startup",
+     "autoload_scripts": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "status": "captured",
+     "popups": [
+      "Log window",
+      "Reloading"
+     ],
+     "screenshot": "screens/automation-bundled-autoload.png",
+     "app_log_tail": "\n(hikarisub:14718): dbind-WARNING **: 16:39:07.148: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n"
+    },
+    {
+     "part": "probe",
+     "probe_sha256": "45c417b6dcb5f5b305fbf5c4f975f216efeecc815817aa38e8f8d70b22337a82",
+     "corpus": [
+      "BezierToText.lua",
+      "a-mo.Aegisub-Motion.moon",
+      "cleantags-autoload.lua",
+      "gradient-factory.lua",
+      "kara-templater.lua",
+      "karaoke-auto-leadin.lua",
+      "l0.DependencyControl.Toolbox.moon",
+      "macro-1-edgeblur.lua",
+      "macro-2-mkfullwitdh.lua",
+      "select-overlaps.moon",
+      "skew gradient.lua",
+      "strip-tags.lua"
+     ],
+     "status": "incomplete",
+     "steps": [
+      {
+       "case": "defaults-ok",
+       "macro": 0,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-defaults-ok.png",
+       "popups": []
+      },
+      {
+       "case": "defaults-escape",
+       "macro": 1,
+       "keys": [
+        "Escape"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-defaults-escape.png",
+       "popups": []
+      },
+      {
+       "case": "buttons-return",
+       "macro": 2,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-buttons-return.png",
+       "popups": []
+      },
+      {
+       "case": "buttons-escape",
+       "macro": 3,
+       "keys": [
+        "Escape"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-buttons-escape.png",
+       "popups": []
+      },
+      {
+       "case": "button-id-unknown",
+       "macro": 4,
+       "keys": [
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-button-id-unknown.png",
+       "popups": []
+      },
+      {
+       "case": "button-id-invalid",
+       "macro": 5,
+       "keys": [],
+       "status": "timeout",
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-button-id-invalid.png",
+       "popups": []
+      },
+      {
+       "case": "float-step-up",
+       "macro": 6,
+       "keys": [
+        "Up",
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-float-step-up.png",
+       "popups": []
+      },
+      {
+       "case": "int-step-up",
+       "macro": 7,
+       "keys": [
+        "Up",
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-int-step-up.png",
+       "popups": []
+      },
+      {
+       "case": "edit-typed",
+       "macro": 8,
+       "keys": [
+        "type:h\u00e9llo",
+        "Return"
+       ],
+       "status": "timeout",
+       "dialog_windows": [],
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-edit-typed.png",
+       "popups": []
+      },
+      {
+       "case": "corpus",
+       "macro": 9,
+       "keys": [],
+       "status": "timeout",
+       "windows_after": [],
+       "main_title_after": "probe.ass - HikariSub v0.0.1-rc.1  HEAD 20d647c",
+       "screenshot": "screens/automation-corpus.png",
+       "popups": []
+      }
+     ],
+     "startup_popups": [],
+     "load_time": [
+      {
+       "aegisub_api": [
+        "__init_clipboard:function",
+        "cancel:function",
+        "decode_path:function",
+        "file_name:function",
+        "frame_from_ms:function",
+        "get_audio_selection:function",
+        "get_frame:function",
+        "gettext:function",
+        "gui:table",
+        "keyframes:function",
+        "lua_automation_version:number",
+        "ms_from_frame:function",
+        "project_properties:function",
+        "register_filter:function",
+        "register_macro:function",
+        "set_status_text:function",
+        "text_extents:function",
+        "video_size:function"
+       ],
+       "case": "corpus",
+       "jit": "LuaJIT 2.1.1703358377",
+       "lua_version": "Lua 5.1",
+       "modules": {
+        "aegisub.clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.re": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "aegisub.util": {
+         "ok": true,
+         "type": "table"
+        },
+        "bit": {
+         "ok": true,
+         "type": "table"
+        },
+        "clipboard": {
+         "ok": true,
+         "type": "table"
+        },
+        "ffi": {
+         "ok": true,
+         "type": "table"
+        },
+        "json": {
+         "ok": true,
+         "type": "table"
+        },
+        "karaskel": {
+         "ok": true,
+         "type": "boolean"
+        },
+        "l0.DependencyControl": {
+         "error": "[string \"/home/runner/work/hikari/hikari/capture/cap-v...\"]:13: FFI could not load \"PT.PreciseTimer.PreciseTimer\". Search paths:",
+         "ok": false,
+         "type": "string"
+        },
+        "lfs": {
+         "ok": true,
+         "type": "table"
+        },
+        "lpeg": {
+         "ok": true,
+         "type": "table"
+        },
+        "luabins": {
+         "ok": true,
+         "type": "table"
+        },
+        "moonscript": {
+         "ok": true,
+         "type": "table"
+        },
+        "re": {
+         "ok": true,
+         "type": "table"
+        },
+        "unicode": {
+         "ok": true,
+         "type": "table"
+        },
+        "utils": {
+         "ok": true,
+         "type": "boolean"
+        }
+       },
+       "package_cpath": "./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so",
+       "package_path": "/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload//?.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload//?/init.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Include//?.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Include//?/init.lua;",
+       "scripts": [
+        {
+         "file": "BezierToText.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Impose test onto a Bezier curve"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Bezier"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "an eer? & Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "An effect to impose text onto a Bezier curve"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Bezier Curve Imposition"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0"
+         }
+        },
+        {
+         "file": "a-mo.Aegisub-Motion.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Applies properly formatted motion tracking data to selected subtitles."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Apply"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Removes properly formatted motion tracking data from selected subtitles."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Revert"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cuts and encodes the current scene for use with motion tracking software."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Cuts and encodes selected scenes for use with motion tracking software."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim Each"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "description": {
+            "type": "string",
+            "value": "Opens a gui to configure the trim tool."
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Aegisub-Motion/Trim Settings"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "torque"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Aegisub-Motion"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "a-mo.Aegisub-Motion"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0.9"
+         }
+        },
+        {
+         "file": "cleantags-autoload.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Clean Tags"
+           },
+           "processing": "function",
+           "validation": "nil"
+          },
+          {
+           "configuration": "nil",
+           "description": {
+            "type": "string",
+            "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+           },
+           "kind": "filter",
+           "name": {
+            "type": "string",
+            "value": "Clean Tags"
+           },
+           "priority": {
+            "type": "number",
+            "value": 0
+           },
+           "processing": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Muhammad Lukman Nasaruddin (ai-chan)"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Clean subtitle lines by re-arranging ASS tags and override blocks within the lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Clean Tags"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.20"
+         }
+        },
+        {
+         "file": "gradient-factory.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Generate color gradient"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Generate color gradient"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Muhammad Lukman Nasaruddin (ai-chan) and Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Color gradient generator by ai-chan and Bakura"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Gradient Factory v2.6"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.6"
+         }
+        },
+        {
+         "file": "kara-templater.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Applies karaoke effects from templates"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Apply karaoke template"
+           },
+           "processing": "function",
+           "validation": "function"
+          },
+          {
+           "configuration": "nil",
+           "description": {
+            "type": "string",
+            "value": "Apply karaoke effect templates to the subtitles.\n\nSee the help file for information on how to use this."
+           },
+           "kind": "filter",
+           "name": {
+            "type": "string",
+            "value": "Karaoke template"
+           },
+           "priority": {
+            "type": "number",
+            "value": 2000
+           },
+           "processing": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Macro and export filter to apply karaoke effects using the template language"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Karaoke Templater"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2.1.7"
+         }
+        },
+        {
+         "file": "karaoke-auto-leadin.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Automatic karaoke lead-in"
+           },
+           "processing": "function",
+           "validation": "function"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Join up the ends of selected lines and add \\k tags to shift karaoke"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Automatic karaoke lead-in"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.0"
+         }
+        },
+        {
+         "error": "...re/cap-vql4sh7b/corpus/l0.DependencyControl.Toolbox.moon:6: loop or previous error loading module 'l0.DependencyControl'\nstack traceback:\n\t[C]: in function 'require'\n\t...re/cap-vql4sh7b/corpus/l0.DependencyControl.Toolbox.moon:6: in main chunk\n\t[C]: in function 'xpcall'\n\t[string \"/home/runner/work/hikari/hikari/capture/cap-v...\"]:220: in function <[string \"/home/runner/work/hikari/hikari/capture/cap-v...\"]:159>\n\t[C]: in function 'pcall'\n\t[string \"/home/runner/work/hikari/hikari/capture/cap-v...\"]:249: in main chunk",
+         "file": "l0.DependencyControl.Toolbox.moon",
+         "loaded": false,
+         "registrations": [],
+         "script_author": {
+          "type": "string",
+          "value": "line0"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Provides DependencyControl maintenance and configuration tools."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "DependencyControl Toolbox"
+         },
+         "script_namespace": {
+          "type": "string",
+          "value": "l0.DependencyControl.Toolbox"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "0.1.3"
+         }
+        },
+        {
+         "file": "macro-1-edgeblur.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Adds \\be1 tags to all selected lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Add edgeblur"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "A demo macro showing how to do simple line modification in Automation 4"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Add edgeblur"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        },
+        {
+         "file": "macro-2-mkfullwitdh.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Convert Latin letters to SJIS fullwidth letters"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Make fullwidth"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Niels Martin Hansen"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Shows how to use the unicode include to iterate over characters and a lookup table to convert those characters to something else."
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Make text fullwidth"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        },
+        {
+         "file": "select-overlaps.moon",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Select lines which begin while another non-comment line is active"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Select overlaps"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Thomas Goyne"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Select lines which begin while another non-comment line is active"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Select overlaps"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "2"
+         }
+        },
+        {
+         "file": "skew gradient.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": ""
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Skew gradient"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Bakura"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "makes gradient from skew clip from 4 points"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Skew gradient"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1.5"
+         }
+        },
+        {
+         "file": "strip-tags.lua",
+         "loaded": true,
+         "registrations": [
+          {
+           "description": {
+            "type": "string",
+            "value": "Remove all override tags from selected lines"
+           },
+           "is_active": "nil",
+           "kind": "macro",
+           "name": {
+            "type": "string",
+            "value": "Strip tags"
+           },
+           "processing": "function",
+           "validation": "nil"
+          }
+         ],
+         "script_author": {
+          "type": "string",
+          "value": "Thomas Goyne"
+         },
+         "script_description": {
+          "type": "string",
+          "value": "Remove all override tags from selected lines"
+         },
+         "script_name": {
+          "type": "string",
+          "value": "Strip tags"
+         },
+         "script_namespace": {
+          "type": "nil"
+         },
+         "script_version": {
+          "type": "string",
+          "value": "1"
+         }
+        }
+       ],
+       "shared_package_loaded": true,
+       "stubs": {
+        "cancel": "function",
+        "debug": "nil",
+        "progress": "nil",
+        "set_undo_point": "nil",
+        "set_undo_point_call": {
+         "ok": false,
+         "result": {
+          "type": "string",
+          "value": "[string \"/home/runner/work/hikari/hikari/capture/cap-v...\"]:176: attempt to call field 'set_undo_point' (a nil value)"
+         }
+        }
+       }
+      }
+     ],
+     "automation_menu": "screens/automation-menu.png",
+     "submenu": "screens/automation-submenu.png",
+     "after_return": "screens/automation-after-return.png",
+     "app_log_tail": "\n(hikarisub:14742): dbind-WARNING **: 16:39:16.987: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "config_files": [
+      "Config.txt",
+      "Hotkeys.txt",
+      "LastSession.txt"
+     ],
+     "hotkeys_after": "[HikariSub 0.0.1.9999]\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-0=Ctrl-Shift-F1\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-1=Ctrl-Shift-F2\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-2=Ctrl-Shift-F3\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-3=Ctrl-Shift-F4\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-4=Ctrl-Shift-F5\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-5=Ctrl-Shift-F6\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-6=Ctrl-Shift-F7\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-7=Ctrl-Shift-F8\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-8=Ctrl-Shift-F9\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-9=Ctrl-Shift-F10\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-10=Ctrl-Shift-F11\nScript /home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload/capture-probe.lua-11=Ctrl-Shift-F12\n",
+     "capture_lines": "{\"aegisub_api\":[\"__init_clipboard:function\",\"cancel:function\",\"decode_path:function\",\"file_name:function\",\"frame_from_ms:function\",\"get_audio_selection:function\",\"get_frame:function\",\"gettext:function\",\"gui:table\",\"keyframes:function\",\"lua_automation_version:number\",\"ms_from_frame:function\",\"project_properties:function\",\"register_filter:function\",\"register_macro:function\",\"set_status_text:function\",\"text_extents:function\",\"video_size:function\"],\"case\":\"corpus\",\"jit\":\"LuaJIT 2.1.1703358377\",\"lua_version\":\"Lua 5.1\",\"modules\":{\"aegisub.clipboard\":{\"ok\":true,\"type\":\"table\"},\"aegisub.lfs\":{\"ok\":true,\"type\":\"table\"},\"aegisub.re\":{\"ok\":true,\"type\":\"table\"},\"aegisub.unicode\":{\"ok\":true,\"type\":\"table\"},\"aegisub.util\":{\"ok\":true,\"type\":\"table\"},\"bit\":{\"ok\":true,\"type\":\"table\"},\"clipboard\":{\"ok\":true,\"type\":\"table\"},\"ffi\":{\"ok\":true,\"type\":\"table\"},\"json\":{\"ok\":true,\"type\":\"table\"},\"karaskel\":{\"ok\":true,\"type\":\"boolean\"},\"l0.DependencyControl\":{\"error\":\"[string \\\"/home/runner/work/hikari/hikari/capture/cap-v...\\\"]:13: FFI could not load \\\"PT.PreciseTimer.PreciseTimer\\\". Search paths:\",\"ok\":false,\"type\":\"string\"},\"lfs\":{\"ok\":true,\"type\":\"table\"},\"lpeg\":{\"ok\":true,\"type\":\"table\"},\"luabins\":{\"ok\":true,\"type\":\"table\"},\"moonscript\":{\"ok\":true,\"type\":\"table\"},\"re\":{\"ok\":true,\"type\":\"table\"},\"unicode\":{\"ok\":true,\"type\":\"table\"},\"utils\":{\"ok\":true,\"type\":\"boolean\"}},\"package_cpath\":\"./?.so;/usr/local/lib/lua/5.1/?.so;/usr/lib/x86_64-linux-gnu/lua/5.1/?.so;/usr/local/lib/lua/5.1/loadall.so\",\"package_path\":\"/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload//?.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Autoload//?/init.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Include//?.lua;/home/runner/work/hikari/hikari/capture/cap-vql4sh7b/hikarisub-linux-x86_64/Automation/automation/Include//?/init.lua;\",\"scripts\":[{\"file\":\"BezierToText.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Impose test onto a Bezier curve\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Bezier\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"an eer? & Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"An effect to impose text onto a Bezier curve\"},\"script_name\":{\"type\":\"string\",\"value\":\"Bezier Curve Imposition\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"file\":\"a-mo.Aegisub-Motion.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies properly formatted motion tracking data to selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Apply\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Removes properly formatted motion tracking data from selected subtitles.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Revert\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes the current scene for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Cuts and encodes selected scenes for use with motion tracking software.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Each\"},\"processing\":\"function\",\"validation\":\"function\"},{\"description\":{\"type\":\"string\",\"value\":\"Opens a gui to configure the trim tool.\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion/Trim Settings\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"torque\"},\"script_description\":{\"type\":\"string\",\"value\":\"A set of tools for simplifying the process of creating and applying motion tracking data with Aegisub.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Aegisub-Motion\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"a-mo.Aegisub-Motion\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0.9\"}},{\"file\":\"cleantags-autoload.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"processing\":\"function\",\"validation\":\"nil\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"priority\":{\"type\":\"number\",\"value\":0},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan)\"},\"script_description\":{\"type\":\"string\",\"value\":\"Clean subtitle lines by re-arranging ASS tags and override blocks within the lines\"},\"script_name\":{\"type\":\"string\",\"value\":\"Clean Tags\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.20\"}},{\"file\":\"gradient-factory.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Generate color gradient\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Muhammad Lukman Nasaruddin (ai-chan) and Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"Color gradient generator by ai-chan and Bakura\"},\"script_name\":{\"type\":\"string\",\"value\":\"Gradient Factory v2.6\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.6\"}},{\"file\":\"kara-templater.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Applies karaoke effects from templates\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Apply karaoke template\"},\"processing\":\"function\",\"validation\":\"function\"},{\"configuration\":\"nil\",\"description\":{\"type\":\"string\",\"value\":\"Apply karaoke effect templates to the subtitles.\\n\\nSee the help file for information on how to use this.\"},\"kind\":\"filter\",\"name\":{\"type\":\"string\",\"value\":\"Karaoke template\"},\"priority\":{\"type\":\"number\",\"value\":2000},\"processing\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Macro and export filter to apply karaoke effects using the template language\"},\"script_name\":{\"type\":\"string\",\"value\":\"Karaoke Templater\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2.1.7\"}},{\"file\":\"karaoke-auto-leadin.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"processing\":\"function\",\"validation\":\"function\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Join up the ends of selected lines and add \\\\k tags to shift karaoke\"},\"script_name\":{\"type\":\"string\",\"value\":\"Automatic karaoke lead-in\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.0\"}},{\"error\":\"...re/cap-vql4sh7b/corpus/l0.DependencyControl.Toolbox.moon:6: loop or previous error loading module 'l0.DependencyControl'\\nstack traceback:\\n\\t[C]: in function 'require'\\n\\t...re/cap-vql4sh7b/corpus/l0.DependencyControl.Toolbox.moon:6: in main chunk\\n\\t[C]: in function 'xpcall'\\n\\t[string \\\"/home/runner/work/hikari/hikari/capture/cap-v...\\\"]:220: in function <[string \\\"/home/runner/work/hikari/hikari/capture/cap-v...\\\"]:159>\\n\\t[C]: in function 'pcall'\\n\\t[string \\\"/home/runner/work/hikari/hikari/capture/cap-v...\\\"]:249: in main chunk\",\"file\":\"l0.DependencyControl.Toolbox.moon\",\"loaded\":false,\"registrations\":[],\"script_author\":{\"type\":\"string\",\"value\":\"line0\"},\"script_description\":{\"type\":\"string\",\"value\":\"Provides DependencyControl maintenance and configuration tools.\"},\"script_name\":{\"type\":\"string\",\"value\":\"DependencyControl Toolbox\"},\"script_namespace\":{\"type\":\"string\",\"value\":\"l0.DependencyControl.Toolbox\"},\"script_version\":{\"type\":\"string\",\"value\":\"0.1.3\"}},{\"file\":\"macro-1-edgeblur.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Adds \\\\be1 tags to all selected lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Add edgeblur\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"A demo macro showing how to do simple line modification in Automation 4\"},\"script_name\":{\"type\":\"string\",\"value\":\"Add edgeblur\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}},{\"file\":\"macro-2-mkfullwitdh.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Convert Latin letters to SJIS fullwidth letters\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Make fullwidth\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Niels Martin Hansen\"},\"script_description\":{\"type\":\"string\",\"value\":\"Shows how to use the unicode include to iterate over characters and a lookup table to convert those characters to something else.\"},\"script_name\":{\"type\":\"string\",\"value\":\"Make text fullwidth\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}},{\"file\":\"select-overlaps.moon\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Select lines which begin while another non-comment line is active\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Select overlaps\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Thomas Goyne\"},\"script_description\":{\"type\":\"string\",\"value\":\"Select lines which begin while another non-comment line is active\"},\"script_name\":{\"type\":\"string\",\"value\":\"Select overlaps\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"2\"}},{\"file\":\"skew gradient.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Skew gradient\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Bakura\"},\"script_description\":{\"type\":\"string\",\"value\":\"makes gradient from skew clip from 4 points\"},\"script_name\":{\"type\":\"string\",\"value\":\"Skew gradient\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1.5\"}},{\"file\":\"strip-tags.lua\",\"loaded\":true,\"registrations\":[{\"description\":{\"type\":\"string\",\"value\":\"Remove all override tags from selected lines\"},\"is_active\":\"nil\",\"kind\":\"macro\",\"name\":{\"type\":\"string\",\"value\":\"Strip tags\"},\"processing\":\"function\",\"validation\":\"nil\"}],\"script_author\":{\"type\":\"string\",\"value\":\"Thomas Goyne\"},\"script_description\":{\"type\":\"string\",\"value\":\"Remove all override tags from selected lines\"},\"script_name\":{\"type\":\"string\",\"value\":\"Strip tags\"},\"script_namespace\":{\"type\":\"nil\"},\"script_version\":{\"type\":\"string\",\"value\":\"1\"}}],\"shared_package_loaded\":true,\"stubs\":{\"cancel\":\"function\",\"debug\":\"nil\",\"progress\":\"nil\",\"set_undo_point\":\"nil\",\"set_undo_point_call\":{\"ok\":false,\"result\":{\"type\":\"string\",\"value\":\"[string \\\"/home/runner/work/hikari/hikari/capture/cap-v...\\\"]:176: attempt to call field 'set_undo_point' (a nil value)\"}}}}\n"
+    }
+   ]
+  },
   {
    "id": "F1-F3-ui",
    "route": "ui",
@@ -74,7 +1477,7 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.3
+       "seconds": 5.2
       },
       {
        "do": "open",
@@ -86,7 +1489,7 @@
        "do": "find_text",
        "text": "HELLO",
        "status": "done",
-       "seconds": 2.2
+       "seconds": 2.1
       },
       {
        "do": "find",
@@ -196,7 +1599,7 @@
         "editor_cursor": 7
        },
        "status": "done",
-       "seconds": 5.2
+       "seconds": 5.3
       },
       {
        "do": "find",
@@ -315,7 +1718,7 @@
        ],
        "message_screenshot": "screens/F1-next-text-01-message.png",
        "status": "done",
-       "seconds": 1.9
+       "seconds": 1.8
       },
       {
        "do": "answer",
@@ -428,16 +1831,17 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.6
+       "seconds": 5.3
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-next-text-03-final.png",
-     "app_log_tail": "",
-     "seconds": 60.4
+     "app_log_tail": "\n(hikarisub:15006): dbind-WARNING **: 16:47:22.567: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 59.8
     },
     {
      "id": "F1-wrap-from-selected",
@@ -512,7 +1916,7 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.3
+       "seconds": 5.2
       },
       {
        "do": "open",
@@ -524,7 +1928,7 @@
        "do": "find_text",
        "text": "hello",
        "status": "done",
-       "seconds": 2.2
+       "seconds": 2.1
       },
       {
        "do": "find",
@@ -718,7 +2122,7 @@
        "title": "Confirmation",
        "screenshot": "screens/F1-wrap-from-selected-04-message.png",
        "status": "done",
-       "seconds": 1.7
+       "seconds": 1.6
       },
       {
        "do": "dump",
@@ -768,16 +2172,17 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.5
+       "seconds": 5.3
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-wrap-from-selected-05-final.png",
-     "app_log_tail": "",
-     "seconds": 49.8
+     "app_log_tail": "\n(hikarisub:15224): dbind-WARNING **: 16:48:23.462: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 49.2
     },
     {
      "id": "F1-beginning-of-text",
@@ -988,7 +2393,7 @@
        "title": "Confirmation",
        "screenshot": "screens/F1-beginning-of-text-02-message.png",
        "status": "done",
-       "seconds": 1.7
+       "seconds": 1.6
       },
       {
        "do": "dump",
@@ -1045,9 +2450,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-beginning-of-text-03-final.png",
-     "app_log_tail": "",
-     "seconds": 40.8
+     "app_log_tail": "\n(hikarisub:15412): dbind-WARNING **: 16:49:13.808: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 40.6
     },
     {
      "id": "F1-beginning-of-text-regex",
@@ -1131,7 +2537,7 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.5
+       "seconds": 5.3
       },
       {
        "do": "find",
@@ -1140,7 +2546,7 @@
        ],
        "message_screenshot": "screens/F1-beginning-of-text-regex-01-message.png",
        "status": "done",
-       "seconds": 1.9
+       "seconds": 1.8
       },
       {
        "do": "answer",
@@ -1198,16 +2604,17 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.6
+       "seconds": 5.3
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-beginning-of-text-regex-03-final.png",
-     "app_log_tail": "",
-     "seconds": 27.3
+     "app_log_tail": "\n(hikarisub:15567): dbind-WARNING **: 16:49:55.472: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 26.5
     },
     {
      "id": "F1-end-of-text",
@@ -1420,9 +2827,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-end-of-text-03-final.png",
-     "app_log_tail": "",
-     "seconds": 33.8
+     "app_log_tail": "\n(hikarisub:15675): dbind-WARNING **: 16:50:23.072: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 33.5
     },
     {
      "id": "F1-regex-rest-of-text",
@@ -1506,7 +2914,7 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.6
+       "seconds": 5.3
       },
       {
        "do": "find",
@@ -1623,9 +3031,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-regex-rest-of-text-01-final.png",
-     "app_log_tail": "",
-     "seconds": 32.3
+     "app_log_tail": "\n(hikarisub:15803): dbind-WARNING **: 16:50:57.706: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 31.8
     },
     {
      "id": "F1-skip-tags",
@@ -1662,7 +3071,7 @@
        "do": "find_text",
        "text": "b",
        "status": "done",
-       "seconds": 2.1
+       "seconds": 2.0
       },
       {
        "do": "find",
@@ -1736,9 +3145,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-skip-tags-03-final.png",
-     "app_log_tail": "",
-     "seconds": 34.4
+     "app_log_tail": "\n(hikarisub:15918): dbind-WARNING **: 16:51:30.613: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 21.2
     },
     {
      "id": "F1-skip-text",
@@ -1775,7 +3185,7 @@
        "do": "find_text",
        "text": "b",
        "status": "done",
-       "seconds": 2.1
+       "seconds": 2.0
       },
       {
        "do": "find",
@@ -1837,9 +3247,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-skip-text-01-final.png",
-     "app_log_tail": "",
-     "seconds": 20.1
+     "app_log_tail": "\n(hikarisub:16001): dbind-WARNING **: 16:51:52.875: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.5
     },
     {
      "id": "F1-styles-or-selected",
@@ -1986,7 +3397,7 @@
         "editor_cursor": 7
        },
        "status": "done",
-       "seconds": 5.2
+       "seconds": 5.3
       },
       {
        "do": "find",
@@ -2041,16 +3452,17 @@
         "editor_cursor": 6
        },
        "status": "done",
-       "seconds": 5.5
+       "seconds": 5.3
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-styles-or-selected-01-final.png",
-     "app_log_tail": "",
-     "seconds": 35.9
+     "app_log_tail": "\n(hikarisub:16074): dbind-WARNING **: 16:52:13.444: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 33.6
     },
     {
      "id": "F1-styles-missing",
@@ -2096,7 +3508,7 @@
        "title": "Confirmation",
        "screenshot": "screens/F1-styles-missing-02-message.png",
        "status": "done",
-       "seconds": 1.7
+       "seconds": 1.6
       },
       {
        "do": "dump",
@@ -2153,9 +3565,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-styles-missing-03-final.png",
-     "app_log_tail": "",
-     "seconds": 20.2
+     "app_log_tail": "\n(hikarisub:16193): dbind-WARNING **: 16:52:48.146: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.6
     },
     {
      "id": "F1-styles-none-found",
@@ -2258,9 +3671,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-styles-none-found-03-final.png",
-     "app_log_tail": "",
-     "seconds": 20.7
+     "app_log_tail": "\n(hikarisub:16275): dbind-WARNING **: 16:53:08.801: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.5
     },
     {
      "id": "F1-invalid-regex",
@@ -2289,7 +3703,7 @@
        "do": "find_text",
        "text": "(",
        "status": "done",
-       "seconds": 2.0
+       "seconds": 2.1
       },
       {
        "do": "find",
@@ -2374,9 +3788,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-invalid-regex-05-final.png",
-     "app_log_tail": "",
-     "seconds": 21.3
+     "app_log_tail": "\n(hikarisub:16359): dbind-WARNING **: 16:53:29.403: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 20.8
     },
     {
      "id": "F1-regex-lookbehind",
@@ -2405,7 +3820,7 @@
        "do": "find_text",
        "text": "(?<=hel)LO",
        "status": "done",
-       "seconds": 2.3
+       "seconds": 2.2
       },
       {
        "do": "find",
@@ -2467,9 +3882,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-regex-lookbehind-01-final.png",
-     "app_log_tail": "",
-     "seconds": 19.5
+     "app_log_tail": "\n(hikarisub:16453): dbind-WARNING **: 16:53:51.299: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 17.9
     },
     {
      "id": "F1-unicode-case",
@@ -2496,7 +3912,7 @@
       },
       {
        "do": "find_text",
-       "text": "łódź",
+       "text": "\u0142\u00f3d\u017a",
        "status": "done",
        "seconds": 2.1
       },
@@ -2507,7 +3923,7 @@
        ],
        "message_screenshot": "screens/F1-unicode-case-01-message.png",
        "status": "done",
-       "seconds": 1.7
+       "seconds": 1.8
       },
       {
        "do": "answer",
@@ -2527,7 +3943,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "żółw ŁÓDŹ"
+          "text": "\u017c\u00f3\u0142w \u0141\u00d3D\u0179"
          }
         ],
         "selected": [
@@ -2548,9 +3964,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-unicode-case-03-final.png",
-     "app_log_tail": "",
-     "seconds": 19.8
+     "app_log_tail": "\n(hikarisub:16516): dbind-WARNING **: 16:54:10.343: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.5
     },
     {
      "id": "F1-unicode-case-c-locale",
@@ -2577,7 +3994,7 @@
       },
       {
        "do": "find_text",
-       "text": "łódź",
+       "text": "\u0142\u00f3d\u017a",
        "status": "done",
        "seconds": 2.1
       },
@@ -2608,7 +4025,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "żółw ŁÓDŹ"
+          "text": "\u017c\u00f3\u0142w \u0141\u00d3D\u0179"
          }
         ],
         "selected": [
@@ -2629,9 +4046,10 @@
       "LANG": "C"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-unicode-case-c-locale-03-final.png",
-     "app_log_tail": "",
-     "seconds": 20.7
+     "app_log_tail": "\n(hikarisub:16596): dbind-WARNING **: 16:54:30.923: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.5
     },
     {
      "id": "F1-unicode-match-case",
@@ -2658,7 +4076,7 @@
       },
       {
        "do": "find_text",
-       "text": "łódź",
+       "text": "\u0142\u00f3d\u017a",
        "status": "done",
        "seconds": 2.1
       },
@@ -2689,7 +4107,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "żółw ŁÓDŹ"
+          "text": "\u017c\u00f3\u0142w \u0141\u00d3D\u0179"
          }
         ],
         "selected": [
@@ -2710,9 +4128,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-unicode-match-case-03-final.png",
-     "app_log_tail": "",
-     "seconds": 19.7
+     "app_log_tail": "\n(hikarisub:16676): dbind-WARNING **: 16:54:51.535: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.5
     },
     {
      "id": "F1-unicode-regex",
@@ -2739,7 +4158,7 @@
       },
       {
        "do": "find_text",
-       "text": "łó.ź",
+       "text": "\u0142\u00f3.\u017a",
        "status": "done",
        "seconds": 2.1
       },
@@ -2758,7 +4177,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "żółw ŁÓDŹ"
+          "text": "\u017c\u00f3\u0142w \u0141\u00d3D\u0179"
          }
         ],
         "selected": [
@@ -2779,9 +4198,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-unicode-regex-01-final.png",
-     "app_log_tail": "",
-     "seconds": 18.4
+     "app_log_tail": "\n(hikarisub:16760): dbind-WARNING **: 16:55:12.087: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 17.8
     },
     {
      "id": "F1-field-style",
@@ -2946,9 +4366,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-field-style-04-final.png",
-     "app_log_tail": "",
-     "seconds": 28.6
+     "app_log_tail": "\n(hikarisub:16824): dbind-WARNING **: 16:55:30.991: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 27.8
     },
     {
      "id": "F1-field-actor",
@@ -2977,7 +4398,7 @@
        "do": "find_text",
        "text": "n",
        "status": "done",
-       "seconds": 2.1
+       "seconds": 2.0
       },
       {
        "do": "find",
@@ -2989,7 +4410,7 @@
        "label": "actor-match-1",
        "screenshot": "screens/F1-field-actor-01-actor-match-1.png",
        "status": "done",
-       "seconds": 1.4
+       "seconds": 1.3
       },
       {
        "do": "dump",
@@ -3175,8 +4596,9 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-field-actor-05-final.png",
-     "app_log_tail": "",
+     "app_log_tail": "\n(hikarisub:16934): dbind-WARNING **: 16:55:59.889: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
      "seconds": 36.1
     },
     {
@@ -3277,7 +4699,7 @@
        ],
        "message_screenshot": "screens/F1-field-effect-02-message.png",
        "status": "done",
-       "seconds": 1.7
+       "seconds": 1.8
       },
       {
        "do": "answer",
@@ -3342,9 +4764,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-field-effect-04-final.png",
-     "app_log_tail": "",
-     "seconds": 33.1
+     "app_log_tail": "\n(hikarisub:17078): dbind-WARNING **: 16:56:37.082: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 27.8
     },
     {
      "id": "F1-tlmode",
@@ -3437,7 +4860,7 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.2
+       "seconds": 5.3
       },
       {
        "do": "find",
@@ -3483,7 +4906,7 @@
        ],
        "message_screenshot": "screens/F1-tlmode-02-message.png",
        "status": "done",
-       "seconds": 1.8
+       "seconds": 1.9
       },
       {
        "do": "answer",
@@ -3524,9 +4947,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-tlmode-04-final.png",
-     "app_log_tail": "",
-     "seconds": 42.3
+     "app_log_tail": "\n(hikarisub:17194): dbind-WARNING **: 16:57:05.978: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 42.7
     },
     {
      "id": "F1-replace-next",
@@ -3555,7 +4979,7 @@
        "do": "find_text",
        "text": "hello",
        "status": "done",
-       "seconds": 2.1
+       "seconds": 2.2
       },
       {
        "do": "replace_text",
@@ -3696,7 +5120,7 @@
        "title": "Confirmation",
        "screenshot": "screens/F1-replace-next-02-message.png",
        "status": "done",
-       "seconds": 1.6
+       "seconds": 1.7
       },
       {
        "do": "dump",
@@ -3753,9 +5177,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-next-03-final.png",
-     "app_log_tail": "",
-     "seconds": 39.4
+     "app_log_tail": "\n(hikarisub:17376): dbind-WARNING **: 16:57:49.779: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 38.3
     },
     {
      "id": "F1-replace-next-regex",
@@ -3845,12 +5270,12 @@
         "editor_cursor": 4
        },
        "status": "done",
-       "seconds": 5.6
+       "seconds": 5.3
       },
       {
        "do": "replace_next",
        "status": "done",
-       "seconds": 1.9
+       "seconds": 1.8
       },
       {
        "do": "dump",
@@ -3907,9 +5332,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-next-regex-01-final.png",
-     "app_log_tail": "",
-     "seconds": 30.0
+     "app_log_tail": "\n(hikarisub:17541): dbind-WARNING **: 16:58:29.140: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 27.7
     },
     {
      "id": "F1-replace-next-stale",
@@ -4068,9 +5494,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-next-stale-05-final.png",
-     "app_log_tail": "",
-     "seconds": 40.1
+     "app_log_tail": "\n(hikarisub:17659): dbind-WARNING **: 16:58:57.865: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 38.1
     },
     {
      "id": "F1-replace-all",
@@ -4187,7 +5614,7 @@
        ],
        "message_screenshot": "screens/F1-replace-all-03-message.png",
        "status": "done",
-       "seconds": 1.8
+       "seconds": 1.9
       },
       {
        "do": "answer",
@@ -4252,9 +5679,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-05-final.png",
-     "app_log_tail": "",
-     "seconds": 34.6
+     "app_log_tail": "\n(hikarisub:17837): dbind-WARNING **: 16:59:37.043: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 33.1
     },
     {
      "id": "F1-replace-all-styles-and-selected",
@@ -4343,7 +5771,7 @@
        "do": "find_text",
        "text": "hello",
        "status": "done",
-       "seconds": 2.1
+       "seconds": 2.2
       },
       {
        "do": "replace_text",
@@ -4358,7 +5786,7 @@
        ],
        "message_screenshot": "screens/F1-replace-all-styles-and-selected-01-message.png",
        "status": "done",
-       "seconds": 2.0
+       "seconds": 1.9
       },
       {
        "do": "answer",
@@ -4424,9 +5852,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-styles-and-selected-03-final.png",
-     "app_log_tail": "",
-     "seconds": 30.8
+     "app_log_tail": "\n(hikarisub:18004): dbind-WARNING **: 17:00:11.288: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 29.7
     },
     {
      "id": "F1-replace-all-from-selected",
@@ -4543,9 +5972,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-from-selected-03-final.png",
-     "app_log_tail": "",
-     "seconds": 25.5
+     "app_log_tail": "\n(hikarisub:18132): dbind-WARNING **: 17:00:42.052: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 23.9
     },
     {
      "id": "F1-replace-all-anchored-regex",
@@ -4654,9 +6084,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-anchored-regex-03-final.png",
-     "app_log_tail": "",
-     "seconds": 23.3
+     "app_log_tail": "\n(hikarisub:18240): dbind-WARNING **: 17:01:07.041: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 22.1
     },
     {
      "id": "F1-replace-all-beginning",
@@ -4765,9 +6196,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-beginning-03-final.png",
-     "app_log_tail": "",
-     "seconds": 24.6
+     "app_log_tail": "\n(hikarisub:18344): dbind-WARNING **: 17:01:30.276: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 22.1
     },
     {
      "id": "F1-replace-all-end-empty",
@@ -4863,16 +6295,17 @@
         "editor_cursor": 1
        },
        "status": "done",
-       "seconds": 5.5
+       "seconds": 5.3
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-replace-all-end-empty-03-final.png",
-     "app_log_tail": "",
-     "seconds": 21.8
+     "app_log_tail": "\n(hikarisub:18449): dbind-WARNING **: 17:01:53.484: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 20.0
     },
     {
      "id": "F1-replace-all-pattern-length",
@@ -4989,9 +6422,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 97,
      "final_screenshot": "screens/F1-replace-all-pattern-length-03-final.png",
-     "app_log_tail": "",
-     "seconds": 25.0
+     "app_log_tail": "\n(hikarisub:18546): dbind-WARNING **: 17:02:14.544: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 23.9
     },
     {
      "id": "F1-find-all-current",
@@ -5096,9 +6530,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 100,
      "final_screenshot": "screens/F1-find-all-current-02-final.png",
-     "app_log_tail": "",
-     "seconds": 21.9
+     "app_log_tail": "\n(hikarisub:18655): dbind-WARNING **: 17:02:39.489: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 22.0
     },
     {
      "id": "F1-find-all-comments-overlap",
@@ -5203,9 +6638,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 99,
      "final_screenshot": "screens/F1-find-all-comments-overlap-02-final.png",
-     "app_log_tail": "",
-     "seconds": 22.2
+     "app_log_tail": "\n(hikarisub:18752): dbind-WARNING **: 17:03:02.509: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 21.8
     },
     {
      "id": "F1-find-all-tlmode",
@@ -5254,9 +6690,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 96,
      "final_screenshot": "screens/F1-find-all-tlmode-02-final.png",
-     "app_log_tail": "",
-     "seconds": 17.5
+     "app_log_tail": "\n(hikarisub:18848): dbind-WARNING **: 17:03:25.400: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 13.9
     },
     {
      "id": "F1-find-all-actor",
@@ -5308,7 +6745,7 @@
        ],
        "message_screenshot": "screens/F1-find-all-actor-02-message.png",
        "status": "done",
-       "seconds": 2.6
+       "seconds": 2.7
       },
       {
        "do": "answer",
@@ -5316,7 +6753,7 @@
        "title": "Log window",
        "screenshot": "screens/F1-find-all-actor-03-message.png",
        "status": "done",
-       "seconds": 1.6
+       "seconds": 1.7
       },
       {
        "do": "dump",
@@ -5373,9 +6810,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 99,
      "final_screenshot": "screens/F1-find-all-actor-04-final.png",
-     "app_log_tail": "",
-     "seconds": 23.5
+     "app_log_tail": "\n(hikarisub:18913): dbind-WARNING **: 17:03:40.406: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 23.6
     },
     {
      "id": "F1-find-all-regex-lookahead",
@@ -5480,9 +6918,10 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 100,
      "final_screenshot": "screens/F1-find-all-regex-lookahead-02-final.png",
-     "app_log_tail": "",
-     "seconds": 23.4
+     "app_log_tail": "\n(hikarisub:19029): dbind-WARNING **: 17:04:05.025: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 22.0
     },
     {
      "id": "F1-find-all-end-of-text",
@@ -5521,29 +6960,27 @@
       },
       {
        "do": "shot",
-       "label": "after",
-       "screenshot": "screens/F1-find-all-end-of-text-01-after.png",
        "status": "done",
-       "seconds": 1.4
+       "response": "none"
       },
       {
        "do": "dump",
-       "timeout": 15,
-       "may_hang": true,
-       "state": null,
-       "response": "none",
-       "screenshot": "screens/F1-find-all-end-of-text-02-no-response.png",
        "status": "done",
-       "seconds": 19.4
+       "response": "none"
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
-     "final_screenshot": "screens/F1-find-all-end-of-text-03-final.png",
-     "app_log_tail": "",
-     "seconds": 42.5
+     "peak_rss_mb": 1045,
+     "killed_over_memory_limit": {
+      "rss_mb": 1045,
+      "after_seconds": 12.4
+     },
+     "final_screenshot": "screens/F1-find-all-end-of-text-01-final.png",
+     "app_log_tail": "\n(hikarisub:19125): dbind-WARNING **: 17:04:28.062: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 19.4
     },
     {
      "id": "F1-replace-all-empty-match",
@@ -5601,16 +7038,21 @@
        "response": "none",
        "screenshot": "screens/F1-replace-all-empty-match-02-no-response.png",
        "status": "done",
-       "seconds": 19.2
+       "seconds": 19.1
       }
      ],
      "env": {
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 1605,
+     "killed_over_memory_limit": {
+      "rss_mb": 1605,
+      "after_seconds": 31.8
+     },
      "final_screenshot": "screens/F1-replace-all-empty-match-03-final.png",
-     "app_log_tail": "",
-     "seconds": 44.0
+     "app_log_tail": "\n(hikarisub:19172): dbind-WARNING **: 17:04:48.527: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 42.3
     },
     {
      "id": "F3-window-walk",
@@ -5982,7 +7424,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "Zażółć 世界 gęślą"
+          "text": "Za\u017c\u00f3\u0142\u0107 \u4e16\u754c g\u0119\u015bl\u0105"
          },
          {
           "row": 7,
@@ -5990,7 +7432,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "a 𐌰𐌱 b"
+          "text": "a \ud800\udf30\ud800\udf31 b"
          },
          {
           "row": 8,
@@ -6054,7 +7496,7 @@
           "style": "Default",
           "actor": "",
           "effect": "",
-          "text": "good—good good-good good_good e-mail"
+          "text": "good\u2014good good-good good_good e-mail"
          },
          {
           "row": 16,
@@ -6089,7 +7531,7 @@
        ],
        "message_screenshot": "screens/F3-window-walk-37-message.png",
        "status": "done",
-       "seconds": 193.8
+       "seconds": 195.2
       },
       {
        "do": "answer",
@@ -6111,8 +7553,9 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 92,
      "final_screenshot": "screens/F3-window-walk-40-final.png",
-     "app_log_tail": "",
+     "app_log_tail": "\n(hikarisub:19274): dbind-WARNING **: 17:05:31.938: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
      "seconds": 214.3
     },
     {
@@ -6216,7 +7659,7 @@
        ],
        "message_screenshot": "screens/F3-window-walk-srt-06-message.png",
        "status": "done",
-       "seconds": 23.9
+       "seconds": 24.2
       },
       {
        "do": "answer",
@@ -6231,12 +7674,12 @@
       "LANG": "C.UTF-8"
      },
      "startup_popups": [],
+     "peak_rss_mb": 88,
      "final_screenshot": "screens/F3-window-walk-srt-08-final.png",
-     "app_log_tail": "",
-     "seconds": 42.6
+     "app_log_tail": "\n(hikarisub:20330): dbind-WARNING **: 17:09:07.337: AT-SPI: Error retrieving accessibility bus address: org.freedesktop.DBus.Error.ServiceUnknown: The name org.a11y.Bus was not provided by any .service files\n",
+     "seconds": 41.9
     }
    ]
   }
- ],
- "note": "Local reproduction (hikari-legacy-env container: Ubuntu 24.04, Xvfb + openbox) of the legacy Linux package built by legacy-capture run 37192275602; F1-tlmode, F1-replace-next and F1-unicode-case recaptured after their plan steps were fixed (2026-10-04T14:27:05Z)."
+ ]
 }
