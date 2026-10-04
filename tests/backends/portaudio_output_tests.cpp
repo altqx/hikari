@@ -1,5 +1,5 @@
 // N6 / M50-device: the PortAudio owner against a real stream. Device tests run
-// on HIKARI_TEST_AUDIO_DEVICE (a substring of the device name) when set, else
+// on HIKARI_TEST_AUDIO_DEVICE (a substring of the device name or id) when set, else
 // the host default, and skip with the reason when the host has no output
 // device. Only silence is written.
 #include "hikari/backends/portaudio_output.h"
@@ -49,7 +49,8 @@ protected:
         const auto devices = out.devices();
         const char *wanted = std::getenv("HIKARI_TEST_AUDIO_DEVICE");
         for (const auto &device : devices) {
-            if (wanted && *wanted ? device.name.find(wanted) != std::string::npos : device.isDefault) {
+            if (wanted && *wanted ? device.name.find(wanted) != std::string::npos || device.id.find(wanted) != std::string::npos
+                                  : device.isDefault) {
                 id = device.id;
                 break;
             }
