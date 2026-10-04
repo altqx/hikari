@@ -7,6 +7,7 @@
 
 #include "hikari/application/audio_output.h"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -27,6 +28,15 @@ public:
     };
     // "Windows WASAPI" on Windows, "" elsewhere.
     static std::string defaultHostApi();
+    // audio.outputHostApi (0 WASAPI, 1 DirectSound) as the host API to ask
+    // for on Windows; elsewhere (`windows` false) the setting does nothing
+    // and the default stays (defaultHostApi()).
+    static std::string hostApiForSetting(std::int64_t value, bool windows = onWindows);
+#ifdef _WIN32
+    static constexpr bool onWindows = true;
+#else
+    static constexpr bool onWindows = false;
+#endif
 
     PortAudioOutput();
     explicit PortAudioOutput(Options options);

@@ -40,7 +40,7 @@ protected:
             wait(300ms);
             mouseClick("mainWindow/settingsMenuItem");
             if (waitForItem("mainWindow/settingsPages", 5s)) {
-                setStringProperty("mainWindow/settingsPages", "currentIndex", "6"); // Hotkeys
+                setStringProperty("mainWindow/settingsPages", "currentIndex", "7"); // Hotkeys (after Themes)
                 wait(300ms);
                 observed.push_back(getStringProperty("mainWindow/hotkeyList", "selectedRow")); // 1: the first row
                 mouseClick("mainWindow/hotkeyMap");

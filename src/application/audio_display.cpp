@@ -220,13 +220,17 @@ bool DisplayAudio::appendFrames(const std::int16_t *interleaved, std::int64_t fr
 {
     if (frames <= 0)
         return true;
-    if (!m_store)
-        m_store = ramAudioStore(channels);
-    if (channels != m_store->channels())
-        return false;
-    const std::int64_t at = m_store->frames();
-    if (!m_store->append(interleaved, frames))
-        return false;
+    std::int64_t at = 0;
+    {
+        const std::scoped_lock lock(*m_lock);
+        if (!m_store)
+            m_store = ramAudioStore(channels);
+        if (channels != m_store->channels())
+            return false;
+        at = m_store->frames();
+        if (!m_store->append(interleaved, frames))
+            return false;
+    }
     // The peak table covers the samples the display reads (legacy BuildPeaks
     // over GetNumSamples), not frames a positive delay pushed past the end.
     const std::int64_t keep = std::clamp<std::int64_t>(m_count - at, 0, frames);
@@ -260,6 +264,7 @@ bool DisplayAudio::appendSilence(std::int64_t frames, int channels)
 
 bool DisplayAudio::scanStored(std::int64_t frames)
 {
+    const std::scoped_lock lock(*m_lock);
     if (!m_store)
         return false;
     const int channels = m_store->channels();
@@ -286,15 +291,29 @@ bool DisplayAudio::scanStored(std::int64_t frames)
 
 void DisplayAudio::finish()
 {
+    const std::scoped_lock lock(*m_lock);
     if (m_store && m_store->frames() >= m_count)
         m_store->complete();
     m_finished = true;
+}
+
+std::int64_t DisplayAudio::decoded() const
+{
+    const std::scoped_lock lock(*m_lock);
+    return m_silence ? m_count : m_store ? m_store->frames() : 0;
+}
+
+int DisplayAudio::channels() const
+{
+    const std::scoped_lock lock(*m_lock);
+    return m_store && !m_silence ? m_store->channels() : 1;
 }
 
 void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *out) const
 {
     if (count <= 0)
         return;
+    const std::scoped_lock lock(*m_lock);
     const std::int64_t have = m_silence || !m_store ? 0 : std::min(m_store->frames(), m_count);
     const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
     const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
@@ -313,6 +332,22 @@ void DisplayAudio::read(std::int64_t start, std::int64_t count, std::int16_t *ou
             sum += m_frames[static_cast<std::size_t>(i * channels + c)];
         dst[i] = static_cast<std::int16_t>(sum / channels);
     }
+}
+
+// A4: legacy ReadCache (ProviderDummy's playback is silence). Frames not
+// yet decoded read as silence; legacy read whatever its cache held there.
+void DisplayAudio::readFrames(std::int64_t start, std::int64_t count, std::int16_t *out) const
+{
+    if (count <= 0)
+        return;
+    const int channels = this->channels();
+    const std::scoped_lock lock(*m_lock);
+    const std::int64_t have = m_silence || !m_store ? 0 : std::min(m_store->frames(), m_count);
+    const std::int64_t first = std::clamp<std::int64_t>(start, 0, have);
+    const std::int64_t last = std::clamp<std::int64_t>(start + count, 0, have);
+    std::fill(out, out + count * channels, std::int16_t(0));
+    if (last > first)
+        m_store->read(first, last - first, out + (first - start) * channels);
 }
 
 // Legacy Provider::GetWaveForm.
@@ -732,7 +767,8 @@ std::string legacyAssTime(int ms)
 }
 
 std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns &columns, const AudioMarks &marks,
-                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth)
+                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth,
+                                   std::shared_ptr<const AudioImage> spectrum)
 {
     std::vector<AudioShape> out;
     const int w = view.width(), h = view.height(), displayH = h + view.timelineHeight();
@@ -746,6 +782,17 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     const std::int64_t selStart = lineStart, selEnd = lineEnd;
     const bool hasSel = true; // legacy sets it before every draw
 
+    // A2: legacy DrawSpectrum copies the rendered spectrum over the background
+    if (spectrum) {
+        AudioShape picture;
+        picture.kind = AudioShape::Kind::Image;
+        picture.x2 = float(spectrum->width);
+        picture.y2 = float(spectrum->height);
+        picture.image = std::move(spectrum);
+        out.push_back(std::move(picture));
+    }
+    const bool waveform = !out.back().image; // legacy: no waveform in spectrum mode
+
     // Selection background
     if (hasSel && lineStart < lineEnd && options.drawSelectionBackground)
         out.push_back(fill(float(lineStart), 0, float(lineEnd + 1), float(h),
@@ -755,7 +802,7 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
     std::uint32_t waveformSel = options.waveform;
     if (hasSel && options.drawSelectionBackground)
         waveformSel = marks.modified ? options.waveformModified : options.waveformSelected;
-    const int drawn = std::min<int>(w, static_cast<int>(columns.min.size()));
+    const int drawn = waveform ? std::min<int>(w, static_cast<int>(columns.min.size())) : 0;
     for (int i = 0; i < drawn; i++) {
         const bool selected = hasSel && i >= selStartCap && i < selEndCap;
         const float x = i + 0.5f;
@@ -854,6 +901,18 @@ std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns 
                            AudioShape::Font::Label, AudioShape::Align::TopLeft, 0xFFFF0000, true));
 
     timescale(out, view, options, textWidth);
+
+    // A3: the mark, two pixels wide, with its time centred above the bottom
+    if (marks.markMs) {
+        const auto selMark = static_cast<std::int64_t>(view.xAtMs(*marks.markMs));
+        if (selMark >= 0 && selMark < w) {
+            out.push_back(line(float(selMark + 1), 0, float(selMark + 1), float(h), options.lineBoundaryMark, 2));
+            const float top = float(h - marks.markTextHeight - 2);
+            const float left = float(selMark - 150);
+            out.push_back(text(legacyAssTime(*marks.markMs), left, top, left + 300, top + 100,
+                               AudioShape::Font::Label, AudioShape::Align::TopCenter, 0xFFFFFFFF, true));
+        }
+    }
 
     // The paused video's frame
     if (options.drawVideoPosition && marks.videoMs)

@@ -3,6 +3,7 @@
 #include "audio_controller.h"
 
 #include <QFontMetrics>
+#include <QMouseEvent>
 #include <QGuiApplication>
 #include <QQuickWindow>
 #include <QSGFlatColorMaterial>
@@ -47,7 +48,12 @@ struct Drawing {
         QColor colour;
         bool outlined = false;
     };
-    std::vector<std::variant<Triangles, Text>> items;
+    // A2: the spectrum, pixel for pixel
+    struct Picture {
+        QImage image;
+        QPointF at;
+    };
+    std::vector<std::variant<Triangles, Text, Picture>> items;
 };
 
 class Batch {
@@ -95,6 +101,18 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
     Batch batch(out);
     std::optional<std::uint32_t> colour;
     for (const auto &s : shapes) {
+        if (s.kind == AudioShape::Kind::Image) {
+            if (colour)
+                batch.flush(*colour);
+            colour.reset();
+            if (s.image && s.image->width > 0 && s.image->height > 0) {
+                // BGRA bytes are QImage's RGB32 on little-endian machines
+                const QImage view(s.image->bgra.data(), s.image->width, s.image->height, s.image->width * 4,
+                                  QImage::Format_RGB32);
+                out.items.emplace_back(Drawing::Picture{view.copy(), QPointF(s.x1, s.y1)});
+            }
+            continue;
+        }
         if (s.kind == AudioShape::Kind::Text) {
             if (colour)
                 batch.flush(*colour);
@@ -123,7 +141,8 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
         case AudioShape::Kind::Triangle:
             batch.triangle(QPointF(s.x1, s.y1), QPointF(s.x2, s.y2), QPointF(s.x3, s.y3));
             break;
-        case AudioShape::Kind::Text: break;
+        case AudioShape::Kind::Text:
+        case AudioShape::Kind::Image: break;
         }
     }
     if (colour)
@@ -160,6 +179,17 @@ void buildNodes(QSGNode *parent, const Drawing &drawing, QQuickWindow *window)
             parent->appendChildNode(node);
             continue;
         }
+        if (const auto *p = std::get_if<Drawing::Picture>(&item)) {
+            if (!window)
+                continue;
+            QSGImageNode *node = window->createImageNode();
+            node->setTexture(window->createTextureFromImage(p->image));
+            node->setOwnsTexture(true);
+            node->setFiltering(QSGTexture::Nearest);
+            node->setRect(QRectF(p->at, QSizeF(p->image.size())));
+            parent->appendChildNode(node);
+            continue;
+        }
         const auto &text = std::get<Drawing::Text>(item);
         if (!window)
             continue;
@@ -191,6 +221,10 @@ QImage paintImage(const Drawing &drawing, QSize size, qreal dpr)
                                         {t->points[i + 2].x, t->points[i + 2].y}};
                 painter.drawConvexPolygon(tri, 3);
             }
+            continue;
+        }
+        if (const auto *p = std::get_if<Drawing::Picture>(&item)) {
+            painter.drawImage(p->at, p->image);
             continue;
         }
         const auto &text = std::get<Drawing::Text>(item);
@@ -271,6 +305,7 @@ void AudioDisplayItem::setController(QObject *object)
     if (m_controller) {
         connect(m_controller, &AudioController::displayChanged, this, &QQuickItem::update);
         connect(m_controller, &AudioController::cursorChanged, this, &QQuickItem::update);
+        m_controller->setMarkTextHeight(QFontMetrics(m_label).height()); // A3
         pushSize();
     }
     emit controllerChanged();
@@ -325,6 +360,7 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     } else {
         m_controller->setCursor(std::nullopt);
     }
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
 }
 
 void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
@@ -339,14 +375,87 @@ void AudioDisplayItem::mousePressEvent(QMouseEvent *event)
     forceActiveFocus(Qt::MouseFocusReason);
     if (m_controller)
         m_controller->setCursor(std::nullopt);
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Press));
     event->accept();
 }
 
+// A3: the buttons' timing (legacy OnMouseEvent: the display has the mouse
+// captured while a button is down).
+void AudioDisplayItem::mouseMoveEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseReleaseEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::Release));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    timingEvent(event, static_cast<int>(application::AudioMouse::Type::DoubleClick));
+    event->accept();
+}
+
+void AudioDisplayItem::mouseUngrabEvent()
+{
+    if (m_controller)
+        m_controller->lostCapture();
+}
+
+void AudioDisplayItem::timingEvent(const QSinglePointEvent *event, int type)
+{
+    if (!m_controller)
+        return;
+    using Mouse = application::AudioMouse;
+    Mouse mouse;
+    mouse.type = static_cast<Mouse::Type>(type);
+    switch (event->button()) {
+    case Qt::LeftButton: mouse.button = Mouse::Button::Left; break;
+    case Qt::RightButton: mouse.button = Mouse::Button::Right; break;
+    case Qt::MiddleButton: mouse.button = Mouse::Button::Middle; break;
+    default: break;
+    }
+    const QPointF p = event->position();
+    mouse.x = static_cast<int>(std::floor(p.x()));
+    mouse.y = static_cast<int>(std::floor(p.y()));
+    const auto buttons = event->buttons();
+    mouse.leftHeld = buttons & Qt::LeftButton;
+    mouse.rightHeld = buttons & Qt::RightButton;
+    mouse.middleHeld = buttons & Qt::MiddleButton;
+    const auto modifiers = event->modifiers();
+    mouse.shift = modifiers & Qt::ShiftModifier;
+    mouse.ctrl = modifiers & Qt::ControlModifier;
+    mouse.alt = modifiers & Qt::AltModifier;
+    m_controller->setMarkTextHeight(QFontMetrics(m_label).height());
+    const auto result = m_controller->mouse(mouse);
+    if (result.focus && !hasActiveFocus()) // legacy SetFocus on a button (and the middle double click)
+        forceActiveFocus(Qt::MouseFocusReason);
+    if (result.sizeCursor) {
+        if (*result.sizeCursor)
+            setCursor(Qt::SizeHorCursor); // wxCURSOR_SIZEWE
+        else
+            unsetCursor();
+    }
+}
+
+// Legacy OnMouseEvent's wheel: Ctrl alone zooms vertically, Shift
+// horizontally around the mouse (A2), otherwise it scrolls. Legacy read
+// GetWheelRotation() without GetWheelAxis(), so a horizontal wheel acts as
+// the vertical one with its rotation; on Windows (the normative build) that
+// rotation is positive for a tilt to the right, which Qt reports as a
+// negative x (QWindowsMouseHandler reverses WM_MOUSEHWHEEL's delta).
 void AudioDisplayItem::wheelEvent(QWheelEvent *event)
 {
-    // Shift and Ctrl zoom (A2)
-    if (m_controller && event->modifiers() == Qt::NoModifier && event->angleDelta().y() != 0)
-        m_controller->wheel(event->angleDelta().y());
+    const QPoint delta = event->angleDelta();
+    const int rotation = delta.y() != 0 ? delta.y() : -delta.x();
+    if (m_controller && rotation != 0) {
+        const auto modifiers = event->modifiers();
+        m_controller->wheel(rotation, modifiers == Qt::ControlModifier, modifiers.testFlag(Qt::ShiftModifier),
+                            static_cast<float>(static_cast<int>(event->position().x())));
+    }
     event->accept();
 }
 
@@ -374,7 +483,8 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     };
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
-                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), false, m_controller->options())
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
+                                                         m_controller->options())
                    : std::vector<AudioShape>{};
     };
     if (softwareScene(window())) {

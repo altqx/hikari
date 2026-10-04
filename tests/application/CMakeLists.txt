@@ -66,6 +66,11 @@ target_compile_definitions(hikari_application_find_replace_capture_tests PRIVATE
     HIKARI_CAPTURE_ARTIFACTS="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
 hikari_add_gtest(hikari_application_audio_display_tests SOURCES audio_display_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_audio_spectrum_tests SOURCES audio_spectrum_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+# A4: the audio box's playback modes, Stop and the playback cursor.
+hikari_add_gtest(hikari_application_audio_playback_tests SOURCES audio_playback_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_legacy_dir_tests SOURCES legacy_dir_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # O2: hotkeys and the shortcut editor, against the legacy sources.
@@ -74,3 +79,6 @@ hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
+# A3: the audio box's timing.
+hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
+    LIBRARIES hikari_application LABELS application)

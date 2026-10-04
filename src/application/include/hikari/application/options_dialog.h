@@ -58,7 +58,8 @@ struct OptionsBinding {
     std::string_view sizeSetting;  // Font
 };
 
-// Every bound control, in the legacy ConOpt order.
+// Every bound control, in the legacy ConOpt order; on Windows the rewrite's
+// audio.outputHostApi choice follows them.
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);
 

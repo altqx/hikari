@@ -136,7 +136,10 @@ public:
     // Indexing (Opening): FFMS2's done and total.
     std::pair<std::int64_t, std::int64_t> indexing() const { return m_indexing; }
     float progress() const { return m_progress; } // decoding (Loading): legacy m_audioProgress
-    const DisplayAudio *audio() const { return m_audio ? &*m_audio : nullptr; }
+    const DisplayAudio *audio() const { return m_audio.get(); }
+    // The same audio, kept alive by its holder after the box lets it go (A4:
+    // the player's fill thread reads it until it stops).
+    std::shared_ptr<const DisplayAudio> sharedAudio() const { return m_audio; }
     int track() const { return m_track; }
     std::int64_t delayFrames() const { return m_delay; }
     // The disk cache file in use (empty with a RAM cache): written as
@@ -177,7 +180,7 @@ private:
     bool m_declined = false;
     std::optional<SourceError> m_error;
     std::pair<std::int64_t, std::int64_t> m_indexing;
-    std::optional<DisplayAudio> m_audio;
+    std::shared_ptr<DisplayAudio> m_audio;
     std::filesystem::path m_cacheFile;
     int m_channels = 0;
     int m_track = -1;

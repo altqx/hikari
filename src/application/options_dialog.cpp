@@ -107,6 +107,11 @@ constexpr OptionsBinding kBindings[] = {
     {"audio.cacheFilesLimit", Number, AudioAdvanced, 0, 10000},
     {"audio.leadInValue", Number, AudioAdvanced, 0, 10000},
     {"audio.leadOutValue", Number, AudioAdvanced, 0, 10000},
+#ifdef _WIN32
+    // The rewrite's own, after legacy's: the Windows output's host API
+    // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
+    {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},
+#endif
 };
 
 constexpr std::string_view kFps[] = {"23.976", "24", "25", "29.97", "30", "60"};

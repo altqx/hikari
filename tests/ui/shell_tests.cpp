@@ -5,6 +5,7 @@
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/backends/simulated_output.h"
 #include "docking.h"
 #include "line_grid.h"
 #include "line_table_model.h"
@@ -30,6 +31,7 @@
 #include <dirent.h>
 #endif
 
+#include <cmath>
 #include <cstring>
 #include <algorithm>
 #include <filesystem>
@@ -1960,6 +1962,26 @@ private:
         return applied;
     }
 
+    // A4: a session whose players make no sound (playbackAudio off): the
+    // audio box plays through the output without a device, at its pace.
+    void restartWithoutSound()
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+
 private slots:
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
@@ -3438,7 +3460,11 @@ private slots:
               {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
               {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move syllable line after click"},
-              {"audio.ramCache", "Load audio into RAM"}}},
+              {"audio.ramCache", "Load audio into RAM"},
+#ifdef _WIN32
+              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
+#endif
+             }},
             {"settingsPageAudioAdvanced",
              {{"audio.delay", nullptr},
               {"audio.markPlayTime", nullptr},
@@ -3493,6 +3519,8 @@ private slots:
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
+        // and the Themes page's colours (A2), which are not bound options
+        bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -4064,7 +4092,15 @@ private slots:
         auto pixel = [&](int x, int y) { return drawn.pixel(origin + QPoint(x, y)) | 0xFF000000u; };
         QCOMPARE(pixel(34, h / 2), audio.options().lineStart);   // the start boundary, over the waveform
         QCOMPARE(pixel(10, h / 2), audio.options().waveform);    // a column before the Lines
-        QCOMPARE(pixel(10, h / 16), audio.options().background); // above its peak
+        // above its peak, below the focus border
+        QVERIFY(audio.columns().min[10] > 8);
+        QCOMPARE(pixel(10, audio.columns().min[10] / 2), audio.options().background);
+        // the default arrangement gives the box legacy's AUDIO_BOX_HEIGHT
+        // (170: the display with its ruler, the search bar and the button
+        // row), so the waveform has most of it
+        const qreal box = display->height() + item("audioScroll")->height() + 4 + item("audioButtons")->height() + 2;
+        QVERIFY2(std::abs(box - 170) <= 8, qPrintable(QString::number(box)));
+        QVERIFY2(h >= 90, qPrintable(QString::number(h)));
         // legacy D3DXCreateFontW: the cursor time and labels bold, the ruler not
         auto *displayItem = qobject_cast<ui::AudioDisplayItem *>(display);
         QVERIFY(displayItem);
@@ -4089,6 +4125,274 @@ private slots:
         QVERIFY(audio.box().error().has_value());
     }
 
+    // A2: legacy AudioBox's horizontal zoom, AUDIO_SCROLL_LEFT/RIGHT, the
+    // wheel, the vertical zoom and volume sliders and their link, and
+    // auto-scroll, on blank audio (44.1 kHz): each starts from the registry
+    // when a box is made and is written back as it changes.
+    void audioBoxZoomScrollAndGain()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        QCOMPARE(audio.horizontalZoom(), 50);
+        QCOMPARE(audio.verticalZoom(), 50);
+        QCOMPARE(audio.volume(), 50);
+        QVERIFY(!audio.linked());
+        QVERIFY(audio.autoScroll());
+        QVERIFY(!audio.spectrumOn());
+        QVERIFY(!audio.spectrumNonLinear());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(item("audioSliders")->isVisible());
+        QVERIFY(item("audioAutoScroll")->isVisible()); // the switches, in the button row
+        const auto &view = audio.view();
+        QCOMPARE(view.samples(), 1323);
+
+        // the zoom slider: 100% is two minutes over 500 columns (legacy w1)
+        audio.setHorizontalZoom(100);
+        QCOMPARE(view.samples(), 10584);
+        QCOMPARE(settings.integer("audio.horizontalZoom"), 100);
+        QCOMPARE(item("audioHorizontalZoom")->property("value").toInt(), 100);
+
+        // A (AUDIO_SCROLL_RIGHT, "Scroll left") and F in the display: 50 columns
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 100);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_A);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 0);
+        // and in the Grid (legacy TabPanel::SetAccels gives it the audio keys)
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F);
+        QCOMPARE(view.position(), 50);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), 0);
+
+        // zooming keeps the view's centre (legacy SetSamplesPercent, pivot 0.5)
+        audio.setScrollPosition(83); // the search bar's units are 12 columns
+        QCOMPARE(view.position(), 996);
+        audio.setHorizontalZoom(50);
+        QCOMPARE(view.samples(), 1323);
+        QCOMPARE(view.position(), (996LL * 10584 + (10584 - 1323) * 250) / 1323);
+
+        // the wheel: a notch scrolls a third of the display, Shift zooms
+        // around the mouse, and the zoom setting keeps a value past the slider
+        const int w = view.width();
+        std::int64_t before = view.position();
+        audio.wheel(-120);
+        QCOMPARE(view.position(), before + 120 * w / 360);
+        before = view.positionSample();
+        audio.wheel(120, false, true, 0); // zoom in one step, pivot at column 0
+        QCOMPARE(audio.horizontalZoom(), 49);
+        QCOMPARE(view.samples(), int(int(44100 * 120 / 500) * std::pow(0.49, 3)));
+        QCOMPARE(view.positionSample() / view.samples(), view.position());
+        QCOMPARE(view.position(), before / view.samples());
+        audio.setHorizontalZoom(100);
+        audio.wheel(-120, false, true, 0);
+        QCOMPARE(audio.horizontalZoom(), 100);
+        QCOMPARE(settings.integer("audio.horizontalZoom"), 101);
+        QCOMPARE(view.samples(), 10584);
+        // AUDIO_WHEEL_DEFAULT_TO_ZOOM swaps scrolling and zooming
+        settings.set("audio.wheelDefaultToZoom", true);
+        audio.wheel(120);
+        QCOMPARE(audio.horizontalZoom(), 99);
+        before = view.position();
+        audio.wheel(-120, false, true, 0);
+        QCOMPARE(audio.horizontalZoom(), 99);
+        QCOMPARE(view.position(), before + 120 * w / 360);
+        settings.set("audio.wheelDefaultToZoom", false);
+
+        // Ctrl and the wheel over the display: the vertical zoom slider
+        auto *display = item("audioDisplay");
+        const QPointF at = display->mapToScene(QPointF(100, 10));
+        QWheelEvent wheel(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::ControlModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QCOMPARE(audio.verticalZoom(), 51);
+        QCOMPARE(view.scale(), application::audioScaleFromSlider(51));
+        QCOMPARE(settings.integer("audio.verticalZoom"), 51);
+        QCOMPARE(audio.volume(), 50); // not linked
+        // a horizontal wheel is the vertical one (legacy reads the rotation,
+        // not the axis): a tilt to the right, +120 to Windows and -120 in
+        // Qt's x, scrolls back a third of the display; Ctrl with it is the
+        // vertical zoom again
+        audio.setScrollPosition(83);
+        before = view.position();
+        QWheelEvent right(at, window->mapToGlobal(at), QPoint(), QPoint(-120, 0), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &right);
+        QCOMPARE(view.position(), before - 120 * w / 360);
+        QWheelEvent left(at, window->mapToGlobal(at), QPoint(), QPoint(120, 0), Qt::NoButton, Qt::NoModifier,
+                         Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &left);
+        QCOMPARE(view.position(), before);
+        QWheelEvent ctrlRight(at, window->mapToGlobal(at), QPoint(), QPoint(-120, 0), Qt::NoButton,
+                              Qt::ControlModifier, Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &ctrlRight);
+        QCOMPARE(audio.verticalZoom(), 52);
+        audio.setVerticalZoom(51);
+
+        // linking moves the volume to the vertical zoom; each then moves both
+        QSignalSpy volumes(&audio, &ui::AudioController::volumeChanged);
+        audio.setLinked(true);
+        QCOMPARE(audio.volume(), 51);
+        QCOMPARE(settings.integer("audio.volume"), 51);
+        QVERIFY(settings.boolean("audio.link"));
+        audio.setVolume(30);
+        QCOMPARE(audio.verticalZoom(), 30);
+        QCOMPARE(view.scale(), 0.216f);
+        QCOMPARE(audio.playbackVolume(), 0.216f);
+        QCOMPARE(settings.integer("audio.verticalZoom"), 30);
+        audio.setVerticalZoom(80);
+        QCOMPARE(audio.volume(), 80);
+        QCOMPARE(audio.playbackVolume(), 1.3f); // the player's ramp above 50
+        QCOMPARE(volumes.size(), 3);
+        QCOMPARE(volumes.last().first().toFloat(), 1.3f);
+        QCOMPARE(item("audioVolume")->property("value").toInt(), 80);
+        audio.wheel(1200, true); // ten notches, the slider stops at 100
+        QCOMPARE(audio.verticalZoom(), 90);
+        QCOMPARE(audio.volume(), 90);
+        audio.wheel(1200, true);
+        QCOMPARE(audio.verticalZoom(), 100);
+        audio.setVerticalZoom(80);
+
+        // a new box starts from the settings: a zoom stored past the
+        // slider's range, and a linked volume takes the vertical zoom's value
+        settings.set("audio.horizontalZoom", 101);
+        settings.set("audio.volume", 10);
+        audio.closeAudio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.horizontalZoom(), 100);
+        QCOMPARE(audio.view().samples(), 10584);
+        QCOMPARE(audio.volume(), 80);
+        QCOMPARE(settings.integer("audio.volume"), 80);
+        QCOMPARE(audio.view().scale(), application::audioScaleFromSlider(80));
+        audio.setLinked(false);
+        audio.setVolume(20);
+        QCOMPARE(audio.verticalZoom(), 80);
+        QCOMPARE(settings.integer("audio.volume"), 20);
+
+        // auto-scroll (AUDIO_AUTO_SCROLL): another active Line is brought into view
+        audio.setHorizontalZoom(10); // 10 samples a column: 3.00 is column 13230
+        QCOMPARE(audio.view().samples(), 10);
+        audio.setScrollPosition(0);
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
+        // legacy MakeDialogueVisible: the start 50 columns from the left
+        const auto followed = audio.view().position();
+        QCOMPARE(followed, (132300 - 50 * 10) / 10);
+        audio.setAutoScroll(false);
+        QVERIFY(!settings.boolean("audio.autoScroll"));
+        QVERIFY(!item<QObject>("audioAutoScroll")->property("checked").toBool());
+        grid->forceActiveFocus();
+        press(Qt::Key_Up);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(audio.view().position(), followed);
+        audio.setAutoScroll(true);
+        application->editor().discard();
+    }
+
+    // A2: spectrum mode (AUDIO_SPECTRUM_ON) and its speech layout
+    // (AUDIO_SPECTRUM_NON_LINEAR_ON): legacy RenderRange's picture over the
+    // background in place of the waveform, drawn as it is by whichever
+    // renderer this run uses.
+    void audioSpectrumIsDrawn()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        auto *toggle = item("audioSpectrumMode");
+        QVERIFY(!toggle->property("checked").toBool());
+        // the switch as a click toggles it (not hovered: a tooltip's popup
+        // window upsets offscreen RHI grabs)
+        QVERIFY(QMetaObject::invokeMethod(toggle, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(toggle, "toggled"));
+        QTRY_VERIFY(audio.spectrumOn());
+        QVERIFY(toggle->property("checked").toBool());
+        QVERIFY(settings.boolean("audio.spectrumOn"));
+        QVERIFY(item("audioDisplay")->hasActiveFocus()); // legacy OnSpectrumMode focuses the display
+        const auto picture = audio.spectrumImage();
+        QVERIFY(picture);
+        const auto &view = audio.view();
+        QCOMPARE(picture->width, view.width());
+        QCOMPARE(picture->height, view.height());
+        // the same view draws the same picture again without new transforms
+        const auto lines = audio.spectrum()->transformedLines();
+        QVERIFY(lines > 0);
+        QCOMPARE(audio.spectrumImage(), picture);
+        // zoom 50: 1440 samples a column, two transforms per 2048 samples
+        QCOMPARE(audio.spectrum()->overlaps(), 2);
+        // a fresh render of the view gives the same pixels
+        application::AudioSpectrum fresh(1);
+        std::vector<std::uint8_t> again(picture->bgra.size(), 0);
+        fresh.render(*audio.box().audio(), 0, std::int64_t(view.width()) * 1440, again.data(), view.width(),
+                     view.width(), view.height(), 50);
+        for (std::size_t i = 0; i < again.size(); i += 4)
+            QVERIFY(std::equal(again.begin() + i, again.begin() + i + 3, picture->bgra.begin() + i));
+
+        // the scene: the picture, no waveform columns
+        const auto scene = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
+        QCOMPARE(scene.at(1).kind, application::AudioShape::Kind::Image);
+        // what the scene graph drew, before the active Line (column 10, 20)
+        QTest::mouseMove(window, QPoint(0, 0));
+        QTRY_VERIFY(!audio.cursor().has_value());
+        QCoreApplication::processEvents();
+        auto *display = item("audioDisplay");
+        const QPoint origin = display->mapToScene(QPointF(0, 0)).toPoint();
+        const int h = view.height();
+        auto expected = [&](int x, int y) {
+            const std::uint8_t *p = picture->bgra.data() + (std::size_t(y) * picture->width + x) * 4;
+            return qRgb(p[2], p[1], p[0]);
+        };
+        int lit = 0;
+        auto drawnAsRendered = [&] {
+            const QImage drawn = window->grabWindow();
+            lit = 0;
+            for (int x : {10, 20})
+                for (int y : {h / 8, h / 4, h / 2, 3 * h / 4, h - 4}) {
+                    if ((drawn.pixel(origin + QPoint(x, y)) | 0xFF000000u) != expected(x, y))
+                        return false;
+                    lit += expected(x, y) != qRgb(0, 0, 0);
+                }
+            return true;
+        };
+        QTRY_VERIFY(drawnAsRendered()); // a grab can come before the window is ready again
+        QVERIFY(lit > 0); // the fixture's sawtooth is broadband
+
+        // the speech layout spreads the low bands over more rows
+        audio.setSpectrumNonLinear(true);
+        QVERIFY(settings.boolean("audio.spectrumNonLinearOn"));
+        const auto speech = audio.spectrumImage();
+        QVERIFY(speech != picture);
+        QVERIFY(speech->bgra != picture->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines); // same transforms, other rows
+
+        // the vertical zoom scales the power (legacy SetScaling)
+        audio.setVerticalZoom(100);
+        QVERIFY(audio.spectrumImage()->bgra != speech->bgra);
+        QCOMPARE(audio.spectrum()->transformedLines(), lines);
+
+        // off again: the waveform
+        audio.setSpectrumOn(false);
+        QVERIFY(!settings.boolean("audio.spectrumOn"));
+        const auto waveform = audio.scene([](application::AudioShape::Font, std::string_view) { return 30; });
+        for (const auto &shape : waveform)
+            QVERIFY(shape.kind != application::AudioShape::Kind::Image);
+        audio.setVerticalZoom(50);
+        audio.setSpectrumNonLinear(false);
+        audio.closeAudio();
+        application->editor().discard();
+    }
+
     // GLOBAL_OPEN_DUMMY_AUDIO: 2 h 30 min of 44.1 kHz silence, ready at once;
     // its name joins the recent list, which drops it as a missing file.
     void blankAudio()
@@ -4102,6 +4406,99 @@ private slots:
         for (int peak : audio.columns().peak)
             QCOMPARE(peak, audio.view().height() / 2);
         QVERIFY(application->recentAudio().isEmpty());
+    }
+
+    // A3: timing in the audio box over blank audio (44.1 kHz at zoom 50:
+    // 1323 samples, 30 ms a column, the view at 0): legacy OnMouseEvent's
+    // boundary drag, AudioBox's hotkeys (AUDIO_LEAD_IN C, AUDIO_LEAD_OUT V,
+    // AUDIO_COMMIT Enter, AUDIO_PREVIOUS_ALT Z, AUDIO_NEXT_ALT X) with
+    // AUDIO_AUTO_COMMIT on and off, the ruler's mark and
+    // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO; each commit one named step.
+    void audioTimingByMouseAndKeys()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.selectionStart(), 1000);
+        QCOMPARE(audio.view().position(), 0);
+        auto *display = item("audioDisplay");
+        const int h = audio.view().height();
+        auto at = [&](int x, int y = 10) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const auto steps = editor.history().size();
+        auto lastStep = [&] { return editor.history().last(); };
+
+        // the end (column 66) dragged to column 100: one step
+        QTest::mousePress(window, Qt::LeftButton, {}, at(66));
+        QCOMPARE(audio.timing().hold(), 2);
+        QTest::mouseMove(window, at(100));
+        QCOMPARE(audio.selectionEnd(), 3000);
+        QVERIFY(audio.modified());
+        QCOMPARE(display->cursor().shape(), Qt::SizeHorCursor);
+        QTest::mouseRelease(window, Qt::LeftButton, {}, at(100));
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(lastStep(), QStringLiteral("Changing time on audio spectrum, active line 1"));
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:03.00"));
+        QVERIFY(!audio.modified());
+        QVERIFY(display->hasActiveFocus());
+
+        // the keys: lead-in and lead-out commit, Enter goes to the next Line
+        QTest::keyClick(window, Qt::Key_C);
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:00.80"));
+        QTest::keyClick(window, Qt::Key_V);
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:03.30"));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QTest::keyClick(window, Qt::Key_Return);
+        QCOMPARE(editor.history().size(), steps + 3); // nothing left to commit
+        QCOMPARE(editor.text(), QStringLiteral("second"));
+        QCOMPARE(audio.selectionStart(), 3000);
+        QTest::keyClick(window, Qt::Key_Z);
+        QCOMPARE(editor.text(), QStringLiteral("first"));
+        QCOMPARE(audio.selectionStart(), 800);
+        QTest::keyClick(window, Qt::Key_X);
+        QCOMPARE(editor.text(), QStringLiteral("second"));
+
+        // the ruler's right click sets the mark
+        QTest::mouseClick(window, Qt::RightButton, {}, at(200, h + 5));
+        QVERIFY(audio.hasMark());
+        QCOMPARE(audio.markMs(), 6000);
+        QCOMPARE(editor.history().size(), steps + 3);
+        // GLOBAL_SET_AUDIO_MARK_FROM_VIDEO without video: VideoBox::Tell is 0
+        application->setAudioFromVideo(true);
+        QCOMPARE(audio.markMs(), 0);
+        QCOMPARE(audio.view().position(), 0);
+
+        // without AUDIO_AUTO_COMMIT the times wait in the editor until Enter
+        auto *autoCommit = item<QObject>("audioAutoCommit");
+        QVERIFY(autoCommit->property("checked").toBool());
+        application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), false);
+        QVERIFY(!autoCommit->property("checked").toBool());
+        QTest::mousePress(window, Qt::LeftButton, {}, at(100));
+        QCOMPARE(audio.timing().hold(), 1);
+        QTest::mouseMove(window, at(90));
+        QTest::mouseRelease(window, Qt::LeftButton, {}, at(90));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QVERIFY(audio.modified());
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:02.70"));
+        QTest::keyClick(window, Qt::Key_Return);
+        // the last Line: the commit and the appended Line are one step
+        QCOMPARE(editor.history().size(), steps + 4);
+        QCOMPARE(lastStep(), QStringLiteral("Adding a new line, active line 2"));
+        QCOMPARE(editor.startText(), QStringLiteral("0:00:04.00"));
+        QCOMPARE(editor.endText(), QStringLiteral("0:00:09.00"));
+        QVERIFY(!audio.modified());
+        // Undo takes both back
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.history().size(), steps + 4);
+        QCOMPARE(editor.historyCursor(), int(steps + 2));
+        // with a mark the Timing tool may move the marker to audio time
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_I, Qt::ControlModifier);
+        QTRY_VERIFY(item<QObject>("shiftToAudio"));
+        QVERIFY(item<QObject>("shiftToAudio")->property("enabled").toBool());
+        audio.closeAudio();
+        QVERIFY(!item<QObject>("shiftToAudio")->property("enabled").toBool());
     }
 
     // GLOBAL_AUDIO_FROM_VIDEO and legacy RendererFFMS2::OpenFile: a video with
@@ -4474,7 +4871,7 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Hotkeys",
+        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Themes", "Hotkeys",
                                      "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         QCOMPARE(hotkeyRows().size(), 226);
@@ -4624,17 +5021,18 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
         QVERIFY(!application->settingsStore()->contains("shortcuts.hotkeys"));
-        // The copy outlives the dialog (legacy's static hotkeysCopy): the
-        // next dialog's OK writes the cancelled edits too.
+        // O2-stale-copy (approved): the cancelled dialog's edits went with
+        // it (legacy's static hotkeysCopy outlived the dialog, and the next
+        // dialog's OK wrote them too); the next dialog writes its own only.
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
         application->hotkeys().select(hotkeyPosition(QStringLiteral("Global Find")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QString());
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Shift-H"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QStringLiteral("F6"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QStringLiteral("Ctrl-Shift-H"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-S"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QString());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
         // Apply clears the changed marks and keeps the dialog.
         QVERIFY(!hotkeyRow(QStringLiteral("Global Find")).value(QStringLiteral("keyModified")).toBool());
@@ -4904,6 +5302,430 @@ private slots:
         scripts.commit();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QStringLiteral("Ctrl-F"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SEARCH G=Ctrl-F")));
+    }
+
+    // A4: legacy AudioBox's play commands hand the player the frames each
+    // asks for (AudioDisplay::Play at 48 kHz: ms * 48); the cursor follows
+    // the output's clock and the player stops 8192 frames past the end.
+    void audioBoxPlaybackModes()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 active, 3.00-4.00
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv")); // 96256 frames
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        QVERIFY(!audio.playing());
+        item("audioDisplay")->forceActiveFocus();
+
+        // AUDIO_PLAY (Down): the selection; the cursor is drawn from 50
+        // columns in (1440 frames a column) and goes at the end, and the
+        // player stops by itself
+        press(Qt::Key_Down);
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        QVERIFY(audio.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursor() && *audio.cursor() >= 50.f, 3000);
+        // the mouse does not move the cursor while playing
+        auto *display = item("audioDisplay");
+        QTest::mouseMove(window, display->mapToScene(QPointF(10, 10)).toPoint());
+        QVERIFY(!audio.cursor() || *audio.cursor() != 10.f);
+        // (the mouse leaves, or its hover would draw it once playback ends)
+        QTest::mouseMove(window, QPoint(0, 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 5000);
+        QVERIFY(!audio.cursor());
+        QCOMPARE(audio.playback()->lastPositionMs(), 0); // not a Stop
+
+        // each mode's keys (legacy AUDIO_HOTKEY defaults)
+        const std::vector<std::tuple<Qt::Key, Qt::KeyboardModifiers, PlayRange>> keys{
+            {Qt::Key_S, Qt::NoModifier, {48000, 48000}},       // AUDIO_PLAY_ALT
+            {Qt::Key_Up, Qt::NoModifier, {48000, 48000}},      // AUDIO_PLAY_LINE
+            {Qt::Key_R, Qt::NoModifier, {48000, 48000}},       // AUDIO_PLAY_LINE_ALT
+            {Qt::Key_Q, Qt::NoModifier, {24000, 24000}},       // 500 ms before
+            {Qt::Key_W, Qt::NoModifier, {96000, 255}},         // 500 ms after, cut at the last frame
+            {Qt::Key_E, Qt::NoModifier, {48000, 24000}},       // first 500 ms
+            {Qt::Key_D, Qt::NoModifier, {72000, 24000}},       // last 500 ms
+            {Qt::Key_T, Qt::NoModifier, {48000, 96255 - 48000}}, // to the end, less its last frame
+        };
+        for (const auto &[key, mods, expected] : keys) {
+            press(key, mods);
+            QCOMPARE(range(), expected);
+            // a range under legacy's 100 ms plays once and may already have
+            // ended on the player's own thread
+            if (expected.count >= 4800)
+                QVERIFY(audio.playing());
+        }
+        // the mark plays need a mark: without one nothing plays
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{48000, 96255 - 48000}));
+        // the ruler's mark (A3: a right click on the ruler, 30 ms a column)
+        QCOMPARE(audio.view().position(), 0);
+        QTest::mouseClick(window, Qt::RightButton, {},
+                          item("audioDisplay")->mapToScene(QPointF(50, audio.view().height() + 5)).toPoint());
+        QVERIFY(audio.hasMark());
+        QCOMPARE(audio.markMs(), 1500);
+        QTest::mouseMove(window, QPoint(0, 0));
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_0, Qt::KeypadModifier); // AUDIO_MARK_PLAY_TIME (1000) before
+        QCOMPARE(range(), (PlayRange{24000, 48000}));
+        press(Qt::Key_Period, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{72000, 96255 - 72000}));
+        application->settingsStore()->set("audio.markPlayTime", 250);
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QCOMPARE(range(), (PlayRange{60000, 12000}));
+        // modified keys are not the audio box's
+        press(Qt::Key_T, Qt::ShiftModifier);
+        QCOMPARE(range(), (PlayRange{60000, 12000}));
+
+        // AUDIO_STOP (H): while playing it stops and remembers where; again,
+        // it plays from there to the last end
+        press(Qt::Key_T);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.playback()->lastPositionMs() == 0 && audio.cursor(), 3000);
+        press(Qt::Key_H);
+        QVERIFY(!audio.playing());
+        QVERIFY(!audio.cursor());
+        const int at = audio.playback()->lastPositionMs();
+        QVERIFY(at > 1000);
+        press(Qt::Key_H);
+        QVERIFY(audio.playing());
+        QCOMPARE(range(), (PlayRange{at * 48, 96255 - at * 48}));
+        press(Qt::Key_H);
+        QVERIFY(!audio.playing());
+
+        // the buttons, which focus the display
+        item("editingGrid")->forceActiveFocus();
+        auto *first = visualItem("audioPlay500First"); // Repeater delegates
+        auto *stop = visualItem("audioStop");
+        QVERIFY(first && stop);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, first->mapToScene(QPointF(4, 4)).toPoint());
+        QCOMPARE(range(), (PlayRange{48000, 24000}));
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          stop->mapToScene(QPointF(4, 4)).toPoint());
+        QVERIFY(!audio.playing());
+        // the middle double click plays the selection
+        QTest::mouseDClick(window, Qt::MiddleButton, Qt::NoModifier, display->mapToScene(QPointF(200, 10)).toPoint());
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        press(Qt::Key_H);
+        // (the mouse leaves: over the waveform it takes the focus, AUDIO_AUTO_FOCUS)
+        QTest::mouseMove(window, QPoint(0, 0));
+
+        // from the Grid: the letters and the keypad (not Down and Up, which
+        // move there), and the display takes the focus
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // the second Line, 3.00-4.00
+        QVERIFY(!audio.playing());
+        QCOMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        press(Qt::Key_S);
+        QCOMPARE(range(), (PlayRange{96255, 0})); // past the audio: its last frame, nothing
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        QTRY_VERIFY_WITH_TIMEOUT(!audio.playing(), 3000); // silence until 8192 frames on
+
+        // a new file in the box stops the player; Close resets Stop's memory
+        press(Qt::Key_T);
+        QVERIFY(audio.playing());
+        audio.closeAudio();
+        QVERIFY(!audio.playing());
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QCOMPARE(audio.playback()->lastEndMs(), 5000);
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_H); // legacy's default: 0 to 5000 ms
+        QCOMPARE(range(), (PlayRange{0, 220500}));
+        press(Qt::Key_H);
+    }
+
+    // A4: legacy Play pauses a playing video; Stop pauses it and leaves the
+    // audio alone.
+    void audioPlaybackPausesThePlayingVideo()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(video.play());
+        QVERIFY(video.playing());
+        audio.playToEnd();
+        QVERIFY(!video.playing());
+        QVERIFY(audio.playing());
+        QVERIFY(video.play());
+        audio.stopPlayback();
+        QVERIFY(!video.playing());
+        QVERIFY(audio.playing());
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+    }
+
+    // O2 with A2-A4: the audio box's keys are its window's bindings in the
+    // hotkey registry (AudioBox::SetAccels), and the Grid takes the Audio
+    // bindings but AUDIO_COMMIT to AUDIO_NEXT (TabPanel::SetAccels, handed
+    // to the box by SubsGrid::OnAccelerator). A remapped key acts there and
+    // the old one no longer does; an _ALT id runs its main id (GetHKey's
+    // id + 10), so AUDIO_PLAY_LINE_ALT plays the line as AUDIO_PLAY_LINE.
+    void audioHotkeysFollowTheRegistry()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 active, 3.00-4.00
+        auto &audio = application->audio();
+        auto &h = application->hotkeys();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        const auto &view = audio.view();
+        // the defaults route by window
+        QCOMPARE(h.actionFor(4, Qt::Key_A, Qt::NoModifier), QStringLiteral("AUDIO_SCROLL_RIGHT"));
+        QCOMPARE(h.actionFor(4, Qt::Key_R, Qt::NoModifier), QStringLiteral("AUDIO_PLAY_LINE"));
+        QCOMPARE(h.actionFor(4, Qt::Key_Return, Qt::NoModifier), QStringLiteral("AUDIO_COMMIT"));
+        QCOMPARE(h.actionFor(4, Qt::Key_0, Qt::KeypadModifier), QStringLiteral("AUDIO_PLAY_BEFORE_MARK"));
+        QCOMPARE(h.actionFor(1, Qt::Key_X, Qt::NoModifier), QStringLiteral("AUDIO_NEXT"));  // AUDIO_NEXT_ALT
+        QCOMPARE(h.actionFor(1, Qt::Key_Right, Qt::NoModifier), QString());                // AUDIO_NEXT: not the Grid's
+        QCOMPARE(h.actionFor(1, Qt::Key_Return, Qt::NoModifier), QString());               // AUDIO_COMMIT neither
+        QCOMPARE(h.actionFor(1, Qt::Key_Down, Qt::NoModifier), QString());                 // AUDIO_PLAY neither
+        QCOMPARE(h.actionFor(2, Qt::Key_A, Qt::NoModifier), QString());                    // nor the Line editor's
+
+        // remapped through the registry (the Options page's Hotkeys list, OK)
+        h.beginOptions();
+        h.select(hotkeyPosition(QStringLiteral("Audio Scroll left")));      // AUDIO_SCROLL_RIGHT, A
+        h.optionsMap(QStringLiteral("K"), 4, QStringLiteral("cancel"));
+        h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));    // R
+        h.optionsMap(QStringLiteral("Y"), 4, QStringLiteral("cancel"));
+        h.select(hotkeyPosition(QStringLiteral("Audio Commit")));           // Enter
+        h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("K"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("Y"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("J"));
+        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=K")));
+
+        // in the display: K scrolls back 50 columns, A no longer does
+        item("audioDisplay")->forceActiveFocus();
+        audio.setHorizontalZoom(0); // the most columns
+        audio.setScrollPosition(10);
+        const auto at = view.position();
+        QVERIFY(at >= 100);
+        press(Qt::Key_K);
+        QCOMPARE(view.position(), at - 50);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), at - 50);
+        // in the Grid too
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_K);
+        QCOMPARE(view.position(), at - 100);
+        press(Qt::Key_A);
+        QCOMPARE(view.position(), at - 100);
+
+        // Y plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_R);
+        QVERIFY(!audio.lastPlayRange());
+        press(Qt::Key_Y);
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        press(Qt::Key_H);
+        // from the Grid, the display takes the focus (the play handlers' SetFocus)
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Y);
+        QCOMPARE(range(), (PlayRange{48000, 48000}));
+        QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        press(Qt::Key_H);
+
+        // J commits (without AUDIO_AUTO_COMMIT the times wait for it); Enter
+        // no longer does; X (AUDIO_NEXT_ALT) in the Grid goes to the next Line
+        application->settingsStore()->setValue(QStringLiteral("audio.autoCommit"), false);
+        audio.setHorizontalZoom(50);
+        audio.setScrollPosition(0);
+        auto &editor = application->editor();
+        auto *display = item("audioDisplay");
+        const int startX = int(view.xAtMs(1000));
+        QTest::mouseMove(window, display->mapToScene(QPointF(startX, 10)).toPoint());
+        QTest::mousePress(window, Qt::LeftButton, {}, display->mapToScene(QPointF(startX, 10)).toPoint());
+        QTest::mouseMove(window, display->mapToScene(QPointF(startX - 10, 10)).toPoint());
+        QTest::mouseRelease(window, Qt::LeftButton, {}, display->mapToScene(QPointF(startX - 10, 10)).toPoint());
+        QVERIFY(audio.modified());
+        const auto steps = editor.history().size();
+        press(Qt::Key_Return);
+        QVERIFY(audio.modified());
+        QCOMPARE(editor.history().size(), steps);
+        press(Qt::Key_J);
+        QVERIFY(!audio.modified());
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(editor.text(), QStringLiteral("second")); // AUDIO_COMMIT goes on to the next Line
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Z); // AUDIO_PREVIOUS_ALT
+        QCOMPARE(editor.text(), QStringLiteral("first"));
+        QTest::mouseMove(window, QPoint(0, 0));
+    }
+
+    // A3: legacy AudioDisplay::Commit ran EditBox::OnEdit after an
+    // auto-commit unless DISABLE_LIVE_VIDEO_EDITING (the video's preview of
+    // the edit). The rewrite's video shows the committed Document, and the
+    // box's commit is one: the video takes the new times either way.
+    void audioAutoCommitReachesTheVideo()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 active
+        auto &audio = application->audio();
+        auto &video = application->video();
+        application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(!video.times().isEmpty(), 20000);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        for (const bool disabled : {false, true}) {
+            application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), disabled);
+            const QString before = video.times();
+            const int endX = int(view.xAtMs(audio.selectionEnd()));
+            QTest::mouseMove(window, display->mapToScene(QPointF(endX, 10)).toPoint());
+            QTest::mousePress(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX, 10)).toPoint());
+            QTest::mouseMove(window, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
+            QTest::mouseRelease(window, Qt::LeftButton, {}, display->mapToScene(QPointF(endX + 20, 10)).toPoint());
+            QVERIFY(!audio.modified()); // committed
+            QTRY_VERIFY(video.times() != before); // the video's Line has the new end
+            QTest::mouseMove(window, QPoint(0, 0));
+        }
+    }
+
+    // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
+    // are enabled with the audio box and the editor (legacy OnMenuOpened:
+    // ABox != nullptr && editor).
+    void setAudioFromVideoNeedsTheBoxAndTheEditor()
+    {
+        auto *position = item<QObject>("setAudioFromVideoMenuItem");
+        auto *mark = item<QObject>("setAudioMarkFromVideoMenuItem");
+        QVERIFY(position && mark);
+        auto &audio = application->audio();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QVERIFY(!application->workspace().editingTarget());
+        QVERIFY(!position->property("enabled").toBool());
+        QVERIFY(!mark->property("enabled").toBool());
+        QVERIFY(application->openFile(episode));
+        QVERIFY(position->property("enabled").toBool());
+        QVERIFY(mark->property("enabled").toBool());
+        audio.closeAudio();
+        QVERIFY(!position->property("enabled").toBool());
+        QVERIFY(!mark->property("enabled").toBool());
+    }
+
+    // A2: the spectrum's colours (legacy theme colours AUDIO_SPECTRUM_*) are
+    // settings with legacy's defaults, listed on the Options dialog's Themes
+    // page in legacy's rows; OK saves a changed one and the spectrum is drawn
+    // again with it (legacy ChangeColors, AudioDisplay::ChangeOptions,
+    // AudioSpectrum::ChangeColours); Set default leaves them.
+    void spectrumColoursAreThemeSettings()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(settings.text("audio.spectrumBackground"), QStringLiteral("#000000"));
+        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#674FD7"));
+        QCOMPARE(settings.text("audio.spectrumInner"), QStringLiteral("#F4F4F4"));
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        audio.setSpectrumOn(true);
+        const auto first = audio.spectrumImage();
+        QVERIFY(first);
+        QCOMPARE(audio.options().spectrumEcho, 0xFF674FD7u);
+
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("settingsDialog", "settingsPageThemes"));
+        auto *list = dialogItem("settingsDialog", "themeColours");
+        QVERIFY(list);
+        QStringList rows;
+        for (const auto &row : list->property("model").toList())
+            rows << row.toMap().value(QStringLiteral("name")).toString();
+        QCOMPARE(rows, (QStringList{"Audio spectrum background", "Audio spectrum echo", "Audio spectrum"}));
+        auto values = dialog->property("values").toMap();
+        QCOMPARE(values.value(QStringLiteral("audio.spectrumEcho")).toString(), QStringLiteral("#674FD7"));
+        // the picked colour, then OK
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("audio.spectrumEcho")),
+                                          Q_ARG(QVariant, QStringLiteral("#112233"))));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#112233"));
+        QCOMPARE(audio.options().spectrumEcho, 0xFF112233u);
+        const auto again = audio.spectrumImage();
+        QVERIFY(again && again != first);
+        // the same picture a fresh renderer draws with the new palette
+        application::AudioSpectrum fresh;
+        fresh.setColours(0xFF000000, 0xFF112233, 0xFFF4F4F4);
+        fresh.setScaling(audio.view().scale());
+        const auto &view = audio.view();
+        std::vector<std::uint8_t> expected(std::size_t(view.width()) * view.height() * 4, 0);
+        for (std::size_t i = 3; i < expected.size(); i += 4)
+            expected[i] = 0xFF;
+        fresh.render(*audio.box().audio(), view.position() * view.samples(), (view.position() + view.width()) * view.samples(),
+                     expected.data(), view.width(), view.width(), view.height(), view.samplesPercent());
+        QVERIFY(again->bgra == expected);
+        // "Set default" leaves the theme's colours
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(dialog->property("values").toMap().value(QStringLiteral("audio.spectrumEcho")).toString(),
+                 QStringLiteral("#112233"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#112233"));
+    }
+
+    // A4-wasapi-default: the audio box's output is made with the host API
+    // audio.outputHostApi names (Windows: 0 WASAPI, 1 DirectSound; here the
+    // Windows choice is asked for and the output recorded). A change takes
+    // effect when the output next opens: at once while idle, after the
+    // playback while playing.
+    void audioOutputFollowsTheHostApiSetting()
+    {
+        delete engine;
+        delete application;
+        std::vector<std::string> made;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.outputHostApiSetting = true;
+        options.makeAudioOutput = [&made](const backends::PortAudioOutput::Options &o) {
+            made.push_back(o.hostApi);
+            return std::make_unique<backends::SimulatedOutput>();
+        };
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(made.empty()); // PortAudio starts at the first play
+        audio.playLine();
+        QVERIFY(audio.playing());
+        QCOMPARE(made, std::vector<std::string>{"Windows WASAPI"});
+        // while playing the output stays; after the stop the next play makes it again
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("audio.outputHostApi"), 1);
+        audio.stopPlayback();
+        QCOMPARE(made.size(), std::size_t(1));
+        audio.playLine();
+        QCOMPARE(made, (std::vector<std::string>{"Windows WASAPI", "Windows DirectSound"}));
+        // while idle the output is let go at once
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+        settings.setValue(QStringLiteral("audio.outputHostApi"), 0);
+        audio.playLine();
+        QCOMPARE(made, (std::vector<std::string>{"Windows WASAPI", "Windows DirectSound", "Windows WASAPI"}));
+        audio.stopPlayback();
+        // the same choice again keeps the output
+        audio.playLine();
+        QCOMPARE(made.size(), std::size_t(3));
+        audio.stopPlayback();
+        // elsewhere the setting does nothing: PortAudio's own default
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, false), backends::PortAudioOutput::defaultHostApi());
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, true), std::string("Windows DirectSound"));
+        QCOMPARE(backends::PortAudioOutput::hostApiForSetting(0, true), std::string("Windows WASAPI"));
     }
 
     void theReferenceIsNeverEdited()

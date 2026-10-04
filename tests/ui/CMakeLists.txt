@@ -70,6 +70,8 @@ hikari_add_spix_test(hikari_ui_grid_workflow SOURCES grid_workflow.cpp LIBRARIES
 hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp LIBRARIES hikari_composition)
 # G10: History (Spix workflow).
 hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIBRARIES hikari_composition)
+# A3: three Lines timed by keyboard in the audio box (Spix workflow).
+hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 # P1: close review (L58-write-close).
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)

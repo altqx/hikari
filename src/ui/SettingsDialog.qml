@@ -3,8 +3,9 @@
 // Audio (Advanced) and Subtitle properties, with OK, Apply, Cancel and Set
 // default. `values` is what each control holds (application::OptionsState);
 // OK/Apply write the bound controls whose value differs (legacy SetOptions)
-// and Set default refreshes the controls as legacy ResetDefault does. Themes
-// are excluded by the accepted settings decision; the Hotkeys page is the
+// and Set default refreshes the controls as legacy ResetDefault does. Theme
+// files are excluded by the accepted settings decision (the Themes page
+// lists the theme colours the rewrite keeps as settings); the Hotkeys page is the
 // shortcut editor's (O2, `hotkeys`); Associations are Windows only and wait
 // for their platform card.
 import QtQuick
@@ -220,6 +221,7 @@ Dialog {
                 {name: qsTr("Video"), depth: 0},
                 {name: qsTr("Audio"), depth: 0},
                 {name: qsTr("Advanced"), depth: 1},
+                {name: qsTr("Themes"), depth: 0},
                 {name: qsTr("Hotkeys"), depth: 0},
                 {name: qsTr("Subtitle properties"), depth: 0}
             ]
@@ -480,6 +482,23 @@ Dialog {
                     SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge all the \"n\" with the previous syllable") }
                     SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move syllable line after click") }
                     SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
+                    // A4-wasapi-default (Windows): the audio box's output API;
+                    // a change applies when the output next opens.
+                    Loader {
+                        active: Qt.platform.os === "windows"
+                        Layout.fillWidth: true
+                        sourceComponent: GroupBox {
+                            objectName: "audioOutputHostApiBox"
+                            title: qsTr("Audio output")
+                            SettingChoice {
+                                setting: "audio.outputHostApi"
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                model: ["WASAPI", "DirectSound"]
+                                Accessible.name: qsTr("Audio output")
+                            }
+                        }
+                    }
                 }
             }
 
@@ -532,6 +551,61 @@ Dialog {
                             model: [qsTr("None"), qsTr("Before and after the active"), qsTr("All visible")]
                         }
                     }
+                }
+            }
+
+            // Themes (legacy Themes page): its Name / Color list, as far as
+            // the rewrite keeps theme colours (theme files and their choice
+            // are excluded): the audio spectrum's three (A2), in legacy's
+            // rows and labels. A double click picks the colour; OK/Apply
+            // save the changed ones and the audio display reads them again
+            // (SetOptions' ID_COLOR_CONFIG, ChangeColors).
+            ColumnLayout {
+                objectName: "settingsPageThemes"
+                ListView {
+                    id: themeColours
+                    objectName: "themeColours"
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    clip: true
+                    model: [
+                        {setting: "audio.spectrumBackground", name: qsTr("Audio spectrum background")},
+                        {setting: "audio.spectrumEcho", name: qsTr("Audio spectrum echo")},
+                        {setting: "audio.spectrumInner", name: qsTr("Audio spectrum")}
+                    ]
+                    header: RowLayout {
+                        width: ListView.view.width
+                        Label { text: qsTr("Name"); Layout.fillWidth: true; font.bold: true }
+                        Label { text: qsTr("Color"); Layout.preferredWidth: 120; font.bold: true }
+                    }
+                    delegate: ItemDelegate {
+                        id: colourRow
+                        required property var modelData
+                        required property int index
+                        objectName: "themeColour_" + modelData.setting
+                        width: ListView.view.width
+                        highlighted: ListView.isCurrentItem
+                        readonly property string colour: dialog.values[modelData.setting] ?? ""
+                        contentItem: RowLayout {
+                            Label { text: colourRow.modelData.name; Layout.fillWidth: true }
+                            Rectangle {
+                                Layout.preferredWidth: 16
+                                Layout.preferredHeight: 16
+                                color: colourRow.colour.length ? colourRow.colour : "transparent"
+                                border.color: palette.mid
+                            }
+                            Label { text: colourRow.colour; Layout.preferredWidth: 100 }
+                        }
+                        Accessible.name: modelData.name + " " + colour
+                        onClicked: themeColours.currentIndex = index
+                        onDoubleClicked: {
+                            themeColours.currentIndex = index
+                            themeColourDialog.setting = modelData.setting
+                            themeColourDialog.selectedColor = colour
+                            themeColourDialog.open()
+                        }
+                    }
+                    Accessible.name: qsTr("Themes")
                 }
             }
 
@@ -686,6 +760,14 @@ Dialog {
             fontsFolder.text = path
             dialog.put("fonts.externalDirectory", path)
         }
+    }
+
+    ColorDialog {
+        id: themeColourDialog
+        objectName: "themeColourDialog"
+        property string setting: ""
+        // the picked colour as legacy's list keeps it: "#RRGGBB"
+        onAccepted: dialog.put(setting, selectedColor.toString().toUpperCase())
     }
 
     HotkeyMapping {

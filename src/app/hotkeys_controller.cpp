@@ -300,19 +300,31 @@ QString HotkeysController::actionFor(int window, int key, int modifiers) const
         return k.type;
     };
     for (const auto &[k, hotkey] : m_installed) {
-        if (hotkey.accel.empty() || k.type == GlobalHotkey || k.type == AudioHotkey)
-            continue; // Global: the main window's; Audio: the audio box's (not routed yet)
+        if (hotkey.accel.empty() || k.type == GlobalHotkey)
+            continue; // Global: the main window's
         int table = routed(k);
         // Video play/seek bindings also go to the Grid.
-        const bool alsoGrid = k.type == VideoHotkey && k.id >= kVideoPlayPause && k.id <= kVideo5SecondsBackward;
+        bool alsoGrid = k.type == VideoHotkey && k.id >= kVideoPlayPause && k.id <= kVideo5SecondsBackward;
+        // The Audio window's bindings: the audio box's own table
+        // (AudioBox::SetAccels), and the Grid's too except AUDIO_COMMIT to
+        // AUDIO_NEXT (the _ALT ids stay), which SubsGrid::OnAccelerator
+        // hands to the box; so do the Grid's own bindings of audio ids.
+        if (k.type == AudioHotkey) {
+            table = AudioHotkey;
+            alsoGrid = !(k.id >= kAudioCommit && k.id <= kAudioNext);
+        } else if (k.type == GridHotkey && k.id >= 1000 && k.id < 2000 && k.id >= kAudioCommit && k.id <= kAudioNext) {
+            continue;
+        }
         if (table != window && !(alsoGrid && window == GridHotkey))
             continue;
         // No hotkeys for hidden tag buttons.
         if (table == EditorHotkey && k.type == EditorHotkey && k.id >= kEditorTagButton1 + m_installedTagButtons &&
             k.id <= kEditorTagButton20)
             continue;
+        // Hotkeys::GetHKey: an id under AUDIO_COMMIT (the _ALT ones) sends
+        // its id + 10, so AUDIO_PLAY_LINE_ALT runs AUDIO_PLAY_LINE.
         if (sameChord(hotkey.accel, pressed))
-            return qs(symbolOf(k.id));
+            return qs(symbolOf(k.id < kAudioCommit ? k.id + 10 : k.id));
     }
     return {};
 }
@@ -321,6 +333,10 @@ QString HotkeysController::actionFor(int window, int key, int modifiers) const
 
 void HotkeysController::beginOptions()
 {
+    // O2-stale-copy (approved): each dialog edits its own copy of the
+    // bindings, filled at its first edit; a cancelled dialog's copy goes
+    // with it (legacy's static hotkeysCopy outlived the dialog).
+    m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
     m_list->build(bindings());
     emit rowsChanged();

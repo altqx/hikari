@@ -19,6 +19,8 @@
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/workspace.h"
+#include "hikari/backends/audio_box_player.h"
+#include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
@@ -109,6 +111,14 @@ public:
         QString recoveryDir;
         // V1: whether video playback may open an audio device.
         bool playbackAudio = true;
+        // A4: makes the audio box's output with the options the settings
+        // give (tests record them); unset: PortAudio, or with playbackAudio
+        // off an output without a device.
+        std::function<std::unique_ptr<application::AudioOutputPort>(const backends::PortAudioOutput::Options &)>
+            makeAudioOutput;
+        // Whether audio.outputHostApi chooses the host API (Windows; tests
+        // elsewhere may say so).
+        bool outputHostApiSetting = backends::PortAudioOutput::onWindows;
         // P8: the release list the update check reads (tests: a file).
         QUrl updateFeed = UpdateChecker::defaultFeed();
         // Y2: where the style catalogs live; empty: "Catalog" beside the settings
@@ -507,6 +517,10 @@ public:
     Q_INVOKABLE void openAudioFromVideo();
     Q_INVOKABLE QVariantList recentAudio();
     Q_INVOKABLE QUrl audioDialogFolder() const;
+    // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
+    // Video menu, enabled while the audio box exists): the box centred on the
+    // video's time (VideoBox::Tell, 0 without video), with the mark there too.
+    Q_INVOKABLE void setAudioFromVideo(bool mark);
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -699,12 +713,26 @@ private:
     std::vector<int> m_audioKeyframes;
     std::function<application::AudioCacheSettings()> m_audioSettings;
     QString m_indexDir; // legacy Indices; empty: no index files
+    // A4: the box's player and the editor output it plays through (PortAudio,
+    // made at the first play; without playbackAudio an output with no device)
+    std::unique_ptr<application::AudioOutputPort> m_audioOutput;
+    std::string m_audioOutputHostApi; // the host API m_audioOutput was made for
+    std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
     void refreshAudio();
     void followVideoInAudio();
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();
     // Legacy's index file for `path` and an audio track (-1: none).
     QString indexFile(const QString &path, int track) const;
+    // A3: the box's commits reach the editing target here (legacy
+    // CommitChanges through the edit box and grid); while one runs the box
+    // keeps its selection for the same Line (no SetDialogue).
+    bool m_audioCommitting = false;
+    void commitAudioTimes(const application::AudioCommitRequest &request);
+    // The Options dialog's Themes page colours (A2: the spectrum's).
+    void addThemeColours(QVariantMap &values) const;
+    void setAudioActive(int key);
+    void seekVideoFromAudio(int ms);
 };
 
 } // namespace hikari::app

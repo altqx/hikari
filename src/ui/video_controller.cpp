@@ -131,6 +131,16 @@ bool VideoController::play()
     return done;
 }
 
+bool VideoController::playActualLine()
+{
+    if (!m_lineTimes)
+        return false;
+    const bool done = m_session.playLine(static_cast<int>(m_lineTimes->first.microseconds() / 1000),
+                                         static_cast<int>(m_lineTimes->second.microseconds() / 1000));
+    emit changed();
+    return done;
+}
+
 bool VideoController::pause()
 {
     const bool done = m_session.pause();

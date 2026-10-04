@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <memory>
 #include <functional>
+#include <mutex>
 #include <optional>
 #include <span>
 #include <string>
@@ -80,6 +81,10 @@ std::unique_ptr<AudioStore> cachedAudioStore(const std::filesystem::path &path, 
 // decode format; finish() marks the peak table ready (legacy BuildPeaks,
 // block 256), so zoomed out views read it. Blank audio (legacy
 // ProviderDummy) is silence and never has a peak table.
+// The cached frames may be read from another thread (A4: the player's fill
+// thread, as legacy's DirectSoundPlayer2Thread read the provider's cache)
+// while the owner thread appends and reads them; the store is locked for
+// each call. The peak table is the owner thread's alone.
 class DisplayAudio {
 public:
     static constexpr int kPeakBlock = 256;
@@ -100,12 +105,18 @@ public:
 
     int sampleRate() const { return m_rate; }
     std::int64_t sampleCount() const { return m_count; }
-    std::int64_t decoded() const { return m_silence ? m_count : m_store ? m_store->frames() : 0; }
+    std::int64_t decoded() const;
     bool finished() const { return m_finished; }
     // [start, start + count) into `out`; zero past what is decoded or past
     // the end (legacy ReadCache).
     void read(std::int64_t start, std::int64_t count, std::int16_t *out) const;
     const WaveformPeaks *peaks() const { return m_finished && !m_silence ? &m_peaks : nullptr; }
+    // A4: the cached frames' channels (1 for blank audio and before the
+    // first frames), and legacy ProviderFFMS2::ReadCache for playback: the
+    // interleaved frames [start, start + count), zero past the end and past
+    // what is decoded.
+    int channels() const;
+    void readFrames(std::int64_t start, std::int64_t count, std::int16_t *out) const;
 
 private:
     int m_rate = 0;
@@ -114,6 +125,7 @@ private:
     bool m_finished = false;
     std::unique_ptr<AudioStore> m_store;
     mutable std::vector<std::int16_t> m_frames; // read's interleaved frames
+    mutable std::unique_ptr<std::mutex> m_lock = std::make_unique<std::mutex>(); // the store and m_frames
     std::int64_t m_scanned = 0;                 // scanStored's position
     WaveformPeaks m_peaks{kPeakBlock};
 };
@@ -158,6 +170,11 @@ struct AudioDisplayOptions {
     std::uint32_t waveformSelected = 0xFFDCDAFF;      // AUDIO_WAVEFORM_SELECTED
     std::uint32_t timescaleBackground = 0xFF202225;   // WINDOW_BACKGROUND
     std::uint32_t timescaleText = 0xFFAEAFB2;         // WINDOW_TEXT
+    // A2: the spectrum's palette (legacy AudioSpectrum::ChangeColours)
+    std::uint32_t spectrumBackground = 0xFF000000;    // AUDIO_SPECTRUM_BACKGROUND
+    std::uint32_t spectrumEcho = 0xFF674FD7;          // AUDIO_SPECTRUM_ECHO
+    std::uint32_t spectrumInner = 0xFFF4F4F4;         // AUDIO_SPECTRUM_INNER
+    std::uint32_t lineBoundaryMark = 0xFFFFFFFF;      // AUDIO_LINE_BOUNDARY_MARK (A3)
 };
 
 // Legacy AudioDisplayScaleFromSlider: a cubic response, 50 is 100%.
@@ -224,9 +241,15 @@ private:
     Scrollbar m_bar;
 };
 
+// A2: an opaque picture (the spectrum), BGRA bytes with row 0 at the top.
+struct AudioImage {
+    int width = 0, height = 0;
+    std::vector<std::uint8_t> bgra;
+};
+
 // One shape of the drawn image, in legacy draw order.
 struct AudioShape {
-    enum class Kind { Fill, Line, Triangle, Text };
+    enum class Kind { Fill, Line, Triangle, Text, Image };
     enum class Font { Scale, Cursor, Label }; // legacy tahoma8, tahoma13, verdana11
     enum class Align { TopLeft, TopCenter, Center };
 
@@ -241,6 +264,8 @@ struct AudioShape {
     Font font = Font::Scale;
     Align align = Align::TopLeft;
     bool outlined = false; // legacy DRAWOUTTEXT: a black outline one pixel around
+    // Image: drawn pixel for pixel with its top left corner at (x1, y1).
+    std::shared_ptr<const AudioImage> image;
 };
 
 // Text widths in a font, for the ruler's label spacing (legacy GetTextExtent).
@@ -255,12 +280,19 @@ struct AudioMarks {
     std::vector<int> keyframesMs; // the video's keyframes (legacy Timebase::Keyframes)
     std::optional<int> videoMs;   // the paused video's time (legacy VideoBox::Tell)
     bool focused = false;
+    // A3: the mark (legacy hasMark, curMarkMS) and the label font's text
+    // height (wx GetTextExtent with verdana11), which places its time.
+    std::optional<int> markMs;
+    int markTextHeight = 0;
 };
 
 // Legacy DoUpdateImage: everything but the cursor. `columns` are the
-// waveform's (legacyWaveform over the view).
+// waveform's (legacyWaveform over the view). With a `spectrum` (A2, legacy
+// spectrum mode) the picture is drawn over the background in place of the
+// waveform and the inactive Lines' waveform.
 std::vector<AudioShape> audioScene(const AudioView &view, const WaveformColumns &columns, const AudioMarks &marks,
-                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth);
+                                   const AudioDisplayOptions &options, const AudioTextWidth &textWidth,
+                                   std::shared_ptr<const AudioImage> spectrum = nullptr);
 // Legacy DrawProgress while the audio is still loading (`progress` 0..1).
 std::vector<AudioShape> audioProgressScene(const AudioView &view, float progress, const AudioDisplayOptions &options);
 // Legacy DrawCursor: the mouse cursor's line and, when not playing, its time.
