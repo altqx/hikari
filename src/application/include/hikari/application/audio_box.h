@@ -16,21 +16,30 @@
 //
 // The open video's audio is the video's track (the one the video's open
 // chose), opened from the index file the video's open wrote, so nothing is
-// indexed twice and the video's helper never waits for the box. Its cache is
-// made again when the video's index was new.
+// indexed twice and the video's helper never waits for the box. When that
+// file could not be written, the video's helper handed the index over in a
+// temporary file, which the box reads instead (legacy's box shared the
+// video's index in memory). Its cache is made again when the video's index
+// was new.
 //
 // A name starting with "dummy" opens blank audio (legacy ProviderDummy):
 // 2 h 30 min of 44.1 kHz mono silence, ready at once; "?dummy" (a dummy
 // video's name) has no audio. Answers for an earlier open are dropped.
 //
-// A block FFMS2 fails to decode is cached as legacy cached it: in a disk cache
-// the previous block's frames again (legacy reused its block buffer; zeros
-// before the first block), and caching goes on.
+// Blocks are read as legacy ProviderFFMS2::GetAudio read them into its
+// caches' buffers (BlockRead): frames past legacy's sample count (the audio
+// less a negative delay's skipped start) are not decoded, and its "fill
+// beyond with zero" clears samples, not frames. A disk cache reads into the
+// block buffer the source keeps (DiskCache's reused `data`), a RAM cache into
+// a new one. A block FFMS2 fails to decode is cached as legacy cached it: what
+// the buffer holds, the frames decoded before the failure followed by the
+// previous block's (zeros before the first block), and caching goes on.
 //
-// Approved departures (R3-hang-crash-loss): in a RAM cache that block is
-// silence (legacy left the new block's memory uninitialised: an undefined
-// read); a cache that cannot be allocated or written, or a media helper that
-// ends, ends the open with a message (legacy crashed or read garbage).
+// Approved departures (R3-hang-crash-loss, extended to A1): in a RAM cache
+// the part of a block FFMS2 did not write is zeros (legacy's new block was
+// uninitialised memory); a cache that cannot be allocated or written, or a
+// media helper that ends, ends the open with a message (legacy crashed, drew
+// an empty progress bar forever or cached nothing).
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/display_audio_port.h"
@@ -107,8 +116,10 @@ public:
     // A file of the box's own (GLOBAL_OPEN_AUDIO, recent audio, Open audio from video).
     void open(const std::string &path);
     // The open video's audio: the track the video's open chose, with the
-    // index file it wrote (`videoNewIndex`: the video indexed it now).
-    void openFromVideo(const std::string &path, int track, bool videoNewIndex);
+    // index file it wrote (`videoNewIndex`: the video indexed it now), or
+    // `handoffIndexFile` when it handed its index over in a temporary file.
+    void openFromVideo(const std::string &path, int track, bool videoNewIndex,
+                       const std::string &handoffIndexFile = {});
     void close();
 
     State state() const { return m_state; }
@@ -160,6 +171,7 @@ private:
     std::string m_path;
     bool m_fromVideo = false;
     bool m_videoNewIndex = false;
+    std::string m_videoIndexFile; // the video's handed-over index, if any
     bool m_reused = false;
     bool m_choosing = false;
     bool m_declined = false;
@@ -173,10 +185,10 @@ private:
     // the cache plan (legacy DiskCache / RAMCache)
     bool m_ram = false;
     std::int64_t m_sourceFrame = 0, m_sourceEnd = 0; // the source frames to read
+    std::int64_t m_decodeEnd = 0;                    // legacy m_numSamples: no frame past it is decoded
     std::int64_t m_written = 0;                      // RAM: frames of the cache filled
     std::int64_t m_silence = 0;                      // RAM: a positive delay's leading frames
     int m_block = 0, m_blocks = 0;                   // RAM: the current block, blocks in all
-    std::vector<std::int16_t> m_blockBuffer;         // disk: legacy DiskCache's reused block buffer
     float m_progress = 0;
     std::uint64_t m_request = 0; // the newest open; older answers are dropped
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);

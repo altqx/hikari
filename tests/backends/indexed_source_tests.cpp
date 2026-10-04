@@ -617,8 +617,12 @@ struct DisplayAudioFixture : AudioFixture {
     }
     std::expected<AudioBlock, AudioFailure> display(std::int64_t start, std::int64_t count)
     {
+        return displayBlock({start, count, count, false});
+    }
+    std::expected<AudioBlock, AudioFailure> displayBlock(const BlockRead &read)
+    {
         std::optional<std::expected<AudioBlock, AudioFailure>> result;
-        source.displayAudio(start, count, [&](auto r) { result = std::move(r); });
+        source.displayAudio(read, [&](auto r) { result = std::move(r); });
         EXPECT_TRUE(waitFor([&] { return result.has_value(); }));
         return result.value_or(std::unexpected(AudioFailure{}));
     }
@@ -734,6 +738,7 @@ TEST_F(DisplayAudioFixture, TheVideosIndexFileIsWrittenAndReadBack)
     EXPECT_TRUE(first->newIndex);
     EXPECT_FALSE(progress.empty());
     EXPECT_TRUE(std::filesystem::exists(file));
+    EXPECT_TRUE(first->handoffIndexFile.empty()); // written: nothing handed over
     EXPECT_EQ(first->firstAudioTrack, 1); // every audio track is still listed
     EXPECT_EQ(first->audioTracks, (std::vector<int>{1, 2}));
     // the chosen track was indexed and opens
@@ -765,7 +770,7 @@ TEST_F(DisplayAudioFixture, TheBoxReadsTheVideosIndexInItsOwnHelper)
     EXPECT_TRUE(progress.empty());
     EXPECT_EQ(opened->info.sampleCount, 96256);
     std::optional<std::expected<AudioBlock, AudioFailure>> block;
-    box.displayAudio(1000, 4, [&](auto r) { block = std::move(r); });
+    box.displayAudio({1000, 4, 4, false}, [&](auto r) { block = std::move(r); });
     std::optional<std::expected<IndexedFrame, SourceError>> shown;
     source.frame(5, [&](auto r) { shown = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return block.has_value() && shown.has_value(); }));
@@ -807,6 +812,140 @@ TEST_F(DisplayAudioFixture, AStaleOrForeignIndexFileIsIndexedAgain)
     EXPECT_TRUE(plain->newIndex);
     EXPECT_TRUE(openAudio(1));
     EXPECT_TRUE(openAudio(2));
+}
+
+// A1: legacy ProviderFFMS2::GetAudio into a cache's buffer. The helper keeps
+// one block buffer for the box's source (legacy DiskCache's `data`): a read
+// sets S16 samples [decode, frames) to zero (legacy's fill beyond counts
+// samples, not frames) and decodes frames [0, decode), so past both the
+// buffer keeps the previous read's frames; a fresh read (RAMCache's new
+// block) starts from zeros. A read FFMS2 fails sends the buffer as FFMS2
+// left it with the error.
+TEST_F(DisplayAudioFixture, BlocksAreReadIntoTheBlockBufferAsLegacyReadThem)
+{
+    const auto tracks = probe(fixture("audioonly"));
+    ASSERT_TRUE(tracks);
+    ASSERT_EQ(tracks->audio.size(), 1u);
+    const int track = tracks->audio[0].index;
+    ASSERT_TRUE(openDisplay("audioonly", track));
+    const auto value = [](std::int64_t i) { return static_cast<std::int16_t>(((i * 37) % 65536) - 32768); };
+    const auto first = display(0, 56);
+    ASSERT_TRUE(first);
+    const auto second = displayBlock({1000, 56, 10, false});
+    ASSERT_TRUE(second) << second.error().message;
+    ASSERT_EQ(second->count, 56);
+    for (std::int64_t i = 0; i < 10; ++i)
+        EXPECT_EQ(left(*second, i), value(1000 + i)) << i;
+    for (std::int64_t i = 10; i < 28; ++i) // samples 10..55: frames 5..27, the first 10 decoded over
+        EXPECT_EQ(left(*second, i), 0) << i;
+    for (std::int64_t i = 28; i < 56; ++i) { // the previous read's frames
+        EXPECT_EQ(left(*second, i), value(i)) << i;
+        EXPECT_EQ(right(*second, i), static_cast<std::int16_t>(value(i) / 2)) << i;
+    }
+    const auto fresh = displayBlock({1000, 56, 10, true});
+    ASSERT_TRUE(fresh);
+    EXPECT_EQ(left(*fresh, 0), value(1000));
+    for (std::int64_t i = 28; i < 56; ++i)
+        EXPECT_EQ(left(*fresh, i), 0) << i;
+    // a fresh read leaves the block buffer as it was: past the cleared
+    // samples it still holds the first read's frames
+    const auto nothing = displayBlock({0, 56, 4, false});
+    ASSERT_TRUE(nothing);
+    EXPECT_EQ(left(*nothing, 3), value(3));
+    EXPECT_EQ(left(*nothing, 4), 0);
+    EXPECT_EQ(right(*nothing, 27), 0);
+    EXPECT_EQ(left(*nothing, 40), value(40));
+    // FFMS2 refuses a range past the end before writing anything: the error
+    // brings the buffer back as it was
+    const auto failed = displayBlock({96250, 56, 56, false});
+    ASSERT_FALSE(failed);
+    EXPECT_EQ(failed.error().stage, AudioStage::Read);
+    EXPECT_FALSE(failed.error().message.empty());
+    EXPECT_EQ(failed.error().samples, nothing->samples);
+    // a new open starts from a zeroed buffer
+    ASSERT_TRUE(openDisplay("audioonly", track));
+    const auto reopened = displayBlock({0, 56, 0, false});
+    ASSERT_TRUE(reopened);
+    EXPECT_TRUE(std::all_of(reopened->samples.begin(), reopened->samples.end(), [](std::byte b) { return b == std::byte{0}; }));
+}
+
+// When the video's index file cannot be written (FFMS_WriteIndex fails, here
+// in an Indices folder that cannot be written), the video's helper hands the
+// new index over in a temporary file, and the box's own helper opens the
+// video's audio from it without indexing again (legacy's box shared the
+// video's index). The file goes once released, when the source opens again
+// and when the source ends.
+TEST_F(DisplayAudioFixture, TheIndexIsHandedOverWhenItsFileCannotBeWritten)
+{
+    IndexFolder folder("handoff");
+    const auto path = folder.copy("tracks");
+    const auto indices = folder.dir / "Indices";
+    std::filesystem::create_directories(indices);
+    const auto file = folder.index("tracks_1.ffindex");
+#ifdef _WIN32
+    // a read-only folder still takes new files on Windows: the index file's
+    // name is taken by a folder instead
+    std::filesystem::create_directories(file);
+#else
+    std::filesystem::permissions(indices, std::filesystem::perms::owner_read | std::filesystem::perms::owner_exec);
+    struct Restore {
+        std::filesystem::path dir;
+        ~Restore() { std::filesystem::permissions(dir, std::filesystem::perms::owner_all); }
+    } restore{indices};
+    if (FILE *probe = std::fopen((indices / "probe").c_str(), "wb")) { // root writes anyway
+        std::fclose(probe);
+        GTEST_SKIP() << "the Indices folder stays writable for this user";
+    }
+#endif
+    std::vector<std::int64_t> progress;
+    const auto video = openIndexed(path, 1, file, &progress);
+    ASSERT_TRUE(video);
+    EXPECT_TRUE(video->newIndex);
+    EXPECT_FALSE(progress.empty());
+    EXPECT_FALSE(std::filesystem::is_regular_file(file));
+    const auto handoff = video->handoffIndexFile;
+    ASSERT_FALSE(handoff.empty());
+    EXPECT_TRUE(std::filesystem::is_regular_file(handoff));
+    EXPECT_NE(std::filesystem::path(handoff).parent_path(), indices);
+
+    backends::FfmsIndexedSource box{QStringLiteral(HIKARI_MEDIA_HELPER)};
+    progress.clear();
+    const auto opened = openDisplayPath(box, path, 1, handoff, &progress);
+    ASSERT_TRUE(opened) << opened.error().message;
+    EXPECT_FALSE(opened->newIndex);
+    EXPECT_TRUE(progress.empty()); // nothing indexed again
+    std::optional<std::expected<AudioBlock, AudioFailure>> block;
+    box.displayAudio({1000, 4, 4, false}, [&](auto r) { block = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return block.has_value(); }));
+    ASSERT_TRUE(*block);
+    EXPECT_EQ(left(**block, 0), 1000);
+
+    // released once the box has read it (another file's name is ignored)
+    source.releaseIndexHandoff(handoff + ".other");
+    EXPECT_TRUE(std::filesystem::exists(handoff));
+    source.releaseIndexHandoff(handoff);
+    EXPECT_FALSE(std::filesystem::exists(handoff));
+    // opening again removes the previous one; reading the index makes none
+    const auto again = openIndexed(path, 1, file);
+    ASSERT_TRUE(again);
+    ASSERT_FALSE(again->handoffIndexFile.empty());
+    EXPECT_NE(again->handoffIndexFile, handoff);
+    EXPECT_TRUE(std::filesystem::exists(again->handoffIndexFile));
+    const auto plain = openIndexed(folder.copy("cfr"), -1, (folder.dir / "elsewhere" / "cfr_-1.ffindex").string());
+    ASSERT_TRUE(plain);
+    EXPECT_TRUE(plain->handoffIndexFile.empty()); // no audio track: nothing for the box
+    EXPECT_FALSE(std::filesystem::exists(again->handoffIndexFile));
+    std::optional<backends::FfmsIndexedSource> ending;
+    ending.emplace(QStringLiteral(HIKARI_MEDIA_HELPER));
+    std::optional<std::expected<SourceTimeline, SourceError>> result;
+    ending->openIndexed(path, IndexRequest{1, file}, nullptr, [&](auto r) { result = std::move(r); });
+    ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
+    ASSERT_TRUE(*result);
+    const auto last = (*result)->handoffIndexFile;
+    ASSERT_FALSE(last.empty());
+    EXPECT_TRUE(std::filesystem::exists(last));
+    ending.reset();
+    EXPECT_FALSE(std::filesystem::exists(last));
 }
 
 // FFMS2's error text and the failing stage reach the box (legacy messages).

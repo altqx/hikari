@@ -15,11 +15,13 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <vector>
 
 using namespace hikari::backends;
 using namespace hikari::backends::helper;
@@ -53,6 +55,9 @@ struct Source {
     std::unique_ptr<FFMS_AudioSource, AudioDeleter> display;
     std::int64_t displaySamples = 0;
     int displayChannels = 0;
+    // A1: legacy DiskCache's `data`, the block buffer every block is decoded
+    // into; it starts zeroed with each open and keeps what the last read left.
+    std::vector<std::byte> block;
 };
 
 // One resampled stream over a source range (I3). Chunks continue the same
@@ -115,17 +120,37 @@ FFMS_Index *readIndexFile(const std::string &path, const std::string &indexFile)
 }
 
 // Legacy: the folder is made when missing; a failed write is a debug message
-// ("Cannot save index, error %s occurred") and the open goes on.
-void writeIndexFile(const std::string &indexFile, FFMS_Index *index)
+// ("Cannot save index, error %s occurred") and the open goes on. True when
+// the file was written.
+bool writeIndexFile(const std::string &indexFile, FFMS_Index *index)
 {
     if (indexFile.empty())
-        return;
+        return false;
     std::error_code ec;
     std::filesystem::create_directories(fsPath(indexFile).parent_path(), ec);
     char buffer[1024];
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
-    if (FFMS_WriteIndex(indexFile.c_str(), index, &err) != 0)
+    if (FFMS_WriteIndex(indexFile.c_str(), index, &err) != 0) {
         std::fprintf(stderr, "Cannot save index, error %s occurred\n", errorText(err).c_str());
+        return false;
+    }
+    return true;
+}
+
+// A1: legacy's box shared the video's index in memory. When the index file
+// cannot be written, the index goes to the host's temporary file instead, so
+// the box's own helper reads it rather than indexing the track again.
+bool handOff(const std::string &handoffFile, FFMS_Index *index)
+{
+    if (handoffFile.empty())
+        return false;
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (FFMS_WriteIndex(handoffFile.c_str(), index, &err) != 0) {
+        std::fprintf(stderr, "Cannot hand the index over, error %s occurred\n", errorText(err).c_str());
+        return false;
+    }
+    return true;
 }
 
 constexpr int kEveryAudioTrack = -2;
@@ -135,6 +160,7 @@ void open(Source &source, Reader &in, Responder &r)
     const std::string path = in.str();
     const int audioTrack = in.i32();
     const std::string indexFile = in.str();
+    const std::string handoffFile = in.str();
     if (!in.ok())
         return r.terminal(Outcome::InvalidInput, bytesOf("malformed open"));
     source = {};
@@ -145,6 +171,7 @@ void open(Source &source, Reader &in, Responder &r)
         return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
     std::unique_ptr<FFMS_Index, IndexDeleter> index(readIndexFile(path, indexFile));
     const bool newIndex = !index;
+    bool handedOff = false;
     if (index) {
         FFMS_CancelIndexing(indexer); // legacy: the index file stands in for indexing
     } else {
@@ -159,7 +186,8 @@ void open(Source &source, Reader &in, Responder &r)
         index.reset(FFMS_DoIndexing2(indexer, FFMS_IEH_ABORT, &err));
         if (!index)
             return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
-        writeIndexFile(indexFile, index.get());
+        if (!writeIndexFile(indexFile, index.get()) && !indexFile.empty())
+            handedOff = handOff(handoffFile, index.get());
     }
     const int track = FFMS_GetFirstTrackOfType(index.get(), FFMS_TYPE_VIDEO, &err);
     if (track < 0)
@@ -199,7 +227,7 @@ void open(Source &source, Reader &in, Responder &r)
     out.i32(static_cast<std::int32_t>(keyframes.size()));
     for (int k : keyframes)
         out.i32(k);
-    out.u8(newIndex ? 1 : 0);
+    out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -395,21 +423,38 @@ void openDisplayAudio(Source &source, Reader &in, Responder &r)
     finishDisplay(source, std::move(audio), track, newIndex, r);
 }
 
+// A1: legacy ProviderFFMS2::GetAudio into a cache's buffer (media_protocol.h).
 void displayRead(Source &source, Reader &in, Responder &r)
 {
     const std::int64_t start = in.i64();
-    std::int64_t count = in.i64();
-    if (!in.ok() || !source.display || count < 0)
+    const std::int64_t frames = in.i64();
+    const std::int64_t decode = in.i64();
+    const bool fresh = in.u8() != 0;
+    if (!in.ok() || !source.display || frames < 0 || decode < 0 || decode > frames)
         return failDisplay(r, Outcome::InvalidInput, Stage::Host, "not open");
-    if (start < 0 || start >= source.displaySamples)
+    if (decode > 0 && (start < 0 || start >= source.displaySamples))
         return failDisplay(r, Outcome::InvalidInput, Stage::Host, "EOF");
-    count = std::min(count, source.displaySamples - start);
-    std::vector<std::byte> samples(static_cast<std::size_t>(count) * 2 * source.displayChannels);
-    char buffer[1024];
-    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
-    if (count > 0 && FFMS_GetAudio(source.display.get(), samples.data(), start, count, &err) != 0)
-        return failDisplay(r, Outcome::Failed, Stage::Read, errorText(err));
-    r.terminal(Outcome::Ok, Writer().i64(start).i64(count).bytes(samples).take());
+    const std::size_t bytes = static_cast<std::size_t>(frames) * 2 * static_cast<std::size_t>(source.displayChannels);
+    std::vector<std::byte> newBlock;
+    std::vector<std::byte> &buffer = fresh ? newBlock : source.block;
+    if (buffer.size() < bytes)
+        buffer.resize(bytes); // the new part zeroed, as legacy's vector began
+    // legacy "Fill beyond with zero": short samples [decode, frames), so in
+    // stereo half of the frames past the decoded ones
+    auto *samples = reinterpret_cast<std::int16_t *>(buffer.data());
+    for (std::int64_t i = decode; i < frames; ++i)
+        samples[i] = 0;
+    char text[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof text, text};
+    // FFMS2 copies each decoded piece into the buffer as it goes, so a failure
+    // leaves the frames it decoded first followed by what the buffer held.
+    if (decode > 0 && FFMS_GetAudio(source.display.get(), buffer.data(), start, decode, &err) != 0)
+        return r.terminal(Outcome::Failed, Writer()
+                                               .u8(static_cast<std::uint8_t>(Stage::Read))
+                                               .str(errorText(err))
+                                               .raw(buffer.data(), bytes)
+                                               .take());
+    r.terminal(Outcome::Ok, Writer().i64(start).i64(frames).raw(buffer.data(), bytes).take());
 }
 
 void audio(Source &source, Reader &in, Responder &r)

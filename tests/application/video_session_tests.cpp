@@ -60,6 +60,7 @@ struct FakeSource : IndexedSourcePort {
     IndexRequest lastRequest;
     std::vector<int> audioTracks; // the timeline's (the first is firstAudioTrack)
     bool newIndex = true;
+    std::string handoffIndexFile;
     std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
                               Opened done) override
     {
@@ -86,6 +87,7 @@ struct FakeSource : IndexedSourcePort {
         t.audioTracks = audioTracks;
         t.firstAudioTrack = audioTracks.empty() ? -1 : audioTracks.front();
         t.newIndex = newIndex;
+        t.handoffIndexFile = handoffIndexFile;
         pendingOpen(t);
     }
     void answer(std::size_t which = 0)
@@ -421,10 +423,12 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     // the same file reopened with another track: the open player switches
     video.open("/m/ep1.mkv", IndexRequest{1, {}});
     source.newIndex = true;
+    source.handoffIndexFile = "/tmp/hikari-index-x.ffindex"; // its index file could not be written
     source.finishOpen();
     source.answer();
     EXPECT_EQ(video.audioTrack(), 1);
     EXPECT_TRUE(video.newIndex());
+    EXPECT_EQ(video.indexHandoff(), "/tmp/hikari-index-x.ffindex");
     player.calls.clear();
     ASSERT_TRUE(video.play());
     EXPECT_EQ(player.calls.front(), "audio track 0");
@@ -436,4 +440,5 @@ TEST_F(VideoTest, PlaybackPlaysTheChosenAudioTrack)
     EXPECT_EQ(video.audioTrack(), 1);
     video.close();
     EXPECT_EQ(video.audioTrack(), -1);
+    EXPECT_TRUE(video.indexHandoff().empty());
 }

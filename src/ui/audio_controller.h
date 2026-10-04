@@ -63,7 +63,7 @@ public:
     // An indexed video's audio (legacy RendererFFMS2::OpenFile's
     // OpenAudioInTab(40000): the video's provider and track): the video's
     // track, from the index file the video's open wrote.
-    void openFromVideo(const QString &path, int track, bool videoNewIndex);
+    void openFromVideo(const QString &path, int track, bool videoNewIndex, const QString &handoffIndexFile = {});
     // Asks "Choose the track" for a video's open (legacy asked inside the
     // video's indexing); answers the row, or nothing on Cancel.
     void askTrack(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer);

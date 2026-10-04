@@ -9,6 +9,10 @@
 //                  cache, Indices/<name>_<track>.ffindex; empty: none). An
 //                  index file newer than the source that belongs to it is read
 //                  instead of indexing; a new index is written to it.
+//                  str handoffFile (A1; empty: none): when a new index cannot
+//                  be written to indexFile, it is written here instead, so the
+//                  audio box's helper reads it rather than indexing again
+//                  (legacy's box shared the video's index in memory).
 //         progress: i64 done, i64 total
 //         terminal Ok: i32 track, i64 fpsNum, i64 fpsDen, i64 timeBaseNum,
 //                      i64 timeBaseDen, i32 frameCount, i64 pts[frameCount],
@@ -16,7 +20,8 @@
 //                      i32 audioTracks[audioCount] (every audio track, in order),
 //                      i32 keyframeCount, i32 keyframes[keyframeCount] (frame
 //                      indices FFMS2 marks as keyframes, ascending),
-//                      u8 newIndex (1: indexed now, 0: read from indexFile)
+//                      u8 newIndex (1: indexed now, 0: read from indexFile),
+//                      u8 handedOff (1: the new index is in handoffFile)
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open
@@ -54,16 +59,27 @@
 //                      newIndex. Replaces the open source; DisplayRead reads it.
 // (10, OpenSourceDisplayAudio, read the open video's audio in the video's own
 // helper in protocol 5; removed in 6: the box has a helper of its own.)
-// DisplayRead request: u8 DisplayRead, i64 start, i64 count
-//         terminal Ok: as Audio, from the box's audio source
+// DisplayRead request: u8 DisplayRead, i64 start, i64 frames, i64 decode,
+//                  u8 fresh. Legacy ProviderFFMS2::GetAudio into a cache's
+//                  buffer: S16 samples [decode, frames) of the buffer are set
+//                  to zero (legacy's "fill beyond" counts samples, not
+//                  frames), then frames [0, decode) are decoded from start.
+//                  fresh 0: the helper's block buffer, kept from read to read
+//                  of the open source (legacy DiskCache's reused `data`);
+//                  1: a new zeroed buffer (legacy RAMCache's new block).
+//         terminal Ok: i64 start, i64 frames, bytes the buffer's frames
+//         terminal Failed, stage 4 (read): u8 stage, str text, bytes the
+//                  buffer's frames as FFMS2 left them (the frames it decoded
+//                  before failing, then what the buffer held)
 
 #include <cstdint>
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 6; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+inline constexpr std::uint32_t kProtocolVersion = 7; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
                                                    // 5: Probe, a chosen track, the video's audio, DisplayRead;
-                                                   // 6: index files and the audio track in Open, no shared display audio
+                                                   // 6: index files and the audio track in Open, no shared display audio;
+                                                   // 7: Open's index handoff, DisplayRead into a block buffer
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,

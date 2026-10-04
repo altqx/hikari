@@ -41,6 +41,11 @@ struct SourceTimeline {
     std::vector<int> audioTracks;  // every audio track, in container order
     std::vector<int> keyframes;    // frame indices of keyframes, ascending (V2)
     bool newIndex = true;          // A1: indexed now, not read from an index file
+    // A1: when the open's index file could not be written, the new index in a
+    // temporary file for the audio box to read (legacy's box shared the
+    // video's index); empty otherwise. The port removes it when the source is
+    // opened again or ends, or sooner when told the box has read it.
+    std::string handoffIndexFile;
 };
 
 // How an open indexes (A1; legacy ProviderFFMS2::Init). Legacy indexed the

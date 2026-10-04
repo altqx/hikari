@@ -94,6 +94,9 @@ public:
     int audioTrack() const { return m_state == State::Ready ? m_audioTrack : -1; }
     // A1: the open indexed now instead of reading legacy's index file.
     bool newIndex() const { return m_newIndex; }
+    // A1: the index handed over in a temporary file when the index file could
+    // not be written (SourceTimeline::handoffIndexFile); empty otherwise.
+    const std::string &indexHandoff() const { return m_indexHandoff; }
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
     std::optional<int> requestedFrame() const { return m_requested; }
@@ -139,6 +142,7 @@ private:
     int m_audioTrack = -1;
     int m_audioOrdinal = -1; // the track among the audio tracks (the general player's numbering)
     bool m_newIndex = true;
+    std::string m_indexHandoff;
     double m_fps = 0;
 };
 

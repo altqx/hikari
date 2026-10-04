@@ -9,12 +9,14 @@
 // The box has a media helper of its own, so its reads never wait behind the
 // video's frames (legacy decoded the cache on a thread of its own). Opening
 // uses legacy's index file (Indices/<name>_<track>.ffindex): for the open
-// video's audio the video has just written it, so nothing is indexed twice.
+// video's audio the video has just written it, or, when it could not, the
+// temporary file it handed the index over in, so nothing is indexed twice.
 // displayAudio() reads the open track, and cancelDisplay() resolves the box's
 // outstanding requests.
 
 #include "hikari/application/indexed_source.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <functional>
@@ -51,6 +53,25 @@ struct AudioFailure {
     SourceError error = SourceError::BackendFailure;
     AudioStage stage = AudioStage::Host;
     std::string message; // FFMS2's error text, when it gave one
+    // A failed read (Read): the block's buffer as FFMS2 left it, interleaved
+    // S16 for the block's frames (the frames decoded before the failure, then
+    // what the buffer held), as legacy cached it.
+    std::vector<std::byte> samples;
+};
+
+// A block read into a cache's buffer, as legacy ProviderFFMS2::GetAudio
+// read it: `frames` frames from `start`, of which the first `decode` are
+// decoded (legacy's count after it stopped at its sample count); the S16
+// samples [decode, frames) are set to zero first (legacy's "fill beyond"
+// counts samples, not frames). `fresh` false reads into the block buffer the
+// source keeps from read to read (legacy DiskCache's reused `data`, zeroed
+// when the track opens); true into a new zeroed one (legacy RAMCache's new
+// block, whose unwritten part was uninitialised memory: R3).
+struct BlockRead {
+    std::int64_t start = 0;
+    std::int64_t frames = 0;
+    std::int64_t decode = 0;
+    bool fresh = false;
 };
 
 // An opened track and whether its index was made now (legacy newIndex: a
@@ -77,8 +98,8 @@ public:
     // (FFMS_DELAY_FIRST_VIDEO_TRACK). Replaces whatever the helper had open.
     virtual void openDisplayAudio(const std::string &path, int track, const std::string &indexFile, Progress progress,
                                   Opened done) = 0;
-    // A half-open range of sample frames of the box's audio.
-    virtual void displayAudio(std::int64_t start, std::int64_t count, Read done) = 0;
+    // A block of the box's audio (BlockRead); the answer has `frames` frames.
+    virtual void displayAudio(const BlockRead &read, Read done) = 0;
     // Resolves the box's outstanding open and reads as Cancelled now.
     virtual void cancelDisplay() = 0;
 };

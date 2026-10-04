@@ -16,6 +16,7 @@
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
 #include <QSettings>
+#include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -3649,6 +3650,52 @@ private slots:
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old1.w64"))));
         QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old2.w64"))));
         QCOMPARE(QDir(folder.filePath(QStringLiteral("AudioCache"))).entryList(QDir::Files).size(), 10);
+        delete application;
+        application = nullptr;
+    }
+
+    // When the video's index file cannot be written (an Indices folder that
+    // cannot be written), the video's helper hands the index over in a
+    // temporary file; the box opens the video's audio from it without
+    // indexing again (legacy's box shared the video's index), and the file
+    // goes once the box has opened.
+    void indexHandedOverWhenIndicesCannotBeWritten()
+    {
+        delete engine;
+        engine = nullptr;
+        delete application;
+        application = nullptr;
+        QTemporaryDir folder;
+        const QString indices = folder.filePath(QStringLiteral("Indices"));
+        QVERIFY(QDir().mkpath(indices));
+#ifdef _WIN32
+        // a read-only folder still takes new files on Windows: the index
+        // file's name is taken by a folder instead
+        QVERIFY(QDir().mkpath(folder.filePath(QStringLiteral("Indices/clip_1.ffindex"))));
+#else
+        QVERIFY(QFile::setPermissions(indices, QFileDevice::ReadOwner | QFileDevice::ExeOwner));
+        const auto restore = qScopeGuard([&] { QFile::setPermissions(indices, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner); });
+        if (QFile probe(folder.filePath(QStringLiteral("Indices/probe"))); probe.open(QIODevice::WriteOnly))
+            QSKIP("the Indices folder stays writable for this user");
+#endif
+        app::Application::Options options;
+        options.indexDir = indices;
+        options.audioCacheDir = folder.filePath(QStringLiteral("AudioCache"));
+        application = new app::Application(options);
+        const QString clip = folder.filePath(QStringLiteral("clip.mkv"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().state() == application::VideoSession::State::Ready, 20000);
+        const QString handoff = QString::fromStdString(video.session().indexHandoff());
+        QVERIFY(!handoff.isEmpty());
+        QVERIFY(!QFileInfo(folder.filePath(QStringLiteral("Indices/clip_1.ffindex"))).isFile());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(audio.box().fromVideo());
+        QCOMPARE(audio.box().indexing().second, 0); // the box's helper read the index
+        QVERIFY(!audio.box().cacheReused()); // the video indexed now
+        QVERIFY(!QFileInfo::exists(handoff));
         delete application;
         application = nullptr;
     }

@@ -174,6 +174,7 @@ void AudioBox::open(const std::string &path)
     m_declined = false;
     m_fromVideo = false;
     m_videoNewIndex = false;
+    m_videoIndexFile.clear();
     // legacy Provider::Get
     if (path.starts_with("dummy")) {
         m_audio = DisplayAudio::silence(kDummyRate, kDummySamples);
@@ -186,7 +187,8 @@ void AudioBox::open(const std::string &path)
     start(request);
 }
 
-void AudioBox::openFromVideo(const std::string &path, int track, bool videoNewIndex)
+void AudioBox::openFromVideo(const std::string &path, int track, bool videoNewIndex,
+                             const std::string &handoffIndexFile)
 {
     close();
     const std::uint64_t request = ++m_request;
@@ -195,6 +197,7 @@ void AudioBox::openFromVideo(const std::string &path, int track, bool videoNewIn
     m_declined = false;
     m_fromVideo = true;
     m_videoNewIndex = videoNewIndex;
+    m_videoIndexFile = handoffIndexFile;
     m_state = State::Opening;
     m_indexing = {};
     m_progress = 0;
@@ -269,8 +272,12 @@ void AudioBox::openTrack(std::uint64_t request, int track)
         this->opened(request, opened->info, opened->newIndex || m_videoNewIndex);
     });
     const auto settings = m_settings ? m_settings() : AudioCacheSettings{};
+    // the video's index handed over in a temporary file stands in for its
+    // index file, which could not be written
     const std::string indexFile =
-        settings.indexDir.empty() ? std::string() : toUtf8(settings.indexDir / fromUtf8(legacyIndexName(m_path, track)));
+        m_fromVideo && !m_videoIndexFile.empty() ? m_videoIndexFile
+        : settings.indexDir.empty()              ? std::string()
+                                                 : toUtf8(settings.indexDir / fromUtf8(legacyIndexName(m_path, track)));
     m_own.openDisplayAudio(m_path, track, indexFile, guard(request, [this](std::int64_t indexed, std::int64_t total) {
                                m_indexing = {indexed, total};
                                notify();
@@ -325,11 +332,11 @@ void AudioBox::opened(std::uint64_t request, const AudioInfo &info, bool newInde
     // a positive delay starts with silence, a negative one skips the start
     m_sourceFrame = std::max<std::int64_t>(0, -m_delay);
     m_sourceEnd = sampleCount + m_sourceFrame;
+    m_decodeEnd = sampleCount; // legacy reduced m_numSamples by the skipped start before reading
     m_silence = std::max<std::int64_t>(0, m_delay);
     m_written = 0;
     m_block = 0;
     m_blocks = static_cast<int>(sampleCount * 2 * m_channels / kRamBlockBytes) + 1;
-    m_blockBuffer.assign(m_ram || m_reused ? 0 : static_cast<std::size_t>(kBlockFrames * m_channels), 0);
     m_progress = 0; // legacy m_audioProgress = 0
     m_state = State::Loading;
     if (m_reused) {
@@ -396,28 +403,31 @@ void AudioBox::readNext(std::uint64_t request)
 
 void AudioBox::readSource(std::uint64_t request, std::int64_t start, std::int64_t count)
 {
-    m_own.displayAudio(start, count, guard(request, [this, request, count](std::expected<AudioBlock, AudioFailure> block) {
+    // legacy GetAudio: a read past m_numSamples decodes up to it (with a
+    // negative delay the last blocks reach past it)
+    const std::int64_t decode = std::clamp<std::int64_t>(m_decodeEnd - start, 0, count);
+    const BlockRead read{start, count, decode, m_ram};
+    m_own.displayAudio(read, guard(request, [this, request, count](std::expected<AudioBlock, AudioFailure> block) {
         bool kept = false;
+        const auto bytes = static_cast<std::size_t>(count * m_channels) * 2;
         if (block) {
-            if (block->channels != m_channels || block->count < 0 || block->count > count ||
-                block->samples.size() < static_cast<std::size_t>(block->count * m_channels) * 2) {
+            if (block->channels != m_channels || block->count != count || block->samples.size() != bytes) {
                 log("Cannot open audio " + m_path, LogLevel::Shown);
                 return fail(SourceError::BackendFailure);
             }
-            const auto *samples = reinterpret_cast<const std::int16_t *>(block->samples.data());
-            if (!m_blockBuffer.empty()) // the block buffer legacy reuses holds this block now
-                std::copy_n(samples, block->count * m_channels, m_blockBuffer.begin());
-            // legacy GetAudio: past the end is silence
-            kept = m_audio->appendFrames(samples, block->count, m_channels) &&
-                   m_audio->appendSilence(count - block->count, m_channels);
+            kept = m_audio->appendFrames(reinterpret_cast<const std::int16_t *>(block->samples.data()), count,
+                                         m_channels);
         } else if (block.error().stage == AudioStage::Read || block.error().error == SourceError::EndOfStream) {
-            // legacy logged FFMS_GetAudio's error for debugging and kept caching
-            // what its buffer held: on disk the block buffer it reuses (the
-            // previous block, zeros before the first); in RAM silence (R3:
+            // legacy logged FFMS_GetAudio's error for debugging and kept
+            // caching what its buffer held: the frames decoded before the
+            // failure, then the block buffer's earlier content on disk (the
+            // previous block, zeros before the first) or zeros in RAM (R3:
             // legacy's new block was uninitialised memory)
             log("error audio" + block.error().message, LogLevel::Debug);
-            kept = m_blockBuffer.empty() ? m_audio->appendSilence(count, m_channels)
-                                         : m_audio->appendFrames(m_blockBuffer.data(), count, m_channels);
+            const auto &held = block.error().samples;
+            kept = held.size() == bytes
+                       ? m_audio->appendFrames(reinterpret_cast<const std::int16_t *>(held.data()), count, m_channels)
+                       : m_audio->appendSilence(count, m_channels);
         } else {
             if (block.error().error == SourceError::HelperLost || block.error().error == SourceError::Busy ||
                 block.error().error == SourceError::BackendFailure)
@@ -451,7 +461,6 @@ void AudioBox::fail(SourceError error)
     m_audio.reset();
     m_cacheFile.clear();
     m_reused = false;
-    m_blockBuffer.clear();
     m_indexing = {};
     m_progress = 0;
     m_channels = 0;
@@ -472,10 +481,10 @@ void AudioBox::close()
     m_audio.reset(); // a complete disk cache keeps its name, an incomplete one is removed
     m_cacheFile.clear();
     m_reused = false;
-    m_blockBuffer.clear();
     m_path.clear();
     m_fromVideo = false;
     m_videoNewIndex = false;
+    m_videoIndexFile.clear();
     m_choosing = false;
     m_indexing = {};
     m_progress = 0;
