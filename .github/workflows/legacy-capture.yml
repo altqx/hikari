@@ -109,6 +109,23 @@ jobs:
             --legacy-commit "$LEGACY_COMMIT" \
             --out capture/observations.json | tee capture/summary.json
 
+      # The legacy package and its wx libraries, so a capture route can be
+      # reproduced outside CI (an Ubuntu 24.04 container with Xvfb and openbox).
+      - name: Bundle the legacy app for local reproduction
+        if: always()
+        run: |
+          mkdir -p legacy-app
+          cp legacy/build/dist/hikarisub-linux-x86_64.tar.gz legacy-app/ || true
+          tar -C legacy/build-wx-linux/prefix -czf legacy-app/wx-prefix-lib.tar.gz lib || true
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: legacy-app-${{ github.run_id }}-${{ github.run_attempt }}
+          path: legacy-app/
+          if-no-files-found: warn
+          retention-days: 7
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
