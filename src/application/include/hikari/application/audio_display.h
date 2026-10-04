@@ -162,6 +162,7 @@ struct AudioDisplayOptions {
     std::uint32_t spectrumBackground = 0xFF000000;    // AUDIO_SPECTRUM_BACKGROUND
     std::uint32_t spectrumEcho = 0xFF674FD7;          // AUDIO_SPECTRUM_ECHO
     std::uint32_t spectrumInner = 0xFFF4F4F4;         // AUDIO_SPECTRUM_INNER
+    std::uint32_t lineBoundaryMark = 0xFFFFFFFF;      // AUDIO_LINE_BOUNDARY_MARK (A3)
 };
 
 // Legacy AudioDisplayScaleFromSlider: a cubic response, 50 is 100%.
@@ -267,6 +268,10 @@ struct AudioMarks {
     std::vector<int> keyframesMs; // the video's keyframes (legacy Timebase::Keyframes)
     std::optional<int> videoMs;   // the paused video's time (legacy VideoBox::Tell)
     bool focused = false;
+    // A3: the mark (legacy hasMark, curMarkMS) and the label font's text
+    // height (wx GetTextExtent with verdana11), which places its time.
+    std::optional<int> markMs;
+    int markTextHeight = 0;
 };
 
 // Legacy DoUpdateImage: everything but the cursor. `columns` are the

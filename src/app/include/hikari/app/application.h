@@ -507,6 +507,10 @@ public:
     Q_INVOKABLE void openAudioFromVideo();
     Q_INVOKABLE QVariantList recentAudio();
     Q_INVOKABLE QUrl audioDialogFolder() const;
+    // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
+    // Video menu, enabled while the audio box exists): the box centred on the
+    // video's time (VideoBox::Tell, 0 without video), with the mark there too.
+    Q_INVOKABLE void setAudioFromVideo(bool mark);
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -708,6 +712,13 @@ private:
     void trimAudioCache();
     // Legacy's index file for `path` and an audio track (-1: none).
     QString indexFile(const QString &path, int track) const;
+    // A3: the box's commits reach the editing target here (legacy
+    // CommitChanges through the edit box and grid); while one runs the box
+    // keeps its selection for the same Line (no SetDialogue).
+    bool m_audioCommitting = false;
+    void commitAudioTimes(const application::AudioCommitRequest &request);
+    void setAudioActive(int key);
+    void seekVideoFromAudio(int ms);
 };
 
 } // namespace hikari::app

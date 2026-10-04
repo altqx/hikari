@@ -67,3 +67,6 @@ hikari_add_gtest(hikari_application_hotkeys_tests SOURCES hotkeys_tests.cpp
 target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
+# A3: the audio box's timing.
+hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
+    LIBRARIES hikari_application LABELS application)

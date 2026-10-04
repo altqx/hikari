@@ -10,6 +10,7 @@
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
 #include "hikari/application/audio_spectrum.h"
+#include "hikari/application/audio_timing.h"
 
 #include <QObject>
 #include <QPointer>
@@ -155,7 +156,68 @@ public:
     int scrollPage() const { return m_scrollbar.page; }
     int scrollRange() const { return m_scrollbar.range; }
 
+    // A3: timing (legacy AudioDisplay's selection and mouse timing,
+    // CommitChanges, AddLead, ChangeLine, SetMark and ChangePosition; the
+    // AudioBox buttons and hotkeys). What legacy did through the edit box,
+    // the grid and the video, the application does through these hooks.
+    Q_PROPERTY(bool hasMark READ hasMark NOTIFY markChanged)
+    Q_PROPERTY(int markMs READ markMs NOTIFY markChanged)
+    Q_PROPERTY(bool modified READ modified NOTIFY displayChanged) // legacy NeedCommit
+    Q_PROPERTY(int selectionStart READ selectionStart NOTIFY displayChanged)
+    Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY displayChanged)
+public:
+    struct TimingHooks {
+        // CommitChanges' edit-box part: the times into the editor's fields,
+        // with `save` EditBox::Send(AUDIO_CHANGE_TIME, nextLine).
+        std::function<void(const application::AudioCommitRequest &)> commit;
+        // grid->SetActive: the Line at `key` becomes active, selected alone.
+        std::function<void(int key)> setActive;
+        // tab->video->Seek (Ctrl+left or middle click).
+        std::function<void(int ms)> seekVideo;
+        // A4: legacy Play after Next/Previous (unless
+        // AUDIO_DONT_PLAY_WHEN_LINE_CHANGES) and on a middle double click,
+        // and the player's end while a boundary is dragged. Unset: nothing plays.
+        std::function<void(int startMs, int endMs)> play;
+        std::function<void(std::int64_t sample)> setPlayEnd;
+    };
+    void setTimingHooks(TimingHooks hooks) { m_hooks = std::move(hooks); }
+    // AUDIO_AUTO_COMMIT, the snap options, AUDIO_START_DRAG_SENSITIVITY, the
+    // leads and AUDIO_DONT_PLAY_WHEN_LINE_CHANGES, read when used.
+    void setTimingSettings(std::function<application::AudioTimingOptions()> settings)
+    {
+        m_timingSettings = std::move(settings);
+    }
+    // Each keyframe's snap time (StartTimeFor(FrameAt(keyframe))), in step with setKeyframes.
+    void setKeyframeSnapTimes(std::vector<int> snapMs) { m_keyframeSnap = std::move(snapMs); }
+    bool hasMark() const { return m_timing.hasMark(); }
+    int markMs() const { return m_timing.markMs(); }
+    bool modified() const { return m_needCommit; }
+    int selectionStart() const { return m_startMs; }
+    int selectionEnd() const { return m_endMs; }
+    const application::AudioTiming &timing() const { return m_timing; }
+    // AUDIO_COMMIT and AUDIO_COMMIT_ALT (AudioBox::OnCommit: CommitChanges(true)).
+    Q_INVOKABLE void commit();
+    // AUDIO_NEXT(_ALT), AUDIO_PREVIOUS(_ALT) (AudioBox::OnNext/OnPrev).
+    Q_INVOKABLE void nextLine();
+    Q_INVOKABLE void previousLine();
+    // AUDIO_GOTO (MakeDialogueVisible(true)).
+    Q_INVOKABLE void goToSelection();
+    // AUDIO_LEAD_IN, AUDIO_LEAD_OUT (AddLead).
+    Q_INVOKABLE void leadIn() { addLead(true, false); }
+    Q_INVOKABLE void leadOut() { addLead(false, true); }
+    // GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: the
+    // view centred on the video's time (ChangePosition), the mark there too.
+    void showTime(int ms, bool mark);
+    // The display's mouse (OnMouseEvent's timing) and lost capture.
+    application::AudioMouseResult mouse(const application::AudioMouse &event);
+    void lostCapture() { m_timing.lostCapture(); }
+    // The label font's text height, which places the mark's time.
+    void setMarkTextHeight(int height) { m_markTextHeight = height; }
+
 signals:
+    // A3: the mark was set or moved; the display wants the focus (SetFocus).
+    void markChanged();
+    void focusRequested();
     void changed();
     void displayChanged();
     void cursorChanged();
@@ -177,8 +239,15 @@ private:
     void boxChanged();
     void newView();
     void reselect();     // legacy SetDialogue
-    void update();       // legacy Update: follow the Line, then redraw
+    void update(bool moveToEnd = false); // legacy Update: follow the Line, then redraw
     void redraw();
+    // A3
+    application::AudioTimingOptions timingOptions() const;
+    application::AudioSnapContext snapContext() const;
+    void commitChanges(bool nextLine, bool save, bool moveToEnd,
+                       application::AudioAdjacent adjacent = application::AudioAdjacent::None);
+    void changeLine(int delta);
+    void addLead(bool in, bool out);
 
     application::AudioBox m_box;
     std::function<application::AudioCacheSettings()> m_settings;
@@ -226,6 +295,13 @@ private:
         bool nonLinear = false;
         bool operator==(const SpectrumKey &) const = default;
     } m_spectrumKey;
+    // A3
+    application::AudioTiming m_timing;
+    bool m_needCommit = false; // legacy NeedCommit
+    std::vector<int> m_keyframeSnap;
+    std::function<application::AudioTimingOptions()> m_timingSettings;
+    TimingHooks m_hooks;
+    int m_markTextHeight = 0;
 };
 
 } // namespace hikari::ui
