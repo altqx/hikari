@@ -333,6 +333,10 @@ QString HotkeysController::actionFor(int window, int key, int modifiers) const
 
 void HotkeysController::beginOptions()
 {
+    // O2-stale-copy (approved): each dialog edits its own copy of the
+    // bindings, filled at its first edit; a cancelled dialog's copy goes
+    // with it (legacy's static hotkeysCopy outlived the dialog).
+    m_copy.clear();
     m_list = std::make_unique<application::HotkeyList>(m_copy);
     m_list->build(bindings());
     emit rowsChanged();

@@ -5021,17 +5021,18 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
         QVERIFY(!application->settingsStore()->contains("shortcuts.hotkeys"));
-        // The copy outlives the dialog (legacy's static hotkeysCopy): the
-        // next dialog's OK writes the cancelled edits too.
+        // O2-stale-copy (approved): the cancelled dialog's edits went with
+        // it (legacy's static hotkeysCopy outlived the dialog, and the next
+        // dialog's OK wrote them too); the next dialog writes its own only.
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
         application->hotkeys().select(hotkeyPosition(QStringLiteral("Global Find")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyRemove"), "clicked"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QString());
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Shift-H"));
-        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QStringLiteral("F6"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_HISTORY"), 0), QStringLiteral("Ctrl-Shift-H"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-S"));
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 3), QString());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
         // Apply clears the changed marks and keeps the dialog.
         QVERIFY(!hotkeyRow(QStringLiteral("Global Find")).value(QStringLiteral("keyModified")).toBool());

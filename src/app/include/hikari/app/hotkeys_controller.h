@@ -8,8 +8,9 @@
 //   legacy saves its files (shortcuts.hotkeys: Hotkeys.txt's lines without
 //   the scripts, shortcuts.audioHotkeys: AudioHotkeys.txt's) and installed
 //   (the shortcuts in effect) when legacy calls SetAccels.
-// - The Options page edits legacy's static hotkeysCopy, which outlives the
-//   dialog; OK/Apply make it the bindings, save and install them.
+// - The Options page edits a copy of the bindings of its own (legacy's
+//   static hotkeysCopy outlived the dialog: O2-stale-copy); OK/Apply make
+//   it the bindings, save and install them.
 // - "Set default" (ResetDefault) replaces the bindings in memory only.
 // - The Shift+click gesture on a menu item or a mapped button (OnMapHkey)
 //   changes, installs and saves the bindings at once.
@@ -122,7 +123,7 @@ private:
     ui::SettingsStore &m_settings;
     application::HotkeyMap m_live;      // the static bindings in memory
     application::HotkeyMap m_installed; // the bindings in effect, scripts excluded
-    application::HotkeyMap m_copy;      // OptionsDialog::hotkeysCopy
+    application::HotkeyMap m_copy;      // OptionsDialog::hotkeysCopy, one per dialog (O2-stale-copy)
     std::unique_ptr<application::HotkeyList> m_list;
     int m_installedTagButtons = 0; // EDITBOX_TAG_BUTTONS when installed
     bool m_lastClickShift = false;     // Shift alone
