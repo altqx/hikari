@@ -188,6 +188,63 @@ TEST_F(PortAudioDevice, LostStreamInvalidatesAndReopenRecovers)
     ASSERT_TRUE(feedUntil(out, [&] { return out.status().framesConsumed > 0 && out.clock().valid; }));
 }
 
+// M50-device with a real device that goes away and comes back: runs only with
+// HIKARI_TEST_AUDIO_HOTPLUG (a substring of the device's name) and optionally
+// HIKARI_TEST_AUDIO_HOTPLUG_API (its host API). The test prints HOTPLUG-READY
+// once the stream runs; whoever drives it (tools/winix/hotplug.sh unplugs a
+// QEMU USB audio device) then removes the device, the test prints
+// HOTPLUG-LOST once the loss is seen and the device is gone, and waits for the
+// device to come back. Only silence is written.
+TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
+{
+    const char *wanted = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG");
+    if (!wanted || !*wanted)
+        GTEST_SKIP() << "set HIKARI_TEST_AUDIO_HOTPLUG and unplug the device on HOTPLUG-READY";
+    const char *api = std::getenv("HIKARI_TEST_AUDIO_HOTPLUG_API");
+    const auto find = [&](PortAudioOutput &out) {
+        for (const auto &device : out.devices())
+            if (device.name.find(wanted) != std::string::npos && (!api || !*api || device.hostApi == api))
+                return device.id;
+        return std::string();
+    };
+    const auto say = [](const std::string &line) {
+        std::printf("%s\n", line.c_str());
+        std::fflush(stdout);
+    };
+
+    PortAudioOutput out;
+    ASSERT_TRUE(out.available());
+    const std::string id = find(out);
+    ASSERT_FALSE(id.empty()) << "no output named like \"" << wanted << "\"";
+    ASSERT_TRUE(out.open(id, {48000, 2}));
+    ASSERT_TRUE(out.start());
+    ASSERT_TRUE(feedUntil(out, [&] { return out.clock().valid; }));
+    const auto before = out.clock();
+    say("HOTPLUG-READY " + id);
+
+    // The host reports the loss as an unrequested stream end, or its
+    // callbacks stop: either way the estimate goes.
+    ASSERT_TRUE(feedUntil(out, [&] { return out.status().deviceLost || !out.clock().valid; }, 120s))
+        << "the device was not lost within 120 s";
+    const auto lost = out.status();
+    say(std::string("loss seen: deviceLost ") + (lost.deviceLost ? "1" : "0") + ", running " +
+        (lost.running ? "1" : "0") + ", callbacks " + std::to_string(lost.callbacks));
+    EXPECT_FALSE(out.clock().valid);
+    out.close();
+    ASSERT_TRUE(waitFor([&] { return find(out).empty(); }, 30s)) << "the device is still listed";
+    EXPECT_EQ(out.open(id, {48000, 2}).error(), application::OutputError::DeviceUnavailable);
+    say("HOTPLUG-LOST");
+
+    std::string back;
+    ASSERT_TRUE(waitFor([&] { return !(back = find(out)).empty(); }, 120s)) << "the device did not come back";
+    // Windows may need a moment after listing it before a stream opens.
+    ASSERT_TRUE(waitFor([&] { return static_cast<bool>(out.open(back, {48000, 2})); }, 30s)) << back;
+    ASSERT_TRUE(out.start());
+    ASSERT_TRUE(feedUntil(out, [&] { return out.status().framesConsumed > 0 && out.clock().valid; }));
+    EXPECT_GT(out.clock().epoch, before.epoch) << "the reopened stream starts a new epoch";
+    say("HOTPLUG-RECOVERED " + back);
+}
+
 TEST_F(PortAudioDevice, RescanWaitsWhileAStreamIsOpen)
 {
     ASSERT_TRUE(out.open(id, {48000, 2}));

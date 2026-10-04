@@ -256,7 +256,7 @@ TEST_F(Spelling, DictionaryFoldersInSearchOrder)
     writeFile(bundled / "pl.dic", "1\nkot\n");
     EXPECT_EQ(names(availableDictionaries(std::vector<fs::path>{folder, bundled})),
               (std::vector<std::string>{"en_US", "pl"}));
-    SpellChecker both({folder, bundled}, fakes::FakeSpelling::loader(&backend));
+    SpellChecker both(std::vector<fs::path>{folder, bundled}, fakes::FakeSpelling::loader(&backend));
     ASSERT_EQ(both.initialize(u"pl"), SpellChecker::Status::Ready);
     EXPECT_TRUE(both.checkWord(u"kot"));
     ASSERT_EQ(both.initialize(u"en_US"), SpellChecker::Status::Ready);

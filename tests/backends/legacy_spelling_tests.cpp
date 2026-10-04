@@ -131,7 +131,7 @@ TEST(HunspellSpelling, SpellCheckerInitializesFromTheFolder)
         std::ofstream out(user / "UserDic.udic", std::ios::binary);
         out << "\xEF\xBB\xBFHikari\r\nwrold";
     }
-    application::SpellChecker checker({user, kFixtures}, backends::hunspellSpellingLoader());
+    application::SpellChecker checker(std::vector<std::filesystem::path>{user, kFixtures}, backends::hunspellSpellingLoader());
     EXPECT_EQ(checker.initialize(u"en_TEST"), application::SpellChecker::Status::Ready);
     EXPECT_TRUE(checker.checkWord(u"Hikari"));
     EXPECT_TRUE(checker.checkWord(u"wrold"));
