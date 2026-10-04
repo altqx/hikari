@@ -11,6 +11,19 @@ Records what the legacy wx HikariSub actually does on the [approved-departure fi
 
 **The dialog cases never complete on the legacy baseline, on either platform.** `LuaCommand::Run` (`Automation.cpp:993-996`) starts the macro on a `LuaThreadedCall` and joins it with `wxThread::Wait()` on the main thread, while `aegisub.dialog.display` (`LuaProgressSink::LuaDisplayDialog`, `AutomationProgress.cpp:240-258`) queues the dialog to the main thread and waits on a semaphore. The pinned wxWidgets 3.3.3 defines `wxTHREAD_WAIT_DEFAULT` as `wxTHREAD_WAIT_BLOCK`, so `Wait()` pumps no messages on wxMSW either (`WaitForSingleObject` through `wxAppTraits::DoSimpleWaitForThread`); on wxGTK it is a plain `pthread_join`. Every macro that shows a dialog leaves the app not responding with no dialog on screen. Macros without a dialog (the corpus capture) run.
 
+### F1 and F3 ui cases
+
+The plan's `ui` section ([`ui_capture.py`](ui_capture.py), run by `drive.py` after the automation route) drives the legacy Find and replace dialog and the Spellchecker window on capture-only documents in [`inputs/`](inputs). Each case runs a fresh copy of the package with a `Config.txt` holding the case's options (a header that does not match the build makes legacy load its defaults first, then the listed values), Autoload emptied but for [`automation/state-dump.lua`](automation/state-dump.lua), and the `en_TEST` fixture dictionary. The steps are semantic (select rows, open a tab, type the search or replacement, Find, Replace next, Replace all, Find all, Replace checked, answer a box, dump, open the Spellchecker and walk it by Ignore), so the rewrite replays the same plan (`FindReplaceCapture.ReplaysTheLegacyCaptures`). A dump runs the state-dump macro from Automation > Hikari state dump by menu hover and Return; it first clicks the Line editor's Effect field (`focus_at`), because after a message box closes legacy's frame has no focused window and the menu bar gets no keys. Documents are dated two minutes back: the Linux build compares a file's time (with milliseconds) with the load time in whole seconds and would otherwise ask "Subtitles were modified by another program. Reload?". Positions (menus, dialog buttons relative to their window, grid rows) are plan values for the 1280x800 Xvfb screen. To run only these cases (for example in the `hikari-legacy-env` container with the package from a run's `legacy-app-*` artifact):
+
+```
+python3 tools/legacy-capture/ui_capture.py --plan tools/legacy-capture/plan.json \
+    --package hikarisub-linux-x86_64.tar.gz --out capture/observations.json [--only F1-next-text ...]
+python3 tools/legacy-capture/compare_ui.py capture/observations.json \
+    <build>/tests/application/artifacts/find-replace-capture.json
+```
+
+[`compare_ui.py`](compare_ui.py) prints each F1 dump and box beside the rewrite's replay and the F3 walk; the reviewed capture is [`local-f1f3-20261004`](../../tests/fixtures/legacy-observations/local-f1f3-20261004/README.md).
+
 ### Windows route
 
 [`drive_windows.py`](drive_windows.py) runs the same capture against the legacy Windows release (`v0.0.1-rc.1`, built from the baseline) on the Winix VM desktop. From a worktree with a clean, committed tree:

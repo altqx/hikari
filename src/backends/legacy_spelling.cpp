@@ -244,14 +244,26 @@ application::SpellingBackendLoader hunspellSpellingLoader()
     };
 }
 
-application::SpellingText legacySpellingText()
+core::legacy::CaseMapping legacyCaseMapping(bool everyLetter)
+{
+    core::legacy::CaseMapping cases;
+    if (everyLetter) {
+        cases.isUpper = [](char16_t c) { return QChar(c).isUpper(); };
+        cases.toUpper = [](char16_t c) { return QChar(c).toUpper().unicode(); };
+        cases.toLower = [](char16_t c) { return QChar(c).toLower().unicode(); };
+    } else {
+        cases.isUpper = [](char16_t c) { return c >= u'A' && c <= u'Z'; };
+        cases.toUpper = [](char16_t c) { return c >= u'a' && c <= u'z' ? static_cast<char16_t>(c - 32) : c; };
+        cases.toLower = [](char16_t c) { return c >= u'A' && c <= u'Z' ? static_cast<char16_t>(c + 32) : c; };
+    }
+    return cases;
+}
+
+application::SpellingText legacySpellingText(bool everyLetter)
 {
     application::SpellingText text;
     text.segment = segmentWords;
-    // iswupper / wxToupper / wxTolower: one UTF-16 unit at a time.
-    text.cases.isUpper = [](char16_t c) { return QChar(c).isUpper(); };
-    text.cases.toUpper = [](char16_t c) { return QChar(c).toUpper().unicode(); };
-    text.cases.toLower = [](char16_t c) { return QChar(c).toLower().unicode(); };
+    text.cases = legacyCaseMapping(everyLetter);
     return text;
 }
 

@@ -85,6 +85,41 @@ TEST(PortAudioOutput, EnumeratesScopedDeviceIds)
     EXPECT_LE(defaults, 1);
 }
 
+// A4-wasapi-default: the default device is the preferred host API's default
+// output (WASAPI on Windows), else PortAudio's own.
+TEST(PortAudioOutput, PreferredHostApiNamesTheDefaultDevice)
+{
+#ifdef _WIN32
+    EXPECT_EQ(PortAudioOutput::defaultHostApi(), "Windows WASAPI");
+#else
+    EXPECT_EQ(PortAudioOutput::defaultHostApi(), "");
+#endif
+    PortAudioOutput any;
+    ASSERT_TRUE(any.available());
+    std::set<std::string> apis;
+    for (const auto &device : any.devices())
+        apis.insert(device.hostApi);
+    for (const std::string &api : apis) {
+        PortAudioOutput::Options options;
+        options.hostApi = api;
+        PortAudioOutput out(options);
+        int defaults = 0;
+        for (const auto &device : out.devices())
+            if (device.isDefault) {
+                ++defaults;
+                EXPECT_EQ(device.hostApi, api) << "the default is " << api << "'s";
+            }
+        EXPECT_LE(defaults, 1);
+    }
+    PortAudioOutput::Options unknown;
+    unknown.hostApi = "No Such API";
+    PortAudioOutput fallback(unknown);
+    int defaults = 0;
+    for (const auto &device : fallback.devices())
+        defaults += device.isDefault;
+    EXPECT_LE(defaults, 1) << "an unknown host API falls back to PortAudio's default";
+}
+
 TEST(PortAudioOutput, CallsWithoutAStreamFailCleanly)
 {
     PortAudioOutput out;
@@ -158,18 +193,24 @@ TEST_F(PortAudioDevice, NegotiatesTheRateOrRefuses)
 
 TEST_F(PortAudioDevice, ReopensByIdAfterARescan)
 {
+    // A rescan can renumber the host's devices (desktop ALSA lists come and
+    // go), so the reopened stream is compared by host API and name.
+    const auto sameDevice = [](const std::string &a, const std::string &b) {
+        const auto ka = a.find('/'), kb = b.find('/');
+        return a.substr(0, ka) == b.substr(0, kb) && a.substr(a.find('/', ka + 1)) == b.substr(b.find('/', kb + 1));
+    };
     ASSERT_TRUE(out.open(id, {48000, 2}));
     out.close();
     const auto devices = out.devices(); // idle: rescans the host
     ASSERT_FALSE(devices.empty());
     ASSERT_TRUE(out.open(id, {48000, 2}));
-    EXPECT_EQ(out.openDeviceId(), id);
+    EXPECT_TRUE(sameDevice(out.openDeviceId(), id)) << out.openDeviceId() << " vs " << id;
     out.close();
     // An id whose index moved still names the device by host API and name.
     const auto first = id.find('/'), second = id.find('/', first + 1);
     const std::string moved = id.substr(0, first) + "/9999/" + id.substr(second + 1);
     ASSERT_TRUE(out.open(moved, {48000, 2}));
-    EXPECT_EQ(out.openDeviceId(), id);
+    EXPECT_TRUE(sameDevice(out.openDeviceId(), id)) << out.openDeviceId() << " vs " << id;
 }
 
 TEST_F(PortAudioDevice, LostStreamInvalidatesAndReopenRecovers)

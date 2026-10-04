@@ -22,6 +22,14 @@ set_target_properties(hikari_lua_helper PROPERTIES OUTPUT_NAME hikari-lua-helper
 target_compile_definitions(hikari_lua_helper PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
 target_link_libraries(hikari_lua_helper PRIVATE hikari_lua_protocol hikari_lua_legacy_native Hikari::luajit
     Boost::regex Boost::locale ICU::i18n ICU::uc ICU::data)
+# A Lua error unwinds the C++ frames between lua_error and the protecting
+# pcall (LuaJIT's full C++ interoperability, which runs their destructors).
+# MSVC's default /EHsc assumes extern "C" functions such as lua_error never
+# throw, so a frame raising one while it holds an object with a destructor
+# has no unwind state for it and ends the process; /EHs (with /EHc-) keeps it.
+if(MSVC)
+    target_compile_options(hikari_lua_helper PRIVATE /EHc-)
+endif()
 hikari_module(hikari_lua_helper ALLOW hikari_lua_protocol hikari_helper_endpoint hikari_application hikari_core
     hikari_lua_legacy_native Hikari::luajit "Boost::*" "ICU::*")
 

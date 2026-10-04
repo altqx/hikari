@@ -12,10 +12,14 @@ Routes (see plan.json):
   automation (plan "automation" section) the legacy Lua host: the bundled
             Autoload scripts at startup, then automation/capture-probe.lua's
             macros run through script hotkeys (dialog subset, then corpus)
+  ui        (plan "ui" section, ui_capture.py) F1 Find and replace and F3
+            spell checker cases, observed through automation/state-dump.lua
 Anything else is recorded as not captured, with the plan's reason.
 """
 import argparse, hashlib, json, os, platform, shutil, subprocess, sys, tarfile, tempfile, time
 from pathlib import Path
+
+import ui_capture
 
 
 SUBTITLE_SUFFIXES = {".ass", ".ssa", ".srt", ".sub", ".txt", ".mpl"}
@@ -432,6 +436,10 @@ def main():
         probe_source = a.plan.parent / auto["probe"]
         result["cases"].append({"id": auto["id"], "route": "automation",
                                 "observations": automation(auto, a.package, a.display, workdir, probe_source)})
+    if "ui" in plan:
+        ui = plan["ui"]
+        result["cases"].append({"id": ui["id"], "route": "ui",
+                                "observations": ui_capture.run(ui, a.package, a.display, workdir, a.plan.parent)})
     a.out.write_text(json.dumps(result, indent=1) + "\n")
     bad = [c["id"] for c in result["cases"] for o in c.get("observations", [])
            if o["status"] not in ("captured", "not-representable-in-legacy-ms")]

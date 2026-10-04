@@ -66,6 +66,15 @@ namespace hikari::app {
 
 namespace {
 
+// U1-unicode-case: case-insensitive matching folds every letter by Unicode
+// simple case folding, which maps one code point to one, so match offsets in
+// the folded text are offsets in the original.
+std::u16string unicodeFold(std::u16string_view s)
+{
+    const QString folded = QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size())).toCaseFolded();
+    return std::u16string(reinterpret_cast<const char16_t *>(folded.utf16()), static_cast<std::size_t>(folded.size()));
+}
+
 std::u8string toU8(const QString &text)
 {
     const QByteArray utf8 = text.toUtf8();
@@ -480,14 +489,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_dictionaryDirs << bundled;
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
-    {
-        // hikarisubApp::OnInit: a PROGRAM_LANGUAGE other than English (and
-        // the legacy "0"/"1", read as none) that wxLocale knows initializes
-        // wxLocale, which sets the process locale; otherwise it stays "C".
-        const QString language = m_settings->text("program.language");
-        m_foldsEveryLetter = !language.isEmpty() && language != QLatin1String("0") && language != QLatin1String("1") &&
-                             language != QLatin1String("en") && QLocale(language).language() != QLocale::C;
-    }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
@@ -544,7 +545,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_sessionId.toStdString(), m_recoveryDir.isEmpty() ? 0 : capacity);
     m_recovery->prune(std::chrono::system_clock::now());
     // F3: spelling options, the Dictionary folder and the Grid's marks.
-    m_spellingText = backends::legacySpellingText();
+    // GetRightCase, IsAllUpperCase and Ignore All's comparison: the case
+    // functions of the interface language's C locale (legacyCaseMapping).
+    m_spellingText = backends::legacySpellingText(true);
     m_dictionaryDir = options.dictionaryDir;
     if (m_dictionaryDir.isEmpty() && !m_settingsFile.isEmpty())
         m_dictionaryDir = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Dictionary");
@@ -2380,11 +2383,9 @@ void Application::saveSelectLinesSettings(const QVariantMap &settings)
 QString Application::selectLines(const QVariantMap &map, bool allTabs)
 {
     const auto settings = selectSettings(map, m_selectOptions);
-    // wxString::MakeLower, character by character.
-    const application::TextFold fold = [](std::u16string_view s) {
-        const QString lower = QString(reinterpret_cast<const QChar *>(s.data()), static_cast<qsizetype>(s.size())).toLower();
-        return std::u16string(reinterpret_cast<const char16_t *>(lower.utf16()), static_cast<std::size_t>(lower.size()));
-    };
+    // Case-insensitive by Unicode case folding for every letter
+    // (U1-unicode-case; legacy's English interface folded A-Z only).
+    const application::TextFold fold = unicodeFold;
     std::vector<application::EditSession *> sessions;
     if (allTabs) {
         for (const auto id : m_workspace.documents())
@@ -2436,11 +2437,13 @@ QString Application::selectStylesPattern(const QStringList &styles) const
 
 namespace {
 
-// iswupper, towlower and towupper per character (wxString MakeLower/MakeUpper).
-application::ReplacerCase replacerCase()
+// MisspellReplacer::MoveCase: iswupper, and towlower / towupper through
+// wxString MakeLower / MakeUpper and wxToupper, as the interface language's
+// C locale has them (backends::legacyCaseMapping: A-Z only in English).
+application::ReplacerCase replacerCase(bool everyLetter)
 {
-    return {[](char16_t c) { return QChar(c).isUpper(); }, [](char16_t c) { return QChar(c).toLower().unicode(); },
-            [](char16_t c) { return QChar(c).toUpper().unicode(); }};
+    const auto cases = backends::legacyCaseMapping(everyLetter);
+    return {cases.isUpper, cases.toLower, cases.toUpper};
 }
 
 QString fromUtf16(const std::u16string &s)
@@ -2730,7 +2733,7 @@ void Application::replaceMisspells(const QVariantMap &scope, bool allTabs)
         if (auto *session = m_files->session(id); session && !(m_workspace.reference() && *m_workspace.reference() == id)) {
             logRegexErrors(*m_log, misspellRuleList(), true); // ReplaceOnTab compiles per tab
             application::ReplacerMatchErrors matchErrors;
-            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(),
+            (void)application::replaceErrors(*session, misspellRuleList(), replacerScope(scope), replacerCase(true),
                                              &matchErrors);
             logMatchErrors(*m_log, matchErrors);
         }
@@ -2757,7 +2760,7 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
         auto *session = m_files->session(document);
         if (!session)
             continue;
-        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase());
+        const auto result = application::replaceFinds(*session, misspellRuleList(), finds, replacerCase(true));
         if (!result)
             continue;
         for (const auto &problem : result->problems) {
@@ -3217,13 +3220,11 @@ bool Application::removeDictionaryWords(const QStringList &words)
 
 void Application::createFindReplace()
 {
-    m_find = std::make_unique<application::FindReplace>(*m_findHost, [](std::u16string_view s) {
-        // wxString::Lower: one unit at a time.
-        std::u16string out(s);
-        for (auto &c : out)
-            c = QChar(c).toLower().unicode();
-        return out;
-    });
+    // wxString::Lower, one unit at a time, is towlower: in the "C" locale
+    // legacy keeps with an English interface it changes A-Z only (captured on
+    // Linux: a plain "łódź" never finds "ŁÓDŹ"); with another language
+    // wxLocale set the process locale and every letter folds.
+    m_find = std::make_unique<application::FindReplace>(*m_findHost, unicodeFold);
 }
 
 QVariantMap Application::openFindReplace(int tab)
@@ -3365,7 +3366,9 @@ QString Application::findReplaceActivated(const QString &find)
         const QString shown = role == 1 ? m_editor->translationText() : m_editor->text();
         const QString selected = shown.mid(from, to - from);
         m_find->selectionAdopted();
-        return selected.toLower() != find.toLower() ? selected : find;
+        // OnActivate's case-insensitive comparison (U1-unicode-case).
+        const auto lower = [](const QString &t) { return t.toCaseFolded(); };
+        return lower(selected) != lower(find) ? selected : find;
     }
     return find;
 }
@@ -4068,8 +4071,8 @@ QVariantMap Application::openSettingsDialog()
     lists.languageTags = {"en"};
     lists.languageNames = {"English"};
     lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
-    if (m_foldsEveryLetter)
-        lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {
+    // U1-unicode-case: every letter, whatever the interface language.
+    lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {
             const QString x = qs(a), y = qs(b);
             return x.size() == y.size() && x.compare(y, Qt::CaseInsensitive) == 0;
         };

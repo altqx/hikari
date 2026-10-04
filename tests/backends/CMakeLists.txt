@@ -194,4 +194,5 @@ add_dependencies(hikari_backends_video_session_tests hikari_media_helper hikari_
 hikari_add_gtest(hikari_backends_legacy_spelling_tests SOURCES legacy_spelling_tests.cpp
     LIBRARIES hikari_backends LABELS backends)
 target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
-    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling")
+    HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
+    HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")

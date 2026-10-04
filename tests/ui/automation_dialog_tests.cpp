@@ -240,6 +240,7 @@ private slots:
     void returnPressesTheFocusedButtonAndEscapeNone()
     {
         std::optional<DialogResult> result;
+        window->setProperty("navigationPlatform", QStringLiteral("linux"));
         showDialog(sampleRequest(), result);
         QTest::keyClick(window, Qt::Key_Space);
         QTest::keyClick(window, Qt::Key_Enter, Qt::KeypadModifier); // Linux: not the Return accelerator
@@ -267,9 +268,19 @@ private slots:
 
     // A text field takes Return and Escape (OnCharHook skips them for a
     // HikariTextCtrl): a single-line one ignores them, the textbox makes a
-    // new line; the dialog stays open.
+    // new line (keypad Enter too on Windows, where it matches the Return
+    // accelerator); the dialog stays open.
+    void textFieldsKeepReturnAndEscape_data()
+    {
+        QTest::addColumn<QString>("platform");
+        QTest::addColumn<QString>("textbox");
+        QTest::newRow("linux") << QStringLiteral("linux") << QStringLiteral("a\n");
+        QTest::newRow("windows") << QStringLiteral("windows") << QStringLiteral("a\n\n");
+    }
     void textFieldsKeepReturnAndEscape()
     {
+        QFETCH(QString, platform);
+        QFETCH(QString, textbox);
         DialogRequest request;
         request.controls = {DialogControl{.kind = "edit", .name = "e", .text = ""},
                             DialogControl{.kind = "textbox", .name = "t", .y = 1, .text = ""},
@@ -277,6 +288,7 @@ private slots:
                             DialogControl{.kind = "floatedit", .name = "f", .y = 3, .number = 1, .numberMin = 0,
                                           .numberMax = 9}};
         std::optional<DialogResult> result;
+        window->setProperty("navigationPlatform", platform);
         showDialog(request, result);
         for (int i = 0; i < 4; ++i) {
             controlItem(i)->forceActiveFocus();
@@ -289,14 +301,14 @@ private slots:
             QVERIFY(window->isVisible());
         }
         QCOMPARE(controlItem(0)->property("text").toString(), QStringLiteral("a"));
-        QCOMPARE(controlItem(1)->property("text").toString(), QStringLiteral("a\n"));
+        QCOMPARE(controlItem(1)->property("text").toString(), textbox);
         QCOMPARE(controlItem(2)->property("text").toString(), QStringLiteral("1")); // digits only
         QCOMPARE(controlItem(3)->property("text").toString(), QStringLiteral("1"));
         named(QStringLiteral("dialogButton0"))->forceActiveFocus();
         QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(result.has_value());
         QCOMPARE(result->pressed, 0);
-        QCOMPARE(std::get<std::string>(result->values[1]), std::string("a\n"));
+        QCOMPARE(QString::fromStdString(std::get<std::string>(result->values[1])), textbox);
     }
 
     // A checkbox and a dropdown handle no Return or Escape: OnCharHook clicks

@@ -2523,6 +2523,64 @@ private slots:
         QCOMPARE(application->editor().selectionEnd(), 1);
     }
 
+    // U1-unicode-case: Find and replace, Select lines and the misspell
+    // replacer's MoveCase ignore case for every letter whatever the interface
+    // language (legacy's English interface folded A-Z only: captured, a plain
+    // "łódź" never found "ŁÓDŹ"). A regular expression folds every letter too.
+    void caseFoldingIgnoresCaseForEveryLetter()
+    {
+        const QString path = writeFile(dir, "fold.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Ąb żółw ŁÓDŹ\n"
+                                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,abc\n");
+        for (const bool polish : {false, true}) {
+            QTemporaryDir own;
+            app::Application::Options options;
+            options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+            options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+            if (polish) {
+                app::Application first(options);
+                first.settingsStore()->set("program.language", QStringLiteral("pl"));
+            }
+            app::Application a(options);
+            QVERIFY(a.openFile(path));
+            auto *session = a.files().session(*a.workspace().editingTarget());
+            const auto text = [&] {
+                const auto &t = session->document().lines()[0]->text;
+                return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+            };
+            // Select lines, plain and case folded (SelectLines' MakeLower).
+            QCOMPARE(a.selectLines({{QStringLiteral("find"), QString::fromUtf8("łódź")}, {QStringLiteral("field"), 0},
+                                    {QStringLiteral("mode"), 0}, {QStringLiteral("action"), 0}},
+                                   false),
+                     QStringLiteral("1 lines selected."));
+            // The misspell replacer: MoveCase's iswupper and MakeUpper.
+            for (int i = 0; i < a.misspellRules().size(); ++i)
+                a.checkMisspellRule(i, false);
+            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("ąb")},
+                                       {QStringLiteral("replace"), QStringLiteral("xy")}, {QStringLiteral("options"), 0}}));
+            QVERIFY(a.addMisspellRule({{QStringLiteral("find"), QString::fromUtf8("żółw")},
+                                       {QStringLiteral("replace"), QString::fromUtf8("żółw")}, {QStringLiteral("options"), 4}}));
+            const int rules = int(a.misspellRules().size());
+            a.checkMisspellRule(rules - 2, true);
+            a.checkMisspellRule(rules - 1, true);
+            a.replaceMisspells({{QStringLiteral("lines"), 0}}, false);
+            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW ŁÓDŹ"));
+            // Find and replace: plain, then a regular expression.
+            QStringList questions;
+            a.setFindQuestionHandler([&](int, const QString &q) {
+                questions << q;
+                return 2;
+            });
+            QVariantMap replace{{QStringLiteral("tab"), 1},
+                                {QStringLiteral("find"), QString::fromUtf8("łódź")},
+                                {QStringLiteral("replace"), QStringLiteral("x")}};
+            a.runFindReplace(QStringLiteral("replaceAll"), replace);
+            QCOMPARE(questions.back(), QStringLiteral("Replaced 1 times."));
+            replace[QStringLiteral("regex")] = true;
+            a.runFindReplace(QStringLiteral("replaceAll"), replace);
+            QCOMPARE(text(), QString::fromUtf8("Xy ŻÓŁW x"));
+        }
+    }
+
     // F1: Replace in subtitles rewrites only the listed subtitle files that
     // changed, each after its backup; links are followed as legacy wxDir
     // follows them (a link cycle is cut), the charset is detected with
@@ -3550,11 +3608,10 @@ private slots:
         QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
     }
 
-    // O1: HikariChoice::FindString (wxArrayString::Index without case) is
-    // CmpNoCase, the C runtime's under the process locale: "C" (ASCII
-    // letters only) for English, every letter once a translation language
-    // initialized wxLocale at startup.
-    void settingsChoicesIgnoreCaseAsTheLegacyLocaleDoes()
+    // O1: HikariChoice::FindString (wxArrayString::Index without case)
+    // ignores case for every letter whatever the interface language
+    // (U1-unicode-case; legacy's English interface compared A-Z only).
+    void settingsChoicesIgnoreCaseForEveryLetter()
     {
         QTemporaryDir own;
         app::Application::Options options;
@@ -3574,7 +3631,9 @@ private slots:
             auto &settings = *a.settingsStore();
             settings.set("convert.styleCatalog", lower);
             auto open = a.openSettingsDialog();
-            QVERIFY(open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                     int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(accented)));
             settings.set("convert.styleCatalog", QStringLiteral("aBC"));
             open = a.openSettingsDialog();
             QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));

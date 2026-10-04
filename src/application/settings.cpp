@@ -240,6 +240,10 @@ const std::vector<SettingDefinition> &definitions()
         {kSpectrumBackgroundSetting, "", String, Profile, Mapped, false, std::string("#000000")},
         {kSpectrumEchoSetting, "", String, Profile, Mapped, false, std::string("#674FD7")},
         {kSpectrumInnerSetting, "", String, Profile, Mapped, false, std::string("#F4F4F4")},
+        // The audio output's host API on Windows: 0 WASAPI (default; reports
+        // an unplugged device as lost), 1 DirectSound (legacy's player). The
+        // user's choice, 2026-10-04 (A4-wasapi-default).
+        {"audio.outputHostApi", "", Int, Profile, Mapped, false, std::int64_t{0}},
     };
     return table;
 }
