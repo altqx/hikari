@@ -300,14 +300,20 @@ def automation(spec, package, display, workdir, probe_source):
         x(["xdotool", "mousemove", str(mx), str(my), "click", "1"], display)
         time.sleep(2)
         probe_rec["automation_menu"] = screenshot(display, workdir, "automation-menu")
-        for _ in range(3):
-            x(["xdotool", "key", "Escape"], display)
-            time.sleep(0.3)
+        # Escape does not close the app-drawn menu (it never has the focus);
+        # a click on the Grid's empty area does. Each step does the same, so
+        # its click on the label opens the menu instead of closing it.
+        def close_menu():
+            x(["xdotool", "mousemove", "400", "550", "click", "1"], display)
+            time.sleep(0.5)
+
+        close_menu()
         for step in spec["steps"]:
             k = step["macro"]
             srec = {"case": step["case"], "macro": k, "keys": step.get("keys", []), "status": "timeout"}
             before = len(output.read_text().splitlines())
             x(["xdotool", "windowactivate", "--sync", wid], display)
+            close_menu()
             # The script hotkeys never fire under Xvfb, so the macro runs from
             # the menu: Automation, the probe's submenu, then macro k (plan
             # "automation_probe_at", "automation_submenu_at", "automation_row").
