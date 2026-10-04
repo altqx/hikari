@@ -644,12 +644,36 @@ Dialog {
                     readonly property int selectedRow: dialog.hotkeys ? dialog.hotkeys.selected : -1
                     ScrollBar.vertical: ScrollBar {}
                     Accessible.name: qsTr("Hotkeys")
+                    // HikariListCtrl's gutter while the list is filtered: a
+                    // box where rows are hidden ("+") or shown again ("-");
+                    // a click shows or hides them (ShowOrHideBlock).
+                    readonly property bool gutter: dialog.hotkeys ? dialog.hotkeys.listFiltered : false
+                    component BlockBox: Label {
+                        property int block: 0
+                        property int position: -1
+                        visible: block !== 0
+                        text: block === 1 ? "+" : "−"
+                        horizontalAlignment: Text.AlignHCenter
+                        width: 13
+                        Accessible.role: Accessible.Button
+                        Accessible.name: block === 1 ? qsTr("Show hidden rows") : qsTr("Hide the rows shown")
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: dialog.hotkeys.toggleBlock(parent.position)
+                        }
+                    }
                     header: RowLayout {
                         width: hotkeyList.width
+                        BlockBox {
+                            objectName: "hotkeyTopBlock"
+                            block: dialog.hotkeys ? dialog.hotkeys.topBlock : 0
+                            Layout.preferredWidth: hotkeyList.gutter ? 13 : 0
+                        }
                         Label { text: qsTr("Function"); Layout.preferredWidth: hotkeyList.width * 0.7 }
                         Label { text: qsTr("Hotkey"); Layout.fillWidth: true }
                     }
                     delegate: ItemDelegate {
+                        id: hotkeyRow
                         required property var modelData
                         required property int index
                         width: hotkeyList.width
@@ -664,18 +688,51 @@ Dialog {
                         }
                         Accessible.name: modelData.text + " " + modelData.accel
                         contentItem: RowLayout {
+                            Item {
+                                // the block's line beside rows shown from it
+                                visible: hotkeyList.gutter
+                                Layout.preferredWidth: 13
+                                Layout.fillHeight: true
+                                Rectangle {
+                                    visible: hotkeyRow.modelData.inBlock
+                                    x: 6; width: 1; height: parent.height
+                                    color: palette.windowText
+                                }
+                            }
+                            // ItemText / ItemHotkey (HikariListCtrl.cpp:44-55,
+                            // OptionsDialog.cpp:48-71): a cell whose text does
+                            // not fit shows it whole as its tooltip (the
+                            // Function column's first 1000 characters).
                             Label {
+                                id: hotkeyText
+                                objectName: "hotkeyText"
                                 text: modelData.text
                                 color: modelData.textModified ? dialog.warningColour : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.preferredWidth: hotkeyList.width * 0.7
+                                HoverHandler { id: textHover }
+                                ToolTip.visible: textHover.hovered && truncated
+                                ToolTip.text: modelData.text.substring(0, 1000)
                             }
                             Label {
+                                id: hotkeyKeys
+                                objectName: "hotkeyKeys"
                                 text: modelData.accel
                                 color: modelData.keyModified ? dialog.warningColour : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
+                                HoverHandler { id: keysHover }
+                                ToolTip.visible: keysHover.hovered && truncated
+                                ToolTip.text: modelData.accel
                             }
+                        }
+                        // the box for the gap after this row
+                        BlockBox {
+                            objectName: "hotkeyBlock" + hotkeyRow.index
+                            block: hotkeyRow.modelData.block
+                            position: hotkeyRow.index
+                            y: hotkeyRow.height - height / 2
+                            z: 1
                         }
                     }
                     // HikariListCtrl's accelerators: undo, redo, and the selection.

@@ -48,13 +48,22 @@ ApplicationWindow {
         return out
     }
 
+    // Subtitles > Conversion: target, label, GLOBAL_CONVERT_TO_* id.
+    readonly property var conversionItems: [
+        ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS"], ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT"],
+        ["mdvd", qsTr("Convert to MDVD"), "GLOBAL_CONVERT_TO_MDVD"], ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2"],
+        ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP"]]
+
+    // With their GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ids.
     readonly property var sortKeys: [
-        { key: "start", label: qsTr("The starting time") },
-        { key: "end", label: qsTr("End time") },
-        { key: "style", label: qsTr("Styles") },
-        { key: "actor", label: qsTr("Actor") },
-        { key: "effect", label: qsTr("Effect") },
-        { key: "layer", label: qsTr("Layer") }
+        { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
+          selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES" },
+        { key: "end", label: qsTr("End time"), all: "GLOBAL_SORT_ALL_BY_END_TIMES",
+          selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES" },
+        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE" },
+        { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR" },
+        { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT" },
+        { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER" }
     ]
 
     // E2: a custom tag button. Types 0 and 1 work in the focused field like
@@ -331,34 +340,6 @@ ApplicationWindow {
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
     }
 
-    // Legacy GLOBAL_SHOW_SHIFT_TIMES ("Time shift window", Ctrl+I). In the
-    // Line editor Ctrl+I is italic: the editor's own hotkey wins there.
-    Shortcut {
-        sequences: [root.globalKeys("GLOBAL_SHOW_SHIFT_TIMES")]
-        context: Qt.ApplicationShortcut
-        enabled: root.shellActive && !editorPanel.activeFocus
-        onActivated: root.showPanel(timingDock)
-    }
-    // Legacy GLOBAL_JOIN_WITH_PREVIOUS / _NEXT ("Merge with previous/next line").
-    Shortcut {
-        sequences: [root.globalKeys("GLOBAL_JOIN_WITH_PREVIOUS")]
-        context: Qt.ApplicationShortcut
-        enabled: root.shell.hasEditingTarget && root.shellActive
-        onActivated: root.app.joinLines("previous")
-    }
-    Shortcut {
-        sequences: [root.globalKeys("GLOBAL_JOIN_WITH_NEXT")]
-        context: Qt.ApplicationShortcut
-        enabled: root.shell.hasEditingTarget && root.shellActive
-        onActivated: root.app.joinLines("next")
-    }
-    // Legacy GLOBAL_REMOVE_LINES.
-    Shortcut {
-        sequences: [root.globalKeys("GLOBAL_REMOVE_LINES")]
-        context: Qt.ApplicationShortcut
-        enabled: root.shell.hasEditingTarget && root.shellActive
-        onActivated: root.app.deleteLines()
-    }
     // D1: a floating panel's window is part of the shell. The Classic
     // shortcuts work there too, and not in dialogs or tool windows.
     readonly property bool floatingPanelActive: {
@@ -366,59 +347,39 @@ ApplicationWindow {
         return w !== null && w !== root && panels.some(p => p.visible && p.Window.window === w)
     }
     readonly property bool shellActive: root.workspaceLayout.focusWindow === root || floatingPanelActive
-    // The menu's shortcuts belong to the main window; these mirror them while
-    // a floating panel has the focus.
+    // O2: the Global window's accelerator table (HikariSubFrame::SetAccels,
+    // HikariSubFrame.cpp:1754-1800), on the whole shell (legacy's Tabs). The
+    // focused panel's own bindings come first (each panel takes its keys in
+    // ShortcutOverride, as the nearer wx accelerator table wins), then these.
+    // Every Global binding is routed here, the menu items' included, so
+    // remapping any of them works (runGlobalHotkey).
     Repeater {
-        model: [
-            { keys: [root.globalKeys("GLOBAL_OPEN_SUBS")], action: openAction },
-            { keys: [root.globalKeys("GLOBAL_CLOSE_PAGE")], action: closeAction },
-            { keys: [root.globalKeys("GLOBAL_SAVE_SUBS")], action: saveAction },
-            { keys: [root.globalKeys("GLOBAL_SAVE_SUBS_AS")], action: saveAsAction },
-            { keys: [root.globalKeys("GLOBAL_HISTORY")], action: historyAction }
-        ]
+        objectName: "globalHotkeys"
+        model: root.hotkeys.globalShortcuts
         delegate: Item {
             required property var modelData
             Shortcut {
-                sequences: modelData.keys
+                objectName: "globalHotkey_" + modelData.symbol
+                sequences: [modelData.keys]
                 context: Qt.ApplicationShortcut
-                enabled: root.floatingPanelActive && modelData.action.enabled
-                onActivated: modelData.action.trigger()
+                enabled: root.shellActive
+                onActivated: root.runGlobalHotkey(modelData.symbol)
             }
         }
     }
-    // Application-wide, so F6 also leaves a floating panel group (D1).
+    // Application-wide, so F6 also leaves a floating panel group (D1); a
+    // Global binding of the same keys comes first.
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
+        enabled: !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
+        enabled: !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
-    }
-    // P6: legacy GLOBAL_ADD_PAGE (Ctrl+T), GLOBAL_NEXT_TAB (Ctrl+PgDown) and
-    // GLOBAL_PREVIOUS_TAB (Ctrl+PgUp), global hotkeys without menu items.
-    Shortcut {
-        objectName: "addPageShortcut"
-        sequences: ["Ctrl+T"]
-        context: Qt.ApplicationShortcut
-        enabled: root.shellActive
-        onActivated: root.app.addPage()
-    }
-    Shortcut {
-        objectName: "nextTabShortcut"
-        sequences: ["Ctrl+PgDown"]
-        context: Qt.ApplicationShortcut
-        enabled: root.shellActive
-        onActivated: root.app.changeTab(1)
-    }
-    Shortcut {
-        objectName: "previousTabShortcut"
-        sequences: ["Ctrl+PgUp"]
-        context: Qt.ApplicationShortcut
-        enabled: root.shellActive
-        onActivated: root.app.changeTab(-1)
     }
     // P6: a tab closed from the tab bar (its close mark or a middle click).
     function closeTab(index) {
@@ -464,7 +425,6 @@ ApplicationWindow {
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
-                        shortcut: root.globalKeys("GLOBAL_OPEN_SUBS")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.open()
                     }
                 }
@@ -497,8 +457,8 @@ ApplicationWindow {
                     objectName: "newMenuItem"
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
+                        id: removeSubsAction
                         text: qsTr("Remove subtitles from the &editor")
-                        shortcut: root.globalKeys("GLOBAL_REMOVE_SUBS")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
                     }
                 }
@@ -507,7 +467,6 @@ ApplicationWindow {
                     action: Action {
                         id: closeAction
                         text: qsTr("&Close")
-                        shortcut: root.globalKeys("GLOBAL_CLOSE_PAGE")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
                     }
@@ -515,8 +474,8 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "openVideoMenuItem"
                     action: Action {
+                        id: openVideoAction
                         text: qsTr("Open &Video…")
-                        shortcut: root.globalKeys("GLOBAL_OPEN_VIDEO")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
                     }
                 }
@@ -525,7 +484,6 @@ ApplicationWindow {
                     action: Action {
                         id: saveAction
                         text: qsTr("&Save")
-                        shortcut: root.globalKeys("GLOBAL_SAVE_SUBS")
                         enabled: root.editor.editable
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
                     }
@@ -533,8 +491,8 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "saveAllMenuItem"
                     action: Action {
+                        id: saveAllAction
                         text: qsTr("Save &all")
-                        shortcut: root.globalKeys("GLOBAL_SAVE_ALL_SUBS")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
@@ -549,7 +507,6 @@ ApplicationWindow {
                     action: Action {
                         id: saveAsAction
                         text: qsTr("Save &as…")
-                        shortcut: root.globalKeys("GLOBAL_SAVE_SUBS_AS")
                         enabled: root.shell.hasEditingTarget
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
                     }
@@ -557,8 +514,8 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "saveTranslationMenuItem"
                     action: Action {
+                        id: saveTranslationAction
                         text: qsTr("Save &translation")
-                        shortcut: root.globalKeys("GLOBAL_SAVE_TRANSLATION")
                         enabled: root.shell.hasEditingTarget && root.editor.translationMode
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_TRANSLATION"))
@@ -571,25 +528,33 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
+                        id: saveWithVideoNameAction
                         text: qsTr("Save subtitles using the video name")
                         checkable: true
                         checked: root.app.saveWithVideoName
-                        onToggled: root.app.saveWithVideoName = checked
+                        onToggled: {
+                            // A Shift+click maps without switching (legacy
+                            // MenuDialog::SendEvent toggles only without Shift).
+                            if (root.hotkeyGesture("GLOBAL_SAVE_WITH_VIDEO_NAME"))
+                                checked = Qt.binding(() => root.app.saveWithVideoName)
+                            else
+                                root.app.saveWithVideoName = checked
+                        }
                     }
                 }
                 MenuItem {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
+                        id: openAutoSaveAction
                         text: qsTr("Open auto save")
-                        shortcut: root.globalKeys("GLOBAL_OPEN_AUTO_SAVE")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) recoveryWindow.showBundles()
                     }
                 }
                 MenuItem {
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
+                        id: removeTemporaryAction
                         text: qsTr("Remove temporary files")
-                        shortcut: root.globalKeys("GLOBAL_DELETE_TEMPORARY_FILES")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
                     }
                 }
@@ -605,19 +570,22 @@ ApplicationWindow {
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
                     MenuItem {
+                        id: loadLastSessionItem
                         objectName: "loadLastSessionMenuItem"
                         text: qsTr("Load last session")
-                        onTriggered: sessionWindows.load()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
                     }
                     MenuItem {
+                        id: loadSessionFileItem
                         objectName: "loadSessionFileMenuItem"
                         text: qsTr("Load session from file")
-                        onTriggered: sessionWindows.chooseSessionToLoad()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
                     }
                     MenuItem {
+                        id: saveSessionFileItem
                         objectName: "saveSessionFileMenuItem"
                         text: qsTr("Save session to file")
-                        onTriggered: sessionWindows.chooseSessionToSave()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
                     }
                     MenuItem {
                         objectName: "askForLastSessionMenuItem"
@@ -638,8 +606,8 @@ ApplicationWindow {
                 MenuItem {
                     objectName: "settingsMenuItem"
                     action: Action {
+                        id: settingsAction
                         text: qsTr("&Settings")
-                        shortcut: root.globalKeys("GLOBAL_SETTINGS")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
                 }
@@ -655,14 +623,14 @@ ApplicationWindow {
         Menu {
             title: qsTr("&Edit")
             Action {
+                id: undoAction
                 text: qsTr("&Undo")
-                shortcut: root.globalKeys("GLOBAL_UNDO")
                 enabled: root.editor.hasLine
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
             }
             Action {
+                id: redoAction
                 text: qsTr("&Redo")
-                shortcut: root.globalKeys("GLOBAL_REDO")
                 enabled: root.editor.hasLine
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
             }
@@ -678,7 +646,7 @@ ApplicationWindow {
                         required property var modelData
                         objectName: "sortAll_" + modelData.key
                         text: modelData.label
-                        onTriggered: root.app.sortLines(modelData.key, false)
+                        onTriggered: if (!root.hotkeyGesture(modelData.all)) root.app.sortLines(modelData.key, false)
                     }
                     onObjectAdded: (index, object) => sortAllMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
@@ -695,7 +663,7 @@ ApplicationWindow {
                         required property var modelData
                         objectName: "sortSelected_" + modelData.key
                         text: modelData.label
-                        onTriggered: root.app.sortLines(modelData.key, true)
+                        onTriggered: if (!root.hotkeyGesture(modelData.selected)) root.app.sortLines(modelData.key, true)
                     }
                     onObjectAdded: (index, object) => sortSelectedMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
@@ -704,8 +672,8 @@ ApplicationWindow {
             MenuItem {
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
+                    id: undoToLastSaveAction
                     text: qsTr("Undo to last save")
-                    shortcut: root.globalKeys("GLOBAL_UNDO_TO_LAST_SAVE")
                     enabled: root.editor.canUndoToLastSave
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
                 }
@@ -715,7 +683,6 @@ ApplicationWindow {
                 action: Action {
                     id: historyAction
                     text: qsTr("&History")
-                    shortcut: root.globalKeys("GLOBAL_HISTORY")
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
                 }
@@ -723,16 +690,16 @@ ApplicationWindow {
             MenuItem {
                 objectName: "misspellMenuItem"
                 action: Action {
+                    id: misspellAction
                     text: qsTr("Fix minor errors (experimental)")
-                    shortcut: root.globalKeys("GLOBAL_MISSPELLS_REPLACER")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
                 }
             }
             MenuItem {
                 objectName: "selectLinesMenuItem"
                 action: Action {
+                    id: selectLinesAction
                     text: qsTr("Select &lines")
-                    shortcut: root.globalKeys("GLOBAL_OPEN_SELECT_LINES")
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SELECT_LINES")) selectLinesDialog.openDialog()
                 }
@@ -741,8 +708,8 @@ ApplicationWindow {
             MenuItem {
                 objectName: "findReplaceMenuItem"
                 action: Action {
+                    id: findReplaceAction
                     text: qsTr("Find and re&place")
-                    shortcut: root.globalKeys("GLOBAL_FIND_REPLACE")
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
                 }
@@ -750,8 +717,8 @@ ApplicationWindow {
             MenuItem {
                 objectName: "findMenuItem"
                 action: Action {
+                    id: findAction
                     text: qsTr("&Find")
-                    shortcut: root.globalKeys("GLOBAL_SEARCH")
                     enabled: root.editor.hasLine
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
                 }
@@ -759,8 +726,8 @@ ApplicationWindow {
             MenuItem {
                 objectName: "findNextMenuItem"
                 action: Action {
+                    id: findNextAction
                     text: qsTr("Find next")
-                    shortcut: root.globalKeys("GLOBAL_FIND_NEXT")
                     // A question box waits: nothing re-enters the search (legacy's are modal).
                     enabled: root.editor.hasLine && !root.app.findBusy
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_NEXT")) root.app.findNext()
@@ -772,8 +739,11 @@ ApplicationWindow {
             objectName: "automationMenu"
             title: qsTr("&Automation")
             Action {
+                id: automationHotkeysAction
                 text: qsTr("Open shortcut mapping window")
                 onTriggered: {
+                    if (root.hotkeyGesture("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
+                        return
                     root.automationHotkeys.begin()
                     automationHotkeysWindow.show()
                 }
@@ -781,15 +751,17 @@ ApplicationWindow {
             MenuItem {
                 objectName: "loadScriptMenuItem"
                 action: Action {
+                    id: loadScriptAction
                     text: qsTr("&Load script…")
-                    onTriggered: scriptDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
                 }
             }
             MenuItem {
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
+                    id: reloadAutoloadAction
                     text: qsTr("Refresh autoload scripts")
-                    onTriggered: root.automation.reloadAutoload()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
                 }
             }
             MenuItem {
@@ -815,7 +787,13 @@ ApplicationWindow {
                     objectName: "macro_" + modelData.name
                     text: modelData.name
                     enabled: !root.automation.running
-                    onTriggered: root.automationManager.run(modelData.path, modelData.ordinal)
+                    // Automation.cpp:1376-1379: Shift maps the macro's hotkey
+                    // (OnMapHkey(-1, "Script <file>-<n>"), no window choice).
+                    onTriggered: {
+                        const name = root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal)
+                        if (!root.hotkeyGesture(name, 0, "macro"))
+                            root.automationManager.run(modelData.path, modelData.ordinal)
+                    }
                 }
                 onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
@@ -824,32 +802,70 @@ ApplicationWindow {
         Menu {
             objectName: "videoMenu"
             title: qsTr("&Video")
-            Action { text: qsTr("Open &video…"); onTriggered: videoDialog.open() }
-            Action { text: qsTr("Previous frame"); enabled: root.video.hasVideo; onTriggered: root.video.stepFrames(-1) }
-            Action { text: qsTr("Next frame"); enabled: root.video.hasVideo; onTriggered: root.video.stepFrames(1) }
-            Action { text: qsTr("Go to start time"); enabled: root.video.hasVideo; onTriggered: root.video.goToLineStart() }
-            Action { text: qsTr("Go to end time of line"); enabled: root.video.hasVideo; onTriggered: root.video.goToLineEnd() }
-            Action { text: qsTr("Play / Pause"); enabled: root.video.hasVideo; onTriggered: root.video.togglePlay() }
-            Action { text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.previousKeyframe() }
-            Action { text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo; onTriggered: root.video.nextKeyframe() }
-            Action { text: qsTr("Open keyframes"); onTriggered: keyframesDialog.open() }
+            // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
+            Action {
+                text: qsTr("Open &video…")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+            }
+            Action {
+                id: previousFrameAction
+                text: qsTr("Previous frame"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+            }
+            Action {
+                id: nextFrameAction
+                text: qsTr("Next frame"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+            }
+            Action {
+                id: goToStartAction
+                text: qsTr("Go to start time"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+            }
+            Action {
+                id: goToEndAction
+                text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+            }
+            Action {
+                id: playPauseAction
+                text: qsTr("Play / Pause"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+            }
+            Action {
+                id: previousKeyframeAction
+                text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+            }
+            Action {
+                id: nextKeyframeAction
+                text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+            }
+            Action {
+                id: openKeyframesAction
+                text: qsTr("Open keyframes")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
+            }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
             MenuItem {
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
+                    id: setAudioFromVideoAction
                     text: qsTr("Set audio position to video time")
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: root.app.setAudioFromVideo(false)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
                 }
             }
             MenuItem {
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
+                    id: setAudioMarkFromVideoAction
                     text: qsTr("Set audio marker to video time")
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
-                    onTriggered: root.app.setAudioFromVideo(true)
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
             }
         }
@@ -862,8 +878,11 @@ ApplicationWindow {
             MenuItem {
                 objectName: "openAudioMenuItem"
                 action: Action {
+                    id: openAudioAction
                     text: qsTr("Open audio")
                     onTriggered: {
+                        if (root.hotkeyGesture("GLOBAL_OPEN_AUDIO"))
+                            return
                         audioDialog.currentFolder = root.app.audioDialogFolder()
                         audioDialog.open()
                     }
@@ -897,24 +916,27 @@ ApplicationWindow {
             MenuItem {
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
+                    id: audioFromVideoAction
                     text: qsTr("Open audio from video")
                     enabled: root.video.hasVideo
-                    onTriggered: root.app.openAudioFromVideo()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
                 }
             }
             MenuItem {
                 objectName: "dummyAudioMenuItem"
                 action: Action {
+                    id: dummyAudioAction
                     text: qsTr("Open blank 2h30m audio")
-                    onTriggered: root.audio.openDummy()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_AUDIO")) root.audio.openDummy()
                 }
             }
             MenuItem {
                 objectName: "closeAudioMenuItem"
                 action: Action {
+                    id: closeAudioAction
                     text: qsTr("Close audio")
                     enabled: root.audio.hasAudio
-                    onTriggered: root.audio.closeAudio()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_AUDIO")) root.audio.closeAudio()
                 }
             }
         }
@@ -1009,27 +1031,31 @@ ApplicationWindow {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
             MenuItem {
+                id: showShiftTimesItem
                 objectName: "showShiftTimes"
                 text: qsTr("Shift &times...")
-                onTriggered: root.showPanel(timingDock)
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
             MenuItem {
+                id: runShiftTimesItem
                 objectName: "runShiftTimes"
                 text: qsTr("Shift times / run time post processor")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: root.runShiftTimes()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
             MenuItem {
+                id: styleManagerItem
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: styleManagerWindow.showFor(root.app.activeLineStyle())
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             MenuItem {
+                id: assPropertiesItem
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: scriptPropertiesDialog.openFor()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
             }
             Menu {
                 id: conversionMenu
@@ -1038,65 +1064,71 @@ ApplicationWindow {
                 property var targets: []
                 onAboutToShow: targets = root.app.conversionTargets()
                 Repeater {
-                    model: [["ass", qsTr("Convert to ASS")], ["srt", qsTr("Convert to SRT")], ["mdvd", qsTr("Convert to MDVD")],
-                            ["mpl2", qsTr("Convert to MPL2")], ["tmp", qsTr("Convert to TMP")]]
+                    model: root.conversionItems
                     MenuItem {
                         objectName: "convertTo_" + modelData[0]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
-                        onTriggered: conversionDialog.openFor(modelData[0], modelData[1])
+                        onTriggered: if (!root.hotkeyGesture(modelData[2])) conversionDialog.openFor(modelData[0], modelData[1])
                     }
                 }
             }
             MenuItem {
+                id: resampleItem
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: resampleDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) resampleDialog.openDialog()
             }
             // Legacy HikariSubFrame: after Resample subtitles.
             MenuItem {
+                id: checkSpellingItem
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: spellCheckerDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
         }
         Menu {
             title: qsTr("&Help")
             MenuItem {
                 action: Action {
+                    id: websiteAction
                     text: qsTr("HikariSub &website")
-                    onTriggered: Qt.openUrlExternally("https://altqx.com")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) Qt.openUrlExternally("https://altqx.com")
                 }
             }
             MenuItem {
                 objectName: "reportIssueMenuItem"
                 action: Action {
+                    id: reportIssueAction
                     text: qsTr("&Report an issue")
-                    onTriggered: root.app.reportIssue()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.app.reportIssue()
                 }
             }
             MenuItem {
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
+                    id: checkForUpdatesAction
                     text: qsTr("Check for &updates")
                     enabled: !root.updates.checking
-                    onTriggered: root.updates.checkNow()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
             MenuItem {
                 objectName: "aboutMenuItem"
                 action: Action {
+                    id: aboutAction
                     text: qsTr("&About")
-                    onTriggered: aboutDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) aboutDialog.open()
                 }
             }
             MenuItem {
                 objectName: "creditsMenuItem"
                 action: Action {
+                    id: creditsAction
                     text: qsTr("&Credits")
-                    onTriggered: creditsDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HELPERS")) creditsDialog.open()
                 }
             }
         }
@@ -1411,9 +1443,9 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 title: qsTr("Video")
-                // Frame stepping while the panel has focus (legacy video arrows).
-                Keys.onLeftPressed: root.video.stepFrames(-1)
-                Keys.onRightPressed: root.video.stepFrames(1)
+                // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
+                // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
+                // table (legacy VideoBox has no arrow keys of its own).
                 // O2: the Video window's bindings (VideoBox's table; by default
                 // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
                 // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
@@ -1492,12 +1524,18 @@ ApplicationWindow {
                 }
                 RowLayout {
                     Layout.fillWidth: true
+                    // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
+                    // GLOBAL_PLAY_ACTUAL_LINE, VIDEO_STOP): the binding in the
+                    // tooltip, and Shift+click maps it (BitmapButton).
                     Button {
                         objectName: "playPause"
                         text: root.video.playing ? qsTr("Pause") : qsTr("Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        onClicked: root.video.togglePlay()
+                        ToolTip.visible: hovered
+                        readonly property string tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
+                        ToolTip.text: tip
+                        onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
                     // Line editor's text.
@@ -1507,9 +1545,12 @@ ApplicationWindow {
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
                         ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Play the current line")
+                        readonly property string tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
+                        ToolTip.text: tip
                         Accessible.name: qsTr("Play the current line")
                         onClicked: {
+                            if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
+                                return
                             lineText.forceActiveFocus()
                             root.video.playActualLine()
                         }
@@ -1519,7 +1560,10 @@ ApplicationWindow {
                         text: qsTr("Stop")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        onClicked: root.video.stop()
+                        ToolTip.visible: hovered
+                        readonly property string tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
+                        ToolTip.text: tip
+                        onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
                     Button {
                         objectName: "previousFrame"
@@ -1705,7 +1749,7 @@ ApplicationWindow {
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
                         ToolTip.visible: hovered
                         onClicked: {
-                            if (symbol.length && root.hotkeyGesture(symbol, 4, true))
+                            if (symbol.length && root.hotkeyGesture(symbol, 4, true, altSymbol.length > 0))
                                 return
                             run()
                         }
@@ -1909,6 +1953,27 @@ ApplicationWindow {
                 objectName: "editorPanel"
                 title: shell.hasEditingTarget ? qsTr("Line editor: %1").arg(shell.editingTitle)
                                               : qsTr("Line editor")
+                // O2: EditBox's accelerator table covers the whole Line editor
+                // (TabPanel::SetAccels): a key its other controls do not take
+                // (the time and margin fields keep their editing keys) runs
+                // the Editor binding; the text fields route their own first.
+                // The commit keys stay the fields' own (OnNewline's rule for
+                // the time fields, EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
+                // EditBox.cpp:987-999, is not in the rewrite yet).
+                function panelAction(event) {
+                    if (lineText.activeFocus || translationText.activeFocus)
+                        return ""
+                    const action = root.hotkeys.actionFor(2, event.key, event.modifiers, false)
+                    return action === "EDITBOX_COMMIT" || action === "EDITBOX_COMMIT_GO_NEXT_LINE" ? "" : action
+                }
+                Keys.onShortcutOverride: event => event.accepted = panelAction(event) !== ""
+                Keys.onPressed: event => {
+                    const action = panelAction(event)
+                    if (action === "")
+                        return
+                    root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+                    event.accepted = true
+                }
                 ColumnLayout {
                     anchors.fill: parent
 
@@ -2253,23 +2318,23 @@ ApplicationWindow {
                         }
                         Menu {
                             title: qsTr("&Insert")
-                            MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: root.app.insertLine(true) }
-                            MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: root.app.insertLine(false) }
+                            MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
                             MenuItem {
                                 objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
-                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "video")
+                                enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             MenuItem {
                                 objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
-                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "video")
+                                enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             MenuItem {
                                 objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
-                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(true, "frame")
+                                enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             MenuItem {
                                 objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
-                                enabled: root.video.hasVideo; onTriggered: root.app.insertLine(false, "frame")
+                                enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
                         }
                         MenuItem {
@@ -2277,19 +2342,19 @@ ApplicationWindow {
                             // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
                             text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
-                            onTriggered: if (!root.hotkeyGesture("GRID_DUPLICATE_LINES", 1)) root.app.duplicateLines()
+                            onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: root.app.swapLines() }
-                        MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: root.app.joinLines("join") }
-                        MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: root.app.joinLines("first") }
-                        MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: root.app.joinLines("last") }
+                        MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         MenuItem {
                             objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
-                            onTriggered: root.app.makeContinuous(true)
+                            onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         MenuItem {
                             objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
-                            onTriggered: root.app.makeContinuous(false)
+                            onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         // Legacy "Split lines" (GRID_SPLIT_BY_*).
                         Menu {
@@ -2298,37 +2363,39 @@ ApplicationWindow {
                                 objectName: "splitAtVideoTime"
                                 text: qsTr("Split line at video time")
                                 enabled: root.video.hasVideo
-                                onTriggered: root.app.splitLines("videoTime")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
                             MenuItem {
                                 objectName: "splitIntoFrames"
                                 text: qsTr("Split lines into frames")
                                 enabled: root.video.hasVideo
-                                onTriggered: root.app.splitLines("frames")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
                             MenuItem {
                                 objectName: "splitIntoCharacters"
                                 text: qsTr("Split lines into characters")
-                                onTriggered: root.app.splitLines("chars")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             MenuItem {
                                 objectName: "splitIntoWords"
                                 text: qsTr("Split lines into words")
-                                onTriggered: root.app.splitLines("words")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             MenuItem {
                                 objectName: "splitByWraps"
                                 text: qsTr("Split lines by wraps")
-                                onTriggered: root.app.splitLines("wraps")
+                                onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
-                        MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: root.app.makeGroups() }
+                        MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         MenuItem {
                             objectName: "pasteTranslation"
                             text: qsTr("Paste translation text")
                             enabled: gridMenu.canPasteTranslation
                             onTriggered: {
+                                if (root.gridGesture(this, "GRID_PASTE_TRANSLATION"))
+                                    return
                                 translationFileDialog.currentFolder = root.app.targetFolder()
                                 translationFileDialog.open()
                             }
@@ -2337,9 +2404,9 @@ ApplicationWindow {
                             objectName: "translationDialog"
                             text: qsTr("Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
-                            onTriggered: translationShiftWindow.show()
+                            onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
                         }
-                        MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: root.app.hideSelectedLines() }
+                        MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
                         Menu {
                             id: filteringMenu
@@ -2353,21 +2420,21 @@ ApplicationWindow {
                                 checkable: true
                                 enabled: root.shell.assColumns
                                 checked: root.gridFilter.afterLoad
-                                onTriggered: root.gridFilter.afterLoad = checked
+                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_AFTER_SUBS_LOAD")) root.gridFilter.afterLoad = checked
                             }
                             MenuItem {
                                 objectName: "filterInvert"
                                 text: qsTr("Reverse filtering")
                                 checkable: true
                                 checked: root.gridFilter.inverted
-                                onTriggered: root.gridFilter.inverted = checked
+                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_INVERT")) root.gridFilter.inverted = checked
                             }
                             MenuItem {
                                 objectName: "filterDoNotReset"
                                 text: qsTr("Do not reset previous filtering")
                                 checkable: true
                                 checked: root.gridFilter.addToFilter
-                                onTriggered: root.gridFilter.addToFilter = checked
+                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_DO_NOT_RESET")) root.gridFilter.addToFilter = checked
                             }
                             Menu {
                                 id: filterStylesMenu
@@ -2388,10 +2455,14 @@ ApplicationWindow {
                             }
                             Instantiator {
                                 model: [
-                                    { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection" },
-                                    { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true },
-                                    { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true },
-                                    { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true }
+                                    { bit: 2, label: qsTr("Hide selected lines"), name: "filterBySelection",
+                                      symbol: "GRID_FILTER_BY_SELECTIONS" },
+                                    { bit: 4, label: qsTr("Hide comments"), name: "filterByComments", ass: true,
+                                      symbol: "GRID_FILTER_BY_DIALOGUES" },
+                                    { bit: 8, label: qsTr("Show unconfirmed"), name: "filterByUnconfirmed", tl: true,
+                                      symbol: "GRID_FILTER_BY_DOUBTFUL" },
+                                    { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true,
+                                      symbol: "GRID_FILTER_BY_UNTRANSLATED" }
                                 ]
                                 delegate: MenuItem {
                                     required property var modelData
@@ -2400,17 +2471,17 @@ ApplicationWindow {
                                     checkable: true
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.tl || root.editor.translationMode)
                                     checked: (root.gridFilter.filterBy & modelData.bit) !== 0
-                                    onTriggered: root.gridFilter.setFilterBy(modelData.bit, checked)
+                                    onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.gridFilter.setFilterBy(modelData.bit, checked)
                                 }
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: root.app.filterLines() }
+                            MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
                             MenuItem {
                                 objectName: "turnOffFiltering"
                                 text: qsTr("Turn off filtering")
                                 enabled: root.shell.filtered
-                                onTriggered: root.app.turnOffFiltering()
+                                onTriggered: if (!root.gridGesture(this, "GRID_FILTER_BY_NOTHING")) root.app.turnOffFiltering()
                             }
                         }
                         MenuItem {
@@ -2418,7 +2489,7 @@ ApplicationWindow {
                             text: qsTr("Ignore filtering in some actions")
                             checkable: true
                             checked: root.gridFilter.ignoreInActions
-                            onTriggered: root.gridFilter.ignoreInActions = checked
+                            onTriggered: if (!root.gridGesture(this, "GRID_FILTER_IGNORE_IN_ACTIONS")) root.gridFilter.ignoreInActions = checked
                         }
                         // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
                         Menu {
@@ -2427,17 +2498,17 @@ ApplicationWindow {
                             title: qsTr("Hide columns")
                             Instantiator {
                                 model: [
-                                    { bit: 1, label: qsTr("Hide layer"), ass: true },
-                                    { bit: 2, label: qsTr("Hide start time"), ass: false },
-                                    { bit: 4, label: qsTr("Hide end time"), ass: false, end: true },
-                                    { bit: 16, label: qsTr("Hide actor"), ass: true },
-                                    { bit: 8, label: qsTr("Hide style"), ass: true },
-                                    { bit: 32, label: qsTr("Hide left margin"), ass: true },
-                                    { bit: 64, label: qsTr("Hide right margin"), ass: true },
-                                    { bit: 128, label: qsTr("Hide vertical margin"), ass: true },
-                                    { bit: 256, label: qsTr("Hide effect"), ass: true },
-                                    { bit: 512, label: qsTr("Hide characters per second"), ass: false },
-                                    { bit: 8192, label: qsTr("Hide line wraps"), ass: false }
+                                    { bit: 1, label: qsTr("Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
+                                    { bit: 2, label: qsTr("Hide start time"), ass: false, symbol: "GRID_HIDE_START" },
+                                    { bit: 4, label: qsTr("Hide end time"), ass: false, end: true, symbol: "GRID_HIDE_END" },
+                                    { bit: 16, label: qsTr("Hide actor"), ass: true, symbol: "GRID_HIDE_ACTOR" },
+                                    { bit: 8, label: qsTr("Hide style"), ass: true, symbol: "GRID_HIDE_STYLE" },
+                                    { bit: 32, label: qsTr("Hide left margin"), ass: true, symbol: "GRID_HIDE_MARGINL" },
+                                    { bit: 64, label: qsTr("Hide right margin"), ass: true, symbol: "GRID_HIDE_MARGINR" },
+                                    { bit: 128, label: qsTr("Hide vertical margin"), ass: true, symbol: "GRID_HIDE_MARGINV" },
+                                    { bit: 256, label: qsTr("Hide effect"), ass: true, symbol: "GRID_HIDE_EFFECT" },
+                                    { bit: 512, label: qsTr("Hide characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
+                                    { bit: 8192, label: qsTr("Hide line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
                                 ]
                                 delegate: MenuItem {
                                     required property var modelData
@@ -2446,23 +2517,23 @@ ApplicationWindow {
                                     checkable: true
                                     checked: (root.shell.hiddenColumns & modelData.bit) !== 0
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
-                                    onTriggered: root.shell.toggleColumn(modelData.bit)
+                                    onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
                                 onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: fpsWindow.show() }
+                        MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
                         MenuItem {
                             objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
-                            enabled: root.video.hasVideo; onTriggered: root.app.setFpsFromVideo()
+                            enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
-                        MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: root.app.copyLines() }
-                        MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: root.app.cutLines() }
-                        MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: root.app.pasteLines() }
-                        MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: columnsWindow.choose(false) }
-                        MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: columnsWindow.choose(true) }
-                        MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: root.app.deleteLines() }
+                        MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                     }
                 }
             }
@@ -4284,12 +4355,7 @@ ApplicationWindow {
         }
     }
 
-    // O2: the shortcut editor. The installed bindings of a Global action as
-    // a Qt sequence ("" when none).
-    function globalKeys(symbol) {
-        return root.hotkeys.keys.global[symbol] ?? ""
-    }
-    // An installed binding as legacy text ("Ctrl-D"), following installs.
+    // O2: the shortcut editor. An installed binding as legacy text ("Ctrl-D"), following installs.
     function boundKeys(symbol, window) {
         return root.hotkeys.keys ? root.hotkeys.accelOf(symbol, window) : ""
     }
@@ -4298,15 +4364,31 @@ ApplicationWindow {
         const key = root.boundKeys(symbol, window)
         return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTr("Shortcut can be set using Shift + Click")
     }
-    // Hotkeys::OnMapHkey: a Shift+click on a menu item (with the window
-    // choice) or a mapped button (Shift held, its own window) maps the
+    // A bitmap button's tooltip (BitmapButton::SetToolTip): its binding in
+    // its window, then the gesture.
+    function bitmapTip(text, symbol, window) {
+        const key = root.boundKeys(symbol, window)
+        return (key.length ? text + " (" + key + ")" : text) + "\n" + qsTr("Shortcut can be set using Shift + Click")
+    }
+    // Hotkeys::OnMapHkey (Hotkeys.cpp:466-540): the gesture maps the
     // action's hotkey instead of running it; the bindings are installed and
-    // saved at once.
-    function hotkeyGesture(symbol, window, mappedButton) {
-        if (!root.hotkeys.shiftClicked(!mappedButton))
+    // saved at once. `kind`:
+    // - a menu item (omitted, "menu"): Shift alone, with the window choice
+    //   (HikariSubFrame::OnMenuSelected/OnMenuSelected1, the Grid's menu);
+    // - "macro": Shift alone, no window choice (Automation.cpp:1376-1379);
+    // - a mapped button (true, "mapped"): Shift held, no window choice; with
+    //   `two` (MappedButton's twoHotkeys) Ctrl held too, which maps the same
+    //   (main) hotkey: legacy computes id - 10 and does not use it
+    //   (MappedButton.cpp:437-445);
+    // - "bitmap": the video panel's buttons (BitmapButton.cpp:97-106), Shift
+    //   held, with the window choice.
+    function hotkeyGesture(symbol, window, kind, two) {
+        const mapped = kind === true || kind === "mapped"
+        const held = mapped || kind === "bitmap"
+        if (!root.hotkeys.shiftClicked(!held) && !(mapped && two && root.hotkeys.ctrlClicked()))
             return false
         const target = root.hotkeys.gestureTarget(symbol)
-        hotkeyMapping.capture(target.name, window ?? 0, !mappedButton, (accel, type) => {
+        hotkeyMapping.capture(target.name, window ?? 0, !(mapped || kind === "macro"), (accel, type) => {
             const conflict = root.hotkeys.gestureConflict(target.id, accel, type)
             if (conflict.message === undefined)
                 root.hotkeys.gestureMap(target.id, target.name, accel, type, "cancel")
@@ -4315,10 +4397,134 @@ ApplicationWindow {
         })
         return true
     }
+    // SubsGrid::ContextMenu (SubsGrid.cpp:294-302): Shift with an id from
+    // 4000 maps its hotkey for the Subtitles window (with the window
+    // choice); a checkable item is not switched then.
+    function gridGesture(item, symbol) {
+        if (!root.hotkeyGesture(symbol, 1))
+            return false
+        if (item.checkable)
+            item.toggle()
+        return true
+    }
+    // A menu item's command when it is enabled (legacy checks the item's
+    // state for an accelerator: OnMenuSelected's OnMenuOpened, OnMenuSelected1).
+    function runItem(item) {
+        if (item.enabled)
+            item.triggered()
+    }
+    // The frame's handlers of the Global window's bindings (HikariSubFrame:
+    // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,
+    // OnPageAdd, OnPageClose, OnAudioSnap, OnUseWindowHotkey), reached from
+    // the shell's table and from a Global id bound for a panel. An id below
+    // 5000 runs in its own window (OnUseWindowHotkey,
+    // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
+    // have yet still takes its key, as legacy's accelerator does.
+    function runGlobalHotkey(symbol) {
+        const field = translationText.activeFocus ? translationText : lineText
+        if (symbol.startsWith("AUDIO_"))
+            return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
+        if (symbol.startsWith("VIDEO_"))
+            return root.runVideoHotkey(symbol)
+        if (symbol.startsWith("EDITBOX_"))
+            return root.runEditorHotkey(symbol, field)
+        if (symbol.startsWith("GRID_"))
+            return root.runGridHotkey(symbol)
+        // OnMenuSelected1's ids (GLOBAL_OPEN_SUBS..GLOBAL_CHECK_FOR_UPDATES,
+        // GLOBAL_SELECT_FROM_VIDEO..GLOBAL_STYLE_MANAGER_CLEAN_STYLE) pass
+        // CheckLastKeyEvent (HikariSubFrame.cpp:1005).
+        const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
+                               "GLOBAL_OPEN_DUMMY_AUDIO", "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
+                               "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_EDITOR", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
+                               "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
+                               "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]
+        const actions = {
+            GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
+            GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
+            GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
+            GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
+            GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+            GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
+            GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
+            GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
+            GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
+            GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
+            GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
+            GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
+            GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
+            GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+            GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+            GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
+            GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
+            GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
+            // P6: OnPageClose (the rewrite's File > Close).
+            GLOBAL_CLOSE_PAGE: closeAction
+        }
+        const items = {
+            GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
+            GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
+            GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
+            GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
+            GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem
+        }
+        if (menuSelected1.includes(symbol) && root.hotkeys.repeatedKey(symbol))
+            return true
+        if (actions[symbol] !== undefined) {
+            actions[symbol].trigger()
+            return true
+        }
+        if (items[symbol] !== undefined) {
+            root.runItem(items[symbol])
+            return true
+        }
+        const conversion = root.conversionItems.find(c => c[2] === symbol)
+        if (conversion) {
+            // OnMenuOpened: the item is enabled for the formats it converts to.
+            if (root.app.conversionTargets().indexOf(conversion[0]) >= 0)
+                conversionDialog.openFor(conversion[0], conversion[1])
+            return true
+        }
+        const sort = root.sortKeys.find(k => k.all === symbol || k.selected === symbol)
+        if (sort) {
+            if (root.editor.editable)
+                root.app.sortLines(sort.key, sort.selected === symbol)
+            return true
+        }
+        const editing = root.shell.hasEditingTarget
+        switch (symbol) {
+        case "GLOBAL_QUIT": root.close(); return true
+        case "GLOBAL_PLAY_ACTUAL_LINE": // the video panel's "Play the current line"
+            if (root.video.hasVideo) {
+                lineText.forceActiveFocus()
+                root.video.playActualLine()
+            }
+            return true
+        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
+            if (editing) {
+                cleanStylesMessage.text = root.styleManager.cleanStyles()
+                cleanStylesMessage.open()
+            }
+            return true
+        case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
+        case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
+        case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
+        case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
+        case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
+        case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
+        }
+        // Not in the rewrite yet (docs/qt/coverage.md, O2): the key is taken
+        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME and
+        // GLOBAL_VIDEO_INDEXING change nothing in legacy either (OnMenuSelected
+        // reads the item's check without switching it), nor do the submenu
+        // ids (GLOBAL_SORT_LINES, GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*).
+        return false
+    }
     // EditBox::OnAccelerator for an Editor binding in `field` (the focused
     // text field); Video actions bound for the Editor go to the video.
     // False for an action the rewrite does not have yet.
     function runEditorHotkey(action, field) {
+        if (action.startsWith("GLOBAL_"))
+            return root.runGlobalHotkey(action) // the event goes up to the frame
         const tags = { EDITBOX_INSERT_BOLD: "b", EDITBOX_INSERT_ITALIC: "i", EDITBOX_CHANGE_UNDERLINE: "u",
                        EDITBOX_CHANGE_STRIKEOUT: "s" }
         const colours = { EDITBOX_CHANGE_COLOR_PRIMARY: 1, EDITBOX_CHANGE_COLOR_SECONDARY: 2,
@@ -4364,12 +4570,17 @@ ApplicationWindow {
     // VideoBox::OnAccelerator; Editor and Grid actions bound for the Video
     // window go to theirs.
     function runVideoHotkey(action) {
+        if (action.startsWith("GLOBAL_"))
+            return root.runGlobalHotkey(action) // the event goes up to the frame
+        if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
+            return true
         switch (action) {
         case "VIDEO_PLAY_PAUSE": root.video.togglePlay(); return true
         case "VIDEO_5_SECONDS_FORWARD": root.video.seekBy(5000); return true
         case "VIDEO_5_SECONDS_BACKWARD": root.video.seekBy(-5000); return true
         case "VIDEO_MINUTE_FORWARD": root.video.seekBy(60000); return true
         case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
+        case "VIDEO_STOP": root.video.stop(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
@@ -4378,6 +4589,16 @@ ApplicationWindow {
     // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
     // go to theirs.
     function runGridHotkey(action) {
+        if (action.startsWith("GLOBAL_"))
+            return root.runGlobalHotkey(action) // the event goes up to the frame
+        // SubsGrid::OnAccelerator hands audio ids to the audio box (when
+        // there is one; the key is the Grid's either way), whose
+        // OnAccelerator checks CheckLastKeyEvent (SubsGrid.cpp:810-819,
+        // AudioBox.cpp:670-674).
+        if (action.startsWith("AUDIO_"))
+            return !root.hotkeys.repeatedKey(action) && root.audio.runHotkey(action)
+        if (root.hotkeys.repeatedKey(action))
+            return true
         // GRID_HIDE_*: the column's bit (id - 4000; CPS 512, wraps 8192).
         const columns = { GRID_HIDE_LAYER: 1, GRID_HIDE_START: 2, GRID_HIDE_END: 4, GRID_HIDE_STYLE: 8,
                           GRID_HIDE_ACTOR: 16, GRID_HIDE_MARGINL: 32, GRID_HIDE_MARGINR: 64, GRID_HIDE_MARGINV: 128,
@@ -4425,10 +4646,6 @@ ApplicationWindow {
             root.gridFilter.ignoreInActions = root.hotkeys.ignoreFilteringFromOption()
             return true
         }
-        // SubsGrid::OnAccelerator hands audio ids to the audio box (when
-        // there is one; the key is the Grid's either way).
-        if (action.startsWith("AUDIO_"))
-            return root.audio.runHotkey(action)
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
@@ -4436,8 +4653,10 @@ ApplicationWindow {
     // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
     // Audio window go to theirs (AudioBox::SetAccels).
     function runAudioHotkey(action) {
+        if (action.startsWith("GLOBAL_"))
+            return root.runGlobalHotkey(action) // the event goes up to the frame
         if (action.startsWith("AUDIO_"))
-            return root.audio.runHotkey(action)
+            return !root.hotkeys.repeatedKey(action) && root.audio.runHotkey(action) // AudioBox.cpp:673
         if (action.startsWith("VIDEO_"))
             return root.runVideoHotkey(action)
         if (action.startsWith("EDITBOX_"))
@@ -4448,6 +4667,18 @@ ApplicationWindow {
         id: hotkeyMapping
         hotkeys: root.hotkeys
     }
+    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE: StyleStore::OnCleanStyles's message
+    // (stylestore.cpp:738-775).
+    Dialog {
+        id: cleanStylesMessage
+        objectName: "cleanStylesMessage"
+        property alias text: cleanStylesLabel.text
+        title: qsTr("Status of deleted styles")
+        modal: true
+        anchors.centerIn: parent
+        standardButtons: Dialog.Ok
+        Label { id: cleanStylesLabel }
+    }
 
     // S2: committed automation shortcuts, application-wide.
     Repeater {
@@ -4457,6 +4688,10 @@ ApplicationWindow {
             Shortcut {
                 sequence: modelData.keys
                 context: Qt.ApplicationShortcut
+                // The scripts' entries follow the static ones in the frame's
+                // table (map order: ids from 30100), so a static Global
+                // binding of the same keys wins.
+                enabled: !root.hotkeys.globalSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
