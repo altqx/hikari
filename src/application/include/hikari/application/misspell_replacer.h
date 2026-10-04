@@ -46,15 +46,26 @@ struct ReplacerRule {
 
 // Rules.txt as FillRulesList reads it, from the text OpenWrite::FileOpen
 // gives (backends::readLegacyTextFile: on Windows CRLF is already LF, on Linux
-// each line keeps its "\r", so the last checkbox reads "1\r", not "1", and a
-// blank CRLF line is a rule). Empty text gives the shipped rules. A line
-// Rule() cannot read whole is kept as far as it got and listed in `invalid`
-// (legacy logs "Rule \"%s\" is invalid.").
+// each line keeps its "\r", and a blank CRLF line is a rule). Empty text
+// gives the shipped rules. A line Rule() cannot read whole is kept as far as
+// it got and listed in `invalid` (legacy logs "Rule \"%s\" is invalid.").
+//
+// F4-rules-cr (R3-hang-crash-loss): legacy Linux split the checkbox line
+// "1|0|1\r" on '|' as it was, so the last token was "1\r", not "1", and the
+// last rule came back unchecked after every restart. Read by the Linux build,
+// the checkbox line's trailing '\r' is dropped first. (The rule lines' last
+// field, the options, is read with wxAtoi, which stops at the '\r'.)
+enum class RulesReadBy { Windows, Linux };
+#ifdef _WIN32
+inline constexpr RulesReadBy kRulesReadBy = RulesReadBy::Windows;
+#else
+inline constexpr RulesReadBy kRulesReadBy = RulesReadBy::Linux;
+#endif
 struct ReplacerRules {
     std::vector<ReplacerRule> rules;
     std::vector<std::u8string> invalid;
 };
-ReplacerRules readReplacerRules(std::u8string_view text);
+ReplacerRules readReplacerRules(std::u8string_view text, RulesReadBy build = kRulesReadBy);
 // FillWithDefaultRules (the English texts).
 std::u8string defaultReplacerRules();
 // SaveRules: the header, the checkbox line and one line per rule, CRLF (the

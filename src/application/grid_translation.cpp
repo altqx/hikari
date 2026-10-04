@@ -142,11 +142,10 @@ std::expected<void, CommandRefusal> pasteTranslation(EditSession &session, std::
     const auto format = session.document().format();
     if (format != core::SubtitleFormat::Ass && format != core::SubtitleFormat::PlainText)
         return std::unexpected(CommandRefusal::Invalid);
-    // Legacy reads the file in text mode (wxFFile "r" on Windows): CRLF becomes LF.
-    u8 normalized(fileText);
-    for (std::size_t p; (p = normalized.find(u8"\r\n")) != u8::npos;)
-        normalized.erase(p, 1);
-    fileText = normalized;
+    // The text is as OpenWrite::FileOpen read it (backends::readLegacyTextFile,
+    // R5-per-platform): on Windows CRLF is already LF; on Linux each line
+    // keeps its "\r", so a blank CRLF line is a "\r" entry (a pasted empty
+    // translation; in an SRT file it ends the block before it).
     std::vector<u8> texts;
     for (const auto &entry : pastedEntries(fileText, extension))
         texts.push_back(core::dialogueFromRaw(entry, format, conversion).text);

@@ -775,6 +775,48 @@ private slots:
         QCOMPARE(tr(1), QStringLiteral("b"));
     }
 
+    // E3 / R4-uchardet: Paste translation reads the file through
+    // OpenWrite::FileOpen as legacy OnPasteTextTl did: uchardet's charset, the
+    // platform's line ends, and nothing at all from an empty file.
+    void pasteTranslationReadsAsLegacyFileOpen()
+    {
+        const QString path = dir.filePath(QStringLiteral("tl-charset.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n");
+        }
+        const QString empty = dir.filePath(QStringLiteral("tl-empty.txt"));
+        {
+            QFile f(empty);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        // Two Polish lines in cp1250 with CRLF.
+        const QString polish = dir.filePath(QStringLiteral("tl-cp1250.txt"));
+        {
+            QFile f(polish);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("Za\xBF\xF3\xB3\xE6 g\xEA\x9Cl\xB9 ja\x9F\xF1, \x9F" "d\x9F" "b\xB3o trawy.\r\n"
+                    "Pchn\xB9\xE6 w t\xEA \xB3\xF3" "d\x9F je\xBF" "a lub o\x9Cm skrzy\xF1 fig.\r\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto steps = session->historySize();
+        QVERIFY(!application->pasteTranslationFile(QUrl::fromLocalFile(empty)));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!session->document().scriptInfo(u8"TLMode"));
+        QVERIFY(application->pasteTranslationFile(QUrl::fromLocalFile(polish)));
+        const auto tr = [&](int row) {
+            const auto &t = session->document().lines()[static_cast<std::size_t>(row)]->translation;
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        QCOMPARE(tr(0), QString::fromUtf8("Zażółć gęślą jaźń, źdźbło trawy."));
+        QCOMPARE(tr(1), QString::fromUtf8("Pchnąć w tę łódź jeża lub ośm skrzyń fig."));
+    }
+
     // D1: View > Panels floats, docks, hides and shows panels; a draft and
     // the editing target survive, and F6 reaches a floating panel.
     void panelsFloatDockHideAndKeepTheirState()
@@ -1438,13 +1480,10 @@ private slots:
             QCOMPARE(rules[0].toMap().value(QStringLiteral("description")).toString(),
                      QString::fromUtf8("Zażółć gęślą jaźń. Pchnąć w tę łódź jeża lub ośm skrzyń fig."));
             QVERIFY(rules[0].toMap().value(QStringLiteral("checked")).toBool());
-            // R5-per-platform: the Linux build keeps "\r", so the last checkbox
-            // token is "1\r" and that rule comes back unchecked.
-#ifdef Q_OS_WIN
+            // The Linux build keeps "\r" (R5-per-platform), so legacy read the
+            // last checkbox token as "1\r" and lost that rule's state;
+            // F4-rules-cr keeps it checked on both platforms.
             QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
-#else
-            QVERIFY(!rules[1].toMap().value(QStringLiteral("checked")).toBool());
-#endif
         }
     }
 
