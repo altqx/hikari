@@ -10,6 +10,7 @@
 #include "audio_display_item.h"
 
 #include <QAccessible>
+#include <QMimeData>
 #include <QClipboard>
 #include <QStyleHints>
 #include <QDirIterator>
@@ -92,6 +93,24 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
+    // Whether `w` becomes the application's focus window. A window manager
+    // may refuse a client's activation request (X without one; sway's default
+    // focus_on_window_activation marks the window urgent instead).
+    static bool becomesFocusWindow(QWindow *w, int ms = 3000)
+    {
+        return QTest::qWaitFor([&] { return QGuiApplication::focusWindow() == w; }, ms);
+    }
+    // A named object of the shell (menu items are not all QObject children).
+    QObject *named(const char *name) const
+    {
+        auto *root = engine->rootObjects().first();
+        if (auto *found = root->findChild<QObject *>(QLatin1String(name)))
+            return found;
+        for (QObject *o : root->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String(name))
+                return o;
+        return nullptr;
+    }
     QString panelTitle(const char *panel) const
     {
         auto *label = window->findChild<QObject *>(QLatin1String(panel) + QLatin1String("Title"));
@@ -157,8 +176,10 @@ private slots:
         QCOMPARE(panelTitle("referencePanel"), QStringLiteral("Reference (protected, read-only): original.ass"));
         QCOMPARE(item<QObject>("statusTargets")->property("text").toString(),
                  QStringLiteral("Editing: episode.ass  |  Reference (protected): original.ass"));
-        // Panels are named for assistive technology too.
-        QCOMPARE(QAccessible::queryAccessibleInterface(item("gridPanel"))->text(QAccessible::Name),
+        // Panels are named for assistive technology too: the Grid by its
+        // role, the editing target in its description (D1 native gate).
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("gridPanel"))->text(QAccessible::Name), QStringLiteral("Grid"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(item("gridPanel"))->text(QAccessible::Description),
                  QStringLiteral("Editing: episode.ass"));
         // The Grids show the real Lines of each Document.
         QCOMPARE(item("editingGrid")->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
@@ -888,10 +909,15 @@ private slots:
         QTRY_VERIFY(item("editorPanel")->window() != window);
         QWindow *floating = item("editorPanel")->window();
         // F6 order: Video, Audio, Editor, Grid; back from the Grid is the floating Editor.
+        window->requestActivate();
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager did not activate the main window");
         item("editingGrid")->forceActiveFocus();
         QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, -1)));
-        if (!QTest::qWaitForWindowActive(floating, 3000))
-            QSKIP("The platform did not activate the floating panel's window (no window manager)");
+        // (QTest::qWaitForWindowActive would pass at once: Qt reports the
+        // floating window active while its transient parent is.)
+        if (!becomesFocusWindow(floating))
+            QSKIP("The window manager did not activate the floating panel's window");
         if (!QTest::qWaitFor([&] { return item("editorPanel")->hasActiveFocus(); }, 5000)) {
             // Without a window manager X11 may hand activation back to the main window.
             if (QGuiApplication::focusWindow() != floating)
@@ -950,6 +976,267 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
         QTRY_COMPARE(audio->mapToScene(QPointF(0, 0)), gridPanel->mapToScene(QPointF(0, 0)));
         placement->close();
+    }
+
+    // D1 native gate: Float leaves the focus on the panel, in its new window;
+    // F6 and Shift+F6 activate that window and the main one; Show focuses a
+    // floating panel. Qt reports a floating panel's window active whenever
+    // the main window is, so this checks the application's focus window.
+    void floatF6AndShowActivateTheFloatingPanelsWindow()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(named("panelFloatEditor"), "triggered"));
+        QTRY_VERIFY(item("editorPanel")->window() != window);
+        QWindow *floating = item("editorPanel")->window();
+        if (!becomesFocusWindow(floating))
+            QSKIP("The window manager did not give the new floating window the focus");
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus()); // focus-after-float
+
+        // F6 from the floating Line editor: the Grid, in the main window.
+        QTest::keyClick(floating, Qt::Key_F6);
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        // Shift+F6 from the Grid: back into the floating Line editor.
+        press(Qt::Key_F6, Qt::ShiftModifier);
+        if (!becomesFocusWindow(floating))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+        // Shift+F6 again: Audio, in the main window.
+        QTest::keyClick(floating, Qt::Key_F6, Qt::ShiftModifier);
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("audioPanel"));
+        // F6 from Audio: into the floating Line editor.
+        press(Qt::Key_F6);
+        if (!becomesFocusWindow(floating))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+
+        // View > Panels > Line editor > Show from the main window focuses it.
+        window->requestActivate();
+        item("editingGrid")->forceActiveFocus();
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
+        if (!becomesFocusWindow(floating))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+
+        // Dock: the panel keeps the focus, back in the main window.
+        QVERIFY(QMetaObject::invokeMethod(named("panelDockEditor"), "triggered"));
+        QTRY_COMPARE(item("editorPanel")->window(), window);
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("editorPanel"));
+
+        // Float it again: the main window keeps no focused item, so when it
+        // is activated again (by the window manager) the Grid takes the focus.
+        QVERIFY(QMetaObject::invokeMethod(named("panelFloatEditor"), "triggered"));
+        QTRY_VERIFY(item("editorPanel")->window() != window);
+        if (!becomesFocusWindow(item("editorPanel")->window()))
+            QSKIP("The window manager refused the shell's activation request (its focus-stealing policy)");
+        window->requestActivate();
+        if (!becomesFocusWindow(window))
+            QSKIP("The window manager did not activate the main window");
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        QVERIFY(root);
+    }
+
+    // D1 native gate: View > Move panel… shows the focused panel and the Grid
+    // as "Next to" when it opens, and keyboard changes keep a value.
+    void placementWindowShowsItsDefaultsAndKeyboardChanges()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *placement = root->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
+        QTRY_VERIFY(placement->isVisible());
+        auto *panelBox = findItem(placement->contentItem(), QStringLiteral("placementPanel"));
+        auto *kindBox = findItem(placement->contentItem(), QStringLiteral("placementKind"));
+        auto *targetBox = findItem(placement->contentItem(), QStringLiteral("placementTarget"));
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Grid"));
+        QCOMPARE(kindBox->property("displayText").toString(), QStringLiteral("Tab with"));
+        QCOMPARE(targetBox->property("currentIndex").toInt(), 3);
+        QCOMPARE(targetBox->property("displayText").toString(), QStringLiteral("Grid"));
+        // Panel: Up twice from the Grid is Audio; Next to: Down from the Grid is the Reference.
+        QVERIFY(QTest::qWaitForWindowExposed(placement));
+        placement->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), placement);
+        panelBox->forceActiveFocus();
+        QTest::keyClick(placement, Qt::Key_Up);
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Line editor"));
+        QTest::keyClick(placement, Qt::Key_Up);
+        QCOMPARE(panelBox->property("currentIndex").toInt(), 1);
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Audio"));
+        kindBox->forceActiveFocus();
+        QTest::keyClick(placement, Qt::Key_Down);
+        QCOMPARE(kindBox->property("displayText").toString(), QStringLiteral("Left of"));
+        targetBox->forceActiveFocus();
+        QTest::keyClick(placement, Qt::Key_Down);
+        QCOMPARE(targetBox->property("displayText").toString(), QStringLiteral("Reference"));
+        QTest::keyClick(placement, Qt::Key_Up);
+        QCOMPARE(targetBox->property("displayText").toString(), QStringLiteral("Grid"));
+        // Move: Audio goes left of the Grid (not of another panel).
+        QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
+        auto *audio = item("audioPanel");
+        auto *gridPanel = item("gridPanel");
+        QTRY_VERIFY(audio->mapToScene(QPointF(0, 0)).x() < gridPanel->mapToScene(QPointF(0, 0)).x());
+        QCOMPARE(qRound(audio->mapToScene(QPointF(0, 0)).y()), qRound(gridPanel->mapToScene(QPointF(0, 0)).y()));
+        // The panel combo still names a panel after the move.
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Audio"));
+        placement->close();
+    }
+
+    // D1 native gate: the file drop target takes file drags only and is not
+    // what the docking engine's own hit test finds over the panels, so
+    // dragging a panel shows the drop indicators; files still drop (P2).
+    void fileDropAreaLeavesPanelDragsToTheDockingEngine()
+    {
+        auto *dropArea = visualItem("dropArea");
+        auto *docking = visualItem("dockingArea");
+        QVERIFY(dropArea && docking);
+        auto *gridPanel = item("gridPanel");
+        const QPointF centre = gridPanel->mapToScene(QPointF(gridPanel->width() / 2, gridPanel->height() / 2));
+        // The engine's hit test without drag-and-drop (X11, Windows): the
+        // deepest visible item under the cursor, the last child winning.
+        std::function<QQuickItem *(QQuickItem *, QPointF)> deepest = [&](QQuickItem *parent, QPointF scenePos) {
+            QQuickItem *found = nullptr;
+            for (QQuickItem *child : parent->childItems()) {
+                if (!child->isVisible() || !child->contains(child->mapFromScene(scenePos)))
+                    continue;
+                QQuickItem *deeper = deepest(child, scenePos);
+                found = deeper ? deeper : child;
+            }
+            return found;
+        };
+        QQuickItem *hit = deepest(window->contentItem(), centre);
+        QVERIFY(hit);
+        QVERIFY2(docking->isAncestorOf(hit), qPrintable(QStringLiteral("hit %1 %2").arg(
+                                                 QString::fromLatin1(hit->metaObject()->className()), hit->objectName())));
+
+        // Drag-and-drop (Wayland docking, files everywhere): a drag without
+        // files is refused, a drag with files is taken.
+        auto drag = [&](QMimeData *mime) {
+            QDragEnterEvent enter(centre.toPoint(), Qt::CopyAction | Qt::MoveAction, mime, Qt::LeftButton, Qt::NoModifier);
+            QCoreApplication::sendEvent(window, &enter);
+            const bool contains = dropArea->property("containsDrag").toBool();
+            QDragLeaveEvent leave;
+            QCoreApplication::sendEvent(window, &leave);
+            return contains;
+        };
+        QMimeData panel;
+        panel.setData(QStringLiteral("application/x-kddockwidgets"), "Audio");
+        QVERIFY(!drag(&panel));
+        QMimeData files;
+        files.setUrls({QUrl::fromLocalFile(episode)});
+        QVERIFY(drag(&files));
+    }
+
+    // D1 native gate: the panels' title-bar buttons and tabs are named for
+    // assistive technology; the Grid is in the tree, named "Grid".
+    void dockingControlsAndTheGridAreAccessible()
+    {
+        // As with a screen reader running: Qt Quick fills in states (a tab's
+        // selection) only while accessibility is active.
+        QAccessible::setActive(true);
+        const auto inactive = qScopeGuard([] { QAccessible::setActive(false); });
+        QVERIFY(application->openFile(episode));
+        QAccessibleInterface *top = QAccessible::queryAccessibleInterface(window);
+        QVERIFY(top);
+        std::function<QAccessibleInterface *(QAccessibleInterface *, QAccessible::Role, const QString &)> find =
+            [&](QAccessibleInterface *from, QAccessible::Role role, const QString &name) -> QAccessibleInterface * {
+            for (int i = 0; i < from->childCount(); ++i) {
+                QAccessibleInterface *child = from->child(i);
+                if (!child || child->role() == QAccessible::Cell)
+                    continue;
+                if (child->role() == role && child->text(QAccessible::Name) == name)
+                    return child;
+                if (QAccessibleInterface *found = find(child, role, name))
+                    return found;
+            }
+            return nullptr;
+        };
+        // The Grid panel and its table.
+        QAccessibleInterface *gridPanel = find(top, QAccessible::Pane, QStringLiteral("Grid"));
+        QVERIFY(gridPanel);
+        QCOMPARE(gridPanel->text(QAccessible::Description), QStringLiteral("Editing: episode.ass"));
+        QAccessibleInterface *table = find(gridPanel, QAccessible::Table, QStringLiteral("Subtitle lines"));
+        QVERIFY(table);
+        QCOMPARE(table->tableInterface()->rowCount(), 2);
+        QCOMPARE(table->parent()->text(QAccessible::Name), QStringLiteral("Grid"));
+        // Title-bar buttons: Float and Close, named after the panel.
+        QAccessibleInterface *floatAudio = find(top, QAccessible::Button, QStringLiteral("Float Audio"));
+        QVERIFY(floatAudio);
+        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Audio")));
+        QVERIFY(floatAudio->actionInterface());
+        QVERIFY(floatAudio->actionInterface()->actionNames().contains(QAccessibleActionInterface::pressAction()));
+        auto *audioDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("audioDock"));
+        floatAudio->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(audioDock->property("isFloating").toBool());
+        QAccessibleInterface *floatingTop = QAccessible::queryAccessibleInterface(item("audioPanel")->window());
+        QAccessibleInterface *dockAudio = find(floatingTop, QAccessible::Button, QStringLiteral("Dock Audio"));
+        QVERIFY(dockAudio);
+        dockAudio->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(!audioDock->property("isFloating").toBool());
+
+        // Tabs: Timing opens as a tab beside the Line editor; each tab is a
+        // named page tab with its own Float and Close buttons.
+        auto *timingDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("timingDock"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
+        QTRY_VERIFY(timingDock->property("isOpen").toBool());
+        top = QAccessible::queryAccessibleInterface(window);
+        QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Timing")));
+        QAccessibleInterface *editorTab = find(top, QAccessible::PageTab, QStringLiteral("Line editor"));
+        QVERIFY(editorTab);
+        QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Timing"));
+        QVERIFY(timingTab->state().checked); // Timing, just shown, is the selected tab
+        QVERIFY(!editorTab->state().checked);
+        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Line editor")));
+        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Float tab group"))); // the title bar's, for both
+        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Timing"));
+        QVERIFY(floatTiming);
+        floatTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(timingDock->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("panelDockTiming"), "triggered"));
+        QTRY_VERIFY(!timingDock->property("isFloating").toBool());
+        top = QAccessible::queryAccessibleInterface(window);
+        QAccessibleInterface *closeTiming = nullptr;
+        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Timing"))));
+        closeTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(!timingDock->property("isOpen").toBool());
+    }
+
+    // D1 native gate: a floating panel no screen shows (a removed monitor, a
+    // layout from other screens) comes back onto the main window's screen,
+    // and Show brings it back there too.
+    void floatingPanelsOffEveryScreenComeBack()
+    {
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+        auto *editorDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("editorDock"));
+        QVERIFY(editorDock->setProperty("isFloating", true));
+        QTRY_VERIFY(item("editorPanel")->window() != window);
+        QWindow *floating = item("editorPanel")->window();
+        QTRY_VERIFY(floating->isVisible());
+        const QRect screen = window->screen()->availableGeometry();
+        auto reachable = [&] {
+            const QRect frame = floating->frameGeometry();
+            return screen.intersected(QRect(frame.topLeft(), QSize(frame.width(), 30))).width() >= 80;
+        };
+        floating->setFramePosition(screen.topRight() + QPoint(400, 300));
+        QTRY_VERIFY(!reachable());
+        QCOMPARE(application->workspaceLayout().keepFloatingPanelsOnScreen(), 1);
+        QTRY_VERIFY(reachable());
+        QCOMPARE(application->workspaceLayout().keepFloatingPanelsOnScreen(), 0); // nothing else to move
+
+        floating->setFramePosition(QPoint(screen.left() - 3000, screen.top() - 2000));
+        QTRY_VERIFY(!reachable());
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
+        QTRY_VERIFY(reachable());
+        QVERIFY(screen.contains(floating->frameGeometry().topLeft()));
     }
 
     // Y3: Subtitles > ASS file properties writes the changed fields as one step.
@@ -1784,8 +2071,11 @@ private slots:
         auto *notice = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"));
         QTRY_VERIFY(notice->property("visible").toBool());
         QCOMPARE(notice->property("text").toString(),
-                 QStringLiteral("No dictionary files were found in the \"%1\\Dictionary\" folder.\nSpell checking will be disabled")
-                     .arg(QDir::toNativeSeparators(QFileInfo(empty.path()).absoluteFilePath())));
+                 QStringLiteral("No dictionary files were found in the \"%1\" folder.\nSpell checking will be disabled")
+                     .arg(QDir::toNativeSeparators(QDir(empty.path()).absoluteFilePath(QStringLiteral("Dictionary")))));
+#ifndef _WIN32
+        QVERIFY(!notice->property("text").toString().contains(QLatin1Char('\\'))); // native separators only
+#endif
         QVERIFY(!application->spellingOn());
         QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
     }

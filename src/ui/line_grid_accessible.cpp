@@ -167,6 +167,13 @@ QAccessibleInterface *LineGridAccessible::parent() const
     LineGrid *g = grid();
     if (!g)
         return nullptr;
+    // The nearest ancestor that lists the Grid among its accessible
+    // children (Qt Quick skips items without an Accessible attachment).
+    auto *self = const_cast<LineGridAccessible *>(this);
+    for (QQuickItem *p = g->parentItem(); p; p = p->parentItem())
+        if (QAccessibleInterface *candidate = QAccessible::queryAccessibleInterface(p);
+            candidate && candidate->indexOfChild(self) >= 0)
+            return candidate;
     if (QQuickItem *p = g->parentItem())
         return QAccessible::queryAccessibleInterface(p);
     return g->window() ? QAccessible::queryAccessibleInterface(g->window()) : nullptr;

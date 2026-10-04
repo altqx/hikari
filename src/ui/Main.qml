@@ -219,7 +219,8 @@ ApplicationWindow {
     // 4 below, 5 float. The moved panel keeps the focus.
     function placePanel(dock, kind, target) {
         if (kind === 5) {
-            dock.isFloating = true
+            if (!dock.isFloating)
+                root.setPanelFloating(dock, true)
         } else {
             if (!target || target === dock || !target.isOpen)
                 return false
@@ -241,6 +242,7 @@ ApplicationWindow {
     // View > Panels > Show: open the panel, bring its window up and focus it.
     function showPanel(dock) {
         dock.open()
+        root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
@@ -255,35 +257,72 @@ ApplicationWindow {
 
     function cyclePanels(step) {
         const shown = panels.filter(p => p.visible)
-        // The panel with focus in the active window: the main one or a
-        // floating panel group (D1).
-        let current = shown.findIndex(p => p.activeFocus && p.Window.active)
-        if (current < 0)
+        // The panel with focus in the focus window: the main one or a
+        // floating panel group (D1). Window.active cannot tell them apart:
+        // Qt reports a floating panel's window active whenever its transient
+        // parent, the main window, is, so the shell compares the
+        // application's focus window.
+        const focusWindow = root.workspaceLayout.focusWindow
+        let current = shown.findIndex(p => p.activeFocus && p.Window.window === focusWindow)
+        if (current < 0 && focusWindow === root)
             current = shown.indexOf(panelOf(root.activeFocusItem))
+        if (current < 0 && focusWindow)
+            current = shown.indexOf(panelOf(focusWindow.activeFocusItem))
         const next = current < 0 ? (step > 0 ? 0 : shown.length - 1)
                                  : (current + step + shown.length) % shown.length
         root.focusPanel(shown[next], Qt.TabFocusReason)
     }
 
-    // Focus a panel, activating its window first when it is another one (a
-    // floating panel). Platforms that activate asynchronously (X11) give the
-    // window its own focus on activation, so the panel takes it again then.
+    // The panel waiting for its window's activation (focusPanel).
+    property var pendingFocus: null
+    Connections {
+        target: root.workspaceLayout
+        function onFocusWindowChanged() {
+            const pending = root.pendingFocus
+            if (!pending || root.workspaceLayout.focusWindow !== pending.window) {
+                // The main window activated with nothing to focus (its focused
+                // panel floated away): the next visible region takes it, the
+                // Grid first (docs/qt/docking.md, focus restoration).
+                const w = root.workspaceLayout.focusWindow
+                const a = root.activeFocusItem // nothing, or the window's own root items
+                if (w === root && (!a || !a.parent || a === root.contentItem)) {
+                    const inMain = root.panels.filter(p => p.visible && p.Window.window === root)
+                    const next = inMain.includes(gridPanel) ? gridPanel : inMain[0]
+                    if (next)
+                        next.forceActiveFocus(Qt.ActiveWindowFocusReason)
+                }
+                return
+            }
+            root.pendingFocus = null
+            pending.panel.forceActiveFocus(pending.reason)
+            // Again after the other activation handlers (the docking layer
+            // focuses its own frame when a floating window activates).
+            Qt.callLater(() => pending.panel.forceActiveFocus(pending.reason))
+        }
+    }
+
+    // Focus a panel, activating its window first when that is not the focus
+    // window (a floating panel, or the main window from one). Activation is
+    // asynchronous on X11 and Wayland, and the window gives the focus to its
+    // own item when it activates, so the panel takes it again then.
     function focusPanel(panel, reason) {
         const w = panel.Window.window
-        if (w && !panel.Window.active) {
-            const refocus = function() {
-                if (w.active) {
-                    w.activeChanged.disconnect(refocus)
-                    panel.forceActiveFocus(reason)
-                    // Again after the other activation handlers (the docking
-                    // layer focuses its own frame when a floating window activates).
-                    Qt.callLater(() => panel.forceActiveFocus(reason))
-                }
-            }
-            w.activeChanged.connect(refocus)
+        root.pendingFocus = null
+        if (w && root.workspaceLayout.focusWindow !== w) {
+            root.pendingFocus = { window: w, panel: panel, reason: reason }
+            w.raise()
             w.requestActivate()
         }
         panel.forceActiveFocus(reason)
+    }
+
+    // D1: Float and Dock from View > Panels (and Move panel's Float) leave the
+    // focus on the moved panel, in its new window (docs/qt/docking.md, focus
+    // restoration). The panel's window changes when the engine reparents it.
+    function setPanelFloating(dock, floating) {
+        const panel = panels[dockList.indexOf(dock)]
+        dock.isFloating = floating
+        Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
     }
 
     // Legacy GLOBAL_SHOW_SHIFT_TIMES ("Time shift window", Ctrl+I). In the
@@ -780,13 +819,13 @@ ApplicationWindow {
                             objectName: "panelFloat" + modelData.uniqueName
                             text: qsTr("Float")
                             enabled: modelData.isOpen && !modelData.isFloating
-                            onTriggered: modelData.isFloating = true
+                            onTriggered: root.setPanelFloating(modelData, true)
                         }
                         MenuItem {
                             objectName: "panelDock" + modelData.uniqueName
                             text: qsTr("Dock")
                             enabled: modelData.isOpen && modelData.isFloating
-                            onTriggered: modelData.isFloating = false
+                            onTriggered: root.setPanelFloating(modelData, false)
                         }
                     }
                     onObjectAdded: (index, object) => panelsMenu.insertMenu(index, object)
@@ -1161,10 +1200,14 @@ ApplicationWindow {
     component Panel: FocusScope {
         id: panel
         property string title
+        // The panel's name for assistive technology: its title unless the
+        // title names something else (the Grid's names the editing target).
+        property string accessibleName: title
         default property alias content: body.data
         activeFocusOnTab: false
         Accessible.role: Accessible.Pane
-        Accessible.name: title
+        Accessible.name: accessibleName
+        Accessible.description: accessibleName !== title ? title : ""
 
         Rectangle {
             anchors.fill: parent
@@ -1188,6 +1231,47 @@ ApplicationWindow {
                 margins: 4
             }
         }
+    }
+
+    // Dropped files open by the legacy rules (subtitles, scripts, video).
+    // It takes file drags only and stays out of the docking engine's way
+    // (D1): declared before the docking area, so the engine's own hit test
+    // (the last child under the cursor wins; X11, Windows) finds the panels,
+    // and above it (z) for real drag-and-drop, where it refuses every drag
+    // without files so the engine's drop indicators get it (Wayland).
+    DropArea {
+        id: fileDropArea
+        objectName: "dropArea"
+        anchors.fill: parent
+        z: 2
+        onEntered: drag => {
+            if (!drag.hasUrls)
+                drag.accepted = false
+        }
+        onDropped: drop => {
+            if (!drop.hasUrls)
+                return
+            drop.accept(Qt.CopyAction)
+            const subtitles = root.app.openDropped(drop.urls)
+            if (subtitles.length > 0)
+                root.openSubtitles(subtitles)
+        }
+    }
+
+    // Wayland: the docking engine drags a panel with real drag-and-drop, and
+    // its QtQuick frontend takes such drops only in floating windows (a QML
+    // DropArea naming the engine's drop area in dropAreaCpp). This gives the
+    // main window the same receiver, under the file drop target. Elsewhere
+    // the engine finds drop areas by hit test, so it is hidden there.
+    DropArea {
+        id: panelDropArea
+        objectName: "panelDropArea"
+        anchors.fill: dockingArea
+        z: 1
+        visible: Qt.platform.pluginName.startsWith("wayland")
+        property QtObject dropAreaCpp: null
+        // The engine makes the main window's drop area with the docking area.
+        Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
@@ -1642,12 +1726,18 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "gridPanel"
                 title: shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No document open")
+                accessibleName: qsTr("Grid")
                 focus: true
                 HikariGrid {
                     id: grid
                     objectName: "editingGrid"
                     anchors.fill: parent
                     focus: true
+                    // Puts the Grid in the shell's accessibility tree: Qt Quick
+                    // lists only items with an Accessible attachment; the
+                    // Grid's own table interface (ui/line_grid_accessible.h)
+                    // answers for it.
+                    Accessible.role: Accessible.Table
                     model: shell.lines
                     // Every gesture is a request; the application owns the selection (G1).
                     onActiveLineRequested: id => root.app.selectLine(id)
@@ -1929,6 +2019,7 @@ ApplicationWindow {
                     objectName: "referenceGrid"
                     anchors.fill: parent
                     focus: true
+                    Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
                     model: shell.referenceLines
                 }
             }
@@ -2534,20 +2625,6 @@ ApplicationWindow {
         onAccepted: root.openSubtitles(root.app.localPath(selectedFile))
     }
 
-    // Dropped files open by the legacy rules (subtitles, scripts, video).
-    DropArea {
-        objectName: "dropArea"
-        anchors.fill: parent
-        onDropped: drop => {
-            if (!drop.hasUrls)
-                return
-            drop.accept(Qt.CopyAction)
-            const subtitles = root.app.openDropped(drop.urls)
-            if (subtitles.length > 0)
-                root.openSubtitles(subtitles)
-        }
-    }
-
     // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
     Window {
         id: fpsWindow
@@ -2735,7 +2812,13 @@ ApplicationWindow {
                 id: placementPanel
                 objectName: "placementPanel"
                 Layout.fillWidth: true
-                model: root.dockList.map(d => d.title)
+                // The docks themselves, and the shown text read from the dock
+                // while the window shows. A dock's title reads empty until the
+                // engine has made its dock widget, and the dock does not notify
+                // the change, so text taken earlier stayed empty (D1 gate).
+                model: root.dockList
+                textRole: "title"
+                displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
                 Accessible.name: qsTr("Panel")
                 onActivated: placementWindow.refreshSize()
             }
@@ -2753,8 +2836,10 @@ ApplicationWindow {
                 objectName: "placementTarget"
                 Layout.fillWidth: true
                 enabled: placementKind.currentIndex !== 5
-                model: root.dockList.map(d => d.title)
-                currentIndex: 3
+                model: root.dockList
+                textRole: "title"
+                displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
+                currentIndex: 3 // the Grid
                 Accessible.name: qsTr("Next to panel")
             }
             Item { Layout.fillWidth: true }

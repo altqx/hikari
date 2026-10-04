@@ -15,6 +15,7 @@
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
 #include <QTemporaryDir>
 #include <QtTest>
 
@@ -124,6 +125,58 @@ private slots:
         QVERIFY(application->workspaceLayout().hasBackup());
         QVERIFY(application->workspaceLayout().restoreBackup());
         QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        stop();
+    }
+
+    // D1 native gate (monitor removal): a layout saved with a floating panel
+    // on a screen that is gone comes back with that panel's title bar on an
+    // available screen.
+    void aFloatingPanelSavedOffScreenComesBackOnScreen()
+    {
+        if (QGuiApplication::platformName().startsWith(QLatin1String("wayland")))
+            QSKIP("On Wayland the compositor places windows (docs/qt/docking.md)");
+        start();
+        QVERIFY(dock("editorDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        stop();
+        QFile f(layoutFile());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QJsonObject saved = QJsonDocument::fromJson(f.readAll()).object();
+        f.close();
+        QJsonObject payload = saved.value(QStringLiteral("payload")).toObject();
+        QJsonArray floating = payload.value(QStringLiteral("floatingWindows")).toArray();
+        QCOMPARE(floating.size(), 1);
+        // Mostly where a second monitor right of the first used to be: a
+        // sliver of the window stays on this screen, which the engine's own
+        // restore accepts, but not enough of its title bar to take hold of.
+        const QRect screen = QGuiApplication::primaryScreen()->availableGeometry();
+        QJsonObject window = floating.at(0).toObject();
+        for (const char *key : {"geometry", "normalGeometry"}) {
+            QJsonObject g = window.value(QLatin1String(key)).toObject();
+            QVERIFY2(!g.isEmpty() || qstrcmp(key, "normalGeometry") == 0, key);
+            if (g.isEmpty())
+                continue;
+            g.insert(QStringLiteral("x"), screen.right() - 20);
+            g.insert(QStringLiteral("y"), screen.top() + 100);
+            window.insert(QLatin1String(key), g);
+        }
+        floating.replace(0, window);
+        payload.insert(QStringLiteral("floatingWindows"), floating);
+        saved.insert(QStringLiteral("payload"), payload);
+        writeLayout(QJsonDocument(saved).toJson());
+
+        start();
+        QTRY_VERIFY(dock("editorDock")->property("isFloating").toBool());
+        QQuickItem *panel = engine->rootObjects().first()->findChild<QQuickItem *>(QStringLiteral("editorPanel"));
+        QVERIFY(panel);
+        QWindow *w = panel->window();
+        QVERIFY(w && w != engine->rootObjects().first());
+        const QRect frame = w->frameGeometry();
+        const QRect strip(frame.topLeft(), QSize(frame.width(), 30));
+        bool reachable = false;
+        for (QScreen *screen : QGuiApplication::screens())
+            reachable = reachable || screen->availableGeometry().intersected(strip).width() >= 80;
+        QVERIFY2(reachable, qPrintable(QStringLiteral("floating window at %1,%2").arg(frame.x()).arg(frame.y())));
         stop();
     }
 
