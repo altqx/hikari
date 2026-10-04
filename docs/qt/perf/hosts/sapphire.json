@@ -59,13 +59,13 @@
       }
     ],
     "repository": {
-      "path": "/home/altq/Work/hikari-wt/human-kits",
+      "path": "~/Work/hikari-wt/human-kits",
       "source": "/dev/mapper/root",
       "filesystem": "btrfs",
       "disk": "nvme0n1 HS-SSD-FUTURE 1024G nvme"
     },
     "buildTree": {
-      "path": "/home/altq/Work/hikari-qt/out/build/ubuntu-x64-release",
+      "path": "~/Work/hikari-qt/out/build/ubuntu-x64-release",
       "source": "/dev/mapper/root",
       "filesystem": "btrfs",
       "disk": "nvme0n1 HS-SSD-FUTURE 1024G nvme"
@@ -163,8 +163,8 @@
   "softwareBuild": {
     "gitRevision": "bdf8ae522b43a1ed64328b0bb53664441e443f52",
     "uncommittedFiles": 0,
-    "sourceTree": "/home/altq/Work/hikari-qt",
-    "buildTree": "/home/altq/Work/hikari-qt/out/build/ubuntu-x64-release",
+    "sourceTree": "~/Work/hikari-qt",
+    "buildTree": "~/Work/hikari-qt/out/build/ubuntu-x64-release",
     "buildType": "Release",
     "binariesBuiltAt": {
       "hikarisub": "2026-10-04T13:40:21+07:00",
@@ -200,13 +200,13 @@
       "94237b53 2026-10-04T12:09:47+07:00 Merge F1: Find and replace"
     ],
     "compiler": {
-      "path": "/home/altq/.local/lib/kache/shims/c++",
+      "path": "~/.local/lib/kache/shims/c++",
       "version": "16.2.1",
       "gnuVersion": "16.2.1 20260810"
     },
     "qt": {
       "version": "6.11.2",
-      "dir": "/home/altq/Work/hikari-qt/out/sdk/qt-6.11.2-linux/6.11.2/gcc_64/lib/cmake/Qt6",
+      "dir": "~/Work/hikari-qt/out/sdk/qt-6.11.2-linux/6.11.2/gcc_64/lib/cmake/Qt6",
       "multimediaFfmpegLibraries": "libavcodec.so.61.19.101,libavformat.so.61.7.103,libavutil.so.59.39.100"
     },
     "ffmpeg": "7.1.2#5",

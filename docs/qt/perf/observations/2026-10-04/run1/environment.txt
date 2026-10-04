@@ -4,5 +4,5 @@ host: sapphire
 kernel: 7.2.5-4-omarchy
 governors:  12 performance
 power profile: performance
-build dir: /home/altq/Work/hikari-qt/out/build/ubuntu-x64-release
+build dir: ~/Work/hikari-qt/out/build/ubuntu-x64-release
 ended: 2026-10-04T13:20:53+07:00
