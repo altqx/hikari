@@ -36,6 +36,7 @@
     "curl",
     "pcre2",
     "hunspell",
+    "uchardet",
     {
       "name": "pkgconf",
       "host": true,
