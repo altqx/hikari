@@ -44,3 +44,5 @@ hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_misspell_replacer_tests SOURCES misspell_replacer_tests.cpp
+    LIBRARIES hikari_application LABELS application)

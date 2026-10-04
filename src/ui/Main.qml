@@ -530,6 +530,13 @@ ApplicationWindow {
                 }
             }
             MenuItem {
+                objectName: "misspellMenuItem"
+                action: Action {
+                    text: qsTr("Fix minor errors (experimental)")
+                    onTriggered: misspellDialog.toggle()
+                }
+            }
+            MenuItem {
                 objectName: "selectLinesMenuItem"
                 action: Action {
                     text: qsTr("Select &lines")
@@ -2867,6 +2874,10 @@ ApplicationWindow {
         id: selectLinesDialog
         app: root.app
         anchors.centerIn: parent
+    }
+    MisspellReplacerDialog {
+        id: misspellDialog
+        app: root.app
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

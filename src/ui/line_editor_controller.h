@@ -152,8 +152,9 @@ public:
     // aegisub.gui); `role` 0 Original, 1 Translated.
     Q_INVOKABLE void reportFieldSelection(int role, int start, int end);
     std::pair<int, int> fieldSelection() const { return m_fieldSelection[translationMode() ? 1 : 0]; }
-    // Selects text in the edited field (aegisub.gui.set_cursor/set_selection).
-    void selectInField(int start, int end);
+    // Selects text in the edited field (aegisub.gui.set_cursor/set_selection),
+    // or in `role` (0 Original, 1 Translated) when given.
+    void selectInField(int start, int end, int role = -1);
     // The Document changed outside the editor (a macro): show it again.
     void reloadFromSession();
     // The video time shown (ms), or nullopt without video.
