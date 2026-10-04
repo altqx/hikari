@@ -113,6 +113,27 @@ const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
     return *row.measures;
 }
 
+const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
+{
+    if (row.spellMarks)
+        return *row.spellMarks;
+    QVariantList marks;
+    const core::LineRecord &line = row.line;
+    // SubsGridWindow: comments are not checked, and marks are drawn on the
+    // last column only. In translation mode that is the translation column
+    // (not built yet), so the Text column, showing the original, has none.
+    if (m_spelling && !line.comment && !line.text.empty() && !m_translationMode) {
+        const QString text = qs(line.text);
+        const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
+                                                           static_cast<std::size_t>(text.size())),
+                                       m_format, true);
+        for (const int offset : result.errors)
+            marks << offset;
+    }
+    row.spellMarks = std::move(marks);
+    return *row.spellMarks;
+}
+
 void LineTableModel::setDocument(const core::Document &document)
 {
     beginResetModel();
@@ -259,6 +280,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return measuresOf(r).cpsTooHigh;
     case BadWrapsRole:
         return measuresOf(r).badWraps;
+    case SpellMarksRole:
+        return spellMarksOf(r);
     default:
         return {};
     }
@@ -293,7 +316,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {StartMicrosecondsRole, "startMicroseconds"},
                   {EndMicrosecondsRole, "endMicroseconds"},
                   {CpsTooHighRole, "cpsTooHigh"},
-                  {BadWrapsRole, "badWraps"}});
+                  {BadWrapsRole, "badWraps"},
+                  {SpellMarksRole, "spellMarks"}});
     return roles;
 }
 

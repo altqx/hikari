@@ -40,13 +40,21 @@ add_library(Hikari::media_deps ALIAS hikari_media_deps)
 # Editor audio output (ADR 0010): the owned PortAudio overlay with pinned host
 # APIs. Static; ALSA is the system library on Linux.
 find_package(portaudio CONFIG REQUIRED)
-# R1-pcre2 / R2-hunspell: legacy wxRegEx's PCRE2 and the spell checker.
+# R1-pcre2: legacy wxRegEx's PCRE2.
 find_package(PCRE2 CONFIG REQUIRED COMPONENTS 16BIT)
 # R4-uchardet: legacy OpenWrite::CheckCharSet's charset detection (static).
 find_package(uchardet CONFIG REQUIRED)
 if(NOT TARGET Hikari::uchardet)
     add_library(Hikari::uchardet ALIAS uchardet::libuchardet)
 endif()
+# R2-hunspell: the spell checker's Hunspell (the port ships pkg-config
+# metadata only), and legacy's word segmentation, Boost.Locale over ICU.
+pkg_check_modules(HIKARI_HUNSPELL REQUIRED IMPORTED_TARGET GLOBAL hunspell=1.7.3)
+if(NOT TARGET Hikari::hunspell)
+    add_library(Hikari::hunspell ALIAS PkgConfig::HIKARI_HUNSPELL)
+endif()
+find_package(Boost CONFIG REQUIRED COMPONENTS locale)
+find_package(ICU REQUIRED COMPONENTS uc i18n data)
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)
 add_library(Hikari::portaudio ALIAS hikari_portaudio)
@@ -67,6 +75,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "libass=${HIKARI_LIBASS_VERSION} ${HIKARI_LIBASS_LINK_LIBRARIES}\n"
     "portaudio_DIR=${portaudio_DIR} ${portaudio_VERSION}\n"
     "luajit=${HIKARI_LUAJIT_VERSION} ${HIKARI_LUAJIT_LINK_LIBRARIES}\n"
+    "hunspell=${HIKARI_HUNSPELL_VERSION} ${HIKARI_HUNSPELL_LINK_LIBRARIES}\n"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"
     "compiler=${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\n")
 

@@ -748,6 +748,13 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: resampleDialog.openDialog()
             }
+            // Legacy HikariSubFrame: after Resample subtitles.
+            MenuItem {
+                objectName: "checkSpellingMenuItem"
+                text: qsTr("Check spelling")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: spellCheckerDialog.openDialog()
+            }
         }
         Menu {
             title: qsTr("&Help")
@@ -828,10 +835,140 @@ ApplicationWindow {
         onCursorPositionChanged: root.editor.reportFieldSelection(role, selectionStart, selectionEnd)
         Connections {
             target: root.editor
-            function onChanged() { field.sync() }
+            function onChanged() {
+                field.sync()
+                field.refreshMarks()
+            }
             function onSelectionRequested() {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
+            }
+        }
+        // F3: the spell-checked field (legacy TextEdit: the Translated one in
+        // translation mode) marks misspellings and bracket errors while
+        // spelling is on, and its menu offers suggestions, the Spellchecker
+        // switch, the installed languages and "Add word".
+        readonly property bool spelled: role === (root.editor.translationMode ? 1 : 0)
+        property var misspell: ({})
+        property int misspellPosition: -1
+        function refreshMarks() {
+            spellMarks.ranges = spelled ? root.app.editorSpellingMarks(role) : []
+        }
+        onSpelledChanged: refreshMarks()
+        SpellingHighlighter {
+            id: spellMarks
+            objectName: field.objectName + "SpellMarks"
+            document: field.textDocument
+            // Legacy EDITOR_SPELLCHECKER defaults (dark and light themes).
+            colour: field.palette.base.hslLightness < 0.5 ? "#940000" : "#ff6968"
+        }
+        Connections {
+            target: root.app
+            function onSpellingChanged() { field.refreshMarks() }
+        }
+        ContextMenu.onRequested: position => {
+            field.misspellPosition = field.positionAt(position.x, position.y)
+            field.misspell = field.spelled ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
+        }
+        ContextMenu.menu: Menu {
+            id: editMenu
+            objectName: field.objectName + "Menu"
+            readonly property var suggestions: field.misspell.suggestions || []
+            Instantiator {
+                model: editMenu.suggestions
+                delegate: MenuItem {
+                    required property string modelData
+                    text: modelData
+                    onTriggered: root.app.replaceEditorMisspell(field.role, field.misspellPosition, modelData)
+                }
+                onObjectAdded: (index, object) => editMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => editMenu.removeItem(object)
+            }
+            MenuSeparator { visible: editMenu.suggestions.length > 0; height: visible ? implicitHeight : 0 }
+            MenuItem { text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
+            MenuItem { text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
+            MenuItem { text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
+            MenuSeparator {}
+            MenuItem {
+                id: spellingOnItem
+                objectName: field.objectName + "SpellingOn"
+                text: qsTr("Spellchecker")
+                checkable: true
+                checked: root.app.spellingOn
+                visible: field.spelled
+                height: visible ? implicitHeight : 0
+                onTriggered: root.app.spellingOn = checked
+            }
+            // "Installed languages": only in the spell-checked field (legacy
+            // builds it with the Spellchecker entry, useSpellchecker).
+            Instantiator {
+                model: field.spelled ? 1 : 0
+                delegate: Menu {
+                    id: languagesMenu
+                    objectName: field.objectName + "Languages"
+                    title: qsTr("Installed languages")
+                    property var languages: []
+                    onAboutToShow: languages = root.app.dictionaries()
+                    Instantiator {
+                        model: languagesMenu.languages
+                        delegate: MenuItem {
+                            required property var modelData
+                            text: modelData.name
+                            checkable: true
+                            // Legacy marks the entry whose name is the chosen language's.
+                            checked: modelData.name === root.app.dictionaryName(root.app.dictionaryLanguage)
+                            onTriggered: root.app.dictionaryLanguage = modelData.symbol
+                        }
+                        onObjectAdded: (index, object) => languagesMenu.insertItem(index, object)
+                        onObjectRemoved: (index, object) => languagesMenu.removeItem(object)
+                    }
+                }
+                onObjectAdded: (index, object) => {
+                    // Right after the Spellchecker switch.
+                    for (let i = 0; i < editMenu.count; ++i) {
+                        if (editMenu.itemAt(i) === spellingOnItem) {
+                            editMenu.insertMenu(i + 1, object)
+                            return
+                        }
+                    }
+                    editMenu.addMenu(object)
+                }
+                onObjectRemoved: (index, object) => editMenu.removeMenu(object)
+            }
+            MenuItem {
+                objectName: field.objectName + "AddWord"
+                text: qsTr("&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
+                visible: !!field.misspell.word
+                height: visible ? implicitHeight : 0
+                onTriggered: {
+                    if (!root.app.addEditorWord(field.misspell.word)) {
+                        spellingNotice.text = qsTr("Error. Word \"%1\" was not added.").arg(field.misspell.word)
+                        spellingNotice.open()
+                    }
+                }
+            }
+            MenuItem {
+                text: qsTr("&Delete")
+                enabled: field.selectedText.length > 0 && !field.readOnly
+                onTriggered: field.remove(field.selectionStart, field.selectionEnd)
+            }
+        }
+        // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK: a double click on a
+        // misspelling lists its suggestions ("Fix suggestions").
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            onDoubleTapped: eventPoint => {
+                if (!root.app.suggestionsOnDoubleClick || !field.spelled)
+                    return
+                const position = field.positionAt(eventPoint.position.x, eventPoint.position.y)
+                const found = root.app.editorMisspellAt(field.role, position)
+                if (found.word) {
+                    // Legacy shows the list and returns before its double
+                    // click selects the word: the caret stays where clicked.
+                    field.deselect()
+                    field.cursorPosition = position
+                    fixSuggestions.openFor(field.role, position, found.suggestions)
+                }
             }
         }
         Keys.onPressed: event => {
@@ -2605,6 +2742,7 @@ ApplicationWindow {
                   "KDDockWidgets - Copyright © Klarälvdalens Datakonsult AB (KDAB).\n" +
                   qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
                   "Copyright © Rodrigo Braz Monteiro.\n" +
+                  "Hunspell - Copyright © Kevin Hendricks.\n" +
                   "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
                   "FFmpeg - Copyright © the FFmpeg developers.\n" +
                   "LuaJIT - Copyright © Mike Pall.\n" +
@@ -2878,6 +3016,69 @@ ApplicationWindow {
     MisspellReplacerDialog {
         id: misspellDialog
         app: root.app
+    }
+    // F3: the Spellchecker window, legacy's spelling message boxes and the
+    // editor's "Fix suggestions" list.
+    SpellCheckerDialog {
+        id: spellCheckerDialog
+        app: root.app
+        anchors.centerIn: parent
+    }
+    Dialog {
+        id: spellingNotice
+        objectName: "spellingNotice"
+        property alias text: spellingNoticeLabel.text
+        anchors.centerIn: parent
+        modal: true // legacy HikariMessageBox is modal
+        standardButtons: Dialog.Ok
+        Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
+    }
+    Connections {
+        target: root.app
+        function onSpellingNotice(message) {
+            spellingNotice.text = message
+            spellingNotice.open()
+        }
+    }
+    Dialog {
+        id: fixSuggestions
+        objectName: "fixSuggestions"
+        title: qsTr("Fix suggestions")
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        property int role: 0
+        property int position: -1
+        property var suggestions: []
+        function openFor(role, position, suggestions) {
+            fixSuggestions.role = role
+            fixSuggestions.position = position
+            fixSuggestions.suggestions = suggestions
+            fixList.currentIndex = 0
+            open()
+        }
+        onAccepted: if (fixList.currentIndex >= 0 && fixList.currentIndex < suggestions.length)
+            root.app.replaceEditorMisspell(role, position, suggestions[fixList.currentIndex])
+        ListView {
+            id: fixList
+            objectName: "fixSuggestionsList"
+            implicitWidth: 220
+            implicitHeight: 160
+            clip: true
+            model: fixSuggestions.suggestions
+            delegate: ItemDelegate {
+                required property string modelData
+                required property int index
+                width: ListView.view.width
+                text: modelData
+                highlighted: ListView.isCurrentItem
+                onClicked: fixList.currentIndex = index
+                onDoubleClicked: {
+                    fixList.currentIndex = index
+                    fixSuggestions.accept()
+                }
+            }
+        }
     }
     ScriptPropertiesDialog {
         id: scriptPropertiesDialog

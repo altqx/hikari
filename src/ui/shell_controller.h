@@ -78,6 +78,12 @@ public:
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
+    // F3: spelling marks in both Grids, from the next refresh.
+    void setSpelling(const LineTableModel::Spelling &spelling)
+    {
+        m_lines.setSpelling(spelling);
+        m_referenceLines.setSpelling(spelling);
+    }
 
     // The editing target's Grid asked for a Line to become active.
     Q_INVOKABLE void activateLine(qulonglong id);

@@ -21,6 +21,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cp
     include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h
     include/hikari/backends/helper_host.h
+    legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>
     $<$<PLATFORM_ID:Linux>:posix_platform_files.cpp>
     $<$<PLATFORM_ID:Windows>:win_file_port.cpp> $<$<PLATFORM_ID:Windows>:win_file_reader.cpp>
@@ -29,10 +30,13 @@ target_include_directories(hikari_backends PUBLIC include)
 set_target_properties(hikari_backends PROPERTIES AUTOMOC ON)
 target_link_libraries(hikari_backends PUBLIC hikari_application hikari_helper_endpoint hikari_lua_protocol Qt6::Core
     Qt6::Multimedia
-    PRIVATE Hikari::media_deps Hikari::portaudio Hikari::uchardet)
+    PRIVATE Hikari::media_deps Hikari::portaudio Hikari::uchardet Hikari::hunspell Boost::locale ICU::i18n ICU::uc ICU::data)
+# F3 / R2-hunspell: ICU and Boost.Locale link statically (no dllimport, no
+# Boost auto-linking).
+target_compile_definitions(hikari_backends PRIVATE BOOST_ALL_NO_LIB U_STATIC_IMPLEMENTATION)
 hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper_endpoint hikari_lua_protocol
     Hikari::media_deps
-    Hikari::portaudio Hikari::uchardet "Qt6::*")
+    Hikari::portaudio Hikari::uchardet Hikari::hunspell "Qt6::*")
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE dwrite) # FontService system faces
 endif()
