@@ -44,10 +44,21 @@ std::string deviceId(PaDeviceIndex index, const PaDeviceInfo &info)
     return std::string(api ? api->name : "?") + "/" + std::to_string(index) + "/" + info.name;
 }
 
-std::vector<OutputDevice> enumerate()
+// The default output device of the named host API, else PortAudio's.
+PaDeviceIndex defaultOutputOf(const std::string &hostApi)
+{
+    if (!hostApi.empty())
+        for (PaHostApiIndex i = 0, n = Pa_GetHostApiCount(); i < n; ++i)
+            if (const PaHostApiInfo *api = Pa_GetHostApiInfo(i);
+                api && hostApi == api->name && api->defaultOutputDevice != paNoDevice)
+                return api->defaultOutputDevice;
+    return Pa_GetDefaultOutputDevice();
+}
+
+std::vector<OutputDevice> enumerate(const std::string &hostApi)
 {
     std::vector<OutputDevice> out;
-    const PaDeviceIndex defaultOutput = Pa_GetDefaultOutputDevice();
+    const PaDeviceIndex defaultOutput = defaultOutputOf(hostApi);
     const PaDeviceIndex count = Pa_GetDeviceCount();
     for (PaDeviceIndex i = 0; i < count; ++i) {
         const PaDeviceInfo *info = Pa_GetDeviceInfo(i);
@@ -62,10 +73,10 @@ std::vector<OutputDevice> enumerate()
 
 // Resolves an id from any enumeration: the exact id, or the same host API and
 // name at a moved index.
-std::expected<PaDeviceIndex, OutputError> resolve(const std::string &id)
+std::expected<PaDeviceIndex, OutputError> resolve(const std::string &id, const std::string &hostApi)
 {
     if (id.empty()) {
-        const PaDeviceIndex index = Pa_GetDefaultOutputDevice();
+        const PaDeviceIndex index = defaultOutputOf(hostApi);
         if (index == paNoDevice)
             return std::unexpected(OutputError::NoDevice);
         return index;
@@ -76,7 +87,7 @@ std::expected<PaDeviceIndex, OutputError> resolve(const std::string &id)
         return std::unexpected(OutputError::DeviceUnavailable);
     const std::string api = id.substr(0, first), name = id.substr(second + 1);
     PaDeviceIndex byName = paNoDevice;
-    for (const OutputDevice &device : enumerate()) {
+    for (const OutputDevice &device : enumerate(hostApi)) {
         const auto index = static_cast<PaDeviceIndex>(std::stoi(device.id.substr(device.hostApi.size() + 1)));
         if (device.id == id)
             return index;
@@ -113,6 +124,15 @@ struct PortAudioOutput::Impl {
     std::string deviceId;
     double latency = 0;
 };
+
+std::string PortAudioOutput::defaultHostApi()
+{
+#ifdef _WIN32
+    return "Windows WASAPI";
+#else
+    return {};
+#endif
+}
 
 PortAudioOutput::PortAudioOutput() : PortAudioOutput(Options{}) {}
 
@@ -156,7 +176,7 @@ std::vector<OutputDevice> PortAudioOutput::devices()
         if (!lib.initialized)
             return {};
     }
-    return enumerate();
+    return enumerate(d->options.hostApi);
 }
 
 std::expected<OutputFormat, OutputError> PortAudioOutput::open(const std::string &id, OutputFormat format)
@@ -168,7 +188,7 @@ std::expected<OutputFormat, OutputError> PortAudioOutput::open(const std::string
         return std::unexpected(OutputError::BackendFailure);
     if (format.channels < 1 || format.sampleRate < 1)
         return std::unexpected(OutputError::InvalidFormat);
-    const auto index = resolve(id);
+    const auto index = resolve(id, d->options.hostApi);
     if (!index)
         return std::unexpected(index.error());
     const PaDeviceInfo *info = Pa_GetDeviceInfo(*index);

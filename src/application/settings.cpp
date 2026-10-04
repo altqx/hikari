@@ -236,6 +236,10 @@ const std::vector<SettingDefinition> &definitions()
         // unset, LoadDefault's.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // The audio output's host API on Windows: 0 WASAPI (default; reports
+        // an unplugged device as lost), 1 DirectSound (legacy's player). The
+        // user's choice, 2026-10-04 (A4-wasapi-default).
+        {"audio.outputHostApi", "", Int, Profile, Mapped, false, std::int64_t{0}},
     };
     return table;
 }

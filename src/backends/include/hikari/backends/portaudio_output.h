@@ -8,6 +8,7 @@
 #include "hikari/application/audio_output.h"
 
 #include <memory>
+#include <string>
 
 namespace hikari::backends {
 
@@ -18,7 +19,14 @@ public:
     struct Options {
         double queueSeconds = 0.5;    // ready-queue capacity
         double latencySeconds = -1;   // < 0: the device's default low output latency
+        // The host API whose default output device "the default device" is
+        // ("" = PortAudio's own default). WASAPI on Windows: it reports an
+        // unplugged device as lost, where DirectSound only stalls
+        // (audio.outputHostApi; the user's choice, 2026-10-04).
+        std::string hostApi = defaultHostApi();
     };
+    // "Windows WASAPI" on Windows, "" elsewhere.
+    static std::string defaultHostApi();
 
     PortAudioOutput();
     explicit PortAudioOutput(Options options);
