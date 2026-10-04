@@ -2,7 +2,9 @@
 // Values go back through the controller, which types them per control.
 // Enter presses the first button; Escape presses the last (the legacy wx
 // enter and escape buttons, since script button IDs are dropped); closing the
-// window answers with no button.
+// window answers with no button. The enter button has the focus when the
+// dialog shows (legacy HikariDialog::Show focuses the enter button), so no
+// other control takes keys until the user moves the focus.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -29,6 +31,15 @@ Window {
         return out;
     }
     function press(index) { controller.finish(index, values()); }
+    // Legacy HikariDialog::Show: FindWindow(enterId)->SetFocus(), where
+    // LuaDialog::CreateWindow made the first OK/Yes/Save button the enter
+    // button, else the first button; without the IDs, the first.
+    function focusEnterButton() {
+        const button = buttonRepeater.itemAt(0);
+        if (button)
+            button.forceActiveFocus(Qt.OtherFocusReason);
+    }
+    onVisibleChanged: if (visible) Qt.callLater(focusEnterButton)
 
     onClosing: function(close) {
         if (controller.open)
@@ -90,6 +101,7 @@ Window {
         RowLayout {
             Layout.alignment: Qt.AlignHCenter
             Repeater {
+                id: buttonRepeater
                 model: window.controller.buttons
                 delegate: Button {
                     required property string modelData

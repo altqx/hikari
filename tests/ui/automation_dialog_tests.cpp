@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QMap>
 #include <QQmlApplicationEngine>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
@@ -162,6 +163,43 @@ private slots:
         QCOMPARE(std::get<double>(result->values[2]), 2.5);
     }
 
+    // Legacy HikariDialog::Show focuses the enter button (LuaDialog::
+    // CreateWindow: the first OK/Yes/Save button, else the first; the
+    // rewrite drops the IDs, so the first), so typing reaches no field and
+    // Return presses that button.
+    void enterButtonHasTheFocusOnShow()
+    {
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Fixture"), sampleRequest(), [&](DialogResult r) { result = r; });
+        QTRY_VERIFY(window->isVisible());
+        window->requestActivate();
+        QTRY_VERIFY(QGuiApplication::focusWindow() == window);
+        QTRY_VERIFY(window->activeFocusItem());
+        QCOMPARE(window->activeFocusItem()->objectName(), QStringLiteral("dialogButton0"));
+        for (const QChar c : QStringLiteral("xyz"))
+            QTest::sendKeyEvent(QTest::Click, window, Qt::Key_unknown, QString(c), Qt::NoModifier);
+        QTest::keyClick(window, Qt::Key_Up);
+        QCOMPARE(control(1)->property("text").toString(), QStringLiteral("t"));
+        QCOMPARE(control(2)->property("value").toInt(), 12);
+        QCOMPARE(control(3)->property("text").toString(), QStringLiteral("1.5"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 0);
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("t"));
+        QTRY_VERIFY(!window->isVisible());
+
+        // Shown again, the enter button has the focus again.
+        result.reset();
+        controller->present(QStringLiteral("Again"), sampleRequest(), [&](DialogResult r) { result = r; });
+        QTRY_VERIFY(window->isVisible());
+        window->requestActivate();
+        QTRY_VERIFY(window->activeFocusItem() &&
+                    window->activeFocusItem()->objectName() == QStringLiteral("dialogButton0"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 1);
+    }
+
     void defaultButtonsShowOkAndCancel()
     {
         DialogRequest request;
@@ -228,8 +266,12 @@ private slots:
     // plan.json "automation") run through this dialog with the plan's keys,
     // as drive.py/drive_windows.py send them to the legacy app. Each case's
     // JSON line is the rewrite side of the legacy comparison
-    // (artifacts/automation-capture-dialogs.json); only that every case
-    // answers is asserted here (the legacy baseline hangs on all of them).
+    // (artifacts/automation-capture-dialogs.json). The legacy baseline hangs
+    // on all of them, so what is asserted beyond every case answering comes
+    // from the legacy sources: the enter button has the focus when the dialog
+    // shows (HikariDialog::Show), so Up and typed text change no field and
+    // Return presses that button (float-step-up f=1, int-step-up i=1,
+    // edit-typed e="").
     void captureProbeDialogCasesAnswer()
     {
         QFile planFile(QStringLiteral(HIKARI_LEGACY_CAPTURE_PLAN));
@@ -288,9 +330,8 @@ private slots:
                 QTRY_VERIFY(QGuiApplication::focusWindow() == window);
                 record.insert(QStringLiteral("dialog_title"), window->title());
                 record.insert(QStringLiteral("dialog_buttons"), QJsonArray::fromStringList(controller->buttons()));
-                QQuickItem *focus = window->activeFocusItem();
-                record.insert(QStringLiteral("focus"), focus ? QString::fromLatin1(focus->metaObject()->className())
-                                                             : QString());
+                QTRY_VERIFY(window->activeFocusItem());
+                record.insert(QStringLiteral("focus"), window->activeFocusItem()->objectName());
                 for (const auto &key : step.value(QStringLiteral("keys")).toArray()) {
                     const QString chord = key.toString();
                     if (chord.startsWith(QStringLiteral("type:"))) {
@@ -330,10 +371,29 @@ private slots:
         QFile artifact(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/automation-capture-dialogs.json"));
         QVERIFY(artifact.open(QIODevice::WriteOnly));
         artifact.write(QJsonDocument(QJsonObject{{QStringLiteral("cases"), cases}}).toJson());
-        for (const auto &c : cases)
-            QVERIFY2(c.toObject().value(QStringLiteral("status")).toString() == QStringLiteral("captured") ||
-                         c.toObject().contains(QStringLiteral("dialog_open_after_keys")),
-                     qPrintable(c.toObject().value(QStringLiteral("case")).toString()));
+        QMap<QString, QJsonObject> byName;
+        for (const auto &c : cases) {
+            const QJsonObject record = c.toObject();
+            const QString name = record.value(QStringLiteral("case")).toString();
+            byName.insert(name, record);
+            QVERIFY2(record.value(QStringLiteral("status")).toString() == QStringLiteral("captured") ||
+                         record.contains(QStringLiteral("dialog_open_after_keys")),
+                     qPrintable(name));
+            if (record.value(QStringLiteral("dialog_shown")).toBool())
+                QVERIFY2(record.value(QStringLiteral("focus")).toString() == QStringLiteral("dialogButton0"),
+                         qPrintable(name));
+        }
+        const auto value = [&](const char *name, const char *field) {
+            return byName.value(QLatin1String(name))
+                .value(QStringLiteral("result")).toObject()
+                .value(QStringLiteral("values")).toObject()
+                .value(QLatin1String(field)).toObject()
+                .value(QStringLiteral("value"));
+        };
+        QCOMPARE(value("float-step-up", "f").toDouble(), 1.0);
+        QCOMPARE(value("int-step-up", "i").toDouble(), 1.0);
+        QCOMPARE(value("edit-typed", "e").toString(), QString());
+        QVERIFY(value("edit-typed", "e").isString());
     }
 };
 
