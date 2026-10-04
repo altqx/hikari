@@ -25,6 +25,9 @@
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
+#include <QProcess>
+#include <QLockFile>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -137,6 +140,29 @@ protected:
         static char *argv[] = {name, nullptr};
         if (!QCoreApplication::instance())
             new QCoreApplication(argc, argv);
+        stageOnce();
+    }
+
+    // The automation-thirdparty-stage test stages the corpus first when ctest
+    // honours its fixture; discovered gtest cases can start before it, so the
+    // first case to run stages it itself (one process at a time).
+    static void stageOnce()
+    {
+        const QString status = stageDir() + QStringLiteral("/status.json");
+        QDir().mkpath(QFileInfo(stageDir()).absolutePath());
+        QLockFile lock(stageDir() + QStringLiteral(".lock"));
+        lock.setStaleLockTime(0);
+        if (!lock.tryLock(10 * 60 * 1000) || QFile::exists(status))
+            return;
+        QProcess stage;
+        stage.setProcessChannelMode(QProcess::ForwardedChannels);
+        stage.start(QStringLiteral(HIKARI_CMAKE_COMMAND),
+                    {QStringLiteral("-D"), QStringLiteral("MANIFEST=") + fixtureDir() + QStringLiteral("/manifest.json"),
+                     QStringLiteral("-D"), QStringLiteral("FETCH_DIR=" HIKARI_THIRDPARTY_FETCH),
+                     QStringLiteral("-D"), QStringLiteral("OUT=") + stageDir(),
+                     QStringLiteral("-D"), QStringLiteral("STAGE_INCLUDE=" HIKARI_AUTOMATION_INCLUDE),
+                     QStringLiteral("-P"), fixtureDir() + QStringLiteral("/stage.cmake")});
+        stage.waitForFinished(5 * 60 * 1000);
     }
 
     void SetUp() override

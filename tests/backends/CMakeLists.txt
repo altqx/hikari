@@ -97,6 +97,9 @@ target_compile_definitions(hikari_backends_automation_thirdparty_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_THIRDPARTY_DIR="${_hikari_thirdparty}"
     HIKARI_THIRDPARTY_STAGE="${_hikari_thirdparty_stage}"
+    HIKARI_CMAKE_COMMAND="${CMAKE_COMMAND}"
+    HIKARI_THIRDPARTY_FETCH="${CMAKE_CURRENT_BINARY_DIR}/automation-thirdparty/fetched"
+    HIKARI_AUTOMATION_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
 add_dependencies(hikari_backends_automation_thirdparty_tests hikari_lua_helper hikari_automation_stage)
