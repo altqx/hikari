@@ -2,13 +2,11 @@
 
 #include "hikari/core/editor_font_colour.h"
 
-#include <QSettings>
-
 namespace hikari::ui {
 
 namespace {
 
-const QString kKey = QStringLiteral("ColorPicker/Recent");
+constexpr const char *kKey = "colourPicker.recentColours";
 
 core::legacy::TagColour colourOf(const QVariantMap &m)
 {
@@ -24,12 +22,16 @@ QVariantMap mapOf(const core::legacy::TagColour &c)
 } // namespace
 
 ColourPickerController::ColourPickerController(QString settingsFile, QObject *parent)
-    : QObject(parent), m_settingsFile(std::move(settingsFile))
+    : QObject(parent), m_ownedSettings(std::make_unique<SettingsStore>(std::move(settingsFile))),
+      m_settings(m_ownedSettings.get())
 {
-    QString text;
-    if (!m_settingsFile.isEmpty())
-        text = QSettings(m_settingsFile, QSettings::IniFormat).value(kKey).toString();
-    loadFromString(text);
+    loadFromString(m_settings->text(kKey));
+}
+
+ColourPickerController::ColourPickerController(SettingsStore &settings, QObject *parent)
+    : QObject(parent), m_settings(&settings)
+{
+    loadFromString(m_settings->text(kKey));
 }
 
 void ColourPickerController::loadFromString(const QString &text)
@@ -41,6 +43,23 @@ void ColourPickerController::loadFromString(const QString &text)
     while (m_recent.size() < kRecent)
         m_recent.append(mapOf({}));
     emit changed();
+}
+
+void ColourPickerController::opened(const QString &owner)
+{
+    // DialogColorPicker::Get: a picker kept for another window is destroyed,
+    // and the new one reads COLORPICKER_RECENT_COLORS.
+    if (!m_owner || *m_owner != owner)
+        loadFromString(m_settings->text(kKey));
+    m_owner = owner;
+}
+
+void ColourPickerController::settingsReset()
+{
+    // Without a DialogColorPicker the option is the list (AddRecent edits
+    // it); a created picker keeps its recent_box.
+    if (!m_owner)
+        loadFromString(m_settings->text(kKey));
 }
 
 QString ColourPickerController::storeToString() const
@@ -90,9 +109,7 @@ QString ColourPickerController::htmlText(const QVariantMap &colour) const
 
 void ColourPickerController::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings(m_settingsFile, QSettings::IniFormat).setValue(kKey, storeToString());
+    m_settings->set(kKey, storeToString());
 }
 
 } // namespace hikari::ui

@@ -49,3 +49,7 @@ hikari_add_gtest(hikari_application_misspell_replacer_tests SOURCES misspell_rep
 hikari_add_gtest(hikari_application_spell_checker_tests SOURCES spell_checker_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_spell_checker_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+hikari_add_gtest(hikari_application_settings_tests SOURCES settings_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_options_dialog_tests SOURCES options_dialog_tests.cpp
+    LIBRARIES hikari_application LABELS application)

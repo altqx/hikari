@@ -89,3 +89,5 @@ hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cp
 hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARIES hikari_ui)
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+# O1: the settings registry over the INI file and the interim keys' move.
+hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)

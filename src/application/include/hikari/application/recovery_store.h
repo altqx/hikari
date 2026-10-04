@@ -48,6 +48,8 @@ public:
     RecoveryStore(std::filesystem::path root, std::string session, int capacity = kDefaultCapacity);
 
     bool enabled() const { return m_capacity > 0 && !m_root.empty(); }
+    // Legacy reads AUTOSAVE_MAX_FILES at each autosave.
+    void setCapacity(int capacity) { m_capacity = capacity; }
     // A new generation for `key`; false (and the previous generation kept)
     // when it could not be written and verified.
     bool write(const std::string &key, const RecoveryContent &content);

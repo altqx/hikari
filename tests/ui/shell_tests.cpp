@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "hikari/application/options_dialog.h"
 #include "docking.h"
 #include "line_grid.h"
 #include "line_table_model.h"
@@ -19,6 +20,7 @@
 #include <QtTest>
 
 #include <cstring>
+#include <functional>
 #include <vector>
 #include <set>
 #include <optional>
@@ -1958,6 +1960,14 @@ private slots:
         press(Qt::Key_I, Qt::ControlModifier);
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         QTRY_VERIFY(item("timingPanel")->hasActiveFocus());
+        // The panel starts from the legacy options: 2 s backward (SHIFT_TIMES_TIME
+        // 2000, SHIFT_TIMES_OPTIONS unset), storing nothing until it changes.
+        QCOMPARE(application->shiftTimesSettings().settings().timeMs, 2000);
+        QVERIFY(item("shiftBackward")->property("checked").toBool());
+        QVERIFY(!application->settingsStore()->contains("shiftTimes.time"));
+        QVERIFY(!application->settingsStore()->contains("shiftTimes.options"));
+        QVERIFY(QMetaObject::invokeMethod(item("shiftForward"), "click"));
+        QVERIFY(application->shiftTimesSettings().settings().forward);
         auto *time = item("shiftTime");
         time->setProperty("text", QStringLiteral("0:00:01.50"));
         QVERIFY(QMetaObject::invokeMethod(time, "editingFinished"));
@@ -2369,6 +2379,499 @@ private slots:
                                                : QByteArray("{10}{20}abc|def\n{30}{40}x\n{40}{}\n"));
             QVERIFY(application->closeEditingTarget());
         }
+    }
+
+    // O1: File > Settings, the legacy Options dialog over the settings registry.
+    QQuickItem *settingsButton(const char *name) const
+    {
+        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        auto *footer = popup ? popup->property("footer").value<QQuickItem *>() : nullptr;
+        return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+    }
+    QObject *openSettings()
+    {
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        auto *menuItem = root->findChild<QObject *>(QStringLiteral("settingsMenuItem"));
+        if (!dialog || !menuItem || !QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"))
+            return nullptr;
+        return dialog;
+    }
+    QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
+
+    void settingsDialogAppliesChangedValuesLive()
+    {
+        auto &settings = *application->settingsStore();
+        settings.set("video.ffms2Seeking", 9);
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        // Opening fixes a seeking method outside the four choices at once.
+        QCOMPARE(settings.integer("video.ffms2Seeking"), 2);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), 2);
+        QCOMPARE(dialogItem("settingsDialog", "setting_autosave.maxFiles")->property("value").toInt(), 3);
+        QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 40);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QStringLiteral("200"));
+        QVERIFY(dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection")->property("checked").toBool());
+        // "Do not warn about resolution mismatch" applies on Apply, not before.
+        QSignalSpy askChanged(application, &app::Application::askForBadResolutionChanged);
+        auto *noWarning = dialogItem("settingsDialog", "setting_video.dontAskForBadResolution");
+        QVERIFY(noWarning);
+        QVERIFY(QMetaObject::invokeMethod(noWarning, "click"));
+        QVERIFY(noWarning->property("checked").toBool());
+        QVERIFY(application->askForBadResolution());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QVERIFY(!application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 1);
+        QVERIFY(dialog->property("visible").toBool());
+        // Only changed values are written: untouched options stay unset, but
+        // the language is written as "en" (legacy writes the chosen tag) and
+        // the shown fallbacks are written.
+        QVERIFY(!settings.contains("grid.loadSortedSubs"));
+        QVERIFY(!settings.contains("autosave.maxFiles"));
+        QCOMPARE(settings.text("program.language"), QStringLiteral("en"));
+        QCOMPARE(settings.integer("program.tabTextMaxChars"), 40);
+        QCOMPARE(settings.integer("video.zoomPercent"), 200);
+        // Numbers are clamped to the NumCtrl range on OK.
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("autosave.maxFiles")),
+                                          Q_ARG(QVariant, 1)));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("fonts.externalDirectory")),
+                                          Q_ARG(QVariant, QStringLiteral("/fonts"))));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put",
+                                          Q_ARG(QVariant, QStringLiteral("grid.duplicationDontChangeSelection")),
+                                          Q_ARG(QVariant, true)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.integer("autosave.maxFiles"), 2);
+        QCOMPARE(settings.text("fonts.externalDirectory"), QStringLiteral("/fonts") + QDir::separator());
+        // Live: duplicating now keeps the selection (SubsGrid::OnDuplicate).
+        QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto first = session->document().lines()[0]->id;
+        QVERIFY(application->duplicateLines());
+        QCOMPARE(session->selection().selected, (std::set<core::LineId>{first}));
+        // Cancel drops staged changes.
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *changeActive = dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection");
+        QVERIFY(QMetaObject::invokeMethod(changeActive, "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
+        // Set default resets every option at once, even when then cancelled;
+        // the recent list is kept, as legacy writes it back at exit.
+        const auto recent = application->recentEntries();
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 2);
+        QCOMPARE(settings.integer("autosave.maxFiles"), 3);
+        QVERIFY(!settings.contains("grid.duplicationDontChangeSelection"));
+        QVERIFY(!settings.contains("program.tabTextMaxChars"));
+        QCOMPARE(application->recentEntries(), recent);
+        QCOMPARE(settings.list("recent.subtitles").size(), qsizetype(recent.size()));
+        QVERIFY(application->closeEditingTarget());
+    }
+
+    // O1: every legacy ConOpt control is on its page, in the legacy order, with
+    // the legacy label (OptionsDialog.cpp opts[] arrays, OptionsPanels.cpp).
+    void settingsDialogPagesBindTheLegacyOptions()
+    {
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        struct Control {
+            const char *setting;
+            const char *label; // a check box's text (nullptr: not checked)
+        };
+        const std::vector<std::pair<const char *, std::vector<Control>>> pages{
+            {"settingsPageEditor",
+             {{"program.language", nullptr},
+              {"editor.dictionaryLanguage", nullptr},
+              {"grid.loadSortedSubs", "Open sorted subtitles"},
+              {"editor.spellchecker", "Turn spell checking"},
+              {"grid.autoSelectLinesFromLastTab", "Select the line with the time line\nof the previous active tab"},
+              {"editor.suggestionsOnDoubleClick", "Show suggestions by double-clicking on misspell"},
+              {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
+              {"editor.dontGoToNextLineOnTimesEdit", "Stay on selected line when editing times"},
+              {"video.disableLiveEditing", "Turn off edits preview on video\n(re-opening tab is required)"},
+              {"grid.setVisibleLineAfterFullScreen", "Turn searching of visible line\nafter switching from full screen"},
+              {"shiftTimes.changeValuesWithTab", "Synchronize time shifting window in all tabs"},
+              {"grid.changeActiveOnSelection", "Change active line after add to selection"},
+              {"translation.showOriginal", "Show original in translator mode"},
+              {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
+              {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
+              {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
+              {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
+              {"video.visualWarningsOff", "Turn off visual tools warning"},
+              {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
+              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"}}},
+            {"settingsPageConversion",
+             {{"convert.styleCatalog", nullptr},
+              {"convert.style", nullptr},
+              {"convert.fps", nullptr},
+              {"convert.fpsFromVideo", "FPS from video"},
+              {"convert.newEndTimes", "New end times"},
+              {"convert.showSettings", "Show window before conversion"},
+              {"convert.timePerCharacter", nullptr},
+              {"convert.resolutionWidth", nullptr},
+              {"convert.resolutionHeight", nullptr},
+              {"convert.assTagsToInsertInLine", nullptr}}},
+            {"settingsPageEditorAdvanced",
+             {{"grid.calcSpacesAndPunctuationForWraps", "Calculate spaces and punctation characters for wraps"},
+              {"grid.calcSpacesAndPunctuationForCps", "Calculate spaces and punctation characters for CPS"},
+              {"editor.saveAfterCharacterCount", nullptr},
+              {"autosave.maxFiles", nullptr},
+              {"grid.insertStartOffset", nullptr},
+              {"grid.insertEndOffset", nullptr},
+              {"grid.tagsSwapCharacter", nullptr},
+              {"program.tabTextMaxChars", nullptr},
+              {"automation.traceLevel", nullptr},
+              {"grid.font", nullptr},
+              {"grid.fontSize", nullptr},
+              {"program.font", nullptr},
+              {"program.fontSize", nullptr},
+              {"automation.loadingMethod", nullptr},
+              {"fonts.externalDirectory", nullptr}}},
+            {"settingsPageVideo",
+             {{"video.fullScreenOnStart", "Open video from context menu on full screen"},
+              {"video.pauseOnClick", "Left mouse button pauses video"},
+              {"video.openAtActiveLine", "Open video with time of active line"},
+              {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
+              {"video.acceptedAudioStream", nullptr},
+              {"video.ffms2Seeking", nullptr},
+              {"video.zoomPercent", nullptr}}},
+            {"settingsPageAudio",
+             {{"audio.drawTimeCursor", "Show time next to cursor"},
+              {"audio.drawSecondaryLines", "Show seconds markers"},
+              {"audio.drawSelectionBackground", "Show background selection"},
+              {"audio.drawVideoPosition", "Show video position"},
+              {"audio.drawKeyframes", "Show keyframes"},
+              {"audio.lockScrollOnCursor", "Follow audio during playback"},
+              {"audio.autoFocus", "Activate the audio when hover"},
+              {"audio.snapToKeyframes", "Snap to keyframe"},
+              {"audio.snapToOtherLines", "Snap to other lines"},
+              {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
+              {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
+              {"audio.karaokeMoveOnClick", "Move syllable line after click"},
+              {"audio.ramCache", "Load audio into RAM"}}},
+            {"settingsPageAudioAdvanced",
+             {{"audio.delay", nullptr},
+              {"audio.markPlayTime", nullptr},
+              {"audio.leadInValue", nullptr},
+              {"audio.leadOutValue", nullptr},
+              {"audio.lineBoundariesThickness", nullptr},
+              {"audio.cacheFilesLimit", nullptr},
+              {"audio.inactiveLinesDisplayMode", nullptr}}},
+            {"settingsPageSubtitleProperties",
+             {{"scriptProperties.title", nullptr},
+              {"scriptProperties.titleOn", nullptr},
+              {"scriptProperties.script", nullptr},
+              {"scriptProperties.scriptOn", nullptr},
+              {"scriptProperties.translation", nullptr},
+              {"scriptProperties.translationOn", nullptr},
+              {"scriptProperties.editing", nullptr},
+              {"scriptProperties.editingOn", nullptr},
+              {"scriptProperties.timing", nullptr},
+              {"scriptProperties.timingOn", nullptr},
+              {"scriptProperties.update", nullptr},
+              {"scriptProperties.updateOn", nullptr},
+              {"scriptProperties.askForChange", "Always ask before changing subtitle information"}}},
+        };
+        std::set<std::string> shown;
+        for (const auto &[pageName, controls] : pages) {
+            auto *page = dialogItem("settingsDialog", pageName);
+            QVERIFY2(page, pageName);
+            std::vector<QQuickItem *> found;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *item) {
+                if (item->objectName().startsWith(QLatin1String("setting_")))
+                    found.push_back(item);
+                for (QQuickItem *child : item->childItems())
+                    walk(child);
+            };
+            walk(page);
+            QCOMPARE(found.size(), controls.size());
+            for (std::size_t i = 0; i < controls.size(); ++i) {
+                QCOMPARE(found[i]->objectName(), QLatin1String("setting_") + QLatin1String(controls[i].setting));
+                if (controls[i].label)
+                    QCOMPARE(found[i]->property("text").toString(), QString::fromUtf8(controls[i].label));
+                shown.insert(controls[i].setting);
+            }
+        }
+        // Every bound option has its control, and the dialog holds nothing else.
+        std::set<std::string> bound;
+        for (const auto &b : application::optionsBindings()) {
+            bound.insert(std::string(b.setting));
+            if (!b.sizeSetting.empty())
+                bound.insert(std::string(b.sizeSetting));
+        }
+        QCOMPARE(shown, bound);
+        std::set<std::string> held;
+        for (const auto &id : settingsValues(dialog).keys())
+            held.insert(id.toStdString());
+        QCOMPARE(held, bound);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+    }
+
+    // O1: legacy defects the dialog reproduces, and what it leaves alone.
+    void settingsDialogKeepsLegacyChoiceAndResetDefects()
+    {
+        auto &settings = *application->settingsStore();
+        // A stored index past its list shows nothing and OK writes -1
+        // (HikariChoice::SetSelection returns early; GetSelection is -1).
+        settings.set("automation.loadingMethod", 7);
+        settings.set("audio.inactiveLinesDisplayMode", -2);
+        settings.set("updater.nextCheck", 100);
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("audio.inactiveLinesDisplayMode")).toInt(), -2);
+        // A value written elsewhere while the dialog is open is not reverted
+        // (the update check's next date, say).
+        settings.set("updater.nextCheck", 200);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QCOMPARE(settings.integer("automation.loadingMethod"), -1);
+        QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -2);
+        QCOMPARE(settings.integer("updater.nextCheck"), 200);
+        // Apply leaves the controls as they are.
+        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        // Choosing an entry stages it.
+        auto *method = dialogItem("settingsDialog", "setting_automation.loadingMethod");
+        QVERIFY(QMetaObject::invokeMethod(method, "activated", Q_ARG(int, 3)));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), 3);
+        // The shift times panel keeps its values through Set default.
+        auto shift = application->shiftTimesSettings().settingsMap();
+        shift.insert(QStringLiteral("forward"), true);
+        shift.insert(QStringLiteral("timeMs"), 750);
+        application->shiftTimesSettings().setSettingsMap(shift);
+        // Set default: the controls refresh as ResetDefault refreshes them,
+        // and OK then writes what they show.
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(settings.integer("updater.nextCheck"), 0);
+        QVERIFY(!settings.contains("automation.loadingMethod"));
+        QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QString());
+        QCOMPARE(dialogItem("settingsDialog", "setting_program.language")->property("currentIndex").toInt(), 0);
+        QVERIFY(application->shiftTimesSettings().settings().forward);
+        QCOMPARE(application->shiftTimesSettings().settings().timeMs, 750);
+        QVERIFY(!settings.contains("shiftTimes.time"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.integer("automation.loadingMethod"), -1);
+        QCOMPARE(settings.integer("video.ffms2Seeking"), -1);
+        QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -1);
+        QCOMPARE(settings.integer("program.tabTextMaxChars"), 20);
+        QVERIFY(!settings.contains("video.zoomPercent"));
+        QCOMPARE(settings.text("program.language"), QStringLiteral("en"));
+    }
+
+    // O1: the conversion catalog and style choose from the style catalogs (Y2).
+    void settingsDialogChoosesConversionCatalogAndStyle()
+    {
+        auto &settings = *application->settingsStore();
+        auto &styles = application->styleManager();
+        QVERIFY(styles.createCatalog(QStringLiteral("Conv")));
+        styles.saveCatalog();
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+        settings.set("convert.styleCatalog", QStringLiteral("Missing"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        // "does not exist" for the catalog: the current one is shown.
+        auto *warning = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsWarning"));
+        QVERIFY(warning);
+        QTRY_VERIFY(warning->property("visible").toBool());
+        const auto catalogs = dialog->property("catalogs").toStringList();
+        QVERIFY(catalogs.contains(QStringLiteral("Conv")));
+        auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
+        QCOMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(warning, "close"));
+        // Choosing a catalog loads it and lists its Styles (none in a new one).
+        QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
+        QCOMPARE(styles.catalog(), QStringLiteral("Conv"));
+        QVERIFY(dialog->property("styles").toStringList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("convert.styleCatalog"), QStringLiteral("Conv"));
+        // The style choice kept its index past the empty list: an empty style.
+        QCOMPARE(settings.text("convert.style"), QString());
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
+    }
+
+    // O1: HikariChoice::FindString (wxArrayString::Index without case) is
+    // CmpNoCase, the C runtime's under the process locale: "C" (ASCII
+    // letters only) for English, every letter once a translation language
+    // initialized wxLocale at startup.
+    void settingsChoicesIgnoreCaseAsTheLegacyLocaleDoes()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        const QString accented = QStringLiteral(u"Ćwiczenia");
+        const QString lower = QStringLiteral(u"ćwiczenia");
+        const QString missing = tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("catalog for style"));
+        {
+            app::Application a(options);
+            auto &styles = a.styleManager();
+            QVERIFY(styles.createCatalog(accented));
+            styles.saveCatalog();
+            QVERIFY(styles.createCatalog(QStringLiteral("Abc")));
+            styles.saveCatalog();
+            QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+            auto &settings = *a.settingsStore();
+            settings.set("convert.styleCatalog", lower);
+            auto open = a.openSettingsDialog();
+            QVERIFY(open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            settings.set("convert.styleCatalog", QStringLiteral("aBC"));
+            open = a.openSettingsDialog();
+            QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+            QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                     int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(QStringLiteral("Abc"))));
+            settings.set("program.language", QStringLiteral("pl"));
+        }
+        app::Application b(options);
+        b.settingsStore()->set("convert.styleCatalog", lower);
+        const auto open = b.openSettingsDialog();
+        QVERIFY(!open.value(QStringLiteral("warnings")).toStringList().contains(missing));
+        QCOMPARE(open.value(QStringLiteral("values")).toMap().value(QStringLiteral("convert.styleCatalog")).toInt(),
+                 int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(accented)));
+    }
+
+    // R6-dictionary-location: the Main page lists the settings folder's
+    // Dictionary first (user dictionaries), then the program folder's.
+    void settingsDictionariesComeFromTheSettingsFolder()
+    {
+        QTemporaryDir own;
+        QVERIFY(QDir(own.path()).mkdir(QStringLiteral("Dictionary")));
+        for (const char *name : {"pl_PL.dic", "pl_PL.aff", "en_US.dic", "en_US.aff", "de_DE.dic"}) {
+            QFile file(own.filePath(QStringLiteral("Dictionary/") + QLatin1String(name)));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write("x\n");
+        }
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        app::Application a(options);
+        a.settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("pl_PL"));
+        const auto open = a.openSettingsDialog();
+        // AvailableDics pairs the i-th .dic with the i-th .aff: de_DE.dic
+        // shifts every pair, so none matches (the pairing stops at the
+        // shorter list, R3-hang-crash-loss) and the placeholder is shown.
+        QCOMPARE(open.value(QStringLiteral("dictionaries")).toStringList(),
+                 (QStringList{QStringLiteral("Put files .dic and .aff to \"Dictionary\" folder")}));
+        QVERIFY(QFile::remove(own.filePath(QStringLiteral("Dictionary/de_DE.dic"))));
+        const auto again = a.openSettingsDialog();
+        QCOMPARE(again.value(QStringLiteral("dictionaries")).toStringList(),
+                 (QStringList{QStringLiteral("English"), QStringLiteral("Polski")}));
+        QCOMPARE(again.value(QStringLiteral("values")).toMap().value(QStringLiteral("editor.dictionaryLanguage")).toInt(), 1);
+    }
+
+    // O1: "Set default" resets the registry at once; what long-lived legacy
+    // objects hold survives and is written back by them later.
+    void setDefaultKeepsWhatLegacyWindowsHold()
+    {
+        QTemporaryDir own;
+        app::Application::Options options;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        app::Application a(options);
+        auto &settings = *a.settingsStore();
+        // HikariSubFrame's recent lists: subtitles, video and audio are kept;
+        // the keyframes list is not written back at exit, so it resets.
+        settings.set("recent.video", QStringList{QStringLiteral("/v.mkv")});
+        settings.set("recent.audio", QStringList{QStringLiteral("/a.wav")});
+        settings.set("recent.keyframes", QStringList{QStringLiteral("/k.txt")});
+        // Select lines, not opened yet: the dialog will read the defaults.
+        QVariantMap select{{QStringLiteral("find"), QStringLiteral("abc")}, {QStringLiteral("matchCase"), true}};
+        a.saveSelectLinesSettings(select);
+        QVERIFY(a.selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        // The shown tag buttons, the colour picker and the Grid.
+        a.tagButtons().setCount(2);
+        a.tagButtons().edit(0, QStringLiteral("Bold"), QStringLiteral("\\b1"), 0);
+        a.gridFilter().setIgnoreInActions(true);
+        a.gridFilter().setInverted(true);
+        a.shell().toggleColumn(1);
+        const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
+        a.colourPicker().addRecent(red); // no picker yet: the option is the list
+
+        a.resetSettings({});
+        QCOMPARE(settings.list("recent.video"), QStringList{QStringLiteral("/v.mkv")});
+        QCOMPARE(settings.list("recent.audio"), QStringList{QStringLiteral("/a.wav")});
+        QVERIFY(!settings.contains("recent.keyframes"));
+        QVERIFY(!a.selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 0);
+        // EditBox keeps the buttons SetTagButtons built; pressing one reads
+        // its reset option (wxBell); "Change number of buttons" starts from
+        // the stored 0 and adds buttons past the shown ones from their options.
+        QCOMPARE(a.tagButtons().count(), 2);
+        QCOMPARE(a.tagButtons().buttons().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Bold"));
+        QVERIFY(a.tagButtons().pressed(0).isEmpty());
+        QCOMPARE(a.tagButtons().storedCount(), 0);
+        a.tagButtons().setCount(3);
+        QCOMPARE(settings.integer("editor.tagButtons"), 3);
+        QCOMPARE(a.tagButtons().buttons().first().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Bold"));
+        QCOMPARE(a.tagButtons().buttons().last().toMap().value(QStringLiteral("name")).toString(), QStringLiteral("T3"));
+        QVERIFY(!settings.contains("editor.tagButton1"));
+        // SubsGrid keeps ignoreFiltered and its hidden columns; the filter
+        // itself takes the defaults; each toggle writes its own option.
+        QVERIFY(a.gridFilter().ignoreInActions());
+        QVERIFY(!a.gridFilter().inverted());
+        QVERIFY(!settings.contains("grid.ignoreFiltering"));
+        a.gridFilter().setInverted(true);
+        QVERIFY(!settings.contains("grid.ignoreFiltering"));
+        QCOMPARE(a.shell().hiddenColumns(), 1);
+        QVERIFY(!settings.contains("grid.hideColumns"));
+        a.shell().toggleColumn(8192);
+        QCOMPARE(settings.integer("grid.hideColumns"), 8193);
+
+        // Once opened, SelectLines keeps its options and recent searches:
+        // the options go back when it closes, the recent searches at the
+        // next selection.
+        a.openSelectLines();
+        QVERIFY(a.selectLines(select, false).size() > 0);
+        QCOMPARE(settings.list("selectLines.recentSelections"), QStringList{QStringLiteral("abc")});
+        // A created DialogColorPicker keeps its recent colours.
+        a.colourPickerOpened();
+        a.colourPicker().addRecent(red);
+        a.resetSettings({});
+        QVERIFY(!settings.contains("selectLines.options"));
+        QVERIFY(!settings.contains("selectLines.recentSelections"));
+        auto shown = a.openSelectLines();
+        QVERIFY(shown.value(QStringLiteral("matchCase")).toBool());
+        QCOMPARE(shown.value(QStringLiteral("recent")).toStringList(), QStringList{QStringLiteral("abc")});
+        a.saveSelectLinesSettings(select); // closed: the options only
+        QVERIFY(settings.contains("selectLines.options"));
+        QVERIFY(!settings.contains("selectLines.recentSelections"));
+        select.insert(QStringLiteral("find"), QStringLiteral("def"));
+        a.selectLines(select, false);
+        QCOMPARE(settings.list("selectLines.recentSelections"), (QStringList{QStringLiteral("def"), QStringLiteral("abc")}));
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 255);
+        QVERIFY(!settings.contains("colourPicker.recentColours"));
+        // Opened for another tab's Line editor, the picker is created again
+        // from the option.
+        QVERIFY(a.openFile(episode));
+        a.colourPickerOpened();
+        QCOMPARE(a.colourPicker().recent().first().toMap().value(QStringLiteral("r")).toInt(), 0);
+        QVERIFY(a.closeEditingTarget());
+
+        // A changed program font runs DestroyDialogs: SelectLines saves its
+        // options and is gone, so it reads the settings again.
+        a.resetSettings({});
+        QVERIFY(!settings.contains("selectLines.options"));
+        QSignalSpy destroyed(&a, &app::Application::selectLinesDestroyed);
+        a.applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
+        QCOMPARE(destroyed.count(), 1);
+        QVERIFY(app::Application(options).selectLinesSettings().value(QStringLiteral("matchCase")).toBool());
+        QVERIFY(a.openSelectLines().value(QStringLiteral("recent")).toStringList().isEmpty());
     }
 
     void theReferenceIsNeverEdited()

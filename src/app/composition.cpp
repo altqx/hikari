@@ -24,7 +24,7 @@ int run(int argc, char **argv, StartupMode mode)
 
     Application::Options options;
     options.autoload = true; // legacy: the Autoload scripts load at start
-    // The recent lists, until the settings registry owns them.
+    // The settings registry (O1).
     options.settingsFile =
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + QStringLiteral("/hikari.ini");
     options.recoveryDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + QStringLiteral("/Recovery");

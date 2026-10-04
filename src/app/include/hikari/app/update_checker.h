@@ -4,13 +4,17 @@
 // UpdateChecker at 20d647c4), notification only: it reads the release list
 // and offers the release page; it never downloads or installs anything.
 // The options (legacy UPDATER_AUTO_CHECK, UPDATER_CHECK_FOR_STABLE and
-// UPDATER_NEXT_CHECK) live in the INI file until the settings registry.
+// UPDATER_NEXT_CHECK) live in the settings registry (updater.*).
+
+#include "settings_store.h"
 
 #include <QNetworkAccessManager>
 #include <QObject>
 #include <QString>
 #include <QUrl>
 #include <QVariantMap>
+
+#include <memory>
 
 namespace hikari::app {
 
@@ -24,7 +28,10 @@ public:
     // The legacy release list: GitHub's ten newest releases.
     static QUrl defaultFeed();
 
+    // Options in the INI file `settingsFile` (in memory when empty), or in
+    // the application's store.
     UpdateChecker(QString settingsFile, QUrl feed, QString version, QObject *parent = nullptr);
+    UpdateChecker(ui::SettingsStore &settings, QUrl feed, QString version, QObject *parent = nullptr);
 
     bool autoCheck() const { return m_autoCheck; }
     void setAutoCheck(bool on);
@@ -43,6 +50,8 @@ public:
     // "Remind me in a week".
     Q_INVOKABLE void remindInAWeek();
     Q_INVOKABLE void openReleasePage(const QString &url);
+    // Reads the options again (after "Set default").
+    void reload();
 
 signals:
     void optionsChanged();
@@ -53,9 +62,11 @@ signals:
 
 private:
     void check(bool interactive);
+    void load();
     void save() const;
 
-    QString m_settingsFile;
+    std::unique_ptr<ui::SettingsStore> m_ownedSettings;
+    ui::SettingsStore *m_settings;
     QUrl m_feed;
     QString m_version;
     bool m_autoCheck = false;

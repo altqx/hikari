@@ -3,13 +3,17 @@
 // The Grid's filtering preferences (G8; legacy GRID_FILTER_BY,
 // GRID_FILTER_STYLES, GRID_FILTER_INVERTED, GRID_ADD_TO_FILTER,
 // GRID_FILTER_AFTER_LOAD and GRID_IGNORE_FILTERING at 20d647c4), shown in the
-// Grid menu's Filtering submenu and kept in the INI file the application
-// names until the settings registry owns them. The filter itself runs in the
+// Grid menu's Filtering submenu and kept in the settings registry (grid.filter*,
+// grid.addToFilter, grid.ignoreFiltering). The filter itself runs in the
 // application (grid_filtering.h).
+
+#include "settings_store.h"
 
 #include <QObject>
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
+
+#include <memory>
 
 namespace hikari::ui {
 
@@ -25,6 +29,7 @@ class GridFilterController : public QObject {
     Q_PROPERTY(bool ignoreInActions READ ignoreInActions WRITE setIgnoreInActions NOTIFY changed)
 public:
     explicit GridFilterController(QString settingsFile = {}, QObject *parent = nullptr);
+    explicit GridFilterController(SettingsStore &settings, QObject *parent = nullptr);
 
     int filterBy() const { return m_filterBy; }
     QStringList styles() const { return m_styles; }
@@ -44,13 +49,20 @@ public:
     // whether any Style is chosen (legacy ID_FILTERING_STYLES).
     Q_INVOKABLE void setStyle(const QString &name, bool on);
 
+    // Reads the settings again.
+    void reload();
+    // After "Set default": the filter takes the defaults, "Ignore filtering
+    // in some actions" stays as it was (legacy keeps it per open grid).
+    void settingsReset();
+
 signals:
     void changed();
 
 private:
-    void save() const;
+    void load();
 
-    QString m_settingsFile;
+    std::unique_ptr<SettingsStore> m_ownedSettings;
+    SettingsStore *m_settings;
     int m_filterBy = 0;
     QStringList m_styles;
     bool m_inverted = false;

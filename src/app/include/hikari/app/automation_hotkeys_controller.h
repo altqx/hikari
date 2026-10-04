@@ -6,8 +6,11 @@
 // OK, bindings that no longer resolve shown as unresolved (S44-macro-alias),
 // and an import of a legacy Hotkeys.txt's script lines. Committed bindings
 // that resolve become application-wide shortcuts running their macros.
+// Bindings are kept in the settings registry (shortcuts.automationMacros).
 
 #include "hikari/application/automation_hotkeys.h"
+
+#include "settings_store.h"
 
 #include <QObject>
 #include <QString>
@@ -26,7 +29,7 @@ class AutomationHotkeysController : public QObject {
     // Committed bindings that resolve: {legacyName, keys}.
     Q_PROPERTY(QVariantList shortcuts READ shortcuts NOTIFY shortcutsChanged)
 public:
-    AutomationHotkeysController(AutomationShell &automation, QString settingsFile, QObject *parent = nullptr);
+    AutomationHotkeysController(AutomationShell &automation, ui::SettingsStore &settings, QObject *parent = nullptr);
 
     QVariantList rows() const;
     QVariantList shortcuts() const;
@@ -60,7 +63,7 @@ private:
     std::optional<std::pair<std::string, int>> resolve(const application::MacroBinding &binding) const;
 
     AutomationShell &m_automation;
-    QString m_settingsFile;
+    ui::SettingsStore &m_settings;
     std::map<std::string, application::MacroBinding> m_committed;
     std::map<std::string, application::MacroBinding> m_staged;
 };

@@ -59,8 +59,9 @@ ApplicationWindow {
     // Bold; plain text (type 2) goes, as in legacy, into the main field (the
     // translation in translation mode, unless it is empty).
     function applyTagButton(index) {
-        const b = root.tagButtons.buttons[index]
-        if (!b || b.tag.length === 0)
+        // EditBox::OnButtonTag reads the button's option as stored now.
+        const b = root.tagButtons.pressed(index)
+        if (b.tag === undefined || b.tag.length === 0)
             return false
         let field = translationText.activeFocus ? translationText : lineText
         if (b.type === 2)
@@ -453,6 +454,14 @@ ApplicationWindow {
                     action: Action {
                         text: qsTr("Show / Hide log window")
                         onTriggered: root.log.toggleWindow()
+                    }
+                }
+                // O1: legacy GLOBAL_SETTINGS, the Options dialog.
+                MenuItem {
+                    objectName: "settingsMenuItem"
+                    action: Action {
+                        text: qsTr("&Settings")
+                        onTriggered: settingsDialog.openDialog()
                     }
                 }
                 MenuItem {
@@ -1323,7 +1332,8 @@ ApplicationWindow {
                                 ToolTip.text: modelData.name
                                 onClicked: {
                                     const field = translationText.activeFocus ? translationText : lineText
-                                    colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd)
+                                    if (colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd))
+                                        root.app.colourPickerOpened()
                                 }
                             }
                         }
@@ -3008,10 +3018,23 @@ ApplicationWindow {
         styles: root.styleManager
         app: root.app
     }
+    SettingsDialog {
+        id: settingsDialog
+        app: root.app
+        anchors.centerIn: parent
+    }
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
         anchors.centerIn: parent
+        // DestroyDialogs (a changed program font): SaveOptions, then gone.
+        Connections {
+            target: root.app
+            function onSelectLinesDestroyed() {
+                if (selectLinesDialog.visible)
+                    selectLinesDialog.close()
+            }
+        }
     }
     MisspellReplacerDialog {
         id: misspellDialog
@@ -3170,7 +3193,7 @@ ApplicationWindow {
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok | Dialog.Cancel
-        onAboutToShow: tagButtonCount.value = root.tagButtons.count
+        onAboutToShow: tagButtonCount.value = root.tagButtons.storedCount()
         onAccepted: root.tagButtons.setCount(tagButtonCount.value)
         SpinBox {
             id: tagButtonCount

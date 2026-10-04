@@ -1,7 +1,5 @@
 #include "shift_times_controller.h"
 
-#include <QSettings>
-
 namespace hikari::ui {
 
 namespace {
@@ -17,24 +15,66 @@ std::u8string u8(const QString &s)
     return std::u8string(reinterpret_cast<const char8_t *>(b.constData()), static_cast<std::size_t>(b.size()));
 }
 
+// The panel's values and their settings; the switches are the
+// shiftTimes.options bits (legacy ShiftTimes::SaveOptions).
+struct Field {
+    const char *name;
+    const char *setting;
+};
+constexpr Field kFields[] = {
+    {"timeMs", "shiftTimes.time"},
+    {"frames", "shiftTimes.displayFrames"},
+    {"whichLines", "shiftTimes.whichLines"},
+    {"whichTimes", "shiftTimes.whichTimes"},
+    {"correctEndTimes", "shiftTimes.correctEndTimes"},
+    {"styles", "shiftTimes.styles"},
+    {"postprocessor", "postprocessor.on"},
+    {"leadIn", "postprocessor.leadIn"},
+    {"leadOut", "postprocessor.leadOut"},
+    {"thresholdStart", "postprocessor.thresholdStart"},
+    {"thresholdEnd", "postprocessor.thresholdEnd"},
+    {"keyframeBeforeStart", "postprocessor.keyframeBeforeStart"},
+    {"keyframeAfterStart", "postprocessor.keyframeAfterStart"},
+    {"keyframeBeforeEnd", "postprocessor.keyframeBeforeEnd"},
+    {"keyframeAfterEnd", "postprocessor.keyframeAfterEnd"},
+};
+struct Bit {
+    const char *name;
+    int bit;
+};
+constexpr Bit kBits[] = {{"forward", 1},         {"fromStartTime", 2}, {"moveToVideoTime", 4},
+                         {"moveToAudioTime", 8}, {"byFrames", 16},     {"tagTimes", 32}};
+constexpr int kAllBits = 63;
+
 } // namespace
 
 ShiftTimesController::ShiftTimesController(QString settingsFile, QObject *parent)
-    : QObject(parent), m_settingsFile(std::move(settingsFile))
+    : QObject(parent), m_ownedStore(std::make_unique<SettingsStore>(std::move(settingsFile))),
+      m_store(m_ownedStore.get())
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    const QSettings ini(m_settingsFile, QSettings::IniFormat);
+    load();
+}
+
+ShiftTimesController::ShiftTimesController(SettingsStore &settings, QObject *parent)
+    : QObject(parent), m_store(&settings)
+{
+    load();
+}
+
+// The panel reads its options as legacy ShiftTimes does (SHIFT_TIMES_TIME
+// 2000 and backward when SHIFT_TIMES_OPTIONS is unset) and writes nothing
+// until it changes.
+void ShiftTimesController::load()
+{
     QVariantMap map;
-    for (const QString &key : {QStringLiteral("forward"), QStringLiteral("byFrames"), QStringLiteral("timeMs"),
-                               QStringLiteral("frames"), QStringLiteral("fromStartTime"), QStringLiteral("moveToVideoTime"),
-                               QStringLiteral("moveToAudioTime"), QStringLiteral("tagTimes"), QStringLiteral("whichLines"),
-                               QStringLiteral("whichTimes"), QStringLiteral("correctEndTimes"), QStringLiteral("styles"),
-                               QStringLiteral("postprocessor"), QStringLiteral("leadIn"), QStringLiteral("leadOut"), QStringLiteral("thresholdStart"), QStringLiteral("thresholdEnd"), QStringLiteral("keyframeBeforeStart"), QStringLiteral("keyframeAfterStart"), QStringLiteral("keyframeBeforeEnd"), QStringLiteral("keyframeAfterEnd")})
-        if (ini.contains(QStringLiteral("ShiftTimes/") + key))
-            map.insert(key, ini.value(QStringLiteral("ShiftTimes/") + key));
-    setSettingsMap(map);
-    m_profiles = ini.value(QStringLiteral("ShiftTimes/Profiles")).toStringList();
+    for (const auto &f : kFields)
+        map.insert(QLatin1String(f.name), m_store->value(QLatin1String(f.setting)));
+    const int options = m_store->integer("shiftTimes.options");
+    for (const auto &b : kBits)
+        map.insert(QLatin1String(b.name), (options & b.bit) != 0);
+    m_profiles = m_store->list("shiftTimes.profiles");
+    assign(map);
+    emit changed();
 }
 
 QVariantMap ShiftTimesController::settingsMap() const
@@ -64,6 +104,13 @@ QVariantMap ShiftTimesController::settingsMap() const
 }
 
 void ShiftTimesController::setSettingsMap(const QVariantMap &map)
+{
+    assign(map);
+    save();
+    emit changed();
+}
+
+void ShiftTimesController::assign(const QVariantMap &map)
 {
     auto &s = m_settings;
     auto b = [&](const char *key, bool &field) {
@@ -96,8 +143,6 @@ void ShiftTimesController::setSettingsMap(const QVariantMap &map)
     i("keyframeAfterEnd", s.keyframeAfterEnd);
     if (map.contains(QStringLiteral("styles")))
         s.styles = u8(map.value(QStringLiteral("styles")).toString());
-    save();
-    emit changed();
 }
 
 QStringList ShiftTimesController::profileNames() const
@@ -147,13 +192,16 @@ void ShiftTimesController::removeProfile(const QString &name)
 
 void ShiftTimesController::save() const
 {
-    if (m_settingsFile.isEmpty())
-        return;
-    QSettings ini(m_settingsFile, QSettings::IniFormat);
     const auto map = settingsMap();
-    for (auto it = map.begin(); it != map.end(); ++it)
-        ini.setValue(QStringLiteral("ShiftTimes/") + it.key(), it.value());
-    ini.setValue(QStringLiteral("ShiftTimes/Profiles"), m_profiles);
+    for (const auto &f : kFields)
+        m_store->set(f.setting, map.value(QLatin1String(f.name)));
+    // Bits legacy does not know are kept.
+    int options = m_store->integer("shiftTimes.options") & ~kAllBits;
+    for (const auto &b : kBits)
+        if (map.value(QLatin1String(b.name)).toBool())
+            options |= b.bit;
+    m_store->set("shiftTimes.options", options);
+    m_store->set("shiftTimes.profiles", m_profiles);
 }
 
 } // namespace hikari::ui

@@ -12,6 +12,7 @@
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_selection.h"
 #include "hikari/application/misspell_replacer.h"
+#include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/spell_checker.h"
@@ -28,6 +29,7 @@
 #include "shift_times_controller.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
+#include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -49,6 +51,8 @@ class Application : public QObject {
     Q_OBJECT
 signals:
     void closeFinished(bool done, const QString &problem);
+    // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
+    void selectLinesDestroyed();
     void quitApprovedChanged();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
@@ -75,7 +79,7 @@ public:
         QString automationDir;
         // Load the Autoload scripts at start (the application does; tests choose).
         bool autoload = false;
-        // INI file holding the recent lists; empty: they are not kept (tests).
+        // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
         // P3: where recovery bundles live; empty: no autosave (tests).
         QString recoveryDir;
@@ -166,9 +170,9 @@ public:
     Q_INVOKABLE bool saveAll();
     // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
     Q_INVOKABLE bool turnOffTranslationMode();
-    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING), kept in the INI file.
+    // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
-    bool saveWithVideoName() const { return m_saveWithVideoName; }
+    bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
     void setSaveWithVideoName(bool on);
     // GLOBAL_ANSI ("Report an issue"): the issue tracker in the browser.
     Q_INVOKABLE void reportIssue();
@@ -243,7 +247,7 @@ public:
     Q_INVOKABLE QString openKeyframes(const QUrl &file);
     // Y5: GLOBAL_CONVERT_TO_ASS/SRT/MDVD/MPL2/TMP with the CONVERT_* options
     // {fps, fpsFromVideo, style, newEndTimes, timePerCharacter, prefix,
-    // resolutionWidth, resolutionHeight}, kept in the INI file.
+    // resolutionWidth, resolutionHeight}, kept in the settings registry (convert.*).
     Q_INVOKABLE QVariantMap conversionOptions() const;
     Q_INVOKABLE void setConversionOptions(const QVariantMap &options);
     // The formats the editing target can be converted to ("ass", "srt",
@@ -266,16 +270,22 @@ public:
     // The SubsMismatchResolutionDialog's Change: 0 only the resolution,
     // 1 resample (no stretch), 2 resample (stretch).
     Q_INVOKABLE bool matchVideoResolution(int option);
-    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION), kept in the INI file.
+    // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION, video.dontAskForBadResolution).
     Q_PROPERTY(bool askForBadResolution READ askForBadResolution WRITE setAskForBadResolution NOTIFY askForBadResolutionChanged)
-    bool askForBadResolution() const { return m_askForBadResolution; }
+    bool askForBadResolution() const { return !m_settings->boolean("video.dontAskForBadResolution"); }
     void setAskForBadResolution(bool on);
     // F2: GLOBAL_OPEN_SELECT_LINES. The dialog's settings {find, with,
     // matchCase, regex, field, dialogues, comments, mode, action} and its
     // recent searches (legacy SELECT_LINES_OPTIONS and _RECENT_SELECTIONS,
-    // kept in the INI file); selectLines runs on the editing target or on
+    // kept in the settings registry); selectLines runs on the editing target or on
     // every open Document and returns the legacy message.
     Q_INVOKABLE QVariantMap selectLinesSettings() const;
+    // The dialog opens (legacy creates SelectLines once and keeps it until
+    // the app closes or DestroyDialogs): selectLinesSettings, and from now
+    // on the dialog's options and recent searches survive "Set default".
+    Q_INVOKABLE QVariantMap openSelectLines();
+    // The dialog closes: its options are written (not the recent searches,
+    // which legacy writes only when a selection runs).
     Q_INVOKABLE void saveSelectLinesSettings(const QVariantMap &settings);
     Q_INVOKABLE QString selectLines(const QVariantMap &settings, bool allTabs);
     // The "+" button: the chosen styles as the legacy anchored pattern.
@@ -379,8 +389,31 @@ public:
     // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);
-    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (default true) until the settings registry.
-    void setChangeActiveOnSelection(bool on) { m_changeActiveOnSelection = on; }
+    // Legacy GRID_CHANGE_ACTIVE_ON_SELECTION (grid.changeActiveOnSelection, default true).
+    void setChangeActiveOnSelection(bool on) { m_settings->set("grid.changeActiveOnSelection", on); }
+
+    // O1: GLOBAL_SETTINGS, the Options dialog (legacy OptionsDialog at
+    // 20d647c4) over the settings registry. The dialog reads each page's
+    // values as legacy shows them and writes the changed ones on OK/Apply.
+    Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
+    ui::SettingsStore *settingsStore() const { return m_settings.get(); }
+    // Opening the dialog (application::openOptionsDialog): {values: the
+    // controls' state by setting id, languages, dictionaries, catalogs,
+    // styles: the choices' entries, warnings: the legacy "does not exist"
+    // messages}. Opening fixes an FFMS2 seeking value outside 0-3 to 2 at
+    // once and loads the conversion catalog, as legacy does.
+    Q_INVOKABLE QVariantMap openSettingsDialog();
+    // OK/Apply (legacy SetOptions): each bound control whose value differs
+    // from the stored one is written; nothing else.
+    Q_INVOKABLE void applySettings(const QVariantMap &values);
+    // "Set default" (legacy ResetDefault): every setting at once, even if the
+    // dialog is then cancelled; returns the controls' state as legacy
+    // refreshes them (its defects included).
+    Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
+    // OnChangeCatalog: loads the catalog and returns {values, styles}.
+    Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
+    // wxDirDialog::GetPath: the chosen folder with native separators.
+    Q_INVOKABLE QString settingsFolderPath(const QUrl &url) const;
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -392,6 +425,9 @@ public:
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
+    // E1/O1: the Line editor's colour picker opens for the editing target
+    // (legacy DialogColorPicker::Get(EditBox of that tab)).
+    Q_INVOKABLE void colourPickerOpened();
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
     ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
@@ -434,6 +470,18 @@ private:
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
+    // O1: declared before everything that keeps a reference to it.
+    std::unique_ptr<ui::SettingsStore> m_settings;
+    void settingChanged(const QString &id);
+    // R6-dictionary-location: the settings folder's Dictionary (user
+    // dictionaries), then the program folder's (bundled ones).
+    QStringList m_dictionaryDirs;
+    // The process locale legacy CmpNoCase runs under: a translation language
+    // initialized at startup folds every letter, "C" only ASCII letters.
+    bool m_foldsEveryLetter = false;
+    bool m_resettingSettings = false; // "Set default" is resetting the registry
+    bool m_selectLinesOpened = false; // legacy SelectLines exists
+    application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<UpdateChecker> m_updates;
@@ -444,9 +492,6 @@ private:
     std::unique_ptr<ui::WorkspaceLayoutController> m_workspaceLayout;
     std::unique_ptr<ui::ShiftTimesController> m_shiftTimes;
     int m_selectOptions = 0;
-    bool m_saveWithVideoName = false;
-    bool m_askForBadResolution = true;
-    QVariantMap m_conversionOptions;
     struct ConversionPlan {
         std::uint64_t document = 0;
         std::uint64_t revision = 0;
@@ -482,7 +527,6 @@ private:
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
-    bool m_changeActiveOnSelection = true;
     struct Closing {
         application::DocumentId document;
         bool save = false;

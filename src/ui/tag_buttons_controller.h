@@ -4,15 +4,19 @@
 // EDITBOX_TAG_BUTTON_VALUE1-20 at 20d647c4): how many are shown (0 to 20,
 // none by default) and each button's tag, insertion type and name. Each
 // definition is kept in the legacy option text, so a settings import can
-// carry legacy values over unchanged. Kept in the INI file the application
-// names until the settings registry owns them.
+// carry legacy values over unchanged. Kept in the settings registry
+// (editor.tagButtons, editor.tagButton1-20).
+
+#include "settings_store.h"
 
 #include <QObject>
 #include <QString>
 #include <QVariantList>
+#include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <array>
+#include <memory>
 
 namespace hikari::ui {
 
@@ -32,29 +36,42 @@ public:
         QString name;
     };
 
+    // Settings kept in the INI file `settingsFile` (in memory when empty),
+    // or in the application's store.
     explicit TagButtonsController(QString settingsFile = {}, QObject *parent = nullptr);
+    explicit TagButtonsController(SettingsStore &settings, QObject *parent = nullptr);
 
     int count() const { return m_count; }
     QVariantList buttons() const;
     const Button &button(int index) const { return m_buttons[static_cast<std::size_t>(index)]; }
 
-    // "Change number of buttons".
+    // "Change number of buttons": the stored count it starts from, and OK.
+    Q_INVOKABLE int storedCount() const;
     Q_INVOKABLE void setCount(int count);
     // The TagButtonDialog's "Save tag".
     Q_INVOKABLE void edit(int index, const QString &name, const QString &tag, int type);
+    // Pressing a button or its menu entry (EditBox::OnButtonTag): its option
+    // as it is stored now, {tag, type}, or nothing (legacy wxBell) when it
+    // has fewer than two entries. The shown buttons are what SetTagButtons
+    // built; after "Set default" they stay while their options are reset.
+    Q_INVOKABLE QVariantMap pressed(int index) const;
 
     // config::GetTable with empty entries kept: "{\n\t<tag>\n\t<type>\n\t<name>\n}";
     // a missing name is "T<n>" (1-based), a missing type 0.
     static Button fromLegacy(const QString &value, int index);
     static QString toLegacy(const Button &button);
 
+    // Reads the settings again.
+    void reload();
+
 signals:
     void changed();
 
 private:
-    void save() const;
+    void load();
 
-    QString m_settingsFile;
+    std::unique_ptr<SettingsStore> m_ownedSettings;
+    SettingsStore *m_settings;
     int m_count = 0;
     std::array<Button, kMaximum> m_buttons;
 };
