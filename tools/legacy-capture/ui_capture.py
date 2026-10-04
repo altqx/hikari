@@ -35,7 +35,9 @@ semantic, so the rewrite can replay the same plan:
   shot       a screenshot of the screen or of a named window
 
 A dump step with "may_hang" records an app that stops answering (a legacy
-hang the case expects) as its observation. The plan's and the case's "env"
+hang the case expects) as its observation. A watchdog kills the app when
+its resident memory passes "memory_limit_mb" (1024 by default) and
+records it: the End-of-text hang grows without bound. The plan's and the case's "env"
 are added to the app's environment (LANG: legacy's wxString::Lower follows
 the C library's locale, so the plan runs under C.UTF-8 and one case under C).
 
@@ -45,7 +47,7 @@ that gets no dump back (the app busy or blocked) is recorded as such and
 the case ends. What is recorded is what the old app did; it is not an
 expectation for the rewrite.
 """
-import argparse, hashlib, json, os, platform, re, shutil, subprocess, tarfile, tempfile, time
+import argparse, hashlib, json, os, platform, re, shutil, subprocess, tarfile, tempfile, threading, time
 from pathlib import Path
 
 MAIN = "HikariSub v"
@@ -104,6 +106,42 @@ class X:
 
     def type(self, text):
         self("xdotool", "type", "--delay", "40", text, timeout=60)
+
+
+class MemoryWatch:
+    """Kills the app when its resident memory passes the limit.
+
+    Legacy's End-of-text Find all never leaves the Line and appends results
+    without end (about 0.8 GB a second): left alone it takes the whole
+    machine, and on a GitHub runner the job is lost with its artifacts. The
+    kill is recorded with the case; it is the observation of that hang."""
+
+    def __init__(self, proc, limit_mb):
+        self.proc, self.limit_kb = proc, limit_mb * 1024
+        self.killed = None
+        self.peak_kb = 0
+        self.started = time.time()
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._watch, daemon=True)
+        self._thread.start()
+
+    def _watch(self):
+        status = Path(f"/proc/{self.proc.pid}/status")
+        while not self._stop.is_set() and self.proc.poll() is None:
+            try:
+                rss = next((int(l.split()[1]) for l in status.read_text().splitlines() if l.startswith("VmRSS:")), 0)
+            except (OSError, ValueError):
+                rss = 0
+            self.peak_kb = max(self.peak_kb, rss)
+            if rss > self.limit_kb:
+                self.proc.kill()
+                self.killed = {"rss_mb": rss // 1024, "after_seconds": round(time.time() - self.started, 1)}
+                return
+            self._stop.wait(0.1)
+
+    def stop(self):
+        self._stop.set()
+        self._thread.join(timeout=2)
 
 
 class Case:
@@ -201,7 +239,7 @@ class Case:
 
     def dump(self, timeout=20):
         before = len(self.out.read_text(encoding="utf-8").splitlines())
-        if self.popups():
+        if self.proc.poll() is not None or self.popups():
             return None
         p = self.pos
         # After a message box closes, legacy's main frame no longer passes
@@ -348,6 +386,8 @@ class Case:
         proc = subprocess.Popen([str(self.app), *map(str, self.docs)], cwd=self.app.parent,
                                 env={**env, "HOME": str(self.scratch / "home"), "HIKARI_CAPTURE_OUT": str(self.out)},
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        self.proc = proc
+        watch = MemoryWatch(proc, self.case.get("memory_limit_mb", self.spec.get("memory_limit_mb", 1024)))
         try:
             found = x("xdotool", "search", "--sync", "--onlyvisible", "--name", "HikariSub v[0-9]", timeout=90).split()
             if not found:
@@ -360,7 +400,16 @@ class Case:
                 x("xdotool", "windowactivate", "--sync", w)
                 x.key("Return")
                 time.sleep(1)
+            expects_hang = any(st.get("may_hang") for st in self.case["steps"])
             for step in self.case["steps"]:
+                if proc.poll() is not None:
+                    # The app is gone (the watchdog's kill): in a case that
+                    # expects a hang that is the observation, otherwise a failure.
+                    rec["steps"].append({"do": step["do"], "status": "done" if expects_hang else "app-ended",
+                                         "response": "none"})
+                    if not expects_hang:
+                        break
+                    continue
                 t0 = time.time()
                 s = self.run_step(step)
                 s["seconds"] = round(time.time() - t0, 1)
@@ -370,6 +419,10 @@ class Case:
             rec["status"] = "captured" if all(s["status"] == "done" for s in rec["steps"]) and \
                 len(rec["steps"]) == len(self.case["steps"]) else "incomplete"
         finally:
+            watch.stop()
+            rec["peak_rss_mb"] = watch.peak_kb // 1024
+            if watch.killed:
+                rec["killed_over_memory_limit"] = watch.killed
             rec["final_screenshot"] = self.shot("final")
             proc.kill()
             try:
@@ -385,11 +438,19 @@ class Case:
 def run(spec, package, display, workdir, plan_dir, only=None):
     x = X(display)
     out = []
+    # Each case's record is also appended to ui-observations.jsonl as it
+    # ends, so a lost run still leaves what it captured.
+    partial = workdir / "ui-observations.jsonl"
     for case in spec["cases"]:
         if only and case["id"] not in only:
             continue
         rec = Case(spec, case, package, x, workdir, plan_dir).run()
-        print(json.dumps({"case": rec["id"], "status": rec["status"]}), flush=True)
+        free = subprocess.run(["free", "-m"], capture_output=True, text=True).stdout.split("\n")[1:2]
+        print(json.dumps({"case": rec["id"], "status": rec["status"], "seconds": rec.get("seconds"),
+                          "peak_rss_mb": rec.get("peak_rss_mb"), "killed": rec.get("killed_over_memory_limit"),
+                          "free_mb": " ".join(free[0].split()[1:4]) if free else None}), flush=True)
+        with partial.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
         out.append(rec)
     return out
 
