@@ -42,10 +42,16 @@ function(hikari_add_qttest target)
     add_executable(${target} ${arg_SOURCES})
     set_target_properties(${target} PROPERTIES AUTOMOC ON)
     target_link_libraries(${target} PRIVATE Qt6::Test ${arg_LIBRARIES})
+    # ctest keeps no QtTest output on Windows: also write it to a file beside
+    # the build (CI collects qttest-*.txt).
+    set(output)
+    if(WIN32)
+        set(output -o "${CMAKE_BINARY_DIR}/qttest-${target}.txt,txt" -o "-,txt")
+    endif()
     if(arg_OFFSCREEN_ONLY)
-        _hikari_add_qt_modes(${target} qttest OFFSCREEN_ONLY $<TARGET_FILE:${target}>)
+        _hikari_add_qt_modes(${target} qttest OFFSCREEN_ONLY $<TARGET_FILE:${target}> ${output})
     else()
-        _hikari_add_qt_modes(${target} qttest $<TARGET_FILE:${target}>)
+        _hikari_add_qt_modes(${target} qttest $<TARGET_FILE:${target}> ${output})
     endif()
 endfunction()
 
