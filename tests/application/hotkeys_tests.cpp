@@ -676,3 +676,103 @@ TEST(Hotkeys, GestureMapsAtOnce)
     EXPECT_TRUE(r.changed);
     EXPECT_TRUE(r.saveAudio);
 }
+
+// Hotkeys::OnMapHkey's Switch (Hotkeys.cpp:497-509), in map order: each
+// binding holding the keys is cleared and given (id, window)'s keys as they
+// are then. The mapped binding among them clears itself, so those after it
+// get nothing; SetHKey gives it the keys afterwards.
+TEST(Hotkeys, GestureSwitchFollowsLegacyOrder)
+{
+    HotkeyMap live;
+    live[HotkeyId{5005, GlobalHotkey}] = Hotkey{"", "Ctrl-K"};  // GLOBAL_REDO, before it
+    live[HotkeyId{kHistory, GlobalHotkey}] = Hotkey{"", "Ctrl-K"}; // the binding mapped
+    live[HotkeyId{5100, GlobalHotkey}] = Hotkey{"", "Ctrl-K"};  // GLOBAL_OPEN_SUBS, after it
+    live[HotkeyId{kDuplicate, GridHotkey}] = Hotkey{"", "Ctrl-K"}; // another window: not doubled, kept
+    const auto c = mapHotkeyNowConflict(live, kHistory, "Ctrl-K", GlobalHotkey);
+    ASSERT_TRUE(c);
+    EXPECT_TRUE(c->doubled);
+    const auto r = mapHotkeyNow(live, kHistory, "History", "Ctrl-K", GlobalHotkey, HotkeyAnswer::Switch);
+    EXPECT_TRUE(r.changed);
+    EXPECT_EQ(live.at(HotkeyId{5005, GlobalHotkey}).accel, "Ctrl-K");
+    EXPECT_EQ(live.at(HotkeyId{kHistory, GlobalHotkey}).accel, "Ctrl-K");
+    EXPECT_EQ(live.at(HotkeyId{5100, GlobalHotkey}).accel, "");
+    EXPECT_EQ(live.at(HotkeyId{kDuplicate, GridHotkey}).accel, "Ctrl-K");
+    // Without the mapped binding among them, every doubled one gets its old keys.
+    live[HotkeyId{5100, GlobalHotkey}].accel = "Ctrl-J";
+    live[HotkeyId{5005, GlobalHotkey}].accel = "Ctrl-J";
+    mapHotkeyNow(live, kHistory, "History", "Ctrl-J", GlobalHotkey, HotkeyAnswer::Switch);
+    EXPECT_EQ(live.at(HotkeyId{5005, GlobalHotkey}).accel, "Ctrl-K");
+    EXPECT_EQ(live.at(HotkeyId{5100, GlobalHotkey}).accel, "Ctrl-K");
+    EXPECT_EQ(live.at(HotkeyId{kHistory, GlobalHotkey}).accel, "Ctrl-J");
+}
+
+// Hotkeys::GetHKey (Hotkeys.cpp:362-375): a key text that is no FillTable
+// name and longer than one character (UTF-16 units) is logged as invalid.
+TEST(Hotkeys, InvalidKeysAreReportedAsGetHKeyLogsThem)
+{
+    EXPECT_EQ(invalidHotkeyKey("Ctrl-Bogus"), "Bogus");
+    EXPECT_EQ(invalidHotkeyKey("Ctrl-Shift"), "Shift");
+    EXPECT_EQ(invalidHotkeyKey("Num 0"), "");
+    EXPECT_EQ(invalidHotkeyKey("Num -"), ""); // the '-' key
+    EXPECT_EQ(invalidHotkeyKey("Ctrl-A"), "");
+    EXPECT_EQ(invalidHotkeyKey("Alt-\xc3\xa9"), ""); // one character: valid for legacy
+    EXPECT_EQ(qtKeysOfAccel("Alt-\xc3\xa9"), "");    // but no Qt sequence here
+    EXPECT_EQ(invalidHotkeyKey("Alt-\xf0\x9f\x98\x80"), "\xf0\x9f\x98\x80"); // two UTF-16 units
+    EXPECT_EQ(invalidHotkeyKey(""), "");
+}
+
+// LoadHkeys (Hotkeys.cpp:300-304): a numeric label is Labels.IsNumber()
+// (a sign, then digits) read with wxAtoi, which never fails.
+TEST(Hotkeys, NumericLabelsAreReadWithWxAtoi)
+{
+    HotkeyMap map;
+    EXPECT_NO_THROW(readHotkeyLines(map, {"99999999999 G=Ctrl-K", "-5 S=F2", "+4527 S=F3", "12a G=F4"}));
+    // strtol on a 64-bit long, truncated to int (core::legacy::atoi)
+    EXPECT_EQ(map.at(HotkeyId{1215752191, GlobalHotkey}).accel, "Ctrl-K");
+    EXPECT_EQ(map.at(HotkeyId{-5, GridHotkey}).accel, "F2");
+    EXPECT_EQ(map.at(HotkeyId{kDuplicate, GridHotkey}).accel, "F3");
+    EXPECT_EQ(map.at(HotkeyId{0, GlobalHotkey}).accel, "F4"); // not a number: GetIdValue
+    // Neither is written back: an id under 100, and one in the scripts' range
+    // (legacy writes it as "=Ctrl-K", which it cannot read again).
+    const auto lines = hotkeyLines(map, false);
+    EXPECT_EQ(lines, (std::vector<std::string>{"GRID_DUPLICATE_LINES S=F3"}));
+}
+
+// HikariListCtrl's gutter (CheckIfHasHiddenBlock, ShowOrHideBlock) over
+// ItemHotkey's filter.
+TEST(Hotkeys, FilteredListShowsAndHidesBlocks)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    list.build(defaultHotkeys());
+    EXPECT_FALSE(list.filtered());
+    list.filter(1); // Set shortcuts
+    ASSERT_TRUE(list.filtered());
+    const auto shown = list.shown();
+    // The first set shortcut is the first row (GLOBAL_CLOSE_PAGE, Ctrl-W);
+    // rows without keys follow it, hidden.
+    ASSERT_EQ(shown.front(), 0);
+    EXPECT_EQ(list.hiddenBlock(-1), 0);
+    int position = -1;
+    for (int i = 0; i + 1 < int(shown.size()); ++i)
+        if (shown[std::size_t(i) + 1] > shown[std::size_t(i)] + 1) {
+            position = i;
+            break;
+        }
+    ASSERT_GE(position, 0);
+    const int first = shown[std::size_t(position)];
+    const int next = shown[std::size_t(position) + 1];
+    EXPECT_EQ(list.hiddenBlock(position), 1);
+    list.toggleBlock(position);
+    EXPECT_EQ(list.shown().size(), shown.size() + std::size_t(next - first - 1));
+    EXPECT_EQ(list.row(first + 1).visible, 2);
+    EXPECT_EQ(list.hiddenBlock(position), 2);
+    list.toggleBlock(position);
+    EXPECT_EQ(list.shown(), shown);
+    // No block, no change; "All" is not filtered.
+    list.toggleBlock(int(shown.size()) - 1);
+    EXPECT_EQ(list.shown(), shown);
+    list.filter(0);
+    EXPECT_FALSE(list.filtered());
+    EXPECT_EQ(list.hiddenBlock(0), 0);
+}
