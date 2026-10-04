@@ -25,12 +25,24 @@ Dialog {
     property real clientTop: 0
 
     // Legacy creates the window once, CenterOnParent, and shows or hides it;
-    // where the user moves it, it stays.
+    // where the user moves it, it stays. CenterOnParent placed the window by
+    // its laid-out size; here the layout can settle only once the window is
+    // shown (with some fonts, on Windows, wider than first measured), so the
+    // place follows the size until the window is first moved.
+    property bool centring: false
+    function centre() {
+        if (!parent)
+            return
+        x = Math.round((parent.width - implicitWidth) / 2)
+        y = Math.round((parent.height - implicitHeight) / 2)
+    }
+    onImplicitWidthChanged: if (centring) centre()
+    onImplicitHeightChanged: if (centring) centre()
     function openDialog() {
         reloadRules()
         if (!placed) {
-            x = Math.round((parent.width - implicitWidth) / 2)
-            y = Math.round((parent.height - implicitHeight) / 2)
+            centring = true
+            centre()
             placed = true
         }
         open()
@@ -45,6 +57,7 @@ Dialog {
         results.placed = false
         close()
         placed = false
+        centring = false
         selectedRule = -1
         rules = []
         description.text = ""
@@ -103,6 +116,7 @@ Dialog {
     component TitleBar: Label {
         id: titleBar
         required property var popup
+        signal dragged() // the window was moved by its title
         text: popup.title
         font.bold: true
         padding: 12
@@ -129,10 +143,11 @@ Dialog {
                 }
                 popup.x = x
                 popup.y = y
+                titleBar.dragged()
             }
         }
     }
-    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog }
+    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog; onDragged: dialog.centring = false }
 
     RowLayout {
         anchors.fill: parent
