@@ -141,13 +141,33 @@ TEST_F(Select, RegularExpressionsAndAnInvalidOne)
     EXPECT_EQ(run(s), 0);
     select({0, 2}, 2);
     s.find = u8"(";
-    EXPECT_EQ(run(s), 0);
+    const auto invalid = selectLines(session, s);
+    ASSERT_TRUE(invalid && invalid->invalidExpression);
+    EXPECT_EQ(invalid->count, 0);
+    EXPECT_EQ(invalid->invalidExpression->first, u"("); // logged "Invalid regular expression '(': ..."
+    EXPECT_FALSE(invalid->invalidExpression->second.empty());
     EXPECT_TRUE(selectedRows().empty()); // Select cleared it before compiling
     EXPECT_EQ(activeRow(), 2u);
     select({0, 2}, 2);
     s.mode = S::Mode::AddToSelection;
     EXPECT_EQ(run(s), 0);
     EXPECT_EQ(selectedRows(), (std::set<std::size_t>{0, 2}));
+}
+
+TEST_F(Select, RegexMatchErrorsCountAsNoMatchAndAreReported)
+{
+    // PCRE2's match limit (catastrophic backtracking): wx_regexec logs it and
+    // the Line does not match.
+    EditSession longLine{load(std::string(kHeader) + "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," +
+                              std::string(40, 'a') + "b\n")};
+    S s = find(u8"(a+)+$");
+    s.regex = true;
+    const auto r = selectLines(longLine, s);
+    ASSERT_TRUE(r);
+    EXPECT_EQ(r->count, 0);
+    ASSERT_EQ(r->matchErrors.size(), 1u);
+    EXPECT_FALSE(r->matchErrors.front().empty());
+    EXPECT_FALSE(r->invalidExpression);
 }
 
 TEST_F(Select, AddAndDeselectCount)

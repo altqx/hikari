@@ -207,7 +207,9 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
         re.emplace(find, core::LegacyRegex::Advanced | (settings.matchCase ? 0 : core::LegacyRegex::IgnoreCase));
         if (!re->isValid()) {
             session.setSelection(selection);
-            return SelectLinesResult{};
+            SelectLinesResult invalid;
+            invalid.invalidExpression.emplace(find, re->errorMessage());
+            return invalid;
         }
     }
 
@@ -221,6 +223,8 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
         if (!txt.empty() && !find.empty()) {
             if (re) {
                 found = re->matches(txt);
+                if (const std::u16string error = re->matchError(); !found && !error.empty())
+                    result.matchErrors.push_back(error);
             } else {
                 if (!settings.matchCase)
                     txt = lower(txt);

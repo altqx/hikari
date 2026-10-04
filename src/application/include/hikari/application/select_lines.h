@@ -9,6 +9,7 @@
 #include <expected>
 #include <functional>
 #include <optional>
+#include <utility>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -51,11 +52,17 @@ using TextFold = std::function<std::u16string(std::u16string_view)>;
 struct SelectLinesResult {
     int count = 0;                          // legacy allSelections: the message's number
     std::optional<std::u8string> clipboard; // Copy and Cut: what goes on the clipboard
+    // wxRegEx::Compile's wxLogError: the expression and PCRE2's message.
+    std::optional<std::pair<std::u16string, std::u16string>> invalidExpression;
+    // wx_regexec's wxLogError, one per Matches that failed with a PCRE2 error
+    // (the match or heap limit); that Line counts as not matching.
+    std::vector<std::u16string> matchErrors;
 };
 
 // One run on one Document. Hidden Lines are skipped unless `visible` is
 // empty (Ignore filtering in some actions). An invalid regular expression
-// counts nothing and only clears the selection in Select mode.
+// counts nothing, is reported in the result and only clears the selection in
+// Select mode.
 std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &session, const SelectLinesSettings &settings,
                                                              const LineVisible &visible = {},
                                                              const TextFold &fold = {});

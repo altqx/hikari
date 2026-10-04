@@ -2214,6 +2214,10 @@ application::SelectLinesSettings selectSettings(const QVariantMap &m, int option
     return s;
 }
 
+// wx_regexec's log line for a failed match (defined with the Fix minor errors helpers).
+QString regexMatchError(const std::u16string &error);
+QString fromUtf16(const std::u16string &s);
+
 } // namespace
 
 QVariantMap Application::selectLinesSettings() const
@@ -2269,6 +2273,12 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
         const auto result = application::selectLines(*session, settings, actionLines(*session), fold);
         if (!result)
             continue;
+        // wxRegEx's wxLogError calls, per tab as legacy compiled per tab.
+        if (result->invalidExpression)
+            m_log->log(tr("Invalid regular expression '%1': %2")
+                           .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
+        for (const auto &error : result->matchErrors)
+            m_log->log(regexMatchError(error));
         count += result->count;
         // Each Document's Copy or Cut replaces the clipboard (legacy, per tab).
         if (result->clipboard)
