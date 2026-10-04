@@ -134,3 +134,84 @@ tasks:
     script: $p = Get-Process HikariSub -ErrorAction SilentlyContinue | Select-Object -First 1; if (-not $p) { Write-Output 'no HikariSub process'; exit 1 }; Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class Dump { [DllImport("dbghelp.dll", SetLastError=true)] public static extern bool MiniDumpWriteDump(IntPtr hProcess, uint pid, Microsoft.Win32.SafeHandles.SafeFileHandle hFile, uint type, IntPtr e, IntPtr u, IntPtr c); }'; New-Item -ItemType Directory -Force out/legacy-win/dump | Out-Null; $f = [IO.File]::Create("$PWD/out/legacy-win/dump/HikariSub.dmp"); $ok = [Dump]::MiniDumpWriteDump($p.Handle, [uint32]$p.Id, $f.SafeFileHandle, 0x0, [IntPtr]::Zero, [IntPtr]::Zero, [IntPtr]::Zero); $f.Close(); Write-Output "pid $($p.Id) responding=$($p.Responding) dump=$ok size=$((Get-Item out/legacy-win/dump/HikariSub.dmp).Length)"
     timeoutSeconds: 300
     artifacts: [out/legacy-win/dump/HikariSub.dmp]
+  # D1 native gate on Windows (tools/native-gate/windows/gate_windows.py).
+  # Guest scratch: out/native-gate-win. The driver passes parameters through
+  # each task's environment (a derived config); the defaults below run alone.
+  gate-win-prepare:
+    script: ./tools/native-gate/windows/gate.ps1 -Action prepare
+    visualStudio: false
+    timeoutSeconds: 300
+  gate-win-fresh:
+    # Ends the HikariSub under test and sets its profile aside (never deleted).
+    script: ./tools/native-gate/windows/gate.ps1 -Action fresh
+    visualStudio: false
+    timeoutSeconds: 120
+  gate-win-kill:
+    script: ./tools/native-gate/windows/gate.ps1 -Action kill
+    visualStudio: false
+    timeoutSeconds: 120
+  gate-win-status:
+    script: ./tools/native-gate/windows/gate.ps1 -Action status
+    visualStudio: false
+    timeoutSeconds: 120
+  gate-win-uia:
+    # Every top-level window of the app through UI Automation, focus, foreground, cursor.
+    script: ./tools/native-gate/windows/uia.ps1
+    visualStudio: false
+    timeoutSeconds: 300
+  gate-win-fullscreen:
+    script: ./tools/native-gate/windows/gate.ps1 -Action fullscreen
+    visualStudio: false
+    timeoutSeconds: 120
+    environment: {GATE_FULLSCREEN: 'off'}
+  gate-win-dpi:
+    # The guest's display scale (a guest setting); the dpi step restores 100.
+    script: ./tools/native-gate/windows/gate.ps1 -Action dpi
+    visualStudio: false
+    timeoutSeconds: 120
+    environment: {GATE_DPI_PERCENT: '100'}
+  gate-win-tests:
+    # hikari_ui_shell_tests (D1 functions), docking qualification and workspace layout under the windows platform.
+    script: ./tools/native-gate/windows/tests.ps1
+    visualStudio: false
+    timeoutSeconds: 2400
+  nvda-setup:
+    # NVDA 2026.2 checked against its published SHA-256, as a portable copy under out/native-gate-win/nvda (nothing installed).
+    script: ./tools/native-gate/windows/nvda.ps1 -Action setup
+    visualStudio: false
+    timeoutSeconds: 1200
+  nvda-output:
+    # Quits NVDA and prints its speech lines; the whole log is the artifact.
+    script: ./tools/native-gate/windows/nvda.ps1 -Action output
+    visualStudio: false
+    timeoutSeconds: 180
+    artifacts: [out/native-gate-win/nvda/nvda-last.log]
+  gate-win-keys:
+    # Key sequences as a keyboard sends them (scan codes, extended-key flag on navigation keys).
+    script: ./tools/native-gate/windows/gate.ps1 -Action keys
+    visualStudio: false
+    timeoutSeconds: 300
+    environment: {GATE_KEYS: '[]'}
+  monitors:
+    # The display adapters and monitors Windows sees (tools/winix/monitors.sh).
+    script: Get-CimInstance Win32_VideoController | Format-Table Name, Status, CurrentHorizontalResolution, CurrentVerticalResolution -AutoSize | Out-String -Width 200; Get-CimInstance -Namespace root\wmi WmiMonitorID -ErrorAction SilentlyContinue | ForEach-Object { "monitor $($_.InstanceName) active=$($_.Active)" }; Get-PnpDevice -Class Display,Monitor | Format-Table Class, Status, FriendlyName -AutoSize | Out-String -Width 200
+    visualStudio: false
+    timeoutSeconds: 120
+  qxl-driver:
+    # QXL-WDDM-DOD from the pinned virtio-win ISO, one monitor per QXL device
+    # (tools/winix/monitors.sh copies it into the synced tree).
+    script: pnputil /add-driver "$PWD\tools\winix\drivers\qxldod\w10\amd64\qxldod.inf" /install; Get-PnpDevice -Class Display | Format-Table Status, FriendlyName, InstanceId -AutoSize | Out-String -Width 200
+    visualStudio: false
+    timeoutSeconds: 300
+  display-layout:
+    # Both QXL monitors extended at 1280x800, the second right of the primary; prints the monitor rectangles.
+    script: ./tools/native-gate/windows/display.ps1
+    visualStudio: false
+    timeoutSeconds: 180
+    environment: {GATE_DISPLAY: extend}
+  gate-win-display:
+    # The gate's display changes (GATE_DISPLAY extend|detach|status, GATE_SCALE2 percent); see display.ps1.
+    script: ./tools/native-gate/windows/display.ps1
+    visualStudio: false
+    timeoutSeconds: 180
+    environment: {GATE_DISPLAY: status}
