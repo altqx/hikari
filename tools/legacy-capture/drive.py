@@ -331,7 +331,15 @@ def automation(spec, package, display, workdir, probe_source):
             time.sleep(1)
             if k == 0:
                 probe_rec["submenu"] = screenshot(display, workdir, "automation-submenu")
-            x(["xdotool", "mousemove", str(sx), str(sy + row * k), "click", "1"], display)
+            # The app-drawn menu misses an instant press and release on an item:
+            # hover it, then press and release apart.
+            x(["xdotool", "mousemove", str(sx), str(sy + row * k)], display)
+            time.sleep(0.5)
+            x(["xdotool", "mousemove", str(sx + 5), str(sy + row * k)], display)
+            time.sleep(0.3)
+            x(["xdotool", "mousedown", "1"], display)
+            time.sleep(0.2)
+            x(["xdotool", "mouseup", "1"], display)
             if step.get("keys") is not None:
                 time.sleep(3)  # the dialog takes the focus
                 srec["dialog_windows"] = [t for _, t in popups(display, wid)]
