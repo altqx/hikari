@@ -260,7 +260,14 @@ std::size_t PortAudioOutput::write(std::span<const float> interleaved)
 
 OutputStatus PortAudioOutput::status() const
 {
-    return d->engine ? d->engine->status() : OutputStatus{};
+    if (!d->engine)
+        return {};
+    // Some host APIs end the stream on device loss without the finished
+    // callback: a stream that is no longer active although nobody stopped it
+    // was lost.
+    if (const auto s = d->engine->status(); s.running && !s.deviceLost && Pa_IsStreamActive(d->stream) == 0)
+        d->engine->streamFinished();
+    return d->engine->status();
 }
 
 ClockEstimate PortAudioOutput::clock() const

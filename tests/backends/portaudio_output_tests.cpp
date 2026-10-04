@@ -230,13 +230,31 @@ TEST(PortAudioHotplug, RealDeviceLossInvalidatesAndTheReturnedDeviceReopens)
     say(std::string("loss seen: deviceLost ") + (lost.deviceLost ? "1" : "0") + ", running " +
         (lost.running ? "1" : "0") + ", callbacks " + std::to_string(lost.callbacks));
     EXPECT_FALSE(out.clock().valid);
+    EXPECT_TRUE(lost.deviceLost) << "the owner reports the loss as DeviceLost";
+    EXPECT_EQ(out.start().error(), application::OutputError::DeviceLost);
     out.close();
     ASSERT_TRUE(waitFor([&] { return find(out).empty(); }, 30s)) << "the device is still listed";
     EXPECT_EQ(out.open(id, {48000, 2}).error(), application::OutputError::DeviceUnavailable);
+    // Windows may name the returning device differently ("2- ..."): it is the
+    // output of that host API that was not listed while it was gone.
+    std::set<std::string> without;
+    for (const auto &device : out.devices())
+        without.insert(device.name);
     say("HOTPLUG-LOST");
 
     std::string back;
-    ASSERT_TRUE(waitFor([&] { return !(back = find(out)).empty(); }, 120s)) << "the device did not come back";
+    const auto returned = [&] {
+        for (const auto &device : out.devices())
+            if (!without.contains(device.name) && (!api || !*api || device.hostApi == api))
+                return device.id;
+        return std::string();
+    };
+    const bool cameBack = waitFor([&] { return !(back = returned()).empty(); }, 120s);
+    if (!cameBack)
+        for (const auto &device : out.devices())
+            say("listed: " + device.id);
+    ASSERT_TRUE(cameBack) << "the device did not come back";
+    say("returned as " + back);
     // Windows may need a moment after listing it before a stream opens.
     ASSERT_TRUE(waitFor([&] { return static_cast<bool>(out.open(back, {48000, 2})); }, 30s)) << back;
     ASSERT_TRUE(out.start());
