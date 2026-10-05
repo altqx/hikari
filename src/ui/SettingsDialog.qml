@@ -556,7 +556,8 @@ Dialog {
 
             // Themes (legacy Themes page): its Name / Color list, as far as
             // the rewrite keeps theme colours (theme files and their choice
-            // are excluded): the audio spectrum's three (A2), in legacy's
+            // are excluded): the Grid's comparison colours (R1) and the audio
+            // spectrum's three (A2), in legacy's
             // rows and labels. A double click picks the colour; OK/Apply
             // save the changed ones and the audio display reads them again
             // (SetOptions' ID_COLOR_CONFIG, ChangeColors).
@@ -569,6 +570,12 @@ Dialog {
                     Layout.fillHeight: true
                     clip: true
                     model: [
+                        // R1: GRID_COMPARISON_* (OptionsDialog.cpp:781-783).
+                        {setting: "grid.comparisonOutline", name: qsTr("Subtitle comparison border")},
+                        {setting: "grid.comparisonMismatch", name: qsTr("Subtitle comparison mismatch background")},
+                        {setting: "grid.comparisonMatch", name: qsTr("Subtitle comparison match background")},
+                        {setting: "grid.comparisonCommentMismatch", name: qsTr("Subtitle comparison comment mismatch background")},
+                        {setting: "grid.comparisonCommentMatch", name: qsTr("Subtitle comparison comment match background")},
                         {setting: "audio.spectrumBackground", name: qsTr("Audio spectrum background")},
                         {setting: "audio.spectrumEcho", name: qsTr("Audio spectrum echo")},
                         {setting: "audio.spectrumInner", name: qsTr("Audio spectrum")}

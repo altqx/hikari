@@ -573,6 +573,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     // GRID_HIDE_COLUMNS (G7).
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    loadComparisonColours(); // R1
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
@@ -1147,8 +1148,11 @@ void Application::refreshViews()
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
+    refreshComparison(); // R1: an edited compared Document is compared again
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
-                     referenceSession ? &referenceSession->document() : nullptr);
+                     referenceSession ? &referenceSession->document() : nullptr,
+                     target ? m_comparison.table(*target) : nullptr,
+                     reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession)
         m_shell->setSelection(targetSession->selection());
     // The editor only ever edits the editing target, never the reference.
@@ -2010,7 +2014,12 @@ bool Application::turnOffFiltering()
 
 bool Application::toggleHiddenBlock(int documentRow)
 {
-    return runFilter([&](application::EditSession &s) { return application::toggleHiddenBlock(s, documentRow); });
+    // R1: legacy FilterPartial (SubsGridFiltering.cpp:102-128).
+    m_partialFilter = true;
+    const bool done =
+        runFilter([&](application::EditSession &s) { return application::toggleHiddenBlock(s, documentRow); });
+    m_partialFilter = false;
+    return done;
 }
 
 QStringList Application::styleNames() const
@@ -3842,7 +3851,13 @@ bool Application::makeGroups()
 
 bool Application::toggleGroup(qulonglong description)
 {
-    return runFilter([&](application::EditSession &s) { return application::toggleGroup(s, core::LineId{description}); });
+    // R1: a group description's click is legacy FilterPartial too
+    // (SubsGridWindow.cpp:1572).
+    m_partialFilter = true;
+    const bool done =
+        runFilter([&](application::EditSession &s) { return application::toggleGroup(s, core::LineId{description}); });
+    m_partialFilter = false;
+    return done;
 }
 
 bool Application::renameGroup(qulonglong description, const QString &text)
@@ -4029,6 +4044,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id.startsWith(QLatin1String("grid.comparison")))
+        loadComparisonColours(); // R1: ChangeColors repaints the Grids
 }
 
 namespace {
@@ -4187,9 +4204,15 @@ QVariantMap Application::openSettingsDialog()
 }
 
 // The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the audio spectrum's three (A2).
+// rewrite keeps theme colours: the Grid's comparison colours (R1) and the
+// audio spectrum's three (A2).
 namespace {
-constexpr std::string_view kThemeColours[] = {application::kSpectrumBackgroundSetting,
+constexpr std::string_view kThemeColours[] = {application::kComparisonOutlineSetting,
+                                              application::kComparisonMismatchSetting,
+                                              application::kComparisonMatchSetting,
+                                              application::kComparisonCommentMismatchSetting,
+                                              application::kComparisonCommentMatchSetting,
+                                              application::kSpectrumBackgroundSetting,
                                               application::kSpectrumEchoSetting,
                                               application::kSpectrumInnerSetting};
 } // namespace
@@ -4283,7 +4306,10 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                                       std::string_view("recent.audio"), application::kAutomationHotkeysSetting,
                                       application::kHotkeysSetting, application::kAudioHotkeysSetting,
                                       application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
-                                      application::kSpectrumInnerSetting})
+                                      application::kSpectrumInnerSetting, application::kComparisonOutlineSetting,
+                                      application::kComparisonMismatchSetting, application::kComparisonMatchSetting,
+                                      application::kComparisonCommentMismatchSetting,
+                                      application::kComparisonCommentMatchSetting})
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
     m_resettingSettings = true;

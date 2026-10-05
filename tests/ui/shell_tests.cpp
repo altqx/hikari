@@ -3529,7 +3529,10 @@ private slots:
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
         // and the Themes page's colours (A2), which are not bound options
-        bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
+        bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner",
+                      // and the Grid's comparison colours (R1)
+                      "grid.comparisonOutline", "grid.comparisonMismatch", "grid.comparisonMatch",
+                      "grid.comparisonCommentMismatch", "grid.comparisonCommentMatch"});
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -6193,7 +6196,11 @@ private slots:
         QStringList rows;
         for (const auto &row : list->property("model").toList())
             rows << row.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(rows, (QStringList{"Audio spectrum background", "Audio spectrum echo", "Audio spectrum"}));
+        QCOMPARE(rows, (QStringList{"Subtitle comparison border", "Subtitle comparison mismatch background",
+                                    "Subtitle comparison match background",
+                                    "Subtitle comparison comment mismatch background",
+                                    "Subtitle comparison comment match background", "Audio spectrum background",
+                                    "Audio spectrum echo", "Audio spectrum"}));
         auto values = dialog->property("values").toMap();
         QCOMPARE(values.value(QStringLiteral("audio.spectrumEcho")).toString(), QStringLiteral("#674FD7"));
         // the picked colour, then OK

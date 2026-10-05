@@ -240,6 +240,12 @@ const std::vector<SettingDefinition> &definitions()
         {kSpectrumBackgroundSetting, "", String, Profile, Mapped, false, std::string("#000000")},
         {kSpectrumEchoSetting, "", String, Profile, Mapped, false, std::string("#674FD7")},
         {kSpectrumInnerSetting, "", String, Profile, Mapped, false, std::string("#F4F4F4")},
+        // R1: the Grid's comparison colours (legacy theme colours, config.cpp:427-431).
+        {kComparisonOutlineSetting, "", String, Profile, Mapped, false, std::string("#2700FF")},
+        {kComparisonMismatchSetting, "", String, Profile, Mapped, false, std::string("#272B32")},
+        {kComparisonMatchSetting, "", String, Profile, Mapped, false, std::string("#3A3E45")},
+        {kComparisonCommentMismatchSetting, "", String, Profile, Mapped, false, std::string("#003176")},
+        {kComparisonCommentMatchSetting, "", String, Profile, Mapped, false, std::string("#3662A1")},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).

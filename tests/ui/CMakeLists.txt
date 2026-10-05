@@ -114,3 +114,5 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
 # P6: tab traversal and close review through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)
+# R1: subtitle comparison through the composition and the tab menu.
+hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)

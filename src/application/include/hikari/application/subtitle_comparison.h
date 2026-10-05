@@ -123,6 +123,8 @@ public:
     bool active() const { return m_active; }               // hasCompare
     std::optional<DocumentId> first() const { return m_first; }   // CG1
     std::optional<DocumentId> second() const { return m_second; } // CG2
+    // The Documents that have a table.
+    std::vector<DocumentId> tabled() const;
     // A grid's Comparison table, or nullptr when it has none.
     const std::vector<LineComparison> *table(DocumentId id) const;
 

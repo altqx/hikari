@@ -257,6 +257,14 @@ void SubtitleComparison::forget(DocumentId id)
     m_tables.erase(id.value);
 }
 
+std::vector<DocumentId> SubtitleComparison::tabled() const
+{
+    std::vector<DocumentId> out;
+    for (const auto &[id, rows] : m_tables)
+        out.push_back(DocumentId{id});
+    return out;
+}
+
 const std::vector<LineComparison> *SubtitleComparison::table(DocumentId id) const
 {
     const auto it = m_tables.find(id.value);
