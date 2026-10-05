@@ -58,6 +58,10 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool canUndoToLastSave READ canUndoToLastSave NOTIFY changed)
     // The field a requested selection belongs to (0 Original, 1 Translated).
     Q_PROPERTY(int selectionRole READ selectionRole NOTIFY selectionRequested)
+    // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
+    // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
+    Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
+    Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
 
 public:
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
@@ -170,6 +174,22 @@ public:
     // goes to the next Line; Ctrl+D / Ctrl+R find the next unconfirmed or
     // untranslated visible Line, wrapping once.
     Q_INVOKABLE bool toggleUnconfirmedAndAdvance();
+    // E5: the "Not confirmed" button (EditBox::OnDoubtfulTl without
+    // NextLine): every selected Line's Unconfirmed flips, one step.
+    Q_INVOKABLE bool toggleUnconfirmed();
+    bool unconfirmed() const;
+    // E5: "Moving tags" (EditBox::SetTextWithTags, EditBox.cpp:1809-1858). With
+    // it on, in translation mode, an untranslated Line whose text holds a '}'
+    // is shown split when the editor shows the Line: its override blocks in
+    // the Translated field (which takes the focus, its caret after a leading
+    // block) and the rest in the Original field, while the Document keeps the
+    // text whole. The first change to either field (a keystroke or an editor
+    // command) makes both fields the Line's draft: the Original without the
+    // tags, the Translated with them. Only while no visual tool but the
+    // crosshair is active (legacy Visual <= CROSS).
+    bool moveTags() const { return m_moveTags; }
+    void setMoveTags(bool on); // shows the Line again, as OnAutoMoveTags does
+    void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
     Q_INVOKABLE bool findNextUnconfirmed();
     Q_INVOKABLE bool findNextUntranslated();
     int selectionStart() const { return m_selectionStart; }
@@ -183,10 +203,23 @@ signals:
     void changed();
     void lineChanged(qulonglong id); // the active Line moved (keeps the Grid in step)
     void selectionRequested();
+    void fieldFocusRequested(int role); // E5: 0 Original, 1 Translated
 
 private:
     application::EditSession *session() const;
-    std::optional<core::LineRecord> record() const; // the active Line, draft applied
+    std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
+    std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
+    // E5: the split Moving tags shows, for the Line it was made for.
+    struct Split {
+        core::LineId line;
+        std::u8string original, translation;
+    };
+    std::optional<Split> m_split;
+    std::optional<core::LineId> m_splitEvaluated; // the Line SetTextWithTags last ran for
+    bool m_moveTags = false;
+    std::function<bool()> m_visualToolActive;
+    void evaluateSplit(); // legacy SetTextWithTags, from SetLine
+    bool m_splitFocus = false; // the split asks for the Translated field's focus
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);

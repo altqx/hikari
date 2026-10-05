@@ -1,5 +1,6 @@
 #include "line_editor_controller.h"
 
+#include "hikari/application/translation_mode.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
 #include "hikari/core/editor_font_colour.h"
@@ -9,6 +10,8 @@
 #include "hikari/core/text_projection.h"
 
 #include <QTextBoundaryFinder>
+
+#include <utility>
 
 #include <algorithm>
 #include <tuple>
@@ -71,10 +74,75 @@ void LineEditorController::setDocument(std::optional<application::DocumentId> do
     m_draftRedo.clear();
     m_problem.clear();
     m_attempted.clear();
+    m_splitEvaluated.reset();
     refresh();
 }
 
 std::optional<core::LineRecord> LineEditorController::record() const
+{
+    auto r = sessionRecord();
+    if (r && m_split && m_split->line == r->id) {
+        r->text = m_split->original;
+        r->translation = m_split->translation;
+    }
+    return r;
+}
+
+void LineEditorController::evaluateSplit()
+{
+    m_split.reset();
+    const auto r = sessionRecord();
+    m_splitEvaluated = r ? std::optional(r->id) : std::nullopt;
+    // EditBox.cpp:1811: grid->hasTLMode && line->TextTl == "" && Moving tags
+    // && Visual <= CROSS.
+    if (!r || !m_moveTags || !translationMode() || !r->translation.empty() ||
+        (m_visualToolActive && m_visualToolActive()))
+        return;
+    const auto moved = application::moveTagsFromOriginal(r->text);
+    if (!moved)
+        return;
+    m_split = Split{r->id, moved->original, moved->translation};
+    // TextEdit->SetSelection(pos, pos); TextEdit->SetFocus() (EditBox.cpp:1857-1858).
+    const auto caret = moved->caret;
+    m_selectionStart = m_selectionEnd =
+        static_cast<int>(m_showTags ? caret : core::displayOffset(core::project(core::toUtf16(moved->translation)), caret));
+    m_selectionRole = 1;
+    m_splitFocus = true;
+}
+
+void LineEditorController::setMoveTags(bool on)
+{
+    if (on == m_moveTags)
+        return;
+    m_moveTags = on;
+    m_splitEvaluated.reset(); // OnAutoMoveTags: SetTextWithTags(true)
+    refresh();
+}
+
+bool LineEditorController::unconfirmed() const
+{
+    const auto r = sessionRecord();
+    return r && r->unconfirmed;
+}
+
+bool LineEditorController::toggleUnconfirmed()
+{
+    auto *s = session();
+    if (!editable())
+        return false;
+    if (!translationMode()) {
+        fail(tr("Unconfirmed applies in translation mode only."));
+        return false;
+    }
+    if (!application::toggleUnconfirmed(*s)) {
+        fail(problemText());
+        return false;
+    }
+    committed();
+    return true;
+}
+
+std::optional<core::LineRecord> LineEditorController::sessionRecord() const
 {
     auto *s = session();
     if (!s || !s->selection().active)
@@ -170,6 +238,8 @@ bool LineEditorController::translationMode() const
 
 void LineEditorController::refresh()
 {
+    if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_splitEvaluated)
+        evaluateSplit(); // legacy SetLine runs SetTextWithTags
     const auto r = record();
     for (int role = 0; role < 2; ++role) {
         if (!r)
@@ -184,6 +254,10 @@ void LineEditorController::refresh()
     if (m_attempted.isEmpty())
         m_problem = problemText();
     emit changed();
+    if (std::exchange(m_splitFocus, false)) {
+        emit selectionRequested();
+        emit fieldFocusRequested(1);
+    }
 }
 
 void LineEditorController::fail(const QString &problem, const QString &attempted)
@@ -209,6 +283,7 @@ bool LineEditorController::showLine(qulonglong id)
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
+    m_splitEvaluated.reset(); // SetLine
     if (s->historySize() != before || s->revision() != revision)
         committed();
     refresh();
@@ -225,9 +300,19 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
         return true;
     application::DraftChange change;
     (role == 0 ? change.text : change.translation) = std::move(raw);
+    const auto real = sessionRecord();
+    if (m_split && m_split->line == r->id) {
+        // E5: a split field changed: legacy Send writes both fields
+        // (EditBox.cpp:612-629, splittedTags).
+        if (!change.text)
+            change.text = m_split->original;
+        if (!change.translation)
+            change.translation = m_split->translation;
+    }
     if (!s->editDraft(r->id, change))
         return false;
-    m_draftUndo.push_back({r->text, r->translation});
+    m_split.reset();
+    m_draftUndo.push_back({real->text, real->translation});
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
@@ -991,10 +1076,8 @@ bool LineEditorController::toggleUnconfirmedAndAdvance()
         fail(tr("Unconfirmed applies in translation mode only."));
         return false;
     }
-    const bool now = !r->unconfirmed; // ChangeState(4) toggles
-    const auto result = s->run(application::Command{
-        "Mark unconfirmed", s->revision(), {r->id},
-        [&](core::Document &d) { return d.setLineUnconfirmed(r->id, now); }});
+    // E5: EditBox::OnDoubtfulTl flips every selected Line (ChangeState(4)).
+    const auto result = application::toggleUnconfirmed(*s);
     if (!result) {
         fail(problemText());
         return false;
@@ -1055,6 +1138,7 @@ void LineEditorController::committed()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
+    m_splitEvaluated.reset(); // DoUndo and the commands show the Line again (SetLine)
     if (m_onCommitted)
         m_onCommitted();
     refresh();
@@ -1223,6 +1307,7 @@ void LineEditorController::reloadFromSession()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
+    m_splitEvaluated.reset();
     refresh();
 }
 

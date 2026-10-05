@@ -463,14 +463,17 @@ std::vector<double> LineGrid::columnWidths(double total) const
         case LineTableModel::EffectColumn: width = 60; break;
         case LineTableModel::CpsColumn: width = fit("CPS", 10); break;
         case LineTableModel::WrapsColumn: width = fit("00/00", 10); break;
-        default: width = -1; break; // Text
+        default: width = -1; break; // Text (and E5's Translation)
         }
         w.push_back(width);
         used += std::max(0.0, width);
     }
+    // E5: with the original shown, "Original text" and "Translation" take
+    // half of the rest each (SubsGridWindow.cpp:481-485).
+    const auto rest = static_cast<double>(std::count_if(w.begin(), w.end(), [](double v) { return v < 0; }));
     for (double &v : w)
         if (v < 0)
-            v = std::max(40.0, total - used);
+            v = std::max(40.0, (total - used) / rest);
     return w;
 }
 

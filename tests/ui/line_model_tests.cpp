@@ -128,6 +128,49 @@ private slots:
         QVERIFY(shown(LineTableModel::TextColumn));
     }
 
+    // E5: the translation column (legacy SubsGridWindow.cpp:329-330 and
+    // 370-416). Without the original shown, a translated Line shows its
+    // translation in "Text"; with it, "Original text" and "Translation".
+    void translationColumnFollowsShowOriginal()
+    {
+        const auto document = load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                                   "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                                   "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n");
+        LineTableModel model;
+        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        model.setDocument(document);
+        QCOMPARE(model.rowCount(), 2);
+        QVERIFY(!model.columnShown(LineTableModel::TranslationColumn));
+        QCOMPARE(model.headerData(LineTableModel::TextColumn, Qt::Horizontal).toString(), QStringLiteral("Text"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Brama"));
+        QCOMPARE(model.index(1, LineTableModel::TextColumn).data().toString(), QStringLiteral("Wall"));
+
+        model.setShowOriginal(true);
+        model.setDocument(document);
+        QVERIFY(model.columnShown(LineTableModel::TranslationColumn));
+        QCOMPARE(model.headerData(LineTableModel::TextColumn, Qt::Horizontal).toString(), QStringLiteral("Original text"));
+        QCOMPARE(model.headerData(LineTableModel::TranslationColumn, Qt::Horizontal).toString(),
+                 QStringLiteral("Translation"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+        QCOMPARE(model.index(0, LineTableModel::TranslationColumn).data().toString(), QStringLiteral("Brama"));
+        QCOMPARE(model.index(1, LineTableModel::TranslationColumn).data().toString(), QString());
+        // Hide columns never hides the text columns.
+        model.setHiddenColumns(0xFFFF);
+        QVERIFY(model.columnShown(LineTableModel::TextColumn));
+        QVERIFY(model.columnShown(LineTableModel::TranslationColumn));
+
+        // Outside translation mode the Text column is the text, even with a
+        // translation left in the record (isTl needs hasTLMode).
+        model.setShowOriginal(false);
+        model.setHiddenColumns(0);
+        auto off = document;
+        off.removeScriptInfo(u8"TLMode");
+        model.setDocument(off);
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+    }
+
     void identitySurvivesFilteringAndSorting()
     {
         LineTableModel model;
