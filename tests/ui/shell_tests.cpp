@@ -1757,11 +1757,6 @@ private slots:
         QMouseEvent event(type, QPointF(local), QPointF(w->mapToGlobal(local)), button, buttons, Qt::NoModifier);
         QCoreApplication::sendEvent(w, &event);
     }
-    static QPoint centreOf(QQuickItem *item)
-    {
-        return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
-    }
-
     // Y7: the colour buttons' right click opens the simple "Color picker"
     // (EditBox::AllColorClick, EditBox.cpp:862-919; SimpleColorPickerDialog,
     // ColorPicker.cpp:1374-1533): a right press outside it picks the screen
