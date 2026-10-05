@@ -331,14 +331,21 @@ std::vector<std::byte> probeScript(const u16 &family, bool bold, bool italic, co
             text += c;
     if (text.empty())
         text = U"a";
+    // A family the Style line cannot carry (a \fn value with a comma) is
+    // asked for as the Document asks for it, by an override tag before the
+    // text; the Style's own family is then never drawn.
+    const bool inStyle = family.find_first_of(u",\r\n") == u16::npos;
+    std::string fn = toUtf8(family);
+    std::erase_if(fn, [](char c) { return c == '\r' || c == '\n'; });
     const std::string s =
         "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\nFormat: Name, Fontname, "
         "Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
         "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, "
-        "Encoding\nStyle: P," + toUtf8(family) + ",40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000," +
+        "Encoding\nStyle: P," + (inStyle ? fn : std::string()) + ",40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000," +
         (bold ? "-1" : "0") + "," + (italic ? "-1" : "0") +
         ",0,0,100,100,0,0,1,0,0,7,10,10,10,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, "
-        "MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:01.00,P,,0,0,0,," + utf8Of(text) + "\n";
+        "MarginV, Effect, Text\nDialogue: 0,0:00:00.00,0:00:01.00,P,,0,0,0,," + (inStyle ? std::string() : "{\\fn" + fn + "}") +
+        utf8Of(text) + "\n";
     std::vector<std::byte> out(s.size());
     std::transform(s.begin(), s.end(), out.begin(), [](char c) { return std::byte(c); });
     return out;

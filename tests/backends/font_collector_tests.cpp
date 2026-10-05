@@ -206,6 +206,25 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     EXPECT_TRUE(reimportsIdentically(service, doc, entries));
 }
 
+// A \fn value with a comma is one family (legacy ParseTags keeps the whole
+// value, SubsDialogue.cpp:1086-1158), so the renderer is asked for it whole,
+// as the Document asks: no font is named "HikariProbeBase,Bold", so it is
+// not found, though HikariProbeBase is and a Style line would have read
+// only that.
+TEST(FontCollectorRenderer, AFamilyWithACommaIsAskedForWhole)
+{
+    const auto doc = document(0, {"A,HikariProbeBase,0,0"}, {"A,Plain", "A,{\\fnHikariProbeBase,Bold}Comma"});
+    LibassFontService service;
+    FontCollector collector(service);
+    const auto review = collector.prepare({doc}, CollectorAction::Check);
+    ASSERT_TRUE(review);
+    EXPECT_TRUE(review->found.contains(u"HikariProbeBase"));
+    EXPECT_TRUE(review->notFound.contains(u"HikariProbeBase,Bold"));
+    EXPECT_FALSE(review->found.contains(u"HikariProbeBase,Bold"));
+    EXPECT_EQ(review->notFoundCount, 1);
+    EXPECT_FALSE(review->complete());
+}
+
 // Check counts families; Copy counts the files it wrote. One family used
 // regular and bold is one font found and two fonts copied.
 TEST(FontCollectorRenderer, BothMeaningsOfTheFontCount)
