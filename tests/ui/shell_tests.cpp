@@ -7128,7 +7128,7 @@ private slots:
     // shows Invert clip and the vector clip's point modes with the K1 icons and
     // legacy's help texts. A click adds a vector point, the mask Line goes into
     // the video's subtitles, a D key nudge commits on its release, and the
-    // "Double m" notice is shown without a dialog.
+    // "Double m" refusal is legacy's modal "Warning" box.
     void visualClipsDrawEditAndInvert()
     {
         QVERIFY(application->openFile(visualDocument("clip.ass")));
@@ -7227,18 +7227,26 @@ private slots:
         const QByteArray script(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size()));
         QVERIFY2(script.contains("Dialogue: 2147483647,") && script.contains("\\1a&H77&\\pos(0,0)\\an7\\iclip(m "),
                  script.constData());
-        // Separate point: another "m" right after the "m" is refused with a
-        // notice (legacy's message box), no dialog.
+        // Separate point: another "m" right after the "m" is refused with
+        // legacy's modal HikariMessageBox titled "Warning"
+        // (VisualClips.cpp:1013-1016), a box in the window closed by OK.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_mode4"), "click"));
         QTRY_VERIFY(visualItem("visualOption_mode4")->property("checked").toBool());
         QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
         const std::size_t refused = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
         QTRY_COMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
-        QTRY_VERIFY(visualItem("visualNotice")->isVisible());
+        QObject *box = named("visualNotice");
+        QVERIFY(box);
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Warning"));
+        QCOMPARE(box->property("modal").toBool(), true);
+        QCOMPARE(named("visualNoticeText")->property("text").toString(),
+                 QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
         QCOMPARE(session->historySize(), refused);
-        QVERIFY(!QGuiApplication::modalWindow());
-        QVERIFY(QMetaObject::invokeMethod(visualItem("visualNoticeDismiss"), "click"));
+        QVERIFY(!QGuiApplication::modalWindow()); // in the window: nothing an offscreen run cannot close
+        QVERIFY(QMetaObject::invokeMethod(box, "accept"));
+        QTRY_VERIFY(!box->property("visible").toBool());
         QCOMPARE(tools.notice(), QString());
         QCOMPARE(text(session->document().lines()[0]).left(7), QStringLiteral("{\\iclip"));
         Q_UNUSED(first);

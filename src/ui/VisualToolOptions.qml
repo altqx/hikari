@@ -7,8 +7,9 @@ import Hikari.Ui
 // (VisualItem). T4: the clips' buttons: VectorItem's point modes (one on at
 // a time) and Invert clip, ClipRectangleItem's Invert clip, each with its
 // icon of the K1 set and legacy's help text. A toggle shows its state; an
-// action acts at once. A notice a tool gives (legacy showed a message box)
-// sits after them until the next click on the video, or until dismissed.
+// action acts at once. A notice a tool gives is legacy's HikariMessageBox
+// titled "Warning" (VisualClips.cpp:1013-1016): a modal box in the window,
+// closed by OK.
 RowLayout {
     id: options
     objectName: "visualToolOptions"
@@ -34,19 +35,39 @@ RowLayout {
             }
         }
     }
-    Label {
+    Dialog {
+        id: noticeBox
         objectName: "visualNotice"
-        visible: text.length > 0
-        text: options.tools.notice
-        font.bold: true
-        Accessible.role: Accessible.AlertMessage
-        Accessible.name: text
+        parent: Overlay.overlay
+        anchors.centerIn: parent
+        modal: true // legacy HikariMessageBox is modal
+        title: qsTr("Warning")
+        standardButtons: Dialog.Ok
+        // The title without the style's eliding header, whose width loops
+        // through the box's implicit width.
+        header: Label {
+            text: noticeBox.title
+            font.bold: true
+            padding: 12
+            bottomPadding: 0
+        }
+        Label {
+            id: noticeText
+            objectName: "visualNoticeText"
+            Accessible.role: Accessible.AlertMessage
+            Accessible.name: text
+        }
+        onClosed: options.tools.dismissNotice()
     }
-    ToolButton {
-        objectName: "visualNoticeDismiss"
-        visible: options.tools.notice.length > 0
-        text: qsTr("OK")
-        focusPolicy: Qt.NoFocus
-        onClicked: options.tools.dismissNotice()
+    Connections {
+        target: options.tools
+        function onChanged() {
+            if (options.tools.notice.length > 0 && !noticeBox.visible) {
+                noticeText.text = options.tools.notice
+                noticeBox.open()
+            }
+            else if (options.tools.notice.length === 0 && noticeBox.visible)
+                noticeBox.close()
+        }
     }
 }

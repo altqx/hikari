@@ -416,8 +416,6 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
     p.wheelSteps = wheelSteps;
-    if (p.kind == Pointer::Kind::Press && !m_notice.isEmpty())
-        dismissNotice(); // legacy's message box went with the next click
     if (p.kind == Pointer::Kind::Leave) {
         m_overVideo = false;
         m_lastPointer.reset();

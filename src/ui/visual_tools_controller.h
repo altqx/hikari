@@ -62,8 +62,8 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // The family's own options (legacy VideoToolbar's second row): name,
     // kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
     // enabled, choices, index. T4: its own signal, so the row is rebuilt only
-    // when it changes. And the notice a tool gave in place of legacy's
-    // message box.
+    // when it changes. And the notice a tool gave, which the shell shows as
+    // legacy's modal "Warning" message box until OK.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
 public:

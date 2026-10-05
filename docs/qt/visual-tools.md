@@ -47,7 +47,7 @@ While a gesture is open the video shows its staged texts, and a tool's `previewL
 
 A tool commits through the host and keeps its state afterwards: legacy never reset a tool after its own edit (EditBox::Send with visualdummy and SetModified with dummy skip ShowEditOnVideo's SetVisual, SubsGridBase.cpp:1147-1149), so the controller treats the revision its own commit made as seen. Another edit, an undo or another active Line resets the tool (legacy SetCurVisual); a cancelled gesture (Esc) resets it too, so its points and corners go back to the Line.
 
-A notice legacy showed in a message box (the vector clip's "Double m" refusal) is `VisualHost::notice`, shown in the tool's row without blocking until the next click on the video; legacy's wxBell is `VisualHost::bell`.
+A notice legacy showed in a message box (the vector clip's "Double m" refusal) is `VisualHost::notice`, shown as legacy's modal message box titled "Warning" (VisualClips.cpp:1013-1016) until OK; legacy's wxBell is `VisualHost::bell`.
 
 ## Clips (T4) and the vector point editor (T4, T5)
 
