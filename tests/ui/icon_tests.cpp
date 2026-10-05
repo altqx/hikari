@@ -2,11 +2,12 @@
 // test (every role the QML names resolves to an SVG of the set; each SVG is
 // valid, single-colour with at most one accent layer, on the 16-unit grid and
 // without raster), the tint, the default colours' contrast, the Icon item
-// following the appearance and the icon colour settings live, and the
-// rendering fixtures: the whole set drawn by the Icon item at the process's
-// scale (100% here; 150% and 200% in the .scale150 / .scale200 runs) in the
-// light, dark and high-contrast colours, equal to the set rendered at the
-// device's pixels. With HIKARI_ICON_SHEET_DIR set the contact sheets are
+// following the appearance and the icon colour settings live, the
+// right-to-left mirroring (the manifest's flags against icons.md's rule, and
+// the flip painted), and the rendering fixtures: the whole set drawn by the
+// Icon item at the process's scale (100% here; 150% and 200% in the
+// .scale150 / .scale200 runs) in the light, dark and high-contrast colours,
+// equal to the SVG files drawn at the device's pixels. With HIKARI_ICON_SHEET_DIR set the contact sheets are
 // written there (k1-<appearance>-<percent>.png).
 
 #include "icon_theme.h"
@@ -90,6 +91,29 @@ QColor composite(QRgb premultiplied, const QColor &background)
     return QColor::fromRgbF(float(qRed(premultiplied) / 255.0 + background.redF() * (1 - a)),
                             float(qGreen(premultiplied) / 255.0 + background.greenF() * (1 - a)),
                             float(qBlue(premultiplied) / 255.0 + background.blueF() * (1 - a)));
+}
+
+// The icon as the SVG file in the source tree draws it, recoloured apart
+// from the item's tint (icons::tint's text substitution): the colours are
+// given as SVG's own color property, the root's in the icon colour and the
+// accent group's in the accent colour, and the file's currentColor paints
+// resolve to them. (QtSvg resolves an inherited stroke="currentColor" with
+// the root's color, so the accent group names its stroke again.)
+QImage drawnFromSource(const QString &role, int side, const QColor &colour, const QColor &accent)
+{
+    QImage image(side, side, QImage::Format_ARGB32_Premultiplied);
+    image.fill(Qt::transparent);
+    QFile file(QStringLiteral(HIKARI_ICON_DIR "/") + role + QStringLiteral(".svg"));
+    if (!file.open(QIODevice::ReadOnly))
+        return image;
+    QByteArray svg = file.readAll();
+    svg.replace("<svg ", "<svg color=\"" + colour.name().toLatin1() + "\" ");
+    svg.replace("<g id=\"accent\">", "<g id=\"accent\" color=\"" + accent.name().toLatin1() + "\" stroke=\"currentColor\">");
+    QSvgRenderer renderer(svg);
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing);
+    renderer.render(&painter, QRectF(0, 0, side, side));
+    return image;
 }
 
 } // namespace
@@ -467,13 +491,98 @@ Row {
         QVERIFY(!item("plain")->property("valid").toBool());
     }
 
+    // icons.md, "Mirroring": icons that show navigation or reading order
+    // mirror in right-to-left layouts (undo, redo, list and text-line icons,
+    // the session and search arrows); media transport, time, frame and data
+    // symbols do not. The manifest's mirror flags are that set, and the
+    // Icon item reads them.
+    void mirrorFlagsFollowTheRule()
+    {
+        const QSet<QString> expected{
+            // undo and redo
+            QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("undo-to-last-save"),
+            // list icons
+            QStringLiteral("sort"), QStringLiteral("sort-selected"), QStringLiteral("select-lines"),
+            // text-line icons
+            QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
+            QStringLiteral("view-only-subs"),
+            // the session and search arrows
+            QStringLiteral("last-session"), QStringLiteral("find-replace")};
+        QSet<QString> mirrored;
+        for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
+            const auto icon = value.toObject();
+            const QString role = icon.value(QLatin1String("role")).toString();
+            const bool mirror = icon.value(QLatin1String("mirror")).toBool();
+            QCOMPARE(ui::icons::mirrors(role), mirror);
+            if (mirror)
+                mirrored.insert(role);
+            // no media transport, time or frame symbol mirrors: nothing on
+            // the video transport, the full-screen controls or the audio box
+            for (const auto &surface : icon.value(QLatin1String("surfaces")).toArray())
+                if (const QString name = surface.toString(); name == QLatin1String("video-transport")
+                                                             || name == QLatin1String("video-fullscreen")
+                                                             || name == QLatin1String("audio-box"))
+                    QVERIFY2(!mirror, qPrintable(role + QStringLiteral(" on ") + name));
+            for (const char *symbol : {"media-", "frame", "time", "play"})
+                if (role.contains(QLatin1String(symbol)))
+                    QVERIFY2(!mirror, qPrintable(role));
+        }
+        QCOMPARE(mirrored, expected);
+    }
+
+    // A mirrored icon is painted flipped left to right; an icon that does
+    // not mirror paints the same in a right-to-left layout.
+    void mirroredIconsPaintFlipped()
+    {
+        auto shown = show(R"(
+import QtQuick
+import Hikari.Ui
+Rectangle {
+    color: "white"
+    Icon { objectName: "undo"; iconRole: "undo"; size: 32; x: 0 }
+    Icon { objectName: "undoRtl"; iconRole: "undo"; size: 32; x: 40; LayoutMirroring.enabled: true }
+    Icon { objectName: "play"; iconRole: "media-play"; size: 32; x: 80 }
+    Icon { objectName: "playRtl"; iconRole: "media-play"; size: 32; x: 120; LayoutMirroring.enabled: true }
+}
+)", QSize(160, 32));
+        QVERIFY(shown.root);
+        QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
+        const auto item = [&](const char *name) { return shown.root->findChild<QQuickItem *>(QLatin1String(name)); };
+        QVERIFY(item("undoRtl")->property("mirrored").toBool());
+        QVERIFY(!item("playRtl")->property("mirrored").toBool());
+        QImage window;
+        QTRY_VERIFY((window = shown.window->grabWindow(), !window.isNull() && window.width() > 0));
+        const qreal dpr = shown.window->effectiveDevicePixelRatio();
+        const int side = qRound(32 * dpr);
+        const auto cell = [&](int x) { return window.copy(qRound(x * dpr), 0, side, side).convertToFormat(QImage::Format_RGB32); };
+        const auto difference = [](const QImage &a, const QImage &b) {
+            int worst = 0;
+            for (int y = 0; y < a.height(); ++y)
+                for (int x = 0; x < a.width(); ++x) {
+                    const QRgb p = a.pixel(x, y), q = b.pixel(x, y);
+                    worst = std::max({worst, std::abs(qRed(p) - qRed(q)), std::abs(qGreen(p) - qGreen(q)),
+                                      std::abs(qBlue(p) - qBlue(q))});
+                }
+            return worst;
+        };
+        const QImage undo = cell(0), undoRtl = cell(40), play = cell(80), playRtl = cell(120);
+        QVERIFY(difference(undo, undo.flipped(Qt::Horizontal)) > 100); // the drawing is not symmetric
+        QVERIFY(difference(undo, undoRtl) > 100);
+        QVERIFY2(difference(undoRtl, undo.flipped(Qt::Horizontal)) <= 8,
+                 qPrintable(QString::number(difference(undoRtl, undo.flipped(Qt::Horizontal)))));
+        QVERIFY(difference(play, play.flipped(Qt::Horizontal)) > 100);
+        QCOMPARE(difference(playRtl, play), 0);
+    }
+
     // The rendering check and contact sheets: the whole set drawn by the
     // Icon item on each appearance's background at this process's scale,
-    // every icon equal to the set rendered at the device's pixels (crisp,
-    // not scaled up from 16 px). The expected images come from the same
-    // QSvgRenderer and tint, so this shows the item paints at device pixels
-    // in its appearance's colours; whether the drawings look right rests on
-    // the user's review of the contact sheets written here.
+    // every icon equal to its SVG file drawn at the device's pixels (crisp,
+    // not scaled up from 16 px) in the appearance's colour, its accent layer
+    // in the accent colour. The expected icon is drawn from the source
+    // tree's file, recoloured through SVG's color property rather than the
+    // item's tint (drawnFromSource), so a wrong drawing, a wrong tint or
+    // colours in the wrong layer fail here; whether the drawings look right
+    // rests on the user's review of the contact sheets written here.
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::IconTheme::forceAppearance(std::nullopt); });
@@ -529,7 +638,7 @@ Rectangle {
                 // the 16-unit icon at (8, 6) of its cell, in device pixels
                 const int px = qRound((i % columns * cellWidth + 8) * dpr), py = qRound((i / columns * cellHeight + 6) * dpr);
                 const int side = qRound(16 * dpr);
-                const QImage expected = ui::icons::render(roles[i], QSize(side, side), colour, accent);
+                const QImage expected = drawnFromSource(roles[i], side, colour, accent);
                 for (int y = 0; y < side; ++y)
                     for (int x = 0; x < side; ++x) {
                         const QColor want = composite(expected.pixel(x, y), background);
