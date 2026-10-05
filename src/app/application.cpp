@@ -490,6 +490,28 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_dictionaryDirs << bundled;
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
+    // O3: an import activated in an earlier session takes effect now, before
+    // anything reads the profile.
+    if (!m_settingsFile.isEmpty()) {
+        m_importStore = std::make_unique<SettingsImportStore>(*m_settings, QFileInfo(m_settingsFile).absolutePath());
+        m_importStore->macroProblem = [this](std::string_view alias) -> std::string {
+            const auto r = m_automation->manager().registry().resolve(std::string(alias));
+            if (!r.problem)
+                return {};
+            switch (*r.problem) {
+            case application::AliasProblem::MissingScript:
+                return "no loaded script has this file name";
+            case application::AliasProblem::BasenameCollision:
+                return "several loaded scripts have this file name";
+            case application::AliasProblem::OrdinalOutOfRange:
+                return "the script has no macro of this ordinal";
+            default:
+                return "the script's registration differs";
+            }
+        };
+        m_importStore->recover();
+    }
+    m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     // K1: the icons take their colours from this profile.
     ui::IconTheme::useSettings(m_settings.get());
@@ -4061,6 +4083,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
+            {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},

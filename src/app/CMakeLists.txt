@@ -26,3 +26,6 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# O3: the legacy settings importer's generations and window state.
+target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h
+    settings_import_controller.cpp include/hikari/app/settings_import_controller.h)

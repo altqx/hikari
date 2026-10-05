@@ -108,3 +108,10 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# O3: the one-shot settings importer's readers and plan, against the legacy
+# loaders and the migration worksheet.
+hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_import_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_settings_import_tests PRIVATE
+    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
+    HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map")
