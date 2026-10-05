@@ -2,7 +2,7 @@
 
 HikariSub's UI icons are one in-house vector set ([K1](https://github.com/altqx/hikari/issues/204)), replacing legacy's PNG bitmaps (`HikariSub/Bitmaps`) and the rewrite's placeholder glyphs and text labels ([visual language](visual-language.md), "Icons, content and adaptive layout"). The user decided on 2026-10-05 that the set is drawn in house, covers UI icons only, follows the light or dark appearance live and has user-customizable colours per appearance.
 
-Out of scope: the application icon and the file-type icons (kept as they are), and controls Qt draws itself (check boxes, radio buttons, menu marks, list arrows, sliders, grippers). The manifest names every legacy bitmap the set does not replace and why.
+Out of scope: the application icon and the file-type icons (kept as they are), and controls Qt draws itself (check boxes, radio buttons, menu marks, list arrows, sliders, grippers). The manifest names every legacy bitmap the set does not replace and why. Legacy also drew its list arrows `arrow_list.png` and `arrowListDouble.png` as action images (the Style manager's move and transfer buttons, stylestore.cpp:56-88; the Line editor's Manage tag buttons MenuButton, MenuButton.cpp:21), so the set replaces them there (move-up, move-down, move-to-top, move-to-bottom, menu-more) while Qt keeps drawing the list arrows themselves.
 
 ## Files
 
@@ -13,11 +13,25 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon here and run it. |
 | `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`), in the theme layer's four themes (it reads their colours from `src/ui/theme.cpp`). |
 | `src/ui/Icon.qml`, `IconButton.qml`, `IconToolButton.qml` | The Icon item and the icon-only buttons. |
+| `src/ui/IconTextButton.qml` | A push button with an icon of the set beside its text (legacy buttons with a bitmap beside the label). |
 | `src/ui/ShellMenuItem.qml`, `ShellMenu.qml` (their `iconRole`), `IconTabButton.qml` | Menu items, submenus and tab buttons with an icon (every shell menu is a ShellMenu, D1; a submenu's item shows the submenu's role): the style draws the control, the icon is its image source from `IconTheme`'s image provider (`image://hikari-icon/<role>/<colour>/<accent>/<mirrored>`, drawn at the device's pixels). |
 | `src/ui/IconDialogHeader.qml` | A dialog's title with its icon (legacy dialogs' SetIcon); windows take theirs with `IconTheme.setWindowIcon`. |
 | `src/ui/icon_theme.*` | The tint, the appearance, the `IconTheme` singleton and the image provider. |
 
 Roles are lowercase, hyphenated and name the action or symbol, not the picture (`frame-previous`, `tag-bold`, `media-play`). A surface built by a later card places the roles drawn for it here.
+
+## Where icons go
+
+The UI polish of 2026-10-05 (the user's rule that HikariSub look like professional software) placed the set by these rules; [visual-language.md](visual-language.md#tool-strips-option-rows-and-labels) has the layout rules around them.
+
+- **A glyph never stands in for an icon.** No button's text is "+", "-", "...", an arrow or a glyph prefix ("↑ Add to storage"): it is an icon of the set (`hikari_ui_icon_tests` noGlyphStandsInForAnIcon reads every QML file; AutomationDialog, whose controls a script defines, is the exception).
+- **Tool strips are icon-only.** The visual tool rail, the tool strip under the video, the Line editor's tag row, the Style manager's list columns, the font catalog bar, the reference tray's bar and an automation script's row use `IconToolButton`: the icon only, the name as the tooltip and the accessible name, the longer help text as `tip`.
+- **A dialog verb keeps its text.** OK, Cancel, Apply, Find, Replace and the other labelled verbs of a dialog or a panel stay text; a list's transfer or rule button that needs its words takes an icon beside them (`IconTextButton`: the Style manager's Add to storage / Add to ASS / Add to all open ASS files, the Multireplacer's Add / Edit / Delete rule).
+- **One command, one icon.** A command shows the same icon on every surface: the menus, the context menus (video, Grid, text fields), the tab menu and the transport (Save and Save all in the tab menu, Play / Pause and Stop in the video menu, Font collector in the Grid menu, the Spellchecker switch in a text field's menu).
+- **Menus line up.** Every menu item keeps the check gutter and the icon gutter, with or without an icon (`ShellMenuItem`), and shows its key binding right-aligned in the muted colour.
+- **Generic roles are shared.** add, remove, edit, duplicate, delete, import, refresh, clear and filter serve every list (Style manager, font catalogs, Multireplacer, automation scripts, the Timing panel's profiles); folder-open every folder chooser (Find in subtitles, Font collector, Import legacy settings).
+
+The roles the polish added: pick-lines and clear (the batch picker); move-to-top, move-up, move-down, move-to-bottom and menu-more; add, remove, edit, duplicate, delete, import, refresh, filter; edit-copy, edit-cut, edit-paste; folder-open, find-in-files, show-in-folder; compare, reference, extract-subtitles, multireplace (Fix minor errors had borrowed select-lines); close-video, frame-snapshot, zoom-reset, volume; match-previous and match-next (the reference tray had borrowed the audio box's line steps); unload and run-script; settings-video, settings-audio, appearance and hotkeys (the Options pages); fullscreen and fullscreen-exit, drawn for V5 ([#184](https://github.com/altqx/hikari/issues/184)) and pending until it builds full screen. clip-invert was redrawn in the outline style (a frame, the shape and the kept outside hatched in the accent) in place of the first draft's solid square. Their contact sheets for review: `out/polish/new-icons-light.png` and `new-icons-dark.png` (the icon test's sheet with `HIKARI_ICON_SHEET_ROLES`).
 
 ## Geometry
 
@@ -53,7 +67,7 @@ An icon-only control keeps its text as its accessible name and shows a tooltip (
 
 ## Evidence
 
-`hikari_ui_icon_tests`: the manifest test (every role the QML names resolves, every other role is marked `pending` and a pending role is not named; each SVG valid for Qt SVG without warnings, single-colour with at most one accent layer, on the quarter-unit grid inside the box, without raster; every legacy bitmap replaced or listed as not replaced), the tint, the defaults' contrast, live palette colours, the image-sourced controls (menu items, submenus, tab buttons, dialog titles, window icons), and the rendering fixtures: the whole set drawn by the Icon item in the three themes' palettes at 100% (and at 150% and 200% in the `.scale150` / `.scale200` runs), each icon equal to the set rendered at the device's pixels. With `HIKARI_ICON_SHEET_DIR` set they write the contact sheets `k1-<appearance>-<percent>.png`.
+`hikari_ui_icon_tests`: the manifest test (every role the QML names resolves, every other role is marked `pending` and a pending role is not named; each SVG valid for Qt SVG without warnings, single-colour with at most one accent layer, on the quarter-unit grid inside the box, without raster; every legacy bitmap replaced or listed as not replaced), the tint, the defaults' contrast, live palette colours, the image-sourced controls (menu items, submenus, tab buttons, dialog titles, window icons), and the rendering fixtures: the whole set drawn by the Icon item in the three themes' palettes at 100% (and at 150% and 200% in the `.scale150` / `.scale200` runs), each icon equal to the set rendered at the device's pixels. With `HIKARI_ICON_SHEET_DIR` set they write the contact sheets `k1-<appearance>-<percent>.png`; `HIKARI_ICON_SHEET_ROLES` (comma-separated) limits a sheet to those roles and `HIKARI_ICON_SHEET_PREFIX` renames it, for reviewing new icons. noGlyphStandsInForAnIcon: no QML button shows a glyph in place of an icon.
 
 ## Provenance and licence
 

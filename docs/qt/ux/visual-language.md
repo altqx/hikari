@@ -201,6 +201,24 @@ The H mark, Unicode transport symbols, arrows, checkmarks and other glyphs are p
 
 The study stacks preview, editor, audio and grid below a 900-unit width and simplifies some content below 590. Those browser breakpoints and fixed stacked heights are exploratory references, not supported minimum-window sizes. In particular, hiding the layer field or an action at a narrow width is not permission to make that capability unreachable. Use resizing, overflow, scrolling and appropriate panel arrangements while preserving access to fields and commands. Check long translations, larger system text and mixed-direction text rather than assuming English widths.
 
+## Tool strips, option rows and labels
+
+The user's rule of 2026-10-05: HikariSub looks like professional software, not "vibe coded". Its presentation rules, applied by the UI polish; legacy behaviour (HikariSub/, baseline 20d647c4) is unchanged by them.
+
+**Say it once.** A label never repeats what its container says: a panel's name appears once, in its dock header (the Automation panel has no heading of its own); the document name in the tab and the window title only; a tool has one name in its dock, panel and menu ("Shift times", where the dock said "Timing"); a dialog is titled with the menu command that opens it ("Select lines", "Fix minor errors", "ASS file properties", "Resample subtitles"). The status bar does not say "Modified" (the tab's mark does) and drops "Saved" once the Document is edited again.
+
+**Tool strips are icon-only.** A tool strip shows icons of the K1 set ([icons.md](icons.md#where-icons-go)) with the name as the tooltip and the accessible name. The visual tool rail is a 32-pixel strip of eleven 28-pixel tool buttons, one per family: the on family is the style's checked button, the buttons take focus by Tab (a click leaves it with the video), Up and Down move between them, and a family whose tool has not landed says so in its tooltip rather than being drawn faded.
+
+**The options row shows only the active family.** Below the video, one strip carries the active family's options (icon toggles and actions, its choices), its editable values (compact fields sized for a coordinate, in tabular figures, labelled in the muted colour) and the batch picker. The strip exists only when the family has something for it: none for the crosshair (it edits no batch) or for a family whose tool has not landed, so then there is no row at all. It wraps onto a second line rather than run out of the panel, the batch picker keeping its trailing slot. The batch picker is an icon button whose checked look is its state (the count in its tooltip); Clear appears only while Lines are picked. A tool's read-only values (the crosshair's position, the scale) are a readout beside the video times, in a row that is always there, so the video does not resize as the pointer enters and leaves it.
+
+**No debug text, no empty rows, nothing cut off.** No readout that reads like a log ("Targets: active line"); an empty list or result pane says so in one muted line ("No results yet", "No scripts loaded", "No auto save files", "No suggestions"), its explanation in the tooltip; a choice with nothing to choose says so ("No dictionaries found") rather than show a blank box; a footer of actions appears once there is something to act on. Controls are as wide as their content (menus size to their widest item up to 480 pixels; a combo box to its widest choice; a fixed Grid column to its header), panels clip what does not fit rather than draw over their neighbours, and a scrolling form shows its scroll bar while there is more. Integers are plain digits (no thousands separator in a pixel or time field); the resolution separator is "×"; legacy labels' hard line breaks become wrapping text; an ellipsis is "…".
+
+**Colours come from the Theme roles.** No per-colour settings (the high-contrast themes' pickers are the approved exception, [Hikari theme layer](#hikari-theme-layer-k2)); text on the selection takes the palette's highlighted-text colour; errors take `danger`, secondary text `muted`. The visual tools' "Line is not visible on video" warning keeps legacy's text, size and centring in `danger` on a scrim of the panel colour.
+
+**Menus.** Every menu item keeps a check gutter and an icon gutter, so labels line up whether or not an item has an icon or a check, and shows its key binding right-aligned in the muted colour, in one notation ("Ctrl+Shift+O"): the menu bar's from the Global bindings, the context menus' from legacy's tab-separated text.
+
+Dock chrome (headers, tab bars) follows MuseScore 4 under D3 ([#207](https://github.com/altqx/hikari/issues/207), [musescore-docking.md](../../research/musescore-docking.md)) and is not redesigned by these rules.
+
 ## Qt Quick responsibilities and remaining verification
 
 | Owner | Responsibility |
