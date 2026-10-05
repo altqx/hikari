@@ -7277,6 +7277,35 @@ private slots:
         QCOMPARE(session->historySize(), sameSteps);
     }
 
+    // T2: VisualToolOptions.qml names each toggle's K1 role literally (so
+    // icon_tests sees the roles placed); every family's toggles must show the
+    // role its tool gives (ToolOption::iconRole), so a new or reordered
+    // option without its role in the QML fails here.
+    void visualToolOptionIconsFollowTheModel()
+    {
+        QVERIFY(application->openFile(visualDocument("t2icons.ass")));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        int toggles = 0;
+        for (int family = 1; family < 11; ++family) {
+            tools.selectFamily(family);
+            QCOMPARE(tools.activeFamily(), family);
+            for (const QVariant &v : tools.options()) {
+                const QVariantMap o = v.toMap();
+                if (o.value(QStringLiteral("kind")).toString() != QStringLiteral("toggle"))
+                    continue;
+                const QString name = o.value(QStringLiteral("name")).toString();
+                QQuickItem *button = nullptr;
+                QTRY_VERIFY2((button = visualItem(qPrintable(QStringLiteral("visualOption_") + name))), qPrintable(name));
+                QCOMPARE(button->property("iconRole").toString(), o.value(QStringLiteral("iconRole")).toString());
+                QVERIFY2(!o.value(QStringLiteral("iconRole")).toString().isEmpty(), qPrintable(name));
+                ++toggles;
+            }
+        }
+        QVERIFY(toggles >= 4); // Position's three and Move's two points
+    }
+
     // T2: Position's helper cross (a middle click) dragged, then the Line out
     // of the shown frame's time: the render that blocks the tool ends the
     // drag (Position::Draw's nothintoshow, VisualPosition.cpp:107-113:

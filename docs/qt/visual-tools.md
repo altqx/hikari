@@ -50,4 +50,4 @@ T2 ([#177](https://github.com/altqx/hikari/issues/177), Position and Move: `visu
 - Keys reach the tool whether or not its pointer events are blocked (VideoBox::OnKeyPress, VideoBox.cpp:666-668).
 - A tool decides when it reads its Lines again: legacy set Position again after its commits (SetModified, ShowEditOnVideo) but not Move (EditBox::Send and the batch's SetModified are dummies), so Move ignores the host's refresh after its own commit.
 
-A family's options use the K1 roles the manifest names (frame-to-scale, scale-x, scale-y, two-points for T2); `VisualToolOptions.qml` maps each option's name to its role literally, so the icon test sees the roles placed.
+A family's options use the K1 roles the manifest names (frame-to-scale, scale-x, scale-y, two-points for T2); `VisualToolOptions.qml` maps each option's name to its role literally, so the icon test sees the roles placed; a family adding a toggle adds its name and role there, and `shell_tests`' `visualToolOptionIconsFollowTheModel` fails for any toggle whose shown role is not the one its `ToolOption::iconRole` gives.
