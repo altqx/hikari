@@ -5,8 +5,12 @@
 #include "hikari/core/ass_load.h"
 
 #include <QDir>
+#include <QFont>
+#include <QFontDatabase>
+#include <QGuiApplication>
 #include <QImage>
 #include <QPainter>
+#include <QScopeGuard>
 #include <QTest>
 
 #include <cstdio>
@@ -155,11 +159,23 @@ private slots:
         model.setDocument(core::loadAss(bytes).document, &table);
         model.setComparisonColours({QColor(0, 255, 0), QColor(200, 0, 0), QColor(0, 0, 200), QColor(1, 1, 1),
                                     QColor(2, 2, 2)});
+        // The outline is drawn glyphs: measure and paint in a font every
+        // platform has (offscreen on Windows reads Qt's own font directory,
+        // which holds none, and draws every character as a box).
+        const int font = QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_TEST_FONT));
+        QVERIFY(font >= 0);
+        const QFont before = QGuiApplication::font();
+        auto restore = qScopeGuard([&] { QGuiApplication::setFont(before); });
+        QFont testFont(QFontDatabase::applicationFontFamilies(font).value(0));
+        testFont.setPixelSize(20);
+        QGuiApplication::setFont(testFont);
+        // Wide enough for every fixed column and the Text column after them.
         LineGrid grid;
-        grid.setSize(QSizeF(720, 120));
+        grid.setSize(QSizeF(1280, 200));
         grid.setModel(&model);
-        QImage image(720, 120, QImage::Format_ARGB32);
+        QImage image(1280, 200, QImage::Format_ARGB32);
         QPainter painter(&image);
+        painter.setFont(testFont);
         grid.paint(&painter);
         painter.end();
         const double rh = grid.rowHeight();
