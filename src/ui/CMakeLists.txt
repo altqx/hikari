@@ -33,6 +33,8 @@ qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 # R1: the tab menu's "Subtitle comparison".
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
+# R2: the reference tray (navigation, linked matching, the preview menu).
+qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # O3: the legacy settings importer's window.

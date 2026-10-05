@@ -64,7 +64,9 @@ Item {
                     Accessible.role: Accessible.PageTab
                     Accessible.name: modelData.title
                     Accessible.checked: modelData.current
-                    Accessible.description: modelData.modified ? qsTr("Modified") : ""
+                    // R2: the tab shown as the protected reference says so.
+                    Accessible.description: [modelData.modified ? qsTr("Modified") : "",
+                                             modelData.reference ? qsTr("Protected reference") : ""].filter(s => s.length > 0).join(", ")
                     // "<history step>*<name>" while modified: the step, the
                     // modified mark in place of the "*", the name.
                     readonly property int mark: modelData.modified ? modelData.label.indexOf("*") : -1

@@ -626,7 +626,8 @@
     "button_prev.png"
    ],
    "surfaces": [
-    "audio-box"
+    "audio-box",
+    "reference-tray"
    ]
   },
   {
@@ -639,7 +640,8 @@
     "button_next.png"
    ],
    "surfaces": [
-    "audio-box"
+    "audio-box",
+    "reference-tray"
    ]
   },
   {
@@ -902,7 +904,8 @@
    "surfaces": [
     "audio-box",
     "visual-tools",
-    "script-properties"
+    "script-properties",
+    "reference-tray"
    ]
   },
   {
@@ -1779,7 +1782,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "document-tabs"
+    "document-tabs",
+    "reference-tray"
    ]
   },
   {

@@ -105,4 +105,25 @@ std::vector<core::LineId> ShellController::displayedLines() const
     return out;
 }
 
+void ShellController::setReferenceSelection(const application::Selection &selection)
+{
+    m_referenceLines.setSelection(selection, selection.anchor);
+}
+
+std::vector<core::LineId> ShellController::referenceDisplayedLines() const
+{
+    std::vector<core::LineId> out;
+    for (int row = 0; row < m_referenceLines.rowCount(); ++row)
+        if (const auto id = m_referenceLines.lineAt(row))
+            out.push_back(*id);
+    return out;
+}
+
+void ShellController::setReferenceNavigation(bool linked, const application::LinkedMatch &match)
+{
+    m_referenceLinked = linked;
+    m_referenceMatch = match;
+    emit referenceNavigationChanged();
+}
+
 } // namespace hikari::ui

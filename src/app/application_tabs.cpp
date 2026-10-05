@@ -73,6 +73,8 @@ QVariantList Application::tabs() const
                             {QStringLiteral("title"), name},
                             {QStringLiteral("modified"), modified},
                             {QStringLiteral("current"), target == id},
+                            // R2: the tab shown in the reference tray (protected).
+                            {QStringLiteral("reference"), m_workspace.reference() == id},
                             // The tab's tooltip: SubsName, then VideoName.
                             {QStringLiteral("tip"), name + QLatin1Char('\n') + video}};
     }

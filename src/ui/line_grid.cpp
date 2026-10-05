@@ -262,6 +262,19 @@ void LineGrid::scrollToRow(int row)
         setContentY(top + m_geometry.rowHeight - body);
 }
 
+void LineGrid::makeLineVisible(qulonglong id)
+{
+    // SubsGridPreview.cpp:76-89: erow the active row, panel rows
+    // h / (GridHeight + 1) (the header row included, as legacy counted it).
+    const int row = rowOfLine(core::LineId{id});
+    if (row < 0 || m_geometry.rowHeight <= 0)
+        return;
+    const int rows = static_cast<int>(height() / m_geometry.rowHeight);
+    const int top = static_cast<int>(m_contentY / m_geometry.rowHeight);
+    if (top > row || top + rows < row + 2)
+        setContentY(std::max(0, row - rows / 2 + 1) * m_geometry.rowHeight);
+}
+
 void LineGrid::keyPressEvent(QKeyEvent *event)
 {
     const int rows = m_model ? m_model->rowCount() : 0;

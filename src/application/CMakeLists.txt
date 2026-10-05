@@ -33,6 +33,8 @@ target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE document_scripts.cpp)
 # R1: subtitle comparison (legacy SubsComparison and the tab menu's state).
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
+# R2: reference navigation (legacy SubsGridPreview's matching).
+target_sources(hikari_application PRIVATE reference_navigation.cpp)
 # Y8: the font collector (renderer-verified collection).
 target_sources(hikari_application PRIVATE font_collector.cpp)
 # Y9: MKV extraction (subtitle tracks and font attachments).
