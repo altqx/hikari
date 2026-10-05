@@ -6607,6 +6607,71 @@ private slots:
         }
     }
 
+    // K1: screenshots of the wired surfaces for review (the main window, the
+    // audio box, the Line editor and the File menu) in the light and dark
+    // themes' palettes, written to HIKARI_SURFACE_SHOT_DIR when it is set.
+    void surfaceScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(episode));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        application->video().stepFrames(1);
+        // (the resolution question the video asks)
+        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && mismatch->property("visible").toBool())
+            QMetaObject::invokeMethod(mismatch, "close");
+        application->audio().openDummy();
+        QTRY_VERIFY(application->audio().ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, 'x');
+        press(Qt::Key_Return, Qt::ControlModifier); // a modified tab
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        auto *root = engine->rootObjects().first();
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            QPalette palette = themePalette(before, appearance);
+            QGuiApplication::setPalette(palette);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), palette.color(QPalette::Window));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QTest::qWait(200);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
+            QVERIFY(shot.copy(crop(visualItem("audioPanel"))).save(out + QStringLiteral("/audio-box") + suffix));
+            QVERIFY(shot.copy(crop(visualItem("editorPanel"))).save(out + QStringLiteral("/line-editor") + suffix));
+            // The File menu, open.
+            auto *bar = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+            auto *menu = bar->property("menu").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, bar), Q_ARG(QPointF, QPointF(0, bar->height()))));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            auto *content = menu->property("contentItem").value<QQuickItem *>();
+            QTest::qWait(300);
+            const QImage menuShot = content->window()->grabWindow();
+            QRect r = crop(content);
+            r = (content->window() == window ? r.adjusted(-4, -4, 4, 4) : menuShot.rect()).intersected(menuShot.rect());
+            QVERIFY(menuShot.copy(r).save(out + QStringLiteral("/file-menu") + suffix));
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        }
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected
