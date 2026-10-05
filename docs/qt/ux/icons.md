@@ -9,11 +9,13 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | Path | What |
 | --- | --- |
 | `src/ui/icons/<role>.svg` | One icon per role, the shipped source. |
-| `src/ui/icons/manifest.json` | Per role: file, label (the legacy tooltip or menu text, the default accessible name), whether it has an accent layer, whether it mirrors, the legacy bitmaps it replaces, the surfaces using it; and `notReplaced`, the legacy bitmaps left out with the reason. |
+| `src/ui/icons/manifest.json` | Per role: file, label (the legacy tooltip or menu text, the default accessible name), whether it has an accent layer, whether it mirrors, the legacy bitmaps it replaces, the surfaces using it, and `pending` (the later card that places it) for a role whose surface does not exist yet; and `notReplaced`, the legacy bitmaps left out with the reason (retired commands among them: GLOBAL_VIDEO_INDEXING's FFMS2 Indexing.png). |
 | `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon here and run it. |
 | `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`). |
-| `src/ui/Icon.qml`, `IconButton.qml` | The Icon item and the icon-only button. |
-| `src/ui/icon_theme.*` | The tint, the appearance and the `IconTheme` singleton. |
+| `src/ui/Icon.qml`, `IconButton.qml`, `IconToolButton.qml` | The Icon item and the icon-only buttons. |
+| `src/ui/IconMenuItem.qml`, `IconMenu.qml`, `IconTabButton.qml` | Menu items, submenus and tab buttons with an icon: the style draws the control, the icon is its image source from `IconTheme`'s image provider (`image://hikari-icon/<role>/<colour>/<accent>/<mirrored>`, drawn at the device's pixels). |
+| `src/ui/IconDialogHeader.qml` | A dialog's title with its icon (legacy dialogs' SetIcon); windows take theirs with `IconTheme.setWindowIcon`. |
+| `src/ui/icon_theme.*` | The tint, the appearance, the `IconTheme` singleton and the image provider. |
 
 Roles are lowercase, hyphenated and name the action or symbol, not the picture (`frame-previous`, `tag-bold`, `media-play`). A surface built by a later card places the roles drawn for it here.
 
@@ -35,9 +37,11 @@ Each SVG paints only with `currentColor` or `none`: no colours of its own, opaci
 
 **Accent layer.** An icon may have one accent layer, the group `<g id="accent">`, drawn in the accent colour: the modifier (a badge's plus, cross or clock), the direction of a move, the part a tool acts on, a colour swatch. The accent never carries meaning alone: the icon reads in one colour, and the disabled and hover/pressed states paint the whole icon, accent included, in one colour.
 
-**States.** Normal: the icon colour with the accent colour on the accent layer. Hover or pressed: the whole icon in the hover/pressed colour (legacy BitmapButton brightened a hovered bitmap and swapped in a pressed one; the set uses one colour for both). Disabled: the whole icon in the disabled colour (an item is disabled with its parent).
+**Theme colours.** The icons take their colours from the active theme's palette, live: the icon colour is its text colour (`WindowText`), the accent colour its accent (`Accent`), the hover/pressed colour the accent too, the disabled colour its disabled text colour. The user decided on 2026-10-05 to walk back per-colour editing for a MuseScore-style model (light, dark and high-contrast themes with one user-chosen accent), designed separately; the settings below stay until that model replaces them, and a colour saved in them still wins over the palette's.
 
-**Settings.** Twelve profile settings of the rewrite's own, "#RRGGBB" text, edited on the Options dialog's Themes page below the spectrum colours (a double click picks a colour, "Reset icon colours" stages the defaults, OK or Apply saves and every icon repaints at once; a colour saved at its default leaves the profile). Like the other theme colours, "Set default" leaves them. The defaults come from the visual-language tokens:
+**States.** Normal: the icon colour with the accent colour on the accent layer. Hover or pressed: the whole icon in the hover/pressed colour (legacy BitmapButton brightened a hovered bitmap and swapped in a pressed one; the set uses one colour for both). Disabled: the whole icon in the disabled colour (an item is disabled with its parent). A highlighted menu item paints the whole icon in the palette's highlighted text colour, as the highlight is the accent.
+
+**Settings (to be replaced).** Twelve profile settings of the rewrite's own, "#RRGGBB" text, edited on the Options dialog's Themes page below the spectrum colours (a double click picks a colour, "Reset icon colours" stages the defaults, OK or Apply saves and every icon repaints at once; a colour saved at its default leaves the profile). Like the other theme colours, "Set default" leaves them. Their defaults, the visual-language tokens a theme's palette uses:
 
 | Setting | Light | Dark | High contrast |
 | --- | --- | --- | --- |
@@ -55,11 +59,11 @@ Every default, the disabled colour included, meets WCAG 2.x success criterion 1.
 
 Icons that show navigation or reading order mirror in right-to-left layouts (`mirror` in the manifest: undo, redo, list and text-line icons, the session and search arrows). Media transport, time, frame and data symbols do not.
 
-An icon-only control keeps its text as its accessible name and shows a tooltip (`IconButton`: the text is not drawn; `tip` defaults to it). The Icon item itself is ignored by assistive technology.
+An icon-only control keeps its text as its accessible name and shows a tooltip (`IconButton`, `IconToolButton` and the audio box's buttons: the text is not drawn; `tip` defaults to it). The Icon item itself is ignored by assistive technology.
 
 ## Evidence
 
-`hikari_ui_icon_tests`: the manifest test (every role the QML names resolves; each SVG valid for Qt SVG without warnings, single-colour with at most one accent layer, on the quarter-unit grid inside the box, without raster; every legacy bitmap replaced or listed as not replaced), the tint, the defaults' contrast, live appearance and colours, and the rendering fixtures: the whole set drawn by the Icon item in the three appearances at 100% (and at 150% and 200% in the `.scale150` / `.scale200` runs), each icon equal to the set rendered at the device's pixels. With `HIKARI_ICON_SHEET_DIR` set they write the contact sheets `k1-<appearance>-<percent>.png`.
+`hikari_ui_icon_tests`: the manifest test (every role the QML names resolves, every other role is marked `pending` and a pending role is not named; each SVG valid for Qt SVG without warnings, single-colour with at most one accent layer, on the quarter-unit grid inside the box, without raster; every legacy bitmap replaced or listed as not replaced), the tint, the defaults' contrast, live palette colours, the image-sourced controls (menu items, submenus, tab buttons, dialog titles, window icons), and the rendering fixtures: the whole set drawn by the Icon item in the three themes' palettes at 100% (and at 150% and 200% in the `.scale150` / `.scale200` runs), each icon equal to the set rendered at the device's pixels. With `HIKARI_ICON_SHEET_DIR` set they write the contact sheets `k1-<appearance>-<percent>.png`.
 
 ## Provenance and licence
 
