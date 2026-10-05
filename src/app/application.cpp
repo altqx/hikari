@@ -271,6 +271,8 @@ public:
             m_app.m_editor->selectRaw(application::translationMode(*session) ? 1 : 0, start, end);
         else if (role == 0)
             m_app.m_editor->selectRaw(0, start, end);
+        else if (role == 2 || role == 3)
+            m_app.m_editor->selectInBox(role, start, end); // E4: ActorEdit/EffectEdit->SetTextSelection
     }
     void changed(application::DocumentId) override
     {
@@ -496,6 +498,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    // E4: the options the Line editor reads, and its Times/Frames switch
+    // (EDITBOX_TIMES_TO_FRAMES_SWITCH, saved when it is switched).
+    m_editor->setOptionsSource([this] {
+        ui::LineEditorController::Options o;
+        o.liveEditing = !m_settings->boolean("video.disableLiveEditing");
+        o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
+        o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
+        o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        return o;
+    });
+    m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
+                                   [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
+    connect(m_editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [this] {
+        const auto *frames = m_editor->frameTimebase();
+        m_shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
+    });
     m_selectOptions = m_settings->integer("selectLines.options");
     // Legacy keeps 20 when the dialog opens.
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
@@ -625,6 +643,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_editor.get(), &ui::LineEditorController::changed, this, [this] {
         refreshVideo();
         scheduleAutosave();
+    });
+    // E4: the editor's time fields show frames of the open video (TimeCtrl::SetVideoBox).
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        const auto &video = m_video->session();
+        const bool ready = video.state() == application::VideoSession::State::Ready;
+        const QString path = ready ? QString::fromStdString(video.path()) : QString();
+        if (path == m_editorTimebaseVideo)
+            return;
+        m_editorTimebaseVideo = path;
+        m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
     // A video that cannot be opened is reported in the log window once.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
@@ -1220,6 +1248,7 @@ void Application::refreshVideo()
         leaveTabMedia(previous); // P6: the tab shown so far keeps its video position
         m_videoDocument = target;
         m_videoRevision.reset();
+        m_videoScript.clear();
         m_videoLine.reset();
         application::MediaAssociations associations;
         const auto destination = target ? m_files->destination(*target) : std::nullopt;
@@ -1239,9 +1268,20 @@ void Application::refreshVideo()
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
-    if (session->revision() != m_videoRevision) {
+    // E4: live video editing (EditBox::OnEdit's OpenSubsLater, connected
+    // unless DISABLE_LIVE_VIDEO_EDITING, EditBox.cpp:349-352): the video
+    // shows the pending draft; without it, the committed Document only.
+    std::optional<core::Document> draft;
+    if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
+        draft = m_editor->draftDocument();
+    if (draft || m_videoShowsDraft || session->revision() != m_videoRevision) {
         m_videoRevision = session->revision();
-        m_video->session().setSubtitles(core::encodeAss(session->document()));
+        m_videoShowsDraft = draft.has_value();
+        auto script = core::encodeAss(draft ? *draft : session->document());
+        if (script != m_videoScript) {
+            m_videoScript = script;
+            m_video->session().setSubtitles(std::move(script));
+        }
     }
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
@@ -1742,6 +1782,7 @@ bool Application::reloadTarget()
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
     m_videoRevision.reset();
+    m_videoScript.clear();
     m_videoLine.reset();
     m_editor->reloadFromSession();
     refreshViews();
@@ -4090,6 +4131,10 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
+        m_editor->optionsChanged(); // E4: the counters and Duration follow at once
+        refreshVideo();             // live editing on or off: the draft or the committed Lines
+    }
 }
 
 namespace {

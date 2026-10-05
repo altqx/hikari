@@ -7,6 +7,7 @@
 // its own beyond the snapshot it was given.
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/legacy_timebase.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/document.h"
 #include "hikari/core/spelling.h"
@@ -106,6 +107,10 @@ public:
     void setSpelling(Spelling spelling) { m_spelling = std::move(spelling); }
     int hiddenColumns() const { return m_hidden; }
     bool columnShown(int column) const;
+    // E4: the Times/Frames switch (SubsGrid::ChangeTimeDisplay): with an exact
+    // timebase Start shows the frame at or after it and End the frame before
+    // it (SubsGridWindow.cpp:348-357); nullopt shows times.
+    void setFrameTimebase(std::optional<application::LegacyTimebase> frames);
 
     std::optional<int> rowOf(core::LineId id) const;
     std::optional<core::LineId> lineAt(int row) const;
@@ -146,6 +151,7 @@ private:
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;
+    std::optional<application::LegacyTimebase> m_frames;
     ComparisonColours m_comparisonColours = themeComparisonColours(true);
 };
 

@@ -91,6 +91,17 @@ void LineTableModel::setHiddenColumns(int mask)
 
 LineTableModel::LineTableModel(QObject *parent) : QAbstractTableModel(parent) {}
 
+void LineTableModel::setFrameTimebase(std::optional<application::LegacyTimebase> frames)
+{
+    if (frames && !frames->exact())
+        frames.reset(); // only an exact timebase shows frames
+    if (!frames && !m_frames)
+        return;
+    m_frames = std::move(frames);
+    if (!m_rows.empty())
+        emit dataChanged(index(0, StartColumn), index(static_cast<int>(m_rows.size()) - 1, EndColumn), {Qt::DisplayRole});
+}
+
 const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
 {
     if (row.measures)
@@ -274,8 +285,14 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         switch (index.column()) {
         case NumberColumn: return index.row() + 1;
         case LayerColumn: return QString::number(line.layer.value);
-        case StartColumn: return legacyTime(line.start, line.startFrame, m_format);
-        case EndColumn: return legacyTime(line.end, line.endFrame, m_format);
+        case StartColumn:
+            if (m_frames)
+                return QString::number(m_frames->frameAt(static_cast<int>(line.start.value.microseconds() / 1000)));
+            return legacyTime(line.start, line.startFrame, m_format);
+        case EndColumn:
+            if (m_frames)
+                return QString::number(m_frames->frameAt(static_cast<int>(line.end.value.microseconds() / 1000)) - 1);
+            return legacyTime(line.end, line.endFrame, m_format);
         case StyleColumn: return qs(line.style);
         case ActorColumn: return qs(line.actor);
         case MarginLeftColumn: return QString::number(line.marginLeft.value);

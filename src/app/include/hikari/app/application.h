@@ -494,6 +494,8 @@ public:
     // values as legacy shows them and writes the changed ones on OK/Apply.
     Q_PROPERTY(hikari::ui::SettingsStore *settings READ settingsStore CONSTANT)
     ui::SettingsStore *settingsStore() const { return m_settings.get(); }
+    // E4: the subtitles the video overlay was given last (live editing shows the draft).
+    const std::vector<std::byte> &videoScript() const { return m_videoScript; }
     // A1: the options the audio box's next open reads.
     application::AudioCacheSettings audioSettings() const { return m_audioSettings(); }
     // Opening the dialog (application::openOptionsDialog): {values: the
@@ -761,6 +763,9 @@ private:
     void reportGroupBreak();
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
+    bool m_videoShowsDraft = false;               // E4: the overlay shows the editor's draft
+    std::vector<std::byte> m_videoScript;         // E4: the script the overlay was given last
+    QString m_editorTimebaseVideo;                // E4: the video the editor's frames come from
     std::optional<core::LineId> m_videoLine;
     struct Closing {
         application::DocumentId document;
