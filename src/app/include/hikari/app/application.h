@@ -555,7 +555,7 @@ public:
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
-    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback
+    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback (V3), its volume (V4)
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
@@ -582,7 +582,6 @@ public:
     // T1: the Video panel's visual tools.
     ui::VisualToolsController &visualTools() { return *m_visualTools; }
     ui::VideoViewController &videoView() { return *m_videoView; }
-    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // V4: its volume (tests)
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
