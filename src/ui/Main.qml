@@ -427,21 +427,24 @@ ApplicationWindow {
     }
 
     // Classic menus. Commands join through the shared action system as their
-    // cards land.
+    // cards land. K1: the items legacy drew with a bitmap (HikariSubFrame.cpp's
+    // AppendTool) show the set's icon (IconMenuItem, IconMenu).
     menuBar: MenuBar {
         MenuBarItem {
             objectName: "fileMenuBarItem"
             menu: Menu {
                 title: qsTr("&File")
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "open-subtitles"
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.open()
                     }
                 }
-                Menu {
+                IconMenu {
                     id: recentMenu
+                    iconRole: "recent-subtitles"
                     objectName: "recentSubtitlesMenu"
                     title: qsTr("Recently opened &subtitles")
                     property var rows: []
@@ -465,7 +468,8 @@ ApplicationWindow {
                         height: visible ? implicitHeight : 0
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "close-subtitles"
                     objectName: "newMenuItem"
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
@@ -483,7 +487,8 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "open-video"
                     objectName: "openVideoMenuItem"
                     action: Action {
                         id: openVideoAction
@@ -491,7 +496,8 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "save"
                     objectName: "saveMenuItem"
                     action: Action {
                         id: saveAction
@@ -500,7 +506,8 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "save-all"
                     objectName: "saveAllMenuItem"
                     action: Action {
                         id: saveAllAction
@@ -514,7 +521,8 @@ ApplicationWindow {
                         }
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "save-as"
                     objectName: "saveAsMenuItem"
                     action: Action {
                         id: saveAsAction
@@ -523,7 +531,8 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "save-translation"
                     objectName: "saveTranslationMenuItem"
                     action: Action {
                         id: saveTranslationAction
@@ -537,7 +546,8 @@ ApplicationWindow {
                         }
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "save-with-video-name"
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
                         id: saveWithVideoNameAction
@@ -578,11 +588,13 @@ ApplicationWindow {
                     }
                 }
                 // P6: legacy "Last session" submenu.
-                Menu {
+                IconMenu {
+                    iconRole: "last-session"
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
-                    MenuItem {
+                    IconMenuItem {
                         id: loadLastSessionItem
+                        iconRole: "last-session"
                         objectName: "loadLastSessionMenuItem"
                         text: qsTr("Load last session")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
@@ -615,7 +627,8 @@ ApplicationWindow {
                     }
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "settings"
                     objectName: "settingsMenuItem"
                     action: Action {
                         id: settingsAction
@@ -623,7 +636,8 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
                 }
-                MenuItem {
+                IconMenuItem {
+                    iconRole: "exit"
                     objectName: "exitMenuItem"
                     action: Action {
                         text: qsTr("E&xit")
@@ -634,20 +648,27 @@ ApplicationWindow {
         }
         Menu {
             title: qsTr("&Edit")
-            Action {
-                id: undoAction
-                text: qsTr("&Undo")
-                enabled: root.editor.hasLine
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+            IconMenuItem {
+                iconRole: "undo"
+                action: Action {
+                    id: undoAction
+                    text: qsTr("&Undo")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+                }
             }
-            Action {
-                id: redoAction
-                text: qsTr("&Redo")
-                enabled: root.editor.hasLine
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+            IconMenuItem {
+                iconRole: "redo"
+                action: Action {
+                    id: redoAction
+                    text: qsTr("&Redo")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+                }
             }
             // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
-            Menu {
+            IconMenu {
+                iconRole: "sort"
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
                 enabled: root.editor.editable
@@ -664,7 +685,8 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
                 }
             }
-            Menu {
+            IconMenu {
+                iconRole: "sort-selected"
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
                 enabled: root.editor.editable
@@ -681,7 +703,8 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "undo-to-last-save"
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
                     id: undoToLastSaveAction
@@ -690,7 +713,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "history"
                 objectName: "historyMenuItem"
                 action: Action {
                     id: historyAction
@@ -699,7 +723,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "select-lines"
                 objectName: "misspellMenuItem"
                 action: Action {
                     id: misspellAction
@@ -707,7 +732,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "select-lines"
                 objectName: "selectLinesMenuItem"
                 action: Action {
                     id: selectLinesAction
@@ -717,7 +743,8 @@ ApplicationWindow {
                 }
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
-            MenuItem {
+            IconMenuItem {
+                iconRole: "find-replace"
                 objectName: "findReplaceMenuItem"
                 action: Action {
                     id: findReplaceAction
@@ -726,7 +753,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
@@ -735,7 +763,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "search"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
@@ -760,7 +789,8 @@ ApplicationWindow {
                     automationHotkeysWindow.show()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "automation"
                 objectName: "loadScriptMenuItem"
                 action: Action {
                     id: loadScriptAction
@@ -768,7 +798,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "automation"
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
                     id: reloadAutoloadAction
@@ -815,54 +846,82 @@ ApplicationWindow {
             objectName: "videoMenu"
             title: qsTr("&Video")
             // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
-            Action {
-                text: qsTr("Open &video…")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+            IconMenuItem {
+                iconRole: "open-video"
+                action: Action {
+                    text: qsTr("Open &video…")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                }
             }
-            Action {
-                id: previousFrameAction
-                text: qsTr("Previous frame"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+            IconMenuItem {
+                iconRole: "frame-previous"
+                action: Action {
+                    id: previousFrameAction
+                    text: qsTr("Previous frame"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+                }
             }
-            Action {
-                id: nextFrameAction
-                text: qsTr("Next frame"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+            IconMenuItem {
+                iconRole: "frame-next"
+                action: Action {
+                    id: nextFrameAction
+                    text: qsTr("Next frame"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+                }
             }
-            Action {
-                id: goToStartAction
-                text: qsTr("Go to start time"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+            IconMenuItem {
+                iconRole: "video-to-start-time"
+                action: Action {
+                    id: goToStartAction
+                    text: qsTr("Go to start time"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+                }
             }
-            Action {
-                id: goToEndAction
-                text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+            IconMenuItem {
+                iconRole: "video-to-end-time"
+                action: Action {
+                    id: goToEndAction
+                    text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+                }
             }
-            Action {
-                id: playPauseAction
-                text: qsTr("Play / Pause"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+            IconMenuItem {
+                iconRole: root.video.playing ? "media-pause" : "media-play"
+                action: Action {
+                    id: playPauseAction
+                    text: qsTr("Play / Pause"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+                }
             }
-            Action {
-                id: previousKeyframeAction
-                text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+            IconMenuItem {
+                iconRole: "keyframe-previous"
+                action: Action {
+                    id: previousKeyframeAction
+                    text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+                }
             }
-            Action {
-                id: nextKeyframeAction
-                text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+            IconMenuItem {
+                iconRole: "keyframe-next"
+                action: Action {
+                    id: nextKeyframeAction
+                    text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+                }
             }
-            Action {
-                id: openKeyframesAction
-                text: qsTr("Open keyframes")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
+            IconMenuItem {
+                iconRole: "open-keyframes"
+                action: Action {
+                    id: openKeyframesAction
+                    text: qsTr("Open keyframes")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
+                }
             }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
-            MenuItem {
+            IconMenuItem {
+                iconRole: "audio-to-video-time"
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
                     id: setAudioFromVideoAction
@@ -871,7 +930,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "audio-marker-to-video-time"
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
                     id: setAudioMarkFromVideoAction
@@ -887,7 +947,8 @@ ApplicationWindow {
             id: audioMenu
             objectName: "audioMenu"
             title: qsTr("A&udio")
-            MenuItem {
+            IconMenuItem {
+                iconRole: "open-audio"
                 objectName: "openAudioMenuItem"
                 action: Action {
                     id: openAudioAction
@@ -900,8 +961,9 @@ ApplicationWindow {
                     }
                 }
             }
-            Menu {
+            IconMenu {
                 id: recentAudioMenu
+                iconRole: "recent-audio"
                 objectName: "recentAudioMenu"
                 title: qsTr("Recently opened audio")
                 property var rows: []
@@ -925,7 +987,8 @@ ApplicationWindow {
                     height: visible ? implicitHeight : 0
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "audio-from-video"
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
                     id: audioFromVideoAction
@@ -942,7 +1005,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_AUDIO")) root.audio.openDummy()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "close-audio"
                 objectName: "closeAudioMenuItem"
                 action: Action {
                     id: closeAudioAction
@@ -1042,8 +1106,9 @@ ApplicationWindow {
         Menu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
-            MenuItem {
+            IconMenuItem {
                 id: showShiftTimesItem
+                iconRole: "shift-times"
                 objectName: "showShiftTimes"
                 text: qsTr("Shift &times...")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
@@ -1055,46 +1120,52 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
-            MenuItem {
+            IconMenuItem {
                 id: styleManagerItem
+                iconRole: "styles"
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
-            MenuItem {
+            IconMenuItem {
                 id: assPropertiesItem
+                iconRole: "script-properties"
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
             }
-            Menu {
+            IconMenu {
                 id: conversionMenu
+                iconRole: "convert"
                 objectName: "conversionMenu"
                 title: qsTr("Conversion")
                 property var targets: []
                 onAboutToShow: targets = root.app.conversionTargets()
                 Repeater {
                     model: root.conversionItems
-                    MenuItem {
+                    IconMenuItem {
                         objectName: "convertTo_" + modelData[0]
+                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
                         onTriggered: if (!root.hotkeyGesture(modelData[2])) conversionDialog.openFor(modelData[0], modelData[1])
                     }
                 }
             }
-            MenuItem {
+            IconMenuItem {
                 id: resampleItem
+                iconRole: "resample"
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) resampleDialog.openDialog()
             }
             // Legacy HikariSubFrame: after Resample subtitles.
-            MenuItem {
+            IconMenuItem {
                 id: checkSpellingItem
+                iconRole: "spellchecker"
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
                 enabled: root.shell.hasEditingTarget
@@ -1103,14 +1174,16 @@ ApplicationWindow {
         }
         Menu {
             title: qsTr("&Help")
-            MenuItem {
+            IconMenuItem {
+                iconRole: "help"
                 action: Action {
                     id: websiteAction
                     text: qsTr("HikariSub &website")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) Qt.openUrlExternally("https://altqx.com")
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
                 action: Action {
                     id: reportIssueAction
@@ -1118,7 +1191,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.app.reportIssue()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "check-updates"
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
                     id: checkForUpdatesAction
@@ -1127,7 +1201,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "about"
                 objectName: "aboutMenuItem"
                 action: Action {
                     id: aboutAction
@@ -1135,7 +1210,8 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) aboutDialog.open()
                 }
             }
-            MenuItem {
+            IconMenuItem {
+                iconRole: "credits"
                 objectName: "creditsMenuItem"
                 action: Action {
                     id: creditsAction
