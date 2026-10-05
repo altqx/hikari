@@ -27,7 +27,7 @@
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
-#include "icon_theme.h"
+#include "theme.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -514,8 +514,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
-    // K1: the icons take their colours from this profile.
-    ui::IconTheme::useSettings(m_settings.get());
+    // K2: the theme layer follows this profile's appearance (the controls'
+    // palette, the icons and the owner-drawn items).
+    ui::theme::useSettings(m_settings.get());
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
@@ -4367,7 +4368,7 @@ QVariantMap Application::openSettingsDialog()
     if (open.styleMissing)
         warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("style"));
     auto values = toVariant(open.state);
-    addThemeColours(values);
+    addAppearance(values);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
@@ -4376,58 +4377,50 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("warnings"), warnings}};
 }
 
-// The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the audio spectrum's three (A2) and the icon
-// colours of each appearance (K1). The Grid's comparison colours are fixed
-// per theme (R1, LineTableModel).
+// K2: the Appearance page's settings (the theme, following the system, each
+// mode's accent preset and the high-contrast pickers), which replace legacy's
+// Themes page (theme files stay excluded). They are not legacy options:
+// "Set default" leaves them, as ResetDefault left the theme.
 namespace {
-std::vector<std::string_view> themeColours()
+std::vector<std::string_view> appearanceSettings()
 {
-    std::vector<std::string_view> ids{application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
-                                      application::kSpectrumInnerSetting};
-    for (const auto &appearance : application::kIconColourSettings)
-        ids.insert(ids.end(), std::begin(appearance), std::end(appearance));
+    std::vector<std::string_view> ids;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.id.starts_with("appearance."))
+            ids.push_back(setting.id);
     return ids;
 }
 
-bool isIconColour(std::string_view id)
+// A staged value the setting accepts: a theme's code, an accent preset's
+// key, a colour ("#RRGGBB" or "#RRGGBBAA").
+bool validAppearance(std::string_view id, const QVariant &value)
 {
-    for (const auto &appearance : application::kIconColourSettings)
-        if (std::ranges::find(appearance, id) != std::end(appearance))
-            return true;
-    return false;
+    if (id == ui::theme::kThemeSetting)
+        return ui::theme::codeFromName(value.toString()).has_value();
+    if (id == ui::theme::kFollowSystemSetting)
+        return value.typeId() == QMetaType::Bool;
+    if (id == ui::theme::kLightAccentSetting || id == ui::theme::kDarkAccentSetting) {
+        const bool dark = id == ui::theme::kDarkAccentSetting;
+        return ui::theme::accent(dark, value.toString()).key == value.toString();
+    }
+    return application::parseSettingColour(value.toString().toStdString()).has_value();
 }
 } // namespace
 
-void Application::addThemeColours(QVariantMap &values) const
+void Application::addAppearance(QVariantMap &values) const
 {
-    for (const auto id : themeColours())
-        values.insert(qs(id), qs(m_settings->settings().text(id)));
+    for (const auto id : appearanceSettings())
+        values.insert(qs(id), m_settings->value(qs(id)));
 }
 
 void Application::applySettings(const QVariantMap &values)
 {
-    // SetOptions' ID_COLOR_CONFIG list: the changed colours are saved and
-    // ChangeColors runs (the audio display's ChangeOptions: the spectrum
-    // reads its colours again, through settingChanged).
-    for (const auto id : themeColours()) {
+    // K2: the appearance, saved when it differs; the theme follows at once.
+    for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
-        if (found == values.cend())
+        if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
             continue;
-        const std::string colour = found->toString().toStdString();
-        if (!application::parseSettingColour(colour) || colour == m_settings->settings().text(id))
-            continue;
-        // K1: an icon colour back at its theme default leaves the profile
-        // (it follows the default again); the icons repaint at once. The
-        // colours are compared as colours, so "#9cdbc9" or "#9CDBC9FF" is
-        // the default "#9CDBC9" too.
-        const auto *setting = application::findSetting(id);
-        if (isIconColour(id) && setting
-            && application::parseSettingColour(std::get<std::string>(setting->defaultValue))
-                   == application::parseSettingColour(colour))
-            m_settings->reset(qs(id));
-        else
-            m_settings->settings().set(id, colour);
+        m_settings->setValue(qs(id), *found);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
@@ -4494,12 +4487,12 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     //   legacy next saves them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
-    // The theme's colours are not options: ResetDefault leaves them.
+    // The appearance is not an option: ResetDefault leaves it, as it left the theme.
     std::vector<std::string_view> keep{"recent.subtitles", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting};
-    const auto colours = themeColours();
-    keep.insert(keep.end(), colours.begin(), colours.end());
+    const auto appearance = appearanceSettings();
+    keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
@@ -4544,8 +4537,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     m_hotkeys->resetDefaults();
     auto refreshed =
         toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
-    // the colour list keeps what it shows
-    for (const auto id : themeColours())
+    // the Appearance page keeps what it shows
+    for (const auto id : appearanceSettings())
         if (const auto found = values.constFind(qs(id)); found != values.cend())
             refreshed.insert(qs(id), *found);
     return refreshed;

@@ -10,12 +10,14 @@
 #include "hikari/application/settings.h"
 #include "docking.h"
 #include "line_table_model.h"
+#include "theme.h"
 
 #include <QCryptographicHash>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScopeGuard>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
@@ -650,8 +652,9 @@ private slots:
 
     // GRID_COMPARISON_*: fixed per theme, not settings (the user's
     // 2026-10-05 decision; colours follow a theme model, no per-colour
-    // editing). Both Grids paint legacy's dark theme values
-    // (config.cpp:427-431); the light theme's are kept beside them.
+    // editing). Dark paints legacy's dark theme values and Light legacy's
+    // light ones (config.cpp:427-431, LoadDefaultColors); both Grids follow
+    // a theme change live (K2).
     void coloursAreFixedPerTheme()
     {
         for (const char *id : {"grid.comparisonOutline", "grid.comparisonMismatch", "grid.comparisonMatch",
@@ -661,13 +664,25 @@ private slots:
             auto *model = reference ? application->shell().referenceLines() : application->shell().lines();
             return model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList();
         };
-        QVariantList dark;
-        for (const QColor &c : LineTableModel::themeComparisonColours(true))
-            dark << c;
-        QCOMPARE(colours(false), dark);
-        QCOMPARE(colours(true), dark);
-        QCOMPARE(dark.value(1), QVariant(QColor(0x27, 0x2B, 0x32)));
-        QCOMPARE(LineTableModel::themeComparisonColours(false)[1], QColor(0xFF, 0x00, 0x0C));
+        const auto list = [] {
+            QVariantList out;
+            for (const QColor &c : LineTableModel::themeComparisonColours())
+                out << c;
+            return out;
+        };
+        auto restore = qScopeGuard([] { ui::theme::endPreview(); });
+        ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("dark")},
+                            {QStringLiteral("appearance.followSystem"), false}});
+        QCOMPARE(colours(false), list());
+        QCOMPARE(colours(true), list());
+        QCOMPARE(list(), (QVariantList{QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45),
+                                       QColor(0x00, 0x31, 0x76), QColor(0x36, 0x62, 0xA1)}));
+        ui::theme::preview({{QStringLiteral("appearance.theme"), QStringLiteral("light")},
+                            {QStringLiteral("appearance.followSystem"), false}});
+        QCOMPARE(list(), (QVariantList{QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0x00, 0x0C), QColor(0xB7, 0xAC, 0x00),
+                                       QColor(0x9C, 0x00, 0x00), QColor(0x81, 0x79, 0x00)}));
+        QCOMPARE(colours(false), list());
+        QCOMPARE(colours(true), list());
     }
 };
 

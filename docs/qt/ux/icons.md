@@ -11,7 +11,7 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | `src/ui/icons/<role>.svg` | One icon per role, the shipped source. |
 | `src/ui/icons/manifest.json` | Per role: file, label (the legacy tooltip or menu text, the default accessible name), whether it has an accent layer, whether it mirrors, the legacy bitmaps it replaces, the surfaces using it, and `pending` (the later card that places it) for a role whose surface does not exist yet; and `notReplaced`, the legacy bitmaps left out with the reason (retired commands among them: GLOBAL_VIDEO_INDEXING's FFMS2 Indexing.png). |
 | `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon here and run it. |
-| `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`). |
+| `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`), in the theme layer's four themes (it reads their colours from `src/ui/theme.cpp`). |
 | `src/ui/Icon.qml`, `IconButton.qml`, `IconToolButton.qml` | The Icon item and the icon-only buttons. |
 | `src/ui/ShellMenuItem.qml`, `ShellMenu.qml` (their `iconRole`), `IconTabButton.qml` | Menu items, submenus and tab buttons with an icon (every shell menu is a ShellMenu, D1; a submenu's item shows the submenu's role): the style draws the control, the icon is its image source from `IconTheme`'s image provider (`image://hikari-icon/<role>/<colour>/<accent>/<mirrored>`, drawn at the device's pixels). |
 | `src/ui/IconDialogHeader.qml` | A dialog's title with its icon (legacy dialogs' SetIcon); windows take theirs with `IconTheme.setWindowIcon`. |
@@ -37,23 +37,13 @@ Each SVG paints only with `currentColor` or `none`: no colours of its own, opaci
 
 **Accent layer.** An icon may have one accent layer, the group `<g id="accent">`, drawn in the accent colour: the modifier (a badge's plus, cross or clock), the direction of a move, the part a tool acts on, a colour swatch. The accent never carries meaning alone: the icon reads in one colour, and the disabled and hover/pressed states paint the whole icon, accent included, in one colour.
 
-**Theme colours.** The icons take their colours from the active theme's palette, live: the icon colour is its text colour (`WindowText`), the accent colour its accent (`Accent`), the hover/pressed colour the accent too, the disabled colour its disabled text colour. The user decided on 2026-10-05 to walk back per-colour editing for a MuseScore-style model (light, dark and high-contrast themes with one user-chosen accent), designed separately; the settings below stay until that model replaces them, and a colour saved in them still wins over the palette's.
+**Theme colours.** The icons take their colours from the Hikari theme layer (K2, [visual-language.md](visual-language.md#hikari-theme-layer-k2)), live: the icon colour is the theme's text colour, the accent colour its accent, the hover/pressed colour the accent too, the disabled colour its disabled colour. There are no icon colour settings: K1's twelve `icons.<appearance>.<slot>` settings and their Themes page rows were withdrawn by K2 (the user's 2026-10-05 decision, no per-colour editing), and a profile that saved them drops them on load. In high contrast the "Text and icons" and accent pickers recolour the icons with the text.
 
 **States.** Normal: the icon colour with the accent colour on the accent layer. Hover or pressed: the whole icon in the hover/pressed colour (legacy BitmapButton brightened a hovered bitmap and swapped in a pressed one; the set uses one colour for both). Disabled: the whole icon in the disabled colour (an item is disabled with its parent). A highlighted menu item paints the whole icon in the palette's highlighted text colour, as the highlight is the accent.
 
-**Settings (to be replaced).** Twelve profile settings of the rewrite's own, "#RRGGBB" text, edited on the Options dialog's Themes page below the spectrum colours (a double click picks a colour, "Reset icon colours" stages the defaults, OK or Apply saves and every icon repaints at once; a colour saved at its default leaves the profile). Like the other theme colours, "Set default" leaves them. Their defaults, the visual-language tokens a theme's palette uses:
+**Contrast.** In every theme, with every accent preset, the icon, accent and disabled colours meet WCAG 2.x success criterion 1.4.11's 3:1 for graphical objects against the theme's four surfaces (bg, panel, raised, field), and a disabled icon is at least 2:1 from an enabled one (`hikari_ui_icon_tests` themeIconColoursMeetContrast). The lowest are the disabled colours: 3.31 (Light, Dark), 4.28 (High contrast white), 5.43 (High contrast black). A high-contrast pick is the user's own and is not checked.
 
-| Setting | Light | Dark | High contrast |
-| --- | --- | --- | --- |
-| `icons.<appearance>.normal` | `#202832` (text) | `#E8EDF2` (text) | `#FFFFFF` |
-| `icons.<appearance>.accent` | `#145C4C` (accent) | `#9CDBC9` (accent) | `#FFFF00` (accent) |
-| `icons.<appearance>.active` (hover/pressed) | `#145C4C` | `#9CDBC9` | `#00FFFF` (focus) |
-| `icons.<appearance>.disabled` | `#74808B` | `#75818D` | `#8C8C8C` |
-| Lowest contrast against bg, panel, raised and field | 3.31 (disabled) | 3.31 (disabled) | 5.43 (disabled) |
-
-Every default, the disabled colour included, meets WCAG 2.x success criterion 1.4.11's 3:1 for graphical objects against the four surfaces of its appearance (`hikari_ui_icon_tests` defaultColoursMeetContrast). A user's own colours are not checked.
-
-**Appearance.** High contrast when the platform asks for it (Qt's contrast preference); otherwise dark when the application palette's window colour is dark, else light. A palette, colour-scheme or contrast change repaints every icon without a restart. Until the Hikari theme layer exists the palette is Qt's; the icons follow whatever palette the controls use.
+**Appearance.** The theme layer's: Light, Dark, High contrast white or High contrast black, Light or Dark following the platform's colour scheme while "Follow system theme" is on. A theme, accent or pick change repaints every icon without a restart.
 
 ## Direction and accessibility
 

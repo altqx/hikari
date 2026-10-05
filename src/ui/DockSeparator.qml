@@ -1,24 +1,12 @@
 import QtQuick
-import com.kdab.dockwidgets 2.0
+import Hikari.Ui
+import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDW
 
-// D1: the splitter between docked panels, the engine's Separator.qml with
-// the application palette's window colour in place of its fixed light grey,
-// so the seams follow the light or dark appearance. Loaded through the
+// D1, K2: the docking engine's separator between panels (its Separator.qml
+// paints a fixed "#eff0f1") in the theme's application background, the gutter
+// between panels, so the seams follow the appearance. Loaded through the
 // adapter's view factory (ui/docking.cpp).
-Rectangle {
-    id: root
+KDDW.Separator {
     objectName: "dockSeparator"
-    anchors.fill: parent
-    color: root.palette.window
-
-    readonly property SeparatorView kddwSeparator: parent // qmllint disable incompatible-type
-
-    MouseArea {
-        cursorShape: root.kddwSeparator ? (root.kddwSeparator.isVertical ? Qt.SizeVerCursor : Qt.SizeHorCursor) : Qt.SizeHorCursor
-        anchors.fill: parent
-        onPressed: root.kddwSeparator.onMousePressed()
-        onReleased: root.kddwSeparator.onMouseReleased()
-        onPositionChanged: mouse => root.kddwSeparator.onMouseMoved(Qt.point(mouse.x, mouse.y))
-        onDoubleClicked: root.kddwSeparator.onMouseDoubleClicked()
-    }
+    color: Theme.background
 }

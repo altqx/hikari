@@ -33,12 +33,18 @@ Q_LOGGING_CATEGORY(lcDocking, "hikari.docking")
 QPointer<QQmlEngine> g_attached;
 bool g_everAttached = false;
 
-// The engine's views with Hikari's title and tab bars and its separator.
+// The engine's views with Hikari's title and tab bars, and (K2) its
+// separators, group frames and floating windows in the theme's colours.
 class ViewFactory : public KDDockWidgets::QtQuick::ViewFactory {
 public:
     QUrl titleBarFilename() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockTitleBar.qml")); }
     QUrl tabbarFilename() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockTabBar.qml")); }
     QUrl separatorFilename() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockSeparator.qml")); }
+    QUrl groupFilename() const override { return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockGroup.qml")); }
+    QUrl floatingWindowFilename() const override
+    {
+        return QUrl(QStringLiteral("qrc:/qt/qml/Hikari/Ui/DockFloatingWindow.qml"));
+    }
 };
 } // namespace
 

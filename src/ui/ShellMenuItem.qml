@@ -5,7 +5,11 @@ import Hikari.Ui
 // A shell menu item. Qt 6.11's Windows style tints an item only under the
 // pointer (windows/MenuItem.qml: the background's alpha is 0 unless the item
 // is down or hovered), so the item the keyboard highlighted showed nothing
-// (D1 Windows gate). There it gets the style's hover tint.
+// (D1 Windows gate). There it gets the style's hover tint. Since K2 the
+// application runs the HikariStyle controls style (Fusion, src/ui/style) on
+// every platform, whose items show the keyboard's highlight themselves; the
+// Windows branch applies only when QT_QUICK_CONTROLS_STYLE=Windows asks for
+// the native style.
 //
 // K1: with an iconRole, the item shows that icon of the set (legacy menus'
 // bitmaps, HikariSubFrame.cpp's AppendTool). The style draws the item; its

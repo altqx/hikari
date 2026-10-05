@@ -18,9 +18,9 @@ Dialog {
     objectName: "fontCollectorDialog"
     required property var collector
     // FontCollectorDialog's colours: WINDOW_TEXT, WINDOW_WARNING_ELEMENTS and
-    // the success "#008000".
-    readonly property color warningColour: "#e0a030"
-    readonly property color successColour: "#008000"
+    // the success "#008000", from the theme (K2).
+    readonly property color warningColour: Theme.warning
+    readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
     title: qsTr("Font collector")
     // K1: the title with the set's font-collector icon (the Subtitles menu's FontCollector bitmap).

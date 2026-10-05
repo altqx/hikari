@@ -1,4 +1,5 @@
 import QtQuick
+import Hikari.Ui
 import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDW
 
 // D1: a panel's title bar (docked group or floating window), the engine's
@@ -10,9 +11,7 @@ KDDW.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
 
-    // The application palette's colours (as the panels'), so the chrome
-    // follows the light or dark appearance.
-    color: root.palette.window
+    color: Theme.raised // K2
     heightWhenVisible: 30
 
     Accessible.role: Accessible.TitleBar
@@ -48,7 +47,7 @@ KDDW.TitleBarBase {
         height: image.implicitHeight + 5
         width: image.implicitWidth + 5
         radius: 3
-        border.color: root.palette.mid
+        border.color: Theme.line
         border.width: mouseArea.containsMouse ? 1 : 0
         Accessible.role: Accessible.Button
         Accessible.name: button.name
@@ -69,9 +68,22 @@ KDDW.TitleBarBase {
         }
     }
 
+    // K2 (visual-language.md, "Keyboard focus"): the panel holding the
+    // keyboard focus rings its header, 2 wide in the focus role (the text
+    // colour) just inside it, so F6 and Tab show which panel takes the keys.
+    Rectangle {
+        objectName: "focusRing"
+        anchors.fill: parent
+        anchors.margins: 1
+        color: "transparent"
+        border.width: 2
+        border.color: Theme.focus
+        visible: root.isFocused
+    }
+
     Text {
         text: root.title
-        color: root.palette.windowText
+        color: Theme.text
         anchors.left: parent ? parent.left : undefined
         anchors.leftMargin: 5
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined

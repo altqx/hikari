@@ -77,6 +77,11 @@ SettingsStore::SettingsStore(QString file, QObject *parent) : QObject(parent), m
     else {
         auto ini = std::make_unique<IniSettingsStorage>(m_file);
         migrateInterimKeys(ini->ini());
+        // K2: the withdrawn colour settings leave the profile (no saved
+        // colour overrides the theme any more).
+        for (const auto id : application::retiredSettings())
+            if (ini->ini().contains(QStringLiteral("profile/") + qs(id)))
+                ini->ini().remove(QStringLiteral("profile/") + qs(id));
         m_storage = std::move(ini);
     }
     m_settings = std::make_unique<application::Settings>(*m_storage);

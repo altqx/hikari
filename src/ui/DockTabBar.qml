@@ -34,7 +34,7 @@ KDDW.TabBarBase {
         width: 18
         height: 18
         radius: 3
-        color: area.containsMouse ? root.palette.mid : "transparent" // the palette (as the title bar)
+        color: area.containsMouse ? Theme.select : "transparent" // K2
         Accessible.role: Accessible.Button
         Accessible.name: action.name
         Accessible.focusable: false
@@ -43,7 +43,7 @@ KDDW.TabBarBase {
         Text {
             anchors.centerIn: parent
             text: action.glyph
-            color: root.palette.buttonText
+            color: Theme.text
             Accessible.ignored: true
         }
         MouseArea {

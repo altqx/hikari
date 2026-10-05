@@ -133,7 +133,7 @@ hikari_add_spix_test(hikari_ui_visual_tools_workflow SOURCES visual_tools_workfl
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_media_fixtures)
-# K1: the vector icon set: the icon manifest test, the tint, the default
+# K1: the vector icon set: the icon manifest test, the tint, the theme
 # colours' contrast, live colours, and the rendering fixtures (contact sheets)
 # at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.
 hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg Qt6::QuickControls2
@@ -142,11 +142,15 @@ target_compile_definitions(hikari_ui_icon_tests PRIVATE
     HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
     HIKARI_LEGACY_BITMAPS="${PROJECT_SOURCE_DIR}/HikariSub/Bitmaps")
+# K2: the theme layer: role tables, accent presets and their contrast,
+# following the system, the high-contrast pickers, content colours, the live
+# preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
+hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_icon_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheAppearanceAndColoursLive mirroredIconsPaintFlipped
+        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheThemeLive mirroredIconsPaintFlipped
             imageSourcedControlsDrawTheSet)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)

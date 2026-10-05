@@ -49,8 +49,16 @@ target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
 target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
-qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
+qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
-# D1: the splitter between docked panels in the palette's colours.
-qt_target_qml_sources(hikari_ui QML_FILES DockSeparator.qml)
+# K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
+# the appearance state, the Options dialog's Appearance page and its focus
+# ring, and the docking engine's separators (D1's splitter), group frames and
+# floating windows in the theme's colours.
+target_sources(hikari_ui PRIVATE theme.cpp theme.h)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+# K2: the controls style (Fusion with the theme's control outlines), chosen by
+# theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
+add_subdirectory(style)
+target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)

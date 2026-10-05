@@ -2,15 +2,18 @@
 """K1: the HTML contact sheet of the HikariSub icon set, for review.
 
 Writes one self-contained page (default out/k1/index.html) showing every
-icon of src/ui/icons/manifest.json in the light, dark and high-contrast
-appearances at 16 and 32 px, with its hover/pressed and disabled colours,
+icon of src/ui/icons/manifest.json in the four themes (Light, Dark, High
+contrast white and High contrast black) at 16 and 32 px, with its hover/pressed and disabled colours,
 beside the legacy bitmap it replaces (HikariSub/Bitmaps, embedded), its
 label, the surfaces using it and whether it mirrors in right-to-left
 layouts. The page links the PNG sheets hikari_ui_icon_tests writes into the
-same folder (k1-<appearance>-<percent>.png, rendered by the app's Icon item).
+same folder (k1-<theme>-<percent>.png, rendered by the app's Icon item).
 
-The colours are the registry defaults (src/application/settings.cpp); the
-inline SVGs take them through CSS `color`, as currentColor does in the app.
+The colours are the theme layer's (K2, src/ui/theme.cpp), as IconTheme
+takes them: the icon in the theme's text colour, the accent layer and the
+hover/pressed state in its accent (Light and Dark with the default accent
+preset), the disabled state in its disabled colour. The inline SVGs take
+them through CSS `color`, as currentColor does in the app.
 
 Run:  python3 tools/icons/contact_sheet.py [output.html]
 """
@@ -25,26 +28,49 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ICONS = os.path.join(ROOT, "src", "ui", "icons")
 BITMAPS = os.path.join(ROOT, "HikariSub", "Bitmaps")
-SETTINGS = os.path.join(ROOT, "src", "application", "settings.cpp")
+THEME = os.path.join(ROOT, "src", "ui", "theme.cpp")
+THEME_H = os.path.join(ROOT, "src", "ui", "theme.h")
 
 APPEARANCES = [
-    # id, name, background (visual-language.md bg), text
-    ("light", "Light", "#E5E9EC", "#202832"),
-    ("dark", "Dark", "#171B20", "#E8EDF2"),
-    ("highContrast", "High contrast", "#000000", "#FFFFFF"),
+    # id (theme::codeName, the icon tests' sheet names), name, theme::Code
+    ("light", "Light", "Light"),
+    ("dark", "Dark", "Dark"),
+    ("highContrastWhite", "High contrast white", "HighContrastWhite"),
+    ("highContrastBlack", "High contrast black", "HighContrastBlack"),
 ]
 SLOTS = ["normal", "accent", "active", "disabled"]
+RGB = r'rgb\(0x([0-9A-Fa-f]{6})\)'
 
 
-def defaults():
-    """The icon colours' registry defaults, read from settings.cpp."""
-    text = open(SETTINGS, encoding="utf-8").read()
-    found = re.findall(r'kIconColourSettings\[(\d)\]\[(\d)\].*?std::string\("(#[0-9A-Fa-f]{6})"\)', text)
+def theme_colours():
+    """Each theme's background, text and icon colours, read from the theme
+    layer's tables in theme.cpp (baseRoles, and the default accent preset of
+    kLightAccents / kDarkAccents for Light and Dark)."""
+    source = open(THEME, encoding="utf-8").read()
+    header = open(THEME_H, encoding="utf-8").read()
+    names = re.search(r'kRoleNames\{([^}]*)\}', header)
+    default = re.search(r'kDefaultAccent = "(\w+)"', header)
+    if not names or not default:
+        sys.exit("expected kRoleNames and kDefaultAccent in theme.h")
+    names = re.findall(r'"(\w+)"', names.group(1))
     out = {}
-    for a, s, colour in found:
-        out[(APPEARANCES[int(a)][0], SLOTS[int(s)])] = colour
-    if len(out) != 12:
-        sys.exit("expected the 12 icon colour settings in settings.cpp")
+    for aid, _, code in APPEARANCES:
+        body = re.search(r'case Code::%s:\s*return \{(.*?)\};' % code, source, re.S)
+        values = re.findall(r'%s|\{\}' % RGB, body.group(1)) if body else []
+        if len(values) != len(names):
+            sys.exit("expected the %d roles of Code::%s in theme.cpp's baseRoles" % (len(names), code))
+        roles = {n: ("#" + v.upper() if v else None) for n, v in zip(names, values)}
+        if roles["accent"] is None:
+            table = "kDarkAccents" if code == "Dark" else "kLightAccents"
+            preset = re.search(r'%s\{\{.*?\{"%s",[^}]*?%s' % (table, default.group(1), RGB), source, re.S)
+            if not preset:
+                sys.exit("expected the %s preset in theme.cpp's %s" % (default.group(1), table))
+            roles["accent"] = "#" + preset.group(1).upper()
+        out[aid] = {
+            "background": roles["background"], "text": roles["text"],
+            "normal": roles["text"], "accent": roles["accent"], "active": roles["accent"],
+            "disabled": roles["disabled"],
+        }
     return out
 
 
@@ -56,10 +82,11 @@ def inline(svg, size):
 def main():
     out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "out", "k1", "index.html")
     manifest = json.load(open(os.path.join(ICONS, "manifest.json"), encoding="utf-8"))
-    colours = defaults()
+    colours = theme_colours()
     css = []
-    for aid, _, bg, fg in APPEARANCES:
-        c = {s: colours[(aid, s)] for s in SLOTS}
+    for aid, _, _ in APPEARANCES:
+        c = colours[aid]
+        bg, fg = c["background"], c["text"]
         css.append(
             ".%(a)s{background:%(bg)s;color:%(n)s}.%(a)s .accent{color:%(ac)s}"
             ".%(a)s .hover,.%(a)s .hover .accent{color:%(act)s}"
@@ -71,7 +98,7 @@ def main():
     for icon in manifest["icons"]:
         svg = open(os.path.join(ICONS, icon["file"]), encoding="utf-8").read()
         cells = []
-        for aid, _, _, _ in APPEARANCES:
+        for aid, _, _ in APPEARANCES:
             cells.append(
                 '<td class="sw %s"><span>%s</span><span>%s</span><span class="hover">%s</span>'
                 '<span class="off">%s</span></td>' % (aid, inline(svg, 16), inline(svg, 32), inline(svg, 16),
@@ -90,15 +117,15 @@ def main():
                 "".join(legacy) or "&mdash;", html.escape(", ".join(icon["legacy"])),
                 html.escape(", ".join(icon["surfaces"]))))
     sheets = []
-    for aid, name, _, _ in APPEARANCES:
+    for aid, name, _ in APPEARANCES:
         for pct in (100, 150, 200):
             png = "k1-%s-%d.png" % (aid, pct)
             sheets.append('<a href="%s">%s %d%%</a>' % (png, name, pct))
     swatches = []
-    for aid, name, bg, _ in APPEARANCES:
+    for aid, name, _ in APPEARANCES:
         items = "".join('<span class=chip><i style="background:%s"></i>%s %s</span>' % (
-            colours[(aid, s)], s, colours[(aid, s)]) for s in SLOTS)
-        swatches.append("<div><b>%s</b> on %s: %s</div>" % (name, bg, items))
+            colours[aid][s], s, colours[aid][s]) for s in SLOTS)
+        swatches.append("<div><b>%s</b> on %s: %s</div>" % (name, colours[aid]["background"], items))
     page = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HikariSub icon set</title>
@@ -122,12 +149,12 @@ td.sw svg{display:block}
 </style></head><body>
 <h1>HikariSub icon set (K1)</h1>
 <p>%d icons drawn in house on a 16-unit grid (docs/qt/ux/icons.md). Each appearance column shows the icon
-at 16 and 32 px, then hover/pressed and disabled at 16 px, in the default icon colours; the accent layer
-is the second colour. The legacy bitmap each one replaces is shown on white at 2x. PNG sheets rendered by the
+at 16 and 32 px, then hover/pressed and disabled at 16 px, in the theme layer's colours (Light and Dark
+with the default accent); the accent layer is the second colour. The legacy bitmap each one replaces is shown on white at 2x. PNG sheets rendered by the
 application's Icon item: <span class=sheets>%s</span></p>
 %s
 <div class=wrap><table>
-<thead><tr><th>Role</th><th>Light</th><th>Dark</th><th>High contrast</th><th>Legacy bitmap</th><th>Surfaces</th></tr></thead>
+<thead><tr><th>Role</th><th>Light</th><th>Dark</th><th>High contrast white</th><th>High contrast black</th><th>Legacy bitmap</th><th>Surfaces</th></tr></thead>
 <tbody>
 %s
 </tbody></table></div>

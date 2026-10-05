@@ -17,6 +17,7 @@ ApplicationWindow {
     height: 800
     visible: true
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
+    color: Theme.background // K2: the application background between panels
 
     required property ShellController shell
     required property LineEditorController editor
@@ -1323,8 +1324,8 @@ ApplicationWindow {
             id: spellMarks
             objectName: field.objectName + "SpellMarks"
             document: field.textDocument
-            // Legacy EDITOR_SPELLCHECKER defaults (dark and light themes).
-            colour: field.palette.base.hslLightness < 0.5 ? "#940000" : "#ff6968"
+            // EDITOR_SPELLCHECKER: the theme's (K2; legacy's dark and light defaults).
+            colour: Theme.spellcheck
         }
         Connections {
             target: root.app
@@ -1490,11 +1491,13 @@ ApplicationWindow {
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
+        // K2 (visual-language.md, "Keyboard focus"): the boundary stays
+        // `line`; the panel holding the focus is ringed on its dock header
+        // (DockTitleBar.qml) in the focus role, not bordered in the accent.
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
-            border.width: panel.activeFocus ? 2 : 1
-            border.color: panel.activeFocus ? panel.palette.highlight : panel.palette.mid
+            border.color: panel.palette.mid
         }
         Item {
             id: body
@@ -1677,7 +1680,7 @@ ApplicationWindow {
                     objectName: "videoTimes"
                     Layout.fillWidth: true
                     text: root.video.times
-                    color: root.video.keyframeShown ? "#e0a030" : palette.windowText
+                    color: root.video.keyframeShown ? Theme.warning : palette.windowText
                     Accessible.name: qsTr("Video times")
                 }
                 RowLayout {
@@ -2437,7 +2440,7 @@ ApplicationWindow {
                         objectName: "editorProblem"
                         visible: text.length > 0
                         text: root.editor.problem
-                        color: "firebrick"
+                        color: Theme.danger
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                         Accessible.role: Accessible.AlertMessage
@@ -3120,6 +3123,7 @@ ApplicationWindow {
     // Legacy HistoryDialog: every step, the current one selected; Set and a
     // double-click jump there and stay open, OK jumps and closes.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: historyWindow
         objectName: "historyWindow"
         // K1: the set's history icon as the window's (as legacy's dialogs show theirs, SetIcon).
@@ -3236,6 +3240,7 @@ ApplicationWindow {
     // Save all, Discard all and Cancel. Nothing closes until every save is
     // acknowledged as written.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: closeReview
         objectName: "closeReview"
         title: qsTr("Unsaved changes")
@@ -3304,7 +3309,7 @@ ApplicationWindow {
                 objectName: "closeReviewProblem"
                 text: closeReview.problem
                 visible: text.length > 0
-                color: "firebrick"
+                color: Theme.danger
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }
@@ -3355,6 +3360,7 @@ ApplicationWindow {
         automation: root.automation
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationManagerWindow
         objectName: "automationManagerWindow"
         // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
@@ -3368,6 +3374,7 @@ ApplicationWindow {
         }
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationProgress
         objectName: "automationProgress"
         title: root.automation.runTitle
@@ -3446,6 +3453,7 @@ ApplicationWindow {
 
     // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: fpsWindow
         objectName: "fpsWindow"
         title: qsTr("Choose new FPS")
@@ -3499,6 +3507,7 @@ ApplicationWindow {
     // The column choice for Copy columns / Paste columns (legacy Stylelistbox),
     // checked as last chosen.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: columnsWindow
         objectName: "columnsWindow"
         title: paste ? qsTr("Paste columns") : qsTr("Copy columns")
@@ -3561,6 +3570,7 @@ ApplicationWindow {
     // Legacy LogWindow: a message pops it up with just that message; the File
     // menu entry shows the whole log.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: logWindow
         objectName: "logWindow"
         title: qsTr("Log window")
@@ -3603,6 +3613,7 @@ ApplicationWindow {
 
     // D1: every drag placement from the keyboard, and numeric resizing.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: placementWindow
         objectName: "placementWindow"
         title: qsTr("Move panel")
@@ -3768,6 +3779,7 @@ ApplicationWindow {
     // Legacy TLDialog: moves the translation or the original against the
     // other from the first selected Line; it stays open while working.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: translationShiftWindow
         objectName: "translationShiftWindow"
         title: qsTr("Translation matching options")
@@ -4305,6 +4317,7 @@ ApplicationWindow {
 
     // Legacy TagButtonDialog ("Enter ASS tag").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: tagButtonDialog
         objectName: "tagButtonDialog"
         title: qsTr("Enter ASS tag")
@@ -4390,6 +4403,7 @@ ApplicationWindow {
 
     // Legacy TreeDialog ("Tree description").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: groupDescriptionDialog
         objectName: "groupDescriptionDialog"
         title: qsTr("Tree description")
@@ -4447,6 +4461,7 @@ ApplicationWindow {
         }
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: groupBreakDialog
         objectName: "groupBreakDialog"
         title: qsTr("Line group")
@@ -4493,6 +4508,7 @@ ApplicationWindow {
             recoveryWindow.showBundles()
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: recoveryWindow
         objectName: "recoveryWindow"
         title: qsTr("Open auto save")
@@ -4567,6 +4583,7 @@ ApplicationWindow {
     // P4: legacy AutoSavesRemoving for the autosaves this application keeps
     // (no index or audio caches are written to disk).
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: temporaryFilesWindow
         objectName: "temporaryFilesWindow"
         title: qsTr("Remove temporary files")
@@ -5005,6 +5022,7 @@ ApplicationWindow {
 
     // Legacy AutomationHotkeysDialog ("List of automation shortcuts").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationHotkeysWindow
         objectName: "automationHotkeysWindow"
         title: qsTr("List of automation shortcuts")
@@ -5048,7 +5066,7 @@ ApplicationWindow {
                         Label { text: modelData.macro; elide: Text.ElideRight; Layout.preferredWidth: hotkeyList.width * 0.35 }
                         Label {
                             text: modelData.problem.length ? modelData.problem : modelData.keys
-                            color: modelData.problem.length ? "#e0a030" : palette.windowText
+                            color: modelData.problem.length ? Theme.warning : palette.windowText
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
@@ -5100,6 +5118,7 @@ ApplicationWindow {
     }
     // Legacy HkeysDialog ("Hotkey mapping").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: hotkeyCapture
         objectName: "hotkeyCapture"
         title: qsTr("Hotkey mapping")
@@ -5162,6 +5181,7 @@ ApplicationWindow {
     }
 
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: reloadPrompt
         objectName: "reloadPrompt"
         title: qsTr("Reloading")
