@@ -1777,11 +1777,20 @@ ApplicationWindow {
                                 Accessible.name: ToolTip.text
                             }
                         }
+                        // K1: the set's link icon (legacy VerticalLink's
+                        // button_link bitmap, AudioBox.cpp:123).
                         ToolButton {
+                            id: audioLink
                             objectName: "audioLink"
                             Layout.fillWidth: true
                             Layout.bottomMargin: 2 // legacy wxBOTTOM 2
                             text: qsTr("Link")
+                            display: AbstractButton.IconOnly
+                            contentItem: Icon {
+                                iconRole: "link"
+                                hovered: audioLink.hovered
+                                pressed: audioLink.down
+                            }
                             checkable: true
                             checked: root.audio.linked
                             focusPolicy: Qt.NoFocus
@@ -1825,16 +1834,27 @@ ApplicationWindow {
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
                     // Legacy MappedButton's small square buttons; a Shift+click
                     // maps the action's Audio hotkey instead (Hotkeys::OnMapHkey).
+                    // K1: each shows the set's icon in place of legacy's
+                    // bitmap (AudioBox.cpp:149-193); its text is not drawn,
+                    // the tip stays its accessible name and tooltip.
                     component AudioButton: ToolButton {
+                        id: audioButton
                         property string symbol: ""
                         property string altSymbol: ""
                         property string tip: ""
+                        property string iconRole: ""
                         property int gap: 2
                         signal run()
                         focusPolicy: Qt.NoFocus
                         padding: 2
+                        display: AbstractButton.IconOnly
+                        contentItem: Icon {
+                            iconRole: audioButton.iconRole
+                            hovered: audioButton.hovered
+                            pressed: audioButton.down
+                        }
                         implicitHeight: 22
-                        implicitWidth: Math.max(22, implicitContentWidth + 8)
+                        implicitWidth: 22
                         Layout.rightMargin: gap
                         Accessible.name: tip
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
@@ -1848,85 +1868,101 @@ ApplicationWindow {
                     // A3, A4: AUDIO_PREVIOUS, AUDIO_NEXT, AUDIO_PLAY,
                     // AUDIO_PLAY_LINE (two hotkeys each), AUDIO_STOP
                     AudioButton {
-                        objectName: "audioPrevious"; text: "◀"
+                        objectName: "audioPrevious"; text: qsTr("Previous line")
+                        iconRole: "audio-previous-line"
                         symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTr("Play the previous line")
                         onRun: root.audio.previousLine()
                     }
                     AudioButton {
-                        objectName: "audioNext"; text: "▶"
+                        objectName: "audioNext"; text: qsTr("Next line")
+                        iconRole: "audio-next-line"
                         symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTr("Play the next line")
                         onRun: root.audio.nextLine()
                     }
                     AudioButton {
                         objectName: "audioPlay"; text: qsTr("Play")
+                        iconRole: "audio-play"
                         symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTr("Play the current syllable / line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY")
                     }
                     AudioButton {
                         objectName: "audioPlayLine"; text: qsTr("Play line")
+                        iconRole: "play-line"
                         symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTr("Play the current line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
                     }
                     AudioButton {
                         objectName: "audioStop"; text: qsTr("Stop"); gap: 8
+                        iconRole: "media-stop"
                         symbol: "AUDIO_STOP"; tip: qsTr("Stop playback")
                         onRun: root.audio.runHotkey("AUDIO_STOP")
                     }
                     // A4: the mark plays (the ruler's mark, A3)
                     AudioButton {
                         objectName: "audioPlayBeforeMark"; text: qsTr("Before mark")
+                        iconRole: "play-before-mark"
                         symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTr("Play before the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_BEFORE_MARK")
                     }
                     AudioButton {
                         objectName: "audioPlayAfterMark"; text: qsTr("After mark"); gap: 8
+                        iconRole: "play-after-mark"
                         symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTr("Play after the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_AFTER_MARK")
                     }
                     // A4: the 500 ms plays and to the end
                     AudioButton {
                         objectName: "audioPlay500Before"; text: qsTr("500 before")
+                        iconRole: "play-before-start"
                         symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTr("Play 500ms before the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_BEFORE")
                     }
                     AudioButton {
                         objectName: "audioPlay500First"; text: qsTr("500 first")
+                        iconRole: "play-after-start"
                         symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTr("Play 500 ms after the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_FIRST")
                     }
                     AudioButton {
                         objectName: "audioPlay500Last"; text: qsTr("500 last")
+                        iconRole: "play-before-end"
                         symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTr("Play 500ms before the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_LAST")
                     }
                     AudioButton {
                         objectName: "audioPlay500After"; text: qsTr("500 after")
+                        iconRole: "play-after-end"
                         symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTr("Play 500ms after the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_AFTER")
                     }
                     AudioButton {
                         objectName: "audioPlayToEnd"; text: qsTr("To end"); gap: 8
+                        iconRole: "play-to-end"
                         symbol: "AUDIO_PLAY_TO_END"; tip: qsTr("Play to the end")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_TO_END")
                     }
                     // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT, AUDIO_GOTO
                     AudioButton {
                         objectName: "audioLeadIn"; text: qsTr("In")
+                        iconRole: "lead-in"
                         symbol: "AUDIO_LEAD_IN"; tip: qsTr("Add lead-in to the active line")
                         onRun: root.audio.leadIn()
                     }
                     AudioButton {
                         objectName: "audioLeadOut"; text: qsTr("Out"); gap: 8
+                        iconRole: "lead-out"
                         symbol: "AUDIO_LEAD_OUT"; tip: qsTr("Add lead-out to the active line")
                         onRun: root.audio.leadOut()
                     }
                     AudioButton {
-                        objectName: "audioCommit"; text: "✓"
+                        objectName: "audioCommit"; text: qsTr("Commit")
+                        iconRole: "commit"
                         symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTr("Apply changes")
                         onRun: root.audio.commit()
                     }
                     AudioButton {
                         objectName: "audioGoto"; text: qsTr("Go"); gap: 8
+                        iconRole: "go-to-selection"
                         symbol: "AUDIO_GOTO"; tip: qsTr("Go to selection")
                         onRun: root.audio.goToSelection()
                     }
@@ -1935,6 +1971,7 @@ ApplicationWindow {
                     // splitting; each handler focuses the display.
                     AudioButton {
                         objectName: "audioKaraoke"
+                        iconRole: "karaoke"
                         text: qsTr("Karaoke")
                         checkable: true
                         checked: root.audio.karaoke
@@ -1946,6 +1983,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioKaraokeSplit"
+                        iconRole: "karaoke-split"
                         text: qsTr("Auto split"); gap: 8
                         checkable: true
                         checked: root.audio.karaokeSplitMode
@@ -1961,6 +1999,7 @@ ApplicationWindow {
                     AudioButton {
                         id: audioAutoCommit
                         objectName: "audioAutoCommit"
+                        iconRole: "auto-commit"
                         text: qsTr("Auto")
                         checkable: true
                         checked: root.app.settings.value("audio.autoCommit")
@@ -1980,6 +2019,7 @@ ApplicationWindow {
                     AudioButton {
                         id: audioNextCommit
                         objectName: "audioNextCommit"
+                        iconRole: "next-after-commit"
                         text: qsTr("Next")
                         checkable: true
                         checked: root.app.settings.value("audio.nextLineOnCommit")
@@ -2001,6 +2041,7 @@ ApplicationWindow {
                     // legacy's handlers do).
                     AudioButton {
                         objectName: "audioAutoScroll"
+                        iconRole: "auto-scroll"
                         text: qsTr("Auto-scroll")
                         checkable: true
                         checked: root.audio.autoScroll
@@ -2009,6 +2050,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioSpectrumMode"
+                        iconRole: "spectrum"
                         text: qsTr("Spectrum")
                         checkable: true
                         checked: root.audio.spectrumOn
@@ -2017,6 +2059,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioSpectrumNonLinear"
+                        iconRole: "spectrum-nonlinear"
                         text: qsTr("Speech")
                         checkable: true
                         checked: root.audio.spectrumNonLinear
