@@ -70,7 +70,7 @@ struct Roles {
     QColor accent;     // action / active accent
     QColor onAccent;   // text on an accent fill
     QColor select;     // selected background
-    QColor focus;      // keyboard focus
+    QColor focus;      // keyboard focus: the text colour (K2, MuseScore's focus ring)
     QColor danger;     // error emphasis
     QColor warning;    // warning emphasis (legacy WINDOW_WARNING_ELEMENTS)
     QColor success;    // success text (legacy FontCollectorDialog's "#008000")
@@ -86,7 +86,7 @@ QColor role(const Roles &roles, std::size_t index);
 struct Accent {
     const char *key; // stored in appearance.lightAccent / darkAccent
     const char *name;
-    QColor accent, onAccent, select, focus;
+    QColor accent, onAccent, select;
 };
 inline constexpr const char *kDefaultAccent = "green";
 // Seven per mode, by hue; the default (the spec's green) is the fourth.

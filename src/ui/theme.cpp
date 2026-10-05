@@ -41,32 +41,31 @@ bool isDarkColour(const QColor &colour)
 // surface; dark accents carry a dark tint of their hue and meet 4.5:1 on
 // every dark surface (measured in docs/qt/ux/visual-language.md). Each
 // preset's selected background is its hue at the spec green's selected
-// lightness and saturation; the focus colour stays the spec's unless the
-// accent's hue is within 60 degrees of it (then a blue / sky focus keeps
-// focus and accent apart).
+// lightness and saturation.
 const std::array<Accent, 7> kLightAccents{{
-    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6), rgb(0x0B57D0)},
-    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6), rgb(0x0B57D0)},
-    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0x7A5E00), rgb(0xFFFFFF), rgb(0xEBE6D6), rgb(0x0B57D0)},
-    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x145C4C), rgb(0xFFFFFF), rgb(0xD6EBE4), rgb(0x8D4200)},
-    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0x1D5BA8), rgb(0xFFFFFF), rgb(0xD6DFEB), rgb(0x8D4200)},
-    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0x5B3FB0), rgb(0xFFFFFF), rgb(0xDBD6EB), rgb(0x8D4200)},
-    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0x9E2A73), rgb(0xFFFFFF), rgb(0xEBD6E3), rgb(0x8D4200)},
+    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xB3261E), rgb(0xFFFFFF), rgb(0xEBD7D6)},
+    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0x9C4600), rgb(0xFFFFFF), rgb(0xEBDFD6)},
+    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0x7A5E00), rgb(0xFFFFFF), rgb(0xEBE6D6)},
+    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x145C4C), rgb(0xFFFFFF), rgb(0xD6EBE4)},
+    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0x1D5BA8), rgb(0xFFFFFF), rgb(0xD6DFEB)},
+    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0x5B3FB0), rgb(0xFFFFFF), rgb(0xDBD6EB)},
+    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0x9E2A73), rgb(0xFFFFFF), rgb(0xEBD6E3)},
 }};
 const std::array<Accent, 7> kDarkAccents{{
-    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xF4A9A3), rgb(0x2C1210), rgb(0x4C3230), rgb(0x8FD8FF)},
-    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0xF5BB8A), rgb(0x2C1D10), rgb(0x4C3D30), rgb(0x8FD8FF)},
-    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0xE3CF7E), rgb(0x2C2610), rgb(0x4C4630), rgb(0x8FD8FF)},
-    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x9CDBC9), rgb(0x102C24), rgb(0x304C47), rgb(0xF9D784)},
-    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0xA6C8F2), rgb(0x101D2C), rgb(0x303D4C), rgb(0xF9D784)},
-    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0xC6B5F4), rgb(0x18102C), rgb(0x38304C), rgb(0xF9D784)},
-    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041), rgb(0xF9D784)},
+    {"red", QT_TRANSLATE_NOOP("Theme", "Red"), rgb(0xF4A9A3), rgb(0x2C1210), rgb(0x4C3230)},
+    {"orange", QT_TRANSLATE_NOOP("Theme", "Orange"), rgb(0xF5BB8A), rgb(0x2C1D10), rgb(0x4C3D30)},
+    {"gold", QT_TRANSLATE_NOOP("Theme", "Gold"), rgb(0xE3CF7E), rgb(0x2C2610), rgb(0x4C4630)},
+    {"green", QT_TRANSLATE_NOOP("Theme", "Green"), rgb(0x9CDBC9), rgb(0x102C24), rgb(0x304C47)},
+    {"blue", QT_TRANSLATE_NOOP("Theme", "Blue"), rgb(0xA6C8F2), rgb(0x101D2C), rgb(0x303D4C)},
+    {"purple", QT_TRANSLATE_NOOP("Theme", "Purple"), rgb(0xC6B5F4), rgb(0x18102C), rgb(0x38304C)},
+    {"pink", QT_TRANSLATE_NOOP("Theme", "Pink"), rgb(0xEFAAD3), rgb(0x2C1021), rgb(0x4C3041)},
 }};
 
 // The fixed roles of each theme (visual-language.md): Light and Dark are the
-// spec's tokens, with the accent's four from the chosen preset; High contrast
-// black is the spec's high-contrast column; High contrast white is drawn to
-// match it on white.
+// spec's tokens, with the accent's three from the chosen preset; High
+// contrast black is the spec's high-contrast column; High contrast white is
+// drawn to match it on white. Keyboard focus is resolved from the text
+// colour (resolve).
 Roles baseRoles(Code code)
 {
     switch (code) {
@@ -78,11 +77,11 @@ Roles baseRoles(Code code)
                 {}, {}, {}, {}, rgb(0xFFADAD), rgb(0xE0A030), rgb(0x008000), rgb(0x75818D)};
     case Code::HighContrastWhite:
         return {rgb(0xFFFFFF), rgb(0xFFFFFF), rgb(0xEBEBEB), rgb(0xFFFFFF), rgb(0x000000), rgb(0x1A1A1A), rgb(0x000000),
-                rgb(0x0037B3), rgb(0xFFFFFF), rgb(0xC9DAF8), rgb(0xB4009E), rgb(0xA00000), rgb(0x6B4500), rgb(0x005A00),
+                rgb(0x0037B3), rgb(0xFFFFFF), rgb(0xC9DAF8), {}, rgb(0xA00000), rgb(0x6B4500), rgb(0x005A00),
                 rgb(0x6E6E6E)};
     case Code::HighContrastBlack:
         return {rgb(0x000000), rgb(0x080808), rgb(0x151515), rgb(0x000000), rgb(0xFFFFFF), rgb(0xEEEEEE), rgb(0xFFFFFF),
-                rgb(0xFFFF00), rgb(0x000000), rgb(0x253F60), rgb(0x00FFFF), rgb(0xFFADAD), rgb(0xFFD54A), rgb(0x7CFC7C),
+                rgb(0xFFFF00), rgb(0x000000), rgb(0x253F60), {}, rgb(0xFFADAD), rgb(0xFFD54A), rgb(0x7CFC7C),
                 rgb(0x8C8C8C)};
     }
     return {};
@@ -219,6 +218,21 @@ Code effective(const Choice &choice, Qt::ColorScheme system)
     return withDark(choice.theme, system == Qt::ColorScheme::Dark);
 }
 
+namespace {
+
+// Keyboard focus (K2, visual-language.md "Keyboard focus"; the user's
+// 2026-10-05 decision): MuseScore 4's convention, a ring in the text colour
+// (its NavigationFocusBorder in fontPrimaryColor), which the accent of
+// selection, the default button and a focused field's border never is. A
+// high-contrast text pick takes it along.
+Roles withFocus(Roles roles)
+{
+    roles.focus = roles.text;
+    return roles;
+}
+
+} // namespace
+
 Roles resolve(Code code, const Choice &choice)
 {
     Roles roles = baseRoles(code);
@@ -237,15 +251,14 @@ Roles resolve(Code code, const Choice &choice)
             if (contrastRatio(other, roles.accent) > contrastRatio(roles.onAccent, roles.accent))
                 roles.onAccent = other;
         }
-        return roles;
+        return withFocus(roles);
     }
     const bool dark = isDark(code);
     const Accent &a = accent(dark, dark ? choice.darkAccent : choice.lightAccent);
     roles.accent = a.accent;
     roles.onAccent = a.onAccent;
     roles.select = a.select;
-    roles.focus = a.focus;
-    return roles;
+    return withFocus(roles);
 }
 
 QPalette palette(const Roles &r)

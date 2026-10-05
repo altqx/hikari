@@ -5,10 +5,11 @@
 // sets them with the palette; until it does (no profile) the controls keep
 // Fusion's own colours.
 //
-// focus: the theme's keyboard focus role (visual-language.md, `focus`). The
-// controls draw their keyboard focus (visualFocus) in it, apart from the
-// accent that marks selection, the default button and a focused field's
-// border (the K2 card: "the accent drives ... focused field border").
+// focus: the theme's keyboard focus role (visual-language.md, `focus`: the
+// text colour, MuseScore's convention). The controls draw their keyboard
+// focus ring (FocusFrame.qml) in it, apart from the accent that marks
+// selection, the default button and a focused field's border (the K2 card:
+// "the accent drives ... focused field border").
 
 #include <QColor>
 #include <QObject>

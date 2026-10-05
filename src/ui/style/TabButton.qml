@@ -1,7 +1,10 @@
 // K2: Fusion's tab button with its outline in the theme's boundary colour
 // (control.palette.mid, the line role; see CMakeLists.txt). Fusion draws it
 // in Fusion.outline(), the window colour darkened 140%, about 1.1:1 against
-// the Dark and High contrast black panels. Everything else is Fusion's.
+// the Dark and High contrast black panels. Keyboard focus (visualFocus) is
+// the style's ring (FocusFrame: 2 wide in the theme's focus role, the text
+// colour) just inside the tab, where the tab bar does not clip it; the
+// current tab is told by its raised face. Everything else is Fusion's.
 import QtQuick
 import QtQuick.Templates as T
 import QtQuick.Controls.Fusion as F
@@ -13,6 +16,7 @@ F.TabButton {
         implicitHeight: 21
         height: control.height - (control.checked ? 0 : 2)
         border.color: control.palette.mid
+        FocusFrame { control: control; shown: control.visualFocus; offset: -3 }
         gradient: Gradient {
             GradientStop {
                 position: 0

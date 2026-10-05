@@ -23,7 +23,9 @@
 #include <QPainter>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QQuickItem>
 #include <QQuickStyle>
+#include <QQuickWindow>
 #include <QScopeGuard>
 #include <QTextStream>
 #include <QWindow>
@@ -64,13 +66,6 @@ double lowest(const QColor &colour, const ui::theme::Roles &r)
     return out;
 }
 
-// Hue distance in degrees (0 to 180).
-double hueDistance(const QColor &a, const QColor &b)
-{
-    const double d = std::abs(a.hsvHueF() - b.hsvHueF()) * 360;
-    return std::min(d, 360 - d);
-}
-
 QString name(const QColor &c)
 {
     return c.name(QColor::HexRgb).toUpper();
@@ -109,7 +104,7 @@ private slots:
         QCOMPARE(dark.accent, hex(0x9CDBC9));
         QCOMPARE(dark.onAccent, hex(0x102C24));
         QCOMPARE(dark.select, hex(0x304C47));
-        QCOMPARE(dark.focus, hex(0xF9D784));
+        QCOMPARE(dark.focus, dark.text); // K2 focus: the text colour, not the spec's #F9D784
         QCOMPARE(dark.danger, hex(0xFFADAD));
         const auto light = roles(Code::Light);
         QCOMPARE(surfaces(light), (std::array{hex(0xE5E9EC), hex(0xF9FAFB), hex(0xEDF0F3), hex(0xFFFFFF)}));
@@ -119,7 +114,7 @@ private slots:
         QCOMPARE(light.accent, hex(0x145C4C));
         QCOMPARE(light.onAccent, hex(0xFFFFFF));
         QCOMPARE(light.select, hex(0xD6EBE4));
-        QCOMPARE(light.focus, hex(0x8D4200));
+        QCOMPARE(light.focus, light.text); // not the spec's #8D4200
         QCOMPARE(light.danger, hex(0xA51F31));
         const auto black = roles(Code::HighContrastBlack, ui::theme::choiceFrom([](const char *) { return QVariant(); }));
         QCOMPARE(surfaces(black), (std::array{hex(0x000000), hex(0x080808), hex(0x151515), hex(0x000000)}));
@@ -129,7 +124,7 @@ private slots:
         QCOMPARE(black.accent, hex(0xFFFF00));
         QCOMPARE(black.onAccent, hex(0x000000));
         QCOMPARE(black.select, hex(0x253F60));
-        QCOMPARE(black.focus, hex(0x00FFFF));
+        QCOMPARE(black.focus, black.text); // not the spec's #00FFFF
         QCOMPARE(black.danger, hex(0xFFADAD));
         // The success text is legacy FontCollector's "#008000" in Light and
         // Dark (FontCollector.cpp:872, 978: the same in every legacy theme).
@@ -173,11 +168,44 @@ private slots:
         }
     }
 
+    // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
+    // decision after MuseScore 4, whose real focus ring is
+    // NavigationFocusBorder in fontPrimaryColor): the focus role is the
+    // theme's text colour in every theme and with every accent preset or
+    // high-contrast text pick, so it reads on every surface as text does,
+    // and it is never the colour of selection (the accent, the selected
+    // background), on which it reads as text does.
+    void focusIsTheTextColour()
+    {
+        const auto check = [](const ui::theme::Roles &r, const QString &what) {
+            QVERIFY2(r.focus == r.text, qPrintable(what + QStringLiteral(": focus ") + name(r.focus)));
+            QVERIFY2(r.focus != r.accent, qPrintable(what));
+            QVERIFY2(r.focus != r.select, qPrintable(what));
+            QVERIFY2(contrastRatio(r.focus, r.select) >= 4.5, qPrintable(what));
+            QVERIFY2(lowest(r.focus, r) >= 4.5, qPrintable(what));
+        };
+        const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
+        for (const auto code : ui::theme::kCodes)
+            check(roles(code, defaults), ui::theme::codeName(code));
+        for (const bool dark : {false, true})
+            for (const auto &a : ui::theme::accents(dark)) {
+                ui::theme::Choice choice;
+                (dark ? choice.darkAccent : choice.lightAccent) = QLatin1String(a.key);
+                check(roles(dark ? Code::Dark : Code::Light, choice),
+                      QLatin1String(dark ? "dark " : "light ") + QLatin1String(a.key));
+            }
+        // A high-contrast text pick moves keyboard focus with it.
+        const QVariantMap picks{{QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FFD000")},
+                                {QStringLiteral("appearance.highContrastWhite.text"), QStringLiteral("#300060")}};
+        const auto picked = ui::theme::choiceFrom([&](const char *id) { return picks.value(QLatin1String(id)); });
+        QCOMPARE(roles(Code::HighContrastBlack, picked).focus, hex(0xFFD000));
+        QCOMPARE(roles(Code::HighContrastWhite, picked).focus, hex(0x300060));
+    }
+
     // Seven presets per mode, by hue, in the same order and keys in Light and
     // Dark; the default (the fourth) is the spec's green. Each meets 4.5:1
     // against every surface of its mode, carries readable text (4.5:1) and a
-    // readable selected background, and keeps its focus colour apart from it
-    // (3:1 on the surfaces, at least 60 degrees of hue away).
+    // readable selected background.
     void accentPresetsMeetContrast()
     {
         const QStringList keys{"red", "orange", "gold", "green", "blue", "purple", "pink"};
@@ -200,8 +228,6 @@ private slots:
                 QVERIFY2(lowest(a.accent, r) >= 4.5, qPrintable(what));
                 QVERIFY2(contrastRatio(a.onAccent, a.accent) >= 4.5, qPrintable(what));
                 QVERIFY2(contrastRatio(r.text, a.select) >= 4.5, qPrintable(what));
-                QVERIFY2(lowest(a.focus, r) >= 3.0, qPrintable(what));
-                QVERIFY2(hueDistance(a.focus, a.accent) >= 60, qPrintable(what));
                 // the selected background stays a quiet tint (the spec green's)
                 QVERIFY2(contrastRatio(a.select, r.panel) < 2.0, qPrintable(what));
                 // the other mode's roles and the theme's own roles stay put
@@ -291,7 +317,7 @@ private slots:
         QCOMPARE(black.onAccent, hex(0xFFFFFF)); // black on navy would not read
         QCOMPARE(black.background, base.background);
         QCOMPARE(black.select, base.select);
-        QCOMPARE(black.focus, base.focus);
+        QCOMPARE(black.focus, hex(0xFFD000)); // keyboard focus follows the text pick
         QCOMPARE(black.disabled, base.disabled);
         // High contrast white keeps its own (the unreadable one: its default)
         QCOMPARE(roles(Code::HighContrastWhite, choice).accent, hex(0x0037B3));
@@ -473,8 +499,8 @@ QtObject {
     // The controls style (src/ui/style): every control outline in the
     // theme's boundary colour (the line role, the high-contrast border pick),
     // live; Fusion's own, its window colour darkened 140%, measures about
-    // 1.1:1 against the Dark and High contrast black panels. The focused
-    // outline stays Fusion's accent-derived one.
+    // 1.1:1 against the Dark and High contrast black panels. A focused
+    // field's outline stays Fusion's accent-derived one.
     void controlsOutlineInTheBoundaryColour()
     {
         QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
@@ -497,10 +523,11 @@ Window {
         field.background.border.color, area.background.border.color, spin.background.border.color,
         combo.background.border.color, check.indicator.border.color, radio.indicator.border.color,
         group.background.border.color, frame.background.border.color, menu.background.border.color,
-        tab.background.border.color, tabBar.background.children[0].color]
+        tab.background.border.color, tabBar.background.children[0].color, slider.background.border.color,
+        slider.handle.border.color]
     // A control the style leaves alone is Fusion's (the qmldir's fallback),
-    // not Basic's: Fusion's slider handle is its SliderHandle item.
-    property string sliderHandle: String(slider.handle)
+    // not Basic's: Fusion's switch indicator is its SwitchIndicator item.
+    property string switchIndicator: String(toggle.indicator)
     Column {
         Button { id: button; text: "B" }
         ToolButton { id: toolButton; text: "T" }
@@ -515,13 +542,14 @@ Window {
         TabBar { id: tabBar; TabButton { id: tab; text: "t" } }
         Menu { id: menu; objectName: "menu" }
         Slider { id: slider }
+        Switch { id: toggle }
     }
 }
 )", QUrl(QStringLiteral("qrc:/k2-controls.qml")));
         std::unique_ptr<QObject> window(component.create());
         QVERIFY2(window, qPrintable(component.errorString()));
-        QVERIFY2(window->property("sliderHandle").toString().startsWith(QStringLiteral("SliderHandle")),
-                 qPrintable(window->property("sliderHandle").toString()));
+        QVERIFY2(window->property("switchIndicator").toString().startsWith(QStringLiteral("SwitchIndicator")),
+                 qPrintable(window->property("switchIndicator").toString()));
         for (const Code code : ui::theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             const ui::theme::Roles &r = ui::theme::current().roles;
@@ -532,7 +560,7 @@ Window {
                                                          [&](const QVariant &c) { return c.value<QColor>() == r.line; }),
                                      1000);
             const auto outlines = window->property("outlines").toList();
-            QCOMPARE(outlines.size(), 13);
+            QCOMPARE(outlines.size(), 15);
             for (qsizetype i = 0; i < outlines.size(); ++i)
                 QVERIFY2(outlines[i].value<QColor>() == r.line,
                          qPrintable(QStringLiteral("%1: control %2 outline %3, line %4").arg(ui::theme::codeName(code)).arg(i)
@@ -551,14 +579,18 @@ Window {
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
     }
 
-    // visual-language.md: keyboard focus stays distinguishable from
-    // selection ("Selected row", "Keyboard, focus and tabs": the focus colour
-    // is distinct from selection and error). The controls draw their
-    // keyboard focus (visualFocus) in the focus role; the accent keeps the
-    // default button's outline and a focused field's border (the K2 card:
-    // the accent drives the focused field border). Live, in every theme and
-    // with every accent; without a profile Fusion's own.
-    void keyboardFocusInTheFocusRole()
+    // K2 focus (visual-language.md, "Keyboard focus"; the user's 2026-10-05
+    // decision after MuseScore 4's NavigationFocusBorder): every focusable
+    // control of the style draws keyboard focus (Tab, Backtab, a shortcut)
+    // as a ring 2 wide in the focus role, the theme's text colour: 3 beyond
+    // a button, tool button, combo box, check box, radio button, field, text
+    // area or spin box, around a slider's handle, inside a tab. The accent
+    // stays for selection, the default button and a focused field's border,
+    // and the control's own outline stays the boundary colour, so keyboard
+    // focus and selection are told apart. A click's focus draws no ring.
+    // Live, in every theme, with a high-contrast text pick; without a
+    // profile the ring is the palette's text colour.
+    void keyboardFocusRingInTheTextColour()
     {
         ui::SettingsStore store;
         const QPalette before = QGuiApplication::palette();
@@ -574,60 +606,100 @@ Window {
 import QtQuick
 import QtQuick.Controls
 Window {
-    width: 400; height: 400; visible: true
-    property var controls: [button, toolButton, combo, check, radio]
+    width: 400; height: 900; visible: true
+    property var controls: [button, toolButton, combo, check, radio, field, area, spin, tab, slider]
     property var outlines: [button.background.border.color, toolButton.background.border.color,
         combo.background.border.color, check.indicator.border.color, radio.indicator.border.color]
     property color defaultOutline: primary.background.border.color
     property color fieldOutline: field.background.border.color
-    property Item field: field
+    property color paletteText: button.palette.windowText
+    property Item primary: primary
     Column {
+        x: 40; y: 20; spacing: 16
         Button { id: button; text: "B" }
         ToolButton { id: toolButton; text: "T" }
         ComboBox { id: combo; model: ["a"] }
         CheckBox { id: check; text: "c" }
         RadioButton { id: radio; text: "r" }
-        Button { id: primary; text: "P"; highlighted: true }
         TextField { id: field }
+        TextArea { id: area; text: "a" }
+        SpinBox { id: spin }
+        TabBar { width: 200; TabButton { id: tab; text: "t" } TabButton { text: "u" } }
+        Slider { id: slider }
+        Button { id: primary; text: "P"; highlighted: true }
     }
 }
 )", QUrl(QStringLiteral("qrc:/k2-focus.qml")));
         std::unique_ptr<QObject> object(component.create());
         QVERIFY2(object, qPrintable(component.errorString()));
-        auto *window = qobject_cast<QWindow *>(object.get());
+        auto *window = qobject_cast<QQuickWindow *>(object.get());
         QVERIFY(window);
         window->requestActivate();
         QVERIFY(QTest::qWaitForWindowActive(window));
-        QList<QObject *> controls;
+        QList<QQuickItem *> controls;
         for (const QVariant &c : object->property("controls").toList())
-            controls.append(c.value<QObject *>());
-        QCOMPARE(controls.size(), 5);
+            controls.append(c.value<QQuickItem *>());
+        QCOMPARE(controls.size(), 10);
+        enum { Field = 5, Tab = 8, Slider = 9 };
+        const auto ring = [&](qsizetype i) { return controls[i]->findChild<QQuickItem *>(QStringLiteral("focusRing")); };
+        for (qsizetype i = 0; i < controls.size(); ++i)
+            QVERIFY2(ring(i), qPrintable(QStringLiteral("control %1 has no focus ring").arg(i)));
         const auto outline = [&](qsizetype i) { return object->property("outlines").toList()[i].value<QColor>(); };
         const auto colour = [&](const char *name) { return object->property(name).value<QColor>(); };
-        const auto tabTo = [](QObject *item) {
-            QVERIFY(QMetaObject::invokeMethod(item, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::TabFocusReason)));
-            QTRY_VERIFY(item->property("visualFocus").toBool());
+        const auto ringColour = [&](qsizetype i) {
+            return ring(i)->property("border").value<QObject *>()->property("color").value<QColor>();
+        };
+        const auto sceneRect = [](const QQuickItem *item) {
+            return item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+        };
+        auto *primary = object->property("primary").value<QQuickItem *>();
+        const auto tabTo = [&](QQuickItem *control) {
+            primary->forceActiveFocus(Qt::MouseFocusReason); // (a focus change, with its reason)
+            control->forceActiveFocus(Qt::TabFocusReason);
         };
         const auto check = [&](const ui::theme::Roles &r, const QString &what) {
-            QVERIFY2(r.focus != r.accent, qPrintable(what));
             for (qsizetype i = 0; i < controls.size(); ++i) {
+                const QString where = QStringLiteral("%1: control %2").arg(what).arg(i);
                 tabTo(controls[i]);
-                QTRY_VERIFY2(outline(i) == r.focus,
-                             qPrintable(QStringLiteral("%1: control %2 focused %3, focus %4")
-                                            .arg(what).arg(i).arg(name(outline(i)), name(r.focus))));
+                QTRY_VERIFY2(ring(i)->isVisible(), qPrintable(where));
                 for (qsizetype j = 0; j < controls.size(); ++j)
                     if (j != i)
-                        // (the palette reaches the controls an event loop pass later)
-                        QTRY_VERIFY2(outline(j) == r.line, qPrintable(QStringLiteral("%1: control %2").arg(what).arg(j)));
-                // The default button keeps the accent's outline.
-                QTRY_VERIFY2(colour("defaultOutline") != r.focus && colour("defaultOutline") != r.line, qPrintable(what));
+                        QTRY_VERIFY2(!ring(j)->isVisible(), qPrintable(where + QStringLiteral(" and %1").arg(j)));
+                // (the palette reaches the controls an event loop pass later)
+                QTRY_VERIFY2(ringColour(i) == r.text,
+                             qPrintable(where + QStringLiteral(" ring %1, text %2").arg(name(ringColour(i)), name(r.text))));
+                QCOMPARE(ringColour(i), r.focus);
+                QVERIFY2(ringColour(i) != r.accent && ringColour(i) != r.select, qPrintable(where));
+                QCOMPARE(ring(i)->property("border").value<QObject *>()->property("width").toInt(), 2);
+                // Where it is: 3 beyond the control (the slider's handle);
+                // inside a tab, which the tab bar would clip.
+                const QRectF at = sceneRect(ring(i));
+                if (i == Tab)
+                    QVERIFY2(sceneRect(controls[i]).contains(at), qPrintable(where));
+                else
+                    QCOMPARE(at, sceneRect(i == Slider ? controls[i]->property("handle").value<QQuickItem *>()
+                                                       : controls[i]).adjusted(-5, -5, 5, 5));
+                // and drawn: its left side in the text colour
+                const QImage shot = window->grabWindow();
+                const qreal dpr = window->effectiveDevicePixelRatio();
+                const QPoint pixel = ((at.topLeft() + QPointF(1, at.height() / 2)) * dpr).toPoint();
+                QVERIFY2(shot.pixelColor(pixel) == r.text,
+                         qPrintable(where + QStringLiteral(" drawn %1").arg(name(shot.pixelColor(pixel)))));
+                // The control's own outline stays the boundary colour.
+                if (i < 5)
+                    QTRY_VERIFY2(outline(i) == r.line, qPrintable(where));
             }
-            // A focused field's border is the accent's outline, not the focus role.
-            auto *field = object->property("field").value<QObject *>();
-            QVERIFY(QMetaObject::invokeMethod(field, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::TabFocusReason)));
-            QTRY_VERIFY(field->property("activeFocus").toBool());
+            // The default button keeps the accent's outline; a focused
+            // field's border is the accent's outline too, with the ring
+            // beside it only for keyboard focus.
+            QVERIFY2(colour("defaultOutline") != r.line, qPrintable(what));
+            controls[Field]->forceActiveFocus(Qt::MouseFocusReason);
             QTRY_COMPARE(colour("fieldOutline"), colour("defaultOutline"));
-            QVERIFY(colour("fieldOutline") != r.focus);
+            QVERIFY(!ring(Field)->isVisible());
+            // A click's focus draws no ring.
+            controls[0]->forceActiveFocus(Qt::MouseFocusReason);
+            QTRY_VERIFY(controls[0]->hasActiveFocus());
+            QVERIFY2(!ring(0)->isVisible(), qPrintable(what));
         };
         for (const Code code : ui::theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
@@ -635,22 +707,16 @@ Window {
             if (QTest::currentTestFailed())
                 return;
         }
-        // Every accent preset's focus colour reaches the controls.
-        for (const bool dark : {false, true}) {
-            store.setValue(QStringLiteral("appearance.theme"), dark ? QStringLiteral("dark") : QStringLiteral("light"));
-            for (const auto &a : ui::theme::accents(dark)) {
-                store.setValue(QLatin1String(dark ? ui::theme::kDarkAccentSetting : ui::theme::kLightAccentSetting),
-                               QLatin1String(a.key));
-                QCOMPARE(ui::theme::current().roles.focus, a.focus);
-                tabTo(controls[0]);
-                QTRY_COMPARE(outline(0), a.focus);
-            }
-        }
-        // Without a profile the controls are Fusion's: focus in the
-        // highlight's outline, as the default button's.
+        // A high-contrast text pick reaches the ring.
+        store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Text)),
+                       QStringLiteral("#FFD000"));
+        tabTo(controls[0]);
+        QTRY_COMPARE(ringColour(0), hex(0xFFD000));
+        // Without a profile: the palette's text colour.
         ui::theme::useSettings(nullptr);
         tabTo(controls[0]);
-        QTRY_COMPARE(outline(0), colour("defaultOutline"));
+        QTRY_VERIFY(ring(0)->isVisible());
+        QTRY_COMPARE(ringColour(0), colour("paletteText"));
     }
 
     // The swatch sheet for the user's review: per mode, the seven accents as

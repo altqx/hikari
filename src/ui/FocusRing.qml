@@ -1,9 +1,11 @@
 // K2: the keyboard focus ring of a control the shell draws itself (the
 // Appearance page's theme cards and accent swatches): visual-language.md's
-// "Keyboard focus ring", 2 wide, 3 beyond the control, in the theme's focus
-// role, which stays apart from the accent that marks the chosen card or
-// swatch. Shown while the control has keyboard focus (visualFocus). Place it
-// in the control's background; set radius to the background's.
+// "Keyboard focus", 2 wide, 3 beyond the control, in the theme's focus role,
+// the text colour (MuseScore 4's convention), which stays apart from the
+// accent that marks the chosen card or swatch. Shown while the control has
+// keyboard focus (visualFocus). Place it in the control's background; set
+// radius to the background's. The HikariStyle controls draw the same ring
+// (style/FocusFrame.qml).
 import QtQuick
 import QtQuick.Templates as T
 import Hikari.Ui

@@ -2,7 +2,11 @@
 // buttons in the theme's boundary colour (control.palette.mid, the line role;
 // see CMakeLists.txt). Fusion draws them in Fusion.outline(), the window
 // colour darkened 140%, about 1.1:1 against the Dark and High contrast black
-// panels. Everything else is Fusion's.
+// panels. Focused, its border is the accent's outline, as a field's; with
+// keyboard focus (visualFocus) the style's ring (FocusFrame: 2 wide, 3
+// beyond it, in the theme's focus role, the text colour) is drawn beside it,
+// and its buttons keep their colour (Fusion tints them with the accent).
+// Everything else is Fusion's.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 
@@ -35,11 +39,11 @@ F.SpinBox {
             gradient: Gradient {
                 GradientStop {
                     position: 0
-                    color: F.Fusion.gradientStart(F.Fusion.buttonColor(control.palette, control.visualFocus, false, control.up.hovered || control.down.hovered))
+                    color: F.Fusion.gradientStart(F.Fusion.buttonColor(control.palette, false, false, control.up.hovered || control.down.hovered))
                 }
                 GradientStop {
                     position: 1
-                    color: F.Fusion.gradientStop(F.Fusion.buttonColor(control.palette, control.visualFocus, false, control.up.hovered || control.down.hovered))
+                    color: F.Fusion.gradientStop(F.Fusion.buttonColor(control.palette, false, false, control.up.hovered || control.down.hovered))
                 }
             }
 
@@ -60,5 +64,7 @@ F.SpinBox {
             visible: control.activeFocus
             radius: 1.7
         }
+
+        FocusFrame { control: control; shown: control.visualFocus }
     }
 }
