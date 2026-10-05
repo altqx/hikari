@@ -467,10 +467,13 @@ Row {
         QVERIFY(!item("plain")->property("valid").toBool());
     }
 
-    // The rendering fixtures and contact sheets: the whole set drawn by the
+    // The rendering check and contact sheets: the whole set drawn by the
     // Icon item on each appearance's background at this process's scale,
     // every icon equal to the set rendered at the device's pixels (crisp,
-    // not scaled up from 16 px).
+    // not scaled up from 16 px). The expected images come from the same
+    // QSvgRenderer and tint, so this shows the item paints at device pixels
+    // in its appearance's colours; whether the drawings look right rests on
+    // the user's review of the contact sheets written here.
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::IconTheme::forceAppearance(std::nullopt); });
