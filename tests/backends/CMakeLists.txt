@@ -48,8 +48,13 @@ hikari_add_gtest(hikari_backends_indexed_source_tests SOURCES indexed_source_tes
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_indexed_source_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
-add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_media_fixtures)
+# V3: a media helper whose Open fails at a chosen stage (protocol 8).
+add_executable(hikari_failing_media_helper failing_media_helper.cpp)
+target_link_libraries(hikari_failing_media_helper PRIVATE hikari_helper_endpoint)
+add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_failing_media_helper
+    hikari_media_fixtures)
 
 # N6: the real-time engine everywhere; the PortAudio stream wherever an output
 # device exists (CI Linux provides a null ALSA PCM, HIKARI_TEST_AUDIO_DEVICE).
