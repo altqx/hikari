@@ -163,6 +163,7 @@ public:
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitResolved(int ms = 30000);
     std::filesystem::path catalogDir() const { return m_dir; }
+    int autosaveInterval() const { return m_autosave.interval(); }
     void setAutosaveInterval(int ms) { m_autosave.setInterval(ms); }
     void setWatchDelay(int ms) { m_watchDelay.setInterval(ms); }
 

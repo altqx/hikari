@@ -27,6 +27,10 @@ RowLayout {
     // StyleChange reads STYLE_EDIT_FILTER_TEXT once, when it is made.
     property string filterTextAtOpen: ""
     property bool listed: false // the window made its list (a FontEnum observer)
+    // HikariChoice's txtchoice where it no longer names the entry at the
+    // choice (the Style editor after the catalogs changed under a choice past
+    // the new end); "" while they agree. It is drawn and it is GetValue().
+    property string staleText: ""
     signal listMade()
 
     // The window opens: the catalogs and the two entries, "All fonts" chosen,
@@ -36,6 +40,7 @@ RowLayout {
         filterTextAtOpen = catalogs.filterText
         choices = catalogs.catalogChoices()
         choice.currentIndex = 0
+        staleText = ""
         filter.checked = catalogs.filterOn
         changeCatalog(false)
     }
@@ -44,21 +49,50 @@ RowLayout {
     function changeCatalog(save) {
         if (save)
             catalogs.setFilterOn(filter.checked)
-        const value = choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
+        const value = staleText !== "" ? staleText
+                    : choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
         fonts = catalogs.fontList(choice.currentIndex, value, filter.checked,
                                   fontDialog ? catalogs.filterText : filterTextAtOpen, fontDialog)
         listMade()
     }
     // CATALOG_CHANGED (the catalog window shown or hidden): the choice made
     // again around its selection, the list, then SaveCatalogs.
+    // The font dialog clamps the choice to the last entry (FontDialog.cpp:
+    // 466-474); the Style editor does not (StyleChange.cpp:98-104).
     function catalogsChangedByWindow() {
         let sel = choice.currentIndex
+        const before = choices
         choices = catalogs.catalogChoices()
         if (fontDialog && sel >= choices.length)
             sel = choices.length - 1
-        // HikariChoice::SetSelection ignores a position past the end.
-        if (sel < choices.length)
-            choice.currentIndex = sel
+        if (sel < choices.length) {
+            choice.currentIndex = sel // SetSelection(sel): its text follows
+            staleText = ""
+        } else {
+            // HikariChoice::SetSelection ignores a position past the end
+            // (ListControls.cpp:459), so the choice stays where
+            // PutArray(names) left it before "All fonts" and "Without
+            // catalog" were inserted ahead of it (ListControls.cpp:498-519,
+            // 685-688), and its text stays that name.
+            const names = catalogs.catalogNames
+            const ce = sel >= 0 && sel < before.length ? before[sel] : ""
+            let c = sel
+            let text = staleText !== "" ? staleText : ce
+            if (names.length < 1) {
+                c = -1
+            } else if (ce !== "") {
+                if (c >= names.length) {
+                    c = 0
+                    text = names[0]
+                }
+                if (ce !== names[c]) {
+                    c = Math.max(0, names.indexOf(ce)) // wxArrayString::Index
+                    text = names[c]
+                }
+            }
+            choice.currentIndex = c
+            staleText = c >= 0 && c < choices.length && choices[c] === text ? "" : text
+        }
         changeCatalog(false)
         catalogs.save()
     }
@@ -81,6 +115,7 @@ RowLayout {
         choices = catalogs.catalogNames
         const lower = catalog.toLowerCase()
         choice.currentIndex = choices.findIndex(n => n.toLowerCase() === lower)
+        staleText = "" // SetSelection
         changeCatalog(false)
     }
 
@@ -89,8 +124,12 @@ RowLayout {
         objectName: "fontCatalogChoice"
         Layout.fillWidth: true
         model: bar.choices
+        displayText: bar.staleText !== "" ? bar.staleText : currentText
         Accessible.name: qsTr("Font catalogs")
-        onActivated: bar.changeCatalog(false)
+        onActivated: {
+            bar.staleText = ""
+            bar.changeCatalog(false)
+        }
     }
     Button {
         id: addButton

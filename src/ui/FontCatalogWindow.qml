@@ -351,7 +351,7 @@ Dialog {
         footer: DialogButtonBox {
             Button { objectName: "catalogClashMerge"; text: qsTr("Merge"); onClicked: { clash.close(); window.renamed(clash.oldName, clash.newName, 0) } }
             Button { objectName: "catalogClashDelete"; text: qsTr("Delete"); onClicked: { clash.close(); window.renamed(clash.oldName, clash.newName, 1) } }
-            Button { text: qsTr("Cancel"); onClicked: clash.close() }
+            Button { objectName: "catalogClashCancel"; text: qsTr("Cancel"); onClicked: clash.close() }
         }
     }
     Dialog {
