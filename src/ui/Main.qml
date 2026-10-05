@@ -2184,21 +2184,24 @@ ApplicationWindow {
                         Repeater {
                             // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
                             // maps the hotkey, the tooltip shows it.
+                            // K1: the set's icons in place of the letters
+                            // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
+                            // bitmaps, EditBox.cpp:168-195).
                             model: [
-                                { tag: "b", label: qsTr("B"), name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                { tag: "i", label: qsTr("I"), name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                { tag: "u", label: qsTr("U"), name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                { tag: "s", label: qsTr("S"), name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
+                                { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
                             ]
-                            ToolButton {
+                            IconToolButton {
                                 required property var modelData
+                                required property int index
                                 objectName: "tag_" + modelData.tag
-                                text: modelData.label
+                                iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
+                                text: modelData.name
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return
@@ -2209,14 +2212,13 @@ ApplicationWindow {
                         }
                         // E1: Font selection and the four colours
                         // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                        ToolButton {
+                        IconToolButton {
                             objectName: "changeFont"
-                            text: qsTr("Fn")
+                            iconRole: "tag-font"
+                            text: qsTr("Font selection")
                             focusPolicy: Qt.NoFocus
                             enabled: root.editor.editable
-                            Accessible.name: qsTr("Font selection")
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
+                            tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
                             onClicked: {
                                 if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                     return
@@ -2231,15 +2233,14 @@ ApplicationWindow {
                                 { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
                                 { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
                             ]
-                            ToolButton {
+                            IconToolButton {
                                 required property var modelData
                                 objectName: "changeColour" + modelData.number
-                                text: modelData.number + "c"
+                                iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
+                                text: modelData.name
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return

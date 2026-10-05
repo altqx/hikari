@@ -35,5 +35,5 @@ target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml IconMenuItem.qml IconMenu.qml
-    IconTabButton.qml IconDialogHeader.qml
+    IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
