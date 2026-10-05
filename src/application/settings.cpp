@@ -255,6 +255,22 @@ const std::vector<SettingDefinition> &definitions()
         {kIconColourSettings[2][1], "", String, Profile, Mapped, false, std::string("#FFFF00")},
         {kIconColourSettings[2][2], "", String, Profile, Mapped, false, std::string("#00FFFF")},
         {kIconColourSettings[2][3], "", String, Profile, Mapped, false, std::string("#8C8C8C")},
+        // K2: the appearance (docs/qt/ux/visual-language.md, the user's
+        // 2026-10-05 decision superseding A2-theme-colours): the theme
+        // ("light", "dark", "highContrastWhite", "highContrastBlack"; legacy's
+        // default theme was dark), following the system's light or dark scheme
+        // (on by default), each mode's accent preset by key, and the high-contrast
+        // themes' pickers ("#RRGGBB"), the only colour settings.
+        {"appearance.theme", "", String, Profile, Mapped, false, std::string("dark")},
+        {"appearance.followSystem", "", Bool, Profile, Mapped, false, true},
+        {"appearance.lightAccent", "", String, Profile, Mapped, false, std::string("green")},
+        {"appearance.darkAccent", "", String, Profile, Mapped, false, std::string("green")},
+        {"appearance.highContrastWhite.accent", "", String, Profile, Mapped, false, std::string("#0037B3")},
+        {"appearance.highContrastWhite.text", "", String, Profile, Mapped, false, std::string("#000000")},
+        {"appearance.highContrastWhite.border", "", String, Profile, Mapped, false, std::string("#000000")},
+        {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
+        {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).

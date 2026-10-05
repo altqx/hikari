@@ -211,6 +211,30 @@ TEST(SettingsRegistry, IconColoursArePerAppearanceSettings)
     EXPECT_EQ(kIconColourSettings[1][2], "icons.dark.active");
 }
 
+// K2: the appearance settings and their defaults: the theme (legacy's
+// default theme was dark, config.cpp:639), following the system on, each
+// mode's accent the spec's green, the high-contrast pickers' defaults.
+TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    EXPECT_EQ(settings.text("appearance.theme"), "dark");
+    EXPECT_TRUE(settings.boolean("appearance.followSystem"));
+    EXPECT_EQ(settings.text("appearance.lightAccent"), "green");
+    EXPECT_EQ(settings.text("appearance.darkAccent"), "green");
+    EXPECT_EQ(settings.text("appearance.highContrastWhite.accent"), "#0037B3");
+    EXPECT_EQ(settings.text("appearance.highContrastBlack.accent"), "#FFFF00");
+    EXPECT_EQ(settings.text("appearance.highContrastBlack.text"), "#FFFFFF");
+    std::size_t count = 0;
+    for (const auto &s : settingDefinitions())
+        if (s.id.starts_with("appearance.")) {
+            ++count;
+            EXPECT_TRUE(s.legacyKey.empty()) << s.id;
+            EXPECT_EQ(s.scope, SettingScope::Profile) << s.id;
+        }
+    EXPECT_EQ(count, 10u);
+}
+
 TEST(SettingsRegistry, ThemesAreExcludedAndUnresolvedOnesKept)
 {
     const auto *theme = findLegacySetting("PROGRAM_THEME");

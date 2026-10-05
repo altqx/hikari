@@ -44,3 +44,6 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
+# the appearance state.
+target_sources(hikari_ui PRIVATE theme.cpp theme.h)
