@@ -106,6 +106,14 @@ public:
     application::visual::Overlay overlay(const application::visual::VisualHost &) const override { return {}; }
 };
 
+// A visual overlay polygon's first contour (VisualToolsController::overlay:
+// "contours", lists of logical points).
+QVariantList polygonPoints(const QVariantMap &shape)
+{
+    const QVariantList contours = shape.value(QStringLiteral("contours")).toList();
+    return contours.isEmpty() ? QVariantList{} : contours.first().toList();
+}
+
 QString text(const core::LineRecord *line)
 {
     return QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
@@ -8488,12 +8496,10 @@ private slots:
                 const QVariantMap m = v.toMap();
                 if (m.value(QStringLiteral("type")).toString() != QStringLiteral("polygon"))
                     continue;
-                const QVariantList pts = m.value(QStringLiteral("points")).toList();
+                const QVariantList pts = polygonPoints(m);
                 if (pts.size() != 4)
                     continue;
-                const QVariantMap a = pts[0].toMap(), c = pts[2].toMap();
-                return QPointF((a[QStringLiteral("x")].toDouble() + c[QStringLiteral("x")].toDouble()) / 2,
-                               (a[QStringLiteral("y")].toDouble() + c[QStringLiteral("y")].toDouble()) / 2);
+                return (pts[0].toPointF() + pts[2].toPointF()) / 2;
             }
             return std::nullopt;
         };
@@ -8637,7 +8643,7 @@ private slots:
         QVERIFY(signText() != before);
         bool arrow = false;
         for (const QVariant &v : tools.overlay())
-            arrow |= v.toMap().value(QStringLiteral("points")).toList().size() == 3;
+            arrow |= polygonPoints(v.toMap()).size() == 3;
         QVERIFY(arrow); // DrawArrow's head
 
         // Two points: the first on this frame, the second three frames
@@ -8738,14 +8744,12 @@ private slots:
         auto helper = [&]() -> std::optional<QPointF> {
             for (const QVariant &v : tools.overlay()) {
                 const QVariantMap m = v.toMap();
-                const QVariantList pts = m.value(QStringLiteral("points")).toList();
+                const QVariantList pts = polygonPoints(m);
                 if (m.value(QStringLiteral("type")).toString() != QStringLiteral("polygon") || pts.size() != 4)
                     continue;
-                const QVariantMap a = pts[0].toMap(), c = pts[2].toMap();
-                const double w = c[QStringLiteral("x")].toDouble() - a[QStringLiteral("x")].toDouble();
-                if (std::abs(view.toDevice(w) - 8) < 0.5)
-                    return QPointF((a[QStringLiteral("x")].toDouble() + c[QStringLiteral("x")].toDouble()) / 2,
-                                   (a[QStringLiteral("y")].toDouble() + c[QStringLiteral("y")].toDouble()) / 2);
+                const QPointF a = pts[0].toPointF(), c = pts[2].toPointF();
+                if (std::abs(view.toDevice(c.x() - a.x()) - 8) < 0.5)
+                    return (a + c) / 2;
             }
             return std::nullopt;
         };
