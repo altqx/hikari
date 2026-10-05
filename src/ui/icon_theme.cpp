@@ -14,8 +14,11 @@
 #include <QJsonObject>
 #include <QPainter>
 #include <QPalette>
+#include <QIcon>
+#include <QPixmap>
 #include <QStyleHints>
 #include <QSvgRenderer>
+#include <QWindow>
 #include <QtQml/qqmlengine.h>
 
 #include <algorithm>
@@ -259,7 +262,36 @@ IconTheme::IconTheme(QObject *parent) : QObject(parent)
 
 IconTheme *IconTheme::create(QQmlEngine *engine, QJSEngine *)
 {
+    if (!engine->imageProvider(QLatin1String(IconImageProvider::kId)))
+        engine->addImageProvider(QLatin1String(IconImageProvider::kId), new IconImageProvider);
     return new IconTheme(engine);
+}
+
+QUrl IconTheme::image(const QString &role, const QColor &colour, const QColor &accent, bool mirrored) const
+{
+    const auto hex = [](const QColor &c) { return c.name(QColor::HexRgb).mid(1); };
+    return QUrl(QStringLiteral("image://%1/%2/%3/%4/%5")
+                    .arg(QLatin1String(IconImageProvider::kId), role, hex(colour), hex(accent),
+                         mirrored ? QStringLiteral("1") : QStringLiteral("0")));
+}
+
+void IconTheme::setWindowIcon(QObject *object, const QString &role)
+{
+    auto *window = qobject_cast<QWindow *>(object);
+    if (!window || !icons::exists(role))
+        return;
+    m_windows.removeIf([window](const auto &entry) { return !entry.first || entry.first == window; });
+    m_windows.append({window, role});
+    applyWindowIcon(window, role);
+}
+
+void IconTheme::applyWindowIcon(QWindow *window, const QString &role) const
+{
+    // Drawn at each size a title bar or task switcher asks for, at once.
+    QIcon icon;
+    for (const int side : {16, 20, 24, 32, 40, 48, 64})
+        icon.addPixmap(QPixmap::fromImage(icons::render(role, QSize(side, side), normal(), accent())));
+    window->setIcon(icon);
 }
 
 icons::Appearance IconTheme::currentAppearance()
@@ -286,16 +318,39 @@ void IconTheme::forceAppearance(std::optional<icons::Appearance> appearance)
 
 QColor IconTheme::colour(icons::Appearance appearance, icons::Slot slot)
 {
-    // The registry's own parser reads the value, the same one applySettings
-    // validates with: "#RRGGBB", or "#RRGGBBAA" (QColor would read nine digits
-    // as #AARRGGBB). Anything it rejects keeps the theme default. The tint
-    // paints the colour opaque (icons::tint writes #RRGGBB).
+    // A colour the user saved in the profile (icons.<appearance>.<slot>)
+    // still wins until the theme model replaces those settings. The registry's
+    // own parser reads the value, the same one applySettings validates with:
+    // "#RRGGBB", or "#RRGGBBAA" (QColor would read nine digits as #AARRGGBB).
+    // Anything it rejects is ignored. The tint paints the colour opaque
+    // (icons::tint writes #RRGGBB).
     if (const auto &settings = Hub::get().settings) {
-        const QString stored = settings->text(icons::settingId(appearance, slot).data());
-        if (const auto argb = application::parseSettingColour(stored.toStdString()))
-            return QColor::fromRgba(QRgb(*argb));
+        const char *id = icons::settingId(appearance, slot).data();
+        if (settings->contains(id)) {
+            const QString stored = settings->text(id);
+            if (const auto argb = application::parseSettingColour(stored.toStdString()))
+                return QColor::fromRgba(QRgb(*argb));
+        }
     }
-    return icons::defaultColour(appearance, slot);
+    return paletteColour(slot);
+}
+
+QColor IconTheme::paletteColour(icons::Slot slot)
+{
+    // The active theme's palette: its text colour, its accent (the accent
+    // layer, and the whole icon while hovered or pressed) and its disabled
+    // text colour.
+    const QPalette palette = QGuiApplication::palette();
+    switch (slot) {
+    case icons::Slot::Normal:
+        return palette.color(QPalette::Active, QPalette::WindowText);
+    case icons::Slot::Accent:
+    case icons::Slot::Active:
+        return palette.color(QPalette::Active, QPalette::Accent);
+    case icons::Slot::Disabled:
+        return palette.color(QPalette::Disabled, QPalette::WindowText);
+    }
+    return palette.color(QPalette::Active, QPalette::WindowText);
 }
 
 QString IconTheme::defaultColour(const QString &settingId) const
@@ -326,7 +381,35 @@ void IconTheme::refresh()
         return;
     m_appearance = appearance;
     m_colours = colours;
+    for (const auto &[window, role] : std::as_const(m_windows))
+        if (window)
+            applyWindowIcon(window, role);
     emit changed();
+}
+
+IconImageProvider::IconImageProvider() : QQuickImageProvider(QQuickImageProvider::Image) {}
+
+QImage IconImageProvider::requestImage(const QString &id, QSize *size, const QSize &requestedSize)
+{
+    const QStringList parts = id.split(QLatin1Char('/'));
+    QSize pixels(16, 16);
+    if (requestedSize.width() > 0 || requestedSize.height() > 0) {
+        const int side = std::max(requestedSize.width(), requestedSize.height());
+        pixels = QSize(requestedSize.width() > 0 ? requestedSize.width() : side,
+                       requestedSize.height() > 0 ? requestedSize.height() : side);
+    }
+    if (size)
+        *size = pixels;
+    if (parts.size() != 4 || !icons::exists(parts[0])) {
+        QImage blank(pixels, QImage::Format_ARGB32_Premultiplied);
+        blank.fill(Qt::transparent);
+        return blank;
+    }
+    const auto colour = [](const QString &hex) { return QColor(QLatin1Char('#') + hex); };
+    QImage image = icons::render(parts[0], pixels, colour(parts[1]), colour(parts[2]));
+    if (parts[3] == QLatin1String("1"))
+        image = image.flipped(Qt::Horizontal);
+    return image;
 }
 
 TintedSvg::TintedSvg(QQuickItem *parent) : QQuickPaintedItem(parent) {}

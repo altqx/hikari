@@ -26,12 +26,14 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 # O2: the "Hotkey mapping" window and its questions.
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
-# the SVGs and their manifest as module resources, the Icon item and the
-# icon-only button. Kept in this block of their own (not the shared lists
+# the SVGs and their manifest as module resources, the Icon item, the
+# icon-only button, the menu items, tab button and dialog title that draw the
+# set through IconTheme's image provider. Kept in this block of their own (not the shared lists
 # above) so the parallel cards' edits do not meet.
 target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
 target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
-qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
+qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml IconMenuItem.qml IconMenu.qml
+    IconTabButton.qml IconDialogHeader.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})

@@ -2,11 +2,12 @@
 // test (every role the QML names resolves to an SVG of the set; each SVG is
 // valid, single-colour with at most one accent layer, on the 16-unit grid and
 // without raster), the tint, the default colours' contrast, the Icon item
-// following the appearance and the icon colour settings live, the
+// following the theme palette live, the menu items, tab buttons, dialog
+// titles and window icons that draw the set through the image provider, the
 // right-to-left mirroring (the manifest's flags against icons.md's rule, and
 // the flip painted), and the rendering fixtures: the whole set drawn by the
 // Icon item at the process's scale (100% here; 150% and 200% in the
-// .scale150 / .scale200 runs) in the light, dark and high-contrast colours,
+// .scale150 / .scale200 runs) in the light, dark and high-contrast palettes,
 // equal to the SVG files drawn at the device's pixels. With HIKARI_ICON_SHEET_DIR set the contact sheets are
 // written there (k1-<appearance>-<percent>.png).
 
@@ -26,6 +27,8 @@
 #include <QPainter>
 #include <QPalette>
 #include <QQmlComponent>
+#include <QQmlContext>
+#include <QQmlExpression>
 #include <QQmlEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -114,6 +117,29 @@ QImage drawnFromSource(const QString &role, int side, const QColor &colour, cons
     painter.setRenderHint(QPainter::Antialiasing);
     renderer.render(&painter, QRectF(0, 0, side, side));
     return image;
+}
+
+// A theme's palette in visual-language.md's tokens (its text, accent and
+// disabled text colours are the icon colour settings' defaults; bg is the
+// window colour): the icons take their colours from the palette.
+QPalette themePalette(Appearance appearance)
+{
+    QPalette palette = QGuiApplication::palette();
+    const QColor text = ui::icons::defaultColour(appearance, Slot::Normal);
+    const QColor accent = ui::icons::defaultColour(appearance, Slot::Accent);
+    const QColor disabled = ui::icons::defaultColour(appearance, Slot::Disabled);
+    const auto surfaces = ui::icons::surfaces(appearance);
+    for (const auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+        palette.setColor(group, QPalette::Window, surfaces[0]);
+        palette.setColor(group, QPalette::Button, surfaces[2]);
+        palette.setColor(group, QPalette::Base, surfaces[3]);
+        palette.setColor(group, QPalette::WindowText, group == QPalette::Disabled ? disabled : text);
+        palette.setColor(group, QPalette::ButtonText, group == QPalette::Disabled ? disabled : text);
+        palette.setColor(group, QPalette::Text, group == QPalette::Disabled ? disabled : text);
+        palette.setColor(group, QPalette::Accent, accent);
+        palette.setColor(group, QPalette::Highlight, accent);
+    }
+    return palette;
 }
 
 } // namespace
@@ -393,9 +419,10 @@ private slots:
         }
     }
 
-    // The Icon item and IconButton follow the appearance and the profile's
-    // icon colours live, in every state; the colours persist in the profile
-    // and reset to the theme defaults.
+    // The Icon item and IconButton take the theme palette's colours live (its
+    // text, accent and disabled text colours), in every state; a colour saved
+    // in the profile's icon settings still wins, persists and resets (until
+    // the theme model replaces those settings).
     void iconsFollowTheAppearanceAndColoursLive()
     {
         QTemporaryDir dir;
@@ -408,6 +435,7 @@ private slots:
             ui::IconTheme::forceAppearance(std::nullopt);
             ui::IconTheme::useSettings(nullptr);
         });
+        QGuiApplication::setPalette(themePalette(Appearance::Light));
         auto shown = show(R"(
 import QtQuick
 import Hikari.Ui
@@ -443,10 +471,19 @@ Row {
         QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QStringLiteral("Stop"));
         auto *buttonIcon = button->property("contentItem").value<QQuickItem *>();
         QCOMPARE(buttonIcon->property("iconRole").toString(), QStringLiteral("media-stop"));
+        // The icons take the palette's text, accent and disabled colours.
+        QPalette custom = themePalette(Appearance::Light);
+        custom.setColor(QPalette::Active, QPalette::WindowText, QColor(0x12, 0x34, 0x56));
+        custom.setColor(QPalette::Active, QPalette::Accent, QColor(0x65, 0x43, 0x21));
+        custom.setColor(QPalette::Disabled, QPalette::WindowText, QColor(0x88, 0x88, 0x88));
+        QGuiApplication::setPalette(custom);
+        QCOMPARE(colour("plain"), QStringLiteral("#123456"));
+        QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#654321"));
+        QCOMPARE(colour("over"), QStringLiteral("#654321"));
+        QCOMPARE(colour("off"), QStringLiteral("#888888"));
         // The palette turns dark.
-        QPalette dark = before;
-        dark.setColor(QPalette::Window, QColor(0x17, 0x1B, 0x20));
-        QGuiApplication::setPalette(dark);
+        QGuiApplication::setPalette(themePalette(Appearance::Dark));
+        QCOMPARE(ui::IconTheme::currentAppearance(), Appearance::Dark);
         QCOMPARE(colour("plain"), QStringLiteral("#e8edf2"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
         QCOMPARE(colour("off"), QStringLiteral("#75818d"));
@@ -467,7 +504,7 @@ Row {
         // (the one applySettings validates with), not QColor's #AARRGGBB.
         store->set("icons.dark.accent", QStringLiteral("#FF880080"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ff8800"));
-        // a value the registry rejects keeps the theme default
+        // a value the registry rejects keeps the palette's colour
         store->set("icons.dark.accent", QStringLiteral("red"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
         store->set("icons.dark.accent", QStringLiteral("#FF00FF"));
@@ -475,20 +512,179 @@ Row {
         // persisted in the profile
         store->sync();
         QCOMPARE(ui::SettingsStore(ini).text("icons.dark.accent"), QStringLiteral("#FF00FF"));
-        // and reset to the theme default
+        // and reset: the palette's colour again
         store->reset(QStringLiteral("icons.dark.accent"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
         store->sync();
         QVERIFY(!ui::SettingsStore(ini).contains("icons.dark.accent"));
-        // High contrast.
+        // High contrast: the high-contrast theme's palette.
         ui::IconTheme::forceAppearance(Appearance::HighContrast);
+        QGuiApplication::setPalette(themePalette(Appearance::HighContrast));
         QCOMPARE(colour("plain"), QStringLiteral("#ffffff"));
         QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ffff00"));
-        QCOMPARE(colour("over"), QStringLiteral("#00ffff"));
+        QCOMPARE(colour("over"), QStringLiteral("#ffff00"));
         QCOMPARE(colour("off"), QStringLiteral("#8c8c8c"));
         // An unknown role draws nothing.
         item("plain")->setProperty("iconRole", QStringLiteral("no-such-icon"));
         QVERIFY(!item("plain")->property("valid").toBool());
+    }
+
+    // The controls that draw an image source (menu items, submenus, tab
+    // buttons) show the set through IconTheme's image provider: the icon's
+    // URL carries its colours and mirroring, retinted live, and the image is
+    // the SVG drawn at the device's pixels (crisp at 150% and 200%, not
+    // scaled up). A dialog in the overlay shows its icon before its title,
+    // and a window takes the icon as its own (legacy SetIcon).
+    void imageSourcedControlsDrawTheSet()
+    {
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        QGuiApplication::setPalette(themePalette(Appearance::Light));
+        auto shown = show(R"(
+import QtQuick
+import QtQuick.Controls
+import Hikari.Ui
+Rectangle {
+    id: root
+    color: "lightgrey"
+    property alias menu: menu
+    property alias dialog: dialog
+    property alias window: window
+    property alias tab: tab
+    Menu {
+        id: menu
+        objectName: "menu"
+        IconMenuItem { objectName: "undoItem"; iconRole: "undo"; text: "Undo" }
+        IconMenuItem { objectName: "offItem"; iconRole: "save"; text: "Save"; enabled: false }
+        IconMenuItem { objectName: "rtlItem"; iconRole: "undo"; text: "Undo"; LayoutMirroring.enabled: true }
+        IconMenuItem { objectName: "mediaRtlItem"; iconRole: "media-play"; text: "Play"; LayoutMirroring.enabled: true }
+        IconMenu { objectName: "recent"; iconRole: "recent-subtitles"; title: "Recent" }
+    }
+    TabBar {
+        y: 100
+        IconTabButton { id: tab; iconRole: "search"; text: "Find" }
+    }
+    Dialog {
+        id: dialog
+        objectName: "dialog"
+        title: "Options"
+        width: 200; height: 100
+        header: IconDialogHeader { objectName: "header"; iconRole: "settings"; text: dialog.title }
+    }
+    Window {
+        id: window
+        title: "History"
+        Component.onCompleted: IconTheme.setWindowIcon(window, "history")
+    }
+}
+)", QSize(320, 240));
+        QVERIFY(shown.root);
+        QVERIFY(QTest::qWaitForWindowExposed(shown.window.get()));
+        auto *menu = shown.root->property("menu").value<QObject *>();
+        QVERIFY(menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, shown.root), Q_ARG(QPointF, QPointF(0, 0))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        // The icon's source, read through QML (icon is a value type).
+        const auto url = [&](QObject *item) {
+            QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
+            return expression.evaluate().toString();
+        };
+        QObject *undo = menu->findChild<QObject *>(QStringLiteral("undoItem"));
+        QVERIFY(undo);
+        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/202832/145c4c/0"));
+        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("offItem"))), QStringLiteral("image://hikari-icon/save/74808b/74808b/0"));
+        // directional icons mirror in right-to-left layouts, media symbols do not
+        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("rtlItem"))), QStringLiteral("image://hikari-icon/undo/202832/145c4c/1"));
+        QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("mediaRtlItem"))),
+                 QStringLiteral("image://hikari-icon/media-play/202832/145c4c/0"));
+        // a highlighted item: the whole icon in the highlighted text colour
+        undo->setProperty("highlighted", true);
+        const QString highlighted = QGuiApplication::palette().color(QPalette::HighlightedText).name().mid(1);
+        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/%1/%1/0").arg(highlighted));
+        undo->setProperty("highlighted", false);
+        // the submenu's item in the parent menu shows the submenu's icon
+        auto *recent = menu->findChild<QObject *>(QStringLiteral("recent"));
+        QVERIFY(recent);
+        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/202832/145c4c/0"));
+        QQuickItem *recentItem = nullptr;
+        QTRY_VERIFY(recentItem = [&]() -> QQuickItem * {
+            const auto count = menu->property("count").toInt();
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *item = nullptr;
+                QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+                if (item && item->property("subMenu").value<QObject *>() == recent)
+                    return item;
+            }
+            return nullptr;
+        }());
+        QCOMPARE(url(recentItem), url(recent));
+        // The image is the SVG drawn at the device's pixels: compare the
+        // menu item's icon on screen with the icon rendered at that size.
+        auto *undoItem = qobject_cast<QQuickItem *>(undo);
+        QQuickItem *image = nullptr;
+        QTRY_VERIFY(image = [&]() -> QQuickItem * {
+            for (auto *child : undoItem->findChildren<QQuickItem *>())
+                if (QByteArray(child->metaObject()->className()).contains("IconImage") && child->property("status").toInt() == 1)
+                    return child;
+            return nullptr;
+        }());
+        QQuickWindow *window = undoItem->window();
+        const qreal dpr = window->effectiveDevicePixelRatio();
+        const int side = qRound(16 * dpr);
+        QCOMPARE(image->property("sourceSize").toSize(), QSize(16, 16));
+        QImage screen;
+        QTRY_VERIFY((screen = window->grabWindow(), !screen.isNull() && screen.width() > 0));
+        const QPointF at = image->mapToScene(QPointF((image->width() - 16) / 2, (image->height() - 16) / 2));
+        const QColor background(screen.pixel(qRound(at.x() * dpr) - 1, qRound(at.y() * dpr) - 1));
+        const QImage expected = drawnFromSource(QStringLiteral("undo"), side, QColor(0x20, 0x28, 0x32), QColor(0x14, 0x5C, 0x4C));
+        int worst = 0;
+        for (int y = 0; y < side; ++y)
+            for (int x = 0; x < side; ++x) {
+                const QColor want = composite(expected.pixel(x, y), background);
+                const QColor got(screen.pixel(qRound(at.x() * dpr) + x, qRound(at.y() * dpr) + y));
+                worst = std::max({worst, std::abs(want.red() - got.red()), std::abs(want.green() - got.green()),
+                                  std::abs(want.blue() - got.blue())});
+            }
+        QVERIFY2(worst <= 8, qPrintable(QString::number(worst)));
+        // The palette turns dark: the URLs follow at once.
+        QGuiApplication::setPalette(themePalette(Appearance::Dark));
+        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/e8edf2/9cdbc9/0"));
+        QCOMPARE(url(recent), QStringLiteral("image://hikari-icon/recent-subtitles/e8edf2/9cdbc9/0"));
+        QGuiApplication::setPalette(themePalette(Appearance::Light));
+        QMetaObject::invokeMethod(menu, "close");
+        // the tab button
+        auto *tab = shown.root->property("tab").value<QQuickItem *>();
+        QVERIFY(tab);
+        QCOMPARE(url(tab), QStringLiteral("image://hikari-icon/search/202832/145c4c/0"));
+        QCOMPARE(tab->property("text").toString(), QStringLiteral("Find")); // drawn beside the icon
+        // the dialog's title with its icon
+        auto *dialog = shown.root->property("dialog").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        auto *header = dialog->findChild<QQuickItem *>(QStringLiteral("header"));
+        QVERIFY(header);
+        QVERIFY(header->isVisible());
+        auto *dialogIcon = header->findChild<QQuickItem *>(QStringLiteral("dialogIcon"));
+        QVERIFY(dialogIcon && dialogIcon->property("valid").toBool());
+        QCOMPARE(dialogIcon->property("iconRole").toString(), QStringLiteral("settings"));
+        QVERIFY(dialogIcon->x() + dialogIcon->width() <= header->property("leftPadding").toReal());
+        QMetaObject::invokeMethod(dialog, "close");
+        // the window's icon, retinted with the palette
+        auto *history = shown.root->property("window").value<QWindow *>();
+        QVERIFY(history);
+        const auto iconPixel = [&] {
+            const QImage icon = history->icon().pixmap(QSize(32, 32)).toImage();
+            for (int y = 0; y < icon.height(); ++y)
+                for (int x = 0; x < icon.width(); ++x)
+                    if (qAlpha(icon.pixel(x, y)) == 255)
+                        return QColor(icon.pixel(x, y)).name();
+            return QString();
+        };
+        QVERIFY(!history->icon().isNull());
+        const QString light = iconPixel();
+        QVERIFY(light == QLatin1String("#202832") || light == QLatin1String("#145c4c"));
+        QGuiApplication::setPalette(themePalette(Appearance::Dark));
+        QTRY_VERIFY(iconPixel() == QLatin1String("#e8edf2") || iconPixel() == QLatin1String("#9cdbc9"));
     }
 
     // icons.md, "Mirroring": icons that show navigation or reading order
@@ -585,13 +781,18 @@ Rectangle {
     // rests on the user's review of the contact sheets written here.
     void contactSheets()
     {
-        auto restore = qScopeGuard([] { ui::IconTheme::forceAppearance(std::nullopt); });
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] {
+            QGuiApplication::setPalette(before);
+            ui::IconTheme::forceAppearance(std::nullopt);
+        });
         const QStringList roles = ui::icons::roles();
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
         const int rows = int((roles.size() + columns - 1) / columns);
         const QString outDir = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
         for (const auto appearance : ui::icons::kAppearances) {
             ui::IconTheme::forceAppearance(appearance);
+            QGuiApplication::setPalette(themePalette(appearance));
             const QColor background = ui::icons::surfaces(appearance)[0];
             const QColor text = ui::icons::defaultColour(appearance, Slot::Normal);
             QByteArray qml = R"(

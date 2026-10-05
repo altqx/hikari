@@ -2,17 +2,23 @@
 
 // K1: the in-house vector icon set (docs/qt/ux/icons.md). Each UI icon is a
 // monochrome SVG on a 16-unit grid painted with currentColor, with at most
-// one accent layer (<g id="accent">). The set is tinted at run time: the
-// icon's colour and its accent colour come from the icon colour settings of
-// the current appearance (light, dark or high contrast), which follows the
-// application palette and the platform's contrast preference live.
+// one accent layer (<g id="accent">). The set is tinted at run time from the
+// active theme's palette, live: its text colour, its accent (the accent layer,
+// and the whole icon while hovered or pressed) and its disabled text colour.
+// The appearance (light, dark or high contrast) follows the palette and the
+// platform's contrast preference. A colour saved in the profile's
+// icons.<appearance>.<slot> settings still wins until the theme model
+// (light, dark and high contrast with one user accent) replaces them.
 
 #include <QByteArray>
 #include <QColor>
 #include <QImage>
 #include <QObject>
 #include <QPointer>
+#include <QQuickImageProvider>
 #include <QQuickPaintedItem>
+#include <QUrl>
+#include <QWindow>
 #include <QString>
 #include <QStringList>
 #include <QtQml/qqmlregistration.h>
@@ -86,7 +92,8 @@ class IconTheme : public QObject {
     Q_PROPERTY(QColor active READ active NOTIFY changed FINAL)
     Q_PROPERTY(QColor disabled READ disabled NOTIFY changed FINAL)
 public:
-    explicit IconTheme(QObject *parent = nullptr);
+    // (Not default-constructible, so the engine makes it through create().)
+    explicit IconTheme(QObject *parent);
     static IconTheme *create(QQmlEngine *engine, QJSEngine *js);
 
     QString appearance() const { return icons::appearanceName(m_appearance); }
@@ -104,6 +111,13 @@ public:
     Q_INVOKABLE QString defaultColour(const QString &settingId) const;
     // The icon colour settings, appearance by appearance, slot by slot.
     Q_INVOKABLE QStringList settingIds() const;
+    // The icon as an image source, for the controls that draw one (menu
+    // items, tab buttons): drawn by the engine's IconImageProvider in
+    // `colour` with its accent layer in `accent`, flipped when `mirrored`.
+    Q_INVOKABLE QUrl image(const QString &role, const QColor &colour, const QColor &accent, bool mirrored) const;
+    // The icon as `window`'s icon (legacy dialogs' SetIcon), in the current
+    // appearance's colours and kept in them while the window lives.
+    Q_INVOKABLE void setWindowIcon(QObject *window, const QString &role);
 
     // The appearance the palette and the platform ask for: high contrast
     // when the platform prefers it, else dark when the application palette's
@@ -114,16 +128,33 @@ public:
     // sheets and tests; nothing to follow the palette again).
     static void useSettings(SettingsStore *settings);
     static void forceAppearance(std::optional<icons::Appearance> appearance);
+    // A slot's colour: a colour saved in the profile for the appearance, else
+    // the application palette's (paletteColour).
     static QColor colour(icons::Appearance appearance, icons::Slot slot);
+    static QColor paletteColour(icons::Slot slot);
 
 signals:
     void changed();
 
 private:
     void refresh();
+    void applyWindowIcon(QWindow *window, const QString &role) const;
 
     icons::Appearance m_appearance = icons::Appearance::Light;
     std::array<QColor, 4> m_colours;
+    QList<std::pair<QPointer<QWindow>, QString>> m_windows;
+};
+
+// "image://hikari-icon/<role>/<RRGGBB>/<RRGGBB accent>/<0|1 mirrored>": the
+// icon drawn at the requested size, which the image item asks in the
+// device's pixels (its source size times the window's scale), so the vectors
+// are drawn again at 150% and 200% rather than scaled up. IconTheme adds it to
+// its engine.
+class IconImageProvider : public QQuickImageProvider {
+public:
+    static constexpr const char *kId = "hikari-icon";
+    IconImageProvider();
+    QImage requestImage(const QString &id, QSize *size, const QSize &requestedSize) override;
 };
 
 // The painted icon: an SVG of the set with its two colours, crisp at any

@@ -126,7 +126,8 @@ foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_icon_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheAppearanceAndColoursLive mirroredIconsPaintFlipped)
+        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheAppearanceAndColoursLive mirroredIconsPaintFlipped
+            imageSourcedControlsDrawTheSet)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
