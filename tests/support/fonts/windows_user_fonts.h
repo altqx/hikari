@@ -2,18 +2,21 @@
 
 // The Windows font fixture (Y8W): the generated CC0 fixtures installed for
 // the current user for the length of one test process, the way Windows'
-// per-user install makes a font a system font.
+// per-user install (the shell's "Install") makes a font a system font.
 //
-// - A value under HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts
-//   names each file, so DirectWrite's system collection lists it
-//   (FontService::systemFaces, the collector's availability check and the
-//   provider path of a stream font).
+// - Each file is copied into the user's font folder
+//   (%LOCALAPPDATA%\Microsoft\Windows\Fonts) under its own name, and a value
+//   under HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts names it,
+//   so DirectWrite's system collection lists it (FontService::systemFaces,
+//   the collector's availability check and the provider path of a stream
+//   font). A file of that name that is not the fixture is never replaced.
 // - AddFontResourceEx(FR_PRIVATE) loads it into this process's GDI font
 //   table, where libass's DirectWrite provider looks a family up
 //   (EnumFontFamilies, then CreateFontFaceFromHdc: "directwrite (with GDI)").
 //
 // SetUp waits until DirectWrite reports every family, asking it to check for
-// changes; TearDown removes both again, so nothing stays installed.
+// changes; TearDown removes all of it again, so nothing stays installed.
+// A failed install is a test failure, never a skip: every test still runs.
 
 #ifdef _WIN32
 
@@ -32,7 +35,10 @@
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <vector>
 
@@ -48,52 +54,93 @@ public:
     {
     }
 
+    // Where the fixtures are installed: the user's font folder.
+    static std::filesystem::path userFontFolder()
+    {
+        wchar_t local[MAX_PATH];
+        const DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", local, MAX_PATH);
+        if (n == 0 || n >= MAX_PATH)
+            return {};
+        return std::filesystem::path(local) / L"Microsoft" / L"Windows" / L"Fonts";
+    }
+
     void SetUp() override
     {
+        namespace fs = std::filesystem;
+        const fs::path folder = userFontFolder();
+        EXPECT_FALSE(folder.empty()) << "LOCALAPPDATA";
+        std::error_code ec;
+        fs::create_directories(folder, ec);
+
         HKEY key = nullptr;
-        ASSERT_EQ(RegCreateKeyExW(HKEY_CURRENT_USER, kFontsKey, 0, nullptr, 0, KEY_SET_VALUE, nullptr, &key, nullptr),
-                  ERROR_SUCCESS);
+        const LSTATUS opened =
+            RegCreateKeyExW(HKEY_CURRENT_USER, kFontsKey, 0, nullptr, 0, KEY_SET_VALUE, nullptr, &key, nullptr);
+        EXPECT_EQ(opened, ERROR_SUCCESS) << "HKCU Fonts key";
         for (const auto &name : m_files) {
-            const std::wstring path = (m_directory / name).make_preferred().wstring();
-            const std::wstring value = valueName(name);
-            const LSTATUS set =
-                RegSetValueExW(key, value.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE *>(path.c_str()),
-                               DWORD((path.size() + 1) * sizeof(wchar_t)));
-            EXPECT_EQ(set, ERROR_SUCCESS) << std::filesystem::path(path).string();
-            if (set == ERROR_SUCCESS)
-                m_registered.push_back(value);
+            const fs::path source = m_directory / name;
+            const fs::path target = (folder / name).make_preferred();
+            if (fs::exists(target, ec) && !sameBytes(source, target)) {
+                ADD_FAILURE() << target.string() << " exists and is not the fixture; it is left as it is";
+                continue;
+            }
+            if (!fs::exists(target, ec)) {
+                fs::copy_file(source, target, ec);
+                if (ec) {
+                    ADD_FAILURE() << "copying " << source.string() << ": " << ec.message();
+                    continue;
+                }
+                m_copied.push_back(target);
+            }
+            const std::wstring path = target.wstring();
+            if (opened == ERROR_SUCCESS) {
+                const std::wstring value = valueName(name);
+                const LSTATUS set =
+                    RegSetValueExW(key, value.c_str(), 0, REG_SZ, reinterpret_cast<const BYTE *>(path.c_str()),
+                                   DWORD((path.size() + 1) * sizeof(wchar_t)));
+                EXPECT_EQ(set, ERROR_SUCCESS) << target.string();
+                if (set == ERROR_SUCCESS)
+                    m_registered.push_back(value);
+            }
             const int added = AddFontResourceExW(path.c_str(), FR_PRIVATE, nullptr);
-            EXPECT_GT(added, 0) << std::filesystem::path(path).string();
+            EXPECT_GT(added, 0) << target.string();
             if (added > 0)
                 m_loaded.push_back(path);
         }
-        RegCloseKey(key);
+        if (key)
+            RegCloseKey(key);
 
         IDWriteFactory *factory = nullptr;
-        ASSERT_TRUE(SUCCEEDED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
-                                                  reinterpret_cast<IUnknown **>(&factory))));
+        if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
+                                       reinterpret_cast<IUnknown **>(&factory)))) {
+            ADD_FAILURE() << "DWriteCreateFactory";
+            return;
+        }
         const auto start = std::chrono::steady_clock::now();
-        bool listed = false;
-        while (!listed && std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
+        std::vector<std::wstring> missing = m_families;
+        while (!missing.empty() && std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
             IDWriteFontCollection *collection = nullptr;
             if (SUCCEEDED(factory->GetSystemFontCollection(&collection, TRUE)) && collection) {
-                listed = true;
+                missing.clear();
                 for (const auto &family : m_families) {
                     UINT32 index = 0;
                     BOOL exists = FALSE;
-                    listed = listed && SUCCEEDED(collection->FindFamilyName(family.c_str(), &index, &exists)) && exists;
+                    if (FAILED(collection->FindFamilyName(family.c_str(), &index, &exists)) || !exists)
+                        missing.push_back(family);
                 }
                 collection->Release();
             }
-            if (!listed)
+            if (!missing.empty())
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         factory->Release();
         const auto ms =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-        std::fprintf(stderr, "Windows user fonts: %zu files from %s, DirectWrite listed them after %lld ms\n",
-                     m_files.size(), m_directory.string().c_str(), static_cast<long long>(ms));
-        ASSERT_TRUE(listed) << "DirectWrite's system collection never listed the per-user fixture fonts";
+        std::fprintf(stderr,
+                     "Windows user fonts: %zu files installed in %s, DirectWrite listed %zu of %zu families after %lld ms\n",
+                     m_files.size(), folder.string().c_str(), m_families.size() - missing.size(), m_families.size(),
+                     static_cast<long long>(ms));
+        for (const auto &family : missing)
+            ADD_FAILURE() << "DirectWrite's system collection never listed " << fs::path(family).string();
     }
 
     void TearDown() override
@@ -108,6 +155,13 @@ public:
             RegCloseKey(key);
         }
         m_registered.clear();
+        // Unregistered, a file is no longer installed; if the font cache
+        // still holds one open, the next run finds the same bytes and reuses it.
+        for (const auto &path : m_copied) {
+            std::error_code ec;
+            std::filesystem::remove(path, ec);
+        }
+        m_copied.clear();
     }
 
 private:
@@ -116,11 +170,22 @@ private:
     // One value per file, recognisably the tests' own.
     static std::wstring valueName(const std::wstring &file) { return L"Hikari test font " + file + L" (TrueType)"; }
 
+    static bool sameBytes(const std::filesystem::path &a, const std::filesystem::path &b)
+    {
+        std::ifstream fa(a, std::ios::binary), fb(b, std::ios::binary);
+        if (!fa || !fb)
+            return false;
+        const std::string da((std::istreambuf_iterator<char>(fa)), std::istreambuf_iterator<char>());
+        const std::string db((std::istreambuf_iterator<char>(fb)), std::istreambuf_iterator<char>());
+        return da == db;
+    }
+
     std::filesystem::path m_directory;
     std::vector<std::wstring> m_files;
     std::vector<std::wstring> m_families;
     std::vector<std::wstring> m_registered;
     std::vector<std::wstring> m_loaded;
+    std::vector<std::filesystem::path> m_copied;
 };
 
 } // namespace hikari::testing

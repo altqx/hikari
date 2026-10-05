@@ -47,10 +47,12 @@ namespace {
 #else
 // The fixtures the Documents below name, installed for this process's
 // tests; fallback.ttf is not, so DirectWrite's resolver picks a system font.
+// DirectWrite's collection lists legacy.ttf under its typographic family
+// (HikariProbeModern); GDI, where libass looks, under HikariProbeLegacy.
 [[maybe_unused]] ::testing::Environment *const kUserFonts =
     ::testing::AddGlobalTestEnvironment(new hikari::testing::WindowsUserFonts(
         HIKARI_FONT_FIXTURES, {L"base.ttf", L"base-bold.ttf", L"weighted.ttf", L"legacy.ttf", L"collection.ttc"},
-        {L"HikariProbeBase", L"HikariProbeWeighted", L"HikariProbeLegacy", L"HikariProbeCollectionB"}));
+        {L"HikariProbeBase", L"HikariProbeWeighted", L"HikariProbeModern", L"HikariProbeCollectionB"}));
 #endif
 
 std::string fixture(const char *name)
@@ -59,11 +61,11 @@ std::string fixture(const char *name)
 }
 
 // A fixture's path as the provider names it: fontconfig the configured
-// directory's, DirectWrite the registered file's (native separators).
+// directory's, DirectWrite the installed copy's in the user's font folder.
 std::u16string installed(const char *name)
 {
 #ifdef _WIN32
-    return std::filesystem::path(fixture(name)).make_preferred().u16string();
+    return (hikari::testing::WindowsUserFonts::userFontFolder() / name).make_preferred().u16string();
 #else
     return QString::fromStdString(fixture(name)).toStdU16String();
 #endif
@@ -219,7 +221,7 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     std::vector<std::u16string> names;
     for (const auto &f : review->files)
         names.push_back(f.name);
-    EXPECT_EQ(names, (std::vector<std::u16string>{u"base.ttf", u"collection.ttc", u"legacy.ttf", u"base-bold.ttf"}));
+    ASSERT_EQ(names, (std::vector<std::u16string>{u"base.ttf", u"collection.ttc", u"legacy.ttf", u"base-bold.ttf"}));
     EXPECT_EQ(file(*review, u"base.ttf")->sha256, fixtureSha("base.ttf"));
     EXPECT_EQ(file(*review, u"collection.ttc")->sha256, fixtureSha("collection.ttc"));
     EXPECT_EQ(file(*review, u"collection.ttc")->faces, std::vector<long>{1});
