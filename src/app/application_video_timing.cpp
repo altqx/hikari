@@ -281,7 +281,13 @@ bool Application::snapToKeyframe(bool start)
 bool Application::commitAndAdvance()
 {
     m_lineChangeOrigin = LineChangeOrigin{false, true}; // SubsGrid::NextLine: SetLine(..., autoPlay)
+    // E4 sends the draft before the move (EditBox::Send, then NextLine); the
+    // video sees both at once, as ShowEditOnVideo ran after NextLine
+    // (SubsGrid::ChangeLine, SubsGridBase.cpp:150-154).
+    m_holdVideoRefresh = true;
     const bool done = m_editor->commitAndAdvance();
+    m_holdVideoRefresh = false;
+    refreshVideo();
     m_lineChangeOrigin.reset();
     return done;
 }

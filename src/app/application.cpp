@@ -1425,6 +1425,8 @@ void Application::refreshViews()
 
 void Application::refreshVideo()
 {
+    if (m_holdVideoRefresh)
+        return; // commitAndAdvance refreshes once the move is made
     const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;

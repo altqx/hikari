@@ -1021,6 +1021,8 @@ private:
         bool autoPlay = false;
     };
     std::optional<LineChangeOrigin> m_lineChangeOrigin;
+    // V6 with E4: Enter's send and move refresh the video once, together.
+    bool m_holdVideoRefresh = false;
     // The Line whose draft the editor committed on leaving it, until the next refreshVideo.
     std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow();
