@@ -109,6 +109,7 @@ public:
     // Tests: another font service, and waiting for the worker.
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitIdle(int ms = 30000);
+    void setCloseWait(int ms) { m_closeWaitMs = ms; } // how long close() waits for a running job
 
 signals:
     void settingsChanged();
@@ -159,6 +160,7 @@ private:
     std::atomic<bool> m_cancel{false};
     QElapsedTimer m_clock;
     qint64 m_elapsed = 0;
+    int m_closeWaitMs = 30000;
 };
 
 } // namespace hikari::app

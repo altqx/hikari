@@ -1952,6 +1952,24 @@ private slots:
         QCOMPARE(QDir(dir.filePath(QStringLiteral("Czcionki"))).entryList(QDir::Files, QDir::Name),
                  (QStringList{QStringLiteral("INCOMPLETE - font collection.txt"), QStringLiteral("arial.ttf"),
                               QStringLiteral("times.ttf")}));
+
+        // Closing while Apply still runs past the wait: the late result
+        // still finds its review (no read of a dropped one) and ends the job.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        collector.setCloseWait(-1);
+        collector.apply(true);
+        collector.close();
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Working));
+        QVERIFY(collector.waitIdle());
+        collector.setCloseWait(30000);
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QVERIFY(!collector.reviewIncomplete());
+        const QString late = collector.logText();
+        QVERIFY2(late.startsWith(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\n")),
+                 qPrintable(late));
+        QVERIFY2(late.contains(QStringLiteral("\nFinished in 00:00:")), qPrintable(late));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         application->settingsStore()->set("fontCollector.useSubsDirectory", false);

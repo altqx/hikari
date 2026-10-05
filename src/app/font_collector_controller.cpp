@@ -625,6 +625,10 @@ void FontCollectorController::applied(CollectorResult result)
 {
     join();
     m_elapsed += m_clock.elapsed();
+    if (!m_review) { // not expected: close() keeps the review while a job runs
+        setStage(Done);
+        return;
+    }
     const CollectorReview review = *m_review;
     m_review.reset();
     clearLog();
@@ -657,8 +661,10 @@ void FontCollectorController::cancel()
 void FontCollectorController::close()
 {
     m_cancel = true;
-    if (m_stage == Working)
-        waitIdle();
+    // A job that outlasts the wait ends cancelled later; its result (applied)
+    // still reads the review and drops it then.
+    if (m_stage == Working && !waitIdle(m_closeWaitMs))
+        return;
     m_review.reset();
     if (m_stage == Review)
         setStage(Options);
