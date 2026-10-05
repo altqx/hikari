@@ -84,3 +84,13 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 # E5: the Line editor's Translator mode check box and its Not confirmed and
 # Moving tags buttons.
 qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
+# Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
+# the desktop's Screenshot portal over D-Bus on Wayland) and the simple
+# "Color picker" window.
+target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
+qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml SimpleColourPicker.qml)
+if(UNIX AND NOT APPLE)
+    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
+    target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
+    target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
+endif()

@@ -1040,8 +1040,23 @@ QVariantMap LineEditorController::switchColour(int number)
         m_lastColour = core::legacy::colourInEffect(d.state, number, style, &d.position);
     }
     // The line formats keep the last colour (legacy actualColor is not read).
-    d.actualColour = m_lastColour;
+    d.actualColour = d.editedColour = m_lastColour;
     return colourMap(d.actualColour);
+}
+
+QVariantMap LineEditorController::simplePickerColour(int number)
+{
+    if (!m_dialog || number < 1 || number > 4)
+        return {};
+    // Y7-simple-picker-type (approved departure from EditBox.cpp:908-912,
+    // which read the colour into a fresh AssColor and left actualColor as
+    // it was): ASS formats take that colour in effect as the reset of later
+    // changes, as "Choose color" does; the line formats, with one colour,
+    // keep the colour the picker shows.
+    if (m_dialog->ass)
+        return switchColour(number);
+    m_dialog->number = number;
+    return colourMap(m_dialog->editedColour);
 }
 
 bool LineEditorController::changeColour(const QVariantMap &colour)
@@ -1050,6 +1065,7 @@ bool LineEditorController::changeColour(const QVariantMap &colour)
         return false;
     auto &d = *m_dialog;
     const auto chosen = colourOf(colour);
+    d.editedColour = chosen;
     if (!d.ass) {
         const std::vector<core::legacy::EditStep> steps{core::legacy::colourNonAssStep(chosen)};
         return applyDialogChange(

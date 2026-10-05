@@ -2463,9 +2463,13 @@ ApplicationWindow {
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return
-                                    const field = translationText.activeFocus ? translationText : lineText
-                                    if (colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd))
-                                        root.app.colourPickerOpened()
+                                    root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
+                                }
+                                // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
+                                TapHandler {
+                                    acceptedButtons: Qt.RightButton
+                                    onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
+                                                                                translationText.activeFocus ? translationText : lineText)
                                 }
                             }
                         }
@@ -4526,6 +4530,22 @@ ApplicationWindow {
         picker: root.colourPicker
         anchors.centerIn: parent
     }
+    SimpleColourPicker {
+        id: simpleColourPicker
+        editor: root.editor
+        picker: root.colourPicker
+    }
+    // Y7: EditBox::AllColorClick (EditBox.cpp:862-919): a left click and the
+    // hotkey open "Choose color", a right click the simple "Color picker";
+    // COLORPICKER_SWITCH_CLICKS swaps them.
+    function colourClick(number, leftClick, field) {
+        if (root.colourPicker.switchClicks)
+            leftClick = !leftClick
+        if (!leftClick)
+            simpleColourPicker.openFor(number, field.role, field.selectionStart, field.selectionEnd)
+        else if (colourDialog.openFor(number, field.role, field.selectionStart, field.selectionEnd))
+            root.app.colourPickerOpened()
+    }
 
     // Legacy TagButtonDialog ("Enter ASS tag").
     Window {
@@ -5083,8 +5103,7 @@ ApplicationWindow {
             return true
         }
         if (colours[action] !== undefined) {
-            if (colourDialog.openFor(colours[action], field.role, field.selectionStart, field.selectionEnd))
-                root.app.colourPickerOpened()
+            root.colourClick(colours[action], true, field)
             return true
         }
         if (action.startsWith("EDITBOX_TAG_BUTTON")) {

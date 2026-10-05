@@ -252,6 +252,12 @@ public:
     Q_INVOKABLE QVariantMap beginColour(int number, int role, int selectionStart, int selectionEnd);
     // The picker switched colours (legacy COLOR_TYPE_CHANGED): that colour in effect.
     Q_INVOKABLE QVariantMap switchColour(int number);
+    // Y7: the simple "Color picker" switched colours (EditBox.cpp:908-912).
+    // Y7-simple-picker-type: ASS formats get that colour in effect, which
+    // later changes take as their reset (as switchColour); the line formats
+    // keep the colour the picker shows (legacy turned it black and kept the
+    // reset of the colour the picker opened with).
+    Q_INVOKABLE QVariantMap simplePickerColour(int number);
     Q_INVOKABLE bool changeColour(const QVariantMap &colour);
     Q_INVOKABLE void endDialog(bool accepted);
     // Translation mode (legacy EditBox OnCopyAll, OnCopySelection, OnHideOriginal):
@@ -369,6 +375,7 @@ private:
         core::legacy::FontValues actualFont, editedFont;
         int number = 1;
         core::legacy::TagColour actualColour;
+        core::legacy::TagColour editedColour; // the colour last chosen in the dialog
     };
     bool beginDialog(int role, int selectionStart, int selectionEnd);
     bool applyDialogChange(const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,

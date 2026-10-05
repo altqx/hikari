@@ -44,3 +44,16 @@ hikari_add_gtest(hikari_core_legacy_regex_tests SOURCES legacy_regex_tests.cpp L
 hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES hikari_core LABELS core)
 # Y9: subtitles read from a Matroska track (legacy Demux).
 hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)
+
+# Y7: the colour picker's conversions against legacy colorspace.cpp itself,
+# copied unchanged into the build and compiled against the stubs in
+# legacy-colorspace (a quoted include looks beside the source first, so the
+# copy keeps HikariSub/config.h out).
+set(_legacy_colorspace "${CMAKE_CURRENT_BINARY_DIR}/legacy-colorspace")
+configure_file("${PROJECT_SOURCE_DIR}/HikariSub/colorspace.cpp" "${_legacy_colorspace}/colorspace.cpp" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/HikariSub/colorspace.h" "${_legacy_colorspace}/colorspace.h" COPYONLY)
+hikari_add_gtest(hikari_core_colour_space_tests
+    SOURCES colour_space_tests.cpp "${_legacy_colorspace}/colorspace.cpp"
+    LIBRARIES hikari_core LABELS core)
+target_include_directories(hikari_core_colour_space_tests PRIVATE
+    "${_legacy_colorspace}" "${CMAKE_CURRENT_SOURCE_DIR}/legacy-colorspace")

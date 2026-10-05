@@ -177,3 +177,5 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
+# Y7: the colour picker's option, simple-picker recent colour and screen sampler.
+hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)

@@ -24,6 +24,8 @@
 #include "hikari/application/grid_translation.h"
 #include "icon_theme.h"
 #include "theme.h"
+#include "colour_picker_controller.h"
+#include "screen_sampler.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -1740,6 +1742,452 @@ private slots:
         QTRY_COMPARE(session->historyCursor(), steps - 1);
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->document().lines()[1]->text.data())),
                  QStringLiteral("second"));
+    }
+
+    // Y7: a window of the shell by its name.
+    static QQuickWindow *shellWindow(const char *name)
+    {
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (w->objectName() == QLatin1String(name))
+                return qobject_cast<QQuickWindow *>(w);
+        return nullptr;
+    }
+    static void sendMouse(QWindow *w, QEvent::Type type, QPoint local, Qt::MouseButton button, Qt::MouseButtons buttons)
+    {
+        QMouseEvent event(type, QPointF(local), QPointF(w->mapToGlobal(local)), button, buttons, Qt::NoModifier);
+        QCoreApplication::sendEvent(w, &event);
+    }
+    static QPoint centreOf(QQuickItem *item)
+    {
+        return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+    }
+
+    // Y7: the colour buttons' right click opens the simple "Color picker"
+    // (EditBox::AllColorClick, EditBox.cpp:862-919; SimpleColorPickerDialog,
+    // ColorPicker.cpp:1374-1533): a right press outside it picks the screen
+    // pixel under the pointer into the text at once, the release moves the
+    // window to the pointer, the type choice adds the colour to the recent
+    // ones, OK adds it again through the option text (no "Choose color"
+    // exists yet), Cancel takes the change back; COLORPICKER_SWITCH_CLICKS
+    // swaps the clicks; without a screen route the picker says why.
+    void simpleColourPickerPicksFromTheScreen()
+    {
+        QVERIFY(application->openFile(episode)); // "first" and "second", no Styles
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto &sampler = *application->colourPicker().sampler();
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
+        auto *settings = application->settingsStore();
+        settings->set("colourPicker.recentColours", QStringLiteral("&H000000FF&"));
+        application->colourPicker().loadFromString(QStringLiteral("&H000000FF&"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour3")));
+        QQuickWindow *simple = shellWindow("simpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!named("colourDialog")->property("visible").toBool());
+        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&")); // white without a Style
+        QVERIFY(sampler.tracking()); // OnShow: CaptureMouse
+
+        // A right press outside picks the centre pixel at once.
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        // The release moves the window to the pointer (MoveToMousePosition).
+        const QPoint pointer = simple->mapToGlobal(QPoint(-40, 10));
+        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
+        const QRect area = sampler.availableGeometryAt(pointer.x(), pointer.y());
+        // wxWindow::GetSize and Move: the frame included.
+        const QRect frame = simple->frameGeometry();
+        const int expectedX = std::max(area.x(), std::min(pointer.x() - frame.width() / 2, area.right() + 1 - frame.width()));
+        QTRY_COMPARE(simple->frameGeometry().x(), expectedX);
+        int expectedY = pointer.y() + 15;
+        if (expectedY + frame.height() > area.bottom() + 1) {
+            expectedY -= frame.height() + 30;
+            if (expectedY < area.y())
+                expectedY = area.bottom() + 1 - frame.height();
+        }
+        QCOMPARE(simple->frameGeometry().y(), expectedY);
+        // Events over the window are its own: no pick.
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(2, 2), Qt::RightButton, Qt::RightButton);
+        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(2, 2), Qt::RightButton, Qt::NoButton);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
+
+        // The type choice: AddRecent (through the option text), then the
+        // shadow colour in effect, alpha included, without a text change.
+        auto *type = findItem(simple->contentItem(), QStringLiteral("simpleColourType"));
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
+        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
+        QCOMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
+        // A pick now tags the shadow colour.
+        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 10), Qt::NoButton, Qt::RightButton);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\4c&H302010&")));
+        // Y7-simple-picker-type: the choice takes the colour in effect as
+        // the reset of later picks. The shadow chosen again is &H302010&; a
+        // white pick now tags it (legacy kept the white the picker opened
+        // with as the reset, saw no change and wrote nothing).
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        // Y7-recent-option-text: the same colour again stays first, one space
+        // apart (legacy left "&H00302010&  &H000000FF&").
+        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0xff, 0xff, 0xff));
+            return image;
+        });
+        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 12), Qt::NoButton, Qt::RightButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\4c&HFFFFFF&\\3c&H302010&}first"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
+        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
+        QTRY_VERIFY(!simple->isVisible());
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00FFFFFF& &H00302010& &H000000FF&"));
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
+
+        // Cancel takes the picker's changes back.
+        QVERIFY(application->editor().commit());
+        const QString committed = text->property("text").toString();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(simple->isVisible());
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H302010&")));
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        QTRY_COMPARE(text->property("text").toString(), committed);
+
+        // Swapped: the left click opens the simple picker, the right click
+        // "Choose color".
+        application->colourPicker().setSwitchClicks(true);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        auto *dialog = named("colourDialog");
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("colourDialog", "switchClicks")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // Without a route (Wayland without the portal) nothing is sampled and
+        // the picker says why.
+        application->colourPicker().setSwitchClicks(false);
+        sampler.setRoute(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, false));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!sampler.tracking());
+        auto *note = findItem(simple->contentItem(), QStringLiteral("simpleDropperUnavailable"));
+        QVERIFY(note->isVisible());
+        QCOMPARE(note->property("text").toString(), sampler.unavailableReason());
+        QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+
+        // The portal route (Wayland): no pointer capture, the move box off,
+        // and a "Pick a colour from the screen" button asking the desktop,
+        // whose pick tags the text at once; a cancel leaves the picker no
+        // longer waiting, so a later answer to another ask is not its own; a
+        // failure shows until the next ask.
+        int asked = 0;
+        sampler.setPortalRequest([&] { ++asked; });
+        sampler.setRoute({QStringLiteral("portal"), {}});
+        const QString before = text->property("text").toString();
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(note->property("text").toString().isEmpty());
+        QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
+        auto *portalPick = findItem(simple->contentItem(), QStringLiteral("simplePortalPick"));
+        QVERIFY(portalPick->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QCOMPARE(asked, 1);
+        QVERIFY(!portalPick->isEnabled());
+        sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
+        QVERIFY(portalPick->isEnabled());
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H604020&")));
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        sampler.answerPortal(1);
+        QVERIFY(!simple->property("portalAsked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        sampler.failPortalCall(QStringLiteral("No such interface"));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.answerPortal(1);
+        QCOMPARE(asked, 4);
+        sampler.setPortalRequest({});
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        QCOMPARE(text->property("text").toString(), before);
+    }
+
+    // Y7-simple-picker-type (approved departure): on a line format (one
+    // colour, no colour types) the simple picker's type choice keeps the
+    // colour it shows, and the recent colour it adds is that colour. Legacy
+    // read the colour into a fresh AssColor that GetColor never sets below
+    // ASS (EditBox.cpp:908-912, 932-953), so the picker turned black and its
+    // next type choice added black to the recent colours.
+    void simpleColourPickerKeepsTheColourOnLineFormats()
+    {
+        // MicroDVD: a line format whose colour is markup ({C:BBGGRR}); SRT
+        // takes no colour (E1-nonass-font).
+        const QString path = dir.filePath(QStringLiteral("simple-colour.sub"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{10}{20}first\n");
+        }
+        QVERIFY(application->openFile(path));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto &sampler = *application->colourPicker().sampler();
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
+        auto *settings = application->settingsStore();
+        settings->set("colourPicker.recentColours", QStringLiteral("&H000000FF&"));
+        application->colourPicker().loadFromString(QStringLiteral("&H000000FF&"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QQuickWindow *simple = shellWindow("simpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
+        auto *type = findItem(simple->contentItem(), QStringLiteral("simpleColourType"));
+        const QString opened = hex->property("text").toString();
+        // Before any pick: the choice keeps the colour the picker opened with.
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 2)));
+        QCOMPARE(hex->property("text").toString(), opened);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+
+        // A pick, then the choice: the picked colour stays in the picker.
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QTRY_VERIFY(text->property("text").toString() != QStringLiteral("first"));
+        const QString picked = text->property("text").toString();
+        QCOMPARE(picked, QStringLiteral("{C:302010}first"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        QCOMPARE(text->property("text").toString(), picked);
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+        // The next choice adds that colour again, not black.
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 0)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
+        QTRY_VERIFY(!simple->isVisible());
+        QCOMPARE(text->property("text").toString(), picked);
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+    }
+
+    // Y7: "Choose color"'s HSL and HSV values (UpdateFromRGB/HSL/HSV through
+    // colorspace.cpp), the type choice's recent colour (GetColor), the ASS
+    // and HTML fields, the screen dropper (OnDropperMouse: a left press on
+    // the icon takes the pointer, a right release picks the centre, a press
+    // on a captured pixel picks it, the alpha kept) and the "swap shortcuts"
+    // box writing COLORPICKER_SWITCH_CLICKS.
+    void colourDialogHslHsvAndTheScreenDropper()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto &sampler = *application->colourPicker().sampler();
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            image.setPixel(0, 0, qRgb(1, 2, 3));
+            return image;
+        });
+        auto *dialog = named("colourDialog");
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("changeColour1"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        // White: HSV saturation 0, value 255; HSL lightness 255.
+        QCOMPARE(dialog->property("hsvSaturation").toInt(), 0);
+        QCOMPARE(dialog->property("hsvValue").toInt(), 255);
+        QCOMPARE(dialog->property("lightness").toInt(), 255);
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 128), Q_ARG(QVariant, 0)));
+        QCOMPARE(dialog->property("hsvHue").toInt(), 21);
+        QCOMPARE(dialog->property("hsvSaturation").toInt(), 255);
+        QCOMPARE(dialog->property("hslHue").toInt(), 21);
+        QCOMPARE(dialog->property("lightness").toInt(), 127);
+        QCOMPARE(dialogItem("colourDialog", "assText")->property("text").toString(), QStringLiteral("&H0080FF&"));
+        QCOMPARE(dialogItem("colourDialog", "htmlText")->property("text").toString(), QStringLiteral("#FF8000"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\1c&H0080FF&}first"));
+
+        // The HSV hue field: hsv_to_rgb's special case 171 is blue, the HSL
+        // values from hsv_to_hsl.
+        auto *hsvHue = dialogItem("colourDialog", "hsvHue");
+        hsvHue->setProperty("value", 171);
+        QVERIFY(QMetaObject::invokeMethod(hsvHue, "valueModified"));
+        QCOMPARE(dialog->property("blue").toInt(), 255);
+        QCOMPARE(dialog->property("red").toInt(), 0);
+        QCOMPARE(dialog->property("hslHue").toInt(), 171);
+        QCOMPARE(dialog->property("lightness").toInt(), 127);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\1c&HFF0000&}first"));
+        // The lightness field: hsl_to_rgb, and the HSV values from hsl_to_hsv.
+        auto *lightness = dialogItem("colourDialog", "lightness");
+        lightness->setProperty("value", 64);
+        QVERIFY(QMetaObject::invokeMethod(lightness, "valueModified"));
+        const auto rgb = application->colourPicker().hslToRgb(171, 255, 64);
+        const auto hsv = application->colourPicker().hslToHsv(171, 255, 64);
+        QCOMPARE(dialog->property("blue").toInt(), rgb.at(2).toInt());
+        QCOMPARE(dialog->property("hsvValue").toInt(), hsv.at(2).toInt());
+        // The HTML field reads html_to_color: three digits double up.
+        auto *html = dialogItem("colourDialog", "htmlText");
+        html->setProperty("text", QStringLiteral("#f80"));
+        QVERIFY(QMetaObject::invokeMethod(html, "editingFinished"));
+        QCOMPARE(dialog->property("green").toInt(), 136);
+
+        // An alpha first: the dropper and the recent colours keep it.
+        auto *alpha = dialogItem("colourDialog", "alpha");
+        alpha->setProperty("value", 0x40);
+        QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1a&H40&")));
+
+        // The dropper: the icon's left press takes the pointer; a move
+        // anywhere captures, the right release picks the centre and lets go.
+        const QPoint icon = centreOf(dialogItem("colourDialog", "eyedropperArea"));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QTRY_VERIFY(sampler.tracking());
+        QVERIFY(dialog->property("dropping").toBool());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon); // the dropper's: a capture only
+        QVERIFY(sampler.tracking());
+        sendMouse(window, QEvent::MouseMove, QPoint(-30, -30), Qt::NoButton, Qt::NoButton);
+        QVERIFY(sampler.tracking());
+        sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::RightButton, Qt::NoButton);
+        QVERIFY(!sampler.tracking());
+        QCOMPARE(dialog->property("red").toInt(), 0x10);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H302010&")));
+        // A left press on a captured pixel picks it.
+        auto *cells = dialogItem("colourDialog", "dropperCells");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, cells->mapToScene(QPointF(3, 3)).toPoint());
+        QCOMPARE(dialog->property("blue").toInt(), 3);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H030201&")));
+        // A second left press on the icon lets go without a pick.
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QTRY_VERIFY(sampler.tracking());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, icon);
+        sendMouse(window, QEvent::MouseButtonPress, QPoint(-30, -30), Qt::LeftButton, Qt::LeftButton);
+        QVERIFY(!sampler.tracking());
+        sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::LeftButton, Qt::NoButton);
+        QCOMPARE(dialog->property("blue").toInt(), 3);
+
+        // A recent colour's tap takes its red, green and blue and keeps the
+        // alpha in effect (OnRecentSelect, ColorPicker.cpp:1130-1137:
+        // SetColor(color, 0, true, false), setAlpha false at :717).
+        application->colourPicker().loadFromString(QStringLiteral("&H80123456&"));
+        auto *swatch = dialogItem("colourDialog", "recent0");
+        QTRY_COMPARE(swatch->property("color").value<QColor>(), QColor(0x56, 0x34, 0x12));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(swatch));
+        QCOMPARE(dialog->property("red").toInt(), 0x56);
+        QCOMPARE(dialog->property("green").toInt(), 0x34);
+        QCOMPARE(dialog->property("blue").toInt(), 0x12);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H123456&")));
+        QVERIFY(text->property("text").toString().contains(QStringLiteral("\\1a&H40&")));
+
+        // The type choice puts the colour into the recent ones first.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("colourDialog", "colourType"), "activated", Q_ARG(int, 1)));
+        const auto recent = application->colourPicker().recent().first().toMap();
+        QCOMPARE(recent.value(QStringLiteral("r")).toInt(), 0x56);
+        QCOMPARE(recent.value(QStringLiteral("a")).toInt(), 0x40);
+
+        // The swap box writes the option at once.
+        auto *swap = dialogItem("colourDialog", "switchClicks");
+        QVERIFY(!swap->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(swap, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(swap, "toggled"));
+        QVERIFY(application->settingsStore()->boolean("colourPicker.switchClicks"));
+
+        // The portal route (Wayland): the icon's press asks the desktop and
+        // takes no pointer; its pick sets the colour with the alpha kept, as
+        // the dropper's; a failure shows under the icon until the next ask;
+        // a cancel changes nothing. The type choice above left the second
+        // colour in effect with its own alpha; an alpha for it first.
+        alpha->setProperty("value", 0x40);
+        QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2a&H40&")));
+        int asked = 0;
+        sampler.setPortalRequest([&] { ++asked; });
+        sampler.setRoute({QStringLiteral("portal"), {}});
+        auto *note = dialogItem("colourDialog", "dropperUnavailable");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 1);
+        QVERIFY(sampler.portalBusy());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(!dialog->property("dropping").toBool());
+        QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
+        sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
+        QVERIFY(!sampler.portalBusy());
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 0x20);
+        QCOMPARE(dialog->property("green").toInt(), 0x40);
+        QCOMPARE(dialog->property("blue").toInt(), 0x60);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2c&H604020&")));
+        QVERIFY(dialogItem("colourDialog", "eyedropper")->isEnabled());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 2);
+        sampler.failPortalCall(QStringLiteral("No such interface"));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
+        QVERIFY(note->isVisible());
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 3);
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.answerPortal(1);
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 0x20);
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.setPortalRequest({});
+
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // Unavailable: the icon is disabled and the reason shown.
+        sampler.setRoute(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, false));
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
+        QCOMPARE(dialogItem("colourDialog", "dropperUnavailable")->property("text").toString(), sampler.unavailableReason());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     void pasteTranslationAndTheShiftingWindow()
