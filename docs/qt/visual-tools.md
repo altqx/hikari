@@ -35,6 +35,7 @@ Every edit goes through a gesture:
 - `gesture->before(line)` is the target as the gesture began (the pending draft applied); `stage(line, text, translation)` replaces the staged text on every sample. Nothing reaches the Document, the draft or the history meanwhile.
 - `host.commitGesture()` on release: one history step named `history` (`familyInfo(family).history`, legacy SubsFile.cpp:228-238), after the pending draft's own step. Without staged changes nothing is recorded; a gesture whose Document changed since it began is refused.
 - Esc during the gesture (the host handles it) drops it and leaves the pre-gesture draft.
+- A change of the active Line or of the editing target drops an open gesture the same way, and the tool is reset to the new Line (legacy's SetVisual dropped the tool's unsent preview). The gesture is never moved to the new Line.
 
 Draw with `Overlay` (lines, circles, text, and filled polygons below or above the lines) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
 

@@ -156,8 +156,14 @@ void VisualToolsController::refresh()
     } else if (revision != m_seenRevision) {
         reset = true;
     }
-    if (active != m_seenActive)
+    if (active != m_seenActive) {
+        // Another active Line: the tool reads it again (legacy's SetVisual,
+        // which dropped the tool's unsent preview), so an open gesture is
+        // cancelled. It never moves to the new Line, and the tool's state no
+        // longer belongs to the Lines it targets (T4).
+        (void)escape();
         reset = true;
+    }
     m_seenSession = id;
     m_seenRevision = revision;
     m_seenActive = active;
