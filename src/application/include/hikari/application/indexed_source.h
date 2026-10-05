@@ -46,6 +46,12 @@ struct SourceTimeline {
     // video's index); empty otherwise. The port removes it when the source is
     // opened again or ends, or sooner when told the box has read it.
     std::string handoffIndexFile;
+    // T1: frame 0's encoded size and the track's sample aspect ratio
+    // (FFMS_Frame EncodedWidth/EncodedHeight, FFMS_VideoProperties SARNum/
+    // SARDen; 0 when unknown), as legacy ProviderFFMS2::Init read them for
+    // the video's aspect (ProviderFFMS2.cpp:362-366).
+    int width = 0, height = 0;
+    int sarNum = 0, sarDen = 0;
 };
 
 // How an open indexes (A1; legacy ProviderFFMS2::Init). Legacy indexed the
