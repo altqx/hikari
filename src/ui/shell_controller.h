@@ -35,6 +35,9 @@ class ShellController : public QObject {
     Q_PROPERTY(bool endColumn READ endColumn NOTIFY targetsChanged)
     // The editing target is filtered (legacy IsFiltered): "Turn off filtering".
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
+    // E6: GLOBAL_HIDE_TAGS (GRID_HIDE_TAGS): the Grids show override tags as
+    // GRID_TAGS_SWAP_CHARACTER.
+    Q_PROPERTY(bool hideTags READ hideTags NOTIFY hideTagsChanged)
     // A transient status message (automation's set_status_text).
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
 
@@ -88,8 +91,24 @@ public:
     bool assColumns() const { return m_assFormat; }
     bool endColumn() const { return m_endColumn; }
     bool filtered() const { return m_lines.headerData(0, Qt::Horizontal, LineTableModel::FilteredRole).toBool(); }
+    bool hideTags() const { return m_lines.hideTags(); }
+    // E6: both Grids, at once (legacy HideOverrideTags refreshes the Grid).
+    void setHideTags(bool hide, const QString &swap)
+    {
+        const bool changed = hide != m_lines.hideTags();
+        m_lines.setHideTags(hide, swap);
+        m_referenceLines.setHideTags(hide, swap);
+        if (changed)
+            emit hideTagsChanged();
+    }
+    // E6: the changed-Line mark of each Grid's Lines, read at each refresh.
+    void setChangeStates(const LineTableModel::ChangeState &target, const LineTableModel::ChangeState &reference)
+    {
+        m_lines.setChangeState(target);
+        m_referenceLines.setChangeState(reference);
+    }
     // F3: spelling marks in both Grids, from the next refresh.
-    void setSpelling(const LineTableModel::Spelling &spelling)
+    void setSpelling(const LineTableModel::TagSpelling &spelling)
     {
         m_lines.setSpelling(spelling);
         m_referenceLines.setSpelling(spelling);
@@ -109,6 +128,7 @@ signals:
     void activeLineChanged();
     void statusTextChanged();
     void hiddenColumnsChanged();
+    void hideTagsChanged();
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;

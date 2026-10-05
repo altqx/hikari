@@ -97,6 +97,7 @@ void LineEditorController::setShowTags(bool show)
     if (m_showTags == show)
         return;
     m_showTags = show;
+    m_tagList.close(); // E6: the list belongs to the raw text it was opened in
     refresh();
 }
 
@@ -355,6 +356,17 @@ bool LineEditorController::commit()
 
 bool LineEditorController::commitAndAdvance()
 {
+    // EditBox::OnNewline -> Send(..., gotoNextLine) -> SubsGrid::NextLine.
+    return nextLine(1);
+}
+
+// SubsGrid::NextLine (SubsGridBase.cpp:1382-1415), also GLOBAL_PREVIOUS_LINE /
+// GLOBAL_NEXT_LINE (E6, HikariSubFrame::OnChangeLine): the shown Line after
+// or before the active one (GetKeyFromPosition(currentLine, direction, false)
+// skips hidden Lines). Before the first one nothing happens; after the last
+// shown one a Line is appended.
+bool LineEditorController::nextLine(int direction)
+{
     auto *s = session();
     const auto r = record();
     if (!s || !r)
@@ -363,25 +375,45 @@ bool LineEditorController::commitAndAdvance()
     const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
     if (it == lines.end())
         return false;
-    if (it + 1 == lines.end()) {
-        // SubsGrid::NextLine on the last Line: commit, then append a copy of it
-        // starting at its End, five seconds long, with no text (its own step).
+    const std::ptrdiff_t at = it - lines.begin();
+    for (std::ptrdiff_t i = at + direction; i >= 0 && i < static_cast<std::ptrdiff_t>(lines.size()); i += direction) {
+        const core::LineRecord *line = lines[static_cast<std::size_t>(i)];
+        if (line->visibility == core::LineVisibility::Hidden)
+            continue;
+        if (!showLine(line->id.value))
+            return false;
+        emit lineChanged(line->id.value);
+        return true;
+    }
+    if (direction < 0)
+        return false;
+    {
+        // No shown Line after it: commit, then append a copy of the Line
+        // GetDialogue(GetElementByKey(size - 1)) names, starting at its End,
+        // five seconds long, with no text (its own step). GetElementByKey
+        // gives the number of shown Lines before the last one, read as a
+        // row: the last Line when nothing is hidden.
         if (s->draftLine() && !s->commitDraft() && s->draftLine()) {
             fail(problemText());
             return false;
         }
-        const core::LineRecord last = **(s->document().lines().end() - 1);
-        core::LineRecord next = last;
+        const auto now = s->document().lines();
+        std::size_t source = 0;
+        for (std::size_t i = 0; i + 1 < now.size(); ++i)
+            source += now[i]->visibility != core::LineVisibility::Hidden;
+        const core::LineRecord &copied = *now[std::min(source, now.size() - 1)];
+        const core::LineRecord &last = *now.back();
+        core::LineRecord next = copied;
         next.text.clear();
         next.translation.clear();
-        next.start.value = last.end.value;
-        next.end.value = core::DocumentTime(last.end.value.microseconds() + 5'000'000);
+        next.start.value = copied.end.value;
+        next.end.value = core::DocumentTime(copied.end.value.microseconds() + 5'000'000);
         if (s->document().format() == core::SubtitleFormat::MicroDvd) {
-            // Frames: the new Line starts at the last end frame; its end is the
+            // Frames: the new Line starts at the copied end frame; its end is the
             // frame at End + 5 s rounded up, as legacy SubsTime computes it.
             // Without the Document's own rate (C01-fps-isolation) the end
             // frame is left empty rather than guessed.
-            next.startFrame = last.endFrame;
+            next.startFrame = copied.endFrame;
             next.endFrame.reset();
             if (const auto &rate = s->document().frameRate()) {
                 const auto &fps = rate->framesPerSecond();
@@ -393,7 +425,7 @@ bool LineEditorController::commitAndAdvance()
         std::optional<core::LineId> added;
         const auto result = s->run(application::Command{
             "Append Line", s->revision(), {last.id}, [&](core::Document &d) {
-                added = d.insertLineAfter(last.id, next);
+                added = d.insertLineAfter(last.id, next); // AddLine: at the end
                 return added.has_value();
             }});
         if (!result || !added)
@@ -404,10 +436,6 @@ bool LineEditorController::commitAndAdvance()
         emit lineChanged(added->value);
         return true;
     }
-    if (!showLine((*(it + 1))->id.value))
-        return false;
-    emit lineChanged((*(it + 1))->id.value);
-    return true;
 }
 
 void LineEditorController::discard()

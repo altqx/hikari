@@ -2,6 +2,7 @@
 
 #include "hikari/application/grid_filtering.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/legacy_regex.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
 #include "line_measures.h"
@@ -113,6 +114,65 @@ const LineTableModel::Measures &LineTableModel::measuresOf(const Row &row) const
     return *row.measures;
 }
 
+const QString &LineTableModel::shownTextOf(const Row &row) const
+{
+    if (row.shownText)
+        return *row.shownText;
+    QString text = qs(row.line.text);
+    if (tagsSwapped()) {
+        // SubsGrid::TagsPattern (SubsGridWindow.cpp:34-39): wxRegEx
+        // "\{[^\{]*\}" (SRT "\<[^\<]*\>"), advanced syntax, its
+        // ReplaceAll taking GRID_TAGS_SWAP_CHARACTER as a replacement (so
+        // "&" and "\0".."\9" there are back-references, as in legacy);
+        // SubsGridWindow.cpp:405-410 replaces the shown text only.
+        static const core::LegacyRegex ass(u"\\{[^\\{]*\\}", core::LegacyRegex::Advanced);
+        static const core::LegacyRegex srt(u"\\<[^\\<]*\\>", core::LegacyRegex::Advanced);
+        std::u16string raw = text.toStdU16String();
+        (m_format == core::SubtitleFormat::Srt ? srt : ass).replaceAll(raw, m_tagSwap.toStdU16String());
+        text = QString::fromStdU16String(raw);
+    }
+    row.shownText = std::move(text);
+    return *row.shownText;
+}
+
+void LineTableModel::setSpelling(Spelling spelling)
+{
+    if (!spelling) {
+        m_spelling = {};
+        return;
+    }
+    m_spelling = [spelling = std::move(spelling)](std::u16string_view text, core::SubtitleFormat format, bool spell,
+                                                  int) { return spelling(text, format, spell); };
+}
+
+void LineTableModel::setHideTags(bool hide, const QString &swap)
+{
+    if (hide == m_hideTags && swap == m_tagSwap)
+        return;
+    m_hideTags = hide;
+    m_tagSwap = swap;
+    // HideOverrideTags clears SpellErrors and refreshes (SubsGridWindow.cpp:1959-1965).
+    for (const Row &row : m_rows) {
+        row.shownText.reset();
+        row.spellMarks.reset();
+    }
+    if (!m_rows.empty())
+        emit dataChanged(index(0, TextColumn), index(rowCount() - 1, TextColumn), {Qt::DisplayRole, SpellMarksRole});
+}
+
+int LineTableModel::labelSlot(int state)
+{
+    return state == 0 ? 0 : state == 2 ? 2 : state == 1 ? 1 : 3;
+}
+
+LineTableModel::LabelColours LineTableModel::themeLabelColours(bool dark)
+{
+    // GRID_LABEL_NORMAL, _MODIFIED, _SAVED, _DOUBTFUL (config.cpp:422-425).
+    if (dark)
+        return {QColor(0x2F, 0x31, 0x36), QColor(0x32, 0x2F, 0x4E), QColor(0x20, 0x22, 0x25), QColor(0x92, 0x5B, 0x1F)};
+    return {QColor(0x7F, 0x7F, 0x7F), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
+}
+
 const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
 {
     if (row.spellMarks)
@@ -124,9 +184,10 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
     // (not built yet), so the Text column, showing the original, has none.
     if (m_spelling && !line.comment && !line.text.empty() && !m_translationMode) {
         const QString text = qs(line.text);
+        // E6: with tags hidden, Init gets the tag length (SubsGridWindow.cpp:385-386).
         const auto result = m_spelling(std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()),
                                                            static_cast<std::size_t>(text.size())),
-                                       m_format, true);
+                                       m_format, true, tagsSwapped() ? static_cast<int>(m_tagSwap.size()) : -1);
         for (const int offset : result.errors)
             marks << offset;
     }
@@ -173,6 +234,10 @@ void LineTableModel::setDocument(const core::Document &document,
     for (const core::LineRecord *line : lines) {
         m_rowById.emplace(line->id.value, static_cast<int>(m_rows.size()));
         m_rows.push_back(Row{*line, std::nullopt, 0});
+        // E6: Dialogue::GetState: the changed-Line mark (bits 1 and 2), 4
+        // Unconfirmed, 8 bookmarked.
+        m_rows.back().state = (m_changeState ? m_changeState(*line) : 0) | (line->unconfirmed ? 4 : 0) |
+                              (line->bookmark ? 8 : 0);
     }
     // Hidden-block marks (legacy CheckIfHasHiddenBlock), in one pass from the
     // end: hiddenRun[k] counts the hidden Lines from k up to the next shown one.
@@ -284,7 +349,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case EffectColumn: return qs(line.effect);
         case CpsColumn: return measuresOf(r).cps;
         case WrapsColumn: return measuresOf(r).wraps;
-        case TextColumn: return qs(line.text);
+        case TextColumn: return shownTextOf(r);
         default: return {};
         }
     case LineIdRole:
@@ -324,6 +389,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.comparison;
     case ComparisonMarksRole:
         return r.comparisonMarks;
+    case LineStateRole:
+        return r.state;
     default:
         return {};
     }
@@ -341,6 +408,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return m_headerBlock;
     if (role == ComparisonColoursRole)
         return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
+    if (role == LabelColoursRole)
+        return QVariantList(m_labelColours.begin(), m_labelColours.end());
     if (role != Qt::DisplayRole)
         return {};
     // Legacy headings.
@@ -363,7 +432,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {BadWrapsRole, "badWraps"},
                   {SpellMarksRole, "spellMarks"},
                   {ComparisonRole, "comparison"},
-                  {ComparisonMarksRole, "comparisonMarks"}});
+                  {ComparisonMarksRole, "comparisonMarks"},
+                  {LineStateRole, "lineState"}});
     return roles;
 }
 

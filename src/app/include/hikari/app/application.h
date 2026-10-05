@@ -243,6 +243,9 @@ public:
     Q_INVOKABLE bool insertLine(bool before, const QString &timing = {});
     Q_INVOKABLE bool duplicateLines();
     Q_INVOKABLE bool deleteLines();
+    // E6: GLOBAL_REMOVE_TEXT ("Delete text") and GLOBAL_HIDE_TAGS.
+    Q_INVOKABLE bool deleteText();
+    Q_INVOKABLE void toggleHideTags();
     // G5: "join", "previous", "next", "first", "last".
     Q_INVOKABLE bool joinLines(const QString &kind);
     Q_INVOKABLE bool swapLines();

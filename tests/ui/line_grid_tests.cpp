@@ -167,7 +167,7 @@ private slots:
         // A cell of the row away from any text (the margin column's right edge).
         const QRectF text1 = grid.cellRect(1, grid.columnCount() - 1);
         // The comparison colour from the second column on; the number column
-        // keeps the row's own background, as legacy paints column 0 in its
+        // takes its label colour (E6), as legacy paints column 0 in its
         // label colour and only the others in kol (SubsGridWindow.cpp:495).
         const QRectF number0 = grid.cellRect(0, 0);
         QCOMPARE(grid.columnTitle(0), model.headerData(LineTableModel::NumberColumn, Qt::Horizontal).toString());
@@ -194,6 +194,80 @@ private slots:
         QCOMPARE(outline0, 0);
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comparison-frame.png")));
+    }
+
+    // E6: the number cell in its label colour by State (SubsGridWindow.cpp:
+    // 478-479, 495), selected or not, with a dot for a changed Line and a
+    // ring for a changed and saved one; the state named for assistive
+    // technology.
+    void paintsTheChangedLineMark()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,plain\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,changed\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,saved\n"
+                             "Dialogue: 0,0:00:07.00,0:00:08.00,Default,[bookmark],0,0,0,,bookmarked\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setChangeState([](const core::LineRecord &l) { return l.id.value == 2 ? 1 : l.id.value == 3 ? 2 : 0; });
+        model.setDocument(core::loadAss(bytes).document);
+        model.setSelection({core::LineId{2}, {core::LineId{2}}}, core::LineId{2});
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 140));
+        grid.setModel(&model);
+        QImage image(720, 140, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid.paint(&painter);
+        painter.end();
+        const auto colours = LineTableModel::themeLabelColours(true);
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        const QRectF number = grid.cellRect(0, 0);
+        // A pixel of the cell left of the number's text.
+        QCOMPARE(image.pixelColor(2, rowY(0)), colours[0]);
+        QCOMPARE(image.pixelColor(2, rowY(1)), colours[1]); // selected: still its label colour
+        QCOMPARE(image.pixelColor(2, rowY(2)), colours[2]);
+        QCOMPARE(image.pixelColor(2, rowY(3)), colours[3]);
+        // The mark's centre: filled for changed, the label colour inside a ring for saved.
+        const int markX = int(number.right() - 6.5);
+        QVERIFY(image.pixelColor(markX, rowY(1)) != colours[1]);
+        QCOMPARE(image.pixelColor(markX, rowY(2)), colours[2]);
+        int ring = 0;
+        for (int x = markX - 3; x <= markX + 3; ++x)
+            ring += image.pixelColor(x, rowY(2)) != colours[2];
+        QVERIFY(ring > 0);
+        QCOMPARE(image.pixelColor(markX, rowY(0)), colours[0]);
+        QCOMPARE(grid.rowStateText(0), QString());
+        QCOMPARE(grid.rowStateText(1), QStringLiteral("changed"));
+        QCOMPARE(grid.rowStateText(2), QStringLiteral("changed, saved"));
+        QCOMPARE(grid.rowStateText(3), QStringLiteral("bookmarked"));
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
+    }
+
+    // E6: hidden tags as painted (the Text column's swapped text).
+    void paintsHiddenTags()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8\\fs20}Top {\\i1}line\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setDocument(core::loadAss(bytes).document);
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 60));
+        grid.setModel(&model);
+        const int text = grid.columnCount() - 1;
+        QCOMPARE(grid.cellText(0, text), QStringLiteral("{\\an8\\fs20}Top {\\i1}line"));
+        model.setHideTags(true, QStringLiteral("\u2600"));
+        QCOMPARE(grid.cellText(0, text), QStringLiteral("\u2600Top \u2600line"));
+        QImage image(720, 60, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid.paint(&painter);
+        painter.end();
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-hidden-tags.png")));
     }
 
     void followsModelChanges()

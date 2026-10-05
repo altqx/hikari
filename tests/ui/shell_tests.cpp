@@ -328,6 +328,252 @@ private slots:
         QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
     }
 
+    // E6: the Line editor's tag list (legacy TextEditor's PopupTagList at
+    // 20d647c4): opened by "\" in an override block of the raw text, narrowed
+    // by typing (an input method's commit included, its composition left
+    // alone), Up/Down to choose, Enter or a click to put the tag, the
+    // options menu, Escape to close; the field keeps focus throughout.
+    void tagListCompletesTagsInTheRawText()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        auto *list = application->editor().tagList();
+        // The hidden-tag view refuses ASS syntax: no list there.
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QCoreApplication::processEvents();
+        QVERIFY(!list->open());
+        application->editor().discard();
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        QVERIFY(list->popupShown());
+        QCOMPARE(list->rows().size(), 20); // TEXT_EDITOR_TAG_LIST_OPTIONS 0: the type-0 tags
+        auto *popup = item<QObject>("lineTextTagList");
+        QVERIFY(popup);
+        QTRY_VERIFY(popup->property("visible").toBool());
+        QVERIFY(text->hasActiveFocus());
+        QTest::keyClick(window, 'b');
+        QTRY_COMPARE(list->rows(), (QStringList{"be", "blur", "bord"}));
+        // An input method's composition goes on under the list ...
+        QInputMethodEvent preedit(QStringLiteral("e"), {});
+        QCoreApplication::sendEvent(text, &preedit);
+        QVERIFY(text->property("inputMethodComposing").toBool());
+        QVERIFY(text->hasActiveFocus());
+        QVERIFY(popup->property("visible").toBool());
+        QCOMPARE(list->rows().size(), 3);
+        QCOMPARE(list->selection(), 0);
+        // ... and its committed text is typed.
+        QInputMethodEvent commit;
+        commit.setCommitString(QStringLiteral("l"));
+        QCoreApplication::sendEvent(text, &commit);
+        QTRY_COMPARE(list->rows(), (QStringList{"blur"}));
+        QVERIFY(text->hasActiveFocus());
+        press(Qt::Key_Return);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blurfirst"));
+        QCOMPARE(text->property("cursorPosition").toInt(), 6);
+        QVERIFY(!list->open());
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("{\\blurfirst"));
+        // Up and Down move the selection (wrapping), Return puts it.
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        press(Qt::Key_Up);
+        QCOMPARE(list->selection(), 19);
+        press(Qt::Key_Down);
+        press(Qt::Key_Down);
+        QCOMPARE(list->selection(), 1); // alpha, be
+        QCOMPARE(list->selectedAnnouncement(), QStringLiteral("\\be, Edge blur, 2 of 20"));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur\\befirst"));
+        // The options menu: "Show all tags", kept in the profile.
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("lineTextTagListShowAllTags"), "triggered"));
+        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 1);
+        QCOMPARE(list->rows().size(), 50);
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("lineTextTagListShowDescription"), "triggered"));
+        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 5);
+        QCOMPARE(list->rows().first(), QStringLiteral("1a - Transparency of primary color"));
+        // The pointer: the first event is ignored, then the row under it is
+        // selected and a left click puts it; the field keeps focus.
+        auto *pointer = item("lineTextTagListPointer");
+        QTRY_VERIFY(pointer && pointer->isVisible());
+        const double rowHeight = popup->property("rowHeight").toDouble();
+        const QPoint row2 = pointer->mapToScene(QPointF(10, rowHeight * 2.5)).toPoint();
+        QTest::mouseMove(window, row2 - QPoint(0, 1));
+        QTest::mouseMove(window, row2);
+        QTRY_COMPARE(list->selection(), 2);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, row2);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur\\be\\3afirst"));
+        QVERIFY(text->hasActiveFocus());
+        // Escape closes the list and keeps the draft (it is not the editor's Escape).
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        press(Qt::Key_Escape);
+        QVERIFY(!list->open());
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("{\\blur\\be\\3a\\first"));
+        // Left closes it (one of TextEditor's own accelerators) ...
+        QTest::keyClick(window, 'f'); // the character after "\" opens it again
+        QTRY_VERIFY(list->open());
+        QCOMPARE(list->rows().first(), QStringLiteral("fad - Fading in / fading out of text"));
+        press(Qt::Key_Left);
+        QVERIFY(!list->open());
+        // ... and so does the field losing focus.
+        press(Qt::Key_Right);
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        item("editingGrid")->forceActiveFocus();
+        QVERIFY(!list->open());
+        application->editor().discard();
+    }
+
+    // E6: GLOBAL_HIDE_TAGS, Subtitles > Hide tags (legacy SubsGrid::
+    // HideOverrideTags): the Grid's text with each block swapped for
+    // GRID_TAGS_SWAP_CHARACTER, kept in GRID_HIDE_TAGS.
+    void hideTagsSwitchesTheGridsTags()
+    {
+        const QString tagged = writeFile(dir, "tagged.ass",
+                                         "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hi{\\i0} there\n");
+        QVERIFY(application->openFile(tagged));
+        auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
+        const auto shown = [&] { return model->index(0, ui::LineTableModel::TextColumn).data().toString(); };
+        QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
+        auto *menuItem = named("hideTagsMenuItem");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QCOMPARE(shown(), QStringLiteral("☀Hi☀ there"));
+        QVERIFY(application->settingsStore()->boolean("grid.hideTags"));
+        // A new swap character applies at once.
+        application->settingsStore()->set("grid.tagsSwapCharacter", QStringLiteral("~"));
+        QCOMPARE(shown(), QStringLiteral("~Hi~ there"));
+        // The Global binding (none by default) runs the same switch.
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_HIDE_TAGS"))));
+        QVERIFY(ran.toBool());
+        QCOMPARE(shown(), QStringLiteral("{\\i1}Hi{\\i0} there"));
+        QVERIFY(!application->settingsStore()->boolean("grid.hideTags"));
+        // The Line editor's own hidden-tag view has the set's icon.
+        QCOMPARE(item("showTags")->property("iconRole").toString(), QStringLiteral("hide-tags"));
+        QCOMPARE(item("showTags")->property("checked").toBool(), !application->editor().showTags());
+    }
+
+    // E6: GLOBAL_PREVIOUS_LINE / GLOBAL_NEXT_LINE (Ctrl+Up / Ctrl+Down,
+    // SubsGrid::NextLine): shown Lines only, nothing before the first, a new
+    // Line after the last; the Line selected alone.
+    void ctrlUpAndDownMoveBetweenShownLines()
+    {
+        const QString three = writeFile(dir, "three.ass",
+                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
+                                        "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                                        "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+        QVERIFY(application->openFile(three));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("one"));
+        // Hide "two".
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
+        QVERIFY(application->hideSelectedLines());
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("one"));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Up, Qt::ControlModifier); // before the first: nothing
+        QCOMPARE(session->selection().active, lines[0]->id);
+        press(Qt::Key_Down, Qt::ControlModifier); // over the hidden "two"
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three"));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[2]->id});
+        press(Qt::Key_Up, Qt::ControlModifier);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("one"));
+        // Nothing hidden: after the last Line a copy of it starting at its
+        // End, five seconds long, without text; from the editor too.
+        QVERIFY(application->turnOffFiltering());
+        session->setSelection(application::Selection{lines[2]->id, {lines[2]->id}, lines[2]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three"));
+        const auto steps = session->historySize();
+        text->forceActiveFocus();
+        press(Qt::Key_Down, Qt::ControlModifier);
+        QTRY_COMPARE(session->document().lines().size(), std::size_t(4));
+        QCOMPARE(session->historySize(), steps + 1);
+        const auto *added = session->document().lines()[3];
+        QCOMPARE(session->selection().active, added->id);
+        QCOMPARE(text->property("text").toString(), QString());
+        QCOMPARE(added->start.value.microseconds(), 6'000'000);
+        QCOMPARE(added->end.value.microseconds(), 11'000'000);
+        press(Qt::Key_Up, Qt::ControlModifier);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("three"));
+    }
+
+    // E6: GLOBAL_REMOVE_TEXT (Alt+Delete; the Grid menu's "Delete text"):
+    // the shown selected Lines' text emptied in one "Deleting text" step.
+    void deleteTextEmptiesTheSelectedLines()
+    {
+        QVERIFY(application->openFile(episode));
+        keysNeverRepeat();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("first"));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_A, Qt::ControlModifier);
+        const auto steps = session->historySize();
+        press(Qt::Key_Delete, Qt::AltModifier);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Deleting text"));
+        for (const auto *line : session->document().lines())
+            QVERIFY(line->text.empty());
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QString());
+        QVERIFY(application->editor().undo());
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("second"));
+        // The Grid menu's item, before "Delete lines".
+        auto *menuItem = named("deleteText");
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Delete text"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Deleting text"));
+    }
+
+    // E6: the changed-Line mark (legacy State 1, saved 2): the number cell's
+    // label colour, its shape and the state named for assistive technology.
+    void changedLinesAreMarkedUntilSaved()
+    {
+        const QString copy = dir.filePath(QStringLiteral("changed.ass"));
+        QFile::remove(copy);
+        QVERIFY(QFile::copy(episode, copy));
+        QVERIFY(application->openFile(copy));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        const auto state = [&](int row) { return model->index(row, 0).data(ui::LineTableModel::LineStateRole).toInt(); };
+        QCOMPARE(state(0), 0);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, '!');
+        QTRY_COMPARE(application->editor().text(), QStringLiteral("first!"));
+        press(Qt::Key_Return, Qt::ControlModifier); // commit
+        QTRY_COMPARE(state(0), 1);
+        QCOMPARE(state(1), 0);
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("changed"));
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QTRY_COMPARE(state(0), 2);
+        QCOMPARE(grid->rowStateText(0), QStringLiteral("changed, saved"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(state(0), 0);
+    }
+
     void boldWrapsTheSelectionWithTagsHidden()
     {
         QVERIFY(application->openFile(episode));

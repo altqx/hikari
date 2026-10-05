@@ -54,6 +54,9 @@ public:
     // GRID_COMPARISON_OUTLINE, _BACKGROUND_NOT_MATCH, _BACKGROUND_MATCH,
     // _COMMENT_BACKGROUND_NOT_MATCH and _COMMENT_BACKGROUND_MATCH.
     static constexpr int ComparisonColoursRole = Qt::UserRole + 53;
+    // headerData role on section 0 (E6): the label colours, a list of
+    // GRID_LABEL_NORMAL, _MODIFIED, _SAVED and _DOUBTFUL.
+    static constexpr int LabelColoursRole = Qt::UserRole + 54;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -77,7 +80,15 @@ public:
         // R1: the differing characters, flat inclusive [start, end] pairs
         // (legacy lineCompare without its leading 1).
         ComparisonMarksRole,
+        // E6: the Line's legacy State (SubsGridWindow.cpp:343, 478-479): 1
+        // changed, 2 changed and saved (the session's changeState), 4
+        // Unconfirmed, 8 bookmarked, or'ed together; 0 none.
+        LineStateRole,
     };
+    // E6: the number cell's colour index in LabelColoursRole for a State
+    // (SubsGridWindow.cpp:478-479): 0 normal, 1 modified, 2 saved, 3 doubtful
+    // (any other State, Unconfirmed or bookmarked included).
+    static int labelSlot(int state);
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
 
@@ -96,6 +107,19 @@ public:
     // Grid uses the dark ones until the theme model arrives.
     static ComparisonColours themeComparisonColours(bool dark);
     void setComparisonColours(const ComparisonColours &colours);
+    // E6: the label colours are fixed per theme as well: legacy's theme
+    // defaults (config.cpp:422-425); the Grid uses the dark ones until the
+    // theme model arrives.
+    using LabelColours = std::array<QColor, 4>;
+    static LabelColours themeLabelColours(bool dark);
+    // E6: a Line's changed-Line mark, 0, 1 or 2 (EditSession::changeState),
+    // read at the next setDocument. Unset: 0.
+    using ChangeState = std::function<int(const core::LineRecord &)>;
+    void setChangeState(ChangeState changeState) { m_changeState = std::move(changeState); }
+    // E6: GLOBAL_HIDE_TAGS (GRID_HIDE_TAGS): the Text column shows each
+    // override block (SRT: each <...>) as `swap` (GRID_TAGS_SWAP_CHARACTER).
+    void setHideTags(bool hide, const QString &swap);
+    bool hideTags() const { return m_hideTags; }
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setHiddenColumns(int mask);
     // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
@@ -103,7 +127,13 @@ public:
     // always). Unset: no marks. Applied from the next setDocument.
     using Spelling = std::function<core::legacy::SpellMarks(std::u16string_view text, core::SubtitleFormat format,
                                                              bool spell)>;
-    void setSpelling(Spelling spelling) { m_spelling = std::move(spelling); }
+    void setSpelling(Spelling spelling);
+    // E6: with GLOBAL_HIDE_TAGS on, the marks are of the text with its tags
+    // swapped, each block counted as `replaceTagsLen` characters (legacy
+    // TextData::Init's tagReplaceLen); -1 otherwise.
+    using TagSpelling = std::function<core::legacy::SpellMarks(std::u16string_view text, core::SubtitleFormat format,
+                                                                bool spell, int replaceTagsLen)>;
+    void setSpelling(TagSpelling spelling) { m_spelling = std::move(spelling); }
     int hiddenColumns() const { return m_hidden; }
     bool columnShown(int column) const;
 
@@ -131,10 +161,17 @@ private:
         mutable std::optional<QVariantList> spellMarks; // checked when first shown (F3)
         int comparison = 0;          // R1: ComparisonRole
         QVariantList comparisonMarks; // R1: ComparisonMarksRole
+        int state = 0;               // E6: LineStateRole
+        mutable std::optional<QString> shownText; // E6: the Text column, tags swapped when hidden
     };
+    const QString &shownTextOf(const Row &row) const;
+    bool tagsSwapped() const { return m_hideTags && !m_translationMode; }
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
-    Spelling m_spelling;
+    TagSpelling m_spelling;
+    ChangeState m_changeState;
+    bool m_hideTags = false;
+    QString m_tagSwap;
     void emitStateChanged(const std::vector<core::LineId> &ids);
 
     std::vector<Row> m_rows;
@@ -147,6 +184,7 @@ private:
     int m_headerBlock = 0;
     int m_hidden = 0;
     ComparisonColours m_comparisonColours = themeComparisonColours(true);
+    LabelColours m_labelColours = themeLabelColours(true);
 };
 
 // Filtered view over a LineTableModel. Hidden Lines stay selected: the

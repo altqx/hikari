@@ -609,12 +609,30 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
     }
-    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell) {
+    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
                                                   spell && m_settings->boolean("editor.spellchecker") && checker ? checker->wordCheck()
-                                                                                   : core::legacy::WordCheck{});
+                                                                                   : core::legacy::WordCheck{},
+                                                  replaceTagsLen);
     });
+    // E6: the changed-Line mark of each Grid's Document, and GRID_HIDE_TAGS
+    // with GRID_TAGS_SWAP_CHARACTER (SubsGrid.cpp:60, SubsGridWindow.cpp:249).
+    m_shell->setChangeStates(
+        [this](const core::LineRecord &line) {
+            const auto *session = targetSession();
+            return session ? session->changeState(line) : 0;
+        },
+        [this](const core::LineRecord &line) {
+            const auto reference = m_workspace.reference();
+            const auto *session = reference ? m_files->session(*reference) : nullptr;
+            return session ? session->changeState(line) : 0;
+        });
+    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    // E6: TEXT_EDITOR_TAG_LIST_OPTIONS, read when a tag list opens and
+    // written by its menu.
+    m_editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
+                                         [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
     // GRID_HIDE_COLUMNS (G7).
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
@@ -1364,6 +1382,11 @@ void Application::resolveClose(const QVariantList &choices)
 
 void Application::writeFinished(const application::WriteResult &result)
 {
+    // E6: the saved Lines' marks turn saved (SubsGridBase.cpp:391).
+    if ((result.outcome == application::WriteOutcome::Written ||
+         result.outcome == application::WriteOutcome::DurabilityUncertain) &&
+        (m_workspace.editingTarget() == result.document || m_workspace.reference() == result.document))
+        refreshViews();
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value); // legacy SetRecent after a save
@@ -4001,6 +4024,26 @@ bool Application::deleteLines()
     return done;
 }
 
+// E6: GLOBAL_HIDE_TAGS, SubsGrid::HideOverrideTags (SubsGridWindow.cpp:1959-1965):
+// the Grid's switch flips and GRID_HIDE_TAGS keeps it.
+void Application::toggleHideTags()
+{
+    m_settings->set("grid.hideTags", !m_shell->hideTags());
+    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+}
+
+// E6: GLOBAL_REMOVE_TEXT, SubsGrid::DeleteText (SubsGridBase.cpp:928-936).
+bool Application::deleteText()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteText(*session, shownLines()).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::joinLines(const QString &kind)
 {
     const auto target = m_workspace.editingTarget();
@@ -4090,6 +4133,8 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+        m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
 }
 
 namespace {
