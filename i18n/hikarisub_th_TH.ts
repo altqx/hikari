@@ -59,7 +59,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Secondary</source>
+        <source>Choose…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,10 +72,6 @@
     </message>
     <message>
         <source>UI colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -108,12 +104,36 @@
 <context>
     <name>AutomationManager</name>
     <message>
-        <source>Automation</source>
+        <source>A script is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
+    </message>
+    <message>
+        <source>No scripts loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reload</source>
@@ -385,6 +405,10 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Modified (history step %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -517,23 +541,39 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add a catalog with this name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation type="unfinished">แก้ไข</translation>
+    </message>
+    <message>
+        <source>Edit the catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
         <translation type="unfinished">ลบ</translation>
     </message>
     <message>
+        <source>Delete the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation type="unfinished">โหลด</translation>
+    </message>
+    <message>
+        <source>Load a catalog from a file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Refresh fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reads the installed and external fonts again</source>
+        <source>Refresh fonts: reads the installed and external fonts again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -579,6 +619,10 @@ and the color selection window on right-click.</source>
     <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">ปิด</translation>
     </message>
     <message>
         <source>Select the name of the profile</source>
@@ -645,6 +689,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Destination folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -742,6 +790,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font name</source>
         <translation>ชื่อแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Font size</source>
@@ -1293,10 +1345,14 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">แก้ไข</translation>
+        <translation type="obsolete">แก้ไข</translation>
     </message>
     <message>
         <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style: allows quick editing of the current line&apos;s style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1840,6 +1896,10 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Video times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2639,8 +2699,12 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From video</source>
+        <translation type="unfinished">จากวิดีโอ</translation>
+    </message>
+    <message>
         <source>Modified</source>
-        <translation>แก้ไขแล้ว</translation>
+        <translation type="vanished">แก้ไขแล้ว</translation>
     </message>
     <message>
         <source>History (1 element)</source>
@@ -2931,6 +2995,10 @@ Moves the translation one line up.</source>
 และเลื่อนการแปลขึ้นไป</translation>
     </message>
     <message>
+        <source>Description</source>
+        <translation type="unfinished">คำอธิบาย</translation>
+    </message>
+    <message>
         <source>Description:
 Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
 Translation - text pasted into subtitles with correct timing.</source>
@@ -3169,7 +3237,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change resolution</source>
-        <translation>เปลี่ยนความละเอียด</translation>
+        <translation type="vanished">เปลี่ยนความละเอียด</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
@@ -3185,7 +3253,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Get from video</source>
-        <translation>ใช้ค่าจากวิดีโอ</translation>
+        <translation type="vanished">ใช้ค่าจากวิดีโอ</translation>
     </message>
     <message>
         <source>Resample options</source>
@@ -3336,6 +3404,10 @@ Match the resolution to the video?
     <message>
         <source>Auto save</source>
         <translation>บันทึกอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>No auto save files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove selected autosave files</source>
@@ -3513,7 +3585,11 @@ Match the resolution to the video?
     <name>MisspellReplacerDialog</name>
     <message>
         <source>Multireplacer</source>
-        <translation>เครื่องมือแทนที่หลายรายการ</translation>
+        <translation type="vanished">เครื่องมือแทนที่หลายรายการ</translation>
+    </message>
+    <message>
+        <source>Fix minor errors</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rule editing</source>
@@ -3799,7 +3875,11 @@ in all tabs</source>
     <name>ScriptPropertiesDialog</name>
     <message>
         <source>ASS subtitle properties</source>
-        <translation>คุณสมบัติของคำบรรยาย ASS</translation>
+        <translation type="vanished">คุณสมบัติของคำบรรยาย ASS</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation type="unfinished">คุณสมบัติแฟ้ม ASS</translation>
     </message>
     <message>
         <source>Save</source>
@@ -3928,6 +4008,10 @@ in all tabs</source>
     <message>
         <source>Find and replace</source>
         <translation>ค้นหาและแทนที่</translation>
+    </message>
+    <message>
+        <source>In files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Find in subtitles</source>
@@ -4066,6 +4150,10 @@ in all tabs</source>
         <translation>ผลการค้นหา</translation>
     </message>
     <message>
+        <source>No results yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4119,6 +4207,10 @@ in all tabs</source>
     <message>
         <source>Find</source>
         <translation>ค้นหา</translation>
+    </message>
+    <message>
+        <source>Select lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>With</source>
@@ -4343,6 +4435,10 @@ please save with different name or change file attribute.</source>
         <translation>ตั้งเป็นค่าเริ่มต้น</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Font size</source>
         <translation>ขนาดอักษร</translation>
     </message>
@@ -4393,6 +4489,14 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
         <translation>ภาษาการตรวจสอบการสะกดคำ (โฟลเดอร์ &quot;Dictionary&quot;)</translation>
+    </message>
+    <message>
+        <source>None chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -4827,6 +4931,14 @@ removing audio cache files.</source>
         <translation>ข้อมูลคำบรรยาย</translation>
     </message>
     <message>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the value into the subtitles&apos; information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Title</source>
         <translation>ชื่อเรื่อง</translation>
     </message>
@@ -4902,7 +5014,7 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose folder...</source>
+        <source>Choose folder…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5066,6 +5178,10 @@ to the color selection location</source>
         <translation>แทนที่เป็น:</translation>
     </message>
     <message>
+        <source>No suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Suggestions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5203,8 +5319,16 @@ in uppercase</source>
         <translation>คัดลอก</translation>
     </message>
     <message>
+        <source>Copy the selected style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>แก้ไข</translation>
+    </message>
+    <message>
+        <source>Edit the selected style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load</source>
@@ -5215,8 +5339,16 @@ in uppercase</source>
         <translation>โหลดสไตล์จากแฟ้ม ASS ภายนอกไปยังที่เก็บข้อมูล</translation>
     </message>
     <message>
+        <source>Delete the selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort</source>
         <translation>จัดเรียง</translation>
+    </message>
+    <message>
+        <source>Sort the styles by name</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
@@ -5253,6 +5385,10 @@ in uppercase</source>
     <message>
         <source>Add to all open ASS files</source>
         <translation>เพิ่มไปยังแฟ้ม ASS ที่เปิดอยู่ทั้งหมด</translation>
+    </message>
+    <message>
+        <source>Copy style from storage to every open ASS file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Create new ASS style</source>
@@ -5722,6 +5858,10 @@ Foreign language text will be deleted.</source>
 <context>
     <name>VideoFollowChoices</name>
     <message>
+        <source>Seek on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Double-clicking a line (always on)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5747,6 +5887,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Move video to selected line on:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Then play</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5803,24 +5947,41 @@ Foreign language text will be deleted.</source>
     </message>
 </context>
 <context>
+    <name>VisualToolRail</name>
+    <message>
+        <source>%1 (not available yet)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VisualToolValues</name>
+    <message>
+        <source>Pick selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Targets: %n picked line(s)</source>
+        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Targets: active line</source>
+        <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n line(s) picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <source>Pick selected lines</source>
+        <source>Clear picked lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">ล้าง</translation>
+        <translation type="obsolete">ล้าง</translation>
     </message>
 </context>
 <context>

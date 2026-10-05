@@ -59,7 +59,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Secondary</source>
+        <source>Choose…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,10 +72,6 @@
     </message>
     <message>
         <source>UI colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -108,12 +104,36 @@
 <context>
     <name>AutomationManager</name>
     <message>
-        <source>Automation</source>
+        <source>A script is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>No scripts loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reload</source>
@@ -385,6 +405,10 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Modified (history step %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -517,23 +541,39 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Add a catalog with this name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation type="unfinished">편집</translation>
+    </message>
+    <message>
+        <source>Edit the catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete</source>
         <translation type="unfinished">삭제</translation>
     </message>
     <message>
+        <source>Delete the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Load</source>
         <translation type="unfinished">파일에서</translation>
+    </message>
+    <message>
+        <source>Load a catalog from a file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Refresh fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reads the installed and external fonts again</source>
+        <source>Refresh fonts: reads the installed and external fonts again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -579,6 +619,10 @@ and the color selection window on right-click.</source>
     <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">닫기</translation>
     </message>
     <message>
         <source>Select the name of the profile</source>
@@ -645,6 +689,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Destination folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -742,6 +790,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font name</source>
         <translation>글꼴 이름</translation>
+    </message>
+    <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Font size</source>
@@ -1293,10 +1345,14 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">편집</translation>
+        <translation type="obsolete">편집</translation>
     </message>
     <message>
         <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style: allows quick editing of the current line&apos;s style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1840,6 +1896,10 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Video times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2639,8 +2699,12 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From video</source>
+        <translation type="unfinished">영상에서</translation>
+    </message>
+    <message>
         <source>Modified</source>
-        <translation>적용 가능</translation>
+        <translation type="vanished">적용 가능</translation>
     </message>
     <message>
         <source>History (1 element)</source>
@@ -2931,6 +2995,10 @@ Moves the translation one line up.</source>
 번역을 한 줄 위로 이동합니다.</translation>
     </message>
     <message>
+        <source>Description</source>
+        <translation type="unfinished">설명</translation>
+    </message>
+    <message>
         <source>Description:
 Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
 Translation - text pasted into subtitles with correct timing.</source>
@@ -3169,7 +3237,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change resolution</source>
-        <translation>자막해상도 변경</translation>
+        <translation type="vanished">자막해상도 변경</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
@@ -3185,7 +3253,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Get from video</source>
-        <translation>영상에서</translation>
+        <translation type="vanished">영상에서</translation>
     </message>
     <message>
         <source>Resample options</source>
@@ -3336,6 +3404,10 @@ Match the resolution to the video?
     <message>
         <source>Auto save</source>
         <translation>자동 저장</translation>
+    </message>
+    <message>
+        <source>No auto save files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove selected autosave files</source>
@@ -3513,7 +3585,11 @@ Match the resolution to the video?
     <name>MisspellReplacerDialog</name>
     <message>
         <source>Multireplacer</source>
-        <translation>자동 바꾸기</translation>
+        <translation type="vanished">자동 바꾸기</translation>
+    </message>
+    <message>
+        <source>Fix minor errors</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rule editing</source>
@@ -3795,7 +3871,11 @@ in all tabs</source>
     <name>ScriptPropertiesDialog</name>
     <message>
         <source>ASS subtitle properties</source>
-        <translation>ASS 파일 정보</translation>
+        <translation type="vanished">ASS 파일 정보</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation type="unfinished">ASS 파일 정보</translation>
     </message>
     <message>
         <source>Save</source>
@@ -3924,6 +4004,10 @@ in all tabs</source>
     <message>
         <source>Find and replace</source>
         <translation>찾아서 바꾸기</translation>
+    </message>
+    <message>
+        <source>In files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Find in subtitles</source>
@@ -4062,6 +4146,10 @@ in all tabs</source>
         <translation>찾기 결과</translation>
     </message>
     <message>
+        <source>No results yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4115,6 +4203,10 @@ in all tabs</source>
     <message>
         <source>Find</source>
         <translation>찾기</translation>
+    </message>
+    <message>
+        <source>Select lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>With</source>
@@ -4339,6 +4431,10 @@ please save with different name or change file attribute.</source>
         <translation>기본값으로 설정</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Font size</source>
         <translation>글꼴 크기</translation>
     </message>
@@ -4389,6 +4485,14 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
         <translation>맞춤법 검사 (&quot;Dictionary&quot; 폴더)</translation>
+    </message>
+    <message>
+        <source>None chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -4823,6 +4927,14 @@ removing audio cache files.</source>
         <translation>자막 정보</translation>
     </message>
     <message>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the value into the subtitles&apos; information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Title</source>
         <translation>제목</translation>
     </message>
@@ -4898,7 +5010,7 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose folder...</source>
+        <source>Choose folder…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5062,6 +5174,10 @@ to the color selection location</source>
         <translation>변경 글자:</translation>
     </message>
     <message>
+        <source>No suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Suggestions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5198,8 +5314,16 @@ in uppercase</source>
         <translation>복사</translation>
     </message>
     <message>
+        <source>Copy the selected style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>편집</translation>
+    </message>
+    <message>
+        <source>Edit the selected style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load</source>
@@ -5210,8 +5334,16 @@ in uppercase</source>
         <translation>ASS자막에서 가져오기</translation>
     </message>
     <message>
+        <source>Delete the selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort</source>
         <translation>정렬</translation>
+    </message>
+    <message>
+        <source>Sort the styles by name</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
@@ -5248,6 +5380,10 @@ in uppercase</source>
     <message>
         <source>Add to all open ASS files</source>
         <translation>열려있는 모든 파일에 추가</translation>
+    </message>
+    <message>
+        <source>Copy style from storage to every open ASS file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Create new ASS style</source>
@@ -5717,6 +5853,10 @@ Foreign language text will be deleted.</source>
 <context>
     <name>VideoFollowChoices</name>
     <message>
+        <source>Seek on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Double-clicking a line (always on)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5742,6 +5882,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Move video to selected line on:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Then play</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5798,24 +5942,41 @@ Foreign language text will be deleted.</source>
     </message>
 </context>
 <context>
+    <name>VisualToolRail</name>
+    <message>
+        <source>%1 (not available yet)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VisualToolValues</name>
+    <message>
+        <source>Pick selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Targets: %n picked line(s)</source>
+        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Targets: active line</source>
+        <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n line(s) picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <source>Pick selected lines</source>
+        <source>Clear picked lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">스타일 정리</translation>
+        <translation type="obsolete">스타일 정리</translation>
     </message>
 </context>
 <context>
