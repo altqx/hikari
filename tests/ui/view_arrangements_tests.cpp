@@ -10,8 +10,10 @@
 #include "icon_theme.h"
 #include "workspace_layout.h"
 
+#include <QAccessible>
 #include <QFile>
 #include <QPalette>
+#include <QPointer>
 #include <QScopeGuard>
 #include <QSettings>
 #include <QQmlApplicationEngine>
@@ -77,6 +79,7 @@ class ViewArrangementsTest : public QObject {
     Q_OBJECT
     QTemporaryDir dir;
     QString episode;
+    QString original;
     std::unique_ptr<app::Application> application;
     std::unique_ptr<QQmlApplicationEngine> engine;
     QQuickWindow *window = nullptr;
@@ -215,6 +218,40 @@ class ViewArrangementsTest : public QObject {
         walk(panel("videoPanel"));
         return n;
     }
+    // The shown title bar over a panel: its group's, or its floating
+    // window's when that shows the only one.
+    QQuickItem *titleBarOver(const char *panelName) const
+    {
+        std::function<QQuickItem *(QQuickItem *, int)> bar = [&](QQuickItem *item, int depth) -> QQuickItem * {
+            if (item->objectName() == QLatin1String("dockTitleBar"))
+                return item->isVisible() ? item : nullptr;
+            if (depth == 0 || item->objectName().endsWith(QLatin1String("Panel")))
+                return nullptr;
+            for (QQuickItem *child : item->childItems())
+                if (QQuickItem *found = bar(child, depth - 1))
+                    return found;
+            return nullptr;
+        };
+        for (QQuickItem *p = panel(panelName); p; p = p->parentItem())
+            if (QQuickItem *found = bar(p, 4))
+                return found;
+        return nullptr;
+    }
+    // A title bar button pressed as the pointer and as assistive
+    // technology press it.
+    void pressTitleBarButton(QQuickItem *button)
+    {
+        const QPoint centre = button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint();
+        const QPointer<QQuickItem> guard(button);
+        QTest::mouseClick(button->window(), Qt::LeftButton, {}, centre);
+        QCoreApplication::processEvents();
+        if (!guard || !guard->isVisible())
+            return; // it closed its panel
+        if (QAccessibleInterface *a = QAccessible::queryAccessibleInterface(button))
+            if (QAccessibleActionInterface *actions = a->actionInterface())
+                actions->doAction(QAccessibleActionInterface::pressAction());
+        QCoreApplication::processEvents();
+    }
     application::EditSession *session() const
     {
         return application->files().session(*application->workspace().editingTarget());
@@ -227,6 +264,7 @@ private slots:
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
+        original = writeFile(dir, "original.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,ref\n");
     }
     void cleanup()
     {
@@ -303,6 +341,8 @@ private slots:
         openVideo();
         application->audio().openDummy(); // after the video (A1 closes the box for a video without audio)
         QTRY_VERIFY(application->audio().hasAudio());
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
         const auto editing = placement();
         QCOMPARE(editing.size(), 4);
         typeDraft();
@@ -312,6 +352,7 @@ private slots:
         trigger("viewVideoAndSubs");
         QTRY_COMPARE(openCore(), (QStringList{"videoDock", "editorDock", "gridDock"}));
         QCOMPARE(focusedPanel(), QStringLiteral("editorPanel")); // still shown: the focus stays
+        QVERIFY(isOpen(QStringLiteral("referenceDock"))); // the tray goes with the Grid
 
         trigger("viewAudioAndSubs");
         QTRY_COMPARE(openCore(), (QStringList{"audioDock", "editorDock", "gridDock"}));
@@ -324,6 +365,7 @@ private slots:
         trigger("viewOnlyVideo");
         QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
         QVERIFY(!isOpen(QStringLiteral("timingDock")));
+        QVERIFY(!isOpen(QStringLiteral("referenceDock"))); // no Grid, no tray
         QTRY_COMPARE(focusedPanel(), QStringLiteral("videoPanel")); // the focused panel went: the next shown one
         QVERIFY(session()->draftLine()); // hiding the Line editor keeps the draft
         QVERIFY(application->workspace().editingTarget());
@@ -335,6 +377,7 @@ private slots:
         QTRY_COMPARE(openCore(), (QStringList{"editorDock", "gridDock"}));
         QTRY_VERIFY(!application->video().playing());
         QVERIFY(isOpen(QStringLiteral("timingDock")));
+        QVERIFY(isOpen(QStringLiteral("referenceDock"))); // the Grid back, the tray with it
         QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
         QCOMPARE(panel("lineText")->property("text").toString(), QStringLiteral("first!"));
         QVERIFY(QMetaObject::invokeMethod(dock(QStringLiteral("timingDock")), "close"));
@@ -398,8 +441,6 @@ private slots:
         QTest::keyClick(window, Qt::Key_E, Qt::ControlModifier);
         QTRY_VERIFY(!application->editorOn());
         QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
-        for (const char *name : {"referenceDock", "timingDock", "searchDock"})
-            QVERIFY2(!isOpen(QLatin1String(name)), name);
         QVERIFY(application->workspaceLayout().holding());
         QTRY_COMPARE(focusedPanel(), QStringLiteral("videoPanel"));
         // HideVideoToolbar and RemoveVisual(false, true): no visual tool
@@ -432,6 +473,118 @@ private slots:
         QVERIFY(menuEnabled("panelsMenu"));
         QCOMPARE(visualToolItems(true), 3);
         application->editor().discard();
+        stop();
+    }
+
+    // HideEditor's last lines (HikariSubFrame.cpp:2082-2087): the editor off
+    // hides the Find and replace window (FR, the Search tool), Select lines
+    // (SL) and the Style manager (StyleStore); the Reference tray goes with
+    // the Grid. The editor back on shows the Grid and its tray again, but
+    // not the tools legacy hid (nothing shows FR, SL or StyleStore again).
+    void editorOffClosesTheEditingTools()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
+        QVERIFY(QMetaObject::invokeMethod(root(), "openSearch", Q_ARG(QVariant, 0)));
+        QTRY_VERIFY(isOpen(QStringLiteral("searchDock")));
+        QVERIFY(QMetaObject::invokeMethod(named(QStringLiteral("selectLinesMenuItem"))->property("action").value<QObject *>(),
+                                          "trigger"));
+        QObject *selectLines = named(QStringLiteral("selectLinesDialog"));
+        QVERIFY(selectLines);
+        QTRY_VERIFY(selectLines->property("visible").toBool());
+        trigger("styleManagerMenuItem");
+        QObject *styles = named(QStringLiteral("styleManager"));
+        QVERIFY(styles);
+        QTRY_VERIFY(styles->property("visible").toBool());
+
+        application->toggleEditor();
+        QTRY_VERIFY(!application->editorOn());
+        QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
+        for (const char *name : {"referenceDock", "timingDock", "searchDock"})
+            QVERIFY2(!isOpen(QLatin1String(name)), name);
+        QTRY_VERIFY(!selectLines->property("visible").toBool());
+        QTRY_VERIFY(!styles->property("visible").toBool());
+
+        application->toggleEditor();
+        QTRY_VERIFY(application->editorOn());
+        QTRY_COMPARE(openCore(), kCore);
+        QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
+        QVERIFY(!isOpen(QStringLiteral("searchDock")));
+        QVERIFY(!selectLines->property("visible").toBool());
+        QVERIFY(!styles->property("visible").toBool());
+        stop();
+    }
+
+    // A reference opened in the player layout waits for the Grid: no tray
+    // over the video, and it shows when the editor comes back.
+    void aReferenceOpenedInThePlayerLayoutWaitsForTheGrid()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        QVERIFY(!isOpen(QStringLiteral("referenceDock")));
+        application->toggleEditor();
+        QTRY_VERIFY(!application->editorOn());
+        QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
+        QVERIFY(application->openReference(original));
+        QTest::qWait(200);
+        QVERIFY(!isOpen(QStringLiteral("referenceDock")));
+        QCOMPARE(openCore(), (QStringList{"videoDock"}));
+        application->toggleEditor();
+        QTRY_VERIFY(application->editorOn());
+        QTRY_COMPARE(openCore(), kCore);
+        QTRY_VERIFY(isOpen(QStringLiteral("referenceDock")));
+        stop();
+    }
+
+    // The player layout with a video: the switch is off (above) and so are
+    // the Panels menu and the arrangements, so the Video panel, legacy's
+    // only content of the frame, cannot be closed from its title bar,
+    // docked or floating. With the editor back it closes as any panel.
+    void playerLayoutKeepsTheVideoPanel()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        application->toggleEditor();
+        QTRY_VERIFY(!application->editorOn());
+        openVideo();
+        QTRY_COMPARE(openCore(), (QStringList{"videoDock"}));
+        for (const char *name : {"editorSwitchMenuItem", "panelsMenu", "viewAll", "resetLayout"})
+            QVERIFY2(!menuEnabled(name), name);
+        QQuickItem *bar = titleBarOver("videoPanel");
+        QVERIFY(bar);
+        auto *close = bar->findChild<QQuickItem *>(QStringLiteral("dockCloseButton"));
+        QVERIFY(close);
+        QTRY_VERIFY(!close->isEnabled());
+        QVERIFY(!close->isVisible());
+        pressTitleBarButton(close);
+        QTest::qWait(200);
+        QVERIFY(isOpen(QStringLiteral("videoDock")));
+        QCOMPARE(openCore(), (QStringList{"videoDock"}));
+        // Floated, its window's title bar cannot close it either.
+        QVERIFY(dock(QStringLiteral("videoDock"))->setProperty("isFloating", true));
+        QTRY_VERIFY(dock(QStringLiteral("videoDock"))->property("isFloating").toBool());
+        QTRY_VERIFY(titleBarOver("videoPanel"));
+        bar = titleBarOver("videoPanel");
+        close = bar->findChild<QQuickItem *>(QStringLiteral("dockCloseButton"));
+        QTRY_VERIFY(!close->isEnabled());
+        QVERIFY(!close->isVisible());
+        pressTitleBarButton(close);
+        QTest::qWait(200);
+        QVERIFY(isOpen(QStringLiteral("videoDock")));
+        QVERIFY(dock(QStringLiteral("videoDock"))->setProperty("isFloating", false));
+        QTRY_VERIFY(!dock(QStringLiteral("videoDock"))->property("isFloating").toBool());
+
+        application->toggleEditor();
+        QTRY_VERIFY(application->editorOn());
+        QTRY_COMPARE(openCore(), kCore);
+        QTRY_VERIFY(titleBarOver("videoPanel"));
+        close = titleBarOver("videoPanel")->findChild<QQuickItem *>(QStringLiteral("dockCloseButton"));
+        QTRY_VERIFY(close->isEnabled());
+        QVERIFY(close->isVisible());
+        pressTitleBarButton(close);
+        QTRY_VERIFY(!isOpen(QStringLiteral("videoDock")));
         stop();
     }
 

@@ -54,7 +54,8 @@ KDDW.TitleBarBase {
         Accessible.name: button.name
         Accessible.focusable: false
         Accessible.ignored: !button.visible
-        Accessible.onPressAction: button.clicked()
+        // A disabled button (a panel that cannot be closed) does nothing.
+        Accessible.onPressAction: if (button.enabled) button.clicked()
         Image {
             id: image
             anchors.centerIn: parent
@@ -108,6 +109,9 @@ KDDW.TitleBarBase {
         }
         Button {
             objectName: "dockCloseButton"
+            // A panel that cannot be closed (D2: the Video panel in the
+            // player layout) shows no Close: the engine's image does not dim.
+            visible: root.closeButtonEnabled
             enabled: root.closeButtonEnabled
             imageSource: root.imagePath("close")
             name: root.buttonName(qsTr("Close %1"), qsTr("Close tab group"))

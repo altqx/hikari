@@ -326,9 +326,13 @@ ApplicationWindow {
     // comes back) and only the Video panel is shown, docked, without the
     // visual tools' rail and values (HideVideoToolbar, RemoveVisual(false,
     // true)), with the focus; the Search tool, Select lines and the Style
-    // manager close (FR, SL, StyleStore hidden). On: the held arrangement
-    // comes back as it was, and the focus goes to the Grid (or the first
-    // shown panel). A draft in the Line editor stays as it was either way.
+    // manager close (FR, SL, StyleStore hidden). The Video panel cannot be
+    // closed meanwhile (legacy's video is the frame's only content, with no
+    // close of its own): the Panels menu and the arrangements that could
+    // bring a panel back are off. On: the held arrangement comes back as it
+    // was, but for the Search tool (FR stays hidden), and the focus goes to
+    // the Grid (or the first shown panel). A draft in the Line editor stays
+    // as it was either way.
     function applyEditor(on) {
         if (!on) {
             if (root.workspaceLayout.holding)
@@ -344,14 +348,20 @@ ApplicationWindow {
             if (videoDock.isFloating)
                 videoDock.isFloating = false
             videoDock.open()
+            videoDock.options = KDDW.KDDockWidgets.DockWidgetOption_NotClosable
             if (selectLinesDialog.visible)
                 selectLinesDialog.close()
             if (styleManagerWindow.visible)
                 styleManagerWindow.close()
             root.focusPanel(videoPanel, Qt.OtherFocusReason)
         } else {
+            videoDock.options = KDDW.KDDockWidgets.DockWidgetOption_None
             if (!root.workspaceLayout.releaseArrangement())
                 return
+            // Legacy hid FR when the editor went off and nothing shows it
+            // again: the Search tool stays closed in the arrangement.
+            if (searchDock.isOpen)
+                searchDock.close()
             if (root.shell.hasReference && gridDock.isOpen)
                 referenceDock.open() // a reference opened meanwhile
             Qt.callLater(() => root.keepFocusOnAShownPanel(null))
