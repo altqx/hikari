@@ -7,8 +7,7 @@
 // ("Filters", legacy VideoBox::ContextMenu) and Stop back to the first frame.
 // Then the transport's Next / Previous frame buttons step, and the Filters
 // submenu, open beside the context menu, takes the Dark and Light themes'
-// colours with every filter's name whole (saved for review when
-// HIKARI_SCREENSHOT_DIR is set).
+// colours (saved for review when HIKARI_SCREENSHOT_DIR is set).
 
 #include "hikari/app/application.h"
 #include "docking.h"
@@ -31,6 +30,7 @@
 #include <cstdio>
 #include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -149,8 +149,7 @@ void setTheme(const char *code)
 
 // With the Filters submenu open in the theme `code`: both menus' surface
 // is the theme's (K2: Menu draws on palette.base, the field role), on the
-// theme's side, and no filter's name is cut off. The context menu's own
-// items that are cut off are printed (theirs is the shared menu item).
+// theme's side.
 std::string filtersLook(const char *code, bool dark)
 {
     std::string out;
@@ -168,17 +167,21 @@ std::string filtersLook(const char *code, bool dark)
             auto *filtersBack = filters->property("background").value<QQuickItem *>();
             const QColor menuColour = menuBack ? menuBack->property("color").value<QColor>() : QColor();
             const QColor filtersColour = filtersBack ? filtersBack->property("color").value<QColor>() : QColor();
-            QStringList cut;
-            for (auto *item : menuItems(filters))
-                if (item->implicitWidth() > item->width() + 0.5)
-                    cut << item->property("text").toString();
-            QStringList menuCut;
-            for (auto *item : menuItems(menu))
-                if (item->implicitWidth() > item->width() + 0.5)
-                    menuCut << item->property("text").toString().replace(QLatin1Char('\t'), QLatin1Char(' '));
-            std::printf("%s: context menu %s, Filters %s, theme field %s; context menu items cut off: %s\n", code,
-                        qPrintable(menuColour.name()), qPrintable(filtersColour.name()), qPrintable(expected.name()),
-                        qPrintable(menuCut.isEmpty() ? QStringLiteral("none") : menuCut.join(QStringLiteral(" | "))));
+            // Labels cut off (elided): printed only, since the offscreen
+            // platform here has no fonts of its own (the shell test
+            // videoFiltersSubmenuShowsWholeNames measures them).
+            const auto cutOff = [](QObject *m) {
+                QStringList out;
+                for (auto *item : menuItems(m)) {
+                    auto *label = item->property("contentItem").value<QQuickItem *>();
+                    if (label && label->implicitWidth() > label->width() + 0.5)
+                        out << item->property("text").toString().replace(QLatin1Char('\t'), QLatin1Char(' '));
+                }
+                return out.isEmpty() ? QStringLiteral("none") : out.join(QStringLiteral(" | "));
+            };
+            std::printf("%s: context menu %s, Filters %s, theme field %s; labels cut off: Filters %s; context menu %s\n",
+                        code, qPrintable(menuColour.name()), qPrintable(filtersColour.name()),
+                        qPrintable(expected.name()), qPrintable(cutOff(filters)), qPrintable(cutOff(menu)));
             const QString dir = qEnvironmentVariable("HIKARI_SCREENSHOT_DIR");
             if (!dir.isEmpty() && filtersBack && filtersBack->window()) {
                 QDir().mkpath(dir);
@@ -189,8 +192,6 @@ std::string filtersLook(const char *code, bool dark)
                 out = "not the theme's surface: " + filtersColour.name().toStdString();
             else if ((expected.lightness() < 128) != dark)
                 out = "not on the theme's side";
-            else if (!cut.isEmpty())
-                out = "cut off: " + cut.join(QStringLiteral(", ")).toStdString();
             else
                 out = code;
         },
@@ -311,21 +312,22 @@ protected:
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.barcode == 0 && s.accepted; })
                                    ? "previous button"
                                    : "no previous frame: " + std::to_string(shown().frame)); // 13
-            // The Filters submenu in the Dark and Light themes.
-            mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
-            for (int i = 0; i < 50 && filterEntries().isEmpty(); ++i)
-                wait(100ms);
-            openFilters();
-            setTheme("dark");
-            wait(500ms);
-            status();
-            observed.push_back(filtersLook("dark", true)); // 14
-            setTheme("light");
-            wait(500ms);
-            status();
-            observed.push_back(filtersLook("light", false)); // 15
-            closeContextMenu();
-            wait(200ms);
+            // The Filters submenu in the Dark and Light themes, each chosen
+            // before the menu opens (the Options dialog is modal: no menu
+            // stays open while the theme changes).
+            for (const auto &[code, dark] : {std::pair{"dark", true}, std::pair{"light", false}}) {
+                setTheme(code);
+                wait(300ms);
+                mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
+                for (int i = 0; i < 50 && filterEntries().isEmpty(); ++i)
+                    wait(100ms);
+                openFilters();
+                wait(500ms);
+                status();
+                observed.push_back(filtersLook(code, dark)); // 14, 15
+                closeContextMenu();
+                wait(300ms);
+            }
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -437,8 +439,8 @@ int main(int argc, char **argv)
         expect(o[11] == "frame 0", "Stop returns to the first frame");
         expect(o[12] == "next button", "the Next frame button steps one indexed frame");
         expect(o[13] == "previous button", "the Previous frame button steps back");
-        expect(o[14] == "dark", "the Filters submenu takes the Dark theme, its names whole");
-        expect(o[15] == "light", "the Filters submenu takes the Light theme, its names whole");
+        expect(o[14] == "dark", "the Filters submenu takes the Dark theme");
+        expect(o[15] == "light", "the Filters submenu takes the Light theme");
     }
     return failures == 0 ? 0 : 1;
 }

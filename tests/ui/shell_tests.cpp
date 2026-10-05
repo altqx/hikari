@@ -12710,6 +12710,104 @@ private slots:
         QVERIFY(!application->settingsStore()->boolean("video.progressBar"));
     }
 
+    // W1: the menus draw on the theme's surface from the start. The theme
+    // shown when the window loads (here Dark, by following a dark system)
+    // reaches the popups too, not only after the theme next changes: the
+    // video's context menu (where DirectShow's Filters submenu opens) and
+    // the File menu; then Light and Dark by hand.
+    void menusFollowTheThemeFromTheStart()
+    {
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Dark);
+        restartWithoutSound();
+        auto *root = engine->rootObjects().first();
+        auto *videoMenu = named("videoContextMenu");
+        auto *bar = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+        QVERIFY(videoMenu && bar);
+        auto *fileMenu = bar->property("menu").value<QObject *>();
+        QVERIFY(fileMenu);
+        const auto surface = [](QObject *menu) {
+            return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
+        };
+        const auto check = [&](bool dark) {
+            const QColor field = ui::theme::current().roles.field;
+            QCOMPARE(field.lightness() < 128, dark);
+            QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+            QTRY_VERIFY(videoMenu->property("opened").toBool());
+            QTRY_COMPARE(surface(videoMenu), field);
+            QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
+            QTRY_VERIFY(!videoMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, bar),
+                                              Q_ARG(QPointF, QPointF(0, bar->height()))));
+            QTRY_VERIFY(fileMenu->property("opened").toBool());
+            QTRY_COMPARE(surface(fileMenu), field);
+            QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
+            QTRY_VERIFY(!fileMenu->property("visible").toBool());
+        };
+        check(true);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        check(false);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        check(true);
+        ui::theme::forceSystemScheme(std::nullopt);
+    }
+
+    // W1: the video context menu's Filters submenu (legacy VideoBox.cpp:
+    // 981-990), shown with a DirectShow graph's filters as the adapter lists
+    // them on Windows: after the separator, each filter's whole name, the
+    // ones without property pages disabled. Without filters there is no
+    // submenu.
+    void videoFiltersSubmenuShowsWholeNames()
+    {
+        auto *menu = named("videoContextMenu");
+        QVERIFY(menu);
+        const auto filtersItem = [&]() -> QQuickItem * {
+            const int count = menu->property("count").toInt();
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *item = nullptr;
+                QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+                if (item && item->property("subMenu").value<QObject *>())
+                    if (item->property("subMenu").value<QObject *>()->objectName() == QLatin1String("videoMenuFilters"))
+                        return item;
+            }
+            return nullptr;
+        };
+        QVERIFY(QMetaObject::invokeMethod(menu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(!filtersItem()); // no DirectShow graph (Linux: no adapter)
+        // The graphs the Windows evidence recorded (AVI, MPEG-1, WMV).
+        const QStringList names{QStringLiteral("Direct Sound Renderer"), QStringLiteral("HikariSub video Renderer"),
+                                QStringLiteral("MPEG Video Decoder"),    QStringLiteral("MPEG-I Stream Splitter"),
+                                QStringLiteral("Mpeg4s Decoder DMO"),    QStringLiteral("WMVideo Decoder DMO"),
+                                QStringLiteral("AVI Splitter"),          QStringLiteral("Source Filter")};
+        QVariantList filters;
+        for (const auto &name : names)
+            filters.push_back(QVariantMap{{QStringLiteral("name"), name},
+                                          {QStringLiteral("enabled"), name == QLatin1String("MPEG Video Decoder")}});
+        menu->setProperty("filters", filters);
+        QTRY_VERIFY(filtersItem());
+        QVERIFY(QMetaObject::invokeMethod(filtersItem(), "click"));
+        auto *submenu = named("videoMenuFilters");
+        QTRY_VERIFY(submenu->property("opened").toBool());
+        QCOMPARE(submenu->property("count").toInt(), names.size());
+        for (int i = 0; i < names.size(); ++i) {
+            QQuickItem *item = nullptr;
+            QMetaObject::invokeMethod(submenu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+            QVERIFY(item);
+            QCOMPARE(item->property("text").toString(), names[i]);
+            QCOMPARE(item->property("enabled").toBool(), names[i] == QLatin1String("MPEG Video Decoder"));
+            // Whole: the label is not elided (the item is as wide as it asks).
+            auto *label = item->property("contentItem").value<QQuickItem *>();
+            QVERIFY(label);
+            QVERIFY2(label->implicitWidth() <= label->width() + 0.5,
+                     qPrintable(names[i] + QStringLiteral(": %1 > %2").arg(label->implicitWidth()).arg(label->width())));
+        }
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        menu->setProperty("filters", QVariantList());
+    }
+
     // The video's context menu (VideoBox::ContextMenu) on a right click and
     // the menu key; its snapshots against the CPU-BGRA/libass reference at
     // the paused frame, the PNGs beside the video and the clipboard read

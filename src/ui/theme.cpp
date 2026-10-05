@@ -512,6 +512,22 @@ public:
             emit changed();
     }
 
+    // The Qt Quick Controls' popups (menus, dialogs) take their palettes
+    // from the controls' theme, which the style sets up from its own
+    // defaults when an engine first loads the controls and changes only
+    // when the application palette changes afterwards: the theme's palette
+    // set before that (the Application, before the engine) reached the
+    // windows but not the popups, so they stayed light under Dark until
+    // the theme next changed (W1). Once the engine has loaded, the palette
+    // is set again as a change.
+    void repalette()
+    {
+        if (!settings)
+            return;
+        QGuiApplication::setPalette(QPalette());
+        QGuiApplication::setPalette(palette(state.roles));
+    }
+
 signals:
     void changed();
 
@@ -543,6 +559,16 @@ void useSettings(SettingsStore *settings)
 {
     Hub::get().use(settings);
 }
+
+namespace {
+
+// After the engine's load, when its popups exist (Hub::repalette).
+void repaletteAfterLoad()
+{
+    QMetaObject::invokeMethod(&Hub::get(), [] { Hub::get().repalette(); }, Qt::QueuedConnection);
+}
+
+} // namespace
 
 void preview(const QVariantMap &values)
 {
@@ -583,6 +609,8 @@ void chooseControlsStyle()
 Theme::Theme(QObject *parent) : QObject(parent)
 {
     theme::onChanged(this, [this] { emit changed(); });
+    // An engine's singleton: once its load has made the popups.
+    theme::repaletteAfterLoad();
 }
 
 Theme *Theme::create(QQmlEngine *engine, QJSEngine *)
