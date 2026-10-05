@@ -23,6 +23,7 @@ class ScaleTool : public VisualTool {
 public:
     Family family() const override { return Family::Scale; }
     void reset(VisualHost &host) override;
+    bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
     bool key(const Key &event, VisualHost &host) override;

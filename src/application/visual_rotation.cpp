@@ -270,11 +270,17 @@ void RotationZTool::setVisual(bool dummy, VisualHost &host)
         m_editorText = txt;
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
-    } else if (const std::u16string written = m_editorText; finishEdit(host)) {
-        // The caret goes to the tag only in the text that was written.
-        m_currentLineText = written;
+    } else {
+        // The caret goes to the tag only in the text that was written; it
+        // and the text are taken first, as the host may reload the editor
+        // while it commits.
+        const std::u16string written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
-        host.setEditorSelection(selFrom, selTo);
+        if (finishEdit(host)) {
+            m_currentLineText = written;
+            m_find.setSelection(selFrom, selTo);
+            host.setEditorSelection(selFrom, selTo);
+        }
     }
     host.toolChanged();
 }
@@ -733,11 +739,17 @@ void RotationXYTool::setVisual(bool dummy, VisualHost &host)
         m_editorText = txt;
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
-    } else if (const std::u16string written = m_editorText; finishEdit(host)) {
-        // The caret goes to the tag only in the text that was written.
-        m_currentLineText = written;
+    } else {
+        // The caret goes to the tag only in the text that was written; it
+        // and the text are taken first, as the host may reload the editor
+        // while it commits.
+        const std::u16string written = m_editorText;
         const auto [selFrom, selTo] = m_find.selection();
-        host.setEditorSelection(selFrom, selTo);
+        if (finishEdit(host)) {
+            m_currentLineText = written;
+            m_find.setSelection(selFrom, selTo);
+            host.setEditorSelection(selFrom, selTo);
+        }
     }
     host.toolChanged();
 }

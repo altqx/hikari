@@ -26,6 +26,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+#include <functional>
 #include <fstream>
 #include <map>
 #include <optional>
@@ -106,6 +107,11 @@ public:
     // A refusal for the next commit (a stale revision, a draft that cannot
     // commit): nothing is written.
     std::optional<CommandRefusal> refuse;
+    // What the app does when a commit changed the Document, before the
+    // commit returns: VisualToolsController::commitGesture's m_edited reloads
+    // the Line editor and refresh() resets the tool on a new revision unless
+    // the tool keeps its state, as legacy's Scale and rotations did.
+    std::function<void()> edited;
 
     const VideoView &view() const override { return v; }
     const EditSession *session() const override { return s.get(); }
@@ -139,8 +145,11 @@ public:
         const std::size_t steps = s->historySize();
         auto r = g->commit(*s);
         g.reset();
-        if (s->historySize() > steps)
+        if (s->historySize() > steps) {
             (several ? history : sent).push_back(several ? "dummy " + action : action);
+            if (edited)
+                edited();
+        }
         return r;
     }
     void cancelGesture() override { g.reset(); }
@@ -427,6 +436,10 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
         std::unique_ptr<VisualTool> tool;
         std::size_t step = 0;
         std::size_t noStepSends = 0; // below
+        host.edited = [&] {
+            if (!tool->keepsStateAfterCommit())
+                tool->reset(host);
+        };
         bool several = !c.select.empty() && !(c.select.size() == 1 && c.select[0] == c.active);
         for (const std::string &op : c.ops) {
             std::istringstream in(op);

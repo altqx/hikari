@@ -222,6 +222,10 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     m_gesture.reset();
     if (!result)
         m_lastRefusal = result.error();
+    // T3: the tool's own step is no reason to reset it (legacy ran no
+    // SetVisual after a visual edit); refresh() sees the revision as seen.
+    if (const auto *t = tool(); result && t && t->keepsStateAfterCommit())
+        m_seenRevision = s->revision();
     if (changes && m_edited)
         m_edited(); // the shell refreshes; refresh() follows
     emit changed();

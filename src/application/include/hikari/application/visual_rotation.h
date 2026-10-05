@@ -31,6 +31,7 @@ class RotationZTool : public VisualTool {
 public:
     Family family() const override { return Family::RotationZ; }
     void reset(VisualHost &host) override;
+    bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
@@ -102,6 +103,7 @@ class RotationXYTool : public VisualTool {
 public:
     Family family() const override { return Family::RotationXY; }
     void reset(VisualHost &host) override;
+    bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;

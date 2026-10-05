@@ -252,6 +252,12 @@ public:
     virtual Family family() const = 0;
     // Legacy SetCurVisual: the view, script resolution or active Line changed.
     virtual void reset(VisualHost &host) { (void)host; }
+    // T3: true when the tool's own commit must not reset it. The host resets
+    // a tool on every new revision; legacy's Scale and rotations sent their
+    // edit with the visual dummy flag, so no SetVisual followed it
+    // (Visuals.cpp:791-829, SubsGridBase.cpp:1125-1157) and the tool kept
+    // its state (the caret at the tag, the angles, the press point).
+    virtual bool keepsStateAfterCommit() const { return false; }
     virtual void pointer(const Pointer &event, VisualHost &host) = 0;
     // True when the tool used the key (a nudge: begin on press, commit on release).
     virtual bool key(const Key &event, VisualHost &host)
