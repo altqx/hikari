@@ -189,7 +189,10 @@ void AudioController::openAudio(const QString &path)
 {
     if (path.isEmpty())
         return; // legacy: no file, nothing happens
-    m_box.open(path.toStdString());
+    // In the platform's form, as Open video hands its file on: legacy's
+    // wxFileDialog and wxFileName paths were native, and a file dialog's URL
+    // gives "/" on Windows too.
+    m_box.open(QDir::toNativeSeparators(path).toStdString());
 }
 
 void AudioController::closeAudio()

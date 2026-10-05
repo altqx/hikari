@@ -6722,9 +6722,10 @@ private slots:
         QCOMPARE(*audio.cursor(), 100.f);
         QTest::mouseMove(window, display->mapToScene(QPointF(100, h + 2)).toPoint());
         QTRY_VERIFY(!audio.cursor().has_value());
-        // legacy SetRecent(2), then Close audio
+        // legacy SetRecent(2), then Close audio; the file in the platform's
+        // form, as it was opened
         QCOMPARE(application->recentAudio().first().toMap().value(QStringLiteral("path")).toString(),
-                 QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+                 nativeFixture("audioonly.mkv"));
         // what the scene graph drew, in whichever renderer this run uses
         // (offscreen: the software adaptation; xvfb: RHI)
         QTest::mouseMove(window, QPoint(0, 0));
