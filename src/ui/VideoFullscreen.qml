@@ -61,10 +61,13 @@ Window {
 
     onActiveChanged: if (active && controller.active) keys.forceActiveFocus()
     // Fullscreen::OnClose: the window manager's close (Alt+F4) leaves
-    // fullscreen; the window itself stays for the next time.
+    // fullscreen; the window itself stays for the next time. Hidden, it
+    // lets the close through (the application's quit closes every window).
     onClosing: close => {
-        close.accepted = false
-        fs.controller.leave()
+        if (fs.controller.active) {
+            close.accepted = false
+            fs.controller.leave()
+        }
     }
 
     // A move over the picture: the panel shows or hides (the picture's

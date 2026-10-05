@@ -72,6 +72,11 @@ class Workflow : public spix::TestServer {
 public:
     int monitors = 1;
     std::vector<std::string> observed;
+    void note(std::string what)
+    {
+        std::printf("step %zu: %s\n", observed.size(), what.c_str());
+        observed.push_back(std::move(what));
+    }
     std::atomic<bool> finished{false};
 
 protected:
@@ -94,41 +99,41 @@ protected:
     void executeTest() override
     {
         // Indexed and showing its first frame.
-        observed.push_back(waitFor([&] { return status().rfind("Frame", 0) == 0; }, 200) ? "indexed" : "not indexed");
+        note(waitFor([&] { return status().rfind("Frame", 0) == 0; }, 200) ? "indexed" : "not indexed");
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
         enterKey("mainWindow/videoPanel", Qt::Key_F, spix::KeyModifiers::None);
-        observed.push_back(waitFor([&] { return changes() >= 1; }) ? "entered" : "not entered"); // 1
+        note(waitFor([&] { return changes() >= 1; }) ? "entered" : "not entered"); // 1
         wait(500ms);
-        observed.push_back(existsAndVisible("videoFullscreen/videoFullscreenPanel") ? "panel" : "no panel"); // 2
+        note(existsAndVisible("videoFullscreen/videoFullscreenPanel") ? "panel" : "no panel"); // 2
         QDir().mkpath(HIKARI_TEST_ARTIFACT_DIR);
         takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen.png");
         // The transport keys in the fullscreen window.
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
-        observed.push_back(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Pause"; })
+        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Pause"; })
                                ? "playing" : "not playing"); // 3
         wait(300ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
-        observed.push_back(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Play"; })
+        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenPlayPause", "text") == "Play"; })
                                ? "paused" : "not paused"); // 4
         const std::string before = getStringProperty("videoFullscreen/fullscreenTimes", "text");
         wait(200ms);
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Right, spix::KeyModifiers::None);
-        observed.push_back(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTimes", "text") != before; })
+        note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTimes", "text") != before; })
                                ? "stepped" : "not stepped"); // 5
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-        observed.push_back(waitFor([&] { return changes() >= 2; }) ? "left" : "not left"); // 6
+        note(waitFor([&] { return changes() >= 2; }) ? "left" : "not left"); // 6
         wait(500ms);
         if (monitors > 1) {
             // The context menu's monitor entry (VideoBox.cpp:941-948, 1053-1056).
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
-            observed.push_back(waitForItem("mainWindow/videoMenuMonitor1", 3s)
+            note(waitForItem("mainWindow/videoMenuMonitor1", 3s)
                                    ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry"); // 7
             invokeMethod("mainWindow/videoMenuMonitor1", "triggered", {});
-            observed.push_back(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 8
+            note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 8
             wait(800ms);
             takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-monitor2.png");
             enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-            observed.push_back(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 9
+            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 9
             wait(500ms);
         }
         takeScreenshot("mainWindow", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-after.png");
@@ -145,6 +150,7 @@ protected:
 
 int main(int argc, char **argv)
 {
+    std::setvbuf(stdout, nullptr, _IONBF, 0); // each line as it comes (a task's log)
     QGuiApplication app(argc, argv);
     int monitors = 1;
     for (int i = 1; i + 1 < argc; ++i)
