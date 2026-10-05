@@ -15,13 +15,13 @@ qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES "${hikari_k
     LUPDATE_TARGET hikari_i18n_keys NO_GLOBAL_TARGET OPTIONS -locations none -no-obsolete)
 add_custom_target(hikari_i18n_keymap
     COMMAND "${CMAKE_COMMAND}" -E copy "${hikari_keys_ts}" "${hikari_i18n_dir}/migration/keys.ts"
-    COMMAND hikari_i18n_migrate keymap --pot "${PROJECT_SOURCE_DIR}/Locale/template.pot"
+    COMMAND ${HIKARI_I18N_RUN} $<TARGET_FILE:hikari_i18n_migrate> keymap --pot "${PROJECT_SOURCE_DIR}/Locale/template.pot"
         --keys "${hikari_i18n_dir}/migration/keys.ts" --commit ${HIKARI_I18N_INPUT_COMMIT}
         --out "${hikari_i18n_dir}/migration/keymap.tsv"
     VERBATIM)
 add_dependencies(hikari_i18n_keymap hikari_i18n_keys hikari_i18n_migrate)
 add_custom_target(hikari_i18n_convert
-    COMMAND hikari_i18n_migrate convert --map "${hikari_i18n_dir}/migration/keymap.tsv"
+    COMMAND ${HIKARI_I18N_RUN} $<TARGET_FILE:hikari_i18n_migrate> convert --map "${hikari_i18n_dir}/migration/keymap.tsv"
         --keys "${hikari_i18n_dir}/migration/keys.ts" --pot "${PROJECT_SOURCE_DIR}/Locale/template.pot"
         ${HIKARI_I18N_PO_ARGS} --out-dir "${hikari_i18n_dir}" --report "${hikari_i18n_dir}/migration/report.md"
     VERBATIM)
