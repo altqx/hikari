@@ -354,6 +354,12 @@ private slots:
         press(Qt::Key_Up, Qt::ShiftModifier);
         QCOMPARE(session(*application->workspace().reference()).selection().selected.size(), std::size_t(2));
         QCOMPARE(activeRow(session(target)), 1);
+        // Ctrl+A selects every reference Line and leaves the editing target's
+        // selection as it was.
+        press(Qt::Key_A, Qt::ControlModifier);
+        QCOMPARE(session(*application->workspace().reference()).selection().selected.size(), std::size_t(5));
+        QCOMPARE(session(target).selection().selected.size(), std::size_t(1));
+        QCOMPARE(activeRow(session(target)), 1);
         QCOMPARE(application->workspace().editingTarget(), target);
         // Linking is explicit, and follows from then on.
         click(item("referenceLinked"));
@@ -369,9 +375,10 @@ private slots:
     }
 
     // A reference never becomes writable because it has focus: Ctrl+V
-    // (legacy pasted into the previewed grid) is refused, and the editing
-    // commands still go to the editing target; Ctrl+C copies the
-    // reference's Lines (PREVIEW_COPY).
+    // (legacy pasted into the previewed grid) is refused, and the Grid's
+    // editing keys pressed in the tray (Ctrl+D, Ctrl+X, Shift+Delete) still
+    // go to the editing target; Ctrl+C copies the reference's Lines
+    // (PREVIEW_COPY).
     void focusNeverMakesTheReferenceWritable()
     {
         showPreviewByKey();
@@ -389,8 +396,27 @@ private slots:
         QCOMPARE(session(target).document().lines().size(), std::size_t(3));
         press(Qt::Key_C, Qt::ControlModifier);
         QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",r0")));
-        // The editor and editing commands keep the editing target.
-        QVERIFY(application->deleteLines());
+        // The Grid's other keys pressed in the tray act on the editing target,
+        // as legacy's did: the preview was a child of the grid it was drawn
+        // on (SubsGridPreview.cpp:33-35) whose own table held only Ctrl+C and
+        // Ctrl+V (61-65), so the rest reached that grid's accelerators
+        // (TabPanel::SetAccels, TabPanel.cpp:100-193) and the frame's.
+        // GRID_DUPLICATE_LINES (Ctrl-D, Hotkeys.cpp:173) through runGridHotkey:
+        press(Qt::Key_D, Qt::ControlModifier);
+        QVERIFY(item("referenceGrid")->hasActiveFocus());
+        QCOMPARE(session(target).document().lines().size(), std::size_t(4));
+        QCOMPARE(session(refId).document().lines().size(), lines);
+        // GRID_CUT (Ctrl+X, TabPanel.cpp:104) cuts the editing target's Lines:
+        QGuiApplication::clipboard()->clear();
+        press(Qt::Key_X, Qt::ControlModifier);
+        QVERIFY(item("referenceGrid")->hasActiveFocus());
+        QCOMPARE(session(target).document().lines().size(), std::size_t(3));
+        QVERIFY(QGuiApplication::clipboard()->text().contains(QStringLiteral(",e1")));
+        QVERIFY(!QGuiApplication::clipboard()->text().contains(QStringLiteral(",r")));
+        QCOMPARE(session(refId).document().lines().size(), lines);
+        // GLOBAL_REMOVE_LINES (Shift-Delete, Hotkeys.cpp:156), the frame's:
+        press(Qt::Key_Delete, Qt::ShiftModifier);
+        QVERIFY(item("referenceGrid")->hasActiveFocus());
         QCOMPARE(session(target).document().lines().size(), std::size_t(2));
         QCOMPARE(session(refId).document().lines().size(), lines);
         QCOMPARE(application->workspace().editingTarget(), target);
@@ -490,6 +516,55 @@ private slots:
         QCOMPARE(application->comparedReferenceRow(1), -1);
         application->setReferenceLinked(false);
         QCOMPARE(application->comparedReferenceRow(0), -1);
+    }
+
+    // The compared grid's scroll (SubsGridWindow.cpp:1462-1465, 1719-1729):
+    // ShowSecondComparedLine(scrollPosition, ..., true) gives the linked
+    // partner the paired Line as its first row. Compared by times
+    // (SubsGridBase.cpp:1757-1790), long.ass row i pairs with partner row
+    // i + 5: the partner's first five Lines have times no Line of long.ass has.
+    void aLinkedPartnerScrollsWithTheComparedGrid()
+    {
+        auto at = [](int s) {
+            return QStringLiteral("%1:%2:%3.00").arg(s / 3600).arg(s / 60 % 60, 2, 10, QLatin1Char('0'))
+                .arg(s % 60, 2, 10, QLatin1Char('0')).toLatin1();
+        };
+        QByteArray longLines, partnerLines;
+        for (int i = 0; i < 5; ++i)
+            partnerLines += "Dialogue: 0," + at(3000 + i) + "," + at(3000 + i) + ",Default,,0,0,0,,lead\n";
+        for (int i = 0; i < 200; ++i) {
+            const QByteArray line = "Dialogue: 0," + at(10 + i) + "," + at(11 + i) + ",Default,,0,0,0,,l" +
+                                    QByteArray::number(i) + "\n";
+            longLines += line;
+            partnerLines += line;
+        }
+        QVERIFY(application->openFile(write(dir, "long.ass", longLines)));
+        QVERIFY(application->openFile(write(dir, "partner.ass", partnerLines)));
+        application->selectTab(3);
+        application->settingsStore()->set("comparison.type", 1); // by times
+        QVERIFY(application->compareWithTab(4));
+        showPreviewByKey();
+        QCOMPARE(application->workspace().reference(), tab(4));
+        QVERIFY(shell().referenceLinked());
+        QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
+        QQuickItem *editing = item("editingGrid");
+        QQuickItem *reference = item("referenceGrid");
+        const qreal rh = editing->property("rowHeight").toReal();
+        QVERIFY(rh > 0);
+        QCOMPARE(reference->property("rowHeight").toReal(), rh);
+        // The editing Grid scrolled (its scroll bar writes contentY) to row 30:
+        // the partner's first row is 35, the selection untouched.
+        const int active = referenceRow();
+        editing->setProperty("contentY", 30 * rh);
+        QCOMPARE(editing->property("contentY").toReal(), 30 * rh);
+        QCOMPARE(reference->property("contentY").toReal(), 35 * rh);
+        QCOMPARE(referenceRow(), active);
+        editing->setProperty("contentY", 31.5 * rh); // part way into row 31
+        QCOMPARE(reference->property("contentY").toReal(), 36 * rh);
+        // Unlinked, the partner keeps its own scroll.
+        application->setReferenceLinked(false);
+        editing->setProperty("contentY", 60 * rh);
+        QCOMPARE(reference->property("contentY").toReal(), 36 * rh);
     }
 };
 
