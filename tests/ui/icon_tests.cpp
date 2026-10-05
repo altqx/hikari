@@ -229,30 +229,58 @@ private slots:
         QCOMPARE(accounted, legacy);
     }
 
-    // Every role the QML names (Icon and IconButton's iconRole bindings)
-    // resolves to an SVG of the set.
+    // Every role the QML names (the iconRole bindings of Icon, IconButton,
+    // IconToolButton, IconMenuItem, IconMenu, IconTabButton and the dialog
+    // titles, and IconTheme.setWindowIcon's) resolves to an SVG of the set;
+    // every role of the set is named by the QML, or the manifest marks it
+    // "pending" with the later card whose surface places it (and then the
+    // QML does not name it yet).
     void everyRoleTheQmlReferencesResolves()
     {
-        static const QRegularExpression binding(QStringLiteral(R"re(\biconRole:\s*([^\n]*))re"));
+        static const QRegularExpression binding(QStringLiteral(R"re(\biconRole:\s*([^\n;}]*))re"));
+        static const QRegularExpression windowIcon(QStringLiteral("\\bsetWindowIcon\\([^,]*,\\s*(\"[^\"]*\")"));
         static const QRegularExpression literal(QStringLiteral("\"([^\"]*)\""));
-        QStringList referenced;
+        QSet<QString> referenced;
         QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
         while (it.hasNext()) {
             QFile file(it.next());
             QVERIFY(file.open(QIODevice::ReadOnly));
             const QString text = QString::fromUtf8(file.readAll());
-            for (auto b = binding.globalMatch(text); b.hasNext();) {
-                const QString expression = b.next().captured(1);
-                for (auto l = literal.globalMatch(expression); l.hasNext();) {
-                    const QString role = l.next().captured(1);
-                    referenced << role;
-                    QVERIFY2(ui::icons::exists(role), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + role));
+            for (const auto *pattern : {&binding, &windowIcon})
+                for (auto b = pattern->globalMatch(text); b.hasNext();) {
+                    const QString expression = b.next().captured(1);
+                    for (auto l = literal.globalMatch(expression); l.hasNext();) {
+                        const QString role = l.next().captured(1);
+                        if (role.isEmpty())
+                            continue; // a component's default: no icon
+                        referenced.insert(role);
+                        QVERIFY2(ui::icons::exists(role), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + role));
+                    }
                 }
+        }
+        // The surfaces wired so far: among them the video transport, the
+        // menus, the audio box, the Line editor, the document tabs, the
+        // Search tool, the windows' and dialogs' icons.
+        for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next",
+                                 "open-subtitles", "undo", "recent-subtitles", "convert-srt", "audio-previous-line", "link",
+                                 "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
+                                 "document-modified", "search", "find-replace", "history", "styles", "settings",
+                                 "select-lines", "automation"})
+            QVERIFY2(referenced.contains(QLatin1String(role)), role);
+        static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
+        int pending = 0;
+        for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
+            const auto icon = value.toObject();
+            const QString role = icon.value(QLatin1String("role")).toString();
+            if (icon.contains(QLatin1String("pending"))) {
+                ++pending;
+                QVERIFY2(card.match(icon.value(QLatin1String("pending")).toString()).hasMatch(), qPrintable(role));
+                QVERIFY2(!referenced.contains(role), qPrintable(role + QStringLiteral(" is placed: no longer pending")));
+            } else {
+                QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // The video transport (the demonstration surface) is among them.
-        for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next"})
-            QVERIFY2(referenced.contains(QLatin1String(role)), role);
+        QCOMPARE(pending, 47);
     }
 
     void svgsAreMonochromeOnTheGrid_data()

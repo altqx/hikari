@@ -547,6 +547,33 @@ NOT_REPLACED = {
 }
 
 
+# The roles drawn for surfaces a later wave-5 card builds: that card places
+# them (written to the manifest as "pending"; the manifest test requires every
+# other role to be named by the QML, and a pending role not to be).
+PENDING = {}
+for card, roles in {
+    "T1 #176": ["tool-crosshair"],
+    "T2 #177": ["tool-position", "tool-move"],
+    "T3 #178": ["tool-scale", "tool-rotate-z", "tool-rotate-xy", "two-points", "frame-to-scale", "scale-x", "scale-y",
+                "original-frame"],
+    "T4 #179": ["tool-clip-rect", "tool-clip-vector", "clip-invert"],
+    "T4 #179, T5 #180": ["vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"],
+    "T5 #180": ["tool-drawing"],
+    "T6 #181": ["tool-move-all", "tool-all-tags", "tool-scale-rotation", "shift-position", "shift-move-start",
+                "shift-move-end", "shift-clips", "shift-drawings", "shift-origins"],
+    "V3 #182": ["recent-video", "recent-keyframes", "media-previous-file", "media-next-file"],
+    "V4 #183": ["zoom"],
+    "V6 #185": ["set-start-time", "set-end-time"],
+    "E4 #186": ["alignment"],
+    "E6 #188": ["hide-tags"],
+    "Y7 #190": ["eyedropper"],
+    "Y8 #191": ["font-collector"],
+    "D2 #201": ["editor", "view-all", "view-video-subs", "view-audio-subs", "view-only-video", "view-only-subs"],
+}.items():
+    for role in roles:
+        PENDING[role] = card
+
+
 # ---------------------------------------------------------------- writing
 
 def svg(body):
@@ -577,6 +604,10 @@ def main():
             "legacy": item["legacy"],
             "surfaces": item["surfaces"],
         })
+        if item["role"] in PENDING:
+            manifest[-1]["pending"] = PENDING.pop(item["role"])
+    if PENDING:
+        sys.exit("pending roles not in the set: " + ", ".join(PENDING))
     for name in os.listdir(OUT):
         if name not in keep:
             os.remove(os.path.join(OUT, name))
