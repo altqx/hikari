@@ -279,7 +279,7 @@ Dialog {
                             y: dialog.hsvHue - 1
                             width: hueStrip.width; height: 3
                             color: "transparent"
-                            border.color: palette.windowText
+                            border.color: Theme.text
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -428,7 +428,7 @@ Dialog {
                     implicitWidth: 32
                     implicitHeight: 32
                     color: "transparent"
-                    border.color: palette.mid
+                    border.color: Theme.line
                     enabled: dialog.sampler.available && !dialog.sampler.portalBusy
                     Accessible.role: Accessible.Button
                     Accessible.name: qsTr("Pick a colour from the screen")

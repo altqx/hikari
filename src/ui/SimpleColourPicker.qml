@@ -24,7 +24,7 @@ Window {
     modality: Qt.ApplicationModal
     width: content.implicitWidth + 16
     height: content.implicitHeight + 16
-    color: palette.window
+    color: Theme.panel // K2: a Window draws white unless told
     // AssColor color: r, g, b and the ASS alpha.
     property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
     property bool picking: false
@@ -158,7 +158,7 @@ Window {
             color: bright < 2 ? "white" : "black"
             background: Rectangle {
                 color: Qt.rgba(window.colour.r / 255, window.colour.g / 255, window.colour.b / 255, 1)
-                border.color: palette.mid
+                border.color: Theme.line
             }
         }
         RowLayout {

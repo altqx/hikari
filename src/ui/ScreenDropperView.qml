@@ -16,7 +16,7 @@ Rectangle {
     implicitWidth: size * magnification + 2
     implicitHeight: size * magnification + 2
     color: "transparent"
-    border.color: palette.mid // legacy wxSTATIC_BORDER
+    border.color: Theme.line // legacy wxSTATIC_BORDER
     Accessible.role: Accessible.Graphic
     Accessible.name: qsTr("Screen pixels around the pointer")
 
