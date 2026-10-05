@@ -79,6 +79,16 @@ std::expected<void, CommandRefusal> toggleUnconfirmed(EditSession &session)
         lines.insert(*active);
     if (lines.empty())
         return std::unexpected(CommandRefusal::Invalid);
+    // E5-unconfirmed-own-step: typed text on one of these Lines is its own
+    // step first, then the flip is "Mark unconfirmed" on top of it (legacy's
+    // flip joined that text's step). Committed here, before the revision is
+    // taken, so the flip is not refused as stale.
+    if (const auto draft = session.draftLine(); draft && lines.contains(*draft)) {
+        if (session.draftProblem() && session.invalidCommitPolicy() == InvalidCommitPolicy::Block)
+            return std::unexpected(CommandRefusal::InvalidDraft);
+        if (!session.commitDraft() && session.draftLine())
+            return std::unexpected(CommandRefusal::InvalidDraft);
+    }
     return session.run(Command{"Mark unconfirmed", session.revision(), lines, [&](core::Document &d) {
                                    for (const auto id : lines)
                                        if (!d.editLine(id, [](core::LineRecord &l) { l.unconfirmed = !l.unconfirmed; }))

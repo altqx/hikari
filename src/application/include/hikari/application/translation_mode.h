@@ -30,8 +30,11 @@ std::expected<void, CommandRefusal> turnOnTranslationModeStep(EditSession &sessi
 // Unconfirmed flips (Dialogue::ChangeState(4) toggles State bit 4), as one
 // "Mark unconfirmed" step. Legacy flips the editor's copy of the active Line
 // and the selected Lines; an active Line outside the selection reaches the
-// Document at its next commit there, here at once. Refused outside
-// translation mode (legacy rings the bell) and without any Line.
+// Document at its next commit there, here at once. A pending draft on one of
+// the Lines is committed as its own step first (legacy's flip joined the next
+// step; approved E5-unconfirmed-own-step). Refused outside translation mode
+// (legacy rings the bell), without any Line, and when that draft can't be
+// committed.
 std::expected<void, CommandRefusal> toggleUnconfirmed(EditSession &session);
 
 // EditBox::SetTextWithTags with "Moving tags" (EditBox.cpp:1809-1858): an

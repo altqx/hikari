@@ -3787,6 +3787,37 @@ private slots:
         QVERIFY(!session->document().lines()[1]->unconfirmed);
     }
 
+    // E5-unconfirmed-own-step: Alt+Down (EDITBOX_SET_DOUBTFUL) with typed text
+    // records the text's step, then its own "Mark unconfirmed" step, and goes
+    // to the next Line; one Undo takes the flip away and leaves the text
+    // (legacy's flip joined the text's step, EditBox.cpp:1946-1962).
+    void markUnconfirmedIsItsOwnStep()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-own-step.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down);
+        auto *original = item("lineText");
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
+        const auto id = session->document().lines()[1]->id;
+        QVERIFY(!session->document().lines()[1]->unconfirmed);
+        original->forceActiveFocus();
+        original->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, 's');
+        QTRY_VERIFY(session->draftLine().has_value());
+        const auto steps = session->historySize();
+        press(Qt::Key_Down, Qt::AltModifier);
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QCOMPARE(session->history().back().name, std::string("Mark unconfirmed"));
+        QVERIFY(session->document().lines()[1]->unconfirmed);
+        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
+        QVERIFY(session->selection().active != id); // the next Line
+        QVERIFY(application->editor().undo());
+        QVERIFY(!session->document().lines()[1]->unconfirmed);
+        QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
+    }
+
     // E5: "Moving tags" (EditBox::SetTextWithTags): an untranslated Line is
     // shown split, the Translated field takes the focus, and the first change
     // makes both fields the draft.

@@ -226,6 +226,44 @@ TEST(NotConfirmed, FlipsEverySelectedLineAsOneStep)
     EXPECT_FALSE(lines[2]->unconfirmed);
 }
 
+TEST(NotConfirmed, IsItsOwnStepNotJoinedToTheNextEdit)
+{
+    // E5-unconfirmed-own-step: legacy OnDoubtfulTl (EditBox.cpp:1946-1962)
+    // flips State bit 4 without SetModified, so the flip joins whichever step
+    // comes next and one Undo takes both away. Here it is its own
+    // "Mark unconfirmed" step: the next edit undoes on its own.
+    EditSession session{load(kPairs)};
+    selectRows(session, {1});
+    const auto id = session.document().lines()[1]->id;
+    const auto steps = session.historySize();
+    ASSERT_TRUE(toggleUnconfirmed(session));
+    ASSERT_TRUE(session.editDraftText(id, u8"Turret"));
+    ASSERT_TRUE(session.commitDraft());
+    ASSERT_EQ(session.historySize(), steps + 2);
+    EXPECT_EQ(session.history()[steps].name, "Mark unconfirmed");
+    ASSERT_TRUE(session.undo()); // the text edit only
+    EXPECT_EQ(session.document().lines()[1]->text, u8"Tower");
+    EXPECT_TRUE(session.document().lines()[1]->unconfirmed);
+    ASSERT_TRUE(session.undo()); // then the flip
+    EXPECT_FALSE(session.document().lines()[1]->unconfirmed);
+
+    // A pending draft on the Line is committed as its own step first, then the
+    // flip follows as "Mark unconfirmed"; Undo takes the flip away alone.
+    EditSession drafted{load(kPairs)};
+    selectRows(drafted, {1});
+    const auto draftedId = drafted.document().lines()[1]->id;
+    const auto before = drafted.historySize();
+    ASSERT_TRUE(drafted.editDraftText(draftedId, u8"Turret"));
+    ASSERT_TRUE(toggleUnconfirmed(drafted));
+    ASSERT_EQ(drafted.historySize(), before + 2);
+    EXPECT_NE(drafted.history()[before].name, "Mark unconfirmed");
+    EXPECT_EQ(drafted.history()[before + 1].name, "Mark unconfirmed");
+    EXPECT_FALSE(drafted.draftLine());
+    ASSERT_TRUE(drafted.undo());
+    EXPECT_FALSE(drafted.document().lines()[1]->unconfirmed);
+    EXPECT_EQ(drafted.document().lines()[1]->text, u8"Turret");
+}
+
 TEST(NotConfirmed, OnlyInTranslationMode)
 {
     // `if (!grid->hasTLMode){ wxBell(); return; }`
