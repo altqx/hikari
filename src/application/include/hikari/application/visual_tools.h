@@ -68,6 +68,7 @@ struct Pointer {
     Button button = Button::None; // the button pressed or released
     bool leftDown = false;        // held during a move
     bool rightDown = false;       // T2: legacy RightIsDown (Move drags with either)
+    bool middleDown = false;      // T3: legacy MiddleIsDown
     bool control = false, shift = false, alt = false;
     int wheelSteps = 0;
 };
@@ -100,7 +101,8 @@ struct OverlayCircle {
     bool filled = false;
 };
 // A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
-// triangle strip and line strip; T2).
+// triangle strip and line strip; T2). T3: a border of 0 draws the fill alone
+// (RotationZ's ring), a fill of 0 the border alone.
 struct OverlayPolygon {
     std::vector<PointF> points;
     std::uint32_t fill = 0;
@@ -243,6 +245,17 @@ public:
     virtual TextMeasurePort *textMeasure() const { return nullptr; }
     virtual bool ignoreFiltered() const { return false; }
     virtual void log(std::u16string_view text) { (void)text; }
+    // T3: the Line editor's selection in the text the tools edit (legacy
+    // TagFindReplace::FindTag's editor->GetSelection with one Line selected,
+    // TagFindReplace.cpp:40-41), in UTF-16 code units.
+    virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
+    // Legacy put the editor's caret at the tag it changed
+    // (Visuals::SetVisual, Visuals.cpp:815); called after the commit.
+    virtual void setEditorSelection(long from, long to)
+    {
+        (void)from;
+        (void)to;
+    }
 };
 
 // One visual family. The host gives a tool only the events legacy's
@@ -254,6 +267,12 @@ public:
     virtual Family family() const = 0;
     // Legacy SetCurVisual: the view, script resolution or active Line changed.
     virtual void reset(VisualHost &host) { (void)host; }
+    // T3: true when the tool's own commit must not reset it. The host resets
+    // a tool on every new revision; legacy's Scale and rotations sent their
+    // edit with the visual dummy flag, so no SetVisual followed it
+    // (Visuals.cpp:791-829, SubsGridBase.cpp:1125-1157) and the tool kept
+    // its state (the caret at the tag, the angles, the press point).
+    virtual bool keepsStateAfterCommit() const { return false; }
     virtual void pointer(const Pointer &event, VisualHost &host) = 0;
     // True when the tool used the key (a nudge: begin on press, commit on release).
     virtual bool key(const Key &event, VisualHost &host)
@@ -307,6 +326,14 @@ public:
         (void)host;
         return false;
     }
+    // T3: Esc with no gesture open: true when the tool dropped a pending
+    // step (RotationZ's first point of the two-point angle).
+    virtual bool cancelPending(VisualHost &host)
+    {
+        (void)host;
+        return false;
+    }
+    virtual bool hasPending() const { return false; }
 };
 
 // The tool for a family: nullptr while its card (T2-T6) has not landed.

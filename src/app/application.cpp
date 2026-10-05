@@ -544,6 +544,22 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     m_visualTools->setLog([this](const QString &text) { m_log->log(text); });
     m_visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
+    // T3: the Line editor's caret in the text the tools edit (the
+    // translation in TLMode unless it is empty), for FindTag's mode 0.
+    const auto visualRole = [this] {
+        int role = 0;
+        if (const auto *s = targetSession(); s && application::translationMode(*s) && s->selection().active) {
+            const auto draft = s->draftRecord();
+            for (const auto *line : s->document().lines())
+                if (line->id == *s->selection().active)
+                    role = !((draft && draft->id == line->id) ? draft->translation : line->translation).empty() ? 1 : 0;
+        }
+        return role;
+    };
+    m_visualTools->setEditorSelection([this, visualRole]() { return m_editor->rawFieldSelection(visualRole()); });
+    m_visualTools->setEditorSelectionPlacer([this, visualRole](long from, long to) {
+        m_editor->selectRaw(visualRole(), static_cast<int>(from), static_cast<int>(to));
+    });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).

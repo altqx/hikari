@@ -170,3 +170,97 @@ target_compile_options(legacy_position_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_position_capture PRIVATE ${wx_libs})
+
+# T3: the legacy Scale, RotationZ and RotationXY tools (VisualScale.cpp,
+# VisualRotationZ.cpp, VisualRotationXY.cpp and Timebase.cpp, unchanged)
+# with the Visuals, TagFindReplace, Styles, ParseData and ClipPoint classes
+# and the definitions they call, copied unchanged; the GUI they touch is
+# stood in for by visual_t3/standins.h.
+set(t3_gen "${CMAKE_CURRENT_BINARY_DIR}/visual_t3")
+file(MAKE_DIRECTORY "${t3_gen}")
+foreach(copy VisualScale.cpp VisualRotationZ.cpp VisualRotationXY.cpp)
+    configure_file("${legacy_hs}/${copy}" "${t3_gen}/copy/${copy}" COPYONLY)
+endforeach()
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.h" "${t3_gen}/styles_classes.inc"
+    "class AssColor" "class Styles" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${t3_gen}/parse_classes.inc"
+    "class TagData" "class ParseData" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.h" "${t3_gen}/tagfind_classes.inc"
+    "class FindData" "class TagFindReplace" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualClipPoint.h" "${t3_gen}/clippoint_class.inc"
+    "class ClipPoint" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${t3_gen}/visuals_classes.inc"
+    "class Visuals : public TagFindReplace" "class Scale : public Visuals" "class RotationZ : public Visuals"
+    "class RotationXY : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${t3_gen}/styles.inc"
+    "AssColor::AssColor()" "AssColor::~AssColor()" "void AssColor::SetAss(wxString color)"
+    "void AssColor::SetAlphaString(wxString alpha)" "Styles::Styles()" "Styles::~Styles()"
+    "double Styles::GetOtlineDouble()" "double Styles::GetShadowDouble()" "double Styles::GetScaleXDouble()"
+    "double Styles::GetScaleYDouble()" "double Styles::GetFontSizeDouble()" "Styles *Styles::Copy()"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${t3_gen}/dialogue.inc"
+    "TagData::TagData(const wxString &name, unsigned int _startTextPos)"
+    "void TagData::PutValue(const wxString &_value, bool _multiValue)" "ParseData::ParseData()"
+    "void ParseData::AddData(TagData *data)" "ParseData::~ParseData()" "void Dialogue::ClearParse()"
+    "ParseData* Dialogue::ParseTags(wxString *tags, size_t ntags, bool plainText, const wxString& textToParse/* = L\"\"*/)"
+    "void Dialogue::GetDefaultPosition(Styles* lineStyle, int an, const wxSize& subsSize, float* posx, float* posy)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.cpp" "${t3_gen}/tagfind.inc"
+    "bool TagFindReplace::FindTag(const wxString& pattern, const wxString& text, int mode, bool toEndOfSelection)"
+    "int TagFindReplace::ReplaceAll(const wxString& pattern, const wxString& tag, wxString * text, std::function< void(const FindData&, wxString*)> func, bool returnPosWhenNoTags)"
+    "int TagFindReplace::Replace(const wxString& replaceTxt, wxString* text)"
+    "bool TagFindReplace::TagValueToStyle(Styles* style, const wxString& tag, const wxString& value)"
+    "bool TagFindReplace::GetDouble(double* retval)"
+    "bool TagFindReplace::GetTwoValueDouble(double* retval, double* retval2)"
+    "int TagFindReplace::ChangeText(wxString* txt, const wxString& what, bool inbracket, const wxPoint& pos)"
+    "bool TagFindReplace::GetTextResult(wxString* rettext)"
+    "wxPoint TagFindReplace::GetPositionInText()"
+    "wxPoint FindBrackets(const wxString& text, long from)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualClips.cpp" "${t3_gen}/clippoint.inc"
+    "ClipPoint::ClipPoint()" "ClipPoint::ClipPoint(float _x, float _y, wxString _type, bool isstart)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/RendererVideo.cpp" "${t3_gen}/vertex.inc"
+    "void CreateVERTEX(VERTEX * v, float X, float Y, D3DCOLOR colour, float Z)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.cpp" "${t3_gen}/config.inc"
+    "wxString getfloat(float num, const wxString& format, bool Truncate)"
+    "size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignoreCase)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.cpp" "${t3_gen}/visuals.inc"
+    "Visuals::Visuals()" "Visuals::~Visuals()"
+    "void Visuals::GetDialoguesWithoutPosition(Dialogue* dialogue)"
+    "D3DXVECTOR2 Visuals::GetDialogueAdditionalPosition(Dialogue* dialogue)"
+    "void Visuals::GetRectFromSize(D3DXVECTOR2 size, int an, Dialogue* dial, Styles* style, D3DXVECTOR2* pos, D3DXVECTOR2* pos1)"
+    "bool Visuals::IsInRect(D3DXVECTOR2 pos, D3DXVECTOR2 pos1, D3DXVECTOR2 secondpos, D3DXVECTOR2 secondpos1)"
+    "void Visuals::RenderSubs(wxString *subs, bool redraw /*= true*/)"
+    "void Visuals::SetVisual(Dialogue* dial, int tool, bool noRefresh)"
+    "void Visuals::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)"
+    "void Visuals::DrawArrow(D3DXVECTOR2 from, D3DXVECTOR2 *to, int diff)"
+    "void Visuals::DrawRect(D3DXVECTOR2 pos, bool sel, float rcsize)"
+    "void Visuals::Draw(int time)" "void Visuals::DrawWarning(bool comment)"
+    "D3DXVECTOR2 Visuals::CalcMovePos()"
+    "void Visuals::GetVectorPoints(const wxString& vector, std::vector<ClipPoint>* points)"
+    "void Visuals::GetMoveTimes(int *start, int *end)"
+    "D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)"
+    "void Visuals::SetVisual(bool dummy)"
+    "D3DXVECTOR2 Visuals::GetPosition(Dialogue *Dial, bool *putinBracket, wxPoint *TextPos, double* moveTable)"
+    "void Visuals::ChangeOrg(wxString *txt, Dialogue *_dial, float coordx, float coordy)"
+    "void Visuals::SetModified(int action, bool dummy)"
+    "D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* style, "
+    "D3DXVECTOR2 Visuals::GetDrawingSize(const wxString& drawing, D3DXVECTOR2* position)"
+    "void Visuals::RotateZ(D3DXVECTOR2* point, float sinOfAngle, float cosOfAngle, D3DXVECTOR2 orgpivot)"
+    "void Visuals::Curve(int pos, std::vector<ClipPoint>* vectorPoints, "
+    COMMAND_ERROR_IS_FATAL ANY)
+file(WRITE "${t3_gen}/extracted_t3.inc"
+    "#include \"styles.inc\"\n#include \"dialogue.inc\"\n#include \"tagfind.inc\"\n#include \"clippoint.inc\"\n"
+    "#include \"vertex.inc\"\n#include \"config.inc\"\n#include \"visuals.inc\"\n")
+add_executable(legacy_visual_t3_capture visual_t3_capture.cpp
+    "${t3_gen}/copy/VisualScale.cpp" "${t3_gen}/copy/VisualRotationZ.cpp" "${t3_gen}/copy/VisualRotationXY.cpp"
+    "${legacy_hs}/Timebase.cpp")
+target_include_directories(legacy_visual_t3_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/visual_t3" "${t3_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_visual_t3_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_visual_t3_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_visual_t3_capture PRIVATE ${wx_libs})

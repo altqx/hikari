@@ -1,0 +1,685 @@
+# T3: Scale, RotationZ and RotationXY (visual_t3_capture.cpp). The video
+# rectangle is a 1280x720 frame in a 640x400 client (40-pixel panel): (0, 0,
+# 640, 360), the script 1920x1080, so the tools' coefficients are 3 and the
+# Line at \pos(960,540) sits at (320, 180). The arrows of Scale then end at
+# (420, 280): width at (420, 180), height at (320, 280).
+#
+# "frame" (the decoded frame: width, height, SAR) and "viewzoom" (a wheel
+# zoom: percent, x, y) are the rewrite's (its VideoView makes the rectangle
+# and the zoom from them); the probe takes "rect" and "zoom" as legacy's
+# RendererVideo gave them for the same, as the T1 capture
+# (local-t1-visual-20261005) records: fit-16x9, pillarbox, zoom-at-point and
+# zoom-pillarbox.
+
+case scale-width-left-drag
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Hello
+active 0
+tool scale 6
+state
+press 420 180 left
+move 445 182 left
+state
+move 470 185 left
+state
+release 470 185 left
+state
+end
+
+case scale-height-right-drag
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fscx120}Hello
+active 0
+tool scale 6
+press 100 100 right
+move 100 150 right
+release 100 150 right
+state
+end
+
+case scale-middle-both
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|Hello
+active 0
+tool scale 6
+state
+press 200 200 middle
+move 230 240 middle
+release 230 240 middle
+state
+end
+
+case scale-shift-proportional
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fscx80\fscy90}Hello
+active 0
+tool scale 6
+press 400 260 left shift
+move 410 262 left shift
+move 425 255 left shift
+release 425 255 left shift
+state
+move 430 255
+state
+end
+
+case scale-caret-second-block
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Hel{\fscx50\bord3}lo{\i1}!
+caret 22 22
+active 0
+tool scale 6
+press 420 180 left
+move 380 180 left
+release 380 180 left
+state
+press 420 180 left
+move 300 180 left
+release 300 180 left
+state
+end
+
+case scale-caret-plain-text
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Hello world
+caret 18 18
+active 0
+tool scale 6
+press 420 180 left
+move 460 180 left
+release 460 180 left
+state
+end
+
+case scale-change-all-tags
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fscx50}He{\fscx200\fscy80}llo
+active 0
+tool scale 38
+state
+press 420 180 left
+move 470 180 left
+release 470 180 left
+state
+press 320 280 right
+move 320 300 right
+release 320 300 right
+state
+end
+
+case scale-several-lines
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+style Big 60 150 50 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Active
+line 1000 2000 Big 0 0 0 0|Second{\fscx40}x
+line 1000 2000 Default 0 0 0 0|{\fscy70}Third
+active 0
+select 0 1 2
+tool scale 6
+press 420 180 left
+move 470 180 left
+release 470 180 left
+state
+press 230 220 middle
+release 230 220 middle
+state
+end
+
+case scale-several-preserve-proportions
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+style Big 60 150 50 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fscx100}Active
+line 1000 2000 Big 0 0 0 0|{\pos(1200,600)\clip(100,200,300,400)}Second{\fscx40}x
+line 1000 2000 Default 0 0 0 0|{\pos(800,300)\clip(2,m 0 0 l 100 0 100 100 l 0 100)}Third
+line 1000 2000 Default 10 20 30 0|{\iclip(m 10 10 b 20 20 30 20 40 10)}Fourth
+active 0
+select 0 1 2 3
+tool scale 102
+state
+press 420 180 left
+move 440 190 left
+release 440 190 left
+state
+key D
+state
+end
+
+case scale-keys
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(1500,900)}Keys
+active 0
+tool scale 6
+state
+key D
+state
+key D shift
+state
+key S
+state
+key W shift
+state
+key A alt
+state
+key A ctrl
+state
+end
+
+case scale-move-line
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+style Default2 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\move(300,300,900,600,0,1000)}Moving
+line 1000 2000 Default 0 0 0 0|{\pos(10,10)}Other
+active 0
+select 0 1
+tool scale 102
+state
+draw
+state
+press 400 300 left
+move 420 310 left
+release 420 310 left
+state
+end
+
+case scale-move-three
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1040 2000 Default 0 0 0 0|{\move(300,300,900,600)}Moving
+line 1000 2000 Default 0 0 0 0|{\pos(10,10)}Other
+active 0
+select 0 1
+tool scale 102
+state
+press 100 100 left
+move 120 110 left
+release 120 110 left
+state
+end
+
+case scale-rectangle
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\bord3}Hello\Nworld
+active 0
+tool scale 7
+state
+press 300 150 left
+move 400 200 left
+state
+release 400 200 left
+state
+move 400 175
+press 401 175 left
+move 450 175 left
+release 450 175 left
+state
+press 350 175 left
+move 360 180 left
+release 360 180 left
+state
+end
+
+case scale-rectangle-height
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Tall
+active 0
+tool scale 9
+press 300 150 left
+move 380 260 left
+release 380 260 left
+state
+end
+
+case scale-original-rectangle
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 60 100 100 0 0 0 7 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(300,300)\shad2}Orig
+active 0
+tool scale 55
+state
+press 50 50 right
+move 150 100 right
+release 150 100 right
+state
+press 200 200 left
+move 400 260 left
+release 400 260 left
+state
+end
+
+case scale-translation
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+tlmode
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Original|{\fscx90}Translated
+active 0
+tool scale 6
+press 420 180 left
+move 450 180 left
+release 450 180 left
+state
+end
+
+case scale-pillarbox-zoom
+client 800 400 40
+frame 640 360 1 1
+viewzoom 3 500 100
+rect 80 0 720 360
+zoom 399.25 40 2.99065423 3
+script 640 360
+time 1500
+fps 23.976
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(450,60)}Zoomed
+active 0
+tool scale 6
+state
+press 52 60 left
+move 30 61 left
+release 30 61 left
+state
+end
+
+case rotz-drag
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Turn
+active 0
+tool rotz 0
+state
+draw
+press 420 180 left
+move 380 250 left
+state
+move 320 280 left
+state
+release 320 280 left
+state
+press 320 290 left
+move 300 300 left
+release 300 300 left
+state
+end
+
+case rotz-style-angle
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 15 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|Hello {\b1}there
+caret 8 8
+active 0
+tool rotz 0
+state
+press 100 100 left
+move 120 80 left
+release 120 80 left
+state
+end
+
+case rotz-org-single
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\frz30}Origin
+active 0
+tool rotz 0
+press 321 181 left
+move 360 200 left
+release 360 200 left
+state
+press 500 100 left
+move 520 120 left
+release 520 120 left
+state
+end
+
+case rotz-org-several
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Active
+line 1000 2000 Default 0 0 0 0|{\an7\org(10,20)\frz30}Second
+line 1000 2000 Default 0 0 0 0|No position
+line 1000 2000 Default 0 0 0 0|{\pos(30,40)\bord2}Placed
+active 0
+select 0 1 2 3
+tool rotz 0
+press 320 180 left
+move 330 190 left
+release 330 190 left
+state
+end
+
+case rotz-org-stacked
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+style Top 30 120 100 0 1 1 8 20 20 30
+line 1000 2000 Default 0 0 0 0|First bottom line
+line 1000 2000 Default 0 0 0 0|{\bord4}Second\Nbottom
+line 1000 2000 Top 0 0 0 0|Top one
+line 1000 2000 Default 0 0 0 0|Third bottom
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Active
+active 4
+select 3 4
+tool rotz 0
+press 320 180 left
+move 335 170 left
+release 335 170 left
+state
+end
+
+case rotz-two-points
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\frz10}Two points
+active 0
+tool rotz 1
+state
+press 100 100 left
+release 100 100 left
+state
+move 200 150
+press 300 200 left
+state
+release 300 200 left
+state
+press 301 199 left
+move 310 150 left
+release 310 150 left
+state
+press 50 300 left
+release 50 300 left
+state
+setvisual
+state
+end
+
+case rotz-change-all
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\frz20}Al{\frz350}l{\fs20}x
+active 0
+tool rotz 2
+state
+press 420 180 left
+move 320 80 left
+release 320 80 left
+state
+end
+
+case rotz-several-preserve
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\org(900,500)\frz10}Active
+line 1000 2000 Default 0 0 0 0|{\pos(1200,600)\clip(100,200,300,400)\frz45}Second
+line 1000 2000 Default 0 0 0 0|{\move(800,300,900,350,0,500)\clip(2,m 0 0 l 100 0 100 100 l 0 100)}Third
+line 1000 2000 Default 0 0 0 0|Fourth
+active 0
+select 0 1 2 3
+tool rotz 6
+state
+press 420 180 left
+move 380 260 left
+release 380 260 left
+state
+end
+
+case rotz-zoom-org
+client 640 400 40
+frame 1280 720 0 1
+viewzoom 2.5 200 120
+rect 0 0 640 360
+zoom 72 48 2.5 2.5
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Zoom
+line 1000 2000 Default 0 0 0 0|{\pos(30,40)\org(100,100)}Other
+active 0
+select 0 1
+tool rotz 0
+state
+press 620 330 left
+move 630 340 left
+release 630 340 left
+state
+end
+
+case rotz-move-draw
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\move(300,300,900,600)}Moving
+active 0
+tool rotz 0
+state
+draw
+state
+end
+
+case rotxy-left-right-middle
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\frx10}Tilt
+active 0
+tool rotxy -1
+state
+press 100 100 left
+move 130 120 left
+release 130 120 left
+state
+press 100 100 right
+move 90 150 right
+release 90 150 right
+state
+press 100 100 middle
+move 50 50 middle
+release 50 50 middle
+state
+draw
+state
+end
+
+case rotxy-change-all
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fry5}Ti{\fry350\frx20}lt
+line 1000 2000 Default 0 0 0 0|{\frx40}Other
+active 0
+tool rotxy 0
+state
+press 100 100 middle
+move 120 90 middle
+release 120 90 middle
+state
+option -1
+state
+end
+
+case rotxy-several
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\fry5}Active
+line 1000 2000 Default 0 0 0 0|{\fry40\frx10}Other
+line 1000 2000 Default 0 0 0 0|{\fry30}a{\fry60}b
+active 0
+select 0 1 2
+tool rotxy 0
+press 100 100 left
+move 140 100 left
+release 140 100 left
+state
+end
+
+case rotxy-org
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\an3\pos(960,540)}Org
+line 1000 2000 Default 0 0 0 0|{\org(5,5)}Other
+active 0
+tool rotxy -1
+press 325 177 left
+move 400 100 left
+release 400 100 left
+state
+select 0 1
+setvisual
+press 400 100 left
+move 410 120 left
+release 410 120 left
+state
+end

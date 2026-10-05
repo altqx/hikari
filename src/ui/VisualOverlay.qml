@@ -62,20 +62,23 @@ Item {
             const ctx = getContext("2d")
             ctx.reset()
             for (const s of shapes) {
-                if (s.type === "polygon") { // T2: a handle's square or an arrow's head
+                if (s.type === "polygon") { // T2, T3: a filled shape with a one-pixel border
+                    if (s.points.length < 2)
+                        continue
                     ctx.beginPath()
-                    for (let i = 0; i < s.points.length; ++i) {
-                        if (i === 0)
-                            ctx.moveTo(s.points[i].x, s.points[i].y)
-                        else
-                            ctx.lineTo(s.points[i].x, s.points[i].y)
-                    }
+                    ctx.moveTo(s.points[0][0], s.points[0][1])
+                    for (let i = 1; i < s.points.length; ++i)
+                        ctx.lineTo(s.points[i][0], s.points[i][1])
                     ctx.closePath()
-                    ctx.fillStyle = s.fill
-                    ctx.fill()
-                    ctx.strokeStyle = s.color
-                    ctx.lineWidth = 1
-                    ctx.stroke()
+                    if (s.fill !== "") {
+                        ctx.fillStyle = s.fill
+                        ctx.fill()
+                    }
+                    if (s.border !== "") {
+                        ctx.strokeStyle = s.border
+                        ctx.lineWidth = 1
+                        ctx.stroke()
+                    }
                 } else if (s.type === "line") {
                     ctx.strokeStyle = s.color
                     ctx.lineWidth = s.width

@@ -1525,8 +1525,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "vector-drag",
@@ -1773,8 +1772,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "eyedropper",

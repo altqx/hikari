@@ -134,3 +134,9 @@ hikari_add_gtest(hikari_application_visual_position_tests SOURCES visual_positio
 target_compile_definitions(hikari_application_visual_position_tests PRIVATE
     HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/position-cases.txt"
     HIKARI_POSITION_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t2-position-20261005/observations.jsonl")
+# T3: Scale and the Z and X/Y rotations, with the legacy probe's observations.
+hikari_add_gtest(hikari_application_visual_transform_tests SOURCES visual_transform_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
+    HIKARI_VISUAL_T3_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-cases.txt"
+    HIKARI_VISUAL_T3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-visual-20261005/observations.jsonl")

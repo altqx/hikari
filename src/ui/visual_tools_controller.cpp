@@ -55,6 +55,12 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
         if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
             t->blocked(*this);
         emit changed(); // the shown frame's time moves the warnings
+        // T3: a \move's position follows the shown frame (legacy Draw ran
+        // DrawVisual on every frame, Visuals.cpp:504-529).
+        if (const auto time = videoTimeMs(); time != m_seenTime) {
+            m_seenTime = time;
+            emit overlayChanged();
+        }
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
@@ -187,6 +193,7 @@ void VisualToolsController::resetTool()
         t->reset(*this);
     emit changed();
     emit overlayChanged();
+    emit optionsChanged(); // the family, the format or the Line changed
 }
 
 std::optional<core::LineId> VisualToolsController::activeLine() const
@@ -228,6 +235,10 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     updatePreview();
     if (!result)
         m_lastRefusal = result.error();
+    // T3: the tool's own step is no reason to reset it (legacy ran no
+    // SetVisual after a visual edit); refresh() sees the revision as seen.
+    if (const auto *t = tool(); result && t && t->keepsStateAfterCommit())
+        m_seenRevision = s->revision();
     if (changes && m_edited)
         m_edited(); // the shell refreshes; refresh() follows
     emit changed();
@@ -236,16 +247,34 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
 
 bool VisualToolsController::escape()
 {
-    if (!m_gesture)
+    if (!m_gesture) {
+        // T3: with no gesture open Esc drops a tool's pending step (the
+        // first of RotationZ's two points, the card's evidence on #178).
+        auto *t = tool();
+        if (t && m_view.hasVideo() && t->cancelPending(*this)) {
+            emit changed();
+            emit overlayChanged();
+            return true;
+        }
         return false;
+    }
     m_gesture.reset();
-    // T2: the tool reads its Lines again, as before the gesture.
-    if (auto *t = tool())
+    // T2, T3: the tool reads its Lines again, as before the gesture (legacy
+    // SetCurVisual), so its handles go back to where the text puts them.
+    if (auto *t = tool(); t && t->family() != Family::Crosshair)
         t->reset(*this);
     updatePreview();
     emit changed();
     emit overlayChanged();
     return true;
+}
+
+bool VisualToolsController::escapable() const
+{
+    if (m_gesture)
+        return true;
+    const auto *t = tool();
+    return t && m_view.hasVideo() && t->hasPending();
 }
 
 std::pair<int, int> VisualToolsController::measureLabel(std::u16string_view text) const
@@ -314,6 +343,11 @@ void VisualToolsController::log(std::u16string_view text)
         m_log(qs(text));
 }
 
+std::pair<long, long> VisualToolsController::editorSelection() const
+{
+    return m_editorSelection ? m_editorSelection() : std::pair<long, long>{0, 0};
+}
+
 void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
 {
     Pointer p;
@@ -335,6 +369,7 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     }
     p.leftDown = (buttons & Qt::LeftButton) != 0;
     p.rightDown = (buttons & Qt::RightButton) != 0;
+    p.middleDown = (buttons & Qt::MiddleButton) != 0;
     p.control = (modifiers & Qt::ControlModifier) != 0;
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
@@ -461,6 +496,7 @@ bool VisualToolsController::setOption(const QString &name, int value)
     const bool done = t->setOption(name.toStdString(), value, *this);
     emit changed();
     emit overlayChanged();
+    emit optionsChanged();
     return done;
 }
 
@@ -545,14 +581,16 @@ QVariantList VisualToolsController::overlay() const
         return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
-    for (const OverlayPolygon &p : o.polygons) {
+    // Drawn first (T2, T3): filled shapes with a one-pixel border; a fill
+    // or border of 0 is not drawn.
+    for (const OverlayPolygon &poly : o.polygons) {
         QVariantList points;
-        for (const PointF &pt : p.points)
-            points.append(QVariantMap{{QStringLiteral("x"), L(pt.x)}, {QStringLiteral("y"), L(pt.y)}});
+        for (const PointF &pt : poly.points)
+            points.append(QVariantList{L(pt.x), L(pt.y)});
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("polygon")},
                                {QStringLiteral("points"), points},
-                               {QStringLiteral("fill"), colour(p.fill)},
-                               {QStringLiteral("color"), colour(p.border)}});
+                               {QStringLiteral("fill"), poly.fill ? colour(poly.fill) : QString()},
+                               {QStringLiteral("border"), poly.border ? colour(poly.border) : QString()}});
     }
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},

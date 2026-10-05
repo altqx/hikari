@@ -55,10 +55,12 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
     // The tool's numeric values (shown below the canvas): name, label, text, editable.
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
-    // T2: the family's own options (legacy VideoToolbar's second row): name,
-    // kind ("toggle" or "choice"), iconRole, tooltip, checked, enabled,
+    // T2, T3: the family's own options (legacy VideoToolbar's second row):
+    // name, kind ("toggle" or "choice"), iconRole, tooltip, checked, enabled,
     // choices, index.
-    Q_PROPERTY(QVariantList options READ options NOTIFY changed)
+    Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
+    // T3: Esc has something to drop: an open gesture or a tool's pending step.
+    Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
     // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
@@ -79,6 +81,13 @@ public:
     // T2: HikariLog and the Grid's "Ignore filtering in some actions".
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
     void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
+    // T3: the Line editor's selection in the edited text (FindTag's mode 0).
+    void setEditorSelection(std::function<std::pair<long, long>()> selection)
+    {
+        m_editorSelection = std::move(selection);
+    }
+    // T3: puts the Line editor's caret where a tool's edit left it.
+    void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
     // The editing target, its content, active Line or format changed.
     void refresh();
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
@@ -98,6 +107,7 @@ public:
     QRectF sourceRect() const;
     QVariantList values() const;
     QVariantList options() const;
+    bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
@@ -147,6 +157,12 @@ public:
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }
     bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
     void log(std::u16string_view text) override;
+    std::pair<long, long> editorSelection() const override;
+    void setEditorSelection(long from, long to) override
+    {
+        if (m_placeSelection)
+            m_placeSelection(from, to);
+    }
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -156,6 +172,7 @@ signals:
     void changed();
     void overlayChanged();
     void geometryChanged();
+    void optionsChanged();
 
 private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
@@ -171,6 +188,8 @@ private:
     std::function<void(const core::Document *)> m_preview;
     std::function<void(const QString &)> m_log;
     std::function<bool()> m_ignoreFiltered;
+    std::function<std::pair<long, long>()> m_editorSelection;
+    std::function<void(long, long)> m_placeSelection;
     mutable QtTextMeasurePort m_measure;
     bool m_previewing = false;
     application::visual::VideoView m_view;
@@ -190,6 +209,7 @@ private:
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
     std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
+    std::int64_t m_seenTime = -1;
 };
 
 } // namespace hikari::ui

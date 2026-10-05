@@ -44,6 +44,11 @@ target_sources(hikari_application PRIVATE matroska.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
 # T2: Position and Move, and what the families read from the script.
 target_sources(hikari_application PRIVATE visual_script.cpp visual_position.cpp)
+# T3: Scale and the Z and X/Y rotations, with the tag reading and writing
+# they share; legacy's float steps again.
+target_sources(hikari_application PRIVATE visual_transform.cpp visual_scale.cpp visual_rotation.cpp)
+set_source_files_properties(visual_transform.cpp visual_scale.cpp visual_rotation.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.cpp visual_position.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # O3: the one-shot legacy settings importer's readers and review plan.
