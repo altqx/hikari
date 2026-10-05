@@ -6,10 +6,13 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Hikari.Ui
 
 Window {
     id: manager
     objectName: "styleManager"
+    // K1: the set's styles icon as the window's (legacy stylestore SetIcon).
+    Component.onCompleted: IconTheme.setWindowIcon(manager, "styles")
     required property var styles   // StyleManagerController
     required property var app
     title: qsTr("Style manager")

@@ -20,6 +20,8 @@ Dialog {
     required property var app
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     title: qsTr("Options")
+    // K1: the title with the set's settings icon (legacy OptionsDialog SetIcon(SETTINGS)).
+    header: IconDialogHeader { objectName: "settingsDialogTitle"; iconRole: "settings"; text: dialog.title }
     modal: true
     width: 640
     height: 600

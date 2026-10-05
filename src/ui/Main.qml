@@ -3033,6 +3033,8 @@ ApplicationWindow {
     Window {
         id: historyWindow
         objectName: "historyWindow"
+        // K1: the set's history icon as the window's (as legacy's dialogs show theirs, SetIcon).
+        Component.onCompleted: IconTheme.setWindowIcon(historyWindow, "history")
         title: root.editor.history.length === 1 ? qsTr("History (1 element)")
                                                 : qsTr("History (%1 elements)").arg(root.editor.history.length)
         width: 360
@@ -3250,6 +3252,8 @@ ApplicationWindow {
     Window {
         id: automationManagerWindow
         objectName: "automationManagerWindow"
+        // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
+        Component.onCompleted: IconTheme.setWindowIcon(automationManagerWindow, "automation")
         title: qsTr("Automation manager")
         width: 560
         height: 420
