@@ -105,6 +105,57 @@ private slots:
         QCOMPARE(cell->text(QAccessible::Name), QStringLiteral("line 50000"));
     }
 
+    // D1 Windows gate: UI Automation listed the main window again under each
+    // Grid cell, and focus in the Grid resolved to the main window. Qt's
+    // Windows bridge (qwindowsuiautils.cpp, hwndForAccessible) gives an element
+    // a host HWND when it has a window() and its parent has another window
+    // (or none); the Grid's cells and table must stay fragments of the window.
+    void cellsAndTableAreFragmentsOfTheWindow()
+    {
+        Rig rig(10);
+        const auto hostsAWindow = [](QAccessibleInterface *iface) {
+            QWindow *w = iface->window();
+            return w && (!iface->parent() || iface->parent()->window() != w);
+        };
+        QAccessibleInterface *table = QAccessible::queryAccessibleInterface(rig.grid);
+        QAccessibleInterface *cell = rig.table()->cellAt(3, 12);
+        QVERIFY(table && cell);
+        QCOMPARE(table->window(), &rig.window);
+        QCOMPARE(cell->window(), &rig.window);
+        QCOMPARE(cell->role(), QAccessible::Cell);
+        QCOMPARE(cell->parent(), table);
+        QCOMPARE(table->role(), QAccessible::Table);
+        QVERIFY(!hostsAWindow(cell));
+        QVERIFY(!hostsAWindow(table));
+        // Up from the table: items of the window, then the window's own
+        // interface, which alone hosts the HWND.
+        QAccessibleInterface *windowIface = QAccessible::queryAccessibleInterface(&rig.window);
+        QAccessibleInterface *up = table;
+        for (int steps = 0; up && up != windowIface && steps < 10; ++steps) {
+            QCOMPARE(up->window(), &rig.window);
+            QVERIFY(up->role() != QAccessible::Window && up->role() != QAccessible::Client);
+            up = up->parent();
+        }
+        QCOMPARE(up, windowIface);
+        QVERIFY(hostsAWindow(windowIface));
+
+        // Focus in the Grid resolves to the current cell, from the window down.
+        rig.grid->forceActiveFocus();
+        QTest::keyClick(&rig.window, Qt::Key_Down);
+        QTest::keyClick(&rig.window, Qt::Key_Down);
+        QCOMPARE(rig.grid->currentRow(), 1);
+        QAccessibleInterface *focused = table->focusChild();
+        QVERIFY(focused);
+        QCOMPARE(focused->role(), QAccessible::Cell);
+        QCOMPARE(focused->tableCellInterface()->rowIndex(), 1);
+        QVERIFY(focused->state().focused);
+        QVERIFY(!hostsAWindow(focused));
+        QAccessibleInterface *fromWindow = windowIface->focusChild();
+        for (int steps = 0; fromWindow && fromWindow->focusChild() && steps < 10; ++steps)
+            fromWindow = fromWindow->focusChild();
+        QCOMPARE(fromWindow, focused);
+    }
+
     void hiddenColumnsLeaveTheTable()
     {
         Rig rig(10);

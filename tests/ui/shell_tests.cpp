@@ -948,6 +948,68 @@ private slots:
         history->close();
     }
 
+    // D1 Windows gate: Right on View > Panels did not open it. Menus open as
+    // items of the main window (Popup.Item), so it stays the focus window and
+    // the shell's Right and Left (Next and Previous frame) took the keys on
+    // Windows. Right opens a submenu, Left closes it, as in legacy's menus
+    // (Menu.cpp:1263-1276), and the keyboard's item shows its highlight.
+    void menuArrowsOpenAndCloseSubmenus()
+    {
+        QVERIFY(application->openFile(episode));
+        item("editingGrid")->forceActiveFocus();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(root->property("shellActive").toBool());
+        QObject *nextFrame = nullptr;
+        std::function<void(QQuickItem *)> find = [&](QQuickItem *from) {
+            if (auto *o = from->findChild<QObject *>(QStringLiteral("globalHotkey_GLOBAL_NEXT_FRAME"), Qt::FindDirectChildrenOnly))
+                nextFrame = o;
+            for (QQuickItem *child : from->childItems())
+                find(child);
+        };
+        find(window->contentItem());
+        QVERIFY(nextFrame); // Right is a shell shortcut
+        QSignalSpy frameSteps(nextFrame, SIGNAL(activated()));
+        auto *view = named("viewMenu");
+        auto *panels = named("panelsMenu");
+        QVERIFY(view && panels);
+        const auto current = [](QObject *menu) {
+            const auto entries = menuItems(menu);
+            const int index = menu->property("currentIndex").toInt();
+            return index >= 0 && index < entries.size() ? entries[index] : nullptr;
+        };
+        // The keyboard's item: highlighted, with a background that shows.
+        const auto showsHighlight = [](QQuickItem *entry) {
+            auto *background = entry ? entry->property("background").value<QQuickItem *>() : nullptr;
+            return entry && entry->property("highlighted").toBool() && background && background->isVisible()
+                   && background->property("color").value<QColor>().alpha() > 0;
+        };
+
+        QVERIFY(QMetaObject::invokeMethod(view, "open"));
+        QTRY_VERIFY(view->property("opened").toBool());
+        QVERIFY(root->property("menuHasKeys").toBool());
+        press(Qt::Key_Down); // View > Panels
+        QCOMPARE(current(view)->property("subMenu").value<QObject *>(), panels);
+        QVERIFY(showsHighlight(current(view)));
+        press(Qt::Key_Right);
+        QTRY_VERIFY(panels->property("opened").toBool());
+        QVERIFY(showsHighlight(current(panels))); // its first panel
+        auto *panelMenu = current(panels)->property("subMenu").value<QObject *>();
+        QVERIFY(panelMenu);
+        press(Qt::Key_Right);
+        QTRY_VERIFY(panelMenu->property("opened").toBool());
+        QVERIFY(showsHighlight(current(panelMenu))); // Show
+        press(Qt::Key_Left);
+        QTRY_VERIFY(!panelMenu->property("visible").toBool());
+        QVERIFY(panels->property("visible").toBool());
+        press(Qt::Key_Left);
+        QTRY_VERIFY(!panels->property("visible").toBool());
+        QVERIFY(view->property("visible").toBool());
+        QCOMPARE(frameSteps.count(), 0);
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!view->property("visible").toBool());
+        QTRY_VERIFY(root->property("shellActive").toBool());
+    }
+
     // D1: the keyboard placement window expresses drag placements and resizes.
     void placementWindowMovesTabsAndResizes()
     {

@@ -174,9 +174,18 @@ QAccessibleInterface *LineGridAccessible::parent() const
         if (QAccessibleInterface *candidate = QAccessible::queryAccessibleInterface(p);
             candidate && candidate->indexOfChild(self) >= 0)
             return candidate;
-    if (QQuickItem *p = g->parentItem())
-        return QAccessible::queryAccessibleInterface(p);
+    // Otherwise the nearest accessible ancestor, and at last the window: an
+    // element without a parent counts as a top-level window to UI Automation.
+    for (QQuickItem *p = g->parentItem(); p; p = p->parentItem())
+        if (QAccessibleInterface *candidate = QAccessible::queryAccessibleInterface(p))
+            return candidate;
     return g->window() ? QAccessible::queryAccessibleInterface(g->window()) : nullptr;
+}
+
+QWindow *LineGridAccessible::window() const
+{
+    LineGrid *g = grid();
+    return g ? g->window() : nullptr;
 }
 
 int LineGridAccessible::childCount() const
