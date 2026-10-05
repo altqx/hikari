@@ -8,6 +8,7 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "theme.h"
 
 #include <QDir>
 #include <QFile>
@@ -149,6 +150,10 @@ bool write(const QString &path, const QString &videoFile)
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
+    // The application's controls style (composition.cpp chooses it), not
+    // the platform's: Qt's native Windows style, which the application never
+    // shows, divides by zero painting offscreen.
+    hikari::ui::theme::chooseControlsStyle();
     QTemporaryDir dir;
     const QString subtitles = dir.filePath(QStringLiteral("ep1.ass"));
     const QString orphan = dir.filePath(QStringLiteral("orphan.ass"));

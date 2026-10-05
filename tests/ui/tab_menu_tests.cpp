@@ -9,6 +9,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
+#include "theme.h"
 #include "line_table_model.h"
 
 #include <QCryptographicHash>
@@ -211,6 +212,10 @@ class TabMenuTests : public QObject {
 private slots:
     void initTestCase()
     {
+        // The application's controls style (composition.cpp chooses it), not
+        // the platform's: Qt's native Windows style, which the application never
+        // shows, divides by zero painting offscreen.
+        hikari::ui::theme::chooseControlsStyle();
         QVERIFY(home.isValid() && dir.isValid());
     }
     void init()

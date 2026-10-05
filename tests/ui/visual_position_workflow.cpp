@@ -13,6 +13,7 @@
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_view.h"
 #include "docking.h"
+#include "theme.h"
 
 #include <QDeadlineTimer>
 #include <QDir>
@@ -140,6 +141,10 @@ constexpr char kSubtitles[] = "[Script Info]\r\n"
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
+    // The application's controls style (composition.cpp chooses it), not
+    // the platform's: Qt's native Windows style, which the application never
+    // shows, divides by zero painting offscreen.
+    hikari::ui::theme::chooseControlsStyle();
     QTemporaryDir dir;
     const QString subtitles = dir.filePath(QStringLiteral("position.ass"));
     int failures = 0;

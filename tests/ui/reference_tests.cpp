@@ -15,6 +15,7 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "theme.h"
 #include "line_table_model.h"
 
 #include <QAccessible>
@@ -160,6 +161,10 @@ class ReferenceTest : public QObject {
 private slots:
     void initTestCase()
     {
+        // The application's controls style (composition.cpp chooses it), not
+        // the platform's: Qt's native Windows style, which the application never
+        // shows, divides by zero painting offscreen.
+        hikari::ui::theme::chooseControlsStyle();
         QVERIFY(dir.isValid());
         edit = write(dir, "edit.ass",
                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e1\n"
