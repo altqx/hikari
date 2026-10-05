@@ -6,6 +6,7 @@
 // tests/application/subtitle_comparison_tests.cpp.
 
 #include "hikari/app/application.h"
+#include "hikari/application/grid_clipboard.h"
 #include "docking.h"
 #include "line_table_model.h"
 
@@ -449,6 +450,163 @@ private slots:
         click(qobject_cast<QQuickItem *>(named("compareSubtitles")));
         QTRY_VERIFY(application->comparison().active());
         QCOMPARE(states(), QStringLiteral(".x."));
+    }
+
+    // Loading other subtitles into a compared tab (legacy OpenFile into the
+    // same tab): SubsLoader runs SubsGrid::Clearing, which deletes that
+    // grid's table (SubsLoader.cpp:30, SubsGridBase.cpp:118-120), so
+    // HikariSubFrame's "remove comparison after every subs load" finds no
+    // table and RemoveComparison never runs (HikariSubFrame.cpp:1391-1394).
+    // CG2 still names the tab: the other Document's next edit (SetModified,
+    // SubsGridBase.cpp:1000-1002) compares it with the new subtitles.
+    void loadingOtherSubtitlesIntoAComparedTabKeepsThePair()
+    {
+        QVERIFY(application->compareWithTab(1));
+        QCOMPARE(states(), QStringLiteral("=x="));
+        const auto firstId = application->workspace().tabs()[0];
+        application->selectTab(1);
+        const QString third = write(dir, "third.ass", "Default",
+                                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,uno\n"
+                                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n");
+        const auto review = application->reviewOpen(third);
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty()); // unmodified
+        application->finishClose();
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        const auto loaded = application->workspace().tabs()[1];
+        QCOMPARE(application->files().session(loaded)->document().lines().size(), std::size_t(2));
+        // The pair stays, CG2 now the loaded subtitles; only their table went.
+        const auto &c = application->comparison();
+        QVERIFY(c.active());
+        QCOMPARE(c.first(), firstId);
+        QCOMPARE(c.second(), loaded);
+        QVERIFY(!c.table(loaded));
+        QCOMPARE(states(), QStringLiteral(".."));
+        application->selectTab(0);
+        QCOMPARE(states(), QStringLiteral("=x=")); // the first's table as it was
+        // An edit of the first ("one" becomes "uno"): compared again with the
+        // loaded subtitles, in order (no criteria).
+        auto &editor = application->editor();
+        editor.textEdited(QStringLiteral("uno"), 3);
+        QVERIFY(editor.commit());
+        QCOMPARE(states(), QStringLiteral("==."));
+        application->selectTab(1);
+        QCOMPARE(states(), QStringLiteral("=="));
+    }
+
+    // Loading a session (Notebook::LoadLastSession, Notebook.cpp:1388-1393)
+    // destroys every tab without DeletePage, so neither RemoveComparison nor
+    // anything else clears hasCompare: the comparison stays on with its tabs
+    // gone, and "Turn off comparison" stays enabled (Notebook.cpp:938-939).
+    // A session tab whose subtitles were missing and are loaded later
+    // (retryRestore) is the same tab with other subtitles, as above.
+    void loadingASessionLeavesTheComparisonOn()
+    {
+        const QString later = dir.filePath(QStringLiteral("later.ass"));
+        QFile::remove(later);
+        QByteArray text = "[HikariSub v0.0.1]\n";
+        int tab = 0;
+        for (const QString &path : {first, later})
+            text += "Tab: " + QByteArray::number(tab++) + "\nVideo: \nPosition: 0\nFFMS2: 1\nSubtitles: " +
+                    QDir::fromNativeSeparators(path).toUtf8() + "\nActive: 0\nScroll: 0\nEditor: 1\n";
+        const QString kls = dir.filePath(QStringLiteral("comparison.kls"));
+        {
+            QFile f(kls);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(text);
+        }
+        QVERIFY(application->compareWithTab(1));
+        const auto review = application->reviewSession(QUrl::fromLocalFile(kls));
+        QVERIFY(review.value(QStringLiteral("ok")).toBool());
+        QVERIFY(review.value(QStringLiteral("rows")).toList().isEmpty());
+        application->finishClose();
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        QCOMPARE(application->unresolvedRestores().size(), qsizetype(1)); // later.ass
+        const auto &c = application->comparison();
+        QVERIFY(c.active());
+        for (const auto id : application->workspace().tabs()) {
+            QVERIFY(c.first() != id);
+            QVERIFY(c.second() != id);
+            QVERIFY(!c.table(id));
+        }
+        QVERIFY(c.tabled().empty());
+        // The session's last tab (later.ass, missing) is the editing target.
+        QCOMPARE(application->currentTab(), 1);
+        application->selectTab(0);
+        QCOMPARE(states(), QStringLiteral("..."));
+        // An edit compares nothing (no grid has a table).
+        auto &editor = application->editor();
+        editor.textEdited(QStringLiteral("uno"), 3);
+        QVERIFY(editor.commit());
+        QCOMPARE(states(), QStringLiteral("..."));
+        // Compare the session's tabs, then later.ass loads into its tab
+        // (retryRestore): that tab's table goes, the pair stays.
+        QVERIFY(application->compareWithTab(1));
+        QCOMPARE(c.first(), application->workspace().tabs()[0]);
+        QVERIFY(c.table(application->workspace().tabs()[1]));
+        QVERIFY(QFile::copy(second, later));
+        QVERIFY(application->retryRestore(0));
+        const auto loaded = application->workspace().tabs()[1];
+        QVERIFY(c.active());
+        QCOMPARE(c.second(), loaded);
+        QVERIFY(!c.table(loaded));
+        // The first's next edit compares it with later.ass, in order:
+        // "too" / "one", "two" / "too", "three" / "three".
+        editor.textEdited(QStringLiteral("too"), 3);
+        QVERIFY(editor.commit());
+        QCOMPARE(states(), QStringLiteral("xx="));
+        application->selectTab(1);
+        QCOMPARE(states(), QStringLiteral("xx=."));
+        // The menu with a session's comparison: Turn off is enabled and clears it.
+        cleanup();
+        init();
+        QVERIFY(application->compareWithTab(1));
+        QVERIFY(application->reviewSession(QUrl::fromLocalFile(kls)).value(QStringLiteral("ok")).toBool());
+        application->finishClose();
+        QObject *menu = openTabMenu(-1);
+        QVERIFY(menu->property("enabled").toBool());
+        QVERIFY(enabled("turnOffComparison"));
+        QVERIFY(!enabled("compareSubtitles"));
+        trigger("turnOffComparison");
+        QVERIFY(!application->comparison().active());
+    }
+
+    // Translation mode: each side's grid compares its translation when it
+    // has one (SubsGridBase.cpp:1780-1781, `CCG1->hasTLMode && TextTl !=
+    // emptyString`); the composition passes each Document's TLMode.
+    void translationModeComparesTheTranslation()
+    {
+        const QString tl = dir.filePath(QStringLiteral("translation.ass"));
+        {
+            QFile f(tl);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(QByteArray("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLmode\n\n") + kStyles +
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,one\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,uno\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,TLmode,,0,0,0,,two\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,dos\n");
+        }
+        QVERIFY(application->openFile(tl));
+        QVERIFY(application->openFile(write(dir, "plain.ass", "Default",
+                                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,uno\n"
+                                            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n")));
+        QVERIFY(application::translationMode(session(2)));
+        QCOMPARE(session(2).document().lines().size(), std::size_t(2));
+        // The translations "uno", "dos" against "uno", "two" (the originals
+        // "one", "two" would give "x=").
+        application->selectTab(2);
+        QVERIFY(application->compareWithTab(3));
+        QCOMPARE(states(), QStringLiteral("=x"));
+        application->selectTab(3);
+        QCOMPARE(states(), QStringLiteral("=x"));
+        // The other way round: the second grid's translation mode counts too.
+        QVERIFY(application->compareWithTab(2));
+        QCOMPARE(states(), QStringLiteral("=x"));
+        application->selectTab(2);
+        QCOMPARE(states(), QStringLiteral("=x"));
     }
 
     // Notebook.cpp:922-928 adds each checked style to compareStyles at every
