@@ -38,6 +38,7 @@ public:
     std::uint64_t openIndexed(const std::string &path, const application::IndexRequest &index, Progress progress,
                               Opened done) override;
     void cancelOpen() override;
+    std::optional<application::OpenFailure> openFailure() const override { return m_openFailure; }
     void frame(int index, FrameReady done) override;
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
@@ -87,6 +88,7 @@ private:
     bool m_open = false;
     std::optional<application::AudioInfo> m_audio;
     std::optional<std::uint64_t> m_openRequest;
+    std::optional<application::OpenFailure> m_openFailure; // V3: the latest open's
     std::string m_path;
     application::IndexRequest m_index; // the last open's
     QString m_handoff; // the last open's index handoff file (A1), or the one its open may write
