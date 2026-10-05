@@ -33,3 +33,10 @@ target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 # Y8: the font collector (renderer-verified collection).
 target_sources(hikari_application PRIVATE font_collector.cpp)
+# T1: the visual tools' shared transform, rail families, gestures, batch
+# picker and the crosshair. Legacy's float steps must round as its build did,
+# so these files are built without floating-point contraction (as
+# audio_spectrum.cpp).
+target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
+set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

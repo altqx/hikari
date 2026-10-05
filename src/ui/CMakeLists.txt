@@ -11,7 +11,8 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     workspace_layout.cpp workspace_layout.h shift_times_controller.cpp shift_times_controller.h
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
     settings_store.cpp settings_store.h
-    audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h)
+    audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
+    visual_tools_controller.cpp visual_tools_controller.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -29,3 +30,5 @@ qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
+# T1: the visual tool rail, the overlay over the Video canvas and the values below it.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)

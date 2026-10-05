@@ -11,6 +11,7 @@
 #include "line_table_model.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
+#include "hikari/application/visual_crosshair.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -65,6 +66,36 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
 QString nativeFixture(const char *name)
 {
     return QDir::toNativeSeparators(QStringLiteral(HIKARI_MEDIA_FIXTURES "/") + QLatin1String(name));
+}
+
+// T1: a batch tool for the rail's gesture rule. A left press begins a
+// gesture on the batch picker's targets, each move stages \pos at the
+// pointer before each target's text, the release commits it.
+class DragTool : public application::visual::VisualTool {
+public:
+    application::visual::Family family() const override { return application::visual::Family::Position; }
+    void pointer(const application::visual::Pointer &e, application::visual::VisualHost &host) override
+    {
+        using application::visual::Pointer;
+        if (e.kind == Pointer::Kind::Press && e.button == Pointer::Button::Left)
+            (void)host.beginGesture(host.batchTargets(), "Visual positioning tool");
+        auto *g = host.gesture();
+        if (g && (e.kind == Pointer::Kind::Move || e.kind == Pointer::Kind::Press)) {
+            const auto at = host.view().viewToScript({static_cast<float>(e.x), static_cast<float>(e.y)});
+            const std::string pos = "{\\pos(" + std::to_string(static_cast<int>(at.x)) + "," +
+                                    std::to_string(static_cast<int>(at.y)) + ")}";
+            for (const auto &id : g->targets())
+                g->stage(id, std::u8string(pos.begin(), pos.end()) + g->before(id).text);
+        }
+        if (g && e.kind == Pointer::Kind::Release && e.button == Pointer::Button::Left)
+            (void)host.commitGesture();
+    }
+    application::visual::Overlay overlay(const application::visual::VisualHost &) const override { return {}; }
+};
+
+QString text(const core::LineRecord *line)
+{
+    return QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
 }
 
 } // namespace
@@ -2245,6 +2276,27 @@ private:
         if (auto *marks = item<QObject>(field))
             QMetaObject::invokeMethod(marks, "appliedRanges", Q_RETURN_ARG(QVariantList, applied));
         return applied;
+    }
+
+    // A session reading its settings from `file`, without a spelling
+    // backend (no dictionary notice beside it).
+    void restartWithSettings(const QString &file)
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.settingsFile = file;
+        options.spellingBackend = {};
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
     }
 
     // A4: a session whose players make no sound (playbackAudio off): the
@@ -6557,6 +6609,371 @@ private slots:
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, false), backends::PortAudioOutput::defaultHostApi());
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, true), std::string("Windows DirectSound"));
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(0, true), std::string("Windows WASAPI"));
+    }
+
+    // T1: the tool rail, the shared view placing the frame, the crosshair
+    // over the video, VIDEO_COPY_COORDS at the pointer and a Ctrl+click's
+    // \pos as one history step.
+private:
+    QString visualDocument(const char *name, const char *extra = "")
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QFile f(path);
+        if (!f.open(QIODevice::WriteOnly))
+            return {};
+        // The video's own resolution, so no resolution question pops up.
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n");
+        f.write(extra);
+        return path;
+    }
+    QPoint videoPoint(QPointF local) const
+    {
+        return item("visualOverlay")->mapToScene(local).toPoint();
+    }
+
+private slots:
+
+    void visualToolRailCrosshairAndCopyCoordinates()
+    {
+        // VIDEO_COPY_COORDS has no default key and no row in the shortcut
+        // editor (legacy Hotkeys.h:66 gives it no name), so it is bound the
+        // way legacy's Hotkeys.txt would: a Video window line.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("VIDEO_COPY_COORDS V=Ctrl-Shift-K")});
+        restartWithSettings(ini);
+        QCOMPARE(application->hotkeys().actionFor(3, Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier),
+                 QStringLiteral("VIDEO_COPY_COORDS"));
+        QVERIFY(application->openFile(visualDocument("visual.ass")));
+        auto &tools = application->visualTools();
+        // The rail: legacy VideoToolbar's eleven families, the crosshair on.
+        for (int i = 0; i < application::visual::kFamilyCount; ++i) {
+            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(i)));
+            QVERIFY(button);
+            const auto tip = application::visual::families()[i].tooltip;
+            QCOMPARE(button->property("text").toString(), QString::fromLatin1(tip.data(), tip.size()));
+            QCOMPARE(button->property("checked").toBool(), i == 0);
+            QVERIFY(button->isEnabled());
+        }
+        QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(item("videoPresenter")->property("presentedGeneration").toULongLong() > 0, 20000);
+        // The presenter draws the frame in the shared view's rectangle
+        // (legacy UpdateRects in device pixels).
+        const auto &view = tools.videoView();
+        QCOMPARE(item("videoPresenter")->property("videoRect").toRectF(), tools.videoRect());
+        QCOMPARE(view.frameWidth(), 320);
+        QCOMPARE(view.frameHeight(), 240);
+        const auto r = view.videoRect();
+        QVERIFY(r.width() > 0 && r.height() > 0);
+        QVERIFY(r.left == 0 || r.top == 0); // fitted: bars on one axis at most
+        QCOMPARE(view.scriptWidth(), 320);
+
+        // The crosshair follows the pointer over the video.
+        const QPointF centre = tools.videoRect().center();
+        const QPoint p = videoPoint(centre);
+        QTest::mouseMove(window, p);
+        QTRY_VERIFY(!tools.overlay().isEmpty());
+        QVERIFY(tools.hideCursor());
+        const QVariantList shapes = tools.overlay();
+        QCOMPARE(shapes.size(), 5); // two black lines, two white, the label
+        const QString label = shapes.last().toMap().value(QStringLiteral("text")).toString();
+        const QStringList xy = label.split(QStringLiteral(", "));
+        QCOMPARE(xy.size(), 2);
+        const int dx = view.toDevice(centre.x()), dy = view.toDevice(centre.y());
+        const auto script = view.viewToScript({float(dx), float(dy)});
+        QVERIFY2(std::abs(xy[0].toInt() - script.x) <= 2 && std::abs(xy[1].toInt() - script.y) <= 2, qPrintable(label));
+        QTRY_COMPARE(visualItem("visualValue_position")->property("text").toString(), label);
+
+        // VIDEO_COPY_COORDS at the pointer, in legacy's text form "x,y",
+        // through the Video window binding: VideoBox::OnAccelerator takes the
+        // pointer's position (VideoBox.cpp:1151). Approved departure
+        // T1-copy-coords-view: the text is the script position under the
+        // pointer, the crosshair's conversion (its coefficients,
+        // VisualCross.cpp:80-92, and the tools' zoom, 94-97) truncated as
+        // its label is, computed here, not with copyCoordinatesText. Legacy
+        // OnCopyCoords (VideoBox.cpp:1395-1412) scaled by the whole client
+        // less one pixel, which a bar puts off.
+        QGuiApplication::clipboard()->clear();
+        item("videoPanel")->forceActiveFocus();
+        const QPoint k = p + QPoint(7, 5);
+        QTest::mouseMove(window, k);
+        QTRY_VERIFY(!tools.overlay().isEmpty());
+        press(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
+        const QPointF at = item("visualOverlay")->mapFromScene(QPointF(k));
+        const int devX = view.toDevice(at.x()), devY = view.toDevice(at.y());
+        QVERIFY(r.left > 0 || r.top > 0); // a bar, where legacy's text was off
+        const float crossX = float(view.scriptWidth()) / float(r.width() - (r.left ? 0 : 1));
+        const float crossY = float(view.scriptHeight()) / float(r.height() - (r.top ? 0 : 1));
+        const int sx = int(((devX / view.zoomScale().x) + view.zoomMove().x) * crossX);
+        const int sy = int(((devY / view.zoomScale().y) + view.zoomMove().y) * crossY);
+        const QString copied = QStringLiteral("%1,%2").arg(sx).arg(sy);
+        QTRY_COMPARE(QGuiApplication::clipboard()->text(), copied);
+        QCOMPARE(tools.copied(), copied);
+        // The crosshair's label at the same pointer reads the same position.
+        QCOMPARE(visualItem("visualValue_position")->property("text").toString(), QStringLiteral("%1, %2").arg(sx).arg(sy));
+        const float legacyX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
+        const float legacyY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
+        QVERIFY(copied != QStringLiteral("%1,%2").arg(int(float(devX) * legacyX)).arg(int(float(devY) * legacyY)));
+
+        // Ctrl+click: \pos at the pointer into the active Line, one step.
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::size_t steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual positioning tool"));
+        QVERIFY2(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")),
+                 qPrintable(text(session->document().lines()[0])));
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("second"));
+        // Leaving the video hides it.
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
+        QTRY_VERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+    }
+
+    // T1: the transaction rule (accepted on #55) through the real panel: a
+    // drag commits on release as one step, Esc during it restores the
+    // pre-gesture draft, the batch picker's Lines are the targets whatever
+    // the active Line, and a tool other than the crosshair is blocked with
+    // the legacy warning outside its Line's time (VIDEO_VISUAL_WARNINGS_OFF
+    // hides the text).
+    void visualGesturesCommitOnReleaseAndEscCancels()
+    {
+        QVERIFY(application->openFile(visualDocument("gesture.ass")));
+        auto &tools = application->visualTools();
+        tools.setTool(application::visual::Family::Position, std::make_unique<DragTool>());
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000); // the active Line's start
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
+        QCOMPARE(tools.activeFamily(), 1);
+        QVERIFY(visualItem("visualTool1")->property("checked").toBool());
+        QVERIFY(!visualItem("visualTool0")->property("checked").toBool());
+
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const core::LineId first = lines[0]->id, second = lines[1]->id;
+        QVERIFY(session->editDraftText(first, u8"typed"));
+        const std::size_t steps = session->historySize();
+        const QPoint p = videoPoint(tools.videoRect().center());
+        // Esc during the drag: nothing reaches the Document, the draft stays.
+        QTest::mouseMove(window, p);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(10, 6));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("first"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(10, 6));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(session->draftText() == std::optional<std::u8string>(u8"typed"));
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("first"));
+
+        // A drag commits on release: the draft first (its own step), then
+        // one step for the whole drag.
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        for (int i = 1; i <= 5; ++i)
+            QTest::mouseMove(window, p + QPoint(2 * i, i));
+        QCOMPARE(session->historySize(), steps);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(10, 5));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QCOMPARE(session->history()[session->historySize() - 2].name, std::string("Edit Line"));
+        QCOMPARE(session->history().back().name, std::string("Visual positioning tool"));
+        QVERIFY2(text(session->document().lines()[0]).endsWith(QStringLiteral(")}typed")),
+                 qPrintable(text(session->document().lines()[0])));
+        QCOMPARE(text(session->document().lines()[1]), QStringLiteral("second"));
+
+        // The batch picker: both Lines picked, then the selection and the
+        // active Line move to the second alone; the drag still edits both.
+        application->selectAllLines();
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualPickBatch"), "click"));
+        QCOMPARE(tools.batchCount(), 2);
+        application->selectLine(second.value);
+        const std::size_t before = session->historySize();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(4, 4));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(4, 4));
+        QTRY_COMPARE(session->historySize(), before + 1);
+        QVERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")));
+        QVERIFY(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\pos(")));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualClearBatch"), "click"));
+        QCOMPARE(tools.batchCount(), 0);
+
+        // Outside the Line's time: the warning, and the tool takes nothing.
+        QVERIFY(application->video().showFrameAt(0));
+        QTRY_COMPARE(tools.warning(), QStringLiteral("Line is not visible on video\nor has zero duration"));
+        QTRY_VERIFY(item("visualWarning")->isVisible());
+        // Approved departure T1-warning-centre: centred on the video
+        // rectangle (legacy's wx path, Visuals.cpp:479-493), not in the
+        // window's corner to the video's far edges as legacy's Direct3D path
+        // drew it (Visuals.cpp:531-546), off-centre with a bar.
+        {
+            const QQuickItem *warning = item("visualWarning");
+            const QRectF video = tools.videoRect();
+            QVERIFY(video.left() > 0 || video.top() > 0);
+            QVERIFY2(std::abs(warning->x() + warning->width() / 2 - video.center().x()) <= 0.5,
+                     qPrintable(QStringLiteral("%1 in %2").arg(warning->x()).arg(video.left())));
+            QVERIFY2(std::abs(warning->y() + warning->height() / 2 - video.center().y()) <= 0.5,
+                     qPrintable(QStringLiteral("%1 in %2").arg(warning->y()).arg(video.top())));
+        }
+        const std::size_t blocked = session->historySize();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p);
+        QVERIFY(!tools.gestureActive());
+        QCOMPARE(session->historySize(), blocked);
+        application->settingsStore()->setValue(QStringLiteral("video.visualWarningsOff"), true);
+        QTRY_COMPARE(tools.warning(), QString());
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p);
+        QCOMPARE(session->historySize(), blocked); // still blocked (blockevents)
+
+        // The family again goes back to the crosshair.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
+        QCOMPARE(tools.activeFamily(), 0);
+    }
+
+    // T1: legacy disables the rail for a Document that is not ASS
+    // (VideoToolbar::DisableVisuals); the crosshair stays the tool. (An ASS
+    // Document's rail is enabled: visualToolRailCrosshairAndCopyCoordinates.)
+    void visualRailIsDisabledForOtherFormats()
+    {
+        const QString path = dir.filePath(QStringLiteral("visual.srt"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("1\n00:00:01,000 --> 00:00:02,000\nfirst\n\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &tools = application->visualTools();
+        QVERIFY(!tools.railEnabled());
+        QVERIFY(!visualItem("visualTool1")->isEnabled());
+        tools.selectFamily(3);
+        QCOMPARE(tools.activeFamily(), 0);
+    }
+
+    // T1: converting the Document moves the crosshair with it: to ASS
+    // makes it (HikariSubFrame::OnConversion, DisableVisuals(false),
+    // HikariSubFrame.cpp:1169), from ASS deletes it (RemoveVisual(true,
+    // true), HikariSubFrame.cpp:1166-1168; RendererVideo.cpp:1133-1146), and
+    // an edit never brings it back (SubsGrid::ShowEditOnVideo runs no
+    // SetVisual below CHANGEPOS, SubsGridBase.cpp:1168).
+    void visualCrosshairFollowsTheDocumentFormat()
+    {
+        const QString path = dir.filePath(QStringLiteral("cross.srt"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("1\n00:00:01,000 --> 00:00:02,000\nfirst\n\n2\n00:00:03,000 --> 00:00:04,000\nsecond\n\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const QPoint p = videoPoint(tools.videoRect().center());
+        // SRT: no crosshair, not even after an edit, and a Ctrl+click
+        // writes nothing.
+        QVERIFY(!tools.tool());
+        QVERIFY(session->editDraftText(session->document().lines()[0]->id, u8"edited"));
+        QVERIFY(application->editor().commit());
+        QVERIFY(!tools.tool());
+        QTest::mouseMove(window, p);
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+        std::size_t steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
+        QCOMPARE(session->historySize(), steps);
+
+        // Converted to ASS (at the video's resolution, so no resolution
+        // question): the crosshair, hidden until the next move.
+        application->setConversionOptions({{QStringLiteral("resolutionWidth"), 320},
+                                           {QStringLiteral("resolutionHeight"), 240}});
+        QVERIFY(application->previewConversion(QStringLiteral("ass")).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->acceptConversion());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QVERIFY(tools.railEnabled());
+        QVERIFY(tools.tool());
+        QVERIFY(tools.overlay().isEmpty());
+        QTest::mouseMove(window, p + QPoint(2, 1));
+        QTRY_COMPARE(tools.overlay().size(), 5);
+
+        // Back to SRT: gone, and an edit does not bring it back.
+        QVERIFY(application->previewConversion(QStringLiteral("srt")).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->acceptConversion());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QVERIFY(!tools.railEnabled());
+        QVERIFY(!tools.tool());
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(session->editDraftText(session->document().lines()[1]->id, u8"typed"));
+        QVERIFY(application->editor().commit());
+        QVERIFY(!tools.tool());
+        QTest::mouseMove(window, p + QPoint(4, 3));
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+        steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p + QPoint(4, 3));
+        QCOMPARE(session->historySize(), steps);
+    }
+
+    // T1: the visual tools edit the editing target only, so the Protected
+    // reference refuses their writes by never being given to them. With the
+    // reference the only Document there is no target: the rail is disabled
+    // and a Ctrl+click or middle click (legacy Cross's \pos, VisualCross.cpp:
+    // 102-126) writes nothing. With a target too, the crosshair is live and
+    // its clicks go to the target, never the reference. (The shell's
+    // reference EditSession is not built protected, DocumentFiles; the
+    // Gesture's own refusal of a protected session is unit-tested only,
+    // VisualGesture.ProtectedReferenceRefusesWrites.)
+    void visualToolsNeverWriteTheReference()
+    {
+        QVERIFY(application->openReference(original));
+        QVERIFY(!application->workspace().editingTarget());
+        auto *reference = application->files().session(*application->workspace().reference());
+        QVERIFY(reference);
+        const auto revision = reference->revision();
+        const std::size_t steps = reference->historySize();
+        auto &tools = application->visualTools();
+        QVERIFY(!tools.session());
+        QVERIFY(!tools.railEnabled());
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        const QPoint p = videoPoint(tools.videoRect().center());
+        QTest::mouseMove(window, p);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, p);
+        QVERIFY(!tools.gestureActive());
+        QCOMPARE(reference->revision(), revision);
+        QCOMPARE(reference->historySize(), steps);
+        QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
+
+        // With an editing target as well, the tools are live and still edit
+        // the target only: the shell gives them the editing target, which
+        // the Workspace never lets the reference be.
+        QVERIFY(application->openFile(visualDocument("visual.ass")));
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(application->workspace().reference());
+        auto *target = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(tools.session(), target);
+        QVERIFY(tools.railEnabled());
+        application->video().openVideo(nativeFixture("cfr.mkv")); // the new target's video closed
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        const QPoint q = videoPoint(tools.videoRect().center()) + QPoint(5, 3); // a move: not where the pointer is
+        QTest::mouseMove(window, q);
+        QTRY_COMPARE(tools.overlay().size(), 5); // the crosshair
+        const std::size_t targetSteps = target->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, q);
+        QTRY_COMPARE(target->historySize(), targetSteps + 1);
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, q);
+        QTRY_COMPARE(target->historySize(), targetSteps + 2);
+        QVERIFY(text(target->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")));
+        QCOMPARE(reference->revision(), revision);
+        QCOMPARE(reference->historySize(), steps);
+        QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
     }
 
     void theReferenceIsNeverEdited()

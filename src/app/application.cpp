@@ -500,6 +500,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
+    // T1: the visual tools edit the editing target, never the reference.
+    m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
+    m_visualTools->setEdited([this] {
+        m_editor->reloadFromSession();
+        refreshViews();
+    });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1227,6 +1233,7 @@ void Application::refreshVideo()
         m_video->offer(associations);
         enterTabMedia(previous, target); // P6: the tab's own video, audio and keyframes
     }
+    m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
     if (session->revision() != m_videoRevision) {
@@ -4049,6 +4056,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("workspaceLayout"), QVariant::fromValue(m_workspaceLayout.get())},
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
+            {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},

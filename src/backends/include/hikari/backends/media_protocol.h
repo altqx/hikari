@@ -21,7 +21,9 @@
 //                      i32 keyframeCount, i32 keyframes[keyframeCount] (frame
 //                      indices FFMS2 marks as keyframes, ascending),
 //                      u8 newIndex (1: indexed now, 0: read from indexFile),
-//                      u8 handedOff (1: the new index is in handoffFile)
+//                      u8 handedOff (1: the new index is in handoffFile),
+//                      i32 width, i32 height (frame 0's encoded size),
+//                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown)
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open

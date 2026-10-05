@@ -100,3 +100,11 @@ hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_c
 hikari_add_gtest(hikari_application_font_collector_tests SOURCES font_collector_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+# T1: the visual tools' transform, crosshair and gestures, with the legacy
+# probe's observations.
+hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
+    HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
+    HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
+    HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")

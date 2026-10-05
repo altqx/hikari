@@ -229,6 +229,10 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                     t.keyframes.push_back(in.i32());
                 t.newIndex = in.u8() != 0;
                 const bool handedOff = in.u8() != 0;
+                t.width = in.i32();
+                t.height = in.i32();
+                t.sarNum = in.i32();
+                t.sarDen = in.i32();
                 if (!in.ok()) {
                     unused();
                     return done(std::unexpected(SourceError::BackendFailure));

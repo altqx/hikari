@@ -168,6 +168,8 @@ int main(int argc, char **argv)
     enc->gop_size = kind == "longgop" ? 600 : 12; // 600 is MPEG-4's largest interval
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
     enc->bit_rate = 2'000'000;
+    if (kind == "sar") // T1: an anamorphic frame
+        enc->sample_aspect_ratio = AVRational{32, 27};
     if (color) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
@@ -182,6 +184,7 @@ int main(int argc, char **argv)
     AVStream *vs = avformat_new_stream(fmt, nullptr);
     avcodec_parameters_from_context(vs->codecpar, enc);
     vs->time_base = enc->time_base;
+    vs->sample_aspect_ratio = enc->sample_aspect_ratio;
 
     AVCodecContext *aenc = nullptr;
     AVStream *as = nullptr, *as2 = nullptr, *ss = nullptr;

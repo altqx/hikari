@@ -16,6 +16,8 @@
 using namespace hikari;
 using namespace hikari::application;
 
+using hikari::application::visual::SourceGeometry;
+
 namespace {
 
 core::Document load(std::string_view text)
@@ -61,6 +63,7 @@ struct FakeSource : IndexedSourcePort {
     std::vector<int> audioTracks; // the timeline's (the first is firstAudioTrack)
     bool newIndex = true;
     std::string handoffIndexFile;
+    SourceGeometry geometry; // T1: what the timeline reports (none by default)
     std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
                               Opened done) override
     {
@@ -88,7 +91,17 @@ struct FakeSource : IndexedSourcePort {
         t.firstAudioTrack = audioTracks.empty() ? -1 : audioTracks.front();
         t.newIndex = newIndex;
         t.handoffIndexFile = handoffIndexFile;
+        t.width = geometry.width;
+        t.height = geometry.height;
+        t.sarNum = geometry.sarNum;
+        t.sarDen = geometry.sarDen;
         pendingOpen(t);
+    }
+    void fail(std::size_t which = 0)
+    {
+        auto [index, done] = std::move(frames[which]);
+        frames.erase(frames.begin() + static_cast<std::ptrdiff_t>(which));
+        done(std::unexpected(SourceError::BackendFailure));
     }
     void answer(std::size_t which = 0)
     {
@@ -163,6 +176,37 @@ TEST_F(VideoTest, ASeekWhileIndexingAppliesWhenReady)
     ASSERT_TRUE(presenter.shown[0].overlay);
     EXPECT_EQ(renderer.renderedAt, std::vector<std::int64_t>{120'000}); // the frame's start, not the Line's
     EXPECT_EQ(video.lastPresent()->outcome, PresentOutcome::Accepted);
+}
+
+TEST_F(VideoTest, SourceGeometryOutlivesADecoderFailure)
+{
+    // T1: the visual tools take the source's frame size and SAR from its
+    // timeline (legacy ProviderFFMS2::Init); a frame that fails to decode
+    // leaves them, so the tools stay usable.
+    source.geometry = {720, 480, 32, 27};
+    video.setPresenter(&presenter);
+    EXPECT_FALSE(video.sourceGeometry().valid());
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    EXPECT_EQ(video.sourceGeometry(), (SourceGeometry{720, 480, 32, 27}));
+    source.fail();
+    EXPECT_EQ(video.state(), VideoSession::State::Ready);
+    EXPECT_EQ(video.sourceGeometry(), (SourceGeometry{720, 480, 32, 27}));
+    video.showFrame(1);
+    source.answer();
+    ASSERT_FALSE(presenter.shown.empty());
+    EXPECT_DOUBLE_EQ(presenter.shown.back().transform.pixelAspect, 32.0 / 27.0);
+    video.close();
+    EXPECT_FALSE(video.sourceGeometry().valid());
+}
+
+TEST_F(VideoTest, SourceGeometryFallsBackToTheShownFrame)
+{
+    video.open("/m/ep1.mkv");
+    source.finishOpen(); // a timeline without a size
+    EXPECT_FALSE(video.sourceGeometry().valid());
+    source.answer();
+    EXPECT_EQ(video.sourceGeometry(), (SourceGeometry{4, 2, 0, 1}));
 }
 
 TEST_F(VideoTest, ASeekMadeBeforeOpeningAppliesToTheVideo)

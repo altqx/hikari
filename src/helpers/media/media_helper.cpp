@@ -228,6 +228,8 @@ void open(Source &source, Reader &in, Responder &r)
     for (int k : keyframes)
         out.i32(k);
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
+    // T1: legacy ProviderFFMS2::Init's frame size and SAR (ProviderFFMS2.cpp:362-366).
+    out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);

@@ -66,6 +66,7 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_newIndex = opened->newIndex;
         m_indexHandoff = opened->handoffIndexFile;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
+        m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
         notify();
         if (const auto seek = std::exchange(m_pendingSeek, std::nullopt))
@@ -217,6 +218,17 @@ void VideoSession::render()
         m_overlay = std::make_shared<const OverlayFrame>(std::move(*overlay));
 }
 
+visual::SourceGeometry VideoSession::sourceGeometry() const
+{
+    if (m_state != State::Ready)
+        return {};
+    if (m_geometry.valid())
+        return m_geometry;
+    if (m_shown)
+        return {m_shown->width, m_shown->height, 0, 1};
+    return {};
+}
+
 void VideoSession::present()
 {
     if (!m_presenter || !m_shown)
@@ -225,6 +237,11 @@ void VideoSession::present()
     p.generation = m_shown->generation;
     p.frame = m_shown;
     p.overlay = m_overlay;
+    // T1: the source's SAR widens the frame as legacy's aspect did
+    // (ProviderFFMS2.cpp:366; no SAR is square).
+    const auto geometry = sourceGeometry();
+    if (geometry.sarNum > 0 && geometry.sarDen > 0)
+        p.transform.pixelAspect = static_cast<double>(geometry.sarNum) / static_cast<double>(geometry.sarDen);
     const std::weak_ptr<bool> alive = m_alive;
     const auto shown = m_shown;
     m_presenter->present(std::move(p), [this, alive, shown](PresentResult result) {

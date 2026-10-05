@@ -21,6 +21,7 @@
 #include "hikari/application/legacy_timebase.h"
 #include "hikari/application/presenter.h"
 #include "hikari/application/subtitle_render.h"
+#include "hikari/application/visual_view.h"
 #include "hikari/core/frame_timeline.h"
 
 #include <functional>
@@ -107,6 +108,10 @@ public:
     const std::string &indexHandoff() const { return m_indexHandoff; }
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
+    // T1: the open video's frame size and SAR (the source's, else the first
+    // frame shown's with no SAR); invalid without one. It stays when a
+    // frame fails to decode, so the visual tools keep working.
+    visual::SourceGeometry sourceGeometry() const;
     std::optional<int> requestedFrame() const { return m_requested; }
     std::optional<int> shownFrame() const { return m_shown ? std::optional(m_shown->index) : std::nullopt; }
     std::optional<core::DocumentTime> frameStart(int index) const;
@@ -154,6 +159,7 @@ private:
     bool m_newIndex = true;
     std::string m_indexHandoff;
     double m_fps = 0;
+    visual::SourceGeometry m_geometry; // the source's, from its timeline
 };
 
 } // namespace hikari::application

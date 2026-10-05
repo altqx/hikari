@@ -106,7 +106,23 @@ TEST_F(Fixture, ConstantRateFramesAreExact)
     EXPECT_LT(t->keyframes.back(), 48);
     EXPECT_EQ(t->fpsNumerator * 1001, t->fpsDenominator * 24000);
     EXPECT_TRUE(std::ranges::is_sorted(t->pts));
+    // T1: frame 0's encoded size; no SAR is written, so none (or 1:1) is read.
+    EXPECT_EQ(t->width, 320);
+    EXPECT_EQ(t->height, 240);
+    EXPECT_TRUE(t->sarNum == 0 || t->sarNum == t->sarDen) << t->sarNum << ":" << t->sarDen;
     expectExactFrames(48);
+}
+
+TEST_F(Fixture, OpenGivesTheFramesSizeAndSampleAspect)
+{
+    // T1: legacy ProviderFFMS2::Init's EncodedWidth/EncodedHeight and SAR
+    // (ProviderFFMS2.cpp:362-366), for the visual tools' aspect.
+    const auto t = open("sar");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->width, 320);
+    EXPECT_EQ(t->height, 240);
+    EXPECT_EQ(t->sarNum, 32);
+    EXPECT_EQ(t->sarDen, 27);
 }
 
 TEST_F(Fixture, VariableRateTimelineAndFramesAreExact)
