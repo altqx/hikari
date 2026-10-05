@@ -455,6 +455,40 @@ private slots:
         QTRY_VERIFY(!item("referenceDock")->property("isOpen").toBool());
     }
 
+    // R2-reference-tray: legacy's preview belonged to the grid it was drawn
+    // on, so changing tabs left it behind (and it was editable there). The
+    // tray is workspace-wide: switching the editing target to another tab
+    // keeps the same Protected reference open, linked to the new target's
+    // active Line, and switching back follows the first tab's Line again.
+    void theTrayStaysAcrossTabSwitches()
+    {
+        const QByteArray before = hash(ref);
+        const auto refId = tab(1);
+        showPreviewByKey();
+        QTRY_VERIFY(item("referenceDock")->property("isOpen").toBool());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // e2
+        QCOMPARE(referenceRow(), 2);
+        QCOMPARE(shell().referenceMatchCount(), 1);
+        application->selectTab(2); // third.ass: t0, 1-2 s
+        QCOMPARE(application->workspace().editingTarget(), tab(2));
+        QCOMPARE(application->workspace().reference(), refId);
+        QVERIFY(application->workspace().referenceIsTab());
+        QVERIFY(shell().referenceLinked());
+        QVERIFY(item("referenceDock")->property("isOpen").toBool());
+        QCOMPARE(shell().referenceMatchCount(), 2); // r0, then r2
+        QCOMPARE(referenceRow(), 0);
+        QCOMPARE(status(), QStringLiteral("Match 1 of 2"));
+        QVERIFY(!application->workspace().checkContentCommand(refId));
+        application->selectTab(0); // back to edit.ass, still at e2
+        QCOMPARE(application->workspace().reference(), refId);
+        QVERIFY(item("referenceDock")->property("isOpen").toBool());
+        QCOMPARE(referenceRow(), 2);
+        QCOMPARE(status(), QStringLiteral("Match 1 of 1"));
+        QVERIFY(!session(refId).isDirty());
+        QCOMPARE(hash(ref), before);
+    }
+
     // SubsGridPreview::ContextMenu: every occurrence of the editing Line in
     // the other tabs, "SubsName (lineRangeStart lineRangeLen)", the shown one
     // checked; choosing one shows that tab and Line.
