@@ -21,19 +21,24 @@ cmake --build <dir> --target legacy_video_timing_capture
 <dir>/legacy_video_timing_capture < tools/legacy-capture/inputs/video-timing-cases.txt > observations.jsonl
 ```
 
-`observations.jsonl` holds one line per case; each op ran on a fresh copy of the case and records the Lines' times, the selection (keys), the edit box's Line (`current`) and time fields (`edit`), `GetFrameTime`'s start and end for `frametime`, and the calls. sha256 `bfde29d238ea49263168fcc314ab8a6f86e227dfdcab83b4fc7e4eee5709b808`.
+`observations.jsonl` holds one line per case; each op ran on a fresh copy of the case and records the Lines' times, the selection (keys), the edit box's Line (`current`) and time fields (`edit`), `GetFrameTime`'s start and end for `frametime`, and the calls. sha256 `aaff657070e4b68cb9ead549860c9d1fe13ecf1b235e900c4263aa798e5bbad8` (44 cases, 1197 ops; the last three cases, `insert-times-unchanged`, `select-from-video-all-hidden` and `snap-end-blocked-start`, were added on 2026-10-05 as old evidence for the V6 departures, and the earlier 41 cases' lines are unchanged).
 
 ## Compared with the rewrite
 
-`VideoTimingCapture.ReplaysTheLegacyObservations` (`hikari_application_video_timing_tests`) replays every op through `hikari/application/video_timing.h` and compares the times, selections and the video and audio calls (`VideoFollow`). All are the same; no departure applies.
+`VideoTimingCapture.ReplaysTheLegacyObservations` (`hikari_application_video_timing_tests`) replays every op through `hikari/application/video_timing.h` and compares the times, selections and the video and audio calls (`VideoFollow`). All are the same apart from the ops of four approved departures ([compatibility decisions](../../../../docs/qt/compatibility-decisions.md), user 2026-10-05), where the replay needs legacy's result with exactly that change and the legacy observation stays as the old evidence:
 
-The capture also confirms these legacy quirks, kept:
+- V6-snap-next-line: `snap-first-line-mode-1` `snap end 1` snaps to the next Line's Start 950;
+- V6-snap-both-boundaries: `snap-end-blocked-start` `snap end 1` snaps to the other Line's End 1990;
+- V6-select-shown-fallback: `select-from-video-first-hidden` `at 200 selvideo` selects row 1, the first shown, and `select-from-video-all-hidden` selects nothing;
+- V6-insert-time-no-op: `insert-times-unchanged` `setstart 0` and `setend 0` record no step.
+
+The capture also confirms these legacy quirks, kept unless marked:
 
 - Insert start/end time from video uses the frame's midpoint representative (StartTimeFor / EndTimeFor of the frame shown at Tell), then the offset, then ZEROIT: at 1001 ms (frame 24) the start is 980 and the end 1020; ZEROIT truncates towards zero, so a negative time becomes 0 only through SubsTime::NewTime.
-- Every selected Line gets the time, hidden ones included; a start after the End takes the End along (`End < stime`), an end before the Start takes the Start.
-- Select line at current video position ignores Comments and Lines with neither text nor translation; [Start, End] includes both ends; between Lines it takes the later one only when strictly nearer; its fallbacks are Document row 0, even a hidden one.
+- Every selected Line gets the time, hidden ones included; a start after the End takes the End along (`End < stime`), an end before the Start takes the Start. A step is recorded even when no time changes (not kept: V6-insert-time-no-op).
+- Select line at current video position ignores Comments and Lines with neither text nor translation; [Start, End] includes both ends; between Lines it takes the later one only when strictly nearer; its fallbacks are Document row 0, even a hidden one (not kept: V6-select-shown-fallback).
 - Select all lines visible on video reads `Start - 5 <= Tell < End - 5`, skips Comments and unparsed records always and hidden Lines unless "Ignore filtering in some actions" is on, and reads the active Line as the edit box holds it.
-- Change start/end time to nearest keyframe needs the audio box; with AUDIO_INACTIVE_LINES_DISPLAY_MODE 1 it never reaches the next Line (the loop stops before `shadeTo`); a boundary that fails the order check skips that Line's other boundary too (`continue`).
+- Change start/end time to nearest keyframe needs the audio box; with AUDIO_INACTIVE_LINES_DISPLAY_MODE 1 it never reaches the next Line (the loop stops before `shadeTo`; not kept: V6-snap-next-line); a boundary that fails the order check skips that Line's other boundary too (`continue`; not kept: V6-snap-both-boundaries).
 - EditBox::SetLine seeks only for "Every line change" and only when the play-after choice does not play the video; it pauses a playing video first. The play-after choice plays only for a Grid click or SubsGrid::NextLine (`autoPlay`), also on the same Line (the `goto done` path), and the video choices end at the frame before the Line's end (or the next shown Line's start, when later).
 - SetVideoLineTime plays then pauses a Stopped video, pauses a playing one unless the choice is "Double-clicking a line" (then the video plays on from there), seeks to the end for the End column (not in TMPlayer), and a Ctrl double click a second earlier (not below 0); the audio box then shows the Line's start or end (AudioDisplay::Update).
 - ShowEditOnVideo seeks to the active Line's start for choices 2-5 while paused, 3 and 5 also while playing (the video plays on), and only without a visual tool past the crosshair.

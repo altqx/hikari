@@ -38,12 +38,13 @@ int legacyFrameTime(const LegacyTimebase &timebase, int tellMs, bool start);
 int legacyInsertTimeFromVideo(const LegacyTimebase &timebase, int tellMs, bool start, int offsetMs);
 
 // SubsGrid::SetStartTime / SetEndTime: every selected Line (hidden ones too)
-// gets the time ("Setting start time" / "Setting end time", one step, also
-// when nothing changes, as legacy's CopyDialogue records every selected
-// Line); a start after the End moves the End there, an end before the Start
-// moves the Start. SubsTime::NewTime clamps at 0; a MicroDVD Document's
-// frames follow from its own rate (C01-fps-isolation). The pending draft is
-// committed first, as its own step (legacy Send(EDITBOX_LINE_EDITION)).
+// gets the time ("Setting start time" / "Setting end time", one step); a
+// start after the End moves the End there, an end before the Start moves the
+// Start. When no time changes nothing is recorded (V6-insert-time-no-op;
+// legacy's CopyDialogue recorded a step anyway) and it still succeeds.
+// SubsTime::NewTime clamps at 0; a MicroDVD Document's frames follow from
+// its own rate (C01-fps-isolation). The pending draft is committed first, as
+// its own step (legacy Send(EDITBOX_LINE_EDITION)).
 // Refused (Invalid) without a selected Line.
 std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool end, int ms);
 
@@ -54,7 +55,9 @@ using ShownLine = std::function<bool(core::LineId)>;
 // translation), the first whose [Start, End] holds `tellMs` (both ends
 // included); else the one starting nearest to it, the later one only when it
 // is strictly nearer, with `durationMs` (the video's) bounding the search
-// forward. Legacy's fallbacks are Document row 0 (ip, idr start at 0).
+// forward. The fallbacks are the first shown Line (V6-select-shown-fallback;
+// legacy's were Document row 0, ip and idr starting at 0, even a hidden one);
+// nothing when no Line is shown.
 std::optional<core::LineId> lineAtVideoTime(const core::Document &document, const ShownLine &shown, int tellMs,
                                             int durationMs);
 
@@ -72,9 +75,12 @@ std::vector<core::LineId> linesShownOnVideo(const core::Document &document, cons
 // AUDIO_INACTIVE_LINES_DISPLAY_MODE > 0, the other shown Line's boundary
 // nearest to the active Line's start (or end), more than 0 and less than
 // 5000 ms away, that stays before its end (after its start). Mode 1 reads the
-// Lines from the previous shown Line up to, not including, the next one
-// (legacy's loop stops before shadeTo, so the next Line never counts); modes
-// 2 and 3 every Line. Nothing (no change) when none is found.
+// Lines from the previous shown Line to the next one, both included
+// (V6-snap-next-line; legacy's loop stopped before shadeTo, so the next Line
+// never counted); modes 2 and 3 every Line. A Line's boundary on the wrong
+// side is passed over without skipping its other boundary
+// (V6-snap-both-boundaries; legacy `continue`d past the whole Line). Nothing
+// (no change) when none is found.
 struct KeyframeSnapContext {
     std::span<const int> keyframesMs;    // Timebase::Keyframes
     std::span<const int> keyframeSnapMs; // StartTimeFor(FrameAt(keyframe)), before ZEROIT

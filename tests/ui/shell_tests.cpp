@@ -7525,6 +7525,11 @@ private slots:
         QTRY_COMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
         QCOMPARE(session->history().back().name, std::string("Setting end time"));
         QCOMPARE(session->historySize(), steps + 2);
+        // V6-insert-time-no-op: the same frame again changes nothing and
+        // records no step (legacy recorded one)
+        QVERIFY(application->setTimeFromVideo(true));
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+        QCOMPARE(session->historySize(), steps + 2);
         // the offset counts before the centiseconds: ZEROIT(985 + 25) = 1010
         application->settingsStore()->set("grid.insertStartOffset", 25);
         press(Qt::Key_Left, Qt::ControlModifier);
@@ -7574,6 +7579,34 @@ private slots:
         QVERIFY(application->selectLinesVisibleOnVideo());
         QVERIFY(session->selection().selected.empty()); // legacy cleared the selection
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        // V6-select-shown-fallback: with a hidden, F2's fallbacks are the first
+        // shown Line, b; legacy took the hidden row 0
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home); // a
+        QTRY_COMPARE(session->selection().selected, std::set<core::LineId>{lines[0]->id});
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QTRY_VERIFY(application->shell().filtered());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // c
+        QTRY_COMPARE(session->selection().active, std::optional(lines[3]->id));
+        // 1960 ms, the video's last frame: c's start is 460 ms back and the
+        // video's end 0 ms ahead, so the later fallback
+        press(Qt::Key_F2);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[1]->id});
+        press(Qt::Key_End); // c
+        QTRY_COMPARE(session->selection().active, std::optional(lines[3]->id));
+        // 83 ms: before every shown Line's start (b's 317 ms ahead, nothing
+        // shown starts in (0, 83)), so the earlier fallback
+        QVERIFY(application->video().showFrameAt(2));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 2);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F2);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[1]->id});
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("turnOffFiltering")), "triggered"));
+        QTRY_VERIFY(!application->shell().filtered());
     }
 
     // V6: GLOBAL_SNAP_WITH_START / _END (Shift+Left / Shift+Right,
@@ -7613,6 +7646,12 @@ private slots:
         QVERIFY(application->snapToKeyframe(true));
         QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 300'000);
         QCOMPARE(session->historySize(), steps + 3);
+        // V6-snap-next-line: the End 980 sits on keyframe 24; mode 1 now
+        // reaches the next Line, whose Start (1.10 s, 120 ms away) is nearer
+        // than keyframes 12 and 36 (500 ms); legacy stopped before it and took 480
+        QVERIFY(application->snapToKeyframe(false));
+        QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 1'100'000);
+        QCOMPARE(session->historySize(), steps + 4);
         audio.closeAudio();
         QVERIFY(!application->snapToKeyframe(false)); // the audio box is gone
     }

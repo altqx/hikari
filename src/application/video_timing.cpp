@@ -5,6 +5,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <set>
+#include <tuple>
 
 namespace hikari::application {
 
@@ -78,10 +79,15 @@ std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool
         return std::unexpected(CommandRefusal::Invalid); // `if (sels.size())`: nothing recorded
     const auto fps = microDvdFps(session.document());
     const auto selection = session.selection();
+    // V6-insert-time-no-op: legacy recorded a step even when no time changed
+    // (CopyDialogue copies every selected Line); the rewrite records none.
+    bool changed = false, unchanged = false;
     const auto ran = session.run(Command{end ? "Setting end time" : "Setting start time", session.revision(), chosen,
                                          [&](core::Document &d) {
                                              for (const auto id : chosen)
                                                  if (!d.editLine(id, [&](core::LineRecord &l) {
+                                                         const auto before = std::tuple(l.start.value, l.end.value,
+                                                                                        l.startFrame, l.endFrame);
                                                          if (!end) {
                                                              // SubsGridBase.cpp:1287-1288
                                                              newTime(l.start, l.startFrame, ms, fps);
@@ -93,10 +99,15 @@ std::expected<void, CommandRefusal> setTimesFromVideo(EditSession &session, bool
                                                              if (msOf(l.start.value) > ms)
                                                                  newTime(l.start, l.startFrame, ms, fps);
                                                          }
+                                                         changed = changed || before != std::tuple(l.start.value, l.end.value,
+                                                                                                   l.startFrame, l.endFrame);
                                                      }))
                                                      return false;
-                                             return true;
+                                             unchanged = !changed;
+                                             return changed; // unchanged: discarded, no step
                                          }});
+    if (unchanged)
+        return {}; // the times were already there
     if (!ran)
         return std::unexpected(ran.error());
     session.setSelection(selection);
@@ -108,12 +119,17 @@ std::optional<core::LineId> lineAtVideoTime(const core::Document &document, cons
 {
     // SubsGridWindow.cpp:1982-2022
     const auto lines = document.lines();
-    if (lines.empty())
+    // V6-select-shown-fallback: legacy's fallbacks are Document row 0 (ip,
+    // idr = 0), even a hidden one; the rewrite falls back to the first shown
+    // Line, and to nothing when no Line is shown.
+    const auto firstShown =
+        std::find_if(lines.begin(), lines.end(), [&](const core::LineRecord *l) { return isShown(shown, l->id); });
+    if (firstShown == lines.end())
         return std::nullopt;
     const int time = tellMs;
     int prevtime = 0;
     int durtime = durationMs;
-    std::size_t idr = 0, ip = 0;
+    std::size_t idr = static_cast<std::size_t>(firstShown - lines.begin()), ip = idr;
     for (std::size_t i = 0; i < lines.size(); ++i) {
         const auto &dial = *lines[i];
         if (!isShown(shown, dial.id))
@@ -180,23 +196,26 @@ std::optional<int> legacyKeyframeSnap(const KeyframeSnapContext &context, int st
             shadeFrom = legacyKeyFromPosition(context.lines, context.active, -1);
             shadeTo = legacyKeyFromPosition(context.lines, context.active, 1);
         }
-        for (int j = std::max(shadeFrom, 0); j < shadeTo && j < count; ++j) {
+        // V6-snap-next-line: mode 1 reaches the next shown Line too (legacy's
+        // `j < shadeTo`, HikariSubFrame.cpp:2567, stopped one Line short).
+        const int last = context.inactiveLinesMode == 1 ? shadeTo : shadeTo - 1;
+        // A boundary on the wrong side of the other time (start on or after
+        // the End, end on or before the Start) is not a target.
+        auto blocked = [&](int target) { return snapStart ? target >= time2 : target <= time2; };
+        for (int j = std::max(shadeFrom, 0); j <= last && j < count; ++j) {
             const auto &shade = context.lines[static_cast<std::size_t>(j)];
             if (!shade.visible || j == context.active)
                 continue;
             const int start = shade.startMs, end = shade.endMs;
             const int startDiff = std::abs(time - start);
             const int endDiff = std::abs(time - end);
-            if (startDiff < lastDifferents && startDiff > 0) {
-                // legacy `continue`s here, so the End is not tried either
-                if ((snapStart && start >= time2) || (!snapStart && start <= time2))
-                    continue;
+            // V6-snap-both-boundaries: a blocked Start no longer skips the
+            // Line's End (legacy `continue`d, HikariSubFrame.cpp:2575-2577).
+            if (startDiff < lastDifferents && startDiff > 0 && !blocked(start)) {
                 snaptime = start;
                 lastDifferents = startDiff;
             }
-            if (endDiff < lastDifferents && endDiff > 0) {
-                if ((snapStart && end >= time2) || (!snapStart && end <= time2))
-                    continue;
+            if (endDiff < lastDifferents && endDiff > 0 && !blocked(end)) {
                 snaptime = end;
                 lastDifferents = endDiff;
             }
