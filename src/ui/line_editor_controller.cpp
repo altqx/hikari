@@ -877,6 +877,22 @@ QVariantMap LineEditorController::switchColour(int number)
     return colourMap(d.actualColour);
 }
 
+QVariantMap LineEditorController::simplePickerColour(int number)
+{
+    if (!m_dialog || number < 1 || number > 4)
+        return {};
+    auto &d = *m_dialog;
+    d.number = number;
+    core::legacy::TagColour colour{0, 0, 0, 0}; // AssColor col;
+    if (d.ass) {
+        core::legacy::TagColour style{255, 255, 255, 0};
+        if (const auto s = lineStyle())
+            style = tagColour(number == 1 ? s->primary : number == 2 ? s->secondary : number == 3 ? s->outline : s->back);
+        colour = core::legacy::colourInEffect(d.state, number, style, &d.position);
+    }
+    return colourMap(colour);
+}
+
 bool LineEditorController::changeColour(const QVariantMap &colour)
 {
     if (!m_dialog)

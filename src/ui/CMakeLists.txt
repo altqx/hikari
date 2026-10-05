@@ -45,8 +45,10 @@ qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qm
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
-# the desktop's Screenshot portal over D-Bus on Wayland).
+# the desktop's Screenshot portal over D-Bus on Wayland) and the simple
+# "Color picker" window.
 target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
+qt_target_qml_sources(hikari_ui QML_FILES ScreenDropperView.qml SimpleColourPicker.qml)
 if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
