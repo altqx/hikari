@@ -7660,10 +7660,12 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(session->document().lines()[2]->id));
     }
 
-    // DurEdit: End = Start + the duration while live editing is on (OnEdit's
-    // durFocus branch); without it, OnEdit never runs and Send keeps the End
-    // (EditBox.cpp:582-586, 597-601).
-    void durationMovesTheEndWithLiveEditing()
+    // DurEdit: End = Start + the duration (OnEdit's durFocus branch,
+    // EditBox.cpp:1551-1555), followed as it is typed with live editing on.
+    // E4-duration-live-off: without live editing the Duration still moves
+    // End, when the field applies (Enter or leaving it) as Start and End do;
+    // legacy's Send kept the End there (EditBox.cpp:576-580).
+    void durationMovesTheEndWhateverLiveEditing()
     {
         QVERIFY(application->openFile(writeStyled("duration.ass",
                                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n")));
@@ -7672,18 +7674,37 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
+        auto *end = item<QObject>("endField");
         typeInto("durationField", QStringLiteral("0:00:03.25"));
         // OnEdit runs on each NUMBER_CHANGED: End follows before Enter.
-        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:04.25"));
+        QCOMPARE(end->property("text").toString(), QStringLiteral("0:00:04.25"));
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 2'000'000);
         press(Qt::Key_Return);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 4'250'000);
-        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:04.25"));
+        QCOMPARE(end->property("text").toString(), QStringLiteral("0:00:04.25"));
+
+        // Live editing off: nothing follows while it is typed; Enter moves End.
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
         typeInto("durationField", QStringLiteral("0:00:01.00"));
+        QCOMPARE(end->property("text").toString(), QStringLiteral("0:00:04.25"));
+        QVERIFY(!session->draftLine());
         press(Qt::Key_Return);
-        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 4'250'000);
-        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("0:00:01.00")); // as typed
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 2'000'000);
+        QCOMPARE(end->property("text").toString(), QStringLiteral("0:00:02.00"));
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("0:00:01.00"));
+
+        // Leaving the field applies it too, from the Start just typed, and
+        // Enter sends both as one step.
+        typeInto("startField", QStringLiteral("0:00:01.50"));
+        typeInto("durationField", QStringLiteral("0:00:02.00")); // Start applies on leaving
+        item("editingGrid")->forceActiveFocus();                 // Duration applies on leaving
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 1'500'000);
+        QCOMPARE(session->draftRecord()->end.value.microseconds(), 3'500'000);
+        QCOMPARE(end->property("text").toString(), QStringLiteral("0:00:03.50"));
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 2'000'000); // not sent yet
+        QVERIFY(application->editor().commit());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'500'000);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 3'500'000);
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
         application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
     }

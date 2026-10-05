@@ -1647,13 +1647,11 @@ void LineEditorController::setDurationText(const QString &text)
     const auto r = record();
     if (!editable() || !r || !hasEnd())
         return;
-    if (!options().liveEditing) {
-        // Without live editing OnEdit never runs, and Send takes End from
-        // EndEdit (EditBox.cpp:582-586): the typed Duration changes nothing.
-        m_typedDuration = text;
-        refresh();
-        return;
-    }
+    // E4-duration-live-off: the Duration moves End whatever the live-editing
+    // option. Legacy moved it only in OnEdit, which runs only with live
+    // editing on; without it Send took End from EndEdit (EditBox.cpp:576-580)
+    // and the typed Duration changed nothing. Without live editing it applies
+    // when the field does (Enter or leaving it), as Start and End do.
     auto *s = session();
     const auto format = s->document().format();
     const auto typed = application::typedTime(u8(text), application::TimeFieldRole::Duration, format,
