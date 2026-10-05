@@ -68,6 +68,19 @@ KDDW.TitleBarBase {
         }
     }
 
+    // K2 (visual-language.md, "Keyboard focus"): the panel holding the
+    // keyboard focus rings its header, 2 wide in the focus role (the text
+    // colour) just inside it, so F6 and Tab show which panel takes the keys.
+    Rectangle {
+        objectName: "focusRing"
+        anchors.fill: parent
+        anchors.margins: 1
+        color: "transparent"
+        border.width: 2
+        border.color: Theme.focus
+        visible: root.isFocused
+    }
+
     Text {
         text: root.title
         color: Theme.text

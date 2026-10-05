@@ -1465,11 +1465,13 @@ ApplicationWindow {
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
+        // K2 (visual-language.md, "Keyboard focus"): the boundary stays
+        // `line`; the panel holding the focus is ringed on its dock header
+        // (DockTitleBar.qml) in the focus role, not bordered in the accent.
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
-            border.width: panel.activeFocus ? 2 : 1
-            border.color: panel.activeFocus ? panel.palette.highlight : panel.palette.mid
+            border.color: panel.palette.mid
         }
         Label {
             id: heading

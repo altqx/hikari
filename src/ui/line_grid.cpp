@@ -375,7 +375,14 @@ void LineGrid::mouseReleaseEvent(QMouseEvent *event)
 void LineGrid::focusInEvent(QFocusEvent *event)
 {
     QQuickPaintedItem::focusInEvent(event);
+    update(); // the focused cell's ring
     announceState(true);
+}
+
+void LineGrid::focusOutEvent(QFocusEvent *event)
+{
+    QQuickPaintedItem::focusOutEvent(event);
+    update();
 }
 
 void LineGrid::stateChanged()
@@ -570,7 +577,11 @@ void LineGrid::paint(QPainter *painter)
     // K2: the theme's roles: rows on the panel surface (every other one a
     // shade apart), the header raised with secondary text, a selected row on
     // the selected background with the leading accent marker, the active
-    // Line outlined in the accent, a Comment in secondary text.
+    // Line outlined in the accent, a Comment in secondary text. While the
+    // Grid has keyboard focus its focused cell, the active Line's row,
+    // carries the focus ring (visual-language.md, "Keyboard focus"): 2 wide
+    // in the focus role, the text colour, just inside the accent outline,
+    // under a selected row's marker.
     const auto &roles = theme::current().roles;
     const auto &content = theme::current().content;
     painter->fillRect(bounds, roles.panel);
@@ -615,12 +626,6 @@ void LineGrid::paint(QPainter *painter)
             const double from = m_markWidth + (columns > 0 && modelColumn(0) == LineTableModel::NumberColumn ? widths[0] : 0);
             painter->fillRect(QRectF(from, top, bounds.width() - from, rh), *compared);
         }
-        if (selected)
-            painter->fillRect(QRectF(0, top, 3, rh), roles.accent);
-        if (active) {
-            painter->setPen(roles.accent);
-            painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
-        }
         painter->setPen(comment ? roles.muted : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
@@ -650,6 +655,20 @@ void LineGrid::paint(QPainter *painter)
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];
+        }
+        if (active && hasActiveFocus()) {
+            const double w = bounds.width();
+            painter->fillRect(QRectF(1, top + 1, w - 2, 2), roles.focus);
+            painter->fillRect(QRectF(1, top + rh - 3, w - 2, 2), roles.focus);
+            painter->fillRect(QRectF(1, top + 3, 2, rh - 6), roles.focus);
+            painter->fillRect(QRectF(w - 3, top + 3, 2, rh - 6), roles.focus);
+        }
+        if (selected)
+            painter->fillRect(QRectF(0, top, 3, rh), roles.accent);
+        if (active) {
+            painter->setPen(roles.accent);
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
         }
         ++m_lastPainted;
         if (m_markWidth > 0)

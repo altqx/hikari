@@ -6752,6 +6752,7 @@ private slots:
             QTRY_VERIFY2(ring->isVisible(), name);
             const auto *border = ring->property("border").value<QObject *>();
             QCOMPARE(border->property("color").value<QColor>(), ui::theme::current().roles.focus);
+            QCOMPARE(border->property("color").value<QColor>(), ui::theme::current().roles.text);
             QCOMPARE(border->property("width").toInt(), 2);
             QVERIFY(ui::theme::current().roles.focus != ui::theme::current().roles.accent);
             QCOMPARE(ring->width(), control->width() + 10);
@@ -6933,6 +6934,77 @@ private slots:
             // the Grid's empty area below the rows: the panel surface
             QTRY_COMPARE(gridPixel(), roles.panel);
             QCOMPARE(application->audio().options().background, ui::theme::current().content.audio.background);
+        }
+    }
+
+    // K2 focus (visual-language.md, "Keyboard focus"): the panel holding
+    // keyboard focus rings its header, the dock title bar, 2 wide just
+    // inside it in the focus role (the theme's text colour), and the ring
+    // moves with the focus; the panel's own boundary stays `line` (D1 drew
+    // a focused panel's border 2 wide in the accent). The Grid's focused
+    // cell, its current row, has its own ring, painted when the Grid takes
+    // the focus and gone when it leaves. Every theme.
+    void keyboardFocusRingsThePanelHeaderAndTheGridRow()
+    {
+        auto &settings = *application->settingsStore();
+        QVERIFY(application->openFile(episode));
+        auto *root = engine->rootObjects().first();
+        auto *grid = item("editingGrid");
+        auto *text = item("lineText");
+        auto *gridPanel = visualItem("gridPanel");
+        QVERIFY(grid && text && gridPanel);
+        grid->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Home);
+        const auto ringed = [&] {
+            QStringList out;
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar"))) {
+                auto *ring = bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
+                if (!ring)
+                    return QStringList{QStringLiteral("a title bar without a ring")};
+                if (bar->isVisible() && ring->isVisible())
+                    out << bar->property("title").toString();
+            }
+            return out;
+        };
+        const auto ringOf = [&](const QString &title) -> QQuickItem * {
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar")))
+                if (bar->isVisible() && bar->property("title").toString() == title)
+                    return bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
+            return nullptr;
+        };
+        const auto pixel = [&](QQuickItem *on, QPointF at) {
+            const QImage shot = window->grabWindow();
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const QPointF p = on->mapToScene(at) * dpr;
+            return QColor(shot.pixel(int(std::floor(p.x())), int(std::floor(p.y()))));
+        };
+        const double rh = grid->property("rowHeight").toDouble();
+        // the ring's top side on the first row, below the header (its left
+        // side lies under a selected row's marker)
+        const QPointF currentRowRing(grid->width() / 2, rh + 1.5);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto theme : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(theme));
+            const auto &roles = ui::theme::current().roles;
+            QCOMPARE(roles.focus, roles.text);
+            grid->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_COMPARE(ringed(), QStringList{QStringLiteral("Grid")});
+            auto *ring = ringOf(QStringLiteral("Grid"));
+            QVERIFY(ring);
+            const auto *border = ring->property("border").value<QObject *>();
+            QCOMPARE(border->property("color").value<QColor>(), roles.focus);
+            QCOMPARE(border->property("width").toInt(), 2);
+            auto *bar = ring->parentItem();
+            QVERIFY(QRectF(0, 0, bar->width(), bar->height()).contains(ring->mapRectToItem(bar, ring->boundingRect())));
+            QTRY_COMPARE(pixel(ring, QPointF(0.5, ring->height() / 2)), roles.focus);
+            QTRY_COMPARE(pixel(grid, currentRowRing), roles.focus);
+            for (const QPointF at : {QPointF(0.5, gridPanel->height() / 2), QPointF(1.5, gridPanel->height() / 2)})
+                QTRY_COMPARE(pixel(gridPanel, at), at.x() < 1 ? roles.line : roles.field);
+            // The Line editor takes the focus: its header is ringed, the
+            // Grid's ring and its row's ring are gone.
+            text->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(ringed().size() == 1 && ringed().front().startsWith(QStringLiteral("Line editor")));
+            QTRY_VERIFY(pixel(grid, currentRowRing) != roles.focus);
         }
     }
 
@@ -7607,6 +7679,9 @@ private slots:
     // the audio box, the Line editor, the File menu and the Options dialog's
     // Appearance page) in the four themes of the theme layer, written to
     // HIKARI_SURFACE_SHOT_DIR when it is set (main-window-<theme>.png, ...).
+    // Keyboard focus is shown: the Grid has it in the main window (its
+    // panel header and current row ringed), Follow system theme on the
+    // Appearance page.
     void surfaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -7648,6 +7723,8 @@ private slots:
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
             const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(item("editingGrid")->hasActiveFocus());
             QTest::qWait(200);
             const QImage shot = window->grabWindow();
             QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
@@ -7671,6 +7748,8 @@ private slots:
             QTRY_VERIFY(dialog->property("opened").toBool());
             dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
+            dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(dialogItem("settingsDialog", "appearanceFollowSystem")->property("visualFocus").toBool());
             QTest::qWait(300);
             const QImage dialogShot = window->grabWindow();
             auto *dialogItemRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
