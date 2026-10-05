@@ -37,7 +37,12 @@ qt_add_lrelease(TS_FILES ${hikari_ui_ts} ${hikari_gettext_ts} QM_FILES_OUTPUT_VA
     QM_OUTPUT_DIRECTORY qm LRELEASE_TARGET hikari_lrelease NO_GLOBAL_TARGET OPTIONS -nounfinished -silent)
 qt_add_library(hikari_translations STATIC)
 qt_add_resources(hikari_translations hikari_translations PREFIX /i18n BASE "${CMAKE_CURRENT_BINARY_DIR}/qm"
-    FILES ${hikari_qm_files})
+    FILES ${hikari_qm_files} OUTPUT_TARGETS hikari_translations_resource_targets)
+# The resource initializer is an object library of its own; Qt built with
+# reduce_relocations needs it position independent, and Fedora's GCC module
+# scan preprocesses it without the flag otherwise (#error in qcompilerdetection.h).
+set_target_properties(hikari_translations ${hikari_translations_resource_targets}
+    PROPERTIES POSITION_INDEPENDENT_CODE ON)
 add_dependencies(hikari_translations hikari_lrelease)
 
 # A source edit (lupdate, a translator) reconfigures, so the recorded hashes
