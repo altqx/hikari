@@ -1251,6 +1251,8 @@ ApplicationWindow {
         persistentSelection: true // the Original's selection survives for "Paste the selected"
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // E4: the Line's fields take rows below; a short panel keeps a line of text.
+        Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
         function sync() {
@@ -2162,9 +2164,8 @@ ApplicationWindow {
                 // (TabPanel::SetAccels): a key its other controls do not take
                 // (the time and margin fields keep their editing keys) runs
                 // the Editor binding; the text fields route their own first.
-                // The commit keys stay the fields' own (OnNewline's rule for
-                // the time fields, EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
-                // EditBox.cpp:987-999, is not in the rewrite yet).
+                // The commit keys stay the fields' own (E4: LineInspector runs
+                // them with OnNewline's rule for the time fields).
                 function panelAction(event) {
                     if (lineText.activeFocus || translationText.activeFocus)
                         return ""
@@ -2182,50 +2183,9 @@ ApplicationWindow {
                 ColumnLayout {
                     anchors.fill: parent
 
-                    // Local inspector: timing and margins of the active Line.
+                    // The tag and colour buttons (legacy BoxSizer4).
                     RowLayout {
                         Layout.fillWidth: true
-                        component Field: TextField {
-                            property string value
-                            text: value
-                            enabled: root.editor.editable
-                            selectByMouse: true
-                            Layout.preferredWidth: 90
-                            onValueChanged: text = value
-                        }
-                        Field {
-                            objectName: "startField"
-                            value: root.editor.startText
-                            Accessible.name: qsTr("Start")
-                            onEditingFinished: root.editor.setStartText(text)
-                        }
-                        Field {
-                            objectName: "endField"
-                            value: root.editor.endText
-                            Accessible.name: qsTr("End")
-                            onEditingFinished: root.editor.setEndText(text)
-                        }
-                        Field {
-                            objectName: "marginLeftField"
-                            value: root.editor.marginLeftText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Left margin")
-                            onEditingFinished: root.editor.setMarginText(0, text)
-                        }
-                        Field {
-                            objectName: "marginRightField"
-                            value: root.editor.marginRightText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Right margin")
-                            onEditingFinished: root.editor.setMarginText(1, text)
-                        }
-                        Field {
-                            objectName: "marginVerticalField"
-                            value: root.editor.marginVerticalText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Vertical margin")
-                            onEditingFinished: root.editor.setMarginText(2, text)
-                        }
                         // Ordinary ASS controls; they keep focus (and the
                         // selection) in the text field.
                         Repeater {
@@ -2297,6 +2257,11 @@ ApplicationWindow {
                                 }
                             }
                         }
+                        // E4: Text position (legacy Ban, after the colours).
+                        AlignmentChoice {
+                            editor: root.editor
+                            onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
+                        }
                         // E2: custom tag buttons; right click (or a button
                         // without a tag) edits it.
                         Repeater {
@@ -2359,6 +2324,12 @@ ApplicationWindow {
                         }
                     }
 
+                    // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
+                    LineCounters {
+                        editor: root.editor
+                        Layout.fillWidth: true
+                    }
+
                     RoleField {
                         id: lineText
                         objectName: "lineText"
@@ -2409,6 +2380,14 @@ ApplicationWindow {
                             ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
                             onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
                         }
+                    }
+
+                    // E4: the Line's fields (legacy BoxSizer2, below the text).
+                    LineInspector {
+                        editor: root.editor
+                        hotkeys: root.hotkeys
+                        Layout.fillWidth: true
+                        onStyleEditRequested: style => styleManagerWindow.showFor(style)
                     }
 
                     Label {
