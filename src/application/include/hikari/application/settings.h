@@ -129,17 +129,6 @@ inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys
 inline constexpr std::string_view kSpectrumBackgroundSetting = "audio.spectrumBackground";
 inline constexpr std::string_view kSpectrumEchoSetting = "audio.spectrumEcho";
 inline constexpr std::string_view kSpectrumInnerSetting = "audio.spectrumInner";
-// R1: the Grid's comparison colours, legacy theme colours
-// GRID_COMPARISON_OUTLINE, _BACKGROUND_NOT_MATCH, _BACKGROUND_MATCH,
-// _COMMENT_BACKGROUND_NOT_MATCH and _COMMENT_BACKGROUND_MATCH, settings of the
-// rewrite's own as the spectrum's are (A2-theme-colours), with the defaults of
-// legacy's default theme (config.cpp:427-431, LoadDefaultColors(dark): every
-// theme but LightSentro, config.cpp:639).
-inline constexpr std::string_view kComparisonOutlineSetting = "grid.comparisonOutline";
-inline constexpr std::string_view kComparisonMismatchSetting = "grid.comparisonMismatch";
-inline constexpr std::string_view kComparisonMatchSetting = "grid.comparisonMatch";
-inline constexpr std::string_view kComparisonCommentMismatchSetting = "grid.comparisonCommentMismatch";
-inline constexpr std::string_view kComparisonCommentMatchSetting = "grid.comparisonCommentMatch";
 // wxColour::Set's "#RRGGBB" (and "#RRGGBBAA") as 0xAARRGGBB; nothing when it
 // is not one.
 std::optional<std::uint32_t> parseSettingColour(std::string_view text);

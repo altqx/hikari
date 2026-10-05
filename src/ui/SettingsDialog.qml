@@ -570,12 +570,6 @@ Dialog {
                     Layout.fillHeight: true
                     clip: true
                     model: [
-                        // R1: GRID_COMPARISON_* (OptionsDialog.cpp:781-783).
-                        {setting: "grid.comparisonOutline", name: qsTr("Subtitle comparison border")},
-                        {setting: "grid.comparisonMismatch", name: qsTr("Subtitle comparison mismatch background")},
-                        {setting: "grid.comparisonMatch", name: qsTr("Subtitle comparison match background")},
-                        {setting: "grid.comparisonCommentMismatch", name: qsTr("Subtitle comparison comment mismatch background")},
-                        {setting: "grid.comparisonCommentMatch", name: qsTr("Subtitle comparison comment match background")},
                         {setting: "audio.spectrumBackground", name: qsTr("Audio spectrum background")},
                         {setting: "audio.spectrumEcho", name: qsTr("Audio spectrum echo")},
                         {setting: "audio.spectrumInner", name: qsTr("Audio spectrum")}

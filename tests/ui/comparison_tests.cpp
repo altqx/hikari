@@ -7,6 +7,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/settings.h"
 #include "docking.h"
 #include "line_table_model.h"
 
@@ -647,27 +648,26 @@ private slots:
         QVERIFY(checked("compareByChosenStyles"));
     }
 
-    // GRID_COMPARISON_*: the Themes page's colours reach both Grids.
-    void coloursAreThemeSettings()
+    // GRID_COMPARISON_*: fixed per theme, not settings (the user's
+    // 2026-10-05 decision; colours follow a theme model, no per-colour
+    // editing). Both Grids paint legacy's dark theme values
+    // (config.cpp:427-431); the light theme's are kept beside them.
+    void coloursAreFixedPerTheme()
     {
-        auto &settings = *application->settingsStore();
-        QCOMPARE(settings.text("grid.comparisonOutline"), QStringLiteral("#2700FF"));
-        QCOMPARE(settings.text("grid.comparisonMismatch"), QStringLiteral("#272B32"));
-        QCOMPARE(settings.text("grid.comparisonMatch"), QStringLiteral("#3A3E45"));
-        QCOMPARE(settings.text("grid.comparisonCommentMismatch"), QStringLiteral("#003176"));
-        QCOMPARE(settings.text("grid.comparisonCommentMatch"), QStringLiteral("#3662A1"));
-        // The models of the editing Grid and the reference tray.
-        const auto colours = [this](const char *gridName) {
-            auto *model = QByteArray(gridName) == "editingGrid" ? application->shell().lines()
-                                                                 : application->shell().referenceLines();
+        for (const char *id : {"grid.comparisonOutline", "grid.comparisonMismatch", "grid.comparisonMatch",
+                               "grid.comparisonCommentMismatch", "grid.comparisonCommentMatch"})
+            QVERIFY2(!application::findSetting(id), id);
+        const auto colours = [this](bool reference) {
+            auto *model = reference ? application->shell().referenceLines() : application->shell().lines();
             return model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList();
         };
-        QCOMPARE(colours("editingGrid").value(1), QVariant(QColor(0x27, 0x2B, 0x32)));
-        // As the Themes page's OK saves it (shell_tests lists the rows).
-        settings.set("grid.comparisonMismatch", QStringLiteral("#112233"));
-        QCOMPARE(settings.text("grid.comparisonMismatch"), QStringLiteral("#112233"));
-        QCOMPARE(colours("editingGrid").value(1), QVariant(QColor(0x11, 0x22, 0x33)));
-        QCOMPARE(colours("referenceGrid").value(1), QVariant(QColor(0x11, 0x22, 0x33)));
+        QVariantList dark;
+        for (const QColor &c : LineTableModel::themeComparisonColours(true))
+            dark << c;
+        QCOMPARE(colours(false), dark);
+        QCOMPARE(colours(true), dark);
+        QCOMPARE(dark.value(1), QVariant(QColor(0x27, 0x2B, 0x32)));
+        QCOMPARE(LineTableModel::themeComparisonColours(false)[1], QColor(0xFF, 0x00, 0x0C));
     }
 };
 

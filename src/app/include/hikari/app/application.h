@@ -737,7 +737,6 @@ private:
     application::ComparedDocument comparedDocument(application::DocumentId id) const;
     void recompare();
     void refreshComparison();
-    void loadComparisonColours();
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;

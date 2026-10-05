@@ -573,7 +573,6 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     // GRID_HIDE_COLUMNS (G7).
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
-    loadComparisonColours(); // R1
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
             [this] { m_settings->set("grid.hideColumns", m_shell->hiddenColumns()); });
     m_recent.set(m_settings->settings().list("recent.subtitles"));
@@ -4044,8 +4043,6 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
-    else if (id.startsWith(QLatin1String("grid.comparison")))
-        loadComparisonColours(); // R1: ChangeColors repaints the Grids
 }
 
 namespace {
@@ -4204,15 +4201,10 @@ QVariantMap Application::openSettingsDialog()
 }
 
 // The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the Grid's comparison colours (R1) and the
-// audio spectrum's three (A2).
+// rewrite keeps theme colours: the audio spectrum's three (A2). The Grid's
+// comparison colours are fixed per theme (R1, LineTableModel).
 namespace {
-constexpr std::string_view kThemeColours[] = {application::kComparisonOutlineSetting,
-                                              application::kComparisonMismatchSetting,
-                                              application::kComparisonMatchSetting,
-                                              application::kComparisonCommentMismatchSetting,
-                                              application::kComparisonCommentMatchSetting,
-                                              application::kSpectrumBackgroundSetting,
+constexpr std::string_view kThemeColours[] = {application::kSpectrumBackgroundSetting,
                                               application::kSpectrumEchoSetting,
                                               application::kSpectrumInnerSetting};
 } // namespace
@@ -4306,10 +4298,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                                       std::string_view("recent.audio"), application::kAutomationHotkeysSetting,
                                       application::kHotkeysSetting, application::kAudioHotkeysSetting,
                                       application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
-                                      application::kSpectrumInnerSetting, application::kComparisonOutlineSetting,
-                                      application::kComparisonMismatchSetting, application::kComparisonMatchSetting,
-                                      application::kComparisonCommentMismatchSetting,
-                                      application::kComparisonCommentMatchSetting})
+                                      application::kSpectrumInnerSetting})
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
     m_resettingSettings = true;

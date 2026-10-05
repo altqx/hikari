@@ -18,8 +18,6 @@
 #include "hikari/application/grid_clipboard.h"
 #include "hikari/application/settings.h"
 
-#include <QColor>
-
 #include <algorithm>
 
 namespace hikari::app {
@@ -92,21 +90,6 @@ void Application::refreshComparison()
     for (const auto id : m_comparison.tabled())
         if (const auto *session = m_files->session(id))
             m_comparedRevisions[id.value] = session->revision();
-}
-
-void Application::loadComparisonColours()
-{
-    // The theme colours SubsGridWindow::PaintD reads (an unreadable value
-    // keeps the default theme's).
-    const auto colour = [this](std::string_view id, QRgb fallback) {
-        const auto parsed = application::parseSettingColour(m_settings->settings().text(id));
-        return QColor::fromRgba(parsed.value_or(fallback));
-    };
-    m_shell->setComparisonColours({colour(application::kComparisonOutlineSetting, 0xFF2700FF),
-                                   colour(application::kComparisonMismatchSetting, 0xFF272B32),
-                                   colour(application::kComparisonMatchSetting, 0xFF3A3E45),
-                                   colour(application::kComparisonCommentMismatchSetting, 0xFF003176),
-                                   colour(application::kComparisonCommentMatchSetting, 0xFF3662A1)});
 }
 
 QVariantMap Application::openComparisonMenu(int index)

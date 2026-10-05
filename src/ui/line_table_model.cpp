@@ -139,6 +139,17 @@ void LineTableModel::setDocument(const core::Document &document)
     setDocument(document, nullptr);
 }
 
+LineTableModel::ComparisonColours LineTableModel::themeComparisonColours(bool dark)
+{
+    // GRID_COMPARISON_OUTLINE, _BACKGROUND_NOT_MATCH, _BACKGROUND_MATCH,
+    // _COMMENT_BACKGROUND_NOT_MATCH, _COMMENT_BACKGROUND_MATCH.
+    if (dark)
+        return {QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45), QColor(0x00, 0x31, 0x76),
+                QColor(0x36, 0x62, 0xA1)};
+    return {QColor(0xFF, 0xFF, 0xFF), QColor(0xFF, 0x00, 0x0C), QColor(0xB7, 0xAC, 0x00), QColor(0x9C, 0x00, 0x00),
+            QColor(0x81, 0x79, 0x00)};
+}
+
 void LineTableModel::setComparisonColours(const ComparisonColours &colours)
 {
     if (colours == m_comparisonColours)
