@@ -24,7 +24,7 @@ T1 ([#176](https://github.com/altqx/hikari/issues/176)) lays the ground the visu
 
 A family's card adds one class and one line; the rail, the routing and the drawing need no change.
 
-1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `values()` / `setValue()` (the numeric alternative shown below the canvas), and `warnsOutsideLine()` (true but for the crosshair).
+1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `values()` / `setValue()` (the numeric alternative shown below the canvas), `options()` / `setOption()` (the family's own row, below), `previewLines()` (Lines the video renders after the Document's) and `warnsOutsideLine()` (true but for the crosshair).
 2. Return it from `makeVisualTool()` in `src/application/visual_tools.cpp`.
 
 The host gives a tool only what legacy's Visuals got: pointer events in device pixels over the video while a video is open, the Video panel's keys that no Video binding takes, and resets. A tool other than the crosshair gets nothing outside its Line's time or on a comment (Visuals::Draw's blockevents); the host draws the warning centred on the video unless VIDEO_VISUAL_WARNINGS_OFF (approved departure T1-warning-centre).
@@ -36,7 +36,7 @@ Every edit goes through a gesture:
 - `host.commitGesture()` on release: one history step named `history` (`familyInfo(family).history`, legacy SubsFile.cpp:228-238), after the pending draft's own step. Without staged changes nothing is recorded; a gesture whose Document changed since it began is refused.
 - Esc during the gesture (the host handles it) drops it and leaves the pre-gesture draft.
 
-Draw with `Overlay` (lines, circles, text) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
+Draw with `Overlay` (lines, circles, text, and filled polygons below or above the lines) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
 
 ## The tool's own row, the preview and the notices
 
