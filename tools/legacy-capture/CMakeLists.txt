@@ -89,3 +89,62 @@ target_compile_options(legacy_visual_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_visual_capture PRIVATE ${wx_libs})
+
+# T4: the legacy rectangle and vector clips (VisualClipRect.cpp and
+# VisualClips.cpp, unchanged) with the real VisualClipPoint.h; the classes
+# (VisualClips.h's among them) and definitions they use are copied out of their files
+# unchanged (extract_functions.py) and the GUI stood in for by
+# clip/clipstandins.h.
+set(clip_gen "${CMAKE_CURRENT_BINARY_DIR}/clip")
+file(MAKE_DIRECTORY "${clip_gen}")
+configure_file("${legacy_hs}/VisualClipRect.cpp" "${clip_gen}/copy/VisualClipRect.cpp" COPYONLY)
+configure_file("${legacy_hs}/VisualClips.cpp" "${clip_gen}/copy/VisualClips.cpp" COPYONLY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.h" "${clip_gen}/tagfind_class.inc"
+    "class FindData {" "class TagFindReplace" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${clip_gen}/visuals_class.inc"
+    "class Visuals : public TagFindReplace" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${clip_gen}/cliprect_class.inc"
+    "class ClipRect : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualClips.h" "${clip_gen}/drawingandclip_class.inc"
+    "class DrawingAndClip : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.cpp" "${clip_gen}/clip_visuals.inc"
+    "Visuals::Visuals()" "Visuals::~Visuals()"
+    "void Visuals::RenderSubs(wxString *subs, bool redraw /*= true*/)"
+    "void Visuals::SetVisual(Dialogue* dial, int tool, bool noRefresh)"
+    "void Visuals::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)"
+    "D3DXVECTOR2 Visuals::CalcMovePos()"
+    "void Visuals::GetVectorPoints(const wxString& vector, std::vector<ClipPoint>* points)"
+    "D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)"
+    "void Visuals::SetVisual(bool dummy)"
+    "void Visuals::SetModified(int action, bool dummy)"
+    "void Visuals::RotateDrawing("
+    "D3DXVECTOR2 Visuals::CalcDrawingSize("
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.cpp" "${clip_gen}/clip_tagfind.inc"
+    "bool TagFindReplace::FindTag(const wxString& pattern, const wxString& text, int mode, bool toEndOfSelection)"
+    "int TagFindReplace::Replace(const wxString& replaceTxt, wxString* text)"
+    "bool TagFindReplace::GetDouble(double* retval)"
+    "bool TagFindReplace::GetTwoValueDouble(double* retval, double* retval2)"
+    "bool TagFindReplace::GetTextResult(wxString* rettext)"
+    "wxPoint TagFindReplace::GetPositionInText()"
+    "wxPoint FindBrackets(const wxString& text, long from)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/EditBox.cpp" "${clip_gen}/clip_editbox.inc"
+    "TextEditor * EditBox::GetEditor(const wxString &text)" "bool EditBox::IsCursorOnStart()"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.cpp" "${clip_gen}/clip_config.inc"
+    "wxString getfloat(float num, const wxString& format, bool Truncate)"
+    "size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignoreCase)"
+    COMMAND_ERROR_IS_FATAL ANY)
+file(WRITE "${clip_gen}/extracted.inc"
+    "#include \"clip_visuals.inc\"\n#include \"clip_tagfind.inc\"\n#include \"clip_editbox.inc\"\n#include \"clip_config.inc\"\n")
+add_executable(legacy_clip_capture clip_capture.cpp "${clip_gen}/copy/VisualClipRect.cpp" "${clip_gen}/copy/VisualClips.cpp")
+# The stand-ins come first, so the copies' quoted includes find them; the
+# legacy directory supplies VisualClipPoint.h and the Linux D3DX stand-ins.
+target_include_directories(legacy_clip_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/clip" "${clip_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_clip_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_clip_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_clip_capture PRIVATE ${wx_libs})
