@@ -932,10 +932,11 @@ private slots:
         choose(choice, 2);
         QCOMPARE(list->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
         QCOMPARE(list->property("currentIndex").toInt(), 1); // "tahoma": past "arial", at "verdana"
-        // "Without catalog" here removes the first font per catalog entry
-        // (FontList::FindString answers 0): four entries, four fonts.
+        // "Without catalog": the fonts no catalog holds, as in the Style
+        // editor (Y6-without-catalog; legacy's FontList::FindString answered
+        // 0, removing the first font per catalog entry).
         choose(choice, 1);
-        QCOMPARE(list->property("model").toStringList(), QStringList{"Verdana"});
+        QCOMPARE(list->property("model").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
         // The Filter: the fonts with a glyph for each of STYLE_EDIT_FILTER_TEXT's
         // characters, and STYLE_EDIT_FILTER_TEXT_ON saved.
         choose(choice, 0);
@@ -972,6 +973,10 @@ private slots:
         QCOMPARE(window->property("fonts").toStringList(), all);
         QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "", "B", "", "A"}));
         QCOMPARE(dialogItem("fontDialogCatalogWindow", "fontCatalogList")->property("currentIndex").toInt(), 3);
+        // Load's chooser is titled for catalog files (Y6-load-title).
+        auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
+        QVERIFY(load);
+        QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
         // Add: a new catalog in the choice, saved to FontCatalogsAutosave0.txt.
         auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
         field->setProperty("editText", QStringLiteral("C"));
@@ -1078,6 +1083,41 @@ private slots:
         // (ListControls.cpp:685-688); 2 is clamped to the last entry.
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"Without catalog", "All fonts"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        catalogs.waitResolved();
+    }
+
+    // Y6-rename-listed: Edit renaming a catalog to a free name lists the new
+    // name at once, in the old one's place: in the window's choice and, when
+    // the window hides, in the font dialog's (legacy ChangeCatalogName,
+    // FontCatalogList.cpp:739-776, dropped the old name and listed the new
+    // one only after a restart).
+    void fontCatalogRenameIsListedAtOnce()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        auto *dialog = openFontDialog(fontAss("rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(dialog);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
+        auto *window = named("fontDialogCatalogWindow");
+        QTRY_VERIFY(window->property("visible").toBool());
+        const auto in = [window](const char *name) { return window->findChild<QObject *>(QLatin1String(name)); };
+        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
+        field->setProperty("editText", QStringLiteral("A"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
+        QTRY_VERIFY(in("catalogEditionDialog")->property("visible").toBool());
+        QCOMPARE(in("catalogEditionCurrent")->property("currentIndex").toInt(), 0);
+        in("catalogEditionNewName")->setProperty("text", QStringLiteral("Latin"));
+        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"Latin", "B"}));
+        QCOMPARE(field->property("model").toStringList(), (QStringList{"Latin", "B"}));
+        QCOMPARE(field->property("editText").toString(), QStringLiteral("Latin"));
+        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"Latin", "", "B", "", "Latin"}));
+        QVERIFY(QMetaObject::invokeMethod(window, "close"));
+        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
+        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "Latin", "B"}));
+        choose(choice, 2);
+        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         catalogs.waitResolved();
     }
@@ -1191,7 +1231,8 @@ private slots:
     // Y6: Add > "Add fonts from subtitles" (GetFontsFromASSDialog,
     // CollectFontsFromSubtitles): the Style fonts and \fn names join the
     // catalog, the catalogs are saved, and the choice is left with the catalog
-    // names alone (FontDialog's PutArray without its two entries).
+    // with "All fonts" and "Without catalog" and the catalog chosen
+    // (Y6-collect-choice; legacy's PutArray left the names alone).
     void fontsFromSubtitlesFillTheChosenCatalog()
     {
         usePickerFonts();
@@ -1217,10 +1258,12 @@ private slots:
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n\tTahoma\r\n\tImpact\r\n}"));
         auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        QCOMPARE(choice->property("model").toStringList(), (QStringList{"A", "B"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 0);
-        // Selection 0 is "All fonts" to ChangeCatalog, whatever the choice reads.
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList().size(), 5);
+        QCOMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        QCOMPARE(choice->property("currentIndex").toInt(), 2);
+        QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
+        // The catalog's installed fonts, sorted.
+        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(),
+                 (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
         // A check in the Add menu adds the font and saves (AddToCatalog).
         catalogs.toggleFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma"), true);
         QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("B={\r\n\tImpact\r\n\tTahoma\r\n}"));

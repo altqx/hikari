@@ -90,10 +90,9 @@ public:
     // for the choice's selection and value. The filtered list is used when
     // `filterOn` and the filter text is not empty (GetFontsTable);
     // `filterText` is the text the window read (the Style editor reads it
-    // once when it opens). `fontDialog`: "Without catalog" removes the first
-    // font per catalog entry (FontList::FindString answers 0).
-    Q_INVOKABLE QStringList fontList(int selection, const QString &value, bool filterOn, const QString &filterText,
-                                     bool fontDialog);
+    // once when it opens). "Without catalog" removes the catalogs' fonts
+    // exactly in both windows (Y6-without-catalog).
+    Q_INVOKABLE QStringList fontList(int selection, const QString &value, bool filterOn, const QString &filterText);
     // GetFontsTable(save = true): the Filter toggle saves STYLE_EDIT_FILTER_TEXT_ON.
     Q_INVOKABLE void setFilterOn(bool on);
     // "Save filter": STYLE_EDIT_FILTER_TEXT.

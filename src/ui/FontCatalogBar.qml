@@ -5,11 +5,11 @@
 // listMade() is signalled.
 //
 // The two windows differ where legacy did: the font dialog reads
-// STYLE_EDIT_FILTER_TEXT each time, keeps its choice within the list when
-// the catalogs change and its "Without catalog" removes the first font per
-// catalog entry (FontList::FindString answers 0); the Style editor reads the
-// filter text when it opens, removes each catalog font itself and asks the
-// catalog window to select its font when it is opened again.
+// STYLE_EDIT_FILTER_TEXT each time and keeps its choice within the list when
+// the catalogs change; the Style editor reads the filter text when it opens
+// and asks the catalog window to select its font when it is opened again.
+// "Without catalog" removes the catalogs' fonts in both (Y6-without-catalog:
+// legacy's font dialog removed its first font per catalog entry).
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -52,7 +52,7 @@ RowLayout {
         const value = staleText !== "" ? staleText
                     : choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
         fonts = catalogs.fontList(choice.currentIndex, value, filter.checked,
-                                  fontDialog ? catalogs.filterText : filterTextAtOpen, fontDialog)
+                                  fontDialog ? catalogs.filterText : filterTextAtOpen)
         listMade()
     }
     // CATALOG_CHANGED (the catalog window shown or hidden): the choice made
@@ -107,14 +107,18 @@ RowLayout {
         addMenu.names = catalogs.catalogNames
         addMenu.popup(addButton, 0, addButton.height)
     }
-    // ShowGetFromAssDialog's answer: the choice gets the catalog names alone
-    // (PutArray without the two entries) with the catalog chosen.
+    // ShowGetFromAssDialog's answer: the choice made again with "All fonts"
+    // and "Without catalog" and the catalog chosen (Y6-collect-choice:
+    // legacy's PutArray left the catalog names alone, so the catalog's index
+    // among them read as "All fonts" or "Without catalog" to ChangeCatalog).
     function collectedInto(catalog) {
         if (catalog.length === 0)
             return
-        choices = catalogs.catalogNames
+        choices = catalogs.catalogChoices()
         const lower = catalog.toLowerCase()
-        choice.currentIndex = choices.findIndex(n => n.toLowerCase() === lower)
+        const at = catalogs.catalogNames.findIndex(n => n.toLowerCase() === lower)
+        // The names follow the two entries (there is a catalog, so no clamp).
+        choice.currentIndex = at < 0 ? -1 : at + 2
         staleText = "" // SetSelection
         changeCatalog(false)
     }

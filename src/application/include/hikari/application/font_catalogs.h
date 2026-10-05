@@ -69,7 +69,7 @@ public:
     std::string serialize() const;
 
     // fontCatalogsNames: the catalog choices, in the order catalogs were
-    // added (a rename drops the old name and does not add the new one).
+    // added (a rename puts the new name in the old one's place).
     const std::vector<std::u16string> &names() const { return m_names; }
     // The catalogs in legacy's map order.
     const std::vector<Catalog> &catalogs() const { return m_catalogs; }
@@ -91,8 +91,9 @@ public:
     // exists, `ask` answers "Catalog named \"%s\" already exists. What to
     // do?": Merge adds the old catalog's fonts to it, Delete replaces its
     // fonts with the old catalog's, Cancel changes nothing (false). The old
-    // catalog goes and its name leaves the choices; legacy does not add the
-    // new name to the choices (it is listed again after a restart).
+    // catalog goes; the new name takes the old one's place in the choices,
+    // or stays where it is when already listed (Y6-rename-listed: legacy
+    // dropped the old name and listed the new one only after a restart).
     enum class Clash { Merge, Delete, Cancel };
     bool rename(std::u16string_view oldName, std::u16string_view newName, const std::function<Clash()> &ask);
     // RemoveCatalog.

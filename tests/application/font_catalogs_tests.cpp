@@ -256,13 +256,17 @@ TEST(FontCatalogs, RenameMovesTheFontsAndAsksWhenTheNameIsTaken)
             return clash;
         };
     };
-    // A free name: no question; the old name leaves the choices and the
-    // new one is not added to them (legacy lists it after a restart).
+    // A free name: no question; the new name takes the old one's place in
+    // the choices at once (Y6-rename-listed; legacy listed it only after a
+    // restart).
     EXPECT_TRUE(c.rename(u"C", u"D", answer(FontCatalogs::Clash::Cancel)));
     EXPECT_EQ(asked, 0);
     EXPECT_EQ(fontsOf(c, u"D"), (std::vector<std::u16string>{u"Verdana"}));
     EXPECT_FALSE(c.find(u"C"));
-    EXPECT_EQ(c.names(), (std::vector<std::u16string>{u"A", u"B"}));
+    EXPECT_EQ(c.names(), (std::vector<std::u16string>{u"A", u"B", u"D"}));
+    FontCatalogs first = c;
+    EXPECT_TRUE(first.rename(u"A", u"Z", answer(FontCatalogs::Clash::Cancel)));
+    EXPECT_EQ(first.names(), (std::vector<std::u16string>{u"Z", u"B", u"D"}));
     // Cancel: nothing changes.
     EXPECT_FALSE(c.rename(u"A", u"B", answer(FontCatalogs::Clash::Cancel)));
     EXPECT_EQ(asked, 1);
@@ -272,7 +276,7 @@ TEST(FontCatalogs, RenameMovesTheFontsAndAsksWhenTheNameIsTaken)
     EXPECT_TRUE(merged.rename(u"A", u"B", answer(FontCatalogs::Clash::Merge)));
     EXPECT_EQ(fontsOf(merged, u"B"), (std::vector<std::u16string>{u"Impact", u"Tahoma", u"Arial"}));
     EXPECT_FALSE(merged.find(u"A"));
-    EXPECT_EQ(merged.names(), (std::vector<std::u16string>{u"B"}));
+    EXPECT_EQ(merged.names(), (std::vector<std::u16string>{u"B", u"D"})); // B listed once
     // Delete: B's own fonts go, A's take their place.
     EXPECT_TRUE(c.rename(u"A", u"B", answer(FontCatalogs::Clash::Delete)));
     EXPECT_EQ(fontsOf(c, u"B"), (std::vector<std::u16string>{u"Arial", u"Impact"}));
@@ -280,6 +284,7 @@ TEST(FontCatalogs, RenameMovesTheFontsAndAsksWhenTheNameIsTaken)
     // An old name that is not a catalog: the new catalog is empty.
     EXPECT_TRUE(c.rename(u"nothing", u"E", answer(FontCatalogs::Clash::Cancel)));
     EXPECT_EQ(fontsOf(c, u"E"), std::vector<std::u16string>{});
+    EXPECT_EQ(c.names(), (std::vector<std::u16string>{u"B", u"D", u"E"}));
 }
 
 // Y6-rename-self (proposed): renaming a catalog onto its own name freed its
@@ -290,7 +295,7 @@ TEST(FontCatalogs, RenamingOntoItsOwnNameKeepsTheFonts)
     c.load(u"A={\n\tArial\n}\n");
     EXPECT_TRUE(c.rename(u"A", u"A", [] { return FontCatalogs::Clash::Merge; }));
     EXPECT_EQ(fontsOf(c, u"A"), (std::vector<std::u16string>{u"Arial"}));
-    EXPECT_TRUE(c.names().empty()); // the defined part: its name left the choices
+    EXPECT_EQ(c.names(), std::vector<std::u16string>{u"A"}); // Y6-rename-listed: still listed
 }
 
 // FindCatalogByFont (the first in map order, exact), IsFontInCatalog,
@@ -352,21 +357,18 @@ TEST(FontPicker, TheCatalogChoiceInsertsItsTwoEntriesAsLegacyDid)
 }
 
 // ChangeCatalog's lists: 0 all, a catalog's own fonts sorted and present
-// in the list; "Without catalog" removing each catalog entry exactly in the
-// Style editor and the first font per entry in the font dialog (its
-// FontList::FindString stub answers 0, FontDialog.cpp:351-354).
+// in the list; "Without catalog" removing each catalog entry exactly, in the
+// font dialog too (Y6-without-catalog: legacy's FontList::FindString stub
+// answered 0 there, removing the first font per entry, FontDialog.cpp:351-354).
 TEST(FontPicker, CatalogViewsOfTheFontList)
 {
     FontCatalogs c(kLower);
     c.load(u"A={\n\tVerdana\n\tArial\n\tNot Installed\n}\nB={\n\tImpact\n}\n");
     const std::vector<std::u16string> fonts{u"Arial", u"Comic Sans MS", u"Impact", u"Tahoma", u"Verdana"};
-    EXPECT_EQ(catalogView(0, u"All fonts", fonts, c, WithoutCatalogLookup::Exact), fonts);
-    EXPECT_EQ(catalogView(1, u"", fonts, c, WithoutCatalogLookup::Exact),
-              (std::vector<std::u16string>{u"Comic Sans MS", u"Tahoma"}));
-    EXPECT_EQ(catalogView(1, u"", fonts, c, WithoutCatalogLookup::FirstEntry), (std::vector<std::u16string>{u"Verdana"}));
-    EXPECT_EQ(catalogView(2, u"A", fonts, c, WithoutCatalogLookup::Exact),
-              (std::vector<std::u16string>{u"Arial", u"Verdana"}));
-    EXPECT_EQ(catalogView(3, u"none", fonts, c, WithoutCatalogLookup::Exact), std::vector<std::u16string>{});
+    EXPECT_EQ(catalogView(0, u"All fonts", fonts, c), fonts);
+    EXPECT_EQ(catalogView(1, u"", fonts, c), (std::vector<std::u16string>{u"Comic Sans MS", u"Tahoma"}));
+    EXPECT_EQ(catalogView(2, u"A", fonts, c), (std::vector<std::u16string>{u"Arial", u"Verdana"}));
+    EXPECT_EQ(catalogView(3, u"none", fonts, c), std::vector<std::u16string>{});
 }
 
 // FontList::SetSelectionByPartialName and SetSelectionByName, and the

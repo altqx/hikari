@@ -372,11 +372,13 @@ Dialog {
             catalogField.editText = "" // SetValue("")
         }
     }
-    // OnLoadCatalogs (FontCatalogList.cpp:315-316): legacy's chooser title
-    // (sic) and "Text files (*.txt)", whose pattern Qt reads from the label.
+    // OnLoadCatalogs (FontCatalogList.cpp:315-316): "Text files (*.txt)",
+    // whose pattern Qt reads from the label. Titled for catalog files
+    // (Y6-load-title: legacy's read "Choose video file").
     Dialogs.FileDialog {
         id: loadDialog
-        title: qsTr("Choose video file")
+        objectName: "fontCatalogLoadDialog"
+        title: qsTr("Choose font catalog file")
         nameFilters: [qsTr("Text files (*.txt)")]
         fileMode: Dialogs.FileDialog.OpenFile
         onAccepted: {

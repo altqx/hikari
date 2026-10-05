@@ -78,19 +78,16 @@ std::u16string listedFamily(const SystemFace &face);
 std::vector<std::u16string> catalogChoices(const std::vector<std::u16string> &names, const std::u16string &allFonts,
                                            const std::u16string &withoutCatalog);
 
-// How "Without catalog" looks a catalog font up in the list it removes it
-// from: FontDialog's FontList::FindString always answers 0, so each catalog
-// entry removes the list's first font (FontDialog.cpp:351-354, 668-679);
-// StyleChange's HikariChoice::FindString(font, true) finds it exactly.
-enum class WithoutCatalogLookup { FirstEntry, Exact };
-
 // ChangeCatalog's list for the choice's selection `selection` (the
 // choice's value `value`): 0 every font of `fonts`; 1 those fonts without
-// the catalogs' (as `lookup` finds them); otherwise the catalog named
-// `value`, sorted (GetCatalogFonts) and kept where `fonts` has it exactly.
+// the catalogs', each catalog font removed where `fonts` has it exactly
+// (StyleChange's HikariChoice::FindString(font, true); the font dialog too,
+// Y6-without-catalog: legacy's FontList::FindString answered 0 there and
+// removed the list's first font per catalog entry, FontDialog.cpp:351-354,
+// 668-679); otherwise the catalog named `value`, sorted (GetCatalogFonts)
+// and kept where `fonts` has it exactly.
 std::vector<std::u16string> catalogView(int selection, std::u16string_view value,
-                                        const std::vector<std::u16string> &fonts, FontCatalogs &catalogs,
-                                        WithoutCatalogLookup lookup);
+                                        const std::vector<std::u16string> &fonts, FontCatalogs &catalogs);
 
 // FontList::SetSelectionByPartialName (FontDialog.cpp:267-311): the index
 // selected for `partial` (0 for an empty text; -1 for an empty list).

@@ -250,8 +250,6 @@ bool FontCatalogs::rename(u16v oldName, u16v newName, const std::function<Clash(
             table = std::move(fonts);
         }
         m_catalogs.erase(m_catalogs.begin() + (old - m_catalogs.data()));
-        if (auto it = std::find(m_names.begin(), m_names.end(), oldKey); it != m_names.end())
-            m_names.erase(it);
     } else if (!merge) {
         table.reset(); // a new, empty list (legacy also dropped the existing one on Delete)
     }
@@ -262,6 +260,18 @@ bool FontCatalogs::rename(u16v oldName, u16v newName, const std::function<Clash(
     if (!target)
         target = &insert(newKey);
     target->fonts = table ? std::move(*table) : std::vector<u16>();
+    // Y6-rename-listed: the new name is listed at once, in the old one's
+    // place; legacy only dropped the old name (listing the new one after a
+    // restart). A name already listed stays where it is.
+    const auto oldAt = std::find(m_names.begin(), m_names.end(), oldKey);
+    if (containsExact(m_names, newKey)) {
+        if (oldAt != m_names.end() && oldKey != newKey)
+            m_names.erase(oldAt);
+    } else if (oldAt != m_names.end()) {
+        *oldAt = newKey;
+    } else {
+        m_names.push_back(newKey);
+    }
     return true;
 }
 

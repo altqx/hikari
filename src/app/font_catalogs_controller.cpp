@@ -167,16 +167,13 @@ QStringList FontCatalogsController::catalogChoices() const
     return list(application::catalogChoices(m_catalogs.names(), u16(tr("All fonts")), u16(tr("Without catalog"))));
 }
 
-QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText,
-                                             bool fontDialog)
+QStringList FontCatalogsController::fontList(int selection, const QString &value, bool filterOn, const QString &filterText)
 {
     ensureLoaded();
     // GetFontsTable: the filtered fonts when the filter is on and has text.
     const std::vector<std::u16string> fonts =
         filterText.isEmpty() || !filterOn ? m_families->fonts() : m_families->filteredFonts(u16(filterText));
-    return list(application::catalogView(selection, u16(value), fonts, m_catalogs,
-                                         fontDialog ? application::WithoutCatalogLookup::FirstEntry
-                                                    : application::WithoutCatalogLookup::Exact));
+    return list(application::catalogView(selection, u16(value), fonts, m_catalogs));
 }
 
 void FontCatalogsController::setFilterOn(bool on)

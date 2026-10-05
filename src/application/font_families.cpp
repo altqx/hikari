@@ -182,25 +182,16 @@ std::vector<u16> catalogChoices(const std::vector<u16> &names, const u16 &allFon
     return list;
 }
 
-std::vector<u16> catalogView(int selection, u16v value, const std::vector<u16> &fonts, FontCatalogs &catalogs,
-                             WithoutCatalogLookup lookup)
+std::vector<u16> catalogView(int selection, u16v value, const std::vector<u16> &fonts, FontCatalogs &catalogs)
 {
     if (selection == 0)
         return fonts;
     if (selection == 1) {
         std::vector<u16> list = fonts;
         for (const auto &catalog : catalogs.catalogs()) {
-            for (const auto &font : catalog.fonts) {
-                if (lookup == WithoutCatalogLookup::FirstEntry) {
-                    // FindString answers 0: the first font goes, while there is one
-                    // (wxArrayString::RemoveAt on an empty list only asserts).
-                    if (!list.empty())
-                        list.erase(list.begin());
-                    continue;
-                }
+            for (const auto &font : catalog.fonts)
                 if (auto it = std::find(list.begin(), list.end(), font); it != list.end())
                     list.erase(it);
-            }
         }
         return list;
     }
