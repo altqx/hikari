@@ -3,11 +3,21 @@
 // D1: Hikari's adapter around the docking engine (KDDockWidgets, QtQuick
 // frontend; docs/qt/docking.md). The engine is process-wide and serves one
 // QML engine; nothing outside this adapter talks to it directly.
+//
+// D3: the chrome follows MuseScore 4 (docs/research/musescore-docking.md):
+// one header row per panel group (DockTabBar.qml draws a lone panel's title
+// bar and the tab bars), a "⋯" menu instead of float and close buttons,
+// 1-pixel separators, borderless floating tool windows and an accent drop
+// highlight (DockDropHighlight.qml) over the area a drop would take.
 
+#include <QHash>
 #include <QObject>
+#include <QPointer>
+#include <QSize>
 #include <QtQml/qqmlregistration.h>
 
 class QQmlEngine;
+class QQuickItem;
 
 namespace hikari::ui {
 
@@ -16,25 +26,58 @@ namespace hikari::ui {
 // lifetime. When an earlier engine has been destroyed (tests create one per
 // case) the docking engine is re-initialized for the new one; while an
 // earlier engine still lives, the call does nothing and returns false.
-// The engine draws Hikari's title and tab bars (DockTitleBar.qml,
-// DockTabBar.qml), which name their buttons for assistive technology.
+// The engine draws Hikari's headers (DockTabBar.qml, DockTitleBar.qml),
+// separators, group frames, floating windows and drop highlight.
 bool attachDocking(QQmlEngine &engine);
 
-// Keeps every floating panel window's title bar on an available screen
+// Keeps every floating panel window's header on an available screen
 // (docs/qt/docking.md: removed monitors return floating groups to the main
 // screen). On Wayland the compositor places windows and nothing is moved.
 // Returns how many windows were moved.
 int keepFloatingPanelsOnScreen();
 
-// Engine views the shell's QML needs (DockTabBar.qml, Main.qml).
+// D3: has every panel group take its panels' current minimum sizes
+// (Docking.setMinimumSize) again. A restored layout brings the sizes it was
+// saved with, which can be below them; the engine then grows the groups.
+void refreshDockConstraints();
+
+// D3 sizes (docs/research/musescore-docking.md §7): the header row, the gap
+// between a tab bar and the content, and the floating window's drawn shadow
+// (0 where the window system draws its own: Windows).
+namespace dockchrome {
+inline constexpr int kHeaderHeight = 35;
+inline constexpr int kTabGap = 12;
+int floatingShadow();
+} // namespace dockchrome
+
+// Engine views and panel chrome the shell's QML needs (DockTabBar.qml,
+// DockFloatingWindow.qml, Main.qml).
 class Docking : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
+    // Wayland: a floating panel's header moves its window through the
+    // compositor (startSystemMove); the engine cannot place windows there.
+    Q_PROPERTY(bool systemMove READ systemMove CONSTANT FINAL)
+    // The width of the floating window's drawn shadow (0: the system's).
+    Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
+    // Bumped when a panel's header description changes (setPanelHeader).
+    Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
+    // The panel whose menu is open (Main.qml sets it), so its "⋯" button
+    // shows as pressed.
+    Q_PROPERTY(QString openMenu READ openMenu WRITE setOpenMenu NOTIFY openMenuChanged FINAL)
 public:
     using QObject::QObject;
-    // Floats the panel of tab `index` of `tabBar` (the engine's TabBarView).
-    Q_INVOKABLE bool floatTab(QObject *tabBar, int index);
+
+    static bool systemMove();
+    static int floatingShadow() { return dockchrome::floatingShadow(); }
+    int headerRevision() const { return m_revision; }
+    QString openMenu() const { return m_openMenu; }
+    void setOpenMenu(const QString &uniqueName);
+
+    // The uniqueName of the panel of tab `index` of `tabBar` (the engine's
+    // TabBarView); empty when there is none.
+    Q_INVOKABLE QString dockNameAt(QObject *tabBar, int index) const;
     // The drop area view of the main window `uniqueName` (the DockingArea's).
     // On Wayland the engine drags panels with real drag-and-drop and takes a
     // drop through a QML DropArea whose dropAreaCpp property names this view.
@@ -43,6 +86,39 @@ public:
     // at its edges, as the engine's DockWidget::resizeInLayout does; false
     // when it is not docked in a layout.
     Q_INVOKABLE bool resizeInLayout(const QString &uniqueName, int left, int top, int right, int bottom);
+    // D3: the smallest size panel `uniqueName`'s content takes unclipped. The
+    // engine keeps its group at least this big (plus the header), and the
+    // window at least as big as the docked panels need.
+    Q_INVOKABLE bool setMinimumSize(const QString &uniqueName, QSize size);
+    // The panel's minimum size as the engine has it (its dock widget's).
+    Q_INVOKABLE QSize minimumSize(const QString &uniqueName) const;
+
+    // D3: how a panel's header looks. A horizontal panel (the Grid, the
+    // Reference tray, Search) keeps a one-tab bar even alone; `toolbar` is
+    // shown in the slot right of the tabs while the panel is the current tab.
+    Q_INVOKABLE void setPanelHeader(const QString &uniqueName, bool horizontal, QQuickItem *toolbar);
+    Q_INVOKABLE bool isHorizontal(const QString &uniqueName) const;
+    Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
+    // The header's "⋯" button (or a right click on it) asks for panel
+    // `uniqueName`'s menu, below `anchor`; Main.qml owns the menu.
+    Q_INVOKABLE void requestMenu(const QString &uniqueName, QQuickItem *anchor);
+    // Floats panel `uniqueName`, or docks it when it floats (a double-click
+    // on a header the engine does not see: Wayland's moving header).
+    Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
+
+signals:
+    void headersChanged();
+    void menuRequested(const QString &uniqueName, QQuickItem *anchor);
+    void openMenuChanged();
+
+private:
+    struct Header {
+        bool horizontal = false;
+        QPointer<QQuickItem> toolbar;
+    };
+    QHash<QString, Header> m_headers;
+    int m_revision = 0;
+    QString m_openMenu;
 };
 
 } // namespace hikari::ui

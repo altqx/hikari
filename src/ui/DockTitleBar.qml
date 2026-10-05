@@ -1,134 +1,94 @@
 import QtQuick
+import QtQuick.Controls
+import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 import Hikari.Ui
-import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDW
 
-// D1: a panel's title bar (docked group or floating window), the engine's
-// classic look with its buttons named for assistive technology
-// (docs/qt/docking.md: panels expose Float, Dock and Close). The engine's
-// default title bar gives its image buttons no role or name. Loaded through
-// the adapter's view factory (ui/docking.cpp).
-KDDW.TitleBarBase {
+// D3: the engine's title bar. With the adapter's flags a group never shows
+// one (DockTabBar.qml is every group's header), so this is the bar of a
+// floating window that holds several groups side by side: the window's
+// title in bold and a "⋯" menu that docks or closes the whole window, in
+// the header's look (docs/research/musescore-docking.md §1). Dragging it
+// moves the window (on Wayland through the compositor), double-clicking
+// docks it. Loaded through the adapter's view factory (ui/docking.cpp).
+KDDWViews.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
 
-    color: Theme.raised // K2
-    heightWhenVisible: 30
+    color: Theme.field
+    heightWhenVisible: 35
 
     Accessible.role: Accessible.TitleBar
     Accessible.name: root.title
+    // Every group loads one; only a floating window of several groups shows it.
+    Accessible.ignored: !root.visible
 
-    // A docked group of tabs: its buttons act on the whole group (each tab
-    // has its own Float and Close in DockTabBar.qml). The engine's Loader
-    // sits in its Group.qml, which holds the group.
-    readonly property var group: parent && parent.parent ? parent.parent.groupCpp : null
-    readonly property bool tabbed: group ? group.tabBar.dockWidgetModel.count > 1 : false
-    function buttonName(action: string, tabbedAction: string): string {
-        return root.tabbed ? tabbedAction : action.arg(root.title)
+    Rectangle {
+        width: parent.width
+        height: 1
+        y: parent.height - 1
+        color: Theme.line
     }
 
-    // The float button docks a floating window back. The engine retitles its
-    // tooltip when that changes, so the binding reads it to re-evaluate.
-    readonly property bool floating: titleBarCpp !== null && titleBarCpp.floatButtonToolTip !== undefined
-                                     && titleBarCpp.isFloating()
-
-    function imagePath(id: string): string {
-        // Qt's @Nx does not cover fractional ratios: the engine ships its own.
-        const ratio = Screen.devicePixelRatio
-        const suffix = ratio === 1.5 ? "-1.5x" : ratio === 2 ? "-2x" : ""
-        return "qrc:/img/" + id + suffix + ".png"
+    Text {
+        objectName: "dockTitleText"
+        x: 12
+        width: Math.max(0, menuButton.x - x - 4)
+        anchors.verticalCenter: parent.verticalCenter
+        text: root.title
+        color: Theme.text
+        font.bold: true
+        elide: Text.ElideRight
+        Accessible.ignored: true // the title bar carries the name
     }
 
-    component Button: Rectangle {
-        id: button
-        signal clicked()
-        property alias imageSource: image.source
-        property string name
-        color: "transparent"
-        height: image.implicitHeight + 5
-        width: image.implicitWidth + 5
-        radius: 3
-        border.color: Theme.line
-        border.width: mouseArea.containsMouse ? 1 : 0
-        Accessible.role: Accessible.Button
-        Accessible.name: button.name
-        Accessible.focusable: false
-        Accessible.ignored: !button.visible
-        Accessible.onPressAction: button.clicked()
-        Image {
-            id: image
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: 1
-            anchors.horizontalCenterOffset: 1
+    DockMenuButton {
+        id: menuButton
+        z: 1
+        x: root.width - 12 - width
+        anchors.verticalCenter: parent.verticalCenter
+        panelTitle: root.title
+        menuOpen: windowMenu.visible
+        Accessible.ignored: !root.visible
+        activeFocusOnTab: true
+        focusPolicy: Qt.TabFocus
+        onClicked: windowMenu.popup(menuButton, 0, menuButton.height)
+    }
+    ShellMenu {
+        id: windowMenu
+        objectName: "dockWindowMenu"
+        ShellMenuItem {
+            objectName: "dockWindowDock"
+            text: qsTr("Dock")
+            onTriggered: root.floatButtonClicked()
         }
-        MouseArea {
-            id: mouseArea
-            hoverEnabled: true
-            anchors.fill: parent
-            onClicked: button.clicked()
+        ShellMenuItem {
+            objectName: "dockWindowClose"
+            text: qsTr("Close")
+            enabled: root.closeButtonEnabled
+            onTriggered: root.closeButtonClicked()
         }
     }
 
-    // K2 (visual-language.md, "Keyboard focus"): the panel holding the
-    // keyboard focus rings its header, 2 wide in the focus role (the text
-    // colour) just inside it, so F6 and Tab show which panel takes the keys.
+    // Wayland: the compositor moves the window.
+    MouseArea {
+        z: 1
+        enabled: Docking.systemMove
+        visible: enabled
+        width: Math.max(0, menuButton.x - 2)
+        height: parent.height
+        onPressed: Window.window.startSystemMove()
+        onDoubleClicked: root.floatButtonClicked()
+    }
+
+    // K2: the focus ring of the window holding the keyboard focus.
     Rectangle {
         objectName: "focusRing"
         anchors.fill: parent
         anchors.margins: 1
+        z: 2
         color: "transparent"
         border.width: 2
         border.color: Theme.focus
-        visible: root.isFocused
-    }
-
-    // A group of tabs names its panels in the tabs, once: the title bar
-    // above them shows only the group's buttons (it would repeat the
-    // current tab's name).
-    Text {
-        objectName: "dockTitleText"
-        visible: !root.tabbed
-        text: root.title
-        color: Theme.text
-        anchors.left: parent ? parent.left : undefined
-        anchors.leftMargin: 5
-        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-        Accessible.ignored: true // the title bar carries the name
-    }
-
-    Row {
-        anchors.verticalCenter: parent ? parent.verticalCenter : undefined
-        anchors.right: parent ? parent.right : undefined
-        anchors.rightMargin: 2
-
-        Button {
-            objectName: "dockMinimizeButton"
-            visible: root.minimizeButtonVisible
-            imageSource: root.imagePath("min")
-            name: root.buttonName(qsTr("Minimize %1"), qsTr("Minimize tab group"))
-            onClicked: root.minimizeButtonClicked()
-        }
-        Button {
-            objectName: "dockFloatButton"
-            visible: root.floatButtonVisible
-            imageSource: root.imagePath("dock-float")
-            name: root.floating ? root.buttonName(qsTr("Dock %1"), qsTr("Dock tab group"))
-                                : root.buttonName(qsTr("Float %1"), qsTr("Float tab group"))
-            onClicked: root.floatButtonClicked()
-        }
-        Button {
-            objectName: "dockMaximizeButton"
-            visible: root.maximizeButtonVisible
-            imageSource: root.maximizeUsesRestoreIcon ? root.imagePath("dock-float") : root.imagePath("max")
-            name: root.maximizeUsesRestoreIcon ? root.buttonName(qsTr("Restore %1"), qsTr("Restore tab group"))
-                                               : root.buttonName(qsTr("Maximize %1"), qsTr("Maximize tab group"))
-            onClicked: root.maximizeButtonClicked()
-        }
-        Button {
-            objectName: "dockCloseButton"
-            enabled: root.closeButtonEnabled
-            imageSource: root.imagePath("close")
-            name: root.buttonName(qsTr("Close %1"), qsTr("Close tab group"))
-            onClicked: root.closeButtonClicked()
-        }
+        visible: root.isFocused && !menuButton.activeFocus
     }
 }

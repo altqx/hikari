@@ -24,7 +24,9 @@ ColumnLayout {
     // The Edit button (legacy OnStyleEdit): the Style manager on that Style.
     signal styleEditRequested(string style)
 
-    readonly property bool wide: width > 850
+    // The column's width, not its own: laid out at its one-row size, the
+    // inspector would stay wide in a column that has narrowed (D3).
+    readonly property bool wide: (parent ? parent.width : width) > 850
     spacing: 2
 
     // Enter and Ctrl+Enter as the Editor binds them (EditBox's accelerators).

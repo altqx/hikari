@@ -98,3 +98,6 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
 endif()
+# D3: the dock chrome after MuseScore 4 (docs/qt/docking.md, "Chrome"): the
+# panel header's "⋯" button and the drop highlight.
+qt_target_qml_sources(hikari_ui QML_FILES DockMenuButton.qml DockDropHighlight.qml)

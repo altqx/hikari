@@ -247,6 +247,71 @@ class ShellTest : public QObject {
         return nullptr;
     }
     QQuickItem *visualItem(const char *name) const { return findItem(window->contentItem(), QLatin1String(name)); }
+    // D3: the header row (DockTabBar.qml) of the group whose current panel
+    // is `panel` (a dock's uniqueName), in any window.
+    QQuickItem *dockHeader(const QString &panel) const
+    {
+        std::function<QQuickItem *(QQuickItem *)> walk = [&](QQuickItem *from) -> QQuickItem * {
+            if (from->objectName() == QLatin1String("dockHeader") && from->isVisible()
+                && from->property("currentName").toString() == panel)
+                return from;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = walk(child))
+                    return found;
+            return nullptr;
+        };
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (auto *qw = qobject_cast<QQuickWindow *>(w); qw && qw->isVisible())
+                if (QQuickItem *found = walk(qw->contentItem()))
+                    return found;
+        return nullptr;
+    }
+    // D3: clicks panel `panel`'s "⋯" button; whether its menu opened.
+    bool openPanelMenu(const QString &panel)
+    {
+        QQuickItem *header = nullptr;
+        if (!QTest::qWaitFor([&] { return (header = dockHeader(panel)) != nullptr; }))
+            return false;
+        QQuickItem *button = findItem(header, QStringLiteral("dockMenuButton"));
+        if (!button || !button->isVisible())
+            return false;
+        auto *w = button->window();
+        QTest::mouseClick(w, Qt::LeftButton, {}, button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint());
+        return QTest::qWaitFor([&] { return named("panelOptionsMenu")->property("visible").toBool(); });
+    }
+    // The open panel menu's items as shown: text, or "|" for a separator;
+    // "(off)" after a disabled item, "(on)" after a checked one.
+    QStringList panelMenuItems() const
+    {
+        QObject *menu = named("panelOptionsMenu");
+        QStringList out;
+        const int count = menu->property("count").toInt();
+        for (int i = 0; i < count; ++i) {
+            QQuickItem *entry = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+            if (!entry || !entry->isVisible() || entry->height() <= 0)
+                continue;
+            if (entry->inherits("QQuickMenuSeparator")) {
+                out << QStringLiteral("|");
+                continue;
+            }
+            QString text = entry->property("text").toString();
+            if (!entry->isEnabled())
+                text += QStringLiteral(" (off)");
+            if (entry->property("checked").toBool())
+                text += QStringLiteral(" (on)");
+            out << text;
+        }
+        return out;
+    }
+    // The scene top of the panel group holding `item` (its header's top).
+    static qreal groupTop(QQuickItem *item)
+    {
+        for (QQuickItem *p = item; p; p = p->parentItem())
+            if (p->objectName() == QLatin1String("dockGroup"))
+                return p->mapToScene(QPointF(0, 0)).y();
+        return item->mapToScene(QPointF(0, 0)).y();
+    }
     // Whether `w` becomes the application's focus window. A window manager
     // may refuse a client's activation request (X without one; sway's default
     // focus_on_window_activation marks the window urgent instead).
@@ -2498,7 +2563,8 @@ private slots:
         auto *audio = item("audioPanel");
         auto *gridPanel = item("gridPanel");
         QTRY_VERIFY(audio->mapToScene(QPointF(0, 0)).x() < gridPanel->mapToScene(QPointF(0, 0)).x());
-        QCOMPARE(qRound(audio->mapToScene(QPointF(0, 0)).y()), qRound(gridPanel->mapToScene(QPointF(0, 0)).y()));
+        // (their bodies start lower under the Grid's tab bar: compare the groups)
+        QCOMPARE(qRound(groupTop(audio)), qRound(groupTop(gridPanel)));
         QTRY_VERIFY(audio->hasActiveFocus()); // the moved panel keeps the focus
 
         // Numeric resize: wider by 60 px.
@@ -2625,7 +2691,8 @@ private slots:
         auto *audio = item("audioPanel");
         auto *gridPanel = item("gridPanel");
         QTRY_VERIFY(audio->mapToScene(QPointF(0, 0)).x() < gridPanel->mapToScene(QPointF(0, 0)).x());
-        QCOMPARE(qRound(audio->mapToScene(QPointF(0, 0)).y()), qRound(gridPanel->mapToScene(QPointF(0, 0)).y()));
+        // (their bodies start lower under the Grid's tab bar: compare the groups)
+        QCOMPARE(qRound(groupTop(audio)), qRound(groupTop(gridPanel)));
         // The panel combo still names a panel after the move.
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Audio"));
         placement->close();
@@ -2676,8 +2743,8 @@ private slots:
         QVERIFY(drag(&files));
     }
 
-    // D1 native gate: the panels' title-bar buttons and tabs are named for
-    // assistive technology; the Grid is in the tree, named "Grid".
+    // D1 native gate, D3: the panels' headers, tabs and "⋯" buttons are
+    // named for assistive technology; the Grid is in the tree, named "Grid".
     void dockingControlsAndTheGridAreAccessible()
     {
         // As with a screen reader running: Qt Quick fills in states (a tab's
@@ -2708,23 +2775,41 @@ private slots:
         QVERIFY(table);
         QCOMPARE(table->tableInterface()->rowCount(), 2);
         QCOMPARE(table->parent()->text(QAccessible::Name), QStringLiteral("Grid"));
-        // Title-bar buttons: Float and Close, named after the panel.
-        QAccessibleInterface *floatAudio = find(top, QAccessible::Button, QStringLiteral("Float Audio"));
-        QVERIFY(floatAudio);
-        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Audio")));
-        QVERIFY(floatAudio->actionInterface());
-        QVERIFY(floatAudio->actionInterface()->actionNames().contains(QAccessibleActionInterface::pressAction()));
+        // D3: each header names its panel (a lone panel's title bar) or
+        // its tabs (page tabs with their selection); its "⋯" button, named
+        // "<panel> options", opens the panel's menu, whose named items float,
+        // dock and close it (docs/qt/docking.md: tabs expose their names,
+        // selection and close/float actions to assistive technology).
+        QAccessibleInterface *audioBar = find(top, QAccessible::TitleBar, QStringLiteral("Audio"));
+        QVERIFY(audioBar);
+        QAccessibleInterface *audioOptions = find(top, QAccessible::Button, QStringLiteral("Audio options"));
+        QVERIFY(audioOptions);
+        QVERIFY(audioOptions->actionInterface());
+        QVERIFY(audioOptions->actionInterface()->actionNames().contains(QAccessibleActionInterface::pressAction()));
+        // No float or close buttons any more.
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Float Audio")));
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Close Audio")));
         auto *audioDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("audioDock"));
-        floatAudio->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        auto *menu = named("panelOptionsMenu");
+        QVERIFY(menu);
+        audioOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Undock"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(audioDock->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close")); // (a click on the item closes it)
         QAccessibleInterface *floatingTop = QAccessible::queryAccessibleInterface(item("audioPanel")->window());
-        QAccessibleInterface *dockAudio = find(floatingTop, QAccessible::Button, QStringLiteral("Dock Audio"));
-        QVERIFY(dockAudio);
-        dockAudio->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QAccessibleInterface *floatingOptions = nullptr;
+        QTRY_VERIFY((floatingOptions = find(floatingTop, QAccessible::Button, QStringLiteral("Audio options"))));
+        floatingOptions->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(named("panelOptionsFloat")->property("text").toString(), QStringLiteral("Dock"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(!audioDock->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
 
         // Tabs: Timing opens as a tab beside the Line editor; each tab is a
-        // named page tab with its own Float and Close buttons.
+        // named page tab, the selected one carrying the group's "⋯" button.
         auto *timingDock = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("timingDock"));
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
@@ -2735,41 +2820,232 @@ private slots:
         QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked); // Timing, just shown, is the selected tab
         QVERIFY(!editorTab->state().checked);
-        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Line editor")));
-        QVERIFY(find(top, QAccessible::Button, QStringLiteral("Float tab group"))); // the title bar's, for both
-        // The group's name is said once, by its tabs: the title bar above
-        // them draws no title (it would repeat the current tab's), while a
-        // single panel's title bar keeps its own.
-        {
-            int tabbedBars = 0, singleBars = 0;
-            for (auto *bar : engine->rootObjects().first()->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar"))) {
-                if (!bar->isVisible())
-                    continue;
-                auto *title = bar->findChild<QQuickItem *>(QStringLiteral("dockTitleText"));
-                QVERIFY(title);
-                if (bar->property("tabbed").toBool()) {
-                    ++tabbedBars;
-                    QVERIFY2(!title->isVisible(), qPrintable(bar->property("title").toString()));
-                } else {
-                    ++singleBars;
-                    QVERIFY(title->isVisible());
-                    QCOMPARE(title->property("text").toString(), bar->property("title").toString());
-                }
-            }
-            QVERIFY(tabbedBars >= 1);
-            QVERIFY(singleBars >= 1);
-        }
-        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Shift times"));
-        QVERIFY(floatTiming);
-        floatTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
-        QTRY_VERIFY(timingDock->property("isFloating").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("panelDockTiming"), "triggered"));
-        QTRY_VERIFY(!timingDock->property("isFloating").toBool());
-        top = QAccessible::queryAccessibleInterface(window);
-        QAccessibleInterface *closeTiming = nullptr;
-        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Shift times"))));
-        closeTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QVERIFY(find(top, QAccessible::PageTabList, QStringLiteral("Panels")));
+        // The group's name is said once, by its tabs: no title bar above
+        // them, and the button is the selected panel's.
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Line editor")));
+        QVERIFY(!find(top, QAccessible::TitleBar, QStringLiteral("Shift times")));
+        QAccessibleInterface *timingOptions = find(top, QAccessible::Button, QStringLiteral("Shift times options"));
+        QVERIFY(timingOptions);
+        QVERIFY(!find(top, QAccessible::Button, QStringLiteral("Line editor options")));
+        // A tab selects its panel (its press action).
+        QVERIFY(editorTab->actionInterface());
+        editorTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(find(QAccessible::queryAccessibleInterface(window), QAccessible::Button, QStringLiteral("Line editor options")));
+        timingTab = find(QAccessible::queryAccessibleInterface(window), QAccessible::PageTab, QStringLiteral("Shift times"));
+        timingTab->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QAccessibleInterface *closeFrom = nullptr;
+        QTRY_VERIFY((closeFrom = find(QAccessible::queryAccessibleInterface(window), QAccessible::Button,
+                                      QStringLiteral("Shift times options"))));
+        closeFrom->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsClose"), "triggered"));
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
+    }
+
+    // D3: a panel's "⋯" menu (MuseScore's, docs/research/musescore-docking.md
+    // §1): the panel's own items first (the Reference tray's), a separator,
+    // then Move panel…, Undock (Dock while it floats) and Close, each
+    // disabled where the panel cannot do it (an item with nothing to act on,
+    // a dock that is not closable).
+    void panelMenuHoldsOwnItemsMoveUndockAndClose()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        auto *referenceDock = item<QObject>("referenceDock");
+        QTRY_VERIFY(referenceDock->property("isOpen").toBool());
+        auto *menu = named("panelOptionsMenu");
+        QVERIFY(menu);
+        const bool linked = application->shell().referenceLinked();
+        QVERIFY(openPanelMenu(QStringLiteral("Reference")));
+        QStringList expected{QStringLiteral("Follow the editing Line") + (linked ? QStringLiteral(" (on)") : QString()),
+                             QStringLiteral("Show nearest Line")
+                                 + (application->shell().referenceHasNearest() ? QString() : QStringLiteral(" (off)")),
+                             QStringLiteral("|"), QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+                             QStringLiteral("Close")};
+        QCOMPARE(panelMenuItems(), expected);
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_referenceFollow"), "triggered"));
+        QTRY_COMPARE(application->shell().referenceLinked(), !linked);
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // The "⋯" button shows as pressed while its menu is open.
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
+        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
+
+        // Not closable: Close is off.
+        auto *videoDock = item<QObject>("videoDock");
+        QVERIFY(videoDock->setProperty("options", 1)); // DockWidgetOption_NotClosable
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"), QStringLiteral("Close (off)")}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(videoDock->setProperty("options", 0));
+
+        // Undock floats it; from its floating header the item reads Dock.
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
+        QTRY_VERIFY(videoDock->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(dockHeader(QStringLiteral("Video")) && dockHeader(QStringLiteral("Video"))->window() != window);
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
+        QTRY_VERIFY(!videoDock->property("isFloating").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+
+        // Move panel… opens the placement window on that panel.
+        QVERIFY(openPanelMenu(QStringLiteral("Grid")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMove"), "triggered"));
+        auto *placement = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
+        QTRY_VERIFY(placement->isVisible());
+        QCOMPARE(findItem(placement->contentItem(), QStringLiteral("placementPanel"))->property("displayText").toString(),
+                 QStringLiteral("Grid"));
+        placement->close();
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+
+        // Close hides the panel (its content stays).
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsClose"), "triggered"));
+        QTRY_VERIFY(!videoDock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowVideo"), "triggered"));
+        QTRY_VERIFY(videoDock->property("isOpen").toBool());
+    }
+
+    // D3: the keyboard reaches a panel's header and its menu: Shift+Tab
+    // from the panel's content to its header (the selected tab of a tab
+    // bar), Right to the "⋯" button, Space to open the menu, Escape back to
+    // the button; F6 goes on from a header to the next panel.
+    void keyboardReachesThePanelHeaderAndItsMenu()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        auto *grid = item("editingGrid");
+        grid->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("gridPanel"));
+        press(Qt::Key_Tab, Qt::ShiftModifier);
+        QQuickItem *header = dockHeader(QStringLiteral("Grid"));
+        QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
+        QTRY_VERIFY2(tab->hasActiveFocus(), window->activeFocusItem() ? qPrintable(window->activeFocusItem()->objectName()) : "none");
+        QVERIFY(findItem(tab, QStringLiteral("tabFocusRing"))->isVisible());
+        QVERIFY(!findItem(header, QStringLiteral("focusRing"))->isVisible()); // the tab's ring, not the header's
+        QQuickItem *button = findItem(header, QStringLiteral("dockMenuButton"));
+        press(Qt::Key_Right);
+        QTRY_VERIFY(button->hasActiveFocus());
+        press(Qt::Key_Space);
+        auto *menu = named("panelOptionsMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QCOMPARE(panelMenuItems().last(), QStringLiteral("Close"));
+        QTest::keyClick(QGuiApplication::focusWindow(), Qt::Key_Escape);
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_VERIFY(button->hasActiveFocus());
+        press(Qt::Key_Left);
+        QTRY_VERIFY(tab->hasActiveFocus());
+        // F6 from the Grid's header: the next panel, the Reference tray.
+        press(Qt::Key_F6);
+        QTRY_COMPARE(focusedPanel(), QStringLiteral("referencePanel"));
+    }
+
+    // D3: a double-click on a panel's header floats it, and on its floating
+    // header docks it again; the floating panel is a borderless tool window
+    // keeping its header.
+    void doubleClickOnAHeaderFloatsAndDocks()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *audioDock = item<QObject>("audioDock");
+        QQuickItem *header = dockHeader(QStringLiteral("Audio"));
+        QVERIFY(header && header->property("titleMode").toBool());
+        QTest::mouseDClick(window, Qt::LeftButton, {}, header->mapToScene(QPointF(60, header->height() / 2)).toPoint());
+        QTRY_VERIFY(audioDock->property("isFloating").toBool());
+        QQuickItem *floating = nullptr;
+        QTRY_VERIFY((floating = dockHeader(QStringLiteral("Audio"))) && floating->window() != window);
+        QWindow *w = floating->window();
+        QVERIFY(w->flags().testFlag(Qt::Tool));
+#ifndef Q_OS_WIN
+        QVERIFY(w->flags().testFlag(Qt::FramelessWindowHint));
+#endif
+        QVERIFY(floating->property("titleMode").toBool());
+        QTRY_VERIFY(w->isExposed());
+        QTest::mouseDClick(w, Qt::LeftButton, {}, floating->mapToScene(QPointF(60, floating->height() / 2)).toPoint());
+        QTRY_VERIFY(!audioDock->property("isFloating").toBool());
+        QTRY_COMPARE(dockHeader(QStringLiteral("Audio"))->window(), static_cast<QWindow *>(window));
+    }
+
+    // D3: the bottom panels keep a one-tab header even alone (the Grid, the
+    // Reference tray, Search), the Reference tray's toolbar in it right of
+    // the tab (MuseScore's toolbar slot) instead of a row of its own.
+    void bottomPanelsKeepATabAndTheTrayToolbar()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(application->openReference(original));
+        QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
+        for (const QString &panel : {QStringLiteral("Grid"), QStringLiteral("Reference")}) {
+            QQuickItem *header = nullptr;
+            QTRY_VERIFY((header = dockHeader(panel)));
+            QVERIFY2(!header->property("titleMode").toBool(), qPrintable(panel));
+            QCOMPARE(header->property("count").toInt(), 1);
+        }
+        QQuickItem *header = dockHeader(QStringLiteral("Reference"));
+        QCOMPARE(header->property("currentTitle").toString(), QStringLiteral("Reference: original.ass"));
+        auto *bar = item("referenceBar");
+        QVERIFY(bar);
+        QTRY_COMPARE(bar->parentItem(), findItem(header, QStringLiteral("dockToolbarSlot")));
+        QVERIFY(bar->isVisible());
+        // right of the tab, inside the header
+        const QRectF inHeader = bar->mapRectToItem(header, QRectF(0, 0, bar->width(), bar->height()));
+        QVERIFY(inHeader.top() >= 0 && inHeader.bottom() <= header->height());
+        QQuickItem *tab = header->property("currentTab").value<QQuickItem *>();
+        QVERIFY(inHeader.left() >= tab->mapToItem(header, QPointF(tab->width(), 0)).x());
+        // and it works there
+        const bool linked = application->shell().referenceLinked();
+        QTest::mouseClick(window, Qt::LeftButton, {}, centreOf(item("referenceLinked")));
+        QTRY_COMPARE(application->shell().referenceLinked(), !linked);
+        // Search, opened, is a tab bar too.
+        QVERIFY(QMetaObject::invokeMethod(named("panelShowSearch"), "triggered"));
+        QQuickItem *search = nullptr;
+        QTRY_VERIFY((search = dockHeader(QStringLiteral("Search"))));
+        QVERIFY(!search->property("titleMode").toBool());
+    }
+
+    // D3: each panel reports the smallest size its content takes unclipped
+    // to the docking engine, which keeps it at least that big: in the
+    // default arrangement, and when a separator is dragged. The Video
+    // panel's follow choices wrap onto two rows rather than be cut off.
+    void panelsKeepTheirMinimumSizes()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
+        QVERIFY(docking);
+        for (const char *name : {"videoPanel", "audioPanel", "editorPanel", "gridPanel"}) {
+            QQuickItem *panel = item(name);
+            const QSizeF minimum = panel->property("minimumSize").toSizeF();
+            QVERIFY2(minimum.width() > 8 && minimum.height() > 8, name);
+            QTRY_VERIFY2(panel->width() >= minimum.width() && panel->height() >= minimum.height(),
+                         qPrintable(QStringLiteral("%1 %2x%3 < %4x%5").arg(QLatin1String(name)).arg(panel->width())
+                                        .arg(panel->height()).arg(minimum.width()).arg(minimum.height())));
+            const QSize engineMinimum = docking->minimumSize(panel->property("dockName").toString());
+            QVERIFY2(engineMinimum.width() >= minimum.width() && engineMinimum.height() >= minimum.height(), name);
+        }
+        // Squeezing the Line editor stops at its minimum.
+        auto *editorDock = item<QObject>("editorDock");
+        QQuickItem *editor = item("editorPanel");
+        const qreal minimumHeight = editor->property("minimumSize").toSizeF().height();
+        application->workspaceLayout().resizePanel(editorDock, application->workspaceLayout().panelSize(editorDock).width(), 60);
+        QTest::qWait(50);
+        QVERIFY2(editor->height() >= minimumHeight, qPrintable(QString::number(editor->height())));
+        // A narrow Video panel: the follow choices on two rows, none cut off.
+        auto *videoDock = item<QObject>("videoDock");
+        application->workspaceLayout().resizePanel(videoDock, 470, application->workspaceLayout().panelSize(videoDock).height());
+        auto *choices = item("videoFollowChoices");
+        QTRY_VERIFY(choices->property("wrapped").toBool());
+        QQuickItem *video = item("videoPanel");
+        QTRY_VERIFY(video->width() < 520);
+        auto *playAfter = item("videoPlayAfter");
+        QTRY_VERIFY2(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x() <= video->width(),
+                     qPrintable(QString::number(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x())));
     }
 
     // D1 native gate: a floating panel no screen shows (a removed monitor, a
@@ -4509,6 +4785,10 @@ private slots:
         field = item("lineText");
         menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("wrold"));
+        // D3: the Line editor grows to its translation-mode minimum (its
+        // rows laid out) before the field is clicked where it ends up.
+        QTRY_VERIFY(item("translationText")->y() > field->y());
+        QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
         QVERIFY(!hasSubMenu(menu, QStringLiteral("Installed languages")));
@@ -6752,6 +7032,8 @@ private slots:
         // the mouse over the waveform draws the cursor; over the ruler it does not
         auto *display = item("audioDisplay");
         const QPoint inside = display->mapToScene(QPointF(100, 10)).toPoint();
+        // The pointer enters the display first (an enter draws no cursor).
+        QTest::mouseMove(window, inside + QPoint(0, 1));
         QTest::mouseMove(window, inside);
         QTRY_VERIFY(audio.cursor().has_value());
         QCOMPARE(*audio.cursor(), 100.f);
@@ -9247,8 +9529,22 @@ private slots:
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), roles.panel);
             QTRY_COMPARE(controls->property("highlight").value<QColor>(), roles.accent);
-            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar")))
-                QCOMPARE(bar->property("color").value<QColor>(), roles.raised);
+            // D3: a lone panel's header in the body's colour, a tab strip
+            // `raised` with the selected tab in the body's colour.
+            int headers = 0;
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockHeader"))) {
+                if (!bar->isVisible())
+                    continue;
+                ++headers;
+                auto *strip = findItem(bar, QStringLiteral("dockHeaderStrip"));
+                QVERIFY(strip);
+                const bool titleMode = bar->property("titleMode").toBool();
+                QCOMPARE(strip->property("color").value<QColor>(), titleMode ? roles.field : roles.raised);
+                if (!titleMode)
+                    QCOMPARE(findItem(bar->property("currentTab").value<QQuickItem *>(), QStringLiteral("dockTabBackground"))
+                                 ->property("color").value<QColor>(), roles.field);
+            }
+            QVERIFY(headers >= 4);
             // every other window (a Window draws white unless told)
             const auto windows = root->findChildren<QQuickWindow *>();
             QVERIFY(windows.size() >= 10);
@@ -9263,10 +9559,10 @@ private slots:
     }
 
     // K2 focus (visual-language.md, "Keyboard focus"): the panel holding
-    // keyboard focus rings its header, the dock title bar, 2 wide just
+    // keyboard focus rings its header (D3: its dock header row), 2 wide just
     // inside it in the focus role (the theme's text colour), and the ring
-    // moves with the focus; the panel's own boundary stays `line` (D1 drew
-    // a focused panel's border 2 wide in the accent). The Grid's focused
+    // moves with the focus; the panel has no accent border (D1 drew a
+    // focused panel's border 2 wide in the accent). The Grid's focused
     // cell, its current row, has its own ring, painted when the Grid takes
     // the focus and gone when it leaves. Every theme.
     void keyboardFocusRingsThePanelHeaderAndTheGridRow()
@@ -9282,18 +9578,18 @@ private slots:
         press(Qt::Key_Home);
         const auto ringed = [&] {
             QStringList out;
-            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar"))) {
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockHeader"))) {
                 auto *ring = bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
                 if (!ring)
-                    return QStringList{QStringLiteral("a title bar without a ring")};
+                    return QStringList{QStringLiteral("a header without a ring")};
                 if (bar->isVisible() && ring->isVisible())
-                    out << bar->property("title").toString();
+                    out << bar->property("currentTitle").toString();
             }
             return out;
         };
         const auto ringOf = [&](const QString &title) -> QQuickItem * {
-            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar")))
-                if (bar->isVisible() && bar->property("title").toString() == title)
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockHeader")))
+                if (bar->isVisible() && bar->property("currentTitle").toString() == title)
                     return bar->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             return nullptr;
         };
@@ -9323,8 +9619,10 @@ private slots:
             QVERIFY(QRectF(0, 0, bar->width(), bar->height()).contains(ring->mapRectToItem(bar, ring->boundingRect())));
             QTRY_COMPARE(pixel(ring, QPointF(0.5, ring->height() / 2)), roles.focus);
             QTRY_COMPARE(pixel(grid, currentRowRing), roles.focus);
+            // D3: the panel has no frame of its own (the separators are the
+            // boundaries between panels): its body's colour to its edge.
             for (const QPointF at : {QPointF(0.5, gridPanel->height() / 2), QPointF(1.5, gridPanel->height() / 2)})
-                QTRY_COMPARE(pixel(gridPanel, at), at.x() < 1 ? roles.line : roles.field);
+                QTRY_COMPARE(pixel(gridPanel, at), roles.field);
             // The Line editor takes the focus: its header is ringed, the
             // Grid's ring and its row's ring are gone.
             text->forceActiveFocus(Qt::TabFocusReason);

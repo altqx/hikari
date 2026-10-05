@@ -10,6 +10,7 @@ import Hikari.Ui
 // editing Line" links it one way to the editing target's active Line, with
 // the candidates counted, Previous/Next match and an empty no-match state
 // (legacy's nearest Line only on request). The close mark is legacy's X.
+// These controls sit in the dock's header (D3).
 // The menu lists every occurrence of the editing Line in the other
 // Documents, as the preview's context menu did.
 FocusScope {
@@ -30,65 +31,69 @@ FocusScope {
         return mods === Qt.ControlModifier && (event.key === Qt.Key_C || event.key === Qt.Key_X || event.key === Qt.Key_V)
     }
 
+    // D3: the tray's toolbar, shown in its dock's header right of the tab
+    // (Docking.setPanelHeader; MuseScore's toolbar slot), not as a row of
+    // its own. Until the header takes it, it stays out of sight.
+    readonly property Item toolbar: referenceBar
+    RowLayout {
+        id: referenceBar
+        objectName: "referenceBar"
+        visible: parent !== tray
+        spacing: 2
+        IconToolButton {
+            objectName: "referenceLinked"
+            iconRole: "link"
+            text: qsTr("Follow the editing Line")
+            checkable: true
+            checked: tray.shell.referenceLinked
+            onToggled: tray.app.setReferenceLinked(checked)
+            Accessible.checkable: true
+            Accessible.checked: checked
+        }
+        Label {
+            objectName: "referenceMatchStatus"
+            Layout.fillWidth: true
+            elide: Text.ElideRight
+            text: !tray.shell.referenceLinked ? qsTr("Independent navigation")
+                : tray.shell.referenceNoMatch ? qsTr("No matching Line")
+                : tray.shell.referenceMatchCount > 0
+                  ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1).arg(tray.shell.referenceMatchCount)
+                : ""
+            Accessible.role: Accessible.StaticText
+            Accessible.name: text
+        }
+        IconToolButton {
+            objectName: "referenceNearest"
+            iconRole: "go-to-selection"
+            visible: tray.shell.referenceHasNearest
+            text: qsTr("Show nearest Line")
+            onClicked: tray.app.showNearestReferenceLine()
+        }
+        IconToolButton {
+            objectName: "referencePreviousMatch"
+            iconRole: "match-previous"
+            text: qsTr("Previous match")
+            enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex > 0
+            onClicked: tray.app.stepReferenceMatch(-1)
+        }
+        IconToolButton {
+            objectName: "referenceNextMatch"
+            iconRole: "match-next"
+            text: qsTr("Next match")
+            enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex + 1 < tray.shell.referenceMatchCount
+            onClicked: tray.app.stepReferenceMatch(1)
+        }
+        IconToolButton {
+            objectName: "referenceClose"
+            iconRole: "tab-close"
+            text: qsTr("Close reference")
+            onClicked: tray.app.closeReference()
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
-        RowLayout {
-            objectName: "referenceBar"
-            Layout.fillWidth: true
-            Layout.leftMargin: 4
-            Layout.rightMargin: 4
-            spacing: 2
-            IconToolButton {
-                objectName: "referenceLinked"
-                iconRole: "link"
-                text: qsTr("Follow the editing Line")
-                checkable: true
-                checked: tray.shell.referenceLinked
-                onToggled: tray.app.setReferenceLinked(checked)
-                Accessible.checkable: true
-                Accessible.checked: checked
-            }
-            Label {
-                objectName: "referenceMatchStatus"
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-                text: !tray.shell.referenceLinked ? qsTr("Independent navigation")
-                    : tray.shell.referenceNoMatch ? qsTr("No matching Line")
-                    : tray.shell.referenceMatchCount > 0
-                      ? qsTr("Match %1 of %2").arg(tray.shell.referenceMatchIndex + 1).arg(tray.shell.referenceMatchCount)
-                    : ""
-                Accessible.role: Accessible.StaticText
-                Accessible.name: text
-            }
-            IconToolButton {
-                objectName: "referenceNearest"
-                iconRole: "go-to-selection"
-                visible: tray.shell.referenceHasNearest
-                text: qsTr("Show nearest Line")
-                onClicked: tray.app.showNearestReferenceLine()
-            }
-            IconToolButton {
-                objectName: "referencePreviousMatch"
-                iconRole: "match-previous"
-                text: qsTr("Previous match")
-                enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex > 0
-                onClicked: tray.app.stepReferenceMatch(-1)
-            }
-            IconToolButton {
-                objectName: "referenceNextMatch"
-                iconRole: "match-next"
-                text: qsTr("Next match")
-                enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex + 1 < tray.shell.referenceMatchCount
-                onClicked: tray.app.stepReferenceMatch(1)
-            }
-            IconToolButton {
-                objectName: "referenceClose"
-                iconRole: "tab-close"
-                text: qsTr("Close reference")
-                onClicked: tray.app.closeReference()
-            }
-        }
         HikariGrid {
             id: referenceGrid
             objectName: "referenceGrid"

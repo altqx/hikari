@@ -30,6 +30,10 @@ Item {
     // does not take the editor's selection.
     property bool skipActivation: false
     readonly property bool busy: app.findBusy
+    // D3: the smallest size its docked panel takes unclipped: the scope
+    // rail at its minimum beside a narrow results pane, the rail scrolling
+    // above its action buttons (Panel.minimumBodySize).
+    readonly property size minimumSize: Qt.size(220 + 6 + 200, 160)
 
     // Ctrl+F / Ctrl+H / Edit menu: the tab to show (legacy ShowDialog).
     function showTab(which) {
