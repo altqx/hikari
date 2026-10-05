@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
+    required property var matroska // Y9: MatroskaController (GRID_SUBS_FROM_MKV)
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
 
@@ -2746,6 +2747,12 @@ ApplicationWindow {
                             objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
                         }
+                        // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
+                        ShellMenuItem {
+                            objectName: "gridSubsFromMkv"; text: qsTr("Load subtitles from an MKV/OGM file")
+                            enabled: root.matroska.available
+                            onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                        }
                     }
                 }
             }
@@ -3170,6 +3177,19 @@ ApplicationWindow {
         onAccepted: {
             if (root.app.saveChosen(selectedFile) === "readonly")
                 readOnlyWarning.open()
+            else
+                matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
+        }
+        onRejected: matroskaSubtitles.saveDone()
+    }
+    // Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
+    MatroskaSubtitles {
+        id: matroskaSubtitles
+        matroska: root.matroska
+        save: function() {
+            const route = root.app.saveRoute()
+            root.saveSubtitles()
+            return route === "dialog" || route === "readonly"
         }
     }
     Dialog {
@@ -4881,6 +4901,8 @@ ApplicationWindow {
         case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
         case "GRID_FILTER": root.app.filterLines(); return true
         case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true
+        // SubsGrid::OnAccelerator (SubsGrid.cpp:879-881): only for a ".mkv" or ".ogm" video.
+        case "GRID_SUBS_FROM_MKV": matroskaSubtitles.begin(); return true
         case "GRID_FILTER_INVERT": root.gridFilter.inverted = !root.gridFilter.inverted; return true
         case "GRID_FILTER_DO_NOT_RESET": root.gridFilter.addToFilter = !root.gridFilter.addToFilter; return true
         case "GRID_FILTER_AFTER_SUBS_LOAD": root.gridFilter.afterLoad = !root.gridFilter.afterLoad; return true

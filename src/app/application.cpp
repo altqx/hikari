@@ -582,6 +582,24 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_fontCollector->setMatroskaPort(
             std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)));
     }
+    {
+        // Y9: GRID_SUBS_FROM_MKV on the editing target's tab video.
+        MatroskaController::Hooks hooks;
+        hooks.videoPath = [this] {
+            const auto target = m_workspace.editingTarget();
+            const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+            return it == m_tabMedia.end() ? QString() : it->second.video;
+        };
+        hooks.modified = [this] {
+            auto *session = targetSession();
+            return session && session->isDirty();
+        };
+        hooks.apply = [this](application::MatroskaLoaded loaded) { applyMatroska(std::move(loaded)); };
+        hooks.log = [this](const QString &text) { m_log->log(text); };
+        m_matroska = std::make_unique<MatroskaController>(
+            std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)), std::move(hooks));
+        connect(this, &Application::tabsChanged, m_matroska.get(), &MatroskaController::refresh);
+    }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -1240,7 +1258,8 @@ void Application::refreshVideo()
                 session->document(), destination->value,
                 [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, windows);
         }
-        m_video->offer(associations);
+        if (!m_keepVideoOnEnter) // Y9: subtitles loaded from the tab's video keep it open
+            m_video->offer(associations);
         enterTabMedia(previous, target); // P6: the tab's own video, audio and keyframes
     }
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
@@ -1538,8 +1557,11 @@ QVariantMap Application::saveDialogValues() const
     const QString video = m_video->session().state() == application::VideoSession::State::Ready
                               ? QString::fromStdString(m_video->session().path())
                               : QString();
+    // Y9: subtitles loaded from an MKV are named after it (OnMkvSubs' SubsPath).
+    const auto matroskaPath = m_matroskaPaths.find(target->value);
     const QString path = !video.isEmpty() && saveWithVideoName() ? video
-                         : destination                           ? QString::fromStdString(destination->value)
+                         : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
+                         : matroskaPath != m_matroskaPaths.end()      ? matroskaPath->second
                                                                  : QString();
     const QString ext = extensionFor(session->document().format());
     const QString filter = ext == QStringLiteral("txt") ? tr("Subtitle file ") + QStringLiteral("(*.txt *.sub)")
@@ -2184,6 +2206,37 @@ QVariantList Application::recoveryBundles() const
                            {QStringLiteral("generations"), generations}};
     }
     return out;
+}
+
+void Application::applyMatroska(application::MatroskaLoaded loaded)
+{
+    // SubsGrid::OnMkvSubs after GetSubtitles (SubsGrid.cpp:1149-1190) and
+    // GetSubtitles' Clearing/EndLoad (Demux.cpp:126-164): the tab's
+    // Document is replaced by the loaded one, which has unsaved work
+    // (EndLoad's ForgetSaved) and asks for a name at the next save
+    // (originalFormat = -1); SubsPath and SubsName are the video's name
+    // with ".ass" or ".srt". The tab keeps its video, audio and keyframes,
+    // and InsertSelection(currentLine) selects the row that was active.
+    const auto old = m_workspace.editingTarget();
+    int row = 0;
+    if (auto *session = old ? m_files->session(*old) : nullptr)
+        if (const auto active = session->selection().active) {
+            const auto lines = session->document().lines();
+            for (int i = 0; i < int(lines.size()); ++i)
+                if (lines[std::size_t(i)]->id == *active)
+                    row = i;
+        }
+    const QString subsPath = QDir::toNativeSeparators(QString::fromStdString(loaded.subtitlePath));
+    const auto id = m_files->createUnsaved(std::move(loaded.document));
+    if (auto *session = m_files->session(id)) {
+        selectLegacyActiveLine(*session);
+        selectRow(id, row);
+    }
+    m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
+    m_matroskaPaths[id.value] = subsPath;
+    replaceTarget(id, true);
+    // Hikari->SetSubsResolution (SubsGrid.cpp:1189).
+    QTimer::singleShot(0, this, [this] { checkResolution(); });
 }
 
 bool Application::recoverBundle(const QString &key, qulonglong generation)
@@ -4072,6 +4125,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
+            {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

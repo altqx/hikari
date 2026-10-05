@@ -26,3 +26,5 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# Y9: GRID_SUBS_FROM_MKV.
+target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)

@@ -30,6 +30,8 @@ qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
+# Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
+qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:

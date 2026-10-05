@@ -9,6 +9,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
+#include "hikari/app/matroska_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -539,6 +540,8 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
+    // Y9: GRID_SUBS_FROM_MKV (the font collector reads attachments through its own helper).
+    MatroskaController &matroska() { return *m_matroska; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
@@ -692,6 +695,12 @@ private:
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
+    std::unique_ptr<MatroskaController> m_matroska; // Y9
+    // Y9: OnMkvSubs' SubsPath for a loaded track, the Save dialog's name
+    // until the Document has a destination.
+    std::map<std::uint64_t, QString> m_matroskaPaths;
+    bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
+    void applyMatroska(application::MatroskaLoaded loaded);
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
@@ -876,7 +885,9 @@ private:
     void leaveTabMedia(std::optional<application::DocumentId> document);
     void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);
     void closeDocument(application::DocumentId document);
-    void replaceTarget(application::DocumentId replacement);
+    // keepMedia (Y9): the tab keeps its video, audio and keyframes, as
+    // legacy's SubsGrid::Clearing does.
+    void replaceTarget(application::DocumentId replacement, bool keepMedia = false);
     void applySession();
     void forgetTab(application::DocumentId document);
     void selectRow(application::DocumentId document, int row);

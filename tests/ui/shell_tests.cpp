@@ -11,6 +11,8 @@
 #include "line_table_model.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
+#include "hikari/backends/ffms_matroska.h"
+#include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
@@ -1994,6 +1996,151 @@ private slots:
             // F4-rules-cr keeps it checked on both platforms.
             QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
         }
+    }
+
+    // Y9: GRID_SUBS_FROM_MKV (legacy SubsGrid::OnMkvSubs and Demux at
+    // 20d647c4): enabled for a ".mkv"/".ogm" video name (case-sensitive,
+    // SubsGrid.cpp:289); "The file does not contain any subtitle tracks.";
+    // the question for a modified Document; the track chooser; the loaded
+    // track replaces the tab's Document, which keeps its video and is named
+    // after it; Cancel and the helper's loss change nothing.
+    void matroskaSubtitlesLoadIntoTheTab()
+    {
+        const QString subs = writeFile(dir, "mkvtab.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,before\n");
+        QVERIFY(application->openFile(subs));
+        auto &matroska = application->matroska();
+        auto *item = named("gridSubsFromMkv");
+        QVERIFY(item);
+        QVERIFY(!item->property("enabled").toBool()); // no video
+        const auto target = [&] { return *application->workspace().editingTarget(); };
+        const auto before = target();
+        const auto videoReady = [&](const QString &path) {
+            return QTest::qWaitFor([&] {
+                return application->video().hasVideo() &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) ==
+                           QDir::toNativeSeparators(path) &&
+                       application->video().session().state() == application::VideoSession::State::Ready;
+            }, 30000);
+        };
+        // VideoName.EndsWith(".mkv"): an upper-case extension is not offered.
+        const QString upper = dir.filePath(QStringLiteral("upper.MKV"));
+        QVERIFY(QFile::copy(nativeFixture("cfr.mkv"), upper));
+        application->video().openVideo(upper);
+        QVERIFY(videoReady(upper));
+        QCoreApplication::processEvents();
+        QVERIFY(!matroska.available());
+        QVERIFY(!item->property("enabled").toBool());
+
+        // A video without text tracks.
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QVERIFY(videoReady(nativeFixture("cfr.mkv")));
+        QTRY_VERIFY(item->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        auto *noTracks = named("mkvNoTracksMessage");
+        QTRY_VERIFY_WITH_TIMEOUT(noTracks->property("visible").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(noTracks, "accept"));
+        QCOMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+
+        // The extraction fixture: an ASS and a SubRip track. A modified
+        // Document asks first (Yes / No / Cancel).
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QVERIFY(videoReady(mkv));
+        QTRY_VERIFY(matroska.available());
+        application->duplicateLines();
+        QVERIFY(application->files().session(before)->isDirty());
+        auto *question = named("mkvSaveQuestion");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(question && chooser);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QCOMPARE(matroska.state(), 0);
+        // No: the tracks, then "Choose subtitle track"; its Cancel reads nothing.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose subtitle track"));
+        QCOMPARE(chooser->property("labels").toStringList(),
+                 (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "reject"));
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+        QVERIFY(application->files().session(before)->isDirty());
+
+        // The helper lost while listing: nothing changes.
+        QVERIFY(matroska.start());
+        auto *port = dynamic_cast<backends::FfmsMatroska *>(&matroska.port());
+        QVERIFY(port && port->helperHost());
+        port->helperHost()->stop();
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+
+        // Yes saves the Document to its file first (Hikari->Save(false)); OK
+        // on the first row: the ASS track replaces the tab's Document.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
+        application->waitForWrites();
+        {
+            QFile saved(subs);
+            QVERIFY(saved.open(QIODevice::ReadOnly));
+            QCOMPARE(saved.readAll().count(",before"), 2); // the duplicated Line was written
+        }
+        QTRY_COMPARE(matroska.state(), 0);
+        auto *loaded = application->files().session(target());
+        QVERIFY(loaded);
+        const auto bytes = core::encodeAss(loaded->document());
+        QCOMPARE(QByteArray(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size())),
+                 QByteArray("[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 320\r\nPlayResY: 240\r\n"
+                            "YCbCr Matrix: TV.601\r\n\r\n[V4+ Styles]\r\n"
+                            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                            "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                            "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+                            "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,"
+                            "0,1,2,2,2,10,10,10,1\r\n\r\n[Events]\r\n"
+                            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                            "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
+                            "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n"));
+        // Unsaved, with no file yet: Save asks for one, named after the video.
+        QVERIFY(loaded->isDirty());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.ass"));
+        QCOMPARE(application->saveRoute(), QStringLiteral("dialog"));
+        QCOMPARE(QDir::toNativeSeparators(application->saveDialogValues().value(QStringLiteral("file")).toUrl().toLocalFile()),
+                 QDir::toNativeSeparators(QFileInfo(mkv).absolutePath() + QStringLiteral("/mkvextract")));
+        // The tab keeps its video.
+        QVERIFY(application->video().hasVideo());
+        QCOMPARE(QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())), mkv);
+        QVERIFY(matroska.available());
+
+        // GRID_SUBS_FROM_MKV from the Grid's hotkey path, the SubRip track:
+        // an SRT Document named ".srt".
+        const auto ass = target();
+        auto *root = engine->rootObjects().first();
+        QVariant handled;
+        QVERIFY(QMetaObject::invokeMethod(root, "runGridHotkey", Q_RETURN_ARG(QVariant, handled),
+                                          Q_ARG(QVariant, QStringLiteral("GRID_SUBS_FROM_MKV"))));
+        QVERIFY(handled.toBool());
+        QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        named("mkvTrackList")->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != ass, 20000);
+        auto *srt = application->files().session(target());
+        QCOMPARE(srt->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(srt->document().lines().size(), std::size_t(1));
+        QCOMPARE(srt->document().lines()[0]->text, std::u8string(u8"Pierwsza"));
+        QCOMPARE(srt->document().lines()[0]->start.value.microseconds(), 500'000);
+        QCOMPARE(srt->document().lines()[0]->end.value.microseconds(), 1'500'000);
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
     }
 
     // Y9: the font collector's "Demux fonts from loaded MKV file"
