@@ -392,20 +392,54 @@ private slots:
         QCOMPARE(list->selectedAnnouncement(), QStringLiteral("\\be, Edge blur, 2 of 20"));
         press(Qt::Key_Return);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur\\befirst"));
-        // The options menu: "Show all tags", kept in the profile.
+        // The options menu, by a right click on a row (PopupWindow::
+        // OnMouseEvent's RightUp, TextEditorTagList.cpp:131-149): each item
+        // checked as TEXT_EDITOR_TAG_LIST_OPTIONS says, and the one clicked
+        // flipped in the profile.
         QTest::keyClick(window, '\\');
         QTRY_VERIFY(list->open());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("lineTextTagListShowAllTags"), "triggered"));
-        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 1);
-        QCOMPARE(list->rows().size(), 50);
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("lineTextTagListShowDescription"), "triggered"));
-        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 5);
-        QCOMPARE(list->rows().first(), QStringLiteral("1a - Transparency of primary color"));
-        // The pointer: the first event is ignored, then the row under it is
-        // selected and a left click puts it; the field keeps focus.
         auto *pointer = item("lineTextTagListPointer");
         QTRY_VERIFY(pointer && pointer->isVisible());
         const double rowHeight = popup->property("rowHeight").toDouble();
+        auto *options = item<QObject>("lineTextTagListOptions");
+        QVERIFY(options);
+        const auto checkedItems = [&] {
+            QString out;
+            for (const char *name : {"lineTextTagListShowDescription", "lineTextTagListShowAllTags",
+                                     "lineTextTagListShowVsfilterModTags"})
+                out += item<QObject>(name)->property("checked").toBool() ? QLatin1Char('1') : QLatin1Char('0');
+            return out;
+        };
+        QString shown; // the items' checked states while the menu is open
+        const auto chooseOption = [&](const char *name) {
+            const QPoint row0 = pointer->mapToScene(QPointF(10, rowHeight * 0.5)).toPoint();
+            QTest::mouseMove(window, row0 - QPoint(0, 1)); // the list ignores its first pointer event
+            QTest::mouseMove(window, row0);
+            QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, row0);
+            QTRY_VERIFY(options->property("opened").toBool());
+            QVERIFY(popup->property("visible").toBool()); // the list stays under its menu
+            shown = checkedItems();
+            auto *choice = item(name);
+            QTRY_VERIFY(choice->isVisible() && choice->width() > 0);
+            QTest::mouseClick(choice->window(), Qt::LeftButton, Qt::NoModifier,
+                              choice->mapToScene(QPointF(choice->width() / 2, choice->height() / 2)).toPoint());
+            QTRY_VERIFY(!options->property("visible").toBool());
+            QTRY_VERIFY(text->hasActiveFocus());
+        };
+        chooseOption("lineTextTagListShowAllTags");
+        QVERIFY(!QTest::currentTestFailed());
+        QCOMPARE(shown, QStringLiteral("000"));
+        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 1);
+        QVERIFY(list->open());
+        QCOMPARE(list->rows().size(), 50);
+        chooseOption("lineTextTagListShowDescription");
+        QVERIFY(!QTest::currentTestFailed());
+        QCOMPARE(shown, QStringLiteral("010"));
+        QCOMPARE(application->settingsStore()->integer("textEditor.tagListOptions"), 5);
+        QCOMPARE(list->rows().first(), QStringLiteral("1a - Transparency of primary color"));
+        QCOMPARE(checkedItems(), QStringLiteral("110"));
+        // The pointer: the first event is ignored, then the row under it is
+        // selected and a left click puts it; the field keeps focus.
         const QPoint row2 = pointer->mapToScene(QPointF(10, rowHeight * 2.5)).toPoint();
         QTest::mouseMove(window, row2 - QPoint(0, 1));
         QTest::mouseMove(window, row2);

@@ -4,7 +4,12 @@
 // (OnAccelerator, DialogueTextEditor.cpp:563-567) except Up and Down, which
 // move the selection (722-750), and Return, which puts the selected tag
 // (802-808); Escape, Home and End close it too (OnKeyPress, 528-533);
-// Page Up, Page Down and Insert leave it (525-527). Typed characters open or
+// Page Up, Page Down and Insert leave it (525-527). Those accelerators are
+// TextEditor's own fixed table (DialogueTextEditor.cpp:49-74, Up, Down and
+// Return included: "after change enter it will still work in this field"),
+// not the mapped hotkeys, so the keys here are fixed too; a mapped binding
+// went to the EditBox's table, which neither closed nor used the list, and
+// numpad Enter was TabPanel's commit (TabPanel.cpp:110-111). Typed characters open or
 // narrow it; an input method's committed text counts as typed, one
 // character at a time, as WM_CHAR delivers it, and nothing is intercepted
 // while a composition is open. A mouse press in the field or the field
