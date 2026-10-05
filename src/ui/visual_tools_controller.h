@@ -10,6 +10,7 @@
 // warnings (VIDEO_VISUAL_WARNINGS_OFF) and VIDEO_COPY_COORDS.
 
 #include "hikari/application/visual_tools.h"
+#include "automation_services_qt.h"
 #include "settings_store.h"
 
 #include <QFont>
@@ -54,6 +55,10 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
     // The tool's numeric values (shown below the canvas): name, label, text, editable.
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
+    // T2: the family's own options (legacy VideoToolbar's second row): name,
+    // kind ("toggle" or "choice"), iconRole, tooltip, checked, enabled,
+    // choices, index.
+    Q_PROPERTY(QVariantList options READ options NOTIFY changed)
     // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
@@ -67,6 +72,13 @@ public:
 
     // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
+    // T2: the video shows the open gesture's staged texts (legacy's dummy
+    // rendering, Visuals::RenderSubs): called with the Document as it would
+    // be, or null when the gesture ends (the committed Document again).
+    void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
+    // T2: HikariLog and the Grid's "Ignore filtering in some actions".
+    void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
+    void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
     // The editing target, its content, active Line or format changed.
     void refresh();
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
@@ -85,6 +97,7 @@ public:
     QRectF videoRect() const;
     QRectF sourceRect() const;
     QVariantList values() const;
+    QVariantList options() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
@@ -93,7 +106,8 @@ public:
     // and the window's device pixel ratio.
     Q_INVOKABLE void setViewport(qreal width, qreal height, qreal panelHeight, qreal devicePixelRatio);
     // A pointer event over the video area, in its logical coordinates:
-    // kind 0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel; button a
+    // kind 0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel, 6 the
+    // second press of a double click (after its press); button a
     // Qt::MouseButton; modifiers Qt::KeyboardModifiers.
     Q_INVOKABLE void pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
     // A key while the Video panel has focus: true when the tool used it.
@@ -110,6 +124,8 @@ public:
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
+    // T2: a toggle (0/1) or a choice's index of the family's options.
+    Q_INVOKABLE bool setOption(const QString &name, int value);
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
@@ -126,6 +142,11 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    std::int64_t videoTimeMs() const override;
+    application::LegacyTimebase timebase() const override;
+    application::TextMeasurePort *textMeasure() const override { return &m_measure; }
+    bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
+    void log(std::u16string_view text) override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -141,11 +162,17 @@ private:
     void syncGeometry();
     void resetTool();
     application::visual::LineWarning currentWarning() const;
+    void updatePreview();
 
     VideoController &m_video;
     SettingsStore &m_settings;
     SessionProvider m_session;
     std::function<void()> m_edited;
+    std::function<void(const core::Document *)> m_preview;
+    std::function<void(const QString &)> m_log;
+    std::function<bool()> m_ignoreFiltered;
+    mutable QtTextMeasurePort m_measure;
+    bool m_previewing = false;
     application::visual::VideoView m_view;
     application::visual::SourceGeometry m_geometry;
     std::vector<std::unique_ptr<application::visual::VisualTool>> m_tools;
@@ -162,6 +189,7 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
+    std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
 };
 
 } // namespace hikari::ui
