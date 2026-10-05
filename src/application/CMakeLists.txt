@@ -40,3 +40,8 @@ target_sources(hikari_application PRIVATE font_collector.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# T4: the vector point editor T5 shares,
+# with legacy's float steps (no contraction either).
+target_sources(hikari_application PRIVATE visual_vector.cpp)
+set_source_files_properties(visual_vector.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
