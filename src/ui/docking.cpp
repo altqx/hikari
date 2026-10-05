@@ -27,6 +27,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QScreen>
+#include <qpa/qplatformnativeinterface.h>
 
 #include <algorithm>
 
@@ -231,9 +232,33 @@ void configureEngine()
 }
 } // namespace
 
+namespace {
+std::optional<bool> g_compositing; // tests
+} // namespace
+
+bool dockchrome::windowSystemComposites()
+{
+    if (g_compositing)
+        return *g_compositing;
+    if (QGuiApplication::platformName() != QLatin1String("xcb"))
+        return true; // Wayland and Windows always composite
+    // Qt's xcb integration tracks the compositing manager's selection
+    // (_NET_WM_CM_S<n>) per screen.
+    QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+    QScreen *screen = QGuiApplication::primaryScreen();
+    return native && screen && native->nativeResourceForScreen(QByteArrayLiteral("compositingenabled"), screen);
+}
+
+void dockchrome::overrideCompositing(std::optional<bool> composites)
+{
+    g_compositing = composites;
+}
+
 int dockchrome::floatingShadow()
 {
-    return 8; // MuseScore's DOCK_WINDOW_SHADOW
+    // MuseScore's DOCK_WINDOW_SHADOW, drawn in the window's transparent
+    // margin; none where that margin would come out opaque.
+    return windowSystemComposites() ? 8 : 0;
 }
 
 bool attachDocking(QQmlEngine &engine)

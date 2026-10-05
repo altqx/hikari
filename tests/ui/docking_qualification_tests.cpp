@@ -530,6 +530,10 @@ private slots:
     // with a drawn shadow, on every platform (MuseScore's DockFloatingWindow).
     void floatingPanelsAreBorderlessToolWindows()
     {
+        // where the window system composites (X11 without a compositing
+        // manager: floatingPanelsWithoutCompositingHaveNoShadow)
+        hikari::ui::dockchrome::overrideCompositing(true);
+        const auto unset = qScopeGuard([] { hikari::ui::dockchrome::overrideCompositing(std::nullopt); });
         restoreInitial();
         auto *audio = dock("Audio");
         QVERIFY(audio->setProperty("isFloating", true));
@@ -549,6 +553,39 @@ private slots:
         QVERIFY(bar->property("titleMode").toBool());
         QCOMPARE(bar->mapToScene(QPointF()).toPoint(), QPoint(shadow + 1, shadow + 1));
         QVERIFY(bar->property("floating").toBool());
+        QVERIFY(audio->setProperty("isFloating", false));
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+    }
+
+    // Native gate (X11 without a compositing manager): a transparent
+    // window's margin shows black there, so a floating panel draws no
+    // shadow; its frame fills the window and a band inside the frame's edge
+    // still resizes it.
+    void floatingPanelsWithoutCompositingHaveNoShadow()
+    {
+        hikari::ui::dockchrome::overrideCompositing(false);
+        const auto unset = qScopeGuard([] { hikari::ui::dockchrome::overrideCompositing(std::nullopt); });
+        QCOMPARE(hikari::ui::dockchrome::floatingShadow(), 0);
+        restoreInitial();
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(bar->window());
+        QVERIFY(floating);
+        QQuickItem *frame = itemsNamed(floating, QStringLiteral("dockFloatingFrame")).value(0);
+        QVERIFY(frame);
+        QTRY_COMPARE(frame->size(), QSizeF(floating->size()));
+        QCOMPARE(frame->mapToScene(QPointF()), QPointF());
+        QCOMPARE(frame->property("radius").toReal(), 0.0);
+        QTRY_COMPARE(bar->mapToScene(QPointF()).toPoint(), QPoint(1, 1));
+        for (const char *name : {"resizeLeft", "resizeRight", "resizeTop", "resizeBottom"}) {
+            QQuickItem *edge = itemsNamed(floating, QLatin1String(name)).value(0);
+            QVERIFY2(edge && edge->isEnabled() && edge->isVisible(), name);
+            QCOMPARE(qMin(edge->width(), edge->height()), qreal(hikari::ui::dockchrome::kResizeGrip));
+        }
+        QQuickItem *right = itemsNamed(floating, QStringLiteral("resizeRight")).first();
+        QCOMPARE(right->mapToScene(QPointF(right->width(), 0)).x(), qreal(floating->width()));
         QVERIFY(audio->setProperty("isFloating", false));
         QTRY_VERIFY(!audio->property("isFloating").toBool());
     }

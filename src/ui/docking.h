@@ -16,6 +16,8 @@
 #include <QSize>
 #include <QtQml/qqmlregistration.h>
 
+#include <optional>
+
 class QQmlEngine;
 class QQuickItem;
 class QWindow;
@@ -45,10 +47,21 @@ void refreshDockConstraints();
 // D3 sizes (docs/research/musescore-docking.md §7): the header row, the gap
 // between a tab bar and the content, and the floating window's drawn shadow
 // (every platform: the window is borderless and transparent around it).
+// X11 without a compositing manager shows no transparency, so the shadow's
+// margin would come out black: there the shadow is 0 (native gate, D3).
 namespace dockchrome {
 inline constexpr int kHeaderHeight = 35;
 inline constexpr int kTabGap = 12;
+// The width of the band along a floating window's edge that resizes it:
+// the shadow, or this much inside the frame where there is no shadow.
+inline constexpr int kResizeGrip = 4;
 int floatingShadow();
+// Whether the window system composites (transparent windows show what is
+// behind them): false only on X11 without a compositing manager.
+bool windowSystemComposites();
+// Tests: pretend the window system does or does not composite (nullopt:
+// ask it again).
+void overrideCompositing(std::optional<bool> composites);
 } // namespace dockchrome
 
 // Engine views and panel chrome the shell's QML needs (DockTabBar.qml,
@@ -63,6 +76,7 @@ class Docking : public QObject {
     Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
     // The width of the floating window's drawn shadow.
     Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
+    Q_PROPERTY(int resizeGrip READ resizeGrip CONSTANT FINAL)
     // Bumped when a panel's header description changes (setPanelHeader).
     Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
     // The panel whose menu is open (Main.qml sets it), so its "⋯" button
@@ -77,6 +91,7 @@ public:
     // Tests: the Wayland header on another platform.
     void setSystemMove(bool on);
     static int floatingShadow() { return dockchrome::floatingShadow(); }
+    static int resizeGrip() { return dockchrome::kResizeGrip; }
     int headerRevision() const { return m_revision; }
     QString openMenu() const { return m_openMenu; }
     void setOpenMenu(const QString &uniqueName);

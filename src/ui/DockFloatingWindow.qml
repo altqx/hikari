@@ -10,8 +10,10 @@ import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 // a 1-pixel boundary, 3-pixel corners and a drawn 8-pixel shadow around it.
 // The window is transparent around the frame on every platform (the
 // adapter, ui/docking.cpp, makes it so), and the shadow's edges resize it
-// through the window system (startSystemResize). Loaded through the
-// adapter's view factory.
+// through the window system (startSystemResize). On X11 without a
+// compositing manager the transparent margin would show black, so there
+// is no shadow (Docking.floatingShadow is 0) and a band inside the frame's
+// edge resizes. Loaded through the adapter's view factory.
 Item {
     id: root
     objectName: "dockFloatingWindow"
@@ -89,11 +91,12 @@ Item {
         }
     }
 
-    // Resizing from the shadow, through the compositor.
+    // Resizing from the shadow, through the compositor. Without a shadow
+    // (X11 without a compositing manager, ui/docking.cpp) a band just inside
+    // the frame's edge does it.
+    readonly property int grip: Math.max(shadow, Docking.resizeGrip)
     component ResizeEdge: MouseArea {
         required property int edges
-        enabled: root.shadow > 0
-        visible: enabled
         z: 10
         cursorShape: {
             const horizontal = (edges & (Qt.LeftEdge | Qt.RightEdge)) !== 0
@@ -105,17 +108,17 @@ Item {
         }
         onPressed: root.Window.window.startSystemResize(edges)
     }
-    readonly property int corner: shadow + 6
-    ResizeEdge { objectName: "resizeLeft"; edges: Qt.LeftEdge; x: 0; y: root.corner; width: root.shadow; height: root.height - 2 * root.corner }
-    ResizeEdge { objectName: "resizeRight"; edges: Qt.RightEdge; x: root.width - root.shadow; y: root.corner; width: root.shadow; height: root.height - 2 * root.corner }
-    ResizeEdge { objectName: "resizeTop"; edges: Qt.TopEdge; x: root.corner; y: 0; width: root.width - 2 * root.corner; height: root.shadow }
-    ResizeEdge { objectName: "resizeBottom"; edges: Qt.BottomEdge; x: root.corner; y: root.height - root.shadow; width: root.width - 2 * root.corner; height: root.shadow }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.corner; height: root.shadow }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.shadow; height: root.corner }
-    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.corner; y: 0; width: root.corner; height: root.shadow }
-    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.shadow; y: 0; width: root.shadow; height: root.corner }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.shadow; width: root.corner; height: root.shadow }
-    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.corner; width: root.shadow; height: root.corner }
-    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.corner; y: root.height - root.shadow; width: root.corner; height: root.shadow }
-    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.shadow; y: root.height - root.corner; width: root.shadow; height: root.corner }
+    readonly property int corner: grip + 6
+    ResizeEdge { objectName: "resizeLeft"; edges: Qt.LeftEdge; x: 0; y: root.corner; width: root.grip; height: root.height - 2 * root.corner }
+    ResizeEdge { objectName: "resizeRight"; edges: Qt.RightEdge; x: root.width - root.grip; y: root.corner; width: root.grip; height: root.height - 2 * root.corner }
+    ResizeEdge { objectName: "resizeTop"; edges: Qt.TopEdge; x: root.corner; y: 0; width: root.width - 2 * root.corner; height: root.grip }
+    ResizeEdge { objectName: "resizeBottom"; edges: Qt.BottomEdge; x: root.corner; y: root.height - root.grip; width: root.width - 2 * root.corner; height: root.grip }
+    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.corner; height: root.grip }
+    ResizeEdge { edges: Qt.LeftEdge | Qt.TopEdge; x: 0; y: 0; width: root.grip; height: root.corner }
+    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.corner; y: 0; width: root.corner; height: root.grip }
+    ResizeEdge { edges: Qt.RightEdge | Qt.TopEdge; x: root.width - root.grip; y: 0; width: root.grip; height: root.corner }
+    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.grip; width: root.corner; height: root.grip }
+    ResizeEdge { edges: Qt.LeftEdge | Qt.BottomEdge; x: 0; y: root.height - root.corner; width: root.grip; height: root.corner }
+    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.corner; y: root.height - root.grip; width: root.corner; height: root.grip }
+    ResizeEdge { edges: Qt.RightEdge | Qt.BottomEdge; x: root.width - root.grip; y: root.height - root.corner; width: root.grip; height: root.corner }
 }
