@@ -7135,18 +7135,34 @@ private slots:
         auto &tools = application->visualTools();
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
-        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000); // the active Line's start
+        // The active Line's start shown, not only requested: the tools take
+        // no events outside the shown frame's Line (Visuals::Draw's blockevents).
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
         auto *session = application->files().session(*application->workspace().editingTarget());
         const core::LineId first = session->document().lines()[0]->id;
         const core::LineId second = session->document().lines()[1]->id;
-        const QRectF v = tools.videoRect();
-        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
-        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        // A tool's own row changes the panel's height, and the overlay's new
+        // viewport resets the tool (legacy UpdateVideoWindow's SetCurVisual):
+        // the layout settles before a gesture, as it does before a user's.
+        const auto settle = [&] {
+            QRectF last;
+            return QTest::qWaitFor([&] {
+                QTest::qWait(50);
+                const QRectF r = tools.videoRect();
+                const bool same = r == last && !r.isEmpty();
+                last = r;
+                return same;
+            }, 5000);
+        };
 
         // The rectangle clip.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool6"), "click"));
         QCOMPARE(tools.activeFamily(), 6);
         QTRY_VERIFY(visualItem("visualOption_invert"));
+        QVERIFY(settle());
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
         QCOMPARE(visualItem("visualOption_invert")->property("iconRole").toString(), QStringLiteral("clip-invert"));
         QCOMPARE(visualItem("visualOption_invert")->property("tip").toString(), QStringLiteral("Invert clip"));
         const std::size_t steps = session->historySize();
@@ -7187,6 +7203,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool7"), "click"));
         QCOMPARE(tools.activeFamily(), 7);
         QTRY_VERIFY(visualItem("visualOption_mode5"));
+        QVERIFY(settle());
         const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
         for (int i = 0; i < 6; ++i) {
             QQuickItem *mode = visualItem(qPrintable(QStringLiteral("visualOption_mode%1").arg(i)));
