@@ -28,19 +28,13 @@ Item {
     }
 
     // Legacy Notebook::ContextMenu on tab `index` (-1: none), at (x, y) in
-    // `item`. R1 fills in its "Subtitle comparison"; the rest of the legacy
-    // tab menu is P9's.
+    // `item`; its items are in DocumentTabMenu.qml.
     function openTabMenu(index, item, x, y) {
-        comparisonMenu.prepare(index)
-        tabMenu.popup(item, x, y)
+        tabMenu.openOn(index, item, x, y)
     }
-    Menu {
+    DocumentTabMenu {
         id: tabMenu
-        objectName: "documentTabMenu"
-        SubtitleComparisonMenu {
-            id: comparisonMenu
-            app: bar.app
-        }
+        app: bar.app
     }
 
     Flickable {

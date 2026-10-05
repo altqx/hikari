@@ -26,4 +26,4 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 # O2: the "Hotkey mapping" window and its questions.
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # R1: the tab menu's "Subtitle comparison".
-qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml)
+qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
