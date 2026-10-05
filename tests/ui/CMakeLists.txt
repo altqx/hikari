@@ -139,3 +139,15 @@ foreach(scale 150 200)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# O5: the interface language over the embedded catalogs (live switching,
+# aegisub.gettext through the application, pseudolocalized and right-to-left
+# layouts, the program font).
+hikari_add_qttest(hikari_ui_language_tests SOURCES language_tests.cpp LIBRARIES hikari_composition hikari_translations)
+target_compile_definitions(hikari_ui_language_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_language_tests hikari_lua_helper hikari_automation_stage)
+foreach(mode offscreen xvfb)
+    if(TEST hikari_ui_language_tests.${mode})
+        set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
