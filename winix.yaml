@@ -211,3 +211,33 @@ tasks:
     visualStudio: false
     timeoutSeconds: 180
     environment: {GATE_DISPLAY: status}
+  # W2: the optional xy-VSFilter renderer in its own build tree
+  # (windows-x64-vsfilter: the "vsfilter" manifest feature builds
+  # ports/hikari-xy-vsfilter), with the program and the tests that use it.
+  vsfilter-build:
+    script: ./tools/winix/msvc.ps1 cmake --preset windows-x64-vsfilter; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-vsfilter --target hikarisub hikari_backends_csri_tests hikari_backends_vsfilter_tests hikari_ui_shell_tests hikari_application_options_dialog_tests
+    timeoutSeconds: 7200
+    artifacts: [out/build/windows-x64-vsfilter/provision-evidence]
+  vsfilter-test:
+    # The adapter, the recipe's renderer against the legacy release's
+    # (legacy-win-setup's Csri folder) and the GDI faces, verbose for the
+    # per-fixture differences; the render artifacts are kept.
+    script: $env:HIKARI_LEGACY_CSRI = "$PWD/out/legacy-win/bundled/HikariSub_x64/Csri"; ./tools/winix/msvc.ps1 ctest --preset windows-x64-vsfilter -R "^(Csri|RendererSelection|VsfilterRecipe|OptionsDialog)[.]" -V
+    timeoutSeconds: 1200
+    artifacts: [out/build/windows-x64-vsfilter/tests/backends/artifacts/vsfilter]
+  vsfilter-shell:
+    # The shell functions W2 touches, in the build with xy-VSFilter beside the tests.
+    script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-vsfilter | Select-Object -First 1; Write-Output "csri $((Get-ChildItem "$($exe.DirectoryName)/Csri" | ForEach-Object Name) -join ', ')"; $code = 0; foreach ($f in 'subtitleDisplayFilterSwitchesOnTheLoadedVideo','settingsDialogAppliesChangedValuesLive','settingsDialogPagesBindTheLegacyOptions','aboutAndCreditsShowTheNotices','fontCollectorDoesNotCertifyACsriRenderer') { $out = "$env:TEMP/vsfilter-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/vsfilter-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output "== $f TIMED OUT"; $code = 1 } else { Write-Output "== $f exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 } }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|PASS|SKIP|QWARN|Totals' } }; exit $code
+    timeoutSeconds: 1200
+    artifacts: [out/build/windows-x64-vsfilter/tests/ui/artifacts/vsfilter-switch]
+  vsfilter-shots:
+    # The Video page and the About notice of the build with xy-VSFilter, light
+    # and dark, under the windows platform (offscreen has no fonts on Windows).
+    script: $env:QT_QPA_PLATFORM = 'windows'; $env:HIKARI_SURFACE_SHOT_DIR = "$PWD/out/build/windows-x64-vsfilter/w2-shots"; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-vsfilter | Select-Object -First 1; $out = "$env:TEMP/vsfilter-shots.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "w2SurfaceScreenshots -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output 'TIMED OUT'; exit 1 }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|PASS|Totals' }; exit $p.ExitCode
+    timeoutSeconds: 600
+    artifacts: [out/build/windows-x64-vsfilter/w2-shots]
+  vsfilter-default:
+    # W2 in the default Windows build (no xy-VSFilter): the CSRI adapter is
+    # built, no renderer is offered, and choosing one draws nothing.
+    script: ./tools/winix/msvc.ps1 cmake --preset windows-x64-release; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-release --target hikari_backends_csri_tests hikari_ui_shell_tests; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^Csri[.]"; $code = $LASTEXITCODE; $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "csri folder $(Test-Path "$($exe.DirectoryName)/Csri")"; foreach ($f in 'subtitleDisplayFilterSwitchesOnTheLoadedVideo','settingsDialogAppliesChangedValuesLive','settingsDialogPagesBindTheLegacyOptions','aboutAndCreditsShowTheNotices') { $out = "$env:TEMP/vsfilter-default-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/vsfilter-default-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output "== $f TIMED OUT"; $code = 1 } else { Write-Output "== $f exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 } }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|Totals' } }; exit $code
+    timeoutSeconds: 3600

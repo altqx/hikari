@@ -1640,6 +1640,18 @@ private slots:
         QVERIFY(text.contains(QStringLiteral("Based on Kainote by Marcin Drob")));
         QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
         QVERIFY(text.contains(QStringLiteral("Hunspell - Copyright"))); // F3: linked again (R2-hunspell)
+        // W2: the CSRI line where the CSRI adapter is built (Windows); the
+        // VSFilter line only in a build that ships xy-VSFilter.
+#ifdef _WIN32
+        QVERIFY(text.contains(QStringLiteral("CSRI - Copyright © David Lamparter (BSD licence).")));
+#else
+        QVERIFY(!text.contains(QStringLiteral("CSRI")));
+#endif
+        QCOMPARE(text.contains(QStringLiteral("Vsfilter - Copyright © Gabest (GNU GPL 2 or later).")),
+                 application->property("includesVsfilter").toBool());
+#ifndef _WIN32
+        QVERIFY(!text.contains(QStringLiteral("Vsfilter")));
+#endif
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
         auto *credits = root->findChild<QObject *>(QStringLiteral("creditsDialog"));
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
@@ -2288,6 +2300,124 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         application->settingsStore()->set("fontCollector.useSubsDirectory", false);
         application->settingsStore()->set("fontCollector.action", 0);
+    }
+
+    // W2: the renderer switch on a loaded video (legacy OptionsDialog
+    // SetOptions, OptionsDialog.cpp:1145-1152: DestroyProviders, then
+    // RefreshVideo). With xy-VSFilter in the Csri folder (Windows,
+    // HIKARI_WITH_VSFILTER) the shown frame is drawn again through it, and
+    // back through libass; elsewhere libass stays the only renderer and the
+    // setting changes nothing.
+    void subtitleDisplayFilterSwitchesOnTheLoadedVideo()
+    {
+        const QString path = dir.filePath(QStringLiteral("renderer-switch.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\nFormat: Name, Fontname, "
+                    "Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+                    "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, "
+                    "Encoding\nStyle: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,"
+                    "2,2,2,20,20,20,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, "
+                    "Text\nDialogue: 0,0:00:00.00,0:00:10.00,Default,,0,0,0,,{\\an5\\c&H3080E0&}Renderer\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &renderer = application->subtitleRenderer();
+        auto &session = application->video().session();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        session.seekTo(core::DocumentTime(1'500'000));
+        QTRY_VERIFY_WITH_TIMEOUT(session.shownFrame(), 20000);
+        QTRY_VERIFY2_WITH_TIMEOUT(session.lastOverlay() && !session.lastOverlay()->empty,
+                                  session.lastOverlay() ? "empty overlay" : "no overlay", 20000);
+        QCOMPARE(renderer.activeName(), std::string("libass"));
+        const auto libass = session.lastOverlay();
+        auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("video.subtitleProvider")); });
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("xy-vsfilter_textsub"));
+#ifdef HIKARI_WITH_VSFILTER
+        QCOMPARE(renderer.activeName(), std::string("xy-vsfilter_textsub"));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != libass && !session.lastOverlay()->empty, 20000);
+        const auto vsfilter = session.lastOverlay();
+        QCOMPARE(vsfilter->width, libass->width);
+        QCOMPARE(vsfilter->height, libass->height);
+        QVERIFY(vsfilter->pixels != libass->pixels); // another renderer drew it
+        const QString artifacts = QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/vsfilter-switch");
+        QVERIFY(QDir().mkpath(artifacts));
+        for (const auto &[name, frame] : {std::pair{"libass", libass}, std::pair{"xy-vsfilter", vsfilter}}) {
+            QImage image(frame->width, frame->height, QImage::Format_ARGB32_Premultiplied);
+            for (int y = 0; y < frame->height; ++y)
+                std::memcpy(image.scanLine(y), frame->pixels.data() + std::size_t(y) * std::size_t(frame->stride),
+                            std::size_t(frame->width) * 4);
+            QVERIFY(image.save(artifacts + QLatin1Char('/') + QLatin1String(name) + QStringLiteral(".png")));
+        }
+        // An installed name that is not listed: legacy GetVSFilter's default.
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("vsfiltermod_textsub"));
+        QCOMPARE(renderer.activeName(), std::string("xy-vsfilter_textsub"));
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("libass"));
+        QCOMPARE(renderer.activeName(), std::string("libass"));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != vsfilter, 20000);
+        QVERIFY(session.lastOverlay()->pixels == libass->pixels);
+#elif defined(_WIN32)
+        // No CSRI renderer beside the tests: legacy "Cannot initialize
+        // CSRI." and nothing drawn; there is no fallback to libass.
+        QCOMPARE(renderer.providers(), std::vector<std::string>{"libass"});
+        QVERIFY(!renderer.usesLibass());
+        QCOMPARE(renderer.activeName(), std::string());
+        QTRY_VERIFY_WITH_TIMEOUT(!session.lastOverlay(), 20000);
+        application->settingsStore()->set("video.subtitleProvider", QStringLiteral("libass"));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() && session.lastOverlay()->pixels == libass->pixels, 20000);
+#else
+        QVERIFY(renderer.usesLibass());
+        QCOMPARE(renderer.activeName(), std::string("libass"));
+        QCOMPARE(renderer.providers(), std::vector<std::string>{"libass"});
+        QCOMPARE(session.lastOverlay(), libass); // nothing was drawn again
+#endif
+    }
+
+    // W2: the collector verifies libass only (fonts.md); while the video's
+    // subtitles go through a CSRI renderer its log says that renderer's
+    // output was not verified, so a libass agreement is not taken for it.
+    void fontCollectorDoesNotCertifyACsriRenderer()
+    {
+        const QString path = dir.filePath(QStringLiteral("collect-csri.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
+                    "SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+                    "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &collector = application->fontCollector();
+#ifndef _WIN32
+        QCOMPARE(collector.displayRenderer(), QStringLiteral("libass")); // the only renderer on Linux
+#endif
+        const QString note = QStringLiteral("whose output this check does not verify");
+        const auto check = [&](const QString &renderer) {
+            auto fonts = std::make_unique<hikari::testing::FakeFonts>();
+            fonts->faces = {{"Arial", 400, false, "/fonts/arial.ttf"}};
+            collector.setFontService(std::move(fonts));
+            collector.setDisplayRenderer(renderer);
+            collector.open();
+            if (!collector.start(path, false).isEmpty())
+                return QStringLiteral("refused");
+            if (!collector.waitIdle())
+                return QStringLiteral("timeout");
+            return collector.logText();
+        };
+        const QString libass = check(QStringLiteral("libass"));
+        QVERIFY2(libass.contains(QStringLiteral("Completed Successfully, found 1 font.")), qPrintable(libass));
+        QVERIFY2(!libass.contains(note), qPrintable(libass));
+        const QString csri = check(QStringLiteral("xy-vsfilter_textsub"));
+        QVERIFY2(csri.contains(QStringLiteral("The video shows the subtitles through xy-vsfilter_textsub, whose "
+                                              "output this check does not verify.\n")),
+                 qPrintable(csri));
+        QVERIFY(csri.indexOf(note) < csri.indexOf(QStringLiteral("Completed Successfully")));
+        collector.setDisplayRenderer(QStringLiteral("libass"));
+        collector.close();
     }
 
     // F2: Edit > Select lines selects by the dialog's settings and reports the count.
@@ -3804,6 +3934,27 @@ private slots:
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 40);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QStringLiteral("200"));
         QVERIFY(dialogItem("settingsDialog", "setting_grid.changeActiveOnSelection")->property("checked").toBool());
+        // W2: "Subtitle display filter" lists the CSRI renderers then libass,
+        // and is offered only when there is one besides libass: with the
+        // recipe's xy-VSFilter in the Csri folder beside the tests (Windows,
+        // HIKARI_WITH_VSFILTER), never elsewhere (none at all on Linux). The
+        // unset setting shows libass. Checked on the Video page, where the
+        // group's visibility is its own.
+        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        QTRY_VERIFY(dialogItem("settingsDialog", "setting_video.zoomPercent")->isVisible());
+#ifdef HIKARI_WITH_VSFILTER
+        QCOMPARE(dialog->property("renderers").toStringList(),
+                 (QStringList{QStringLiteral("xy-vsfilter_textsub"), QStringLiteral("libass")}));
+        QVERIFY(dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
+        QCOMPARE(dialogItem("settingsDialog", "setting_video.subtitleProvider")->property("currentText").toString(),
+                 QStringLiteral("libass"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("video.subtitleProvider")).toInt(), 1);
+#else
+        QCOMPARE(dialog->property("renderers").toStringList(), QStringList{QStringLiteral("libass")});
+        QVERIFY(!dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
+        QVERIFY(!settingsValues(dialog).contains(QStringLiteral("video.subtitleProvider")));
+#endif
+        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 0);
         // "Do not warn about resolution mismatch" applies on Apply, not before.
         QSignalSpy askChanged(application, &app::Application::askForBadResolutionChanged);
         auto *noWarning = dialogItem("settingsDialog", "setting_video.dontAskForBadResolution");
@@ -3935,6 +4086,7 @@ private slots:
               {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
               {"video.acceptedAudioStream", nullptr},
               {"video.ffms2Seeking", nullptr},
+              {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
               {"video.zoomPercent", nullptr}}},
             {"settingsPageAudio",
              {{"audio.drawTimeCursor", "Show time next to cursor"},
@@ -4013,6 +4165,11 @@ private slots:
         for (const auto &appearance : application::kIconColourSettings)
             for (const auto id : appearance)
                 bound.insert(std::string(id));
+#ifndef HIKARI_WITH_VSFILTER
+        // W2: "Subtitle display filter" holds a value only when it is offered
+        // (a CSRI renderer besides libass); its control stays in the page.
+        bound.erase("video.subtitleProvider");
+#endif
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -7496,6 +7653,56 @@ private slots:
             QMetaObject::invokeMethod(menu, "close");
             QTRY_VERIFY(!menu->property("visible").toBool());
         }
+    }
+
+    // W2: the Video page's "Subtitle display filter" and the About notice in
+    // the light and dark palettes, written to HIKARI_SURFACE_SHOT_DIR when it
+    // is set. Linux has no CSRI renderer, so the page is shown with the list a
+    // Windows build with xy-VSFilter gives (a preview, not a Windows capture).
+    void w2SurfaceScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        auto *root = engine->rootObjects().first();
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        dialog->setProperty("renderers", QStringList{QStringLiteral("xy-vsfilter_textsub"), QStringLiteral("libass")});
+        auto values = settingsValues(dialog);
+        values.insert(QStringLiteral("video.subtitleProvider"), 1);
+        dialog->setProperty("values", values);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reloaded"));
+        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsRendererGroup")->property("visible").toBool());
+        const auto shoot = [&](QObject *popup, const QString &name) {
+            auto *content = popup->property("contentItem").value<QQuickItem *>();
+            auto *frame = content->parentItem() ? content->parentItem() : content;
+            const qreal dpr = frame->window()->effectiveDevicePixelRatio();
+            const QRectF r = frame->mapRectToScene(QRectF(0, 0, frame->width(), frame->height()));
+            QTest::qWait(300);
+            const QImage shot = frame->window()->grabWindow();
+            return shot.copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect()).save(out + QLatin1Char('/') + name);
+        };
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            QGuiApplication::setPalette(themePalette(before, appearance));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QVERIFY(shoot(dialog, QStringLiteral("settings-video-windows-preview") + suffix));
+        }
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        auto *about = root->findChild<QObject *>(QStringLiteral("aboutDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(about->property("visible").toBool());
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            QGuiApplication::setPalette(themePalette(before, appearance));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QVERIFY(shoot(about, QStringLiteral("about") + suffix));
+        }
+        QVERIFY(QMetaObject::invokeMethod(about, "close"));
     }
 
     void theReferenceIsNeverEdited()

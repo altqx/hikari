@@ -26,3 +26,14 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# W2: with HIKARI_WITH_VSFILTER the build ships xy-VSFilter where legacy did,
+# Csri/xy-VSFilter_hikarisub.dll beside the program (.github/scripts/package.py:36
+# at 20d647c4), and the About notice names it.
+if(HIKARI_WITH_VSFILTER)
+    target_compile_definitions(hikari_composition PRIVATE HIKARI_WITH_VSFILTER)
+    add_custom_command(TARGET hikarisub POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:hikarisub>/Csri"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
+            "$<TARGET_FILE_DIR:hikarisub>/Csri/xy-VSFilter_hikarisub.dll"
+        VERBATIM)
+endif()

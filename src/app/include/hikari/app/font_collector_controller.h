@@ -107,6 +107,13 @@ public:
     // OnConsoleDoubleClick at a position of logText.
     Q_INVOKABLE void logDoubleClicked(int position);
 
+    // W2: the renderer the video's subtitles go through ("libass", or a
+    // CSRI renderer's name on Windows). The check verifies libass only
+    // (fonts.md: CSRI/VSFilter output needs its own agreement evidence), so
+    // with another renderer the log says its output was not verified.
+    void setDisplayRenderer(const QString &name) { m_displayRenderer = name; }
+    QString displayRenderer() const { return m_displayRenderer; }
+
     // Tests: another font service, and waiting for the worker.
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitIdle(int ms = 30000);
@@ -148,6 +155,7 @@ private:
     int m_action = 0;
     QString m_directory;
     bool m_useSubsDirectory = false;
+    QString m_displayRenderer = QStringLiteral("libass"); // W2
     std::vector<Segment> m_log;
     std::vector<Area> m_areas;
     int m_stage = Options;

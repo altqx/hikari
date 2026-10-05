@@ -522,6 +522,11 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     for (const auto &r : review.reimports)
         reproduced = reproduced && r.identical;
     send(text, kNormal);
+    // W2: a libass agreement does not certify another renderer's output.
+    if (!m_displayRenderer.isEmpty() && m_displayRenderer != QLatin1String("libass"))
+        send(tr("The video shows the subtitles through %1, whose output this check does not verify.\n")
+                 .arg(m_displayRenderer),
+             kWarning);
     send(problems, kWarning);
     if (reproduced)
         send(tr("The collected fonts alone reproduce every frame.\n"), kNormal);

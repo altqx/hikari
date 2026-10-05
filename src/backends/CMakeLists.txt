@@ -43,5 +43,14 @@ hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE dwrite) # FontService system faces
 endif()
+# W2: the renderer the video's subtitles go through (legacy
+# SubtitlesProviderManager); on Windows also the optional CSRI adapter, which
+# loads xy-VSFilter (built only with HIKARI_WITH_VSFILTER) from the Csri folder.
+target_sources(hikari_backends PRIVATE subtitle_renderer_selection.cpp
+    include/hikari/backends/subtitle_renderer_selection.h)
+if(WIN32)
+    target_sources(hikari_backends PRIVATE csri_renderer.cpp csri_loader_win.cpp
+        include/hikari/backends/csri_renderer.h)
+endif()
 # Y8: the font collector's folder and zip output.
 target_sources(hikari_backends PRIVATE font_collector_output.cpp include/hikari/backends/font_collector_output.h)

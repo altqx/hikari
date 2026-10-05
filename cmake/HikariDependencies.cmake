@@ -81,3 +81,12 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
 
 # D1: the docking engine (ports/kddockwidgets: QtQuick frontend, built against the provisioned Qt).
 find_package(KDDockWidgets-qt6 CONFIG REQUIRED)
+
+# W2: the optional xy-VSFilter CSRI renderer (the "vsfilter" manifest feature,
+# Windows only; Provision.cmake refuses it elsewhere). A run-time plugin:
+# nothing links it; the application copies it into its Csri folder.
+if(HIKARI_WITH_VSFILTER)
+    find_package(HikariXyVSFilter 3.2 EXACT CONFIG REQUIRED)
+    file(APPEND "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
+        "HikariXyVSFilter_DIR=${HikariXyVSFilter_DIR}\n")
+endif()

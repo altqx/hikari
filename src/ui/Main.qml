@@ -3860,6 +3860,9 @@ ApplicationWindow {
                   qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
                   "Copyright © Rodrigo Braz Monteiro.\n" +
                   "Hunspell - Copyright © Kevin Hendricks.\n" +
+                  // W2: legacy's two lines (HikariSubFrame.cpp:1123-1124), with their licences.
+                  (root.app.includesCsri ? "CSRI - Copyright © David Lamparter (BSD licence).\n" : "") +
+                  (root.app.includesVsfilter ? "Vsfilter - Copyright © Gabest (GNU GPL 2 or later).\n" : "") +
                   "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
                   "FFmpeg - Copyright © the FFmpeg developers.\n" +
                   "LuaJIT - Copyright © Mike Pall.\n" +

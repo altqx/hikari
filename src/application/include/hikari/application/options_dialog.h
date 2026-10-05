@@ -43,6 +43,7 @@ enum class OptionsControl {
     Style,       // ID_CONVERSION_STYLE: the selection's style name
     ComboText,   // HikariChoice with HIKARI_COMBO_BOX (conversion FPS): its text
     Font,        // FontPickerButton: face name in `setting`, point size in `sizeSetting`
+    Renderer,    // W2: ID_VSFILTER_PROVIDER, the selection's renderer name
 };
 
 // The pages, in the legacy tree's order (AddPage/AddSubPage).
@@ -76,6 +77,10 @@ struct OptionsLists {
     std::vector<std::string> catalogs;          // Options.dirs
     std::vector<std::string> styles;            // the current catalog's Styles
     std::string currentCatalog;                 // actualStyleDir
+    // W2: SubtitlesProviderManager::GetProviders, the CSRI renderers' names
+    // then "libass". With one entry or none the choice is not offered (only
+    // libass: Linux, or Windows without a CSRI renderer).
+    std::vector<std::string> renderers;
     // config::FindLanguage.
     std::function<std::string(std::string_view)> findLanguage;
     // HikariChoice::FindString's wxArrayString::Index(text, false):

@@ -12,6 +12,18 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_lua_helper hikari_automation_stage)
+# W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter in the Csri
+# folder beside the tests, as the application ships it, so the Video page
+# offers it and the loaded video switches renderers.
+if(WIN32 AND HIKARI_WITH_VSFILTER)
+    target_compile_definitions(hikari_ui_shell_tests PRIVATE HIKARI_WITH_VSFILTER
+        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
+    add_custom_command(TARGET hikari_ui_shell_tests POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
+            "$<TARGET_FILE_DIR:hikari_ui_shell_tests>/Csri/xy-VSFilter_hikarisub.dll"
+        VERBATIM)
+endif()
 # The whole shell suite runs in one process (about a minute here, more on CI
 # runners), so it gets more than the default 60 s.
 foreach(mode offscreen xvfb)

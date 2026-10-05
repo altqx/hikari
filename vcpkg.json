@@ -49,5 +49,16 @@
       "version": "7.1.2",
       "port-version": 5
     }
-  ]
+  ],
+  "features": {
+    "vsfilter": {
+      "description": "W2: the optional xy-VSFilter CSRI renderer (Windows; HIKARI_WITH_VSFILTER)",
+      "dependencies": [
+        {
+          "name": "hikari-xy-vsfilter",
+          "platform": "windows & x64"
+        }
+      ]
+    }
+  }
 }

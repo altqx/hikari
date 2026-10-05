@@ -455,6 +455,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editor = std::make_unique<ui::LineEditorController>(*m_files);
     m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
+    // W2: CSRI renderers come from the program's Csri folder (legacy
+    // csrilib_os_init); their messages go to the log silently (HikariLogSilent).
+    m_renderer.setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
+    m_renderer.setLog([this](const std::string &text) { m_log->log(QString::fromStdString(text), true); });
     m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
     // V1: playback through the general player; its frames are shown with the
     // overlay, and a pause hands back to the exact indexed frame.
@@ -491,6 +495,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
+    m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
     // K1: the icons take their colours from this profile.
     ui::IconTheme::useSettings(m_settings.get());
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
@@ -574,6 +579,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             goTo(tab, [name](const core::LineRecord &l, int) { return core::toUtf16(l.style) == name; });
         };
         m_fontCollector = std::make_unique<FontCollectorController>(*m_settings, std::move(hooks));
+        m_fontCollector->setDisplayRenderer(QString::fromStdString(m_renderer.provider())); // W2
     }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
@@ -4090,6 +4096,15 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("video.subtitleProvider") &&
+             m_renderer.select(m_settings->text("video.subtitleProvider").toStdString())) {
+        // W2: legacy DestroyProviders and Notebook::RefreshVideo
+        // (OptionsDialog.cpp:1148-1152): the loaded video's subtitles are
+        // prepared again through the chosen renderer and the frame redrawn.
+        m_fontCollector->setDisplayRenderer(QString::fromStdString(m_renderer.provider()));
+        m_videoRevision.reset();
+        refreshVideo();
+    }
 }
 
 namespace {
@@ -4181,6 +4196,24 @@ application::OptionsState fromVariant(const QVariantMap &values)
 
 } // namespace
 
+bool Application::includesCsri()
+{
+#ifdef _WIN32
+    return true;
+#else
+    return false;
+#endif
+}
+
+bool Application::includesVsfilter()
+{
+#ifdef HIKARI_WITH_VSFILTER
+    return true;
+#else
+    return false;
+#endif
+}
+
 QVariantMap Application::openSettingsDialog()
 {
     auto &lists = m_optionsLists;
@@ -4224,6 +4257,7 @@ QVariantMap Application::openSettingsDialog()
         lists.currentCatalog = *load;
     }
     lists.styles = stdList(m_styleManager->storeStyles());
+    lists.renderers = m_renderer.providers(); // W2: GetProviders
 #ifdef _WIN32
     lists.pathSeparator = '\\';
     lists.slashesForBackslashes = false;
@@ -4244,6 +4278,7 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
             {QStringLiteral("catalogs"), qList(lists.catalogs)},
             {QStringLiteral("styles"), qList(lists.styles)},
+            {QStringLiteral("renderers"), qList(lists.renderers)},
             {QStringLiteral("warnings"), warnings}};
 }
 

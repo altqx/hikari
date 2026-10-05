@@ -30,6 +30,7 @@ Dialog {
     property var dictionaries: []
     property var catalogs: []
     property var styles: []
+    property var renderers: [] // W2: the CSRI renderers' names, then "libass"
     property var warnings: []
     signal reloaded()
 
@@ -39,6 +40,7 @@ Dialog {
         dictionaries = r.dictionaries
         catalogs = r.catalogs
         styles = r.styles
+        renderers = r.renderers
         values = r.values
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
@@ -453,6 +455,21 @@ Dialog {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             model: [qsTr("Linear"), qsTr("Normal"), qsTr("Unsafe (always fast)"), qsTr("Aggressive (fast in rewind)")]
+                        }
+                    }
+                    // W2: legacy's "Subtitle display filter" (ID_VSFILTER_PROVIDER),
+                    // only when there is a CSRI renderer to choose besides libass.
+                    GroupBox {
+                        objectName: "settingsRendererGroup"
+                        title: qsTr("Subtitle display filter")
+                        Layout.fillWidth: true
+                        visible: dialog.renderers.length > 1
+                        SettingChoice {
+                            setting: "video.subtitleProvider"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.renderers
+                            Accessible.name: qsTr("Subtitle display filter")
                         }
                     }
                     GroupBox {
