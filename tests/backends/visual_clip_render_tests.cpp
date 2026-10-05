@@ -33,6 +33,19 @@ std::vector<std::byte> bytesOf(const std::string &s)
     return out;
 }
 
+// The renderer has no system font provider (N3): a drawing needs a font
+// leased in memory, the locked Qt install's OFL Titillium Web, as
+// libass_renderer_tests uses.
+std::shared_ptr<const std::vector<std::byte>> testFont()
+{
+    QFile f(QStringLiteral(HIKARI_TEST_FONT));
+    EXPECT_TRUE(f.open(QIODevice::ReadOnly));
+    const QByteArray d = f.readAll();
+    auto bytes = std::make_shared<std::vector<std::byte>>(static_cast<std::size_t>(d.size()));
+    std::memcpy(bytes->data(), d.constData(), bytes->size());
+    return bytes;
+}
+
 std::string script(const std::string &events)
 {
     return "[Script Info]\nScriptType: v4.00+\nPlayResX: 96\nPlayResY: 64\n\n"
@@ -40,7 +53,7 @@ std::string script(const std::string &events)
            "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
            "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, "
            "MarginV, Encoding\n"
-           "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,"
+           "Style: Default,Titillium Web,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,"
            "100,100,0,0,1,0,0,7,0,0,0,1\n\n[Events]\nFormat: Layer, Start, End, Style, "
            "Name, MarginL, MarginR, MarginV, Effect, Text\n" +
            events;
@@ -63,7 +76,7 @@ struct Frame {
 Frame render(const std::string &events)
 {
     backends::LibassRenderer renderer;
-    EXPECT_TRUE(renderer.prepare(RenderSnapshot{bytesOf(script(events)), {}, "Arial", false}));
+    EXPECT_TRUE(renderer.prepare(RenderSnapshot{bytesOf(script(events)), {FontLease{"Titillium Web", testFont()}}, "Titillium Web", false}));
     auto frame = renderer.render(core::DocumentTime(1'000'000), kW, kH);
     EXPECT_TRUE(frame);
     Frame out;
