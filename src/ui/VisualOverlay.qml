@@ -78,6 +78,30 @@ Item {
                         ctx.lineWidth = 1
                         ctx.stroke()
                     }
+                } else if (s.type === "polygon") {
+                    // Filled contours (one path, non-zero), then the border.
+                    ctx.beginPath()
+                    for (const c of s.contours) {
+                        if (c.length === 0)
+                            continue
+                        ctx.moveTo(c[0].x, c[0].y)
+                        for (let i = 1; i < c.length; ++i)
+                            ctx.lineTo(c[i].x, c[i].y)
+                        ctx.closePath()
+                    }
+                    ctx.fillStyle = s.color
+                    ctx.fill()
+                    if (s.border !== "") {
+                        const c = s.contours[0]
+                        ctx.beginPath()
+                        ctx.moveTo(c[0].x, c[0].y)
+                        for (let i = 1; i < c.length; ++i)
+                            ctx.lineTo(c[i].x, c[i].y)
+                        ctx.closePath()
+                        ctx.strokeStyle = s.border
+                        ctx.lineWidth = 1
+                        ctx.stroke()
+                    }
                 } else if (s.type === "text") {
                     ctx.font = "bold " + s.pixelSize + "px \"" + overlayItem.tools.labelFamily + "\""
                     ctx.textBaseline = "top"

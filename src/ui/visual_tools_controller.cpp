@@ -4,6 +4,7 @@
 
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/core/ass_save.h"
 
 #include <QClipboard>
 #include <QColor>
@@ -174,6 +175,8 @@ void VisualToolsController::resetTool()
         t->reset(*this);
     emit changed();
     emit overlayChanged();
+    refreshOptions();
+    updatePreview();
 }
 
 std::optional<core::LineId> VisualToolsController::activeLine() const
@@ -214,8 +217,17 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     m_gesture.reset();
     if (!result)
         m_lastRefusal = result.error();
+    // Legacy never reset a tool after its own edit: the tools commit
+    // through EditBox::Send(..., visualdummy) or SetModified(..., dummy),
+    // which skip ShowEditOnVideo's SetVisual (SubsGridBase.cpp:1147-1149),
+    // and the crosshair's ShowEditOnVideo only reopens the subtitles. So the
+    // tool keeps its state (the vector points' selection, a rectangle's
+    // fractions) and only another change of the Line resets it (T4).
+    if (result)
+        m_seenRevision = s->revision();
     if (changes && m_edited)
         m_edited(); // the shell refreshes; refresh() follows
+    updatePreview();
     emit changed();
     return result;
 }
@@ -225,8 +237,10 @@ bool VisualToolsController::escape()
     if (!m_gesture)
         return false;
     m_gesture.reset();
-    emit changed();
-    emit overlayChanged();
+    // T4: the tool goes back to the Line as it was (its points or corners
+    // moved with the cancelled drag).
+    resetTool();
+    updatePreview();
     return true;
 }
 
@@ -253,6 +267,123 @@ void VisualToolsController::toolChanged()
 {
     emit overlayChanged();
     emit changed();
+    refreshOptions();
+    updatePreview();
+}
+
+void VisualToolsController::bell()
+{
+    // Legacy wxBell; counted (the shell has no audible bell to give).
+    ++m_bells;
+}
+
+void VisualToolsController::notice(std::u16string_view text)
+{
+    m_notice = qs(text);
+    emit changed();
+}
+
+void VisualToolsController::dismissNotice()
+{
+    if (m_notice.isEmpty())
+        return;
+    m_notice.clear();
+    emit changed();
+}
+
+void VisualToolsController::refreshOptions()
+{
+    // Its own signal, only when the options change: the row is not rebuilt
+    // on every pointer move.
+    QVariantList out;
+    if (const auto *t = tool()) {
+        for (const ToolOption &o : t->options(*this)) {
+            QStringList choices;
+            for (const auto &c : o.choices)
+                choices.append(qs(c));
+            const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
+                                 : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
+                                                                      : QStringLiteral("toggle");
+            out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
+                                   {QStringLiteral("kind"), kind},
+                                   {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
+                                   {QStringLiteral("tooltip"), qs(o.tooltip)},
+                                   {QStringLiteral("checked"), o.checked},
+                                   {QStringLiteral("enabled"), o.enabled},
+                                   {QStringLiteral("choices"), choices},
+                                   {QStringLiteral("index"), o.index}});
+        }
+    }
+    if (out == m_options)
+        return;
+    m_options = std::move(out);
+    emit optionsChanged();
+}
+
+bool VisualToolsController::setOption(const QString &name, int value)
+{
+    auto *t = tool();
+    if (!t || !m_railEnabled)
+        return false;
+    m_notice.clear();
+    const bool done = t->setOption(name.toStdString(), value, *this);
+    emit changed();
+    emit overlayChanged();
+    refreshOptions();
+    return done;
+}
+
+bool VisualToolsController::previewDocument(const core::Document &document, core::Document &out) const
+{
+    // Legacy's dummy render: the edited Lines' texts as the gesture staged
+    // them (Visuals::RenderSubs), then the tool's Lines (AppendClipMask).
+    const auto *t = tool();
+    std::vector<core::LineRecord> extra;
+    if (t && m_view.hasVideo())
+        extra = t->previewLines(*this);
+    if (!m_gesture && extra.empty())
+        return false;
+    out = document;
+    if (m_gesture)
+        m_gesture->applyTo(out);
+    for (auto &line : extra)
+        (void)out.appendLine(std::move(line));
+    return true;
+}
+
+std::vector<std::byte> VisualToolsController::subtitles(const core::Document &document) const
+{
+    core::Document preview;
+    if (previewDocument(document, preview))
+        return core::encodeAss(preview);
+    return core::encodeAss(document);
+}
+
+void VisualToolsController::updatePreview()
+{
+    // The preview is asked for again only when what it adds changed (each
+    // pointer move redraws the overlay, not the subtitles).
+    std::u8string key;
+    if (m_gesture)
+        for (const auto &id : m_gesture->targets())
+            for (const bool translation : {false, true})
+                if (const auto staged = m_gesture->staged(id, translation))
+                    key += *staged + u8'\x1f';
+    key += u8'\x1e';
+    if (const auto *t = tool(); t && m_view.hasVideo())
+        for (const auto &line : t->previewLines(*this))
+            key += line.text + u8'\x1f';
+    if (key == m_previewKey)
+        return;
+    m_previewKey = std::move(key);
+    const auto *s = editingSession();
+    if (!m_preview || !s)
+        return;
+    core::Document preview;
+    if (previewDocument(s->document(), preview))
+        m_preview(&preview);
+    else
+        m_preview(nullptr);
 }
 
 void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
@@ -279,6 +410,8 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
     p.wheelSteps = wheelSteps;
+    if (p.kind == Pointer::Kind::Press && !m_notice.isEmpty())
+        dismissNotice(); // legacy's message box went with the next click
     if (p.kind == Pointer::Kind::Leave) {
         m_overVideo = false;
         m_lastPointer.reset();
@@ -441,6 +574,26 @@ QVariantList VisualToolsController::overlay() const
         return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
+    // Filled shapes, before the lines, or after them (T4: `above`).
+    const auto polygon = [&](const OverlayPolygon &p) {
+        QVariantList contours;
+        const auto contour = [&](const std::vector<PointF> &c) {
+            QVariantList points;
+            for (const PointF &pt : c)
+                points.append(QPointF(L(pt.x), L(pt.y)));
+            contours.append(QVariant(points));
+        };
+        contour(p.points);
+        for (const auto &c : p.more)
+            contour(c);
+        out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("polygon")},
+                               {QStringLiteral("contours"), contours},
+                               {QStringLiteral("color"), colour(p.fill)},
+                               {QStringLiteral("border"), p.border ? colour(p.border) : QString()}});
+    };
+    for (const OverlayPolygon &p : o.polygons)
+        if (!p.above)
+            polygon(p);
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},
                                {QStringLiteral("x1"), L(l.from.x)}, {QStringLiteral("y1"), L(l.from.y)},
@@ -451,6 +604,9 @@ QVariantList VisualToolsController::overlay() const
                                {QStringLiteral("x"), L(c.centre.x)}, {QStringLiteral("y"), L(c.centre.y)},
                                {QStringLiteral("radius"), L(c.radius)}, {QStringLiteral("filled"), c.filled},
                                {QStringLiteral("color"), colour(c.argb)}});
+    for (const OverlayPolygon &p : o.polygons)
+        if (p.above)
+            polygon(p);
     for (const OverlayText &x : o.texts)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("text")},
                                {QStringLiteral("x"), L(x.rect.left)}, {QStringLiteral("y"), L(x.rect.top)},

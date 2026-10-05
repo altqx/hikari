@@ -14,6 +14,10 @@ RowLayout {
     required property VisualToolsController tools
     spacing: 6
 
+    // T4: the tool's own modes and actions (the clips' point modes, Invert clip).
+    VisualToolOptions {
+        tools: values.tools
+    }
     Repeater {
         model: values.tools.values
         delegate: RowLayout {

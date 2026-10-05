@@ -509,6 +509,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
+    // T2/T4: the video shows a gesture's staged texts (legacy's dummy
+    // rendering) and the tool's own Lines (the vector clip's mask).
+    m_visualTools->setPreview([this](const core::Document *preview) {
+        auto *session = targetSession();
+        if (!session)
+            return;
+        m_video->session().setSubtitles(core::encodeAss(preview ? *preview : session->document()));
+    });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1241,7 +1249,7 @@ void Application::refreshVideo()
         return;
     if (session->revision() != m_videoRevision) {
         m_videoRevision = session->revision();
-        m_video->session().setSubtitles(core::encodeAss(session->document()));
+        m_video->session().setSubtitles(m_visualTools->subtitles(session->document())); // T4: with the tool's preview
     }
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.

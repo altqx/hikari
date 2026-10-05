@@ -59,6 +59,13 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
     // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
+    // The family's own options (legacy VideoToolbar's second row): name,
+    // kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
+    // enabled, choices, index. T4: its own signal, so the row is rebuilt only
+    // when it changes. And the notice a tool gave in place of legacy's
+    // message box.
+    Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
+    Q_PROPERTY(QString notice READ notice NOTIFY changed)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
@@ -67,6 +74,12 @@ public:
 
     // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
+    // The video shows the open gesture's staged texts (legacy's dummy
+    // rendering, Visuals::RenderSubs) and the tool's own Lines (T4: the
+    // vector clip's mask, Visuals::AppendClipMask): called with the Document
+    // as it would be, or null when there is nothing to add (the committed
+    // Document again).
+    void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
     // The editing target, its content, active Line or format changed.
     void refresh();
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
@@ -88,6 +101,9 @@ public:
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
+    QVariantList options() const { return m_options; }
+    QString notice() const { return m_notice; }
+    int bells() const { return m_bells; }
 
     // The video area's logical size (the presenter's), the panel below it
     // and the window's device pixel ratio.
@@ -113,6 +129,13 @@ public:
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
+    // A toggle (0/1), a choice's index or an action (1) of the family's options.
+    Q_INVOKABLE bool setOption(const QString &name, int value);
+    Q_INVOKABLE void dismissNotice();
+
+    // T4: the subtitles the video renders for a Document: as the preview
+    // gives it (the staged texts and the tool's Lines added), encoded.
+    std::vector<std::byte> subtitles(const core::Document &document) const;
 
     // VisualHost.
     const application::visual::VideoView &view() const override { return m_view; }
@@ -126,6 +149,8 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    void bell() override;
+    void notice(std::u16string_view text) override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -135,17 +160,22 @@ signals:
     void changed();
     void overlayChanged();
     void geometryChanged();
+    void optionsChanged();
 
 private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
     void syncGeometry();
     void resetTool();
     application::visual::LineWarning currentWarning() const;
+    void updatePreview();
+    void refreshOptions();
 
     VideoController &m_video;
     SettingsStore &m_settings;
     SessionProvider m_session;
     std::function<void()> m_edited;
+    std::function<void(const core::Document *)> m_preview;
+    bool previewDocument(const core::Document &document, core::Document &out) const;
     application::visual::VideoView m_view;
     application::visual::SourceGeometry m_geometry;
     std::vector<std::unique_ptr<application::visual::VisualTool>> m_tools;
@@ -162,6 +192,10 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
+    QString m_notice;
+    QVariantList m_options; // the tool's buttons as last shown
+    int m_bells = 0;
+    std::u8string m_previewKey; // what the preview showed last
 };
 
 } // namespace hikari::ui

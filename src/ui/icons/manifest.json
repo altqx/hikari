@@ -1539,8 +1539,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "vector-line",
@@ -1553,8 +1552,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "vector-bezier",
@@ -1567,8 +1565,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "vector-bspline",
@@ -1581,8 +1578,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "vector-point",
@@ -1595,8 +1591,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "vector-delete",
@@ -1609,8 +1604,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179, T5 #180"
+   ]
   },
   {
    "role": "clip-invert",
@@ -1623,8 +1617,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T4 #179"
+   ]
   },
   {
    "role": "shift-position",
