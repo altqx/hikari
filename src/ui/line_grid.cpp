@@ -2,6 +2,7 @@
 
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
+#include "hikari/application/subtitle_comparison.h"
 
 #include <QAbstractProxyModel>
 #include <QAccessible>
@@ -512,7 +513,9 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
 }
 
 // R1: legacy SubsGridWindow.cpp:508-528. Each run of differing characters
-// (inclusive offsets into the shown text, wxString::SubString) is drawn in
+// (inclusive offsets into the shown text, wxString::SubString, counted in the
+// platform's legacy TextUnits: code points on Linux, UTF-16 units on
+// Windows) is drawn in
 // GRID_COMPARISON_OUTLINE one pixel left, right, above and below where the
 // text itself is drawn afterwards, outlining it; a lone space is drawn as
 // "_" so that it shows; a run outside the text draws nothing.
@@ -526,10 +529,13 @@ void LineGrid::drawComparisonMarks(QPainter *painter, const QRectF &cell, const 
     painter->setClipRect(cell, Qt::IntersectClip);
     painter->setPen(outline);
     for (qsizetype m = 0; m + 1 < marks.size(); m += 2) {
-        const int start = marks[m].toInt(), end = marks[m + 1].toInt();
-        if (start < 0 || start >= text.size() || end < start)
+        const auto marked = application::markedRun(
+            std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()), static_cast<std::size_t>(text.size())),
+            marks[m].toInt(), marks[m + 1].toInt());
+        if (!marked)
             continue;
-        QString run = text.mid(start, end - start + 1);
+        const auto start = static_cast<qsizetype>(marked->start);
+        QString run = text.mid(start, static_cast<qsizetype>(marked->length));
         if (run == QLatin1String(" "))
             run = QStringLiteral("_");
         const double before = start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0;

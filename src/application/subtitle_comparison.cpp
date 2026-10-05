@@ -23,6 +23,35 @@ bool contains(const std::vector<std::u8string> &list, const std::u8string &name)
     return std::ranges::find(list, name) != list.end();
 }
 
+// Whether a UTF-16 unit at `i` begins a surrogate pair.
+bool pairAt(std::u16string_view s, std::size_t i)
+{
+    return s[i] >= 0xD800 && s[i] < 0xDC00 && i + 1 < s.size() && s[i + 1] >= 0xDC00 && s[i + 1] < 0xE000;
+}
+
+// The text as wxGTK's wxString holds it: a code point per element (a lone
+// surrogate, which valid UTF-8 never gives, stays one element).
+std::u32string codePoints(std::u16string_view s)
+{
+    std::u32string out;
+    out.reserve(s.size());
+    for (std::size_t i = 0; i < s.size(); ++i) {
+        if (pairAt(s, i)) {
+            out += static_cast<char32_t>(0x10000 + ((s[i] - 0xD800) << 10) + (s[i + 1] - 0xDC00));
+            ++i;
+        } else {
+            out += s[i];
+        }
+    }
+    return out;
+}
+
+// SubsGrid::CompareTexts over the texts' wxString elements (`Char` is the
+// platform's wchar_t width).
+template <typename Char>
+void compareElements(LineComparison &firstCompare, LineComparison &secondCompare, std::basic_string_view<Char> first,
+                     std::basic_string_view<Char> second);
+
 } // namespace
 
 std::u16string comparedText(const core::LineRecord &line, bool translationMode)
@@ -32,7 +61,7 @@ std::u16string comparedText(const core::LineRecord &line, bool translationMode)
 }
 
 ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedDocument &second, int compareBy,
-                                  const std::vector<std::u8string> &chosenStyles)
+                                  const std::vector<std::u8string> &chosenStyles, TextUnits units)
 {
     // SubsGridBase.cpp:1739-1744: the chosen styles are read from the list
     // itself, not from the ChosenStyles bit.
@@ -73,8 +102,12 @@ ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedD
                 continue;
             if (bySelections && (!first.selected.contains(dial1->id) || !second.selected.contains(dial2->id)))
                 continue;
-            compareTexts(result.first[i], result.second[j], comparedText(*dial1, first.translationMode),
-                         comparedText(*dial2, second.translationMode));
+            const std::u16string text1 = comparedText(*dial1, first.translationMode);
+            const std::u16string text2 = comparedText(*dial2, second.translationMode);
+            if (units == TextUnits::CodePoints)
+                compareTexts(result.first[i], result.second[j], codePoints(text1), codePoints(text2));
+            else
+                compareTexts(result.first[i], result.second[j], text1, text2);
             result.first[i].matchedRow = j;
             result.second[j].matchedRow = i;
             lastJ = j + 1;
@@ -86,6 +119,50 @@ ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedD
 
 void compareTexts(LineComparison &firstCompare, LineComparison &secondCompare, std::u16string_view first,
                   std::u16string_view second)
+{
+    compareElements(firstCompare, secondCompare, first, second);
+}
+
+void compareTexts(LineComparison &firstCompare, LineComparison &secondCompare, std::u32string_view first,
+                  std::u32string_view second)
+{
+    compareElements(firstCompare, secondCompare, first, second);
+}
+
+std::optional<MarkedRun> markedRun(std::u16string_view shown, int start, int end, TextUnits units)
+{
+    if (start < 0 || end < start)
+        return std::nullopt;
+    if (units == TextUnits::Utf16) {
+        const auto from = static_cast<std::size_t>(start);
+        if (from >= shown.size())
+            return std::nullopt;
+        return MarkedRun{from, std::min(static_cast<std::size_t>(end) + 1, shown.size()) - from};
+    }
+    // Code point `start` and the one after `end`, as UTF-16 offsets.
+    std::size_t from = shown.size(), to = shown.size();
+    const long long after = static_cast<long long>(end) + 1;
+    long long index = 0;
+    for (std::size_t i = 0; i < shown.size(); ++i, ++index) {
+        if (index == start)
+            from = i;
+        if (index == after) {
+            to = i;
+            break;
+        }
+        if (pairAt(shown, i))
+            ++i;
+    }
+    if (from >= shown.size())
+        return std::nullopt;
+    return MarkedRun{from, to - from};
+}
+
+namespace {
+
+template <typename Char>
+void compareElements(LineComparison &firstCompare, LineComparison &secondCompare, std::basic_string_view<Char> first,
+                     std::basic_string_view<Char> second)
 {
     if (first == second) {
         firstCompare.differences = false;
@@ -165,6 +242,8 @@ void compareTexts(LineComparison &firstCompare, LineComparison &secondCompare, s
         secondCompare.marks.push_back(static_cast<int>(l2 - i2) - 1);
     }
 }
+
+} // namespace
 
 std::vector<std::u8string> commonStyles(const core::Document &first, const core::Document &second)
 {

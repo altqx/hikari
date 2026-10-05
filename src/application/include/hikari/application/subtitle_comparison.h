@@ -31,10 +31,24 @@ namespace compare_by {
 inline constexpr int Times = 1, Styles = 2, ChosenStyles = 4, Visible = 8, Selections = 16;
 }
 
+// What CompareTexts counts as one character: a wxString element, which is a
+// UTF-16 code unit on Windows (wxMSW, 16-bit wchar_t) and a code point on
+// Linux (wxGTK, 32-bit wchar_t). The two legacy builds differ only for
+// characters outside the BMP: U+1F600 against U+1F601 is one differing
+// character on Linux ([1,0,0]) and, on Windows, a shared high surrogate and
+// a differing low one ([1,1,1]). Each platform keeps its own build's tables
+// (R5-per-platform).
+enum class TextUnits { Utf16, CodePoints };
+#ifdef _WIN32
+inline constexpr TextUnits kLegacyTextUnits = TextUnits::Utf16;
+#else
+inline constexpr TextUnits kLegacyTextUnits = TextUnits::CodePoints;
+#endif
+
 // One Line's result (legacy compareData, SubsGrid.h:67-78). `marks` is the
 // legacy lineCompare array: empty when the Line was not compared or its text
 // is equal; otherwise a leading 1, then inclusive [start, end] pairs of the
-// differing characters in UTF-16 code units (wxString on Windows).
+// differing characters, counted in the comparison's TextUnits.
 struct LineComparison {
     std::optional<std::size_t> matchedRow; // secondComparedLine: the other Document's row
     bool differences = true;               // false only for a matched Line with equal text
@@ -62,12 +76,25 @@ struct ComparisonResult {
 // SubsGrid::compareStyles: when it is not empty, both Lines must have the
 // same style and it must be one of them (the ChosenStyles bit is not read).
 ComparisonResult compareSubtitles(const ComparedDocument &first, const ComparedDocument &second, int compareBy,
-                                  const std::vector<std::u8string> &chosenStyles);
+                                  const std::vector<std::u8string> &chosenStyles,
+                                  TextUnits units = kLegacyTextUnits);
 
 // SubsGrid::CompareTexts (SubsGridBase.cpp:1796-1884): equal texts clear
 // `differences`; otherwise both get the leading 1 and the ranges outside a
-// longest common subsequence, matched from the ends of the texts.
+// longest common subsequence, matched from the ends of the texts. The
+// UTF-16 form is the Windows build's, the UTF-32 form the Linux build's.
 void compareTexts(LineComparison &first, LineComparison &second, std::u16string_view a, std::u16string_view b);
+void compareTexts(LineComparison &first, LineComparison &second, std::u32string_view a, std::u32string_view b);
+
+// One [start, end] range of `marks` in the shown text (SubsGridWindow.cpp:
+// 510-525, text.SubString(start, end) and text.Mid(0, start)), as UTF-16
+// offsets into that text: `start` and `length` of the outlined run. Nothing
+// when the run is empty (start past the text), as legacy skips it.
+struct MarkedRun {
+    std::size_t start = 0, length = 0;
+    bool operator==(const MarkedRun &) const = default;
+};
+std::optional<MarkedRun> markedRun(std::u16string_view shown, int start, int end, TextUnits units = kLegacyTextUnits);
 
 // The text a Line is compared by (SubsGridBase.cpp:1780-1781): the
 // translation in translation mode when there is one, else the text.
