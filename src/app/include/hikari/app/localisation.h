@@ -3,7 +3,8 @@
 // O5: the interface language (docs/qt/localisation.md, ADR-0002). Legacy
 // reads PROGRAM_LANGUAGE once at start (hikarisubApp.cpp:327-369: a wxLocale
 // with the hikarisub catalog; "Language (program restart required)"); the
-// rewrite switches live, as the card asks: the catalogs are replaced with a
+// rewrite switches live, as the card asks (so the Options label is
+// "Language", O5-language-label): the catalogs are replaced with a
 // defined precedence, every QML engine retranslates, the layout direction
 // follows the language and languageChanged() tells the owners of cached
 // strings to rebuild them.
@@ -14,7 +15,8 @@
 //
 // Precedence, from the first searched: a pseudolocale (tests and
 // developers), the HikariSub catalog, Qt's own catalog (qt_<language> from
-// the Qt installation). English, the source language, has no catalog.
+// the Qt installation; O5-qt-catalog). English, the source language, has no
+// catalog.
 
 #include <QObject>
 #include <QString>
@@ -68,6 +70,10 @@ public:
     // The catalog language in use; empty for English.
     QString language() const { return m_language; }
 
+    // Where Qt's own catalogs (qt_<language>.qm) are looked for: the Qt
+    // installation's translations by default. Read at the next switch.
+    void setQtCatalogDir(const QString &dir) { m_qtDir = dir; }
+
     void setPseudo(Pseudo pseudo);
     Pseudo pseudo() const { return m_pseudo; }
     // "accents" or "rtl" (HIKARI_PSEUDOLOCALE), anything else none.
@@ -99,6 +105,7 @@ private:
     void mirror(QQuickWindow *window) const;
 
     QString m_dir;
+    QString m_qtDir;
     QString m_language;
     Pseudo m_pseudo = Pseudo::None;
     bool m_rightToLeft = false;

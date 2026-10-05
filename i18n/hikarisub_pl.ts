@@ -3187,7 +3187,11 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Language (program restart required)</source>
-        <translation>Język (wymaga restartu programu)</translation>
+        <translation type="vanished">Język (wymaga restartu programu)</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>

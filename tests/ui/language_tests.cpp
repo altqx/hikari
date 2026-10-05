@@ -17,6 +17,7 @@
 #include <QDir>
 #include <QFile>
 #include <QGuiApplication>
+#include <QLibraryInfo>
 #include <QLocale>
 #include <QPointer>
 #include <QQmlApplicationEngine>
@@ -31,6 +32,7 @@
 #include <QtTest>
 
 #include <memory>
+#include <optional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -54,6 +56,27 @@ QSet<QString> catalogSources()
         if (xml.readNext() == QXmlStreamReader::StartElement && xml.name() == u"source")
             out.insert(xml.readElementText());
     return out;
+}
+
+// A TS catalog's entry: its translation's type ("unfinished", "vanished",
+// "" when finished) and text; nullopt when the context has no such source.
+std::optional<std::pair<QString, QString>> tsEntry(const QString &file, const QString &context, const QString &source)
+{
+    QXmlStreamReader xml(readAll(file));
+    QString name, text;
+    while (!xml.atEnd()) {
+        if (xml.readNext() != QXmlStreamReader::StartElement)
+            continue;
+        if (xml.name() == u"name")
+            name = xml.readElementText();
+        else if (xml.name() == u"source")
+            text = xml.readElementText();
+        else if (xml.name() == u"translation" && name == context && text == source) {
+            const QString type = xml.attributes().value(QStringLiteral("type")).toString();
+            return std::pair{type, xml.readElementText()};
+        }
+    }
+    return std::nullopt;
 }
 
 bool hasLetter(const QString &s)
@@ -248,6 +271,63 @@ private slots:
         QCOMPARE(app::Localisation::firstStartLanguage({}), QString());
     }
 
+    // O5-qt-catalog: Qt's own catalog (qt_<language>) loads with the
+    // language, below HikariSub's: a string both answer is HikariSub's, one
+    // only Qt's catalog has is Qt's; English removes both.
+    void qtCatalogLoadsBelowHikariSubs()
+    {
+        app::Localisation localisation(QStringLiteral(HIKARI_LANGUAGE_FIXTURES));
+        localisation.setQtCatalogDir(QStringLiteral(HIKARI_LANGUAGE_FIXTURES));
+        QCOMPARE(localisation.catalogLanguages(), QStringList{QStringLiteral("pl")});
+        QVERIFY(localisation.setLanguage(QStringLiteral("pl_PL")));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Anuluj (HikariSub)"));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Zamknij (Qt)"));
+        QCOMPARE(QCoreApplication::translate("Main", "&File"), QStringLiteral("&Plik (HikariSub)"));
+        QVERIFY(localisation.setLanguage(QString()));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Cancel"), QStringLiteral("Cancel"));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
+    }
+
+    // By default Qt's catalog comes from the Qt installation (the build's Qt
+    // ships qt_pl and qt_ko; packaging them is distribution's).
+    void qtCatalogComesFromTheQtInstallation()
+    {
+        QTranslator qt;
+        if (!qt.load(QLocale(QStringLiteral("pl")), QStringLiteral("qt"), QStringLiteral("_"),
+                     QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+            QSKIP("this Qt installation has no qt_pl catalog");
+        const QString close = qt.translate("QPlatformTheme", "Close");
+        QVERIFY(!close.isEmpty() && close != u"Close");
+        app::Localisation localisation;
+        QVERIFY(localisation.setLanguage(QStringLiteral("pl")));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), close);
+        QVERIFY(localisation.setLanguage(QStringLiteral("en")));
+        QCOMPARE(QCoreApplication::translate("QPlatformTheme", "Close"), QStringLiteral("Close"));
+    }
+
+    // O5-language-label: the Options label is the new key "Language" in
+    // every interface catalog, unfinished and empty until translator review
+    // (each old translation names the restart); the old key is vanished
+    // there and stays in the gettext catalogs, where scripts reach it.
+    void languageLabelKeyIsNewAndUnfinished()
+    {
+        for (const char *language : {"ko_KR", "pl", "ta", "th_TH"}) {
+            const QString ui = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_%1.ts").arg(QLatin1String(language));
+            const auto label = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language"));
+            QVERIFY2(label.has_value(), language);
+            QCOMPARE(label->first, QStringLiteral("unfinished"));
+            QCOMPARE(label->second, QString());
+            const auto old = tsEntry(ui, QStringLiteral("SettingsDialog"), QStringLiteral("Language (program restart required)"));
+            QVERIFY2(old.has_value(), language);
+            QCOMPARE(old->first, QStringLiteral("vanished"));
+            const QString gettext = QStringLiteral(HIKARI_SOURCE_DIR "/i18n/hikarisub_gettext_%1.ts").arg(QLatin1String(language));
+            const auto script = tsEntry(gettext, QString::fromLatin1(app::Localisation::kGettextContext),
+                                        QStringLiteral("Language (program restart required)"));
+            QVERIFY2(script.has_value(), language);
+            QCOMPARE(script->first, QString());
+        }
+    }
+
     // aegisub.gettext's lookup: the legacy MO's answers (O4's qm_tests
     // compare the whole catalogs), missing keys, conversion edge cases and
     // the catalog after a switch.
@@ -303,6 +383,12 @@ private slots:
                               QStringLiteral("தமிழ்"), QStringLiteral("ไทย")}));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 0);
         QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Options"));
+        // The choice applies at once, so its label asks for no restart
+        // (O5-language-label; legacy "Language (program restart required)").
+        QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
+        QAccessibleInterface *languageChoice = QAccessible::queryAccessibleInterface(dialogItem("setting_program.language"));
+        QVERIFY(languageChoice);
+        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Language"));
         choose("setting_program.language", 2);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
@@ -313,9 +399,13 @@ private slots:
         QCOMPARE(settingsButton("settingsApply")->property("text").toString(), QStringLiteral("Zastosuj"));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 2);
         // An accessible name (Accessible.name: qsTr(...)).
-        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_program.language"));
+        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_editor.dictionaryLanguage"));
         QVERIFY(a);
-        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Język (wymaga restartu programu)"));
+        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Język sprawdzania pisowni (folder \"Dictionary\")"));
+        // The language label's key is new and unfinished until translator
+        // review: English, never the legacy restart text.
+        QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
+        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Language"));
         // A string the application keeps: the Untitled tab's name; a tab
         // named after its file keeps it.
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));

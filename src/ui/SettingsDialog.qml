@@ -262,15 +262,18 @@ Dialog {
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
+                    // Legacy "Language (program restart required)": the
+                    // switch is live (O5-language-label).
                     GroupBox {
-                        title: qsTr("Language (program restart required)")
+                        objectName: "settingsLanguageGroup"
+                        title: qsTr("Language")
                         Layout.fillWidth: true
                         SettingChoice {
                             setting: "program.language"
                             anchors.left: parent.left
                             anchors.right: parent.right
                             model: dialog.languages
-                            Accessible.name: qsTr("Language (program restart required)")
+                            Accessible.name: qsTr("Language")
                         }
                     }
                     GroupBox {

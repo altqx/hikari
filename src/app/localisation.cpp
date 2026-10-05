@@ -131,7 +131,8 @@ private:
 
 } // namespace
 
-Localisation::Localisation(QString catalogDir, QObject *parent) : QObject(parent), m_dir(std::move(catalogDir))
+Localisation::Localisation(QString catalogDir, QObject *parent)
+    : QObject(parent), m_dir(std::move(catalogDir)), m_qtDir(QLibraryInfo::path(QLibraryInfo::TranslationsPath))
 {
     QCoreApplication::instance()->installEventFilter(this);
 }
@@ -225,8 +226,7 @@ void Localisation::install()
         // Qt's own strings (dialog buttons, text field menus), when the Qt
         // installation has them.
         qt = std::make_unique<QTranslator>();
-        if (!qt->load(QLocale(m_language), QStringLiteral("qt"), QStringLiteral("_"),
-                      QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+        if (!qt->load(QLocale(m_language), QStringLiteral("qt"), QStringLiteral("_"), m_qtDir))
             qt.reset();
     }
     if (m_pseudo != Pseudo::None)
