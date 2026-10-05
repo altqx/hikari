@@ -444,7 +444,9 @@ TEST(ExternalFonts, TheFolderIsReadAsLegacyLoadedIt)
     EXPECT_EQ(names, (std::vector<std::string>{".hidden.pfb", "a.TTF", "b.otf", "ttf"}));
     for (const auto &f : load.fonts)
         if (f.name.ends_with("a.TTF")) {
-            EXPECT_EQ(f.name, (dir / "a.TTF").string());
+            // The setting's text as typed, then the file name: the
+            // separator typed in the setting is kept on every platform.
+            EXPECT_EQ(f.name, dir.string() + "/a.TTF");
             EXPECT_EQ(f.bytes->size(), 6u);
         }
     EXPECT_FALSE(loadExternalFonts(path + u"missing/", kLower, FontListPlatform::Linux).opened);
