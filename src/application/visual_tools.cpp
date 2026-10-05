@@ -97,6 +97,12 @@ std::optional<std::u8string> Gesture::staged(core::LineId line, bool translation
     return it->second;
 }
 
+void Gesture::applyTo(core::Document &document) const
+{
+    for (const auto &[key, text] : m_staged)
+        document.editLine(key.first, [&](core::LineRecord &line) { (key.second ? line.translation : line.text) = text; });
+}
+
 std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
 {
     if (m_staged.empty())

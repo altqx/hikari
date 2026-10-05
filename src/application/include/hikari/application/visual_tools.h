@@ -91,11 +91,25 @@ struct OverlayCircle {
     std::uint32_t argb = 0xFFFFFFFF;
     bool filled = false;
 };
+// A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
+// triangle strip and line strip, the clips' masks). T4: `more` holds further
+// contours filled in the same path (non-zero: the rectangle clip's two fans
+// without a seam), and `above` draws it after the lines (the vector points'
+// handles, which legacy drew over the path) instead of before them.
+struct OverlayPolygon {
+    std::vector<PointF> points;
+    std::uint32_t fill = 0;
+    std::uint32_t border = 0xFFFFFFFF; // 0: none
+    std::vector<std::vector<PointF>> more;
+    bool above = false;
+};
+// Drawn in this order: polygons, lines, circles, polygons `above`, texts.
 struct Overlay {
     std::vector<OverlayLine> lines;
     std::vector<OverlayCircle> circles;
     std::vector<OverlayText> texts;
-    bool empty() const { return lines.empty() && circles.empty() && texts.empty(); }
+    std::vector<OverlayPolygon> polygons; // T4
+    bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
 // A numeric value a tool shows below the canvas (the rail's keyboard and
@@ -105,6 +119,22 @@ struct ToolValue {
     std::u16string label;
     std::u16string text;
     bool editable = false;
+};
+
+// A tool's own option on the rail's second row (legacy VideoToolbar's
+// VisualItem for the family, T2-T6): a toggle with its icon role, a choice,
+// or (T4) an action button. setOption takes 0/1 for a toggle, the index for
+// a choice and 1 for an action.
+struct ToolOption {
+    enum class Kind { Toggle, Choice, Action };
+    std::string name;
+    Kind kind = Kind::Toggle;
+    std::string iconRole;     // the K1 set's role (toggles, actions)
+    std::u16string tooltip;   // legacy's help text
+    bool checked = false;     // a toggle's state
+    bool enabled = true;      // legacy's greyed icons
+    std::vector<std::u16string> choices;
+    int index = 0;            // a choice's selection
 };
 
 // One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
@@ -131,6 +161,9 @@ public:
     bool hasChanges() const { return !m_staged.empty(); }
     // The staged text of a target, if any.
     std::optional<std::u8string> staged(core::LineId line, bool translation = false) const;
+    // The staged texts put into a copy of the Document (the video's preview
+    // while the gesture is open, legacy's dummy rendering).
+    void applyTo(core::Document &document) const;
 
     // One history step with every staged text. A pending draft on a target
     // is committed first, as every command does (its own step); the gesture
@@ -188,6 +221,10 @@ public:
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
     // The tool's drawing or values changed.
     virtual void toolChanged() = 0;
+    // T4: legacy wxBell (a refused point insertion) and a notice legacy
+    // showed in a message box; shown without blocking.
+    virtual void bell() {}
+    virtual void notice(std::u16string_view text) { (void)text; }
 };
 
 // One visual family. The host gives a tool only the events legacy's
@@ -223,6 +260,26 @@ public:
     // Legacy Visuals::Draw skipped these tools' warning (VisualCross overrides
     // Draw); the others are blocked outside their Line's time or on comments.
     virtual bool warnsOutsideLine() const { return family() != Family::Crosshair; }
+    // The rail's second row for the family (legacy VisualItem).
+    virtual std::vector<ToolOption> options(const VisualHost &host) const
+    {
+        (void)host;
+        return {};
+    }
+    virtual bool setOption(const std::string &name, int value, VisualHost &host)
+    {
+        (void)name;
+        (void)value;
+        (void)host;
+        return false;
+    }
+    // T4: Lines the video renders after the Document's while the tool is on
+    // (legacy Visuals::AppendClipMask: the vector clip's mask).
+    virtual std::vector<core::LineRecord> previewLines(const VisualHost &host) const
+    {
+        (void)host;
+        return {};
+    }
 };
 
 // The tool for a family: nullptr while its card (T2-T6) has not landed.
