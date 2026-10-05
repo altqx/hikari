@@ -3,8 +3,12 @@
 // contents, both meanings of the font count, partial output written only
 // after acknowledgment and labelled, cancellation leaving nothing
 // unlabelled, and the written fonts reimported into a clean environment.
-// The system provider is fontconfig over the generated CC0 fixtures only
-// (FONTCONFIG_FILE), so every selection is deterministic.
+// On Linux the system provider is fontconfig over the generated CC0 fixtures
+// only (FONTCONFIG_FILE), so every selection is deterministic. On Windows it
+// is libass's DirectWrite provider over the installed fonts, with the
+// fixtures the Documents name installed for the current user for the length
+// of the test process (Y8W, windows_user_fonts.h); fallback comes from
+// DirectWrite's own resolver and is reported as whichever file it chose.
 #include "hikari/backends/font_collector_output.h"
 #include "hikari/backends/libass_font_service.h"
 
@@ -17,9 +21,17 @@
 #include <gtest/gtest.h>
 #include <zlib.h>
 
+#include <algorithm>
+#include <atomic>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <map>
+
+#ifdef _WIN32
+#include "fonts/windows_user_fonts.h"
+#endif
 
 using namespace hikari;
 using namespace hikari::application;
@@ -27,16 +39,45 @@ using hikari::backends::FolderCollectorOutput;
 using hikari::backends::LibassFontService;
 using hikari::backends::ZipCollectorOutput;
 
-#ifndef _WIN32
-
 namespace {
 
+#ifndef _WIN32
 // Set before fontconfig first initializes (as the I5 tests do).
 [[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
+#else
+// The fixtures the Documents below name, installed for this process's
+// tests; fallback.ttf is not, so DirectWrite's resolver picks a system font.
+[[maybe_unused]] ::testing::Environment *const kUserFonts =
+    ::testing::AddGlobalTestEnvironment(new hikari::testing::WindowsUserFonts(
+        HIKARI_FONT_FIXTURES, {L"base.ttf", L"base-bold.ttf", L"weighted.ttf", L"legacy.ttf", L"collection.ttc"},
+        {L"HikariProbeBase", L"HikariProbeWeighted", L"HikariProbeLegacy", L"HikariProbeCollectionB"}));
+#endif
 
 std::string fixture(const char *name)
 {
     return std::string(HIKARI_FONT_FIXTURES) + "/" + name;
+}
+
+// A fixture's path as the provider names it: fontconfig the configured
+// directory's, DirectWrite the registered file's (native separators).
+std::u16string installed(const char *name)
+{
+#ifdef _WIN32
+    return std::filesystem::path(fixture(name)).make_preferred().u16string();
+#else
+    return QString::fromStdString(fixture(name)).toStdU16String();
+#endif
+}
+
+// The system provider the collector renders with: fontconfig, or libass's
+// DirectWrite provider ("directwrite (with GDI)" on the desktop).
+bool systemProvider(const std::string &provider)
+{
+#ifdef _WIN32
+    return provider.rfind("directwrite", 0) == 0;
+#else
+    return provider == "fontconfig";
+#endif
 }
 
 QByteArray readAll(const QString &path)
@@ -171,7 +212,8 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     FontCollector collector(service);
     const auto review = collector.prepare({doc}, CollectorAction::Zip);
     ASSERT_TRUE(review);
-    EXPECT_EQ(review->provider, "fontconfig");
+    std::fprintf(stderr, "provider: %s\n", review->provider.c_str());
+    EXPECT_TRUE(systemProvider(review->provider)) << review->provider;
     ASSERT_TRUE(review->retrievedFonts);
     EXPECT_TRUE(review->complete()) << FontCollector::labelText(*review, nullptr);
     std::vector<std::u16string> names;
@@ -182,7 +224,7 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     EXPECT_EQ(file(*review, u"collection.ttc")->sha256, fixtureSha("collection.ttc"));
     EXPECT_EQ(file(*review, u"collection.ttc")->faces, std::vector<long>{1});
     EXPECT_EQ(file(*review, u"base-bold.ttf")->sha256, fixtureSha("base-bold.ttf"));
-    EXPECT_EQ(file(*review, u"legacy.ttf")->shown, QString::fromStdString(fixture("legacy.ttf")).toStdU16String());
+    EXPECT_EQ(file(*review, u"legacy.ttf")->shown, installed("legacy.ttf"));
     ASSERT_EQ(review->reimports.size(), 1u);
     EXPECT_TRUE(review->reimports[0].identical);
     EXPECT_EQ(review->reimports[0].frames, 4u);
@@ -270,11 +312,24 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_EQ(review->fallbackGlyphs, std::vector<std::uint32_t>{0x4e2d});
     ASSERT_EQ(review->files.size(), 1u);
     EXPECT_EQ(review->files[0].name, u"base.ttf");
-    bool fallbackReported = false;
+    const RendererFile *fallback = nullptr;
     for (const auto &f : review->rendererFiles)
-        if (f.shown == QString::fromStdString(fixture("fallback.ttf")).toStdU16String())
-            fallbackReported = std::find(f.roles.begin(), f.roles.end(), "fallback U+4E2D") != f.roles.end();
-    EXPECT_TRUE(fallbackReported);
+        if (std::find(f.roles.begin(), f.roles.end(), "fallback U+4E2D") != f.roles.end())
+            fallback = &f;
+    ASSERT_NE(fallback, nullptr) << "the fallback file is reported with its role";
+#ifdef _WIN32
+    // DirectWrite's resolver chose an installed system font; whichever it is,
+    // it is a file with bytes, reported and not collected.
+    std::fprintf(stderr, "fallback for U+4E2D: %s (%s, faces %zu)\n",
+                 QString::fromStdU16String(fallback->shown).toUtf8().constData(), fallback->sha256.substr(0, 12).c_str(),
+                 fallback->faces.size());
+    EXPECT_FALSE(fallback->sha256.empty());
+    EXPECT_NE(fallback->shown.find(u'\\'), std::u16string::npos) << "named from the installed file's path";
+#else
+    EXPECT_EQ(fallback->shown, installed("fallback.ttf"));
+#endif
+    for (const auto &f : review->files)
+        EXPECT_NE(f.sha256, fallback->sha256) << "the fallback file is not collected";
     // Without the fallback the clean reimport differs on the frame that used it.
     ASSERT_EQ(review->reimports.size(), 1u);
     EXPECT_FALSE(review->reimports[0].identical);
@@ -300,7 +355,8 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_TRUE(label.contains(QStringLiteral("INCOMPLETE")));
     EXPECT_TRUE(label.contains(QStringLiteral("NoSuchFamily")));
     EXPECT_TRUE(label.contains(QStringLiteral("U+4E2D")));
-    EXPECT_TRUE(label.contains(QStringLiteral("fallback.ttf (fallback U+4E2D), not collected")));
+    EXPECT_TRUE(label.contains(QString::fromStdU16String(fallback->shown) + QStringLiteral(" (fallback U+4E2D), not collected")))
+        << label.toStdString();
 
     // The same review as an archive: the label is an entry of it.
     const QString archive = dir.filePath(QStringLiteral("partial.zip"));
@@ -437,5 +493,3 @@ TEST(FontCollectorRenderer, CancellationLeavesNothingUnlabelled)
     ASSERT_FALSE(none);
     EXPECT_EQ(none.error(), FontError::Cancelled);
 }
-
-#endif

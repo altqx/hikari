@@ -226,7 +226,9 @@ target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
 
 # Y8: the font collector through the renderer, over the same private
-# fontconfig fixtures as I5; the archives are read back with zlib.
+# fontconfig fixtures as I5; the archives are read back with zlib. On Windows
+# (Y8W) the fixtures are installed for the current user while the tests run
+# (tests/support/fonts/windows_user_fonts.h) and DirectWrite provides them.
 find_package(ZLIB REQUIRED)
 hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tests.cpp
     LIBRARIES hikari_backends Qt6::Core ZLIB::ZLIB LABELS backends
@@ -235,3 +237,7 @@ target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
+target_include_directories(hikari_backends_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+if(WIN32)
+    target_link_libraries(hikari_backends_font_collector_tests PRIVATE dwrite gdi32 advapi32)
+endif()

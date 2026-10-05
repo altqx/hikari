@@ -95,8 +95,8 @@ tasks:
     script: $env:QT_QPA_PLATFORM = 'windows'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_video_workflow.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "running $($exe.FullName)"; $ErrorActionPreference = 'Continue'; & $exe.FullName 2>&1 | ForEach-Object { "$_" }; exit $LASTEXITCODE
     timeoutSeconds: 300
   fonts:
-    # Font identity (N4) through DirectWrite, verbose for the provider line.
-    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection)[.]" -V
+    # Font identity (N4), collection (I5) and the collector (Y8) through DirectWrite, verbose for the provider line.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection|FontCollectorRenderer)[.]" -V
     timeoutSeconds: 600
   packaging:
     # Helper package manifests (I6), verbose so the closure is recorded.
