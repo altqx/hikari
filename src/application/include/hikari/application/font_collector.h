@@ -230,7 +230,10 @@ struct CollectorResult {
 
 class FontCollector {
 public:
-    explicit FontCollector(FontServicePort &fonts) : m_fonts(fonts) {}
+    // Reads a file the renderer did not hand over: the other half of a
+    // Type 1 pair (.pfb/.pfm). Null when it cannot be read.
+    using FileReader = std::function<std::shared_ptr<const std::vector<std::byte>>(const std::u16string &path)>;
+    explicit FontCollector(FontServicePort &fonts, FileReader read = {}) : m_fonts(fonts), m_read(std::move(read)) {}
 
     // Start: the scan, the renderer's verification and, for the copy modes,
     // the files to write. The copy modes list the provider's font files at
@@ -252,6 +255,7 @@ public:
 
 private:
     FontServicePort &m_fonts;
+    FileReader m_read;
     bool m_retrieved = false; // legacy fontSizes, kept for the collector's lifetime
 };
 

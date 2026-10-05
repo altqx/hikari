@@ -23,6 +23,7 @@
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
+#include <QTranslator>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
@@ -1933,6 +1934,35 @@ private slots:
         QCOMPARE(message->property("text").toString(), QStringLiteral("Select the folder where you want to copy fonts"));
         QVERIFY(QMetaObject::invokeMethod(message, "accept"));
 
+        // FC-slash-linux: the path field takes '/' typed on Linux; on Windows
+        // it excludes / * ? " < > | as legacy's HikariTextValidator did.
+        auto *pathField = dialogItem("fontCollectorDialog", "fontCollectorPath");
+        QTRY_VERIFY(!message->property("visible").toBool());
+        pathField->forceActiveFocus();
+        QTRY_VERIFY(pathField->hasActiveFocus());
+        for (const char key : {'a', '/', 'b', '*', 'c'})
+            QTest::keyClick(window, key);
+#ifdef _WIN32
+        QCOMPARE(pathField->property("text").toString(), QStringLiteral("abc"));
+#else
+        QCOMPARE(pathField->property("text").toString(), QStringLiteral("a/bc"));
+#endif
+        // FC-chooser-cancel: a cancelled folder or archive chooser keeps the
+        // previous path (legacy stored the empty answer, FontCollector.cpp:
+        // 418-433).
+        const QString kept = QDir::toNativeSeparators(dir.filePath(QStringLiteral("kept")));
+        collector.chooseDirectory(kept);
+        pathField->setProperty("text", kept);
+        for (const char *chooser : {"fontCollectorFolderDialog", "fontCollectorArchiveDialog"}) {
+            auto *chooserDialog = root->findChild<QObject *>(QLatin1String(chooser));
+            QVERIFY2(chooserDialog, chooser);
+            QVERIFY(QMetaObject::invokeMethod(chooserDialog, "rejected"));
+            QCOMPARE(pathField->property("text").toString(), kept);
+            QCOMPARE(application->settingsStore()->text("fontCollector.directory"), kept);
+        }
+        collector.chooseDirectory(QString());
+        QCOMPARE(application->settingsStore()->text("fontCollector.directory"), kept);
+
         // Zip: ".zip" is added; the review is incomplete (a font is not
         // found), so it writes only after the acknowledgment.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
@@ -2018,18 +2048,41 @@ private slots:
         QVERIFY(readZip().startsWith(QByteArray("PK\x03\x04", 4)));
         QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
 
-        // "Save to video / subtitles folder.": Czcionki beside the subtitles.
+        // "Save to video / subtitles folder.": a folder beside the subtitles
+        // named in the interface language, "Fonts" in English (FC-czcionki;
+        // legacy always wrote "Czcionki", FontCollector.cpp:482).
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorSubsDirectory"), "click"));
         QVERIFY(application->settingsStore()->boolean("fontCollector.useSubsDirectory"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
         QVERIFY(collector.waitIdle());
-        QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("Czcionki"))) + QDir::separator());
+        QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("Fonts"))) + QDir::separator());
         collector.apply(true);
         QVERIFY(collector.waitIdle());
-        QCOMPARE(QDir(dir.filePath(QStringLiteral("Czcionki"))).entryList(QDir::Files, QDir::Name),
+        QCOMPARE(QDir(dir.filePath(QStringLiteral("Fonts"))).entryList(QDir::Files, QDir::Name),
                  (QStringList{QStringLiteral("INCOMPLETE - font collection.txt"), QStringLiteral("arial.ttf"),
                               QStringLiteral("times.ttf")}));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("Czcionki"))));
+        {
+            // The name goes through the translation system: a Polish
+            // interface names it "Czcionki".
+            class Polish final : public QTranslator {
+            public:
+                bool isEmpty() const override { return false; }
+                QString translate(const char *context, const char *source, const char *, int) const override
+                {
+                    return QByteArray(context) == "hikari::app::FontCollectorController" && QByteArray(source) == "Fonts"
+                               ? QStringLiteral("Czcionki")
+                               : QString();
+                }
+            } polish;
+            QVERIFY(QCoreApplication::installTranslator(&polish));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QVERIFY(collector.waitIdle());
+            QCoreApplication::removeTranslator(&polish);
+            QCOMPARE(collector.copyPath(),
+                     QDir::toNativeSeparators(dir.filePath(QStringLiteral("Czcionki"))) + QDir::separator());
+        }
 
         // Closing while Apply still runs past the wait: the late result
         // still finds its review (no read of a dropped one) and ends the job.

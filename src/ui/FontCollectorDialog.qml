@@ -109,7 +109,11 @@ Dialog {
                 onAccepted: dialog.start(false)
                 Accessible.name: qsTr("Save folder")
                 // HikariTextValidator with wxFILTER_EXCLUDE_CHAR_LIST: / * ? " < > |
-                validator: RegularExpressionValidator { regularExpression: /[^\/*?"<>|]*/ }
+                // on Windows; elsewhere '/' separates the folders, so it is
+                // accepted (FC-slash-linux).
+                validator: RegularExpressionValidator {
+                    regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
+                }
             }
             Button {
                 objectName: "fontCollectorChoosePath"
@@ -244,17 +248,18 @@ Dialog {
     }
     Dialogs.FolderDialog {
         id: folderDialog
+        objectName: "fontCollectorFolderDialog"
         title: qsTr("Choose save folder")
+        // Cancel keeps the previous path (FC-chooser-cancel).
         onAccepted: dialog.chosen(dialog.collector.localPath(selectedFolder))
-        onRejected: dialog.chosen("")
     }
     Dialogs.FileDialog {
         id: archiveDialog
+        objectName: "fontCollectorArchiveDialog"
         title: qsTr("Select the name of the archive")
         fileMode: Dialogs.FileDialog.SaveFile
         defaultSuffix: "zip"
         nameFilters: [qsTr("Archive files (*.zip)")]
         onAccepted: dialog.chosen(dialog.collector.localPath(selectedFile))
-        onRejected: dialog.chosen("")
     }
 }

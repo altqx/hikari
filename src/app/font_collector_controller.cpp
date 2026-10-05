@@ -16,6 +16,7 @@
 #include <QUrl>
 
 #include <algorithm>
+#include <cstring>
 #include <utility>
 
 namespace hikari::app {
@@ -154,12 +155,24 @@ QString noteText(const Note &n)
     return {};
 }
 
+// The other half of a Type 1 pair, read from the disk (FC-type1-pair).
+std::shared_ptr<const std::vector<std::byte>> readFontFile(const std::u16string &path)
+{
+    QFile f(QString::fromUtf16(path.data(), qsizetype(path.size())));
+    if (!f.open(QIODevice::ReadOnly))
+        return nullptr;
+    const QByteArray data = f.readAll();
+    auto out = std::make_shared<std::vector<std::byte>>(std::size_t(data.size()));
+    std::memcpy(out->data(), data.constData(), std::size_t(data.size()));
+    return out;
+}
+
 } // namespace
 
 FontCollectorController::FontCollectorController(ui::SettingsStore &settings, Hooks hooks, QObject *parent)
     : QObject(parent), m_settings(settings), m_hooks(std::move(hooks)),
       m_service(std::make_unique<backends::LibassFontService>()),
-      m_collector(std::make_unique<application::FontCollector>(*m_service))
+      m_collector(std::make_unique<application::FontCollector>(*m_service, readFontFile))
 {
     open();
 }
@@ -181,7 +194,7 @@ void FontCollectorController::setFontService(std::unique_ptr<application::FontSe
     m_cancel = true;
     join();
     m_service = std::move(service);
-    m_collector = std::make_unique<application::FontCollector>(*m_service);
+    m_collector = std::make_unique<application::FontCollector>(*m_service, readFontFile);
 }
 
 bool FontCollectorController::waitIdle(int ms)
@@ -274,8 +287,11 @@ QVariantMap FontCollectorController::chooserStart(const QString &path) const
 
 void FontCollectorController::chooseDirectory(const QString &path)
 {
-    // Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir) and SaveOptions,
-    // also for a cancelled chooser's empty answer.
+    // Options.SetString(FONT_COLLECTOR_DIRECTORY, destdir) and SaveOptions.
+    // Legacy also stored a cancelled chooser's empty answer
+    // (FontCollector.cpp:418-433); the previous path stays (FC-chooser-cancel).
+    if (path.isEmpty())
+        return;
     m_directory = path;
     m_settings.set("fontCollector.directory", path);
     m_settings.sync();
@@ -331,7 +347,11 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     QString copypath;
     if (m_useSubsDirectory) {
         const QString rest = pathName(subsPath);
-        const QString fontDir = pathJoin(pathDir(subsPath), QStringLiteral("Czcionki"));
+        // Legacy always wrote a Polish "Czcionki" folder (FontCollector.cpp:
+        // 482); the folder is named in the interface language
+        // (FC-czcionki). An existing Czcionki folder is left as it is.
+        const QString fontDir =
+            pathJoin(pathDir(subsPath), tr("Fonts", "the folder the font collector writes beside the subtitles"));
         const qsizetype dot = rest.lastIndexOf(QLatin1Char('.'));
         copypath = zip ? pathJoin(fontDir, (dot < 0 ? rest : rest.left(dot)) + QStringLiteral(".zip")) : fontDir + separator();
     } else {

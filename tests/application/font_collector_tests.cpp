@@ -516,22 +516,96 @@ TEST(FontCollectorApply, PathNotAvailable)
     EXPECT_FALSE(r.complete);
 }
 
-// A Type 1 file names its pair and copies the path it cut the extension
-// from, which fails (FontCollector.cpp:1206-1219).
-TEST(FontCollectorApply, Type1PairFailsAsLegacy)
+// FC-type1-pair: a Type 1 file names its pair and copies it too. Legacy's
+// RemoveLast(3) cut the path in place, so it copied the cut path, which
+// failed (FontCollector.cpp:1207-1219).
+TEST(FontCollectorApply, Type1PairIsCopied)
 {
     FakeFonts fonts;
     fonts.faces = {{"Courier", 400, false, "/fonts/COURIER.PFB"}};
-    FontCollector collector(fonts);
+    std::vector<std::u16string> read;
+    FontCollector collector(fonts, [&](const std::u16string &path) -> std::shared_ptr<const std::vector<std::byte>> {
+        read.push_back(path);
+        return path == u"/fonts/COURIER.PFM" ? std::make_shared<std::vector<std::byte>>(bytesOf("pfm")) : nullptr;
+    });
     const auto review =
         collector.prepare({tab(0, script({"Default,Courier,0,0"}, {"Default,a"}))}, CollectorAction::CopyToFolder);
     ASSERT_TRUE(review);
     ASSERT_EQ(review->files.size(), 2u);
+    EXPECT_EQ(read, std::vector<std::u16string>{u"/fonts/COURIER.PFM"});
     EXPECT_EQ(review->found.at(u"Courier").infos[1].a, u"/fonts/COURIER.PFM");
     MemoryOutput out;
     const auto r = collector.apply(*review, out, false);
-    EXPECT_EQ(out.written, std::vector<std::u16string>{u"COURIER.PFB"});
+    EXPECT_EQ(out.written, (std::vector<std::u16string>{u"COURIER.PFB", u"COURIER.PFM"}));
+    EXPECT_EQ(r.foundCount, 2);
+    EXPECT_EQ(r.notCopiedCount, 0);
+    EXPECT_TRUE(r.complete);
+
+    // A pair that cannot be read is "Cannot copy font" under its own name.
+    FontCollector unread(fonts, [](const std::u16string &) { return nullptr; });
+    const auto again =
+        unread.prepare({tab(0, script({"Default,Courier,0,0"}, {"Default,a"}))}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(again);
+    MemoryOutput out2;
+    const auto r2 = unread.apply(*again, out2, false);
+    EXPECT_EQ(out2.written, std::vector<std::u16string>{u"COURIER.PFB"});
+    EXPECT_EQ(r2.notCopiedCount, 1);
+    EXPECT_FALSE(r2.complete);
+    EXPECT_EQ(r2.found.at(u"Courier").warnings.back().a, u"COURIER.PFM");
+}
+
+namespace {
+// Answers like FakeFonts, except that a bold probe finds no face: the
+// family is found, its bold variant is not.
+class NoBoldFonts final : public FontServicePort {
+public:
+    explicit NoBoldFonts(FakeFonts &inner) : m_inner(inner) {}
+    std::expected<FontReport, FontError> resolve(const FontEnvironment &e, const std::vector<FontRequest> &r) override
+    {
+        return m_inner.resolve(e, r);
+    }
+    std::vector<SystemFace> systemFaces() override { return m_inner.systemFaces(); }
+    std::expected<FontCollection, FontError> collect(const std::vector<std::byte> &s, const FontEnvironment &e,
+                                                     const std::atomic<bool> *cancel) override
+    {
+        const auto styles = core::decodeStyles(core::loadAss(s).document);
+        if (styles.size() == 1 && styles[0].name == u8"P" && styles[0].bold) {
+            FontCollection c;
+            c.frameHashes = {"probe"};
+            c.missingFamilies.push_back(std::string(styles[0].fontname.begin(), styles[0].fontname.end()));
+            return c;
+        }
+        return m_inner.collect(s, e, cancel);
+    }
+    std::expected<ReimportCheck, FontError> verifyReimport(const std::vector<std::byte> &s, const FontCollection &c,
+                                                           const std::string &d) override
+    {
+        return m_inner.verifyReimport(s, c, d);
+    }
+
+private:
+    FakeFonts &m_inner;
+};
+} // namespace
+
+// FC-found-negative: a font not found in the folder counts as not found
+// only. Legacy also decremented `found`, which nothing had counted for it
+// (FontCollector.cpp:1228-1232), so one font written was reported as none.
+TEST(FontCollectorApply, AFontNotInTheFolderLeavesTheFoundCount)
+{
+    auto inner = arialAndTimes();
+    NoBoldFonts fonts(inner);
+    FontCollector collector(fonts);
+    const auto review = collector.prepare(
+        {tab(0, script({"Default,Arial,0,0", "T,Times,-1,0"}, {"Default,a", "T,b"}))}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(review);
+    ASSERT_TRUE(review->found.contains(u"Times"));
+    EXPECT_EQ(kinds(review->found.at(u"Times").warnings).back(), Note::Kind::CannotFindInFolder);
+    EXPECT_EQ(review->foundCount, 0);
+    EXPECT_EQ(review->notFoundCount, 1);
+    MemoryOutput out;
+    const auto r = collector.apply(*review, out, true);
+    EXPECT_EQ(out.written, std::vector<std::u16string>{u"arial.ttf"});
     EXPECT_EQ(r.foundCount, 1);
-    EXPECT_EQ(r.notCopiedCount, 1);
-    EXPECT_EQ(r.found.at(u"Courier").warnings.back().a, u"COURIER.");
+    EXPECT_EQ(r.notFoundCount, 1);
 }

@@ -637,8 +637,10 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
         }
         if (!base) {
             flc.warnings.push_back({Note::Kind::CannotFindInFolder, fn});
+            // Legacy also decremented `found`, which nothing had counted for
+            // this font, so the count could go below the fonts written
+            // (FontCollector.cpp:1228-1232; FC-found-negative).
             ++review.notFoundCount;
-            --review.foundCount; // as legacy, though nothing was counted for it
             continue;
         }
         const CollectedFont *font = nullptr;
@@ -662,19 +664,22 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             const u16 ext = lower(file.shown.size() > 3 ? file.shown.substr(file.shown.size() - 3) : u16());
             review.files.push_back(file);
             if (ext == u"pfm" || ext == u"pfb") {
-                // The Type 1 pair (FontCollector.cpp:1206-1219): legacy names
-                // the other file but copies the path it cut the extension
-                // from, which fails.
+                // The Type 1 pair (FontCollector.cpp:1206-1219): the other
+                // file is named and copied too. Legacy's RemoveLast(3) cut
+                // the path in place, so it copied the cut path, which failed
+                // (FC-type1-pair).
                 u16 repl = ext == u"pfm" ? u"pfb" : u"pfm";
                 if (file.shown.back() < u'Z')
                     for (auto &c : repl)
                         c = char16_t(std::towupper(wint_t(c)));
-                const u16 cut = file.shown.substr(0, file.shown.size() - 3);
-                flc.infos.push_back({Note::Kind::FoundFile, fn, cut + repl});
+                const u16 partner = file.shown.substr(0, file.shown.size() - 3) + repl;
+                flc.infos.push_back({Note::Kind::FoundFile, fn, partner});
                 CollectedFile pair;
                 pair.family = fn;
-                pair.shown = cut;
-                pair.name = fileName(cut);
+                pair.shown = partner;
+                pair.name = fileName(partner);
+                pair.bytes = m_read ? m_read(partner) : nullptr; // null: "Cannot copy"
+                pair.sha256 = "type1:" + toUtf8(partner);
                 review.files.push_back(pair);
             }
         }

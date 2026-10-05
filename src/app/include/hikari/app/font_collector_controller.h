@@ -84,8 +84,8 @@ public:
     // OnChangeOpt: the Options choice and the checkbox are saved.
     Q_INVOKABLE void changeOptions(int action, bool useSubsDirectory);
     // OnButtonPath: where the folder or archive chooser starts ({folder,
-    // name}), then what it returned (also when cancelled: legacy stores the
-    // empty answer).
+    // name}), then what it returned. A cancelled chooser's empty answer
+    // keeps the previous path (FC-chooser-cancel; legacy stored it).
     Q_INVOKABLE QVariantMap chooserStart(const QString &path) const;
     Q_INVOKABLE void chooseDirectory(const QString &path);
     // OnButtonStart. Returns {message} when legacy refused with a message
