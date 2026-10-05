@@ -548,7 +548,10 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 host.picker.clear();
                 tool->reset(host);
             } else if (op == "mouse") {
-                if (!host.blocked())
+                // The probe draws before each event (Visuals::Draw).
+                if (host.blocked())
+                    tool->blocked(host);
+                else
                     tool->pointer(pointerOf(step), host);
             } else if (op == "key") {
                 std::string k;
@@ -563,6 +566,8 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 }
                 // VideoBox::OnKeyPress hands every key to the tool, blocked
                 // or not (VideoBox.cpp:666-668).
+                if (host.blocked())
+                    tool->blocked(host);
                 (void)tool->key(key, host);
                 key.release = true;
                 (void)tool->key(key, host);
@@ -630,6 +635,8 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 }
                 // The handles, and the warning in their place when blocked.
                 const bool blocked = host.blocked();
+                if (blocked)
+                    tool->blocked(host); // the probe's dump draws too
                 EXPECT_EQ(blocked, o[QStringLiteral("blocked")].toBool());
                 if (!blocked)
                     EXPECT_EQ(draws(tool->overlay(host)), legacyDraws(o[QStringLiteral("draws")].toArray()));

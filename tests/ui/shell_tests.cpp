@@ -7277,6 +7277,80 @@ private slots:
         QCOMPARE(session->historySize(), sameSteps);
     }
 
+    // T2: Position's helper cross (a middle click) dragged, then the Line out
+    // of the shown frame's time: the render that blocks the tool ends the
+    // drag (Position::Draw's nothintoshow, VisualPosition.cpp:107-113:
+    // movingHelperLine = false), so when the Line shows again the pointer no
+    // longer carries the cross.
+    void visualPositionHelperDragEndsWhenBlocked()
+    {
+        // cfr.mkv's 48 frames: frame 24 shows the Line, frame 40 (1.67 s) not.
+        const char *extra = "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,{\\an5\\pos(100,80)}sign\n";
+        QVERIFY(application->openFile(visualDocument("t2helper.ass", extra)));
+        auto &tools = application->visualTools();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId sign = session->document().lines()[2]->id;
+        application->selectLine(sign.value);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
+        QCOMPARE(tools.activeFamily(), 1);
+        // The options and values rows take their place first: the video
+        // rectangle settles before points are taken in it.
+        QTRY_VERIFY(visualItem("visualValue_x"));
+        QRectF settled;
+        int polls = 0;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            const QRectF r = tools.videoRect();
+            polls = r == settled ? polls + 1 : 0;
+            settled = r;
+            return polls >= 5;
+        }(), 20000);
+        const auto &view = tools.videoView();
+        // The helper's square (DrawRect with size 4: eight device pixels).
+        auto helper = [&]() -> std::optional<QPointF> {
+            for (const QVariant &v : tools.overlay()) {
+                const QVariantMap m = v.toMap();
+                const QVariantList pts = m.value(QStringLiteral("points")).toList();
+                if (m.value(QStringLiteral("type")).toString() != QStringLiteral("polygon") || pts.size() != 4)
+                    continue;
+                const QVariantMap a = pts[0].toMap(), c = pts[2].toMap();
+                const double w = c[QStringLiteral("x")].toDouble() - a[QStringLiteral("x")].toDouble();
+                if (std::abs(view.toDevice(w) - 8) < 0.5)
+                    return QPointF((a[QStringLiteral("x")].toDouble() + c[QStringLiteral("x")].toDouble()) / 2,
+                                   (a[QStringLiteral("y")].toDouble() + c[QStringLiteral("y")].toDouble()) / 2);
+            }
+            return std::nullopt;
+        };
+        auto near = [](std::optional<QPointF> a, QPointF b) {
+            return a && std::abs(a->x() - b.x()) <= 1.5 && std::abs(a->y() - b.y()) <= 1.5;
+        };
+        const QPointF centre = tools.videoRect().center();
+        const QPoint at = videoPoint(centre + QPointF(-40, -30));
+        QTest::mouseMove(window, at);
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, at);
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(at))));
+        // The drag: the cross follows the pointer.
+        const QPoint dragged = at + QPoint(20, 10);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+        QTest::mouseMove(window, dragged);
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        // Out of the Line's time: blocked, the release never reaches the tool.
+        QVERIFY(application->video().showFrameAt(40));
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 40, 20000);
+        QTRY_VERIFY(!tools.warning().isEmpty());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, dragged);
+        QVERIFY(application->video().showFrameAt(24));
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 24, 20000);
+        QTRY_VERIFY(tools.warning().isEmpty());
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        // A plain move leaves the cross where the drag left it.
+        QTest::mouseMove(window, dragged + QPoint(30, 25));
+        QVERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\an5\\pos(100,80)}sign"));
+    }
+
     // T2: the two-point move on VFR media (frames of 30, 50 and 70 ms). The
     // \move's times are the Line's first and last frames' (GetMoveTimes,
     // Visuals.cpp:607-622, from the media's legacy Timebase), the end is

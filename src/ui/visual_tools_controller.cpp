@@ -51,6 +51,9 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     m_labelFont.setBold(true);
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
+        // The render: Visuals::Draw sets blockevents for the shown frame.
+        if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
+            t->blocked(*this);
         emit changed(); // the shown frame's time moves the warnings
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
@@ -349,6 +352,7 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     // Visuals::Draw's blockevents: a tool other than the crosshair takes no
     // events outside its Line's time or on a comment, warning shown or not.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None) {
+        t->blocked(*this);
         if (m_gesture && p.kind == Pointer::Kind::Release)
             (void)escape(); // legacy released the mouse capture
         return;

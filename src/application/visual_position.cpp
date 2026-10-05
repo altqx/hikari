@@ -796,6 +796,15 @@ std::optional<LineWarning> PositionTool::warning(const VisualHost &host) const
     return comment ? LineWarning::Comment : LineWarning::NotVisible;
 }
 
+void PositionTool::blocked(VisualHost &host)
+{
+    // Position::Draw's nothintoshow ends a helper-cross drag
+    // (VisualPosition.cpp:107-113, DrawWx 162-168: movingHelperLine =
+    // false), so the next event after the Line shows again does not move it.
+    (void)host;
+    m_movingHelperLine = false;
+}
+
 std::vector<ToolValue> PositionTool::values(const VisualHost &host) const
 {
     // The numeric alternative (media.md): the active Line's position in

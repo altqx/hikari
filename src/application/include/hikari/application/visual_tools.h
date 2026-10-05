@@ -280,6 +280,10 @@ public:
         (void)host;
         return std::nullopt;
     }
+    // Visuals::Draw found nothing to show and set blockevents: the host calls
+    // this when it renders, or takes a pointer event, while the tool is
+    // blocked. Position::Draw also ends a helper-cross drag there.
+    virtual void blocked(VisualHost &host) { (void)host; }
     // The family became the active one: legacy Visuals::Get made a new tool
     // (RendererVideo::SetVisual), so the tool's own state starts over; the
     // rail's options are the toolbar's and stay.

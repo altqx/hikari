@@ -33,6 +33,7 @@ public:
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::optional<LineWarning> warning(const VisualHost &host) const override;
+    void blocked(VisualHost &host) override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
     bool setValue(const std::string &name, const std::u16string &text, VisualHost &host) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
