@@ -2,6 +2,7 @@
 // reference, F6/Shift+F6 panel traversal and focus restoration.
 
 #include "hikari/app/application.h"
+#include "hikari/core/ass_save.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/hotkeys.h"
 #include "hikari/application/spell_checker.h"
@@ -7479,6 +7480,473 @@ private slots:
             QMetaObject::invokeMethod(menu, "close");
             QTRY_VERIFY(!menu->property("visible").toBool());
         }
+    }
+
+private:
+    // E4: the Line editor's metadata fields (legacy EditBox at 20d647c4).
+    QString writeStyled(const char *name, const char *events)
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QFile f(path);
+        f.open(QIODevice::WriteOnly);
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                "MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                "Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n"
+                "Style: Alpha,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,7,10,10,10,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+        f.write(events);
+        return path;
+    }
+    application::EditSession *targetSession() const
+    {
+        return application->files().session(*application->workspace().editingTarget());
+    }
+    // QTest::keyClicks takes widgets only: one key press per character.
+    void typeText(const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::keyClick(window, c.toLatin1());
+        QCoreApplication::processEvents();
+    }
+    // Types into a field as a user does: focus, select everything, type.
+    void typeInto(const char *name, const QString &text)
+    {
+        auto *field = item(name);
+        QVERIFY(field);
+        field->forceActiveFocus();
+        QMetaObject::invokeMethod(field, "selectAll");
+        typeText(text);
+        QCoreApplication::processEvents();
+    }
+
+private slots:
+    // Field round trips through the draft: each field shows the Line, a typed
+    // value is pending until Enter sends it as one step (EDITBOX_COMMIT_GO_NEXT_LINE,
+    // EditBox::OnNewline), Undo restores it; the Comment box sends at once.
+    void lineFieldsRoundTripThroughTheDraft()
+    {
+        QVERIFY(application->openFile(writeStyled("fields.ass",
+                                                  "Dialogue: 1,0:00:01.00,0:00:02.50,Sign,Ann,0,0,0,Banner;0,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,Bob,0,0,0,,second\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(item<QObject>("layerField")->property("text").toString(), QStringLiteral("1"));
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("0:00:01.50"));
+        QCOMPARE(item<QObject>("commentBox")->property("checked").toBool(), false);
+        // The Style list is sorted (HikariChoice::Sort) and shows the Line's Style.
+        QCOMPARE(application->editor().styleNames(), (QStringList{"Alpha", "Default", "Sign"}));
+        QCOMPARE(item<QObject>("styleChoice")->property("currentText").toString(), QStringLiteral("Sign"));
+        QCOMPARE(item<QObject>("actorBox")->property("editText").toString(), QStringLiteral("Ann"));
+        QCOMPARE(item<QObject>("effectBox")->property("editText").toString(), QStringLiteral("Banner;0"));
+        // RebuildActorEffectLists: each value once, sorted.
+        QCOMPARE(application->editor().actors(), (QStringList{"Ann", "Bob"}));
+        QCOMPARE(application->editor().effects(), QStringList{"Banner;0"});
+        const auto steps = session->historySize();
+
+        typeInto("layerField", QStringLiteral("4"));
+        typeInto("marginLeftField", QStringLiteral("12")); // finishing the Layer field puts it in the draft
+        QCOMPARE(session->document().lines()[0]->layer.value, 1); // pending only
+        QVERIFY(session->draftLine());
+        press(Qt::Key_Return); // Enter in a field: commit and go to the next Line
+        QCOMPARE(session->document().lines()[0]->layer.value, 4);
+        QCOMPARE(session->document().lines()[0]->marginLeft.value, 12);
+        QCOMPARE(session->historySize(), steps + 1);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(session->document().lines()[0]->layer.value, 1);
+        QCOMPARE(session->document().lines()[0]->marginLeft.value, 0);
+
+        // The Actor box: typing is pending, Enter sends it and rebuilds the list.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
+        auto *actor = item("actorBox");
+        auto *actorText = actor->property("contentItem").value<QQuickItem *>();
+        QVERIFY(actorText);
+        actorText->forceActiveFocus();
+        QMetaObject::invokeMethod(actorText, "selectAll");
+        typeText(QStringLiteral("Cy,"));
+        QCOMPARE(application->editor().actor(), QStringLiteral("Cy")); // commas cannot be typed
+        QCOMPARE(session->document().lines()[1]->actor, u8"Bob");
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[1]->actor, u8"Cy");
+        QCOMPARE(application->editor().actors(), (QStringList{"Ann", "Cy"}));
+
+        // The Comment box sends the Line at once (OnCommit) and empties the counters.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("first"));
+        const auto beforeComment = session->historySize();
+        auto *comment = item("commentBox");
+        QTest::mouseClick(window, Qt::LeftButton, {}, comment->mapToScene(QPointF(8, comment->height() / 2)).toPoint());
+        QTRY_VERIFY(session->document().lines()[0]->comment);
+        QCOMPARE(session->historySize(), beforeComment + 1);
+        QVERIFY(item<QObject>("commentBox")->property("checked").toBool());
+        QCOMPARE(item<QObject>("charsCounter")->property("text").toString(), QString());
+        QCOMPARE(item<QObject>("cpsCounter")->property("text").toString(), QString());
+        QVERIFY(application->editor().undo());
+        QVERIFY(!item<QObject>("commentBox")->property("checked").toBool());
+
+        // The Style choice sends at once too.
+        QVERIFY(QMetaObject::invokeMethod(item("styleChoice"), "activated", Q_ARG(int, 0)));
+        QCOMPARE(session->document().lines()[0]->style, u8"Alpha");
+        QCOMPARE(item<QObject>("styleChoice")->property("currentText").toString(), QStringLiteral("Alpha"));
+        // A pick from the Effect list sends it.
+        QVERIFY(application->editor().chooseEffect(QStringLiteral("Banner;0")));
+        QCOMPARE(session->document().lines()[0]->effect, u8"Banner;0");
+    }
+
+    // E63-invalid-commit: an End before the Start blocks the draft with the
+    // other fields in it; the legacy preference commits it.
+    void lineFieldsWaitBehindAnInvalidTime()
+    {
+        QVERIFY(application->openFile(writeStyled("invalid.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        typeInto("layerField", QStringLiteral("2"));
+        typeInto("endField", QStringLiteral("0:00:00.50"));
+        press(Qt::Key_Return);
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QCOMPARE(session->document().lines()[0]->layer.value, 0);
+        QVERIFY(session->draftLine());
+        session->setInvalidCommitPolicy(application::InvalidCommitPolicy::Legacy);
+        QVERIFY(application->editor().commit());
+        QCOMPARE(session->document().lines()[0]->layer.value, 2);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 500'000);
+    }
+
+    // Enter in Start, End or Duration commits and stays on the Line with
+    // EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT (EditBox::OnNewline,
+    // EditBox.cpp:987-1001); elsewhere, and without it, it goes on.
+    void enterInTheTimeFieldsFollowsTheOption()
+    {
+        QVERIFY(application->openFile(writeStyled("times.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n"
+                                                  "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,third\n")));
+        auto *session = targetSession();
+        const auto lines = session->document().lines();
+        const auto first = lines[0]->id, second = lines[1]->id;
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        typeInto("startField", QStringLiteral("0:00:01.50"));
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'500'000);
+        QCOMPARE(session->selection().active, std::optional(first)); // stays
+        // Ctrl+Enter (EDITBOX_COMMIT) applies and stays, in any field.
+        typeInto("marginVerticalField", QStringLiteral("5"));
+        press(Qt::Key_Return, Qt::ControlModifier);
+        QCOMPARE(session->document().lines()[0]->marginVertical.value, 5);
+        QCOMPARE(session->selection().active, std::optional(first));
+        typeInto("layerField", QStringLiteral("3"));
+        press(Qt::Key_Return); // not a time field: goes on
+        QCOMPARE(session->document().lines()[0]->layer.value, 3);
+        QCOMPARE(session->selection().active, std::optional(second));
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+        typeInto("endField", QStringLiteral("0:00:04.50"));
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[1]->end.value.microseconds(), 4'500'000);
+        QCOMPARE(session->selection().active, std::optional(session->document().lines()[2]->id));
+    }
+
+    // DurEdit: End = Start + the duration while live editing is on (OnEdit's
+    // durFocus branch); without it, OnEdit never runs and Send keeps the End
+    // (EditBox.cpp:582-586, 597-601).
+    void durationMovesTheEndWithLiveEditing()
+    {
+        QVERIFY(application->openFile(writeStyled("duration.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), true);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        typeInto("durationField", QStringLiteral("0:00:03.25"));
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 4'250'000);
+        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:04.25"));
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
+        typeInto("durationField", QStringLiteral("0:00:01.00"));
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 4'250'000);
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("0:00:01.00")); // as typed
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+        application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+    }
+
+    // EditBox::UpdateChars against legacy TextData: "Wraps: <counts>/43" and
+    // "Characters per second: <n><=15", warned over 43 characters a wrap and
+    // over 15 per second; the translation's counts in translation mode.
+    void countersFollowTheEditedText()
+    {
+        QVERIFY(application->openFile(writeStyled("counters.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\\Nsecond line\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *chars = item<QObject>("charsCounter");
+        auto *cps = item<QObject>("cpsCounter");
+        QCOMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/10/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        QCOMPARE(application->editor().cpsWarning(), false);
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        press(Qt::Key_End, Qt::ControlModifier);
+        typeText(QStringLiteral(" more words here"));
+        QTRY_COMPARE(chars->property("text").toString(), QStringLiteral("Wraps: 5/23/43"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 28<=15"));
+        QVERIFY(application->editor().cpsWarning());
+        QVERIFY(!application->editor().charsWarning());
+        typeText(QStringLiteral(" and many more words to pass the limit"));
+        QTRY_VERIFY(application->editor().charsWarning());
+        application->editor().discard();
+    }
+
+    // EditBox::SetAlignment and OnAnChoice: the shown Line's position (the
+    // Style's, or its text's \an), and a choice puts \an<n> in the first block.
+    void alignmentChoiceTagsTheText()
+    {
+        QVERIFY(application->openFile(writeStyled("an.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\an4\\b1}second\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *choice = item<QObject>("alignmentChoice");
+        QCOMPARE(choice->property("currentIndex").toInt(), 7); // Sign's alignment 8
+        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 2)));
+        QCOMPARE(choice->property("currentIndex").toInt(), 2);
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
+                 QStringLiteral("{\\an3}first"));
+        QVERIFY(item("lineText")->hasActiveFocus());
+        application->editor().commit();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(choice->property("currentIndex").toInt(), 3); // the text's \an4
+        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 8)));
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftRecord()->text.c_str())),
+                 QStringLiteral("{\\an9\\b1}second")); // replaced in place
+        application->editor().discard();
+        // Several Lines: each one's first block, as one "Editing multiple lines" step.
+        application->selectAllLines();
+        QVERIFY(QMetaObject::invokeMethod(choice, "activated", Q_ARG(int, 0)));
+        QCOMPARE(session->history().back().name, std::string("Editing multiple lines"));
+        QCOMPARE(session->document().lines()[0]->text, u8"{\\an1}first");
+        QCOMPARE(session->document().lines()[1]->text, u8"{\\an1\\b1}second");
+    }
+
+    // SubsGrid::ChangeLine: with several Lines selected the sent fields go to
+    // each of them in one step.
+    void severalSelectedLinesTakeTheSentFields()
+    {
+        QVERIFY(application->openFile(writeStyled("several.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n"
+                                                  "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,third\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down, Qt::ShiftModifier);
+        QTRY_COMPARE(session->selection().selected.size(), std::size_t(2));
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(item("styleChoice"), "activated", Q_ARG(int, 2))); // Sign
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->document().lines()[0]->style, u8"Sign");
+        QCOMPARE(session->document().lines()[1]->style, u8"Sign");
+        QCOMPARE(session->document().lines()[2]->style, u8"Default");
+        QCOMPARE(session->document().lines()[1]->text, u8"second"); // text was not sent
+    }
+
+    // The Edit button opens the Style manager on the shown Line's Style (Y1).
+    void styleEditOpensTheStyleManagerOnTheStyle()
+    {
+        QVERIFY(application->openFile(writeStyled("edit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *styles = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(styles);
+        QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
+        QTRY_VERIFY(styles->isVisible());
+        const auto selected = styles->property("assSelected").toList(); // Default, Sign, Alpha: Sign
+        QCOMPARE(selected.size(), 1);
+        QCOMPARE(selected.value(0).toInt(), 1);
+        styles->close();
+    }
+
+    // The format decides the fields (EditBox::HideControls): SRT has times but
+    // no ASS fields; TMPlayer no End or Duration; MicroDVD and MPL2 show
+    // frames and deciseconds (SubsTime::raw).
+    void formatsShowTheirOwnFields()
+    {
+        const QString srt = dir.filePath(QStringLiteral("fields.srt"));
+        {
+            QFile f(srt);
+            f.open(QIODevice::WriteOnly);
+            f.write("1\r\n00:00:01,234 --> 00:00:02,500\r\nfirst\r\n\r\n");
+        }
+        QVERIFY(application->openFile(srt));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        QCOMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("00:00:01,234"));
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("00:00:01,266"));
+        QVERIFY(!item<QObject>("layerField")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("styleChoice")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("actorBox")->property("enabled").toBool());
+        QVERIFY(!item<QObject>("alignmentChoice")->property("enabled").toBool());
+        QVERIFY(item<QObject>("endField")->property("enabled").toBool());
+        typeInto("startField", QStringLiteral("00:00:01,500"));
+        press(Qt::Key_Return);
+        QCOMPARE(targetSession()->document().lines()[0]->start.value.microseconds(), 1'500'000);
+    }
+    void mpl2FieldsShowDeciseconds()
+    {
+        const QString mpl2 = dir.filePath(QStringLiteral("fields.txt"));
+        {
+            QFile f(mpl2);
+            f.open(QIODevice::WriteOnly);
+            f.write("[12][25]first\r\n");
+        }
+        QVERIFY(application->openFile(mpl2));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item<QObject>("startField")->property("text").toString(), QStringLiteral("12"));
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("13"));
+        typeInto("endField", QStringLiteral("31"));
+        press(Qt::Key_Return);
+        QCOMPARE(targetSession()->document().lines()[0]->end.value.microseconds(), 3'100'000);
+    }
+
+    // The Times/Frames switch: enabled once a video is open; with an exact
+    // timebase the fields and the Grid show frames (TimeCtrl::SetTime,
+    // SubsGridWindow.cpp:348-357), typed frames take the legacy midpoint
+    // times (StartTimeFor/EndTimeFor, ZEROIT), and the switch is saved.
+    void framesSwitchShowsVideoFrames_data()
+    {
+        QTest::addColumn<QString>("video");
+        QTest::addColumn<QString>("start");
+        QTest::addColumn<QString>("end");
+        QTest::addColumn<QString>("duration");
+        QTest::addColumn<QString>("typed");
+        QTest::addColumn<qint64>("typedStartMs");
+        // 24000/1001: frame 24 starts at 1001 ms, 36 at 1501.5 ms.
+        QTest::newRow("cfr") << "cfr.mkv" << "24" << "35" << "12" << "30" << qint64(1230);
+        // Frame durations cycle 30, 50, 70 ms: frame 3k starts at 150k ms, 3k+1 at
+        // 150k + 30, 3k+2 at 150k + 80. The frame at or after 1000 ms is 21
+        // (1050); 1500 ms is frame 30's start, so the last shown is 29. Typed
+        // frame 3: min(80 + 70 / 2 + 5, 150) = 120 ms.
+        QTest::newRow("vfr") << "vfr.mkv" << "21" << "29" << "9" << "3" << qint64(120);
+    }
+    void framesSwitchShowsVideoFrames()
+    {
+        QFETCH(QString, video);
+        QVERIFY(application->openFile(writeStyled("frames.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,first\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        QVERIFY(!application->editor().framesAvailable());
+        application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
+        application->video().openVideo(nativeFixture(qPrintable(video)));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTRY_VERIFY(application->editor().framesAvailable());
+        QVERIFY(item<QObject>("showFrames")->property("enabled").toBool());
+        const auto click = [&](const char *name) {
+            auto *radio = item(name);
+            QTest::mouseClick(window, Qt::LeftButton, {}, radio->mapToScene(QPointF(10, radio->height() / 2)).toPoint());
+        };
+        click("showFrames");
+        QTRY_VERIFY(application->editor().showFrames());
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), true);
+        QFETCH(QString, start);
+        QFETCH(QString, end);
+        QFETCH(QString, duration);
+        QCOMPARE(item<QObject>("startField")->property("text").toString(), start);
+        QCOMPARE(item<QObject>("endField")->property("text").toString(), end);
+        QCOMPARE(item<QObject>("durationField")->property("text").toString(), duration);
+        auto *model = item("editingGrid")->property("model").value<QAbstractItemModel *>();
+        QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(), start);
+        QCOMPARE(model->index(0, ui::LineTableModel::EndColumn).data().toString(), end);
+        QFETCH(QString, typed);
+        QFETCH(qint64, typedStartMs);
+        typeInto("startField", typed);
+        press(Qt::Key_Return);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds() / 1000, typedStartMs);
+        // Back to times: the Grid and the fields show times again.
+        click("showTimes");
+        QTRY_VERIFY(!application->editor().showFrames());
+        QCOMPARE(model->index(0, ui::LineTableModel::StartColumn).data().toString(),
+                 QString::fromUtf8(reinterpret_cast<const char *>(core::legacy::assTimeText(typedStartMs).c_str())));
+        QCOMPARE(application->settingsStore()->value(QStringLiteral("editor.timesToFramesSwitch")).toBool(), false);
+    }
+
+    // Live video editing (EditBox::OnEdit's OpenSubsLater): the video's
+    // subtitles follow the draft while typing; with DISABLE_LIVE_VIDEO_EDITING
+    // only a commit reaches them.
+    void liveVideoEditingFollowsTheDraft()
+    {
+        QVERIFY(application->openFile(writeStyled("live.ass",
+                                                  "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n")));
+        application->settingsStore()->setValue(QStringLiteral("video.dontAskForBadResolution"), true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        const auto script = [&] {
+            const auto &bytes = application->videoScript();
+            return QByteArray(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size()));
+        };
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        press(Qt::Key_End);
+        typeText(QStringLiteral(" live"));
+        QTRY_VERIFY(script().contains("first live"));
+        application->editor().discard();
+        QTRY_VERIFY(!script().contains("first live"));
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
+        text->forceActiveFocus();
+        press(Qt::Key_End);
+        typeText(QStringLiteral(" later"));
+        QCoreApplication::processEvents();
+        QVERIFY(!script().contains("first later"));
+        QVERIFY(application->editor().commit());
+        QTRY_VERIFY(script().contains("first later"));
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
+    }
+
+    // F1: a match in the Actor or Effect field selects it in that box
+    // (findreplace.cpp:366-371).
+    void findSelectsActorAndEffectMatches()
+    {
+        QVERIFY(application->openFile(writeStyled("find.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,Narrator,0,0,0,,first\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,fade-in,second\n")));
+        application->setFindQuestionHandler([](int, const QString &) { return 2; });
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("rat")},
+                                                             {QStringLiteral("field"), 2}});
+        auto *actorText = item("actorBox")->property("contentItem").value<QQuickItem *>();
+        QTRY_COMPARE(actorText->property("selectedText").toString(), QStringLiteral("rat"));
+        application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("in")},
+                                                             {QStringLiteral("field"), 3}});
+        auto *effectText = item("effectBox")->property("contentItem").value<QQuickItem *>();
+        QTRY_COMPARE(effectText->property("selectedText").toString(), QStringLiteral("in"));
+        QCOMPARE(effectText->property("selectionStart").toInt(), 5);
     }
 
     void theReferenceIsNeverEdited()
