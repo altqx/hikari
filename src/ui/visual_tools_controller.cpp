@@ -282,8 +282,9 @@ void VisualToolsController::updatePreview()
         return;
     const auto *s = editingSession();
     if (m_gesture && m_gesture->hasChanges() && s) {
-        core::Document preview = s->document();
-        m_gesture->applyTo(preview);
+        // Only the Lines the frame shows, as legacy's GetVisible sent: a long
+        // script is not reparsed on every pointer move.
+        const core::Document preview = m_gesture->preview(s->document(), videoTimeMs(), m_video.session().playing());
         m_preview(&preview);
         m_previewing = true;
     } else if (m_previewing) {

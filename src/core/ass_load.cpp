@@ -291,6 +291,20 @@ bool Document::removeLine(LineId id)
     return false;
 }
 
+std::size_t Document::removeLinesIf(const std::function<bool(const LineRecord &)> &remove)
+{
+    std::size_t removed = 0;
+    for (auto &section : m_sections) {
+        const auto end = std::remove_if(section.records.begin(), section.records.end(), [&](const auto &record) {
+            const auto *line = std::get_if<LineRecord>(&record);
+            return line && remove(*line);
+        });
+        removed += static_cast<std::size_t>(section.records.end() - end);
+        section.records.erase(end, section.records.end());
+    }
+    return removed;
+}
+
 bool Document::moveLine(LineId id, std::optional<LineId> before)
 {
     if (before == id)

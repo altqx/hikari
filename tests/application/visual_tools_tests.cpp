@@ -519,6 +519,40 @@ TEST(VisualGesture, OneUndoStepPerGesture)
     EXPECT_EQ(session.historySize(), before);
 }
 
+// T2: the video's preview while a gesture is open holds only the Lines the
+// frame shows, as legacy's dummy rendering sent (Position::ChangeMultiline on
+// SubsGrid::GetVisible, SubsGridBase.cpp:1517-1593, VisualPosition.cpp:
+// 470-481): others within 5 ms of the time, or not yet over while playing;
+// the targets, staged, while the time is within their own (end included), or
+// always while playing.
+TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
+{
+    EditSession session(load(kScript));
+    const auto all = ids(session);
+    auto g = Gesture::begin(session, {all[0], all[2]}, "Visual positioning tool");
+    ASSERT_TRUE(g);
+    g->stage(all[0], u8"{\\pos(1,1)}first");
+    g->stage(all[2], u8"{\\pos(3,3)}third");
+    auto texts = [&](std::int64_t time, bool playing) {
+        std::vector<std::u8string> out;
+        for (const auto *l : g->preview(session.document(), time, playing).lines())
+            out.push_back(l->text);
+        return out;
+    };
+    using V = std::vector<std::u8string>;
+    EXPECT_EQ(texts(1500, false), (V{u8"{\\pos(1,1)}first"}));
+    EXPECT_EQ(texts(1994, false), (V{u8"{\\pos(1,1)}first"}));
+    EXPECT_EQ(texts(1995, false), (V{u8"{\\pos(1,1)}first", u8"second"}));
+    EXPECT_EQ(texts(2000, false), (V{u8"{\\pos(1,1)}first", u8"second"})); // a target's end included
+    EXPECT_EQ(texts(2001, false), (V{u8"second"}));
+    EXPECT_EQ(texts(3004, false), (V{u8"second", u8"{\\pos(3,3)}third"}));
+    EXPECT_EQ(texts(4500, false), (V{u8"note"}));
+    EXPECT_EQ(texts(1500, true), (V{u8"{\\pos(1,1)}first", u8"second", u8"{\\pos(3,3)}third", u8"note"}));
+    EXPECT_EQ(texts(3500, true), (V{u8"{\\pos(1,1)}first", u8"{\\pos(3,3)}third", u8"note"}));
+    // The Document itself keeps every Line.
+    EXPECT_EQ(session.document().lines().size(), 4u);
+}
+
 TEST(VisualGesture, CancelLeavesThePreGestureDraft)
 {
     EditSession session(load(kScript));

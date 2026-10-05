@@ -166,6 +166,12 @@ public:
     // The staged texts put into a copy of the Document (the video's preview
     // while the gesture is open, legacy's dummy rendering).
     void applyTo(core::Document &document) const;
+    // What the video renders while the gesture is open (Position::
+    // ChangeMultiline / Visuals::RenderSubs on SubsGrid::GetVisible,
+    // SubsGridBase.cpp:1517-1593): only the Lines shown at the video's time
+    // (5 ms either side, or any not yet over while playing), the targets
+    // with their staged texts while they show (VisualPosition.cpp:470-481).
+    core::Document preview(const core::Document &document, std::int64_t timeMs, bool playing) const;
 
     // One history step with every staged text. A pending draft on a target
     // is committed first, as every command does (its own step); the gesture
