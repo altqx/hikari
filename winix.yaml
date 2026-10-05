@@ -13,6 +13,10 @@ resources:
   cpus: 6
   memoryGiB: 12
   diskGiB: 180
+# An ICH9 HDA endpoint on QEMU's silent backend (N6 audio tests write silence
+# only) and two monitors for the D1 gate's mixed DPI and monitor removal
+# (both approved by the user, 2026-10-04 and 2026-10-05).
+vm: { audio: none, displays: 2 }
 exclude: [.git, .winix, .env, '*.pfx', '*.key', out]
 pipeline: [provision, build, test]
 tasks:
@@ -57,12 +61,12 @@ tasks:
     script: $env:HIKARI_TEST_AUDIO_DEVICE = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudio(Output|Device)[.]" -V
     timeoutSeconds: 600
   audio-hotplug:
-    # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device
+    # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device through winix vm device
     # (silent audiodev; Windows names it "Speakers (Audio Device)", "(2- Audio Device)" after a replug) when the test asks. Only silence is written.
     script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
   audio-hotplug-directsound:
-    # The same through DirectSound (tools/winix/hotplug.sh winix-dev hikariusbaudio audio-hotplug-directsound),
+    # The same through DirectSound (tools/winix/hotplug.sh hikariusbaudio audio-hotplug-directsound),
     # where the loss shows only as stalled callbacks.
     script: $env:HIKARI_TEST_AUDIO_HOTPLUG = '\((\d+- )?Audio Device\)'; $env:HIKARI_TEST_AUDIO_HOTPLUG_API = 'Windows DirectSound'; $env:HIKARI_TEST_AUDIO_HOTPLUG_STALL_ONLY = '1'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudioHotplug[.]" -V
     timeoutSeconds: 600
@@ -192,17 +196,6 @@ tasks:
     visualStudio: false
     timeoutSeconds: 300
     environment: {GATE_KEYS: '[]'}
-  monitors:
-    # The display adapters and monitors Windows sees (tools/winix/monitors.sh).
-    script: Get-CimInstance Win32_VideoController | Format-Table Name, Status, CurrentHorizontalResolution, CurrentVerticalResolution -AutoSize | Out-String -Width 200; Get-CimInstance -Namespace root\wmi WmiMonitorID -ErrorAction SilentlyContinue | ForEach-Object { "monitor $($_.InstanceName) active=$($_.Active)" }; Get-PnpDevice -Class Display,Monitor | Format-Table Class, Status, FriendlyName -AutoSize | Out-String -Width 200
-    visualStudio: false
-    timeoutSeconds: 120
-  qxl-driver:
-    # QXL-WDDM-DOD from the pinned virtio-win ISO, one monitor per QXL device
-    # (tools/winix/monitors.sh copies it into the synced tree).
-    script: pnputil /add-driver "$PWD\tools\winix\drivers\qxldod\w10\amd64\qxldod.inf" /install; Get-PnpDevice -Class Display | Format-Table Status, FriendlyName, InstanceId -AutoSize | Out-String -Width 200
-    visualStudio: false
-    timeoutSeconds: 300
   display-layout:
     # Both QXL monitors extended at 1280x800, the second right of the primary; prints the monitor rectangles.
     script: ./tools/native-gate/windows/display.ps1
