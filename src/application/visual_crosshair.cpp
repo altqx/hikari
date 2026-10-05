@@ -154,6 +154,12 @@ void CrosshairTool::putPosition(int x, int y, VisualHost &host)
     auto gesture = host.beginGesture({*active}, std::string(familyInfo(Family::Crosshair).history));
     if (!gesture)
         return;
+    // Departure by the approved rule "Commands commit the draft first"
+    // (edit-transactions.md): legacy read tab->edit->line, the Line without
+    // the typed text (EditBox::Send copies the editor into it), and the
+    // SetModified that follows reloaded the editor over that text
+    // (SubsGrid::ShowEditedLine, SubsGridBase.cpp:1118). Here the pending
+    // draft commits first as its own step and \pos goes into the typed text.
     const core::LineRecord &line = (*gesture)->before(*active);
     // The translation in TLMode, unless it is empty.
     const bool istl = translationMode(*session) && !line.translation.empty();

@@ -416,6 +416,11 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_FALSE(cross.shown());
 }
 
+// A departure by the approved rule "Commands commit the draft first"
+// (edit-transactions.md): legacy Cross wrote into tab->edit->line, which
+// lacks the typed text, and the following SetModified reloaded the editor
+// over it (SubsGridBase.cpp:1118), losing it. Here the draft is its own
+// step and \pos goes into the typed text.
 TEST(VisualCrosshair, ClickUsesThePendingDraftAndCommitsItFirst)
 {
     TestHost host;
