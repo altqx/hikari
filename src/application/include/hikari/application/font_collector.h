@@ -148,6 +148,7 @@ struct RendererFile {
 struct CollectorReview {
     CollectorAction action = CollectorAction::Check;
     std::optional<std::size_t> retrievedFonts; // "Retrieved sizes and names of %i fonts"
+    std::int64_t retrieveMs = 0;               // "..., elapsed time %sms."
     // "Cannot retrieve the font file sizes and names;\ncopying will be
     // canceled." (FontCollector.cpp:726-728): nothing else is done.
     bool retrieveFailed = false;

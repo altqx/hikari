@@ -7,7 +7,8 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
     update_checker.cpp include/hikari/app/update_checker.h
-    style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
+    style_manager_controller.cpp include/hikari/app/style_manager_controller.h
+    font_collector_controller.cpp include/hikari/app/font_collector_controller.h) # Y8
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core

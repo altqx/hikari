@@ -4,6 +4,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <cwctype>
@@ -461,6 +462,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
                                                                  CollectorAction action, const std::atomic<bool> *cancel)
 {
     const auto cancelled = [&] { return cancel && cancel->load(); };
+    const auto started = std::chrono::steady_clock::now();
     const bool copyFonts = action != CollectorAction::Check;
     CollectorReview review;
     review.action = action;
@@ -479,6 +481,7 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             return review;
         }
         review.retrievedFonts = files.size();
+        review.retrieveMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
         m_retrieved = true;
     }
 

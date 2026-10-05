@@ -96,3 +96,4 @@ target_compile_definitions(hikari_application_session_file_tests PRIVATE
 # Y8: the font collector's scan, review and output rules.
 hikari_add_gtest(hikari_application_font_collector_tests SOURCES font_collector_tests.cpp
     LIBRARIES hikari_application LABELS application)
+target_include_directories(hikari_application_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

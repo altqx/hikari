@@ -8,6 +8,7 @@
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/app/font_collector_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -534,6 +535,8 @@ public:
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
     StyleManagerController &styleManager() { return *m_styleManager; }
+    // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
+    FontCollectorController &fontCollector() { return *m_fontCollector; }
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
@@ -666,6 +669,7 @@ private:
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<StyleManagerController> m_styleManager;
+    std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;

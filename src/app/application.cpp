@@ -531,6 +531,41 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
+    {
+        // Y8: the font collector reads every tab's Document (a copy for the
+        // run) and goes to a Line or Style from its log.
+        FontCollectorController::Hooks hooks;
+        hooks.tabs = [this] {
+            std::vector<FontCollectorController::Tab> out;
+            for (const auto id : m_workspace.tabs()) {
+                FontCollectorController::Tab tab;
+                if (auto *session = m_files->session(id))
+                    tab.document = std::make_shared<core::Document>(session->document());
+                if (const auto destination = m_files->destination(id))
+                    tab.path = QString::fromStdString(destination->value);
+                out.push_back(std::move(tab));
+            }
+            return out;
+        };
+        hooks.currentTab = [this] { return currentTab(); };
+        const auto goTo = [this](int tab, const std::function<bool(const core::LineRecord &, int)> &match) {
+            selectTab(tab);
+            if (auto *session = targetSession()) {
+                const auto lines = session->document().lines();
+                for (int i = 0; i < int(lines.size()); ++i)
+                    if (match(*lines[std::size_t(i)], i)) {
+                        selectLine(lines[std::size_t(i)]->id.value);
+                        return;
+                    }
+            }
+        };
+        hooks.goToLine = [goTo](int tab, int line) { goTo(tab, [line](const core::LineRecord &, int i) { return i == line; }); };
+        hooks.goToStyle = [goTo](int tab, const QString &style) {
+            const std::u16string name = style.toStdU16String();
+            goTo(tab, [name](const core::LineRecord &l, int) { return core::toUtf16(l.style) == name; });
+        };
+        m_fontCollector = std::make_unique<FontCollectorController>(*m_settings, std::move(hooks));
+    }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
     m_recoveryDir = options.recoveryDir;
@@ -4004,6 +4039,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
+            {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 
