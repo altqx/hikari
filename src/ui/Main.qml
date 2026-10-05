@@ -36,6 +36,7 @@ ApplicationWindow {
     required property var automationHotkeys
     required property var updates
     required property var styleManager
+    required property var fontCollector // Y8: FontCollectorController
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
 
     // Every registered macro, in load and registration order (the dynamic
@@ -1084,6 +1085,15 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture(modelData[2])) conversionDialog.openFor(modelData[0], modelData[1])
                     }
                 }
+            }
+            // Legacy SubsMenu: Font collector after Conversion and Shift times
+            // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
+            MenuItem {
+                id: fontCollectorItem
+                objectName: "fontCollectorMenuItem"
+                text: qsTr("Font collector")
+                enabled: root.shell.hasEditingTarget && root.shell.assColumns
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
             }
             MenuItem {
                 id: resampleItem
@@ -2571,6 +2581,12 @@ ApplicationWindow {
                         MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
                         MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
+                        // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
+                        MenuSeparator {}
+                        MenuItem {
+                            objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
+                        }
                     }
                 }
             }
@@ -3944,6 +3960,22 @@ ApplicationWindow {
         hotkeys: root.hotkeys
         anchors.centerIn: parent
     }
+    // Y8: the font collector; a double click on a Style in its log opens the
+    // Style editor (StyleStore::ShowStyleEdit).
+    FontCollectorDialog {
+        id: fontCollectorDialog
+        collector: root.fontCollector
+        anchors.centerIn: parent
+        Connections {
+            target: root.fontCollector
+            function onStyleRequested(style) {
+                styleManagerWindow.showFor(style)
+                const row = styleManagerWindow.styles.documentStyles.indexOf(style)
+                if (row >= 0)
+                    styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
+            }
+        }
+    }
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
@@ -4509,6 +4541,7 @@ ApplicationWindow {
         const items = {
             GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
             GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
+            GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem, // Y8
             GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
             GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
             GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem

@@ -10,6 +10,7 @@
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "audio_display_item.h"
+#include "fake_font_service.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -22,6 +23,7 @@
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
+#include <QTranslator>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QtQml/qqmlextensionplugin.h>
@@ -1829,6 +1831,280 @@ private slots:
             // F4-rules-cr keeps it checked on both platforms.
             QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
         }
+    }
+
+    // Y8: Subtitles > Font collector (legacy FontCollectorDialog): check
+    // counts families, Zip stages a review whose incomplete output is
+    // written only after the acknowledgment and labelled, the log's Line
+    // numbers and Styles lead to them, and the settings are kept.
+    void fontCollectorChecksStagesAndWrites()
+    {
+        const QString path = dir.filePath(QStringLiteral("collect.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
+                    "SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+                    "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "Style: Sign,Nowhere,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,10,10,10,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\fnTimes}Ab\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Sign,,0,0,0,,x\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto fonts = std::make_unique<hikari::testing::FakeFonts>();
+        fonts->faces = {{"Arial", 400, false, "/fonts/arial.ttf"}, {"Times", 400, false, "/fonts/times.ttf"}};
+        // The whole Document also drew a character with a fallback file no
+        // family named: its block is CheckPathAndGlyphs' "Found font \"%s\"."
+        // (FontCollector.cpp:1088), which has no newline of its own.
+        hikari::testing::FakeFonts::add(fonts->document, {"Gothic", 400, false, "/fonts/gothic.ttf", U"x"},
+                                        application::SelectionStage::Fallback, U'x', "",
+                                        application::NameMatch::None);
+        auto &collector = application->fontCollector();
+        collector.setFontService(std::move(fonts));
+        QString revealed;
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"));
+        QVERIFY(dialog);
+        auto *menuItem = named("fontCollectorMenuItem");
+        QVERIFY(menuItem && menuItem->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        // FONT_COLLECTOR_ACTION 0: the path controls are disabled.
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
+        QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
+        QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        const QString check = collector.logText();
+        QVERIFY2(check.startsWith(QStringLiteral("Found font \"Arial\"\nIn styles:\n - Default tabs: 1\n\n"
+                                                 "Found font \"Times\"\nIn lines: 2\n\n"
+                                                 "Font not found \"Nowhere\".\nIn styles:\n - Sign tabs: 1\n\n")),
+                 qPrintable(check));
+        QVERIFY2(check.contains(QStringLiteral("\nFinished, found 2 fonts.\nNot found 1 font.\n")), qPrintable(check));
+        QVERIFY(check.contains(QStringLiteral("\nFinished in 00:00:")));
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+
+        // A double click in the log (OnConsoleDoubleClick, FontCollector.cpp:269-294)
+        // on a Line number goes to it, on a Style's tab to its first Line.
+        // The click lands on the rich-text log at the character's caret
+        // position, which is the offset in logText (legacy HitTest,
+        // HikariTextCtrl.cpp:1312-1358: the nearest caret position).
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto *logView = dialogItem("fontCollectorDialog", "fontCollectorLog");
+        QVERIFY(logView);
+        const auto pointAt = [&](int offset) {
+            QRectF r;
+            QMetaObject::invokeMethod(logView, "positionToRectangle", Q_RETURN_ARG(QRectF, r), Q_ARG(int, offset));
+            const QPointF local(r.x() + 1.5, r.center().y());
+            int hit = -1;
+            QMetaObject::invokeMethod(logView, "positionAt", Q_RETURN_ARG(int, hit), Q_ARG(qreal, local.x()),
+                                      Q_ARG(qreal, local.y()));
+            return std::pair{logView->mapToScene(local).toPoint(), hit};
+        };
+        for (const QString &at : {QStringLiteral("In lines: 2"), QStringLiteral(" - Sign tabs: 1"),
+                                  QStringLiteral("Font not found")}) {
+            const int offset = int(check.indexOf(at));
+            QCOMPARE(pointAt(offset).second, offset);
+        }
+        const auto lineNumber = pointAt(int(check.indexOf(QStringLiteral("In lines: 2")) + 10));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, lineNumber.first);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        QSignalSpy styleRequested(&collector, &app::FontCollectorController::styleRequested);
+        const auto styleTab = pointAt(int(check.indexOf(QStringLiteral(" - Sign tabs: 1")) + 14));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, styleTab.first);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[2]->id));
+        QCOMPARE(styleRequested.size(), 1);
+        QCOMPARE(styleRequested.at(0).at(0).toString(), QStringLiteral("Sign"));
+        QTRY_VERIFY(named("styleManager")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "closeManager"));
+
+        // Copy to selected folder without a folder: legacy's message.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+        QCOMPARE(application->settingsStore()->integer("fontCollector.action"), 1);
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        auto *message = root->findChild<QObject *>(QStringLiteral("fontCollectorMessage"));
+        QTRY_VERIFY(message->property("visible").toBool());
+        QCOMPARE(message->property("text").toString(), QStringLiteral("Select the folder where you want to copy fonts"));
+        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
+
+        // FC-slash-linux: the path field takes '/' typed on Linux; on Windows
+        // it excludes / * ? " < > | as legacy's HikariTextValidator did.
+        auto *pathField = dialogItem("fontCollectorDialog", "fontCollectorPath");
+        QTRY_VERIFY(!message->property("visible").toBool());
+        pathField->forceActiveFocus();
+        QTRY_VERIFY(pathField->hasActiveFocus());
+        for (const char key : {'a', '/', 'b', '*', 'c'})
+            QTest::keyClick(window, key);
+#ifdef _WIN32
+        QCOMPARE(pathField->property("text").toString(), QStringLiteral("abc"));
+#else
+        QCOMPARE(pathField->property("text").toString(), QStringLiteral("a/bc"));
+#endif
+        // FC-chooser-cancel: a cancelled folder or archive chooser keeps the
+        // previous path (legacy stored the empty answer, FontCollector.cpp:
+        // 418-433).
+        const QString kept = QDir::toNativeSeparators(dir.filePath(QStringLiteral("kept")));
+        collector.chooseDirectory(kept);
+        pathField->setProperty("text", kept);
+        for (const char *chooser : {"fontCollectorFolderDialog", "fontCollectorArchiveDialog"}) {
+            auto *chooserDialog = root->findChild<QObject *>(QLatin1String(chooser));
+            QVERIFY2(chooserDialog, chooser);
+            QVERIFY(QMetaObject::invokeMethod(chooserDialog, "rejected"));
+            QCOMPARE(pathField->property("text").toString(), kept);
+            QCOMPARE(application->settingsStore()->text("fontCollector.directory"), kept);
+        }
+        collector.chooseDirectory(QString());
+        QCOMPARE(application->settingsStore()->text("fontCollector.directory"), kept);
+
+        // Zip: ".zip" is added; the review is incomplete (a font is not
+        // found), so it writes only after the acknowledgment.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
+        const QString archive = dir.filePath(QStringLiteral("collected"));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QDir::toNativeSeparators(archive));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QVERIFY(collector.reviewIncomplete());
+        QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(archive) + QStringLiteral(".zip"));
+        const QString review = collector.logText();
+        QVERIFY2(review.startsWith(QStringLiteral("Retrieved sizes and names of 2 fonts, elapsed time 00:00:")), qPrintable(review));
+        // GetAssFonts' header ends its line (FontCollector.cpp:602); the
+        // renderer's own file is in a block CheckPathAndGlyphs opened, whose
+        // header does not (FontCollector.cpp:1088, FontLogContent::DoLog).
+        QVERIFY2(review.contains(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\nIn styles:\n")),
+                 qPrintable(review));
+        QVERIFY2(review.contains(QStringLiteral("Found font \"gothic.ttf\".The renderer also used \"/fonts/gothic.ttf\" "
+                                                "(fallback); it is not collected.\n\n")),
+                 qPrintable(review));
+        QVERIFY(review.contains(QStringLiteral("Ready to add 2 fonts to the archive")));
+        QVERIFY(!QFile::exists(archive + QStringLiteral(".zip")));
+        auto *apply = dialogItem("fontCollectorDialog", "fontCollectorApply");
+        QVERIFY(apply->property("visible").toBool());
+        QVERIFY(!apply->property("enabled").toBool());
+        auto *acknowledge = dialogItem("fontCollectorDialog", "fontCollectorAcknowledge");
+        QVERIFY(acknowledge->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(acknowledge, "click"));
+        QTRY_VERIFY(apply->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(apply, "click"));
+        QVERIFY(collector.waitIdle());
+        QVERIFY(QFile::exists(archive + QStringLiteral(".zip")));
+        const QString done = collector.logText();
+        QVERIFY2(done.contains(QStringLiteral("Added font \"arial.ttf\" to the archive.\n")), qPrintable(done));
+        QVERIFY2(done.contains(QStringLiteral("\nFinished, copied 2 fonts.\nNot found 1 font.\n")), qPrintable(done));
+        QVERIFY(done.contains(QStringLiteral("The output is labelled incomplete")));
+        QVERIFY(!done.contains(QStringLiteral("Completed Successfully")));
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+        QCOMPARE(application->settingsStore()->text("fontCollector.directory"), QDir::toNativeSeparators(archive));
+
+        // The archive now exists: Start asks "The zip file already exists,
+        // delete it?" (FontCollector.cpp:513-519). Legacy removed it on Yes
+        // and wrote at once; with the staged review the Yes is carried to
+        // Apply, so a review closed or refused keeps the user's archive.
+        const QString zipPath = archive + QStringLiteral(".zip");
+        {
+            QFile f(zipPath);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write("previous archive");
+        }
+        auto *replaceQuestion = root->findChild<QObject *>(QStringLiteral("fontCollectorReplaceQuestion"));
+        QVERIFY(replaceQuestion);
+        const auto readZip = [&] {
+            QFile f(zipPath);
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        };
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
+        QCOMPARE(replaceQuestion->property("text").toString(), QStringLiteral("The zip file already exists, delete it?"));
+        QCOMPARE(replaceQuestion->property("title").toString(), QStringLiteral("Confirmation"));
+        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        collector.close();
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Options));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        // Yes again; the incomplete review is not acknowledged, so Apply is
+        // refused and the archive stays.
+        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        collector.apply(false);
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        // Apply with the acknowledgment removes it and writes the new one.
+        collector.apply(true);
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QVERIFY(readZip().startsWith(QByteArray("PK\x03\x04", 4)));
+        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
+
+        // "Save to video / subtitles folder.": a folder beside the subtitles
+        // named in the interface language, "Fonts" in English (FC-czcionki;
+        // legacy always wrote "Czcionki", FontCollector.cpp:482).
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorSubsDirectory"), "click"));
+        QVERIFY(application->settingsStore()->boolean("fontCollector.useSubsDirectory"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("Fonts"))) + QDir::separator());
+        collector.apply(true);
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(QDir(dir.filePath(QStringLiteral("Fonts"))).entryList(QDir::Files, QDir::Name),
+                 (QStringList{QStringLiteral("INCOMPLETE - font collection.txt"), QStringLiteral("arial.ttf"),
+                              QStringLiteral("times.ttf")}));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("Czcionki"))));
+        {
+            // The name goes through the translation system: a Polish
+            // interface names it "Czcionki".
+            class Polish final : public QTranslator {
+            public:
+                bool isEmpty() const override { return false; }
+                QString translate(const char *context, const char *source, const char *, int) const override
+                {
+                    return QByteArray(context) == "hikari::app::FontCollectorController" && QByteArray(source) == "Fonts"
+                               ? QStringLiteral("Czcionki")
+                               : QString();
+                }
+            } polish;
+            QVERIFY(QCoreApplication::installTranslator(&polish));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QVERIFY(collector.waitIdle());
+            QCoreApplication::removeTranslator(&polish);
+            QCOMPARE(collector.copyPath(),
+                     QDir::toNativeSeparators(dir.filePath(QStringLiteral("Czcionki"))) + QDir::separator());
+        }
+
+        // Closing while Apply still runs past the wait: the late result
+        // still finds its review (no read of a dropped one) and ends the job.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        collector.setCloseWait(-1);
+        collector.apply(true);
+        collector.close();
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Working));
+        QVERIFY(collector.waitIdle());
+        collector.setCloseWait(30000);
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QVERIFY(!collector.reviewIncomplete());
+        const QString late = collector.logText();
+        QVERIFY2(late.startsWith(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\n")),
+                 qPrintable(late));
+        QVERIFY2(late.contains(QStringLiteral("\nFinished in 00:00:")), qPrintable(late));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        application->settingsStore()->set("fontCollector.useSubsDirectory", false);
+        application->settingsStore()->set("fontCollector.action", 0);
     }
 
     // F2: Edit > Select lines selects by the dialog's settings and reports the count.

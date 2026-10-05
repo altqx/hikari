@@ -43,3 +43,5 @@ hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE dwrite) # FontService system faces
 endif()
+# Y8: the font collector's folder and zip output.
+target_sources(hikari_backends PRIVATE font_collector_output.cpp include/hikari/backends/font_collector_output.h)

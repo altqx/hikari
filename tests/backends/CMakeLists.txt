@@ -224,3 +224,14 @@ hikari_add_gtest(hikari_backends_legacy_spelling_tests SOURCES legacy_spelling_t
 target_compile_definitions(hikari_backends_legacy_spelling_tests PRIVATE
     HIKARI_SPELLING_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/spelling"
     HIKARI_CAPTURE_INPUTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs")
+
+# Y8: the font collector through the renderer, over the same private
+# fontconfig fixtures as I5; the archives are read back with zlib.
+find_package(ZLIB REQUIRED)
+hikari_add_gtest(hikari_backends_font_collector_tests SOURCES font_collector_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core ZLIB::ZLIB LABELS backends
+    PROPERTIES ENVIRONMENT "FONTCONFIG_FILE=${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf" RUN_SERIAL TRUE)
+target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
+    HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
+    HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
+add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)

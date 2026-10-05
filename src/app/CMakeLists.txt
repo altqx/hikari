@@ -24,3 +24,5 @@ hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_ui
 qt_add_executable(hikarisub main.cpp)
 target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) # O4: QM under :/i18n
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
+# Y8: the font collector's window state.
+target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
