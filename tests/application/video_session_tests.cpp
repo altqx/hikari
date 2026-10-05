@@ -64,6 +64,18 @@ struct FakeSource : IndexedSourcePort {
     bool newIndex = true;
     std::string handoffIndexFile;
     SourceGeometry geometry; // T1: what the timeline reports (none by default)
+    int colorSpace = 2, colorRange = 0; // V4: frame 0's matrix and range (unspecified)
+    std::vector<std::pair<int, int>> matrixCalls;
+    std::size_t framesBeforeMatrix = 0; // frame requests made before the last matrix call
+    bool refuseMatrix = false;
+    void setInputMatrix(int cs, int cr, MatrixSet done) override
+    {
+        matrixCalls.emplace_back(cs, cr);
+        framesBeforeMatrix = frames.size();
+        if (refuseMatrix)
+            return done(std::unexpected(SourceError::BackendFailure));
+        done({});
+    }
     std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
                               Opened done) override
     {
@@ -95,6 +107,8 @@ struct FakeSource : IndexedSourcePort {
         t.height = geometry.height;
         t.sarNum = geometry.sarNum;
         t.sarDen = geometry.sarDen;
+        t.colorSpace = colorSpace;
+        t.colorRange = colorRange;
         pendingOpen(t);
     }
     void fail(std::size_t which = 0)
@@ -537,4 +551,50 @@ TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
     player.delivered();
     video.generalFrame(playerFrame(), 300'000);
     EXPECT_TRUE(video.playing());
+}
+
+// V4: the Script properties matrix through the source's input matrix
+// (legacy ProviderFFMS2::Init, then SetColorSpace with a Render while
+// paused, RendererFFMS2.h:66-72).
+TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
+{
+    std::vector<std::string> logged;
+    video.setLog([&](const std::string &message) { logged.push_back(message); });
+    video.setPresenter(&presenter);
+    source.colorSpace = 1; // BT.709, limited
+    source.colorRange = 1;
+    video.setMatrix("TV.601");
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    // Before the first frame is asked for.
+    ASSERT_EQ(source.matrixCalls, (std::vector<std::pair<int, int>>{{5, 1}}));
+    EXPECT_EQ(source.framesBeforeMatrix, 0u);
+    ASSERT_EQ(source.frames.size(), 1u);
+    source.answer();
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.601");
+    // The source's own: BT.709 set, the shown frame decoded again.
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.back(), (std::pair<int, int>{1, 1}));
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 0);
+    EXPECT_EQ(source.framesBeforeMatrix, 0u); // the frame after the matrix
+    source.answer();
+    // Unchanged: nothing.
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.size(), 2u);
+    EXPECT_TRUE(source.frames.empty());
+    // Refused: legacy's message, the old name kept.
+    source.refuseMatrix = true;
+    video.setMatrix("TV.601");
+    EXPECT_EQ(logged, (std::vector<std::string>{"Cannot change YCbCr matrix"}));
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
+    // A BT.601 source never takes "TV.709".
+    source.refuseMatrix = false;
+    source.colorSpace = 6;
+    video.setMatrix("TV.709");
+    video.open("/m/ep2.mkv");
+    const auto before = source.matrixCalls.size();
+    source.finishOpen();
+    EXPECT_EQ(source.matrixCalls.size(), before);
+    EXPECT_EQ(video.colourMatrix().source(), "TV.601");
 }

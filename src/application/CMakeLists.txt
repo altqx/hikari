@@ -38,5 +38,11 @@ target_sources(hikari_application PRIVATE font_collector.cpp)
 # so these files are built without floating-point contraction (as
 # audio_spectrum.cpp).
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
+# V4: the video view's volume, aspect and wheel zoom, the snapshots and the
+# YCbCr matrix. The wheel's zoom is legacy float arithmetic, built as
+# visual_view.cpp is.
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp)
+set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

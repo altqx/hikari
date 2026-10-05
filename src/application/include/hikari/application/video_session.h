@@ -21,6 +21,7 @@
 #include "hikari/application/legacy_timebase.h"
 #include "hikari/application/presenter.h"
 #include "hikari/application/subtitle_render.h"
+#include "hikari/application/video_matrix.h"
 #include "hikari/application/visual_view.h"
 #include "hikari/core/frame_timeline.h"
 
@@ -49,6 +50,15 @@ public:
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
     void setSubtitles(std::vector<std::byte> script);
+    // V4: the Document's YCbCr matrix (documentVideoMatrix). An open takes
+    // it as legacy ProviderFFMS2::Init did; a change afterwards is legacy
+    // SetColorSpace, and the shown frame is decoded again (legacy rendered
+    // it again while paused). A converter that refuses keeps the old matrix
+    // and logs legacy's "Cannot change YCbCr matrix".
+    void setMatrix(std::string matrix);
+    const std::string &matrix() const { return m_docMatrix; }
+    const LegacyColourMatrix &colourMatrix() const { return m_colour; }
+    void setLog(std::function<void(const std::string &)> log) { m_log = std::move(log); }
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end or without video
     void showFrame(int index);
@@ -160,6 +170,11 @@ private:
     std::string m_indexHandoff;
     double m_fps = 0;
     visual::SourceGeometry m_geometry; // the source's, from its timeline
+    // V4
+    std::string m_docMatrix;
+    LegacyColourMatrix m_colour;
+    std::function<void(const std::string &)> m_log;
+    void applyInputMatrix(LegacyColourMatrix::Input input, std::optional<LegacyColourMatrix::Change> change);
 };
 
 } // namespace hikari::application

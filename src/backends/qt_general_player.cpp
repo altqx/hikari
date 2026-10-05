@@ -65,6 +65,7 @@ QtGeneralPlayer::QtGeneralPlayer(bool useAudioOutput, QObject *parent) : QObject
     if (useAudioOutput && !QMediaDevices::audioOutputs().isEmpty()) {
         m_audio = std::make_unique<QAudioOutput>();
         m_player.setAudioOutput(m_audio.get());
+        m_audio->setVolume(static_cast<float>(m_volume));
     }
     connect(&m_player, &QMediaPlayer::mediaStatusChanged, this, &QtGeneralPlayer::onStatus);
     connect(&m_player, &QMediaPlayer::playbackStateChanged, this, [this] {
@@ -260,6 +261,13 @@ PlayerClock QtGeneralPlayer::clock() const
     PlayerClock c = m_clock;
     c.valid = c.valid && c.epoch == m_epoch && m_player.playbackState() == QMediaPlayer::PlayingState;
     return c;
+}
+
+void QtGeneralPlayer::setVolume(double linear)
+{
+    m_volume = linear;
+    if (m_audio)
+        m_audio->setVolume(static_cast<float>(linear)); // QAudioOutput's volume is linear
 }
 
 } // namespace hikari::backends

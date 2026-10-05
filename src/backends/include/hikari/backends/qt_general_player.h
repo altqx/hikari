@@ -39,6 +39,8 @@ public:
     application::PlayerClock clock() const override;
     application::MediaDescription description() const override;
     std::uint64_t generation() const override { return m_generation; }
+    void setVolume(double linear) override;
+    double volume() const { return m_volume; }
 
     // The player's own sink (presentation reads frames from here).
     QVideoSink *videoSink() { return &m_sink; }
@@ -70,6 +72,7 @@ private:
     };
     std::optional<PendingSeek> m_pendingSeek;
     application::PlayerClock m_clock;
+    double m_volume = 1.0;
 };
 
 } // namespace hikari::backends

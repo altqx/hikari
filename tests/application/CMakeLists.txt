@@ -108,3 +108,6 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
+hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
+    LIBRARIES hikari_application LABELS application)

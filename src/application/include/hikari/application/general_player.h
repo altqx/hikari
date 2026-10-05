@@ -88,6 +88,9 @@ public:
     virtual PlayerClock clock() const = 0;
     virtual MediaDescription description() const = 0;
     virtual std::uint64_t generation() const = 0;
+    // V4: the player's output gain, linear (legacy VIDEO_VOLUME through
+    // videoVolumeGain). A player without an output ignores it.
+    virtual void setVolume(double linear) { (void)linear; }
 };
 
 struct Chapter {
