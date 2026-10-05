@@ -20,7 +20,7 @@ The [revised D study](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74
 
 ## Semantic appearance tokens
 
-Use semantic roles shared by all components, with a complete palette switch. Hex values below are the exact CSS reference values expanded to six digits. The Dark palette is the study's initial appearance; this does not decide whether the released app initially follows the operating system or a stored preference.
+Use semantic roles shared by all components, with a complete palette switch. Hex values below are the exact CSS reference values expanded to six digits. The Dark palette is the study's initial appearance.
 
 | Role | Reference variable | Dark | Light | High contrast |
 | --- | --- | --- | --- | --- |
@@ -37,11 +37,68 @@ Use semantic roles shared by all components, with a complete palette switch. Hex
 | Keyboard focus | `focus` | `#F9D784` | `#8D4200` | `#00FFFF` |
 | Error / warning emphasis | `danger` | `#FFADAD` | `#A51F31` | `#FFADAD` |
 
+## Hikari theme layer (K2)
+
+The user decided on 2026-10-05 to follow MuseScore 4's appearance model ([research at v4.7.5](../../research/musescore-appearance.md)) with no per-colour editing. [K2](https://github.com/altqx/hikari/issues/206) implements it as the Hikari theme layer, `src/ui/theme.h`: one set of the roles above, resolved from the chosen appearance and exposed once. QML reads the `Theme` singleton (`Theme.panel`, `Theme.accent`, ...); the Qt Quick Controls draw with the application palette the layer sets, in the `HikariStyle` controls style (`src/ui/style`: Fusion on every platform, since the native Windows style draws with the system's colours, with every control outline in `line` and the focused one from the accent; Fusion's own outline, its window colour darkened 140%, measures about 1.1:1 against the Dark and High contrast black panels, so fields and buttons lost their boundaries there; `hikari_ui_theme_tests` controlsOutlineInTheBoundaryColour); the icons take `IconTheme`'s colours, which are the layer's; owner-drawn items (the Grid, the audio display, the spelling marks) read the layer's roles and content colours and repaint when it changes.
+
+**Themes.** Light, Dark, High contrast white and High contrast black (`appearance.theme`: `light`, `dark`, `highContrastWhite`, `highContrastBlack`; Dark by default, legacy's default theme). High contrast black is the spec's high-contrast column; High contrast white is drawn to match it on white.
+
+**Follow system theme** (`appearance.followSystem`, on by default). While on, Light or Dark comes from the platform's colour scheme (`QStyleHints::colorScheme`, live: the Windows setting, the XDG desktop portal on Linux); it never turns high contrast on or off, it only moves a high-contrast theme to its matching side (white for a light scheme, black for a dark one). An unknown scheme keeps the chosen theme. Choosing a theme by hand turns following off.
+
+**Accent.** Seven presets per mode (`appearance.lightAccent`, `appearance.darkAccent`: Light and Dark remember their own), in hue order, the spec's green the default. Each preset sets four roles: `accent`, `onaccent`, `select` (its hue at the green's selected lightness) and `focus` (the spec's, or a blue / sky one when the accent's hue is within 60 degrees of it). No custom accent outside high contrast. The accent drives selection, primary buttons, toggles, the tab underline, the focused field border, text selection, progress, the icons' accent layer and the selection-type marks of owner-drawn content.
+
+| Key | Light accent / text on it | Dark accent / text on it |
+| --- | --- | --- |
+| `red` | `#B3261E` / `#FFFFFF` | `#F4A9A3` / `#2C1210` |
+| `orange` | `#9C4600` / `#FFFFFF` | `#F5BB8A` / `#2C1D10` |
+| `gold` | `#7A5E00` / `#FFFFFF` | `#E3CF7E` / `#2C2610` |
+| `green` (default) | `#145C4C` / `#FFFFFF` | `#9CDBC9` / `#102C24` |
+| `blue` | `#1D5BA8` / `#FFFFFF` | `#A6C8F2` / `#101D2C` |
+| `purple` | `#5B3FB0` / `#FFFFFF` | `#C6B5F4` / `#18102C` |
+| `pink` | `#9E2A73` / `#FFFFFF` | `#EFAAD3` / `#2C1021` |
+
+Measured WCAG 2.x contrast (`hikari_ui_theme_tests` accentPresetsMeetContrast; the swatch sheet `k2-accents.png` and `k2-contrast.txt` are written with `HIKARI_THEME_SHEET_DIR`): the lowest of each accent against its mode's bg, panel, raised and field, text on the accent, and primary text on the preset's selected background.
+
+| Key | Light: on surfaces / text on it / text on selected | Dark: on surfaces / text on it / text on selected |
+| --- | --- | --- |
+| `red` | 5.35 / 6.54 / 10.79 | 6.93 / 9.20 / 9.87 |
+| `orange` | 5.23 / 6.38 / 11.38 | 7.75 / 9.58 / 8.84 |
+| `gold` | 5.02 / 6.12 / 11.92 | 8.46 / 9.69 / 8.01 |
+| `green` | 6.45 / 7.88 / 11.95 | 8.40 / 9.51 / 7.92 |
+| `blue` | 5.52 / 6.74 / 11.07 | 7.63 / 9.86 / 9.39 |
+| `purple` | 6.18 / 7.55 / 10.51 | 7.10 / 9.85 / 10.52 |
+| `pink` | 5.67 / 6.92 / 10.82 | 7.12 / 9.44 / 9.87 |
+
+**High contrast.** Accent, text-and-icons and border colours are freely pickable (`appearance.highContrastWhite.*` and `appearance.highContrastBlack.*`, each theme its own, "#RRGGBB"; MuseScore's low-vision exception, its non-working "Disabled text" picker left out); "Reset to default" puts the theme's back. Every other role is fixed. Text on a picked accent turns black or white to stay readable. These six are the only colour settings (`settings_tests` NoColourSettingOutsideHighContrast).
+
+**Role tables.** Every theme with its default accent, and each role's lowest contrast against the theme's four surfaces (`hikari_ui_theme_tests` rolesMeetContrast; text roles at least 4.5:1, 7:1 in high contrast; accent, focus, icons and disabled at least 3:1). `warning` is the rewrite's warning emphasis (WINDOW_WARNING_ELEMENTS' role), `success` the Font collector's success text (legacy's fixed `#008000`, FontCollector.cpp:872, 978), `disabled` disabled text and icons.
+
+| Role | Light | Dark | High contrast white | High contrast black |
+| --- | --- | --- | --- | --- |
+| `bg` / `panel` / `raised` / `field` | `#E5E9EC` / `#F9FAFB` / `#EDF0F3` / `#FFFFFF` | `#171B20` / `#20262D` / `#29313A` / `#171D24` | `#FFFFFF` / `#FFFFFF` / `#EBEBEB` / `#FFFFFF` | `#000000` / `#080808` / `#151515` / `#000000` |
+| `text` | `#202832` 12.19 | `#E8EDF2` 11.18 | `#000000` 17.62 | `#FFFFFF` 18.26 |
+| `muted` | `#526170` 5.21 | `#A5B1BD` 6.03 | `#1A1A1A` 14.60 | `#EEEEEE` 15.74 |
+| `line` | `#AAB5BE` 1.71 | `#414B57` 1.49 | `#000000` 17.62 | `#FFFFFF` 18.26 |
+| `accent` | `#145C4C` 6.45 | `#9CDBC9` 8.40 | `#0037B3` 8.02 | `#FFFF00` 17.01 |
+| `onaccent` (on `accent`) | `#FFFFFF` 7.88 | `#102C24` 9.51 | `#FFFFFF` 9.56 | `#000000` 19.56 |
+| `select` (`text` on it) | `#D6EBE4` 11.95 | `#304C47` 7.92 | `#C9DAF8` 14.87 | `#253F60` 10.72 |
+| `focus` | `#8D4200` 5.91 | `#F9D784` 9.46 | `#B4009E` 5.13 | `#00FFFF` 14.56 |
+| `danger` | `#A51F31` 6.06 | `#FFADAD` 7.42 | `#A00000` 7.06 | `#FFADAD` 10.29 |
+| `warning` | `#8A5A00` 4.85 | `#E0A030` 5.79 | `#6B4500` 7.11 | `#FFD54A` 12.93 |
+| `success` | `#008000` 4.21 | `#008000` 2.56 | `#005A00` 7.15 | `#7CFC7C` 13.98 |
+| `disabled` | `#74808B` 3.31 | `#75818D` 3.31 | `#6E6E6E` 4.28 | `#8C8C8C` 5.43 |
+
+`success` in Light and Dark is legacy's fixed green, below 4.5:1 (2.56:1 on Dark); a readable dark-theme green is a proposed departure, not applied. `line` in Light and Dark is the spec's boundary token (1.71:1 and 1.49:1 at its lowest), below WCAG 1.4.11's 3:1 for a control's boundary; fields keep their own fill, and a stronger control boundary for those two themes is a proposed change, not applied. In high contrast `line` is the border pick, the control outlines included.
+
+**Content colours** are fixed per theme, not settings: the audio display (waveform, spectrum, cursor, boundaries, keyframe and second marks, the timescale), the Grid's comparison colours (GRID_COMPARISON_*), the spelling marks (GRID_SPELLCHECKER / EDITOR_SPELLCHECKER) and the Grid's alternate-row and warning cells. Dark keeps legacy's dark theme (config.cpp:405-472, `LoadDefaultColors(true)`; the spectrum's `#000000`, `#674FD7`, `#F4F4F4` among them); Light keeps legacy's light comparison and spelling colours and gets matched audio colours (legacy's light theme kept the dark audio display); both high-contrast themes get their own. Selection-type marks take the accent: the audio selection (AUDIO_SELECTION_BACKGROUND and _MODIFIED at legacy's 0x37 alpha, AUDIO_WAVEFORM_SELECTED) and GRID_SELECTION's blend over a compared row (at legacy's alpha 75). Document colours (ASS styles, rendered subtitles, the video) never change with the appearance.
+
+**Appearance page.** The Options dialog's Appearance page (in legacy's Themes page's place; theme files stay excluded) shows the four themes as sample cards, Follow system theme, the shown mode's seven swatches (each with its contrast in the tooltip) and, in high contrast, the three pickers with their reset. Every choice previews live; OK or Apply saves, Cancel takes the preview back; "Set default" leaves the appearance.
+
 The panel header in D uses `field`, although the generic study header uses `raised`. Ordinary controls use `raised`; editable multiline text uses `field`. Secondary text remains meaningful content, not a licence to reduce essential text to unreadable contrast. The grid's subtle row divider is `line` at 48% alpha; primary boundaries are solid `line`.
 
 Interface appearance must not rewrite a document's ASS styles or recolor rendered subtitle output. The preview's white sample subtitle and illustrated scene are media content, not UI tokens. Likewise, an application appearance does not select a document, change a workspace's ownership, or import legacy Kainote themes.
 
-These are accepted color references, not measured contrast or assistive-technology certification. Native disabled states, translucent separators, selection/hover combinations and operating-system contrast integration still require verification. A contrast-mode implementation must preserve meaningful boundaries even when shadows or transparency are suppressed.
+These are accepted color references; the theme layer above measures their contrast, which is not assistive-technology certification. Native disabled states, translucent separators, selection/hover combinations and operating-system contrast integration still require verification. A contrast-mode implementation must preserve meaningful boundaries even when shadows or transparency are suppressed.
 
 ## Density, typography and geometry
 
@@ -83,7 +140,7 @@ The HTML uses Segoe UI / Arial / sans-serif and Consolas / monospace. These are 
 
 Panel headings are uppercase in D. The heading itself has `0.02em` letter spacing; its enclosing header declares `0.08em` for other inherited text. Preserve the restrained visual hierarchy without applying uppercase transformations to user-authored subtitle text, filenames or scripts without case. The sample preview's 19-unit subtitle size is not an application typography rule or an ASS rendering requirement.
 
-The effective D control and panel radius is **1** in all three appearances. The contrast palette declares radius 0, but the later C/D rule overrides it to 1; this specification records the actual approved D cascade. Application frame and dialog also use 1. Exceptions in the reference are the menu popup at 5, a compact state badge at 3 and a status capsule at 20. The rounded H sample mark is provisional artwork, not a settled brand geometry.
+The effective D control and panel radius is **1** in all appearances. The contrast palette declares radius 0, but the later C/D rule overrides it to 1; this specification records the actual approved D cascade. Application frame and dialog also use 1. Exceptions in the reference are the menu popup at 5, a compact state badge at 3 and a status capsule at 20. The rounded H sample mark is provisional artwork, not a settled brand geometry.
 
 Panels are flat, separated by boundaries. The menu popup has a `0 10 30` shadow in black at approximately 33% alpha. The dialog has no explicit shadow in the study; its dimming backdrop is `#050B14A6` (approximately 65% alpha), with padding 24 and a width reference of at most 460. The comparison switcher's stronger shadow and radius belong only to the review harness. No production motion duration or easing system was established by this study.
 
@@ -124,7 +181,7 @@ The reference's focus color is distinct from selection and error. Do not reduce 
 
 ## Icons, content and adaptive layout
 
-The H mark, Unicode transport symbols, arrows, checkmarks and other glyphs are placeholders. They neither select a third-party icon pack nor establish redistribution rights for brand assets. Implement a coherent vector-icon set with consistent optical size, stroke weight and alignment. Record provenance and licence for any adopted assets; an icon-only action needs an accessible name and appropriate tooltip. Use directional mirroring where it conveys navigation, while retaining the meaning of media controls and data symbols. Font glyph availability must not decide whether an essential action is understandable. The set is specified in [icons.md](icons.md) (K1: drawn in house, UI icons only, following the appearance live with customizable colours).
+The H mark, Unicode transport symbols, arrows, checkmarks and other glyphs are placeholders. They neither select a third-party icon pack nor establish redistribution rights for brand assets. Implement a coherent vector-icon set with consistent optical size, stroke weight and alignment. Record provenance and licence for any adopted assets; an icon-only action needs an accessible name and appropriate tooltip. Use directional mirroring where it conveys navigation, while retaining the meaning of media controls and data symbols. Font glyph availability must not decide whether an essential action is understandable. The set is specified in [icons.md](icons.md) (K1: drawn in house, UI icons only, following the appearance live in the theme layer's colours, K2).
 
 The study stacks preview, editor, audio and grid below a 900-unit width and simplifies some content below 590. Those browser breakpoints and fixed stacked heights are exploratory references, not supported minimum-window sizes. In particular, hiding the layer field or an action at a narrow width is not permission to make that capability unreachable. Use resizing, overflow, scrolling and appropriate panel arrangements while preserving access to fields and commands. Check long translations, larger system text and mixed-direction text rather than assuming English widths.
 
@@ -132,7 +189,7 @@ The study stacks preview, editor, audio and grid below a 900-unit width and simp
 
 | Owner | Responsibility |
 | --- | --- |
-| Hikari theme and metrics layer | Expose the semantic palette, typography roles, spacing and radii once; resolve appearance and system/user scaling; keep subtitle-rendering styles separate. |
+| Hikari theme and metrics layer | Expose the semantic palette, typography roles, spacing and radii once; resolve appearance and system/user scaling; keep subtitle-rendering styles separate. The palette half is K2's theme layer (`src/ui/theme.h`, above); typography, spacing and radii are not in it yet. |
 | Shared Qt Quick Controls styling | Apply tokens to ordinary buttons, fields, selectors, toggles, sliders, menus, dialogs and tabs, including overlapping states and accessible labels/values. Avoid divergent per-screen colors. |
 | Workspace and action layer | Own region order, focus restoration, shortcut scope, editing-target indication and modal command routing. Styling must not infer the editing target from the focused panel. |
 | Grid model and presentation | Keep stable row identity, selection and editing state independent of delegates; render compact columns, current/selected/focused states and filtered-selection feedback. |
@@ -142,7 +199,7 @@ These responsibilities implement the [architecture contract](../architecture.md)
 
 The HTML approval establishes visual direction and the demonstrated interaction vocabulary. It does **not** establish that the native application has passed any of the following:
 
-* Native rendering and text readability in all three appearances, including combined states, actual contrast measurements and operating-system contrast behavior.
+* Native rendering and text readability in all four themes, including combined states and operating-system contrast behavior (the role contrast is measured above).
 * System font changes, fallback/shaping, IME input, mixed-direction content, text enlargement, high-DPI scaling and movement between monitors with different scales.
 * Complete keyboard reachability, visible focus, tab/menu/dialog semantics, screen-reader names/roles/values and announcements on the supported platforms.
 * Large-document grid behavior, latency, memory, scrolling or frame-time targets; real audio/video synchronization and rendering performance.
