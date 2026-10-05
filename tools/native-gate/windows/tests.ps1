@@ -14,7 +14,9 @@ $runs = @(
     @{ exe = 'hikari_ui_shell_tests'; fns = @('f6AndShortcutsReachAFloatingPanel', 'panelsFloatDockHideAndKeepTheirState',
             'placementWindowMovesTabsAndResizes', 'floatF6AndShowActivateTheFloatingPanelsWindow',
             'placementWindowShowsItsDefaultsAndKeyboardChanges', 'fileDropAreaLeavesPanelDragsToTheDockingEngine',
-            'dockingControlsAndTheGridAreAccessible', 'floatingPanelsOffEveryScreenComeBack') },
+            'dockingControlsAndTheGridAreAccessible', 'floatingPanelsOffEveryScreenComeBack',
+            'menuArrowsOpenAndCloseSubmenus') },
+    @{ exe = 'hikari_ui_line_grid_a11y_tests'; fns = @() },
     @{ exe = 'hikari_ui_docking_qualification_tests'; fns = @() },
     @{ exe = 'hikari_ui_workspace_layout_tests'; fns = @() }
 )
