@@ -10614,6 +10614,23 @@ private slots:
         const auto at = [&](qreal x, qreal y) {
             return videoPoint(v.topLeft() + QPointF(x * v.width() / 320, y * v.height() / 240));
         };
+        // The script point a pointer's device pixel writes: a point grabbed
+        // within a pixel of it follows the pointer through T1's inverse
+        // (DrawingAndClip::OnMouseEvent's GetCalculatedOutPos, "%6.0f"). A
+        // video rectangle smaller than the script leaves script integers
+        // without a pixel of their own (312x234 with Fedora's fonts puts 300
+        // and 220 between two), so the drop writes what its pixel maps to.
+        const auto &view = tools.videoView();
+        const auto device = [&](QPoint scene) {
+            const QPointF l = item("visualOverlay")->mapFromScene(QPointF(scene));
+            return application::visual::PointF{float(view.toDevice(l.x())), float(view.toDevice(l.y()))};
+        };
+        const auto written = [&](QPoint scene) {
+            const auto s = view.viewToScript(device(scene));
+            return QString::asprintf("%.0f %.0f", double(s.x), double(s.y));
+        };
+        const auto corner = view.scriptToView({160, 120});
+        QVERIFY(std::abs(corner.x - device(at(160, 120)).x) < 1 && std::abs(corner.y - device(at(160, 120)).y) < 1);
         const std::size_t steps = session->historySize();
         QTest::mouseMove(window, at(160, 120));
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(160, 120));
@@ -10648,8 +10665,9 @@ private slots:
             QTest::mouseMove(window, at(160 + 35 * i, 120 + 25 * i));
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(300, 220));
         QTRY_COMPARE(session->historySize(), steps + 1);
-        QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\clip(m 0 0 l 160 0 300 220 0 120)")),
-                 qPrintable(text(session->document().lines()[2])));
+        const QString clip = QStringLiteral("\\clip(m 0 0 l 160 0 %1 0 120)").arg(written(at(300, 220)));
+        QVERIFY2(text(session->document().lines()[2]).contains(clip),
+                 qPrintable(text(session->document().lines()[2]) + QStringLiteral(" lacks ") + clip));
         QTRY_COMPARE(alpha(230, 170), 255);
     }
 
