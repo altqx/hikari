@@ -534,8 +534,11 @@ TEST(VisualGesture, PreviewHoldsOnlyTheShownLines)
     g->stage(all[0], u8"{\\pos(1,1)}first");
     g->stage(all[2], u8"{\\pos(3,3)}third");
     auto texts = [&](std::int64_t time, bool playing) {
+        // The preview Document is held: before C++23's P2718 (which MSVC
+        // lacks) a range-for over a temporary's lines() reads freed Lines.
+        const auto preview = g->preview(session.document(), time, playing);
         std::vector<std::u8string> out;
-        for (const auto *l : g->preview(session.document(), time, playing).lines())
+        for (const auto *l : preview.lines())
             out.push_back(l->text);
         return out;
     };
