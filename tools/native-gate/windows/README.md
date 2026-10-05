@@ -61,8 +61,10 @@ recorded as a pass.
 | `outputs` | floating Audio moved onto the second monitor at 150 % (primary 100 %): on it, `GetDpiForWindow` 144 (per-monitor aware, not bitmap-scaled), 1.5x its width, that monitor's own pixels (`ui screenshot --monitor 1`); that monitor detached: the panel back on the primary, View > Panels > Audio > Show focuses it; finally both monitors at 1024x768, 100 %, extended (`outputs-restored`). Not observable if only one monitor reaches the desktop |
 | `nvda` | NVDA's speech while F6 moves through the panels and a panel is floated from the View menu (`nvda`), and that the Float worked with NVDA running (`nvda-float-from-menu`) |
 | `menutext` | Alt+V from the Line text field |
-| `tests` | `hikari_ui_shell_tests` (D1 functions, the menu arrows), `hikari_ui_line_grid_a11y_tests`, `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` with `QT_QPA_PLATFORM=windows` (task `gate-win-tests`) |
+| `tests` | `hikari_ui_shell_tests` (D1 functions, the menu arrows), `hikari_ui_line_grid_a11y_tests`, `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests`, `hikari_ui_view_arrangements_tests` (D2) with `QT_QPA_PLATFORM=windows` (task `gate-win-tests`) |
 | `a11y` | what UI Automation exposes of the docking controls: named title-bar buttons and tab items (each with Float and Close), the Grid's table under the Grid panel; pressing the buttons through the Invoke pattern floats and docks |
+| `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio): the core panels each shows, the focus on a shown panel, the draft kept, All back to the panels' places. `view_to()` presses Down until the item has the UIA focus (the arrangements come first and Down skips disabled ones) |
+| `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through SendInput: only the Video panel, with the focus; Ctrl+E again: the arrangement back, the focus on the Grid, the draft kept |
 | `dpi` | only with `--dpi`: the one monitor's scale 100 -> 150 % live (`SPI_SETLOGICALDPIOVERRIDE`, no sign-out) with a floating panel, typing there, then back to 100 %. Not observable if the guest does not change scale without signing out |
 
 Submenus: the first Float from View > Panels opens the submenus with Right

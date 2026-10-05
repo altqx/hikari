@@ -23,7 +23,8 @@ tools/native-gate/run.sh                 # all four sessions, every step
 tools/native-gate/run.sh kwin -- video   # one session, chosen steps
 ```
 
-`HIKARI_TREE` names the checkout whose build is tested (default
+`GATE_CONTAINER` names the container (default `d1gate`), so a gate of
+another worktree can run beside one already up. `HIKARI_TREE` names the checkout whose build is tested (default
 `/home/altq/Work/hikari-qt`; `HIKARI_TREE=$PWD tools/native-gate/run.sh` tests
 this worktree's build). `run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
 the host-built binaries and the Qt SDK under `out/sdk` run unchanged), starts
@@ -56,6 +57,8 @@ recorded as a pass.
 | `orca` | Orca's speech while F6 moves through the panels and a panel is floated from the menu |
 | `menutext` | Alt+V from the Line text field |
 | `tests` | `hikari_ui_shell_tests` (D1 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
+| `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio from Audio > Open blank 2h30m audio): the core panels each shows, the focus on a shown panel, the Line editor's draft kept, All back to the panels' places |
+| `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through the compositor: only the Video panel, with the focus; Ctrl+E again: the arrangement back at its places, the focus on the Grid, the draft kept |
 | `a11y` | what AT-SPI exposes of the docking controls: named title-bar buttons and tabs (each with Float and Close), the Grid's table in the panel named Grid; pressing them through AT-SPI floats and docks |
 
 ## Other tools
@@ -87,7 +90,10 @@ window that asks for activation through xdg_activation_v1 urgent instead of
 focusing it, so cross-window F6 there depends on that setting. Its evidence
 goes to `sway-activate/`.
 
-Harness lessons: the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
+Harness lessons: the View menu starts with D2's five arrangements, enabled
+by what is open, and Down skips disabled items, so `view_to()` presses Down
+until the wanted item has the AT-SPI focus instead of counting positions;
+the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
 cycles between them, so `open_view()` presses Alt+V until the View menu shows;
 Qt keeps hidden windows titled HikariSub, so X11 window searches use
 `--onlyvisible`; removing a RandR monitor on Xvfb leaves the output's own
