@@ -101,7 +101,10 @@ void loadEditor(Probe &p)
 
 void setVisual(Probe &p)
 {
-    // RendererVideo::SetVisual (RendererVideo.cpp:1096-1121).
+    // RendererVideo::SetVisual (RendererVideo.cpp:1096-1121). The probe keeps
+    // one tool, so this is the branch for the same Visual, which drops the
+    // cached Line text of the dummy renders (RendererVideo.cpp:1110).
+    SAFE_DELETE(p.visual->dummytext);
     p.visual->SizeChanged(p.videoSize, nullptr, nullptr, nullptr);
     p.visual->SetZoom(p.zoomMove, p.zoomScale);
     p.visual->SetVisual(&p.editLine, p.video.toolbar.GetItemToggled());

@@ -579,6 +579,28 @@ up 100 0
 dump
 end
 
+case vector-remove-all-add-mode
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line Text
+tool vector
+mode 3
+setvisual
+down 176 108
+up 176 108
+dump
+key A ctrl
+mdown 176 108
+dump
+mup 176 108
+dump
+down 200 120
+up 200 120
+dump
+end
+
 case vector-right-insert
 script 1920 1080
 client 640 360 0
@@ -652,6 +674,25 @@ setvisual
 invert
 dump
 invert
+dump
+end
+
+case vector-invert-then-add
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}Text
+tool vector
+mode 1
+setvisual
+down 100 0
+move 110 10 left
+up 110 10
+invert
+dump
+down 200 150
+up 200 150
 dump
 end
 
