@@ -1,17 +1,17 @@
 # D1 native gate on Windows: the guest side of gate_windows.py (winix.yaml
-# tasks gate-win-*). Runs in the VM workspace ($PWD); everything it writes
-# stays under out\native-gate-win.
+# tasks gate-win-*), for what `winix ui` does not do. Runs in the VM
+# workspace ($PWD); everything it writes stays under out\native-gate-win.
 #   -Action prepare     scratch documents, the media fixture, paths (GATE_LAYOUT line)
-#   -Action fresh       end the HikariSub under test, set its profile aside (never deleted)
-#   -Action kill        end the HikariSub under test
-#   -Action status      ALIVE yes|no, the layout files, the newest app log
+#   -Action fresh       set the profile aside (never deleted); a HikariSub left over from
+#                       an earlier run is ended first (the harness ends its own with `winix ui kill`)
+#   -Action restore     GATE_PROFILE_FROM: put a set-aside profile back (the current one is set aside)
+#   -Action status      ALIVE yes|no, the layout files
 #   -Action fullscreen  GATE_FULLSCREEN=on|off: the main window borderless over the whole monitor, or back
-#   -Action dpi         GATE_DPI_PERCENT: the display scale of the (single) monitor, live (DPI_RESULT line)
-#   -Action keys        GATE_KEYS: a JSON list of chords ("alt+w", "down") and pauses (seconds), sent with
-#                       SendInput as a keyboard sends them: scan codes, and the extended-key flag on the
-#                       navigation keys (`winix ui keys` sends arrows without it, i.e. as keypad keys,
-#                       which NVDA takes as review-cursor commands). GATE_KEYS_DELAY: seconds between chords.
-param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'kill', 'status', 'fullscreen', 'dpi', 'keys')][string]$Action)
+#   -Action dpi         GATE_DPI_PERCENT: the display scale of the primary monitor, live (DPI_RESULT line)
+# The app's profile: Qt finds %LOCALAPPDATA% and %APPDATA% through the shell's
+# known folders, not the environment, so `winix ui launch --fresh-profile`
+# does not reach it (its APPDATA/LOCALAPPDATA variables are ignored).
+param([Parameter(Mandatory)][ValidateSet('prepare', 'fresh', 'restore', 'status', 'fullscreen', 'dpi')][string]$Action)
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 $root = $PWD.Path
@@ -88,46 +88,7 @@ public static class GateWin {
 }
 '@
 
-$keyboard = @'
-using System;
-using System.Runtime.InteropServices;
-public static class GateKeys {
-    [StructLayout(LayoutKind.Sequential)] public struct KI { public ushort vk, scan; public uint flags, time; public IntPtr extra; }
-    [StructLayout(LayoutKind.Explicit, Size = 40)] public struct IN { [FieldOffset(0)] public uint type; [FieldOffset(8)] public KI ki; }
-    [DllImport("user32.dll")] static extern uint SendInput(uint n, IN[] i, int size);
-    [DllImport("user32.dll")] static extern uint MapVirtualKey(uint c, uint t);
-    static readonly ushort[] Extended = { 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x2D, 0x2E, 0x5B };
-    static IN Key(ushort vk, bool up) {
-        var i = new IN(); i.type = 1; i.ki.vk = vk; i.ki.scan = (ushort)MapVirtualKey(vk, 0);
-        i.ki.flags = (Array.IndexOf(Extended, vk) >= 0 ? 1u : 0u) | (up ? 2u : 0u);
-        return i;
-    }
-    // Every key of the chord down in order, then up in reverse order.
-    public static uint Chord(ushort[] vks) {
-        var a = new IN[vks.Length * 2];
-        for (int k = 0; k < vks.Length; k++) { a[k] = Key(vks[k], false); a[a.Length - 1 - k] = Key(vks[k], true); }
-        return SendInput((uint)a.Length, a, Marshal.SizeOf(typeof(IN)));
-    }
-}
-'@
-$vkNames = @{ 'alt' = 0x12; 'ctrl' = 0x11; 'shift' = 0x10; 'down' = 0x28; 'up' = 0x26; 'left' = 0x25; 'right' = 0x27
-    'return' = 0x0D; 'escape' = 0x1B; 'tab' = 0x09; 'space' = 0x20; 'f4' = 0x73; 'f6' = 0x75; 'f11' = 0x7A; 'end' = 0x23
-    'home' = 0x24; 'delete' = 0x2E; 'win' = 0x5B }
-
 switch ($Action) {
-    'keys' {
-        Add-Type -TypeDefinition $keyboard
-        $delay = if ($env:GATE_KEYS_DELAY) { [double]$env:GATE_KEYS_DELAY } else { 0.35 }
-        foreach ($item in @($env:GATE_KEYS | ConvertFrom-Json | ForEach-Object { $_ })) {
-            if ($item -is [string]) {
-                $vks = [uint16[]]@($item.ToLower().Split('+') | ForEach-Object {
-                        if ($vkNames.ContainsKey($_)) { $vkNames[$_] } elseif ($_.Length -eq 1) { [int][char]$_.ToUpper() } else { throw "unknown key $_" } })
-                $sent = [GateKeys]::Chord($vks)
-                Write-Output "chord $item sent $sent"
-                Start-Sleep -Milliseconds ([int]($delay * 1000))
-            } else { Start-Sleep -Milliseconds ([int]([double]$item * 1000)) }
-        }
-    }
     'prepare' {
         $exe = Get-ChildItem -Recurse -Filter hikarisub.exe $build -ErrorAction SilentlyContinue |
             Sort-Object { $_.FullName -notlike '*\src\app\*' } | Select-Object -First 1
@@ -155,7 +116,7 @@ switch ($Action) {
         $os = Get-CimInstance Win32_OperatingSystem
         $layout = [ordered]@{
             root = $root; scratch = $scratch; app = $(if ($exe) { $exe.FullName } else { $null }); qt_bin = $qtBin
-            qt_bin_exists = (Test-Path $qtBin); launcher = Join-Path $PSScriptRoot 'launch.ps1'
+            qt_bin_exists = (Test-Path $qtBin); docs = $docs; path = $env:PATH
             episode = $episode; ep1_ass = $ep1; fixture = $(if ($fixture) { $fixture.FullName } else { $null })
             nvda_exe = $(if ($nvda) { Join-Path $nvda.FullName 'nvda.exe' } else { $null })
             nvda_config = Join-Path $scratch 'nvda\config'; nvda_dir = Join-Path $scratch 'nvda'
@@ -163,7 +124,7 @@ switch ($Action) {
         }
         Write-Output ('GATE_LAYOUT ' + ($layout | ConvertTo-Json -Compress))
     }
-    'fresh' {
+    { $_ -in 'fresh', 'restore' } {
         StopApp
         $stamp = Get-Date -Format 'yyyyMMdd-HHmmss-fff'
         foreach ($k in $profileDirs.Keys) {
@@ -179,8 +140,18 @@ switch ($Action) {
                 Write-Output "set aside $dir -> $dest"
             }
         }
+        if ($Action -eq 'restore') {
+            if (-not $env:GATE_PROFILE_FROM -or -not (Test-Path $env:GATE_PROFILE_FROM)) { throw "no set-aside profile at '$($env:GATE_PROFILE_FROM)'" }
+            foreach ($k in $profileDirs.Keys) {
+                $from = Join-Path $env:GATE_PROFILE_FROM $k
+                if (Test-Path $from) {
+                    New-Item -ItemType Directory -Force (Split-Path $profileDirs[$k]) | Out-Null
+                    Copy-Item $from $profileDirs[$k] -Recurse
+                    Write-Output "restored $($profileDirs[$k]) from $from"
+                }
+            }
+        }
     }
-    'kill' { StopApp }
     'status' {
         $procs = AppProcesses
         Write-Output "ALIVE $(if ($procs.Count) { 'yes' } else { 'no' })"
@@ -188,9 +159,6 @@ switch ($Action) {
         Write-Output '== layout files'
         Get-ChildItem $profileDirs.local -Filter 'layout.json*' -ErrorAction SilentlyContinue |
             ForEach-Object { Write-Output "$($_.FullName) $($_.Length) $($_.LastWriteTime.ToString('s'))" }
-        Write-Output '== app log'
-        $logFile = Get-ChildItem $scratch -Filter 'app-*.err.log' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
-        if ($logFile) { Write-Output $logFile.Name; Get-Content $logFile.FullName -Tail 40 }
         Write-Output '== end'
     }
     'fullscreen' {

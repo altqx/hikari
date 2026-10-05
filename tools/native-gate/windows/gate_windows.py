@@ -1,49 +1,52 @@
 #!/usr/bin/env python3
 """D1 native gate on Windows: HikariSub on the Winix VM desktop.
 
-  gate_windows.py [--dpi] [--config winix.yaml] [--vm dev] [STEP...]
+  WINIX_OWNER=<lease owner> gate_windows.py [--dpi] [--config winix.yaml] [--vm dev] [STEP...]
 
 The Windows half of tools/native-gate/gate.py, with the same step names and
 the same evidence layout under out/native-gate-evidence/windows/: one PNG and
-one TXT (top-level windows and the UI Automation view as JSON) per
+one TXT (the app's windows and its UI Automation view as JSON) per
 observation, steps.log, and results.json with a verdict per gate item:
 observed, failed or not-observable (with the reason).
 
-Input paths:
-  keys     `winix ui keys` (SendInput into the foreground window)
-  pointer  the VM's QEMU USB HID tablet through QMP input-send-event
-           (`virsh qemu-monitor-command`): absolute x/y, left button down/up,
-           in small steps; screen pixels map to the tablet's 0..32767 from the
-           guest screen size (the screenshot's dimensions)
-  clicks   for focusing a window, `winix ui click x,y` on its title bar
-UI Automation comes from the gate-win-uia task (uia.ps1), which walks every
-top-level window of the app; `winix ui tree/find` reach only the first.
-The app starts through launch.ps1 by `winix ui launch` (a task ends every
-process it started). The VM definition is never changed.
+Everything goes through `winix ui` (winix 0.2.0):
+  keys      `ui keys` (SendInput with scan codes, the extended flag on navigation keys)
+  text      `ui text` (Unicode input)
+  pointer   `ui pointer` / `ui calibrate` (the VM's USB HID tablet, host-side QMP)
+  view      one `ui batch`: `windows --pid`, `state` (focus, its ancestors, the
+            cursor) and `tree --pid --window N` for every window of the app
+  focus     `ui focus --pid --window hwnd:N`
+  app       `ui launch --exe --arg --env --cwd --no-console`, `ui kill`
+  monitors  `ui monitors`, `ui screenshot [--monitor N]`
+Guest tasks (gate.ps1, uia.ps1, display.ps1, nvda.ps1) remain for what winix
+does not do: the profile (Qt ignores the APPDATA variables `--fresh-profile`
+sets), pressing controls through UIA patterns only, GetDpiForWindow, the
+borderless fullscreen and display changes, NVDA, the test executables. Task
+parameters go through `run TASK --env K=V`. The VM definition is never changed.
 """
 import argparse
 import base64
 import json
 import re
-import shutil
-import struct
 import subprocess
-import sys
 import time
-import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
 EVID = ROOT / "out" / "native-gate-evidence" / "windows"
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
 MAIN = "HikariSub"
+# Windows maps the absolute HID tablet to the primary monitor only (step
+# pointer measures it), so pointer coordinates map over the primary.
+POINTER_MAP = "primary"
 
 W = None        # Winix
-TAB = None      # Tablet
 LAYOUT = {}     # gate-win-prepare's GATE_LAYOUT
+APP = {"pid": None, "log": None}
+# The profile the first fresh() set aside: put back when the run ends.
+PROFILE = {"original": None}
 results = {}
 LOG = None
-SCREEN = {"size": None}
 
 
 def log(*a):
@@ -62,76 +65,52 @@ def verdict(item, status, detail, evidence=()):
 
 # ---------------------------------------------------------------- Winix
 class Winix:
-    """`winix --json` (the drive_windows.py wrapper), plus task parameters
-    passed through the task's environment in a derived config."""
+    """`winix --json`; the lease owner comes from WINIX_OWNER."""
 
     def __init__(self, config, vm):
         self.config = Path(config).resolve()
         self.vm = vm
 
-    def call(self, *args, config=None, timeout=900):
-        cmd = ["winix", "--json", "--vm", self.vm, "--config", str(config or self.config), *args]
+    def lines(self, *args, timeout=900):
+        cmd = ["winix", "--json", "--vm", self.vm, "--config", str(self.config), *args]
         p = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=ROOT)
-        lines = p.stdout.strip().splitlines()
-        try:
-            return json.loads(lines[-1]) if lines else None
-        except json.JSONDecodeError:
-            return {"error": "unparsed", "message": p.stdout[-500:] + p.stderr[-500:]}
+        out = []
+        for line in p.stdout.splitlines():
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+        if not out:
+            out.append({"error": "unparsed", "message": (p.stdout[-500:] + p.stderr[-500:]).strip()})
+        return out
+
+    def call(self, *args, timeout=900):
+        return self.lines(*args, timeout=timeout)[-1]
 
     def ui(self, action, **args):
         return self.call("ui", action, "--args", json.dumps(args))
 
-    def screenshot(self, path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        return self.call("ui", "screenshot", "--output", str(path))
+    def batch(self, steps):
+        return self.call("ui", "batch", "--args", json.dumps(steps), "--continue-on-error")
 
-    def derived(self, name, env):
-        import yaml
-        cfg = yaml.safe_load(self.config.read_text())
-        task = cfg["tasks"][name]
-        task["environment"] = {**(task.get("environment") or {}), **{k: str(v) for k, v in env.items()}}
-        path = EVID / ".winix" / "gate-env.yaml"
+    def screenshot(self, path, monitor=None):
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(yaml.safe_dump(cfg, sort_keys=False, allow_unicode=True))
-        return path
+        return self.call("ui", "screenshot", "--output", str(path), *(["--monitor", str(monitor)] if monitor is not None else []))
 
     def task(self, name, env=None, timeout=3600):
         """Runs a winix.yaml task to its end; returns (job record, output lines)."""
-        config = self.derived(name, env) if env else None
-        job = None
-        for _ in range(3):  # `run --json` occasionally answers without a job id
-            job = self.call("run", name, "--wait", config=config, timeout=timeout)
-            if job and job.get("id"):
-                break
-        if not job or not job.get("id"):
+        args = ["run", name, "--wait"]
+        for k, v in (env or {}).items():
+            args += ["--env", f"{k}={v}"]
+        job = next((j for j in reversed(self.lines(*args, timeout=timeout)) if j.get("type") == "job" or j.get("state")), {})
+        if not job.get("id"):
             raise RuntimeError(f"task {name} did not start: {job}")
-        text, offset = "", 0
-        while True:
-            chunk = self.call("job", "logs", job["id"], "--offset", str(offset)) or {}
-            text += chunk.get("text", "")
-            offset = chunk.get("nextOffset", offset)
-            if chunk.get("end", True):
-                break
+        text = (self.call("job", "logs", job["id"], "--all") or {}).get("text", "")
         lines = [l[6:] if l.startswith(("[out] ", "[err] ")) else l for l in text.splitlines()]
         return job, lines
 
-    def artifact(self, job_id, basename, dest):
-        """One file of a job's artifacts (the zip `job artifacts` writes) copied to DEST."""
-        outdir = EVID / ".winix" / "artifacts"
-        outdir.mkdir(parents=True, exist_ok=True)
-        art = self.call("job", "artifacts", job_id, "--output", str(outdir)) or {}
-        path = Path(art.get("path") or "")
-        if path.is_file() and zipfile.is_zipfile(path):
-            with zipfile.ZipFile(path) as z:
-                for n in z.namelist():
-                    if n.endswith("/" + basename) or n == basename:
-                        dest.write_bytes(z.read(n))
-                        return True
-        elif path.is_dir():
-            for f in path.rglob(basename):
-                shutil.copy(f, dest)
-                return True
-        return False
+    def pull(self, guest, host):
+        return self.call("pull", guest, str(host))
 
 
 def line_value(lines, prefix):
@@ -150,94 +129,98 @@ def sections(lines):
     return out
 
 
-# ---------------------------------------------------------------- pointer (QMP tablet)
-class Tablet:
-    """The VM's USB HID tablet driven through QMP input-send-event. Windows has
-    one cursor for every pointing device, so the button events act at the
-    tablet's position whichever QEMU pointer handler receives them."""
+# ---------------------------------------------------------------- input
+def keys(*seq, delay=0.35):
+    """Chords ("alt+w", "down") and pauses (seconds): each run of chords is
+    one `ui keys` call, DELAY seconds between chords."""
+    run = []
 
-    def __init__(self, domain, uri):
-        self.domain, self.uri = domain, uri
-        self.sent = []
-        # The screen area the tablet's 0..32767 spans (x, y, w, h): the whole
-        # screenshot until calibrate() measures it (with two monitors Windows
-        # may map it to the virtual desktop or to the primary only).
-        self.rect = None
-
-    def qmp(self, execute, arguments=None):
-        payload = {"execute": execute}
-        if arguments:
-            payload["arguments"] = arguments
-        r = subprocess.run(["virsh", "-c", self.uri, "qemu-monitor-command", self.domain, json.dumps(payload)],
-                           capture_output=True, text=True, timeout=30)
-        if r.returncode:
-            raise RuntimeError(f"QMP {execute}: {r.stderr.strip()}")
-        reply = json.loads(r.stdout)
-        if "error" in reply:
-            raise RuntimeError(f"QMP {execute}: {reply['error']}")
-        return reply
-
-    def units(self, x, y):
-        x0, y0, w, h = self.rect or (0, 0, *(SCREEN["size"] or screen_size()))
-        return (min(32767, max(0, int((x - x0 + 0.5) * 32768 / w))), min(32767, max(0, int((y - y0 + 0.5) * 32768 / h))))
-
-    def rel(self, dx, dy):
-        """Relative motion (QEMU routes it to the VM's relative pointer, the
-        PS/2 mouse): the tablet cannot leave the area Windows maps it to."""
-        self.send({"type": "rel", "data": {"axis": "x", "value": dx}}, {"type": "rel", "data": {"axis": "y", "value": dy}})
-
-    def move_units(self, ux, uy):
-        self.send({"type": "abs", "data": {"axis": "x", "value": ux}}, {"type": "abs", "data": {"axis": "y", "value": uy}})
-
-    def calibrate(self):
-        """Measures the area the tablet spans: two raw positions, the guest
-        cursor (GetCursorPos, physical pixels) at each."""
-        seen = []
-        for u in (8192, 24576):
-            self.move_units(u, u)
-            time.sleep(0.4)
-            c = uia().get("cursor") or {}
-            seen.append((u, c.get("x"), c.get("y")))
-        (u1, x1, y1), (u2, x2, y2) = seen
-        if None in (x1, x2, y1, y2) or x1 == x2 or y1 == y2:
-            return {"error": "no cursor positions", "seen": seen}
-        w = (x2 - x1) * 32768 / (u2 - u1)
-        h = (y2 - y1) * 32768 / (u2 - u1)
-        self.rect = (round(x1 - u1 * w / 32768), round(y1 - u1 * h / 32768), round(w), round(h))
-        return {"seen": seen, "rect": self.rect}
-
-    def send(self, *events):
-        self.qmp("input-send-event", {"events": list(events)})
-
-    def move(self, x, y):
-        ax, ay = self.units(x, y)
-        self.send({"type": "abs", "data": {"axis": "x", "value": ax}}, {"type": "abs", "data": {"axis": "y", "value": ay}})
-
-    def button(self, down):
-        self.send({"type": "btn", "data": {"down": down, "button": "left"}})
-
-    def pointer(self, *cmds):
-        """The Linux gate's pointer script: "move X Y", "down", "up", "wait MS"."""
-        for c in cmds:
-            p = c.split()
-            if p[0] == "move":
-                self.move(int(p[1]), int(p[2]))
-            elif p[0] == "rel":
-                self.rel(int(p[1]), int(p[2]))
-            elif p[0] in ("down", "up"):
-                self.button(p[0] == "down")
-            elif p[0] == "wait":
-                time.sleep(int(p[1]) / 1000)
-            self.sent.append(c)
-        time.sleep(0.2)
+    def flush():
+        if run:
+            r = W.ui("keys", keys=" ".join(run), delayMs=int(delay * 1000))
+            if isinstance(r, dict) and r.get("error"):
+                log("keys", run, "->", r)
+            time.sleep(delay)
+            run.clear()
+    for item in seq:
+        if isinstance(item, (int, float)):
+            flush()
+            time.sleep(item)
+        else:
+            run.append(item.upper())
+    flush()
 
 
-def png_size(path):
-    with open(path, "rb") as f:
-        head = f.read(24)
-    if head[:8] != b"\x89PNG\r\n\x1a\n":
-        return None
-    return struct.unpack(">II", head[16:24])
+def combo(*names):
+    keys("+".join(names), delay=0)
+
+
+def type_text(text):
+    W.ui("text", text=text)
+
+
+def pointer(path, **kw):
+    """The tablet along PATH ([(x, y), ...]): pressed at the first point and
+    released at the last (button "none": moves only); hold=True keeps it down."""
+    r = W.ui("pointer", path=";".join(f"{x},{y}" for x, y in path), map=POINTER_MAP, **kw)
+    if isinstance(r, dict) and r.get("error"):
+        log("pointer", path, kw, "->", r)
+    return r
+
+
+def park_pointer():
+    """The tablet cursor to the primary monitor's bottom-right corner (the
+    taskbar's clock): a menu that opens under the cursor takes its current item
+    from the hover, which would turn the keyboard's Down and Right into other
+    moves (Right then goes to the next menu of the bar)."""
+    m = next((x for x in monitors() if x["primary"]), None)
+    if m:
+        W.ui("pointer", path=f"{m['x'] + m['w'] - 30},{m['y'] + m['h'] - 20}", button="none", map="primary")
+
+
+def release():
+    return W.ui("pointer", release=True)
+
+
+def double_click(x, y):
+    """Two tablet clicks, one `ui pointer` call each (winix has no double-click
+    at a point): a double-click only when the second press comes within the
+    double-click time (500 ms) of the first; a call takes about 0.3 s, more
+    when the VM is busy. Returns the seconds between the two calls' ends."""
+    pointer([(x, y)])
+    t1 = time.monotonic()
+    pointer([(x, y)])
+    return round(time.monotonic() - t1, 2)
+
+
+def double_click_until(x, y, done, title=None):
+    """A tablet double-click at X,Y, again (up to three times) while DONE(view)
+    is false; then, as a last resort, `ui doubleclick` on the UIA title bar
+    TITLE ((automationId, name, window): SendInput mouse, not the tablet).
+    Returns (view, how, gaps)."""
+    gaps = []
+    for _ in range(3):
+        gaps.append(double_click(x, y))
+        time.sleep(1.5)
+        st = wait_for(done, timeout=4)
+        if done(st):
+            return st, "tablet", gaps
+        log("tablet double-click at", x, y, "had no effect (gap", gaps[-1], "s); again")
+    if title:
+        aid, name, window = title
+        r = W.ui("doubleclick", pid=APP["pid"], automationId=aid, name=name, window=window)
+        log("ui doubleclick", name, "->", r)
+        time.sleep(1.5)
+        st = wait_for(done, timeout=4)
+        if done(st):
+            return st, "ui doubleclick (SendInput)", gaps
+    return uia(), None, gaps
+
+
+def monitors():
+    m = W.ui("monitors") or {}
+    return [{"device": x["deviceName"], "primary": x["primary"], "x": x["bounds"]["x"], "y": x["bounds"]["y"],
+             "w": x["bounds"]["width"], "h": x["bounds"]["height"], "dpi": x["dpi"]} for x in m.get("monitors") or []]
 
 
 def displays(mode=None, scale2=None, second=None):
@@ -251,67 +234,6 @@ def displays(mode=None, scale2=None, second=None):
     _, lines = W.task("gate-win-display", env=env)
     raw = line_value(lines, "DISPLAY_RESULT ")
     return json.loads(raw) if raw else {"error": lines[-10:]}
-
-
-def screen_size():
-    """The guest screen in pixels, from a desktop screenshot's dimensions."""
-    path = EVID / ".winix" / "screen.png"
-    W.screenshot(path)
-    size = png_size(path) if path.exists() else None
-    if not size:
-        raise RuntimeError("no screenshot to size the guest screen")
-    SCREEN["size"] = size
-    return size
-
-
-# ---------------------------------------------------------------- keys
-KEYMAP = {"alt": "ALT", "ctrl": "CTRL", "shift": "SHIFT", "down": "DOWN", "up": "UP", "left": "LEFT",
-          "right": "RIGHT", "return": "RETURN", "escape": "ESCAPE", "tab": "TAB", "space": "SPACE", "f6": "F6",
-          "end": "END", "home": "HOME", "f11": "F11", "f4": "F4"}
-
-
-# Keys that a keyboard sends with the extended-key flag. `winix ui keys`
-# sends them without it (keypad keys), which NVDA takes as review-cursor
-# commands, so sequences and these keys go through gate-win-keys instead.
-EXTENDED = {"down", "up", "left", "right", "home", "end", "delete", "win"}
-
-
-def combo(*names):
-    keys("+".join(names), delay=0)
-
-
-def winix_keys(*seq, delay=0.35):
-    for item in seq:
-        if isinstance(item, (int, float)):
-            time.sleep(item)
-            continue
-        r = W.ui("keys", keys="+".join(KEYMAP.get(n.lower(), n.upper()) for n in item.split("+")))
-        if isinstance(r, dict) and r.get("error"):
-            log("keys", item, "->", r)
-        time.sleep(delay)
-
-
-def keys(*seq, delay=0.35):
-    """A key sequence (chords and pauses in seconds): with a navigation key in
-    it, sent in one gate-win-keys task; otherwise through `winix ui keys`."""
-    items = [x if isinstance(x, (int, float)) else x.lower() for x in seq]
-    if not any(isinstance(x, str) and set(x.split("+")) & EXTENDED for x in items):
-        winix_keys(*items, delay=delay)
-        return
-    job, lines = W.task("gate-win-keys", env={"GATE_KEYS": json.dumps(items), "GATE_KEYS_DELAY": delay})
-    if job.get("state") != "succeeded":
-        log("keys", items, "->", job.get("state"), lines[-5:])
-
-
-def type_text(text):
-    for ch in text:
-        if ch == " ":
-            combo("space")
-        elif ch.isupper():
-            combo("shift", ch)
-        else:
-            combo(ch)
-        time.sleep(0.05)
 
 
 # ---------------------------------------------------------------- UI Automation
@@ -340,36 +262,87 @@ def ancestors(els, e):
         yield e
 
 
-def uia(do=None, settle_ms=None):
-    """The app's UI Automation view, shaped like atspi_tool.py json (frames,
-    panels, focus, focusPath, texts, labels) plus the raw elements."""
+def guest_uia(do=None, settle_ms=None):
+    """uia.ps1: controls pressed through UIA patterns, and GetDpiForWindow."""
     env = {}
     if do:
         env["GATE_UIA_DO"] = json.dumps(do)
     if settle_ms is not None:
         env["GATE_UIA_SETTLE_MS"] = settle_ms
     try:
-        job, lines = W.task("gate-win-uia", env=env or None, timeout=600)
+        _, lines = W.task("gate-win-uia", env=env, timeout=600)
         raw = line_value(lines, "UIA_JSON_B64 ")
-        data = json.loads(base64.b64decode(raw).decode("utf-8")) if raw else None
-    except Exception as e:  # keep the step going; the view says why it is empty
-        data, lines = None, [repr(e)]
-    if not data:
-        return {"frames": [], "windows": [], "elements": [], "panels": [], "focus": None, "focusPath": None,
-                "texts": {}, "labels": [], "popupMenuItems": [], "videoLabels": [], "combos": {}, "actions": [],
-                "error": "\n".join(lines[-20:])}
-    els = data.get("elements") or []
-    st = dict(data)
+        return json.loads(base64.b64decode(raw).decode("utf-8")) if raw else {"error": lines[-10:]}
+    except Exception as e:  # keep the step going; the result says why it is empty
+        return {"error": repr(e)}
+
+
+def flatten(node, parent, depth, win, els):
+    """A `ui tree` node into the element list; owned windows (walked on their
+    own) are skipped where they appear under their owner."""
+    if node.get("separateWindow"):
+        return
+    e = node["element"]
+    b = e.get("bounds") or {}
+    t = e.get("controlType") or ""
+    n = e.get("name") or ""
+    i = len(els)
+    els.append({"i": i, "p": parent, "d": depth, "win": win, "hw": e.get("hwnd") or 0, "t": t, "n": n,
+                "id": e.get("automationId") or "", "x": b.get("x", 0), "y": b.get("y", 0), "w": b.get("width", 0),
+                "h": b.get("height", 0), "en": bool(e.get("enabled")), "val": e.get("value"),
+                # winix reports no IsOffscreen: an element without area counts as off screen.
+                "off": not b.get("width") or not b.get("height")})
+    for c in node.get("children") or []:
+        flatten(c, i, depth + 1, win, els)
+
+
+def uia(do=None, settle_ms=None, dpi=False):
+    """The app's UI Automation view, shaped like atspi_tool.py json (frames,
+    panels, focus, focusPath, texts, labels) plus the raw elements: one
+    `ui batch` (windows, state, a tree per window). DO presses controls first
+    (uia.ps1); DPI adds GetDpiForWindow per window (uia.ps1)."""
+    pressed = guest_uia(do, settle_ms) if do or dpi else {}
+    st = {"frames": [], "windows": [], "elements": [], "panels": [], "focus": None, "focusPath": None,
+          "texts": {}, "labels": [], "popupMenuItems": [], "videoLabels": [], "combos": {},
+          "actions": pressed.get("actions") or [], "cursor": None, "foreground": None}
+    pid = APP["pid"]
+    if not pid:
+        st["error"] = "no app running"
+        return st
+    steps = [{"action": "windows", "pid": pid}, {"action": "state"}]
+    steps += [{"action": "tree", "pid": pid, "window": i, "depth": 12, "limit": 1000} for i in range(6)]
+    for attempt in range(3):
+        r = W.batch(steps)
+        res = r.get("steps") or []
+        # A window changing under the walk (a menu opening) can fail a step: once more.
+        if len(res) > 2 and res[1].get("ok") and res[2].get("ok"):
+            break
+        log("ui batch incomplete, again:", json.dumps([t.get("error") for t in res[:3]])[:300])
+        time.sleep(0.5)
+    if len(res) < 2 or not res[0].get("ok"):
+        st["error"] = json.dumps(r)[:500]
+        return st
+    windows = res[0]["result"]
+    state = res[1].get("result") or {}
+    st["windows"] = windows
+    st["cursor"] = state.get("cursor")
+    st["foreground"] = state.get("foreground")
+    fg = (state.get("foreground") or {}).get("hwnd")
+    dpis = {w["hwnd"]: w["dpi"] for w in pressed.get("windowDpi") or []}
+    els = []
+    # Out-of-range window indexes fail by design; anything else is kept.
+    st["errors"] = [t for t in res[1:] if not t.get("ok") and "out of range" not in (t.get("error") or "")]
+    for t in res[2:]:
+        if t.get("ok"):
+            node = t["result"]
+            flatten(node, -1, 0, node["element"].get("name") or "", els)
+    st["elements"] = els
     # Every titled window: the main window and the windows it owns (floating
-    # panels, the placement window, dialogs), which UI Automation nests under
-    # it. Nameless windows are popups.
-    fg = (data.get("foreground") or {}).get("hwnd")
-    st["frames"] = [{"name": e["n"], "type": "Window", "x": e["x"], "y": e["y"], "w": e["w"], "h": e["h"],
-                     "hwnd": e["hw"], "dpi": e.get("dpi"), "active": bool(e["hw"]) and e["hw"] == fg, "id": frame_id(e["n"])}
-                    for e in els if e["t"] == "Window" and e["n"] and not e["off"]]
-    st["panels"] = []
-    st["texts"], st["labels"], st["videoLabels"], st["combos"] = {}, [], [], {}
-    st["popupMenuItems"] = []
+    # panels, the placement window, dialogs). Nameless windows are popups.
+    st["frames"] = [{"name": w["title"], "type": "Window", "x": w["bounds"]["x"], "y": w["bounds"]["y"],
+                     "w": w["bounds"]["width"], "h": w["bounds"]["height"], "hwnd": w["hwnd"], "dpi": dpis.get(w["hwnd"]),
+                     "active": w["hwnd"] == fg, "id": frame_id(w["title"])}
+                    for w in windows if w["title"] and w.get("visible", True) and not w.get("minimized")]
     for e in els:
         if e["off"]:
             continue
@@ -377,26 +350,24 @@ def uia(do=None, settle_ms=None):
             st["panels"].append({"name": e["n"], "id": panel_id(e["n"]), "frame": frame_id(e["win"]),
                                  "x": e["x"], "y": e["y"], "w": e["w"], "h": e["h"]})
         if e["t"] == "Edit" and e["n"] in ("Line text", "Start", "End"):
-            st["texts"][e["n"]] = e["val"] if e["val"] is not None else e["txt"]
+            st["texts"][e["n"]] = e["val"]
         if e["t"] == "Text" and e["n"] and (e["n"].startswith(("Editing", "No editing")) or e["n"] == "Video times"):
-            st["labels"].append(e["txt"] or e["n"])
-        if e["t"] == "MenuItem" and not any(a["t"] == "MenuBar" for a in ancestors(els, e)):
+            st["labels"].append(e["n"])
+        if e["t"] == "MenuItem" and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e)):
             st["popupMenuItems"].append(e["n"])
         if e["t"] == "Text" and any(a["t"] == "Pane" and panel_id(a["n"]) == "Video" for a in ancestors(els, e)):
-            st["videoLabels"].append((e["n"], e["txt"]))
+            st["videoLabels"].append((e["n"], e["val"]))
         if e["t"] == "ComboBox":
             kids = [c for c in els if c["p"] == e["i"]]
             # Qt Quick's ComboBox reports an empty Value; its text is the child Edit's.
-            st["combos"][e["n"]] = e["val"] or next(
-                (c["val"] or c["txt"] or c["n"] for c in kids if c["t"] in ("Text", "Edit")), None)
-    f = data.get("focus") or {}
-    if f.get("index", -1) >= 0 and f["index"] < len(els):
-        fe = els[f["index"]]
-        st["focus"] = f"[{fe['t']}] {fe['n']!r} in {fe['win']!r}"
-        st["focusPath"] = el_path(els, fe)  # starts at the top-level window
+            st["combos"][e["n"]] = e["val"] or next((c["val"] or c["n"] for c in kids if c["t"] in ("Text", "Edit")), None)
+    focused = state.get("focused")
+    if focused and focused.get("pid") == pid:
+        chain = [a for a in reversed(state.get("ancestors") or []) if a.get("pid") == pid] + [focused]
+        st["focusPath"] = " > ".join(f"{a['controlType']}:'{a.get('name') or ''}'" for a in chain)
+        st["focus"] = f"[{focused['controlType']}] {focused.get('name') or ''!r} in {(state.get('foreground') or {}).get('title')!r}"
     else:
-        st["focus"] = f.get("path") or f.get("error")
-        st["focusPath"] = f.get("path")
+        st["focus"] = f"not in the app: {json.dumps(focused)[:200]}"
     return st
 
 
@@ -442,20 +413,13 @@ def panel_of(path):
     return found
 
 
-def top_windows():
-    listed = W.ui("windows")
-    return listed if isinstance(listed, list) else []
-
-
-def snap(name, extra=None):
+def snap(name, extra=None, monitor=None):
     png = EVID / f"{name}.png"
-    W.screenshot(png)
-    if png.exists() and not SCREEN["size"]:
-        SCREEN["size"] = png_size(png)
+    W.screenshot(png, monitor)
     st = uia()
     with open(EVID / f"{name}.txt", "w") as f:
-        f.write("# top-level windows (winix ui windows)\n" + json.dumps(top_windows(), indent=1, ensure_ascii=False)
-                + "\n# UI Automation (gate-win-uia)\n" + json.dumps(st, indent=1, ensure_ascii=False) + "\n")
+        f.write("# windows of the app (winix ui windows --pid)\n" + json.dumps(st["windows"], indent=1, ensure_ascii=False)
+                + "\n# UI Automation (winix ui batch: state, tree per window)\n" + json.dumps(st, indent=1, ensure_ascii=False) + "\n")
         if extra:
             f.write(extra + "\n")
     return [f"{name}.png", f"{name}.txt"], st
@@ -468,21 +432,28 @@ def prepare():
     if job.get("state") != "succeeded" or not raw:
         raise SystemExit("gate-win-prepare failed:\n" + "\n".join(lines[-30:]))
     LAYOUT.update(json.loads(raw))
-    log("layout", json.dumps(LAYOUT))
+    log("layout", json.dumps({k: v for k, v in LAYOUT.items() if k != "path"}))
     if not LAYOUT.get("app"):
         raise SystemExit("no hikarisub.exe under out/build/windows-x64-release in the VM (run the build task)")
 
 
 def main_window():
-    for w in top_windows():
-        if frame_id(w.get("name") or "") == MAIN:
+    if not APP["pid"]:
+        return None
+    listed = W.ui("windows", pid=APP["pid"])
+    for w in listed if isinstance(listed, list) else []:
+        if frame_id(w.get("title") or "") == MAIN:
             return w
     return None
 
 
 def app_start(doc=None):
-    args = ["-NoProfile", "-ExecutionPolicy", "Bypass", "-WindowStyle", "Hidden", "-File", LAYOUT["launcher"]]
-    W.ui("launch", exe="powershell.exe", arguments=args + ([doc] if doc else []), cwd=LAYOUT["root"])
+    """HikariSub from the VM's build with the Qt SDK it links on PATH; its
+    output goes to the winix launch log."""
+    r = W.ui("launch", exe=LAYOUT["app"], arguments=[doc] if doc else [], cwd=LAYOUT["docs"], noConsole=True,
+             env={"PATH": LAYOUT["qt_bin"] + ";" + LAYOUT["path"], "QT_FORCE_STDERR_LOGGING": "1"})
+    APP["pid"], APP["log"] = r.get("pid"), r.get("log")
+    log("launched", r)
     deadline = time.time() + 90
     while time.time() < deadline:
         main = main_window()
@@ -491,26 +462,42 @@ def app_start(doc=None):
             focus_main_compositor()
             return main
         time.sleep(2)
-    log("app_start: no main window after 90 s")
+    hidden = W.ui("windows", pid=APP["pid"], includeHidden=True)
+    log("app_start: no main window after 90 s; its windows, hidden ones included:",
+        json.dumps([(w.get("title"), w.get("visible")) for w in hidden] if isinstance(hidden, list) else hidden)[:600])
     return None
 
 
 def app_kill():
-    W.task("gate-win-kill")
+    if APP["pid"]:
+        r = W.ui("kill", pid=APP["pid"])
+        if r.get("error") and "pid" not in r:
+            log("kill", APP["pid"], "->", r)
+        APP["pid"] = None
 
 
 def app_status():
     _, lines = W.task("gate-win-status")
     s = sections(lines)
+    applog = []
+    if APP["log"]:
+        local = EVID / ".winix" / "app.log"
+        local.parent.mkdir(parents=True, exist_ok=True)
+        W.pull(APP["log"], local)
+        if local.exists():
+            applog = local.read_text(errors="replace").splitlines()[-40:]
     return {"alive": "ALIVE yes" in lines, "layout_files": [l for l in s.get("layout files", []) if l.strip()],
-            "app_log": s.get("app log", [])}
+            "app_log": applog}
 
 
 def fresh(doc=None):
+    app_kill()
     job, lines = W.task("gate-win-fresh")
     for l in lines:
         if l.startswith("set aside"):
             log(l)
+            if not PROFILE["original"]:
+                PROFILE["original"] = l.split(" -> ", 1)[1].rsplit("\\", 1)[0]
     if job.get("state") != "succeeded":
         raise RuntimeError("gate-win-fresh failed (the profile was not set aside): " + " | ".join(lines[-6:]))
     app_start(doc)
@@ -525,27 +512,34 @@ def dismiss_notices():
         log("windows besides the main one after the notices:", others)
 
 
+def set_focus(name):
+    """The keyboard focus onto the app's element NAME (`ui setfocus`, UIA SetFocus)."""
+    r = W.ui("setfocus", pid=APP["pid"], name=name)
+    if r.get("error"):
+        log("setfocus", name, "->", r)
+    time.sleep(0.5)
+    return r
+
+
 def focus_main_compositor():
-    """Give the main window the focus the way a user would: a click on its
-    title bar (in the borderless fullscreen state the same point is the
-    menu bar's empty middle)."""
+    """The main window in the foreground (`ui focus`)."""
     main = main_window()
     if not main:
         return False
-    b = main["bounds"]
-    W.ui("click", x=b["x"] + b["width"] // 2, y=max(b["y"], 0) + 12)
+    W.ui("focus", pid=APP["pid"], window=f"hwnd:{main['hwnd']}")
     time.sleep(0.8)
     return True
 
 
 def focus_main():
     """F6 until a panel of the main window has the focus (the shell activates
-    the window of the panel it moves to); else the title bar click."""
+    the window of the panel it moves to); else `ui focus`."""
     for _ in range(6):
         st = uia()
         main = frames(st).get(MAIN)
         if main and main.get("active") and st["focusPath"] and panel_of(st["focusPath"]) \
-                and not st["focusPath"].startswith("Window:'Line editor'"):
+                and not st["focusPath"].startswith("Window:'Line editor'") \
+                and "> Window:'Line editor'" not in st["focusPath"]:
             return True
         combo("f6")
         time.sleep(0.8)
@@ -556,6 +550,7 @@ def focus_main():
 def open_view():
     """Alt+W opens the View menu ("Vie&w": Alt+V stays with legacy's &Video).
     Retried until the View menu (its "Move panel…" item) shows."""
+    park_pointer()
     for _ in range(3):
         keys("alt+w", 0.6)
         st = uia()
@@ -566,9 +561,8 @@ def open_view():
     return False
 
 
-# The key that opens a submenu: Right, as on Linux; on Windows Right does not
-# open View > Panels (first run), so float_panel() records that once and
-# switches to Return, which opens it.
+# The key that opens a submenu: Right, as on Linux. Should Right not open
+# View > Panels, float_panel() records that once and switches to Return.
 SUBMENU = {"key": "right", "checked": False}
 
 
@@ -583,7 +577,8 @@ def panel_menu(name, item):
 
 
 def close_window(title):
-    uia(do=[{"action": "closewindow", "window": title}], settle_ms=500)
+    W.ui("close", pid=APP["pid"], window=title)
+    time.sleep(0.5)
 
 
 def float_panel(name, tag):
@@ -591,6 +586,11 @@ def float_panel(name, tag):
     panel_menu(name, "Float")
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if name in frames(st):
+        if not SUBMENU["checked"]:
+            SUBMENU["checked"] = True
+            verdict("submenu-right-arrow", "observed",
+                    f"Right on View > Panels opens its submenu and Right on {name} opens the panel's: "
+                    f"View > Panels > {name} > Float with Right and Return floated it", [])
         return "menu" if SUBMENU["key"] == "right" else "menu-return"
     if not SUBMENU["checked"]:
         SUBMENU["checked"] = True
@@ -604,9 +604,8 @@ def float_panel(name, tag):
             verdict("submenu-right-arrow", "failed",
                     "Right on View > Panels (focused item) does not open its submenu, so View > Panels > "
                     f"{name} > Float with Right did nothing; Return opens the submenus and floats it. The keys "
-                    "reach the menu (Down moves the focus); Right sent as a keyboard sends it (SendInput with the "
-                    "scan code and the extended-key flag) and without the flag behaves the same. The rest of "
-                    "the run opens submenus with Return", ev)
+                    "reach the menu (Down moves the focus); `ui keys` sends Right with its scan code and the "
+                    "extended-key flag. The rest of the run opens submenus with Return", ev)
             return "menu-return"
         SUBMENU["key"] = "right"
     log(f"{tag}: View > Panels > {name} > Float did not float it; using View > Move panel…")
@@ -657,7 +656,7 @@ def step_default():
 def step_keyboard_float_dock():
     fresh(LAYOUT["episode"])
     dismiss_notices()
-    uia(do=[{"action": "focus", "name": "Line text", "type": "Edit"}], settle_ms=500)
+    set_focus("Line text")
     keys("end")
     type_text(" draft")
     time.sleep(0.8)
@@ -727,7 +726,7 @@ def step_f6_floating():
     verdict("f6-from-floating-panel", "observed" if any(x and x != "Line editor" for x in reached_a) else "failed",
             f"F6 x4 right after Float reached {reached_a} (active {[w['active'] for w in walk_a]})", ev1)
     verdict("f6-into-floating-panel", "observed" if "Line editor" in reached_b and float_active_b else "failed",
-            f"main window focused by a title-bar click (focus {start_b['focus']}); F6 x5 reached {reached_b} "
+            f"main window brought to the foreground with `ui focus` (focus {start_b['focus']}); F6 x5 reached {reached_b} "
             f"(active {[w['active'] for w in walk_b]}); Shift+F6 x3 {[panel_of(w['path']) for w in back]}",
             ev2 + ["f6-floating.json"])
     for _ in range(6):
@@ -790,33 +789,53 @@ def title_point(st, pid, frame_name, dx=120):
     return None
 
 
-def step_pointer():
-    """Float button, double-click on title bars and drag-to-dock with real pointer input (QMP tablet)."""
-    fresh()
-    screen_size()
-    # Calibration: the area the tablet spans, then where the cursor lands on
-    # targets across every monitor (GetCursorPos in the guest).
-    measured = TAB.calibrate()
-    mons = displays().get("monitors") or [{"x": 0, "y": 0, "w": SCREEN["size"][0], "h": SCREEN["size"][1]}]
-    cal, unreachable = [], []
-    rect = measured.get("rect") or (0, 0, *SCREEN["size"])
+def title_ref(st, pid, frame_name):
+    """(automationId, name, window hwnd) of PID's UIA title bar in FRAME_NAME, for `ui doubleclick`."""
+    tb = next((t for t in st.get("elements") or [] if t["t"] == "TitleBar" and not t["off"]
+               and panel_id(t["n"]) == pid and frame_id(t["win"]) == frame_name), None)
+    f = frames(st).get(frame_name)
+    return (tb["id"], tb["n"], f"hwnd:{f['hwnd']}") if tb and f else None
+
+
+def calibrate_pointer():
+    """Where the guest cursor lands (`ui calibrate`) on two targets per
+    monitor, with the tablet mapped over the whole desktop (virtual) and over
+    the primary monitor: the mapping that hits the targets is used."""
+    global POINTER_MAP
+    mons = monitors()
+    points = []
     for m in mons:
         for fx, fy in ((0.25, 0.25), (0.75, 0.75)):
             x, y = m["x"] + int(m["w"] * fx), m["y"] + int(m["h"] * fy)
-            if not (rect[0] <= x < rect[0] + rect[2] and rect[1] <= y < rect[1] + rect[3]):
-                unreachable.append({"monitor": m.get("device"), "point": [x, y]})
-                continue
-            TAB.pointer(f"move {x} {y}", "wait 300")
-            cal.append({"monitor": m.get("device"), "sent": [x, y], "units": TAB.units(x, y), "cursor": uia().get("cursor")})
+            for mapping in ("virtual", "primary"):
+                r = W.ui("calibrate", point=f"{x},{y}", map=mapping)
+                off = r.get("offset") or {}
+                points.append({"monitor": m["device"], "map": mapping, "target": [x, y], "cursor": r.get("actual"),
+                               "off": abs(off.get("x", 9999)) + abs(off.get("y", 9999))})
+    hits = {mp: [p for p in points if p["map"] == mp and p["off"] <= 4] for mp in ("virtual", "primary")}
+    POINTER_MAP = max(hits, key=lambda mp: len(hits[mp]))
+    reachable = {p["monitor"] for p in hits[POINTER_MAP]}
+    unreachable = [m["device"] for m in mons if m["device"] not in reachable]
     (EVID / "pointer-calibration.json").write_text(json.dumps(
-        {"screenshot": SCREEN["size"], "monitors": mons, "tablet": measured, "points": cal,
-         "unreachable_by_the_tablet": unreachable}, indent=1))
-    off = [abs(c["cursor"]["x"] - c["sent"][0]) + abs(c["cursor"]["y"] - c["sent"][1]) for c in cal if c.get("cursor")]
-    log("tablet calibration (px off):", off, measured)
-    verdict("pointer-calibration", "observed" if off and len(off) == len(cal) and max(off) <= 4 else "failed",
-            f"tablet spans {measured.get('rect')} over monitors {[(m.get('device'), m['x'], m['y'], m['w'], m['h']) for m in mons]}; "
-            f"the guest cursor landed {off} px (|dx|+|dy|) from the targets; {len(unreachable)} target(s) outside "
-            "the tablet's area (Windows maps the absolute HID pointer to the primary monitor) (pointer-calibration.json)",
+        {"monitors": mons, "points": points, "map": POINTER_MAP, "unreachable": unreachable}, indent=1))
+    return mons, points, reachable, unreachable
+
+
+def step_pointer():
+    """Float button, double-click on title bars and drag-to-dock with real pointer input (the VM's HID tablet)."""
+    fresh()
+    # The main window opens 1280x800, larger than the 1024x768 primary, and
+    # the tablet reaches the primary only: maximized, its title bars are there.
+    focus_main_compositor()
+    keys("win+up", 1.0)
+    mons, points, reachable, unreachable = calibrate_pointer()
+    used = [p for p in points if p["map"] == POINTER_MAP and p["monitor"] in reachable]
+    off = [p["off"] for p in used]
+    log("tablet calibration:", POINTER_MAP, off, "unreachable", unreachable)
+    verdict("pointer-calibration", "observed" if off and max(off) <= 4 else "failed",
+            f"`ui calibrate` with the tablet mapped over the {POINTER_MAP} area: the guest cursor landed {off} px "
+            f"(|dx|+|dy|) from the targets on {sorted(reachable)}; not reachable with either mapping: {unreachable} "
+            "(Windows maps the absolute HID pointer to the primary monitor) (pointer-calibration.json)",
             ["pointer-calibration.json"])
     st = uia()
     btn = next((b for b in find(st, "Button", "Float Audio") if frame_id(b["win"]) == MAIN), None)
@@ -828,7 +847,8 @@ def step_pointer():
     else:
         verdict("pointer-float-button", "not-observable", "neither the 'Float Audio' button nor the Audio panel found")
         return
-    TAB.pointer(f"move {tx} {ty}", "wait 200", "down", "wait 60", "up", "wait 1200")
+    pointer([(tx, ty)])
+    time.sleep(1.2)
     st = wait_for(lambda s: "Audio" in frames(s))
     ev, st = snap("ptr-1-float-button")
     verdict("pointer-float-button", "observed" if "Audio" in frames(st) else "failed",
@@ -836,11 +856,11 @@ def step_pointer():
             ev + ["pointer-calibration.json"])
     # Double-click the docked Video title bar: floats; double-click its floating title bar: docks.
     pt = title_point(st, "Video", MAIN)
-    dfloat, redock, ev1, ev2 = False, False, [], []
+    dfloat, redock, ev1, ev2, how1, how2, gaps = False, False, [], [], None, None, []
     if pt:
         vx, vy, _ = pt
-        TAB.pointer(f"move {vx} {vy}", "wait 300", "down", "wait 40", "up", "wait 60", "down", "wait 40", "up", "wait 1500")
-        st = wait_for(lambda s: "Video" in frames(s))
+        st, how1, g1 = double_click_until(vx, vy, lambda s: "Video" in frames(s), title_ref(st, "Video", MAIN))
+        gaps.append(g1)
         ev1, st = snap("ptr-2-dblclick-float")
         dfloat = "Video" in frames(st)
     if dfloat:
@@ -848,14 +868,14 @@ def step_pointer():
         if pt2:
             fx, fy, where = pt2
             log("floating Video title at", fx, fy, where)
-            TAB.pointer(f"move {fx} {fy}", "wait 300", "down", "wait 40", "up", "wait 60", "down", "wait 40", "up",
-                        "wait 1500")
-            st = wait_for(lambda s: "Video" not in frames(s))
+            st, how2, g2 = double_click_until(fx, fy, lambda s: "Video" not in frames(s), title_ref(st, "Video", "Video"))
+            gaps.append(g2)
             ev2, st = snap("ptr-3-dblclick-redock")
             redock = "Video" not in frames(st)
     verdict("pointer-dblclick-float-redock", "observed" if dfloat and redock else "failed",
-            f"double-click docked Video title at {pt}: floated={dfloat}; double-click its floating title: "
-            f"redocked={redock}", ev1 + ev2)
+            f"double-click on the docked Video title at {pt}: floated={dfloat} (by {how1}); double-click its "
+            f"floating title: redocked={redock} (by {how2}); tablet attempts, seconds between the two clicks' "
+            f"calls: {gaps}", ev1 + ev2)
     # Drag the floating Audio panel by its title bar onto the Grid's centre.
     st = uia()
     src = title_point(st, "Audio", "Audio", dx=150)
@@ -865,15 +885,18 @@ def step_pointer():
         return
     sx, sy, where = src
     gx, gy = grid["x"] + grid["w"] // 2, grid["y"] + grid["h"] // 2 - 15
-    cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
-    for i in range(1, 31):
-        cmds += [f"move {sx + (gx - sx) * i // 30} {sy + (gy - sy) * i // 30}", "wait 40"]
-    cmds += [f"move {gx + 3} {gy + 3}", "wait 300", f"move {gx} {gy}", "wait 700"]
     try:
-        TAB.pointer(*cmds)
+        # Pressed on the title, along to the Grid's centre in 30 steps, a small
+        # wiggle there, and held while the drop indicators are captured.
+        pointer([(sx, sy)], hold=True)
+        time.sleep(0.25)
+        pointer([(sx, sy), (gx + 3, gy + 3), (gx, gy)], button="none", steps=30, delayMs=40)
+        time.sleep(0.7)
         ev3, _ = snap("ptr-4-drag-over-grid")  # the drop indicators, button still held
     finally:
-        TAB.pointer("up", "wait 1500", f"move {gx + 5} {gy + 5}", "wait 300")
+        release()
+        time.sleep(1.5)
+        pointer([(gx + 5, gy + 5)], button="none")
     ev4, st = snap("ptr-5-dropped")
     docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
     verdict("pointer-drag-dock", "observed" if docked else "failed",
@@ -1003,7 +1026,8 @@ def step_fullscreen():
 def step_menu_from_text():
     fresh(LAYOUT["episode"])
     dismiss_notices()
-    st = uia(do=[{"action": "focus", "name": "Line text", "type": "Edit"}], settle_ms=500)
+    set_focus("Line text")
+    st = uia()
     before = st["texts"].get("Line text")
     keys("alt+v", 1.0)
     ev, st = snap("menu-from-text")
@@ -1020,7 +1044,7 @@ def step_test_executables():
     text = "\n".join(lines)
     (EVID / "test-executables.txt").write_text(f"# winix job {job.get('id')} ({job.get('state')})\n{text}\n")
     exits = re.findall(r"^### (\S+) .*\(exit (.+)\)$", text, re.M)
-    ok = len(exits) == 3 and all(code == "0" for _, code in exits)
+    ok = len(exits) == 4 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
     unexpected = [k for k in skips if "the compositor places windows" not in k]
@@ -1062,7 +1086,8 @@ def step_nvda():
     speech = [l.strip() for l in s.get("speech", []) if l.strip()]
     (EVID / "nvda-speech.txt").write_text("\n".join(speech) + "\n")
     (EVID / "nvda-output.txt").write_text("\n".join(lines) + "\n")
-    got_log = W.artifact(job["id"], "nvda-last.log", EVID / "nvda.log")
+    W.pull(LAYOUT["nvda_dir"] + "\\nvda-last.log", EVID / "nvda.log")
+    got_log = (EVID / "nvda.log").exists()
     synth = s.get("synth", [])
     silent = any("silence" in l for l in synth)
     spoke = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float") if any(p in l for l in speech)]
@@ -1081,15 +1106,10 @@ def inside(f, m):
     return m["x"] <= cx < m["x"] + m["w"] and m["y"] <= cy < m["y"] + m["h"]
 
 
-def framebuffer(name, head):
-    """One QXL head's framebuffer from the host (`virsh screenshot --screen`, read-only)."""
+def head_shot(name, monitor):
+    """One monitor's pixels (`ui screenshot --monitor N`; the worker is per-monitor DPI aware)."""
     out = EVID / f"{name}.png"
-    tmp = out.with_suffix(".ppm")
-    r = subprocess.run(["virsh", "-c", TAB.uri, "screenshot", TAB.domain, str(tmp), "--screen", str(head)],
-                       capture_output=True, text=True)
-    if r.returncode == 0:
-        subprocess.run(["magick", str(tmp), str(out)], capture_output=True)
-    tmp.unlink(missing_ok=True)
+    W.screenshot(out, monitor)
     return [out.name] if out.exists() else []
 
 
@@ -1107,13 +1127,10 @@ def step_outputs():
     fresh(LAYOUT["episode"])
     dismiss_notices()
     try:
-        screen_size()
-        measured = TAB.calibrate()
-        log("tablet", measured)
         how = float_panel("Audio", "outputs")
         st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
         before = frames(st).get("Audio")
-        # 150 % needs a larger mode on the second monitor (1280x800 allows 125 %).
+        # Windows offers 150 % only on a larger mode (about 1920x1200 and up).
         d2 = displays("extend", scale2=150, second=(1920, 1200))
         mons = d2.get("monitors") or mons
         prim = next(m for m in mons if m["primary"])
@@ -1124,30 +1141,33 @@ def step_outputs():
         if src and before:
             sx, sy, _ = src
             tx, ty = sec["x"] + sec["w"] // 3, sec["y"] + 120
-            reach = TAB.rect and TAB.rect[0] <= tx < TAB.rect[0] + TAB.rect[2]
-            if reach:
-                cmds = [f"move {sx} {sy}", "wait 250", "down", "wait 250"]
-                for i in range(1, 31):
-                    cmds += [f"move {sx + (tx - sx) * i // 30} {sy + (ty - sy) * i // 30}", "wait 40"]
+            # Can the tablet reach the second monitor (`ui calibrate` over the whole desktop)?
+            cal = W.ui("calibrate", point=f"{tx},{ty}", map="virtual")
+            off = cal.get("offset") or {}
+            if abs(off.get("x", 9999)) + abs(off.get("y", 9999)) <= 4:
                 try:
-                    TAB.pointer(*cmds, "wait 500")
+                    W.ui("pointer", path=f"{sx},{sy}", map="virtual", hold=True)
+                    time.sleep(0.25)
+                    W.ui("pointer", path=f"{sx},{sy};{tx},{ty}", map="virtual", button="none", steps=30, delayMs=40)
+                    time.sleep(0.5)
                 finally:
-                    TAB.pointer("up", "wait 1500")
+                    release()
+                    time.sleep(1.5)
                 moved_by = f"tablet drag of its title bar from {sx},{sy} to {tx},{ty}"
             else:
-                # Windows maps the tablet to the primary only. A drag carried on
-                # with relative motion does reach the second monitor, but the
-                # tablet's button-up report puts the cursor back at its last
-                # absolute position (the primary's edge, where Windows snaps
-                # the window). So the window moves the keyboard way: active
-                # (a click on its title), then Win+Shift+Right.
-                TAB.pointer(f"move {sx} {sy}", "wait 200", "down", "wait 60", "up", "wait 500")
+                # Windows maps the tablet to the primary only, so the window
+                # moves the keyboard way: active (a click on its title), then
+                # Win+Shift+Right.
+                pointer([(sx, sy)])
+                time.sleep(0.5)
                 keys("win+shift+right", 1.5)
-                moved_by = f"Win+Shift+Right after a click on its title (the tablet spans {TAB.rect} only)"
+                moved_by = (f"Win+Shift+Right after a click on its title (the tablet does not reach the second "
+                            f"monitor: `ui calibrate` {tx},{ty} landed at {cal.get('actual')})")
         st = wait_for(lambda s: "Audio" in frames(s) and inside(frames(s)["Audio"], sec), timeout=6)
+        st = uia(dpi=True)
         fa = frames(st).get("Audio")
         ev0, st = snap("outputs-0-on-scale2", extra="# DISPLAY_RESULT\n" + json.dumps(d2))
-        ev0 += framebuffer("outputs-0-monitor2-framebuffer", 1) + framebuffer("outputs-0-monitor1-framebuffer", 0)
+        ev0 += head_shot("outputs-0-monitor2", 1) + head_shot("outputs-0-monitor1", 0)
         on2 = bool(fa) and inside(fa, sec)
         ratio = round(fa["w"] / before["w"], 2) if fa and before and before["w"] else None
         verdict("mixed-dpi", "observed" if on2 and sec.get("dpi") == 144 and fa.get("dpi") == 144 and prim.get("dpi") == 96
@@ -1156,12 +1176,13 @@ def step_outputs():
                 f"(primary {prim['device']} at {prim['dpi']}): on it={on2}, window {fa and (fa['x'], fa['y'], fa['w'], fa['h'])}, "
                 f"GetDpiForWindow {fa and fa.get('dpi')} (96 would mean bitmap-scaled by Windows), width x{ratio} of "
                 f"its 100 % width {before and before['w']}; second monitor {sec['w']}x{sec['h']}, scale call {d2.get('scale2')} "
-                "(outputs-0-monitor2-framebuffer.png: the head's own pixels)", ev0)
+                "(outputs-0-monitor2.png: that monitor's pixels)", ev0)
         # Monitor removal with the panel on the second monitor.
         d3 = displays("detach")
         left = d3.get("monitors") or []
         st = wait_for(lambda s: "Audio" in frames(s) and len(left) == 1 and inside(frames(s)["Audio"], left[0]), timeout=8)
         ev1, st = snap("outputs-1-after-removal", extra="# DISPLAY_RESULT\n" + json.dumps(d3))
+        st = uia(dpi=True)
         fa = frames(st).get("Audio")
         back = len(left) == 1 and bool(fa) and inside(fa, left[0])
         verdict("monitor-removal", "observed" if back else "failed",
@@ -1178,11 +1199,11 @@ def step_outputs():
                 f"{active_frames(st)}; focus {st['focusPath']})", ev2)
     finally:
         r = displays("extend", scale2=100)
-        ok = len(r.get("monitors") or []) == 2 and all(m["dpi"] == 96 and m["w"] == 1280 and m["h"] == 800
+        ok = len(r.get("monitors") or []) == 2 and all(m["dpi"] == 96 and m["w"] == 1024 and m["h"] == 768
                                                       for m in r["monitors"])
         (EVID / "outputs-restored.txt").write_text(json.dumps(r, indent=1))
         verdict("outputs-restored", "observed" if ok else "failed",
-                f"both monitors back at 1280x800, 100 %, extended: {[(m['device'], m['x'], m['w'], m['h'], m['dpi']) for m in r.get('monitors') or []]}",
+                f"both monitors back at 1024x768 (vm.displays), 100 %, extended: {[(m['device'], m['x'], m['w'], m['h'], m['dpi']) for m in r.get('monitors') or []]}",
                 ["outputs-restored.txt"])
 
 
@@ -1206,15 +1227,8 @@ def step_dpi():
                     f"the guest did not change its scale to 150 % without signing out: {res}", ev0)
             return
         time.sleep(3)
-        # The worker that takes screenshots is not DPI aware: keep the host's view of the framebuffer too.
-        host = EVID / "dpi-1-at-150-framebuffer.png"
-        r = subprocess.run(["virsh", "-c", TAB.uri, "screenshot", TAB.domain, str(host.with_suffix(".ppm"))],
-                           capture_output=True, text=True)
-        if r.returncode == 0:
-            subprocess.run(["magick", str(host.with_suffix(".ppm")), str(host)], capture_output=True)
-            host.with_suffix(".ppm").unlink(missing_ok=True)
         ev1, st = snap("dpi-1-at-150", extra="# DPI_RESULT\n" + json.dumps(res))
-        uia(do=[{"action": "focus", "name": "Line text", "type": "Edit"}], settle_ms=300)
+        set_focus("Line text")
         keys("end")
         type_text(" hidpi")
         time.sleep(0.8)
@@ -1223,7 +1237,7 @@ def step_dpi():
         verdict("dpi-scale-change", "observed" if both and txt and txt.endswith(" hidpi") else "failed",
                 f"scale 100 -> {res.get('after')} % live ({res}); floating Line editor (floated by {how}) and main "
                 f"window still shown: {both}; typing there gives {txt!r} (dpi-1-at-150*.png)",
-                ev0 + ev1 + ([host.name] if host.exists() else []))
+                ev0 + ev1)
     finally:
         back = dpi_set(100)
         time.sleep(3)
@@ -1240,8 +1254,8 @@ def step_a11y():
     st = uia()
     els = st.get("elements") or []
     tree = "\n".join("  " * e["d"] + f"[{e['t']}] {e['n']!r} id={e['id']!r} @{e['x']},{e['y']} {e['w']}x{e['h']}"
-                     + "".join(f" {k}" for k in ("fo", "off", "inv") if e[k]) + ("" if e["en"] else " disabled")
-                     + (f" val={e['val']!r}" if e["val"] is not None else "") + (f" sel={e['sel']}" if e["sel"] else "")
+                     + (" off" if e["off"] else "") + ("" if e["en"] else " disabled")
+                     + (f" val={e['val']!r}" if e["val"] is not None else "") + (f" hwnd={e['hw']}" if e["hw"] else "")
                      + f"  <{e['win']}>" for e in els)
     (EVID / "a11y-tree.txt").write_text(tree + "\n")
     table = find(st, "Table", "Subtitle lines") or find(st, "DataGrid", "Subtitle lines")
@@ -1255,6 +1269,7 @@ def step_a11y():
     press = find(st, "Button", "Float Audio")
     st = uia(do=[{"action": "invoke", "name": "Float Audio", "type": "Button"}])
     out = st["actions"]
+    by_invoke = bool(out) and out[0].get("done") == ["Invoke"]
     st = wait_for(lambda s: "Audio" in frames(s))
     floated = "Audio" in frames(st)
     ev0, st = snap("a11y-0-float-audio-by-uia")
@@ -1263,9 +1278,9 @@ def step_a11y():
     st = wait_for(lambda s: "Audio" not in frames(s))
     docked = "Audio" not in frames(st)
     verdict("title-bar-buttons-accessible",
-            "observed" if all(found.values()) and press and press[0]["inv"] and floated and dock_btn and docked
+            "observed" if all(found.values()) and press and by_invoke and floated and dock_btn and docked
             else "failed",
-            f"named buttons {found}; Invoke pattern on 'Float Audio': {bool(press and press[0]['inv'])}; invoked -> "
+            f"named buttons {found}; pressed through the Invoke pattern: {by_invoke}; invoked -> "
             f"own window={floated} ({out}); then 'Dock Audio' {[d['path'] for d in dock_btn[:1]]} -> docked={docked}",
             ["a11y-tree.txt"] + ev0)
     focus_main()
@@ -1276,17 +1291,16 @@ def step_a11y():
     tab_buttons = {n: bool(find(st, "Button", n)) for n in ("Float Timing", "Close Timing", "Float Line editor",
                                                             "Close Line editor")}
     ev1, st = snap("a11y-1-tabs")
-    selected = [n for n, hits in tabs.items() if hits and hits[0]["sel"]]
     uia(do=[{"action": "invoke", "name": "Float Timing", "type": "Button"}])
     st = wait_for(lambda s: "Timing" in frames(s))
     tab_floated = "Timing" in frames(st)
     ev2, st = snap("a11y-2-float-timing-tab")
     (EVID / "a11y-tabs.txt").write_text(json.dumps(
         {"tabs": {n: [h["path"] for h in hits] for n, hits in tabs.items()}, "buttons": tab_buttons,
-         "selected": selected}, indent=1, ensure_ascii=False))
+         }, indent=1, ensure_ascii=False))
     verdict("tabs-accessible",
             "observed" if all(tabs.values()) and all(tab_buttons.values()) and tab_floated else "failed",
-            f"tab items { {n: bool(h) for n, h in tabs.items()} } (selected {selected}); tab buttons {tab_buttons}; "
+            f"tab items { {n: bool(h) for n, h in tabs.items()} }; tab buttons {tab_buttons}; "
             f"invoked 'Float Timing' -> own window={tab_floated}", ev1 + ev2 + ["a11y-tabs.txt"])
 
 
@@ -1297,13 +1311,11 @@ STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6
 
 
 def main():
-    global W, TAB, LOG
+    global W, LOG
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("steps", nargs="*", help=f"steps (default: all but dpi): {', '.join(STEPS)}")
     ap.add_argument("--config", default=str(ROOT / "winix.yaml"))
     ap.add_argument("--vm", default="dev")
-    ap.add_argument("--domain", default="winix-dev", help="libvirt domain of the VM (QMP pointer input)")
-    ap.add_argument("--libvirt-uri", default="qemu:///session")
     ap.add_argument("--dpi", action="store_true", help="allow the dpi step (changes the guest's display scale "
                                                        "to 150 %% and back to 100 %%)")
     a = ap.parse_args()
@@ -1317,7 +1329,6 @@ def main():
     results.update(json.loads((EVID / "results.json").read_text()) if (EVID / "results.json").exists() else {})
     LOG = open(EVID / "steps.log", "a")
     W = Winix(a.config, a.vm)
-    TAB = Tablet(a.domain, a.libvirt_uri)
     ready = W.call("vm", "ready", a.vm) or {}
     if not ready.get("desktopReady") or ready.get("activeJob"):
         raise SystemExit(f"the VM desktop is not ready or busy: {json.dumps(ready)[:300]}")
@@ -1332,11 +1343,11 @@ def main():
                 traceback.print_exc()
                 verdict(name, "error", f"harness error: {e!r}")
     finally:
-        try:
-            TAB.button(False)  # never leave the left button held
-        except Exception:
-            pass
+        release()  # never leave the left button held
         app_kill()
+        if PROFILE["original"]:
+            _, lines = W.task("gate-win-restore", env={"GATE_PROFILE_FROM": PROFILE["original"]})
+            log("profile:", " | ".join(l for l in lines if l.startswith(("restored", "set aside"))))
 
 
 if __name__ == "__main__":

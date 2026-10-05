@@ -5,7 +5,7 @@ import QtQuick.Controls
 // tab `index` (-1: none). R1 fills in its "Subtitle comparison"
 // (Notebook.cpp:915-956); the rest of the legacy tab menu is P9's, added here
 // around it so DocumentTabBar.qml keeps only the right-click handlers.
-Menu {
+ShellMenu {
     id: tabMenu
     objectName: "documentTabMenu"
     required property var app

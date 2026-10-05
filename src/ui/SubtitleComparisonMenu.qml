@@ -7,7 +7,7 @@ import QtQuick.Controls
 // selections, styles and selected styles (the styles both share), then
 // Compare; Turn off comparison while one is on. The criteria are
 // SUBS_COMPARISON_TYPE and SUBS_COMPARISON_STYLES, saved as they change.
-Menu {
+ShellMenu {
     id: comparison
     objectName: "subtitleComparisonMenu"
     title: qsTr("Subtitle comparison")
@@ -37,7 +37,7 @@ Menu {
 
     // "Compare by selected styles" is a checked item with the styles under
     // it, checked while any style is chosen (Notebook.cpp:936, 113-121).
-    delegate: MenuItem {
+    delegate: ShellMenuItem {
         id: entry
         readonly property bool stylesEntry: entry.subMenu !== null && entry.subMenu.objectName === "compareStylesMenu"
         objectName: stylesEntry ? "compareByChosenStyles" : ""
@@ -50,7 +50,7 @@ Menu {
         Accessible.checked: checked
     }
 
-    MenuItem {
+    ShellMenuItem {
         id: compareByTimes
         objectName: "compareByTimes"
         text: qsTr("Compare by times")
@@ -58,7 +58,7 @@ Menu {
         enabled: comparison.menuState.canCompare === true
         onTriggered: comparison.app.toggleComparisonBit(1) // COMPARE_BY_TIMES
     }
-    MenuItem {
+    ShellMenuItem {
         id: compareByVisible
         objectName: "compareByVisible"
         text: qsTr("Compare by visible lines")
@@ -66,7 +66,7 @@ Menu {
         enabled: comparison.menuState.canCompare === true
         onTriggered: comparison.app.toggleComparisonBit(8) // COMPARE_BY_VISIBLE
     }
-    MenuItem {
+    ShellMenuItem {
         id: compareBySelections
         objectName: "compareBySelections"
         text: qsTr("Compare by selections")
@@ -75,7 +75,7 @@ Menu {
         enabled: comparison.menuState.selectionsEnabled === true
         onTriggered: comparison.app.toggleComparisonBit(16) // COMPARE_BY_SELECTIONS
     }
-    MenuItem {
+    ShellMenuItem {
         id: compareByStyles
         objectName: "compareByStyles"
         text: qsTr("Compare by styles")
@@ -83,7 +83,7 @@ Menu {
         enabled: comparison.menuState.canCompare === true
         onTriggered: comparison.app.toggleComparisonBit(2) // COMPARE_BY_STYLES
     }
-    Menu {
+    ShellMenu {
         id: stylesMenu
         objectName: "compareStylesMenu"
         title: qsTr("Compare by selected styles")
@@ -91,7 +91,7 @@ Menu {
         Instantiator {
             id: styleItems
             model: [] // set by prepare()
-            delegate: MenuItem {
+            delegate: ShellMenuItem {
                 required property var modelData
                 objectName: "compareStyle_" + modelData.name
                 text: modelData.name
@@ -108,13 +108,13 @@ Menu {
             onObjectRemoved: (index, object) => stylesMenu.removeItem(object)
         }
     }
-    MenuItem {
+    ShellMenuItem {
         objectName: "compareSubtitles"
         text: qsTr("Compare")
         enabled: comparison.menuState.canCompare === true
         onTriggered: comparison.app.compareWithTab(comparison.tabIndex)
     }
-    MenuItem {
+    ShellMenuItem {
         objectName: "turnOffComparison"
         text: qsTr("Turn off comparison")
         enabled: comparison.menuState.active === true

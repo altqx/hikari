@@ -9,6 +9,7 @@
 
 #include <QFile>
 #include <QGuiApplication>
+#include <QQuickItem>
 #include <QWindow>
 #include <QFileInfo>
 #include <QDir>
@@ -49,6 +50,17 @@ bool writeAtomically(const QString &path, const QByteArray &bytes)
     return f.commit();
 }
 
+// Whether `focus` is in a Qt Quick Controls menu: a menu's popup item, or an
+// item under it. The menu's items and its popup item are QObject children of
+// the menu (QQuickMenu, a private type: matched by class name).
+bool isInMenu(QObject *focus)
+{
+    for (auto *item = qobject_cast<QQuickItem *>(focus); item; item = item->parentItem())
+        if (item->inherits("QQuickMenuItem") || (item->parent() && item->parent()->inherits("QQuickMenu")))
+            return true;
+    return false;
+}
+
 } // namespace
 
 const QStringList &WorkspaceLayoutController::panelIds()
@@ -64,6 +76,12 @@ WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject
 {
     if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::focusWindowChanged);
+        connect(app, &QGuiApplication::focusObjectChanged, this, [this](QObject *focus) {
+            if (const bool inMenu = isInMenu(focus); inMenu != m_menuHasFocus) {
+                m_menuHasFocus = inMenu;
+                emit menuHasFocusChanged();
+            }
+        });
         // A screen that goes away or shrinks can leave a floating panel
         // where no screen shows it: bring it back (docs/qt/docking.md).
         m_screenCheck.setSingleShot(true);

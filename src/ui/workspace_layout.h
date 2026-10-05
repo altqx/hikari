@@ -30,6 +30,11 @@ class WorkspaceLayoutController : public QObject {
     // The application's focus window (QWindow::isActive is also true for the
     // parent of an active floating panel, so the shell compares windows).
     Q_PROPERTY(QObject *focusWindow READ focusWindow NOTIFY focusWindowChanged)
+    // Whether the keyboard is in an open menu. Qt Quick Controls menus are
+    // items of the window they open in (Popup.Item), so the focus window stays
+    // the shell's while one is open: the shell's shortcuts stay off then, as
+    // legacy's menu took every key while it was shown (D1 Windows gate).
+    Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
 public:
     static constexpr int kSchema = 1;
     static constexpr int kPanelRegistry = 3; // 2: Timing (F5), 3: Search (F1)
@@ -63,6 +68,7 @@ public:
     void setPreset(const QString &preset);
     static const QStringList &presets();
     QObject *focusWindow() const;
+    bool menuHasFocus() const { return m_menuHasFocus; }
     bool hasBackup() const;
 
     // The envelope around an engine payload, and its validation.
@@ -72,6 +78,7 @@ public:
 signals:
     void changed();
     void focusWindowChanged();
+    void menuHasFocusChanged();
 
 private:
     bool restorePayload(const QByteArray &payload);
@@ -83,6 +90,7 @@ private:
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;
+    bool m_menuHasFocus = false;
     QTimer m_screenCheck;
 };
 

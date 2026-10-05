@@ -146,12 +146,13 @@ tasks:
     visualStudio: false
     timeoutSeconds: 300
   gate-win-fresh:
-    # Ends the HikariSub under test and sets its profile aside (never deleted).
+    # Sets the HikariSub profile aside (never deleted); `ui launch --fresh-profile` does not reach Qt's known folders.
     script: ./tools/native-gate/windows/gate.ps1 -Action fresh
     visualStudio: false
     timeoutSeconds: 120
-  gate-win-kill:
-    script: ./tools/native-gate/windows/gate.ps1 -Action kill
+  gate-win-restore:
+    # Puts a set-aside profile back (GATE_PROFILE_FROM: an out/native-gate-win/old-profiles/<stamp> directory).
+    script: ./tools/native-gate/windows/gate.ps1 -Action restore
     visualStudio: false
     timeoutSeconds: 120
   gate-win-status:
@@ -159,7 +160,7 @@ tasks:
     visualStudio: false
     timeoutSeconds: 120
   gate-win-uia:
-    # Every top-level window of the app through UI Automation, focus, foreground, cursor.
+    # What winix ui does not report: controls pressed through UIA patterns only, GetDpiForWindow.
     script: ./tools/native-gate/windows/uia.ps1
     visualStudio: false
     timeoutSeconds: 300
@@ -190,14 +191,8 @@ tasks:
     visualStudio: false
     timeoutSeconds: 180
     artifacts: [out/native-gate-win/nvda/nvda-last.log]
-  gate-win-keys:
-    # Key sequences as a keyboard sends them (scan codes, extended-key flag on navigation keys).
-    script: ./tools/native-gate/windows/gate.ps1 -Action keys
-    visualStudio: false
-    timeoutSeconds: 300
-    environment: {GATE_KEYS: '[]'}
   display-layout:
-    # Both QXL monitors extended at 1280x800, the second right of the primary; prints the monitor rectangles.
+    # Both QXL monitors extended at 1024x768 (vm.displays), the second right of the primary; prints the monitor rectangles.
     script: ./tools/native-gate/windows/display.ps1
     visualStudio: false
     timeoutSeconds: 180

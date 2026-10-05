@@ -2,7 +2,7 @@
 # the guest's desktop over the VM's two QXL monitors, in the user session,
 # without admin rights. One output line: DISPLAY_RESULT <JSON>.
 #   GATE_DISPLAY=extend   SetDisplayConfig(SDC_TOPOLOGY_EXTEND | SDC_APPLY), then every
-#                         monitor at GATE_WIDTH x GATE_HEIGHT (default 1280x800), the
+#                         monitor at GATE_WIDTH x GATE_HEIGHT (default 1024x768, the VM's mode), the
 #                         second to the right of the primary (ChangeDisplaySettingsEx)
 #   GATE_DISPLAY=detach   only the primary (SDC_TOPOLOGY_INTERNAL; else the second
 #                         display detached with a 0x0 mode)
@@ -154,8 +154,8 @@ public static class GateDisplay {
 }
 '@
 $scales = 100, 125, 150, 175, 200, 225, 250, 300, 350, 400, 450, 500
-$width = if ($env:GATE_WIDTH) { [int]$env:GATE_WIDTH } else { 1280 }
-$height = if ($env:GATE_HEIGHT) { [int]$env:GATE_HEIGHT } else { 800 }
+$width = if ($env:GATE_WIDTH) { [int]$env:GATE_WIDTH } else { 1024 }
+$height = if ($env:GATE_HEIGHT) { [int]$env:GATE_HEIGHT } else { 768 }
 # The second monitor's mode (default the same): Windows offers 150 % only
 # from about 1920x1200 (at 1280x800 the most is 125 %).
 $width2 = if ($env:GATE_WIDTH2) { [int]$env:GATE_WIDTH2 } else { $width }

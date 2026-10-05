@@ -30,6 +30,11 @@ public:
 
     // QAccessibleInterface
     QAccessibleInterface *parent() const override;
+    // The Grid's window. QAccessibleObject has none, and Qt's Windows UI
+    // Automation bridge gives an element whose parent has another window
+    // (none counts) that window's HWND: each cell then hosted the whole main
+    // window, and focus in the Grid resolved to it (D1 Windows gate).
+    QWindow *window() const override;
     int childCount() const override;
     QAccessibleInterface *child(int index) const override;
     int indexOfChild(const QAccessibleInterface *child) const override;

@@ -360,7 +360,11 @@ ApplicationWindow {
         const w = root.workspaceLayout.focusWindow
         return w !== null && w !== root && panels.some(p => p.visible && p.Window.window === w)
     }
-    readonly property bool shellActive: root.workspaceLayout.focusWindow === root || floatingPanelActive
+    // While a menu has the keyboard none of the shell's shortcuts fire, as
+    // legacy's menus took every key while shown (MenuBar::OnKey, Menu.cpp:1335):
+    // Left and Right (Previous and Next frame) open and close submenus.
+    readonly property bool menuHasKeys: root.workspaceLayout.menuHasFocus
+    readonly property bool shellActive: (root.workspaceLayout.focusWindow === root || floatingPanelActive) && !menuHasKeys
     // O2: the Global window's accelerator table (HikariSubFrame::SetAccels,
     // HikariSubFrame.cpp:1754-1800), on the whole shell (legacy's Tabs). The
     // focused panel's own bindings come first (each panel takes its keys in
@@ -386,13 +390,13 @@ ApplicationWindow {
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.hotkeys.globalSequences.includes("F6")
+        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // P6: a tab closed from the tab bar (its close mark or a middle click).
@@ -433,16 +437,16 @@ ApplicationWindow {
     menuBar: MenuBar {
         MenuBarItem {
             objectName: "fileMenuBarItem"
-            menu: Menu {
+            menu: ShellMenu {
                 title: qsTr("&File")
-                MenuItem {
+                ShellMenuItem {
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.open()
                     }
                 }
-                Menu {
+                ShellMenu {
                     id: recentMenu
                     objectName: "recentSubtitlesMenu"
                     title: qsTr("Recently opened &subtitles")
@@ -450,7 +454,7 @@ ApplicationWindow {
                     onAboutToShow: rows = root.app.recentSubtitles()
                     Instantiator {
                         model: recentMenu.rows
-                        delegate: MenuItem {
+                        delegate: ShellMenuItem {
                             required property var modelData
                             required property int index
                             objectName: "recentSubtitles" + index
@@ -460,14 +464,14 @@ ApplicationWindow {
                         onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
                         onObjectRemoved: (index, object) => recentMenu.removeItem(object)
                     }
-                    MenuItem {
+                    ShellMenuItem {
                         text: qsTr("None")
                         enabled: false
                         visible: recentMenu.rows.length === 0
                         height: visible ? implicitHeight : 0
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "newMenuItem"
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
@@ -476,7 +480,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_REMOVE_SUBS")) root.beginClose("new")
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "closeMenuItem"
                     action: Action {
                         id: closeAction
@@ -485,7 +489,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_CLOSE_PAGE")) root.beginClose("close")
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "openVideoMenuItem"
                     action: Action {
                         id: openVideoAction
@@ -493,7 +497,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "saveMenuItem"
                     action: Action {
                         id: saveAction
@@ -502,7 +506,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS")) root.saveSubtitles()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "saveAllMenuItem"
                     action: Action {
                         id: saveAllAction
@@ -516,7 +520,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "saveAsMenuItem"
                     action: Action {
                         id: saveAsAction
@@ -525,7 +529,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_SUBS_AS")) root.openSaveDialog()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "saveTranslationMenuItem"
                     action: Action {
                         id: saveTranslationAction
@@ -539,7 +543,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
                         id: saveWithVideoNameAction
@@ -556,7 +560,7 @@ ApplicationWindow {
                         }
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
@@ -564,7 +568,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) recoveryWindow.showBundles()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
                         id: removeTemporaryAction
@@ -572,7 +576,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "logMenuItem"
                     action: Action {
                         text: qsTr("Show / Hide log window")
@@ -580,35 +584,35 @@ ApplicationWindow {
                     }
                 }
                 // P6: legacy "Last session" submenu.
-                Menu {
+                ShellMenu {
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
-                    MenuItem {
+                    ShellMenuItem {
                         id: loadLastSessionItem
                         objectName: "loadLastSessionMenuItem"
                         text: qsTr("Load last session")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
                     }
-                    MenuItem {
+                    ShellMenuItem {
                         id: loadSessionFileItem
                         objectName: "loadSessionFileMenuItem"
                         text: qsTr("Load session from file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
                     }
-                    MenuItem {
+                    ShellMenuItem {
                         id: saveSessionFileItem
                         objectName: "saveSessionFileMenuItem"
                         text: qsTr("Save session to file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
                     }
-                    MenuItem {
+                    ShellMenuItem {
                         objectName: "askForLastSessionMenuItem"
                         text: qsTr("Ask whether to load the last session at program startup")
                         checkable: true
                         checked: root.app.sessionRestore === 1
                         onToggled: root.app.sessionRestore = checked ? 1 : 0
                     }
-                    MenuItem {
+                    ShellMenuItem {
                         objectName: "loadLastSessionOnStartMenuItem"
                         text: qsTr("Load last session after program start")
                         checkable: true
@@ -617,7 +621,7 @@ ApplicationWindow {
                     }
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
-                MenuItem {
+                ShellMenuItem {
                     objectName: "settingsMenuItem"
                     action: Action {
                         id: settingsAction
@@ -625,7 +629,7 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
                 }
-                MenuItem {
+                ShellMenuItem {
                     objectName: "exitMenuItem"
                     action: Action {
                         text: qsTr("E&xit")
@@ -634,7 +638,7 @@ ApplicationWindow {
                 }
             }
         }
-        Menu {
+        ShellMenu {
             title: qsTr("&Edit")
             Action {
                 id: undoAction
@@ -649,14 +653,14 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
             }
             // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
-            Menu {
+            ShellMenu {
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
                 enabled: root.editor.editable
                 id: sortAllMenu
                 Instantiator {
                     model: root.sortKeys
-                    delegate: MenuItem {
+                    delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortAll_" + modelData.key
                         text: modelData.label
@@ -666,14 +670,14 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => sortAllMenu.removeItem(object)
                 }
             }
-            Menu {
+            ShellMenu {
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
                 enabled: root.editor.editable
                 id: sortSelectedMenu
                 Instantiator {
                     model: root.sortKeys
-                    delegate: MenuItem {
+                    delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortSelected_" + modelData.key
                         text: modelData.label
@@ -683,7 +687,7 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => sortSelectedMenu.removeItem(object)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
                     id: undoToLastSaveAction
@@ -692,7 +696,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO_TO_LAST_SAVE")) root.editor.undoToLastSave()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "historyMenuItem"
                 action: Action {
                     id: historyAction
@@ -701,7 +705,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "misspellMenuItem"
                 action: Action {
                     id: misspellAction
@@ -709,7 +713,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "selectLinesMenuItem"
                 action: Action {
                     id: selectLinesAction
@@ -719,7 +723,7 @@ ApplicationWindow {
                 }
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
-            MenuItem {
+            ShellMenuItem {
                 objectName: "findReplaceMenuItem"
                 action: Action {
                     id: findReplaceAction
@@ -728,7 +732,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_FIND_REPLACE")) root.openSearch(1)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
@@ -737,7 +741,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SEARCH")) root.openSearch(0)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
@@ -748,7 +752,7 @@ ApplicationWindow {
                 }
             }
         }
-        Menu {
+        ShellMenu {
             id: automationMenu
             objectName: "automationMenu"
             title: qsTr("&Automation")
@@ -762,7 +766,7 @@ ApplicationWindow {
                     automationHotkeysWindow.show()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "loadScriptMenuItem"
                 action: Action {
                     id: loadScriptAction
@@ -770,7 +774,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_SCRIPT")) scriptDialog.open()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
                     id: reloadAutoloadAction
@@ -778,7 +782,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
@@ -786,7 +790,7 @@ ApplicationWindow {
                     onTriggered: root.automation.rerunLast()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "automationManagerMenuItem"
                 action: Action {
                     text: qsTr("Automation &manager")
@@ -796,7 +800,7 @@ ApplicationWindow {
             MenuSeparator {}
             Instantiator {
                 model: root.macroItems
-                delegate: MenuItem {
+                delegate: ShellMenuItem {
                     required property var modelData
                     objectName: "macro_" + modelData.name
                     text: modelData.name
@@ -813,7 +817,7 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
-        Menu {
+        ShellMenu {
             objectName: "videoMenu"
             title: qsTr("&Video")
             // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
@@ -864,7 +868,7 @@ ApplicationWindow {
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
-            MenuItem {
+            ShellMenuItem {
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
                     id: setAudioFromVideoAction
@@ -873,7 +877,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_FROM_VIDEO")) root.app.setAudioFromVideo(false)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
                     id: setAudioMarkFromVideoAction
@@ -885,11 +889,11 @@ ApplicationWindow {
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
         // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO).
-        Menu {
+        ShellMenu {
             id: audioMenu
             objectName: "audioMenu"
             title: qsTr("A&udio")
-            MenuItem {
+            ShellMenuItem {
                 objectName: "openAudioMenuItem"
                 action: Action {
                     id: openAudioAction
@@ -902,7 +906,7 @@ ApplicationWindow {
                     }
                 }
             }
-            Menu {
+            ShellMenu {
                 id: recentAudioMenu
                 objectName: "recentAudioMenu"
                 title: qsTr("Recently opened audio")
@@ -910,7 +914,7 @@ ApplicationWindow {
                 onAboutToShow: rows = root.app.recentAudio()
                 Instantiator {
                     model: recentAudioMenu.rows
-                    delegate: MenuItem {
+                    delegate: ShellMenuItem {
                         required property var modelData
                         required property int index
                         objectName: "recentAudio" + index
@@ -920,14 +924,14 @@ ApplicationWindow {
                     onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
                 }
-                MenuItem {
+                ShellMenuItem {
                     text: qsTr("None")
                     enabled: false
                     visible: recentAudioMenu.rows.length === 0
                     height: visible ? implicitHeight : 0
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
                     id: audioFromVideoAction
@@ -936,7 +940,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "dummyAudioMenuItem"
                 action: Action {
                     id: dummyAudioAction
@@ -944,7 +948,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_AUDIO")) root.audio.openDummy()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "closeAudioMenuItem"
                 action: Action {
                     id: closeAudioAction
@@ -954,40 +958,40 @@ ApplicationWindow {
                 }
             }
         }
-        Menu {
+        ShellMenu {
             id: viewMenu
             objectName: "viewMenu"
             title: qsTr("Vie&w") // legacy has no View menu; Alt+V stays with &Video
             // D1: each panel can be shown (and focused), hidden, floated or
             // docked; Reset layout returns to the Editing arrangement.
-            Menu {
+            ShellMenu {
                 id: panelsMenu
                 objectName: "panelsMenu"
                 title: qsTr("&Panels")
                 Instantiator {
                     model: root.dockList
-                    delegate: Menu {
+                    delegate: ShellMenu {
                         required property var modelData
                         objectName: "panelMenu" + modelData.uniqueName
                         title: modelData.title
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
                             onTriggered: root.showPanel(modelData)
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "panelHide" + modelData.uniqueName
                             text: qsTr("Hide")
                             enabled: modelData.isOpen
                             onTriggered: modelData.close()
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "panelFloat" + modelData.uniqueName
                             text: qsTr("Float")
                             enabled: modelData.isOpen && !modelData.isFloating
                             onTriggered: root.setPanelFloating(modelData, true)
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "panelDock" + modelData.uniqueName
                             text: qsTr("Dock")
                             enabled: modelData.isOpen && modelData.isFloating
@@ -998,14 +1002,14 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => panelsMenu.removeMenu(object)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "movePanel"
                 text: qsTr("&Move panel…")
                 onTriggered: placementWindow.openFor(root.focusedDock())
             }
             // Built-in starting arrangements (docs/qt/ux/workspaces.md); the
             // tools they open come with the tool cards.
-            Menu {
+            ShellMenu {
                 id: presetMenu
                 objectName: "layoutPresetMenu"
                 title: qsTr("Layout &preset")
@@ -1016,7 +1020,7 @@ ApplicationWindow {
                         { name: "Translation", label: qsTr("Translation") },
                         { name: "Typesetting", label: qsTr("Typesetting") }
                     ]
-                    delegate: MenuItem {
+                    delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "preset" + modelData.name
                         text: modelData.label
@@ -1028,12 +1032,12 @@ ApplicationWindow {
                     onObjectRemoved: (index, object) => presetMenu.removeItem(object)
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "resetLayout"
                 text: qsTr("&Reset layout")
                 onTriggered: root.applyPreset(root.workspaceLayout.preset)
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
                 enabled: root.workspaceLayout.hasBackup
@@ -1041,37 +1045,37 @@ ApplicationWindow {
             }
         }
         // Legacy Subtitles menu; its entries join as their cards land.
-        Menu {
+        ShellMenu {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
-            MenuItem {
+            ShellMenuItem {
                 id: showShiftTimesItem
                 objectName: "showShiftTimes"
                 text: qsTr("Shift &times...")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
             }
-            MenuItem {
+            ShellMenuItem {
                 id: runShiftTimesItem
                 objectName: "runShiftTimes"
                 text: qsTr("Shift times / run time post processor")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
-            MenuItem {
+            ShellMenuItem {
                 id: styleManagerItem
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
-            MenuItem {
+            ShellMenuItem {
                 id: assPropertiesItem
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
             }
-            Menu {
+            ShellMenu {
                 id: conversionMenu
                 objectName: "conversionMenu"
                 title: qsTr("Conversion")
@@ -1079,7 +1083,7 @@ ApplicationWindow {
                 onAboutToShow: targets = root.app.conversionTargets()
                 Repeater {
                     model: root.conversionItems
-                    MenuItem {
+                    ShellMenuItem {
                         objectName: "convertTo_" + modelData[0]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
@@ -1089,14 +1093,14 @@ ApplicationWindow {
             }
             // Legacy SubsMenu: Font collector after Conversion and Shift times
             // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
-            MenuItem {
+            ShellMenuItem {
                 id: fontCollectorItem
                 objectName: "fontCollectorMenuItem"
                 text: qsTr("Font collector")
                 enabled: root.shell.hasEditingTarget && root.shell.assColumns
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
             }
-            MenuItem {
+            ShellMenuItem {
                 id: resampleItem
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
@@ -1104,7 +1108,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS_RESAMPLE")) resampleDialog.openDialog()
             }
             // Legacy HikariSubFrame: after Resample subtitles.
-            MenuItem {
+            ShellMenuItem {
                 id: checkSpellingItem
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
@@ -1112,16 +1116,16 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
         }
-        Menu {
+        ShellMenu {
             title: qsTr("&Help")
-            MenuItem {
+            ShellMenuItem {
                 action: Action {
                     id: websiteAction
                     text: qsTr("HikariSub &website")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_HELP")) Qt.openUrlExternally("https://altqx.com")
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "reportIssueMenuItem"
                 action: Action {
                     id: reportIssueAction
@@ -1129,7 +1133,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ANSI")) root.app.reportIssue()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
                     id: checkForUpdatesAction
@@ -1138,7 +1142,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "aboutMenuItem"
                 action: Action {
                     id: aboutAction
@@ -1146,7 +1150,7 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_ABOUT")) aboutDialog.open()
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: "creditsMenuItem"
                 action: Action {
                     id: creditsAction
@@ -1231,13 +1235,13 @@ ApplicationWindow {
             field.misspellPosition = field.positionAt(position.x, position.y)
             field.misspell = field.spelled ? root.app.editorMisspellAt(field.role, field.misspellPosition) : ({})
         }
-        ContextMenu.menu: Menu {
+        ContextMenu.menu: ShellMenu {
             id: editMenu
             objectName: field.objectName + "Menu"
             readonly property var suggestions: field.misspell.suggestions || []
             Instantiator {
                 model: editMenu.suggestions
-                delegate: MenuItem {
+                delegate: ShellMenuItem {
                     required property string modelData
                     text: modelData
                     onTriggered: root.app.replaceEditorMisspell(field.role, field.misspellPosition, modelData)
@@ -1246,11 +1250,11 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => editMenu.removeItem(object)
             }
             MenuSeparator { visible: editMenu.suggestions.length > 0; height: visible ? implicitHeight : 0 }
-            MenuItem { text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
-            MenuItem { text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
-            MenuItem { text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
+            ShellMenuItem { text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
+            ShellMenuItem { text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
+            ShellMenuItem { text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
-            MenuItem {
+            ShellMenuItem {
                 id: spellingOnItem
                 objectName: field.objectName + "SpellingOn"
                 text: qsTr("Spellchecker")
@@ -1264,7 +1268,7 @@ ApplicationWindow {
             // builds it with the Spellchecker entry, useSpellchecker).
             Instantiator {
                 model: field.spelled ? 1 : 0
-                delegate: Menu {
+                delegate: ShellMenu {
                     id: languagesMenu
                     objectName: field.objectName + "Languages"
                     title: qsTr("Installed languages")
@@ -1272,7 +1276,7 @@ ApplicationWindow {
                     onAboutToShow: languages = root.app.dictionaries()
                     Instantiator {
                         model: languagesMenu.languages
-                        delegate: MenuItem {
+                        delegate: ShellMenuItem {
                             required property var modelData
                             text: modelData.name
                             checkable: true
@@ -1296,7 +1300,7 @@ ApplicationWindow {
                 }
                 onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
-            MenuItem {
+            ShellMenuItem {
                 objectName: field.objectName + "AddWord"
                 text: qsTr("&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
                 visible: !!field.misspell.word
@@ -1308,7 +1312,7 @@ ApplicationWindow {
                     }
                 }
             }
-            MenuItem {
+            ShellMenuItem {
                 text: qsTr("&Delete")
                 enabled: field.selectedText.length > 0 && !field.readOnly
                 onTriggered: field.remove(field.selectionStart, field.selectionEnd)
@@ -2204,11 +2208,11 @@ ApplicationWindow {
                             text: qsTr("Manage tag buttons")
                             focusPolicy: Qt.NoFocus
                             onClicked: tagButtonsMenu.popup()
-                            Menu {
+                            ShellMenu {
                                 id: tagButtonsMenu
                                 Instantiator {
                                     model: root.tagButtons.buttons
-                                    delegate: MenuItem {
+                                    delegate: ShellMenuItem {
                                         required property var modelData
                                         required property int index
                                         text: modelData.name
@@ -2217,7 +2221,7 @@ ApplicationWindow {
                                     onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
                                     onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
                                 }
-                                MenuItem {
+                                ShellMenuItem {
                                     objectName: "changeTagButtonCount"
                                     text: qsTr("Change number of buttons")
                                     onTriggered: tagButtonCountDialog.open()
@@ -2343,18 +2347,18 @@ ApplicationWindow {
                         groupMenu.popup(grid, x, y)
                     }
                     // Legacy tree description menu (ContextMenuTree).
-                    Menu {
+                    ShellMenu {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
-                        MenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                        MenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
-                        MenuItem {
+                        ShellMenuItem { objectName: "groupAddLines"; text: qsTr("Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupCopy"; text: qsTr("Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        ShellMenuItem {
                             objectName: "groupRename"; text: qsTr("Change description")
                             onTriggered: groupDescriptionDialog.edit(groupMenu.description)
                         }
-                        MenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                        MenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupSelect"; text: qsTr("Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { objectName: "groupDelete"; text: qsTr("Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     // The Grid's accelerators (TabPanel::SetAccels): the fixed
                     // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
@@ -2386,7 +2390,7 @@ ApplicationWindow {
                         root.runGridHotkey(action)
                         event.accepted = true
                     }
-                    Menu {
+                    ShellMenu {
                         id: gridMenu
                         objectName: "gridMenu"
                         property bool canPasteTranslation: false
@@ -2395,80 +2399,80 @@ ApplicationWindow {
                             canPasteTranslation = root.app.canPasteTranslation()
                             canShiftTranslation = root.app.canShiftTranslation()
                         }
-                        Menu {
+                        ShellMenu {
                             title: qsTr("&Insert")
-                            MenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            MenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
-                            MenuItem {
+                            ShellMenuItem { objectName: "insertBefore"; text: qsTr("Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { objectName: "insertAfter"; text: qsTr("Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            ShellMenuItem {
                                 objectName: "insertBeforeVideo"; text: qsTr("Insert before with &video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "insertAfterVideo"; text: qsTr("Insert after with video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "insertBeforeFrame"; text: qsTr("Insert before with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "insertAfterFrame"; text: qsTr("Insert after with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "duplicateLines"
                             // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
                             text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        MenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        MenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        MenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        MenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
-                        MenuItem {
+                        ShellMenuItem { objectName: "swapLines"; text: qsTr("&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem { objectName: "joinLines"; text: qsTr("Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        ShellMenuItem { objectName: "joinFirst"; text: qsTr("Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        ShellMenuItem { objectName: "joinLast"; text: qsTr("Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                        ShellMenuItem {
                             objectName: "continuousPrevious"; text: qsTr("Set times as a continuous (previous line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "continuousNext"; text: qsTr("Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         // Legacy "Split lines" (GRID_SPLIT_BY_*).
-                        Menu {
+                        ShellMenu {
                             title: qsTr("Split lines")
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "splitAtVideoTime"
                                 text: qsTr("Split line at video time")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "splitIntoFrames"
                                 text: qsTr("Split lines into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "splitIntoCharacters"
                                 text: qsTr("Split lines into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "splitIntoWords"
                                 text: qsTr("Split lines into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "splitByWraps"
                                 text: qsTr("Split lines by wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
-                        MenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "pasteTranslation"
                             text: qsTr("Paste translation text")
                             enabled: gridMenu.canPasteTranslation
@@ -2479,21 +2483,21 @@ ApplicationWindow {
                                 translationFileDialog.open()
                             }
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "translationDialog"
                             text: qsTr("Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
                         }
-                        MenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
+                        ShellMenuItem { objectName: "hideSelectedLines"; text: qsTr("Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
-                        Menu {
+                        ShellMenu {
                             id: filteringMenu
                             objectName: "filteringMenu"
                             title: qsTr("Filtering")
                             property var styleNames: []
                             onAboutToShow: styleNames = root.app.styleNames()
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "filterAfterLoad"
                                 text: qsTr("Filter after loading subtitles")
                                 checkable: true
@@ -2501,27 +2505,27 @@ ApplicationWindow {
                                 checked: root.gridFilter.afterLoad
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_AFTER_SUBS_LOAD")) root.gridFilter.afterLoad = checked
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "filterInvert"
                                 text: qsTr("Reverse filtering")
                                 checkable: true
                                 checked: root.gridFilter.inverted
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_INVERT")) root.gridFilter.inverted = checked
                             }
-                            MenuItem {
+                            ShellMenuItem {
                                 objectName: "filterDoNotReset"
                                 text: qsTr("Do not reset previous filtering")
                                 checkable: true
                                 checked: root.gridFilter.addToFilter
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_DO_NOT_RESET")) root.gridFilter.addToFilter = checked
                             }
-                            Menu {
+                            ShellMenu {
                                 id: filterStylesMenu
                                 title: qsTr("Hide lines with styles")
                                 enabled: root.shell.assColumns
                                 Instantiator {
                                     model: filteringMenu.styleNames
-                                    delegate: MenuItem {
+                                    delegate: ShellMenuItem {
                                         required property string modelData
                                         text: modelData
                                         checkable: true
@@ -2543,7 +2547,7 @@ ApplicationWindow {
                                     { bit: 16, label: qsTr("Show untranslated"), name: "filterByUntranslated", tl: true,
                                       symbol: "GRID_FILTER_BY_UNTRANSLATED" }
                                 ]
-                                delegate: MenuItem {
+                                delegate: ShellMenuItem {
                                     required property var modelData
                                     objectName: modelData.name
                                     text: modelData.label
@@ -2555,15 +2559,15 @@ ApplicationWindow {
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            MenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
-                            MenuItem {
+                            ShellMenuItem { objectName: "filter"; text: qsTr("Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+                            ShellMenuItem {
                                 objectName: "turnOffFiltering"
                                 text: qsTr("Turn off filtering")
                                 enabled: root.shell.filtered
                                 onTriggered: if (!root.gridGesture(this, "GRID_FILTER_BY_NOTHING")) root.app.turnOffFiltering()
                             }
                         }
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "ignoreFilteringInActions"
                             text: qsTr("Ignore filtering in some actions")
                             checkable: true
@@ -2571,7 +2575,7 @@ ApplicationWindow {
                             onTriggered: if (!root.gridGesture(this, "GRID_FILTER_IGNORE_IN_ACTIONS")) root.gridFilter.ignoreInActions = checked
                         }
                         // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
-                        Menu {
+                        ShellMenu {
                             id: hideColumnsMenu
                             objectName: "hideColumnsMenu"
                             title: qsTr("Hide columns")
@@ -2589,7 +2593,7 @@ ApplicationWindow {
                                     { bit: 512, label: qsTr("Hide characters per second"), ass: false, symbol: "GRID_HIDE_CPS" },
                                     { bit: 8192, label: qsTr("Hide line wraps"), ass: false, symbol: "GRID_HIDE_WRAPS" }
                                 ]
-                                delegate: MenuItem {
+                                delegate: ShellMenuItem {
                                     required property var modelData
                                     objectName: "hideColumn" + modelData.bit
                                     text: modelData.label
@@ -2602,20 +2606,20 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        MenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
-                        MenuItem {
+                        ShellMenuItem { objectName: "setNewFps"; text: qsTr("Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem {
                             objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
-                        MenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
-                        MenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
-                        MenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        MenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        MenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
-                        MenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
+                        ShellMenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        ShellMenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        ShellMenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        ShellMenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        ShellMenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        ShellMenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
-                        MenuItem {
+                        ShellMenuItem {
                             objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
                         }
@@ -4804,7 +4808,7 @@ ApplicationWindow {
                 // The scripts' entries follow the static ones in the frame's
                 // table (map order: ids from 30100), so a static Global
                 // binding of the same keys wins.
-                enabled: !root.hotkeys.globalSequences.includes(modelData.keys)
+                enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
