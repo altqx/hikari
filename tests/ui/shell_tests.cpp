@@ -1680,7 +1680,7 @@ private slots:
                                          false)
                     .startsWith(QStringLiteral("1 ")));
         QVERIFY(session->isDirty());
-        QVERIFY(!application->saveAll());
+        QVERIFY(application->saveAll().isEmpty()); // P9: nothing waits for the dialog
         QTRY_VERIFY(!session->isDirty());
         QVERIFY(written.open(QIODevice::ReadOnly));
         QVERIFY(written.readAll().contains("Comment: 0,0:00:01.00"));
