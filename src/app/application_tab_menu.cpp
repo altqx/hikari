@@ -387,7 +387,7 @@ void Application::openVideo(const QString &path)
     m_video->openVideo(path);
 }
 
-QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QString &video)
+QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QString &video, bool fullscreen)
 {
     // "Yes": the subtitles load into the tab (SavePrompt(2) first), without
     // the association question (LoadVideo's loadPrompt is false for a
@@ -395,9 +395,10 @@ QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QSt
     // load opens nothing (OpenFile returns before LoadVideo).
     m_openFromVideo = true;
     QVariantMap result = reviewOpen(subtitles);
-    if (result.value(QStringLiteral("ok")).toBool())
+    if (result.value(QStringLiteral("ok")).toBool()) {
         m_videoAfterOpen = video;
-    else
+        m_videoAfterOpenFullscreen = fullscreen;
+    } else
         m_openFromVideo = false;
     return result;
 }

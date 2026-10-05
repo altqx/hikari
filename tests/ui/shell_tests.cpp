@@ -26,6 +26,8 @@
 #include "theme.h"
 #include "colour_picker_controller.h"
 #include "screen_sampler.h"
+#include "video_presenter.h"
+#include "hikari/app/composition.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -12998,15 +13000,12 @@ private slots:
         const auto mainVisibility = window->visibility();
         auto *video = item("videoPanel");
         video->forceActiveFocus();
-        // A frame shown just before: the move refuses its pending submission
-        // (the surface changed before upload) and the frame is submitted again.
+        // Frame 30 shown before (a frame submitted at the move itself:
+        // videoFullscreenPresentsTheFramePendingAtTheMove).
         QVERIFY(application->video().showFrameAt(30));
         QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
         press(Qt::Key_F);
         QVERIFY(fs.active());
-        QTRY_VERIFY(application->video().session().lastPresent()
-                    && application->video().session().lastPresent()->outcome == application::PresentOutcome::Accepted
-                    && application->video().session().lastPresent()->stage == application::PresentStage::Rendered);
         QTRY_VERIFY(fsWindow->isVisible());
         QCOMPARE(fsWindow->visibility(), QWindow::FullScreen);
         QCOMPARE(fsWindow->screen(), window->screen()); // SetFullscreen(0): the program's monitor
@@ -13160,6 +13159,13 @@ private slots:
         auto *fsMenu = named("videoFullscreenMenu");
         QTRY_VERIFY(fsMenu->property("opened").toBool());
         QCOMPARE(fsMenu->property("parent").value<QQuickItem *>()->window(), fsWindow);
+        // Every item at its full width: no label or binding elided.
+        for (int i = 0; i < fsMenu->property("count").toInt(); ++i) {
+            QQuickItem *it = nullptr;
+            QMetaObject::invokeMethod(fsMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, it), Q_ARG(int, i));
+            if (it && it->isVisible() && !it->objectName().isEmpty())
+                QVERIFY2(it->width() >= it->implicitWidth(), qPrintable(it->objectName()));
+        }
         QCOMPARE(text("fullscreenMenuFullScreen"), QStringLiteral("Exit full screen\tEscape"));
         QVERIFY(!named("fullscreenMenuCopyCoords")->property("visible").toBool());
         QVERIFY(enabled("fullscreenMenuOpenEditor"));
@@ -13342,6 +13348,188 @@ private slots:
         QVERIFY(!fs.active());
         QTRY_VERIFY(!fullscreenWindow()->isVisible());
         QCOMPARE(item("videoPresenter")->window(), window);
+    }
+
+    // A frame submitted just before the picture moves into the fullscreen
+    // window is refused there (the surface changed before upload); the shown
+    // frame is submitted again once the move is done (Main's attachPresenter
+    // after activeChanged), so the window shows that frame, not the one
+    // shown before it.
+    void videoFullscreenPresentsTheFramePendingAtTheMove()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        const auto &session = application->video().session();
+        auto *presenter = qobject_cast<ui::VideoPresenter *>(item("videoPresenter"));
+        QVERIFY(presenter);
+        QTRY_VERIFY(session.lastPresent() && session.lastPresent()->stage == application::PresentStage::Rendered);
+        // Fullscreen the moment frame 30 is submitted (VideoSession::present
+        // runs before the change is announced), before the scene graph takes it.
+        bool entered = false;
+        bool unanswered = false;
+        auto enter = connect(&application->video(), &ui::VideoController::changed, this, [&] {
+            if (!entered && session.shownFrame() == 30) {
+                entered = true;
+                unanswered = !session.lastPresent(); // submitted, not yet taken
+                fs.toggle(0);
+            }
+        });
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_VERIFY_WITH_TIMEOUT(entered, 10000);
+        disconnect(enter);
+        QVERIFY(unanswered);
+        QVERIFY(fs.active());
+        QCOMPARE(item("videoPresenter")->window(), fullscreenWindow());
+        // Frame 30 drawn in the window: its answer was reset when it was
+        // shown, and an answer for another frame is not taken. (Without the
+        // second submission the first is refused there as made for another
+        // surface, and the answer stays that error.)
+        const auto shown = session.lastFrame();
+        QCOMPARE(shown->index, 30);
+        QTRY_VERIFY(session.lastPresent() && session.lastPresent()->outcome == application::PresentOutcome::Accepted
+                    && session.lastPresent()->stage == application::PresentStage::Rendered);
+        QCOMPARE(session.lastFrame(), shown);
+        QVERIFY(fs.leave());
+    }
+
+    // What the fullscreen window asks shows in it (VideoBox.cpp:895, 907,
+    // 1087, 1103: the dialogs' parent is m_FullScreenWindow): the aspect
+    // ratio, the previous / next file question, Open video and Open
+    // subtitles; after leaving they are the main window's again. The menu key
+    // opens the context menu at the pointer; the toolbar row's buttons choose
+    // the visual tool; Shift+click on a transport button maps its binding
+    // (Hotkeys::OnMapHkey) in the Video window.
+    void videoFullscreenDialogsMenuKeyToolsAndMapping()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        // The aspect ratio (the context menu's Change aspect ratio).
+        auto *aspect = qobject_cast<QQuickItem *>(named("aspectRatioDialog")->property("parent").value<QObject *>());
+        QCOMPARE(aspect, fsWindow->contentItem());
+        QVERIFY(QMetaObject::invokeMethod(fsWindow, "aspectRatioRequested"));
+        QTRY_VERIFY(named("aspectRatioDialog")->property("opened").toBool());
+        QMetaObject::invokeMethod(named("aspectRatioDialog"), "close");
+        QTRY_VERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        // Previous / next file (the panel's buttons).
+        QVERIFY(QMetaObject::invokeMethod(fullscreenItem("fullscreenNextFile"), "clicked"));
+        auto *question = named("videoFileQuestion");
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(question->property("parent").value<QQuickItem *>(), fsWindow->contentItem());
+        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to index the next video?"));
+        QMetaObject::invokeMethod(question, "close");
+        QTRY_VERIFY(!question->property("visible").toBool());
+        // Open video and Open subtitles take the fullscreen window as parent.
+        QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
+        QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
+        // The menu key: the context menu in the fullscreen window.
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTest::keyClick(fsWindow, Qt::Key_Menu);
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QCOMPARE(fsMenu->property("parent").value<QQuickItem *>()->window(), fsWindow);
+        QMetaObject::invokeMethod(fsMenu, "close");
+        QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        // The toolbar row: each button chooses its family.
+        auto &tools = application->visualTools();
+        QCOMPARE(tools.activeFamily(), 0);
+        auto *scale = fullscreenItem("fullscreenTool3");
+        QVERIFY(scale && scale->isVisible());
+        clickWith(scale, Qt::NoModifier);
+        QTRY_COMPARE(tools.activeFamily(), 3);
+        QVERIFY(scale->property("checked").toBool());
+        QVERIFY(!fullscreenItem("fullscreenTool0")->property("checked").toBool());
+        clickWith(fullscreenItem("fullscreenTool0"), Qt::NoModifier);
+        QTRY_COMPARE(tools.activeFamily(), 0);
+        // Shift+click on Stop maps VIDEO_STOP in the Video window, and does not stop.
+        QVERIFY(application->video().play());
+        QTRY_VERIFY(application->video().playing());
+        clickWith(fullscreenItem("fullscreenStop"), Qt::ShiftModifier);
+        auto *mapping = mappingWindow("hotkeyMapping");
+        QVERIFY(mapping);
+        QTRY_VERIFY(mapping->isVisible());
+        QVERIFY(application->video().playing());
+        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                 QStringLiteral("Please enter a hotkey for \"Stop\"."));
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_F12, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("Ctrl-Shift-F12"));
+        QVERIFY(application->video().pause());
+        // Left, the dialogs are the main window's again.
+        QVERIFY(fs.leave());
+        QTRY_VERIFY(!fsWindow->isVisible());
+        QVERIFY(named("aspectRatioDialog")->property("parent").value<QObject *>() != fsWindow->contentItem());
+        QVERIFY(question->property("parent").value<QQuickItem *>() != fsWindow->contentItem());
+        QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
+        QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
+    }
+
+    // video.fullScreenOnStart is OpenFile's `fulls` for one open: when the
+    // video's same-named subtitles are reviewed and the review is cancelled,
+    // nothing opens and a later open of that video is not fullscreen; when
+    // the review goes on, the video opens fullscreen. A video on the command
+    // line opens the same way once the window is up (hikarisubApp.cpp:483-487).
+    void videoFullscreenOnStartLastsOneOpen()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto *root = engine->rootObjects().first();
+        // Another video with its own same-named subtitles.
+        const QString video = folder.filePath(QStringLiteral("other.mkv"));
+        QVERIFY(QFile::copy(folder.filePath(QStringLiteral("clip.mkv")), video));
+        QVERIFY(QFile::copy(folder.filePath(QStringLiteral("clip.ass")), folder.filePath(QStringLiteral("other.ass"))));
+        QVERIFY(application->video().unloadVideo());
+        application->settingsStore()->set("video.fullScreenOnStart", true);
+        // Unsaved work: the tab's Document is reviewed before other.ass loads.
+        application->duplicateLines();
+        QVERIFY(v5Session()->isDirty());
+        QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
+        auto *review = mappingWindow("closeReview");
+        QVERIFY(review);
+        QTRY_VERIFY(review->isVisible());
+        clickButton(review, "closeCancel");
+        QTRY_VERIFY(!review->isVisible());
+        QVERIFY(!application->video().hasVideo());
+        // The same video opened another way, later: not fullscreen.
+        application->video().openVideo(video);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTest::qWait(200);
+        QVERIFY(!fs.active());
+        QVERIFY(application->video().unloadVideo());
+        // The review gone through (Discard all): fullscreen once shown.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
+        QTRY_VERIFY(review->isVisible());
+        clickButton(review, "closeDiscardAll");
+        QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
+        QTRY_VERIFY(fullscreenWindow()->isVisible());
+        QVERIFY(fs.leave());
+        QVERIFY(application->video().unloadVideo());
+        // The command line: a video is left for the window, then opened as
+        // OpenFiles opens one video.
+        const auto target = application->workspace().editingTarget();
+        QVERIFY(app::openStartFile(*application, video));
+        QCOMPARE(application->workspace().editingTarget(), target);
+        QVERIFY(!application->video().hasVideo());
+        app::openStartVideo(root, video);
+        QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
+        QTRY_VERIFY(fullscreenWindow()->isVisible());
+        QVERIFY(fs.leave());
+        // With the setting off it opens in the panel.
+        QVERIFY(application->video().unloadVideo());
+        application->settingsStore()->set("video.fullScreenOnStart", false);
+        app::openStartVideo(root, video);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTest::qWait(200);
+        QVERIFY(!fs.active());
     }
 
     // V5: screenshots of the fullscreen window for review in the four themes,

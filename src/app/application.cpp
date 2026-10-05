@@ -1529,6 +1529,7 @@ QVariantList Application::reviewClose(const QString &then)
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
         m_videoAfterOpen.clear(); // P9
+        m_videoAfterOpenFullscreen = false;
         m_openFromVideo = false;
     }
     if (then != QLatin1String("files"))
@@ -1684,6 +1685,7 @@ void Application::finishClose()
         if (m_pendingOpen)
             id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
         const QString videoAfter = std::exchange(m_videoAfterOpen, QString());
+        const bool fullscreenAfter = std::exchange(m_videoAfterOpenFullscreen, false);
         const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
@@ -1695,6 +1697,10 @@ void Application::finishClose()
                 offerAssociations(*id);
                 showAssociationOffer();
             } else if (!videoAfter.isEmpty()) {
+                // V5: OpenFile(path, fulls) reaches LoadVideo's SetFullscreen
+                // only now; a cancelled review or a failed load never does.
+                if (fullscreenAfter)
+                    m_videoFullscreen->enterWhenShown(videoAfter);
                 m_video->openVideo(videoAfter);
             }
             QTimer::singleShot(0, this, [this] { checkResolution(); });
@@ -1733,6 +1739,7 @@ void Application::cancelClose()
     m_pendingSession.reset(); // P6
     m_closingTab.reset();
     m_videoAfterOpen.clear(); // P9: OpenFile returned before LoadVideo
+    m_videoAfterOpenFullscreen = false;
     m_openFromVideo = false;
     endFindOpen(false);
     // P9: a cancelled review of the first dropped subtitles skips them only

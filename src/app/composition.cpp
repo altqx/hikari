@@ -19,6 +19,19 @@ Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 namespace hikari::app {
 
+bool openStartFile(Application &application, const QString &path)
+{
+    if (application::openKindOf(path.toStdString(), true) == application::OpenKind::Video)
+        return true;
+    application.openFile(path);
+    return false;
+}
+
+void openStartVideo(QObject *mainWindow, const QString &path)
+{
+    QMetaObject::invokeMethod(mainWindow, "openSingleVideo", Q_ARG(QVariant, path));
+}
+
 int run(int argc, char **argv, StartupMode mode)
 {
     QGuiApplication app(argc, argv);
@@ -44,10 +57,7 @@ int run(int argc, char **argv, StartupMode mode)
     // opens as legacy OpenFiles opens one file (hikarisubApp.cpp:483-487),
     // fullscreen with video.fullScreenOnStart, once the window is up.
     const QString startPath = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QString();
-    const bool startVideo = !startPath.isEmpty() &&
-                            application::openKindOf(startPath.toStdString(), true) == application::OpenKind::Video;
-    if (argc > 1 && !startVideo)
-        application.openFile(startPath);
+    const bool startVideo = argc > 1 && openStartFile(application, startPath);
 
     // K2: the controls draw with the theme layer's palette.
     hikari::ui::theme::chooseControlsStyle();
@@ -62,7 +72,7 @@ int run(int argc, char **argv, StartupMode mode)
     if (engine.rootObjects().isEmpty())
         return 2;
     if (startVideo)
-        QMetaObject::invokeMethod(engine.rootObjects().first(), "openSingleVideo", Q_ARG(QVariant, startPath));
+        openStartVideo(engine.rootObjects().first(), startPath);
     if (mode == StartupMode::ExitAfterWindowCreated)
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
     else // legacy CallAfter(CheckOnStartup): once the window is up

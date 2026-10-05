@@ -15,6 +15,7 @@
 // own geometry and state are never touched.
 
 #include <QObject>
+#include <cstdint>
 #include <QPointer>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -71,7 +72,7 @@ public:
     Q_INVOKABLE void setFocusFallback(QQuickItem *item) { m_focusFallback = item; }
     QQuickWindow *window() const;
 
-    // The monitors, primary first (MonitorEnumProc1), and how many.
+    // The monitors (GetMonitorRect1's list: Qt's screens, the primary first), and how many.
     static QList<QScreen *> monitors();
     Q_INVOKABLE int monitorCount() const { return static_cast<int>(monitors().size()); }
     // The monitor SetFullscreen(monitor) takes with the main window where it is.
@@ -87,8 +88,10 @@ public:
     // Leaving (SetFullscreen with m_IsFullscreen set).
     Q_INVOKABLE bool leave();
     // video.fullScreenOnStart (OpenFile(path, fulls), LoadVideo's `if
-    // (fulls) SetFullscreen()`): fullscreen once `path` is shown. Another
-    // video shown, or the open failing, drops the request.
+    // (fulls) SetFullscreen()`): fullscreen once `path` is shown by the next
+    // openVideo, which the caller makes right after this. Like legacy's
+    // argument it lives for that one open only: another open, another video
+    // shown, or the open failing or cancelled drops it.
     Q_INVOKABLE void enterWhenShown(const QString &path);
 
     // A pointer move over the fullscreen video at `y` of a `height`-high
@@ -110,6 +113,7 @@ private:
     bool enter(int monitor);
     void place(QScreen *screen);
     void restoreFocus();
+    void hideWindow();
 
     VideoController &m_video;
     VideoViewController &m_view;
@@ -125,7 +129,9 @@ private:
     QPointer<QQuickItem> m_focusItem;
     QPointer<QQuickItem> m_focusFallback;
     QString m_pendingPath; // enterWhenShown
+    std::uint64_t m_pendingRequest = 0; // the open it belongs to
     bool m_pendingOpening = false;
+    std::uint64_t m_placing = 0; // place()'s calls: a later one drops an earlier one's second step
 };
 
 } // namespace hikari::ui

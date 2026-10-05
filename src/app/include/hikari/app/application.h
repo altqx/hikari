@@ -226,7 +226,10 @@ public:
     Q_INVOKABLE QVariantMap openVideoFile(const QString &path);
     Q_INVOKABLE QVariantMap openVideoFileUrl(const QUrl &url) { return openVideoFile(url.toLocalFile()); }
     Q_INVOKABLE void openVideo(const QString &path);
-    Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video);
+    // V5: `fullscreen` (video.fullScreenOnStart) shows the video fullscreen
+    // once it is shown, when it opens.
+    Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video,
+                                                bool fullscreen = false);
     // P9: a recent file's entry clicked; with Ctrl alone held (legacy
     // OnRecent's wxMOD_CONTROL) it is shown in its folder instead of opened:
     // true then.
@@ -874,6 +877,7 @@ private:
     QString tabVideo(application::DocumentId document) const;
     std::optional<application::DocumentId> documentOf(qulonglong id) const;
     QString m_videoAfterOpen; // reviewOpenWithVideo: the video once the subtitles loaded
+    bool m_videoAfterOpenFullscreen = false; // V5: and fullscreen once shown
     bool m_openFromVideo = false; // the open is a video's same-named subtitles: no question
     void closeAllTabs();
     struct PendingFiles {

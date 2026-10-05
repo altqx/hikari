@@ -5,8 +5,9 @@
 // Esc leaves with the main window's geometry, state and keyboard focus as
 // they were. With two monitors (`--monitors 2`), the context menu's "Open in
 // full screen on monitor 2" puts it on the second one at that monitor's own
-// scale, the docked video closes meanwhile (m_IsOnAnotherMonitor), and Esc
-// brings everything back.
+// scale, the docked video closes meanwhile (m_IsOnAnotherMonitor), the
+// fullscreen context menu then offers "Switch full screen to monitor 2", and
+// Esc brings everything back.
 //
 // Linux runs it offscreen with two screens (fullscreen-two-screens.json, the
 // second at scale 2); Windows on the real desktop.
@@ -132,8 +133,15 @@ protected:
             note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 8
             wait(800ms);
             takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-monitor2.png");
+            // In fullscreen the entry switches (VideoBox.cpp:943-944).
+            mouseClick("videoFullscreen/visualOverlay", spix::MouseButtons::Right);
+            note(waitForItem("videoFullscreen/fullscreenMenuMonitor1", 3s)
+                                   ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
+                                   : "no monitor entry"); // 9
+            enterKey("videoFullscreen/fullscreenMenuMonitor1", Qt::Key_Escape, spix::KeyModifiers::None); // the menu closes
+            wait(300ms);
             enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 9
+            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 10
             wait(500ms);
         }
         takeScreenshot("mainWindow", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-after.png");
@@ -270,7 +278,7 @@ int main(int argc, char **argv)
                     s.mainGeometry.width(), s.mainGeometry.height(), s.mainGeometry.x(), s.mainGeometry.y(),
                     s.mainVisibility, s.presenterInFullscreen ? "fullscreen" : "panel", s.videoDockOpen ? "open" : "closed",
                     s.focusInFullscreen ? "fullscreen" : "other", qPrintable(s.focusItem));
-    const std::size_t steps = monitors > 1 ? 10 : 7;
+    const std::size_t steps = monitors > 1 ? 11 : 7;
     expect(o.size() == steps, "every step observed");
     if (o.size() == steps) {
         expect(o[0] == "indexed", "the video is indexed");
@@ -282,7 +290,8 @@ int main(int argc, char **argv)
         if (monitors > 1) {
             expect(o[7] == "Open in full screen on monitor 2", "the second monitor is offered");
             expect(o[8] == "on monitor 2", "fullscreen on the second monitor");
-            expect(o[9] == "left monitor 2", "Esc leaves the second monitor");
+            expect(o[9] == "Switch full screen to monitor 2", "in fullscreen the entry switches the monitor");
+            expect(o[10] == "left monitor 2", "Esc leaves the second monitor");
         }
     }
     expect(changes.size() == (monitors > 1 ? 4u : 2u), "each change seen");

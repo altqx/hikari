@@ -41,7 +41,9 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
         // fullscreen window has nothing left to show.
         if (m_active && !m_video.hasVideo())
             leave();
-        if (!m_pendingPath.isEmpty()) {
+        if (!m_pendingPath.isEmpty() && m_video.openRequest() != m_pendingRequest) {
+            m_pendingPath.clear(); // another open, or none made
+        } else if (!m_pendingPath.isEmpty()) {
             if (m_video.hasVideo()) {
                 // The video shown before the open started stays until it does.
                 const bool same = QFileInfo(QString::fromStdString(m_video.session().path())) == QFileInfo(m_pendingPath);
@@ -72,15 +74,12 @@ QQuickWindow *VideoFullscreenController::window() const
 
 QList<QScreen *> VideoFullscreenController::monitors()
 {
-    // MonitorEnumProc1: the primary first, then the others in the system's order.
-    QList<QScreen *> out;
-    QScreen *primary = QGuiApplication::primaryScreen();
-    if (primary)
-        out << primary;
-    for (QScreen *s : QGuiApplication::screens())
-        if (s != primary)
-            out << s;
-    return out;
+    // GetMonitorRect1's list: on Windows MonitorEnumProc1's, the primary
+    // first, then the others in EnumDisplayMonitors' order; on Linux
+    // wxDisplay's. Qt's screens are that list: its primary screen is always
+    // the first (QGuiApplication::primaryScreen), the others follow in the
+    // system's order (on Wayland the outputs' order, as wxDisplay's).
+    return QGuiApplication::screens();
 }
 
 int VideoFullscreenController::monitorFor(int monitor) const
@@ -142,6 +141,7 @@ bool VideoFullscreenController::showOn(int monitor)
 void VideoFullscreenController::enterWhenShown(const QString &path)
 {
     m_pendingPath = path;
+    m_pendingRequest = m_video.openRequest() + 1;
     m_pendingOpening = false;
 }
 
@@ -152,6 +152,30 @@ void VideoFullscreenController::place(QScreen *screen)
     // (xdg_toplevel.set_fullscreen with the window's screen).
     if (m_window->isVisible())
         m_window->hide();
+    const std::uint64_t placing = ++m_placing;
+    QScreen *mainScreen = m_main ? m_main->screen() : nullptr;
+    if (!positionsKnown() && mainScreen && mainScreen != screen) {
+        // A Wayland compositor need not give the keyboard to a window mapped
+        // on another output than the focused one (sway gives it only to new
+        // windows of the focused workspace). Mapped first on the main
+        // window's output, where it takes the keyboard, then made fullscreen
+        // on the chosen output, which moves it there with the keyboard.
+        m_window->setScreen(mainScreen);
+        m_window->showNormal();
+        m_window->requestActivate();
+        auto once = std::make_shared<QMetaObject::Connection>();
+        *once = connect(m_window, &QQuickWindow::frameSwapped, this,
+                        [this, once, placing, target = QPointer<QScreen>(screen)] {
+            disconnect(*once);
+            if (!m_active || !m_window || !target || placing != m_placing)
+                return;
+            m_window->setScreen(target);
+            m_window->setGeometry(target->geometry());
+            m_window->showFullScreen();
+            m_window->requestActivate();
+        }, Qt::QueuedConnection);
+        return;
+    }
     m_window->setScreen(screen);
     m_window->setGeometry(screen->geometry());
     m_window->showFullScreen();
@@ -215,11 +239,57 @@ bool VideoFullscreenController::leave()
     m_onAnotherMonitor = false;
     m_view.setFullscreen(false);
     if (m_window)
-        m_window->hide();
+        hideWindow();
     emit activeChanged();
     emit panelChanged();
     restoreFocus();
     return true;
+}
+
+void VideoFullscreenController::hideWindow()
+{
+    const std::uint64_t placing = ++m_placing;
+    QScreen *mainScreen = m_main ? m_main->screen() : nullptr;
+    if (positionsKnown() || !mainScreen || !m_window->isVisible() || !m_window->isActive()
+        || m_window->screen() == mainScreen) {
+        m_window->hide();
+        return;
+    }
+    // Wayland, on another output than the main window's: hidden there, the
+    // keyboard stays on that output, and a compositor need not let the main
+    // window take it back (sway marks it urgent). Carried back first, made
+    // fullscreen on the main window's output (out of fullscreen, then in,
+    // each once the compositor's answer resized the window), then hidden,
+    // the keyboard falls to the main window. At most a second for each.
+    QPointer<QQuickWindow> w = m_window;
+    auto step = std::make_shared<int>(0);
+    auto resized = std::make_shared<QMetaObject::Connection>();
+    auto finish = [this, w, step, resized, placing] {
+        disconnect(*resized);
+        if (w && placing == m_placing && !m_active)
+            w->hide();
+    };
+    auto next = [this, w, step, resized, placing, mainScreen = QPointer<QScreen>(mainScreen), finish] {
+        if (!w || placing != m_placing || m_active) {
+            disconnect(*resized);
+            return;
+        }
+        if (*step == 1 && mainScreen) {
+            *step = 2;
+            w->setScreen(mainScreen);
+            w->showFullScreen();
+            QTimer::singleShot(1000, w, finish);
+        } else if (*step == 2) {
+            finish();
+        }
+    };
+    *resized = connect(w, &QWindow::widthChanged, this, [next] { QTimer::singleShot(0, next); });
+    *step = 1;
+    w->showNormal();
+    QTimer::singleShot(1000, w, [next, step] {
+        if (*step == 1)
+            next();
+    });
 }
 
 void VideoFullscreenController::restoreFocus()

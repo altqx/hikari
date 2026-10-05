@@ -371,13 +371,16 @@ ApplicationWindow {
     // V5: OpenFile(path, fulls) and OpenFile in fullscreen: subtitles named
     // as the video load without "Load subtitles named ...?" (asked only
     // `!fulls && !IsFullScreen()`, HikariSubFrame.cpp:1351), then the video.
-    function openVideoUnasked(path) {
+    // `fullscreen` (V5): legacy OpenFile's `fulls`, for that open only.
+    function openVideoUnasked(path, fullscreen) {
         const found = root.app.openVideoFile(path)
         if (found.subtitles.length === 0) {
+            if (fullscreen)
+                root.videoFullscreen.enterWhenShown(path)
             root.app.openVideo(path)
             return
         }
-        const result = root.app.reviewOpenWithVideo(found.subtitles, path)
+        const result = root.app.reviewOpenWithVideo(found.subtitles, path, fullscreen === true)
         if (!result.ok)
             return
         if (result.rows.length === 0)
@@ -389,8 +392,7 @@ ApplicationWindow {
     // == 1 && VIDEO_FULL_SCREEN_ON_START) (HikariSubFrame.cpp:1856-1858).
     function openSingleVideo(path) {
         if (root.app.settings.value("video.fullScreenOnStart")) {
-            root.videoFullscreen.enterWhenShown(path)
-            root.openVideoUnasked(path)
+            root.openVideoUnasked(path, true)
         } else {
             tabCommands.openVideoFile(path)
         }
@@ -3754,6 +3756,7 @@ ApplicationWindow {
 
     FileDialog {
         id: videoDialog
+        objectName: "videoOpenDialog"
         nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
         // P9; V5: from the fullscreen window without the subtitles question.
         onAccepted: root.videoFullscreen.active ? root.openVideoUnasked(root.app.localPath(selectedFile))
@@ -3844,6 +3847,7 @@ ApplicationWindow {
 
     FileDialog {
         id: openDialog
+        objectName: "subtitlesOpenDialog"
         nameFilters: [qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTr("All files (*)")]
         onAccepted: root.openSubtitles(root.app.localPath(selectedFile))
     }
