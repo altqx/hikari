@@ -145,19 +145,29 @@ Dialog {
                 }
             }
             ColumnLayout {
+                id: actionsColumn
                 Layout.alignment: Qt.AlignTop
+                // Never squeezed below its controls' height (they ran into
+                // each other when the dialog was short).
+                Layout.minimumHeight: implicitHeight
                 CheckBox { id: ignoreComments; objectName: "spellIgnoreComments"; text: qsTr("Ignore comments") }
-                // The legacy label's line break is a space here; it wraps in
-                // the buttons' width and the column makes room for it.
-                CheckBox {
-                    id: ignoreUpper
-                    objectName: "spellIgnoreUpper"
-                    text: qsTr("Ignore words written entirely\nin uppercase").replace("\n", " ")
-                    Layout.fillWidth: true
-                    Layout.maximumWidth: 200
-                    // As tall as its wrapped label (the style sizes it for one line).
-                    Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
-                    Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
+                // Legacy's two-line label beside its box, in a row as tall as
+                // both lines (the style's check box drew the second line into
+                // the Replace button below it); a click on it toggles the box.
+                RowLayout {
+                    spacing: 0
+                    CheckBox {
+                        id: ignoreUpper
+                        objectName: "spellIgnoreUpper"
+                        Layout.alignment: Qt.AlignTop
+                        Accessible.name: upperLabel.text.replace("\n", " ")
+                    }
+                    Label {
+                        id: upperLabel
+                        text: qsTr("Ignore words written entirely\nin uppercase")
+                        Layout.alignment: Qt.AlignVCenter
+                        TapHandler { onTapped: ignoreUpper.toggle() }
+                    }
                 }
                 Button {
                     id: replaceButton
