@@ -315,15 +315,19 @@ ApplicationWindow {
     // where the panel cannot do it (its dock's options: not closable, not
     // dockable). Its header asks for it (Docking.requestMenu: the "⋯"
     // button, a right click on the header, Space or Enter on the button).
+    // A panel's own items are settings that have no place in its body or
+    // its header's toolbar, never a copy of them: no panel has any yet (the
+    // Reference tray's commands are its toolbar's). The Reference tray's
+    // Close closes the reference, the tray with it (legacy's close mark,
+    // DestroyPreview), so the header holds one close, not two.
     function panelOwnItems(dock) {
-        if (dock === referenceDock)
-            return [
-                { name: "referenceFollow", text: qsTr("Follow the editing Line"), checkable: true,
-                  checked: root.shell.referenceLinked, run: () => root.app.setReferenceLinked(!root.shell.referenceLinked) },
-                { name: "referenceNearest", text: qsTr("Show nearest Line"), enabled: root.shell.referenceHasNearest,
-                  run: () => root.app.showNearestReferenceLine() }
-            ]
         return []
+    }
+    function closePanel(dock) {
+        if (dock === referenceDock)
+            root.app.closeReference()
+        else
+            dock.close()
     }
     Connections {
         target: Docking
@@ -381,9 +385,9 @@ ApplicationWindow {
         }
         ShellMenuItem {
             objectName: "panelOptionsClose"
-            text: qsTr("Close")
+            text: panelOptionsMenu.dock === referenceDock ? qsTr("Close reference") : qsTr("Close")
             enabled: panelOptionsMenu.closable
-            onTriggered: panelOptionsMenu.dock.close()
+            onTriggered: root.closePanel(panelOptionsMenu.dock)
         }
     }
 

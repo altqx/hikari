@@ -9,8 +9,9 @@ import Hikari.Ui
 // keys move the reference's selection, never its content. "Follow the
 // editing Line" links it one way to the editing target's active Line, with
 // the candidates counted, Previous/Next match and an empty no-match state
-// (legacy's nearest Line only on request). The close mark is legacy's X.
-// These controls sit in the dock's header (D3).
+// (legacy's nearest Line only on request). These controls sit in the
+// dock's header (D3); legacy's close mark is the header's "⋯" menu's Close
+// reference (Main.qml), so the header has no close button of its own.
 // The menu lists every occurrence of the editing Line in the other
 // Documents, as the preview's context menu did.
 FocusScope {
@@ -82,12 +83,6 @@ FocusScope {
             text: qsTr("Next match")
             enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex + 1 < tray.shell.referenceMatchCount
             onClicked: tray.app.stepReferenceMatch(1)
-        }
-        IconToolButton {
-            objectName: "referenceClose"
-            iconRole: "tab-close"
-            text: qsTr("Close reference")
-            onClicked: tray.app.closeReference()
         }
     }
 

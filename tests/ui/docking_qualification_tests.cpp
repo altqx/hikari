@@ -30,6 +30,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSignalSpy>
+#include <QStyleHints>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -44,6 +45,16 @@ import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
 ApplicationWindow {
     width: 1000; height: 700; visible: true
+    // D3: a floating window of two groups (Video's, then Audio beside it).
+    function pairFloating() {
+        video.addDockWidgetToContainingWindow(audio, KDDW.KDDockWidgets.Location_OnRight)
+    }
+    // D3: Audio and Editor as tabs of Video's group, the Grid right of it.
+    function tabIntoVideo() {
+        video.addDockWidgetAsTab(audio)
+        video.addDockWidgetAsTab(editor)
+        area.addDockWidget(grid, KDDW.KDDockWidgets.Location_OnRight, video)
+    }
     KDDW.DockingArea {
         id: area
         objectName: "area"
@@ -516,7 +527,7 @@ private slots:
     }
 
     // D3: a floating panel is a borderless tool window around its header,
-    // with a drawn shadow off Windows (MuseScore's DockFloatingWindow).
+    // with a drawn shadow, on every platform (MuseScore's DockFloatingWindow).
     void floatingPanelsAreBorderlessToolWindows()
     {
         restoreInitial();
@@ -528,10 +539,11 @@ private slots:
         QVERIFY(floating->flags().testFlag(Qt::Tool));
         QCOMPARE(floating->transientParent(), window);
         const int shadow = hikari::ui::dockchrome::floatingShadow();
-#ifndef Q_OS_WIN
         QVERIFY(floating->flags().testFlag(Qt::FramelessWindowHint));
         QCOMPARE(shadow, 8);
-#endif
+        QCOMPARE(docking()->property("floatingShadow").toInt(), 8);
+        // transparent around the frame, where the shadow is drawn
+        QCOMPARE(qobject_cast<QQuickWindow *>(floating)->color().alpha(), 0);
         // The header keeps its look: a lone panel's title bar, inside the
         // shadow and the 1-pixel frame.
         QVERIFY(bar->property("titleMode").toBool());
@@ -610,7 +622,7 @@ private slots:
         QTRY_VERIFY(!(itemsNamed(window, QStringLiteral("dockDropHighlight"))).isEmpty());
         highlight = itemsNamed(window, QStringLiteral("dockDropHighlight")).first();
         const QRectF h = highlight->mapRectToScene(QRectF(0, 0, highlight->width(), highlight->height()));
-        QVERIFY2(qAbs(h.left() - g.left()) <= 1 && qAbs(h.width() - g.width() / 2) <= g.width() / 8 && qAbs(h.height() - g.height()) <= 2,
+        QVERIFY2(qAbs(h.left() - g.left()) <= 1 && qAbs(h.width() - g.width() / 2) <= 2 && qAbs(h.height() - g.height()) <= 2,
                  qPrintable(QStringLiteral("highlight %1,%2 %3x%4 group %5,%6 %7x%8").arg(h.x()).arg(h.y()).arg(h.width())
                                 .arg(h.height()).arg(g.x()).arg(g.y()).arg(g.width()).arg(g.height())));
         QCOMPARE(highlight->property("border").value<QObject *>()->property("width").toInt(), 1);
@@ -621,6 +633,11 @@ private slots:
         moveTo(left, tab);
         QTRY_VERIFY(highlight->isVisible());
         QTRY_VERIFY(qAbs(highlight->mapRectToScene(QRectF(0, 0, highlight->width(), highlight->height())).width() - g.width()) <= 2);
+        {
+            const QRectF all = highlight->mapRectToScene(QRectF(0, 0, highlight->width(), highlight->height()));
+            QVERIFY2(qAbs(all.left() - g.left()) <= 1 && qAbs(all.top() - g.top()) <= 1 && qAbs(all.height() - g.height()) <= 2,
+                     qPrintable(QStringLiteral("%1,%2 %3x%4").arg(all.x()).arg(all.y()).arg(all.width()).arg(all.height())));
+        }
         // Back to the left half, and drop there.
         moveTo(tab, left);
         sendMouse(receiver, QEvent::MouseButtonRelease, left, Qt::NoButton);
@@ -633,6 +650,191 @@ private slots:
         QQuickItem *audioGroup = groupOf(header(QStringLiteral("Audio")));
         QTRY_VERIFY(audioGroup->mapToScene(QPointF()).x() < gridGroup->mapToScene(QPointF()).x() + 2);
     }
+
+    // D3, Wayland (forced here: Docking.setSystemMove): a floating lone
+    // panel's header keeps both gestures. Its title is the engine's drag,
+    // which shows the drop highlight and docks; the header right of it
+    // moves the window through the compositor, only once the pointer has
+    // moved, so a click there does not hand the pointer over and a
+    // double-click there docks the panel.
+    void waylandHeaderDocksByItsTitleAndMovesByTheRest()
+    {
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QSKIP("a synthetic drag between windows needs the offscreen platform (the native gate drags for real)");
+        restoreInitial();
+        hikari::ui::Docking *d = docking();
+        d->setSystemMove(true);
+        const auto restore = qScopeGuard([d] { d->setSystemMove(hikari::ui::Docking::platformNeedsSystemMove()); });
+        QSignalSpy moves(d, &hikari::ui::Docking::systemMoveRequested);
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        QWindow *floating = bar->window();
+        QTRY_VERIFY(floating->isExposed());
+        QVERIFY(bar->property("titleMode").toBool());
+        QQuickItem *title = childNamed(bar, QStringLiteral("dockTitleText"));
+        QQuickItem *moveArea = childNamed(bar, QStringLiteral("dockSystemMoveArea"));
+        QQuickItem *button = childNamed(bar, QStringLiteral("dockMenuButton"));
+        QVERIFY(title && moveArea && button);
+        QVERIFY(moveArea->isVisible());
+        // the move area starts after the title and ends before the button
+        QVERIFY2(moveArea->x() >= title->x() + title->property("contentWidth").toReal(),
+                 qPrintable(QStringLiteral("%1 %2").arg(moveArea->x()).arg(title->property("contentWidth").toReal())));
+        QVERIFY(moveArea->x() + moveArea->width() <= button->x());
+        QVERIFY(moveArea->width() >= 48);
+        const QPoint free = moveArea->mapToScene(QPointF(moveArea->width() / 2, moveArea->height() / 2)).toPoint();
+        // A click on the free part: no move.
+        QTest::mouseClick(floating, Qt::LeftButton, {}, free);
+        QCOMPARE(moves.count(), 0);
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50); // not a double-click
+        // A press and a move there: the compositor's move, the panel still floating.
+        QTest::mousePress(floating, Qt::LeftButton, {}, free);
+        QTest::mouseMove(floating, free + QPoint(30, 4));
+        QTRY_COMPARE(moves.count(), 1);
+        QCOMPARE(moves.first().first().value<QWindow *>(), floating);
+        QTest::mouseRelease(floating, Qt::LeftButton, {}, free + QPoint(30, 4));
+        QVERIFY(audio->property("isFloating").toBool());
+        // A double-click there docks it.
+        QTest::qWait(QGuiApplication::styleHints()->mouseDoubleClickInterval() + 50);
+        QTest::mouseDClick(floating, Qt::LeftButton, {}, free);
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+        QCOMPARE(moves.count(), 1);
+
+        // Floating again, the title drags with the drop highlight and docks
+        // left of the Grid.
+        QVERIFY(audio->setProperty("isFloating", true));
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        floating = bar->window();
+        QTRY_VERIFY(floating->isExposed());
+        title = childNamed(bar, QStringLiteral("dockTitleText"));
+        QQuickItem *gridGroup = groupOf(header(QStringLiteral("Grid")));
+        const QRectF g = gridGroup->mapRectToScene(QRectF(0, 0, gridGroup->width(), gridGroup->height()));
+        const QPoint start = floating->mapToGlobal(title->mapToScene(QPointF(6, title->height() / 2)).toPoint());
+        const QPoint left = window->mapToGlobal(QPointF(g.left() + g.width() / 8, g.center().y()).toPoint());
+        sendMouse(floating, QEvent::MouseButtonPress, start, Qt::LeftButton);
+        // a few pixels along the title first, as a hand does: the drag starts there
+        for (int i = 1; i <= 4; ++i)
+            sendMouse(floating, QEvent::MouseMove, start + QPoint(4 * i, 0), Qt::LeftButton);
+        const QPoint from = start + QPoint(16, 0);
+        for (int i = 1; i <= 12; ++i)
+            sendMouse(floating, QEvent::MouseMove, from + (left - from) * i / 12, Qt::LeftButton);
+        QTRY_VERIFY(!itemsNamed(window, QStringLiteral("dockDropHighlight")).isEmpty());
+        sendMouse(floating, QEvent::MouseButtonRelease, left, Qt::NoButton);
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+        QCOMPARE(moves.count(), 1); // the title never moved the window itself
+        QQuickItem *audioGroup = groupOf(header(QStringLiteral("Audio")));
+        QTRY_VERIFY(audioGroup->mapToScene(QPointF()).x() < gridGroup->mapToScene(QPointF()).x() + 2);
+    }
+
+    // D3: a floating window holding several groups shows the engine's title
+    // bar (DockTitleBar.qml): the window's title in bold, the move cursor,
+    // and a "⋯" menu of the window's own: Dock, which docks its panels, and
+    // Close, which closes them. No other header of the window repeats it.
+    void floatingWindowOfGroupsHasItsOwnMenu()
+    {
+        restoreInitial();
+        auto *video = dock("Video");
+        auto *audio = dock("Audio");
+        QVERIFY(video->setProperty("isFloating", true));
+        QQuickItem *videoBar = nullptr;
+        QTRY_VERIFY((videoBar = header(QStringLiteral("Video"))) && videoBar->window() != window);
+        auto *floating = qobject_cast<QQuickWindow *>(videoBar->window());
+        QVERIFY(QMetaObject::invokeMethod(window, "pairFloating"));
+        QTRY_VERIFY(header(QStringLiteral("Audio")) && header(QStringLiteral("Audio"))->window() == floating);
+        QQuickItem *titleBar = nullptr;
+        QTRY_VERIFY(!itemsNamed(floating, QStringLiteral("dockTitleBar")).isEmpty());
+        titleBar = itemsNamed(floating, QStringLiteral("dockTitleBar")).first();
+        QCOMPARE(titleBar->height(), 35.0);
+        QQuickItem *button = childNamed(titleBar, QStringLiteral("dockMenuButton"));
+        QVERIFY(button && button->isVisible());
+        QCOMPARE(button->property("contentItem").value<QObject *>()->property("iconRole").toString(), QStringLiteral("panel-menu"));
+        QTRY_VERIFY(floating->isExposed());
+        QObject *menu = nullptr;
+        for (QObject *o : titleBar->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String("dockWindowMenu"))
+                menu = o;
+        QVERIFY(menu);
+        QTest::mouseClick(floating, Qt::LeftButton, {}, centreOf(button));
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QStringList items;
+        for (int i = 0; i < menu->property("count").toInt(); ++i) {
+            QQuickItem *entry = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+            if (entry)
+                items << entry->property("text").toString() + (entry->isEnabled() ? QString() : QStringLiteral(" (off)"));
+        }
+        QCOMPARE(items, (QStringList{QStringLiteral("Dock"), QStringLiteral("Close")}));
+        QObject *dockItem = nullptr;
+        for (QObject *o : titleBar->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String("dockWindowDock"))
+                dockItem = o;
+        QVERIFY(dockItem);
+        QVERIFY(QMetaObject::invokeMethod(dockItem, "triggered"));
+        QTRY_VERIFY(!video->property("isFloating").toBool() && !audio->property("isFloating").toBool());
+        QTRY_COMPARE(header(QStringLiteral("Video"))->window(), window);
+        QTRY_COMPARE(header(QStringLiteral("Audio"))->window(), window);
+
+        // Again, and Close closes both.
+        QVERIFY(video->setProperty("isFloating", true));
+        QTRY_VERIFY((videoBar = header(QStringLiteral("Video"))) && videoBar->window() != window);
+        floating = qobject_cast<QQuickWindow *>(videoBar->window());
+        QVERIFY(QMetaObject::invokeMethod(window, "pairFloating"));
+        QTRY_VERIFY(header(QStringLiteral("Audio")) && header(QStringLiteral("Audio"))->window() == floating);
+        QTRY_VERIFY(!itemsNamed(floating, QStringLiteral("dockTitleBar")).isEmpty());
+        titleBar = itemsNamed(floating, QStringLiteral("dockTitleBar")).first();
+        QObject *closeItem = nullptr;
+        for (QObject *o : titleBar->findChildren<QObject *>())
+            if (o->objectName() == QLatin1String("dockWindowClose"))
+                closeItem = o;
+        QVERIFY(closeItem && closeItem->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(closeItem, "triggered"));
+        QTRY_VERIFY(!video->property("isOpen").toBool() && !audio->property("isOpen").toBool());
+    }
+
+    // D3: tabs that do not fit (MuseScore's DockTabBar): the selected tab
+    // keeps its width, the others share what is left in proportion, cut
+    // off under a 20-pixel fade, and the tabs never run past the header.
+    void crowdedTabsKeepTheSelectedOneWhole()
+    {
+        restoreInitial();
+        QVERIFY(QMetaObject::invokeMethod(window, "tabIntoVideo"));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Editor"))) && bar->property("count").toInt() == 3);
+        // Wide: every tab at its natural width, none cut off.
+        for (int i = 0; i < 3; ++i) {
+            QQuickItem *tab = childNamed(bar, QStringLiteral("dockTab%1").arg(i));
+            QCOMPARE(tab->width(), tab->property("naturalWidth").toReal());
+            QVERIFY(!tab->property("cutOff").toBool());
+        }
+        // Narrow: below the tabs' natural widths.
+        qreal natural = 0;
+        for (int i = 0; i < 3; ++i)
+            natural += childNamed(bar, QStringLiteral("dockTab%1").arg(i))->property("naturalWidth").toReal();
+        QQuickItem *group = groupOf(bar);
+        QTRY_VERIFY(groupOf(header(QStringLiteral("Grid")))->mapToScene(QPointF()).x() > group->mapToScene(QPointF()).x());
+        QVERIFY(docking()->resizeInLayout(QStringLiteral("Grid"), int(group->width() - natural * 0.75), 0, 0, 0));
+        QTRY_VERIFY2(bar->width() < natural, qPrintable(QStringLiteral("%1 %2").arg(bar->width()).arg(natural)));
+        const int selected = bar->property("currentTabIndex").toInt();
+        qreal used = 0;
+        for (int i = 0; i < 3; ++i) {
+            QQuickItem *tab = childNamed(bar, QStringLiteral("dockTab%1").arg(i));
+            used += tab->width();
+            QQuickItem *fade = childNamed(tab, QStringLiteral("dockTabFade"));
+            if (i == selected) {
+                QCOMPARE(tab->width(), tab->property("naturalWidth").toReal());
+                QVERIFY(!fade->isVisible());
+            } else {
+                QVERIFY(tab->property("cutOff").toBool());
+                QVERIFY(tab->width() < tab->property("naturalWidth").toReal());
+                QVERIFY(tab->clip());
+                QVERIFY(fade->isVisible());
+                QCOMPARE(fade->width(), qMin(20.0, tab->width() - 1));
+            }
+        }
+        QVERIFY2(used <= bar->width() + 0.5, qPrintable(QStringLiteral("%1 > %2").arg(used).arg(bar->width())));
+    }
+
 };
 
 QTEST_MAIN(DockingQualification)

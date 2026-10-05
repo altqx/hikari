@@ -359,7 +359,7 @@ icon("spectrum", "Spectrum mode", ["button_spectrum.png"], [AUDIOBOX],
 icon("spectrum-nonlinear", "Non-linear spectrum", ["SpectrumNonLinear.png"], [AUDIOBOX],
      stroke("M2.5 13.5v-3M5 13.5v-7M7.5 13.5v-10M10 13.5v-6M12.5 13.5v-8")
      + accent(stroke("M1.5 12.5C6 12.5 11 9 14.5 2.5")))
-icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties", "reference-tray"],
+icon("link", "Link", ["button_link.png", "ScaleLink.png"], [AUDIOBOX, VISUAL, "script-properties"],
      stroke("M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8")
      + stroke("M6.5 9.5l3-3"))
 
@@ -526,7 +526,7 @@ icon("original-frame", "Set a custom rectangle for the current scale", ["Origina
 icon("eyedropper", "Pick a colour from the screen", ["eyedropper.png"], [PICKER],
      stroke("M10.5 3.5l1.75-1.75a1.75 1.75 0 0 1 2.5 2.5L13 6") + stroke("M9 3l4 4")
      + stroke("M10 4l-6.5 6.5-1 3 3-1L12 6") + accent(stroke("M4.75 11.25l3.25-3.25")))
-icon("tab-close", "Close tab", [], [TABS, "reference-tray", FILE], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
+icon("tab-close", "Close tab", [], [TABS, FILE], stroke("M4.5 4.5l7 7M11.5 4.5l-7 7"))
 icon("tab-new", "Open new tab", [], [TABS], stroke("M8 3v10M3 8h10"))
 icon("document-modified", "Modified", [], [TABS], accent(dot(8, 8, 3)))
 
@@ -563,6 +563,9 @@ icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [S
      rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 11, 3, 1) + stroke("M3.5 9.5h10a1 1 0 0 1 1 1v2")
      + accent(stroke("M7.5 5.5v2.5M5.75 6.5L7.5 8.25 9.25 6.5")))
 icon("menu-more", "More", [], [EDITOR], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
+# D3: a panel header's "⋯" menu (MuseScore's MenuButton): three dots in a
+# row, distinct from menu-more's double chevron, which drops a list open.
+icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + dot(8, 8, 1.25) + dot(12.5, 8, 1.25))
 
 # Generic list and edit commands
 icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog"], stroke("M7.5 2.5v10M2.5 7.5h10"))

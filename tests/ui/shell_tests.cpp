@@ -2844,11 +2844,12 @@ private slots:
     }
 
     // D3: a panel's "⋯" menu (MuseScore's, docs/research/musescore-docking.md
-    // §1): the panel's own items first (the Reference tray's), a separator,
-    // then Move panel…, Undock (Dock while it floats) and Close, each
-    // disabled where the panel cannot do it (an item with nothing to act on,
-    // a dock that is not closable).
-    void panelMenuHoldsOwnItemsMoveUndockAndClose()
+    // §1): Move panel…, Undock (Dock while it floats) and Close, each
+    // disabled where the panel cannot do it (a dock that is not closable).
+    // No item repeats a control of the header (the Reference tray's toolbar
+    // keeps its commands), and the tray's one close is the menu's Close
+    // reference. The button draws the three dots of K1's panel-menu.
+    void panelMenuHoldsMoveUndockAndClose()
     {
         QVERIFY(application->openFile(episode));
         QVERIFY(application->openReference(original));
@@ -2856,18 +2857,27 @@ private slots:
         QTRY_VERIFY(referenceDock->property("isOpen").toBool());
         auto *menu = named("panelOptionsMenu");
         QVERIFY(menu);
-        const bool linked = application->shell().referenceLinked();
         QVERIFY(openPanelMenu(QStringLiteral("Reference")));
-        QStringList expected{QStringLiteral("Follow the editing Line") + (linked ? QStringLiteral(" (on)") : QString()),
-                             QStringLiteral("Show nearest Line")
-                                 + (application->shell().referenceHasNearest() ? QString() : QStringLiteral(" (off)")),
-                             QStringLiteral("|"), QStringLiteral("Move panel…"), QStringLiteral("Undock"),
-                             QStringLiteral("Close")};
-        QCOMPARE(panelMenuItems(), expected);
-        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_referenceFollow"), "triggered"));
-        QTRY_COMPARE(application->shell().referenceLinked(), !linked);
+        const QStringList referenceItems = panelMenuItems();
+        QCOMPARE(referenceItems, (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Undock"),
+                                              QStringLiteral("Close reference")}));
+        // No label twice in one header: the toolbar's buttons are not menu items.
+        QQuickItem *referenceHeader = dockHeader(QStringLiteral("Reference"));
+        std::function<void(QQuickItem *)> noRepeat = [&](QQuickItem *from) {
+            for (QQuickItem *child : from->childItems()) {
+                if (child->isVisible() && child->inherits("QQuickAbstractButton")) {
+                    const QString text = child->property("text").toString();
+                    QVERIFY2(!referenceItems.contains(text), qPrintable(text));
+                }
+                noRepeat(child);
+            }
+        };
+        noRepeat(findItem(referenceHeader, QStringLiteral("dockToolbarSlot")));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(findItem(referenceHeader, QStringLiteral("dockMenuButton"))->property("contentItem").value<QObject *>()
+                     ->property("iconRole").toString(),
+                 QStringLiteral("panel-menu"));
         // The "⋯" button shows as pressed while its menu is open.
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
@@ -2912,6 +2922,14 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QVERIFY(QMetaObject::invokeMethod(named("panelShowVideo"), "triggered"));
         QTRY_VERIFY(videoDock->property("isOpen").toBool());
+
+        // The Reference tray's Close reference ends the reference, and the
+        // tray closes with it.
+        QVERIFY(openPanelMenu(QStringLiteral("Reference")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsClose"), "triggered"));
+        QTRY_VERIFY(!application->workspace().reference());
+        QTRY_VERIFY(!referenceDock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
     // D3: the keyboard reaches a panel's header and its menu: Shift+Tab
@@ -2964,9 +2982,7 @@ private slots:
         QTRY_VERIFY((floating = dockHeader(QStringLiteral("Audio"))) && floating->window() != window);
         QWindow *w = floating->window();
         QVERIFY(w->flags().testFlag(Qt::Tool));
-#ifndef Q_OS_WIN
         QVERIFY(w->flags().testFlag(Qt::FramelessWindowHint));
-#endif
         QVERIFY(floating->property("titleMode").toBool());
         QTRY_VERIFY(w->isExposed());
         QTest::mouseDClick(w, Qt::LeftButton, {}, floating->mapToScene(QPointF(60, floating->height() / 2)).toPoint());
@@ -2976,7 +2992,11 @@ private slots:
 
     // D3: the bottom panels keep a one-tab header even alone (the Grid, the
     // Reference tray, Search), the Reference tray's toolbar in it right of
-    // the tab (MuseScore's toolbar slot) instead of a row of its own.
+    // the tab (MuseScore's toolbar slot) instead of a row of its own, with
+    // no close button (Close reference is the menu's). The toolbar's free
+    // part is header too: a double-click floats the panel and a right
+    // click opens its menu, as a right click on a toolbar button does. The
+    // header shows the move cursor, its buttons the arrow.
     void bottomPanelsKeepATabAndTheTrayToolbar()
     {
         QVERIFY(application->openFile(episode));
@@ -3003,6 +3023,54 @@ private slots:
         const bool linked = application->shell().referenceLinked();
         QTest::mouseClick(window, Qt::LeftButton, {}, centreOf(item("referenceLinked")));
         QTRY_COMPARE(application->shell().referenceLinked(), !linked);
+        // No close button in the header: no tab-close mark, nothing named Close.
+        std::function<void(QQuickItem *)> noClose = [&](QQuickItem *from) {
+            for (QQuickItem *child : from->childItems()) {
+                if (child->isVisible() && child->inherits("QQuickAbstractButton")) {
+                    QVERIFY2(!child->property("text").toString().startsWith(QStringLiteral("Close")),
+                             qPrintable(child->property("text").toString()));
+                    QVERIFY(child->property("iconRole").toString() != QStringLiteral("tab-close"));
+                }
+                noClose(child);
+            }
+        };
+        noClose(header);
+        QVERIFY(!item("referenceClose"));
+        // The cursor: the move cursor on the tab and the toolbar's free
+        // part, the arrow on the "⋯" button and the toolbar's buttons.
+        const auto cursorAt = [&](QPoint at) {
+            QTest::mouseMove(window, at);
+            QCoreApplication::processEvents();
+            return window->cursor().shape();
+        };
+        auto *status = item("referenceMatchStatus");
+        const QPoint statusPoint = status->mapToScene(QPointF(4, status->height() / 2)).toPoint();
+        QTRY_COMPARE(cursorAt(centreOf(tab)), Qt::SizeAllCursor);
+        QTRY_COMPARE(cursorAt(statusPoint), Qt::SizeAllCursor);
+        QTRY_COMPARE(cursorAt(centreOf(findItem(header, QStringLiteral("dockMenuButton")))), Qt::ArrowCursor);
+        QTRY_COMPARE(cursorAt(centreOf(item("referenceLinked"))), Qt::ArrowCursor);
+        QTRY_COMPARE(cursorAt(centreOf(item("referenceGrid"))), Qt::ArrowCursor);
+        // A right click on the toolbar's label, and on one of its buttons:
+        // the tray's menu.
+        auto *menu = named("panelOptionsMenu");
+        for (QQuickItem *target : {static_cast<QQuickItem *>(status), item("referenceNextMatch")}) {
+            QTest::mouseClick(window, Qt::RightButton, {}, target == status ? statusPoint : centreOf(target));
+            QTRY_VERIFY2(menu->property("visible").toBool(), qPrintable(target->objectName()));
+            QCOMPARE(panelMenuItems().last(), QStringLiteral("Close reference"));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        }
+        // A double-click on the label floats the tray; on its floating
+        // header it docks again.
+        auto *referenceDock = item<QObject>("referenceDock");
+        QTest::mouseDClick(window, Qt::LeftButton, {}, statusPoint);
+        QTRY_VERIFY(referenceDock->property("isFloating").toBool());
+        QQuickItem *floating = nullptr;
+        QTRY_VERIFY((floating = dockHeader(QStringLiteral("Reference"))) && floating->window() != window);
+        QTRY_VERIFY(floating->window()->isExposed());
+        QTRY_VERIFY(status->window() == floating->window() && status->isVisible());
+        QTest::mouseDClick(floating->window(), Qt::LeftButton, {}, status->mapToScene(QPointF(4, status->height() / 2)).toPoint());
+        QTRY_VERIFY(!referenceDock->property("isFloating").toBool());
         // Search, opened, is a tab bar too.
         QVERIFY(QMetaObject::invokeMethod(named("panelShowSearch"), "triggered"));
         QQuickItem *search = nullptr;
@@ -3010,16 +3078,56 @@ private slots:
         QVERIFY(!search->property("titleMode").toBool());
     }
 
+    // D3: the controls of `panel` its bounds cut off: a button, field,
+    // label or list (anything that takes input or shows text) not wholly
+    // inside the panel, or a text wider than its box that neither elides nor
+    // wraps. Scrolled content counts as its view (the view must fit).
+    static QStringList clippedIn(QQuickItem *panel)
+    {
+        QStringList out;
+        const QRectF bounds(0, 0, panel->width(), panel->height());
+        std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+            for (QQuickItem *child : from->childItems()) {
+                if (!child->isVisible() || child->opacity() <= 0 || child->width() <= 0 || child->height() <= 0)
+                    continue;
+                const bool leaf = child->inherits("QQuickControl") && !child->inherits("QQuickPane")
+                                  && !child->inherits("QQuickScrollView");
+                const bool text = child->inherits("QQuickText") || child->inherits("QQuickTextInput")
+                                  || child->inherits("QQuickTextEdit");
+                const bool view = child->inherits("QQuickFlickable");
+                if (leaf || text || view) {
+                    const QRectF r = child->mapRectToItem(panel, QRectF(0, 0, child->width(), child->height()));
+                    const QString name = child->objectName().isEmpty() ? QString::fromLatin1(child->metaObject()->className())
+                                                                       : child->objectName();
+                    if (r.left() < bounds.left() - 0.5 || r.top() < bounds.top() - 0.5 || r.right() > bounds.right() + 0.5
+                        || r.bottom() > bounds.bottom() + 0.5)
+                        out << QStringLiteral("%1 at %2,%3 %4x%5").arg(name).arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height());
+                    else if (child->inherits("QQuickText") && child->property("elide").toInt() == 3 /* ElideNone */
+                             && child->property("wrapMode").toInt() == 0 /* NoWrap */
+                             && child->implicitWidth() > child->width() + 1)
+                        out << QStringLiteral("%1 text %2 in %3").arg(name).arg(child->implicitWidth()).arg(child->width());
+                }
+                if (!leaf && !view)
+                    walk(child);
+            }
+        };
+        walk(panel);
+        return out;
+    }
+
     // D3: each panel reports the smallest size its content takes unclipped
     // to the docking engine, which keeps it at least that big: in the
-    // default arrangement, and when a separator is dragged. The Video
+    // default arrangement, and when separators are dragged as far as they
+    // go. Squeezed to the engine's limit from every side, no panel cuts off
+    // a control (clippedIn), so a minimum too small fails. The Video
     // panel's follow choices wrap onto two rows rather than be cut off.
     void panelsKeepTheirMinimumSizes()
     {
         QVERIFY(application->openFile(episode));
         auto *docking = engine->singletonInstance<ui::Docking *>("Hikari.Ui", "Docking");
         QVERIFY(docking);
-        for (const char *name : {"videoPanel", "audioPanel", "editorPanel", "gridPanel"}) {
+        const char *const panels[] = {"videoPanel", "audioPanel", "editorPanel", "gridPanel"};
+        for (const char *name : panels) {
             QQuickItem *panel = item(name);
             const QSizeF minimum = panel->property("minimumSize").toSizeF();
             QVERIFY2(minimum.width() > 8 && minimum.height() > 8, name);
@@ -3028,14 +3136,55 @@ private slots:
                                         .arg(panel->height()).arg(minimum.width()).arg(minimum.height())));
             const QSize engineMinimum = docking->minimumSize(panel->property("dockName").toString());
             QVERIFY2(engineMinimum.width() >= minimum.width() && engineMinimum.height() >= minimum.height(), name);
+            QVERIFY2(clippedIn(panel).isEmpty(), qPrintable(QLatin1String(name) + QLatin1Char(' ') + clippedIn(panel).join(u"; ")));
+        }
+        // Each panel squeezed as far as the separators go, from its right
+        // and bottom edges, then its left and top ones: the engine stops at
+        // its minimum and nothing in it is cut off.
+        const auto settled = [](QQuickItem *i) {
+            const QSizeF size = i->size();
+            QTest::qWait(60);
+            return size == i->size();
+        };
+        for (const char *name : panels) {
+            QQuickItem *panel = item(name);
+            const QString dock = panel->property("dockName").toString();
+            QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
+            QVERIFY(docking->resizeInLayout(dock, -2000, -2000, 0, 0));
+            const QSizeF minimum = panel->property("minimumSize").toSizeF();
+            QTRY_VERIFY(settled(panel));
+            QVERIFY2(panel->width() >= minimum.width() - 0.5 && panel->height() >= minimum.height() - 0.5,
+                     qPrintable(QStringLiteral("%1 %2x%3 < %4x%5").arg(QLatin1String(name)).arg(panel->width())
+                                    .arg(panel->height()).arg(minimum.width()).arg(minimum.height())));
+            const QStringList clipped = clippedIn(panel);
+            QVERIFY2(clipped.isEmpty(), qPrintable(QStringLiteral("%1 at %2x%3: %4").arg(QLatin1String(name)).arg(panel->width())
+                                                       .arg(panel->height()).arg(clipped.join(u"; "))));
+            application->workspaceLayout().resetLayout();
+            QTRY_VERIFY(settled(panel));
+        }
+        // The check sees a cut-off control: below its minimum (the engine
+        // told a smaller one) the Line editor cuts its controls off.
+        {
+            QQuickItem *panel = item("editorPanel");
+            const QString dock = panel->property("dockName").toString();
+            QVERIFY(docking->setMinimumSize(dock, QSize(40, 40)));
+            QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
+            QVERIFY(docking->resizeInLayout(dock, -2000, -2000, 0, 0));
+            QTRY_VERIFY(settled(panel));
+            QVERIFY2(!clippedIn(panel).isEmpty(), qPrintable(QStringLiteral("%1x%2").arg(panel->width()).arg(panel->height())));
+            QVERIFY(QMetaObject::invokeMethod(panel, "reportMinimumSize"));
+            QCOMPARE(docking->minimumSize(dock), panel->property("minimumSize").toSizeF().toSize());
+            application->workspaceLayout().resetLayout();
+            QTRY_VERIFY(settled(panel));
         }
         // Squeezing the Line editor stops at its minimum.
         auto *editorDock = item<QObject>("editorDock");
         QQuickItem *editor = item("editorPanel");
         const qreal minimumHeight = editor->property("minimumSize").toSizeF().height();
+        const qreal before = editor->height();
         application->workspaceLayout().resizePanel(editorDock, application->workspaceLayout().panelSize(editorDock).width(), 60);
-        QTest::qWait(50);
-        QVERIFY2(editor->height() >= minimumHeight, qPrintable(QString::number(editor->height())));
+        QTRY_VERIFY(editor->height() < before || editor->height() <= minimumHeight + 0.5);
+        QVERIFY2(editor->height() >= minimumHeight - 0.5, qPrintable(QString::number(editor->height())));
         // A narrow Video panel: the follow choices on two rows, none cut off.
         auto *videoDock = item<QObject>("videoDock");
         application->workspaceLayout().resizePanel(videoDock, 470, application->workspaceLayout().panelSize(videoDock).height());
@@ -3046,6 +3195,7 @@ private slots:
         auto *playAfter = item("videoPlayAfter");
         QTRY_VERIFY2(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x() <= video->width(),
                      qPrintable(QString::number(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x())));
+        QVERIFY2(clippedIn(video).isEmpty(), qPrintable(clippedIn(video).join(u"; ")));
     }
 
     // D1 native gate: a floating panel no screen shows (a removed monitor, a

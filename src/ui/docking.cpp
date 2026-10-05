@@ -204,42 +204,36 @@ public:
 // as part of Flag_AutoHideSupport (a mask test) and build side bars, which
 // the QtQuick frontend cannot.
 //
-// Floating windows: off Windows they are borderless and transparent around
-// a drawn shadow (DockFloatingWindow.qml), resized through the compositor
-// (startSystemResize); dragging a header moves them by the engine's drag,
-// which tracks the drop highlight, except on Wayland, where the engine
-// cannot place windows and the header moves its window through the
-// compositor (startSystemMove, DockTabBar.qml). On Windows the engine's
-// frame (Aero snap with client decorations) takes the frame away and has
-// the system move (startSystemMove from the drag), resize and shadow them.
+// Floating windows, on every platform: borderless tool windows,
+// transparent around a drawn shadow (DockFloatingWindow.qml), resized
+// through the window system (startSystemResize from the shadow). Dragging a
+// header moves them by the engine's drag, which tracks the pointer to show
+// the drop highlight and dock; a system move would hand the pointer to the
+// window system and lose the drop. Only on Wayland, where the engine cannot
+// place windows, does the header's free part move its window through the
+// compositor (startSystemMove, DockTabBar.qml), while its title and tabs
+// stay the engine's drag (a drag-and-drop there). The engine's Aero-snap
+// frame (Flag_AeroSnapWithClientDecos) is not used: it keeps the system's
+// frame, which the borderless window has not.
 void configureEngine()
 {
     using KDDockWidgets::Config;
     Config &config = Config::self();
-    config.setFlags(Config::Flag_AeroSnapWithClientDecos | Config::Flag_HideTitleBarWhenTabsVisible
-                    | Config::Flag_AlwaysShowTabs);
+    config.setFlags(Config::Flag_HideTitleBarWhenTabsVisible | Config::Flag_AlwaysShowTabs);
     config.setSeparatorThickness(1);
     // The drop highlight is drawn in the window under the dragged panel:
     // the dragged window is see-through while it moves (where the window
     // system composites), as with the engine's own in-window indicators.
     config.setDraggedWindowOpacity(0.7);
-#ifdef Q_OS_WIN
-    KDDockWidgets::Core::FloatingWindow::s_windowFlagsOverride = Qt::Tool;
-#else
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);
     KDDockWidgets::Core::FloatingWindow::s_windowFlagsOverride =
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint;
-#endif
 }
 } // namespace
 
 int dockchrome::floatingShadow()
 {
-#ifdef Q_OS_WIN
-    return 0;
-#else
     return 8; // MuseScore's DOCK_WINDOW_SHADOW
-#endif
 }
 
 bool attachDocking(QQmlEngine &engine)
@@ -322,9 +316,26 @@ int keepFloatingPanelsOnScreen()
     return moved;
 }
 
-bool Docking::systemMove()
+bool Docking::platformNeedsSystemMove()
 {
     return QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+}
+
+void Docking::setSystemMove(bool on)
+{
+    if (on == m_systemMove)
+        return;
+    m_systemMove = on;
+    emit systemMoveChanged();
+}
+
+bool Docking::startSystemMove(QQuickItem *from)
+{
+    QQuickWindow *window = from ? from->window() : nullptr;
+    if (!window)
+        return false;
+    emit systemMoveRequested(window);
+    return window->startSystemMove();
 }
 
 QString Docking::dockNameAt(QObject *tabBar, int index) const

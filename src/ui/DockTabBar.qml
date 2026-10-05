@@ -17,13 +17,17 @@ import Hikari.Ui
 //   button; 1-pixel lines separate the others. The current panel's toolbar
 //   (Docking.setPanelHeader) sits right of the tabs.
 //
-// The header is the drag handle (the engine's mouse area lies under the
-// tabs): drag to move or dock, double-click to float or dock. The "⋯"
-// button, a right click and the keyboard (Right from the selected tab, then
-// Space or Enter; the menu key or Shift+F10 on a tab) open the panel's menu,
-// which Main.qml owns (Docking.requestMenu). On Wayland a floating panel's
-// header moves its window through the compositor (startSystemMove), as the
-// engine cannot place windows there.
+// The header is the drag handle, with the move cursor (the engine's mouse
+// area lies under the tabs; the toolbar slot is the current panel's): drag
+// to move or dock, double-click to float or dock. The "⋯" button, a right
+// click anywhere on the header and the keyboard (Right from the selected
+// tab, then Space or Enter; the menu key or Shift+F10 on a tab) open the
+// panel's menu, which Main.qml owns (Docking.requestMenu). On Wayland the
+// engine cannot place windows, so a floating panel's header has two parts:
+// its title or tabs stay the engine's drag, which docks (a drag-and-drop
+// with the drop highlight), and the rest of the header moves the window
+// through the compositor (startSystemMove) once the pointer has moved, so
+// a double-click there still docks.
 //
 // The header's focus ring (K2, visual-language.md "Keyboard focus") marks
 // the group holding the keyboard focus. Loaded through the adapter's view
@@ -57,13 +61,16 @@ KDDWViews.TabBarBase {
 
     // Called by the engine: the item of tab `index`, and the tab under a
     // point. A one-panel header is all its panel's, so a double-click or a
-    // drag anywhere on it acts on the panel; between tabs it is the group's.
+    // drag anywhere on it acts on the panel, as does the toolbar slot (the
+    // current panel's); between tabs it is the group's.
     function getTabAtIndex(index) {
         return tabRepeater.itemAt(index)
     }
     function getTabIndexAtPosition(globalPoint) {
         if (root.count === 1)
             return root.contains(root.mapFromGlobal(globalPoint.x, globalPoint.y)) ? 0 : -1
+        if (toolbarSlot.visible && toolbarSlot.contains(toolbarSlot.mapFromGlobal(globalPoint.x, globalPoint.y)))
+            return root.currentTabIndex
         for (let i = 0; i < tabRepeater.count; ++i) {
             const tab = tabRepeater.itemAt(i)
             if (tab && tab.contains(tab.mapFromGlobal(globalPoint.x, globalPoint.y)))
@@ -110,6 +117,7 @@ KDDWViews.TabBarBase {
 
     // A lone panel's title: bold, 12 from the left, up to the "⋯" button.
     Text {
+        id: titleText
         objectName: "dockTitleText"
         visible: root.titleMode
         x: 12
@@ -124,7 +132,8 @@ KDDWViews.TabBarBase {
 
     // Tabs: 10 | label | 10, or 10 | label | 6 | ⋯ | 6 on the selected one,
     // then a 1-pixel line. When they do not fit, the selected tab keeps its
-    // width and the others share what is left.
+    // width and the others share what is left in proportion, cut off with a
+    // 20-pixel fade to 70 % of the strip (MuseScore's DockTabBar).
     readonly property real slotWidth: toolbarSlot.width > 0 ? toolbarSlot.width + 8 : 0
     readonly property real naturalTabsWidth: {
         let sum = 0
@@ -153,15 +162,16 @@ KDDWViews.TabBarBase {
                 readonly property bool hovered: root.tabBarCpp !== null && root.tabBarCpp.hoveredTabIndex === index
                 readonly property real naturalWidth: Math.ceil(10 + boldMetrics.advanceWidth
                                                                + (selected ? 6 + menuButton.width + 6 : 10) + 1)
+                readonly property bool cutOff: !selected && root.naturalTabsWidth > root.width - root.slotWidth
                 objectName: "dockTab" + index
                 height: root.height
+                clip: cutOff
                 width: {
-                    const available = root.width - root.slotWidth
-                    if (root.naturalTabsWidth <= available || selected)
+                    if (!cutOff)
                         return naturalWidth
                     const others = root.naturalTabsWidth - root.selectedNaturalWidth
-                    const left = Math.max(0, available - root.selectedNaturalWidth)
-                    return Math.max(24, Math.floor(naturalWidth * left / Math.max(1, others)))
+                    const left = Math.max(0, root.width - root.slotWidth - root.selectedNaturalWidth)
+                    return Math.floor(naturalWidth * left / Math.max(1, others))
                 }
                 activeFocusOnTab: (selected && !root.titleMode) || activeFocus
                 Accessible.role: Accessible.PageTab
@@ -193,13 +203,27 @@ KDDWViews.TabBarBase {
                 Text {
                     id: label
                     x: 10
-                    width: Math.max(0, tab.width - x - (tab.selected ? 6 + menuButton.width + 6 : 10) - 1)
+                    // a cut-off tab clips its label under the fade
+                    width: tab.cutOff ? implicitWidth
+                                      : Math.max(0, tab.width - x - (tab.selected ? 6 + menuButton.width + 6 : 10) - 1)
                     anchors.verticalCenter: parent.verticalCenter
                     text: tab.title
                     color: Theme.text
                     font.bold: tab.selected
-                    elide: Text.ElideRight
+                    elide: tab.cutOff ? Text.ElideNone : Text.ElideRight
                     Accessible.ignored: true
+                }
+                Rectangle {
+                    objectName: "dockTabFade"
+                    visible: tab.cutOff
+                    width: Math.min(20, tab.width - 1)
+                    x: tab.width - 1 - width
+                    height: tab.height - 1
+                    gradient: Gradient {
+                        orientation: Gradient.Horizontal
+                        GradientStop { position: 0.0; color: Qt.alpha(Theme.raised, 0) }
+                        GradientStop { position: 1.0; color: Qt.alpha(Theme.raised, 0.7) }
+                    }
                 }
                 Rectangle {
                     // the line after the tab
@@ -251,11 +275,12 @@ KDDWViews.TabBarBase {
         }
     }
 
-    // Above the engine's drag area (mouseAreaZ): the "⋯" button, on the
-    // selected tab or at the title bar's end.
+    // Above the engine's drag area (mouseAreaZ) and the header's own
+    // (headerArea): the "⋯" button, on the selected tab or at the title
+    // bar's end.
     DockMenuButton {
         id: menuButton
-        z: root.mouseAreaZ + 1
+        z: root.mouseAreaZ + 2
         visible: root.count > 0 && (root.titleMode || root.currentTab !== null)
         panelTitle: root.currentTitle
         menuOpen: root.menuOpen
@@ -287,7 +312,7 @@ KDDWViews.TabBarBase {
         objectName: "dockToolbarSlot"
         readonly property Item toolbar: !root.titleMode ? (Docking.headerRevision, Docking.toolbar(root.currentName)) : null
         property Item hosted: null
-        z: root.mouseAreaZ + 1
+        z: root.mouseAreaZ + 2
         visible: toolbar !== null
         anchors.right: parent.right
         anchors.rightMargin: 4
@@ -310,14 +335,21 @@ KDDWViews.TabBarBase {
         }
     }
 
-    // A right click: the menu of the panel under the pointer.
+    // The whole header: the move cursor (MuseScore's SizeAll; the "⋯"
+    // button and the toolbar's buttons keep the arrow), and a right click,
+    // the toolbar slot included, opens the menu of the panel under the
+    // pointer (the current one off the tabs). Left presses go through to
+    // the engine's drag area below.
     MouseArea {
+        id: headerArea
+        objectName: "dockHeaderArea"
         z: root.mouseAreaZ + 1
         anchors.fill: parent
-        anchors.rightMargin: root.slotWidth
         acceptedButtons: Qt.RightButton
+        cursorShape: Qt.SizeAllCursor
         onPressed: mouse => {
-            const index = root.count === 1 ? 0 : root.getTabIndexAtPosition(mapToGlobal(mouse.x, mouse.y))
+            const at = root.count === 1 ? 0 : root.getTabIndexAtPosition(mapToGlobal(mouse.x, mouse.y))
+            const index = at >= 0 ? at : root.currentTabIndex
             if (index < 0)
                 return
             root.currentTabIndex = index
@@ -325,19 +357,43 @@ KDDWViews.TabBarBase {
         }
     }
 
-    // Wayland: a floating panel's header moves its window through the
-    // compositor, anywhere on a lone panel's header, else between the tabs
-    // (a tab still drags out of the group, as the engine does it).
+    // Wayland, a floating panel: the header's free part moves the window
+    // through the compositor (right of a lone panel's title, keeping at
+    // least 48 pixels; right of the tabs, up to the toolbar). The title and
+    // the tabs stay the engine's drag, which docks. The move starts once
+    // the pointer has moved, so a click or a double-click (to dock) never
+    // hands the pointer to the compositor.
     MouseArea {
+        id: systemMoveArea
         objectName: "dockSystemMoveArea"
-        z: root.mouseAreaZ + 1
+        z: root.mouseAreaZ + 2
         enabled: root.floating && Docking.systemMove
         visible: enabled
-        x: root.count === 1 ? 0 : tabRow.width
-        width: Math.max(0, root.count === 1 ? menuButton.x - 2 : root.width - tabRow.width - root.slotWidth)
+        readonly property real start: root.titleMode
+                                      ? Math.min(titleText.x + titleText.contentWidth + 8, Math.max(0, menuButton.x - 2 - 48))
+                                      : tabRow.width
+        readonly property real end: root.titleMode ? menuButton.x - 2 : root.width - root.slotWidth
+        x: start
+        width: Math.max(0, end - start)
         height: parent.height
-        onPressed: Window.window.startSystemMove()
-        onDoubleClicked: Docking.toggleFloating(root.count === 1 ? root.nameAt(0) : root.currentName)
+        cursorShape: Qt.SizeAllCursor
+        property point pressedAt
+        property bool moving: false
+        onPressed: mouse => {
+            pressedAt = Qt.point(mouse.x, mouse.y)
+            moving = false
+        }
+        onPositionChanged: mouse => {
+            if (moving || !pressed)
+                return
+            if (Math.abs(mouse.x - pressedAt.x) + Math.abs(mouse.y - pressedAt.y) >= Application.styleHints.startDragDistance) {
+                moving = true
+                Docking.startSystemMove(systemMoveArea)
+            }
+        }
+        onReleased: moving = false
+        onCanceled: moving = false
+        onDoubleClicked: Docking.toggleFloating(root.currentName)
     }
 
     // K2: the group holding the keyboard focus rings its header, 2 wide just
@@ -347,7 +403,7 @@ KDDWViews.TabBarBase {
         objectName: "focusRing"
         anchors.fill: parent
         anchors.margins: 1
-        z: root.mouseAreaZ + 2
+        z: root.mouseAreaZ + 3
         color: "transparent"
         border.width: 2
         border.color: Theme.focus

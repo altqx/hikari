@@ -8,11 +8,10 @@ import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
 // whose panel keeps its header (DockTabBar.qml; a window of several groups
 // gets DockTitleBar.qml above them), framed in the panel body's colour with
 // a 1-pixel boundary, 3-pixel corners and a drawn 8-pixel shadow around it.
-// The window is transparent around the frame; the adapter (ui/docking.cpp)
-// makes it so off Windows, where the shadow is drawn and the edges resize
-// the window through the compositor (startSystemResize). On Windows the
-// engine's own frame has the system move, resize and shadow the window, and
-// Docking.floatingShadow is 0. Loaded through the adapter's view factory.
+// The window is transparent around the frame on every platform (the
+// adapter, ui/docking.cpp, makes it so), and the shadow's edges resize it
+// through the window system (startSystemResize). Loaded through the
+// adapter's view factory.
 Item {
     id: root
     objectName: "dockFloatingWindow"

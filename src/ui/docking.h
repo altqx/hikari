@@ -18,6 +18,7 @@
 
 class QQmlEngine;
 class QQuickItem;
+class QWindow;
 
 namespace hikari::ui {
 
@@ -43,7 +44,7 @@ void refreshDockConstraints();
 
 // D3 sizes (docs/research/musescore-docking.md §7): the header row, the gap
 // between a tab bar and the content, and the floating window's drawn shadow
-// (0 where the window system draws its own: Windows).
+// (every platform: the window is borderless and transparent around it).
 namespace dockchrome {
 inline constexpr int kHeaderHeight = 35;
 inline constexpr int kTabGap = 12;
@@ -56,10 +57,11 @@ class Docking : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    // Wayland: a floating panel's header moves its window through the
-    // compositor (startSystemMove); the engine cannot place windows there.
-    Q_PROPERTY(bool systemMove READ systemMove CONSTANT FINAL)
-    // The width of the floating window's drawn shadow (0: the system's).
+    // Wayland: the free part of a floating panel's header moves its window
+    // through the compositor (startSystemMove); the engine cannot place
+    // windows there. Tests set it elsewhere (setSystemMove).
+    Q_PROPERTY(bool systemMove READ systemMove NOTIFY systemMoveChanged FINAL)
+    // The width of the floating window's drawn shadow.
     Q_PROPERTY(int floatingShadow READ floatingShadow CONSTANT FINAL)
     // Bumped when a panel's header description changes (setPanelHeader).
     Q_PROPERTY(int headerRevision READ headerRevision NOTIFY headersChanged FINAL)
@@ -69,7 +71,11 @@ class Docking : public QObject {
 public:
     using QObject::QObject;
 
-    static bool systemMove();
+    // Whether the platform needs the compositor to move windows (Wayland).
+    static bool platformNeedsSystemMove();
+    bool systemMove() const { return m_systemMove; }
+    // Tests: the Wayland header on another platform.
+    void setSystemMove(bool on);
     static int floatingShadow() { return dockchrome::floatingShadow(); }
     int headerRevision() const { return m_revision; }
     QString openMenu() const { return m_openMenu; }
@@ -105,9 +111,15 @@ public:
     // Floats panel `uniqueName`, or docks it when it floats (a double-click
     // on a header the engine does not see: Wayland's moving header).
     Q_INVOKABLE bool toggleFloating(const QString &uniqueName);
+    // Has the compositor move the window holding `from` (Wayland's moving
+    // header); whether the platform took it. systemMoveRequested says so to
+    // tests on platforms that do not.
+    Q_INVOKABLE bool startSystemMove(QQuickItem *from);
 
 signals:
     void headersChanged();
+    void systemMoveChanged();
+    void systemMoveRequested(QWindow *window);
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
     void openMenuChanged();
 
@@ -118,6 +130,7 @@ private:
     };
     QHash<QString, Header> m_headers;
     int m_revision = 0;
+    bool m_systemMove = platformNeedsSystemMove();
     QString m_openMenu;
 };
 
