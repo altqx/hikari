@@ -12,6 +12,8 @@
 #include "audio_display_item.h"
 #include "fake_font_service.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_rotation.h"
+#include "hikari/application/visual_scale.h"
 #include "icon_theme.h"
 
 #include <QAccessible>
@@ -6981,6 +6983,169 @@ private slots:
         // The family again goes back to the crosshair.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
         QCOMPARE(tools.activeFamily(), 0);
+    }
+
+    // T3: Scale and the rotations through the real panel. The family's
+    // options row is legacy VideoToolbar's second row (ScaleItem,
+    // RotationZItem, RotationXYItem) with the K1 icons, legacy's greying and
+    // links; a drag of the width arrow writes \fscx as one step; Esc during
+    // it leaves the text and puts the arrows back; the two-point angle's
+    // first click waits for the second and Esc drops it (the card's
+    // evidence, #178); an X/Y drag writes \fry by the distance.
+    void visualScaleAndRotationsThroughThePanel()
+    {
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "transform.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+        const auto &view = tools.videoView();
+        const auto thirdText = [&] { return text(session->document().lines()[2]); };
+
+        // The crosshair has no options.
+        QVERIFY(!visualItem("visualToolOptions")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
+        QCOMPARE(tools.activeFamily(), 3);
+        QTRY_VERIFY(visualItem("visualToolOptions")->isVisible());
+        // ScaleItem (VideoToolbar.cpp:83-89, 900-958): width and the aspect
+        // ratio on; the rectangle's four options greyed without it.
+        const char *names[] = {"rectangle", "scaleX", "aspectRatio", "scaleY", "originalRectangle", "changeAll",
+                               "preserveProportions"};
+        const char *roles[] = {"frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation",
+                               "resample"};
+        const auto option = [&](const char *name) {
+            return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
+        };
+        const auto states = [&](std::array<bool, 7> checked, std::array<bool, 7> enabled) {
+            for (int i = 0; i < 7; ++i) {
+                QQuickItem *b = option(names[i]);
+                QVERIFY2(b, names[i]);
+                QCOMPARE(b->property("iconRole").toString(), QLatin1String(roles[i]));
+                QVERIFY2(b->property("checked").toBool() == checked[static_cast<std::size_t>(i)], names[i]);
+                QVERIFY2(b->isEnabled() == enabled[static_cast<std::size_t>(i)], names[i]);
+                QVERIFY(!b->property("tip").toString().isEmpty());
+            }
+        };
+        states({false, true, true, false, false, false, false}, {true, false, false, false, false, true, true});
+        QCOMPARE(option("scaleX")->property("tip").toString(), QStringLiteral("Scale width"));
+        // The rectangle switches "change all" on and keeps it on.
+        QVERIFY(QMetaObject::invokeMethod(option("rectangle"), "click"));
+        QTRY_VERIFY(option("rectangle")->property("checked").toBool());
+        states({true, true, true, false, false, true, false}, {true, false, true, false, true, false, true});
+        QVERIFY(QMetaObject::invokeMethod(option("rectangle"), "click"));
+        QTRY_VERIFY(!option("rectangle")->property("checked").toBool());
+        states({false, true, true, false, false, true, false}, {true, false, false, false, false, true, true});
+        QVERIFY(QMetaObject::invokeMethod(option("changeAll"), "click"));
+        QTRY_VERIFY(!option("changeAll")->property("checked").toBool());
+
+        // The width arrow (from the Line's position to the right): a drag of
+        // 20 pixels makes \fscx 120 at the device pixel ratio 1, one step.
+        auto *scale = dynamic_cast<ScaleTool *>(tools.tool());
+        QVERIFY(scale);
+        QCOMPARE(scale->from(), view.scriptToView({160, 120}));
+        const QPoint p = videoPoint(QPointF(view.toLogical(scale->to().x), view.toLogical(scale->from().y)));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, p);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(10, 0));
+        QTest::mouseMove(window, p + QPoint(20, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(thirdText(), QStringLiteral("{\\pos(160,120)}third")); // nothing reaches the Document yet
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(20, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual scaling tool"));
+        const QString fscx = QStringLiteral("\\fscx") +
+                             QString::number(100 + view.toDevice(20));
+        QVERIFY2(thirdText().contains(fscx), qPrintable(thirdText()));
+        QTRY_COMPARE(visualItem("visualValue_fscx")->property("text").toString(), fscx.mid(5));
+        // Esc during a drag: no step, and the arrows go back to the text's.
+        const PointF arrowsBefore = scale->to();
+        const QPoint q = videoPoint(QPointF(view.toLogical(scale->to().x), view.toLogical(scale->from().y)));
+        QTest::mouseMove(window, q);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, q);
+        QTest::mouseMove(window, q + QPoint(15, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QVERIFY(tools.escapable());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, q + QPoint(15, 0));
+        QCOMPARE(session->historySize(), steps + 1);
+        QVERIFY2(thirdText().contains(fscx), qPrintable(thirdText()));
+        QCOMPARE(scale->to(), arrowsBefore);
+
+        // Z rotation: RotationZItem (VideoToolbar.cpp:78-80, 827-865).
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool4"), "click"));
+        QCOMPARE(tools.activeFamily(), 4);
+        QTRY_VERIFY(option("twoPoints"));
+        QCOMPARE(option("twoPoints")->property("iconRole").toString(), QStringLiteral("two-points"));
+        QCOMPARE(option("changeAll")->property("iconRole").toString(), QStringLiteral("tool-scale-rotation"));
+        QCOMPARE(option("preserveProportions")->property("iconRole").toString(), QStringLiteral("resample"));
+        QVERIFY(!option("scaleX"));
+        // "Preserve proportions" switches "change all" on and greys it.
+        QVERIFY(QMetaObject::invokeMethod(option("preserveProportions"), "click"));
+        QTRY_VERIFY(option("changeAll")->property("checked").toBool());
+        QVERIFY(!option("changeAll")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(option("preserveProportions"), "click"));
+        QTRY_VERIFY(option("changeAll")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(option("changeAll"), "click"));
+        QTRY_VERIFY(!option("changeAll")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(option("twoPoints"), "click"));
+        QTRY_VERIFY(option("twoPoints")->property("checked").toBool());
+        auto *rz = dynamic_cast<RotationZTool *>(tools.tool());
+        QVERIFY(rz && rz->hasTwoPoints());
+        const QPointF centre = tools.videoRect().center();
+        const QPoint a = videoPoint(centre + QPointF(-40, 10)), b = videoPoint(centre + QPointF(40, -10));
+        const std::size_t before = session->historySize();
+        // The first click places a point and waits; Esc drops it.
+        QTest::mouseMove(window, a);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTRY_VERIFY(rz->visibility()[0]);
+        QVERIFY(!rz->visibility()[1]);
+        QVERIFY(tools.escapable());
+        QVERIFY(!tools.gestureActive());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!rz->visibility()[0]);
+        QVERIFY(!tools.escapable());
+        QCOMPARE(session->historySize(), before);
+        // Two clicks: the angle of the line through them, one step.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTRY_VERIFY(rz->visibility()[0]);
+        QTest::mouseMove(window, b);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(session->historySize(), before + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual Z-axis rotation tool"));
+        const PointF p0 = rz->twoPoints()[0], p1 = rz->twoPoints()[1];
+        float angle = std::atan2((p0.y - p1.y), (p0.x - p1.x)) * (180.f / 3.1415926536f); // VisualRotationZ.cpp:388-394
+        angle = std::fmod(-angle + 180 + 360.f, 360.f);
+        const QString frz = QStringLiteral("\\frz") + QString::fromStdU16String(transform::getfloat(angle));
+        QVERIFY2(thirdText().contains(frz), qPrintable(thirdText() + QStringLiteral(" / ") + frz));
+        QVERIFY(!tools.escapable()); // both points placed: nothing pending
+
+        // X/Y rotation: RotationXYItem's one option; the grid is drawn.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool5"), "click"));
+        QCOMPARE(tools.activeFamily(), 5);
+        QTRY_VERIFY(option("changeAll"));
+        QCOMPARE(option("changeAll")->property("tip").toString(), QStringLiteral("Changing all X/Y-rotation tags"));
+        QVERIFY(!option("twoPoints"));
+        QTRY_VERIFY(tools.overlay().size() > 44);
+        const std::size_t xy = session->historySize();
+        const QPoint c = videoPoint(centre + QPointF(30, 30));
+        QTest::mouseMove(window, c);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, c);
+        QTest::mouseMove(window, c + QPoint(25, 0));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, c + QPoint(25, 0));
+        QTRY_COMPARE(session->historySize(), xy + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual X/Y-axis rotation tool"));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fry%1").arg(view.toDevice(25))), qPrintable(thirdText()));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool5"), "click"));
+        QCOMPARE(tools.activeFamily(), 0);
+        QTRY_VERIFY(!visualItem("visualToolOptions")->isVisible());
     }
 
     // T1: legacy disables the rail for a Document that is not ASS
