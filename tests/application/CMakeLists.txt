@@ -140,3 +140,10 @@ hikari_add_gtest(hikari_application_visual_transform_tests SOURCES visual_transf
 target_compile_definitions(hikari_application_visual_transform_tests PRIVATE
     HIKARI_VISUAL_T3_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t3-cases.txt"
     HIKARI_VISUAL_T3_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t3-visual-20261005/observations.jsonl")
+# T4: the rectangle and vector clips and the shared vector point editor, with
+# the legacy probe's observations.
+hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
+    HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/clip-cases.txt"
+    HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")

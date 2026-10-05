@@ -62,19 +62,33 @@ Item {
             const ctx = getContext("2d")
             ctx.reset()
             for (const s of shapes) {
-                if (s.type === "polygon") { // T2, T3: a filled shape with a one-pixel border
-                    if (s.points.length < 2)
+                if (s.type === "polygon") {
+                    // T2-T4: filled contours (one path, non-zero: the
+                    // rectangle clip's two fans without a seam), then the
+                    // first contour's one-pixel border; an empty fill or
+                    // border is not drawn (T3: RotationZ's ring).
+                    const first = s.contours.length > 0 ? s.contours[0] : []
+                    if (first.length < 2)
                         continue
-                    ctx.beginPath()
-                    ctx.moveTo(s.points[0][0], s.points[0][1])
-                    for (let i = 1; i < s.points.length; ++i)
-                        ctx.lineTo(s.points[i][0], s.points[i][1])
-                    ctx.closePath()
                     if (s.fill !== "") {
+                        ctx.beginPath()
+                        for (const c of s.contours) {
+                            if (c.length === 0)
+                                continue
+                            ctx.moveTo(c[0].x, c[0].y)
+                            for (let i = 1; i < c.length; ++i)
+                                ctx.lineTo(c[i].x, c[i].y)
+                            ctx.closePath()
+                        }
                         ctx.fillStyle = s.fill
                         ctx.fill()
                     }
                     if (s.border !== "") {
+                        ctx.beginPath()
+                        ctx.moveTo(first[0].x, first[0].y)
+                        for (let i = 1; i < first.length; ++i)
+                            ctx.lineTo(first[i].x, first[i].y)
+                        ctx.closePath()
                         ctx.strokeStyle = s.border
                         ctx.lineWidth = 1
                         ctx.stroke()

@@ -1361,7 +1361,7 @@ void Application::refreshVideo()
         return;
     if (session->revision() != m_videoRevision) {
         m_videoRevision = session->revision();
-        m_video->session().setSubtitles(core::encodeAss(session->document()));
+        m_video->session().setSubtitles(m_visualTools->subtitles(session->document())); // T4: with the tool's preview
     }
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.

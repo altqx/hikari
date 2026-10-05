@@ -1,5 +1,6 @@
 #include "hikari/application/visual_tools.h"
 
+#include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -200,6 +201,10 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<RotationZTool>();
     case Family::RotationXY:
         return std::make_unique<RotationXYTool>();
+    case Family::RectangleClip:
+        return std::make_unique<RectangleClipTool>(); // T4
+    case Family::VectorClip:
+        return std::make_unique<VectorClipTool>(); // T4
     default:
         return nullptr;
     }

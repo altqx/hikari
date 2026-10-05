@@ -1,0 +1,772 @@
+# T4: legacy rectangle and vector clips (clip_capture.cpp). The rewrite's
+# replay (hikari_application_visual_clip_tests) sets the same view up from
+# "client", "frame" and "zoomat" and checks it gives the "video" and "zoom"
+# lines the legacy probe runs with.
+#
+# Script 1920x1080 on a 640x360 video: 3 script units a pixel.
+
+# --- Rectangle clip -------------------------------------------------------
+
+case rect-draw-new
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line Text
+tool rect
+setvisual
+dump
+down 100 50
+move 150 80 left
+move 300 200 left
+dump
+up 300 200
+dump
+end
+
+case rect-read-integer-and-float
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an8\clip(10.7,20.2,300.9,400.5)\bord2}Text
+tool rect
+setvisual
+dump
+down 150 150
+move 160 170 left
+up 160 170
+dump
+end
+
+case rect-drag-edges-and-move
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(300,300,900,600)}Text
+tool rect
+setvisual
+# the left edge (x 100), then the bottom-right corner, then inside
+down 101 150
+move 80 150 left
+up 80 150
+dump
+down 299 199
+move 330 250 left
+up 330 250
+dump
+down 200 150
+move 220 160 left
+move 240 170 left
+up 240 170
+dump
+# beyond the video: clamped to its edges
+down 239 170
+move 700 400 left
+up 700 400
+dump
+end
+
+case rect-iclip-and-invert
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\iclip(30,60,900,600)\clip(m 0 0 l 10 10)}Text
+tool rect
+setvisual
+dump
+invert
+dump
+invert
+dump
+end
+
+case rect-keys
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(300,300,900,600)}Text
+tool rect
+setvisual
+key D
+dump
+key S
+key W
+key A shift
+key A shift
+key D shift
+dump
+key A alt
+key A ctrl
+key D alt shift
+dump
+end
+
+case rect-zero-width
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\b1}Text
+tool rect
+setvisual
+down 100 100
+move 100 150 left
+up 100 150
+dump
+end
+
+case rect-tag-places
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\an8}Text{\i1}more
+tool rect
+setvisual
+down 10 10
+move 20 20 left
+up 20 20
+dump
+end
+
+case rect-no-block
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line Plain text
+tool rect
+setvisual
+down 10 10
+move 20 20 left
+up 20 20
+dump
+end
+
+case rect-empty-text
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line
+tool rect
+setvisual
+down 10 10
+move 20 20 left
+up 20 20
+dump
+end
+
+case rect-second-block-caret
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\b1}Te{\clip(30,30,300,300)}xt
+caret 12
+tool rect
+setvisual
+dump
+end
+
+case rect-second-block-start
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\b1}Te{\clip(30,30,300,300)}xt
+tool rect
+setvisual
+dump
+down 50 50
+move 60 60 left
+up 60 60
+dump
+end
+
+case rect-several-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(30,30,300,300)}first
+line second
+line {\iclip(1,2,3,4)}third
+select 0 1 2
+tool rect
+setvisual
+down 50 50
+move 60 60 left
+dump
+up 60 60
+dump
+invert
+dump
+end
+
+case rect-zoom
+script 1920 1080
+client 640 360 0
+frame 1280 720
+zoomat 2 320 180
+video 0 0 640 360
+zoom 160 90 2 2
+line Text
+tool rect
+setvisual
+down 100 100
+move 200 150 left
+up 200 150
+dump
+end
+
+case rect-pillarbox
+script 1920 1080
+client 800 360 0
+frame 1280 720
+video 80 0 720 360
+zoom -80 0 1 1
+line Text
+tool rect
+setvisual
+down 50 50
+move 750 300 left
+up 750 300
+dump
+end
+
+case rect-translation
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(3,3,30,30)}original
+tl translated
+tool rect
+setvisual
+dump
+down 50 50
+move 60 60 left
+up 60 60
+dump
+end
+
+# --- Vector clip ----------------------------------------------------------
+
+case vector-draw-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line Text
+tool vector
+setvisual
+down 100 100
+up 100 100
+dump
+down 200 100
+up 200 100
+down 200 200
+up 200 200
+dump
+end
+
+case vector-draw-curves
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 300 300 l 600 300)}Text
+tool vector
+mode 2
+setvisual
+down 250 250
+up 250 250
+dump
+mode 3
+setvisual
+down 150 250
+up 150 250
+dump
+down 120 200
+up 120 200
+dump
+end
+
+case vector-integer-float
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0.5 0.4 l 100.5 -0.5 100.6 101.49 1e2 2.5 -0.4 7)}Text
+tool vector
+setvisual
+dump
+down 33 34
+move 40 40 left
+up 40 40
+dump
+end
+
+case vector-subpaths
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300 m 600 600 l 900 600 900 900)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 200 200
+move 210 220 left
+up 210 220
+dump
+end
+
+case vector-malformed
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 x 5 l a b 600 600 n 9 9 l 900 900 1200)}Text
+tool vector
+setvisual
+dump
+down 300 300
+up 300 300
+dump
+end
+
+case vector-incomplete-bezier
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 b 300 300 600 600)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 100
+move 110 110 left
+up 110 110
+dump
+end
+
+case vector-no-m-and-double-m
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(l 0 0 l 300 0 300 300)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 0
+move 101 1 left
+up 101 1
+dump
+end
+
+case vector-double-m-read
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 m 300 300 l 600 300 600 600)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 100
+move 110 110 left
+up 110 110
+dump
+end
+
+case vector-spline-p-c
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 s 300 0 300 300 0 300 p 150 150 c l 600 600)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 0
+move 120 10 left
+up 120 10
+dump
+end
+
+case vector-blanks-and-commas
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m  0   0 l 300,300 l	600 600 900 900)}Text
+tool vector
+mode 0
+setvisual
+dump
+end
+
+case vector-scale
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(3,m 0 0 l 1200 0 1200 1200)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 0
+move 110 10 left
+up 110 10
+dump
+mode 1
+setvisual
+down 300 300
+up 300 300
+dump
+end
+
+case vector-scale-space
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(2 m 0 0 l 300 0 300 300)}Text
+tool vector
+setvisual
+dump
+end
+
+case vector-scale-stays
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(2,m 0 0 l 300 0 300 300)}first
+line {\clip(m 0 0 l 300 0 300 300)}second
+tool vector
+mode 0
+setvisual
+dump
+activate 1
+dump
+down 100 0
+move 110 10 left
+up 110 10
+dump
+end
+
+case vector-iclip-mask
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\iclip(m 0 0 l 300 0 300 300)\clip(1,2,3,4)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 100 0
+move 110 10 left
+up 110 10
+dump
+end
+
+case vector-select-nudge-delete
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300 0 300)}Text
+tool vector
+mode 0
+setvisual
+# a selection box over the top two points, then the keys
+down 300 300
+move -10 -10 left
+dump
+up -10 -10
+key D
+key S
+key W
+key A shift
+dump
+key A ctrl
+key D
+dump
+key Delete
+dump
+end
+
+case vector-ctrl-shift-alt-drag
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300 0 300 m 603 905 l 900 900)}Text
+tool vector
+mode 0
+setvisual
+down 0 0
+down 100 0 ctrl
+dump
+up 100 0
+down 100 100
+move 140 110 left shift
+move 150 150 left shift
+up 150 150
+dump
+down 0 100
+move 203 300 left alt
+up 203 300
+dump
+end
+
+case vector-remove-points
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 b 300 0 600 0 600 300 l 300 300 s 300 600 0 600 0 450 c)}Text
+tool vector
+mode 0
+setvisual
+dump
+mdown 200 100
+dump
+mup 200 100
+dump
+mode 5
+down 100 150
+up 100 150
+dump
+down 0 0
+up 0 0
+dump
+mdown 100 0
+mup 100 0
+dump
+end
+
+case vector-remove-all
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\b1\clip(m 0 0 l 300 0)}Text
+tool vector
+mode 5
+setvisual
+down 0 0
+dump
+up 0 0
+down 100 0
+dump
+up 100 0
+dump
+end
+
+case vector-remove-all-add-mode
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line Text
+tool vector
+mode 3
+setvisual
+down 176 108
+up 176 108
+dump
+key A ctrl
+mdown 176 108
+dump
+mup 176 108
+dump
+down 200 120
+up 200 120
+dump
+end
+
+case vector-right-insert
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 b 400 100 500 200 600 300 l 900 900)}Text
+tool vector
+mode 1
+setvisual
+rdown 100 0
+rup 100 0
+dump
+rdown 167 67
+rup 167 67
+dump
+mode 3
+setvisual
+rdown 0 0
+rup 0 0
+dump
+end
+
+case vector-separate-point
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}Text
+tool vector
+mode 4
+setvisual
+down 300 300
+up 300 300
+dump
+mode 4
+setvisual
+down 150 150
+up 150 150
+dump
+end
+
+case vector-wheel
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}Text
+tool vector
+setvisual
+wheel 10 10 1
+dump
+wheel 10 10 1
+dump
+wheel 10 10 -2
+dump
+wheel 10 10 -5
+dump
+end
+
+case vector-invert
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)\clip(1,2,3,4)}first
+line {\iclip(m 1 1 l 2 2)}second
+line {\clip(5,6,7,8)}third
+select 0 1 2
+tool vector
+setvisual
+invert
+dump
+invert
+dump
+end
+
+case vector-invert-then-add
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}Text
+tool vector
+mode 1
+setvisual
+down 100 0
+move 110 10 left
+up 110 10
+invert
+dump
+down 200 150
+up 200 150
+dump
+end
+
+case vector-wheel-to-invert
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}first
+line {\clip(m 0 0 l 600 0 600 600)}second
+tool vector
+mode 0
+setvisual
+wheel 10 10 1
+dump
+activate 1
+dump
+end
+
+case vector-several-lines
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 300 0 300 300)}first
+line {\iclip(m 9 9 l 99 99)}second
+line third
+select 0 1 2
+tool vector
+mode 0
+setvisual
+down 100 0
+move 110 10 left
+dump
+up 110 10
+dump
+end
+
+case vector-translation
+script 1920 1080
+client 640 360 0
+frame 1280 720
+video 0 0 640 360
+line {\clip(m 0 0 l 30 30)}original
+tl {\clip(m 0 0 l 300 0 300 300)}translated
+tool vector
+mode 0
+setvisual
+dump
+down 100 0
+move 110 10 left
+up 110 10
+dump
+end
+
+case vector-zoom
+script 1920 1080
+client 640 360 0
+frame 1280 720
+zoomat 2 320 180
+video 0 0 640 360
+zoom 160 90 2 2
+line {\clip(m 600 300 l 900 300 900 600)}Text
+tool vector
+mode 0
+setvisual
+dump
+down 80 20
+move 100 40 left
+up 100 40
+dump
+mode 1
+setvisual
+down 300 300
+up 300 300
+dump
+end

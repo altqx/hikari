@@ -138,6 +138,11 @@ hikari_add_spix_test(hikari_ui_visual_position_workflow SOURCES visual_position_
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_position_workflow hikari_media_helper hikari_media_fixtures)
+# T4: the vector and rectangle clips through the real UI (Spix workflow).
+hikari_add_spix_test(hikari_ui_visual_clips_workflow SOURCES visual_clips_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_visual_clips_workflow hikari_media_helper hikari_media_fixtures)
 # K1: the vector icon set: the icon manifest test, the tint, the theme
 # colours' contrast, live colours, and the rendering fixtures (contact sheets)
 # at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.

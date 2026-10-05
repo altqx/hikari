@@ -40,7 +40,8 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.q
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
-# T2 and T3: the families' options row (Position, Move, Scale, the rotations).
+# T2-T4: the families' options row (Position, Move, Scale, the rotations, the
+# clips' point modes and Invert clip).
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
 # the SVGs and their manifest as module resources, the Icon item, the

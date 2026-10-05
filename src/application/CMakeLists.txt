@@ -55,3 +55,8 @@ set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.c
 target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)
 # Y6: Font catalogs, the picker's family lists and the external fonts folder.
 target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
+# T4: the rectangle and vector clips and the vector point editor T5 shares,
+# with legacy's float steps (no contraction either).
+target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
+set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

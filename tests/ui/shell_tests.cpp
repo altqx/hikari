@@ -9219,6 +9219,234 @@ private slots:
         QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
     }
 
+    // T4: the clips through the Video panel. The rectangle clip is drawn by
+    // a drag and committed on release as one step, its mask and outline drawn
+    // over the video; the tool's own row (legacy ClipRectangleItem, VectorItem)
+    // shows Invert clip and the vector clip's point modes with the K1 icons and
+    // legacy's help texts. A click adds a vector point, the mask Line goes into
+    // the video's subtitles, a D key nudge commits on its release, and the
+    // "Double m" refusal is legacy's modal "Warning" box.
+    void visualClipsDrawEditAndInvert()
+    {
+        QVERIFY(application->openFile(visualDocument("clip.ass")));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        // The active Line's start shown, not only requested: the tools take
+        // no events outside the shown frame's Line (Visuals::Draw's blockevents).
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId first = session->document().lines()[0]->id;
+        const core::LineId second = session->document().lines()[1]->id;
+        // A tool's own row changes the panel's height, and the overlay's new
+        // viewport resets the tool (legacy UpdateVideoWindow's SetCurVisual):
+        // the layout settles before a gesture, as it does before a user's.
+        const auto settle = [&] {
+            QRectF last;
+            return QTest::qWaitFor([&] {
+                QTest::qWait(50);
+                const QRectF r = tools.videoRect();
+                const bool same = r == last && !r.isEmpty();
+                last = r;
+                return same;
+            }, 5000);
+        };
+
+        // The rectangle clip.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool6"), "click"));
+        QCOMPARE(tools.activeFamily(), 6);
+        QTRY_VERIFY(visualItem("visualOption_invert"));
+        QVERIFY(settle());
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        QCOMPARE(visualItem("visualOption_invert")->property("iconRole").toString(), QStringLiteral("clip-invert"));
+        QCOMPARE(visualItem("visualOption_invert")->property("tip").toString(), QStringLiteral("Invert clip"));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, a + (b - a) * i / 4);
+        QVERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("first"));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual rectangular clipping tool"));
+        QVERIFY2(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\clip(")),
+                 qPrintable(text(session->document().lines()[0])));
+        int polygons = 0, lines = 0;
+        for (const QVariant &shape : tools.overlay()) {
+            const QString type = shape.toMap().value(QStringLiteral("type")).toString();
+            polygons += type == QLatin1String("polygon");
+            lines += type == QLatin1String("line");
+        }
+        QCOMPARE(polygons, 1); // the darkened outside
+        QCOMPARE(lines, 4);    // the outline
+        // Invert clip: \iclip, recorded as legacy did (VISUAL_VECTOR_CLIP).
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_invert"), "click"));
+        QTRY_VERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\iclip(")));
+        QCOMPARE(session->history().back().name, std::string("Visual vector clipping tool"));
+        // A D key nudge: one step on its release.
+        const QString beforeNudge = text(session->document().lines()[0]);
+        const std::size_t nudge = session->historySize();
+        QTest::keyPress(window, Qt::Key_D);
+        QVERIFY(tools.gestureActive());
+        QCOMPARE(session->historySize(), nudge);
+        QTest::keyRelease(window, Qt::Key_D);
+        QTRY_COMPARE(session->historySize(), nudge + 1);
+        QVERIFY(text(session->document().lines()[0]) != beforeNudge);
+
+        // The vector clip: its modes, Add line on.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool7"), "click"));
+        QCOMPARE(tools.activeFamily(), 7);
+        QTRY_VERIFY(visualItem("visualOption_mode5"));
+        QVERIFY(settle());
+        const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
+        for (int i = 0; i < 6; ++i) {
+            QQuickItem *mode = visualItem(qPrintable(QStringLiteral("visualOption_mode%1").arg(i)));
+            QVERIFY(mode);
+            QCOMPARE(mode->property("iconRole").toString(), QLatin1String(roles[i]));
+            QCOMPARE(mode->property("checked").toBool(), i == 1);
+        }
+        QCOMPARE(visualItem("visualOption_mode2")->property("tip").toString(), QStringLiteral("Add B\u00e9zier curve"));
+        // On the second Line (no clip): a click adds the first point.
+        application->selectLine(second.value);
+        QTRY_COMPARE(*session->selection().active, second);
+        const std::size_t vector = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTRY_COMPARE(session->historySize(), vector + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual vector clipping tool"));
+        QVERIFY2(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\clip(m ")),
+                 qPrintable(text(session->document().lines()[1])));
+        // The mask: the active Line's copy on the top layer, in the subtitles.
+        const auto bytes = tools.subtitles(session->document());
+        const QByteArray script(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size()));
+        QVERIFY2(script.contains("Dialogue: 2147483647,") && script.contains("\\1a&H77&\\pos(0,0)\\an7\\iclip(m "),
+                 script.constData());
+        // Separate point: another "m" right after the "m" is refused with
+        // legacy's modal HikariMessageBox titled "Warning"
+        // (VisualClips.cpp:1013-1016), a box in the window closed by OK.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_mode4"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_mode4")->property("checked").toBool());
+        QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
+        const std::size_t refused = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
+        QObject *box = named("visualNotice");
+        QVERIFY(box);
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Warning"));
+        QCOMPARE(box->property("modal").toBool(), true);
+        QCOMPARE(named("visualNoticeText")->property("text").toString(),
+                 QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
+        QCOMPARE(session->historySize(), refused);
+        QVERIFY(!QGuiApplication::modalWindow()); // in the window: nothing an offscreen run cannot close
+        QVERIFY(QMetaObject::invokeMethod(box, "accept"));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QCOMPARE(tools.notice(), QString());
+        QCOMPARE(text(session->document().lines()[0]).left(7), QStringLiteral("{\\iclip"));
+        Q_UNUSED(first);
+    }
+
+    // T4: what the video shows, through the application's wiring (the
+    // controller's preview to the video session, legacy's RenderSubs with
+    // AppendClipMask): the vector clip's mask Line darkens the outside, and
+    // during a drag the Line's staged text is rendered while the Document
+    // keeps the old one. The Line is a white drawing over the whole frame
+    // inside its clip, so the overlay's alpha tells the two apart: opaque
+    // inside the clip, the mask's 0x88 (\1a&H77&) outside it. Another active
+    // Line mid-drag cancels the gesture (legacy's SetVisual dropped the
+    // unsent preview), and nothing is committed to either Line.
+    void visualClipPreviewReachesTheVideo()
+    {
+        QVERIFY(application->openFile(visualDocument(
+            "clipvideo.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(0,0)\\bord0\\shad0"
+                             "\\clip(m 0 0 l 160 0 160 120 0 120)\\p1}m 0 0 l 320 0 320 240 0 240\n")));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId first = session->document().lines()[0]->id;
+        const core::LineId drawn = session->document().lines()[2]->id;
+        const QString original = text(session->document().lines()[2]);
+        application->selectLine(drawn.value);
+        QTRY_COMPARE(*session->selection().active, drawn);
+        // The overlay's alpha at a script point (the script is the frame's size).
+        const auto alpha = [&](int x, int y) -> int {
+            const auto overlay = application->video().session().lastOverlay();
+            if (!overlay || overlay->empty || x >= overlay->width || y >= overlay->height)
+                return 0;
+            return overlay->pixels[static_cast<std::size_t>(y) * overlay->stride + static_cast<std::size_t>(x) * 4 + 3];
+        };
+        // The crosshair: the Line clipped, no mask.
+        QTRY_COMPARE(alpha(80, 60), 255);
+        QCOMPARE(alpha(230, 170), 0);
+
+        const auto settle = [&] {
+            QRectF last;
+            return QTest::qWaitFor([&] {
+                QTest::qWait(50);
+                const QRectF r = tools.videoRect();
+                const bool same = r == last && !r.isEmpty();
+                last = r;
+                return same;
+            }, 5000);
+        };
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool7"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_mode0"));
+        QVERIFY(settle());
+        // The mask Line reaches the video: the outside darkened.
+        QTRY_COMPARE(alpha(230, 170), 0x88);
+        QCOMPARE(alpha(80, 60), 255);
+
+        // Move points: drag the corner at (160, 120) to (300, 220).
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_mode0"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_mode0")->property("checked").toBool());
+        const QRectF v = tools.videoRect();
+        const auto at = [&](qreal x, qreal y) {
+            return videoPoint(v.topLeft() + QPointF(x * v.width() / 320, y * v.height() / 240));
+        };
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, at(160, 120));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(160, 120));
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, at(160 + 35 * i, 120 + 25 * i));
+        QVERIFY(tools.gestureActive());
+        // The staged clip is on the video: (230, 170) is inside it now.
+        QTRY_COMPARE(alpha(230, 170), 255);
+        QCOMPARE(text(session->document().lines()[2]), original);
+        QCOMPARE(session->historySize(), steps);
+
+        // Another active Line mid-drag: the gesture is dropped, the release
+        // commits nothing, and the video shows the Line as it is.
+        application->selectLine(first.value);
+        QTRY_COMPARE(*session->selection().active, first);
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(300, 220));
+        QVERIFY(!tools.gestureActive());
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(text(session->document().lines()[2]), original);
+        QCOMPARE(text(session->document().lines()[0]), QStringLiteral("first"));
+        QTRY_COMPARE(alpha(230, 170), 0);
+        QCOMPARE(alpha(80, 60), 255);
+
+        // Back on the drawn Line, the same drag commits the staged clip.
+        application->selectLine(drawn.value);
+        QTRY_COMPARE(*session->selection().active, drawn);
+        QTRY_COMPARE(alpha(230, 170), 0x88);
+        QTest::mouseMove(window, at(160, 120));
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(160, 120));
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, at(160 + 35 * i, 120 + 25 * i));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(300, 220));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\clip(m 0 0 l 160 0 300 220 0 120)")),
+                 qPrintable(text(session->document().lines()[2])));
+        QTRY_COMPARE(alpha(230, 170), 255);
+    }
+
     // K1: the video transport buttons show the set's icons (legacy VideoBox's
     // bitmap buttons, VideoBox.cpp:156-165), keep their names and tooltips,
     // and every visible icon takes the theme layer's colours live (K2): the

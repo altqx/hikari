@@ -101,14 +101,20 @@ struct OverlayCircle {
     bool filled = false;
 };
 // A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
-// triangle strip and line strip; T2). T3: a border of 0 draws the fill alone
-// (RotationZ's ring), a fill of 0 the border alone.
+// triangle strip and line strip, the clips' masks; T2). T3: a border of 0
+// draws the fill alone (RotationZ's ring), a fill of 0 the border alone. T4:
+// `more` holds further contours filled in the same path (non-zero: the
+// rectangle clip's two fans without a seam), and `above` draws it after the
+// lines (the vector points' handles, which legacy drew over the path)
+// instead of before them.
 struct OverlayPolygon {
     std::vector<PointF> points;
     std::uint32_t fill = 0;
-    std::uint32_t border = 0xFFFFFFFF;
+    std::uint32_t border = 0xFFFFFFFF; // 0: none
+    std::vector<std::vector<PointF>> more;
+    bool above = false;
 };
-// Drawn in this order: polygons, lines, circles, texts.
+// Drawn in this order: polygons, lines, circles, polygons `above`, texts.
 struct Overlay {
     std::vector<OverlayLine> lines;
     std::vector<OverlayCircle> circles;
@@ -127,13 +133,14 @@ struct ToolValue {
 };
 
 // A tool's own option on the rail's second row (legacy VideoToolbar's
-// VisualItem for the family, T2-T6): a toggle with its icon role, or a
-// choice. setOption takes 0/1 for a toggle and the index for a choice.
+// VisualItem for the family, T2-T6): a toggle with its icon role, a choice,
+// or (T4) an action button. setOption takes 0/1 for a toggle, the index for
+// a choice and 1 for an action.
 struct ToolOption {
-    enum class Kind { Toggle, Choice };
+    enum class Kind { Toggle, Choice, Action };
     std::string name;
     Kind kind = Kind::Toggle;
-    std::string iconRole;     // the K1 set's role (toggles)
+    std::string iconRole;     // the K1 set's role (toggles, actions)
     std::u16string tooltip;   // legacy's help text
     bool checked = false;     // a toggle's state
     bool enabled = true;      // legacy's greyed icons
@@ -256,6 +263,10 @@ public:
         (void)from;
         (void)to;
     }
+    // T4: legacy wxBell (a refused point insertion) and a notice legacy
+    // showed in a message box; shown without blocking.
+    virtual void bell() {}
+    virtual void notice(std::u16string_view text) { (void)text; }
 };
 
 // One visual family. The host gives a tool only the events legacy's
@@ -334,6 +345,14 @@ public:
         return false;
     }
     virtual bool hasPending() const { return false; }
+    // T4: Lines the video renders after the Document's while the tool is on
+    // (legacy Visuals::AppendClipMask: the vector clip's mask).
+    virtual std::vector<core::LineRecord> previewLines(const VisualHost &host) const
+    {
+        (void)host;
+        return {};
+    }
+
 };
 
 // The tool for a family: nullptr while its card (T2-T6) has not landed.

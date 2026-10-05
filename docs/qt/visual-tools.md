@@ -24,7 +24,7 @@ T1 ([#176](https://github.com/altqx/hikari/issues/176)) lays the ground the visu
 
 A family's card adds one class and one line; the rail, the routing and the drawing need no change.
 
-1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `values()` / `setValue()` (the numeric alternative shown below the canvas), and `warnsOutsideLine()` (true but for the crosshair).
+1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `values()` / `setValue()` (the numeric alternative shown below the canvas), `options()` / `setOption()` (the family's own row, below), `previewLines()` (Lines the video renders after the Document's) and `warnsOutsideLine()` (true but for the crosshair).
 2. Return it from `makeVisualTool()` in `src/application/visual_tools.cpp`.
 
 The host gives a tool only what legacy's Visuals got: pointer events in device pixels over the video while a video is open, the Video panel's keys that no Video binding takes, and resets. A tool other than the crosshair gets nothing outside its Line's time or on a comment (Visuals::Draw's blockevents); the host draws the warning centred on the video unless VIDEO_VISUAL_WARNINGS_OFF (approved departure T1-warning-centre).
@@ -35,8 +35,9 @@ Every edit goes through a gesture:
 - `gesture->before(line)` is the target as the gesture began (the pending draft applied); `stage(line, text, translation)` replaces the staged text on every sample. Nothing reaches the Document, the draft or the history meanwhile.
 - `host.commitGesture()` on release: one history step named `history` (`familyInfo(family).history`, legacy SubsFile.cpp:228-238), after the pending draft's own step. Without staged changes nothing is recorded; a gesture whose Document changed since it began is refused.
 - Esc during the gesture (the host handles it) drops it and leaves the pre-gesture draft.
+- A change of the active Line or of the editing target drops an open gesture the same way, and the tool is reset to the new Line (legacy's SetVisual dropped the tool's unsent preview). The gesture is never moved to the new Line.
 
-Draw with `Overlay` (lines, circles, text and filled polygons) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
+Draw with `Overlay` (lines, circles, text, and filled polygons below or above the lines) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
 
 ## What T2 added for the families
 
@@ -62,3 +63,34 @@ T3 ([#178](https://github.com/altqx/hikari/issues/178)) adds `ScaleTool` (`visua
 - **Esc.** With a gesture open Esc drops it and the tool reads the unchanged text again (its handles go back). With none, Esc drops a tool's pending step (`cancelPending`): the first point of RotationZ's two-point angle, the card's evidence; legacy had no key for it.
 - **Drawing.** Legacy's Direct3D shapes in device pixels: Scale's three arrows (DrawArrow) or its rectangles, RotationZ's ring, angle handle and \org cross or its two points, RotationXY's grid, axes and arrow cones projected as its matrices set up (`projectXY`, `drawXYGrid`: D3DXMatrixRotationYawPitchRoll, LookAtLH from z = -17.2, PerspectiveFovLH at 120 degrees, translated to \org in clip space, clipped at the near plane). Their colours are legacy's fixed overlay colours, not settings.
 - **Evidence.** The `legacy_visual_t3_capture` probe ([local-t3-visual-20261005](../../tests/fixtures/legacy-observations/local-t3-visual-20261005/README.md)) runs the legacy tools unchanged; `VisualCapture.ReplaysTheLegacyT3Probe` replays every case and compares every Line, the editor's text and caret, the commits (SetModified and Send against the history steps), the log and the handles exactly; `VisualOverlay` checks the ring against RotationZ::DrawVisual's formulas and the X/Y grid against the D3DX pipeline worked by hand. `hikari_backends_visual_geometry_tests` renders the tools' edits with libass and checks the ink turns about the \org the tool draws and scales away from the position its arrows start from.
+
+## The tool's own row, the preview and the notices
+
+A family's own buttons (legacy VideoToolbar's items for the toggled family, VisualItem) are `VisualTool::options()` and `setOption()`: a toggle (a mode), a choice, or an action (a button that acts at once). `VisualToolOptions.qml` shows them in a row above the values, with their K1 icon and legacy's help text; a role a family uses must be named on its `iconRole` line so `icon_tests` sees it placed.
+
+While a gesture is open the video shows its staged texts, and a tool's `previewLines()` (the vector clip's mask) after the Document's Lines: legacy's "dummy" rendering (Visuals::RenderSubs, AppendClipMask). The host builds that Document (`VisualToolsController::subtitles`, and `setPreview` when it changes); nothing reaches the Document or its history.
+
+A tool commits through the host; the clips, as T3's three, keep their state afterwards (`keepsStateAfterCommit()`): legacy never reset them after their own edit (EditBox::Send with visualdummy and SetModified with dummy skip ShowEditOnVideo's SetVisual, SubsGridBase.cpp:1147-1149), so the controller treats the revision their own commit made as seen. Another edit, an undo or another active Line resets the tool (legacy SetCurVisual); a cancelled gesture (Esc) resets it too, so its points and corners go back to the Line.
+
+A notice legacy showed in a message box (the vector clip's "Double m" refusal) is `VisualHost::notice`, shown as legacy's modal message box titled "Warning" (VisualClips.cpp:1013-1016) until OK; legacy's wxBell is `VisualHost::bell`.
+
+## Clips (T4) and the vector point editor (T4, T5)
+
+T4 ([#179](https://github.com/altqx/hikari/issues/179)) adds `RectangleClipTool` and `VectorClipTool` (`visual_clip.h`) and the vector point editor the drawing tool (T5) reuses (`visual_vector.h`).
+
+| Part | File | Legacy |
+| --- | --- | --- |
+| Reading and writing a Line's clip, inverting, the mask's text | `visual_clip.h` (`clip::`) | ClipRect::SetCurVisual / ChangeVisual / InvertClip, DrawingAndClip::SetCurVisual / ChangeVectorVisual / InvertClip / CreateClipMask, Visuals::GetPosnScale's clip scale |
+| The rectangle clip: drag, edges, corners, move, A/D/W/S, Invert clip, its mask | `RectangleClipTool` | ClipRect (VisualClipRect.cpp) |
+| The vector clip: modes, Invert clip, the mask Line | `VectorClipTool` | DrawingAndClip as VECTORCLIP (VisualClips.cpp) |
+| The points: parsing, writing, the modes' mouse, keys and wheel, selection, snapping, removal, drawing | `VectorEditor`, `parseVectorPoints`, `serializeVectorPoints`, `flattenCurve` | DrawingAndClip, ClipPoint, Visuals::GetVectorPoints / Curve / DrawRect / DrawCircle / DrawDashedLine, getfloat |
+
+The editor holds legacy's points (`VectorPoint`: x, y, command, start, selected) and its state (the grabbed and hovered point, the selection box, the mode), takes pointer and key events in device pixels with a `VectorFrame` (DrawingAndClip's coeffW / coeffH divided by the scale, the drawing's _x / _y, the zoom and the video rectangle), and asks its owner to write the points: `apply(false)` while a gesture samples (legacy SetClip(true)) and `apply(true)` when it ends (SetClip(false)). For T5:
+
+- Set `drawing = true` (Shift nudges by a tenth, legacy's VECTORDRAW).
+- Give the frame the drawing's offset and the coefficients divided by its scale (`\fscx`, `\fscy`, `\p` as GetPosnScale computes them).
+- Write the points with `serializeVectorPoints(points, "6.2f", offset)` into the `\p` block (ChangeVectorVisual's drawing branch); the shapes (VisualDrawingShapes) and the rotation are T5's own.
+
+Every step keeps legacy's float arithmetic and int truncations, and the files are built without floating-point contraction. The `legacy_clip_capture` probe (`tools/legacy-capture/clip_capture.cpp`) runs the legacy VisualClipRect.cpp and VisualClips.cpp unchanged on `inputs/clip-cases.txt`; `hikari_application_visual_clip_tests` replays its observations ([local-t4-clip-20261005](../../tests/fixtures/legacy-observations/local-t4-clip-20261005/README.md)).
+
+A gesture's targets follow legacy's two paths: with several Lines (the batch picker's; legacy several selected) each sample and the release rewrite every target from its own text; with one, each sample rewrites the text the previous sample left (legacy's Line editor) and the release commits it. A nudge (A/D/W/S, Delete) commits on its key's release, auto-repeat included, as the transaction rule says.

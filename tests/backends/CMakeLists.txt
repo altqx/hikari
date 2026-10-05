@@ -260,3 +260,10 @@ target_compile_definitions(hikari_backends_matroska_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
 add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
+
+# T4: the clips the visual tools write, rendered by libass, against the tools'
+# own outline and mask.
+hikari_add_gtest(hikari_backends_visual_clip_render_tests SOURCES visual_clip_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_visual_clip_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")

@@ -55,10 +55,6 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
     // The tool's numeric values (shown below the canvas): name, label, text, editable.
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
-    // T2, T3: the family's own options (legacy VideoToolbar's second row):
-    // name, kind ("toggle" or "choice"), iconRole, tooltip, checked, enabled,
-    // choices, index.
-    Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
     // T3: Esc has something to drop: an open gesture or a tool's pending step.
     Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
     // The batch picker.
@@ -66,6 +62,13 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
     // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
+    // T2-T4: the family's own options (legacy VideoToolbar's second row):
+    // name, kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
+    // enabled, choices, index. T4: its own signal, so the row is rebuilt only
+    // when it changes. And the notice a tool gave, which the shell shows as
+    // legacy's modal "Warning" message box until OK.
+    Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
+    Q_PROPERTY(QString notice READ notice NOTIFY changed)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
@@ -74,9 +77,11 @@ public:
 
     // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
-    // T2: the video shows the open gesture's staged texts (legacy's dummy
-    // rendering, Visuals::RenderSubs): called with the Document as it would
-    // be, or null when the gesture ends (the committed Document again).
+    // T2, T4: the video shows the open gesture's staged texts (legacy's dummy
+    // rendering, Visuals::RenderSubs) and the tool's own Lines (T4: the
+    // vector clip's mask, Visuals::AppendClipMask): called with the Document
+    // as it would be, or null when there is nothing to add (the committed
+    // Document again).
     void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
     // T2: HikariLog and the Grid's "Ignore filtering in some actions".
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
@@ -106,11 +111,13 @@ public:
     QRectF videoRect() const;
     QRectF sourceRect() const;
     QVariantList values() const;
-    QVariantList options() const;
     bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
+    QVariantList options() const { return m_options; }
+    QString notice() const { return m_notice; }
+    int bells() const { return m_bells; }
 
     // The video area's logical size (the presenter's), the panel below it
     // and the window's device pixel ratio.
@@ -134,11 +141,16 @@ public:
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
-    // T2: a toggle (0/1) or a choice's index of the family's options.
-    Q_INVOKABLE bool setOption(const QString &name, int value);
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
+    // A toggle (0/1), a choice's index or an action (1) of the family's options.
+    Q_INVOKABLE bool setOption(const QString &name, int value);
+    Q_INVOKABLE void dismissNotice();
+
+    // T4: the subtitles the video renders for a Document: as the preview
+    // gives it (the staged texts and the tool's Lines added), encoded.
+    std::vector<std::byte> subtitles(const core::Document &document) const;
 
     // VisualHost.
     const application::visual::VideoView &view() const override { return m_view; }
@@ -163,6 +175,8 @@ public:
         if (m_placeSelection)
             m_placeSelection(from, to);
     }
+    void bell() override;
+    void notice(std::u16string_view text) override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -180,6 +194,7 @@ private:
     void resetTool();
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
+    void refreshOptions();
 
     VideoController &m_video;
     SettingsStore &m_settings;
@@ -191,7 +206,7 @@ private:
     std::function<std::pair<long, long>()> m_editorSelection;
     std::function<void(long, long)> m_placeSelection;
     mutable QtTextMeasurePort m_measure;
-    bool m_previewing = false;
+    bool previewDocument(const core::Document &document, core::Document &out) const;
     application::visual::VideoView m_view;
     application::visual::SourceGeometry m_geometry;
     std::vector<std::unique_ptr<application::visual::VisualTool>> m_tools;
@@ -210,6 +225,10 @@ private:
     std::optional<core::LineId> m_seenActive;
     std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
     std::int64_t m_seenTime = -1;
+    QString m_notice;
+    QVariantList m_options; // the tool's buttons as last shown
+    int m_bells = 0;
+    std::u8string m_previewKey; // what the preview showed last
 };
 
 } // namespace hikari::ui
