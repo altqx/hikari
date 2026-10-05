@@ -12,6 +12,7 @@
 #include "audio_display_item.h"
 #include "fake_font_service.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/grid_translation.h"
 #include "icon_theme.h"
 
 #include <QAccessible>
@@ -3603,7 +3604,8 @@ private slots:
     {
         const QString path = dir.filePath(QLatin1String(name));
         QFile f(path);
-        f.open(QIODevice::WriteOnly);
+        if (!f.open(QIODevice::WriteOnly))
+            return {};
         f.write(tlMode ? "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
                        : "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n");
         f.write("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
@@ -3698,6 +3700,66 @@ private slots:
         QVERIFY(!application->turnOnTranslationMode());
     }
 
+    // E5: an ASS Document needs a file too (HikariSubFrame.cpp:2401,
+    // SubsPath != ""): an Untitled one leaves the check box disabled.
+    void translatorModeNeedsAFile()
+    {
+        application->addPage();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(session);
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QVERIFY(!application->translatorModeAvailable());
+        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!application->turnOnTranslationMode());
+        QVERIFY(!session->document().scriptInfo(u8"TLMode"));
+        // The same text with a file enables it.
+        QVERIFY(application->openFile(writeTranslationFile("e5-file.ass", false)));
+        QTRY_VERIFY(item("translatorMode")->isEnabled());
+    }
+
+    // E5: the Grid's Moving translation text entries do nothing while the
+    // original is not shown (SubsGrid::MoveTextTL returns without
+    // showOriginal, SubsGrid.cpp:1037). "TLMode Showtl" outlives turning the
+    // mode off (SetTlMode(false) deletes TLMode and its Style only,
+    // SubsGridBase.cpp:1341-1351), so the menu entries stay enabled after the
+    // mode is turned back on; SetTlMode(true) shows the original again only
+    // with TL_MODE_SHOW_ORIGINAL (SubsGridBase.cpp:1331).
+    void shiftTranslationNeedsTheOriginalShown_data()
+    {
+        QTest::addColumn<bool>("showOriginalSetting");
+        QTest::newRow("option off") << false;
+        QTest::newRow("option on") << true;
+    }
+    void shiftTranslationNeedsTheOriginalShown()
+    {
+        QFETCH(bool, showOriginalSetting);
+        application->settingsStore()->set("translation.showOriginal", showOriginalSetting);
+        const QString path = writeTranslationFile(showOriginalSetting ? "e5-shift-on.ass" : "e5-shift-off.ass");
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::ReadWrite));
+            QByteArray bytes = f.readAll();
+            bytes.replace("TLMode: Yes\n", "TLMode: Yes\nTLMode Showtl: Yes\n");
+            QVERIFY(f.resize(0));
+            QVERIFY(f.seek(0));
+            QCOMPARE(f.write(bytes), bytes.size());
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(application->turnOffTranslationMode());
+        QVERIFY(application->turnOnTranslationMode());
+        QVERIFY(application->canShiftTranslation()); // Showtl kept: the entries are enabled
+        const auto first = session->document().lines()[0]->id;
+        session->setSelection({first, {first}, {}, {}});
+        const auto steps = session->historySize();
+        const auto lines = session->document().lines().size();
+        // "Add line" (Translation) appends a Line when it runs.
+        const bool moved = application->shiftTranslation(int(application::TranslationMove::AddTranslationLine));
+        QCOMPARE(moved, showOriginalSetting);
+        QCOMPARE(session->historySize(), showOriginalSetting ? steps + 1 : steps);
+        QCOMPARE(session->document().lines().size(), showOriginalSetting ? lines + 1 : lines);
+    }
+
     // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
     // as one step and shows the active Line's flag.
     void notConfirmedFlipsTheSelectedLines()
@@ -3778,6 +3840,36 @@ private slots:
         QCOMPARE(translated->property("text").toString(), QString());
     }
 
+    // E5: Moving tags splits only with the crosshair (Visual <= CROSS,
+    // EditBox.cpp:1811); another visual tool shows the Line whole.
+    void movingTagsWaitsForTheCrosshair()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-moving-visual.ass")));
+        application->editor().setShowTags(true);
+        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", true);
+        QTRY_VERIFY(application->editor().moveTags());
+        auto &tools = application->visualTools();
+        QTRY_VERIFY(tools.railEnabled());
+        tools.selectFamily(3);
+        QCOMPARE(tools.activeFamily(), 3);
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(translated->property("text").toString(), QString());
+        // Back to the crosshair, the next SetTextWithTags splits it.
+        tools.selectFamily(3);
+        QCOMPARE(tools.activeFamily(), 0);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Up);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+    }
+
     // E5: the Grid's "Original text" and "Translation" columns (legacy
     // showOriginal: TL_MODE_SHOW_ORIGINAL or "TLMode Showtl" when the file
     // loads; off when translation mode is turned off).
@@ -3828,6 +3920,10 @@ private slots:
         QFile saved(path);
         QVERIFY(saved.open(QIODevice::ReadOnly));
         const QByteArray bytes = saved.readAll();
+        // The unedited untranslated "Wall" pair keeps its two lines
+        // (C03-preservation: unchanged raw content is retained), where legacy
+        // SaveFile writes it as one line with the option on or off
+        // (SubsGridBase.cpp:372-377, GetRaw(&raw, hasTextTl = false)).
         QVERIFY2(bytes.contains("Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,Gate\n"
                                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
                                 "Comment: 0,0:00:03.00,0:00:04.00,O,,0,0,0,\fD,Tower\n"
