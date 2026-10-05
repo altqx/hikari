@@ -48,7 +48,8 @@ public:
     hikari::app::Application *application = nullptr;
 
 protected:
-    std::string targets() { return getStringProperty("mainWindow/statusTargets", "text"); }
+    // The window title names the editing target ("<name> - HikariSub").
+    std::string targets() { return getStringProperty("mainWindow", "title"); }
     std::string lineText() { return getStringProperty("mainWindow/lineText", "text"); }
     void executeTest() override
     {
@@ -133,8 +134,8 @@ int main(int argc, char **argv)
     expect(o.size() == 6, "every step observed");
     if (o.size() == 6) {
         expect(o[0] == "review", "opening over unsaved work shows the review");
-        expect(o[1].rfind("Editing: first.ass", 0) == 0, "Cancel keeps the Document");
-        expect(o[2].rfind("Editing: second.ass", 0) == 0, "Discard all opens the other file");
+        expect(o[1].rfind("first.ass - ", 0) == 0, "Cancel keeps the Document");
+        expect(o[2].rfind("second.ass - ", 0) == 0, "Discard all opens the other file");
         expect(o[3] == "1 second.ass;2 first.ass;", "the recent list names both files, latest first");
         expect(o[4] == "prompt", "a file changed by another program offers a reload");
         expect(o[5] == "Changed", "Yes reloads it");

@@ -31,7 +31,8 @@ public:
     std::vector<std::string> observed;
 
 protected:
-    std::string targets() { return getStringProperty("mainWindow/statusTargets", "text"); }
+    // The window title names the editing target ("<name> - HikariSub").
+    std::string targets() { return getStringProperty("mainWindow", "title"); }
     void key(int key)
     {
         enterKey("mainWindow/editingGrid", key, spix::KeyModifiers::Control);
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
     expect(o.size() == 12, "every step observed");
     if (o.size() == 12) {
-        auto editing = [](const std::string &s, const char *name) { return s.rfind(std::string("Editing: ") + name, 0) == 0; };
+        auto editing = [](const std::string &s, const char *name) { return s.rfind(name, 0) == 0; };
         expect(editing(o[0], "one.ass"), "the first tab is active");
         expect(editing(o[1], "two.ass"), "Ctrl+PgDown shows the next tab");
         expect(editing(o[2], "one.ass"), "past the last it wraps to the first");

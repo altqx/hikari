@@ -175,10 +175,12 @@ class ShellTest : public QObject {
                 return o;
         return nullptr;
     }
-    QString panelTitle(const char *panel) const
+    // A panel's name or description for assistive technology. Its dock's
+    // title bar is its only visible header (no in-panel title row).
+    QString panelAccessible(const char *panel, QAccessible::Text text = QAccessible::Name) const
     {
-        auto *label = window->findChild<QObject *>(QLatin1String(panel) + QLatin1String("Title"));
-        return label ? label->property("text").toString() : QString();
+        QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(item(panel));
+        return iface ? iface->text(text) : QString();
     }
     // The panel that contains the active focus item.
     QString focusedPanel() const
@@ -232,27 +234,40 @@ private slots:
 
     void zeroDocumentState()
     {
-        QCOMPARE(panelTitle("gridPanel"), QStringLiteral("No document open"));
+        QCOMPARE(panelAccessible("gridPanel"), QStringLiteral("Grid"));
+        QCOMPARE(panelAccessible("gridPanel", QAccessible::Description), QStringLiteral("No document open"));
+        QVERIFY(item("gridEmptyState")->isVisible());
         // D1: the Reference panel's dock is closed while there is no reference.
         QVERIFY(!item<QObject>("referenceDock")->property("isOpen").toBool());
-        QCOMPARE(item<QObject>("statusTargets")->property("text").toString(), QStringLiteral("No editing target"));
+        QCOMPARE(window->title(), QStringLiteral("HikariSub"));
+        QCOMPARE(item<QObject>("statusText")->property("text").toString(), QString());
     }
 
     void labelsNameTheEditingTargetAndTheProtectedReference()
     {
         QVERIFY(application->openFile(episode));
         QVERIFY(application->openReference(original));
-        QCOMPARE(panelTitle("gridPanel"), QStringLiteral("Editing: episode.ass"));
         QTRY_VERIFY(item<QObject>("referenceDock")->property("isOpen").toBool());
         QVERIFY(item("referencePanel")->isVisible());
-        QCOMPARE(panelTitle("referencePanel"), QStringLiteral("Reference (protected, read-only): original.ass"));
-        QCOMPARE(item<QObject>("statusTargets")->property("text").toString(),
-                 QStringLiteral("Editing: episode.ass  |  Reference (protected): original.ass"));
-        // Panels are named for assistive technology too: the Grid by its
-        // role, the editing target in its description (D1 native gate).
-        QCOMPARE(QAccessible::queryAccessibleInterface(item("gridPanel"))->text(QAccessible::Name), QStringLiteral("Grid"));
-        QCOMPARE(QAccessible::queryAccessibleInterface(item("gridPanel"))->text(QAccessible::Description),
-                 QStringLiteral("Editing: episode.ass"));
+        // The editing target is named by its Document tab and the window
+        // title; the Grid shows it, so its dock is just "Grid". The Protected
+        // reference has no tab: its tray's dock names it.
+        QCOMPARE(window->title(), QStringLiteral("episode.ass - HikariSub"));
+        QCOMPARE(item<QObject>("gridDock")->property("title").toString(), QStringLiteral("Grid"));
+        QCOMPARE(item<QObject>("referenceDock")->property("title").toString(), QStringLiteral("Reference: original.ass"));
+        QVERIFY(!item("gridEmptyState")->isVisible());
+        // No in-panel title row repeats the dock's, and the status bar does
+        // not name the target.
+        QVERIFY(!window->findChild<QObject *>(QStringLiteral("gridPanelTitle")));
+        QVERIFY(!window->findChild<QObject *>(QStringLiteral("statusTargets")));
+        QVERIFY(!item<QObject>("statusText")->property("text").toString().contains(QLatin1String("episode.ass")));
+        // Panels are named for assistive technology: the Grid by its role,
+        // the editing target in its description (D1 native gate); the
+        // Reference by the Document it shows.
+        QCOMPARE(panelAccessible("gridPanel"), QStringLiteral("Grid"));
+        QCOMPARE(panelAccessible("gridPanel", QAccessible::Description), QStringLiteral("Editing: episode.ass"));
+        QCOMPARE(panelAccessible("referencePanel"), QStringLiteral("Reference (protected, read-only): original.ass"));
+        QCOMPARE(panelAccessible("editorPanel"), QStringLiteral("Line editor: episode.ass"));
         // The Grids show the real Lines of each Document.
         QCOMPARE(item("editingGrid")->property("model").value<QAbstractItemModel *>()->rowCount(), 2);
         QCOMPARE(item("referenceGrid")->property("model").value<QAbstractItemModel *>()->rowCount(), 1);
@@ -268,7 +283,7 @@ private slots:
         item("referenceGrid")->forceActiveFocus();
         QCOMPARE(focusedPanel(), QStringLiteral("referencePanel"));
         QCOMPARE(workspace.editingTarget(), a);
-        QCOMPARE(panelTitle("gridPanel"), QStringLiteral("Editing: episode.ass"));
+        QCOMPARE(panelAccessible("gridPanel", QAccessible::Description), QStringLiteral("Editing: episode.ass"));
         QVERIFY(!workspace.checkContentCommand(ref));
         QVERIFY(workspace.checkContentCommand(a).has_value());
     }
@@ -7433,10 +7448,12 @@ private slots:
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         application->video().stepFrames(1);
-        // (the resolution question the video asks)
+        // (the resolution question the video asks, which comes a moment later)
         auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && mismatch->property("visible").toBool())
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
             QMetaObject::invokeMethod(mismatch, "close");
+            QTRY_VERIFY(!mismatch->property("visible").toBool());
+        }
         application->audio().openDummy();
         QTRY_VERIFY(application->audio().ready());
         QTRY_VERIFY(item("audioButtons")->isVisible());

@@ -44,3 +44,5 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# D1: the splitter between docked panels in the palette's colours.
+qt_target_qml_sources(hikari_ui QML_FILES DockSeparator.qml)

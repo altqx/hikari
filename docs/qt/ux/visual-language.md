@@ -18,6 +18,8 @@ The study header, A–D comparison switcher, direction badge, study guide, revie
 
 The [revised D study](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74d4b3356082c55566b30/docs/prototypes/visual-language.html) and [capture](https://github.com/altqx/hikari/blob/2dc12567c66f79d5d0a74d4b3356082c55566b30/docs/prototypes/compact-studio-preview.png) implement the current-program arrangement. The earlier immutable study remains the provenance for the approved appearance and component gallery.
 
+**Panel header: the dock title bar (2026-10-05).** The D study draws a header inside each panel. With docking, each panel also has a dock title bar, so the two repeated the same title. The user reviewed the Classic shell on 2026-10-05 and dropped the in-panel header. The dock title bar is now each panel's only header. A panel keeps its accessible name (the Grid's description names the editing target). The document name appears only where it adds information: the Document tab and the window title. The Grid shows the active tab's Document, so it does not repeat the name. The Protected reference has no Document tab, so its tray's dock is titled "Reference: <name>". The status bar does not name the editing target: its first field is legacy's help and Automation status text. The dock chrome (title bar, panel tabs, separators) takes its colours from the application palette, as the panels do, so the light and dark appearances stay consistent. The panel-header metrics and heading treatment below now apply to the dock title bar. [D3](https://github.com/altqx/hikari/issues/207) reshapes the dock chrome after MuseScore 4's KDDockWidgets convention (a "⋯" menu in place of the Float and Close buttons, borderless floating panels) and may revise them.
+
 ## Semantic appearance tokens
 
 Use semantic roles shared by all components, with a complete palette switch. Hex values below are the exact CSS reference values expanded to six digits. The Dark palette is the study's initial appearance; this does not decide whether the released app initially follows the operating system or a stored preference.
@@ -52,10 +54,10 @@ All measurements in this section are **reference logical units from CSS**, not p
 | Workspace gutter and outer padding | 3 each |
 | Application bar | 36 high; horizontal padding 12; item gap 12 |
 | Command bar | Minimum 33 high; vertical/horizontal padding 2 / 7; gap 3 |
-| Panel header | Minimum 32 high; padding 5 / 8; gap 8 |
+| Panel header (the dock title bar) | Minimum 32 high; padding 5 / 8; gap 8 |
 | Ordinary button / single-line field | Minimum 30 high; button padding 5 / 10; field padding 4 / 8 |
 | Command-bar button | Minimum 27 high; padding 3 / 8 |
-| Panel-header action | Minimum 21 high; padding 1 / 6 |
+| Panel-header action (dock title-bar button) | Minimum 21 high; padding 1 / 6 |
 | Transport action | Minimum 24 high; padding 3 / 8; group gap 6 |
 | Editor content | Padding 9 / 12; major gaps 8; action-footer gap 6 |
 | Text area | Padding 10; line-height reference 1.6; editor minimum 60 |
@@ -81,7 +83,7 @@ Typography follows these roles:
 
 The HTML uses Segoe UI / Arial / sans-serif and Consolas / monospace. These are reference families, not mandatory bundled fonts. Use suitable system sans-serif and fixed-width roles, preserving shaping and font fallback for Thai, Arabic, CJK and mixed-script content. The raw subtitle editor remains readable body text; D's monospaced table does not require every editing surface to be monospaced. Scale secondary roles relative to the user's base font, and allow them to grow for legibility.
 
-Panel headings are uppercase in D. The heading itself has `0.02em` letter spacing; its enclosing header declares `0.08em` for other inherited text. Preserve the restrained visual hierarchy without applying uppercase transformations to user-authored subtitle text, filenames or scripts without case. The sample preview's 19-unit subtitle size is not an application typography rule or an ASS rendering requirement.
+Panel headings are uppercase in D; the rule applies to the dock title, the only panel heading since 2026-10-05. The heading itself has `0.02em` letter spacing; its enclosing header declares `0.08em` for other inherited text. Preserve the restrained visual hierarchy without applying uppercase transformations to user-authored subtitle text, filenames or scripts without case. The sample preview's 19-unit subtitle size is not an application typography rule or an ASS rendering requirement.
 
 The effective D control and panel radius is **1** in all three appearances. The contrast palette declares radius 0, but the later C/D rule overrides it to 1; this specification records the actual approved D cascade. Application frame and dialog also use 1. Exceptions in the reference are the menu popup at 5, a compact state badge at 3 and a status capsule at 20. The rounded H sample mark is provisional artwork, not a settled brand geometry.
 

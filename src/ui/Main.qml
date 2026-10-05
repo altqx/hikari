@@ -1451,6 +1451,10 @@ ApplicationWindow {
         }
     }
 
+    // A panel's body. Its dock's title bar (DockTitleBar.qml) is its only
+    // visible header: the user dropped the in-panel title row on 2026-10-05,
+    // since with docking it repeated the dock's title. The title stays the
+    // panel's name for assistive technology.
     component Panel: FocusScope {
         id: panel
         property string title
@@ -1470,19 +1474,10 @@ ApplicationWindow {
             border.width: panel.activeFocus ? 2 : 1
             border.color: panel.activeFocus ? panel.palette.highlight : panel.palette.mid
         }
-        Label {
-            id: heading
-            objectName: panel.objectName + "Title"
-            text: panel.title
-            font.bold: true
-            x: 8
-            y: 4
-        }
         Item {
             id: body
             anchors {
                 fill: parent
-                topMargin: heading.height + 8
                 margins: 4
             }
         }
@@ -2748,6 +2743,15 @@ ApplicationWindow {
                         }
                     }
                 }
+                // The Grid's empty state.
+                Label {
+                    objectName: "gridEmptyState"
+                    anchors.centerIn: parent
+                    visible: !shell.hasEditingTarget
+                    text: qsTr("No document open")
+                    color: gridPanel.palette.placeholderText
+                    Accessible.ignored: true // the panel's description says it
+                }
             }
         }
 
@@ -2755,7 +2759,9 @@ ApplicationWindow {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
-            title: qsTr("Reference")
+            // The tray's dock names the Protected reference: unlike the
+            // Grid's Document, no Document tab shows it.
+            title: shell.hasReference ? qsTr("Reference: %1").arg(shell.referenceTitle) : qsTr("Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
@@ -3054,18 +3060,15 @@ ApplicationWindow {
         onCloseRequested: index => root.closeTab(index)
       }
       RowLayout {
-        Label {
-            objectName: "statusTargets"
-            padding: 4
-            text: (shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No editing target"))
-                  + (shell.hasReference ? qsTr("  |  Reference (protected): %1").arg(shell.referenceTitle) : "")
-            Layout.fillWidth: true
-        }
+        // Legacy's first field: help and Automation status text (set_status_text),
+        // never the editing target, which the Document tab and the window
+        // title name.
         Label {
             objectName: "statusText"
             padding: 4
             text: shell.statusText
-            visible: text.length > 0
+            elide: Text.ElideRight
+            Layout.fillWidth: true
         }
         Label {
             objectName: "selectionStatus"
