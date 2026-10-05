@@ -67,11 +67,23 @@ void FfmsMatroska::ensureHelper(std::function<void(bool)> ready)
         host->start();
 }
 
-void FfmsMatroska::send(std::vector<std::byte> payload, Handler handler,
+std::shared_ptr<bool> FfmsMatroska::begin(std::function<void()> resolveCancelled)
+{
+    auto cancelled = std::make_shared<bool>(false);
+    m_cancel = [cancelled, resolveCancelled = std::move(resolveCancelled)] {
+        *cancelled = true;
+        resolveCancelled();
+    };
+    return cancelled;
+}
+
+void FfmsMatroska::send(std::shared_ptr<bool> cancelled, std::vector<std::byte> payload, Handler handler,
                         std::function<void(MatroskaError)> failed)
 {
-    ensureHelper([this, payload = std::move(payload), handler = std::move(handler),
+    ensureHelper([this, cancelled = std::move(cancelled), payload = std::move(payload), handler = std::move(handler),
                   failed = std::move(failed)](bool ok) mutable {
+        if (*cancelled)
+            return; // cancelled while the helper was starting: nothing is sent
         if (!ok)
             return failed(lost());
         auto id = std::make_shared<std::uint64_t>(0);
@@ -99,8 +111,8 @@ void FfmsMatroska::cancel()
 void FfmsMatroska::subtitleTracks(const std::string &path, Tracks done)
 {
     auto finish = once(std::move(done));
-    m_cancel = [finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); };
-    send(Writer().u8(static_cast<std::uint8_t>(media::Command::SubtitleTracks)).str(path).take(),
+    auto cancelled = begin([finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); });
+    send(std::move(cancelled), Writer().u8(static_cast<std::uint8_t>(media::Command::SubtitleTracks)).str(path).take(),
          [finish](std::expected<Event, HostError> e) {
              if (!e)
                  return finish(std::unexpected(lost()));
@@ -129,8 +141,8 @@ void FfmsMatroska::subtitleTracks(const std::string &path, Tracks done)
 void FfmsMatroska::subtitles(const std::string &path, int track, Progress progress, Read done)
 {
     auto finish = once(std::move(done));
-    m_cancel = [finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); };
-    send(Writer().u8(static_cast<std::uint8_t>(media::Command::Subtitles)).str(path).i32(track).take(),
+    auto cancelled = begin([finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); });
+    send(std::move(cancelled), Writer().u8(static_cast<std::uint8_t>(media::Command::Subtitles)).str(path).i32(track).take(),
          [finish, progress = std::move(progress)](std::expected<Event, HostError> e) {
              if (!e)
                  return finish(std::unexpected(lost()));
@@ -166,10 +178,10 @@ void FfmsMatroska::subtitles(const std::string &path, int track, Progress progre
 void FfmsMatroska::attachments(const std::string &path, Attachments done)
 {
     auto finish = once(std::move(done));
-    m_cancel = [finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); };
+    auto cancelled = begin([finish] { finish(std::unexpected(MatroskaError{MatroskaFailure::Cancelled, {}})); });
     auto list = std::make_shared<std::vector<application::MatroskaAttachment>>();
     auto malformed = std::make_shared<bool>(false);
-    send(Writer().u8(static_cast<std::uint8_t>(media::Command::Attachments)).str(path).take(),
+    send(std::move(cancelled), Writer().u8(static_cast<std::uint8_t>(media::Command::Attachments)).str(path).take(),
          [finish, list, malformed](std::expected<Event, HostError> e) {
              if (!e)
                  return finish(std::unexpected(lost()));

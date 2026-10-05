@@ -34,9 +34,14 @@ public:
 
 private:
     using Handler = std::function<void(std::expected<helper::Event, helper::HostError>)>;
-    // Starts the request once the helper is ready; `failed` resolves it when
-    // the helper cannot start or the request cannot be sent.
-    void send(std::vector<std::byte> payload, Handler handler, std::function<void(application::MatroskaError)> failed);
+    // Makes `resolveCancelled` what cancel() runs for the new operation;
+    // the flag it returns turns true on that cancel.
+    std::shared_ptr<bool> begin(std::function<void()> resolveCancelled);
+    // Starts the request once the helper is ready, unless the operation was
+    // cancelled by then; `failed` resolves it when the helper cannot start or
+    // the request cannot be sent.
+    void send(std::shared_ptr<bool> cancelled, std::vector<std::byte> payload, Handler handler,
+              std::function<void(application::MatroskaError)> failed);
     void ensureHelper(std::function<void(bool)> ready);
 
     QString m_program;
