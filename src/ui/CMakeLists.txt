@@ -44,3 +44,11 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
+# the desktop's Screenshot portal over D-Bus on Wayland).
+target_sources(hikari_ui PRIVATE screen_sampler.cpp screen_sampler.h)
+if(UNIX AND NOT APPLE)
+    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
+    target_link_libraries(hikari_ui PRIVATE Qt6::DBus)
+    target_compile_definitions(hikari_ui PRIVATE HIKARI_SCREEN_PORTAL)
+endif()

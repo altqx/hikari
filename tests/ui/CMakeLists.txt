@@ -139,3 +139,5 @@ foreach(scale 150 200)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
 endforeach()
+# Y7: the colour picker's option, simple-picker recent colour and screen sampler.
+hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
