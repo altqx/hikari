@@ -170,6 +170,23 @@ QRect ScreenSampler::availableGeometryAt(int x, int y) const
     return screen ? screen->availableGeometry() : QRect();
 }
 
+void ScreenSampler::moveToPointer(QWindow *window, int x, int y) const
+{
+    if (!window)
+        return;
+    const QRect rc = availableGeometryAt(x, y);
+    const QSize size = window->frameGeometry().size();
+    // mst.x = MID(rc.x, mst.x - siz.x / 2, rc.width + rc.x - siz.x)
+    const int nx = std::max(rc.x(), std::min(x - size.width() / 2, rc.width() + rc.x() - size.width()));
+    int ny = y + 15;
+    if (ny + size.height() > rc.height() + rc.y()) {
+        ny = ny - size.height() - 30;
+        if (ny < rc.y())
+            ny = rc.height() + rc.y() - size.height();
+    }
+    window->setFramePosition(QPoint(nx, ny));
+}
+
 bool ScreenSampler::startTracking(QWindow *window, bool passInside)
 {
     stopTracking();

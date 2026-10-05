@@ -75,6 +75,11 @@ public:
     // The available area of the screen at a global point (legacy
     // MoveToMousePosition's display client area), or the primary screen's.
     Q_INVOKABLE QRect availableGeometryAt(int x, int y) const;
+    // Legacy MoveToMousePosition (config.cpp:1379-1400): the window, frame
+    // included as wxWindow::GetSize and Move take it, centred under the
+    // global point and 15 pixels below it inside that area; above the point
+    // when it would leave the bottom, at the bottom when that leaves the top.
+    Q_INVOKABLE void moveToPointer(QWindow *window, int x, int y) const;
 
     // Legacy CaptureMouse: `window` grabs the pointer, and its mouse events
     // come as pointerEvent with global positions. With `passInside` the

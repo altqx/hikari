@@ -214,6 +214,41 @@ private slots:
             }
     }
 
+    // MoveToMousePosition (config.cpp:1379-1400) with the frame included, as
+    // wxWindow::GetSize and Move take it: centred under the pointer and 15
+    // pixels below, kept inside the area; 30 pixels above the pointer when
+    // the bottom would leave it, at its bottom when the top then would.
+    void moveToPointerFollowsLegacy()
+    {
+        PositionWindow window;
+        window.setGeometry(QRect(50, 60, 120, 90));
+        window.show();
+        QVERIFY(QTest::qWaitForWindowExposed(&window));
+        ui::ScreenSampler sampler;
+        const QRect area = sampler.availableGeometryAt(0, 0);
+        QVERIFY(area.width() > 400 && area.height() > 300);
+        const QSize frame = window.frameGeometry().size();
+
+        sampler.moveToPointer(&window, area.x() + 200, area.y() + 100);
+        QTRY_COMPARE(window.frameGeometry().topLeft(), QPoint(area.x() + 200 - frame.width() / 2, area.y() + 115));
+        // Near the left edge: MID keeps it inside.
+        sampler.moveToPointer(&window, area.x() + 3, area.y() + 100);
+        QTRY_COMPARE(window.frameGeometry().x(), area.x());
+        // Near the right edge.
+        sampler.moveToPointer(&window, area.right() - 2, area.y() + 100);
+        QTRY_COMPARE(window.frameGeometry().x(), area.x() + area.width() - frame.width());
+        // Near the bottom: above the pointer.
+        const int py = area.y() + area.height() - 20;
+        sampler.moveToPointer(&window, area.x() + 200, py);
+        QTRY_COMPARE(window.frameGeometry().y(), py + 15 - frame.height() - 30);
+        // A window taller than the area's room above: at the area's bottom.
+        window.resize(120, area.height() - 40);
+        QTRY_VERIFY(window.frameGeometry().height() > area.height() - 60);
+        const QSize tall = window.frameGeometry().size();
+        sampler.moveToPointer(&window, area.x() + 200, area.y() + 30);
+        QTRY_COMPARE(window.frameGeometry().y(), area.y() + area.height() - tall.height());
+    }
+
     // CaptureMouse: every mouse event of the window comes with its global
     // position; the dropper keeps them, the simple picker lets those over
     // itself through (OnLeaveWindow releases the capture there).
