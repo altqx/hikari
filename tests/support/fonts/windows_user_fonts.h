@@ -9,13 +9,18 @@
 //   under HKCU\Software\Microsoft\Windows NT\CurrentVersion\Fonts names it,
 //   so DirectWrite's system collection lists it (FontService::systemFaces,
 //   the collector's availability check and the provider path of a stream
-//   font). A file of that name that is not the fixture is never replaced.
+//   font). A file of that name that is not the fixture is never replaced;
+//   one with the fixture's bytes, left by a run that never reached its
+//   TearDown, is the tests' own and is removed with the rest
+//   (fixture_files.h).
 // - AddFontResourceEx(FR_PRIVATE) loads it into this process's GDI font
 //   table, where libass's DirectWrite provider looks a family up
 //   (EnumFontFamilies, then CreateFontFaceFromHdc: "directwrite (with GDI)").
 //
 // SetUp waits until DirectWrite reports every family, asking it to check for
-// changes; TearDown removes all of it again, so nothing stays installed.
+// changes; TearDown removes all of it again, so nothing stays installed: it
+// waits for the font cache to let go of each file and reports a file it
+// could not remove as a failure.
 // A failed install is a test failure, never a skip: every test still runs.
 
 #ifdef _WIN32
@@ -32,11 +37,11 @@
 
 #include <gtest/gtest.h>
 
+#include "fixture_files.h"
+
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
-#include <fstream>
-#include <iterator>
 #include <string>
 #include <system_error>
 #include <thread>
@@ -79,18 +84,18 @@ public:
         for (const auto &name : m_files) {
             const fs::path source = m_directory / name;
             const fs::path target = (folder / name).make_preferred();
-            if (fs::exists(target, ec) && !sameBytes(source, target)) {
+            const FixturePlacement placed = placeFixtureFile(source, target, ec);
+            if (placed == FixturePlacement::Foreign) {
                 ADD_FAILURE() << target.string() << " exists and is not the fixture; it is left as it is";
                 continue;
             }
-            if (!fs::exists(target, ec)) {
-                fs::copy_file(source, target, ec);
-                if (ec) {
-                    ADD_FAILURE() << "copying " << source.string() << ": " << ec.message();
-                    continue;
-                }
-                m_copied.push_back(target);
+            if (placed == FixturePlacement::Failed) {
+                ADD_FAILURE() << "copying " << source.string() << ": " << ec.message();
+                continue;
             }
+            if (placed == FixturePlacement::Reused)
+                ++m_reused;
+            m_owned.push_back(target);
             const std::wstring path = target.wstring();
             if (opened == ERROR_SUCCESS) {
                 const std::wstring value = valueName(name);
@@ -136,9 +141,10 @@ public:
         const auto ms =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
         std::fprintf(stderr,
-                     "Windows user fonts: %zu files installed in %s, DirectWrite listed %zu of %zu families after %lld ms\n",
-                     m_files.size(), folder.string().c_str(), m_families.size() - missing.size(), m_families.size(),
-                     static_cast<long long>(ms));
+                     "Windows user fonts: %zu files installed in %s (%zu left by an earlier run), DirectWrite "
+                     "listed %zu of %zu families after %lld ms\n",
+                     m_owned.size(), folder.string().c_str(), m_reused, m_families.size() - missing.size(),
+                     m_families.size(), static_cast<long long>(ms));
         for (const auto &family : missing)
             ADD_FAILURE() << "DirectWrite's system collection never listed " << fs::path(family).string();
     }
@@ -155,13 +161,19 @@ public:
             RegCloseKey(key);
         }
         m_registered.clear();
-        // Unregistered, a file is no longer installed; if the font cache
-        // still holds one open, the next run finds the same bytes and reuses it.
-        for (const auto &path : m_copied) {
+        // Unregistered, a file is no longer installed, but the font cache
+        // can still hold it open for a moment.
+        std::size_t removed = 0;
+        for (const auto &path : m_owned) {
             std::error_code ec;
-            std::filesystem::remove(path, ec);
+            if (removeFixtureFile(path, std::chrono::seconds(10), ec))
+                ++removed;
+            else
+                ADD_FAILURE() << "could not remove " << path.string() << ": " << ec.message();
         }
-        m_copied.clear();
+        std::fprintf(stderr, "Windows user fonts: removed %zu of %zu files\n", removed, m_owned.size());
+        m_owned.clear();
+        m_reused = 0;
     }
 
 private:
@@ -170,22 +182,14 @@ private:
     // One value per file, recognisably the tests' own.
     static std::wstring valueName(const std::wstring &file) { return L"Hikari test font " + file + L" (TrueType)"; }
 
-    static bool sameBytes(const std::filesystem::path &a, const std::filesystem::path &b)
-    {
-        std::ifstream fa(a, std::ios::binary), fb(b, std::ios::binary);
-        if (!fa || !fb)
-            return false;
-        const std::string da((std::istreambuf_iterator<char>(fa)), std::istreambuf_iterator<char>());
-        const std::string db((std::istreambuf_iterator<char>(fb)), std::istreambuf_iterator<char>());
-        return da == db;
-    }
-
     std::filesystem::path m_directory;
     std::vector<std::wstring> m_files;
     std::vector<std::wstring> m_families;
     std::vector<std::wstring> m_registered;
     std::vector<std::wstring> m_loaded;
-    std::vector<std::filesystem::path> m_copied;
+    // Copied or reused: the files TearDown removes.
+    std::vector<std::filesystem::path> m_owned;
+    std::size_t m_reused = 0;
 };
 
 } // namespace hikari::testing

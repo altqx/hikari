@@ -27,10 +27,17 @@
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <thread>
+
+#include "fonts/fixture_files.h"
 
 #ifdef _WIN32
 #include "fonts/windows_user_fonts.h"
+#else
+#include <unistd.h>
 #endif
 
 using namespace hikari;
@@ -494,4 +501,178 @@ TEST(FontCollectorRenderer, CancellationLeavesNothingUnlabelled)
     const auto none = collector.prepare({doc}, CollectorAction::Zip, &cancel);
     ASSERT_FALSE(none);
     EXPECT_EQ(none.error(), FontError::Cancelled);
+}
+
+// Y8W: the fixture files the Windows fixture places in the user's font
+// folder belong to the tests whether copied now or left by a run that never
+// reached its cleanup, and are removed even while the font cache still
+// holds them for a moment; another file of that name is never touched.
+namespace {
+
+namespace fs = std::filesystem;
+using hikari::testing::FixturePlacement;
+
+void writeFile(const fs::path &path, const std::string &bytes)
+{
+    std::ofstream(path, std::ios::binary) << bytes;
+}
+
+std::string readFile(const fs::path &path)
+{
+    std::ifstream in(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+}
+
+// Keeps `path` from being removed until release(): on Windows a handle
+// without FILE_SHARE_DELETE (as the font cache holds a font), elsewhere a
+// read-only parent folder.
+class RemovalBlocker {
+public:
+    explicit RemovalBlocker(fs::path path) : m_path(std::move(path))
+    {
+#ifdef _WIN32
+        m_handle = CreateFileW(m_path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL, nullptr);
+        m_blocking = m_handle != INVALID_HANDLE_VALUE;
+#else
+        std::error_code ec;
+        fs::permissions(m_path.parent_path(), fs::perms::owner_read | fs::perms::owner_exec, fs::perm_options::replace,
+                        ec);
+        m_blocking = !ec && geteuid() != 0;
+#endif
+    }
+    ~RemovalBlocker() { release(); }
+    bool blocking() const { return m_blocking; }
+    void release()
+    {
+#ifdef _WIN32
+        if (m_handle != INVALID_HANDLE_VALUE)
+            CloseHandle(m_handle);
+        m_handle = INVALID_HANDLE_VALUE;
+#else
+        std::error_code ec;
+        fs::permissions(m_path.parent_path(), fs::perms::owner_all, fs::perm_options::replace, ec);
+#endif
+    }
+
+private:
+    fs::path m_path;
+    bool m_blocking = false;
+#ifdef _WIN32
+    HANDLE m_handle = INVALID_HANDLE_VALUE;
+#endif
+};
+
+} // namespace
+
+TEST(FontFixtureFiles, ACopiedFixtureIsOwnedAndRemoved)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path source = fixture("base.ttf");
+    const fs::path target = folder / "base.ttf";
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(source, target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Copied);
+    EXPECT_TRUE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_EQ(readFile(target), readFile(source));
+
+    EXPECT_TRUE(hikari::testing::removeFixtureFile(target, std::chrono::seconds(5), ec)) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, TheFixtureLeftByAnEarlierRunIsOwnedAndRemoved)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path source = fixture("base-bold.ttf");
+    const fs::path target = folder / "base-bold.ttf";
+    // A run that crashed, or whose removal failed, left its copy behind.
+    fs::copy_file(source, target);
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(source, target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Reused);
+    EXPECT_TRUE(hikari::testing::ownsPlacedFixture(placed));
+
+    EXPECT_TRUE(hikari::testing::removeFixtureFile(target, std::chrono::seconds(5), ec)) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, AnotherFileOfThatNameIsLeftAlone)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path target = folder / "weighted.ttf";
+    writeFile(target, "someone else's font");
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(fixture("weighted.ttf"), target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Foreign);
+    EXPECT_FALSE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_EQ(readFile(target), "someone else's font");
+}
+
+TEST(FontFixtureFiles, AFailedCopyIsNotOwned)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path target = folder / "missing.ttf";
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(folder / "no-such-source.ttf", target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Failed);
+    EXPECT_TRUE(ec);
+    EXPECT_FALSE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, RemovalWaitsForTheHolderToLetGo)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = fs::path(dir.path().toStdU16String()) / "fonts";
+    fs::create_directories(folder);
+    const fs::path target = folder / "legacy.ttf";
+    fs::copy_file(fixture("legacy.ttf"), target);
+
+    RemovalBlocker blocker(target);
+    if (!blocker.blocking())
+        GTEST_SKIP() << "nothing here keeps a file from being removed (running as root)";
+    std::thread letGo([&] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        blocker.release();
+    });
+    std::error_code ec;
+    const auto start = std::chrono::steady_clock::now();
+    const bool removed = hikari::testing::removeFixtureFile(target, std::chrono::seconds(10), ec);
+    const auto waited = std::chrono::steady_clock::now() - start;
+    letGo.join();
+    EXPECT_TRUE(removed) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+    EXPECT_GE(waited, std::chrono::milliseconds(250));
+}
+
+TEST(FontFixtureFiles, AFileThatStaysHeldIsReported)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = fs::path(dir.path().toStdU16String()) / "fonts";
+    fs::create_directories(folder);
+    const fs::path target = folder / "collection.ttc";
+    fs::copy_file(fixture("collection.ttc"), target);
+
+    RemovalBlocker blocker(target);
+    if (!blocker.blocking())
+        GTEST_SKIP() << "nothing here keeps a file from being removed (running as root)";
+    std::error_code ec;
+    EXPECT_FALSE(hikari::testing::removeFixtureFile(target, std::chrono::milliseconds(200), ec));
+    EXPECT_TRUE(ec);
+    blocker.release();
+    EXPECT_TRUE(fs::exists(target));
 }
