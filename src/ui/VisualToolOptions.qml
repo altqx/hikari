@@ -9,7 +9,7 @@ import Hikari.Ui
 // icon of the K1 set and legacy's help text. A toggle shows its state; an
 // action acts at once. T5: the drawing's point modes (not usable while a
 // shape is chosen) and its shape list ("Choose", the presets, "Edit", which
-// opens the "Vector shape editing" dialog). A notice a tool gives is
+// opens the "Vector shape editing" dialog), an icon with its menu. A notice a tool gives is
 // legacy's HikariMessageBox titled "Warning" (VisualClips.cpp:1013-1016): a
 // modal box in the window, closed by OK.
 RowLayout {
@@ -44,20 +44,69 @@ RowLayout {
             }
             Component {
                 id: choiceComponent
-                ComboBox {
+                // A choice is an icon with its menu, as the row's other
+                // options (the tool strip is icon-only; T5 review): legacy's
+                // shape list (HikariChoice, VideoToolbar.cpp:503-512) as a
+                // ShellMenu of its entries, the chosen one checked. Its last
+                // entry ("Edit") is an action: after a separator, with no
+                // check. The button shows itself on while an entry other
+                // than the first ("Choose", no shape) is chosen; the tooltip
+                // names it.
+                IconToolButton {
+                    id: choice
                     objectName: "visualOption_" + option.modelData.name
-                    model: option.modelData.choices
-                    currentIndex: option.modelData.index
+                    readonly property var model: option.modelData.choices
+                    readonly property int currentIndex: option.modelData.index
+                    signal activated(int index)
+                    // The K1 roles the choices name (on one line: icon_tests reads them from it).
+                    iconRole: ["shape-presets"].indexOf(option.modelData.iconRole) >= 0 ? option.modelData.iconRole : ""
+                    text: option.modelData.tooltip.split("\n")[0]
+                    tip: (currentIndex > 0 && currentIndex < model.length ? qsTr("Shape: %1").arg(model[currentIndex]) + "\n" : "")
+                         + option.modelData.tooltip
+                    Accessible.description: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
+                    checked: currentIndex > 0
+                    down: pressed || choiceMenu.visible
                     enabled: option.modelData.enabled && options.tools.railEnabled
                     focusPolicy: Qt.NoFocus
-                    implicitContentWidthPolicy: ComboBox.WidestText
-                    Accessible.name: option.modelData.tooltip.split("\n")[0]
-                    ToolTip.visible: hovered
-                    ToolTip.text: option.modelData.tooltip
-                    ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
-                    onActivated: index => {
-                        options.tools.setOption(option.modelData.name, index)
-                        currentIndex = Qt.binding(() => option.modelData.index) // the tool's choice
+                    onClicked: {
+                        if (choiceMenu.visible)
+                            choiceMenu.close()
+                        else
+                            choiceMenu.popup(choice, 0, choice.height)
+                    }
+                    onActivated: index => options.tools.setOption(option.modelData.name, index)
+                    ShellMenu {
+                        id: choiceMenu
+                        objectName: choice.objectName + "_menu"
+                        // A press on the button closes it through onClicked.
+                        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                        // Made with the button before the Loader puts it in the
+                        // window, the menu does not inherit the window's palette:
+                        // it takes the button's (the theme's, live).
+                        palette: choice.palette
+                        MenuSeparator {
+                            visible: choice.model.length > 1
+                            height: visible ? implicitHeight : 0
+                        }
+                        Instantiator {
+                            model: choice.model
+                            delegate: ShellMenuItem {
+                                required property int index
+                                required property string modelData
+                                readonly property bool isAction: index === choice.model.length - 1 && index > 0
+                                objectName: choice.objectName + "_" + index
+                                text: modelData
+                                checkable: !isAction
+                                checked: index === choice.currentIndex
+                                onTriggered: {
+                                    choice.activated(index)
+                                    checked = Qt.binding(() => index === choice.currentIndex)
+                                }
+                            }
+                            // The entries before the separator, the action after it.
+                            onObjectAdded: (index, object) => choiceMenu.insertItem(object.isAction ? index + 1 : index, object)
+                            onObjectRemoved: (index, object) => choiceMenu.removeItem(object)
+                        }
                     }
                 }
             }

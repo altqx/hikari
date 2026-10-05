@@ -7407,6 +7407,55 @@ private slots:
                               QStringLiteral("rounded square 1"), QStringLiteral("rounded square 2"),
                               QStringLiteral("rounded square 3"), QStringLiteral("Edit")}));
         QCOMPARE(list()->property("currentIndex").toInt(), 0);
+        // The row is icon-only (the user's tool strip rule): the list is an
+        // icon button named by legacy's help text, its menu a ShellMenu.
+        const auto centreOf = [](QQuickItem *item) {
+            return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+        };
+        QVERIFY(!list()->inherits("QQuickComboBox"));
+        QCOMPARE(list()->property("iconRole").toString(), QStringLiteral("shape-presets"));
+        constexpr int iconOnly = 0; // AbstractButton.IconOnly
+        QCOMPARE(list()->property("display").toInt(), iconOnly);
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Name),
+                 QStringLiteral("List of ASS drawings with edit option."));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("Choose"));
+        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("List of ASS drawings with edit option.\n")));
+        QVERIFY(!list()->property("checked").toBool());
+        for (QQuickItem *item : visualItem("visualToolOptions")->childItems()) {
+            if (!item->inherits("QQuickLoader"))
+                continue;
+            auto *option = item->property("item").value<QQuickItem *>();
+            QVERIFY(option);
+            QVERIFY2(!option->inherits("QQuickComboBox"), qPrintable(option->objectName()));
+            QCOMPARE(option->property("display").toInt(), iconOnly);
+            QVERIFY(!option->property("iconRole").toString().isEmpty());
+            QVERIFY(!QAccessible::queryAccessibleInterface(option)->text(QAccessible::Name).isEmpty());
+        }
+        const auto menu = [&] { return list()->findChild<QObject *>(QStringLiteral("visualOption_shape_menu")); };
+        const auto menuItem = [&](int i) {
+            QQuickItem *item = nullptr;
+            QMetaObject::invokeMethod(menu(), "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+            return item;
+        };
+        // The entries in legacy's order, the chosen one checked, "Edit" after
+        // a separator.
+        const auto checkMenu = [&](const QStringList &entries, int chosen) {
+            QCOMPARE(menu()->property("count").toInt(), int(entries.size()) + 1);
+            for (int i = 0; i < entries.size(); ++i) {
+                QQuickItem *item = menuItem(i < entries.size() - 1 ? i : i + 1);
+                QVERIFY(item);
+                QCOMPARE(item->property("text").toString(), entries[i]);
+                QCOMPARE(item->property("checkable").toBool(), i < entries.size() - 1);
+                QCOMPARE(item->property("checked").toBool(), i == chosen);
+            }
+            QVERIFY(menuItem(int(entries.size()) - 1)->inherits("QQuickMenuSeparator"));
+        };
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        QVERIFY(list()->property("down").toBool());
+        checkMenu(list()->property("model").toStringList(), 0);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list())); // a second press closes it
+        QTRY_VERIFY(!menu()->property("visible").toBool());
 
         // Free drawing: a click in Add line puts the first point.
         const QRectF v = tools.videoRect();
@@ -7425,8 +7474,14 @@ private slots:
         // rectangle, one step.
         application->selectLine(third.value);
         QTRY_COMPARE(*session->selection().active, third);
-        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 1)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem(1), "click"));
+        QTRY_VERIFY(!menu()->property("visible").toBool());
         QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
+        QVERIFY(list()->property("checked").toBool()); // on while a shape is chosen
+        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("Shape: rectangle\nList of ASS drawings")));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("rectangle"));
         QTRY_VERIFY(!visualItem("visualOption_mode1")->property("enabled").toBool());
         QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
         const std::size_t shapeSteps = session->historySize();
@@ -7453,7 +7508,11 @@ private slots:
         QVERIFY(m.captured(3).toDouble() > m.captured(1).toDouble() && m.captured(4).toDouble() > m.captured(2).toDouble());
 
         // "Edit": the dialog, on the preset after the one chosen (legacy).
-        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 6)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        checkMenu(list()->property("model").toStringList(), 1);
+        QVERIFY(QMetaObject::invokeMethod(menuItem(7), "click"));
+        QTRY_VERIFY(!menu()->property("visible").toBool());
         QObject *dialog = named("shapesEditionDialog");
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
@@ -7493,8 +7552,14 @@ private slots:
         QCOMPARE(list()->property("currentIndex").toInt(), 1);
 
         // Restore default: asked, then the file goes at once; Cancel keeps
-        // the presets the list has (legacy: only OK hands them back).
-        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 5)));
+        // the presets the list has (legacy: only OK hands them back). The
+        // menu took the new names.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        checkMenu({QStringLiteral("Choose"), QStringLiteral("Rectangle"), QStringLiteral("rounded square 1"),
+                   QStringLiteral("rounded square 2"), QStringLiteral("rounded square 3"), QStringLiteral("Edit")},
+                  1);
+        QVERIFY(QMetaObject::invokeMethod(menuItem(6), "click"));
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "click"));
         QObject *question = named("shapesQuestion");
@@ -7511,7 +7576,7 @@ private slots:
 
     // T5: the drawing's surfaces in the light and dark palettes (with
     // HIKARI_SURFACE_SHOT_DIR): the Video panel with the drawing's row and a
-    // shape drawn, and the "Vector shape editing" dialog.
+    // shape drawn, the shape list's menu, and the "Vector shape editing" dialog.
     void visualDrawingScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -7558,6 +7623,22 @@ private slots:
             QTest::qWait(300);
             QImage shot = window->grabWindow();
             QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/drawing-video-panel") + suffix));
+            // The shape list's menu under its button.
+            QQuickItem *button = visualItem("visualOption_shape");
+            auto *menu = button->findChild<QObject *>(QStringLiteral("visualOption_shape_menu"));
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                              button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint());
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QTest::qWait(300);
+            // The theme's palette, as the window's other menus.
+            QCOMPARE(menu->property("palette").value<QObject *>()->property("window").value<QColor>(),
+                     palette.color(QPalette::Window));
+            shot = window->grabWindow();
+            const QRect menuRect = crop(menu->property("background").value<QQuickItem *>()).united(crop(button));
+            QVERIFY(shot.copy(menuRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                        .save(out + QStringLiteral("/drawing-shape-menu") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
             QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 6)));
             QObject *dialog = named("shapesEditionDialog");
             QTRY_VERIFY(dialog->property("opened").toBool());

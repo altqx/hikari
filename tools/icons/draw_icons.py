@@ -489,6 +489,10 @@ icon("vector-point", "Add separate point", ["VectorMove.png"], [VISUAL],
      accent(frect(2, 9, 5, 5)) + stroke("M11.5 2.5v6M8.5 5.5h6"))
 icon("vector-delete", "Delete point", ["VectorDelete.png"], [VISUAL],
      stroke("M1.5 13.5C4 9 6 9 8 11s4 2 6.5-2.5") + accent(stroke("M3 2.5l4 4M7 2.5l-4 4")))
+# The drawing's shape presets (legacy's shape list, a text choice in the row:
+# VideoToolbar.cpp:503-559; an icon with its menu since T5's review)
+icon("shape-presets", "Shape presets", [], [VISUAL],
+     circle(5.5, 5.5, 4) + stroke("M4.25 10.5l2.5 4h-5z") + accent(rect(8.5, 8.5, 6, 6, 1)))
 icon("clip-invert", "Invert clip", ["InvertClipIcon1.png"], [VISUAL],
      fill("M2 2h12v12H2zM8 4.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z", "evenodd"))
 

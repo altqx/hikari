@@ -1187,6 +1187,7 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
     ToolOption shapes;
     shapes.name = "shape";
     shapes.kind = ToolOption::Kind::Choice;
+    shapes.iconRole = "shape-presets"; // the row shows the list as an icon with its menu
     shapes.tooltip = u"List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n "
                      u"place\nof start of drawing and click left mouse button and drag.";
     static const std::vector<ShapePreset> none;

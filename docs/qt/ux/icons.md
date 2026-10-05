@@ -17,7 +17,7 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | `src/ui/IconDialogHeader.qml` | A dialog's title with its icon (legacy dialogs' SetIcon); windows take theirs with `IconTheme.setWindowIcon`. |
 | `src/ui/icon_theme.*` | The tint, the appearance, the `IconTheme` singleton and the image provider. |
 
-Roles are lowercase, hyphenated and name the action or symbol, not the picture (`frame-previous`, `tag-bold`, `media-play`). A surface built by a later card places the roles drawn for it here.
+Roles are lowercase, hyphenated and name the action or symbol, not the picture (`frame-previous`, `tag-bold`, `media-play`). A surface built by a later card places the roles drawn for it here. Added since K1: shape-presets (T5 [#180](https://github.com/altqx/hikari/issues/180): the drawing's shape list in its tool row, which legacy showed as a text choice with no bitmap).
 
 ## Geometry
 

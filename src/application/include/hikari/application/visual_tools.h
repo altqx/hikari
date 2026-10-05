@@ -129,7 +129,7 @@ struct ToolOption {
     enum class Kind { Toggle, Choice, Action };
     std::string name;
     Kind kind = Kind::Toggle;
-    std::string iconRole;     // the K1 set's role (toggles, actions)
+    std::string iconRole;     // the K1 set's role (toggles, actions, a choice's menu button)
     std::u16string tooltip;   // legacy's help text
     bool checked = false;     // a toggle's state
     bool enabled = true;      // legacy's greyed icons

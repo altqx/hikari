@@ -1607,6 +1607,17 @@
    ]
   },
   {
+   "role": "shape-presets",
+   "file": "shape-presets.svg",
+   "label": "Shape presets",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
    "role": "clip-invert",
    "file": "clip-invert.svg",
    "label": "Invert clip",

@@ -858,6 +858,7 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
         EXPECT_EQ(options[i].checked, i == 1); // Add line (VectorItem::toggled = 1)
     }
     EXPECT_EQ(options[6].kind, ToolOption::Kind::Choice);
+    EXPECT_EQ(options[6].iconRole, "shape-presets"); // the row shows it as an icon with its menu
     EXPECT_EQ(options[6].choices.size(), 7u);
     EXPECT_EQ(options[6].index, 0);
     // A shape chosen: the modes take no click and show none pushed
