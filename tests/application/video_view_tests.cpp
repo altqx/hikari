@@ -85,7 +85,8 @@ TEST(VideoZoom, ZoomModeAndResetMatchTheLegacyCaptures)
     three.toggleZoom(300);
     // Legacy's float arithmetic: 640 / (426.67 - 213.33) is 2.9999998, not 3
     // (RendererVideo.cpp:760), so the status bar would read 299.
-    EXPECT_FLOAT_EQ(three.zoomPercent(), 3.f);
+    EXPECT_EQ(three.zoomPercent(), std::nextafter(3.f, 0.f));
+    EXPECT_EQ(static_cast<int>(three.zoomPercent() * 100), 299);
     VideoView odd = fit16x9();
     odd.toggleZoom(1200);
     EXPECT_EQ(odd.zoomPercent(), 2.f);
