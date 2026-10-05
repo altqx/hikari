@@ -58,6 +58,10 @@ void render(void *, csri::Frame *frame, double time)
     calls.strides.push_back(frame->strides[0]);
     unsigned char *p = frame->planes[0] + frame->strides[0] * 1 + 4 * 1;
     std::memcpy(p, calls.pixel, 4);
+    // BGR_ is xy-VSFilter's MSP_RGB32 target: its AlphaBlt masks the colour
+    // channels and leaves the padding byte 0 (MemSubPic.cpp MSP_RGB32).
+    if (frame->pixfmt == csri::BGR_)
+        p[3] = 0;
 }
 
 const csri::Info xyInfo{"xy-vsfilter_textsub", "3.2", "xy-VSFilter/TextSub", "Gabest", "Copyright"};
@@ -210,6 +214,14 @@ TEST_F(Csri, BgraRefusedFallsBackToBgrx)
     EXPECT_EQ(calls.requested[1].pixfmt, csri::BGR_);
     EXPECT_EQ(calls.renderedFormats, (std::vector<int>{csri::BGR_}));
     EXPECT_TRUE(log.empty());
+    // The BGR_ output carries no alpha, so nothing shows: legacy uploaded the
+    // overlay as D3DFMT_A8R8G8B8 and blended it with D3DBLEND_SRCALPHA
+    // (RendererVideo.cpp:411-412, RendererFFMS2.cpp:298-303 and :725), where
+    // alpha 0 keeps the video. The fallback opens the instance but draws no
+    // subtitles; xy-VSFilter itself accepts BGRA (csriapi.cpp), so only
+    // another CSRI renderer reaches it.
+    EXPECT_TRUE(frame->empty);
+    EXPECT_TRUE(std::ranges::all_of(frame->pixels, [](std::uint8_t b) { return b == 0; }));
 }
 
 TEST_F(Csri, AnUnsupportedFormatClosesTheInstance)

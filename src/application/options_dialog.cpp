@@ -460,6 +460,17 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
         case Renderer:
             if (!state.contains(id))
                 break; // not offered
+            if (settings.text(id).empty()) {
+                // The default is unset, which is libass (W2: CSRI is chosen
+                // explicitly). Legacy's SetSelection(GetInt("")) showed the
+                // first entry, its default CSRI renderer, and OK would then
+                // switch to it; show libass as the opening does.
+                const auto it = std::ranges::find(lists.renderers, std::string("libass"));
+                if (it != lists.renderers.end()) {
+                    state[id] = std::int64_t(it - lists.renderers.begin());
+                    break;
+                }
+            }
             [[fallthrough]];
         case Language:
         case Dictionary:

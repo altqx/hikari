@@ -449,10 +449,25 @@ TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
     state["video.subtitleProvider"] = std::int64_t{1};
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("video.subtitleProvider"), "vsfiltermod_textsub");
-    // Set default: SetSelection(GetInt("")) shows the first entry.
+    // Set default: the default is unset, which is libass, so the choice shows
+    // libass (legacy's SetSelection(GetInt("")) showed the first entry, its
+    // default CSRI renderer) and OK keeps the video on libass.
     settings.resetAll();
     state = refreshOptionsDialogAfterReset(settings, l, state);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 2);
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
+    // libass listed first: the reset still finds it by name.
+    l.renderers = {"libass", "xy-vsfilter_textsub"};
+    settings.resetAll();
+    state = refreshOptionsDialogAfterReset(settings, l, openOptionsDialog(settings, l).state);
     EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
+    // A name that is not listed opens on the first entry, the default CSRI
+    // renderer the selection falls back to (GetVSFilter), so OK names what
+    // draws.
+    l.renderers = {"xy-vsfilter_textsub", "libass"};
+    settings.set("video.subtitleProvider", std::string("removed_textsub"));
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 0);
 }
 
 TEST(OptionsDialog, ChangingTheCatalogListsItsStyles)
