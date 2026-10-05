@@ -471,6 +471,25 @@ Dialog {
                             model: [qsTr("Linear"), qsTr("Normal"), qsTr("Unsafe (always fast)"), qsTr("Aggressive (fast in rewind)")]
                         }
                     }
+                    // W1 (Windows): the player that plays video, the
+                    // built-in one or the optional DirectShow adapter
+                    // (legacy's player with indexing off). It applies at
+                    // once; a playing video pauses.
+                    Loader {
+                        active: Qt.platform.os === "windows"
+                        Layout.fillWidth: true
+                        sourceComponent: GroupBox {
+                            objectName: "videoPlaybackPlayerBox"
+                            title: qsTr("Playback")
+                            SettingChoice {
+                                setting: "video.playbackPlayer"
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                model: [qsTr("Built-in"), "DirectShow"]
+                                Accessible.name: qsTr("Playback")
+                            }
+                        }
+                    }
                     GroupBox {
                         title: qsTr("Start video zoom in percent.")
                         Layout.fillWidth: true

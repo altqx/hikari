@@ -4518,6 +4518,25 @@ ApplicationWindow {
         standardButtons: Dialog.Ok
         Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
     }
+    // W1: DirectShow could not open the video (legacy VideoBox::LoadVideo's
+    // HikariMessageBox, titled "Warning").
+    Dialog {
+        id: playerNotice
+        objectName: "playerNotice"
+        property alias text: playerNoticeLabel.text
+        title: qsTr("Warning")
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok
+        Label { id: playerNoticeLabel; Accessible.role: Accessible.AlertMessage }
+    }
+    Connections {
+        target: root.app
+        function onPlayerNotice(message) {
+            playerNotice.text = message
+            playerNotice.open()
+        }
+    }
     Connections {
         target: root.app
         function onSpellingNotice(message) {

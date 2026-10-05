@@ -81,8 +81,16 @@ public:
     void requestFrame(int index, bool withSubtitles,
                       std::function<void(std::shared_ptr<const IndexedFrame>)> done);
 
-    // V1: the general player (none: no playback).
-    void setGeneralPlayer(GeneralPlayerPort *player) { m_player = player; }
+    // V1: the general player (none: no playback). W1: another player (the
+    // DirectShow adapter chosen in the settings) replaces it: a playing
+    // video pauses first, and the new player opens the video at the next play.
+    void setGeneralPlayer(GeneralPlayerPort *player);
+    GeneralPlayerPort *generalPlayer() const { return m_player; }
+    // W1: opens the video in the player without playing (legacy built its
+    // DirectShow graph when the video loaded, which its Filters menu lists);
+    // nothing when the player has it open already or is opening it.
+    void preparePlayer();
+    bool playerHasVideo() const { return m_player && !m_path.empty() && m_playerPath == m_path; }
     bool play();  // from the shown frame; false without video or player
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
@@ -201,6 +209,7 @@ private:
     // V1
     GeneralPlayerPort *m_player = nullptr;
     std::string m_playerPath; // what the player has open
+    bool m_preparing = false;  // W1: preparePlayer's open is pending
     bool m_playing = false;
     bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;

@@ -108,6 +108,7 @@ void VideoSession::close()
     m_stopped = false;
     m_playEndMs = 0;
     ++m_playEpoch;
+    m_preparing = false;
     m_lastGeneralUs.reset();
     m_overlayTime.reset();
     if (m_state == State::Opening)
@@ -353,8 +354,42 @@ bool VideoSession::playLine(int startMs, int endMs)
     return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
 }
 
+void VideoSession::setGeneralPlayer(GeneralPlayerPort *player)
+{
+    if (player == m_player)
+        return;
+    if (m_playing)
+        pause(); // the indexed frame of the last delivered time, as a pause shows
+    m_player = player;
+    m_playerPath.clear();
+    m_preparing = false;
+    ++m_playEpoch; // the previous player's pending answers are dropped
+}
+
+void VideoSession::preparePlayer()
+{
+    if (!m_player || m_state != State::Ready || dummy() || m_playing || m_preparing || m_playerPath == m_path)
+        return;
+    m_preparing = true;
+    const std::uint64_t epoch = m_playEpoch;
+    const std::weak_ptr<bool> alive = m_alive;
+    const std::string path = m_path;
+    m_player->open(path, [this, alive, epoch, path](std::expected<MediaDescription, PlayerError> opened) {
+        if (alive.expired() || epoch != m_playEpoch)
+            return;
+        m_preparing = false;
+        if (!opened || path != m_path)
+            return;
+        m_playerPath = path;
+        if (m_audioOrdinal >= 0 && m_audioOrdinal < static_cast<int>(opened->audioTracks.size()))
+            m_player->selectAudioTrack(m_audioOrdinal);
+        notify();
+    });
+}
+
 bool VideoSession::startPlayback(std::int64_t fromUs)
 {
+    m_preparing = false;
     m_playing = true;
     m_stopped = false;
     const std::uint64_t epoch = ++m_playEpoch;

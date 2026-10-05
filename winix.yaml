@@ -211,3 +211,13 @@ tasks:
     visualStudio: false
     timeoutSeconds: 180
     environment: {GATE_DISPLAY: status}
+  w1-tests:
+    # W1: the DirectShow adapter's tests, its Spix workflow, manifest and
+    # presence checks and the options bindings, with failure output.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "directshow|OptionsDialog" --output-on-failure
+    timeoutSeconds: 1200
+  w1-probe:
+    # W1: which encodings stock DirectShow plays: the graph DirectShow builds
+    # itself (--graph), then the adapter's open, seeks and one second of play.
+    script: $b = 'out/build/windows-x64-release'; $f = (Get-ChildItem -Recurse -Filter hikari_media_fixture.exe $b | Select-Object -First 1).FullName; $p = (Get-ChildItem -Recurse -Filter hikari_directshow_probe.exe $b | Select-Object -First 1).FullName; $d = "$env:TEMP/w1probe"; New-Item -ItemType Directory -Force $d | Out-Null; $ErrorActionPreference = 'Continue'; foreach ($k in 'dshow-cfr.avi', 'dshow-vfr.wmv', 'probe-avi-xvid.avi', 'probe-avi-fmp4.avi', 'probe-avi-m4s2.avi', 'probe-avi-mp4s.avi', 'probe-avi-div3.avi', 'probe-avi-mp43.avi', 'probe-avi-mjpeg.avi', 'probe-asf-wmv2.wmv', 'probe-asf-wmv2-vfr.wmv', 'probe-mpeg-mpeg1.mpg') { $n = $k.Substring(0, $k.LastIndexOf('.')); & $f "$d/$k" $n 2>&1 | Out-Null; Write-Output "== $k"; & $p --graph "$d/$k" 2>&1 | ForEach-Object { "$_" }; & $p "$d/$k" 1000 1500 200 1035 0 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE" }; exit 0
+    timeoutSeconds: 600

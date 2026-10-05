@@ -111,6 +111,8 @@ constexpr OptionsBinding kBindings[] = {
     // The rewrite's own, after legacy's: the Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
     {"audio.outputHostApi", IndexChoice, Audio, 0, 0, 2},
+    // W1: the video player (0 built-in, 1 DirectShow), on the Video page.
+    {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2},
 #endif
 };
 

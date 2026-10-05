@@ -37,6 +37,9 @@
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
 #include "hikari/backends/qt_general_player.h"
+#ifdef _WIN32
+#include "hikari/backends/directshow_player.h"
+#endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
 #include "log_controller.h"
@@ -91,6 +94,10 @@ signals:
     // and legacy's message boxes when the spell checker cannot start.
     void spellingChanged();
     void spellingNotice(const QString &message);
+    // W1: the chosen player changed (video.playbackPlayer).
+    void playbackPlayerChanged();
+    // W1: DirectShow could not open the video: legacy's warning box.
+    void playerNotice(const QString &message);
     // F1: find and replace shows a legacy message box (kind: 0 message, 1
     // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
     // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
@@ -286,6 +293,8 @@ public:
     // mode" step; turning it off (after QML's confirmation) is
     // turnOffTranslationMode. "Moving tags" writes AUTO_MOVE_TAGS_FROM_ORIGINAL.
     Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
+    // W1: DirectShow plays the video (Windows, video.playbackPlayer 1).
+    Q_PROPERTY(bool directShowPlayback READ directShowPlayback NOTIFY playbackPlayerChanged)
     bool translatorModeAvailable() const;
     Q_INVOKABLE bool turnOnTranslationMode();
     Q_INVOKABLE void setMoveTags(bool on);
@@ -637,6 +646,22 @@ public:
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback (V3), its volume (V4)
+    // W1: the player that plays video: the general player, or on Windows the
+    // DirectShow adapter when video.playbackPlayer is 1 (chosen there only,
+    // never as a fallback; other platforms ignore the setting).
+    application::GeneralPlayerPort &activePlayer() { return *m_activePlayer; }
+    bool directShowPlayback() const;
+#ifdef _WIN32
+    backends::DirectShowPlayer *directShowPlayer() { return m_directShow.get(); } // tests
+#endif
+    // W1: legacy's Filters menu (VideoBox::ContextMenu, DShowPlayer::
+    // EnumFilters): while DirectShow plays the loaded video, its graph's
+    // filters in order, each {name, enabled}, enabled when it has property
+    // pages; empty otherwise.
+    Q_INVOKABLE QVariantList playerFilters() const;
+    // W1: legacy FilterConfig: the named filter's property pages in a modal
+    // frame owned by `item`'s window, at (x, y) in `item`.
+    Q_INVOKABLE bool showPlayerFilterProperties(const QString &name, QObject *item, qreal x, qreal y);
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
@@ -889,6 +914,11 @@ private:
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
+#ifdef _WIN32
+    std::unique_ptr<backends::DirectShowPlayer> m_directShow; // W1, made when chosen
+#endif
+    application::GeneralPlayerPort *m_activePlayer = nullptr; // W1
+    void choosePlayer();
     // O1: declared before everything that keeps a reference to it.
     std::unique_ptr<ui::SettingsStore> m_settings;
     // O3: the legacy settings importer's generations (none without a file).

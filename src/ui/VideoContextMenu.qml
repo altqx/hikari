@@ -13,7 +13,7 @@ import Hikari.Ui
 // monitors and "Open editor" (GLOBAL_EDITOR) after Stop, and enables "Show
 // / hide progress bar" in fullscreen; V3 adds "Remove video" as "Unload
 // video" (VIDEO_DELETE_FILE) after the separator, then the streams and the
-// chapters.
+// chapters. W1 adds DirectShow's "Filters" after the separator.
 ShellMenu {
     id: menu
     objectName: "videoContextMenu"
@@ -27,7 +27,15 @@ ShellMenu {
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
 
-    onAboutToShow: recent = shell.videoView.recentFiles()
+    // W1: the DirectShow graph's filters (empty unless DirectShow plays the video).
+    property var filters: []
+    // This menu for the items of its submenus, where `menu` is MenuItem.menu
+    // (the submenu itself).
+    readonly property var contextMenu: menu
+    onAboutToShow: {
+        recent = shell.videoView.recentFiles()
+        filters = shell.app.playerFilters()
+    }
 
     function keys(symbol) {
         const key = menu.shell.boundKeys(symbol, 3)
@@ -137,4 +145,39 @@ ShellMenu {
         onTriggered: if (!menu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) menu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
     }
     MenuSeparator {}
+    // W1: legacy "Filters" (VideoBox.cpp:981-990, 1049-1052): while
+    // DirectShow plays the loaded video, the graph's filters in order, each
+    // enabled when it has property pages; choosing one opens them where the
+    // menu opened (FilterConfig), once the menu has closed. No submenu
+    // without filters.
+    Instantiator {
+        model: menu.filters.length > 0 ? 1 : 0
+        delegate: ShellMenu {
+            id: filtersMenu
+            objectName: "videoMenuFilters"
+            title: qsTr("Filters")
+            Instantiator {
+                model: menu.filters
+                delegate: ShellMenuItem {
+                    required property var modelData
+                    required property int index
+                    objectName: "videoMenuFilter" + index
+                    text: modelData.name
+                    enabled: modelData.enabled
+                    onTriggered: {
+                        // Read now; the modal frame opens once the menu has closed.
+                        const app = contextMenu.shell.app
+                        const name = modelData.name
+                        const at = contextMenu.at
+                        const owner = contextMenu.parent
+                        Qt.callLater(() => app.showPlayerFilterProperties(name, owner, at.x, at.y))
+                    }
+                }
+                onObjectAdded: (index, object) => filtersMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => filtersMenu.removeItem(object)
+            }
+        }
+        onObjectAdded: (index, object) => menu.addMenu(object)
+        onObjectRemoved: (index, object) => menu.removeMenu(object)
+    }
 }

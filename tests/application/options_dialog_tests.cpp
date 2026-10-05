@@ -149,16 +149,23 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
 {
     const auto all = optionsBindings();
 #ifdef _WIN32
-    // A4-wasapi-default: the output's host API, the rewrite's own, last.
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 1);
-    EXPECT_EQ(all.back().setting, "audio.outputHostApi");
+    // A4-wasapi-default: the output's host API, then W1's video player, the
+    // rewrite's own, last.
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 2);
+    const auto &hostApi = all[std::size(kLegacy)];
+    EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
+    EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(hostApi.page, OptionsPage::Audio);
+    EXPECT_EQ(hostApi.entries, 2);
+    EXPECT_EQ(all.back().setting, "video.playbackPlayer");
     EXPECT_EQ(all.back().control, OptionsControl::IndexChoice);
-    EXPECT_EQ(all.back().page, OptionsPage::Audio);
+    EXPECT_EQ(all.back().page, OptionsPage::Video);
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
     ASSERT_EQ(all.size(), std::size(kLegacy));
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
+    EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all;
 #endif
     for (std::size_t i = 0; i < bindings.size(); ++i) {

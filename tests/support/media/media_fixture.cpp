@@ -26,12 +26,21 @@
 //                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
 //                    tagged BT.601 limited, BT.709 limited and BT.709 full
 //                    range (I2: the decoder must convert with the tags)
+//          dshow-cfr the cfr video in AVI (W1: what stock DirectShow plays,
+//                    the AVI splitter and the MPEG-4 decoder DMO)
+//          dshow-vfr the vfr video as WMV2 in ASF (W1: the WM ASF reader and
+//                    the WMV decoder DMO)
+//          dshow-mpg the cfr video as MPEG-1 in a program stream (W1: the
+//                    MPEG-I splitter and the MPEG video decoder, a stock
+//                    filter with property pages)
+//          probe-<container>-<codec>  W1 experiments (not built by default)
 //          colorhd   the same patches at 1280x720 with no matrix or range
 //                    tags (V4: legacy's guess for an untagged frame)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/log.h>
 #include <libavutil/dict.h>
 #include <libavutil/mem.h>
 #include <libavutil/opt.h>
@@ -156,10 +165,51 @@ int main(int argc, char **argv)
     if (argc != 3)
         return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd>");
     const std::string out = argv[1], kind = argv[2];
+    av_log_set_level(AV_LOG_ERROR); // the encoders' clipping notes are noise in the build log
     if (kind == "audioonly")
         return writeAudioOnly(out);
     const bool delayed = kind == "audiodelay";
-    const bool vfr = kind == "vfr";
+    const bool vfr = kind == "vfr" || kind == "dshow-vfr" || kind.ends_with("-vfr");
+    // W1: containers and codecs stock DirectShow plays.
+    const char *container = "matroska";
+    AVCodecID codecId = AV_CODEC_ID_MPEG4;
+    const char *codecTag = nullptr;
+    AVPixelFormat pixelFormat = AV_PIX_FMT_YUV420P;
+    if (kind == "dshow-cfr") {
+        container = "avi";
+        codecTag = "XVID";
+    } else if (kind == "dshow-vfr") {
+        container = "asf";
+        codecId = AV_CODEC_ID_WMV2;
+    } else if (kind == "dshow-mpg") {
+        container = "mpeg";
+        codecId = AV_CODEC_ID_MPEG1VIDEO;
+    } else if (kind.starts_with("probe-")) {
+        // probe-<avi|asf|mpeg>-<fmp4|m4s2|xvid|mp4s|div3|wmv2|mjpeg|mpeg1>[-vfr]
+        const std::string rest = kind.substr(6);
+        container = rest.starts_with("avi") ? "avi" : rest.starts_with("asf") ? "asf" : "mpeg";
+        const std::string codec = rest.substr(rest.find('-') + 1);
+        if (codec.starts_with("div3") || codec.starts_with("mp43"))
+            codecId = AV_CODEC_ID_MSMPEG4V3;
+        else if (codec.starts_with("wmv2"))
+            codecId = AV_CODEC_ID_WMV2;
+        else if (codec.starts_with("mjpeg")) {
+            codecId = AV_CODEC_ID_MJPEG;
+            pixelFormat = AV_PIX_FMT_YUVJ420P;
+        } else if (codec.starts_with("mpeg1"))
+            codecId = AV_CODEC_ID_MPEG1VIDEO;
+        static std::string tag;
+        if (codec.starts_with("m4s2"))
+            tag = "M4S2";
+        else if (codec.starts_with("xvid"))
+            tag = "XVID";
+        else if (codec.starts_with("mp4s"))
+            tag = "MP4S";
+        else if (codec.starts_with("mp43"))
+            tag = "MP43";
+        if (!tag.empty())
+            codecTag = tag.c_str();
+    }
     const bool tracks = kind == "tracks";
     const bool extract = kind == "mkvextract";
     const bool color = kind.starts_with("color");
@@ -171,18 +221,22 @@ int main(int argc, char **argv)
     const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
-    if (avformat_alloc_output_context2(&fmt, nullptr, "matroska", out.c_str()) < 0)
+    if (avformat_alloc_output_context2(&fmt, nullptr, container, out.c_str()) < 0)
         return fail("output context");
-    const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_MPEG4);
+    const AVCodec *codec = avcodec_find_encoder(codecId);
     if (!codec)
-        return fail("no MPEG-4 encoder");
+        return fail("no video encoder");
     AVCodecContext *enc = avcodec_alloc_context3(codec);
     enc->width = kWidth;
     enc->height = kHeight;
-    enc->pix_fmt = AV_PIX_FMT_YUV420P;
+    enc->pix_fmt = pixelFormat;
+    if (codecTag)
+        enc->codec_tag = MKTAG(codecTag[0], codecTag[1], codecTag[2], codecTag[3]);
     enc->time_base = vfr ? AVRational{1, 1000} : AVRational{1001, 24000};
     enc->framerate = AVRational{24000, 1001};
     enc->gop_size = kind == "longgop" ? 600 : 12; // 600 is MPEG-4's largest interval
+    if (codecId == AV_CODEC_ID_MPEG1VIDEO) // MPEG-1 has no 24000/1001 timebase in a stream
+        enc->time_base = AVRational{1001, 24000};
     enc->max_b_frames = kind == "bframes" ? 2 : 0;
     enc->bit_rate = 2'000'000;
     if (kind == "sar") // T1: an anamorphic frame
@@ -203,6 +257,8 @@ int main(int argc, char **argv)
     AVStream *vs = avformat_new_stream(fmt, nullptr);
     avcodec_parameters_from_context(vs->codecpar, enc);
     vs->time_base = enc->time_base;
+    if (codecTag)
+        vs->codecpar->codec_tag = enc->codec_tag;
     vs->sample_aspect_ratio = enc->sample_aspect_ratio;
 
     AVCodecContext *aenc = nullptr;

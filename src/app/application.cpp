@@ -597,6 +597,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // general player takes the video volume.
     m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
     m_videoView->setPlayer(m_generalPlayer.get());
+    // W1: the player video.playbackPlayer chooses (the general player but on
+    // Windows with DirectShow chosen).
+    choosePlayer();
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        if (directShowPlayback()) // legacy built the DirectShow graph as the video loaded
+            m_video->session().preparePlayer();
+    });
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
     m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
     setUpTranslationControls(); // E5
@@ -1473,6 +1480,10 @@ void Application::refreshVideo()
     }
     // V4: the Script properties YCbCr matrix on the video's colours.
     m_video->session().setMatrix(application::sessionVideoMatrix(*session));
+#ifdef _WIN32
+    if (m_directShow) // W1: legacy RendererDirectShow::SetColorSpace
+        m_directShow->setColorSpace(m_video->session().matrix());
+#endif
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
@@ -4533,6 +4544,8 @@ void Application::settingChanged(const QString &id)
 {
     if (id == QLatin1String("audio.outputHostApi") && m_audioPlayer)
         m_audioPlayer->reopenOutput();
+    if (id == QLatin1String("video.playbackPlayer"))
+        choosePlayer(); // W1
     if (id == QLatin1String("subtitles.saveWithVideoName"))
         emit saveWithVideoNameChanged();
     else if (id == QLatin1String("video.dontAskForBadResolution"))

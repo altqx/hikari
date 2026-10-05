@@ -5963,6 +5963,9 @@ private slots:
               {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
               {"video.acceptedAudioStream", nullptr},
               {"video.ffms2Seeking", nullptr},
+#ifdef _WIN32
+              {"video.playbackPlayer", nullptr}, // W1, Windows only
+#endif
               {"video.zoomPercent", nullptr}}},
             {"settingsPageAudio",
              {{"audio.drawTimeCursor", "Show time next to cursor"},
@@ -9288,6 +9291,46 @@ private slots:
     // Windows choice is asked for and the output recorded). A change takes
     // effect when the output next opens: at once while idle, after the
     // playback while playing.
+    // W1: video.playbackPlayer chooses the player that plays video. On
+    // Windows 1 is the optional DirectShow adapter and 0 the general player;
+    // elsewhere the adapter does not exist and the setting is ignored: the
+    // general player plays, there are no filters, and the Video page offers
+    // no choice.
+    void playbackPlayerFollowsTheSetting()
+    {
+        auto &settings = *application->settingsStore();
+        auto *general = static_cast<application::GeneralPlayerPort *>(&application->generalPlayer());
+        QCOMPARE(&application->activePlayer(), general);
+        QVERIFY(!application->directShowPlayback());
+        settings.setValue(QStringLiteral("video.playbackPlayer"), 1);
+#ifdef _WIN32
+        QVERIFY(application->directShowPlayback());
+        QVERIFY(application->directShowPlayer());
+        auto *directShow = static_cast<application::GeneralPlayerPort *>(application->directShowPlayer());
+        QCOMPARE(&application->activePlayer(), directShow);
+        QCOMPARE(application->video().session().generalPlayer(), directShow);
+#else
+        QVERIFY(!application->directShowPlayback());
+        QCOMPARE(&application->activePlayer(), general);
+        QCOMPARE(application->video().session().generalPlayer(), general);
+#endif
+        QVERIFY(application->playerFilters().isEmpty()); // no video
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const bool offered = dialogItem("settingsDialog", "videoPlaybackPlayerBox") != nullptr;
+#ifdef _WIN32
+        QVERIFY(offered);
+#else
+        QVERIFY(!offered);
+#endif
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        settings.setValue(QStringLiteral("video.playbackPlayer"), 0);
+        QVERIFY(!application->directShowPlayback());
+        QCOMPARE(&application->activePlayer(), general);
+        QCOMPARE(application->video().session().generalPlayer(), general);
+    }
+
     void audioOutputFollowsTheHostApiSetting()
     {
         delete engine;
