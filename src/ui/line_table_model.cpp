@@ -389,6 +389,7 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case CpsColumn: return measuresOf(r).cps;
         case WrapsColumn: return measuresOf(r).wraps;
         case TextColumn: return shownTextOf(r);
+        case TranslationColumn: return qs(line.translation);
         default: return {};
         }
     case LineIdRole:
