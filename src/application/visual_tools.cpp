@@ -1,5 +1,6 @@
 #include "hikari/application/visual_tools.h"
 
+#include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
 
 #include <algorithm>
@@ -168,6 +169,10 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
     switch (family) {
     case Family::Crosshair:
         return std::make_unique<CrosshairTool>();
+    case Family::RectangleClip:
+        return std::make_unique<RectangleClipTool>(); // T4
+    case Family::VectorClip:
+        return std::make_unique<VectorClipTool>(); // T4
     default:
         return nullptr;
     }
