@@ -122,6 +122,11 @@ hikari_add_spix_test(hikari_ui_visual_tools_workflow SOURCES visual_tools_workfl
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_media_fixtures)
+# T2: Position and Move's numeric and keyboard alternatives through the real UI (Spix workflow).
+hikari_add_spix_test(hikari_ui_visual_position_workflow SOURCES visual_position_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_visual_position_workflow hikari_media_helper hikari_media_fixtures)
 # K1: the vector icon set: the icon manifest test, the tint, the default
 # colours' contrast, live colours, and the rendering fixtures (contact sheets)
 # at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.
