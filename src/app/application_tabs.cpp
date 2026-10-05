@@ -157,13 +157,14 @@ void Application::closeDocument(application::DocumentId document)
 void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
+    m_matroskaPaths.erase(document.value);
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)
         emit unresolvedRestoresChanged();
 }
 
-void Application::replaceTarget(application::DocumentId replacement)
+void Application::replaceTarget(application::DocumentId replacement, bool keepMedia)
 {
     const auto old = m_workspace.editingTarget();
     if (!old || *old == replacement) {
@@ -177,9 +178,19 @@ void Application::replaceTarget(application::DocumentId replacement)
     TabMedia media;
     if (const auto it = m_tabMedia.find(old->value); it != m_tabMedia.end())
         media = it->second;
-    media.video.clear();
-    media.position = 0;
+    if (keepMedia) {
+        // Y9 (OnMkvSubs): Clearing resets the Grid's scroll; the tab's
+        // video, its position, audio and keyframes stay.
+        media.scroll = 0;
+        if (QString::fromStdString(m_video->session().path()) == media.video &&
+            m_video->session().state() == application::VideoSession::State::Ready)
+            media.position = targetVideoPosition();
+    } else {
+        media.video.clear();
+        media.position = 0;
+    }
     media.audio = m_audio->hasAudio() ? QDir::toNativeSeparators(m_audio->path()) : QString();
+    m_keepVideoOnEnter = keepMedia;
     discardRecovery(*old);
     m_files->close(*old);
     m_workspace.replace(*old, replacement);
@@ -301,8 +312,15 @@ void Application::enterTabMedia(std::optional<application::DocumentId> previous,
         return;
     }
     const TabMedia media = m_tabMedia[document->value];
-    m_pendingKeyframes = media.keyframes; // applied when the video is ready
-    if (!media.video.isEmpty()) {
+    // Y9: subtitles loaded into the tab from its own video leave that video
+    // open as it is (OnMkvSubs only reloads the subtitles on it).
+    const auto &shownVideo = m_video->session();
+    const bool keepVideo = std::exchange(m_keepVideoOnEnter, false) && !media.video.isEmpty() &&
+                           QString::fromStdString(shownVideo.path()) == media.video &&
+                           shownVideo.state() == application::VideoSession::State::Ready;
+    if (!keepVideo)
+        m_pendingKeyframes = media.keyframes; // applied when the video is ready
+    if (!media.video.isEmpty() && !keepVideo) {
         m_pendingTabSeek = std::pair(media.video, media.position);
         if (!media.audio.isEmpty())
             m_keepTabAudio = media.video;

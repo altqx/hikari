@@ -100,6 +100,9 @@ hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_c
 hikari_add_gtest(hikari_application_font_collector_tests SOURCES font_collector_tests.cpp
     LIBRARIES hikari_application LABELS application)
 target_include_directories(hikari_application_font_collector_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+# Y9: MKV extraction (legacy Demux, OnMkvSubs and CopyMKVFonts).
+hikari_add_gtest(hikari_application_matroska_tests SOURCES matroska_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # T1: the visual tools' transform, crosshair and gestures, with the legacy
 # probe's observations.
 hikari_add_gtest(hikari_application_visual_tools_tests SOURCES visual_tools_tests.cpp

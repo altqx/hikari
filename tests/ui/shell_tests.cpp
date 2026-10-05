@@ -11,6 +11,9 @@
 #include "line_table_model.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
+#include "hikari/backends/ffms_matroska.h"
+#include "hikari/core/ass_save.h"
+#include "media/mkv_fixture.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
 
@@ -2634,6 +2637,279 @@ private slots:
             // F4-rules-cr keeps it checked on both platforms.
             QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
         }
+    }
+
+    // Y9: GRID_SUBS_FROM_MKV (legacy SubsGrid::OnMkvSubs and Demux at
+    // 20d647c4): enabled for a ".mkv"/".ogm" video name in any case
+    // (Y9-mkv-case; legacy's SubsGrid.cpp:289 was case-sensitive); "The
+    // file does not contain any subtitle tracks."; the question for a
+    // modified Document; the track chooser; the loaded
+    // track replaces the tab's Document, which keeps its video and is named
+    // after it; Cancel and the helper's loss change nothing.
+    void matroskaSubtitlesLoadIntoTheTab()
+    {
+        const QString subs = writeFile(dir, "mkvtab.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,before\n");
+        QVERIFY(application->openFile(subs));
+        auto &matroska = application->matroska();
+        auto *item = named("gridSubsFromMkv");
+        QVERIFY(item);
+        QVERIFY(!item->property("enabled").toBool()); // no video
+        const auto target = [&] { return *application->workspace().editingTarget(); };
+        const auto before = target();
+        const auto videoReady = [&](const QString &path) {
+            return QTest::qWaitFor([&] {
+                return application->video().hasVideo() &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) ==
+                           QDir::toNativeSeparators(path) &&
+                       application->video().session().state() == application::VideoSession::State::Ready;
+            }, 30000);
+        };
+        // Y9-mkv-case: an upper-case extension is offered (legacy's
+        // VideoName.EndsWith(".mkv") was not). The copy of a video without
+        // text tracks.
+        const QString upper = dir.filePath(QStringLiteral("upper.MKV"));
+        QVERIFY(QFile::copy(nativeFixture("cfr.mkv"), upper));
+        application->video().openVideo(upper);
+        QVERIFY(videoReady(upper));
+        QTRY_VERIFY(matroska.available());
+        QTRY_VERIFY(item->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        auto *noTracks = named("mkvNoTracksMessage");
+        QTRY_VERIFY_WITH_TIMEOUT(noTracks->property("visible").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(noTracks, "accept"));
+        QCOMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+
+        // The extraction fixture: an ASS and a SubRip track. A modified
+        // Document asks first (Yes / No / Cancel).
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QVERIFY(videoReady(mkv));
+        QTRY_VERIFY(matroska.available());
+        application->duplicateLines();
+        QVERIFY(application->files().session(before)->isDirty());
+        auto *question = named("mkvSaveQuestion");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(question && chooser);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
+        QTRY_VERIFY(!question->property("visible").toBool());
+        QCOMPARE(matroska.state(), 0);
+        // No: the tracks, then "Choose subtitle track"; its Cancel reads nothing.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose subtitle track"));
+        QCOMPARE(chooser->property("labels").toStringList(),
+                 (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "reject"));
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+        QVERIFY(application->files().session(before)->isDirty());
+
+        // The helper lost while listing: nothing changes.
+        QVERIFY(matroska.start());
+        auto *port = dynamic_cast<backends::FfmsMatroska *>(&matroska.port());
+        QVERIFY(port && port->helperHost());
+        port->helperHost()->stop();
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(target(), before);
+
+        // Yes saves the Document to its file first (Hikari->Save(false)); OK
+        // on the first row: the ASS track replaces the tab's Document.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
+        application->waitForWrites();
+        {
+            QFile saved(subs);
+            QVERIFY(saved.open(QIODevice::ReadOnly));
+            QCOMPARE(saved.readAll().count(",before"), 2); // the duplicated Line was written
+        }
+        QTRY_COMPARE(matroska.state(), 0);
+        auto *loaded = application->files().session(target());
+        QVERIFY(loaded);
+        const auto bytes = core::encodeAss(loaded->document());
+        QCOMPARE(QByteArray(reinterpret_cast<const char *>(bytes.data()), qsizetype(bytes.size())),
+                 QByteArray("[Script Info]\r\nScriptType: v4.00+\r\nPlayResX: 320\r\nPlayResY: 240\r\n"
+                            "YCbCr Matrix: TV.601\r\n\r\n[V4+ Styles]\r\n"
+                            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                            "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                            "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\r\n"
+                            "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,"
+                            "0,1,2,2,2,10,10,10,1\r\n\r\n[Events]\r\n"
+                            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                            "Dialogue: 0,0:00:00.20,0:00:00.60,Default,,0,0,0,,Sign one\r\n"
+                            "Dialogue: 1,0:00:01.23,0:00:01.73,Default,Actor,0,0,0,,Sign two\r\n"));
+        // Unsaved, with no file yet: Save asks for one, named after the video.
+        QVERIFY(loaded->isDirty());
+        QVERIFY(application->targetUntitled());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.ass"));
+        QCOMPARE(application->saveRoute(), QStringLiteral("dialog"));
+        QCOMPARE(QDir::toNativeSeparators(application->saveDialogValues().value(QStringLiteral("file")).toUrl().toLocalFile()),
+                 QDir::toNativeSeparators(QFileInfo(mkv).absolutePath() + QStringLiteral("/mkvextract")));
+        // The tab keeps its video.
+        QVERIFY(application->video().hasVideo());
+        QCOMPARE(QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())), mkv);
+        QVERIFY(matroska.available());
+
+        // GRID_SUBS_FROM_MKV from the Grid's hotkey path, the SubRip track:
+        // an SRT Document named ".srt".
+        const auto ass = target();
+        auto *root = engine->rootObjects().first();
+        QVariant handled;
+        QVERIFY(QMetaObject::invokeMethod(root, "runGridHotkey", Q_RETURN_ARG(QVariant, handled),
+                                          Q_ARG(QVariant, QStringLiteral("GRID_SUBS_FROM_MKV"))));
+        QVERIFY(handled.toBool());
+        QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        named("mkvTrackList")->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != ass, 20000);
+        auto *srt = application->files().session(target());
+        QCOMPARE(srt->document().format(), core::SubtitleFormat::Srt);
+        QCOMPARE(srt->document().lines().size(), std::size_t(1));
+        QCOMPARE(srt->document().lines()[0]->text, std::u8string(u8"Pierwsza"));
+        QCOMPARE(srt->document().lines()[0]->start.value.microseconds(), 500'000);
+        QCOMPARE(srt->document().lines()[0]->end.value.microseconds(), 1'500'000);
+        QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
+    }
+
+    // Y9: the font collector's "Demux fonts from loaded MKV file"
+    // (FontCollector.cpp:181-183, 440-541, 913-982): enabled for an MKV
+    // video, kept in FONT_COLLECTOR_FROM_MKV (Y9-from-mkv-saved; legacy only
+    // read it); a check-only run lists the MKV's fonts and writes nothing
+    // (Y9-mkv-check-only); Start lists the font attachments, Apply writes
+    // their bytes into the folder or the archive with legacy's messages.
+    void fontCollectorDemuxesMkvFonts()
+    {
+        const QString subs = writeFile(dir, "mkvfonts.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n");
+        QVERIFY(application->openFile(subs));
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        auto &collector = application->fontCollector();
+        auto *dialog = named("fontCollectorDialog");
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *fromMkv = dialogItem("fontCollectorDialog", "fontCollectorFromMkv");
+        QVERIFY(fromMkv);
+        QCOMPARE(fromMkv->property("text").toString(), QStringLiteral("Demux fonts from loaded MKV file"));
+        // Enabled for an MKV video whatever the Options choice (at open).
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
+        QVERIFY(fromMkv->property("enabled").toBool());
+        QVERIFY(!fromMkv->property("checked").toBool());
+        // Y9-from-mkv-saved: checking it writes FONT_COLLECTOR_FROM_MKV.
+        QVERIFY(QMetaObject::invokeMethod(fromMkv, "click"));
+        QVERIFY(collector.fromMkv());
+        QVERIFY(application->settingsStore()->boolean("fontCollector.fromMkv"));
+        // Y9-mkv-check-only: the check mode lists the MKV's fonts and writes
+        // nothing (legacy ran COPY_MKV_FONTS into the last copypath, or
+        // logged "Cannot create folder." without one, FontCollector.cpp:440-447).
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        const QString checked = collector.logText();
+        QVERIFY2(checked.startsWith(QStringLiteral("Font named \"Extract Sans.ttf\".\nFont named \"Extract Serif.otf\".\n"
+                                                   "\nFinished in 00:00:")),
+                 qPrintable(checked));
+        QVERIFY2(!checked.contains(QStringLiteral("Ready to")) && !checked.contains(QStringLiteral("Cannot create folder.")),
+                 qPrintable(checked));
+        QVERIFY(collector.copyPath().isEmpty());
+        QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+        collector.apply(true); // no review to apply
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QCOMPARE(collector.logText(), checked);
+        // Y9-from-mkv-saved: the box is checked again when the window reopens.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(collector.fromMkv());
+        QTRY_VERIFY(fromMkv->property("checked").toBool());
+        // An Options change: only the copy modes keep it enabled.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+        QVERIFY(fromMkv->property("enabled").toBool());
+        QVERIFY(fromMkv->property("checked").toBool());
+        const QString folder = QDir::toNativeSeparators(dir.filePath(QStringLiteral("mkvfonts")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", folder);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        const QString sep = QDir::separator();
+        QCOMPARE(collector.logText(), QStringLiteral("Font named \"Extract Sans.ttf\".\nFont named \"Extract Serif.otf\".\n"
+                                                     "\nReady to copy 2 fonts to \"%1\".\n")
+                                          .arg(folder + sep));
+        QVERIFY(!QFileInfo::exists(folder)); // nothing written before Apply
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        const QString log = collector.logText();
+        QVERIFY2(log.startsWith(QStringLiteral("Saved a font named \"Extract Sans.ttf\".\n \n"
+                                               "Saved a font named \"Extract Serif.otf\".\n \n"
+                                               "Completed successfully and copied 2 fonts.\nFinished in 00:00:")),
+                 qPrintable(log));
+        const auto fonts = mkvfixture::mkvExtractFonts();
+        for (const auto &[file, index] : {std::pair{"Extract Sans.ttf", 0}, std::pair{"Extract Serif.otf", 1}}) {
+            QFile f(QDir(folder).filePath(QLatin1String(file)));
+            QVERIFY2(f.open(QIODevice::ReadOnly), file);
+            QCOMPARE(f.readAll(), QByteArray::fromStdString(fonts[std::size_t(index)].data));
+        }
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+        // The archive: one entry per font under its name.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
+        const QString archive = QDir::toNativeSeparators(dir.filePath(QStringLiteral("mkvfonts.zip")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", archive);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QVERIFY(collector.logText().endsWith(QStringLiteral("Ready to add 2 fonts to the archive \"%1\".\n").arg(archive)));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
+        QVERIFY(collector.waitIdle());
+        QFile zip(archive);
+        QVERIFY(zip.open(QIODevice::ReadOnly));
+        const QByteArray zipped = zip.readAll();
+        QVERIFY(zipped.contains("Extract Sans.ttf") && zipped.contains("Extract Serif.otf"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // Y9-from-mkv-saved: the kept value with a video that is not an MKV
+        // file. The box shows it checked but disabled, and a disabled box
+        // demuxes nothing: "Save to video / subtitles folder." writes beside
+        // the subtitles, not beside the video.
+        QVERIFY(QDir(dir.path()).mkpath(QStringLiteral("notmkv")));
+        const QString other = dir.filePath(QStringLiteral("notmkv/other.mp4"));
+        QVERIFY(QFile::copy(nativeFixture("cfr.mkv"), other));
+        application->video().openVideo(other);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready &&
+                                     QDir::toNativeSeparators(QString::fromStdString(
+                                         application->video().session().path())) == QDir::toNativeSeparators(other),
+                                 30000);
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_VERIFY(fromMkv->property("checked").toBool());
+        QVERIFY(!fromMkv->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+        QVERIFY(!fromMkv->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorSubsDirectory"), "click"));
+        QVERIFY(application->settingsStore()->boolean("fontCollector.useSubsDirectory"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(dir.filePath(QStringLiteral("Fonts"))) + sep);
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("notmkv/Fonts"))));
+        // Unchecking writes it back.
+        collector.setFromMkv(false);
+        QVERIFY(!application->settingsStore()->boolean("fontCollector.fromMkv"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     // Y8: Subtitles > Font collector (legacy FontCollectorDialog): check

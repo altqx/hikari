@@ -8,9 +8,13 @@
 // FontCollectorThread did. The copy modes use the staged review (routing
 // #60): Start prepares and logs what would be written, Apply writes it; an
 // incomplete review is written only after acknowledgment and then labelled
-// (routing #54). "Demux fonts from loaded MKV file" belongs to Y9.
+// (routing #54). Y9: "Demux fonts from loaded MKV file" (FontCollector::
+// CopyMKVFonts, FontCollector.cpp:181-183, 440-541, 913-982) reads every
+// tab's font attachments through the media helper; Start shows them and
+// Apply writes them into the folder or archive.
 
 #include "hikari/application/font_collector.h"
+#include "hikari/application/matroska.h"
 
 #include <QDir>
 #include <QElapsedTimer>
@@ -46,6 +50,9 @@ class FontCollectorController : public QObject {
     Q_PROPERTY(bool reviewIncomplete READ reviewIncomplete NOTIFY stageChanged)
     Q_PROPERTY(bool canSaveFolder READ canSaveFolder NOTIFY stageChanged)
     Q_PROPERTY(QString copyPath READ copyPath NOTIFY stageChanged)
+    // Y9: "Demux fonts from loaded MKV file" and whether it can be checked.
+    Q_PROPERTY(bool fromMkv READ fromMkv NOTIFY settingsChanged)
+    Q_PROPERTY(bool fromMkvEnabled READ fromMkvEnabled NOTIFY settingsChanged)
 public:
     enum Stage { Options = 0, Working = 1, Review = 2, Done = 3 };
     Q_ENUM(Stage)
@@ -53,6 +60,7 @@ public:
     struct Tab {
         std::shared_ptr<const core::Document> document; // a copy for the run
         QString path;                                  // SubsPath; empty when unsaved
+        QString video;                                 // VideoPath (Y9); empty without a video
     };
     struct Hooks {
         std::function<std::vector<Tab>()> tabs; // every tab, in order
@@ -77,12 +85,17 @@ public:
     bool reviewIncomplete() const { return m_review && !m_review->complete(); }
     bool canSaveFolder() const { return m_canSaveFolder; }
     QString copyPath() const { return m_copyPath; }
+    bool fromMkv() const { return m_fromMkv; }
+    bool fromMkvEnabled() const { return m_fromMkvEnabled; }
 
     // ShowDialog: a new dialog with the settings' values, an empty log and
     // "Save folder" disabled.
     Q_INVOKABLE void open();
     // OnChangeOpt: the Options choice and the checkbox are saved.
     Q_INVOKABLE void changeOptions(int action, bool useSubsDirectory);
+    // Y9: the checkbox. Legacy reads FONT_COLLECTOR_FROM_MKV when the window
+    // opens and never writes it, so a click lasts until the window closes.
+    Q_INVOKABLE void setFromMkv(bool on);
     // OnButtonPath: where the folder or archive chooser starts ({folder,
     // name}), then what it returned. A cancelled chooser's empty answer
     // keeps the previous path (FC-chooser-cancel; legacy stored it).
@@ -109,6 +122,8 @@ public:
 
     // Tests: another font service, and waiting for the worker.
     void setFontService(std::unique_ptr<application::FontServicePort> service);
+    // Y9: the media helper that reads the MKV attachments.
+    void setMatroskaPort(std::unique_ptr<application::MatroskaPort> port) { m_matroska = std::move(port); }
     bool waitIdle(int ms = 30000);
     void setCloseWait(int ms) { m_closeWaitMs = ms; } // how long close() waits for a running job
 
@@ -140,6 +155,14 @@ private:
     void applied(application::CollectorResult result);
     void join();
     void setStage(Stage stage);
+    // Y9: the MKV fonts run.
+    QString currentVideo() const;
+    void runMkvPrepare();
+    void mkvNext(std::uint64_t run);
+    void mkvPrepared(bool cancelled);
+    void mkvApply();
+    void mkvApplied(std::vector<application::MatroskaFontsSaved> saved, bool cancelled);
+    void logMkvTab(std::size_t index);
 
     ui::SettingsStore &m_settings;
     Hooks m_hooks;
@@ -163,6 +186,16 @@ private:
     QElapsedTimer m_clock;
     qint64 m_elapsed = 0;
     int m_closeWaitMs = 30000;
+    // Y9
+    std::unique_ptr<application::MatroskaPort> m_matroska;
+    bool m_fromMkv = false;
+    bool m_fromMkvEnabled = false;
+    bool m_runMkv = false;       // this run is COPY_MKV_FONTS
+    bool m_runAllTabs = false;   // ON_ALL_TABS
+    bool m_runZip = false;       // AS_ZIP
+    std::vector<QString> m_mkvVideos;
+    std::vector<application::MatroskaFontTab> m_mkvTabs;
+    std::uint64_t m_mkvRun = 0;
 };
 
 } // namespace hikari::app

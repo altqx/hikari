@@ -31,3 +31,5 @@ target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hika
     settings_import_controller.cpp include/hikari/app/settings_import_controller.h)
 # Y6: Font catalogs, the font picker's lists and the external fonts folder.
 target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)
+# Y9: GRID_SUBS_FROM_MKV.
+target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)

@@ -253,6 +253,10 @@ void FontCollectorController::open()
     m_action = std::clamp(m_settings.integer("fontCollector.action"), 0, 2);
     m_directory = m_settings.text("fontCollector.directory");
     m_useSubsDirectory = m_settings.boolean("fontCollector.useSubsDirectory");
+    // FontCollectorDialog (FontCollector.cpp:181-183): enabled for an MKV
+    // video whatever the Options choice; checked from the setting.
+    m_fromMkv = m_settings.boolean("fontCollector.fromMkv");
+    m_fromMkvEnabled = application::fontsFromMkvEnabled(currentVideo().toStdU16String());
     clearLog();
     m_review.reset();
     m_canSaveFolder = false;
@@ -271,7 +275,29 @@ void FontCollectorController::changeOptions(int action, bool useSubsDirectory)
     m_settings.set("fontCollector.action", m_action);
     m_settings.set("fontCollector.useSubsDirectory", m_useSubsDirectory);
     m_settings.sync();
+    // fromMKV->Enable(opts->GetSelection() != 0 && VideoPath ends with ".mkv").
+    m_fromMkvEnabled = m_action != 0 && application::fontsFromMkvEnabled(currentVideo().toStdU16String());
     emit settingsChanged();
+}
+
+void FontCollectorController::setFromMkv(bool on)
+{
+    // Legacy's checkbox had no handler, so FONT_COLLECTOR_FROM_MKV was read
+    // and never written (FontCollector.cpp:181-183); it is kept as the
+    // other options are (Y9-from-mkv-saved).
+    if (m_fromMkv == on)
+        return;
+    m_fromMkv = on;
+    m_settings.set("fontCollector.fromMkv", on);
+    m_settings.sync();
+    emit settingsChanged();
+}
+
+QString FontCollectorController::currentVideo() const
+{
+    const auto tabs = m_hooks.tabs ? m_hooks.tabs() : std::vector<Tab>{};
+    const int current = m_hooks.currentTab ? m_hooks.currentTab() : -1;
+    return current >= 0 && current < int(tabs.size()) ? tabs[std::size_t(current)].video : QString();
 }
 
 QVariantMap FontCollectorController::chooserStart(const QString &path) const
@@ -323,8 +349,24 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     m_runAction = CollectorAction(m_action);
     m_pendingArchive.clear();
     m_removeArchive.clear();
+    // operation = fromMKV checked and enabled ? COPY_MKV_FONTS : ...
+    // (FontCollector.cpp:440-445); ON_ALL_TABS for "Start on tabs".
+    m_runMkv = m_fromMkv && m_fromMkvEnabled;
+    m_runAllTabs = allTabs;
+    m_runZip = false;
+    m_mkvVideos.clear();
+    for (int i = 0; i < int(tabs.size()); ++i)
+        if (allTabs || i == current)
+            m_mkvVideos.push_back(tabs[std::size_t(i)].video);
     if (m_action == 0) {
-        runPrepare();
+        // StartCollect at once. Legacy's MKV run here wrote into the window's
+        // last copypath ("Cannot create folder." without one, FontCollector.cpp:
+        // 440-447); it lists the MKV's fonts and writes nothing
+        // (Y9-mkv-check-only).
+        if (m_runMkv)
+            runMkvPrepare();
+        else
+            runPrepare();
         return {};
     }
     const auto refuse = [](const QString &message) { return QVariantMap{{QStringLiteral("message"), message}}; };
@@ -338,7 +380,12 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     const QString subsPath = current >= 0 && current < int(tabs.size()) ? tabs[std::size_t(current)].path : QString();
     if (path.isEmpty() && !m_useSubsDirectory)
         return refuse(tr("Select the folder where you want to copy fonts"));
-    if (m_useSubsDirectory && subsPath.isEmpty())
+    // Legacy's subsfromMkv was the checkbox's value, enabled or not
+    // (FontCollector.cpp:453-467); a disabled box could be checked there only
+    // in the check mode, which never reaches this. With the value kept
+    // (Y9-from-mkv-saved) a checked box is disabled for a video that is not
+    // an MKV file, and then demuxes nothing: the run's own MKV choice.
+    if (!m_runMkv && m_useSubsDirectory && subsPath.isEmpty())
         return refuse(tr("No subtitles loaded. Load subtitles or deselect this option."));
     const QString pathValue = normalizePath(path);
     const bool zip = m_action == 2;
@@ -346,12 +393,14 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         return refuse(tr("Choose a name for the archive"));
     QString copypath;
     if (m_useSubsDirectory) {
-        const QString rest = pathName(subsPath);
+        // sourcePath: the video when demuxing fonts from the MKV (480).
+        const QString sourcePath = m_runMkv ? currentVideo() : subsPath;
+        const QString rest = pathName(sourcePath);
         // Legacy always wrote a Polish "Czcionki" folder (FontCollector.cpp:
         // 482); the folder is named in the interface language
         // (FC-czcionki). An existing Czcionki folder is left as it is.
         const QString fontDir =
-            pathJoin(pathDir(subsPath), tr("Fonts", "the folder the font collector writes beside the subtitles"));
+            pathJoin(pathDir(sourcePath), tr("Fonts", "the folder the font collector writes beside the subtitles"));
         const qsizetype dot = rest.lastIndexOf(QLatin1Char('.'));
         copypath = zip ? pathJoin(fontDir, (dot < 0 ? rest : rest.left(dot)) + QStringLiteral(".zip")) : fontDir + separator();
     } else {
@@ -374,13 +423,18 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
             copypath = pathDir(copypath, true);
     } else if (QFileInfo::exists(copypath)) {
         m_copyPath = copypath;
+        m_runZip = zip;
         m_pendingArchive = copypath;
         return {{QStringLiteral("question"), tr("The zip file already exists, delete it?")},
                 {QStringLiteral("title"), tr("Confirmation")},
                 {QStringLiteral("archive"), copypath}};
     }
     m_copyPath = copypath;
-    runPrepare();
+    m_runZip = zip;
+    if (m_runMkv)
+        runMkvPrepare();
+    else
+        runPrepare();
     return {};
 }
 
@@ -397,7 +451,10 @@ bool FontCollectorController::confirmReplace(bool remove)
     // keeps it, and the new archive replaces it when written.
     if (remove)
         m_removeArchive = archive;
-    runPrepare();
+    if (m_runMkv)
+        runMkvPrepare();
+    else
+        runPrepare();
     return true;
 }
 
@@ -623,6 +680,10 @@ void FontCollectorController::prepared(std::expected<CollectorReview, applicatio
 
 void FontCollectorController::apply(bool acknowledged)
 {
+    if (m_stage == Review && m_runMkv) {
+        mkvApply();
+        return;
+    }
     if (m_stage != Review || !m_review)
         return;
     if (!m_review->complete() && !acknowledged)
@@ -683,19 +744,231 @@ void FontCollectorController::applied(CollectorResult result)
     setStage(Done);
 }
 
+// --- Y9: COPY_MKV_FONTS ---------------------------------------------------
+
+namespace {
+
+// MakeDirectory with an empty copypath: wxDir::Make("") fails.
+class NoFolderOutput final : public application::CollectorOutput {
+public:
+    bool open() override { return false; }
+    bool folderFailed() const override { return true; }
+    bool put(const std::u16string &, const std::vector<std::byte> &) override { return false; }
+    bool label(const std::string &) override { return false; }
+    bool unlabel() override { return true; }
+    bool commit() override { return true; }
+    void discard() override {}
+};
+
+} // namespace
+
+void FontCollectorController::runMkvPrepare()
+{
+    join();
+    m_cancel = false;
+    m_elapsed = 0;
+    m_clock.start();
+    m_mkvTabs.clear();
+    setStage(Working);
+    mkvNext(++m_mkvRun);
+}
+
+void FontCollectorController::mkvNext(std::uint64_t run)
+{
+    // CopyMKVFontsFromTab for each tab in order (FontCollector.cpp:933-950).
+    if (run != m_mkvRun)
+        return;
+    if (m_cancel)
+        return mkvPrepared(true);
+    if (m_mkvTabs.size() == m_mkvVideos.size())
+        return mkvPrepared(false);
+    const QString video = m_mkvVideos[m_mkvTabs.size()];
+    application::MatroskaFontTab tab;
+    tab.video = video.toStdU16String();
+    if (!application::isMkvExtension(tab.video) || !m_matroska) {
+        tab.status = application::MatroskaFontTab::Status::NotMkv;
+        m_mkvTabs.push_back(std::move(tab));
+        return mkvNext(run);
+    }
+    m_matroska->attachments(video.toStdString(), [this, run, tab = std::move(tab)](
+                                                     std::expected<std::vector<application::MatroskaAttachment>,
+                                                                   application::MatroskaError> read) mutable {
+        if (run != m_mkvRun)
+            return;
+        using Status = application::MatroskaFontTab::Status;
+        if (!read && read.error().failure == application::MatroskaFailure::Cancelled) {
+            m_cancel = true;
+        } else if (!read) {
+            tab.status = Status::CannotOpen; // Demux::Open failed (or the helper was lost)
+        } else {
+            tab.fonts = application::matroskaFonts(*read);
+            tab.status = tab.fonts.empty() ? Status::NoFonts : Status::Fonts;
+        }
+        if (!m_cancel)
+            m_mkvTabs.push_back(std::move(tab));
+        QMetaObject::invokeMethod(this, [this, run] { mkvNext(run); }, Qt::QueuedConnection);
+    });
+}
+
+void FontCollectorController::logMkvTab(std::size_t index)
+{
+    using Status = application::MatroskaFontTab::Status;
+    const auto &tab = m_mkvTabs[index];
+    if (m_runAllTabs) // CopyMKVFonts with ON_ALL_TABS (FontCollector.cpp:921)
+        send(tr("Video: %1\n\n").arg(qs(tab.video)), kNormal);
+    switch (tab.status) {
+    case Status::NotMkv:
+        send(tr("This video is not an MKV file."), kWarning);
+        break;
+    case Status::CannotOpen:
+        send(tr("Cannot open MKV file"), kWarning);
+        break;
+    case Status::NoFonts:
+        send(tr("Loaded MKV file does not have any fonts."), kWarning);
+        break;
+    case Status::Fonts:
+        break;
+    }
+}
+
+void FontCollectorController::mkvPrepared(bool cancelled)
+{
+    m_elapsed += m_clock.elapsed();
+    clearLog();
+    if (cancelled) {
+        m_mkvTabs.clear();
+        send(tr("Cancelled; nothing was written.\n"), kWarning);
+        logFinished();
+        emit logChanged();
+        setStage(Done);
+        return;
+    }
+    // The staged review: each tab's outcome and the fonts Apply would write.
+    int count = 0;
+    for (std::size_t i = 0; i < m_mkvTabs.size(); ++i) {
+        logMkvTab(i);
+        for (const auto &font : m_mkvTabs[i].fonts) {
+            send(tr("Font named \"%1\".\n").arg(qs(font.name)), kNormal);
+            ++count;
+        }
+    }
+    if (m_runAction == CollectorAction::Check) {
+        // Y9-mkv-check-only: the list is the result; there is no review.
+        m_mkvTabs.clear();
+        logFinished();
+        emit logChanged();
+        setStage(Done);
+        return;
+    }
+    if (count == 0) {
+        // Nothing to write: the run ends as legacy's did, with "Save folder".
+        m_mkvTabs.clear();
+        logFinished();
+        m_canSaveFolder = true;
+        emit logChanged();
+        setStage(Done);
+        return;
+    }
+    const QString target = m_copyPath.isEmpty() ? tr("(no folder)") : m_copyPath;
+    send(QStringLiteral("\n") + (m_runZip ? tr("Ready to add %1 to the archive \"%2\".\n").arg(fonts(count), target)
+                                           : tr("Ready to copy %1 to \"%2\".\n").arg(fonts(count), target)),
+         kNormal);
+    emit logChanged();
+    setStage(Review);
+}
+
+void FontCollectorController::mkvApply()
+{
+    if (!m_removeArchive.isEmpty() && QFileInfo::exists(m_removeArchive) && !QFile::remove(m_removeArchive))
+        return;
+    m_removeArchive.clear();
+    join();
+    m_cancel = false;
+    m_clock.start();
+    setStage(Working);
+    const auto tabs = m_mkvTabs;
+    const QString path = m_copyPath;
+    const bool zip = m_runZip;
+    m_worker = std::thread([this, tabs, path, zip] {
+        // MakeDirectory(operation & AS_ZIP) and SaveFont: the archive, or the
+        // folder SaveFont writes into (HikariPathDir(copypath)).
+        std::unique_ptr<application::CollectorOutput> output;
+        if (zip)
+            output = std::make_unique<backends::ZipCollectorOutput>(path);
+        else if (path.isEmpty())
+            output = std::make_unique<NoFolderOutput>();
+        else
+            output = std::make_unique<backends::FolderCollectorOutput>(pathDir(path, true));
+        auto saved = application::saveMatroskaFonts(tabs, *output, &m_cancel);
+        output.reset();
+        const bool cancelled = m_cancel;
+        QMetaObject::invokeMethod(this, [this, saved = std::move(saved), cancelled]() mutable {
+            mkvApplied(std::move(saved), cancelled);
+        }, Qt::QueuedConnection);
+    });
+}
+
+void FontCollectorController::mkvApplied(std::vector<application::MatroskaFontsSaved> saved, bool cancelled)
+{
+    join();
+    m_elapsed += m_clock.elapsed();
+    clearLog();
+    // CopyMKVFontsFromTab's messages (FontCollector.cpp:953-981).
+    for (std::size_t i = 0; i < m_mkvTabs.size() && i < saved.size(); ++i) {
+        logMkvTab(i);
+        const auto &tab = m_mkvTabs[i];
+        const auto &result = saved[i];
+        if (tab.status != application::MatroskaFontTab::Status::Fonts)
+            continue;
+        if (result.outputFailed) {
+            if (result.cannotCreateFolder)
+                send(tr("Cannot create folder."), kWarning);
+            continue;
+        }
+        int copied = 0;
+        for (std::size_t k = 0; k < result.saved.size(); ++k) {
+            const QString name = qs(tab.fonts[k].name);
+            if (result.saved[k]) {
+                send(tr("Saved a font named \"") + name + QStringLiteral("\".\n \n"), kNormal);
+                ++copied;
+            } else {
+                send(tr("Cannot save font named \"") + name + QStringLiteral("\".\n \n"), kWarning);
+            }
+        }
+        if (result.cancelled) {
+            send(tr("Writing was cancelled.\n"), kWarning);
+            break;
+        }
+        const int total = int(tab.fonts.size());
+        if (copied < total)
+            send(tr("Completed, copied %1 fonts.\nFailed to copy %2 fonts.").arg(copied).arg(total - copied), kWarning);
+        else
+            send(tr("Completed successfully and copied %1 fonts.").arg(copied), kSuccess);
+    }
+    (void)cancelled;
+    m_mkvTabs.clear();
+    logFinished();
+    m_canSaveFolder = true; // EVT_ENABLE_OPEN_FOLDER after a COPY_MKV_FONTS run
+    emit logChanged();
+    setStage(Done);
+}
+
 void FontCollectorController::cancel()
 {
     m_cancel = true;
+    if (m_runMkv && m_stage == Working && m_matroska)
+        m_matroska->cancel(); // the attachments being read
 }
 
 void FontCollectorController::close()
 {
-    m_cancel = true;
+    cancel();
     // A job that outlasts the wait ends cancelled later; its result (applied)
     // still reads the review and drops it then.
     if (m_stage == Working && !waitIdle(m_closeWaitMs))
         return;
     m_review.reset();
+    m_mkvTabs.clear();
     m_removeArchive.clear(); // the review's Yes goes with it: the archive stays
     if (m_stage == Review)
         setStage(Options);

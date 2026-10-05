@@ -18,6 +18,10 @@
 //          audioonly 2 s of 48 kHz stereo PCM and no video: left is
 //                    audioOnlySample(i), right half of it (A1)
 //          unknown   the cfr video written as a live stream: no duration
+//          mkvextract the cfr video with an ASS track ("Signs", eng, with
+//                    kMkvExtractHeader as its codec-private data), a SubRip
+//                    track ("Full", pol) and the font attachments of
+//                    mkvExtractFonts() (Y9)
 //          color601, color709, color709full
 //                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
 //                    tagged BT.601 limited, BT.709 limited and BT.709 full
@@ -35,6 +39,8 @@ extern "C" {
 #include <cstdio>
 #include <cstring>
 #include <string>
+
+#include "mkv_fixture.h"
 
 namespace {
 
@@ -150,6 +156,7 @@ int main(int argc, char **argv)
     const bool delayed = kind == "audiodelay";
     const bool vfr = kind == "vfr";
     const bool tracks = kind == "tracks";
+    const bool extract = kind == "mkvextract";
     const bool color = kind.starts_with("color");
     const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
 
@@ -224,6 +231,36 @@ int main(int argc, char **argv)
             chapter->end = (c + 1) * 1000;
             av_dict_set(&chapter->metadata, "title", c == 0 ? "Opening" : "Second", 0);
             fmt->chapters[c] = chapter;
+        }
+    }
+    AVStream *assTrack = nullptr, *srtTrack = nullptr;
+    if (extract) {
+        // Y9: two text tracks and font attachments beside the video.
+        assTrack = avformat_new_stream(fmt, nullptr);
+        assTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        assTrack->codecpar->codec_id = AV_CODEC_ID_ASS;
+        const std::string &header = mkvfixture::kMkvExtractHeader;
+        assTrack->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(header.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+        std::memcpy(assTrack->codecpar->extradata, header.data(), header.size());
+        assTrack->codecpar->extradata_size = int(header.size());
+        assTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&assTrack->metadata, "language", "eng", 0);
+        av_dict_set(&assTrack->metadata, "title", "Signs", 0);
+        srtTrack = avformat_new_stream(fmt, nullptr);
+        srtTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        srtTrack->codecpar->codec_id = AV_CODEC_ID_SUBRIP;
+        srtTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&srtTrack->metadata, "language", "pol", 0);
+        av_dict_set(&srtTrack->metadata, "title", "Full", 0);
+        for (const auto &font : mkvfixture::mkvExtractFonts()) {
+            AVStream *a = avformat_new_stream(fmt, nullptr);
+            a->codecpar->codec_type = AVMEDIA_TYPE_ATTACHMENT;
+            a->codecpar->codec_id = AV_CODEC_ID_TTF;
+            a->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(font.data.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+            std::memcpy(a->codecpar->extradata, font.data.data(), font.data.size());
+            a->codecpar->extradata_size = int(font.data.size());
+            av_dict_set(&a->metadata, "filename", font.filename.c_str(), 0);
+            av_dict_set(&a->metadata, "mimetype", font.mimetype.c_str(), 0);
         }
     }
     AVDictionary *muxerOptions = nullptr;
@@ -318,6 +355,22 @@ int main(int argc, char **argv)
         av_packet_rescale_ts(sp, AVRational{1, 1000}, ss->time_base);
         av_interleaved_write_frame(fmt, sp);
         av_packet_free(&sp);
+    }
+    if (extract) {
+        // Interleaved with nothing else: the video is already written.
+        const auto writeText = [&](AVStream *st, const mkvfixture::Packet &p) {
+            AVPacket *sp = av_packet_alloc();
+            av_new_packet(sp, int(p.data.size()));
+            std::memcpy(sp->data, p.data.data(), p.data.size());
+            sp->pts = sp->dts = p.start;
+            sp->duration = p.duration;
+            sp->stream_index = st->index;
+            av_packet_rescale_ts(sp, AVRational{1, 1000}, st->time_base);
+            av_interleaved_write_frame(fmt, sp);
+            av_packet_free(&sp);
+        };
+        for (const auto &[track, p] : mkvfixture::mkvExtractPackets())
+            writeText(track == 0 ? assTrack : srtTrack, p);
     }
     av_write_trailer(fmt);
     avio_closep(&fmt->pb);
