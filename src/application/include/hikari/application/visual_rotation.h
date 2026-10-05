@@ -53,6 +53,7 @@ public:
     PointF lastmove() const { return m_lastmove; }
     const std::array<PointF, 2> &twoPoints() const { return m_twoPoints; }
     const std::array<bool, 2> &visibility() const { return m_visibility; }
+    std::pair<long, long> editorCaret() const { return m_find.selection(); } // as ScaleTool's
 
 private:
     void changeTool(int tool, bool blockSetCurVisual, VisualHost &host);
@@ -121,6 +122,7 @@ public:
     PointF org() const { return m_org; }
     PointF angle() const { return m_angle; }
     PointF oldAngle() const { return m_oldAngle; }
+    std::pair<long, long> editorCaret() const { return m_find.selection(); } // as ScaleTool's
 
 private:
     void changeTool(int tool, bool blockSetCurVisual, VisualHost &host);

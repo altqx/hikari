@@ -97,6 +97,11 @@ public:
     mutable FixedMeasure measure;
     std::pair<long, long> caret{0, 0};
     std::vector<std::u16string> logged;
+    // Every history step as legacy recorded its commit: "dummy <action>" for
+    // the several-Line path's SetModified, "<action>" for the one-Line path's
+    // EditBox::Send (Visuals.cpp:791-796, 820-825); the action is the
+    // history's VISUAL_* number (SubsFile.h:67-69).
+    std::vector<std::string> history, sent;
 
     const VideoView &view() const override { return v; }
     const EditSession *session() const override { return s.get(); }
@@ -115,8 +120,17 @@ public:
     Gesture *gesture() override { return g ? &*g : nullptr; }
     std::expected<void, CommandRefusal> commitGesture() override
     {
+        const auto &name = g->history();
+        const std::string action = name == familyInfo(Family::Scale).history        ? "40"
+                                   : name == familyInfo(Family::RotationZ).history ? "41"
+                                   : name == familyInfo(Family::RotationXY).history ? "42"
+                                                                                    : name;
+        const bool several = !(g->targets().size() == 1 && g->targets().front() == activeLine());
+        const std::size_t steps = s->historySize();
         auto r = g->commit(*s);
         g.reset();
+        if (s->historySize() > steps)
+            (several ? history : sent).push_back(several ? "dummy " + action : action);
         return r;
     }
     void cancelGesture() override { g.reset(); }
@@ -402,6 +416,7 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
         ASSERT_EQ(host.v.zoomScale(), c.zoomScale);
         std::unique_ptr<VisualTool> tool;
         std::size_t step = 0;
+        std::size_t noStepSends = 0; // below
         bool several = !c.select.empty() && !(c.select.size() == 1 && c.select[0] == c.active);
         for (const std::string &op : c.ops) {
             std::istringstream in(op);
@@ -480,9 +495,53 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                     EXPECT_EQ(lineOf(*host.s, all[i])->text, u8(l[0])) << "line " << i;
                     EXPECT_EQ(lineOf(*host.s, all[i])->translation, u8(l[1])) << "line " << i;
                 }
-                // The editor's text, on the one-Line path.
-                if (!several)
+                // The editor's text and caret, on the one-Line path. Legacy
+                // moved the caret to the tag on every sample (Visuals.cpp:
+                // 813-815); the rewrite's editor shows the Document, so the
+                // tool holds the caret while the gesture runs and the editor
+                // takes it with the written text on release.
+                const QJsonArray caret = o[QStringLiteral("caret")].toArray();
+                const std::pair<long, long> legacyCaret{caret[0].toInteger(), caret[1].toInteger()};
+                if (!several) {
                     EXPECT_EQ(editorText(host, c), u8(o[QStringLiteral("editor")]));
+                    std::pair<long, long> held;
+                    if (const auto *s = dynamic_cast<const ScaleTool *>(tool.get()))
+                        held = s->editorCaret();
+                    else if (const auto *z = dynamic_cast<const RotationZTool *>(tool.get()))
+                        held = z->editorCaret();
+                    else
+                        held = dynamic_cast<const RotationXYTool *>(tool.get())->editorCaret();
+                    EXPECT_EQ(held, legacyCaret) << "the tool's caret";
+                }
+                if (!host.g)
+                    EXPECT_EQ(host.caret, legacyCaret) << "the editor's caret";
+                // The commits (SetModified, Send) and the log, in order.
+                const auto strings = [](const QJsonValue &v) {
+                    std::vector<std::string> out;
+                    for (const QJsonValue &e : v.toArray())
+                        out.push_back(e.toString().toStdString());
+                    return out;
+                };
+                // Legacy committed on every release (RotationZ::OnMouseEvent,
+                // VisualRotationZ.cpp:150-152), so the release after the
+                // two-point angle's first point and after a click off both
+                // points sent the unchanged text, and that made an undo step:
+                // CopyDialogue marks the file edited (SubsFile.cpp:408-417)
+                // and SetModified saves the undo state (SubsGridBase.cpp:
+                // 1125-1157). The rewrite opens no gesture there, and a
+                // release with nothing staged records nothing (visual-tools.md,
+                // the gesture rule): those steps are left out here, a
+                // difference named in the report.
+                if (c.name == "rotz-two-points" && (step - 1 == 1 || step - 1 == 5))
+                    ++noStepSends;
+                auto legacySent = strings(o[QStringLiteral("sent")]);
+                legacySent.resize(legacySent.size() - noStepSends);
+                EXPECT_EQ(host.history, strings(o[QStringLiteral("history")]));
+                EXPECT_EQ(host.sent, legacySent);
+                std::vector<std::string> logged;
+                for (const auto &l : host.logged)
+                    logged.push_back(QString::fromStdU16String(l).toStdString());
+                EXPECT_EQ(logged, strings(o[QStringLiteral("log")]));
                 // The handles.
                 if (const auto *s = dynamic_cast<const ScaleTool *>(tool.get())) {
                     EXPECT_EQ(s->from(), pair(o[QStringLiteral("from")]));
@@ -526,3 +585,4 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
     }
     EXPECT_GT(states, 70);
 }
+

@@ -49,6 +49,9 @@ public:
     PointF border() const { return m_border; }
     bool rectangleVisible() const { return m_rectangleVisible; }
     bool originalRectangleVisible() const { return m_originalRectangleVisible; }
+    // Legacy's editor caret (TextEdit's selection): FindTag's, moved to the
+    // tag while a one-Line gesture runs and given to the editor on release.
+    std::pair<long, long> editorCaret() const { return m_find.selection(); }
 
 private:
     // Scale::ChangeTool / SetCurVisual / SetVisual (Visuals::SetVisual).
