@@ -1681,7 +1681,7 @@ ApplicationWindow {
                     // V4: the wheel over the panel is the volume's (VideoBox.cpp:519-534).
                     WheelHandler {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-                        onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120))
+                        onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
                 VisualToolValues {
                     Layout.fillWidth: true

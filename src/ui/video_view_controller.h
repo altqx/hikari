@@ -92,8 +92,9 @@ public:
     // release without Ctrl pauses or plays with VIDEO_PAUSE_ON_CLICK.
     Q_INVOKABLE bool pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
     // The wheel over the panel below the video: the volume slider's wheel
-    // (VideoBox.cpp:519-534), or the zoom mode's.
-    Q_INVOKABLE void panelWheel(int steps);
+    // (VideoBox.cpp:519-534), or the zoom mode's; Ctrl+wheel does nothing
+    // there (VideoBox.cpp:508-518, the docked panel is never fullscreen).
+    Q_INVOKABLE void panelWheel(int steps, int modifiers = 0);
     // A key the Video panel's bindings left (VideoBox::OnKeyPress): Return
     // in the zoom mode, Ctrl+Shift+Z.
     Q_INVOKABLE bool key(int key, int modifiers);

@@ -7690,7 +7690,11 @@ private slots:
         QCOMPARE(player.volume(), std::pow(10.0, -16.0 / 100.0 / 20.0));
         // The wheel over the panel: three a step.
         auto *times = item("videoTimes");
-        wheelAt(times->mapToScene(QPointF(times->width() / 2, times->height() / 2)).toPoint(), -2);
+        const QPoint onPanel = times->mapToScene(QPointF(times->width() / 2, times->height() / 2)).toPoint();
+        wheelAt(onPanel, -2);
+        QCOMPARE(view.volume(), -10);
+        // Ctrl+wheel returned first outside fullscreen: no volume (VideoBox.cpp:508-518).
+        wheelAt(onPanel, -2, Qt::ControlModifier);
         QCOMPARE(view.volume(), -10);
         // The slider.
         volume->setProperty("value", -40);
@@ -7714,12 +7718,40 @@ private slots:
         QTemporaryDir folder;
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
+        // The recent lists (VideoBox.cpp:952-965): the first twenty of each,
+        // by file name; a missing file skips its row of both lists (legacy's
+        // `continue`), so b.mkv goes with missing.ass. recent.video is read
+        // here; its writer is GLOBAL_RECENT_VIDEO's (V3 #182).
+        for (const char *name : {"b.mkv", "c.mkv"}) {
+            QFile f(folder.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        application->settingsStore()->set(
+            "recent.subtitles", QStringList{folder.filePath(QStringLiteral("clip.ass")), folder.filePath(QStringLiteral("missing.ass"))});
+        application->settingsStore()->set("recent.video", QStringList{folder.filePath(QStringLiteral("clip.mkv")),
+                                                                      folder.filePath(QStringLiteral("b.mkv")),
+                                                                      folder.filePath(QStringLiteral("c.mkv"))});
         auto &tools = application->visualTools();
         const QPoint c = videoPoint(tools.videoRect().center());
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, c);
         auto *menu = named("videoContextMenu");
         QTRY_VERIFY(menu->property("opened").toBool());
         auto enabled = [&](const char *name) { return named(name)->property("enabled").toBool(); };
+        auto text = [&](const char *name) { return named(name)->property("text").toString(); };
+        QTRY_VERIFY(named("videoMenuRecentVideos1"));
+        QCOMPARE(text("videoMenuRecentSubtitles0"), QStringLiteral("clip.ass"));
+        QVERIFY(!named("videoMenuRecentSubtitles1"));
+        QCOMPARE(text("videoMenuRecentVideos0"), QStringLiteral("clip.mkv"));
+        QCOMPARE(text("videoMenuRecentVideos1"), QStringLiteral("c.mkv"));
+        QVERIFY(!named("videoMenuRecentVideos2"));
+        // Open video and Open subtitles carry their Global bindings.
+        auto label = [&](const QString &name, const char *symbol) {
+            const QString key = application->hotkeys().accelOf(QLatin1String(symbol), 0);
+            return key.isEmpty() ? name : name + QLatin1Char('\t') + key;
+        };
+        QVERIFY(!application->hotkeys().accelOf(QStringLiteral("GLOBAL_OPEN_SUBS"), 0).isEmpty());
+        QCOMPARE(text("videoMenuOpenVideo"), label(QStringLiteral("Open video"), "GLOBAL_OPEN_VIDEO"));
+        QCOMPARE(text("videoMenuOpenSubtitles"), label(QStringLiteral("Open subtitles"), "GLOBAL_OPEN_SUBS"));
         QCOMPARE(named("videoMenuPlayPause")->property("text").toString(), QStringLiteral("Play\tSpace"));
         QVERIFY(enabled("videoMenuPlayPause"));
         QVERIFY(!enabled("videoMenuStop")); // not playing

@@ -211,7 +211,7 @@ bool VideoViewController::pointer(int kind, qreal x, qreal y, int button, int bu
     return false;
 }
 
-void VideoViewController::panelWheel(int steps)
+void VideoViewController::panelWheel(int steps, int modifiers)
 {
     if (!m_video.hasVideo() || steps == 0)
         return;
@@ -220,6 +220,10 @@ void VideoViewController::panelWheel(int steps)
         viewChanged();
         return;
     }
+    // Ctrl+wheel outside fullscreen returned before the volume, doing
+    // nothing below the video (VideoBox.cpp:508-518).
+    if ((modifiers & Qt::ControlModifier) != 0)
+        return;
     if (const auto v = application::videoVolumeWheelStep(volume(), steps))
         setVolume(*v);
 }
