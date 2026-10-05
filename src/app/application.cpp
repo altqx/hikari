@@ -846,6 +846,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return;
         session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
         m_shell->setSelection(session->selection());
+        followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
     });
     // The editor's Start/End difference measures from the frame the Video panel shows.
     m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
