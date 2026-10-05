@@ -34,3 +34,5 @@ target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hika
 target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)
 # Y9: GRID_SUBS_FROM_MKV.
 target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
+# V6: timing and selecting Lines from the video, and the video following the active Line.
+target_sources(hikari_composition PRIVATE application_video_timing.cpp)

@@ -778,6 +778,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->log(problem);
     });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
+    connect(m_editor.get(), &ui::LineEditorController::leftLineCommitted, this,
+            [this](qulonglong id) { m_leftEditedLine = core::LineId{id}; });
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
         const auto target = m_workspace.editingTarget();
         auto *session = target ? m_files->session(*target) : nullptr;
@@ -934,6 +936,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     trackTabMedia(); // P6
     trackVideoSources(); // V3
+    trackVideoFollow(); // V6
     refreshViews();
 }
 
@@ -1054,9 +1057,13 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
     if (outcome && outcome->stepped)
         refreshViews();
     m_audioCommitting = before;
-    // SubsGrid::NextLine: the next Line, selected alone
-    if (outcome && outcome->next)
+    // SubsGrid::NextLine: the next Line, selected alone; its SetLine plays
+    // the play-after choice (V6: autoPlay)
+    if (outcome && outcome->next) {
+        m_lineChangeOrigin = LineChangeOrigin{false, true};
         applySelection(gridSelection().plain(session->selection(), *outcome->next));
+        m_lineChangeOrigin.reset();
+    }
 }
 
 // A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).
@@ -1343,6 +1350,7 @@ void Application::refreshViews()
 
 void Application::refreshVideo()
 {
+    const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (target != m_videoDocument) {
@@ -1370,7 +1378,9 @@ void Application::refreshVideo()
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
+    bool edited = false;
     if (session->revision() != m_videoRevision) {
+        edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
         m_videoRevision = session->revision();
         m_video->session().setSubtitles(m_visualTools->subtitles(session->document())); // T4: with the tool's preview
     }
@@ -1384,12 +1394,15 @@ void Application::refreshVideo()
             if (line->id == *active)
                 lineTimes = std::pair(line->start.value, line->end.value);
     m_video->setActiveLineTimes(lineTimes);
+    // V6: the video follows the active Line as legacy's MOVE_VIDEO_TO_ACTIVE_LINE
+    // and VIDEO_PLAY_AFTER_SELECTION choices say (EditBox::SetLine), and an
+    // edit as ShowEditOnVideo does; the Document's first sight does neither.
+    bool rowChanged = false;
     if (active && active != m_videoLine) {
+        rowChanged = m_videoLine.has_value();
         m_videoLine = active;
-        for (const auto *line : session->document().lines())
-            if (line->id == *active)
-                m_video->session().seekTo(line->start.value);
     }
+    followActiveLine(rowChanged, edited, left);
 }
 
 namespace {
@@ -1945,7 +1958,7 @@ void Application::extendSelection(int rows)
         applySelection(gridSelection().shiftKey(session->selection(), rows));
 }
 
-void Application::clickLine(qulonglong id, int modifiers)
+void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)
 {
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
@@ -1954,12 +1967,30 @@ void Application::clickLine(qulonglong id, int modifiers)
     const auto rules = gridSelection();
     const bool ctrl = modifiers & Qt::ControlModifier, shift = modifiers & Qt::ShiftModifier;
     const core::LineId line{id};
-    if (shift)
+    const auto before = session->selection().active;
+    // V6: legacy SubsGrid::OnMouseEvent (SubsGridWindow.cpp:1625-1649): a
+    // press makes the Line active through SetLine(row, ..., nochangeline,
+    // autoPlay = !ctrl) when GRID_CHANGE_ACTIVE_ON_SELECTION is on or Ctrl is
+    // up; a double click does only with Ctrl (and then selects the Line alone).
+    std::optional<LineChangeOrigin> origin;
+    if (!shift && (doubleClick ? ctrl : (m_settings->boolean("grid.changeActiveOnSelection") || !ctrl)))
+        origin = LineChangeOrigin{true, !ctrl};
+    m_lineChangeOrigin = origin;
+    if (doubleClick) {
+        if (ctrl && !shift)
+            applySelection(rules.plain(session->selection(), line));
+    } else if (shift)
         applySelection(rules.shiftClick(session->selection(), line, ctrl));
     else if (ctrl)
         applySelection(rules.ctrlClick(session->selection(), line));
     else
         applySelection(rules.plain(session->selection(), line));
+    // A press on the active Line: SetLine's "goto done" still plays.
+    if (origin && m_lineChangeOrigin && session->selection().active == before)
+        followShownLine(false, *origin);
+    m_lineChangeOrigin.reset();
+    if (!shift)
+        followGridPress(before, line, modifiers, endColumn, doubleClick);
 }
 
 void Application::dragSelection(qulonglong id)

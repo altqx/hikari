@@ -323,3 +323,36 @@ target_compile_options(legacy_clip_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_clip_capture PRIVATE ${wx_libs})
+
+# V6: the legacy video timing and selection commands and the seek-after /
+# play-after choices. The definitions are copied out of their files unchanged
+# (extract_functions.py); Timebase.cpp and SubsTime.cpp are linked as they
+# are; the GUI they touch is stood in for by video_timing/standins.h.
+set(vt_gen "${CMAKE_CURRENT_BINARY_DIR}/video_timing")
+file(MAKE_DIRECTORY "${vt_gen}")
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VideoBox.cpp" "${vt_gen}/videobox.inc"
+    "int VideoBox::GetFrameTime(bool start)"
+    "void VideoBox::GetVideoListsOptions(int *videoPlayAfter, int *videoSeekAfter)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsGridBase.cpp" "${vt_gen}/grid_base.inc"
+    "void SubsGrid::SetStartTime(int stime)" "void SubsGrid::SetEndTime(int etime)" "void SubsGrid::SelectVisible()"
+    "void SubsGrid::ShowEditOnVideo(bool afterUndo)"
+    "size_t SubsGrid::GetKeyFromPosition(size_t position, int delta, bool safe /*= true*/)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsGridWindow.cpp" "${vt_gen}/grid_window.inc"
+    "void SubsGrid::SelVideoLine(int curtime)" "void SubsGrid::SetVideoLineTime(wxMouseEvent &evt, int mvtal)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/HikariSubFrame.cpp" "${vt_gen}/frame.inc"
+    "void HikariSubFrame::OnAudioSnap(wxCommandEvent& event)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/EditBox.cpp" "${vt_gen}/editbox.inc"
+    "void EditBox::SetLine(int Row, bool setaudio, bool save, bool nochangeline, bool autoPlay)"
+    COMMAND_ERROR_IS_FATAL ANY)
+add_executable(legacy_video_timing_capture video_timing_capture.cpp log_stub.cpp
+    "${legacy_hs}/Timebase.cpp" "${legacy_hs}/SubsTime.cpp")
+target_include_directories(legacy_video_timing_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/video_timing" "${vt_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_video_timing_capture PRIVATE
+    _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT
+    LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_video_timing_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_video_timing_capture PRIVATE ${wx_libs})

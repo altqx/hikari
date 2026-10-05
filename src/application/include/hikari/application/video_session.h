@@ -134,6 +134,19 @@ public:
     void setKeyframes(std::vector<int> frames);
     // The legacy Timebase over this video (empty without one).
     LegacyTimebase legacyTimebase() const;
+    // V6: legacy VideoBox::Tell (RendererVideo::m_Time): the shown frame's
+    // time in whole ms while paused or stopped, the last delivered frame's
+    // while playing; 0 without video.
+    int tellMs() const;
+    // V6: legacy GetDuration (FFMS2's LastTime): the last frame's start in ms.
+    int durationMs() const;
+    // V6: legacy VideoBox::Seek while playing (RendererFFMS2::SetPosition):
+    // playback goes on from the frame a start time (or an end time) shows.
+    // While not playing it is seekTo / seekToEnd.
+    void seekKeepPlaying(core::DocumentTime time, bool startTime);
+    // V6: legacy Play(); Pause() on a Stopped video (SetVideoLineTime): it is
+    // Paused where it stands.
+    void unstop() { m_stopped = false; }
 
     State state() const { return m_state; }
     const std::string &path() const { return m_path; }

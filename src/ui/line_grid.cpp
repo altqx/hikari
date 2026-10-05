@@ -310,7 +310,7 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
             return;
         }
         if (const auto id = row >= 0 ? lineAtRow(row) : std::nullopt; id && !isRowSelected(row))
-            emit lineClicked(id->value, 0);
+            emit activeLineRequested(id->value); // a plain selection, not a press (V6: the video stays)
         emit contextMenuRequested(event->position().x(), event->position().y());
         event->accept();
         return;
@@ -346,8 +346,38 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     }
     m_dragLine = id;
     if (id)
-        emit lineClicked(id->value, static_cast<int>(event->modifiers()));
+        emit lineClicked(id->value, static_cast<int>(event->modifiers()), inEndColumn(event->position().x()), false);
     event->accept();
+}
+
+// V6: legacy's LeftDClick on a Line moves the video to it (SubsGridWindow.cpp:1647,
+// SetVideoLineTime); the press before it has already selected the Line.
+void LineGrid::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton || (m_markWidth > 0 && event->position().x() < m_markWidth)) {
+        event->ignore();
+        return;
+    }
+    const int row = rowAt(event->position().y());
+    const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
+    if (!id || m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
+        event->ignore();
+        return;
+    }
+    emit lineClicked(id->value, static_cast<int>(event->modifiers()), inEndColumn(event->position().x()), true);
+    event->accept();
+}
+
+bool LineGrid::inEndColumn(qreal x) const
+{
+    const auto widths = columnWidths(width() - m_markWidth);
+    double left = m_markWidth;
+    for (std::size_t c = 0; c < widths.size(); ++c) {
+        if (x >= left && x < left + widths[c])
+            return modelColumn(static_cast<int>(c)) == LineTableModel::EndColumn;
+        left += widths[c];
+    }
+    return false;
 }
 
 void LineGrid::mouseMoveEvent(QMouseEvent *event)

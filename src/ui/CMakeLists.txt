@@ -74,3 +74,5 @@ target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoVolumeSlider.qml)
+# V6: the video toolbar's seek-after and play-after lists.
+qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)

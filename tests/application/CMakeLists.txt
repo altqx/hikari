@@ -153,3 +153,10 @@ target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
 # V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
 hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# V6: timing and selecting Lines from the video and the video following the
+# active Line, with the legacy probe's observations.
+hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_video_timing_tests PRIVATE
+    HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/video-timing-cases.txt"
+    HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")

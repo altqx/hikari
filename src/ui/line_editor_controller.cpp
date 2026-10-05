@@ -200,6 +200,7 @@ bool LineEditorController::showLine(qulonglong id)
         return false;
     const auto before = s->historySize();
     const auto revision = s->revision();
+    const auto left = s->draftLine();
     if (!s->navigateTo(core::LineId{id})) {
         fail(problemText());
         if (s->selection().active)
@@ -209,8 +210,11 @@ bool LineEditorController::showLine(qulonglong id)
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
-    if (s->historySize() != before || s->revision() != revision)
+    if (s->historySize() != before || s->revision() != revision) {
+        if (left && left->value != id)
+            emit leftLineCommitted(left->value);
         committed();
+    }
     refresh();
     return true;
 }

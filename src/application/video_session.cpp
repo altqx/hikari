@@ -489,6 +489,44 @@ LegacyTimebase VideoSession::legacyTimebase() const
     return LegacyTimebase(std::move(timecodes), m_fps);
 }
 
+int VideoSession::tellMs() const
+{
+    if (m_state != State::Ready || m_starts.empty())
+        return 0;
+    if (m_playing && m_lastGeneralUs)
+        return static_cast<int>(*m_lastGeneralUs / 1000);
+    const int frame = std::clamp(m_requested.value_or(0), 0, frameCount() - 1);
+    return static_cast<int>(msOf(m_starts[static_cast<std::size_t>(frame)]));
+}
+
+int VideoSession::durationMs() const
+{
+    return m_state == State::Ready && !m_starts.empty() ? static_cast<int>(msOf(m_starts.back())) : 0;
+}
+
+void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
+{
+    if (!m_playing || !m_timeline) {
+        if (startTime)
+            seekTo(time);
+        else
+            seekToEnd(time);
+        return;
+    }
+    int frame = 0;
+    if (startTime) {
+        const auto at = m_timeline->frameAtOrAfter(time);
+        frame = at ? static_cast<int>(at->value()) : frameCount() - 1;
+    } else {
+        const core::DocumentTime before(std::max<std::int64_t>(0, time.microseconds() - 1000));
+        const auto at = m_timeline->frameContaining(before);
+        frame = at ? static_cast<int>(at->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1);
+    }
+    m_requested = frame;
+    m_playEndMs = 0; // legacy SetPosition resets the play end
+    startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
+}
+
 bool VideoSession::isKeyframe(int index) const
 {
     return std::binary_search(m_keyframes.begin(), m_keyframes.end(), index);

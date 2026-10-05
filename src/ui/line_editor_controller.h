@@ -185,6 +185,9 @@ public:
 signals:
     void changed();
     void lineChanged(qulonglong id); // the active Line moved (keeps the Grid in step)
+    // V6: showLine committed `line`'s draft on leaving it (legacy SetLine's
+    // Send of the old Line, EditBox.cpp:383-384); emitted before changed().
+    void leftLineCommitted(qulonglong line);
     void selectionRequested();
 
 private:

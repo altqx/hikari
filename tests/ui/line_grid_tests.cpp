@@ -14,6 +14,7 @@
 #include <QPainter>
 #include <QQuickWindow>
 #include <QScopeGuard>
+#include <QSignalSpy>
 #include <QTest>
 
 #include <cstdio>
@@ -375,6 +376,51 @@ private slots:
             if (QTest::currentTestFailed())
                 return;
         }
+    }
+
+    // V6: a press and a double click report whether they are in the End
+    // column (legacy SubsGrid::SetVideoLineTime seeks to the end there,
+    // SubsGridWindow.cpp:1382-1395); a double click is reported as such.
+    void pressesReportTheEndColumnAndDoubleClicks()
+    {
+        struct Grid : LineGrid {
+            using LineGrid::mouseDoubleClickEvent;
+            using LineGrid::mousePressEvent;
+        };
+        LineTableModel model;
+        model.setDocument(generate(3));
+        Grid grid;
+        grid.setSize(QSizeF(800, 300));
+        grid.setModel(&model);
+        int end = -1, start = -1;
+        for (int c = 0; c < grid.columnCount(); ++c) {
+            if (grid.columnTitle(c) == QLatin1String("End"))
+                end = c;
+            if (grid.columnTitle(c) == QLatin1String("Start"))
+                start = c;
+        }
+        QVERIFY(end >= 0 && start >= 0);
+        QSignalSpy clicked(&grid, &LineGrid::lineClicked);
+        auto send = [&](QEvent::Type type, QPointF at, Qt::KeyboardModifiers mods = Qt::NoModifier) {
+            QMouseEvent event(type, at, at, at, Qt::LeftButton, Qt::LeftButton, mods);
+            if (type == QEvent::MouseButtonDblClick)
+                grid.mouseDoubleClickEvent(&event);
+            else
+                grid.mousePressEvent(&event);
+        };
+        send(QEvent::MouseButtonPress, grid.cellRect(1, end).center());
+        send(QEvent::MouseButtonDblClick, grid.cellRect(1, end).center(), Qt::ControlModifier);
+        send(QEvent::MouseButtonDblClick, grid.cellRect(2, start).center());
+        QCOMPARE(clicked.size(), 3);
+        QCOMPARE(clicked[0].at(0).toULongLong(), grid.lineAtRow(1)->value);
+        QCOMPARE(clicked[0].at(2).toBool(), true);  // End column
+        QCOMPARE(clicked[0].at(3).toBool(), false); // a press
+        QCOMPARE(clicked[1].at(1).toInt(), int(Qt::ControlModifier));
+        QCOMPARE(clicked[1].at(2).toBool(), true);
+        QCOMPARE(clicked[1].at(3).toBool(), true); // a double click
+        QCOMPARE(clicked[2].at(0).toULongLong(), grid.lineAtRow(2)->value);
+        QCOMPARE(clicked[2].at(2).toBool(), false); // the Start column
+        QCOMPARE(clicked[2].at(3).toBool(), true);
     }
 
     void followsModelChanges()

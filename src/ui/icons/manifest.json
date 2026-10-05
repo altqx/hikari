@@ -330,8 +330,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V6 #185"
+   ]
   },
   {
    "role": "set-end-time",
@@ -344,8 +343,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V6 #185"
+   ]
   },
   {
    "role": "frame-previous",
