@@ -861,8 +861,10 @@ ApplicationWindow {
             }
             // V3: legacy's order (HikariSubFrame.cpp:246-258): the recent
             // videos (GLOBAL_RECENT_VIDEO), Open keyframes, the recent
-            // keyframes (GLOBAL_RECENT_KEYFRAMES; legacy OnMenuOpened enables
-            // it with a video loaded) and Open dummy video.
+            // keyframes (GLOBAL_RECENT_KEYFRAMES) and Open dummy video.
+            // Legacy OnMenuOpened (HikariSubFrame.cpp:2252-2275) enables
+            // Open keyframes and the recent keyframes with a video loaded, and
+            // OnMenuSelected checks that for their hotkeys too (:681-687).
             RecentFilesMenu {
                 iconRole: "recent-video"
                 objectName: "recentVideoMenu"
@@ -872,10 +874,12 @@ ApplicationWindow {
                 onChosen: path => root.video.openVideo(path)
             }
             ShellMenuItem {
+                objectName: "openKeyframesMenuItem"
                 iconRole: "open-keyframes"
                 action: Action {
                     id: openKeyframesAction
                     text: qsTr("Open keyframes")
+                    enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
                 }
             }
