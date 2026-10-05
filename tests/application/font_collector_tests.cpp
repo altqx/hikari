@@ -385,6 +385,77 @@ TEST(FontCollectorReview, RendererOnlyFilesAreReportedNotCollected)
     EXPECT_NE(label.find("tab 1: 1 of 1 frames differ"), std::string::npos);
 }
 
+// A Document the renderer cannot read is not verified: the collection is
+// incomplete in every mode, never "Completed Successfully" by default, and
+// the copy is written only after acknowledgment, labelled.
+TEST(FontCollectorReview, AnUnreadableDocumentIsIncomplete)
+{
+    auto fonts = arialAndTimes();
+    fonts.documentUnreadable = true;
+    FontCollector collector(fonts);
+    const std::vector<CollectorDocument> docs{tab(1, script({"Default,Arial,0,0"}, {"Default,a"}))};
+    const auto check = collector.prepare(docs, CollectorAction::Check);
+    ASSERT_TRUE(check);
+    EXPECT_EQ(check->unrendered, std::vector<int>{1});
+    EXPECT_EQ(check->notFoundCount, 0);
+    EXPECT_FALSE(check->rendererComplete());
+    EXPECT_FALSE(collector.result(*check).complete);
+
+    const auto copy = collector.prepare(docs, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(copy);
+    EXPECT_TRUE(copy->reimports.empty());
+    EXPECT_FALSE(copy->complete());
+    MemoryOutput refused;
+    EXPECT_TRUE(collector.apply(*copy, refused, false).refused);
+    EXPECT_FALSE(refused.opened);
+    MemoryOutput out;
+    const auto r = collector.apply(*copy, out, true);
+    EXPECT_EQ(out.written, std::vector<std::u16string>{u"arial.ttf"});
+    EXPECT_FALSE(r.complete);
+    EXPECT_TRUE(r.labelled);
+    ASSERT_TRUE(out.labelText);
+    EXPECT_NE(out.labelText->find("Documents the renderer could not read:\n  tab 2\n"), std::string::npos);
+}
+
+// Two different fonts with one file name (here in two folders): legacy
+// writes both under that name (wxCopyFile overwrites, PutNextEntry adds a
+// second entry, FontCollector.cpp:877-911), so the output is not the set the
+// renderer verified and the collection is incomplete.
+TEST(FontCollectorApply, TwoFontsWithOneFileNameAreIncomplete)
+{
+    FakeFonts fonts;
+    fonts.faces = {{"Arial", 400, false, "/a/arial.ttf"}, {"Sans", 400, false, "/b/ARIAL.TTF"}};
+    FontCollector collector(fonts);
+    const auto review = collector.prepare(
+        {tab(0, script({"Default,Arial,0,0", "S,Sans,0,0"}, {"Default,a", "S,b"}))}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(review);
+    ASSERT_EQ(review->files.size(), 2u);
+    EXPECT_TRUE(review->rendererComplete());
+    EXPECT_EQ(review->nameClashes, std::vector<std::u16string>{u"ARIAL.TTF"});
+    EXPECT_FALSE(review->complete());
+    MemoryOutput refused;
+    EXPECT_TRUE(collector.apply(*review, refused, false).refused);
+    MemoryOutput out;
+    const auto r = collector.apply(*review, out, true);
+    EXPECT_EQ(out.written, (std::vector<std::u16string>{u"arial.ttf", u"ARIAL.TTF"}));
+    EXPECT_FALSE(r.complete);
+    EXPECT_TRUE(r.labelled);
+    ASSERT_TRUE(out.labelText);
+    EXPECT_NE(out.labelText->find("Different fonts with the same file name (only one is kept in a folder):\n  ARIAL.TTF\n"),
+              std::string::npos);
+
+    // The same bytes reached through two families are one file, no clash.
+    FakeFonts same;
+    same.faces = {{"Arial", 400, false, "/a/arial.ttf"}, {"Sans", 400, false, "/a/arial.ttf"}};
+    FontCollector again(same);
+    const auto one = again.prepare({tab(0, script({"Default,Arial,0,0", "S,Sans,0,0"}, {"Default,a", "S,b"}))},
+                                   CollectorAction::CopyToFolder);
+    ASSERT_TRUE(one);
+    EXPECT_EQ(one->files.size(), 1u);
+    EXPECT_TRUE(one->nameClashes.empty());
+    EXPECT_TRUE(one->complete());
+}
+
 // The output cannot be opened: "Path is not available", nothing written.
 TEST(FontCollectorApply, PathNotAvailable)
 {

@@ -45,6 +45,7 @@ public:
     std::optional<Face> fallback;
     FontCollection document;          // what a whole Document reports
     bool reimportIdentical = true;
+    bool documentUnreadable = false;  // a whole Document fails (ass_read_memory)
     int collects = 0;
     std::vector<std::vector<std::string>> reimported; // the font names of each verifyReimport
 
@@ -99,6 +100,8 @@ public:
         const auto doc = core::loadAss(s).document;
         const auto styles = core::decodeStyles(doc);
         if (styles.size() != 1 || styles[0].name != u8"P") {
+            if (documentUnreadable)
+                return std::unexpected(FontError::InvalidInput);
             FontCollection c = document;
             c.frameHashes = {"frame"};
             return c;

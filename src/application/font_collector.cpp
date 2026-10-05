@@ -457,7 +457,7 @@ void nameFile(CollectedFile &file, const CollectedFont &font, const FontCollecti
 
 bool CollectorReview::rendererComplete() const
 {
-    if (!missingFamilies.empty() || !substitutedFamilies.empty() || !missingGlyphs.empty() || !fallbackGlyphs.empty())
+    if (!unrendered.empty() || !missingFamilies.empty() || !substitutedFamilies.empty() || !missingGlyphs.empty() || !fallbackGlyphs.empty())
         return false;
     for (const auto &r : reimports)
         if (!r.identical)
@@ -529,8 +529,11 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             return std::unexpected(FontError::Cancelled);
         auto c = m_fonts.collect(doc.script, env, cancel);
         if (!c) {
-            if (c.error() == FontError::Cancelled)
-                return std::unexpected(FontError::Cancelled);
+            if (c.error() == FontError::Cancelled || c.error() == FontError::RendererUnavailable)
+                return std::unexpected(c.error());
+            // A Document the renderer cannot read is not verified, so the
+            // collection is incomplete (fonts.md), never passed by default.
+            review.unrendered.push_back(doc.tab);
             continue;
         }
         if (review.provider.empty())
@@ -716,6 +719,21 @@ std::expected<CollectorReview, FontError> FontCollector::prepare(const std::vect
             review.rendererFiles.push_back(std::move(file));
         }
     }
+    // Two different fonts under one file name: the output does not hold the
+    // set verified below (a folder keeps the last, as wxCopyFile overwrote
+    // it; an archive holds both entries, as PutNextEntry added them).
+    {
+        std::map<u16, std::string> seen; // lower-case name -> bytes
+        for (const auto &file : review.files) {
+            if (!file.bytes || file.bytes->empty())
+                continue;
+            const auto [it, added] = seen.emplace(lower(file.name), file.sha256);
+            if (!added && it->second != file.sha256 &&
+                std::find(review.nameClashes.begin(), review.nameClashes.end(), file.name) == review.nameClashes.end())
+                review.nameClashes.push_back(file.name);
+        }
+    }
+
     // The faces each file was opened with, from the Documents' rendering.
     for (auto &file : review.files)
         for (const auto *f : union_)
@@ -862,6 +880,10 @@ std::string FontCollector::labelText(const CollectorReview &review, const Collec
     for (const auto &[family, block] : review.notFound)
         notFound.push_back(toUtf8(family));
     list("Fonts not found:\n", notFound);
+    std::vector<std::string> tabs;
+    for (const int t : review.unrendered)
+        tabs.push_back("tab " + std::to_string(t + 1));
+    list("Documents the renderer could not read:\n", tabs);
     list("Families the renderer did not find:\n", review.missingFamilies);
     list("Families answered by a font of another name:\n", review.substitutedFamilies);
     std::vector<std::string> codes;
@@ -886,6 +908,10 @@ std::string FontCollector::labelText(const CollectorReview &review, const Collec
             frames.push_back("tab " + std::to_string(r.tab + 1) + ": " + std::to_string(r.differingFrames.size()) +
                              " of " + std::to_string(r.frames) + " frames differ");
     list("Rendering with the collected fonts alone:\n", frames);
+    std::vector<std::string> clashes;
+    for (const auto &n : review.nameClashes)
+        clashes.push_back(toUtf8(n));
+    list("Different fonts with the same file name (only one is kept in a folder):\n", clashes);
     if (!review.allGlyphs)
         s += "Some fonts do not contain all glyphs used in the text.\n";
     if (result) {

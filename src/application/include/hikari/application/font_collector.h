@@ -173,14 +173,23 @@ struct CollectorReview {
         std::vector<std::size_t> differingFrames;
     };
     std::vector<Reimport> reimports;
+    // Tabs whose Document the renderer could not read: nothing about them
+    // is verified.
+    std::vector<int> unrendered;
+    // File names two different collected fonts share (compared as Windows
+    // does, ignoring case): the output keeps only one of them under that
+    // name (a folder) or both (an archive), so it is not the set the
+    // renderer verified.
+    std::vector<std::u16string> nameClashes;
 
-    // The renderer drew every Document with every family captured and no
-    // glyph missing or from a fallback, and (copy modes) reproduced every
-    // frame from the collected set alone.
+    // The renderer read and drew every Document with every family captured
+    // and no glyph missing or from a fallback, and (copy modes) reproduced
+    // every frame from the collected set alone.
     bool rendererComplete() const;
     // Legacy's "Completed Successfully" condition (no font missing, every
-    // glyph present) and the renderer's agreement.
-    bool complete() const { return notFoundCount == 0 && allGlyphs && rendererComplete(); }
+    // glyph present), the renderer's agreement, and an output that holds
+    // the set the renderer verified.
+    bool complete() const { return notFoundCount == 0 && allGlyphs && rendererComplete() && nameClashes.empty(); }
 };
 
 // The output of Apply (CopyToFolder / Zip). Implemented over the file system

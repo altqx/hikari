@@ -471,6 +471,8 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
     for (const auto &f : review.substitutedFamilies)
         substituted << qs(f);
     QString problems;
+    for (const int t : review.unrendered)
+        problems += tr("Tab %1: the renderer could not read this Document; it was not checked.\n").arg(t + 1);
     if (!missing.isEmpty())
         problems += tr("Families the renderer did not find: %1.\n").arg(missing.join(QStringLiteral(", ")));
     if (!substituted.isEmpty())
@@ -485,7 +487,13 @@ void FontCollectorController::logRenderer(const CollectorReview &review)
                             .arg(r.tab + 1)
                             .arg(r.differingFrames.size())
                             .arg(r.frames);
-    bool reproduced = !review.reimports.empty();
+    QStringList clashes;
+    for (const auto &n : review.nameClashes)
+        clashes << qs(n);
+    if (!clashes.isEmpty())
+        problems += tr("Different fonts with the same file name: %1. Only one of them is kept in a folder.\n")
+                        .arg(clashes.join(QStringLiteral(", ")));
+    bool reproduced = !review.reimports.empty() && review.unrendered.empty();
     for (const auto &r : review.reimports)
         reproduced = reproduced && r.identical;
     send(text, kNormal);
@@ -512,6 +520,9 @@ void FontCollectorController::logSummary(const CollectorReview &review, const Co
             message += tr("Some fonts do not contain all glyphs used in the text.\n");
         if (!review.rendererComplete())
             message += tr("The renderer cannot reproduce the subtitles from these fonts alone: the collection is "
+                          "incomplete.\n");
+        else if (!review.nameClashes.empty())
+            message += tr("The output does not hold every collected font under its own name: the collection is "
                           "incomplete.\n");
         if (result.cancelled)
             message += tr("Writing was cancelled.\n");
