@@ -334,3 +334,85 @@ TEST_F(SessionTest, HistoryKeepsItsCapacityAndConsistentSteps)
     ASSERT_TRUE(session.goTo(h.size() - 1));
     EXPECT_EQ(textOf(session, l1), u8"v" + std::u8string(1, char8_t('a' + 519 % 26)) + u8"519");
 }
+
+// E4: the Line editor's metadata fields go through the draft like text and
+// times: one step per commit, Undo restores them, nothing changed adds no step.
+TEST_F(SessionTest, MetadataFieldsRoundTripThroughTheDraft)
+{
+    ASSERT_TRUE(session.editDraft(l2, DraftChange{.comment = true, .layer = 3, .style = u8"Sign",
+                                                  .actor = u8"Ann", .effect = u8"Banner;0"}));
+    const auto *two = session.document().lines()[1];
+    EXPECT_FALSE(two->comment); // pending only
+    ASSERT_TRUE(session.commitDraft());
+    two = session.document().lines()[1];
+    EXPECT_TRUE(two->comment);
+    EXPECT_EQ(two->layer.value, 3);
+    EXPECT_EQ(two->style, u8"Sign");
+    EXPECT_EQ(two->actor, u8"Ann");
+    EXPECT_EQ(two->effect, u8"Banner;0");
+    EXPECT_EQ(session.historySize(), 2u);
+    ASSERT_TRUE(session.undo());
+    two = session.document().lines()[1];
+    EXPECT_FALSE(two->comment);
+    EXPECT_EQ(two->layer.value, 0);
+    EXPECT_EQ(two->style, u8"Default");
+    EXPECT_TRUE(two->actor.empty());
+    EXPECT_TRUE(two->effect.empty());
+    // Back to the committed values: nothing to commit.
+    ASSERT_TRUE(session.editDraft(l2, DraftChange{.style = u8"Default", .actor = u8""}));
+    EXPECT_FALSE(session.commitDraft());
+}
+
+TEST_F(SessionTest, MetadataDraftsWaitBehindAnInvalidTime)
+{
+    // E63-invalid-commit: the whole draft waits, the new fields with it.
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.end = core::DocumentTime(500'000), .actor = u8"Ann"}));
+    EXPECT_FALSE(session.commitDraft());
+    EXPECT_TRUE(session.draftLine());
+    EXPECT_TRUE(session.document().lines()[0]->actor.empty());
+    session.setInvalidCommitPolicy(InvalidCommitPolicy::Legacy);
+    ASSERT_TRUE(session.commitDraft());
+    EXPECT_EQ(session.document().lines()[0]->actor, u8"Ann");
+}
+
+// SubsGrid::ChangeLine (SubsGridBase.cpp:133-155): with several Lines selected
+// every cell the editor marked modified goes to each selected Line, as one step.
+TEST_F(SessionTest, CommitToSelectedCopiesTheModifiedCellsToEverySelectedLine)
+{
+    Selection selection;
+    selection.active = l1;
+    selection.selected = {l1, l3};
+    session.setSelection(selection);
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.style = u8"Sign", .actor = u8"Ann"}));
+    ASSERT_TRUE(session.commitDraftToSelected());
+    const auto lines = session.document().lines();
+    EXPECT_EQ(lines[0]->style, u8"Sign");
+    EXPECT_EQ(lines[2]->style, u8"Sign");
+    EXPECT_EQ(lines[2]->actor, u8"Ann");
+    EXPECT_EQ(lines[1]->style, u8"Default"); // not selected
+    EXPECT_EQ(lines[2]->text, u8"three");    // text was not a modified cell
+    EXPECT_EQ(session.historySize(), 2u);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(session.document().lines()[2]->style, u8"Default");
+
+    // A cell set back to the active Line's own value still goes to the others
+    // (Send reads IsModified, not a difference).
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.layer = 0}));
+    session.setSelection(selection);
+    EXPECT_FALSE(session.commitDraftToSelected()); // every selected Line already has layer 0
+    ASSERT_TRUE(session.editDraft(l3, DraftChange{.layer = 4}));
+    ASSERT_TRUE(session.commitDraft());
+    session.setSelection(selection);
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.layer = 0}));
+    session.setSelection(selection);
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(session.document().lines()[2]->layer.value, 0);
+}
+
+TEST_F(SessionTest, CommitToSelectedWithOneLineIsAnOrdinaryCommit)
+{
+    ASSERT_TRUE(session.editDraft(l2, DraftChange{.comment = true}));
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_TRUE(session.document().lines()[1]->comment);
+    EXPECT_FALSE(session.document().lines()[0]->comment);
+}

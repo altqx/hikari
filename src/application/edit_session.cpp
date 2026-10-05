@@ -38,6 +38,20 @@ void merge(DraftChange &into, const DraftChange &change)
         into.marginRight = change.marginRight;
     if (change.marginVertical)
         into.marginVertical = change.marginVertical;
+    if (change.comment)
+        into.comment = change.comment;
+    if (change.layer)
+        into.layer = change.layer;
+    if (change.style)
+        into.style = change.style;
+    if (change.actor)
+        into.actor = change.actor;
+    if (change.effect)
+        into.effect = change.effect;
+    if (change.startFrame)
+        into.startFrame = change.startFrame;
+    if (change.endFrame)
+        into.endFrame = change.endFrame;
 }
 
 void apply(core::LineRecord &line, const DraftChange &change)
@@ -56,13 +70,29 @@ void apply(core::LineRecord &line, const DraftChange &change)
         line.marginRight.value = *change.marginRight;
     if (change.marginVertical)
         line.marginVertical.value = *change.marginVertical;
+    if (change.comment)
+        line.comment = *change.comment;
+    if (change.layer)
+        line.layer.value = *change.layer;
+    if (change.style)
+        line.style = *change.style;
+    if (change.actor)
+        line.actor = *change.actor;
+    if (change.effect)
+        line.effect = *change.effect;
+    if (change.startFrame)
+        line.startFrame = *change.startFrame;
+    if (change.endFrame)
+        line.endFrame = *change.endFrame;
 }
 
 bool sameFields(const core::LineRecord &a, const core::LineRecord &b)
 {
     return a.text == b.text && a.translation == b.translation && a.start.value == b.start.value && a.end.value == b.end.value &&
            a.marginLeft.value == b.marginLeft.value && a.marginRight.value == b.marginRight.value &&
-           a.marginVertical.value == b.marginVertical.value;
+           a.marginVertical.value == b.marginVertical.value && a.comment == b.comment &&
+           a.layer.value == b.layer.value && a.style == b.style && a.actor == b.actor && a.effect == b.effect &&
+           a.startFrame == b.startFrame && a.endFrame == b.endFrame;
 }
 
 constexpr std::int64_t kMarginMax = 9999; // the legacy NumCtrl range is 0..9999
@@ -208,7 +238,104 @@ bool EditSession::commit(bool leaving, std::string name)
         line.marginLeft.value = record->marginLeft.value;
         line.marginRight.value = record->marginRight.value;
         line.marginVertical.value = record->marginVertical.value;
+        line.comment = record->comment;
+        line.layer.value = record->layer.value;
+        line.style = record->style;
+        line.actor = record->actor;
+        line.effect = record->effect;
+        line.startFrame = record->startFrame;
+        line.endFrame = record->endFrame;
     });
+    pushState(std::move(next), std::move(name));
+    return true;
+}
+
+bool EditSession::commitDraftToSelected(std::string name, bool leaving)
+{
+    if (!m_draft)
+        return false;
+    // SubsGrid::ChangeLine (SubsGridBase.cpp:133-155): fewer than two
+    // selected Lines change the edited Line only.
+    if (m_selection.selected.size() < 2)
+        return commit(leaving, std::move(name));
+    auto record = draftRecord();
+    if (!record) {
+        m_draft.reset();
+        return false;
+    }
+    if (problemOf(*record)) {
+        if (m_policy == InvalidCommitPolicy::Block)
+            return false;
+        record->marginLeft.value = std::clamp<std::int64_t>(record->marginLeft.value, 0, kMarginMax);
+        record->marginRight.value = std::clamp<std::int64_t>(record->marginRight.value, 0, kMarginMax);
+        record->marginVertical.value = std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
+    }
+    // Send's cells are the fields the editor marked modified: those the draft
+    // holds, even where a value went back to the committed one.
+    const DraftChange cells = m_draft->change;
+    const core::LineId edited = m_draft->line;
+    m_draft.reset();
+    core::Document next = document();
+    bool changed = false;
+    for (const auto *line : document().lines()) {
+        if (!m_selection.selected.contains(line->id))
+            continue;
+        core::LineRecord updated = *line;
+        if (cells.text)
+            updated.text = record->text;
+        if (cells.translation)
+            updated.translation = record->translation;
+        if (cells.start)
+            updated.start.value = record->start.value;
+        if (cells.end)
+            updated.end.value = record->end.value;
+        if (cells.marginLeft)
+            updated.marginLeft.value = record->marginLeft.value;
+        if (cells.marginRight)
+            updated.marginRight.value = record->marginRight.value;
+        if (cells.marginVertical)
+            updated.marginVertical.value = record->marginVertical.value;
+        if (cells.comment)
+            updated.comment = record->comment;
+        if (cells.layer)
+            updated.layer.value = record->layer.value;
+        if (cells.style)
+            updated.style = record->style;
+        if (cells.actor)
+            updated.actor = record->actor;
+        if (cells.effect)
+            updated.effect = record->effect;
+        if (cells.startFrame)
+            updated.startFrame = record->startFrame;
+        if (cells.endFrame)
+            updated.endFrame = record->endFrame;
+        // Leaving under the legacy preference: SetLine sets the edited Line's
+        // End before its Start to the Start.
+        if (leaving && line->id == edited && m_policy == InvalidCommitPolicy::Legacy &&
+            updated.end.value < updated.start.value)
+            updated.end.value = updated.start.value;
+        if (sameFields(*line, updated))
+            continue;
+        changed = true;
+        next.editLine(line->id, [&](core::LineRecord &l) {
+            l.text = updated.text;
+            l.translation = updated.translation;
+            l.start.value = updated.start.value;
+            l.end.value = updated.end.value;
+            l.marginLeft.value = updated.marginLeft.value;
+            l.marginRight.value = updated.marginRight.value;
+            l.marginVertical.value = updated.marginVertical.value;
+            l.comment = updated.comment;
+            l.layer.value = updated.layer.value;
+            l.style = updated.style;
+            l.actor = updated.actor;
+            l.effect = updated.effect;
+            l.startFrame = updated.startFrame;
+            l.endFrame = updated.endFrame;
+        });
+    }
+    if (!changed)
+        return false;
     pushState(std::move(next), std::move(name));
     return true;
 }

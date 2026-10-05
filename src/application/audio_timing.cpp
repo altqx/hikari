@@ -1,5 +1,7 @@
 #include "hikari/application/audio_timing.h"
 
+#include "hikari/application/editor_fields.h"
+
 #include "hikari/core/checked.h"
 #include "hikari/core/text_projection.h"
 
@@ -468,16 +470,8 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
 
 int legacyFieldTime(core::SubtitleFormat format, int ms)
 {
-    if (ms < 0)
-        ms = 0; // SubsTime::NewTime
-    switch (format) {
-    case core::SubtitleFormat::Ass:
-        return (ms / 10) * 10; // "H:MM:SS.cc"
-    case core::SubtitleFormat::TMPlayer:
-        return (ms / 1000) * 1000; // "HH:MM:SS"
-    default:
-        return ms;
-    }
+    // E4: MPL2 keeps deciseconds rounded up (SubsTime::raw), as the editor's field does.
+    return static_cast<int>(fieldPrecisionTime(format, ms));
 }
 
 namespace {
@@ -517,14 +511,33 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
 
     // StartEdit/EndEdit->SetTime(time, true): a field already showing the time stays unmodified
     const auto format = session.document().format();
-    const core::DocumentTime start = msTime(legacyFieldTime(format, request.startMs));
-    const core::DocumentTime end = msTime(legacyFieldTime(format, request.endMs));
+    core::DocumentTime start = msTime(legacyFieldTime(format, request.startMs));
+    core::DocumentTime end = msTime(legacyFieldTime(format, request.endMs));
     const core::LineRecord current = session.draftLine() == active ? *session.draftRecord() : **at;
     DraftChange fields;
+    // E4: a MicroDVD field shows the frame (SubsTime::raw rounds the time up
+    // at the rate) and reads back that frame's time; at the Document's rate
+    // (C01-fps-isolation), the times stay as they were without one.
+    std::optional<std::int64_t> startFrame = current.startFrame, endFrame = current.endFrame;
+    if (format == core::SubtitleFormat::MicroDvd) {
+        const auto &rate = session.document().frameRate();
+        if (const auto s = microDvdFieldTime(request.startMs, rate)) {
+            startFrame = s->frame;
+            start = msTime(s->ms);
+        }
+        if (const auto e = microDvdFieldTime(request.endMs, rate)) {
+            endFrame = e->frame;
+            end = msTime(e->ms);
+        }
+    }
     if (current.start.value != start)
         fields.start = start;
     if (current.end.value != end)
         fields.end = end;
+    if (startFrame != current.startFrame)
+        fields.startFrame = startFrame;
+    if (endFrame != current.endFrame)
+        fields.endFrame = endFrame;
     // A5: Commit's karaoke text goes into the text field first (TextEdit:
     // the translation's in a TLMode file), always marked modified
     const bool tlMode = session.document().scriptInfo(u8"TLMode") == u8"Yes";
@@ -534,7 +547,8 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         else
             fields.text = core::toUtf8(*request.karaokeText);
     }
-    if ((fields.start || fields.end || fields.text || fields.translation) && !session.editDraft(*active, fields))
+    if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
+        !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
 
     // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
@@ -593,8 +607,16 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     const bool marginLChanged = record && record->marginLeft.value != line.marginLeft.value;
     const bool marginRChanged = record && record->marginRight.value != line.marginRight.value;
     const bool marginVChanged = record && record->marginVertical.value != line.marginVertical.value;
+    // E4: the editor's other cells (EditBox::Send: COMMENT, LAYER, STYLE, ACTOR, EFFECT)
+    const bool commentChanged = record && record->comment != line.comment;
+    const bool layerChanged = record && record->layer.value != line.layer.value;
+    const bool styleChanged = record && record->style != line.style;
+    const bool actorChanged = record && record->actor != line.actor;
+    const bool effectChanged = record && record->effect != line.effect;
+    const bool framesChanged = record && (record->startFrame != line.startFrame || record->endFrame != line.endFrame);
     const bool cells = textChanged || translationChanged || startChanged || endChanged || marginLChanged ||
-                       marginRChanged || marginVChanged;
+                       marginRChanged || marginVChanged || commentChanged || layerChanged || styleChanged ||
+                       actorChanged || effectChanged || framesChanged;
 
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
@@ -653,6 +675,20 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                     if (marginVChanged)
                         l.marginVertical.value =
                             std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
+                    if (commentChanged)
+                        l.comment = record->comment;
+                    if (layerChanged)
+                        l.layer.value = record->layer.value;
+                    if (styleChanged)
+                        l.style = record->style;
+                    if (actorChanged)
+                        l.actor = record->actor;
+                    if (effectChanged)
+                        l.effect = record->effect;
+                    if (framesChanged) {
+                        l.startFrame = record->startFrame;
+                        l.endFrame = record->endFrame;
+                    }
                 });
             if (append) {
                 // NextLine on the last shown Line: a copy of the Line at the
