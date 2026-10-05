@@ -89,3 +89,30 @@ target_compile_options(legacy_visual_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_visual_capture PRIVATE ${wx_libs})
+
+# R1: the legacy subtitle comparison. SubsGrid::SubsComparison and
+# SubsGrid::CompareTexts (SubsGridBase.cpp), compareData (SubsGrid.h) and the
+# Line's StoreTextHelper and Visibility (SubsDialogue.h) are copied out of their
+# files unchanged; SubsTime is the legacy SubsTime.cpp; the grid, its file and
+# the option are stood in for by comparison/standins.h.
+set(comparison_gen "${CMAKE_CURRENT_BINARY_DIR}/comparison")
+file(MAKE_DIRECTORY "${comparison_gen}")
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsGridBase.cpp" "${comparison_gen}/comparison.inc"
+    "void SubsGrid::SubsComparison()"
+    "void SubsGrid::CompareTexts(compareData &firstCompare, compareData &secondCompare, const wxString &first, const wxString &second)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsGrid.h" "${comparison_gen}/compare_data.inc"
+    "class compareData" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${comparison_gen}/dialogue_helpers.inc"
+    "class StoreTextHelper" "class Visibility" COMMAND_ERROR_IS_FATAL ANY)
+add_executable(legacy_comparison_capture comparison_capture.cpp log_stub.cpp
+    "${legacy_hs}/Timebase.cpp" "${legacy_hs}/SubsTime.cpp")
+target_include_directories(legacy_comparison_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/comparison" "${comparison_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_comparison_capture PRIVATE
+    _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING _CRT_SECURE_NO_WARNINGS HAVE_DLL_EXPORT
+    LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_comparison_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result -Wno-return-type)
+target_link_libraries(legacy_comparison_capture PRIVATE ${wx_libs})

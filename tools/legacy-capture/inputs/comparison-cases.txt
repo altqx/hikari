@@ -1,0 +1,1190 @@
+# R1 subtitle comparison cases for legacy_comparison_capture (comparison_capture.cpp
+# documents the format). Fields are tab-separated. The rand-* pairs were drawn once
+# with Python random.Random(193) and are fixed here.
+case matrix
+first	1000	2000	Default	1	1	one
+first	3000	4000	Sign	1	0	two
+first	5000	6000	Default	0	1	three
+first	7000	8000	Sign	2	1	four
+first	9000	10000	Default	1	1	five
+first	11000	12000	Sign	1	1	six
+first	13000	14000	Other	1	0	seven
+second	1000	2000	Default	1	1	one
+second	3000	4500	Sign	1	1	too
+second	5000	6000	Default	1	0	three
+second	7000	8000	Sign	0	1	four
+second	7000	8000	Sign	1	1	for
+second	9000	10000	Sign	1	1	five
+second	9000	10000	Default	2	1	fives
+second	11000	12000	Sign	1	0	six
+second	11000	12000	Sign	1	1	sixth
+second	13000	14000	Other	1	1	seven
+second	15000	16000	Default	1	1	eight
+run	0
+run	1
+run	2
+run	3
+run	4
+run	5
+run	6
+run	7
+run	8
+run	9
+run	10
+run	11
+run	12
+run	13
+run	14
+run	15
+run	16
+run	17
+run	18
+run	19
+run	20
+run	21
+run	22
+run	23
+run	24
+run	25
+run	26
+run	27
+run	28
+run	29
+run	30
+run	31
+run	0	Sign
+run	1	Sign
+run	2	Sign
+run	3	Sign
+run	4	Sign
+run	5	Sign
+run	6	Sign
+run	7	Sign
+run	8	Sign
+run	9	Sign
+run	10	Sign
+run	11	Sign
+run	12	Sign
+run	13	Sign
+run	14	Sign
+run	15	Sign
+run	16	Sign
+run	17	Sign
+run	18	Sign
+run	19	Sign
+run	20	Sign
+run	21	Sign
+run	22	Sign
+run	23	Sign
+run	24	Sign
+run	25	Sign
+run	26	Sign
+run	27	Sign
+run	28	Sign
+run	29	Sign
+run	30	Sign
+run	31	Sign
+run	0	Default,Sign
+run	1	Default,Sign
+run	2	Default,Sign
+run	4	Default,Sign
+run	8	Default,Sign
+run	16	Default,Sign
+run	31	Default,Sign
+run	0	Other
+run	1	Other
+run	2	Other
+run	4	Other
+run	8	Other
+run	16	Other
+run	31	Other
+run	0	sign
+run	1	sign
+run	2	sign
+run	4	sign
+run	8	sign
+run	16	sign
+run	31	sign
+run	0	Sign,Sign
+run	1	Sign,Sign
+run	2	Sign,Sign
+run	4	Sign,Sign
+run	8	Sign,Sign
+run	16	Sign,Sign
+run	31	Sign,Sign
+run	0	Missing
+run	1	Missing
+run	2	Missing
+run	4	Missing
+run	8	Missing
+run	16	Missing
+run	31	Missing
+run	0	Default,Missing
+run	1	Default,Missing
+run	2	Default,Missing
+run	4	Default,Missing
+run	8	Default,Missing
+run	16	Default,Missing
+run	31	Default,Missing
+end
+case matrix-swapped
+first	1000	2000	Default	1	1	one
+first	3000	4500	Sign	1	1	too
+first	5000	6000	Default	1	0	three
+first	7000	8000	Sign	0	1	four
+first	7000	8000	Sign	1	1	for
+first	9000	10000	Sign	1	1	five
+first	9000	10000	Default	2	1	fives
+first	11000	12000	Sign	1	0	six
+first	11000	12000	Sign	1	1	sixth
+first	13000	14000	Other	1	1	seven
+first	15000	16000	Default	1	1	eight
+second	1000	2000	Default	1	1	one
+second	3000	4000	Sign	1	0	two
+second	5000	6000	Default	0	1	three
+second	7000	8000	Sign	2	1	four
+second	9000	10000	Default	1	1	five
+second	11000	12000	Sign	1	1	six
+second	13000	14000	Other	1	0	seven
+run	0
+run	1
+run	2
+run	3
+run	4
+run	5
+run	6
+run	7
+run	8
+run	9
+run	10
+run	11
+run	12
+run	13
+run	14
+run	15
+run	16
+run	17
+run	18
+run	19
+run	20
+run	21
+run	22
+run	23
+run	24
+run	25
+run	26
+run	27
+run	28
+run	29
+run	30
+run	31
+run	0	Sign
+run	1	Sign
+run	2	Sign
+run	3	Sign
+run	4	Sign
+run	5	Sign
+run	6	Sign
+run	7	Sign
+run	8	Sign
+run	9	Sign
+run	10	Sign
+run	11	Sign
+run	12	Sign
+run	13	Sign
+run	14	Sign
+run	15	Sign
+run	16	Sign
+run	17	Sign
+run	18	Sign
+run	19	Sign
+run	20	Sign
+run	21	Sign
+run	22	Sign
+run	23	Sign
+run	24	Sign
+run	25	Sign
+run	26	Sign
+run	27	Sign
+run	28	Sign
+run	29	Sign
+run	30	Sign
+run	31	Sign
+run	0	Default,Sign
+run	1	Default,Sign
+run	2	Default,Sign
+run	4	Default,Sign
+run	8	Default,Sign
+run	16	Default,Sign
+run	31	Default,Sign
+end
+case last-j
+first	1000	2000	Default	1	0	a
+first	9000	9500	Default	1	0	b
+first	2000	3000	Default	1	0	c
+first	9000	9500	Default	1	0	d
+second	1000	2000	Default	1	0	a
+second	2000	3000	Default	1	0	c
+second	9000	9500	Default	1	0	b
+second	9000	9500	Default	1	0	d
+run	0
+run	1
+run	8
+run	9
+end
+case times
+first	1000	2000	Default	1	0	x
+first	3000	4000	Default	1	0	x
+first	5000	6000	Default	1	0	x
+second	1000	2010	Default	1	0	x
+second	1000	2000	Default	1	0	x
+second	2990	4000	Default	1	0	x
+second	3000	4000	Default	1	0	y
+second	5000	6000	Default	1	0	x
+run	0
+run	1
+end
+case style-names
+first	0	0	Default	1	0	Default
+first	0	0	Sign	1	0	Sign
+first	0	0	Song Top	1	0	Song Top
+first	0	0	op	1	0	op
+second	0	0	default	1	0	default
+second	0	0	Sign	1	0	Sign
+second	0	0	Song Top 	1	0	Song Top 
+second	0	0	Song Top	1	0	Song Top
+second	0	0	OP	1	0	OP
+second	0	0	op	1	0	op
+run	0
+run	2
+run	0	Sign
+run	0	Song Top
+run	0	default
+run	0	op,Sign
+end
+case visibility
+first	0	0	Default	1	0	l0
+first	0	0	Default	0	0	l1
+first	0	0	Default	2	0	l2
+first	0	0	Default	0	0	l3
+first	0	0	Default	1	0	l4
+first	0	0	Default	2	0	l5
+second	0	0	Default	0	0	l0
+second	0	0	Default	1	0	l1
+second	0	0	Default	2	0	l2
+second	0	0	Default	2	0	l3
+second	0	0	Default	0	0	l4
+second	0	0	Default	1	0	l5
+second	0	0	Default	1	0	l6
+run	0
+run	8
+end
+case selections
+first	0	0	Default	1	1	s0
+first	0	0	Default	1	0	s1
+first	0	0	Default	1	1	s2
+first	0	0	Default	1	1	s3
+first	0	0	Default	1	0	s4
+second	0	0	Default	1	0	s0
+second	0	0	Default	1	1	s1
+second	0	0	Default	1	1	s2
+second	0	0	Default	1	0	s3
+second	0	0	Default	1	1	s4
+second	0	0	Default	1	1	s5
+run	0
+run	16
+run	24
+end
+case empty-first
+second	0	0	Default	1	1	t0
+second	0	0	Default	1	1	t1
+second	0	0	Default	1	1	t2
+run	0
+run	31
+end
+case empty-second
+first	0	0	Default	1	1	t0
+first	0	0	Default	1	1	t1
+first	0	0	Default	1	1	t2
+run	0
+run	31
+end
+case empty-both
+run	0
+run	31
+end
+case translation
+first	0	0	Default	1	0	original one	translated one
+first	0	0	Default	1	0	original two	
+first	0	0	Default	1	0	same	differs
+second	0	0	Default	1	0	translated one	original one
+second	0	0	Default	1	0	original two	other
+second	0	0	Default	1	0	same	differs
+tl	0	0
+run	0
+tl	1	0
+run	0
+tl	0	1
+run	0
+tl	1	1
+run	0
+end
+case texts
+first	0	0	Default	1	0	same
+first	0	0	Default	1	0	cat
+first	0	0	Default	1	0	I saw a cat.
+first	0	0	Default	1	0	abc
+first	0	0	Default	1	0	abcde
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	x
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	abc
+first	0	0	Default	1	0	abab
+first	0	0	Default	1	0	aaaa
+first	0	0	Default	1	0	a b c
+first	0	0	Default	1	0	café
+first	0	0	Default	1	0	é
+first	0	0	Default	1	0	中文字
+first	0	0	Default	1	0	{\i1}text{\i0}
+first	0	0	Default	1	0	line\Nbreak
+first	0	0	Default	1	0	Hello, world
+first	0	0	Default	1	0	a😀b
+first	0	0	Default	1	0	😀
+first	0	0	Default	1	0	😀
+first	0	0	Default	1	0	x😀y😁z
+first	0	0	Default	1	0	😀😀
+first	0	0	Default	1	0	𠀀中
+first	0	0	Default	1	0	The quick brown fox jumps over the lazy dog.
+second	0	0	Default	1	0	same
+second	0	0	Default	1	0	cut
+second	0	0	Default	1	0	I sawed the cat!
+second	0	0	Default	1	0	abcde
+second	0	0	Default	1	0	abc
+second	0	0	Default	1	0	x
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	cba
+second	0	0	Default	1	0	baba
+second	0	0	Default	1	0	aa
+second	0	0	Default	1	0	a  b c
+second	0	0	Default	1	0	cafe
+second	0	0	Default	1	0	é
+second	0	0	Default	1	0	中文
+second	0	0	Default	1	0	text
+second	0	0	Default	1	0	line\nbreak
+second	0	0	Default	1	0	Hello world!
+second	0	0	Default	1	0	ab
+second	0	0	Default	1	0	😁
+second	0	0	Default	1	0	x
+second	0	0	Default	1	0	x😁y😀z
+second	0	0	Default	1	0	😀
+second	0	0	Default	1	0	𠀁中
+second	0	0	Default	1	0	The quick red fox jumped over the lazy dogs.
+run	0
+end
+case rand-ascii
+first	0	0	Default	1	0	{b  ba b
+first	0	0	Default	1	0	b b { a a {
+first	0	0	Default	1	0	a b 
+first	0	0	Default	1	0	 {
+first	0	0	Default	1	0	aa
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	b{{b{aa 
+first	0	0	Default	1	0	a{b{a{
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	b{b{ 
+first	0	0	Default	1	0	ab{a babb
+first	0	0	Default	1	0	 a{aa{ab   
+first	0	0	Default	1	0	{a bb{ abab
+first	0	0	Default	1	0	 {{bbba a{ba
+first	0	0	Default	1	0	b
+first	0	0	Default	1	0	{ab{ bb {ba
+first	0	0	Default	1	0	{{
+first	0	0	Default	1	0	ba 
+first	0	0	Default	1	0	b{ 
+first	0	0	Default	1	0	 ba baa{
+first	0	0	Default	1	0	baa{ b{bb a 
+first	0	0	Default	1	0	 {
+first	0	0	Default	1	0	{ab 
+first	0	0	Default	1	0	a   a{ 
+first	0	0	Default	1	0	b{{
+first	0	0	Default	1	0	ab{ {{a
+first	0	0	Default	1	0	{
+first	0	0	Default	1	0	aab {b 
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	a ba b {
+first	0	0	Default	1	0	aa{b
+first	0	0	Default	1	0	b  aa
+first	0	0	Default	1	0	b {ab  
+first	0	0	Default	1	0	{{a
+first	0	0	Default	1	0	{ b{{aa{{ b 
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	 {{ a b{b
+first	0	0	Default	1	0	 {{{  
+first	0	0	Default	1	0	abb{ba baa b
+first	0	0	Default	1	0	{abb a {b{b
+first	0	0	Default	1	0	bb
+first	0	0	Default	1	0	abbb ba{ {a
+first	0	0	Default	1	0	bb{aaab{
+first	0	0	Default	1	0	ab{a {b {aa
+first	0	0	Default	1	0	ba {baab ba
+first	0	0	Default	1	0	b
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	 b b b
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	b{ abb { aa 
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	   a{ b  bb
+first	0	0	Default	1	0	b
+first	0	0	Default	1	0	b{a  a{{ aa
+first	0	0	Default	1	0	b  a b{ b{
+first	0	0	Default	1	0	a {b
+first	0	0	Default	1	0	aa{aaaba 
+first	0	0	Default	1	0	 b
+first	0	0	Default	1	0	{a{b{{
+first	0	0	Default	1	0	bb{{{a b    
+first	0	0	Default	1	0	baab{a{
+first	0	0	Default	1	0	{{{bb
+first	0	0	Default	1	0	ba {   ba 
+first	0	0	Default	1	0	 b {{
+first	0	0	Default	1	0	aab  ba
+first	0	0	Default	1	0	 b{abab
+first	0	0	Default	1	0	{  a{ 
+first	0	0	Default	1	0	a  
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	a ab 
+first	0	0	Default	1	0	b{{
+first	0	0	Default	1	0	ab aa{a{aaa
+first	0	0	Default	1	0	{{
+first	0	0	Default	1	0	ab  a{{{b
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	abbb a{b 
+first	0	0	Default	1	0	{ ab  
+first	0	0	Default	1	0	bbb{ b
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	{{a{b{  {b
+first	0	0	Default	1	0	b
+first	0	0	Default	1	0	{  a  
+first	0	0	Default	1	0	bb
+first	0	0	Default	1	0	b  a{
+first	0	0	Default	1	0	{ 
+first	0	0	Default	1	0	b  {a{{   a
+first	0	0	Default	1	0	{
+first	0	0	Default	1	0	abb
+first	0	0	Default	1	0	{b
+first	0	0	Default	1	0	b 
+first	0	0	Default	1	0	b {{baa 
+first	0	0	Default	1	0	a  {
+first	0	0	Default	1	0	 b a{a 
+first	0	0	Default	1	0	ba {{a{ {
+first	0	0	Default	1	0	b   
+first	0	0	Default	1	0	ab b aab {aa
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	ab
+first	0	0	Default	1	0	{bb{ {b  { 
+first	0	0	Default	1	0	b{b
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	bab{
+first	0	0	Default	1	0	 b{ {{   
+first	0	0	Default	1	0	a{ba{a a
+first	0	0	Default	1	0	 a{a{
+first	0	0	Default	1	0	aaba{{{
+first	0	0	Default	1	0	 {ba{  b
+first	0	0	Default	1	0	ab  {{{ {{a
+first	0	0	Default	1	0	ab{{ ba{ bb
+first	0	0	Default	1	0	aa
+first	0	0	Default	1	0	b{ {ba b{{b
+first	0	0	Default	1	0	 { {ba{ b{
+first	0	0	Default	1	0	  {aab{
+first	0	0	Default	1	0	 {b   {bb 
+first	0	0	Default	1	0	a{bb{  {
+first	0	0	Default	1	0	 ab{bbb
+first	0	0	Default	1	0	{ a{{a
+first	0	0	Default	1	0	bb{  b
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	{{aa{ ab 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	 b a{a
+first	0	0	Default	1	0	a 
+first	0	0	Default	1	0	{a{{bb   ab
+first	0	0	Default	1	0	ba a{{{
+first	0	0	Default	1	0	b aa{{  {
+first	0	0	Default	1	0	b ab{b
+first	0	0	Default	1	0	aba{babbbb {
+first	0	0	Default	1	0	a{{{bba
+first	0	0	Default	1	0	{{ b b{ ba
+first	0	0	Default	1	0	 ab{
+first	0	0	Default	1	0	  a {
+first	0	0	Default	1	0	{b{ b
+first	0	0	Default	1	0	bbaa   {a
+first	0	0	Default	1	0	 aabaaaa
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	{{
+first	0	0	Default	1	0	b
+first	0	0	Default	1	0	 aa{aa{ab 
+first	0	0	Default	1	0	{{b aaa{
+first	0	0	Default	1	0	{
+first	0	0	Default	1	0	b{a{{{  b
+first	0	0	Default	1	0	 {a{
+first	0	0	Default	1	0	  {{aa{
+first	0	0	Default	1	0	{a{a {   
+first	0	0	Default	1	0	bb{{{
+first	0	0	Default	1	0	 a 
+first	0	0	Default	1	0	a{
+first	0	0	Default	1	0	 {{  
+first	0	0	Default	1	0	 {{{{bb b 
+first	0	0	Default	1	0	  aa
+first	0	0	Default	1	0	{ba
+first	0	0	Default	1	0	{ 
+first	0	0	Default	1	0	aaa  
+first	0	0	Default	1	0	b b{   {bab
+first	0	0	Default	1	0	  aba bb
+first	0	0	Default	1	0	bb{b
+first	0	0	Default	1	0	{{b{b{ { b 
+first	0	0	Default	1	0	 aa{ab
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	bb   bbaab{ 
+first	0	0	Default	1	0	b{ b{a
+first	0	0	Default	1	0	  aaaa
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	{b{ aa {a
+first	0	0	Default	1	0	a b
+first	0	0	Default	1	0	{a  abaaaa b
+first	0	0	Default	1	0	ba b b  a
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	bab{aa
+first	0	0	Default	1	0	{a bb
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	 a
+first	0	0	Default	1	0	ab
+first	0	0	Default	1	0	b{
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	{ a  ab
+first	0	0	Default	1	0	{ 
+first	0	0	Default	1	0	aa
+first	0	0	Default	1	0	{{{ b  b
+first	0	0	Default	1	0	 { a
+first	0	0	Default	1	0	{{{{ {b
+first	0	0	Default	1	0	{
+first	0	0	Default	1	0	b   b{a{a 
+first	0	0	Default	1	0	b{{aa{a 
+first	0	0	Default	1	0	 { a{a baa 
+first	0	0	Default	1	0	b{{a b  a
+first	0	0	Default	1	0	b{a  a{
+first	0	0	Default	1	0	b{a
+first	0	0	Default	1	0	bab 
+first	0	0	Default	1	0	b{b{  
+first	0	0	Default	1	0	a{bab{a{b  
+first	0	0	Default	1	0	{ a b  { 
+first	0	0	Default	1	0	aaa{{aa
+first	0	0	Default	1	0	  { b
+first	0	0	Default	1	0	bb ba  
+first	0	0	Default	1	0	{b  b  bbb{
+first	0	0	Default	1	0	 b{ {{a
+second	0	0	Default	1	0	bb{   b
+second	0	0	Default	1	0	bbba
+second	0	0	Default	1	0	{{{ba{aab{
+second	0	0	Default	1	0	b{{ ba{bb{
+second	0	0	Default	1	0	b{a
+second	0	0	Default	1	0	{bab  
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	  a{aa{ b   
+second	0	0	Default	1	0	{{{abb
+second	0	0	Default	1	0	bb{{
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	  
+second	0	0	Default	1	0	 { {abbbbb
+second	0	0	Default	1	0	{{  b  {
+second	0	0	Default	1	0	abaa b{{ 
+second	0	0	Default	1	0	 a{a{ 
+second	0	0	Default	1	0	{{bb
+second	0	0	Default	1	0	{
+second	0	0	Default	1	0	{a{{a{
+second	0	0	Default	1	0	{
+second	0	0	Default	1	0	{a{a ab {b 
+second	0	0	Default	1	0	 {aa   { aa
+second	0	0	Default	1	0	abbababbba
+second	0	0	Default	1	0	a a{ b{a
+second	0	0	Default	1	0	 a
+second	0	0	Default	1	0	a {bb  { b{b
+second	0	0	Default	1	0	{{{a{b { 
+second	0	0	Default	1	0	a 
+second	0	0	Default	1	0	{
+second	0	0	Default	1	0	{bb
+second	0	0	Default	1	0	b{bb 
+second	0	0	Default	1	0	bba {{bb a
+second	0	0	Default	1	0	 {b{b
+second	0	0	Default	1	0	  { abb a
+second	0	0	Default	1	0	ba  b
+second	0	0	Default	1	0	 {{    b bb
+second	0	0	Default	1	0	{{{
+second	0	0	Default	1	0	    {baa  ab
+second	0	0	Default	1	0	a {{ a{
+second	0	0	Default	1	0	{{ab{a{ a
+second	0	0	Default	1	0	 b { bb{aab
+second	0	0	Default	1	0	a a  a
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	b{a{{ aa{a
+second	0	0	Default	1	0	{{{ {bb {b
+second	0	0	Default	1	0	{b{ ba
+second	0	0	Default	1	0	ab ba{b 
+second	0	0	Default	1	0	a  a
+second	0	0	Default	1	0	a{
+second	0	0	Default	1	0	  baa{ ba
+second	0	0	Default	1	0	{a { a 
+second	0	0	Default	1	0	{ba{{ {b
+second	0	0	Default	1	0	a {a
+second	0	0	Default	1	0	b
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	bbb {ab   
+second	0	0	Default	1	0	{{{aa{{ba{
+second	0	0	Default	1	0	{bb{b a {ab
+second	0	0	Default	1	0	 {ba
+second	0	0	Default	1	0	{ 
+second	0	0	Default	1	0	a{ {b{ba {{
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{aa
+second	0	0	Default	1	0	  
+second	0	0	Default	1	0	b a
+second	0	0	Default	1	0	 {{
+second	0	0	Default	1	0	{aaa{{ {b
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{b    {b{a
+second	0	0	Default	1	0	{{b{
+second	0	0	Default	1	0	b aa
+second	0	0	Default	1	0	{bbb
+second	0	0	Default	1	0	aaba{{
+second	0	0	Default	1	0	 a{
+second	0	0	Default	1	0	bab{ b{bb b{
+second	0	0	Default	1	0	a 
+second	0	0	Default	1	0	a{{aa  b{ {a
+second	0	0	Default	1	0	{{b
+second	0	0	Default	1	0	a  
+second	0	0	Default	1	0	b{b  b{{b
+second	0	0	Default	1	0	aab  {
+second	0	0	Default	1	0	bab babbaa{{
+second	0	0	Default	1	0	{ba{ aa{a{ b
+second	0	0	Default	1	0	{a ab{ bb {
+second	0	0	Default	1	0	bb
+second	0	0	Default	1	0	 b{bb{{ 
+second	0	0	Default	1	0	{a{b
+second	0	0	Default	1	0	 {aa
+second	0	0	Default	1	0	 bbb{ abbba
+second	0	0	Default	1	0	bb
+second	0	0	Default	1	0	 a   b{ a a
+second	0	0	Default	1	0	{{b a{a
+second	0	0	Default	1	0	{b{{ab{ 
+second	0	0	Default	1	0	a{aa
+second	0	0	Default	1	0	{ ab {{{ abb
+second	0	0	Default	1	0	bb {a
+second	0	0	Default	1	0	 b  
+second	0	0	Default	1	0	 {a{b {{b a
+second	0	0	Default	1	0	b{aa baa a{
+second	0	0	Default	1	0	 a {ab
+second	0	0	Default	1	0	bbbb
+second	0	0	Default	1	0	{bbbbb  a{b{
+second	0	0	Default	1	0	{bab
+second	0	0	Default	1	0	{aa{{b
+second	0	0	Default	1	0	     ab{ab{a
+second	0	0	Default	1	0	 b{ 
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{aaa a{baaab
+second	0	0	Default	1	0	b  bb
+second	0	0	Default	1	0	a{bab{ 
+second	0	0	Default	1	0	{ba bb
+second	0	0	Default	1	0	{  { baba  {
+second	0	0	Default	1	0	{ ba {b
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	aaaaa aa {a 
+second	0	0	Default	1	0	{b b b{a 
+second	0	0	Default	1	0	b{ba
+second	0	0	Default	1	0	a{{{ 
+second	0	0	Default	1	0	{    a  { {{
+second	0	0	Default	1	0	{ b{a{ b
+second	0	0	Default	1	0	{ {a{{{
+second	0	0	Default	1	0	aaaaaa
+second	0	0	Default	1	0	{a ab{b 
+second	0	0	Default	1	0	aabaa a{baa
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	  aa{ {{abba
+second	0	0	Default	1	0	a  { 
+second	0	0	Default	1	0	a{
+second	0	0	Default	1	0	{ a{ a{  {  
+second	0	0	Default	1	0	{b ab ab
+second	0	0	Default	1	0	ba
+second	0	0	Default	1	0	b{bb
+second	0	0	Default	1	0	 aaab aa 
+second	0	0	Default	1	0	a {ba{ aa
+second	0	0	Default	1	0	 {a
+second	0	0	Default	1	0	a 
+second	0	0	Default	1	0	b{a{   b{ 
+second	0	0	Default	1	0	a{
+second	0	0	Default	1	0	a{a   a
+second	0	0	Default	1	0	{b
+second	0	0	Default	1	0	{b aa{b{
+second	0	0	Default	1	0	bbab b bb {
+second	0	0	Default	1	0	ab{{aa
+second	0	0	Default	1	0	 {abba 
+second	0	0	Default	1	0	{bb
+second	0	0	Default	1	0	a  {{  b b
+second	0	0	Default	1	0	aba a { {
+second	0	0	Default	1	0	 bbb{  {b 
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{bb 
+second	0	0	Default	1	0	 {{ {{a{aaa
+second	0	0	Default	1	0	b  ba
+second	0	0	Default	1	0	bb aba
+second	0	0	Default	1	0	b ba{a b{{b 
+second	0	0	Default	1	0	{bb{bb{b bb 
+second	0	0	Default	1	0	bb {b
+second	0	0	Default	1	0	b  {aaab{
+second	0	0	Default	1	0	a{b
+second	0	0	Default	1	0	 ba {{{  {
+second	0	0	Default	1	0	a{a  ab {a  
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a{bb{{ b{
+second	0	0	Default	1	0	aa{a
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{ aa a 
+second	0	0	Default	1	0	 a
+second	0	0	Default	1	0	a{bb{a   {
+second	0	0	Default	1	0	  {a{bbb{a{
+second	0	0	Default	1	0	{ { a
+second	0	0	Default	1	0	aa
+second	0	0	Default	1	0	b{aa{b{a{b
+second	0	0	Default	1	0	{{b{
+second	0	0	Default	1	0	a{b{aa b{a
+second	0	0	Default	1	0	abb{aa
+second	0	0	Default	1	0	{{ba{ aaa
+second	0	0	Default	1	0	{ aa{{{  b
+second	0	0	Default	1	0	a  
+second	0	0	Default	1	0	ab{a 
+second	0	0	Default	1	0	{a{{b{{{
+second	0	0	Default	1	0	    a {{
+second	0	0	Default	1	0	{
+second	0	0	Default	1	0	a bbaa{
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	 {
+second	0	0	Default	1	0	{ aa{a aa 
+second	0	0	Default	1	0	 ba 
+second	0	0	Default	1	0	b
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	{  bb
+second	0	0	Default	1	0	{bba{
+second	0	0	Default	1	0	bab 
+second	0	0	Default	1	0	a  {b
+second	0	0	Default	1	0	bbb {   {
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	b  {
+second	0	0	Default	1	0	ab baba
+second	0	0	Default	1	0	a  b{{  {{bb
+second	0	0	Default	1	0	 ab
+second	0	0	Default	1	0	b  aa{a
+run	0
+end
+case rand-astral
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	😀😁a a😀 
+first	0	0	Default	1	0	 😁
+first	0	0	Default	1	0	a😀😀 a😀aa
+first	0	0	Default	1	0	😁 😀
+first	0	0	Default	1	0	aa😁😁a a😁 😁 😁
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	a😀a a 
+first	0	0	Default	1	0	 😀😁😁😀😀
+first	0	0	Default	1	0	a😀😁aa😁a😀 😁 
+first	0	0	Default	1	0	 a😀 aa😀  a
+first	0	0	Default	1	0	😁 😀 a😀a 😀
+first	0	0	Default	1	0	😁a😁😁 a   a 
+first	0	0	Default	1	0	😀a😁
+first	0	0	Default	1	0	😁😀😀 a😀😀😀 a 😁
+first	0	0	Default	1	0	😁😀😀😀a😁😀😀
+first	0	0	Default	1	0	😀😀a a a😁a 😀 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	a😁😀😁 😁a
+first	0	0	Default	1	0	 😁  
+first	0	0	Default	1	0	😁😀😁😁  aa😀
+first	0	0	Default	1	0	😁😁😀a
+first	0	0	Default	1	0	😁 😁  😁😁😁😀 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	 a
+first	0	0	Default	1	0	😀aa 😀😀😀😀😀
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	a😁😀 
+first	0	0	Default	1	0	 😀😀
+first	0	0	Default	1	0	😁😁 😁😁😁😀😀😀😀
+first	0	0	Default	1	0	 😀😁a
+first	0	0	Default	1	0	😁😁
+first	0	0	Default	1	0	 😁a😀aa😁
+first	0	0	Default	1	0	😀 a😀😀
+first	0	0	Default	1	0	a  😁  😁😁😀😁
+first	0	0	Default	1	0	😁😀😀😁a a😀😀 
+first	0	0	Default	1	0	a😁😁😀😁😀😁aaa😁😁
+first	0	0	Default	1	0	aa 😀
+first	0	0	Default	1	0	 😀
+first	0	0	Default	1	0	 😁aaa 
+first	0	0	Default	1	0	😀a😀a😁a😀 😁  
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	aaa
+first	0	0	Default	1	0	😀😁😀😀😀 
+first	0	0	Default	1	0	a😀a😁aa😁😀😁
+first	0	0	Default	1	0	😁a 😀😁
+first	0	0	Default	1	0	😀a
+first	0	0	Default	1	0	😀😀aa
+first	0	0	Default	1	0	😀😀😀😀 a
+first	0	0	Default	1	0	😁😀 😀😀a😀a
+first	0	0	Default	1	0	😀a😀a😁
+first	0	0	Default	1	0	 😁aaaa
+first	0	0	Default	1	0	😁😀😁a
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	 a😁
+first	0	0	Default	1	0	  😀 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	  
+first	0	0	Default	1	0	a😁 aaaa😀a 😀
+first	0	0	Default	1	0	😀😁  😁aa😁😁😁😀
+first	0	0	Default	1	0	😀😁😀a
+first	0	0	Default	1	0	😀a😀 😁  aa😁
+first	0	0	Default	1	0	😀a 😀aa😁😁a 😁a
+first	0	0	Default	1	0	😀 a  😀😁😀😁 😀😀
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😀a 😀
+first	0	0	Default	1	0	😁😀a😀😁
+first	0	0	Default	1	0	😁a aa
+first	0	0	Default	1	0	a 😁😁  
+first	0	0	Default	1	0	😁😀
+first	0	0	Default	1	0	😁a😁aa😁a a 😁😁
+first	0	0	Default	1	0	😁😁 😁   a
+first	0	0	Default	1	0	aa 😀😁😀😀aa
+first	0	0	Default	1	0	 a😁😀😀a aa
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	😀😁😁😀😀a  
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	😁a😁😁😁a 
+first	0	0	Default	1	0	😁😁😁 😁a a
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	😁😁😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😀 😀😁😀 😁 
+first	0	0	Default	1	0	a😀a😁😀 😀a😀 
+first	0	0	Default	1	0	😀😁😀 😀
+first	0	0	Default	1	0	😀😁 a
+first	0	0	Default	1	0	 😁aa😀😁😁😁😀a
+first	0	0	Default	1	0	aaa a
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	aaa 😁 😀 😀😁a
+first	0	0	Default	1	0	  😀  
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	😁😁😁a a😀😀😁
+first	0	0	Default	1	0	  😀 a😁😁😁😁a  
+first	0	0	Default	1	0	aa😀😁aa😀  😁a
+first	0	0	Default	1	0	a😁
+first	0	0	Default	1	0	😁a  
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	 😁😁😀😀😀a 😀 
+first	0	0	Default	1	0	😀 😁 
+first	0	0	Default	1	0	😁😁😀a
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	a😁a😁😀😁
+first	0	0	Default	1	0	a 😁a😁😀😀😁😁😁a
+first	0	0	Default	1	0	😀a😁😀😀a aa
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	 😁a😀 😁 😀 aa
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	😁 😁a 😀 😀😁a😀
+first	0	0	Default	1	0	  😁 
+first	0	0	Default	1	0	a
+first	0	0	Default	1	0	😁😁😀😀😁a😁😁 a 😁
+first	0	0	Default	1	0	a😀😀 😁😀
+first	0	0	Default	1	0	 😀 
+first	0	0	Default	1	0	  a😁 aaa😁😁😁
+first	0	0	Default	1	0	😀😀😁a😀😀a
+first	0	0	Default	1	0	😀 😁  😀aaaaa😁
+first	0	0	Default	1	0	  😁😁😁 😀a 
+first	0	0	Default	1	0	  😀😀aa
+first	0	0	Default	1	0	😁 a a
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	  😀😀😀😁😁a😀😀a
+first	0	0	Default	1	0	😁 😀😀a😁
+first	0	0	Default	1	0	😀a
+first	0	0	Default	1	0	😁😁😀a😀 😀😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁😁😁a😁😀
+first	0	0	Default	1	0	a😁 😁a😁a
+first	0	0	Default	1	0	a😀😁 😁😀
+first	0	0	Default	1	0	a😁
+first	0	0	Default	1	0	😀 😁😀a😁
+first	0	0	Default	1	0	😀a
+first	0	0	Default	1	0	  😀 😁
+first	0	0	Default	1	0	a😀 a😀 😁😁😁  
+first	0	0	Default	1	0	😀aa😀😀😀  😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	a😁 😁 😀😀😀 😁😁
+first	0	0	Default	1	0	😁😁😁😁😁  😁😁
+first	0	0	Default	1	0	 😁 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	a😀😀😁 😀a 😀😁
+first	0	0	Default	1	0	😁😁😀😀aa😁
+first	0	0	Default	1	0	😀😁😁😀😀
+first	0	0	Default	1	0	😀a😀  aaa😁 a
+first	0	0	Default	1	0	a😀
+first	0	0	Default	1	0	😀😁😀
+first	0	0	Default	1	0	😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😀😁a😁😀😁😀 😁  
+first	0	0	Default	1	0	😁😁😀
+first	0	0	Default	1	0	 😀 a😁😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁😀😀😁 😁😀😁😀😀😁a
+first	0	0	Default	1	0	😀😁a😁😁aa😀😁 aa
+first	0	0	Default	1	0	😁😁a😀😁😀 😀😁😀a
+first	0	0	Default	1	0	 😁a😁😁😀😁a😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁a😀😀😀
+first	0	0	Default	1	0	 😁a😁😀😀😀😀aa😁😀
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁😀a
+first	0	0	Default	1	0	😁 a😀 a😁😁
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	 😁 
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	 a😀
+first	0	0	Default	1	0	  
+first	0	0	Default	1	0	😁 😀😁😁 😁 a😁
+first	0	0	Default	1	0	a 😁 😁😀😀😁😀😀😁 
+first	0	0	Default	1	0	😁😀😁😀😀 😀😀
+first	0	0	Default	1	0	😀😀😀😁a😀😁😀
+first	0	0	Default	1	0	😀😀a  
+first	0	0	Default	1	0	😁😁 😀 😀 😁😁
+first	0	0	Default	1	0	😀😁😀 😁
+first	0	0	Default	1	0	😀 😁 a😀😀 😁😁😀
+first	0	0	Default	1	0	  😀a 😁 a😁😁 a
+first	0	0	Default	1	0	a😁😁😀😁
+first	0	0	Default	1	0	aa😀a😀😁  a😀
+first	0	0	Default	1	0	😀😁😀
+first	0	0	Default	1	0	😀 😀a
+first	0	0	Default	1	0	
+first	0	0	Default	1	0	😁😁😀😀😁😁  😀a
+first	0	0	Default	1	0	a😁 😁😀😀😀😀a 😁 
+first	0	0	Default	1	0	  😁 a a😀
+first	0	0	Default	1	0	😁 😁😀😁😁😀  a a
+first	0	0	Default	1	0	  a😁aaa😀
+first	0	0	Default	1	0	 
+first	0	0	Default	1	0	😁
+first	0	0	Default	1	0	😀 😀
+first	0	0	Default	1	0	😀😀😁a😁 😁😀😀😁
+first	0	0	Default	1	0	  
+first	0	0	Default	1	0	aa😀  a😁
+first	0	0	Default	1	0	  a
+first	0	0	Default	1	0	
+second	0	0	Default	1	0	😁😁a a a
+second	0	0	Default	1	0	😀aa😁       
+second	0	0	Default	1	0	 😀😀😀😁
+second	0	0	Default	1	0	😀😁 a😁😀😀aa a
+second	0	0	Default	1	0	😁aa 😀  a😀 a😁
+second	0	0	Default	1	0	😀a a😁😁😀  😁😀
+second	0	0	Default	1	0	a 😀 a😁a😁😁 
+second	0	0	Default	1	0	😁😀  😁
+second	0	0	Default	1	0	😀
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	😁😁😀😁😁 😀 😀😀
+second	0	0	Default	1	0	a😀a😁😀😁a😀😀 😀
+second	0	0	Default	1	0	 😁aa😁 😀aa
+second	0	0	Default	1	0	😀😀😁  a😀   😁😀
+second	0	0	Default	1	0	a 😀 😁
+second	0	0	Default	1	0	a😁 😀😀 😁 😀
+second	0	0	Default	1	0	😁😀😁😁😁 😀 😀 😀
+second	0	0	Default	1	0	 😀 a
+second	0	0	Default	1	0	a😁
+second	0	0	Default	1	0	a😁😁
+second	0	0	Default	1	0	😁a😁😀😀😀😁
+second	0	0	Default	1	0	😀😁
+second	0	0	Default	1	0	  😀 
+second	0	0	Default	1	0	 aa  a
+second	0	0	Default	1	0	 
+second	0	0	Default	1	0	😁 😁 😀😁
+second	0	0	Default	1	0	😀 a😁a😁😁😀  
+second	0	0	Default	1	0	😁a😁😀a😁
+second	0	0	Default	1	0	aa😀
+second	0	0	Default	1	0	a😀a 😀 a😀a😀😀
+second	0	0	Default	1	0	😁😀 😁a a😀a
+second	0	0	Default	1	0	😁a😁😁aa😁😁😁😀
+second	0	0	Default	1	0	😀aa 😀
+second	0	0	Default	1	0	😀 😁😁 😁a😁a😁
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a😁😁😀a  😁 😀 😀
+second	0	0	Default	1	0	😁😁  a😁a😁
+second	0	0	Default	1	0	aa😁😀 😁 😀
+second	0	0	Default	1	0	😀 😁
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	😁 a 😀a
+second	0	0	Default	1	0	 😁😀😁😀a😀aa😁
+second	0	0	Default	1	0	 😀😀a😁😁a😁😀  
+second	0	0	Default	1	0	a😀😁😁😀
+second	0	0	Default	1	0	😀aa😁😀😀😁  😀😁 
+second	0	0	Default	1	0	a aa
+second	0	0	Default	1	0	 😀
+second	0	0	Default	1	0	😀aaaaaa😀😁a
+second	0	0	Default	1	0	😀😀😀a a😀😁😀😁😁
+second	0	0	Default	1	0	 aa😁
+second	0	0	Default	1	0	        
+second	0	0	Default	1	0	😁😀😁
+second	0	0	Default	1	0	aa😁
+second	0	0	Default	1	0	😁
+second	0	0	Default	1	0	😁😀
+second	0	0	Default	1	0	 
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a  😁😁😁a😀aa😀
+second	0	0	Default	1	0	 😀
+second	0	0	Default	1	0	 😀😁😁😀
+second	0	0	Default	1	0	 
+second	0	0	Default	1	0	😁aa😀a 
+second	0	0	Default	1	0	 
+second	0	0	Default	1	0	😀😁 
+second	0	0	Default	1	0	a a😁
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	😀😁aa😁aaa 😀😁 
+second	0	0	Default	1	0	a😀😁😁😀😁😁aaa 
+second	0	0	Default	1	0	😁😀 a😁a a😁  😁
+second	0	0	Default	1	0	 a  a a 
+second	0	0	Default	1	0	😁😀 a
+second	0	0	Default	1	0	😁aa😁  a 😀a 
+second	0	0	Default	1	0	😀a
+second	0	0	Default	1	0	😁
+second	0	0	Default	1	0	  😁😁😁 a
+second	0	0	Default	1	0	 😀a😁
+second	0	0	Default	1	0	 😀😀😁
+second	0	0	Default	1	0	😁a😁aa
+second	0	0	Default	1	0	😁😁😁😁a
+second	0	0	Default	1	0	 😀😁😁 a 😀
+second	0	0	Default	1	0	aa
+second	0	0	Default	1	0	😁a😀a😀😁😀
+second	0	0	Default	1	0	 a😀😀 a  
+second	0	0	Default	1	0	😀😀😁😁a😁😀a😁😁😀
+second	0	0	Default	1	0	😀😀😁😁😀a😁😁
+second	0	0	Default	1	0	 a😁a  😀 a
+second	0	0	Default	1	0	 😀
+second	0	0	Default	1	0	a😀😀
+second	0	0	Default	1	0	😁 😁😀😀 
+second	0	0	Default	1	0	aa  😁 😀a😁
+second	0	0	Default	1	0	a  😁  😀😁😁 
+second	0	0	Default	1	0	😀aa 😁😁😁
+second	0	0	Default	1	0	😀😀a
+second	0	0	Default	1	0	😁 a
+second	0	0	Default	1	0	😀😁😀a
+second	0	0	Default	1	0	 😀 😀a
+second	0	0	Default	1	0	 😀😀  😁😀a 
+second	0	0	Default	1	0	😀
+second	0	0	Default	1	0	😀😁😀 😁a😁
+second	0	0	Default	1	0	😀😀
+second	0	0	Default	1	0	😀a 😁 😀😁😁
+second	0	0	Default	1	0	😁😁😁
+second	0	0	Default	1	0	😁 😀😀😀😀
+second	0	0	Default	1	0	a😀aaa
+second	0	0	Default	1	0	  😁aa😁
+second	0	0	Default	1	0	😀 aaaa a
+second	0	0	Default	1	0	😁😀a
+second	0	0	Default	1	0	a😀😁😁😀a😁😀
+second	0	0	Default	1	0	 a😀 😀 aa  
+second	0	0	Default	1	0	a😁😁😁😀 😁 😀
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a😀😁😀  😀a 
+second	0	0	Default	1	0	😁😁😀 a  😁aa
+second	0	0	Default	1	0	😁😀😁 a😁😀 a
+second	0	0	Default	1	0	aa a 😁😀  😁😁a
+second	0	0	Default	1	0	 a😁 😀a😀😀
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	😀😀😀a😁😁a 😁
+second	0	0	Default	1	0	😁a a😀a😁😀a😁😀a
+second	0	0	Default	1	0	aaaa😁 a a😁
+second	0	0	Default	1	0	a a  😁 😁😀😀a
+second	0	0	Default	1	0	😁  😀a😁aaa 
+second	0	0	Default	1	0	a😀😁
+second	0	0	Default	1	0	 😀
+second	0	0	Default	1	0	a 😁a aa😁😁😀
+second	0	0	Default	1	0	 a😀😀😁😀 
+second	0	0	Default	1	0	😀😀😁  😀😀😀 
+second	0	0	Default	1	0	aaa😁a😀 😀a 😁😁
+second	0	0	Default	1	0	😁
+second	0	0	Default	1	0	😁 😀a😁😀😀
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	aa a 😀😁aa😁😀
+second	0	0	Default	1	0	a 😁a 
+second	0	0	Default	1	0	😀😁
+second	0	0	Default	1	0	 😀 a
+second	0	0	Default	1	0	a aaa 😀
+second	0	0	Default	1	0	a😁😀a😀😀😁😀😁😀😁a
+second	0	0	Default	1	0	 😀😁😀aa😁a😁😁a😁
+second	0	0	Default	1	0	😁a😀a😁a
+second	0	0	Default	1	0	a 😁a😀   😀 😀
+second	0	0	Default	1	0	😁😁😀😁😀😁😁😀 😀
+second	0	0	Default	1	0	a aa😀
+second	0	0	Default	1	0	 😁😁😁😀
+second	0	0	Default	1	0	  😀 
+second	0	0	Default	1	0	a😁😀😁😀😁😀
+second	0	0	Default	1	0	😀a😀aa 😁😁😁 😁😀
+second	0	0	Default	1	0	 😁
+second	0	0	Default	1	0	😁 a😁😁a
+second	0	0	Default	1	0	😀 😀😀😁
+second	0	0	Default	1	0	  😁😁 😀😁😁a😀
+second	0	0	Default	1	0	😁😀😁a😀a😁😁 
+second	0	0	Default	1	0	😁😁 
+second	0	0	Default	1	0	😀   😀
+second	0	0	Default	1	0	a😀a
+second	0	0	Default	1	0	  😀 a 😁
+second	0	0	Default	1	0	aa😁
+second	0	0	Default	1	0	   
+second	0	0	Default	1	0	😀 😁a😁 😀😀 
+second	0	0	Default	1	0	😀 😁 😀😁 a😀a
+second	0	0	Default	1	0	😁😀😀😀😀😀😁  
+second	0	0	Default	1	0	😁
+second	0	0	Default	1	0	😁a😁😀😀😁
+second	0	0	Default	1	0	😁😀😁😁a
+second	0	0	Default	1	0	aa   😀 a  aa
+second	0	0	Default	1	0	  😁😀a
+second	0	0	Default	1	0	😀😀a
+second	0	0	Default	1	0	😁😁😁😁😀😁😁
+second	0	0	Default	1	0	😁😀😀 
+second	0	0	Default	1	0	 a
+second	0	0	Default	1	0	😁😁  a
+second	0	0	Default	1	0	😁😀  😁 a😁 😀
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	😁a😁😀😁😁😁aa😁
+second	0	0	Default	1	0	😁😁😁 😁 a😀a
+second	0	0	Default	1	0	a a😀a  😁 a
+second	0	0	Default	1	0	   😁😁😀
+second	0	0	Default	1	0	a  😀 😀😁  
+second	0	0	Default	1	0	a😁😁😀 😀😀😁😀😀
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a😀a 😁😀😀 
+second	0	0	Default	1	0	😁a😀😁 
+second	0	0	Default	1	0	😀 😁aa a
+second	0	0	Default	1	0	aa😀aa 
+second	0	0	Default	1	0	😁😀
+second	0	0	Default	1	0	a 😁😁😁😀 a
+second	0	0	Default	1	0	
+second	0	0	Default	1	0	a
+second	0	0	Default	1	0	 😀😁 😀a😁
+second	0	0	Default	1	0	😁 a a 😀 😁 😀
+second	0	0	Default	1	0	 😁a 
+second	0	0	Default	1	0	  😀😀 😀😁😀
+second	0	0	Default	1	0	 😁😁a😀😀😀
+second	0	0	Default	1	0	😁aa😁aa😁
+second	0	0	Default	1	0	😁😀  
+second	0	0	Default	1	0	 a😀😁
+second	0	0	Default	1	0	😁 a 😀a 😁😀😁😁
+second	0	0	Default	1	0	😁aa😁a😁 a😁😀😁
+second	0	0	Default	1	0	a😀😀a  
+run	0
+end
