@@ -9286,11 +9286,6 @@ private slots:
         }
     }
 
-    // A4-wasapi-default: the audio box's output is made with the host API
-    // audio.outputHostApi names (Windows: 0 WASAPI, 1 DirectSound; here the
-    // Windows choice is asked for and the output recorded). A change takes
-    // effect when the output next opens: at once while idle, after the
-    // playback while playing.
     // W1: video.playbackPlayer chooses the player that plays video. On
     // Windows 1 is the optional DirectShow adapter and 0 the general player;
     // elsewhere the adapter does not exist and the setting is ignored: the
@@ -9331,6 +9326,11 @@ private slots:
         QCOMPARE(application->video().session().generalPlayer(), general);
     }
 
+    // A4-wasapi-default: the audio box's output is made with the host API
+    // audio.outputHostApi names (Windows: 0 WASAPI, 1 DirectSound; here the
+    // Windows choice is asked for and the output recorded). A change takes
+    // effect when the output next opens: at once while idle, after the
+    // playback while playing.
     void audioOutputFollowsTheHostApiSetting()
     {
         delete engine;

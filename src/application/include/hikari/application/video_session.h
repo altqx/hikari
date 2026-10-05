@@ -91,6 +91,10 @@ public:
     // nothing when the player has it open already or is opening it.
     void preparePlayer();
     bool playerHasVideo() const { return m_player && !m_path.empty() && m_playerPath == m_path; }
+    // W1: preparePlayer's open of this video failed; the player is not asked
+    // again (to open, prepare or play) until the video is loaded again or the
+    // player changes.
+    bool playerFailed() const { return !m_path.empty() && m_failedPath == m_path; }
     bool play();  // from the shown frame; false without video or player
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
@@ -210,6 +214,7 @@ private:
     GeneralPlayerPort *m_player = nullptr;
     std::string m_playerPath; // what the player has open
     bool m_preparing = false;  // W1: preparePlayer's open is pending
+    std::string m_failedPath;  // W1: preparePlayer could not open it
     bool m_playing = false;
     bool m_stopped = false;
     std::uint64_t m_playEpoch = 0;

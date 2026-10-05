@@ -109,6 +109,7 @@ void VideoSession::close()
     m_playEndMs = 0;
     ++m_playEpoch;
     m_preparing = false;
+    m_failedPath.clear();
     m_lastGeneralUs.reset();
     m_overlayTime.reset();
     if (m_state == State::Opening)
@@ -363,12 +364,14 @@ void VideoSession::setGeneralPlayer(GeneralPlayerPort *player)
     m_player = player;
     m_playerPath.clear();
     m_preparing = false;
+    m_failedPath.clear();
     ++m_playEpoch; // the previous player's pending answers are dropped
 }
 
 void VideoSession::preparePlayer()
 {
-    if (!m_player || m_state != State::Ready || dummy() || m_playing || m_preparing || m_playerPath == m_path)
+    if (!m_player || m_state != State::Ready || dummy() || m_playing || m_preparing || m_playerPath == m_path
+        || playerFailed())
         return;
     m_preparing = true;
     const std::uint64_t epoch = m_playEpoch;
@@ -378,8 +381,15 @@ void VideoSession::preparePlayer()
         if (alive.expired() || epoch != m_playEpoch)
             return;
         m_preparing = false;
-        if (!opened || path != m_path)
+        if (path != m_path)
             return;
+        if (!opened) {
+            // Legacy opened the DirectShow graph once per load and warned
+            // once (VideoBox::LoadVideo, VideoBox.cpp:328-331); the player
+            // is not asked again until the video loads again.
+            m_failedPath = path;
+            return notify();
+        }
         m_playerPath = path;
         if (m_audioOrdinal >= 0 && m_audioOrdinal < static_cast<int>(opened->audioTracks.size()))
             m_player->selectAudioTrack(m_audioOrdinal);
@@ -389,6 +399,8 @@ void VideoSession::preparePlayer()
 
 bool VideoSession::startPlayback(std::int64_t fromUs)
 {
+    if (playerFailed())
+        return false; // legacy had no video after the failed open
     m_preparing = false;
     m_playing = true;
     m_stopped = false;

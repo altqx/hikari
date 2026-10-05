@@ -5,11 +5,16 @@
 // the accepted I4 handoff, read from each fixture frame's barcode), step to
 // the next frame and back, list the graph in the video's context menu
 // ("Filters", legacy VideoBox::ContextMenu) and Stop back to the first frame.
+// Then the transport's Next / Previous frame buttons step, and the Filters
+// submenu, open beside the context menu, takes the Dark and Light themes'
+// colours with every filter's name whole (saved for review when
+// HIKARI_SCREENSHOT_DIR is set).
 
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "theme.h"
 
+#include <QColor>
 #include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
@@ -95,6 +100,115 @@ QStringList filterEntries()
     return out;
 }
 
+QObject *rootChild(const char *name)
+{
+    return g_engine->rootObjects().first()->findChild<QObject *>(QString::fromLatin1(name));
+}
+
+std::vector<QQuickItem *> menuItems(QObject *menu)
+{
+    std::vector<QQuickItem *> out;
+    const int count = menu->property("count").toInt();
+    for (int i = 0; i < count; ++i) {
+        QQuickItem *item = nullptr;
+        QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+        if (item)
+            out.push_back(item);
+    }
+    return out;
+}
+
+// Opens the context menu's Filters submenu as choosing its item does.
+void openFilters()
+{
+    QMetaObject::invokeMethod(
+        g_app,
+        [] {
+            auto *menu = rootChild("videoContextMenu");
+            auto *filters = rootChild("videoMenuFilters");
+            if (!menu || !filters)
+                return;
+            for (auto *item : menuItems(menu))
+                if (item->property("subMenu").value<QObject *>() == filters)
+                    QMetaObject::invokeMethod(item, "click");
+        },
+        Qt::BlockingQueuedConnection);
+}
+
+void setTheme(const char *code)
+{
+    QMetaObject::invokeMethod(
+        g_app,
+        [code] {
+            g_app->settingsStore()->setValue(QString::fromLatin1(hikari::ui::theme::kFollowSystemSetting), false);
+            g_app->settingsStore()->setValue(QString::fromLatin1(hikari::ui::theme::kThemeSetting),
+                                             QString::fromLatin1(code));
+        },
+        Qt::BlockingQueuedConnection);
+}
+
+// With the Filters submenu open in the theme `code`: both menus' surface
+// is the theme's (K2: Menu draws on palette.base, the field role), on the
+// theme's side, and no filter's name is cut off. The context menu's own
+// items that are cut off are printed (theirs is the shared menu item).
+std::string filtersLook(const char *code, bool dark)
+{
+    std::string out;
+    QMetaObject::invokeMethod(
+        g_app,
+        [&] {
+            auto *menu = rootChild("videoContextMenu");
+            auto *filters = rootChild("videoMenuFilters");
+            if (!menu || !filters || !filters->property("opened").toBool()) {
+                out = "filters not open";
+                return;
+            }
+            const QColor expected = hikari::ui::theme::current().roles.field;
+            auto *menuBack = menu->property("background").value<QQuickItem *>();
+            auto *filtersBack = filters->property("background").value<QQuickItem *>();
+            const QColor menuColour = menuBack ? menuBack->property("color").value<QColor>() : QColor();
+            const QColor filtersColour = filtersBack ? filtersBack->property("color").value<QColor>() : QColor();
+            QStringList cut;
+            for (auto *item : menuItems(filters))
+                if (item->implicitWidth() > item->width() + 0.5)
+                    cut << item->property("text").toString();
+            QStringList menuCut;
+            for (auto *item : menuItems(menu))
+                if (item->implicitWidth() > item->width() + 0.5)
+                    menuCut << item->property("text").toString().replace(QLatin1Char('\t'), QLatin1Char(' '));
+            std::printf("%s: context menu %s, Filters %s, theme field %s; context menu items cut off: %s\n", code,
+                        qPrintable(menuColour.name()), qPrintable(filtersColour.name()), qPrintable(expected.name()),
+                        qPrintable(menuCut.isEmpty() ? QStringLiteral("none") : menuCut.join(QStringLiteral(" | "))));
+            const QString dir = qEnvironmentVariable("HIKARI_SCREENSHOT_DIR");
+            if (!dir.isEmpty() && filtersBack && filtersBack->window()) {
+                QDir().mkpath(dir);
+                filtersBack->window()->grabWindow().save(
+                    QDir(dir).filePath(QStringLiteral("filters-menu-avi-%1.png").arg(QString::fromLatin1(code))));
+            }
+            if (filtersColour != expected || menuColour != expected)
+                out = "not the theme's surface: " + filtersColour.name().toStdString();
+            else if ((expected.lightness() < 128) != dark)
+                out = "not on the theme's side";
+            else if (!cut.isEmpty())
+                out = "cut off: " + cut.join(QStringLiteral(", ")).toStdString();
+            else
+                out = code;
+        },
+        Qt::BlockingQueuedConnection);
+    return out;
+}
+
+void closeContextMenu()
+{
+    QMetaObject::invokeMethod(
+        g_app,
+        [] {
+            if (auto *menu = rootChild("videoContextMenu"))
+                QMetaObject::invokeMethod(menu, "close");
+        },
+        Qt::BlockingQueuedConnection);
+}
+
 class Workflow : public spix::TestServer {
 public:
     std::vector<std::string> observed;
@@ -145,13 +259,7 @@ protected:
                                        entries.size() >= 4
                                    ? "filters"
                                    : "no filters"); // 2
-            QMetaObject::invokeMethod(
-                g_app,
-                [] {
-                    if (auto *menu = g_engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("videoContextMenu")))
-                        QMetaObject::invokeMethod(menu, "close");
-                },
-                Qt::BlockingQueuedConnection);
+            closeContextMenu();
             wait(200ms);
             mouseClick("mainWindow/playPause");
             observed.push_back(waitForLabel("Pause")); // 3: Pause while playing
@@ -190,6 +298,34 @@ protected:
                                    : "no frames again"); // 10
             mouseClick("mainWindow/stopVideo");
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 11
+            // The transport's Next / Previous frame buttons (legacy
+            // VideoBox's frame buttons), pressed as a click does: at this
+            // window size the row is wider than the Video panel and the Next
+            // frame button lies under the Line editor panel (a layout outside
+            // this card), so its own action is invoked.
+            invokeMethod("mainWindow/nextFrame", "click", {});
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 1 && s.barcode == 1 && s.accepted; })
+                                   ? "next button"
+                                   : "no next frame: " + std::to_string(shown().frame)); // 12
+            invokeMethod("mainWindow/previousFrame", "click", {});
+            observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.barcode == 0 && s.accepted; })
+                                   ? "previous button"
+                                   : "no previous frame: " + std::to_string(shown().frame)); // 13
+            // The Filters submenu in the Dark and Light themes.
+            mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
+            for (int i = 0; i < 50 && filterEntries().isEmpty(); ++i)
+                wait(100ms);
+            openFilters();
+            setTheme("dark");
+            wait(500ms);
+            status();
+            observed.push_back(filtersLook("dark", true)); // 14
+            setTheme("light");
+            wait(500ms);
+            status();
+            observed.push_back(filtersLook("light", false)); // 15
+            closeContextMenu();
+            wait(200ms);
         }
         for (const auto &e : getErrors())
             std::printf("spix error: %s\n", e.c_str());
@@ -285,8 +421,8 @@ int main(int argc, char **argv)
     for (std::size_t i = 0; i < o.size(); ++i)
         std::printf("observed[%zu] = %s\n", i, o[i].c_str());
     std::printf("filters: %s\n", qPrintable(shown().filters.join(QStringLiteral(", "))));
-    expect(o.size() == 12, "every step observed");
-    if (o.size() == 12) {
+    expect(o.size() == 16, "every step observed");
+    if (o.size() == 16) {
         expect(o[0] == "frame 0", "the first frame is shown");
         expect(o[1] == "directshow", "the session plays through the DirectShow adapter");
         expect(o[2] == "filters", "the context menu's Filters lists the graph");
@@ -299,6 +435,10 @@ int main(int argc, char **argv)
         expect(o[9] == "previous", "Previous frame steps back");
         expect(o[10] == "playing again", "Play goes on through DirectShow");
         expect(o[11] == "frame 0", "Stop returns to the first frame");
+        expect(o[12] == "next button", "the Next frame button steps one indexed frame");
+        expect(o[13] == "previous button", "the Previous frame button steps back");
+        expect(o[14] == "dark", "the Filters submenu takes the Dark theme, its names whole");
+        expect(o[15] == "light", "the Filters submenu takes the Light theme, its names whole");
     }
     return failures == 0 ? 0 : 1;
 }

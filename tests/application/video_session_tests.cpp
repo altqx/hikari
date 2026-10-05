@@ -348,6 +348,7 @@ struct FakePlayer : GeneralPlayerPort {
     MediaDescription description() const override { return {}; }
     std::uint64_t generation() const override { return 1; }
     void opened(MediaDescription description = {}) { pendingOpen(std::move(description)); }
+    void failed() { pendingOpen(std::unexpected(PlayerError::FormatError)); }
     void delivered() { pendingSeek(SeekResult{1, soughtUs, soughtUs, {}}); }
 };
 
@@ -693,6 +694,50 @@ TEST_F(VideoTest, RestartGoesToTheStartAndTogglesPlay)
     ASSERT_TRUE(video.restartToggled()); // playing: back to the start, paused there
     EXPECT_FALSE(video.playing());
     EXPECT_EQ(video.requestedFrame(), 0);
+}
+
+// W1: legacy built the DirectShow graph once as the video loaded and warned
+// once when it failed (VideoBox::LoadVideo, VideoBox.cpp:328-331). A failed
+// prepare is not retried on later frames or plays until the video loads
+// again or the player changes.
+TEST_F(VideoTest, AFailedPrepareIsNotRetriedUntilTheVideoLoadsAgain)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    video.setPresenter(&presenter);
+    video.open("/m/ep1.avi");
+    source.finishOpen();
+    source.answer();
+    video.preparePlayer();
+    video.preparePlayer(); // pending: not asked twice
+    ASSERT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
+    player.failed();
+    EXPECT_TRUE(video.playerFailed());
+    EXPECT_FALSE(video.playerHasVideo());
+    // Frame steps, seeks and plays after the failure do not open it again.
+    video.showFrame(2);
+    source.answer();
+    video.preparePlayer();
+    EXPECT_FALSE(video.play());
+    EXPECT_FALSE(video.playing());
+    EXPECT_FALSE(video.playLine(0, 200));
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
+    // Loading the video again asks once more.
+    video.open("/m/ep1.avi");
+    source.finishOpen();
+    EXPECT_FALSE(video.playerFailed());
+    video.preparePlayer();
+    EXPECT_EQ(player.calls.size(), 2u);
+    player.failed();
+    EXPECT_TRUE(video.playerFailed());
+    // So does another player chosen in the settings.
+    FakePlayer other;
+    video.setGeneralPlayer(&other);
+    EXPECT_FALSE(video.playerFailed());
+    video.preparePlayer();
+    EXPECT_EQ(other.calls, (std::vector<std::string>{"open /m/ep1.avi"}));
+    other.opened();
+    EXPECT_TRUE(video.playerHasVideo());
 }
 
 // V4: the Script properties matrix through the source's input matrix
