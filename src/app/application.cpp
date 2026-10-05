@@ -654,6 +654,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->log(problem);
     });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
+    connect(m_editor.get(), &ui::LineEditorController::leftLineCommitted, this,
+            [this](qulonglong id) { m_leftEditedLine = core::LineId{id}; });
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
         const auto target = m_workspace.editingTarget();
         auto *session = target ? m_files->session(*target) : nullptr;
@@ -1218,6 +1220,7 @@ void Application::refreshViews()
 
 void Application::refreshVideo()
 {
+    const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (target != m_videoDocument) {
@@ -1266,7 +1269,7 @@ void Application::refreshVideo()
         rowChanged = m_videoLine.has_value();
         m_videoLine = active;
     }
-    followActiveLine(rowChanged, edited);
+    followActiveLine(rowChanged, edited, left);
 }
 
 namespace {

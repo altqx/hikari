@@ -784,14 +784,18 @@ private:
         bool autoPlay = false;
     };
     std::optional<LineChangeOrigin> m_lineChangeOrigin;
+    // The Line whose draft the editor committed on leaving it, until the next refreshVideo.
+    std::optional<core::LineId> m_leftEditedLine;
     void trackVideoFollow();
-    void followActiveLine(bool rowChanged, bool edited);
+    void followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left);
+    void followEditOn(const application::FollowedLine &line);
     void followShownLine(bool rowChanged, LineChangeOrigin origin);
     void followGridPress(std::optional<core::LineId> before, core::LineId line, int modifiers, bool endColumn,
                          bool doubleClick);
     void applyVideoFollow(const application::VideoFollow &follow);
     application::VideoState videoState() const;
     std::optional<application::FollowedLine> followedLine() const;
+    std::optional<application::FollowedLine> followedLine(core::LineId line) const;
     struct Closing {
         application::DocumentId document;
         bool save = false;

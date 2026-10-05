@@ -7693,6 +7693,59 @@ private slots:
         QTRY_COMPARE(video.frame(), std::min(timebase.frameAt(1100), video.frameCount() - 1));
     }
 
+    // V6: an edit committed because the active Line changes. Legacy
+    // EditBox::SetLine (EditBox.cpp:383-384) sends the old Line's edit before
+    // it loads the new one, so ShowEditOnVideo (SubsGridBase.cpp:1165-1177)
+    // seeks to the EDITED Line's start, and modes 2-5 do not seek on the Line
+    // change itself (EditBox.cpp:448). Enter is the other way round:
+    // SubsGrid::ChangeLine (SubsGridBase.cpp:150-154) runs NextLine before
+    // SetModified, so ShowEditOnVideo seeks to the NEW Line's start.
+    void videoFollowsAnEditCommittedOnALineChange()
+    {
+        auto &settings = *application->settingsStore();
+        settings.set("video.openAtActiveLine", false);
+        settings.set("video.playAfterSelection", 0);
+        const QString path = writeFile(dir, "v6-leave.ass",
+                                       "Dialogue: 0,0:00:00.50,0:00:01.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:01.50,0:00:02.00,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const auto a = lines[0]->id, b = lines[1]->id, c = lines[2]->id;
+        auto &video = application->video();
+        video.openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000);
+        settings.set("video.moveToActiveLine", 4); // "Editing line when paused"
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QCOMPARE(session->selection().active, std::optional(a));
+        QVERIFY(video.showFrameAt(40));
+        QTRY_COMPARE(video.frame(), 40);
+        // a's Start in the editor, not committed; Down commits it on leaving a
+        application->editor().setStartText(QStringLiteral("0:00:00.75"));
+        item("editingGrid")->forceActiveFocus();
+        QCOMPARE(session->draftLine(), std::optional(a));
+        QCOMPARE(video.frame(), 40);
+        press(Qt::Key_Down);
+        QTRY_COMPARE(session->selection().active, std::optional(b));
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 750'000);
+        QTRY_COMPARE(video.frame(), 18); // a's new start, 0.75 s; not b's 1.00 s (frame 24)
+        QTest::qWait(200);
+        QCOMPARE(video.frame(), 18);
+        // Enter with b's Start pending: c becomes active, then the video goes to c's start
+        application->editor().setStartText(QStringLiteral("0:00:01.25"));
+        item("lineText")->forceActiveFocus();
+        QCOMPARE(session->draftLine(), std::optional(b));
+        press(Qt::Key_Return);
+        QTRY_COMPARE(session->selection().active, std::optional(c));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 1'250'000);
+        QTRY_COMPARE(video.frame(), 36); // c's start, 1.50 s; not b's new 1.25 s (frame 30)
+        QTest::qWait(200);
+        QCOMPARE(video.frame(), 36);
+        settings.set("video.moveToActiveLine", 0);
+    }
+
     // V6: "On moving to another line play:" (VIDEO_PLAY_AFTER_SELECTION) after
     // Enter (SubsGrid::NextLine, autoPlay): the video plays the new Line to
     // the frame before its end (the next Line's start for the last choice),

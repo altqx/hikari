@@ -47,15 +47,23 @@ std::optional<application::FollowedLine> Application::followedLine() const
     auto *session = targetSession();
     if (!session || !session->selection().active)
         return std::nullopt;
-    const auto active = *session->selection().active;
-    auto record = session->draftLine() == active ? session->draftRecord() : committedLine(*session, active);
+    return followedLine(*session->selection().active);
+}
+
+// The same for any Line (the one an edit was committed on leaving).
+std::optional<application::FollowedLine> Application::followedLine(core::LineId id) const
+{
+    auto *session = targetSession();
+    if (!session)
+        return std::nullopt;
+    auto record = session->draftLine() == id ? session->draftRecord() : committedLine(*session, id);
     if (!record)
         return std::nullopt;
     const auto shown = shownLines();
     std::vector<application::AudioLineSpan> spans;
     int position = -1;
     for (const auto *line : session->document().lines()) {
-        if (line->id == active)
+        if (line->id == id)
             position = static_cast<int>(spans.size());
         spans.push_back({msOf(line->start.value), msOf(line->end.value), shown(line->id)});
     }
@@ -105,21 +113,34 @@ void Application::followShownLine(bool rowChanged, LineChangeOrigin origin)
                                                   origin.autoPlay, m_audio && m_audio->hasAudio(), *line));
 }
 
-void Application::followActiveLine(bool rowChanged, bool edited)
+void Application::followActiveLine(bool rowChanged, bool edited, std::optional<core::LineId> left)
 {
+    // An edit committed because the active Line changed. EditBox::SetLine
+    // sends the old Line first (EditBox.cpp:383-384), so ShowEditOnVideo
+    // follows the edited Line before the new one is shown. Enter is the
+    // other way round: SubsGrid::ChangeLine runs NextLine before SetModified
+    // (SubsGridBase.cpp:150-154), so ShowEditOnVideo follows the new Line.
+    const bool nextLine = m_lineChangeOrigin && !m_lineChangeOrigin->gridClick && m_lineChangeOrigin->autoPlay;
+    if (rowChanged && edited && left && !nextLine) {
+        if (const auto line = followedLine(*left))
+            followEditOn(*line);
+        edited = false;
+    }
     if (rowChanged) {
         const auto origin = std::exchange(m_lineChangeOrigin, std::nullopt);
         followShownLine(true, origin.value_or(LineChangeOrigin{}));
     }
-    if (edited) {
-        const auto line = followedLine();
-        if (!line)
-            return;
-        // ShowEditOnVideo: `edit->Visual < CHANGEPOS` (no tool, or the crosshair)
-        const bool visualTool = m_visualTools && m_visualTools->activeFamily() > 0;
-        const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
-        applyVideoFollow(application::followEdit(seek, videoState(), visualTool, *line));
-    }
+    if (edited)
+        if (const auto line = followedLine())
+            followEditOn(*line);
+}
+
+void Application::followEditOn(const application::FollowedLine &line)
+{
+    // ShowEditOnVideo: `edit->Visual < CHANGEPOS` (no tool, or the crosshair)
+    const bool visualTool = m_visualTools && m_visualTools->activeFamily() > 0;
+    const auto seek = static_cast<application::SeekAfter>(m_settings->integer("video.moveToActiveLine"));
+    applyVideoFollow(application::followEdit(seek, videoState(), visualTool, line));
 }
 
 void Application::followGridPress(std::optional<core::LineId> before, core::LineId line, int modifiers,
