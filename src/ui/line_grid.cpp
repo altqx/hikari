@@ -606,7 +606,13 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const
     QColor mark = roles.text;
     if (label.isValid() && theme::contrastRatio(roles.field, label) > theme::contrastRatio(mark, label))
         mark = roles.field;
-    const QRectF dot(cell.right() - 9, cell.center().y() - 2.5, 5, 5);
+    // The centre on a device pixel corner, so the ring's 1-wide pen falls on
+    // whole pixels: at a fractional column edge or row height (other fonts,
+    // another platform) it would otherwise smear over two half-tone pixels.
+    const QTransform &device = painter->deviceTransform();
+    const QPointF centre = device.map(QPointF(cell.right() - 6.5, cell.center().y()));
+    const QPointF snapped = device.inverted().map(QPointF(std::round(centre.x()), std::round(centre.y())));
+    const QRectF dot(snapped.x() - 2.5, snapped.y() - 2.5, 5, 5);
     if (changed == 1) {
         painter->setPen(Qt::NoPen);
         painter->setBrush(mark);
