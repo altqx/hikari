@@ -11,8 +11,9 @@
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QMetaObject>
-#include <QPointer>
 #include <QQuickImageProvider>
+
+#include <algorithm>
 
 namespace hikari::app {
 
@@ -68,7 +69,7 @@ std::filesystem::path catalogPath(const std::filesystem::path &dir, std::u16stri
 FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
                                                QObject *parent)
     : QObject(parent), m_settings(settings), m_dir(std::move(catalogDir)), m_hooks(std::move(hooks)),
-      m_catalogs(kLower), m_service(std::make_unique<backends::LibassFontService>()),
+      m_catalogs(kLower), m_service(std::make_shared<backends::LibassFontService>()),
       m_families(std::make_unique<application::FontFamilies>(*m_service, kLower))
 {
     // FontCatalogManagement::saveInterval; the label goes after 10 s.
@@ -98,20 +99,26 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
 
 FontCatalogsController::~FontCatalogsController()
 {
-    joinResolver();
+    stopResolver();
 }
 
-void FontCatalogsController::joinResolver()
+void FontCatalogsController::stopResolver()
 {
+    {
+        std::lock_guard lock(m_resolveMutex);
+        m_resolverStop = true;
+        m_resolveJob.reset();
+    }
+    m_resolveWake.notify_all();
     if (m_resolver.joinable())
-        m_resolver.join();
+        m_resolver.join(); // a resolution under way finishes first
 }
 
 void FontCatalogsController::setFontService(std::unique_ptr<application::FontServicePort> service)
 {
-    joinResolver();
+    // A resolution under way keeps the service it was given (shared).
     application::FontEnvironment environment = m_families->environment();
-    m_service = std::move(service);
+    m_service = std::shared_ptr<application::FontServicePort>(std::move(service));
     m_families = std::make_unique<application::FontFamilies>(*m_service, kLower);
     m_families->setEnvironment(std::move(environment));
     watchFolders();
@@ -430,14 +437,33 @@ void FontCatalogsController::settingChanged(const QString &id)
 
 int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic)
 {
-    joinResolver();
+    // Each resolution builds a libass library over fontconfig, so it runs on
+    // the worker; the GUI thread only hands over the latest request.
     const int request = ++m_resolveRequest;
-    application::FontEnvironment environment = m_families->environment();
-    application::FontRequest want{family.toStdString(), bold, italic, "AaBbCcDdEeFfGg 0123456789"};
-    QPointer<FontCatalogsController> self(this);
-    m_resolving = true;
-    m_resolver = std::thread([this, self, request, environment = std::move(environment), want = std::move(want)] {
-        const auto report = m_service->resolve(environment, {want});
+    {
+        std::lock_guard lock(m_resolveMutex);
+        m_resolveJob = ResolveJob{request, m_service, m_families->environment(),
+                                  application::FontRequest{family.toStdString(), bold, italic, "AaBbCcDdEeFfGg 0123456789"}};
+    }
+    m_resolveWake.notify_one();
+    if (!m_resolver.joinable())
+        m_resolver = std::thread([this] { resolverLoop(); });
+    return request;
+}
+
+void FontCatalogsController::resolverLoop()
+{
+    for (;;) {
+        ResolveJob job;
+        {
+            std::unique_lock lock(m_resolveMutex);
+            m_resolveWake.wait(lock, [this] { return m_resolverStop || m_resolveJob.has_value(); });
+            if (m_resolverStop)
+                return;
+            job = std::move(*m_resolveJob);
+            m_resolveJob.reset();
+        }
+        const auto report = job.service->resolve(job.environment, {job.want});
         QVariantMap result;
         if (report) {
             const auto r = application::pickerResolution(*report);
@@ -453,26 +479,26 @@ int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool
         } else {
             result[QStringLiteral("kind")] = QStringLiteral("unavailable");
         }
+        const int request = job.request;
+        // The controller outlives this thread (its destructor joins before
+        // ~QObject), so the queued call runs on it or is dropped with it.
         QMetaObject::invokeMethod(
-            self.data(),
-            [self, request, result] {
-                if (self) {
-                    self->m_resolving = false;
-                    emit self->resolutionReady(request, result);
-                }
+            this,
+            [this, request, result] {
+                m_resolveAnswered = std::max(m_resolveAnswered, request);
+                emit resolutionReady(request, result);
             },
             Qt::QueuedConnection);
-    });
-    return request;
+    }
 }
 
 bool FontCatalogsController::waitResolved(int ms)
 {
     QElapsedTimer t;
     t.start();
-    while (m_resolving && t.elapsed() < ms)
+    while (m_resolveAnswered < m_resolveRequest && t.elapsed() < ms)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 20);
-    return !m_resolving;
+    return m_resolveAnswered >= m_resolveRequest;
 }
 
 namespace {

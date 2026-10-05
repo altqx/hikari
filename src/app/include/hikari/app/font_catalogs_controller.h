@@ -30,10 +30,12 @@
 #include <QUrl>
 #include <QVariantMap>
 
-#include <atomic>
+#include <condition_variable>
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -144,13 +146,15 @@ public:
     // What the renderer selected for `family` (the font dialog's report):
     // {kind: "requested"|"substituted"|"fallback"|"missing", family, file,
     // emboldened, italicized}; resolutionReady(requestId, result) answers.
+    // One worker thread resolves the latest request; a request still waiting
+    // when a newer one comes is replaced and never answered.
     Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic);
 
     // The external fonts' bytes, for renderer contexts.
     std::vector<application::FontLease> externalFontLeases() const;
     const application::FontEnvironment &environment() const { return m_families->environment(); }
 
-    // Tests: another font service; waiting for a resolution; the catalog
+    // Tests: another font service; waiting for the latest resolution; the catalog
     // file's folder; the autosave and change delays.
     void setFontService(std::unique_ptr<application::FontServicePort> service);
     bool waitResolved(int ms = 30000);
@@ -175,14 +179,22 @@ private:
     void relist();
     void watchFolders();
     void settingChanged(const QString &id);
-    void joinResolver();
+    struct ResolveJob {
+        int request = 0;
+        std::shared_ptr<application::FontServicePort> service;
+        application::FontEnvironment environment;
+        application::FontRequest want;
+    };
+    void resolverLoop();
+    void stopResolver();
 
     ui::SettingsStore &m_settings;
     std::filesystem::path m_dir;
     Hooks m_hooks;
     application::FontCatalogs m_catalogs;
     bool m_loaded = false; // isInit
-    std::unique_ptr<application::FontServicePort> m_service;
+    // Shared with the resolver thread, which keeps the service it was given.
+    std::shared_ptr<application::FontServicePort> m_service;
     std::unique_ptr<application::FontFamilies> m_families;
     std::uint64_t m_generation = 1;
     QTimer m_autosave, m_autosaveLabel, m_watchDelay;
@@ -192,9 +204,13 @@ private:
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;
-    std::thread m_resolver;
-    std::atomic<bool> m_resolving{false};
-    int m_resolveRequest = 0;
+    std::thread m_resolver; // started with the first request
+    std::mutex m_resolveMutex;
+    std::condition_variable m_resolveWake;
+    std::optional<ResolveJob> m_resolveJob; // the latest request not yet taken
+    bool m_resolverStop = false;
+    int m_resolveRequest = 0;  // the latest request made (GUI thread)
+    int m_resolveAnswered = 0; // the latest request answered (GUI thread)
 };
 
 // "image://fontcatalogpreview/<key>": the management window's preview.

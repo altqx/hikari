@@ -48,6 +48,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <future>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -111,9 +112,12 @@ class PickerFonts final : public application::FontServicePort {
 public:
     std::vector<std::pair<std::string, std::u32string>> families;
     int refreshes = 0;
+    std::function<void()> onResolve; // runs first, on the resolving thread
     std::expected<application::FontReport, application::FontError>
     resolve(const application::FontEnvironment &, const std::vector<application::FontRequest> &requests) override
     {
+        if (onResolve)
+            onResolve();
         application::FontReport report;
         for (const auto &request : requests) {
             application::ResolvedFace face;
@@ -998,6 +1002,44 @@ private slots:
                  (QStringList{"All fonts", "Without catalog", "A", "B"}));
         QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
         application->fontCatalogs().waitResolved();
+    }
+
+    // Y6: the font dialog's renderer report resolves on one worker thread:
+    // asking never waits for an earlier resolution, a request still waiting
+    // is replaced by a newer one, and waitResolved waits for the latest.
+    void fontResolutionDoesNotBlockAndAnswersTheLatest()
+    {
+        auto *service = usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        std::promise<void> release;
+        std::shared_future<void> released = release.get_future().share();
+        auto entered = std::make_shared<std::atomic<int>>(0);
+        service->onResolve = [entered, released] {
+            if (entered->fetch_add(1) == 0)
+                released.wait();
+        };
+        bool set = false;
+        auto unblock = qScopeGuard([&] {
+            if (!set)
+                release.set_value(); // a failed check must not leave the worker held
+        });
+        QSignalSpy answers(&catalogs, &app::FontCatalogsController::resolutionReady);
+        const int first = catalogs.resolveFamily(QStringLiteral("Arial"), false, false);
+        QTRY_COMPARE(entered->load(), 1); // the first resolution is under way, held
+        const int second = catalogs.resolveFamily(QStringLiteral("Tahoma"), false, false);
+        const int third = catalogs.resolveFamily(QStringLiteral("Nowhere"), true, false);
+        QCOMPARE(second, first + 1);
+        QCOMPARE(third, first + 2);
+        QVERIFY(!catalogs.waitResolved(50));
+        release.set_value();
+        set = true;
+        QVERIFY(catalogs.waitResolved());
+        QCOMPARE(answers.size(), 2);
+        QCOMPARE(answers.at(0).at(0).toInt(), first);
+        QCOMPARE(answers.at(0).at(1).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("requested"));
+        QCOMPARE(answers.at(1).at(0).toInt(), third);
+        QCOMPARE(answers.at(1).at(1).toMap().value(QStringLiteral("kind")).toString(), QStringLiteral("substituted"));
+        QCOMPARE(entered->load(), 2);
     }
 
     // Y6: Add > "Add fonts from subtitles" (GetFontsFromASSDialog,
