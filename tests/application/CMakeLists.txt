@@ -171,3 +171,8 @@ target_compile_definitions(hikari_application_video_timing_tests PRIVATE
 # the Grid's Original text / Translation columns).
 hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# P9: associated-file discovery and the legacy Subs/ autosaves.
+hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_files_tests.cpp legacy_autosaves_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_associated_files_tests PRIVATE
+    HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")

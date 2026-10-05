@@ -26,6 +26,7 @@
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
 #include "hikari/application/media_association.h"
+#include "hikari/application/legacy_autosaves.h"
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
 #include "theme.h"
@@ -996,6 +997,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     trackVideoSources(); // V3
     trackVideoFollow(); // V6
     startLocalisation(); // O5
+    setupTabMenu(options); // P9
     refreshViews();
 }
 
@@ -1166,8 +1168,12 @@ void Application::setAudioFromVideo(bool mark)
 void Application::openAudioFromVideo()
 {
     const auto &video = m_video->session();
-    if (video.state() == application::VideoSession::State::Ready)
+    if (video.state() == application::VideoSession::State::Ready) {
         m_audio->openAudio(QString::fromStdString(video.path()));
+        // P9: legacy AudioPath = VideoPath (OpenAudioInTab with no path).
+        if (const auto target = m_workspace.editingTarget())
+            m_tabMedia[target->value].audioFromVideo = true;
+    }
 }
 
 QVariantList Application::recentAudio()
@@ -1310,8 +1316,11 @@ bool Application::openFile(const QString &path)
     const auto id = open(path);
     if (!id)
         return false;
+    ++m_openBatch; // P9: the association question (legacy OpenFile's LoadVideo prompt)
     if (emptyTab)
         replaceTarget(*id);
+    offerAssociations(*id);
+    showAssociationOffer();
     refreshViews();
     checkResolution();
     trimAudioCache();
@@ -1425,20 +1434,14 @@ void Application::refreshVideo()
         m_videoRevision.reset();
         m_videoScript.clear();
         m_videoLine.reset();
-        application::MediaAssociations associations;
-        const auto destination = target ? m_files->destination(*target) : std::nullopt;
-        if (session && destination) {
-#ifdef _WIN32
-            constexpr bool windows = true;
-#else
-            constexpr bool windows = false;
-#endif
-            associations = application::resolveMediaAssociations(
-                session->document(), destination->value,
-                [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, windows);
+        // P9: the question asked when the target's subtitles opened (legacy
+        // OpenFile's LoadVideo prompt), until it is answered; switching tabs
+        // asks nothing new. Y9: subtitles loaded from the tab's video keep it
+        // open.
+        if (!m_keepVideoOnEnter) {
+            m_video->resetForTarget();
+            showAssociationOffer();
         }
-        if (!m_keepVideoOnEnter) // Y9: subtitles loaded from the tab's video keep it open
-            m_video->offer(associations);
         enterTabMedia(previous, target); // P6: the tab's own video, audio and keyframes
     }
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
@@ -1521,7 +1524,11 @@ QVariantList Application::reviewClose(const QString &then)
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
+        m_videoAfterOpen.clear(); // P9
+        m_openFromVideo = false;
     }
+    if (then != QLatin1String("files"))
+        m_pendingFiles.reset(); // P9
     std::vector<application::DocumentId> scope;
     if (then != QLatin1String("tab"))
         m_closingTab.reset(); // P6
@@ -1531,6 +1538,8 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_workspace.documents();
     else if (then == QLatin1String("tab")) // P6: a middle-clicked tab
         scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
+    else if (then == QLatin1String("all")) // P9: Close all tabs
+        scope = m_workspace.tabs();
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -1670,8 +1679,20 @@ void Application::finishClose()
         std::optional<application::DocumentId> id;
         if (m_pendingOpen)
             id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
+        const QString videoAfter = std::exchange(m_videoAfterOpen, QString());
+        const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
+            // P9: the folder's video and the Script Info associations are
+            // offered (LoadVideo's loadPrompt), but not for subtitles found
+            // beside a video, which opens after them.
+            ++m_openBatch;
+            if (!fromVideo) {
+                offerAssociations(*id);
+                showAssociationOffer();
+            } else if (!videoAfter.isEmpty()) {
+                m_video->openVideo(videoAfter);
+            }
             QTimer::singleShot(0, this, [this] { checkResolution(); });
         } else {
             closeEditingTarget();
@@ -1685,6 +1706,11 @@ void Application::finishClose()
     } else if (then == QLatin1String("tab")) {
         if (const auto tab = std::exchange(m_closingTab, std::nullopt))
             closeDocument(*tab); // P6
+    } else if (then == QLatin1String("all")) {
+        closeAllTabs(); // P9
+    } else if (then == QLatin1String("files")) {
+        if (auto files = std::exchange(m_pendingFiles, std::nullopt))
+            applyFiles(std::move(*files), false); // P9
     } else {
         closeEditingTarget();
     }
@@ -1702,7 +1728,13 @@ void Application::cancelClose()
     m_pendingOpenPath.clear();
     m_pendingSession.reset(); // P6
     m_closingTab.reset();
+    m_videoAfterOpen.clear(); // P9: OpenFile returned before LoadVideo
+    m_openFromVideo = false;
     endFindOpen(false);
+    // P9: a cancelled review of the first dropped subtitles skips them only
+    // (OpenFile returned true; OpenFiles went on with the next).
+    if (auto files = std::exchange(m_pendingFiles, std::nullopt))
+        applyFiles(std::move(*files), true);
 }
 
 bool Application::targetUntitled() const
@@ -1739,15 +1771,25 @@ bool readOnly(const QString &path)
 
 QString Application::saveRoute() const
 {
-    const auto target = m_workspace.editingTarget();
-    if (!target)
+    return saveRouteFor(0);
+}
+
+// P9: the Video a tab's Save looks at (legacy atab->VideoName): the shown
+// video for the editing target, a tab's own otherwise.
+static QString readyVideo(const application::VideoSession &video)
+{
+    return video.state() == application::VideoSession::State::Ready ? QString::fromStdString(video.path()) : QString();
+}
+
+QString Application::saveRouteFor(qulonglong id) const
+{
+    const auto document = documentOf(id);
+    if (!document)
         return {};
-    const auto destination = m_files->destination(*target);
+    const auto destination = m_files->destination(*document);
     const QString path = destination ? QString::fromStdString(destination->value) : QString();
-    const QString video = m_video->session().state() == application::VideoSession::State::Ready
-                              ? QString::fromStdString(m_video->session().path())
-                              : QString();
-    if (path.isEmpty() || m_formatChanged.contains(target->value) || (saveWithVideoName() && !video.isEmpty() &&
+    const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
+    if (path.isEmpty() || m_formatChanged.contains(document->value) || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -1755,16 +1797,19 @@ QString Application::saveRoute() const
 
 QVariantMap Application::saveDialogValues() const
 {
-    auto *session = targetSession();
+    return saveDialogValuesFor(0);
+}
+
+QVariantMap Application::saveDialogValuesFor(qulonglong id) const
+{
+    const auto document = documentOf(id);
+    auto *session = document ? m_files->session(*document) : nullptr;
     if (!session)
         return {};
-    const auto target = m_workspace.editingTarget();
-    const auto destination = m_files->destination(*target);
-    const QString video = m_video->session().state() == application::VideoSession::State::Ready
-                              ? QString::fromStdString(m_video->session().path())
-                              : QString();
+    const auto destination = m_files->destination(*document);
+    const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
     // Y9: subtitles loaded from an MKV are named after it (OnMkvSubs' SubsPath).
-    const auto matroskaPath = m_matroskaPaths.find(target->value);
+    const auto matroskaPath = m_matroskaPaths.find(document->value);
     const QString path = !video.isEmpty() && saveWithVideoName() ? video
                          : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
                          : matroskaPath != m_matroskaPaths.end()      ? matroskaPath->second
@@ -1781,7 +1826,13 @@ QVariantMap Application::saveDialogValues() const
 
 QString Application::saveChosen(const QUrl &file)
 {
-    auto *session = targetSession();
+    return saveChosenFor(0, file);
+}
+
+QString Application::saveChosenFor(qulonglong id, const QUrl &file)
+{
+    const auto document = documentOf(id);
+    auto *session = document ? m_files->session(*document) : nullptr;
     QString path = file.toLocalFile();
     if (!session || path.isEmpty())
         return QStringLiteral("failed");
@@ -1793,23 +1844,48 @@ QString Application::saveChosen(const QUrl &file)
         path += u'.' + ext;
     if (readOnly(path))
         return QStringLiteral("readonly");
-    if (!saveAs(path))
+    auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
+    if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
-    if (const auto target = m_workspace.editingTarget())
-        m_formatChanged.erase(target->value); // legacy originalFormat = subsFormat
+    m_formatChanged.erase(document->value); // legacy originalFormat = subsFormat
+    if (*document == m_workspace.editingTarget())
+        m_editor->reloadFromSession();
+    refreshViews();
     return {};
 }
 
-bool Application::saveAll()
+bool Application::saveDocument(qulonglong id)
 {
-    bool targetNeedsDialog = false;
-    for (const auto id : m_workspace.documents()) {
+    const auto document = documentOf(id);
+    if (!document)
+        return false;
+    if (*document == m_workspace.editingTarget())
+        return m_editor->save(); // the Line editor reports a refusal
+    auto plan = m_files->prepareSave(*document);
+    const std::string *title = m_workspace.title(*document);
+    const QString name = title ? QString::fromStdString(*title) : QString();
+    if (!plan || !m_files->startSave(std::move(*plan))) {
+        m_log->log(tr("%1 could not be saved.").arg(name));
+        return false;
+    }
+    refreshViews();
+    return true;
+}
+
+QVariantList Application::saveAll()
+{
+    // Legacy SaveAll: Save(false, i, false) for every modified tab in order.
+    QVariantList later;
+    for (const auto id : m_workspace.tabs()) {
         auto *session = m_files->session(id);
         if (!session || !session->isDirty())
             continue;
-        const auto destination = m_files->destination(id);
-        if (!destination || destination->value.empty()) {
-            targetNeedsDialog = targetNeedsDialog || m_workspace.editingTarget() == id;
+        const QString route = saveRouteFor(id.value);
+        if (!route.isEmpty()) {
+            const std::string *title = m_workspace.title(id);
+            later << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
+                                 {QStringLiteral("route"), route},
+                                 {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()}};
             continue;
         }
         if (auto plan = m_files->prepareSave(id))
@@ -1817,7 +1893,7 @@ bool Application::saveAll()
     }
     m_editor->reloadFromSession();
     refreshViews();
-    return targetNeedsDialog;
+    return later;
 }
 
 bool Application::turnOffTranslationMode()
@@ -1852,46 +1928,18 @@ QVariantMap Application::reviewOpen(const QString &path)
         m_log->log(problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
+    // P9: OPEN_SUBS_IN_NEW_TAB (legacy OpenFile): with the option on and
+    // subtitles of a file in the tab, they open in a new tab, unasked
+    // (not for subtitles found beside a video, which load into the tab).
+    if (!m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
+        const bool opened = openInNewTab(std::move(*staged), path);
+        return {{QStringLiteral("ok"), opened}, {QStringLiteral("problem"), QString()},
+                {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+    }
     const QVariantList rows = reviewClose(QStringLiteral("open"));
     m_pendingOpen = std::move(*staged);
     m_pendingOpenPath = path;
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
-}
-
-QString Application::openDropped(const QList<QUrl> &urls)
-{
-    QStringList files;
-    for (const QUrl &url : urls)
-        if (url.isLocalFile())
-            files << url.toLocalFile();
-    // Legacy sorts by the locale's collation.
-    QCollator collator;
-    std::sort(files.begin(), files.end(), [&](const QString &a, const QString &b) { return collator.compare(a, b) < 0; });
-    const bool single = files.size() == 1;
-    QString subtitles;
-    QString video;
-    for (const QString &file : files) {
-        switch (application::openKindOf(file.toStdString(), single)) {
-        case application::OpenKind::Subtitles:
-            if (subtitles.isEmpty())
-                subtitles = file; // one editing target until tabs arrive (D1)
-            break;
-        case application::OpenKind::Script:
-            m_automation->loadScript(QUrl::fromLocalFile(file));
-            break;
-        case application::OpenKind::Video:
-            if (video.isEmpty())
-                video = file;
-            break;
-        case application::OpenKind::Keyframes: // keyframes arrive with the video cards
-        case application::OpenKind::Refused:
-            break;
-        }
-    }
-    if (!video.isEmpty())
-        m_video->openVideo(video);
-    trimAudioCache(); // legacy OpenFiles
-    return subtitles;
 }
 
 void Application::rememberRecent(const std::string &path)
@@ -2495,6 +2543,86 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
         }
     }
     m_workspace.add(id, tr("%1 (recovered)").arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.setEditingTarget(id);
+    refreshViews();
+    return true;
+}
+
+// P9: the legacy app's autosaves in its Subs folder (AutoSaveOpen), read only.
+QVariantList Application::legacyAutosaves()
+{
+    QVariantList rows;
+    if (m_legacyAutosaveDir.isEmpty() || !QFileInfo(m_legacyAutosaveDir).isDir())
+        return rows; // no legacy folder: nothing to list (and nothing logged)
+    const auto files = application::listLegacyAutosaves(std::filesystem::path(m_legacyAutosaveDir.toStdU16String()),
+                                                        tr("Untitled").toStdU16String());
+    if (files.empty()) {
+        // GenerateList: "Cannot open auto save folder" when FindFirstFileW
+        // finds nothing (the Linux build's, for an empty folder too; on
+        // Windows "." and ".." are found), else "Auto save folder is empty".
+#ifdef _WIN32
+        m_log->log(tr("Auto save folder is empty"));
+#else
+        m_log->log(QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+                       ? tr("Cannot open auto save folder")
+                       : tr("Auto save folder is empty"));
+#endif
+        return rows;
+    }
+    for (const auto &file : files) {
+        QVariantList versions;
+        for (const auto &version : file.versions)
+            versions << QVariantMap{{QStringLiteral("written"), QString::fromStdString(version.written)},
+                                    {QStringLiteral("file"), QString::fromStdU16String(version.file.u16string())}};
+        rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(file.name)},
+                            {QStringLiteral("versions"), versions}};
+    }
+    return rows;
+}
+
+QVariantList Application::filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const
+{
+    // AutoSaveOpen::FindFiles: the query's words (split at spaces, empty ones
+    // dropped: wxTOKEN_STRTOK) found in the lowered name, all of them or any
+    // ("All words"); an empty query shows every file. Lowering follows
+    // U1-unicode-case (every letter, whatever the interface language).
+    QVariantList shown;
+    const QStringList tokens = query.split(u' ', Qt::SkipEmptyParts);
+    for (int k = 0; k < files.size(); ++k) {
+        const QString name = files[k].toMap().value(QStringLiteral("name")).toString().toLower();
+        bool found = allWords;
+        for (const QString &token : tokens) {
+            const bool has = name.contains(token.toLower());
+            if (allWords && !has) {
+                found = false;
+                break;
+            }
+            if (!allWords && has) {
+                found = true;
+                break;
+            }
+        }
+        if (query.isEmpty() || found)
+            shown << k;
+    }
+    return shown;
+}
+
+bool Application::openLegacyAutosave(const QString &file)
+{
+    // Legacy OnOkClick opened the autosave itself (Hikari->OpenFile), so a
+    // save wrote into the Subs folder; under L58-recovery-copy it opens as a
+    // new unsaved Untitled copy and the file is only read.
+    auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
+    if (!staged) {
+        m_log->log(tr("Failed to load autosave"));
+        return false;
+    }
+    const auto id = m_files->createUnsaved(std::move(staged->load.document));
+    if (auto *session = m_files->session(id))
+        selectLegacyActiveLine(*session);
+    m_workspace.add(id, tr("%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
+    m_tabMedia[id.value]; // a new tab
     m_workspace.setEditingTarget(id);
     refreshViews();
     return true;

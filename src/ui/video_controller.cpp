@@ -191,26 +191,36 @@ bool VideoController::previousChapter()
     return jj && m_session.seekToMs(starts[static_cast<std::size_t>(*jj)]);
 }
 
-void VideoController::offer(const application::MediaAssociations &associations)
+void VideoController::resetForTarget()
 {
     ++m_openRequest; // P6: an open still in the filter belonged to the previous target
     m_session.close();
-    m_offeredVideo.clear();
-    if (associations.video && associations.video->resolved)
-        m_offeredVideo = QString::fromStdString(*associations.video->resolved);
+    m_offer.clear();
+    m_offerApplyToAll = false;
+    emit changed();
+}
+
+void VideoController::setOffer(const QString &text, const QString &associatedLabel, const QString &directoryLabel)
+{
+    m_offer = text;
+    m_offerAssociated = associatedLabel;
+    m_offerDirectory = directoryLabel;
+    m_offerApplyToAll = false;
     emit changed();
 }
 
 void VideoController::withdrawOffer()
 {
-    m_offeredVideo.clear();
+    m_offer.clear();
     emit changed();
 }
 
-QString VideoController::offer() const
+void VideoController::setOfferApplyToAll(bool on)
 {
-    return m_offeredVideo.isEmpty() ? QString()
-                                    : tr("Associated files:\nVideo: %1").arg(QDir::toNativeSeparators(m_offeredVideo));
+    if (m_offerApplyToAll == on)
+        return;
+    m_offerApplyToAll = on;
+    emit changed();
 }
 
 QString VideoController::status() const
@@ -235,25 +245,39 @@ void VideoController::attachPresenter(QObject *presenter)
     m_session.setPresenter(qobject_cast<VideoPresenter *>(presenter));
 }
 
+void VideoController::answer(int answer)
+{
+    if (m_offer.isEmpty())
+        return;
+    const bool all = m_offerApplyToAll;
+    m_offer.clear();
+    emit changed();
+    emit offerAnswered(answer, all);
+}
+
 void VideoController::loadAssociated()
 {
-    const QString path = m_offeredVideo;
-    m_offeredVideo.clear();
-    if (!path.isEmpty())
-        open(path);
-    emit changed();
+    answer(0);
+}
+
+void VideoController::loadFromDirectory()
+{
+    answer(1);
 }
 
 void VideoController::dismissOffer()
 {
-    withdrawOffer();
+    answer(2);
 }
 
 void VideoController::openVideo(const QString &path)
 {
-    m_offeredVideo.clear();
+    const bool withdrawn = !m_offer.isEmpty();
+    m_offer.clear();
     open(application::isDummyVideo(path.toStdString()) ? path : QDir::toNativeSeparators(path));
     emit changed();
+    if (withdrawn)
+        emit offerWithdrawn();
 }
 
 void VideoController::open(const QString &path)

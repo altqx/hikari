@@ -133,6 +133,17 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
 # P6: tab traversal and close review through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)
+# P9: the tab menu, tab reordering, folders, drops, associated files and the
+# legacy autosaves through the composition and the real QML.
+hikari_add_qttest(hikari_ui_tab_menu_tests SOURCES tab_menu_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_tab_menu_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_tab_menu_tests hikari_media_fixtures hikari_media_helper)
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_tab_menu_tests.${mode})
+        set_tests_properties(hikari_ui_tab_menu_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
 # R1: subtitle comparison through the composition and the tab menu.
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
 # R2: reference navigation, linked matching and the subtitles preview.

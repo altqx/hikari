@@ -35,6 +35,8 @@ target_sources(hikari_application PRIVATE document_scripts.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 # R2: reference navigation (legacy SubsGridPreview's matching).
 target_sources(hikari_application PRIVATE reference_navigation.cpp)
+# P9: associated-file discovery and legacy Subs/ autosaves (read only).
+target_sources(hikari_application PRIVATE associated_files.cpp legacy_autosaves.cpp)
 # Y8: the font collector (renderer-verified collection).
 target_sources(hikari_application PRIVATE font_collector.cpp)
 # Y9: MKV extraction (subtitle tracks and font attachments).

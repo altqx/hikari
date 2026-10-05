@@ -99,8 +99,8 @@ ApplicationWindow {
     // target's unsaved work is reviewed as for Close.
     function openSubtitles(path) {
         const result = root.app.reviewOpen(path)
-        if (!result.ok)
-            return // the log window shows the problem
+        if (!result.ok || result.done)
+            return // the log window shows the problem; P9: opened in a new tab
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
@@ -467,7 +467,8 @@ ApplicationWindow {
                             required property int index
                             objectName: "recentSubtitles" + index
                             text: modelData.label
-                            onTriggered: root.openSubtitles(modelData.path)
+                            // P9: Ctrl+click shows the file in its folder.
+                            onTriggered: if (!root.app.revealRecent(modelData.path)) root.openSubtitles(modelData.path)
                         }
                         onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
                         onObjectRemoved: (index, object) => recentMenu.removeItem(object)
@@ -527,8 +528,7 @@ ApplicationWindow {
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
                                 return
-                            if (root.app.saveAll())
-                                root.openSaveDialog()
+                            root.saveAllTabs()
                         }
                     }
                 }
@@ -1101,7 +1101,8 @@ ApplicationWindow {
                         required property int index
                         objectName: "recentAudio" + index
                         text: modelData.label
-                        onTriggered: root.audio.openAudio(modelData.path)
+                        // P9: Ctrl+click shows the file in its folder.
+                        onTriggered: if (!root.app.revealRecent(modelData.path)) root.audio.openAudio(modelData.path)
                     }
                     onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
@@ -1652,9 +1653,15 @@ ApplicationWindow {
             if (!drop.hasUrls)
                 return
             drop.accept(Qt.CopyAction)
-            const subtitles = root.app.openDropped(drop.urls)
-            if (subtitles.length > 0)
-                root.openSubtitles(subtitles)
+            // P9: legacy OpenFiles: one file opens as OpenFile does; several
+            // open as tabs, after a review of the editing target's work.
+            const result = root.app.openDropped(drop.urls)
+            if (result.kind === "subtitles")
+                root.openSubtitles(result.path)
+            else if (result.kind === "video")
+                tabCommands.openVideoFile(result.path)
+            else if (result.kind === "files" && result.rows.length > 0)
+                closeReview.review(result.rows)
         }
     }
 
@@ -1725,32 +1732,12 @@ ApplicationWindow {
                 Keys.onReleased: event => event.accepted = root.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
                 // The legacy "Associated files" confirmation, inline: the
-                // Document stays editable whatever is chosen.
-                Frame {
-                    id: associationOffer
-                    objectName: "associationOffer"
-                    visible: root.video.offering
+                // Document stays editable whatever is chosen (P9: its text,
+                // buttons and "Apply to All").
+                AssociationOffer {
+                    video: root.video
                     anchors { left: parent.left; right: parent.right; top: parent.top }
                     z: 1
-                    RowLayout {
-                        anchors.fill: parent
-                        Label {
-                            objectName: "associationText"
-                            text: root.video.offer
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                        }
-                        Button {
-                            objectName: "loadAssociated"
-                            text: qsTr("Load associated")
-                            onClicked: root.video.loadAssociated()
-                        }
-                        Button {
-                            objectName: "dismissAssociation"
-                            text: qsTr("No")
-                            onClicked: root.video.dismissOffer()
-                        }
-                    }
                 }
                 // V3: the indexing's progress and Cancel.
                 VideoIndexingProgress {
@@ -3293,6 +3280,10 @@ ApplicationWindow {
         app: root.app
         Layout.fillWidth: true
         onCloseRequested: index => root.closeTab(index)
+        // P9: the tab menu's Save, Save all and Close all tabs.
+        onSaveRequested: id => root.saveSubtitles(id)
+        onSaveAllRequested: root.saveAllTabs()
+        onCloseAllRequested: tabCommands.confirmCloseAll()
       }
       RowLayout {
         // Legacy's first field: help and Automation status text (set_status_text),
@@ -3382,17 +3373,41 @@ ApplicationWindow {
 
     // Legacy HikariSubFrame::Save: "Save subtitle file" for the Document's
     // format, starting at its file (or the video's, with the video name).
-    function saveSubtitles() {
-        const route = root.app.saveRoute()
+    // P9: for any tab's Document `id` (none: the editing target), and Save
+    // all's queue of Documents that need the dialog, one after another.
+    function saveSubtitles(id) {
+        const document = id ?? 0
+        const route = root.app.saveRouteFor(document)
         if (route === "dialog")
-            openSaveDialog()
-        else if (route === "readonly")
+            openSaveDialog(document)
+        else if (route === "readonly") {
+            readOnlyWarning.document = document
             readOnlyWarning.open()
-        else
+        } else if (document === 0)
             root.editor.save()
+        else
+            root.app.saveDocument(document)
     }
-    function openSaveDialog() {
-        const v = root.app.saveDialogValues()
+    property var saveQueue: []
+    function saveAllTabs() {
+        saveQueue = root.app.saveAll()
+        saveNext()
+    }
+    function saveNext() {
+        if (saveQueue.length === 0)
+            return
+        const next = saveQueue[0]
+        saveQueue = saveQueue.slice(1)
+        if (next.route === "readonly") {
+            readOnlyWarning.document = next.id
+            readOnlyWarning.open()
+        } else {
+            openSaveDialog(next.id)
+        }
+    }
+    function openSaveDialog(id) {
+        const v = root.app.saveDialogValuesFor(id ?? 0)
+        saveAsDialog.document = id ?? 0
         saveAsDialog.nameFilters = [v.filter]
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
@@ -3406,13 +3421,20 @@ ApplicationWindow {
         title: qsTr("Save subtitle file")
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTr("Subtitle file ") + "(*.ass)"]
+        property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
-            if (root.app.saveChosen(selectedFile) === "readonly")
+            if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
+                readOnlyWarning.document = document
                 readOnlyWarning.open()
-            else
+            } else {
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
+                root.saveNext()
+            }
         }
-        onRejected: matroskaSubtitles.saveDone()
+        onRejected: {
+            matroskaSubtitles.saveDone()
+            root.saveNext() // legacy SaveAll goes on with the next tab
+        }
     }
     // Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
     MatroskaSubtitles {
@@ -3432,7 +3454,25 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
         Label { text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.") }
-        onClosed: root.openSaveDialog()
+        property var document: 0
+        onClosed: root.openSaveDialog(document)
+    }
+
+    // P9: Close all tabs' question and a video's same-named subtitles.
+    TabCommands {
+        id: tabCommands
+        objectName: "tabCommands"
+        app: root.app
+        onCloseAllConfirmed: root.beginClose("all")
+        onSubtitlesWithVideo: (subtitles, video) => {
+            const result = root.app.reviewOpenWithVideo(subtitles, video)
+            if (!result.ok)
+                return
+            if (result.rows.length === 0)
+                root.app.finishClose()
+            else
+                closeReview.review(result.rows)
+        }
     }
 
     // The accepted close review: every affected Document with Save or Discard,
@@ -3641,7 +3681,7 @@ ApplicationWindow {
     FileDialog {
         id: videoDialog
         nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
-        onAccepted: root.video.openVideoUrl(selectedFile)
+        onAccepted: tabCommands.openVideoFile(root.app.localPath(selectedFile)) // P9
         // V3: the subtitles' folder, else the latest recent video's
         function show() {
             currentFolder = root.app.videoDialogFolder()
@@ -4757,11 +4797,12 @@ ApplicationWindow {
         objectName: "recoveryWindow"
         title: qsTr("Open auto save")
         width: 560
-        height: 360
+        height: 560
         flags: Qt.Dialog
         property var bundles: []
         function showBundles() {
             bundles = root.app.recoveryBundles()
+            legacyAutosaves.reload() // P9
             show()
         }
         ColumnLayout {
@@ -4814,6 +4855,14 @@ ApplicationWindow {
                         }
                     }
                 }
+            }
+            // P9: the legacy Subs/ autosaves, read only.
+            LegacyAutosaveList {
+                id: legacyAutosaves
+                app: root.app
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onOpened: recoveryWindow.close()
             }
             Button {
                 Layout.alignment: Qt.AlignRight

@@ -9,6 +9,12 @@ find_package(HikariFFMS2 5.1.0 EXACT CONFIG REQUIRED)
 find_package(FFMPEG REQUIRED)
 
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS Core Gui Qml Quick Multimedia Network Svg)
+# P9: "show in folder" asks the desktop's file manager over D-Bus
+# (org.freedesktop.FileManager1) on Linux, where Qt's platform plugins
+# already load QtDBus.
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS DBus)
+endif()
 cmake_path(IS_PREFIX HIKARI_QT_PREFIX "${Qt6_DIR}" NORMALIZE _hikari_qt_owned)
 if(NOT _hikari_qt_owned)
     message(FATAL_ERROR "Qt6_DIR ${Qt6_DIR} is not the provisioned Qt at ${HIKARI_QT_PREFIX}")

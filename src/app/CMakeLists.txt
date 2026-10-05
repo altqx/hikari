@@ -6,6 +6,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     application_comparison.cpp # R1: subtitle comparison
     application_video.cpp # V3: video sources, tracks and chapters
     application_reference.cpp # R2: reference navigation and the subtitles preview
+    application_tab_menu.cpp # P9: the tab menu, folders, drops and associated files
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h

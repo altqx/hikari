@@ -44,5 +44,14 @@ hikari_module(hikari_backends ALLOW hikari_application hikari_core hikari_helper
 if(WIN32)
     target_link_libraries(hikari_backends PRIVATE dwrite) # FontService system faces
 endif()
+# P9: legacy SelectInFolder (Explorer's selection on Windows, the desktop
+# file manager over D-Bus with a folder fallback on Linux).
+target_sources(hikari_backends PRIVATE show_in_folder.cpp include/hikari/backends/show_in_folder.h)
+target_link_libraries(hikari_backends PRIVATE Qt6::Gui)
+if(WIN32)
+    target_link_libraries(hikari_backends PRIVATE shell32 ole32)
+else()
+    target_link_libraries(hikari_backends PRIVATE Qt6::DBus)
+endif()
 # Y8: the font collector's folder and zip output.
 target_sources(hikari_backends PRIVATE font_collector_output.cpp include/hikari/backends/font_collector_output.h)

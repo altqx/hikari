@@ -1,9 +1,10 @@
 #pragma once
 
-// The Video panel's presenter-side controller (I1). It offers the editing
-// target's associated video the way legacy did ("Associated files", load or
-// not), opens video on request, follows the active Line and steps frames.
-// The video never gates subtitle editing.
+// The Video panel's presenter-side controller (I1). It shows the editing
+// target's "Associated files" question (P9: the text and buttons the
+// application gives it, legacy Notebook::LoadVideo's), opens video on
+// request, follows the active Line and steps frames. The video never gates
+// subtitle editing.
 
 #include "hikari/application/display_audio_port.h"
 #include "hikari/application/general_player.h"
@@ -31,6 +32,12 @@ class VideoController : public QObject {
     Q_PROPERTY(int frameCount READ frameCount NOTIFY changed)
     Q_PROPERTY(bool offering READ offering NOTIFY changed)
     Q_PROPERTY(QString offer READ offer NOTIFY textsChanged)
+    // P9: the question's buttons (empty: no such button): legacy wxOK
+    // ("Load associated", or "Yes" alone) and wxYES ("Load from directory",
+    // or "Yes" alone); "No" is always there, with "Apply to All".
+    Q_PROPERTY(QString offerAssociatedLabel READ offerAssociatedLabel NOTIFY changed)
+    Q_PROPERTY(QString offerDirectoryLabel READ offerDirectoryLabel NOTIFY changed)
+    Q_PROPERTY(bool offerApplyToAll READ offerApplyToAll WRITE setOfferApplyToAll NOTIFY changed)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
@@ -63,21 +70,30 @@ public:
     using OpenFilter = std::function<void(const QString &path, std::function<void(application::IndexRequest)> asVideo)>;
     void setOpenFilter(OpenFilter filter) { m_filter = std::move(filter); }
 
-    // The editing target changed: closes the video and offers the new
-    // target's resolved association, if any.
-    void offer(const application::MediaAssociations &associations);
+    // The editing target changed: closes the video and withdraws the question.
+    void resetForTarget();
+    // P9: shows the question (`text` as legacy builds it, the two optional
+    // buttons' labels); withdrawOffer hides it.
+    void setOffer(const QString &text, const QString &associatedLabel, const QString &directoryLabel);
     void withdrawOffer();
 
     bool hasVideo() const { return m_session.state() == application::VideoSession::State::Ready; }
     QString status() const;
     int frame() const { return m_session.requestedFrame().value_or(-1); }
     int frameCount() const { return m_session.frameCount(); }
-    bool offering() const { return !m_offeredVideo.isEmpty(); }
-    QString offer() const;
+    bool offering() const { return !m_offer.isEmpty(); }
+    QString offer() const { return m_offer; }
+    QString offerAssociatedLabel() const { return m_offerAssociated; }
+    QString offerDirectoryLabel() const { return m_offerDirectory; }
+    bool offerApplyToAll() const { return m_offerApplyToAll; }
+    void setOfferApplyToAll(bool on);
 
     // The panel's VideoPresenter item.
     Q_INVOKABLE void attachPresenter(QObject *presenter);
+    // The answers (legacy wxOK, wxYES, wxNO): offerAnswered with the
+    // "Apply to All" check; the application loads what the answer names.
     Q_INVOKABLE void loadAssociated();
+    Q_INVOKABLE void loadFromDirectory();
     Q_INVOKABLE void dismissOffer();
     Q_INVOKABLE void openVideo(const QString &path);
     Q_INVOKABLE void openVideoUrl(const QUrl &url) { openVideo(url.toLocalFile()); }
@@ -138,6 +154,10 @@ signals:
     // V3: Unload video emptied the panel.
     void unloaded();
     void textsChanged(); // with every change, and after a language switch
+    // P9: 0 load associated, 1 load from directory, 2 no.
+    void offerAnswered(int answer, bool applyToAll);
+    // A video opened on request while the question was shown.
+    void offerWithdrawn();
 
 private:
     void open(const QString &path);
@@ -145,7 +165,11 @@ private:
     application::VideoSession m_session;
     OpenFilter m_filter;
     std::uint64_t m_openRequest = 0;
-    QString m_offeredVideo;
+    QString m_offer; // the question's text; empty: none
+    QString m_offerAssociated;
+    QString m_offerDirectory;
+    bool m_offerApplyToAll = false;
+    void answer(int answer);
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> m_lineTimes;
     // V3
     void sessionChanged();
