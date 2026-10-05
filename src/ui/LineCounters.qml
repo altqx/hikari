@@ -17,8 +17,8 @@ RowLayout {
     Label {
         objectName: "charsCounter"
         text: counters.editor.charsText
-        // Legacy WINDOW_WARNING_ELEMENTS: the palette's warning-bright text.
-        color: counters.editor.charsWarning ? palette.brightText : palette.windowText
+        // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
+        color: counters.editor.charsWarning ? Theme.warning : palette.windowText
         Accessible.role: Accessible.StaticText
         Accessible.name: text
         Accessible.description: qsTr("Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).")
@@ -30,7 +30,7 @@ RowLayout {
     Label {
         objectName: "cpsCounter"
         text: counters.editor.cpsText
-        color: counters.editor.cpsWarning ? palette.brightText : palette.windowText
+        color: counters.editor.cpsWarning ? Theme.warning : palette.windowText
         Accessible.role: Accessible.StaticText
         Accessible.name: text
         Accessible.description: qsTr("Characters per second.\nShould not exceed 15 characters per second")

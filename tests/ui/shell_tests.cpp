@@ -10411,11 +10411,12 @@ private slots:
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // not sent yet
         QVERIFY(!application->editor().startWarning());
 
-        // End before Start: End, which has the focus, is in the warning colour.
+        // End before Start: End, which has the focus, is in the warning colour
+        // (WINDOW_WARNING_ELEMENTS: the theme layer's warning role).
         typeInto("endField", QStringLiteral("0:00:01.20"));
         QVERIFY(application->editor().endWarning());
         QVERIFY(!application->editor().startWarning());
-        QCOMPARE(end->property("color").value<QColor>(), colour(end, "brightText"));
+        QCOMPARE(end->property("color").value<QColor>(), ui::theme::current().roles.warning);
         QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:00.00")); // clamped at 0
         typeInto("endField", QStringLiteral("0:00:03.00"));
         QVERIFY(!application->editor().endWarning());
@@ -10426,7 +10427,7 @@ private slots:
         // when the Line is not sent (OnCommit, EditBox.cpp:546-554).
         typeInto("startField", QStringLiteral("0:00:04.00"));
         QVERIFY(application->editor().startWarning());
-        QCOMPARE(start->property("color").value<QColor>(), colour(start, "brightText"));
+        QCOMPARE(start->property("color").value<QColor>(), ui::theme::current().roles.warning);
         application->editor().commit();
         QVERIFY(!application->editor().startWarning());
         application->editor().discard();

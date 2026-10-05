@@ -52,8 +52,8 @@ ColumnLayout {
         text: value
         selectByMouse: true
         Layout.preferredWidth: 90
-        // Legacy WINDOW_WARNING_ELEMENTS: the palette's warning-bright text.
-        color: warning ? palette.brightText : palette.text
+        // Legacy WINDOW_WARNING_ELEMENTS: the theme layer's warning role.
+        color: warning ? Theme.warning : palette.text
         // A live edit leaves the typed text as it is (OnEdit sets the other
         // fields, not the focused one).
         onValueChanged: if (!typing) text = value
