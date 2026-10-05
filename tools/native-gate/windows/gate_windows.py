@@ -1332,7 +1332,7 @@ def fs_has(st, ctype, name):
 
 def step_video_fullscreen():
     """V5 (#184): F in the Video panel shows the video fullscreen on the main
-    window's monitor; Space and Right work there; Esc leaves with the main
+    window's monitor; Space and Left work there; Esc leaves with the main
     window's geometry and the keyboard focus as they were; the context menu's
     "Open in full screen on monitor 2" puts it on the second monitor, at 100 %
     and at 150 % (mixed DPI: GetDpiForWindow), and Esc brings the docked video
@@ -1368,10 +1368,17 @@ def step_video_fullscreen():
     keys("space")
     sts = wait_for(lambda s: fs_has(s, "Button", "Play"), timeout=5)
     paused = fs_has(sts, "Button", "Play")
-    before = fs_value(sts, "Slider", "Video position")
-    keys("right")
-    st_r = wait_for(lambda s: fs_value(s, "Slider", "Video position") != before, timeout=5)
-    after = fs_value(st_r, "Slider", "Video position")
+    # UI Automation shows no slider value or label text of Qt Quick's here:
+    # the monitor's pixels before and after Right (cfr.mkv's block moves).
+    time.sleep(1.0)
+    shot_a = head_shot("videofs-1b-paused", m0)
+    # Left (GLOBAL_PREVIOUS_FRAME): a slow guest can play the two-second
+    # clip to its last frame before the second Space, where Right has no
+    # frame to go to.
+    keys("left")
+    time.sleep(1.5)
+    shot_b = head_shot("videofs-1c-stepped", m0)
+    diff = image_diff(shot_a[0], shot_b[0]) if shot_a and shot_b else None
     keys("escape")
     st2 = wait_for(lambda s: fs_frames(s, mons)[0] is None and fs_frames(s, mons)[1] is not None
                    and fs_frames(s, mons)[1]["active"] and panel_of(s["focusPath"]) == "Video", timeout=8)
@@ -1380,10 +1387,7 @@ def step_video_fullscreen():
     keys4 = ("x", "y", "w", "h")
     same = main0 is not None and main2 is not None and all(main0[k] == main2[k] for k in keys4)
     focus_back = panel_of(st2["focusPath"]) == "Video"
-    try:
-        stepped = before is not None and after is not None and float(after) == float(before) + 1
-    except ValueError:
-        stepped = False
+    stepped = isinstance(diff, int) and diff > 50
     verdict("videofs-enter-leave", "observed" if in_video and on1 and full1["active"] and full2 is None and main2
             and main2["active"] and same and focus_back else "failed",
             f"F in the Video panel (focus there: {in_video}): fullscreen window {full1} on monitor {m0} {mons[m0]}: {on1}; "
@@ -1391,8 +1395,9 @@ def step_video_fullscreen():
             f"{main0 and {k: main0[k] for k in keys4}} after {main2 and {k: main2[k] for k in keys4}} same {same}; focus "
             f"back in the Video panel: {focus_back} ({st2['focusPath']})", ev1 + ev2)
     verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
-            f"in fullscreen Space played (Pause shown: {playing}) and paused (Play shown again: {paused}); Right "
-            f"stepped the seek bar {before!r} -> {after!r}", ev1)
+            f"in fullscreen Space played (Pause shown: {playing}) and paused (Play shown again: {paused}); Left "
+            f"changed {diff} pixels of the fullscreen monitor (videofs-1b-paused, videofs-1c-stepped)",
+            ev1 + shot_a + shot_b)
 
     def second_monitor(tag, scale):
         mons2 = monitors()
@@ -1446,7 +1451,7 @@ def step_video_fullscreen():
     log("displays at 150 %:", json.dumps(d2)[:600])
     second_monitor("-150", 150)
     app_kill()
-    displays("extend")
+    displays("extend", scale2=100)
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,

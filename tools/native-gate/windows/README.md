@@ -63,7 +63,7 @@ recorded as a pass.
 | `menutext` | Alt+V from the Line text field |
 | `tests` | `hikari_ui_shell_tests` (D1 functions, the menu arrows), `hikari_ui_line_grid_a11y_tests`, `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` with `QT_QPA_PLATFORM=windows` (task `gate-win-tests`) |
 | `a11y` | what UI Automation exposes of the docking controls: named title-bar buttons and tab items (each with Float and Close), the Grid's table under the Grid panel; pressing the buttons through the Invoke pattern floats and docks |
-| `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's monitor, Space and Right work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" (the menu key, the item through UI Automation) puts it on the second monitor, at 100 % and at 150 % (GetDpiForWindow), and Esc brings the docked video back |
+| `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's monitor, Space and Left work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" (the menu key, the item through UI Automation) puts it on the second monitor, at 100 % and at 150 % (GetDpiForWindow), and Esc brings the docked video back |
 | `dpi` | only with `--dpi`: the one monitor's scale 100 -> 150 % live (`SPI_SETLOGICALDPIOVERRIDE`, no sign-out) with a floating panel, typing there, then back to 100 %. Not observable if the guest does not change scale without signing out |
 
 Submenus: the first Float from View > Panels opens the submenus with Right
