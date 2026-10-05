@@ -502,6 +502,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // D1: the panel layout beside the settings (none without a settings file).
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
+    m_video->setEditorOn(editorOn()); // D2: EDITOR_ON as stored
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
@@ -1114,6 +1115,7 @@ bool Application::openFile(const QString &path)
         return false;
     if (emptyTab)
         replaceTarget(*id);
+    editorOnForSubtitles(); // D2: HikariSubFrame::OpenFile
     refreshViews();
     checkResolution();
     trimAudioCache();
@@ -1211,6 +1213,23 @@ void Application::refreshViews()
     emit tabsChanged(); // P6: titles, modified marks and the active tab
 }
 
+void Application::showVideoSubtitles()
+{
+    auto *session = m_videoDocument ? m_files->session(*m_videoDocument) : nullptr;
+    if (!editorOn()) {
+        // D2: the player layout shows the video without subtitles (legacy
+        // LoadVideo's OpenSubs(CLOSE_SUBTITLES) with the editor off,
+        // HikariSubFrame.cpp:1416; RendererDirectShow::ChangeVobsub(true)
+        // from HideEditor, and ChangeVobsub() again when it comes back).
+        m_videoRevision.reset();
+        if (m_video->session().hasSubtitles())
+            m_video->session().closeSubtitles();
+    } else if (session && session->revision() != m_videoRevision) {
+        m_videoRevision = session->revision();
+        m_video->session().setSubtitles(core::encodeAss(session->document()));
+    }
+}
+
 void Application::refreshVideo()
 {
     const auto target = m_workspace.editingTarget();
@@ -1239,10 +1258,7 @@ void Application::refreshVideo()
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
-    if (session->revision() != m_videoRevision) {
-        m_videoRevision = session->revision();
-        m_video->session().setSubtitles(core::encodeAss(session->document()));
-    }
+    showVideoSubtitles();
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
@@ -1440,6 +1456,7 @@ void Application::finishClose()
             id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
+            editorOnForSubtitles(); // D2: OpenFile's HideEditor (HikariSubFrame.cpp:1402)
             QTimer::singleShot(0, this, [this] { checkResolution(); });
         } else {
             closeEditingTarget();

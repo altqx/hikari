@@ -572,6 +572,15 @@ public:
     // stay visible"): {row, tab, title, kind ("subtitles", "video", "audio",
     // "keyframes"), path}.
     Q_PROPERTY(QVariantList unresolvedRestores READ unresolvedRestores NOTIFY unresolvedRestoresChanged)
+    // D2: GLOBAL_EDITOR "Enable / Disable editor" (legacy TabPanel::editor
+    // and EDITOR_ON, workspace.editorOn). Off is legacy's video player
+    // layout. One switch for the shared Workspace (docs/qt/ux/workspaces.md:
+    // a tab change keeps the panel arrangement), saved at each change as
+    // HideEditor(save) did.
+    Q_PROPERTY(bool editorOn READ editorOn NOTIFY editorOnChanged)
+    bool editorOn() const;
+    // HikariSubFrame::HideEditor: the switch flips.
+    Q_INVOKABLE void toggleEditor();
     QVariantList tabs() const;
     int currentTab() const;
     int sessionRestore() const;
@@ -638,6 +647,7 @@ public:
     bool saveLastSession(bool closing = false, const QString &path = {});
 signals:
     void tabsChanged();
+    void editorOnChanged();
     void sessionRestoreChanged();
     void unresolvedRestoresChanged();
     // A tab became active: its Grid scroll to show again.
@@ -649,6 +659,11 @@ private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
     void rememberRecent(const std::string &path);
+    // Subtitles opened while the editor is off turn it on (legacy OpenFile
+    // and OpenFiles: `if (!tab->editor) HideEditor()`).
+    void editorOnForSubtitles();
+    // The editing target's subtitles over the video, none with the editor off.
+    void showVideoSubtitles();
     void recordFileTime(application::DocumentId document);
     application::EditSession *targetSession() const;
     application::LineVisible shownLines() const;

@@ -179,6 +179,8 @@ QString VideoController::times() const
                 break;
             }
         out += QStringLiteral("%1;  ").arg(*shown - lineFrame);
+    }
+    if (m_lineTimes && m_editorOn) {
         auto zeroIt = [](core::DocumentTime t) { return t.microseconds() / 1000 / 10 * 10; };
         out += QStringLiteral("%1 ms, %2 ms").arg(ms - zeroIt(m_lineTimes->first)).arg(ms - zeroIt(m_lineTimes->second));
     }
@@ -222,6 +224,14 @@ bool VideoController::goToLineEnd()
         return false;
     m_session.seekToEnd(m_lineTimes->second);
     return true;
+}
+
+void VideoController::setEditorOn(bool on)
+{
+    if (on == m_editorOn)
+        return;
+    m_editorOn = on;
+    emit changed();
 }
 
 void VideoController::setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times)

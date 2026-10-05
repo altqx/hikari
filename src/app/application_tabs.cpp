@@ -68,15 +68,44 @@ QVariantList Application::tabs() const
         QString video;
         if (const auto it = m_tabMedia.find(id.value); it != m_tabMedia.end() && !it->second.video.isEmpty())
             video = QFileInfo(it->second.video).fileName();
+        // D2: with the editor off the active tab is named after its video
+        // (HikariSubFrame::Label(0, true) from HideEditor and VideoBox's
+        // OpenVideo: the name without the history step).
+        if (!editorOn() && target == id && !video.isEmpty()) {
+            label = video;
+            label.truncate(m_tabTextMax);
+        }
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("label"), label},
                             {QStringLiteral("title"), name},
                             {QStringLiteral("modified"), modified},
                             {QStringLiteral("current"), target == id},
                             // The tab's tooltip: SubsName, then VideoName.
-                            {QStringLiteral("tip"), name + QLatin1Char('\n') + video}};
+                            {QStringLiteral("tip"), name + QLatin1Char('\n') + video},
+                            {QStringLiteral("video"), video}};
     }
     return rows;
+}
+
+bool Application::editorOn() const
+{
+    return m_settings->boolean("workspace.editorOn");
+}
+
+void Application::toggleEditor()
+{
+    // HideEditor: cur->editor = !cur->editor, then Options.SetBool(EDITOR_ON).
+    m_settings->set("workspace.editorOn", !editorOn());
+    showVideoSubtitles();
+    m_video->setEditorOn(editorOn()); // the times field (VideoBox::ShowTimes)
+    emit editorOnChanged();
+    emit tabsChanged(); // Label(): the tab's name
+}
+
+void Application::editorOnForSubtitles()
+{
+    if (!editorOn())
+        toggleEditor();
 }
 
 int Application::currentTab() const
@@ -403,6 +432,7 @@ bool Application::saveLastSession(bool closing, const QString &path)
         tab.audio = utf8(media.audio);
         if (const auto *u = unresolved("audio"); u && media.audio.isEmpty())
             tab.audio = utf8(u->path);
+        tab.editor = editorOn(); // "Editor: ", the Workspace's switch
         tab.keyframes = utf8(media.keyframes);
         if (const auto *u = unresolved("keyframes"); u && media.keyframes.isEmpty())
             tab.keyframes = utf8(u->path);
@@ -538,6 +568,7 @@ void Application::applySession()
     m_tabMedia.clear();
     m_unresolved.clear();
     std::optional<application::DocumentId> last;
+    bool editorAfter = true;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
         const auto &tab = pending.tabs[i];
         const QString subtitles = qs(tab.subtitles);
@@ -573,6 +604,11 @@ void Application::applySession()
             else
                 m_unresolved.push_back({*id, QStringLiteral("keyframes"), keyframes, 0, 0});
         }
+        // Notebook::LoadSession: each tab starts with the editor (AddPage,
+        // TabPanel's editor(true)) and `if (!hasEditor) HideEditor()` turns
+        // it off before the tab's video (Notebook.cpp:1458-1459). One switch
+        // for the shared Workspace: the last tab, the active one, sets it.
+        editorAfter = tab.editor || qs(tab.video).isEmpty();
         if (const QString video = qs(tab.video); !video.isEmpty()) {
             if (isFile(video)) {
                 media.video = QDir::toNativeSeparators(video);
@@ -596,6 +632,8 @@ void Application::applySession()
         m_workspace.setEditingTarget(*last);
     else
         newDocument();
+    if (editorAfter != editorOn())
+        toggleEditor();
     refreshViews();
     trimAudioCache();
     saveLastSession();

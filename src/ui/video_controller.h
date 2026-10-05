@@ -88,6 +88,9 @@ public:
     Q_INVOKABLE bool goToLineEnd();
     // The active Line's times, for the times field and the go-to commands.
     void setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times);
+    // D2: with the editor off the times field leaves out the ms from the
+    // active Line's start and end (VideoBox::ShowTimes, `if (tab->editor)`).
+    void setEditorOn(bool on);
 
 signals:
     void changed();
@@ -100,6 +103,7 @@ private:
     std::uint64_t m_openRequest = 0;
     QString m_offeredVideo;
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> m_lineTimes;
+    bool m_editorOn = true;
 };
 
 } // namespace hikari::ui

@@ -180,10 +180,16 @@ void WorkspaceLayoutController::captureDefault()
     m_default = KDDockWidgets::LayoutSaver().serializeLayout();
 }
 
-bool WorkspaceLayoutController::restorePayload(const QByteArray &payload)
+bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
     m_restoring = true; // no autosave while restoring
-    const bool restored = KDDockWidgets::LayoutSaver().restoreLayout(payload);
+    // D2: an arrangement taken back within the session keeps the main
+    // window as it is now and the floating panels at their own sizes.
+    const KDDockWidgets::RestoreOptions options =
+        inPlace ? KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_RelativeToMainWindow |
+                                                KDDockWidgets::RestoreOption_AbsoluteFloatingDockWindows)
+                : KDDockWidgets::RestoreOptions(KDDockWidgets::RestoreOption_None);
+    const bool restored = KDDockWidgets::LayoutSaver(options).restoreLayout(payload);
     if (!restored && !m_default.isEmpty())
         KDDockWidgets::LayoutSaver().restoreLayout(m_default); // rebuild a known arrangement
     m_restoring = false;
@@ -202,6 +208,7 @@ bool WorkspaceLayoutController::restoreSaved()
         return false;
     QString problem, preset;
     const auto payload = payloadOf(*bytes, &problem, &preset);
+    m_full.clear();
     if (!payload || !restorePayload(*payload)) {
         if (problem.isEmpty())
             problem = tr("the docking engine could not restore it");
@@ -226,7 +233,7 @@ bool WorkspaceLayoutController::restoreSaved()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring)
+    if (m_file.isEmpty() || m_restoring || holding())
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
@@ -245,6 +252,7 @@ bool WorkspaceLayoutController::resetLayout()
 {
     if (m_default.isEmpty())
         return false;
+    m_full.clear();
     const bool done = restorePayload(m_default);
     dismissNotice();
     save();
@@ -260,7 +268,10 @@ bool WorkspaceLayoutController::restoreBackup()
 {
     const auto bytes = readFile(backupFile());
     const auto payload = bytes ? payloadOf(*bytes, nullptr) : std::nullopt;
-    if (!payload || !restorePayload(*payload))
+    if (!payload)
+        return false;
+    m_full.clear();
+    if (!restorePayload(*payload))
         return false;
     dismissNotice();
     save();
@@ -302,6 +313,64 @@ bool WorkspaceLayoutController::resizePanel(QObject *dock, int width, int height
     const auto size = controller->sizeInLayout();
     controller->resizeInLayout(0, 0, width - size.width(), height - size.height());
     return true;
+}
+
+const QStringList &WorkspaceLayoutController::arrangements()
+{
+    // Legacy ViewMenu's order (HikariSubFrame.cpp:308-312).
+    static const QStringList names{QStringLiteral("GLOBAL_VIEW_ALL"), QStringLiteral("GLOBAL_VIEW_VIDEO"),
+                                   QStringLiteral("GLOBAL_VIEW_AUDIO"), QStringLiteral("GLOBAL_VIEW_ONLY_VIDEO"),
+                                   QStringLiteral("GLOBAL_VIEW_SUBS")};
+    return names;
+}
+
+QStringList WorkspaceLayoutController::arrangementPanels(const QString &arrangement)
+{
+    // HikariSubFrame::OnMenuSelected: the video for ALL, VIDEO and
+    // ONLY_VIDEO; the audio box for ALL and AUDIO; the Line editor and the
+    // Grid for all but ONLY_VIDEO.
+    const QString video = QStringLiteral("Video"), audio = QStringLiteral("Audio"), editor = QStringLiteral("Editor"),
+                  grid = QStringLiteral("Grid");
+    if (arrangement == QLatin1String("GLOBAL_VIEW_ALL"))
+        return {video, audio, editor, grid};
+    if (arrangement == QLatin1String("GLOBAL_VIEW_VIDEO"))
+        return {video, editor, grid};
+    if (arrangement == QLatin1String("GLOBAL_VIEW_AUDIO"))
+        return {audio, editor, grid};
+    if (arrangement == QLatin1String("GLOBAL_VIEW_ONLY_VIDEO"))
+        return {video};
+    if (arrangement == QLatin1String("GLOBAL_VIEW_SUBS"))
+        return {editor, grid};
+    return {};
+}
+
+void WorkspaceLayoutController::holdArrangement()
+{
+    if (holding())
+        return;
+    m_held = KDDockWidgets::LayoutSaver().serializeLayout();
+    emit changed();
+}
+
+bool WorkspaceLayoutController::releaseArrangement()
+{
+    if (!holding())
+        return false;
+    const QByteArray held = std::exchange(m_held, QByteArray());
+    const bool restored = restorePayload(held, true);
+    emit changed();
+    return restored;
+}
+
+void WorkspaceLayoutController::rememberFullArrangement()
+{
+    if (!m_restoring && !holding())
+        m_full = KDDockWidgets::LayoutSaver().serializeLayout();
+}
+
+bool WorkspaceLayoutController::restoreFullArrangement()
+{
+    return !m_full.isEmpty() && restorePayload(m_full, true);
 }
 
 int WorkspaceLayoutController::keepFloatingPanelsOnScreen()

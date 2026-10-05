@@ -18,4 +18,16 @@ Menu {
     icon.width: 16
     icon.height: 16
     delegate: ShellMenuItem {}
+    // As wide as its widest item: the style's menu is only as wide as its
+    // background (200), which cut longer names short ("Shift times / run
+    // time post proce...", D2).
+    contentWidth: {
+        let widest = 0
+        for (let i = 0; i < count; ++i) {
+            const item = itemAt(i)
+            if (item)
+                widest = Math.max(widest, item.implicitWidth)
+        }
+        return widest
+    }
 }

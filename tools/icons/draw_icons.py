@@ -568,7 +568,6 @@ for card, roles in {
     "E6 #188": ["hide-tags"],
     "Y7 #190": ["eyedropper"],
     "Y8 #191": ["font-collector"],
-    "D2 #201": ["editor", "view-all", "view-video-subs", "view-audio-subs", "view-only-video", "view-only-subs"],
 }.items():
     for role in roles:
         PENDING[role] = card

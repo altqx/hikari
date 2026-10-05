@@ -99,6 +99,11 @@ add_dependencies(hikari_ui_automation_workflow hikari_media_helper hikari_media_
 hikari_add_qttest(hikari_ui_docking_qualification_tests SOURCES docking_qualification_tests.cpp
     LIBRARIES KDAB::kddockwidgets Qt6::Quick Qt6::QuickControls2)
 hikari_add_qttest(hikari_ui_workspace_layout_tests SOURCES workspace_layout_tests.cpp LIBRARIES hikari_composition)
+# D2: the View menu's arrangements and the editor switch through the composition.
+hikari_add_qttest(hikari_ui_view_arrangements_tests SOURCES view_arrangements_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_view_arrangements_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_view_arrangements_tests hikari_media_fixtures hikari_media_helper)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
 # F3: the spell checker's Qt adapters and the Grid's marks; the shell tests use the fake backend.
 hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARIES hikari_ui)

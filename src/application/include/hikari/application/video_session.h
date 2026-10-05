@@ -49,6 +49,10 @@ public:
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
     void setSubtitles(std::vector<std::byte> script);
+    // D2: the video without subtitles (legacy OpenSubs(CLOSE_SUBTITLES) in
+    // the player layout); setSubtitles shows them again.
+    void closeSubtitles();
+    bool hasSubtitles() const { return m_hasSubtitles; }
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end or without video
     void showFrame(int index);
