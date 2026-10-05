@@ -4,6 +4,7 @@
 
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 
 #include <gtest/gtest.h>
 
@@ -39,6 +40,17 @@ constexpr std::string_view kScript =
     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"
     "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
     "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n";
+
+constexpr std::string_view kFormat =
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\n";
+
+std::string save(const EditSession &s)
+{
+    const auto bytes = core::encodeAss(s.document());
+    return std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size());
+}
 
 std::vector<std::string> texts(const EditSession &s)
 {
@@ -215,19 +227,115 @@ TEST_F(MacroTest, TheTargetIsReadOnlyWhileTheMacroRuns)
     EXPECT_TRUE(applyMacroResult(session, s, r, "Edit"));
 }
 
-TEST_F(MacroTest, StyleAndInfoEditsAreNotAppliedYet)
+// S4: Style and Script Info edits (legacy AutoToFile edits the SInfo and
+// Styles lists in place, AutomationToFile.cpp:611-625, 822-830) apply with
+// the Lines in the macro's one step, which Undo and Redo restore together.
+TEST_F(MacroTest, StyleAndInfoEditsApplyWithTheLinesAsOneStep)
 {
     const auto s = snapshot();
+    const auto steps = session.historySize();
     MacroResult r = unchanged(s);
     r.styles[0].fields[1] = "Times";
-    r.dialogues[0].text = "changed";
-    const auto applied = applyMacroResult(session, s, r, "Style");
-    ASSERT_FALSE(applied);
-    EXPECT_EQ(applied.error().error, MacroApplyError::UnsupportedChange);
-    EXPECT_EQ(texts(session)[0], "one");
-    r = unchanged(s);
+    r.styles.push_back(MacroStyleLine{{"Sign", "Arial", "30", "&H00FFFFFF", "&H000000FF", "&H00000000", "&H00000000",
+                                       "0", "0", "0", "0", "100", "100", "0", "0", "1", "2", "2", "8", "10", "10",
+                                       "10", "1"}});
+    r.info[0].value = "renamed";
     r.info.push_back({"PlayResX", "640"});
-    EXPECT_EQ(applyMacroResult(session, s, r, "Info").error().error, MacroApplyError::UnsupportedChange);
+    r.dialogues[0].text = "changed";
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Header"));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(texts(session)[0], "changed");
+    EXPECT_EQ(save(session),
+              "[Script Info]\n"
+              "Title: renamed\n"
+              "ScriptType: v4.00+\n"
+              "PlayResX: 640\n"
+              "\n"
+              "[V4+ Styles]\n" +
+                  std::string(kFormat) +
+                  "Style: Default,Times,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                  "Style: Sign,Arial,30,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n"
+                  "\n"
+                  "[Events]\n"
+                  "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,changed\n"
+                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,two\n"
+                  "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,three\n");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(save(session), std::string(kScript));
+    ASSERT_TRUE(session.redo());
+    EXPECT_EQ(session.document().scriptInfo(u8"PlayResX"), std::u8string(u8"640"));
+}
+
+// Deleting and reordering: the properties and Styles left keep their bytes;
+// comments in Script Info stay where they were.
+TEST_F(MacroTest, InfoAndStyleDeletionsKeepTheRest)
+{
+    constexpr std::string_view kTwoStyles =
+        "[Script Info]\n"
+        "; a comment\n"
+        "Title: macro\n"
+        "ScriptType: v4.00+\n"
+        "WrapStyle:0\n"
+        "\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize\n"
+        "Style: A,Arial,20\n"
+        "Style: B,Arial,  30\n"
+        "\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Dialogue: 0,0:00:01.00,0:00:02.00,A,,0,0,0,,one\n";
+    EditSession other{load(kTwoStyles)};
+    const auto s = *snapshotForMacro(other);
+    ASSERT_EQ(s.info.size(), 3u);
+    MacroResult r{s.info, s.styles, s.dialogues, std::nullopt, std::nullopt};
+    r.info.erase(r.info.begin() + 1); // ScriptType
+    std::swap(r.styles[0], r.styles[1]);
+    ASSERT_TRUE(applyMacroResult(other, s, r, "Delete"));
+    const auto bytes = core::encodeAss(other.document());
+    EXPECT_EQ(std::string(reinterpret_cast<const char *>(bytes.data()), bytes.size()),
+              "[Script Info]\n"
+              "; a comment\n"
+              "Title: macro\n"
+              "WrapStyle:0\n"
+              "\n"
+              "[V4+ Styles]\n"
+              "Format: Name, Fontname, Fontsize\n"
+              "Style: B,Arial,  30\n"
+              "Style: A,Arial,20\n"
+              "\n"
+              "[Events]\n"
+              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,A,,0,0,0,,one\n");
+}
+
+// A header change is refused on a stale target like a Line change.
+TEST_F(MacroTest, StaleHeaderChangesAreRefused)
+{
+    const auto s = snapshot();
+    ASSERT_TRUE(session.run(Command{"Edit", session.revision(), {l1},
+                                    [this](core::Document &d) { return d.setLineText(l1, u8"x"); }}));
+    MacroResult r = unchanged(s);
+    r.info[0].value = "renamed";
+    const auto applied = applyMacroResult(session, s, r, "Info");
+    ASSERT_FALSE(applied);
+    EXPECT_EQ(applied.error().refusal, CommandRefusal::StaleRevision);
+    EXPECT_EQ(session.document().scriptInfo(u8"Title"), std::u8string(u8"macro"));
+}
+
+// Legacy LuaCommand::Run reads the returned rows after the run, against the
+// SInfo and Styles sizes the macro left (Automation.cpp:1010).
+TEST_F(MacroTest, ReturnedRowsCountTheHeaderTheMacroLeft)
+{
+    select({l1}, l1);
+    const auto s = snapshot(); // dialogue rows 4-6
+    MacroResult r = unchanged(s);
+    r.info.push_back({"PlayResY", "360"}); // now 5-7
+    r.selected = std::vector<int>{6};
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Rows"));
+    EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l2}));
+    EXPECT_EQ(session.selection().active, l2);
 }
 
 TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)

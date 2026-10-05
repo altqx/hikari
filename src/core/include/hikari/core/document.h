@@ -11,6 +11,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -230,6 +231,19 @@ public:
         std::optional<std::vector<std::u8string>> fields;
     };
     bool rearrangeStyles(const std::vector<StyleSlot> &slots);
+    // A macro's Script Info list (S4; the legacy SInfo vector a macro edits
+    // through its subtitles object): the properties become `slots` in this
+    // order, as rearrangeStyles does for Styles. A slot naming an existing
+    // property (`from`, document order across Script Info sections) keeps its
+    // bytes unless `property` gives a new key and value; extra slots go after
+    // the last property of the last Script Info section; properties beyond
+    // the slots are removed. Comments and blank lines stay where they are.
+    // False without a Script Info section or for an unknown `from`.
+    struct PropertySlot {
+        std::optional<std::size_t> from;
+        std::optional<std::pair<std::u8string, std::u8string>> property;
+    };
+    bool rearrangeScriptInfo(const std::vector<PropertySlot> &slots);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

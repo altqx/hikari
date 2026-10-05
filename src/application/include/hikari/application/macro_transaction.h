@@ -20,7 +20,6 @@ std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &sessi
 
 enum class MacroApplyError {
     Refused,           // the EditSession refused the command (see refusal)
-    UnsupportedChange, // style or Script Info edits are not applied yet; nothing changed
 };
 
 struct MacroApplyFailure {
@@ -28,8 +27,12 @@ struct MacroApplyFailure {
     std::optional<CommandRefusal> refusal;
 };
 
-// Applies `result` as one history step named "Automation: <name>". A result
-// identical to the snapshot changes nothing and adds no step. The returned
+// Applies `result` as one history step named "Automation: <name>": its
+// Script Info, Styles and Lines together (S4). Styles change through the
+// Document operation the Style manager (Y1) uses, Script Info through the
+// property records Script properties (Y3) edits; unchanged entries keep
+// their bytes. A result identical to the snapshot changes nothing and adds
+// no step. The returned
 // selection (script indices, legacy rules) becomes the session's selection.
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name);

@@ -147,8 +147,6 @@ private:
 
 QString refusalText(const application::MacroApplyFailure &failure)
 {
-    if (failure.error == application::MacroApplyError::UnsupportedChange)
-        return AutomationShell::tr("The macro changed Styles or Script Info, which can't be applied yet; nothing was changed.");
     switch (failure.refusal.value_or(application::CommandRefusal::Invalid)) {
     case application::CommandRefusal::StaleRevision:
         return AutomationShell::tr("The Document changed while the macro ran; nothing was changed.");
