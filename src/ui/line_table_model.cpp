@@ -136,6 +136,22 @@ const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
 
 void LineTableModel::setDocument(const core::Document &document)
 {
+    setDocument(document, nullptr);
+}
+
+void LineTableModel::setComparisonColours(const ComparisonColours &colours)
+{
+    if (colours == m_comparisonColours)
+        return;
+    m_comparisonColours = colours;
+    emit headerDataChanged(Qt::Horizontal, 0, 0);
+    if (!m_rows.empty())
+        emit dataChanged(index(0, 0), index(rowCount() - 1, ColumnCount - 1), {ComparisonRole});
+}
+
+void LineTableModel::setDocument(const core::Document &document,
+                                 const std::vector<application::LineComparison> *comparison)
+{
     beginResetModel();
     m_rows.clear();
     m_rowById.clear();
@@ -166,6 +182,16 @@ void LineTableModel::setDocument(const core::Document &document)
             m_rows[r].groupClosed = lines[r + 1]->group == core::GroupMarker::Closed;
     for (std::size_t r = 0; r < n; ++r)
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
+    // R1: a row is painted from Comparison->at(key) (SubsGridWindow.cpp:419-
+    // 420): a mismatch while lineCompare has entries, a match when the texts
+    // were equal. A row past the table (legacy std::out_of_range) has none.
+    if (comparison)
+        for (std::size_t r = 0; r < n && r < comparison->size(); ++r) {
+            const auto &c = (*comparison)[r];
+            m_rows[r].comparison = c.mismatch() ? 2 : c.match() ? 1 : 0;
+            for (std::size_t m = 1; m + 1 < c.marks.size(); m += 2)
+                m_rows[r].comparisonMarks << c.marks[m] << c.marks[m + 1];
+        }
     // Keep only selection that still names existing Lines.
     std::erase_if(m_selection.selected, [&](core::LineId id) { return !m_rowById.contains(id.value); });
     if (m_selection.active && !m_rowById.contains(m_selection.active->value))
@@ -282,6 +308,10 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return measuresOf(r).badWraps;
     case SpellMarksRole:
         return spellMarksOf(r);
+    case ComparisonRole:
+        return r.comparison;
+    case ComparisonMarksRole:
+        return r.comparisonMarks;
     default:
         return {};
     }
@@ -297,6 +327,8 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return m_filtered;
     if (role == HeaderBlockRole)
         return m_headerBlock;
+    if (role == ComparisonColoursRole)
+        return QVariantList(m_comparisonColours.begin(), m_comparisonColours.end());
     if (role != Qt::DisplayRole)
         return {};
     // Legacy headings.
@@ -317,7 +349,9 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {EndMicrosecondsRole, "endMicroseconds"},
                   {CpsTooHighRole, "cpsTooHigh"},
                   {BadWrapsRole, "badWraps"},
-                  {SpellMarksRole, "spellMarks"}});
+                  {SpellMarksRole, "spellMarks"},
+                  {ComparisonRole, "comparison"},
+                  {ComparisonMarksRole, "comparisonMarks"}});
     return roles;
 }
 

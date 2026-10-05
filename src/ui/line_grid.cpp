@@ -495,6 +495,51 @@ void LineGrid::drawBlockMark(QPainter *painter, double borderY, int mark, double
 // F3: legacy TextData::DrawMisspells: behind each error range the width of
 // its text (trailing spaces trimmed), from the width of the text before it;
 // the full row height, in GRID_SPELLCHECKER's colour (dark default).
+std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours)
+{
+    if (state != 1 && state != 2)
+        return std::nullopt;
+    // kol = comparison ? ComparisonBG : ComparisonBGMatch, and the comment
+    // colours on a Comment (SubsGridWindow.cpp:422-426).
+    const int slot = comment ? (state == 2 ? 3 : 4) : (state == 2 ? 1 : 2);
+    QColor colour = colours.value(slot).value<QColor>();
+    if (!selected)
+        return colour;
+    // GetColorWithAlpha(seldial, kol), in its integer arithmetic.
+    constexpr int r = 0x87, g = 0x91, b = 0xFD, invA = 0xFF - 75;
+    return QColor(colour.red() * invA / 0xFF + (r - invA * r / 0xFF), colour.green() * invA / 0xFF + (g - invA * g / 0xFF),
+                  colour.blue() * invA / 0xFF + (b - invA * b / 0xFF));
+}
+
+// R1: legacy SubsGridWindow.cpp:508-528. Each run of differing characters
+// (inclusive offsets into the shown text, wxString::SubString) is drawn in
+// GRID_COMPARISON_OUTLINE one pixel left, right, above and below where the
+// text itself is drawn afterwards, outlining it; a lone space is drawn as
+// "_" so that it shows; a run outside the text draws nothing.
+void LineGrid::drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
+                                   const QColor &outline) const
+{
+    if (marks.size() < 2)
+        return;
+    const QFontMetricsF metrics(painter->font());
+    painter->save();
+    painter->setClipRect(cell, Qt::IntersectClip);
+    painter->setPen(outline);
+    for (qsizetype m = 0; m + 1 < marks.size(); m += 2) {
+        const int start = marks[m].toInt(), end = marks[m + 1].toInt();
+        if (start < 0 || start >= text.size() || end < start)
+            continue;
+        QString run = text.mid(start, end - start + 1);
+        if (run == QLatin1String(" "))
+            run = QStringLiteral("_");
+        const double before = start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0;
+        for (const QPointF offset : {QPointF(-1, -1), QPointF(1, -1), QPointF(-1, 1), QPointF(1, 1)})
+            painter->drawText(cell.translated(before + offset.x(), offset.y()), Qt::AlignVCenter | Qt::TextSingleLine,
+                              run);
+    }
+    painter->restore();
+}
+
 void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const
 {
     if (marks.size() < 2)
@@ -537,6 +582,8 @@ void LineGrid::paint(QPainter *painter)
 
     const int first = m_geometry.firstVisibleRow(m_contentY);
     const int count = m_geometry.visibleRowCount(m_contentY, bounds.height(), rows);
+    const QVariantList comparisonColours =
+        m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList() : QVariantList();
     painter->save();
     painter->setClipRect(QRectF(0, m_geometry.headerHeight, bounds.width(), bounds.height() - m_geometry.headerHeight));
     for (int row = first; row < first + count; ++row) {
@@ -548,6 +595,9 @@ void LineGrid::paint(QPainter *painter)
         QColor background = row % 2 ? QColor(0x24, 0x29, 0x31) : QColor(0x20, 0x24, 0x2b);
         if (selected)
             background = QColor(0x2f, 0x4b, 0x6e);
+        const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
+        if (const auto compared = comparisonBackground(comparison, comment, selected, comparisonColours))
+            background = *compared;
         painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
         if (active) {
             painter->setPen(QColor(0x6c, 0xa8, 0xff));
@@ -571,9 +621,14 @@ void LineGrid::paint(QPainter *painter)
                     painter->drawLine(QPointF(box.center().x(), box.top() + 2), QPointF(box.center().x(), box.bottom() - 2));
                 text.clear();
             }
-            if (mc == LineTableModel::TextColumn)
+            if (mc == LineTableModel::TextColumn) {
                 drawSpellMarks(painter, QRectF(x + 4, top, widths[c] - 8, rh), text,
                                idx.data(LineTableModel::SpellMarksRole).toList());
+                if (comparison == 2 && !comparisonColours.isEmpty())
+                    drawComparisonMarks(painter, QRectF(x + 4, top, widths[c] - 8, rh), text,
+                                        idx.data(LineTableModel::ComparisonMarksRole).toList(),
+                                        comparisonColours.value(0).value<QColor>());
+            }
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];

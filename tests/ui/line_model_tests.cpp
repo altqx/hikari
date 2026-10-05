@@ -190,6 +190,47 @@ private slots:
         QVERIFY(!model.selection().active);
         QVERIFY(model.selection().selected.empty());
     }
+
+    // R1: a Document row's comparison state and its differing characters
+    // come from the table by row (legacy Comparison->at(key),
+    // SubsGridWindow.cpp:419-420); rows past the table, or with no table,
+    // have none. The colours are header data, the default theme's at first.
+    void comparisonRolesFollowTheTable()
+    {
+        LineTableModel model;
+        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        std::vector<application::LineComparison> table(2);
+        table[0].differences = false;                    // a match
+        table[1].marks = {1, 0, 1, 4, 4};                // a mismatch with two runs
+        model.setDocument(load(kLines), &table);
+        QCOMPARE(model.index(0, 0).data(LineTableModel::ComparisonRole).toInt(), 1);
+        QCOMPARE(model.index(1, 0).data(LineTableModel::ComparisonRole).toInt(), 2);
+        QCOMPARE(model.index(1, 0).data(LineTableModel::ComparisonMarksRole).toList(), (QVariantList{0, 1, 4, 4}));
+        QCOMPARE(model.index(2, 0).data(LineTableModel::ComparisonRole).toInt(), 0); // past the table
+        QVERIFY(model.index(0, 0).data(LineTableModel::ComparisonMarksRole).toList().isEmpty());
+        // A text contained in the other is still a mismatch (the leading 1).
+        table[0] = {};
+        table[0].marks = {1};
+        model.setDocument(load(kLines), &table);
+        QCOMPARE(model.index(0, 0).data(LineTableModel::ComparisonRole).toInt(), 2);
+        QVERIFY(model.index(0, 0).data(LineTableModel::ComparisonMarksRole).toList().isEmpty());
+        // An unpaired Line keeps its usual colour.
+        table[0] = {};
+        model.setDocument(load(kLines), &table);
+        QCOMPARE(model.index(0, 0).data(LineTableModel::ComparisonRole).toInt(), 0);
+        model.setDocument(load(kLines));
+        QCOMPARE(model.index(1, 0).data(LineTableModel::ComparisonRole).toInt(), 0);
+
+        const auto colours = model.headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList();
+        QCOMPARE(colours, (QVariantList{QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45),
+                                        QColor(0x00, 0x31, 0x76), QColor(0x36, 0x62, 0xA1)}));
+        QSignalSpy header(&model, &QAbstractItemModel::headerDataChanged);
+        model.setComparisonColours({QColor(1, 2, 3), QColor(4, 5, 6), QColor(7, 8, 9), QColor(10, 11, 12),
+                                    QColor(13, 14, 15)});
+        QCOMPARE(header.count(), 1);
+        QCOMPARE(model.headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList().value(4),
+                 QVariant(QColor(13, 14, 15)));
+    }
 };
 
 QTEST_MAIN(LineModelTest)

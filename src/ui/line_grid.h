@@ -8,6 +8,7 @@
 #include "hikari/core/document.h"
 
 #include <QAbstractItemModel>
+#include <QColor>
 #include <QVariantList>
 #include <QPointer>
 #include <QQuickPaintedItem>
@@ -30,6 +31,14 @@ struct GridGeometry {
     int rowAt(double viewportY, double contentY, int rowCount) const;
     double contentHeight(int rowCount) const { return headerHeight + rowCount * rowHeight; }
 };
+
+// R1: a compared row's background (legacy SubsGridWindow.cpp:419-429): the
+// mismatch or match colour, their comment variants on a Comment, and a
+// selected row with GRID_SELECTION blended over it (GetColorWithAlpha,
+// config.h:566-575; the default theme's #8791FD at alpha 75,
+// config.cpp:415). `state` is ComparisonRole; nothing for 0. `colours` is
+// the model's ComparisonColoursRole.
+std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours);
 
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT
@@ -120,6 +129,8 @@ private:
     std::vector<double> columnWidths(double total) const;
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
+    void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
+                             const QColor &outline) const;
     // The model column shown at display position `column`.
     int modelColumn(int column) const;
 

@@ -22,11 +22,18 @@ ShellController::ShellController(application::Workspace &workspace, QObject *par
 
 void ShellController::refresh(const core::Document *target, const core::Document *reference)
 {
-    m_lines.setDocument(target ? *target : core::Document{});
+    refresh(target, reference, nullptr, nullptr);
+}
+
+void ShellController::refresh(const core::Document *target, const core::Document *reference,
+                              const std::vector<application::LineComparison> *targetComparison,
+                              const std::vector<application::LineComparison> *referenceComparison)
+{
+    m_lines.setDocument(target ? *target : core::Document{}, targetComparison);
     const auto format = target ? target->format() : core::SubtitleFormat::Ass;
     m_assFormat = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText;
     m_endColumn = format != core::SubtitleFormat::TMPlayer;
-    m_referenceLines.setDocument(reference ? *reference : core::Document{});
+    m_referenceLines.setDocument(reference ? *reference : core::Document{}, referenceComparison);
     m_activeText.clear();
     m_activeStyle.clear();
     emit targetsChanged();
