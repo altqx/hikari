@@ -46,6 +46,17 @@ public:
     // A1: `index` carries legacy's chosen audio track and index file.
     void open(const std::string &path, IndexRequest index = {});
     void close();
+    // V3: the indexing's progress while Opening (legacy ProgressSink "Indexing
+    // video"): done of total, nullopt before the first report.
+    std::optional<std::pair<std::int64_t, std::int64_t>> indexingProgress() const { return m_progress; }
+    // V3: the progress window's Cancel (FFMS_CancelIndexing through the
+    // helper): the open ends and the panel has no video, as legacy's
+    // cancelled provider left the VideoBox without a renderer.
+    void cancelOpen();
+    // V3: why the latest open failed (the source's stage and FFMS2 text).
+    const std::optional<OpenFailure> &openFailure() const { return m_openFailure; }
+    // V3: a dummy video (legacy "?dummy:..." path, ProviderDummy).
+    bool dummy() const;
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
     void setSubtitles(std::vector<std::byte> script);
@@ -63,6 +74,24 @@ public:
     bool pause(); // shows the indexed frame of the last delivered time
     bool stop();  // pauses, then shows the first frame (legacy Seek(0))
     bool playing() const { return m_playing; }
+    // V3: legacy VideoBox::Tell(): while playing the last delivered frame's
+    // time, else the shown frame's start, in ms (0 without video).
+    int tell() const;
+    // V3: legacy Seek(ms, true, SEEK_NO_SNAP) (the chapters): the frame at or
+    // after the time (0 at or before 0), clamped; while playing the player
+    // goes on from there.
+    bool seekToMs(int ms);
+    // V3: legacy Seek(0) then Pause(false) (VideoBox::NextFile with no file
+    // that way): the first frame, and play toggled (a paused video plays from
+    // its start, a playing one pauses there).
+    bool restartToggled();
+    // V3: the stream menu. The video's audio tracks in container order (the
+    // general player's numbering) and the one general playback plays;
+    // choosing another switches the playing player at once and every later
+    // play, through each pause's handoff to the indexed frame and back.
+    const std::vector<int> &audioTracks() const { return m_audioTracks; }
+    int playbackAudioTrack() const { return m_state == State::Ready ? m_audioOrdinal : -1; }
+    bool selectPlaybackAudioTrack(int ordinal);
     // A4: legacy RendererVideo::PlayLine (GLOBAL_PLAY_ACTUAL_LINE with
     // Timebase::PlayEndBefore): from the frame at `startMs` (FrameAt) until a
     // frame at or after the start of the frame before the one at `endMs` is
@@ -160,6 +189,9 @@ private:
     std::string m_indexHandoff;
     double m_fps = 0;
     visual::SourceGeometry m_geometry; // the source's, from its timeline
+    std::optional<std::pair<std::int64_t, std::int64_t>> m_progress; // V3
+    std::optional<OpenFailure> m_openFailure;                          // V3
+    std::vector<int> m_audioTracks;                                    // V3
 };
 
 } // namespace hikari::application
