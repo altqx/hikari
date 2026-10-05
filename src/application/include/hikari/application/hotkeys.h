@@ -83,6 +83,14 @@ std::string_view hotkeySymbol(int id);
 const std::map<int, std::string> &hotkeyNames();
 // HotkeysNaming::GetName: "" when the id has no name (scripts, GLOBAL_QUIT...).
 std::string hotkeyName(int id);
+// V3: GLOBAL_VIDEO_INDEXING ("Open video with FFMS2") is retired (wave-5
+// decision 2026-10-05): the rewrite always indexes. It keeps its IDS symbol,
+// so stored lines naming it are recognised, but has no name (never listed in
+// the Options page) and its bindings are dropped as the lists are read.
+bool isRetiredHotkey(int id);
+// Removes the retired actions' bindings from `map` and returns them, for the
+// notice the reader gives.
+std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map);
 // Hotkeys::GetType: the window an id's range belongs to.
 int hotkeyType(int id);
 // The window names the Options list prefixes ("Global", "Subtitles",

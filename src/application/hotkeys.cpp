@@ -421,7 +421,8 @@ constexpr NameRow kNames[] = {
         {5027, "Resample subtitles"}, // GLOBAL_OPEN_SUBS_RESAMPLE
         {5006, "Undo"}, // GLOBAL_UNDO
         {5007, "Undo to last save"}, // GLOBAL_UNDO_TO_LAST_SAVE
-        {5015, "Open video with FFMS2"}, // GLOBAL_VIDEO_INDEXING
+        // GLOBAL_VIDEO_INDEXING (5015, "Open video with FFMS2") is retired
+        // (wave-5 decision 2026-10-05, V3-indexing-retired): never listed.
         {5043, "Zoom video"}, // GLOBAL_VIDEO_ZOOM
         {5044, "Turn off video zoom"}, // GLOBAL_RESET_VIDEO_ZOOM
         {5031, "View all"}, // GLOBAL_VIEW_ALL
@@ -470,7 +471,7 @@ constexpr NameRow kNames[] = {
         {5014, "Check spelling"}, // GLOBAL_OPEN_SPELLCHECKER
         {5026, "Style manager"}, // GLOBAL_OPEN_STYLE_MANAGER
         {2018, "Copy frame to clipboard"}, // VIDEO_COPY_FRAME_TO_CLIPBOARD
-        {2014, "Remove video"}, // VIDEO_DELETE_FILE
+        {2014, "Unload video"}, // VIDEO_DELETE_FILE: V3-unload-video (legacy "Remove video")
         {2017, "Save frame as PNG"}, // VIDEO_SAVE_FRAME_TO_PNG
         {2003, "5 seconds backward"}, // VIDEO_5_SECONDS_BACKWARD
         {2004, "1 minute backward"}, // VIDEO_MINUTE_BACKWARD
@@ -746,6 +747,25 @@ const std::map<int, std::string> &hotkeyNames()
         return out;
     }();
     return names;
+}
+
+bool isRetiredHotkey(int id)
+{
+    return id == 5015; // GLOBAL_VIDEO_INDEXING
+}
+
+std::vector<std::pair<HotkeyId, Hotkey>> dropRetiredHotkeys(HotkeyMap &map)
+{
+    std::vector<std::pair<HotkeyId, Hotkey>> dropped;
+    for (auto it = map.begin(); it != map.end();) {
+        if (isRetiredHotkey(it->first.id)) {
+            dropped.emplace_back(it->first, it->second);
+            it = map.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    return dropped;
 }
 
 std::string hotkeyName(int id)
