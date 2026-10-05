@@ -3528,8 +3528,11 @@ private slots:
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
-        // and the Themes page's colours (A2), which are not bound options
+        // and the Themes page's colours (A2, K1's icon colours), which are not bound options
         bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
+        for (const auto &appearance : application::kIconColourSettings)
+            for (const auto id : appearance)
+                bound.insert(std::string(id));
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }

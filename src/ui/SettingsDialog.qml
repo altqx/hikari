@@ -58,6 +58,12 @@ Dialog {
         v[setting] = value
         values = v
     }
+    // The Themes page's colour picker for a colour row.
+    function pickThemeColour(setting, colour) {
+        themeColourDialog.setting = setting
+        themeColourDialog.selectedColor = colour
+        themeColourDialog.open()
+    }
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
         app.applySettings(values)
@@ -559,7 +565,8 @@ Dialog {
             // are excluded): the audio spectrum's three (A2), in legacy's
             // rows and labels. A double click picks the colour; OK/Apply
             // save the changed ones and the audio display reads them again
-            // (SetOptions' ID_COLOR_CONFIG, ChangeColors).
+            // (SetOptions' ID_COLOR_CONFIG, ChangeColors). Below them the
+            // icon colours of each appearance (K1, IconColours.qml).
             ColumnLayout {
                 objectName: "settingsPageThemes"
                 ListView {
@@ -600,12 +607,16 @@ Dialog {
                         onClicked: themeColours.currentIndex = index
                         onDoubleClicked: {
                             themeColours.currentIndex = index
-                            themeColourDialog.setting = modelData.setting
-                            themeColourDialog.selectedColor = colour
-                            themeColourDialog.open()
+                            dialog.pickThemeColour(modelData.setting, colour)
                         }
                     }
                     Accessible.name: qsTr("Themes")
+                }
+                // K1: the icon colours of each appearance.
+                IconColours {
+                    dialog: dialog
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                 }
             }
 

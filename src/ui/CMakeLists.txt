@@ -10,7 +10,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h shift_times_controller.cpp shift_times_controller.h
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
-    settings_store.cpp settings_store.h
+    settings_store.cpp settings_store.h icon_theme.cpp icon_theme.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
@@ -18,10 +18,17 @@ qt_add_qml_module(hikari_ui
     VERSION 1.0
     QML_FILES Main.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ColourPickerDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
-target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE KDAB::kddockwidgets)
+target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::Svg KDAB::kddockwidgets)
 # Some engine headers include their siblings relative to the kddockwidgets directory.
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
 # O2: the "Hotkey mapping" window and its questions.
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
+# K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
+# the SVGs and their manifest as module resources, the Icon item and the
+# icon-only button.
+file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
+qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
+    RESOURCES icons/manifest.json ${hikari_icon_files})
