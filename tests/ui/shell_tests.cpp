@@ -10,9 +10,11 @@
 #include "line_grid.h"
 #include "line_table_model.h"
 #include "audio_display_item.h"
+#include "icon_theme.h"
 
 #include <QAccessible>
 #include <QMimeData>
+#include <QPalette>
 #include <QClipboard>
 #include <QStyleHints>
 #include <QDirIterator>
@@ -6284,6 +6286,172 @@ private slots:
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, false), backends::PortAudioOutput::defaultHostApi());
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(1, true), std::string("Windows DirectSound"));
         QCOMPARE(backends::PortAudioOutput::hostApiForSetting(0, true), std::string("Windows WASAPI"));
+    }
+
+    // K1: the video transport buttons show the set's icons (legacy VideoBox's
+    // bitmap buttons, VideoBox.cpp:156-165), keep their names and tooltips,
+    // and every visible icon takes a new appearance or icon colour live:
+    // the palette turning dark, a colour saved by the Options dialog (in the
+    // profile) and the Reset icon colours button.
+    void videoTransportIconsFollowTheThemeLive()
+    {
+        restartWithoutSound(); // play / pause below plays the fixture
+        auto &settings = *application->settingsStore();
+        // The light palette with every role set, so that setting it again
+        // reaches the windows (a palette's unset roles are not passed on).
+        const QPalette initial = QGuiApplication::palette();
+        QPalette before = initial;
+        for (int g = 0; g < QPalette::NColorGroups; ++g)
+            for (int r = 0; r < QPalette::NColorRoles; ++r) {
+                const auto group = QPalette::ColorGroup(g);
+                const auto role = QPalette::ColorRole(r);
+                before.setColor(group, role, before.color(group, role));
+            }
+        auto restore = qScopeGuard([&] {
+            QGuiApplication::setPalette(before);
+            ui::IconTheme::forceAppearance(std::nullopt);
+        });
+        struct Button {
+            const char *name, *role, *accessibleName;
+        };
+        const Button buttons[] = {{"playPause", "media-play", "Play"},
+                                  {"playActualLine", "play-line", "Play the current line"},
+                                  {"stopVideo", "media-stop", "Stop"},
+                                  {"previousFrame", "frame-previous", "Previous frame"},
+                                  {"nextFrame", "frame-next", "Next frame"}};
+        const auto icon = [&](const char *name) {
+            auto *button = visualItem(name);
+            return button ? button->property("contentItem").value<QQuickItem *>() : nullptr;
+        };
+        const auto colours = [&] {
+            QStringList out;
+            for (const auto &b : buttons)
+                out << icon(b.name)->property("color").value<QColor>().name();
+            return out;
+        };
+        const auto all = [](const QString &colour) { return QStringList(5, colour); };
+        // Whether the window shows `colour` inside each button.
+        const auto shown = [&](const QColor &colour) {
+            const QImage image = window->grabWindow();
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            for (const auto &b : buttons) {
+                auto *item = icon(b.name);
+                const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+                bool found = false;
+                for (int y = int(r.top() * dpr); y < int(r.bottom() * dpr) && !found; ++y)
+                    for (int x = int(r.left() * dpr); x < int(r.right() * dpr) && !found; ++x)
+                        found = QColor(image.pixel(x, y)) == colour;
+                if (!found)
+                    return false;
+            }
+            return true;
+        };
+        // With HIKARI_ICON_SHEET_DIR set, the transport row is saved for review.
+        const auto saveTransport = [&](const QString &name) {
+            const QString out = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
+            if (out.isEmpty())
+                return;
+            QRectF row;
+            for (const auto &b : buttons) {
+                auto *item = visualItem(b.name);
+                row |= item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            }
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const QRect r = QRectF(row.topLeft() * dpr, row.size() * dpr).toAlignedRect().adjusted(-8, -8, 8, 8);
+            QDir().mkpath(out);
+            QVERIFY(window->grabWindow().copy(r).save(out + QLatin1Char('/') + name));
+        };
+        for (const auto &b : buttons) {
+            auto *button = visualItem(b.name);
+            QVERIFY2(button, b.name);
+            QCOMPARE(button->property("iconRole").toString(), QLatin1String(b.role));
+            QVERIFY(icon(b.name)->property("valid").toBool());
+            QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QLatin1String(b.accessibleName));
+            QVERIFY(!button->property("tip").toString().isEmpty());
+        }
+        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        // No video: the buttons are disabled, in the light appearance (the
+        // offscreen palette is light).
+        QCOMPARE(ui::IconTheme::currentAppearance(), ui::icons::Appearance::Light);
+        QCOMPARE(colours(), all(QStringLiteral("#74808b")));
+        QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
+        saveTransport(QStringLiteral("transport-light-disabled.png"));
+        // With a video they are enabled: the icon colour with its accent.
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        application->video().stepFrames(1); // Previous frame enabled too
+        QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
+                 QStringLiteral("#145c4c"));
+        QTRY_VERIFY(shown(QColor(0x20, 0x28, 0x32)));
+        saveTransport(QStringLiteral("transport-light.png"));
+        // Play / pause swaps its icon as legacy ChangeButtonBMP swaps the
+        // bitmap (VideoBox.cpp:262, 1414-1418).
+        application->video().togglePlay();
+        QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-pause"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(visualItem("playPause"))->text(QAccessible::Name), QStringLiteral("Pause"));
+        application->video().togglePlay();
+        QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-play"));
+        // The palette turns dark: the icons follow at once.
+        QPalette dark = initial;
+        dark.setColor(QPalette::Window, QColor(0x17, 0x1B, 0x20));
+        dark.setColor(QPalette::WindowText, QColor(0xE8, 0xED, 0xF2));
+        dark.setColor(QPalette::Button, QColor(0x29, 0x31, 0x3A));
+        dark.setColor(QPalette::ButtonText, QColor(0xE8, 0xED, 0xF2));
+        dark.setColor(QPalette::Base, QColor(0x17, 0x1D, 0x24));
+        dark.setColor(QPalette::Text, QColor(0xE8, 0xED, 0xF2));
+        QGuiApplication::setPalette(dark);
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        // (the controls take the new palette at the next event loop pass)
+        auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+        QVERIFY(controls);
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x17, 0x1B, 0x20));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#9cdbc9"));
+        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        saveTransport(QStringLiteral("transport-dark.png"));
+        // A colour saved by the Options dialog's Themes page.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("settingsDialog", "iconColours"));
+        QCOMPARE(dialogItem("settingsDialog", "iconColours")->property("count").toInt(), 12);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                          Q_ARG(QVariant, QStringLiteral("#FF8800"))));
+        QCOMPARE(colours(), all(QStringLiteral("#e8edf2"))); // staged only
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00))); // painted (the modal dialog no longer dims the window)
+        // "Set default" leaves the theme's colours.
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#FF8800"));
+        // Reset icon colours stages the theme defaults; OK takes the
+        // colour out of the profile.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "resetIconColours"), "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.light.disabled")).toString(), QStringLiteral("#74808B"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!settings.contains("icons.dark.normal"));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        // High contrast (the platform's preference; forced here).
+        ui::IconTheme::forceAppearance(ui::icons::Appearance::HighContrast);
+        QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#ffff00"));
+        ui::IconTheme::forceAppearance(std::nullopt);
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        // Back at the first frame Previous frame is disabled: the dark
+        // appearance's disabled colour, accent included.
+        application->video().stepFrames(-1);
+        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#75818d"));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#75818d"));
+        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
     }
 
     void theReferenceIsNeverEdited()

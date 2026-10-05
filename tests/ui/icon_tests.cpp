@@ -200,6 +200,9 @@ private slots:
                 }
             }
         }
+        // The video transport (the demonstration surface) is among them.
+        for (const char *role : {"media-play", "media-pause", "play-line", "media-stop", "frame-previous", "frame-next"})
+            QVERIFY2(referenced.contains(QLatin1String(role)), role);
     }
 
     void svgsAreMonochromeOnTheGrid_data()

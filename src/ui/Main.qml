@@ -1539,27 +1539,28 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
                     // GLOBAL_PLAY_ACTUAL_LINE, VIDEO_STOP): the binding in the
-                    // tooltip, and Shift+click maps it (BitmapButton).
-                    Button {
+                    // tooltip, and Shift+click maps it (BitmapButton). K1: the
+                    // set's icons in place of legacy's bitmaps (play / pause
+                    // as legacy ChangeButtonBMP swaps them, VideoBox.cpp:1414);
+                    // the text stays the accessible name.
+                    IconButton {
                         objectName: "playPause"
+                        iconRole: root.video.playing ? "media-pause" : "media-play"
                         text: root.video.playing ? qsTr("Pause") : qsTr("Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
                     // Line editor's text.
-                    Button {
+                    IconButton {
                         objectName: "playActualLine"
+                        iconRole: "play-line"
                         text: qsTr("Play line")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
                         Accessible.name: qsTr("Play the current line")
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
@@ -1568,18 +1569,18 @@ ApplicationWindow {
                             root.video.playActualLine()
                         }
                     }
-                    Button {
+                    IconButton {
                         objectName: "stopVideo"
+                        iconRole: "media-stop"
                         text: qsTr("Stop")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
-                    Button {
+                    IconButton {
                         objectName: "previousFrame"
+                        iconRole: "frame-previous"
                         text: qsTr("Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
                         onClicked: root.video.stepFrames(-1)
@@ -1590,8 +1591,9 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    Button {
+                    IconButton {
                         objectName: "nextFrame"
+                        iconRole: "frame-next"
                         text: qsTr("Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
