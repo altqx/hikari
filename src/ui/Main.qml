@@ -2558,8 +2558,14 @@ ApplicationWindow {
                     }
                     // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                     // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                    RowLayout {
+                    // They wrap: a narrow editor, a larger font or longer
+                    // translated labels must not push them past the panel's
+                    // edge, out of reach.
+                    Flow {
+                        objectName: "translationButtons"
                         visible: root.editor.translationMode
+                        Layout.fillWidth: true
+                        spacing: 5
                         Button {
                             objectName: "pasteAllToTranslation"
                             text: qsTr("Paste all")
