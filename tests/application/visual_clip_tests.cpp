@@ -229,15 +229,11 @@ enum class Departure {
     // Proposed T4-wheel-invert-slot: legacy inverted the clip on every reset
     // with the mode on the Invert clip button, recursing until it crashed.
     WheelInvertSlot,
-    // Approved transaction rule (edit-transactions.md, #55): the last point's
-    // removal commits on release; legacy sent it on the press.
-    CommitOnRelease,
 };
 const std::map<std::pair<std::string, int>, Departure> kDepartures = {
     {{"rect-second-block-caret", 0}, Departure::ReadFromStart},
     {{"rect-zero-width", 0}, Departure::ZeroRectangle},
     {{"vector-wheel-to-invert", 1}, Departure::WheelInvertSlot},
-    {{"vector-remove-all", 1}, Departure::CommitOnRelease},
 };
 
 const char *historyName(const std::string &legacy)
@@ -411,19 +407,17 @@ void compareDump(Replay &r, const QJsonObject &o, std::optional<Departure> depar
     const bool multi = r.host.g && r.host.g->targets().size() > 1;
     // The committed texts.
     const QJsonArray texts = o[QStringLiteral("texts")].toArray();
-    if (departure != Departure::CommitOnRelease) {
-        for (int i = 0; i < texts.size(); ++i) {
-            const auto *l = line(s, r.lineIds[i]);
-            EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
-            EXPECT_EQ(l->translation, u8(texts[i].toArray()[1])) << "line " << i;
-        }
+    for (int i = 0; i < texts.size(); ++i) {
+        const auto *l = line(s, r.lineIds[i]);
+        EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
+        EXPECT_EQ(l->translation, u8(texts[i].toArray()[1])) << "line " << i;
     }
     // Legacy's Line editor during a gesture with one Line (several Lines are
     // only rendered until the release).
     if (!multi && departure != Departure::ZeroRectangle)
         EXPECT_EQ(r.editorText(), u8(o[QStringLiteral("editor")]));
     // One history step per edit that changed a text, named for the tool.
-    if (departure != Departure::WheelInvertSlot && departure != Departure::CommitOnRelease) {
+    if (departure != Departure::WheelInvertSlot) {
         EXPECT_EQ(r.steps(), o[QStringLiteral("steps")].toInt());
         const QJsonArray history = o[QStringLiteral("history")].toArray();
         if (r.steps() > 0 && !history.isEmpty())
@@ -525,10 +519,6 @@ TEST(ClipCapture, ReplaysTheLegacyProbe)
                 // Legacy inverted on each reset until the recursion; nothing here.
                 EXPECT_TRUE(byCase[c.name].at(dump)[QStringLiteral("recursion")].toBool());
                 EXPECT_EQ(r.steps(), 0);
-            } else if (departure == Departure::CommitOnRelease) {
-                // Staged until the release (the next "up" commits it).
-                ASSERT_TRUE(r.host.g);
-                EXPECT_EQ(r.editorText(), u8(byCase[c.name].at(dump)[QStringLiteral("texts")].toArray()[0].toArray()[0]));
             }
             ++dump;
         }
@@ -709,6 +699,77 @@ TEST(ClipGesture, KeyNudgeCommitsOnReleaseOncePerPress)
     // The pending draft first (its own step), then the nudge as one step.
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(30,30,303,300)}first");
     EXPECT_EQ(host.s->historySize(), steps + 2);
+}
+
+// Removing the last point in an add mode (1-3). Legacy's RemovePoints ends in
+// SetClip(true), whose empty-clip branch sends the edit at once
+// (VisualClips.cpp:444-455, edit->Send). Its hover block then returns before
+// the MiddleUp (VisualClips.cpp:906-907: psize < 1), so no later release
+// commits anything. The removal is its own step and no gesture stays open.
+TEST(ClipGesture, RemovingTheLastPointCommitsAtOnce)
+{
+    for (const int mode : {VectorEditor::Line, VectorEditor::Bezier, VectorEditor::Spline}) {
+        SCOPED_TRACE(mode);
+        TestHost host;
+        setUp(host);
+        const auto id = ids(*host.s)[1];
+        host.s->setSelection({id, {id}, id, std::nullopt});
+        VectorClipTool tool;
+        host.tool = &tool;
+        tool.editor().mode = static_cast<VectorEditor::Mode>(mode);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        tool.pointer(at(Pointer::Kind::Press, 176, 108, true, Pointer::Button::Left), host);
+        tool.pointer(at(Pointer::Kind::Release, 176, 108, false, Pointer::Button::Left), host);
+        EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 528 324)}second");
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        Key all;
+        all.key = keys::A;
+        all.control = true;
+        EXPECT_TRUE(tool.key(all, host));
+        tool.pointer(at(Pointer::Kind::Press, 176, 108, false, Pointer::Button::Middle), host);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(line(*host.s, id)->text, u8"second");
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        tool.pointer(at(Pointer::Kind::Release, 176, 108, false, Pointer::Button::Middle), host);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(line(*host.s, id)->text, u8"second");
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        // The next click starts a new clip on the Document's text.
+        tool.pointer(at(Pointer::Kind::Press, 200, 120, true, Pointer::Button::Left), host);
+        tool.pointer(at(Pointer::Kind::Release, 200, 120, false, Pointer::Button::Left), host);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 600 360)}second");
+        EXPECT_EQ(host.s->historySize(), steps + 3);
+    }
+}
+
+// The same through Delete: the removal is sent at once, and the key's release
+// finds nothing left to commit.
+TEST(ClipGesture, DeletingEveryPointCommitsAtOnce)
+{
+    TestHost host;
+    setUp(host);
+    const auto id = ids(*host.s)[0];
+    VectorClipTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Line;
+    tool.reset(host);
+    const std::size_t steps = host.s->historySize();
+    Key all;
+    all.key = keys::A;
+    all.control = true;
+    EXPECT_TRUE(tool.key(all, host));
+    Key del;
+    del.key = keys::Delete;
+    EXPECT_TRUE(tool.key(del, host));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(line(*host.s, id)->text, u8"first");
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    del.release = true;
+    (void)tool.key(del, host);
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
 }
 
 TEST(ClipGesture, ProtectedReferenceRefusesWrites)

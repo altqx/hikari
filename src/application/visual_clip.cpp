@@ -815,14 +815,21 @@ void VectorClipTool::apply(VisualHost &host, bool commit)
         const u16 current = currentText(host, *g, id, &tl);
         const u16 original = editedText(host, g->before(id));
         if (clip.empty()) {
-            // All points gone: the clip leaves the text at once (legacy sent
-            // it then); without one, nothing changes.
+            // All points gone: the clip leaves the text at once, as legacy's
+            // empty-clip branch sent it then (VisualClips.cpp:444-455,
+            // edit->Send) whether or not the edit was a preview; without one,
+            // nothing changes. The commit cannot wait for the release: in the
+            // add modes the hover block returns before it once no point is
+            // left (VisualClips.cpp:906-907). m_began stays set, so a release
+            // that does arrive opens no new gesture.
             m_maskTag.clear();
             m_maskBody.clear();
             bool found = false;
             (void)find(current, kVectorClip, &found);
             if (found)
                 stage(*g, id, tl, original, clip::putVector(current, u""));
+            (void)host.commitGesture();
+            return;
         } else if (!commit) {
             u16 tag;
             const u16 next = clip::putVector(current, clip, &tag);
