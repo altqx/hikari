@@ -27,6 +27,12 @@ Menu {
         compareByVisible.checked = menuState.visible === true
         compareBySelections.checked = menuState.selections === true
         compareByStyles.checked = menuState.styles === true
+        // Legacy builds the style items anew at each opening (Notebook.cpp:
+        // 918-928). An equal list would keep the old items, and one the user
+        // unchecked would still show unchecked although the opening checked
+        // it again (a style added twice stays chosen, Notebook.cpp:103-109).
+        styleItems.model = []
+        styleItems.model = menuState.styleItems ?? []
     }
 
     // "Compare by selected styles" is a checked item with the styles under
@@ -83,7 +89,8 @@ Menu {
         title: qsTr("Compare by selected styles")
         enabled: comparison.menuState.canCompare === true
         Instantiator {
-            model: comparison.menuState.styleItems ?? []
+            id: styleItems
+            model: [] // set by prepare()
             delegate: MenuItem {
                 required property var modelData
                 objectName: "compareStyle_" + modelData.name
