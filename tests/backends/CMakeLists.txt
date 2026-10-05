@@ -34,7 +34,7 @@ add_dependencies(hikari_backends_helper_tests hikari_test_helper)
 # runs (discovered GoogleTest cases did not honour a CTest setup fixture).
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 color709full audiodelay audioonly sar)
+foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 color709full audiodelay audioonly sar mkvextract)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"

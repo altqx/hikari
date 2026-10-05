@@ -138,4 +138,34 @@ inline File noSubs()
     return f;
 }
 
+// The "mkvextract" media fixture (hikari_media_fixture): a video with an
+// ASS track (0) and a SubRip track (1), and two font attachments.
+inline const std::string kMkvExtractHeader =
+    "[Script Info]\r\n"
+    "ScriptType: v4.00+\r\n"
+    "PlayResX: 320\r\n"
+    "PlayResY: 240\r\n"
+    "\r\n"
+    "[V4+ Styles]\r\n"
+    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+    "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+    "MarginR, MarginV, Encoding\r\n"
+    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\r\n"
+    "\r\n"
+    "[Events]\r\n"
+    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n";
+
+inline std::vector<std::pair<int, Packet>> mkvExtractPackets()
+{
+    return {{0, Packet{200, 400, "0,0,Default,,0,0,0,,Sign one"}},
+            {1, Packet{500, 1000, "Pierwsza"}},
+            {0, Packet{1234, 500, "1,1,Default,Actor,0,0,0,,Sign two"}}};
+}
+
+inline std::vector<Attachment> mkvExtractFonts()
+{
+    return {{"Extract Sans.ttf", "font/ttf", fontBytes(11, 3000)},
+            {"fonts/Extract Serif.otf", "application/vnd.ms-opentype", fontBytes(12, 2000)}};
+}
+
 } // namespace mkvfixture
