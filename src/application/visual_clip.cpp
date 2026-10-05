@@ -206,7 +206,7 @@ u16 replaceTag(u16 text, u16v pattern, u16v tag)
 RectangleRead readRectangle(u16v text, int scriptWidth, int scriptHeight)
 {
     // ClipRect::SetCurVisual. Legacy read from the Line editor's caret
-    // (FindTag mode 0); the tools read from the start (clipReadFromStart).
+    // (FindTag mode 0); the tools read from the start (approved T4-clip-read-start).
     RectangleRead out;
     out.x2 = scriptWidth;
     out.y2 = scriptHeight;
@@ -527,7 +527,7 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
             // A rectangle without width or height: legacy wrote nothing on
             // release (with several Lines its previews were only rendered;
             // with one they stayed in the Line editor unsent). The gesture is
-            // dropped (proposed T4-zero-rect-preview).
+            // dropped (approved T4-zero-rect-preview).
             m_began = false;
             host.cancelGesture();
         }
@@ -743,7 +743,7 @@ void VectorClipTool::reset(VisualHost &host)
     // Visuals::SetVisual -> ChangeTool(tool, true) -> SetCurVisual. Legacy's
     // ChangeTool inverted the clip again on every reset while the wheel had
     // left the mode on the Invert clip button (6); the inversion is the
-    // button's only (T4-wheel-invert-slot, proposed).
+    // button's only (approved T4-wheel-invert-slot).
     m_editor.endDrag(); // as RectangleClipTool::reset
     m_inKey = m_keyCommit = false;
     const auto active = activeRecord(host);

@@ -8,8 +8,8 @@
 //
 // A Line's text is read and written as legacy did, through the ported
 // TagFindReplace::FindTag (core::legacy::TagEditor) and Replace, from the
-// start of the text: the Line editor's caret plays no part (see
-// clipReadFromStart below).
+// start of the text: the Line editor's caret plays no part (approved
+// T4-clip-read-start, docs/qt/compatibility-decisions.md).
 
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_vector.h"

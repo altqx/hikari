@@ -530,7 +530,7 @@ void VectorEditor::removePoints(int selectedPoint, const Callbacks &cb, bool fro
 {
     // DrawingAndClip::RemovePoints (VisualClips.cpp:1367-1462). Legacy read
     // and erased past the end on some broken paths (a Bézier missing its
-    // points); those indices are skipped here.
+    // points); those indices are skipped here (approved T4-bezier-past-end).
     std::vector<std::size_t> sels;
     for (std::size_t i = 0; i < points.size(); i++)
         if (points[i].selected)
@@ -921,7 +921,7 @@ int VectorEditor::drawCurve(Overlay &out, const VectorFrame &frame, int i, bool 
         }
     } else {
         if (i + 2 >= size)
-            return size - i; // a Bézier missing its points: legacy read past the end
+            return size - i; // a Bézier missing its points (approved T4-bezier-past-end)
         VectorPoint first = points[i - 1];
         if (points[i - 1].type == u's') {
             int j = i - 2;
