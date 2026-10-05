@@ -2002,6 +2002,27 @@ private:
         return applied;
     }
 
+    // A session reading its settings from `file`, without a spelling
+    // backend (no dictionary notice beside it).
+    void restartWithSettings(const QString &file)
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.settingsFile = file;
+        options.spellingBackend = {};
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+
     // A4: a session whose players make no sound (playbackAudio off): the
     // audio box plays through the output without a device, at its pace.
     void restartWithoutSound()
@@ -6341,6 +6362,16 @@ private slots:
 
     void visualToolRailCrosshairAndCopyCoordinates()
     {
+        // VIDEO_COPY_COORDS has no default key and no row in the shortcut
+        // editor (legacy Hotkeys.h:66 gives it no name), so it is bound the
+        // way legacy's Hotkeys.txt would: a Video window line.
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        const QString ini = home.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("VIDEO_COPY_COORDS V=Ctrl-Shift-K")});
+        restartWithSettings(ini);
+        QCOMPARE(application->hotkeys().actionFor(3, Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier),
+                 QStringLiteral("VIDEO_COPY_COORDS"));
         QVERIFY(application->openFile(visualDocument("visual.ass")));
         auto &tools = application->visualTools();
         // The rail: legacy VideoToolbar's eleven families, the crosshair on.
@@ -6383,16 +6414,25 @@ private slots:
         QVERIFY2(std::abs(xy[0].toInt() - script.x) <= 2 && std::abs(xy[1].toInt() - script.y) <= 2, qPrintable(label));
         QTRY_COMPARE(visualItem("visualValue_position")->property("text").toString(), label);
 
-        // VIDEO_COPY_COORDS at the pointer, in legacy's text form.
-        QCursor::setPos(window->mapToGlobal(p));
-        const QPointF at = item("visualOverlay")->mapFromGlobal(QCursor::pos());
-        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "runVideoHotkey",
-                                          Q_ARG(QVariant, QStringLiteral("VIDEO_COPY_COORDS"))));
-        const QString copied = QString::fromStdU16String(
-            application::visual::copyCoordinatesText(view, view.toDevice(at.x()), view.toDevice(at.y())));
-        QVERIFY(copied.contains(QLatin1Char(',')) && !copied.contains(QLatin1Char(' ')));
+        // VIDEO_COPY_COORDS at the pointer, in legacy's text form, through the
+        // Video window binding: VideoBox::OnAccelerator takes the pointer's
+        // position (VideoBox.cpp:1151) and OnCopyCoords (VideoBox.cpp:
+        // 1395-1412) scales it by the script size over the client less one
+        // pixel (the panel excluded) and truncates. The expected text is
+        // that formula here, not copyCoordinatesText.
+        QGuiApplication::clipboard()->clear();
+        item("videoPanel")->forceActiveFocus();
+        const QPoint k = p + QPoint(7, 5);
+        QTest::mouseMove(window, k);
+        QTRY_VERIFY(!tools.overlay().isEmpty());
+        press(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
+        const QPointF at = item("visualOverlay")->mapFromScene(QPointF(k));
+        const int devX = view.toDevice(at.x()), devY = view.toDevice(at.y());
+        const float coeffX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
+        const float coeffY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
+        const QString copied = QStringLiteral("%1,%2").arg(int(float(devX) * coeffX)).arg(int(float(devY) * coeffY));
+        QTRY_COMPARE(QGuiApplication::clipboard()->text(), copied);
         QCOMPARE(tools.copied(), copied);
-        QCOMPARE(QGuiApplication::clipboard()->text(), copied);
 
         // Ctrl+click: \pos at the pointer into the active Line, one step.
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -6580,12 +6620,15 @@ private slots:
         QCOMPARE(session->historySize(), steps);
     }
 
-    // T1: the visual tools edit the editing target only. With the Protected
-    // reference the only Document there is none, so the rail is disabled
-    // and a Ctrl+click (legacy Cross's \pos, VisualCross.cpp) writes nothing
-    // to the reference. (The Workspace keeps the reference from ever being
-    // the editing target; the Gesture's own refusal of a protected session
-    // is VisualGesture.ProtectedReferenceRefusesWrites.)
+    // T1: the visual tools edit the editing target only, so the Protected
+    // reference refuses their writes by never being given to them. With the
+    // reference the only Document there is no target: the rail is disabled
+    // and a Ctrl+click or middle click (legacy Cross's \pos, VisualCross.cpp:
+    // 102-126) writes nothing. With a target too, the crosshair is live and
+    // its clicks go to the target, never the reference. (The shell's
+    // reference EditSession is not built protected, DocumentFiles; the
+    // Gesture's own refusal of a protected session is unit-tested only,
+    // VisualGesture.ProtectedReferenceRefusesWrites.)
     void visualToolsNeverWriteTheReference()
     {
         QVERIFY(application->openReference(original));
@@ -6604,6 +6647,30 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
         QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, p);
         QVERIFY(!tools.gestureActive());
+        QCOMPARE(reference->revision(), revision);
+        QCOMPARE(reference->historySize(), steps);
+        QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
+
+        // With an editing target as well, the tools are live and still edit
+        // the target only: the shell gives them the editing target, which
+        // the Workspace never lets the reference be.
+        QVERIFY(application->openFile(visualDocument("visual.ass")));
+        QVERIFY(application->workspace().editingTarget());
+        QVERIFY(application->workspace().reference());
+        auto *target = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(tools.session(), target);
+        QVERIFY(tools.railEnabled());
+        application->video().openVideo(nativeFixture("cfr.mkv")); // the new target's video closed
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        const QPoint q = videoPoint(tools.videoRect().center()) + QPoint(5, 3); // a move: not where the pointer is
+        QTest::mouseMove(window, q);
+        QTRY_COMPARE(tools.overlay().size(), 5); // the crosshair
+        const std::size_t targetSteps = target->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, q);
+        QTRY_COMPARE(target->historySize(), targetSteps + 1);
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, q);
+        QTRY_COMPARE(target->historySize(), targetSteps + 2);
+        QVERIFY(text(target->document().lines()[0]).startsWith(QStringLiteral("{\\pos(")));
         QCOMPARE(reference->revision(), revision);
         QCOMPARE(reference->historySize(), steps);
         QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
