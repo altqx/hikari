@@ -296,13 +296,20 @@ std::expected<SelectLinesResult, CommandRefusal> selectLines(EditSession &sessio
                         for (const auto id : moved)
                             if (!d.moveLine(id, before))
                                 return false;
+                    // E6: the moved Lines are copies (Dial->Copy(),
+                    // SelectLines.cpp:365-367), so marked changed, even
+                    // when every Line moves and the order stays.
+                    for (const auto id : moved)
+                        if (!d.markLineChanged(id))
+                            return false;
                 }
                 if (d.lines().empty()) {
                     // Legacy adds a default Dialogue (0:00:00.00-0:00:05.00, Default).
                     core::LineRecord line;
                     line.style = u8"Default";
                     line.end.value = core::DocumentTime(5000 * 1000);
-                    return d.appendLine(line).has_value();
+                    // E6: new Dialogue() (SelectLines.cpp:402-404), unchanged.
+                    return d.appendLine(line, core::ChangeMark::Kept).has_value();
                 }
                 return true;
             }});

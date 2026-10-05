@@ -200,6 +200,10 @@ public:
     bool setLineText(LineId id, std::u8string text);
     // Sets a Line's Unconfirmed state; like setLineText, the Line is regenerated.
     bool setLineUnconfirmed(LineId id, bool unconfirmed);
+    // E6: marks a Line changed without touching its fields or source bytes,
+    // as legacy's plain copy of a Dialogue that only moves (SwapRowsF, the
+    // sorts). False when no Line has this id.
+    bool markLineChanged(LineId id);
     // Changes any fields of one Line; the Line is then regenerated on save.
     // Every mutation marks the Line changed unless `mark` is Kept (E6).
     bool editLine(LineId id, const std::function<void(LineRecord &)> &change, ChangeMark mark = ChangeMark::Changed);

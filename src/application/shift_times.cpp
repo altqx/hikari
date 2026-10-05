@@ -121,6 +121,9 @@ struct Shifted {
     std::u8string text;        // the field the tag times live in (translation if any)
     bool textChanged = false;
     std::size_t textLength = 0; // legacy Text.Len(): UTF-16 units of the text
+    // E6: legacy copies each shifted Line with keepstate (SubsGridBase.cpp:562)
+    // and marks it changed (ChangeDialogueState(1)) only where it says so.
+    bool marked = false;
 };
 
 } // namespace
@@ -234,7 +237,9 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                 l.start = std::max(0, l.start + time);
             if (whichTimes != 1)
                 l.end = std::max(0, l.end + time);
+            l.marked = true; // SubsGridBase.cpp:570
         } else if (frame != 0) {
+            l.marked = true; // SubsGridBase.cpp:584
             if (whichTimes == 0)
                 duration = l.end - l.start;
             if (whichTimes != 2)
@@ -275,9 +280,12 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     if (newEnd < 1000)
                         newEnd = 1000;
                     cur.end = std::max(0, newEnd + cur.start);
+                    cur.marked = true; // SubsGridBase.cpp:639
                 }
-                if (cur.end > next.start)
+                if (cur.end > next.start) {
                     cur.end = next.start;
+                    cur.marked = true; // SubsGridBase.cpp:643
+                }
             }
         }
     }
@@ -370,6 +378,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                                                        static_cast<float>(s.thresholdEnd));
                     it->end = std::max(0, it->end + zeroIt(coeff));
                     newstarttime = it->end;
+                    it->marked = true; // SubsGridBase.cpp:754
                 }
                 if (!foundStartKeyframe && newstarttime != -1) {
                     cur.start = std::max(0, newstarttime);
@@ -377,6 +386,8 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     ++startMods;
                 }
             }
+            if (startMods > 0 || endMods > 0)
+                cur.marked = true; // SubsGridBase.cpp:765-766
             previousIsKeyFrame = foundEndKeyframe;
             isPreviousEndGreater = isEndGreater;
             isPreviousEndEdited = endMods > 0;
@@ -398,7 +409,7 @@ shiftTimes(EditSession &session, const ShiftTimesSettings &s, const ShiftContext
                     set(r.end, r.endFrame, l.end);
                     if (l.textChanged)
                         (r.translation.empty() ? r.text : r.translation) = l.text;
-                }))
+                }, l.marked ? core::ChangeMark::Changed : core::ChangeMark::Kept))
                 return false;
         return true;
     }});

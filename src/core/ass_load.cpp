@@ -347,6 +347,17 @@ bool Document::moveLine(LineId id, std::optional<LineId> before)
     return false; // unreachable: both were checked above
 }
 
+bool Document::markLineChanged(LineId id)
+{
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                line->changeVersion = newChangeVersion();
+                return true;
+            }
+    return false;
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)
