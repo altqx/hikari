@@ -12,7 +12,8 @@
     "opensubs.png"
    ],
    "surfaces": [
-    "menu:file"
+    "menu:file",
+    "video-context-menu"
    ]
   },
   {
@@ -25,7 +26,8 @@
     "Save.png"
    ],
    "surfaces": [
-    "menu:file"
+    "menu:file",
+    "tab-menu"
    ]
   },
   {
@@ -38,7 +40,8 @@
     "SaveAll.png"
    ],
    "surfaces": [
-    "menu:file"
+    "menu:file",
+    "tab-menu"
    ]
   },
   {
@@ -77,7 +80,8 @@
     "RecentSubs.png"
    ],
    "surfaces": [
-    "menu:file"
+    "menu:file",
+    "video-context-menu"
    ]
   },
   {
@@ -130,7 +134,8 @@
    ],
    "surfaces": [
     "menu:file",
-    "settings-dialog"
+    "settings-dialog",
+    "font-catalog"
    ]
   },
   {
@@ -237,7 +242,8 @@
     "Sort.png"
    ],
    "surfaces": [
-    "menu:edit"
+    "menu:edit",
+    "style-manager"
    ]
   },
   {
@@ -264,7 +270,7 @@
    ],
    "surfaces": [
     "menu:edit",
-    "misspell-replacer"
+    "select-lines"
    ]
   },
   {
@@ -277,7 +283,9 @@
     "openvideo.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "video-context-menu",
+    "dummy-video"
    ]
   },
   {
@@ -290,7 +298,8 @@
     "RecentVideo.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "video-context-menu"
    ]
   },
   {
@@ -480,7 +489,8 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "menu:video"
+    "menu:video",
+    "video-context-menu"
    ]
   },
   {
@@ -497,7 +507,8 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "menu:video"
+    "menu:video",
+    "video-context-menu"
    ]
   },
   {
@@ -514,7 +525,9 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "audio-box"
+    "audio-box",
+    "video-context-menu",
+    "automation-manager"
    ]
   },
   {
@@ -626,8 +639,7 @@
     "button_prev.png"
    ],
    "surfaces": [
-    "audio-box",
-    "reference-tray"
+    "audio-box"
    ]
   },
   {
@@ -640,8 +652,7 @@
     "button_next.png"
    ],
    "surfaces": [
-    "audio-box",
-    "reference-tray"
+    "audio-box"
    ]
   },
   {
@@ -797,7 +808,8 @@
     "button_audio_go.png"
    ],
    "surfaces": [
-    "audio-box"
+    "audio-box",
+    "reference-tray"
    ]
   },
   {
@@ -918,7 +930,8 @@
     "Font.png"
    ],
    "surfaces": [
-    "line-editor"
+    "line-editor",
+    "font-dialog"
    ]
   },
   {
@@ -1046,9 +1059,9 @@
     "editor.png"
    ],
    "surfaces": [
-    "menu:subtitles"
-   ],
-   "pending": "D2 #201"
+    "menu:subtitles",
+    "settings-dialog"
+   ]
   },
   {
    "role": "script-properties",
@@ -1061,7 +1074,8 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "script-properties"
+    "script-properties",
+    "settings-dialog"
    ]
   },
   {
@@ -1075,7 +1089,10 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "style-manager"
+    "style-manager",
+    "search-tool",
+    "select-lines",
+    "misspell-replacer"
    ]
   },
   {
@@ -1181,7 +1198,8 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "visual-tools"
+    "visual-tools",
+    "resample"
    ]
   },
   {
@@ -1195,7 +1213,8 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "font-collector"
+    "font-collector",
+    "grid-menu"
    ]
   },
   {
@@ -1209,7 +1228,8 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "spell-checker"
+    "spell-checker",
+    "text-field-menu"
    ]
   },
   {
@@ -1289,7 +1309,9 @@
     "About.png"
    ],
    "surfaces": [
-    "menu:help"
+    "menu:help",
+    "about",
+    "translation-matching"
    ]
   },
   {
@@ -1302,7 +1324,8 @@
     "Helpers.png"
    ],
    "surfaces": [
-    "menu:help"
+    "menu:help",
+    "credits"
    ]
   },
   {
@@ -1603,7 +1626,7 @@
    "role": "clip-invert",
    "file": "clip-invert.svg",
    "label": "Invert clip",
-   "accent": false,
+   "accent": true,
    "mirror": false,
    "legacy": [
     "InvertClipIcon1.png"
@@ -1783,7 +1806,8 @@
    "legacy": [],
    "surfaces": [
     "document-tabs",
-    "reference-tray"
+    "reference-tray",
+    "menu:file"
    ]
   },
   {
@@ -1806,6 +1830,456 @@
    "legacy": [],
    "surfaces": [
     "document-tabs"
+   ]
+  },
+  {
+   "role": "move-to-top",
+   "file": "move-to-top.svg",
+   "label": "Move to beginning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [
+    "arrowListDouble.png"
+   ],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-up",
+   "file": "move-up.svg",
+   "label": "Move up",
+   "accent": false,
+   "mirror": false,
+   "legacy": [
+    "arrow_list.png"
+   ],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-down",
+   "file": "move-down.svg",
+   "label": "Move down",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "move-to-bottom",
+   "file": "move-to-bottom.svg",
+   "label": "Move to end",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "menu-more",
+   "file": "menu-more.svg",
+   "label": "More",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "add",
+   "file": "add.svg",
+   "label": "Add",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "shift-times-panel",
+    "style-manager",
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "remove",
+   "file": "remove.svg",
+   "label": "Remove",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "shift-times-panel"
+   ]
+  },
+  {
+   "role": "edit",
+   "file": "edit.svg",
+   "label": "Edit",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor",
+    "style-manager"
+   ]
+  },
+  {
+   "role": "duplicate",
+   "file": "duplicate.svg",
+   "label": "Copy",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "delete",
+   "file": "delete.svg",
+   "label": "Delete",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager",
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "import",
+   "file": "import.svg",
+   "label": "Load",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "clear",
+   "file": "clear.svg",
+   "label": "Clear",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager",
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "refresh",
+   "file": "refresh.svg",
+   "label": "Refresh",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "font-catalog",
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "filter",
+   "file": "filter.svg",
+   "label": "Filter",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "edit-copy",
+   "file": "edit-copy.svg",
+   "label": "Copy",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "edit-cut",
+   "file": "edit-cut.svg",
+   "label": "Cut",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "edit-paste",
+   "file": "edit-paste.svg",
+   "label": "Paste",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "folder-open",
+   "file": "folder-open.svg",
+   "label": "Choose a folder",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "search-tool",
+    "font-collector",
+    "settings-import"
+   ]
+  },
+  {
+   "role": "find-in-files",
+   "file": "find-in-files.svg",
+   "label": "Find in subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "search-tool"
+   ]
+  },
+  {
+   "role": "show-in-folder",
+   "file": "show-in-folder.svg",
+   "label": "Open the containing folder",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "compare",
+   "file": "compare.svg",
+   "label": "Subtitle comparison",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "reference",
+   "file": "reference.svg",
+   "label": "Show subtitles preview",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "extract-subtitles",
+   "file": "extract-subtitles.svg",
+   "label": "Load subtitles from an MKV file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "multireplace",
+   "file": "multireplace.svg",
+   "label": "Fix minor errors",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles",
+    "misspell-replacer"
+   ]
+  },
+  {
+   "role": "close-video",
+   "file": "close-video.svg",
+   "label": "Unload video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "fullscreen",
+   "file": "fullscreen.svg",
+   "label": "Full screen",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ],
+   "pending": "V5 #184"
+  },
+  {
+   "role": "fullscreen-exit",
+   "file": "fullscreen-exit.svg",
+   "label": "Exit full screen",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ],
+   "pending": "V5 #184"
+  },
+  {
+   "role": "frame-snapshot",
+   "file": "frame-snapshot.svg",
+   "label": "Save frame as PNG",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "zoom-reset",
+   "file": "zoom-reset.svg",
+   "label": "Turn off video zoom",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "volume",
+   "file": "volume.svg",
+   "label": "Volume",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-transport"
+   ]
+  },
+  {
+   "role": "pick-lines",
+   "file": "pick-lines.svg",
+   "label": "Pick selected lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "match-previous",
+   "file": "match-previous.svg",
+   "label": "Previous match",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "reference-tray"
+   ]
+  },
+  {
+   "role": "match-next",
+   "file": "match-next.svg",
+   "label": "Next match",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "reference-tray"
+   ]
+  },
+  {
+   "role": "unload",
+   "file": "unload.svg",
+   "label": "Unload",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation-manager"
+   ]
+  },
+  {
+   "role": "run-script",
+   "file": "run-script.svg",
+   "label": "Run the last loaded script",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "settings-video",
+   "file": "settings-video.svg",
+   "label": "Video",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "settings-audio",
+   "file": "settings-audio.svg",
+   "label": "Audio",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "appearance",
+   "file": "appearance.svg",
+   "label": "Appearance",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "hotkeys",
+   "file": "hotkeys.svg",
+   "label": "Hotkeys",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
    ]
   }
  ],
@@ -1837,8 +2311,6 @@
    "RadioSelected.png",
    "RadioSelectedInactive.png",
    "arrow.png",
-   "arrowListDouble.png",
-   "arrow_list.png",
    "arrow_list_pushed.png",
    "dot.png",
    "separator.png",
