@@ -166,7 +166,10 @@ private slots:
         const QJsonObject json = QJsonDocument::fromJson(readFile(snap->dir + QStringLiteral("/snapshot.json"))).object();
         const QJsonArray files = json.value(QStringLiteral("files")).toArray();
         QCOMPARE(files.size(), 4);
-        QCOMPARE(files[0].toObject().value(QStringLiteral("header")).toString(), QStringLiteral("[HikariSub v0.0.1-rc.1]\r"));
+        // Read as this platform's build read it: Windows folds CRLF (R5-per-platform).
+        QCOMPARE(files[0].toObject().value(QStringLiteral("header")).toString(),
+                 si::kReadBy == si::ReadBy::Windows ? QStringLiteral("[HikariSub v0.0.1-rc.1]")
+                                                    : QStringLiteral("[HikariSub v0.0.1-rc.1]\r"));
         QCOMPARE(files[3].toObject().value(QStringLiteral("encoding")).toString(), QStringLiteral("UTF-8"));
         QVERIFY(files[3].toObject().value(QStringLiteral("bom")).toBool());
         // The same bytes again: the same snapshot.
