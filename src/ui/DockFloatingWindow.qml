@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
 import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDWViews
@@ -31,6 +32,24 @@ Item {
     onTitleBarHeightChanged: {
         if (floatingWindowCpp)
             floatingWindowCpp.geometryUpdated()
+    }
+
+    // Qt Quick's popup overlay (menus, tool tips) of this window is placed
+    // from the window's size when its content item's size changes, and the
+    // engine sizes the content item before the window: the overlay kept the
+    // window's first size's offset (native gate: the panel's menu drawn
+    // 300 pixels below its button, outside the window). Re-placed whenever
+    // the window's size changes, as Qt places it.
+    readonly property size windowSize: Qt.size(Window.width, Window.height)
+    onWindowSizeChanged: placeOverlay()
+    Component.onCompleted: Qt.callLater(placeOverlay)
+    function placeOverlay() {
+        const w = root.Window.window
+        const overlay = w ? root.Overlay.overlay : null
+        if (!overlay || !w.contentItem)
+            return
+        overlay.x = (w.width - w.contentItem.width) / 2
+        overlay.y = (w.height - w.contentItem.height) / 2
     }
 
     // The shadow: rings fading outwards from the frame.

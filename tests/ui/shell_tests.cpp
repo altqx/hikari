@@ -2899,8 +2899,30 @@ private slots:
         QTRY_VERIFY(videoDock->property("isFloating").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(dockHeader(QStringLiteral("Video")) && dockHeader(QStringLiteral("Video"))->window() != window);
+        // A narrow floating window: the menu has no room right of the button.
+        dockHeader(QStringLiteral("Video"))->window()->resize(330, 300);
+        QTRY_COMPARE(dockHeader(QStringLiteral("Video"))->window()->width(), 330);
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
+        // Native gate (sway): the menu opens in the floating panel's window,
+        // under its button, not in the main window where Main.qml declares it.
+        {
+            QQuickItem *floatingHeader = dockHeader(QStringLiteral("Video"));
+            // its parent too: a native popup (Popup.Window, Wayland's
+            // xdg_popup) belongs to the parent's window, which must be the
+            // one the click came from
+            auto *parent = menu->property("parent").value<QQuickItem *>();
+            QVERIFY(parent);
+            QCOMPARE(parent->window(), floatingHeader->window());
+            auto *content = menu->property("contentItem").value<QQuickItem *>();
+            QVERIFY(content);
+            QCOMPARE(content->window(), floatingHeader->window());
+            const QRectF shown = content->mapRectToScene(content->boundingRect());
+            QVERIFY2(QRectF(QPointF(), floatingHeader->window()->size()).contains(shown),
+                     qPrintable(QStringLiteral("menu at %1,%2 %3x%4 in a %5x%6 window").arg(shown.x()).arg(shown.y())
+                                    .arg(shown.width()).arg(shown.height()).arg(floatingHeader->window()->width())
+                                    .arg(floatingHeader->window()->height())));
+        }
         QVERIFY(QMetaObject::invokeMethod(named("panelOptionsFloat"), "triggered"));
         QTRY_VERIFY(!videoDock->property("isFloating").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));

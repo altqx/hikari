@@ -351,6 +351,8 @@ ApplicationWindow {
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotDockable) === 0
         function openFor(target, anchor) {
             dock = target
+            // inside a floating panel's frame, not over its drawn shadow
+            margins = anchor.Window.window !== root ? Docking.floatingShadow + 1 : 0
             popup(anchor, 0, anchor.height)
         }
         onAboutToShow: Docking.openMenu = dock ? dock.uniqueName : ""
