@@ -116,6 +116,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Load script…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load an Automation script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Loading</source>
         <translation type="unfinished"></translation>
     </message>
@@ -537,6 +545,10 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose or type a catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
         <translation type="unfinished"></translation>
     </message>
@@ -635,6 +647,10 @@ and the color selection window on right-click.</source>
     <message>
         <source>Replace with:</source>
         <translation type="unfinished">แทนที่ด้วย:</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -864,6 +880,10 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1211,6 +1231,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Please enter a hotkey for &quot;%1&quot;.</source>
         <translation type="unfinished">ป้อนปุ่มลัดสำหรับ &quot;%1&quot;</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Warning</source>
@@ -4328,6 +4352,10 @@ in all tabs</source>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SessionWindows</name>
@@ -5409,6 +5437,10 @@ in uppercase</source>
     <message>
         <source>Status of deleted styles</source>
         <translation>สถานะของสไตล์ที่ถูกลบ</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
