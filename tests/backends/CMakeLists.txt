@@ -235,3 +235,8 @@ target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
+# P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux).
+hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
+if(NOT WIN32)
+    target_link_libraries(hikari_backends_show_in_folder_tests PRIVATE Qt6::DBus)
+endif()
