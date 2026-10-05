@@ -4,7 +4,10 @@
 // 850 pixels legacy moves Comment, Actor, the margins and Effect to a second
 // row (EditBox::OnSize, EditBox.cpp:1374-1407); so does this one.
 //
-// Fields change the editor's draft when their editing finishes; Enter runs
+// Fields change the editor's draft when their editing finishes; with live
+// video editing on, Start, End and Duration also change it as they are typed
+// (TimeCtrl's NUMBER_CHANGED runs EditBox::OnEdit, EditBox.cpp:343-346), and
+// Start or End show the warning colour while Start is after End. Enter runs
 // the Editor's EDITBOX_COMMIT_GO_NEXT_LINE / EDITBOX_COMMIT bindings (the
 // time fields stay on the Line with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
 // EditBox::OnNewline). The Comment box, the Style choice and a pick from the
@@ -41,16 +44,33 @@ ColumnLayout {
         id: field
         property string value
         property bool timeField: false
+        property int timeRole: -1 // TimeFieldRole: 0 Duration, 1 Start, 2 End
+        property bool warning: false
+        property bool typing: false
         property string tip
         signal applied(string text)
         text: value
         selectByMouse: true
         Layout.preferredWidth: 90
-        onValueChanged: text = value
-        // Only a changed field is sent (legacy IsModified).
+        // Legacy WINDOW_WARNING_ELEMENTS: the palette's warning-bright text.
+        color: warning ? palette.brightText : palette.text
+        // A live edit leaves the typed text as it is (OnEdit sets the other
+        // fields, not the focused one).
+        onValueChanged: if (!typing) text = value
+        onTextEdited: {
+            if (!timeField)
+                return
+            typing = true
+            inspector.editor.timeTyped(timeRole, text)
+            typing = false
+        }
+        // Only a changed field is sent (legacy IsModified). An applied time
+        // field shows the Line's form again, the only form TimeCtrl holds.
         function apply() {
             if (text !== value)
                 applied(text)
+            if (timeField && inspector.editor.attempted.length === 0)
+                text = value
         }
         onEditingFinished: apply()
         Keys.onPressed: event => event.accepted = inspector.commitKey(event, field, field.timeField)
@@ -182,6 +202,8 @@ ColumnLayout {
             value: inspector.editor.startText
             enabled: inspector.editor.editable
             timeField: true
+            timeRole: 1
+            warning: inspector.editor.startWarning
             Accessible.name: qsTr("Start")
             tip: qsTr("Line start time")
             onApplied: text => inspector.editor.setStartText(text)
@@ -192,6 +214,8 @@ ColumnLayout {
             value: inspector.editor.endText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeField: true
+            timeRole: 2
+            warning: inspector.editor.endWarning
             Accessible.name: qsTr("End")
             tip: qsTr("Line end time")
             onApplied: text => inspector.editor.setEndText(text)
@@ -202,6 +226,7 @@ ColumnLayout {
             value: inspector.editor.durationText
             enabled: inspector.editor.editable && inspector.editor.hasEnd
             timeField: true
+            timeRole: 0
             Accessible.name: qsTr("Duration")
             tip: qsTr("Line duration")
             onApplied: text => inspector.editor.setDurationText(text)

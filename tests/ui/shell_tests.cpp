@@ -7673,6 +7673,9 @@ private slots:
         press(Qt::Key_Home);
         QTRY_VERIFY(application->editor().hasLine());
         typeInto("durationField", QStringLiteral("0:00:03.25"));
+        // OnEdit runs on each NUMBER_CHANGED: End follows before Enter.
+        QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:04.25"));
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 2'000'000);
         press(Qt::Key_Return);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 4'250'000);
         QCOMPARE(item<QObject>("endField")->property("text").toString(), QStringLiteral("0:00:04.25"));
@@ -7683,6 +7686,85 @@ private slots:
         QCOMPARE(item<QObject>("durationField")->property("text").toString(), QStringLiteral("0:00:01.00")); // as typed
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
         application->settingsStore()->setValue(QStringLiteral("editor.dontGoToNextLineOnTimesEdit"), false);
+    }
+
+    // Start and End go to the Line copy as they are typed (TimeCtrl's
+    // NUMBER_CHANGED runs EditBox::OnEdit, EditBox.cpp:343-346): Duration and
+    // the counters follow before Enter, and the focused field takes the
+    // warning colour while Start is after End (EditBox.cpp:1526-1545). Send
+    // and SetLine put the text colour back (EditBox.cpp:546-554, 394-402).
+    void timeFieldsApplyAsTheyAreTyped()
+    {
+        QVERIFY(application->openFile(writeStyled("typed.ass",
+                                                  "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\\Nfirst\\Nfirst\n"
+                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n")));
+        auto *session = targetSession();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *start = item("startField");
+        auto *end = item("endField");
+        auto *duration = item<QObject>("durationField");
+        auto *cps = item<QObject>("cpsCounter");
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 15<=15"));
+        const auto colour = [](QQuickItem *field, const char *role) {
+            return field->property("palette").value<QObject *>()->property(role).value<QColor>();
+        };
+
+        typeInto("startField", QStringLiteral("0:00:01.50"));
+        QVERIFY(start->hasActiveFocus());
+        QCOMPARE(start->property("text").toString(), QStringLiteral("0:00:01.50"));
+        QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:00.50"));
+        QCOMPARE(cps->property("text").toString(), QStringLiteral("Characters per second: 30<=15"));
+        QCOMPARE(session->draftRecord()->start.value.microseconds(), 1'500'000);
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 1'000'000); // not sent yet
+        QVERIFY(!application->editor().startWarning());
+
+        // End before Start: End, which has the focus, is in the warning colour.
+        typeInto("endField", QStringLiteral("0:00:01.20"));
+        QVERIFY(application->editor().endWarning());
+        QVERIFY(!application->editor().startWarning());
+        QCOMPARE(end->property("color").value<QColor>(), colour(end, "brightText"));
+        QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:00.00")); // clamped at 0
+        typeInto("endField", QStringLiteral("0:00:03.00"));
+        QVERIFY(!application->editor().endWarning());
+        QCOMPARE(end->property("color").value<QColor>(), colour(end, "text"));
+        QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:01.50"));
+
+        // Start after End: Start is warned; Send puts the colour back even
+        // when the Line is not sent (OnCommit, EditBox.cpp:546-554).
+        typeInto("startField", QStringLiteral("0:00:04.00"));
+        QVERIFY(application->editor().startWarning());
+        QCOMPARE(start->property("color").value<QColor>(), colour(start, "brightText"));
+        application->editor().commit();
+        QVERIFY(!application->editor().startWarning());
+        application->editor().discard();
+
+        // Legacy's else-if: once Start was warned (changedBackGround stays
+        // set), a later End warning is not cleared by a good End, only by
+        // Send or SetLine.
+        typeInto("endField", QStringLiteral("0:00:00.50"));
+        QVERIFY(application->editor().endWarning());
+        typeInto("endField", QStringLiteral("0:00:03.00"));
+        QVERIFY(application->editor().endWarning());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // SetLine
+        QTRY_COMPARE(item<QObject>("lineText")->property("text").toString(), QStringLiteral("second"));
+        QVERIFY(!application->editor().endWarning());
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 3'000'000);
+
+        // Without live editing OnEdit never runs: nothing follows until Enter.
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
+        typeInto("startField", QStringLiteral("0:00:03.50"));
+        QCOMPARE(duration->property("text").toString(), QStringLiteral("0:00:01.00"));
+        QVERIFY(!session->draftLine());
+        typeInto("endField", QStringLiteral("0:00:01.00"));
+        QVERIFY(!application->editor().endWarning());
+        item("editingGrid")->forceActiveFocus(); // End applies on leaving
+        QCOMPARE(session->draftRecord()->end.value.microseconds(), 1'000'000);
+        QVERIFY(!application->editor().endWarning());
+        application->editor().discard();
+        application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), false);
     }
 
     // EditBox::UpdateChars against legacy TextData: "Wraps: <counts>/43" and
@@ -7919,6 +8001,11 @@ private slots:
         QTRY_VERIFY(script().contains("first live"));
         application->editor().discard();
         QTRY_VERIFY(!script().contains("first live"));
+        // A time field follows as it is typed, before Enter (EditBox.cpp:343-346).
+        typeInto("endField", QStringLiteral("0:00:00.50"));
+        QTRY_VERIFY(script().contains("0:00:00.00,0:00:00.50,Default"));
+        application->editor().discard();
+        QTRY_VERIFY(!script().contains("0:00:00.00,0:00:00.50,Default"));
         application->settingsStore()->setValue(QStringLiteral("video.disableLiveEditing"), true);
         text->forceActiveFocus();
         press(Qt::Key_End);

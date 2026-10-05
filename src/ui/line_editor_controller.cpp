@@ -358,6 +358,12 @@ void LineEditorController::setMarginText(int which, const QString &text)
 bool LineEditorController::commit()
 {
     auto *s = session();
+    // EditBox::OnCommit sends even with nothing changed, and Send puts the
+    // time fields back in the text colour first (EditBox.cpp:546-554).
+    if (m_timeWarning[0] || m_timeWarning[1]) {
+        clearTimeWarnings();
+        emit changed();
+    }
     if (!s || !s->draftLine())
         return false;
     return sendDraft();
@@ -368,6 +374,7 @@ bool LineEditorController::commit()
 // an Actor or Effect change rebuilds their lists (EditBox.cpp:633-636).
 bool LineEditorController::sendDraft(bool leaving)
 {
+    clearTimeWarnings(); // Send, EditBox.cpp:546-554
     auto *s = session();
     if (!s || !s->draftLine())
         return true;
@@ -451,6 +458,7 @@ void LineEditorController::discard()
 {
     if (auto *s = session())
         s->discardDraft();
+    clearTimeWarnings(); // the shown times are the Line's again
     m_draftUndo.clear();
     m_draftRedo.clear();
     m_attempted.clear();
@@ -1391,6 +1399,7 @@ void LineEditorController::lineShown()
     const auto r = committedRecord();
     m_shownLine = r ? std::optional(r->id) : std::nullopt;
     m_durationEdited = false;
+    clearTimeWarnings(); // SetLine, EditBox.cpp:394-402
     m_typedDuration.reset();
     if (!r)
         return;
@@ -1664,6 +1673,45 @@ void LineEditorController::setDurationText(const QString &text)
     m_typedDuration = text; // DurEdit keeps the typed text
     s->editDraft(r->id, change);
     refresh();
+}
+
+void LineEditorController::clearTimeWarnings()
+{
+    // SetForegroundColour(WINDOW_TEXT); changedBackGround stays set.
+    m_timeWarning[0] = m_timeWarning[1] = false;
+}
+
+void LineEditorController::timeTyped(int role, const QString &text)
+{
+    // EditBox::OnEdit, connected only without DISABLE_LIVE_VIDEO_EDITING
+    // (EditBox.cpp:343-346, 1520-1560).
+    const auto r = record();
+    if (!options().liveEditing || !editable() || !r || role < 0 || role > 2)
+        return;
+    auto *s = session();
+    const auto field = static_cast<application::TimeFieldRole>(role);
+    if (!application::typedTime(u8(text), field, s->document().format(), s->document().frameRate(), frameTimebase()))
+        return; // not yet the field's form: the field's apply reports it
+    if (field == application::TimeFieldRole::Duration) {
+        // durFocus: End = Start + DurEdit (EditBox.cpp:1546-1550).
+        if (hasEnd())
+            setDurationText(text);
+        return;
+    }
+    // startEndFocus: the Line takes both times, Duration follows
+    // (EditBox.cpp:1526-1545).
+    if (!setTime(field, text))
+        return;
+    const auto line = record();
+    const int focused = field == application::TimeFieldRole::Start ? 0 : 1;
+    // SubsTime::operator> compares the milliseconds (SubsTime.cpp:184-187).
+    if (line && line->start.value.microseconds() / 1000 > line->end.value.microseconds() / 1000)
+        m_timeWarning[focused] = m_timeWarned[focused] = true;
+    else if (m_timeWarned[0]) // legacy's else-if: Start first, End only when Start never warned
+        m_timeWarning[0] = false;
+    else if (m_timeWarned[1])
+        m_timeWarning[1] = false;
+    emit changed();
 }
 
 bool LineEditorController::chooseAlignment(int index)

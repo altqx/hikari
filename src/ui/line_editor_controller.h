@@ -84,6 +84,11 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool charsWarning READ charsWarning NOTIFY changed)
     Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
     Q_PROPERTY(bool cpsWarning READ cpsWarning NOTIFY changed)
+    // Start and End in the warning colour while a live edit has Start after
+    // End (EditBox::OnEdit, EditBox.cpp:1526-1545), until the Line is sent
+    // or shown again (Send, EditBox.cpp:546-554; SetLine, EditBox.cpp:394-402).
+    Q_PROPERTY(bool startWarning READ startWarning NOTIFY changed)
+    Q_PROPERTY(bool endWarning READ endWarning NOTIFY changed)
     // The Time/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH): enabled once a
     // video was opened (Notebook::LoadVideo), as legacy enables it.
     Q_PROPERTY(bool framesAvailable READ framesAvailable NOTIFY changed)
@@ -148,6 +153,8 @@ public:
     bool charsWarning() const;
     QString cpsText() const;
     bool cpsWarning() const;
+    bool startWarning() const { return m_timeWarning[0]; }
+    bool endWarning() const { return m_timeWarning[1]; }
     bool framesAvailable() const { return m_framesAvailable; }
     bool showFrames() const { return m_showFrames; }
     void setShowFrames(bool on);
@@ -170,6 +177,14 @@ public:
     // DurEdit: End becomes Start + the duration (EditBox::OnEdit's durFocus
     // branch), which runs only with live video editing on (EditBox.cpp:349-352).
     Q_INVOKABLE void setDurationText(const QString &text);
+    // A time field's text changed while it is being typed (TimeCtrl's
+    // NUMBER_CHANGED, which runs EditBox::OnEdit with live video editing on,
+    // EditBox.cpp:343-346): `role` is TimeFieldRole's 0 Duration, 1 Start,
+    // 2 End. Start or End go to the draft and Duration follows; Duration moves
+    // End. Without live editing nothing happens until the field is applied.
+    // Text not yet in the field's form is left for the field's apply, since
+    // the legacy control only ever holds its form.
+    Q_INVOKABLE void timeTyped(int role, const QString &text);
     // EditBox::OnAnChoice: \an<index + 1> into the first block of the edited
     // text field (TextEdit, or TextEditOrig while the translation is empty).
     Q_INVOKABLE bool chooseAlignment(int index);
@@ -342,6 +357,11 @@ private:
     QStringList m_actors, m_effects;
     int m_alignment = 2;
     bool m_durationEdited = false; // OnEdit's Duration after a Start/End edit
+    // StartEdit/EndEdit: the warning colour shown, and legacy's
+    // changedBackGround, which is set with it and never cleared.
+    bool m_timeWarning[2] = {false, false};
+    bool m_timeWarned[2] = {false, false};
+    void clearTimeWarnings();
     std::optional<QString> m_typedDuration; // DurEdit keeps what was typed until SetLine
     std::optional<core::LineId> m_shownLine;
 
