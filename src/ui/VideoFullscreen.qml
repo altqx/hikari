@@ -60,6 +60,12 @@ Window {
     visible: false
 
     onActiveChanged: if (active && controller.active) keys.forceActiveFocus()
+    // Fullscreen::OnClose: the window manager's close (Alt+F4) leaves
+    // fullscreen; the window itself stays for the next time.
+    onClosing: close => {
+        close.accepted = false
+        fs.controller.leave()
+    }
 
     // A move over the picture: the panel shows or hides (the picture's
     // coordinates are the window's: without "Show toolbar" it fills it).

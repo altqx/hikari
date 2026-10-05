@@ -13337,7 +13337,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
         QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
         QTRY_VERIFY(fullscreenWindow()->isVisible());
-        QVERIFY(fs.leave());
+        // The window manager's close leaves (Fullscreen::OnClose vetoes it).
+        QVERIFY(!fullscreenWindow()->close());
+        QVERIFY(!fs.active());
+        QTRY_VERIFY(!fullscreenWindow()->isVisible());
+        QCOMPARE(item("videoPresenter")->window(), window);
     }
 
     // V5: screenshots of the fullscreen window for review in the four themes,
