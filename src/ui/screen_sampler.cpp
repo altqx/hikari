@@ -265,6 +265,12 @@ void ScreenSampler::pickFromPortal()
         emit portalFailed(available() ? tr("The desktop's screenshot portal is not in use here.") : unavailableReason());
         return;
     }
+    if (m_portalRequest) {
+        m_portalBusy = true;
+        emit portalBusyChanged();
+        m_portalRequest();
+        return;
+    }
 #ifdef HIKARI_SCREEN_PORTAL
     auto bus = QDBusConnection::sessionBus();
     // Subscribe to the request's Response before asking (handle_token).
@@ -283,11 +289,8 @@ void ScreenSampler::pickFromPortal()
     auto *watcher = new QDBusPendingCallWatcher(bus.asyncCall(call), this);
     connect(watcher, &QDBusPendingCallWatcher::finished, this, [this](QDBusPendingCallWatcher *w) {
         w->deleteLater();
-        if (w->isError()) {
-            const QString message = w->error().message();
-            finishPortal();
-            emit portalFailed(message);
-        }
+        if (w->isError())
+            failPortalCall(w->error().message());
     });
 #else
     emit portalFailed(unavailableReason());
@@ -297,11 +300,8 @@ void ScreenSampler::pickFromPortal()
 void ScreenSampler::portalResponse(uint response, const QVariantMap &results)
 {
 #ifdef HIKARI_SCREEN_PORTAL
-    finishPortal();
-    if (response == 1)
-        return; // the user cancelled: no colour, as a dropper released without a pick
     if (response != 0 || !results.contains(QStringLiteral("color"))) {
-        emit portalFailed(tr("The desktop could not pick a colour from the screen."));
+        answerPortal(response == 1 ? 1 : 2);
         return;
     }
     double r = 0, g = 0, b = 0;
@@ -309,15 +309,38 @@ void ScreenSampler::portalResponse(uint response, const QVariantMap &results)
     argument.beginStructure();
     argument >> r >> g >> b;
     argument.endStructure();
-    auto channel = [](double v) { return std::clamp(int(std::lround(v * 255)), 0, 255); };
-    emit portalPicked({{QStringLiteral("r"), channel(r)},
-                       {QStringLiteral("g"), channel(g)},
-                       {QStringLiteral("b"), channel(b)},
-                       {QStringLiteral("a"), 0}});
+    answerPortal(0, r, g, b);
 #else
     Q_UNUSED(response)
     Q_UNUSED(results)
 #endif
+}
+
+void ScreenSampler::answerPortal(uint response, double red, double green, double blue)
+{
+    if (!m_portalBusy)
+        return;
+    // The answer goes out first and portalBusy falls after it: a listener
+    // that stops listening once the request is over (portalBusyChanged)
+    // would otherwise miss the answer emitted in the same call.
+    if (response == 0) {
+        auto channel = [](double v) { return std::clamp(int(std::lround(v * 255)), 0, 255); };
+        emit portalPicked({{QStringLiteral("r"), channel(red)},
+                           {QStringLiteral("g"), channel(green)},
+                           {QStringLiteral("b"), channel(blue)},
+                           {QStringLiteral("a"), 0}});
+    } else if (response != 1) { // 1: the user cancelled, as a dropper released without a pick
+        emit portalFailed(tr("The desktop could not pick a colour from the screen."));
+    }
+    finishPortal();
+}
+
+void ScreenSampler::failPortalCall(const QString &message)
+{
+    if (!m_portalBusy)
+        return;
+    emit portalFailed(message);
+    finishPortal();
 }
 
 void ScreenSampler::finishPortal()

@@ -37,6 +37,8 @@ Dialog {
     // The screen dropper holds the pointer (legacy screen_dropper_icon's capture).
     property bool dropping: false
     property bool portalAsked: false
+    // The portal's last failure, shown under the dropper until the next ask.
+    property string portalNote: ""
     readonly property color shown: Qt.rgba(red / 255, green / 255, blue / 255, 1)
     readonly property ScreenSampler sampler: picker.sampler
 
@@ -109,6 +111,7 @@ Dialog {
     function startDropper() {
         if (sampler.route === "portal") {
             portalAsked = true
+            portalNote = ""
             sampler.pickFromPortal()
             return
         }
@@ -160,8 +163,10 @@ Dialog {
         }
         function onPortalFailed(message) {
             dialog.portalAsked = false
-            dropperNote.text = message
+            dialog.portalNote = message
         }
+        // The answer comes while portalBusy is still true; a cancel only
+        // lets it fall.
         function onPortalBusyChanged() {
             if (!dialog.sampler.portalBusy)
                 dialog.portalAsked = false
@@ -170,6 +175,7 @@ Dialog {
     onClosed: {
         stopDropper()
         portalAsked = false
+        portalNote = ""
     }
     onAccepted: {
         if (changeTimer.running) {
@@ -462,7 +468,7 @@ Dialog {
                 Layout.maximumWidth: 320
                 wrapMode: Text.WordWrap
                 visible: text.length > 0
-                text: dialog.sampler.available ? "" : dialog.sampler.unavailableReason
+                text: dialog.sampler.available ? dialog.portalNote : dialog.sampler.unavailableReason
             }
             GroupBox {
                 title: qsTr("Recent colors")

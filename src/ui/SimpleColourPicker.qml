@@ -29,6 +29,8 @@ Window {
     property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
     property bool picking: false
     property bool portalAsked: false
+    // The portal's last failure, shown until the next ask.
+    property string portalNote: ""
     readonly property bool tracking: picking && sampler.tracking
 
     function openFor(number, role, selectionStart, selectionEnd) {
@@ -65,6 +67,7 @@ Window {
             return
         picking = false
         portalAsked = false
+        portalNote = ""
         sampler.stopTracking()
         // EditBox: scpd->AddRecent() after OK, DummyUndo otherwise.
         if (accepted)
@@ -108,7 +111,13 @@ Window {
         }
         function onPortalFailed(message) {
             window.portalAsked = false
-            note.text = message
+            window.portalNote = message
+        }
+        // The answer comes while portalBusy is still true; a cancel only
+        // lets it fall.
+        function onPortalBusyChanged() {
+            if (!window.sampler.portalBusy)
+                window.portalAsked = false
         }
     }
 
@@ -168,6 +177,7 @@ Window {
                 text: qsTr("Pick a colour from the screen")
                 onClicked: {
                     window.portalAsked = true
+                    window.portalNote = ""
                     window.sampler.pickFromPortal()
                 }
             }
@@ -178,7 +188,7 @@ Window {
             Layout.maximumWidth: 240
             wrapMode: Text.WordWrap
             visible: text.length > 0
-            text: window.sampler.available ? "" : window.sampler.unavailableReason
+            text: window.sampler.available ? window.portalNote : window.sampler.unavailableReason
         }
         CheckBox {
             id: moveWindow

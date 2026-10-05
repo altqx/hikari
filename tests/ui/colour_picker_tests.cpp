@@ -162,12 +162,77 @@ private slots:
         QVERIFY(!sampler.available());
         QVERIFY(!sampler.unavailableReason().isEmpty());
         QVERIFY(sampler.sample(0, 0).isEmpty());
-        // Without the portal route, asking the portal answers with the reason.
+        // Without the portal route, asking the portal answers with the reason
+        // (here Wayland's without the portal), or, on the grab route, that
+        // the portal is not in use.
         QSignalSpy failed(&sampler, &ui::ScreenSampler::portalFailed);
-        sampler.setRoute({});
         sampler.pickFromPortal();
         QCOMPARE(failed.count(), 1);
+        QCOMPARE(failed.at(0).at(0).toString(), sampler.unavailableReason());
+        QVERIFY(failed.at(0).at(0).toString().contains(QStringLiteral("no screenshot portal")));
         QVERIFY(!sampler.portalBusy());
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.pickFromPortal();
+        QCOMPARE(failed.count(), 2);
+        QCOMPARE(failed.at(1).at(0).toString(), QStringLiteral("The desktop's screenshot portal is not in use here."));
+        QVERIFY(!sampler.portalBusy());
+    }
+
+    // A portal request: busy until the desktop answers; the answer (a pick,
+    // a failure or the call's own error) comes while portalBusy is still
+    // true and portalBusy falls after it, so a listener that stops at the
+    // fall still hears it; a cancel only lets it fall. Each channel is the
+    // portal's 0-1 double rounded to 0-255, the alpha 0.
+    void portalAnswersBeforeTheRequestIsOver()
+    {
+        ui::ScreenSampler sampler;
+        sampler.setRoute(ui::ScreenSampler::routeFor(QStringLiteral("wayland"), true, true));
+        int asked = 0;
+        sampler.setPortalRequest([&] { ++asked; });
+        QStringList order;
+        connect(&sampler, &ui::ScreenSampler::portalBusyChanged, this,
+                [&] { order << (sampler.portalBusy() ? QStringLiteral("busy") : QStringLiteral("over")); });
+        QVariantMap picked;
+        connect(&sampler, &ui::ScreenSampler::portalPicked, this, [&](const QVariantMap &c) {
+            QVERIFY(sampler.portalBusy());
+            picked = c;
+            order << QStringLiteral("picked");
+        });
+        QString message;
+        connect(&sampler, &ui::ScreenSampler::portalFailed, this, [&](const QString &m) {
+            message = m;
+            order << QStringLiteral("failed");
+        });
+
+        sampler.pickFromPortal();
+        QCOMPARE(asked, 1);
+        QVERIFY(sampler.portalBusy());
+        sampler.pickFromPortal(); // one request at a time
+        QCOMPARE(asked, 1);
+        sampler.answerPortal(0, 1.0, 0.5, 0.0);
+        QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("picked"), QStringLiteral("over")}));
+        QCOMPARE(picked, (QVariantMap{{"r", 255}, {"g", 128}, {"b", 0}, {"a", 0}}));
+        QVERIFY(!sampler.portalBusy());
+        sampler.answerPortal(0, 0, 0, 0); // no request: nothing
+        QCOMPARE(order.size(), 3);
+
+        order.clear();
+        sampler.pickFromPortal();
+        sampler.answerPortal(1); // cancelled
+        QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("over")}));
+
+        order.clear();
+        sampler.pickFromPortal();
+        sampler.answerPortal(2);
+        QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("failed"), QStringLiteral("over")}));
+        QCOMPARE(message, QStringLiteral("The desktop could not pick a colour from the screen."));
+
+        order.clear();
+        sampler.pickFromPortal();
+        sampler.failPortalCall(QStringLiteral("No such interface"));
+        QCOMPARE(order, (QStringList{QStringLiteral("busy"), QStringLiteral("failed"), QStringLiteral("over")}));
+        QCOMPARE(message, QStringLiteral("No such interface"));
+        QCOMPARE(asked, 4);
     }
 
     // The route this session resolves: on Wayland the desktop's Screenshot

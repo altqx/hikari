@@ -91,12 +91,22 @@ public:
     Q_INVOKABLE void stopTracking();
 
     // The portal route: the desktop picks one colour; portalPicked or,
-    // unless the user cancelled, portalFailed answers.
+    // unless the user cancelled, portalFailed answers while portalBusy is
+    // still true, and portalBusy falls after it (a cancel only lets it
+    // fall), so a listener gated on its own request still hears the answer.
     Q_INVOKABLE void pickFromPortal();
 
     // Tests: another pixel source, or another route.
     void setSource(Source source) { m_source = std::move(source); }
     void setRoute(const Route &route);
+    // Tests: `request` runs in place of the desktop's PickColor call;
+    // answerPortal then delivers its Response (0 with the colour's channels
+    // as the portal's 0-1 doubles, 1 cancelled, 2 failed) and
+    // failPortalCall the call's own error.
+    using PortalRequest = std::function<void()>;
+    void setPortalRequest(PortalRequest request) { m_portalRequest = std::move(request); }
+    void answerPortal(uint response, double red = 0, double green = 0, double blue = 0);
+    void failPortalCall(const QString &message);
 
 signals:
     void routeChanged();
@@ -131,6 +141,7 @@ private:
     bool m_portalBusy = false;
     QString m_portalPath;
     int m_portalRequests = 0;
+    PortalRequest m_portalRequest;
 };
 
 } // namespace hikari::ui

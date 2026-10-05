@@ -958,6 +958,43 @@ private slots:
         QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
         QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
         QTRY_VERIFY(!simple->isVisible());
+
+        // The portal route (Wayland): no pointer capture, the move box off,
+        // and a "Pick a colour from the screen" button asking the desktop,
+        // whose pick tags the text at once; a cancel leaves the picker no
+        // longer waiting, so a later answer to another ask is not its own; a
+        // failure shows until the next ask.
+        int asked = 0;
+        sampler.setPortalRequest([&] { ++asked; });
+        sampler.setRoute({QStringLiteral("portal"), {}});
+        const QString before = text->property("text").toString();
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QTRY_VERIFY(simple->isVisible());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(note->property("text").toString().isEmpty());
+        QVERIFY(!findItem(simple->contentItem(), QStringLiteral("moveWindow"))->isEnabled());
+        auto *portalPick = findItem(simple->contentItem(), QStringLiteral("simplePortalPick"));
+        QVERIFY(portalPick->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QCOMPARE(asked, 1);
+        QVERIFY(!portalPick->isEnabled());
+        sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
+        QVERIFY(portalPick->isEnabled());
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H604020&")));
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        sampler.answerPortal(1);
+        QVERIFY(!simple->property("portalAsked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        sampler.failPortalCall(QStringLiteral("No such interface"));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
+        QVERIFY(QMetaObject::invokeMethod(portalPick, "clicked"));
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.answerPortal(1);
+        QCOMPARE(asked, 4);
+        sampler.setPortalRequest({});
+        QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
+        QTRY_VERIFY(!simple->isVisible());
+        QCOMPARE(text->property("text").toString(), before);
     }
 
     // Y7: "Choose color"'s HSL and HSV values (UpdateFromRGB/HSL/HSV through
@@ -1072,6 +1109,49 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(swap, "toggle"));
         QVERIFY(QMetaObject::invokeMethod(swap, "toggled"));
         QVERIFY(application->settingsStore()->boolean("colourPicker.switchClicks"));
+
+        // The portal route (Wayland): the icon's press asks the desktop and
+        // takes no pointer; its pick sets the colour with the alpha kept, as
+        // the dropper's; a failure shows under the icon until the next ask;
+        // a cancel changes nothing. The type choice above left the second
+        // colour in effect with its own alpha; an alpha for it first.
+        alpha->setProperty("value", 0x40);
+        QVERIFY(QMetaObject::invokeMethod(alpha, "valueModified"));
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2a&H40&")));
+        int asked = 0;
+        sampler.setPortalRequest([&] { ++asked; });
+        sampler.setRoute({QStringLiteral("portal"), {}});
+        auto *note = dialogItem("colourDialog", "dropperUnavailable");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 1);
+        QVERIFY(sampler.portalBusy());
+        QVERIFY(!sampler.tracking());
+        QVERIFY(!dialog->property("dropping").toBool());
+        QVERIFY(!dialogItem("colourDialog", "eyedropper")->isEnabled());
+        sampler.answerPortal(0, 0x20 / 255.0, 0x40 / 255.0, 0x60 / 255.0);
+        QVERIFY(!sampler.portalBusy());
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 0x20);
+        QCOMPARE(dialog->property("green").toInt(), 0x40);
+        QCOMPARE(dialog->property("blue").toInt(), 0x60);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\2c&H604020&")));
+        QVERIFY(dialogItem("colourDialog", "eyedropper")->isEnabled());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 2);
+        sampler.failPortalCall(QStringLiteral("No such interface"));
+        QCOMPARE(note->property("text").toString(), QStringLiteral("No such interface"));
+        QVERIFY(note->isVisible());
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, icon);
+        QCOMPARE(asked, 3);
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.answerPortal(1);
+        QVERIFY(!dialog->property("portalAsked").toBool());
+        QCOMPARE(dialog->property("red").toInt(), 0x20);
+        QVERIFY(note->property("text").toString().isEmpty());
+        sampler.setPortalRequest({});
+
         QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
 
