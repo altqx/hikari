@@ -439,6 +439,15 @@ Row {
                         return true; // the accent layer (diagonal: no pixel is wholly covered)
             return false;
         }());
+        // A nine-digit value is #RRGGBBAA, as the registry's parser reads it
+        // (the one applySettings validates with), not QColor's #AARRGGBB.
+        store->set("icons.dark.accent", QStringLiteral("#FF880080"));
+        QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ff8800"));
+        // a value the registry rejects keeps the theme default
+        store->set("icons.dark.accent", QStringLiteral("red"));
+        QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#9cdbc9"));
+        store->set("icons.dark.accent", QStringLiteral("#FF00FF"));
+        QCOMPARE(colour("plain", "accentColor"), QStringLiteral("#ff00ff"));
         // persisted in the profile
         store->sync();
         QCOMPARE(ui::SettingsStore(ini).text("icons.dark.accent"), QStringLiteral("#FF00FF"));

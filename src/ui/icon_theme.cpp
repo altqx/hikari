@@ -286,10 +286,14 @@ void IconTheme::forceAppearance(std::optional<icons::Appearance> appearance)
 
 QColor IconTheme::colour(icons::Appearance appearance, icons::Slot slot)
 {
+    // The registry's own parser reads the value, the same one applySettings
+    // validates with: "#RRGGBB", or "#RRGGBBAA" (QColor would read nine digits
+    // as #AARRGGBB). Anything it rejects keeps the theme default. The tint
+    // paints the colour opaque (icons::tint writes #RRGGBB).
     if (const auto &settings = Hub::get().settings) {
-        const QColor stored(settings->text(icons::settingId(appearance, slot).data()));
-        if (stored.isValid())
-            return stored;
+        const QString stored = settings->text(icons::settingId(appearance, slot).data());
+        if (const auto argb = application::parseSettingColour(stored.toStdString()))
+            return QColor::fromRgba(QRgb(*argb));
     }
     return icons::defaultColour(appearance, slot);
 }
