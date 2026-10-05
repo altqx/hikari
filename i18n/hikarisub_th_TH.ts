@@ -2784,19 +2784,15 @@ please save with different name or change file attribute.</source>
         <translation>ปิด</translation>
     </message>
     <message>
-        <source>Follow the editing Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show nearest Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Move panel…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Undock</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close reference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3852,10 +3848,6 @@ in all tabs</source>
     </message>
     <message>
         <source>Next match</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close reference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
