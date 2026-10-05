@@ -223,7 +223,8 @@ Item {
                         Label {
                             id: label
                             text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
-                            font.bold: tab.checked
+                            // Not bold when current: the tab's surface and
+                            // border mark it, and a bold name widened the tab.
                             leftPadding: tab.mark >= 0 ? 0 : 4
                         }
                         IconToolButton {

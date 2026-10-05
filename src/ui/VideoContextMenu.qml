@@ -127,7 +127,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "videoMenuCopySubbedFrame"
-        iconRole: "frame-snapshot"
+        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
         text: qsTr("Copy frame with subtitles to clipboard") + menu.keys("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) menu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
@@ -141,7 +141,7 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "videoMenuCopyFrame"
-        iconRole: "frame-snapshot"
+        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
         text: qsTr("Copy frame to clipboard") + menu.keys("VIDEO_COPY_FRAME_TO_CLIPBOARD")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) menu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")

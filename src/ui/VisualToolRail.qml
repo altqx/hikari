@@ -20,14 +20,46 @@ Frame {
     objectName: "visualToolRail"
     required property VisualToolsController tools
     padding: 2
-    implicitWidth: 28 + leftPadding + rightPadding
+    // A Video panel too short for the eleven families shows a thin scroll bar
+    // beside them: the families below the fold are reached by the mouse, and
+    // the bar says that there are more. The rail widens by the bar.
+    readonly property bool overflows: railScroll.contentHeight > railScroll.height + 0.5
+    readonly property int barWidth: 6
+    implicitWidth: 28 + (overflows ? barWidth + 1 : 0) + leftPadding + rightPadding
 
     ScrollView {
+        id: railScroll
+        objectName: "visualToolRailScroll"
         anchors.fill: parent
         clip: true
-        ScrollBar.vertical.policy: ScrollBar.AlwaysOff
+        contentWidth: 28
+        ScrollBar.vertical: ScrollBar {
+            objectName: "visualToolRailScrollBar"
+            parent: railScroll
+            x: railScroll.width - width
+            y: 0
+            height: railScroll.height
+            width: rail.barWidth
+            padding: 0
+            policy: rail.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+            focusPolicy: Qt.NoFocus
+            // A visible track in the boundary colour, as the audio display's.
+            background: Rectangle {
+                implicitWidth: rail.barWidth
+                radius: rail.barWidth / 2
+                color: Theme.field
+                border.color: Theme.line
+            }
+            contentItem: Rectangle {
+                implicitWidth: rail.barWidth
+                implicitHeight: 12
+                radius: rail.barWidth / 2
+                color: parent.pressed ? Theme.text : Theme.muted
+                opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+            }
+        }
         ColumnLayout {
-            width: rail.availableWidth
+            width: 28
             spacing: 1
             Repeater {
                 id: families

@@ -192,9 +192,12 @@ int LineTableModel::labelSlot(int state)
 LineTableModel::LabelColours LineTableModel::themeLabelColours(bool dark)
 {
     // GRID_LABEL_NORMAL, _MODIFIED, _SAVED, _DOUBTFUL (config.cpp:422-425).
+    // Light's normal label is lighter than legacy's #7F7F7F mid grey, on
+    // which neither the text nor the field role reached 4.5:1 for the
+    // number's digits; it stays darker than the saved label.
     if (dark)
         return {QColor(0x2F, 0x31, 0x36), QColor(0x32, 0x2F, 0x4E), QColor(0x20, 0x22, 0x25), QColor(0x92, 0x5B, 0x1F)};
-    return {QColor(0x7F, 0x7F, 0x7F), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
+    return {QColor(0x9C, 0x9C, 0x9C), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
 }
 
 LineTableModel::LabelColours LineTableModel::themeLabelColours()

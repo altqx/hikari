@@ -170,11 +170,12 @@ Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
-                contentWidth: availableWidth
+                contentWidth: availableWidth - (ScrollBar.vertical.visible ? ScrollBar.vertical.width + 2 : 0)
                 ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
+                // Beside the scroll bar, not under it.
                 ColumnLayout {
-                    width: rail.availableWidth
+                    width: rail.availableWidth - (rail.ScrollBar.vertical.visible ? rail.ScrollBar.vertical.width + 2 : 0)
                     spacing: 4
                     TabBar {
                         id: modes
@@ -433,16 +434,16 @@ Item {
             Layout.fillHeight: true
         }
 
-        // Results and change review (legacy "Search results").
+        // Results and change review (legacy "Search results"). The pane has
+        // no heading: the Search panel's header already names it, and the
+        // name is the pane's accessible name.
         ColumnLayout {
+            objectName: "findResultsPane"
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 4
-            Label {
-                objectName: "findResultsTitle"
-                font.bold: true
-                text: qsTr("Search results")
-            }
+            Accessible.role: Accessible.Pane
+            Accessible.name: qsTr("Search results")
             // The empty state: one muted line in the middle of the pane, with
             // the explanation in its tooltip.
             Label {

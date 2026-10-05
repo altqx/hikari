@@ -549,6 +549,19 @@ icon("move-up", "Move up", ["arrow_list.png"], [STYLEDLG], stroke("M7.5 13.5v-11
 icon("move-down", "Move down", [], [STYLEDLG], stroke("M7.5 2.5v11M3 9l4.5 4.5L12 9"))
 icon("move-to-bottom", "Move to end", [], [STYLEDLG],
      accent(stroke("M2.5 14.5h10")) + stroke("M7.5 1.5v10M3 7l4.5 4.5L12 7"))
+# Transfers between the Style manager's two lists (legacy drew them with the
+# same arrow_list.png as the moves, stylestore.cpp:73-88): the two lists as
+# boxes, the copied style's direction between them in the accent, so a
+# transfer never wears a move's arrow.
+icon("copy-to-storage", "Copy style from ASS to storage", [], [STYLEDLG],
+     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 13, 3, 1)
+     + accent(stroke("M7.5 10v-4.5M5 8l2.5-2.5L10 8")))
+icon("copy-to-ass", "Copy style from storage to ASS", [], [STYLEDLG],
+     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 13, 3, 1)
+     + accent(stroke("M7.5 6v4.5M5 8l2.5 2.5L10 8")))
+icon("copy-to-all-ass", "Copy style from storage to every open ASS file", [], [STYLEDLG],
+     rect(1.5, 1.5, 13, 3, 1) + rect(1.5, 11.5, 11, 3, 1) + stroke("M3.5 9.5h10a1 1 0 0 1 1 1v2")
+     + accent(stroke("M7.5 5.5v2.5M5.75 6.5L7.5 8.25 9.25 6.5")))
 icon("menu-more", "More", [], [EDITOR], stroke("M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"))
 
 # Generic list and edit commands

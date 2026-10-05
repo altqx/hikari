@@ -13,6 +13,8 @@ Pane {
     // or panel sizes it otherwise.
     implicitWidth: 420
     implicitHeight: 360
+    // The Automation menu's "Load script…", offered by the empty state.
+    property Action loadAction: null
 
     ColumnLayout {
         anchors.fill: parent
@@ -34,20 +36,37 @@ Pane {
                 onClicked: root.controller.cancel()
             }
         }
-        // The empty state.
-        Label {
-            objectName: "scriptsEmpty"
+        // The empty state, in the middle of the window: what is missing and
+        // the command that adds it.
+        ColumnLayout {
             visible: scripts.count === 0
             Layout.fillWidth: true
-            topPadding: 24
-            horizontalAlignment: Text.AlignHCenter
-            color: Theme.muted
-            text: qsTr("No scripts loaded")
+            Layout.fillHeight: true
+            spacing: 10
+            Item { Layout.fillHeight: true }
+            Label {
+                objectName: "scriptsEmpty"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                color: Theme.muted
+                text: qsTr("No scripts loaded")
+            }
+            IconTextButton {
+                objectName: "scriptsEmptyLoad"
+                visible: root.loadAction !== null
+                Layout.alignment: Qt.AlignHCenter
+                iconRole: "automation"
+                text: qsTr("Load script…")
+                tip: qsTr("Load an Automation script")
+                onClicked: root.loadAction.trigger()
+            }
+            Item { Layout.fillHeight: true }
         }
 
         ListView {
             id: scripts
             objectName: "scripts"
+            visible: count > 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true

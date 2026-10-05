@@ -147,7 +147,7 @@ Dialog {
         }
     }
 
-    // The count after a run: "Close" also closes the Select dialog, "Ok" keeps it.
+    // The count after a run: "Close" also closes the Select dialog, "OK" (legacy's "Ok", its No button) keeps it.
     Dialog {
         id: result
         objectName: "selectResult"
@@ -158,7 +158,7 @@ Dialog {
         Label { id: resultLabel; objectName: "selectResultText" }
         footer: DialogButtonBox {
             Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-            Button { text: "Ok"; DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            Button { text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
         }
         onAccepted: dialog.close()
     }

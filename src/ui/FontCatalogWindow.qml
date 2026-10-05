@@ -107,6 +107,19 @@ Dialog {
                 editable: true
                 Layout.fillWidth: true
                 Accessible.name: qsTr("Catalogs:")
+                // Legacy leaves the choice empty until a catalog is typed or
+                // chosen; the empty field says what goes in it (the style's
+                // combo box field draws no placeholder of its own).
+                Label {
+                    objectName: "fontCatalogFieldPlaceholder"
+                    z: 10 // over the field
+                    x: catalogField.leftPadding + 4
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: catalogField.editText.length === 0
+                    text: qsTr("Choose or type a catalog name")
+                    color: Theme.muted
+                    Accessible.ignored: true
+                }
             }
             IconToolButton {
                 objectName: "fontCatalogAddCatalog"
@@ -237,12 +250,25 @@ Dialog {
                         Layout.preferredWidth: 260
                         color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
                     }
+                    // A flat cell: the catalog's name, or a muted dash for
+                    // none; it shows as a button on hover (a column of
+                    // raised buttons read as a wall of buttons).
                     Button {
+                        id: cell
                         objectName: "fontCatalogCell"
-                        // An empty cell says so rather than draw a blank box.
+                        readonly property bool none: !window.rowCatalogs[row.index]
                         text: window.rowCatalogs[row.index] || "\u2014"
+                        flat: true
                         enabled: true
                         Layout.preferredWidth: 140
+                        contentItem: Label {
+                            text: cell.text
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            color: row.highlighted && !cell.hovered ? row.palette.highlightedText
+                                                                    : cell.none ? Theme.muted : row.palette.windowText
+                        }
                         Accessible.name: qsTr("Catalog of %1").arg(row.modelData)
                         onClicked: {
                             list.currentIndex = row.index
@@ -261,14 +287,22 @@ Dialog {
                 }
             }
         }
-        Image {
-            id: preview
-            objectName: "fontCatalogPreview"
+        // The selected font's preview, framed, drawn again at its size (it
+        // was drawn before the window had one, and stayed blank).
+        Frame {
             Layout.fillWidth: true
-            Layout.preferredHeight: 220
-            cache: false
-            fillMode: Image.Pad
-            source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
+            Layout.preferredHeight: 160
+            padding: 1
+            Image {
+                id: preview
+                objectName: "fontCatalogPreview"
+                anchors.fill: parent
+                cache: false
+                fillMode: Image.Pad
+                source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
+                onWidthChanged: window.refreshPreview()
+                onHeightChanged: window.refreshPreview()
+            }
         }
         // The footer: the autosave note in the muted colour, and Close
         // (the window is not modal).
@@ -328,7 +362,7 @@ Dialog {
         footer: DialogButtonBox {
             Button {
                 objectName: "catalogEditionOk"
-                text: "OK"
+                text: qsTr("OK")
                 onClicked: {
                     if (replacement.text.length === 0) {
                         info.open() // "Enter a name for the new catalog"

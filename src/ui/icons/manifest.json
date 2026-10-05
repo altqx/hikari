@@ -1881,6 +1881,39 @@
    ]
   },
   {
+   "role": "copy-to-storage",
+   "file": "copy-to-storage.svg",
+   "label": "Copy style from ASS to storage",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "copy-to-ass",
+   "file": "copy-to-ass.svg",
+   "label": "Copy style from storage to ASS",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
+   "role": "copy-to-all-ass",
+   "file": "copy-to-all-ass.svg",
+   "label": "Copy style from storage to every open ASS file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "style-manager"
+   ]
+  },
+  {
    "role": "menu-more",
    "file": "menu-more.svg",
    "label": "More",

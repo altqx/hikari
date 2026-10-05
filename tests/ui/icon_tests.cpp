@@ -270,7 +270,7 @@ private slots:
                                  "show-in-folder", "compare", "reference", "extract-subtitles", "multireplace",
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
-                                 "appearance", "hotkeys"})
+                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
         int pending = 0;
@@ -291,26 +291,90 @@ private slots:
         QCOMPARE(pending, 13);
     }
 
+    // The glyphs that stood in for icons, alone or as a prefix before words.
+    static bool isStandInGlyph(const QString &literal)
+    {
+        static const QRegularExpression alone(QStringLiteral(R"re(^\s*(\+|-|−|\.\.\.|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s*$)re"));
+        static const QRegularExpression prefix(QStringLiteral(R"re(^\s*(\+|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s+\S)re"));
+        return alone.match(literal).hasMatch() || prefix.match(literal).hasMatch();
+    }
+    // Every button-like object in `qml` (its whole block, children
+    // included) whose text, a string or a qsTr() string, plain or followed
+    // by a concatenation, is or starts with a stand-in glyph. Every hit,
+    // not the first one.
+    static QStringList glyphButtons(const QString &qml)
+    {
+        static const QRegularExpression button(QStringLiteral(
+            R"re(\b(Button|ToolButton|RoundButton|TabButton|DelayButton|IconButton|IconToolButton|IconTextButton|IconTabButton|MenuItem|ShellMenuItem|CheckBox|RadioButton|Switch)\s*\{)re"));
+        static const QRegularExpression text(QStringLiteral("\\btext:\\s*(?:qsTr\\x28\\s*)?\"((?:[^\"\\\\]|\\\\.)*)\""));
+        QStringList out;
+        auto it = button.globalMatch(qml);
+        while (it.hasNext()) {
+            const auto m = it.next();
+            // The block, to its matching brace (braces in strings are rare
+            // enough in the shell's QML to ignore).
+            qsizetype at = m.capturedEnd(), depth = 1;
+            while (at < qml.size() && depth > 0) {
+                if (qml[at] == QLatin1Char('{'))
+                    ++depth;
+                else if (qml[at] == QLatin1Char('}'))
+                    --depth;
+                ++at;
+            }
+            const QString block = qml.mid(m.capturedEnd(), at - m.capturedEnd());
+            auto texts = text.globalMatch(block);
+            while (texts.hasNext()) {
+                const auto t = texts.next();
+                if (isStandInGlyph(t.captured(1)))
+                    out << m.captured(1) + QStringLiteral(" ") + t.captured(0);
+            }
+        }
+        return out;
+    }
+
     // An icon button draws an icon of the set, never a glyph standing in
-    // for one: no button whose text is "+", "-", "...", an arrow or a
-    // glyph prefix before its words (the Style manager's "⇈ ↑ ↓ ⇊", the
-    // "+" choosers and profile buttons, Find in subtitles' " ... "). A
-    // script's own dialog (AutomationDialog.qml, defined by the script) is
-    // left as its script made it.
+    // for one: no button, tool button, menu item or check whose text is
+    // "+", "-", "...", an arrow, a cross or a transport glyph, or starts
+    // with one before its words (the Style manager's "⇈ ↑ ↓ ⇊", the "+"
+    // choosers and profile buttons, Find in subtitles' " ... "), whether a
+    // plain string, a qsTr() string or the first part of a concatenation;
+    // every button of every file is read. A Label's "×" between a width and
+    // a height is text, not a button. A script's own dialog
+    // (AutomationDialog.qml, defined by the script) is left as its script
+    // made it. The checker is first shown to catch the regressions it is for.
     void noGlyphStandsInForAnIcon()
     {
-        static const QRegularExpression glyph(
-            QStringLiteral(R"re(\btext:\s*"\s*(\+|-|−|\.\.\.|…|⇈|⇊|↑|↓)\s*"(\s*\+|\s*[;}\n]))re"));
-        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
+        const QString caught = QStringLiteral(
+            "Item {\n"
+            "  Button { text: \"+\" }\n"
+            "  ToolButton { text: qsTr(\"-\"); onClicked: {} }\n"
+            "  IconTextButton { text: \"↑ \" + qsTr(\"Add to storage\") }\n"
+            "  Button { text: qsTr(\"↓ Add to ASS\") }\n"
+            "  ShellMenuItem { text: qsTr(\"…\") + menu.keys(\"X\") }\n"
+            "  RowLayout { Button { id: b; text: \"×\" } }\n"
+            "}\n");
+        QCOMPARE(glyphButtons(caught).size(), 6);
+        const QString passed = QStringLiteral(
+            "Item {\n"
+            "  Label { text: \"×\" }\n"
+            "  Button { text: qsTr(\"Add to storage\") }\n"
+            "  Button { text: qsTr(\"Open...\") }\n"
+            "  TextField { text: \"-00000.00\" }\n"
+            "}\n");
+        QCOMPARE(glyphButtons(passed), QStringList());
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        int files = 0;
         while (it.hasNext()) {
             QFile file(it.next());
             if (QFileInfo(file).fileName() == QLatin1String("AutomationDialog.qml"))
                 continue;
             QVERIFY(file.open(QIODevice::ReadOnly));
-            const QString text = QString::fromUtf8(file.readAll());
-            const auto match = glyph.match(text);
-            QVERIFY2(!match.hasMatch(), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + match.captured(0)));
+            ++files;
+            const QStringList hits = glyphButtons(QString::fromUtf8(file.readAll()));
+            QVERIFY2(hits.isEmpty(), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + hits.join(QStringLiteral(" | "))));
         }
+        QVERIFY(files > 50);
     }
 
     void svgsAreMonochromeOnTheGrid_data()

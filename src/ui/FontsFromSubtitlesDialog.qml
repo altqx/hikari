@@ -65,7 +65,7 @@ Dialog {
         CheckBox { id: allSubs; objectName: "fontsFromSubtitlesAllTabs"; text: qsTr("Add fonts from all open subtitles") }
     }
     footer: DialogButtonBox {
-        Button { objectName: "fontsFromSubtitlesOk"; text: "OK"; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+        Button { objectName: "fontsFromSubtitlesOk"; text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
         Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
     }
     // ShowGetFromAssDialog: nothing without a selection; the editable

@@ -2763,6 +2763,7 @@ ApplicationWindow {
                         }
                         ShellMenuItem {
                             objectName: "duplicateLines"
+                            iconRole: "duplicate"
                             // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
                             text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
@@ -3647,6 +3648,7 @@ ApplicationWindow {
         AutomationManager {
             anchors.fill: parent
             controller: root.automationManager
+            loadAction: loadScriptAction
         }
     }
     Window {
@@ -4422,7 +4424,7 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "resampleOk"
-                    text: "OK"
+                    text: qsTr("OK")
                     onClicked: {
                         if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
                             return

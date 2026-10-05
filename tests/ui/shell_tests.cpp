@@ -1280,7 +1280,13 @@ private slots:
         QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
         // Add: a new catalog in the choice, saved to FontCatalogsAutosave0.txt.
         auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
+        // The empty choice (legacy's) says what goes in it; typing hides that.
+        auto *placeholder = dialogItem("fontDialogCatalogWindow", "fontCatalogFieldPlaceholder");
+        QVERIFY(placeholder);
+        QCOMPARE(field->property("editText").toString(), QString());
+        QVERIFY(placeholder->isVisible());
         field->setProperty("editText", QStringLiteral("C"));
+        QVERIFY(!placeholder->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
@@ -2731,6 +2737,28 @@ private slots:
         QVERIFY(!editorTab->state().checked);
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Line editor")));
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Float tab group"))); // the title bar's, for both
+        // The group's name is said once, by its tabs: the title bar above
+        // them draws no title (it would repeat the current tab's), while a
+        // single panel's title bar keeps its own.
+        {
+            int tabbedBars = 0, singleBars = 0;
+            for (auto *bar : engine->rootObjects().first()->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar"))) {
+                if (!bar->isVisible())
+                    continue;
+                auto *title = bar->findChild<QQuickItem *>(QStringLiteral("dockTitleText"));
+                QVERIFY(title);
+                if (bar->property("tabbed").toBool()) {
+                    ++tabbedBars;
+                    QVERIFY2(!title->isVisible(), qPrintable(bar->property("title").toString()));
+                } else {
+                    ++singleBars;
+                    QVERIFY(title->isVisible());
+                    QCOMPARE(title->property("text").toString(), bar->property("title").toString());
+                }
+            }
+            QVERIFY(tabbedBars >= 1);
+            QVERIFY(singleBars >= 1);
+        }
         QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Shift times"));
         QVERIFY(floatTiming);
         floatTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
@@ -4526,8 +4554,8 @@ private slots:
         QCOMPARE(tool->property("tab").toInt(), 1);
         // Scope rail on the left, results and change review on the right.
         const auto x = [&](const char *name) { return item(name)->mapToScene(QPointF(0, 0)).x(); };
-        QVERIFY(x("findText") < x("findResultsTitle"));
-        QVERIFY(x("replaceAllButton") < x("findResultsTitle"));
+        QVERIFY(x("findText") < x("findResultsPane"));
+        QVERIFY(x("replaceAllButton") < x("findResultsPane"));
         // No results yet: the review footer waits for them.
         QVERIFY(item("findResultsEmpty")->isVisible());
         QVERIFY(!item("replaceCheckedButton")->isVisible());
@@ -9472,6 +9500,26 @@ private slots:
                     QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
             }
         }
+        // A Video panel too short for the eleven families: the rail shows a
+        // scroll bar beside them (the families below are reached by the
+        // mouse and the bar says there are more), still a narrow strip; tall
+        // enough, no bar.
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            auto *bar = visualItem("visualToolRailScrollBar");
+            QVERIFY(bar);
+            const QSize was = window->size();
+            window->resize(1100, 520);
+            QTRY_VERIFY(rail->property("overflows").toBool());
+            QTRY_VERIFY(bar->isVisible());
+            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
+            auto *last = visualItem("visualTool10");
+            QVERIFY(last->mapToItem(rail, QPointF(0, 0)).x() + last->width() <= bar->mapToItem(rail, QPointF(0, 0)).x());
+            window->resize(1600, 1400);
+            QTRY_VERIFY(!rail->property("overflows").toBool());
+            QTRY_VERIFY(!bar->isVisible());
+            window->resize(was);
+        }
         // The crosshair has no options or values to edit and edits no batch:
         // no tool strip below the video, and no "Targets" readout anywhere.
         QVERIFY(!visualItem("visualToolValues")->isVisible());
@@ -12688,7 +12736,10 @@ private slots:
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
         const auto r = tools.videoView().videoRect();
-        QCOMPARE(r.height() * 2, r.width()); // letterboxed at 2:1
+        // Letterboxed at 2:1, to the pixel: an odd video width (the visual
+        // tool rail widens by its scroll bar in a short panel) has no exact
+        // half.
+        QVERIFY2(std::abs(r.height() * 2 - r.width()) <= 1, qPrintable(QStringLiteral("%1x%2").arg(r.width()).arg(r.height())));
         QCOMPARE(presenter->property("videoRect").toRectF(), tools.videoRect());
         QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
