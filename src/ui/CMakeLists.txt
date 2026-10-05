@@ -38,6 +38,8 @@ qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
 # Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
+# E4: the Line editor's metadata fields, counters and \an choice
+qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
 # T2-T4: the families' options row (Position, Move, Scale, the rotations, the

@@ -120,6 +120,22 @@ std::string metaOf(const RecoveryContent &c)
             field(meta, "draft.marginRight", std::to_string(*c.draft.marginRight));
         if (c.draft.marginVertical)
             field(meta, "draft.marginVertical", std::to_string(*c.draft.marginVertical));
+        // E4: the editor's other fields; a cleared MicroDVD frame is "none".
+        if (c.draft.comment)
+            field(meta, "draft.comment", *c.draft.comment ? "1" : "0");
+        if (c.draft.layer)
+            field(meta, "draft.layer", std::to_string(*c.draft.layer));
+        if (c.draft.style)
+            field(meta, "draft.style", u8(*c.draft.style));
+        if (c.draft.actor)
+            field(meta, "draft.actor", u8(*c.draft.actor));
+        if (c.draft.effect)
+            field(meta, "draft.effect", u8(*c.draft.effect));
+        const auto frame = [](const std::optional<std::int64_t> &f) { return f ? std::to_string(*f) : std::string("none"); };
+        if (c.draft.startFrame)
+            field(meta, "draft.startFrame", frame(*c.draft.startFrame));
+        if (c.draft.endFrame)
+            field(meta, "draft.endFrame", frame(*c.draft.endFrame));
     }
     if (c.frameRate) {
         field(meta, "fps.num", std::to_string(c.frameRate->first));
@@ -163,6 +179,23 @@ std::optional<RecoveryContent> contentOf(const fs::path &generation)
                 c.draft.marginRight = std::stoll(f["draft.marginRight"]);
             if (f.contains("draft.marginVertical"))
                 c.draft.marginVertical = std::stoll(f["draft.marginVertical"]);
+            if (f.contains("draft.comment"))
+                c.draft.comment = f["draft.comment"] == "1";
+            if (f.contains("draft.layer"))
+                c.draft.layer = std::stoll(f["draft.layer"]);
+            if (f.contains("draft.style"))
+                c.draft.style = fromU8(f["draft.style"]);
+            if (f.contains("draft.actor"))
+                c.draft.actor = fromU8(f["draft.actor"]);
+            if (f.contains("draft.effect"))
+                c.draft.effect = fromU8(f["draft.effect"]);
+            const auto frame = [](const std::string &v) {
+                return v == "none" ? std::optional<std::int64_t>() : std::optional<std::int64_t>(std::stoll(v));
+            };
+            if (f.contains("draft.startFrame"))
+                c.draft.startFrame = frame(f["draft.startFrame"]);
+            if (f.contains("draft.endFrame"))
+                c.draft.endFrame = frame(f["draft.endFrame"]);
         }
         if (f.contains("fps.num") && f.contains("fps.den"))
             c.frameRate = std::pair(std::stoll(f["fps.num"]), std::stoll(f["fps.den"]));

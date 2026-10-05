@@ -1031,8 +1031,7 @@
    "legacy": [],
    "surfaces": [
     "line-editor"
-   ],
-   "pending": "E4 #186"
+   ]
   },
   {
    "role": "editor",

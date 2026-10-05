@@ -84,6 +84,35 @@ TEST(RecoveryStore, DraftsAndTextSurviveExactly)
     EXPECT_EQ(back.frameRate, (std::pair<std::int64_t, std::int64_t>(24000, 1001)));
 }
 
+// E4: the editor's metadata fields survive in the draft, a cleared MicroDVD
+// frame as cleared and an untouched field as absent.
+TEST(RecoveryStore, MetadataDraftFieldsSurviveExactly)
+{
+    TempDir dir;
+    RecoveryStore store(dir.path, "first");
+    auto c = content("[Events]\n");
+    c.draftRow = 0;
+    c.draft.comment = true;
+    c.draft.layer = -3;
+    c.draft.style = u8"Sign, top";
+    c.draft.actor = u8"Ayumu";
+    c.draft.effect = u8"";
+    c.draft.startFrame = std::optional<std::int64_t>(42);
+    c.draft.endFrame = std::optional<std::int64_t>();
+    ASSERT_TRUE(store.write("doc", c));
+    const auto back = RecoveryStore(dir.path, "second").leftovers(ended).at(0).latest;
+    EXPECT_EQ(back.draft.comment, std::optional<bool>(true));
+    EXPECT_EQ(back.draft.layer, std::optional<std::int64_t>(-3));
+    EXPECT_EQ(back.draft.style, std::optional<std::u8string>(u8"Sign, top"));
+    EXPECT_EQ(back.draft.actor, std::optional<std::u8string>(u8"Ayumu"));
+    EXPECT_EQ(back.draft.effect, std::optional<std::u8string>(u8""));
+    ASSERT_TRUE(back.draft.startFrame);
+    EXPECT_EQ(*back.draft.startFrame, std::optional<std::int64_t>(42));
+    ASSERT_TRUE(back.draft.endFrame);
+    EXPECT_FALSE(*back.draft.endFrame);
+    EXPECT_FALSE(back.draft.marginLeft);
+}
+
 TEST(RecoveryStore, ACorruptGenerationFallsBackToThePreviousOne)
 {
     TempDir dir;

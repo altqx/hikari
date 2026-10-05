@@ -62,6 +62,12 @@ struct DraftChange {
     std::optional<std::u8string> translation; // TLMode translated role
     std::optional<core::DocumentTime> start, end;
     std::optional<std::int64_t> marginLeft, marginRight, marginVertical;
+    // E4: the Line editor's other fields (legacy EditBox::Send's cells
+    // COMMENT, LAYER, STYLE, ACTOR, EFFECT) and MicroDVD's authored frames.
+    std::optional<bool> comment;
+    std::optional<std::int64_t> layer;
+    std::optional<std::u8string> style, actor, effect;
+    std::optional<std::optional<std::int64_t>> startFrame, endFrame;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning
@@ -121,6 +127,13 @@ public:
     // The same step under another name (F3: legacy EditBox::Send with an
     // edition type, such as "Correcting spelling errors in the text field").
     bool commitDraftAs(std::string name);
+    // E4: legacy EditBox::Send through SubsGrid::ChangeLine. With several
+    // Lines selected, every field the draft holds (Send's modified cells)
+    // goes to each selected Line in one step; otherwise this is
+    // commitDraftAs(name). E63-invalid-commit blocks as commitDraft does;
+    // `leaving` is the commit on leave's legacy End correction for the edited
+    // Line (EditBox::SetLine on the next Line).
+    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false);
     void discardDraft();
 
     std::expected<void, CommandRefusal> run(const Command &command);

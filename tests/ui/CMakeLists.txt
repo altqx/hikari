@@ -23,6 +23,11 @@ foreach(mode offscreen xvfb)
 endforeach()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+# E4: the Line editor's metadata fields in the accessibility tree (E2-a11y)
+# and through the real UI (Spix).
+hikari_add_qttest(hikari_ui_line_editor_a11y_tests SOURCES line_editor_a11y_tests.cpp
+    LIBRARIES hikari_composition hikari_a11y_testing)
+hikari_add_spix_test(hikari_ui_line_fields_workflow SOURCES line_fields_workflow.cpp LIBRARIES hikari_composition)
 # N8: script dialogs in fixed QML controls, round-tripped through the Lua helper.
 hikari_add_qttest(hikari_ui_automation_dialog_tests SOURCES automation_dialog_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)

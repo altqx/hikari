@@ -4,8 +4,8 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 
 | ID | Action | Legacy default | Rewrite | Evidence |
 | --- | --- | --- | --- | --- |
-| 3011 | `EDITBOX_COMMIT_GO_NEXT_LINE` Apply and go to the next line | Enter | Enter (outside composition); on the last Line it appends one, as `SubsGrid::NextLine` does | `editor_workflow`, `shell_tests`, legacy capture 37024532554 |
-| 3010 | `EDITBOX_COMMIT` Apply changes | Ctrl+Enter | Ctrl+Enter | `LineEditorController::commit` |
+| 3011 | `EDITBOX_COMMIT_GO_NEXT_LINE` Apply and go to the next line | Enter | Enter (outside composition); on the last Line it appends one, as `SubsGrid::NextLine` does. E4: also in the Line's fields (Layer, the times, margins, Actor, Effect); in Start, End and Duration it applies and stays with `EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT` (`EditBox::OnNewline`). With several Lines selected the sent fields go to each (`SubsGrid::ChangeLine`) | `editor_workflow`, `line_fields_workflow`, `shell_tests`, legacy capture 37024532554 |
+| 3010 | `EDITBOX_COMMIT` Apply changes | Ctrl+Enter | Ctrl+Enter, also in the Line's fields (E4) | `LineEditorController::commit`, `shell_tests` |
 | 3012 | `EDITBOX_INSERT_BOLD` Add bold | Ctrl+B | Ctrl+B and the B button: ASS override tags with legacy placement and restoration; SRT `<b>`, MicroDVD `{Y:b}` (`PutinNonass`) | `tag_commands_tests`, `shell_tests`, legacy captures 37024532554 and 37034136343 |
 | 3013 | `EDITBOX_INSERT_ITALIC` Add italic | Ctrl+I | Ctrl+I and the I button | `tag_commands_tests` |
 | 3001 | `EDITBOX_CHANGE_UNDERLINE` Underline | none | U button | `tag_commands_tests` |
