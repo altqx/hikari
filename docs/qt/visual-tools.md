@@ -69,3 +69,23 @@ The editor holds legacy's points (`VectorPoint`: x, y, command, start, selected)
 Every step keeps legacy's float arithmetic and int truncations, and the files are built without floating-point contraction. The `legacy_clip_capture` probe (`tools/legacy-capture/clip_capture.cpp`) runs the legacy VisualClipRect.cpp and VisualClips.cpp unchanged on `inputs/clip-cases.txt`; `hikari_application_visual_clip_tests` replays its observations ([local-t4-clip-20261005](../../tests/fixtures/legacy-observations/local-t4-clip-20261005/README.md)).
 
 A gesture's targets follow legacy's two paths: with several Lines (the batch picker's; legacy several selected) each sample and the release rewrite every target from its own text; with one, each sample rewrites the text the previous sample left (legacy's Line editor) and the release commits it. A nudge (A/D/W/S, Delete) commits on its key's release, auto-repeat included, as the transaction rule says.
+
+## Drawing and shape presets (T5)
+
+T5 ([#180](https://github.com/altqx/hikari/issues/180)) adds `DrawingTool` (`visual_drawing.h`), legacy's Shapes over DrawingAndClip as VECTORDRAW, and the shape presets with their "Vector shape editing" dialog (`shape_presets.h`, `src/ui/shape_editor.h`, `ShapesEditionDialog.qml`).
+
+| Part | File | Legacy |
+| --- | --- | --- |
+| Reading a Line's drawing: \pos / \move, \fscx / \fscy, the \p scale, \an, \frz, \org, the drawing (ParseTags' "pvector") | `drawing::readLine`, `drawing::parseTags` | Visuals::GetPosnScale, DrawingAndClip::SetCurVisual, Dialogue::ParseTags, GetDefaultPosition |
+| Writing it: \p1, \pos and \an added when missing, plain text put in blocks, "{\p0}" after a drawing that ends the text | `drawing::putDrawing` | DrawingAndClip::ChangeVectorVisual (drawing branch) |
+| The alignment's offset, the rotation, a \move drawing following the video's time | `drawing::drawingSize`, `drawing::rotate`, `drawing::movePosition` | Visuals::CalcDrawingSize, RotateDrawing, CalcMovePos (DrawVisual) |
+| Free drawing: T4's `VectorEditor` with six modes (no Invert clip), Shift nudging by a tenth | `DrawingTool` | DrawingAndClip (VECTORDRAW), VectorItem(false) |
+| Shapes: the rectangle a drag draws (edges, corners, inside), keeping the shape's proportions in "Preserve aspect ratio" (Shift toggles it), the shape written scaled into it, \fscx / \fscy for "Changing scale" | `DrawingTool` (`shapePointer`, `shapeBody`) | Shapes (VisualDrawingShapes.cpp:355-776) |
+| The presets: legacy's five defaults, Config/ShapesSettings.txt read and written as legacy did | `defaultShapePresets`, `parseShapePresets`, `writeShapePresets` | LoadSettings, SaveSettings |
+| The dialog: Add shape, Delete shape, the list's question, Get shape from active line, Apply, OK, Cancel, Restore default | `ShapesEdition` (application), `ShapeEditor` (QML model), `ShapesEditionDialog.qml` | ShapesEdition |
+
+The tool's row is VectorItem for the drawing: the six point modes (the K1 roles vector-drag to vector-delete) and the shape list ("Choose", the presets' names, "Edit"). With a preset chosen the modes take no click and show none pushed. "Edit" opens the dialog on a copy of the presets; OK gives them back to the tool and writes the file beside the settings (UTF-8 with a BOM), Cancel drops them. The presets are the host's (`VisualHost::shapePresets`, loaded at the first use as VideoToolbar::GetShapesSettings did), and the video's time is `VisualHost::videoTimeMs`.
+
+A single Line's gesture follows legacy's preview text (dummytext): the first sample after a reset rewrites the Line's text with ChangeVectorVisual, the next ones replace only the drawing where it went, and the release commits it. Several Lines (the batch picker's) are each rewritten from their own text on every sample and on release. Saving a preset under the name of another (ignoring case) asks "A shape named "…" already exists." with Replace and Rename (accepted on #55); legacy kept both.
+
+The `legacy_drawing_capture` probe (`tools/legacy-capture/clip_capture.cpp` built with PROBE_DRAWING) runs the legacy VisualClips.cpp and the Shapes and preset functions of VisualDrawingShapes.cpp unchanged on `inputs/drawing-cases.txt`; `hikari_application_visual_drawing_tests` replays its observations ([local-t5-drawing-20261005](../../tests/fixtures/legacy-observations/local-t5-drawing-20261005/README.md)) and `hikari_backends_visual_drawing_render_tests` checks the tool's points against libass's render of the drawing.
