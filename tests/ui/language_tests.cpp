@@ -463,6 +463,87 @@ private slots:
         QTRY_COMPARE(item("audioStatus")->property("text").toString(), audio);
     }
 
+    // The selection status with hidden selected Lines (G8): the " (%1
+    // hidden)" part is made again after a switch too, with the same count.
+    void hiddenSelectionStatusFollowsASwitch()
+    {
+        start();
+        QVERIFY(application->openFile(episode));
+        const auto &lines = application->files().session(*application->workspace().editingTarget())->document().lines();
+        application->shell().selectLine(lines[1]->id.value);
+        QVERIFY(QMetaObject::invokeMethod(root()->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QTRY_VERIFY(application->shell().filtered());
+        const QString english = application->shell().selectionStatus();
+        QVERIFY2(english.endsWith(QStringLiteral(" (1 hidden)")), qPrintable(english));
+        application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
+        const QString suffix =
+            QCoreApplication::translate("hikari::ui::ShellController", " (%1 hidden)").arg(1);
+        QVERIFY(suffix != QStringLiteral(" (1 hidden)"));
+        QTRY_VERIFY2(application->shell().selectionStatus().endsWith(suffix),
+                     qPrintable(application->shell().selectionStatus()));
+        QCOMPARE(item("selectionStatus")->property("text").toString(), application->shell().selectionStatus());
+        application->localisation().setPseudo(app::Localisation::Pseudo::None);
+        QTRY_COMPARE(application->shell().selectionStatus(), english);
+    }
+
+    // A live switch re-evaluates the closed Dialogs' implicit sizes, where
+    // the Fusion Dialog and DialogButtonBox bindings report "Binding loop
+    // detected for property implicitWidth" (as a text change in a closed
+    // Dialog does without a switch: the Style Manager's catalog question in
+    // the shell tests). Opened afterwards, each Dialog has the size it has
+    // when the program starts in that language or with that font.
+    void dialogsSizeAfterASwitchAsAtStart()
+    {
+        // One button (Ok) and two (Yes, No), in Main.qml and StyleManager.qml.
+        const auto sizes = [this] {
+            QList<QSizeF> out;
+            for (const char *name : {"aboutDialog", "creditsDialog", "shiftConfirm", "styleMultiQuestion"}) {
+                QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
+                if (!dialog) {
+                    out << QSizeF(-1, -1);
+                    continue;
+                }
+                QMetaObject::invokeMethod(dialog, "open");
+                const bool opened = QTest::qWaitFor([dialog] { return dialog->property("opened").toBool(); });
+                out << (opened ? QSizeF(dialog->property("width").toReal(), dialog->property("height").toReal())
+                               : QSizeF(-2, -2));
+                QMetaObject::invokeMethod(dialog, "close");
+                QTest::qWaitFor([dialog] { return !dialog->property("visible").toBool(); });
+            }
+            return out;
+        };
+        start();
+        const QList<QSizeF> english = sizes();
+        QVERIFY(!english.contains(QSizeF(-1, -1)) && !english.contains(QSizeF(-2, -2)));
+        application->localisation().setPseudo(app::Localisation::Pseudo::Accents);
+        QCoreApplication::processEvents();
+        const QList<QSizeF> switched = sizes();
+        stop();
+        qputenv("HIKARI_PSEUDOLOCALE", "accents");
+        start();
+        qunsetenv("HIKARI_PSEUDOLOCALE");
+        QCOMPARE(sizes(), switched);
+        QVERIFY(switched != english);
+        stop();
+        // The program font, live and at start.
+        start();
+        application->settingsStore()->set("program.fontSize", 14);
+        QCoreApplication::processEvents();
+        const QList<QSizeF> larger = sizes();
+        stop();
+        const QString ini = dir.filePath(QStringLiteral("dialog-font.ini"));
+        {
+            app::Application::Options options;
+            options.settingsFile = ini;
+            app::Application first(options);
+            first.settingsStore()->set("program.fontSize", 14);
+            first.settingsStore()->sync();
+        }
+        start(ini);
+        QCOMPARE(sizes(), larger);
+        QVERIFY(larger != english);
+    }
+
     // The pseudolocalized window: after the switch no item or menu shows a
     // catalog source text any more, so every translatable string on it was
     // refreshed (strings never translated stay, as the allowance says).
