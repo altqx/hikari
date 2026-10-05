@@ -101,7 +101,7 @@ Dialog {
                 implicitHeight: 24
                 readonly property var c: dialog.rgb(colour.text)
                 color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
-                border.color: dialog.palette.mid
+                border.color: Theme.line
             }
             TextField {
                 id: colour
