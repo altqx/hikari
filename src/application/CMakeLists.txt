@@ -40,3 +40,5 @@ target_sources(hikari_application PRIVATE font_collector.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# V6: timing and selecting Lines from the video, and the video following the active Line.
+target_sources(hikari_application PRIVATE video_timing.cpp)
