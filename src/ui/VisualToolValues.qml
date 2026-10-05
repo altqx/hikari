@@ -15,6 +15,11 @@ RowLayout {
     required property VisualToolsController tools
     spacing: 6
 
+    // T2: the family's options before its values (legacy's second toolbar row).
+    VisualToolOptions {
+        tools: values.tools
+        visible: values.tools.options.length > 0
+    }
     Repeater {
         model: values.tools.values
         delegate: RowLayout {

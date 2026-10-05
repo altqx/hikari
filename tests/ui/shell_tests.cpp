@@ -15,6 +15,8 @@
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/grid_split.h"
+#include "hikari/application/visual_position.h"
 #include "icon_theme.h"
 #include "theme.h"
 
@@ -8168,6 +8170,47 @@ private:
     {
         return item("visualOverlay")->mapToScene(local).toPoint();
     }
+    // T2: a Line's \move arguments, as written.
+    static std::optional<QStringList> moveArguments(const QString &text)
+    {
+        static const QRegularExpression move(QStringLiteral("\\\\move\\(([^)]*)\\)"));
+        const auto m = move.match(text);
+        if (!m.hasMatch())
+            return std::nullopt;
+        const QStringList args = m.captured(1).split(QLatin1Char(','));
+        return args.size() == 6 ? std::optional(args) : std::nullopt;
+    }
+    // T2: the \move Move's two points write (Move::SetMove and
+    // ChangeVisual, VisualMove.cpp:405-418, 460-479): the start stays, the
+    // end is the start plus the points' distance in the view scaled by the
+    // \move's time over the time from its start to the video's frame, and
+    // the times are the \move's relative to the Line's start.
+    void checkTwoPointMove(const QString &text, application::visual::PointF fromScript, QPoint p1, QPoint p2,
+                           int moveStart, int moveEnd, int lineStart, int videoMs)
+    {
+        using application::visual::PointF;
+        const auto &view = application->visualTools().videoView();
+        auto device = [&](QPoint scene) {
+            const QPointF l = item("visualOverlay")->mapFromScene(QPointF(scene));
+            return PointF{float(view.toDevice(l.x())), float(view.toDevice(l.y()))};
+        };
+        const PointF from = view.scriptToView(fromScript);
+        const PointF a = device(p1), b = device(p2);
+        const float scale = float(moveEnd - moveStart) / float(videoMs - moveStart);
+        const PointF to = view.viewToScript({from.x + (b.x - a.x) * scale, from.y + (b.y - a.y) * scale});
+        auto ft = [](float v) {
+            const auto t = application::legacy::floatText(v);
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        const auto args = moveArguments(text);
+        QVERIFY2(args, qPrintable(text));
+        const double expected[4] = {fromScript.x, fromScript.y, to.x, to.y};
+        for (int i = 0; i < 4; ++i)
+            QVERIFY2(std::abs((*args)[i].toDouble() - expected[i]) <= 0.01,
+                     qPrintable(QStringLiteral("%1: %2 for %3").arg(text).arg(i).arg(expected[i])));
+        QCOMPARE((*args)[4], ft(float(moveStart - lineStart)));
+        QCOMPARE((*args)[5], ft(float(moveEnd - lineStart)));
+    }
 
 private slots:
 
@@ -8376,6 +8419,418 @@ private slots:
         // The family again goes back to the crosshair.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
         QCOMPARE(tools.activeFamily(), 0);
+    }
+
+    // T2: Position and Move on the video with the real mouse and keys. The
+    // Line is a 40-pixel square drawn by libass centred on its \pos (\an5),
+    // so the handle the tool draws and libass's rendering of the \pos it
+    // writes are compared in the frame's pixels; the video shows the staged
+    // \pos while the button is down (legacy's dummy rendering). Then the
+    // rail's options (by rectangle: legacy's +2 and alignment arithmetic,
+    // checked against the rendered square's edges), a double click, a key
+    // nudge, Esc, and Move's drag and two points with the video stepped.
+    void visualPositionAndMoveTools()
+    {
+        using application::visual::PointF;
+        const char *extra =
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an5\\pos(100,80)\\bord0\\shad0\\p1}m 0 0 l 40 0 40 40 0 40\n";
+        QVERIFY(application->openFile(visualDocument("t2.ass", extra)));
+        auto &tools = application->visualTools();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId sign = session->document().lines()[2]->id;
+        auto signText = [&] {
+            for (const auto *l : session->document().lines())
+                if (l->id == sign)
+                    return text(l);
+            return QString();
+        };
+        application->selectLine(sign.value);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        const auto &view = tools.videoView();
+        auto ft = [](float v) {
+            const auto t = application::legacy::floatText(v);
+            return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
+        };
+        // The rendered square (alpha above the bottom-aligned Lines): its
+        // bounds in frame pixels.
+        auto rendered = [&]() -> std::optional<QRect> {
+            const auto o = application->video().session().lastOverlay();
+            if (!o || o->empty)
+                return std::nullopt;
+            int minX = o->width, minY = o->height, maxX = -1, maxY = -1;
+            for (int y = 0; y < o->height * 7 / 10; ++y)
+                for (int x = 0; x < o->width; ++x)
+                    if (o->pixels[static_cast<std::size_t>(y) * o->stride + x * 4 + 3] > 127) {
+                        minX = std::min(minX, x), maxX = std::max(maxX, x);
+                        minY = std::min(minY, y), maxY = std::max(maxY, y);
+                    }
+            if (maxX < 0)
+                return std::nullopt;
+            return QRect(QPoint(minX, minY), QPoint(maxX, maxY));
+        };
+        // A script point in frame pixels (PlayRes is the video's size).
+        auto frameOf = [&](PointF script) {
+            return QPointF(script.x * view.frameWidth() / view.scriptWidth(),
+                           script.y * view.frameHeight() / view.scriptHeight());
+        };
+        auto near = [](QPointF a, QPointF b, double d) { return std::abs(a.x() - b.x()) <= d && std::abs(a.y() - b.y()) <= d; };
+        auto squareAt = [&](PointF script) {
+            const auto r = rendered();
+            return r && near(QRectF(*r).adjusted(0, 0, 1, 1).center(), frameOf(script), 1.0);
+        };
+        // The tool's handle square in the overlay (logical coordinates).
+        auto handle = [&]() -> std::optional<QPointF> {
+            for (const QVariant &v : tools.overlay()) {
+                const QVariantMap m = v.toMap();
+                if (m.value(QStringLiteral("type")).toString() != QStringLiteral("polygon"))
+                    continue;
+                const QVariantList pts = m.value(QStringLiteral("points")).toList();
+                if (pts.size() != 4)
+                    continue;
+                const QVariantMap a = pts[0].toMap(), c = pts[2].toMap();
+                return QPointF((a[QStringLiteral("x")].toDouble() + c[QStringLiteral("x")].toDouble()) / 2,
+                               (a[QStringLiteral("y")].toDouble() + c[QStringLiteral("y")].toDouble()) / 2);
+            }
+            return std::nullopt;
+        };
+        auto deviceToFrame = [&](QPointF logical) {
+            const QRectF video = tools.videoRect();
+            return QPointF((logical.x() - video.left()) * view.frameWidth() / video.width(),
+                           (logical.y() - video.top()) * view.frameHeight() / video.height());
+        };
+
+        // Position: the rail, its options with the set's icons, the values.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
+        QCOMPARE(tools.activeFamily(), 1);
+        QQuickItem *byRect = visualItem("visualOption_byRectangle");
+        QVERIFY(byRect);
+        QCOMPARE(byRect->property("iconRole").toString(), QStringLiteral("frame-to-scale"));
+        QCOMPARE(visualItem("visualOption_x")->property("iconRole").toString(), QStringLiteral("scale-x"));
+        QCOMPARE(visualItem("visualOption_y")->property("iconRole").toString(), QStringLiteral("scale-y"));
+        QVERIFY(!visualItem("visualOption_x")->isEnabled()); // greyed without the rectangle
+        QVERIFY(visualItem("visualOption_alignment"));
+        QCOMPARE(visualItem("visualValue_x")->property("text").toString(), QStringLiteral("100"));
+        QCOMPARE(visualItem("visualValue_y")->property("text").toString(), QStringLiteral("80"));
+        // The handle and libass's square at the same frame point.
+        QTRY_VERIFY(squareAt({100, 80}));
+        QVERIFY(handle());
+        QVERIFY2(near(deviceToFrame(*handle()), frameOf({100, 80}), 0.5),
+                 qPrintable(QStringLiteral("%1,%2").arg(deviceToFrame(*handle()).x()).arg(deviceToFrame(*handle()).y())));
+
+        // A drag: the video shows the staged \pos, the release commits it as
+        // one step named as legacy's, and libass draws it under the handle.
+        const std::size_t steps = session->historySize();
+        const QPoint start = videoPoint(*handle());
+        const QPoint end = start + QPoint(12, 7);
+        QTest::mouseMove(window, start);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, start);
+        QTest::mouseMove(window, end);
+        QTRY_VERIFY(tools.gestureActive());
+        const QPointF moved = item("visualOverlay")->mapFromScene(QPointF(end));
+        const PointF h0 = view.scriptToView({100, 80});
+        const PointF h1{h0.x + float(view.toDevice(moved.x()) - view.toDevice(item("visualOverlay")->mapFromScene(QPointF(start)).x())),
+                        h0.y + float(view.toDevice(moved.y()) - view.toDevice(item("visualOverlay")->mapFromScene(QPointF(start)).y()))};
+        const PointF staged = view.viewToScript(h1);
+        QTRY_VERIFY(squareAt(staged)); // the preview
+        QCOMPARE(session->historySize(), steps);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, end);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual positioning tool"));
+        const QString dragged = QStringLiteral("{\\an5\\pos(%1,%2)\\bord0\\shad0\\p1}m 0 0 l 40 0 40 40 0 40")
+                                    .arg(ft(staged.x), ft(staged.y));
+        QCOMPARE(signText(), dragged);
+        QTRY_VERIFY(squareAt(staged));
+        QTRY_VERIFY(handle() && near(deviceToFrame(*handle()), frameOf(staged), 0.5));
+
+        // Esc during a drag: nothing written, the handle back where the text has it.
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, end);
+        QTest::mouseMove(window, end + QPoint(20, 20));
+        QTRY_VERIFY(tools.gestureActive());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(!tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, end + QPoint(20, 20));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(signText(), dragged);
+        QTRY_VERIFY(squareAt(staged));
+        QTRY_VERIFY(handle() && near(deviceToFrame(*handle()), frameOf(staged), 0.5));
+
+        // A key nudge (D: a script pixel right) with the video focused, one step.
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_D);
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        {
+            PointF p = view.scriptToView({QString(ft(staged.x)).toFloat(), QString(ft(staged.y)).toFloat()});
+            p.x += (1.f / view.coeffW()) * view.zoomScale().x;
+            const PointF s = view.viewToScript(p);
+            QCOMPARE(signText(), QStringLiteral("{\\an5\\pos(%1,%2)\\bord0\\shad0\\p1}m 0 0 l 40 0 40 40 0 40")
+                                     .arg(ft(s.x), ft(s.y)));
+        }
+
+        // A double click puts the Line at the pointer (legacy LeftDClick);
+        // the release commits it.
+        const QPoint dclick = videoPoint(tools.videoRect().center());
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, dclick);
+        QTRY_VERIFY(!tools.gestureActive());
+        {
+            const QPointF local = item("visualOverlay")->mapFromScene(QPointF(dclick));
+            const PointF s = view.viewToScript({float(view.toDevice(local.x())), float(view.toDevice(local.y()))});
+            QCOMPARE(signText(), QStringLiteral("{\\an5\\pos(%1,%2)\\bord0\\shad0\\p1}m 0 0 l 40 0 40 40 0 40")
+                                     .arg(ft(s.x), ft(s.y)));
+            QTRY_VERIFY(squareAt(s));
+        }
+
+        // By rectangle (bottom-left): the square's left edge two script
+        // pixels in from the rectangle's left, its bottom on the rectangle's
+        // bottom (Position::SetPosition, VisualPosition.cpp:616-715).
+        QVERIFY(QMetaObject::invokeMethod(byRect, "click"));
+        QTRY_VERIFY(visualItem("visualOption_x")->isEnabled());
+        {
+            const QRectF video = tools.videoRect();
+            const QPoint a = videoPoint(video.topLeft() + QPointF(video.width() * 0.2, video.height() * 0.15));
+            const QPoint b = videoPoint(video.topLeft() + QPointF(video.width() * 0.6, video.height() * 0.45));
+            const std::size_t before = session->historySize();
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+            QTest::mouseMove(window, (a + b) / 2);
+            QTest::mouseMove(window, b);
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+            QTRY_COMPARE(session->historySize(), before + 1);
+            auto script = [&](QPoint scene) {
+                const QPointF l = item("visualOverlay")->mapFromScene(QPointF(scene));
+                return view.viewToScript({float(view.toDevice(l.x())), float(view.toDevice(l.y()))});
+            };
+            const PointF ra = script(a), rb = script(b);
+            const auto r = rendered();
+            QVERIFY(r);
+            QVERIFY2(std::abs(r->left() - frameOf({ra.x + 2, 0}).x()) <= 1.0,
+                     qPrintable(QStringLiteral("left %1, rectangle %2").arg(r->left()).arg(ra.x)));
+            QVERIFY2(std::abs(r->bottom() + 1 - frameOf({0, rb.y}).y()) <= 1.0,
+                     qPrintable(QStringLiteral("bottom %1, rectangle %2").arg(r->bottom()).arg(rb.y)));
+            // The alignment choice re-places it at once: Center.
+            const std::size_t placed = session->historySize();
+            QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_alignment"), "activated", Q_ARG(int, 4)));
+            QTRY_COMPARE(session->historySize(), placed + 1);
+            QTRY_VERIFY(squareAt({(ra.x + rb.x) / 2, (ra.y + rb.y) / 2}));
+        }
+        QVERIFY(QMetaObject::invokeMethod(byRect, "click")); // off again
+
+        // Move: drag the start handle; \move from there to the old point,
+        // with the Line's frame times, one step.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
+        QCOMPARE(tools.activeFamily(), 2);
+        QVERIFY(visualItem("visualOption_twoPoints"));
+        QCOMPARE(visualItem("visualOption_twoPoints")->property("iconRole").toString(), QStringLiteral("two-points"));
+        const QString before = signText();
+        const PointF from = view.scriptToView({QString(visualItem("visualValue_x1")->property("text").toString()).toFloat(),
+                                               QString(visualItem("visualValue_y1")->property("text").toString()).toFloat()});
+        const QPoint f0 = videoPoint(QPointF(view.toLogical(from.x), view.toLogical(from.y)));
+        const std::size_t moveSteps = session->historySize();
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, f0);
+        QTest::mouseMove(window, f0 + QPoint(-30, -20));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, f0 + QPoint(-30, -20));
+        QTRY_COMPARE(session->historySize(), moveSteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual movement tool"));
+        QVERIFY2(signText().startsWith(QStringLiteral("{\\an5\\move(")), qPrintable(signText()));
+        QVERIFY(signText() != before);
+        bool arrow = false;
+        for (const QVariant &v : tools.overlay())
+            arrow |= v.toMap().value(QStringLiteral("points")).toList().size() == 3;
+        QVERIFY(arrow); // DrawArrow's head
+
+        // Two points: the first on this frame, the second three frames
+        // later; the \move's end extrapolated over its time (Move::SetMove,
+        // VisualMove.cpp:460-479) from the frame the video shows (Tell).
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_twoPoints"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_twoPoints")->property("checked").toBool());
+        const auto beforeTwo = moveArguments(signText());
+        QVERIFY(beforeTwo);
+        const QPoint p1 = videoPoint(tools.videoRect().center() + QPointF(-40, -30));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p1);
+        const std::size_t twoSteps = session->historySize();
+        QVERIFY(application->video().stepFrames(3));
+        QTRY_COMPARE(application->video().frame(), 27);
+        QTRY_COMPARE(application->video().session().shownFrame(), std::optional<int>(27));
+        const QPoint p2 = p1 + QPoint(15, 6);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
+        QTRY_COMPARE(session->historySize(), twoSteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual movement tool"));
+        // The \move's own times (1 and 960 ms after the Line's start).
+        checkTwoPointMove(signText(), {float((*beforeTwo)[0].toDouble()), float((*beforeTwo)[1].toDouble())}, p1, p2,
+                          1000 + (*beforeTwo)[4].toInt(), 1000 + (*beforeTwo)[5].toInt(), 1000, int(tools.videoTimeMs()));
+        if (QTest::currentTestFailed())
+            return;
+        // On the frame of the first point: legacy's message, nothing written.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click")); // back to the crosshair
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click")); // a new Move
+        QVERIFY(visualItem("visualOption_twoPoints")->property("checked").toBool()); // the toolbar's state stays
+        const std::size_t sameSteps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p1);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
+        QTRY_COMPARE(application->log().lastMessage(),
+                     QStringLiteral("Video must be set at least one frame after the line's start time"));
+        QCOMPARE(session->historySize(), sameSteps);
+    }
+
+    // T2: VisualToolOptions.qml names each toggle's K1 role literally (so
+    // icon_tests sees the roles placed); every family's toggles must show the
+    // role its tool gives (ToolOption::iconRole), so a new or reordered
+    // option without its role in the QML fails here.
+    void visualToolOptionIconsFollowTheModel()
+    {
+        QVERIFY(application->openFile(visualDocument("t2icons.ass")));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        int toggles = 0;
+        for (int family = 1; family < 11; ++family) {
+            tools.selectFamily(family);
+            QCOMPARE(tools.activeFamily(), family);
+            for (const QVariant &v : tools.options()) {
+                const QVariantMap o = v.toMap();
+                if (o.value(QStringLiteral("kind")).toString() != QStringLiteral("toggle"))
+                    continue;
+                const QString name = o.value(QStringLiteral("name")).toString();
+                QQuickItem *button = nullptr;
+                QTRY_VERIFY2((button = visualItem(qPrintable(QStringLiteral("visualOption_") + name))), qPrintable(name));
+                QCOMPARE(button->property("iconRole").toString(), o.value(QStringLiteral("iconRole")).toString());
+                QVERIFY2(!o.value(QStringLiteral("iconRole")).toString().isEmpty(), qPrintable(name));
+                ++toggles;
+            }
+        }
+        QVERIFY(toggles >= 4); // Position's three and Move's two points
+    }
+
+    // T2: Position's helper cross (a middle click) dragged, then the Line out
+    // of the shown frame's time: the render that blocks the tool ends the
+    // drag (Position::Draw's nothintoshow, VisualPosition.cpp:107-113:
+    // movingHelperLine = false), so when the Line shows again the pointer no
+    // longer carries the cross.
+    void visualPositionHelperDragEndsWhenBlocked()
+    {
+        // cfr.mkv's 48 frames: frame 24 shows the Line, frame 40 (1.67 s) not.
+        const char *extra = "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,{\\an5\\pos(100,80)}sign\n";
+        QVERIFY(application->openFile(visualDocument("t2helper.ass", extra)));
+        auto &tools = application->visualTools();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId sign = session->document().lines()[2]->id;
+        application->selectLine(sign.value);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool1"), "click"));
+        QCOMPARE(tools.activeFamily(), 1);
+        // The options and values rows take their place first: the video
+        // rectangle settles before points are taken in it.
+        QTRY_VERIFY(visualItem("visualValue_x"));
+        QRectF settled;
+        int polls = 0;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            const QRectF r = tools.videoRect();
+            polls = r == settled ? polls + 1 : 0;
+            settled = r;
+            return polls >= 5;
+        }(), 20000);
+        const auto &view = tools.videoView();
+        // The helper's square (DrawRect with size 4: eight device pixels).
+        auto helper = [&]() -> std::optional<QPointF> {
+            for (const QVariant &v : tools.overlay()) {
+                const QVariantMap m = v.toMap();
+                const QVariantList pts = m.value(QStringLiteral("points")).toList();
+                if (m.value(QStringLiteral("type")).toString() != QStringLiteral("polygon") || pts.size() != 4)
+                    continue;
+                const QVariantMap a = pts[0].toMap(), c = pts[2].toMap();
+                const double w = c[QStringLiteral("x")].toDouble() - a[QStringLiteral("x")].toDouble();
+                if (std::abs(view.toDevice(w) - 8) < 0.5)
+                    return QPointF((a[QStringLiteral("x")].toDouble() + c[QStringLiteral("x")].toDouble()) / 2,
+                                   (a[QStringLiteral("y")].toDouble() + c[QStringLiteral("y")].toDouble()) / 2);
+            }
+            return std::nullopt;
+        };
+        auto near = [](std::optional<QPointF> a, QPointF b) {
+            return a && std::abs(a->x() - b.x()) <= 1.5 && std::abs(a->y() - b.y()) <= 1.5;
+        };
+        const QPointF centre = tools.videoRect().center();
+        const QPoint at = videoPoint(centre + QPointF(-40, -30));
+        QTest::mouseMove(window, at);
+        QTest::mouseClick(window, Qt::MiddleButton, Qt::NoModifier, at);
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(at))));
+        // The drag: the cross follows the pointer.
+        const QPoint dragged = at + QPoint(20, 10);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
+        QTest::mouseMove(window, dragged);
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        // Out of the Line's time: blocked, the release never reaches the tool.
+        QVERIFY(application->video().showFrameAt(40));
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 40, 20000);
+        QTRY_VERIFY(!tools.warning().isEmpty());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, dragged);
+        QVERIFY(application->video().showFrameAt(24));
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().frame(), 24, 20000);
+        QTRY_VERIFY(tools.warning().isEmpty());
+        QTRY_VERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        // A plain move leaves the cross where the drag left it.
+        QTest::mouseMove(window, dragged + QPoint(30, 25));
+        QVERIFY(near(helper(), item("visualOverlay")->mapFromScene(QPointF(dragged))));
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\an5\\pos(100,80)}sign"));
+    }
+
+    // T2: the two-point move on VFR media (frames of 30, 50 and 70 ms). The
+    // \move's times are the Line's first and last frames' (GetMoveTimes,
+    // Visuals.cpp:607-622, from the media's legacy Timebase), the end is
+    // extrapolated from the frame the video shows (Move::SetMove,
+    // VisualMove.cpp:460-479); on the frame of the first point legacy's
+    // message and nothing written.
+    void visualMoveTwoPointsOnVfrVideo()
+    {
+        const char *extra = "Dialogue: 0,0:00:00.60,0:00:01.20,Default,,0,0,0,,{\\an5\\pos(160,120)}sign\n";
+        QVERIFY(application->openFile(visualDocument("t2vfr.ass", extra)));
+        auto &tools = application->visualTools();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId sign = session->document().lines()[2]->id;
+        auto signText = [&] {
+            for (const auto *l : session->document().lines())
+                if (l->id == sign)
+                    return text(l);
+            return QString();
+        };
+        application->selectLine(sign.value);
+        application->video().openVideo(nativeFixture("vfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(application->video().session().shownFrame(), std::optional<int>(12), 20000);
+        QCOMPARE(tools.videoTimeMs(), 600);
+        const auto timebase = application->video().session().legacyTimebase();
+        const int moveStart = 600 + std::abs(timebase.msAt(timebase.frameAt(600)) - 600);
+        const int moveEnd = 600 + (600 - std::abs(1200 - timebase.msAt(timebase.frameAt(1200) - 1)));
+        // by hand: frame 12 starts at 600 ms, frame 23 (the last before 1200) at 1130
+        QCOMPARE(moveStart, 600);
+        QCOMPARE(moveEnd, 1130);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool2"), "click"));
+        QCOMPARE(tools.activeFamily(), 2);
+        QQuickItem *two = visualItem("visualOption_twoPoints");
+        QVERIFY(two);
+        if (!two->property("checked").toBool())
+            QVERIFY(QMetaObject::invokeMethod(two, "click"));
+        QTRY_VERIFY(visualItem("visualOption_twoPoints")->property("checked").toBool());
+        const std::size_t steps = session->historySize();
+        const QPoint p1 = videoPoint(tools.videoRect().center() + QPointF(-30, 10));
+        const QPoint p2 = p1 + QPoint(40, 12);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p1);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
+        QTRY_COMPARE(application->log().lastMessage(),
+                     QStringLiteral("Video must be set at least one frame after the line's start time"));
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(signText(), QStringLiteral("{\\an5\\pos(160,120)}sign"));
+        // Three frames on (750 ms): grabbing the second point writes the \move.
+        QVERIFY(application->video().stepFrames(3));
+        QTRY_COMPARE(application->video().session().shownFrame(), std::optional<int>(15));
+        QCOMPARE(tools.videoTimeMs(), 750);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, p2);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual movement tool"));
+        QVERIFY2(signText().startsWith(QStringLiteral("{\\an5\\move(")), qPrintable(signText()));
+        checkTwoPointMove(signText(), {160, 120}, p1, p2, moveStart, moveEnd, 600, 750);
     }
 
     // T1: legacy disables the rail for a Document that is not ASS

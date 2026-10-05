@@ -12,6 +12,7 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QQuickItem>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <cmath>
@@ -50,6 +51,9 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     m_labelFont.setBold(true);
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
+        // The render: Visuals::Draw sets blockevents for the shown frame.
+        if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
+            t->blocked(*this);
         emit changed(); // the shown frame's time moves the warnings
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
@@ -147,6 +151,15 @@ void VisualToolsController::refresh()
     const void *id = s;
     const std::uint64_t revision = s ? s->revision() : 0;
     const auto active = s ? s->selection().active : std::nullopt;
+    // T2: the Line editor's text changed (legacy EditBox::OnEdit committed
+    // it and ran SetVisual, so the tool read the Line again).
+    std::optional<std::pair<std::u8string, std::u8string>> draft;
+    if (s && active)
+        if (const auto record = s->draftRecord(); record && record->id == *active)
+            draft = std::pair(record->text, record->translation);
+    if (draft != m_seenDraft && !m_gesture)
+        reset = true;
+    m_seenDraft = draft;
     if (id != m_seenSession) {
         // Another editing target: a gesture never moves to it.
         (void)escape();
@@ -212,6 +225,7 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     const bool changes = m_gesture->hasChanges();
     auto result = m_gesture->commit(*s);
     m_gesture.reset();
+    updatePreview();
     if (!result)
         m_lastRefusal = result.error();
     if (changes && m_edited)
@@ -225,6 +239,10 @@ bool VisualToolsController::escape()
     if (!m_gesture)
         return false;
     m_gesture.reset();
+    // T2: the tool reads its Lines again, as before the gesture.
+    if (auto *t = tool())
+        t->reset(*this);
+    updatePreview();
     emit changed();
     emit overlayChanged();
     return true;
@@ -251,8 +269,49 @@ int VisualToolsController::labelPixelSize() const
 
 void VisualToolsController::toolChanged()
 {
+    updatePreview();
     emit overlayChanged();
     emit changed();
+}
+
+void VisualToolsController::updatePreview()
+{
+    // Visuals::RenderSubs: the video shows the staged texts while the
+    // gesture is open, the committed Document after it.
+    if (!m_preview)
+        return;
+    const auto *s = editingSession();
+    if (m_gesture && m_gesture->hasChanges() && s) {
+        // Only the Lines the frame shows, as legacy's GetVisible sent: a long
+        // script is not reparsed on every pointer move.
+        const core::Document preview = m_gesture->preview(s->document(), videoTimeMs(), m_video.session().playing());
+        m_preview(&preview);
+        m_previewing = true;
+    } else if (m_previewing) {
+        m_previewing = false;
+        m_preview(nullptr);
+    }
+}
+
+std::int64_t VisualToolsController::videoTimeMs() const
+{
+    // VideoBox::Tell: the shown frame's time.
+    const auto frame = m_video.session().shownFrame();
+    if (!frame)
+        return 0;
+    const auto start = m_video.session().frameStart(*frame);
+    return start ? start->microseconds() / 1000 : 0;
+}
+
+application::LegacyTimebase VisualToolsController::timebase() const
+{
+    return m_video.session().legacyTimebase();
+}
+
+void VisualToolsController::log(std::u16string_view text)
+{
+    if (m_log)
+        m_log(qs(text));
 }
 
 void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
@@ -275,6 +334,7 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
         break;
     }
     p.leftDown = (buttons & Qt::LeftButton) != 0;
+    p.rightDown = (buttons & Qt::RightButton) != 0;
     p.control = (modifiers & Qt::ControlModifier) != 0;
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
@@ -293,6 +353,7 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     // Visuals::Draw's blockevents: a tool other than the crosshair takes no
     // events outside its Line's time or on a comment, warning shown or not.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None) {
+        t->blocked(*this);
         if (m_gesture && p.kind == Pointer::Kind::Release)
             (void)escape(); // legacy released the mouse capture
         return;
@@ -306,8 +367,8 @@ bool VisualToolsController::key(int key, int modifiers, bool release, bool autoR
     auto *t = tool();
     if (!t || !m_view.hasVideo())
         return false;
-    if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
-        return false;
+    // VideoBox::OnKeyPress hands the keys to the tool whether or not its
+    // events are blocked (VideoBox.cpp:666-668; blockevents is the pointer's).
     Key k;
     k.key = key;
     k.release = release;
@@ -330,6 +391,9 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
+    // Visuals::Get made a new tool for the family (RendererVideo::SetVisual).
+    if (auto *t = tool())
+        t->selected(*this);
     resetTool();
 }
 
@@ -366,6 +430,40 @@ bool VisualToolsController::setValue(const QString &name, const QString &text)
     return done;
 }
 
+QVariantList VisualToolsController::options() const
+{
+    QVariantList out;
+    const auto *t = tool();
+    if (!t)
+        return out;
+    for (const ToolOption &o : t->options(*this)) {
+        QStringList choices;
+        for (const auto &c : o.choices)
+            choices.append(qs(c));
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
+                               {QStringLiteral("kind"), o.kind == ToolOption::Kind::Toggle ? QStringLiteral("toggle")
+                                                                                          : QStringLiteral("choice")},
+                               {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
+                               {QStringLiteral("tooltip"), qs(o.tooltip)},
+                               {QStringLiteral("checked"), o.checked},
+                               {QStringLiteral("enabled"), o.enabled && m_railEnabled},
+                               {QStringLiteral("choices"), choices},
+                               {QStringLiteral("index"), o.index}});
+    }
+    return out;
+}
+
+bool VisualToolsController::setOption(const QString &name, int value)
+{
+    auto *t = tool();
+    if (!t || m_gesture)
+        return false;
+    const bool done = t->setOption(name.toStdString(), value, *this);
+    emit changed();
+    emit overlayChanged();
+    return done;
+}
+
 void VisualToolsController::pickBatch()
 {
     const auto *s = editingSession();
@@ -388,6 +486,9 @@ void VisualToolsController::clearBatch()
 LineWarning VisualToolsController::currentWarning() const
 {
     const auto *s = editingSession();
+    if (const auto *t = tool(); t && m_view.hasVideo())
+        if (const auto own = t->warning(*this))
+            return *own;
     const auto active = activeLine();
     const auto frame = m_video.session().shownFrame();
     if (!s || !active || !frame)
@@ -439,8 +540,20 @@ QVariantList VisualToolsController::overlay() const
     const auto *t = tool();
     if (!t || !m_view.hasVideo())
         return out;
+    // Visuals::Draw draws the warning instead of the tool.
+    if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
+        return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
+    for (const OverlayPolygon &p : o.polygons) {
+        QVariantList points;
+        for (const PointF &pt : p.points)
+            points.append(QVariantMap{{QStringLiteral("x"), L(pt.x)}, {QStringLiteral("y"), L(pt.y)}});
+        out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("polygon")},
+                               {QStringLiteral("points"), points},
+                               {QStringLiteral("fill"), colour(p.fill)},
+                               {QStringLiteral("color"), colour(p.border)}});
+    }
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},
                                {QStringLiteral("x1"), L(l.from.x)}, {QStringLiteral("y1"), L(l.from.y)},

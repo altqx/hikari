@@ -43,6 +43,8 @@ Item {
             overlayItem.tools.pointer(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
         onReleased: mouse => overlayItem.tools.pointer(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        // T2: legacy's wxEVT_LEFT_DCLICK (Position puts the Line there).
+        onDoubleClicked: mouse => overlayItem.tools.pointer(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
             overlayItem.tools.pointer(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
                                       Math.round(wheel.angleDelta.y / 120))
@@ -60,7 +62,21 @@ Item {
             const ctx = getContext("2d")
             ctx.reset()
             for (const s of shapes) {
-                if (s.type === "line") {
+                if (s.type === "polygon") { // T2: a handle's square or an arrow's head
+                    ctx.beginPath()
+                    for (let i = 0; i < s.points.length; ++i) {
+                        if (i === 0)
+                            ctx.moveTo(s.points[i].x, s.points[i].y)
+                        else
+                            ctx.lineTo(s.points[i].x, s.points[i].y)
+                    }
+                    ctx.closePath()
+                    ctx.fillStyle = s.fill
+                    ctx.fill()
+                    ctx.strokeStyle = s.color
+                    ctx.lineWidth = 1
+                    ctx.stroke()
+                } else if (s.type === "line") {
                     ctx.strokeStyle = s.color
                     ctx.lineWidth = s.width
                     ctx.beginPath()

@@ -1721,8 +1721,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "frame-to-scale",
@@ -1735,8 +1734,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "scale-x",
@@ -1749,8 +1747,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "scale-y",
@@ -1763,8 +1760,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "original-frame",

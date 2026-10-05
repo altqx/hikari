@@ -36,4 +36,18 @@ Every edit goes through a gesture:
 - `host.commitGesture()` on release: one history step named `history` (`familyInfo(family).history`, legacy SubsFile.cpp:228-238), after the pending draft's own step. Without staged changes nothing is recorded; a gesture whose Document changed since it began is refused.
 - Esc during the gesture (the host handles it) drops it and leaves the pre-gesture draft.
 
-Draw with `Overlay` (lines, circles, text) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
+Draw with `Overlay` (lines, circles, text and filled polygons) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
+
+## What T2 added for the families
+
+T2 ([#177](https://github.com/altqx/hikari/issues/177), Position and Move: `visual_position.h`) needed more of legacy's `Visuals` than the crosshair did. These are shared by the later families:
+
+- `visual_script.h`: what `Visuals` read from the script. `ScriptState` holds the Document, its Styles, SubsSize, the video's time and Timebase, the active Line as the Line editor holds it (the pending draft applied) and the text measure. Beside it are `linePosition` (GetPosition: the first `\pos` or `\move`, the tag's place, the default position with the stacking of unpositioned Lines), `posnScale` (GetPosnScale on the editor text, with its 7-value table kept by the tool between calls), `moveTimes` (GetMoveTimes from the video's frames), `calcMovePosition`, `textSize` (GetTextSize and GetDrawingSize through `TextMeasurePort`, legacy's swapped descent and leading kept), `changeText` / `replaceTag` (TagFindReplace's ChangeText and Replace) and the handles (`drawRect`, `drawCircle`, `drawCross`, `drawArrow`, `drawDashedLine`, `drawHelperLine`) in legacy's colours.
+- `VisualHost` gives the video's time (`videoTimeMs`, VideoBox::Tell), its `timebase`, the `textMeasure` (the Qt port of GetLineTextExtents), the Grid's `ignoreFiltered` and `log` (HikariLog).
+- `VisualTool` can override `warning()` (Position draws its warning only while none of its Lines is visible), `selected()` (legacy made a new tool on every family change, so its own state starts over; the toolbar's options stay), `blocked()` (the host calls it when it renders, or takes a pointer event, while the tool is blocked: legacy's Draw ran there, and Position's ends a helper-cross drag) and `options()` / `setOption()`: the rail's second row (legacy VideoToolbar's VisualItem), shown by `VisualToolOptions.qml` as toggles with their K1 icon and choices.
+- `Pointer` has `rightDown` and the `DoubleClick` kind (legacy's LeftDClick; Qt sends it after the second press).
+- The host shows the open gesture's staged texts on the video (`setPreview`, legacy's dummy rendering) and the committed Document after it; Esc resets the tool from its Lines.
+- Keys reach the tool whether or not its pointer events are blocked (VideoBox::OnKeyPress, VideoBox.cpp:666-668).
+- A tool decides when it reads its Lines again: legacy set Position again after its commits (SetModified, ShowEditOnVideo) but not Move (EditBox::Send and the batch's SetModified are dummies), so Move ignores the host's refresh after its own commit.
+
+A family's options use the K1 roles the manifest names (frame-to-scale, scale-x, scale-y, two-points for T2); `VisualToolOptions.qml` maps each option's name to its role literally, so the icon test sees the roles placed; a family adding a toggle adds its name and role there, and `shell_tests`' `visualToolOptionIconsFollowTheModel` fails for any toggle whose shown role is not the one its `ToolOption::iconRole` gives.

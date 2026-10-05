@@ -128,3 +128,9 @@ hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_te
 target_include_directories(hikari_application_font_catalogs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 target_compile_definitions(hikari_application_font_catalogs_tests PRIVATE
     HIKARI_FONT_CATALOG_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/font-catalogs")
+# T2: Position and Move, with the legacy probe's observations.
+hikari_add_gtest(hikari_application_visual_position_tests SOURCES visual_position_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_position_tests PRIVATE
+    HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/position-cases.txt"
+    HIKARI_POSITION_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t2-position-20261005/observations.jsonl")

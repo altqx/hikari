@@ -42,7 +42,9 @@ target_sources(hikari_application PRIVATE matroska.cpp)
 # so these files are built without floating-point contraction (as
 # audio_spectrum.cpp).
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
-set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
+# T2: Position and Move, and what the families read from the script.
+target_sources(hikari_application PRIVATE visual_script.cpp visual_position.cpp)
+set_source_files_properties(visual_view.cpp visual_crosshair.cpp visual_script.cpp visual_position.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # O3: the one-shot legacy settings importer's readers and review plan.
 target_sources(hikari_application PRIVATE settings_import.cpp settings_import_tables.cpp)

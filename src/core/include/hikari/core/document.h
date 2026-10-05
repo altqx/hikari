@@ -199,6 +199,8 @@ public:
     // Removes a Line (its source bytes are no longer written). False when no
     // Line has this id.
     bool removeLine(LineId id);
+    // Removes every Line `remove` picks, in one pass; how many were removed.
+    std::size_t removeLinesIf(const std::function<bool(const LineRecord &)> &remove);
     // Moves a Line, keeping its id and source bytes, before `before`, or to
     // the end of the last Events section when `before` is nullopt. False when
     // either Line is unknown or they are the same Line.

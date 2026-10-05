@@ -533,6 +533,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
+    // T2: the video shows a gesture's staged texts (legacy's dummy rendering),
+    // the tools log as legacy's HikariLog did, and they read the Grid's
+    // "Ignore filtering in some actions" (SubsGrid::ignoreFiltered).
+    m_visualTools->setPreview([this](const core::Document *preview) {
+        auto *session = targetSession();
+        if (!session)
+            return;
+        m_video->session().setSubtitles(core::encodeAss(preview ? *preview : session->document()));
+    });
+    m_visualTools->setLog([this](const QString &text) { m_log->log(text); });
+    m_visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).

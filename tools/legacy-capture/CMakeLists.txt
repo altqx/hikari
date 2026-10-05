@@ -89,3 +89,84 @@ target_compile_options(legacy_visual_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_visual_capture PRIVATE ${wx_libs})
+
+# T2: the legacy Position and Move tools (VisualPosition.cpp and
+# VisualMove.cpp, unchanged), Timebase.cpp, and the class declarations and
+# definitions they call copied unchanged out of their files
+# (extract_functions.py); the GUI they touch is stood in for by
+# position/standins.h.
+set(position_gen "${CMAKE_CURRENT_BINARY_DIR}/position")
+file(MAKE_DIRECTORY "${position_gen}")
+configure_file("${legacy_hs}/VisualPosition.cpp" "${position_gen}/copy/VisualPosition.cpp" COPYONLY)
+configure_file("${legacy_hs}/VisualMove.cpp" "${position_gen}/copy/VisualMove.cpp" COPYONLY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${position_gen}/visuals_class.inc"
+    "class Visuals : public TagFindReplace" "class PosData" "class Position : public Visuals"
+    "class Move : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.h" "${position_gen}/tagfind_class.inc"
+    "class FindData" "class TagFindReplace" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${position_gen}/tagdata_class.inc"
+    "class TagData" "class ParseData" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.cpp" "${position_gen}/visuals_defs.inc"
+    "Visuals::Visuals()" "Visuals::~Visuals()"
+    "void Visuals::GetDialoguesWithoutPosition(Dialogue* dialogue)"
+    "D3DXVECTOR2 Visuals::GetDialogueAdditionalPosition(Dialogue* dialogue)"
+    "void Visuals::GetRectFromSize(D3DXVECTOR2 size, int an, Dialogue* dial, Styles* style, D3DXVECTOR2* pos, D3DXVECTOR2* pos1)"
+    "bool Visuals::IsInRect(D3DXVECTOR2 pos, D3DXVECTOR2 pos1, D3DXVECTOR2 secondpos, D3DXVECTOR2 secondpos1)"
+    "void Visuals::RenderSubs(wxString *subs, bool redraw"
+    "void Visuals::SetVisual(Dialogue* dial, int tool, bool noRefresh)"
+    "void Visuals::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)"
+    "void Visuals::DrawRectWx(wxDC& dc, D3DXVECTOR2 pos, bool sel, float rcsize)"
+    "void Visuals::DrawCircleWx(wxDC& dc, D3DXVECTOR2 pos, bool sel, float crsize)"
+    "void Visuals::DrawCrossWx(wxDC& dc, D3DXVECTOR2 position, const wxColour& color)"
+    "void Visuals::DrawArrowWx(wxDC& dc, D3DXVECTOR2 from, D3DXVECTOR2* to, int diff)"
+    "void Visuals::DrawDashedLineWx(wxDC& dc, D3DXVECTOR2* vector, size_t vectorSize, int dashLen, const wxColour& color)"
+    "void Visuals::DrawWarningWx(wxDC& dc, bool comment)"
+    "void Visuals::Draw(int time)"
+    "void Visuals::GetVectorPoints(const wxString& vector, std::vector<ClipPoint>* points)"
+    "void Visuals::GetMoveTimes(int *start, int *end)"
+    "D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)"
+    "void Visuals::SetVisual(bool dummy)"
+    "D3DXVECTOR2 Visuals::GetPosition(Dialogue *Dial, bool *putinBracket, wxPoint *TextPos, double* moveTable)"
+    "void Visuals::SetModified(int action, bool dummy)"
+    "D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* style,"
+    "D3DXVECTOR2 Visuals::GetDrawingSize(const wxString& drawing, D3DXVECTOR2* position)"
+    "void Visuals::Curve(int pos, std::vector<ClipPoint>* vectorPoints,"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.cpp" "${position_gen}/tagfind_defs.inc"
+    "bool TagFindReplace::FindTag(const wxString& pattern, const wxString& text, int mode, bool toEndOfSelection)"
+    "int TagFindReplace::Replace(const wxString& replaceTxt, wxString* text)"
+    "int TagFindReplace::ChangeText(wxString* txt, const wxString& what, bool inbracket, const wxPoint& pos)"
+    "wxPoint TagFindReplace::GetPositionInText()"
+    "bool TagFindReplace::GetDouble(double* retval)"
+    "bool TagFindReplace::TagValueToStyle(Styles* style, const wxString& tag, const wxString& value)"
+    "wxPoint FindBrackets(const wxString& text, long from)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${position_gen}/dialogue_defs.inc"
+    "TagData::TagData(const wxString &name, unsigned int _startTextPos)"
+    "void TagData::PutValue(const wxString &_value, bool _multiValue)"
+    "ParseData::ParseData()" "void ParseData::AddData(TagData *data)" "ParseData::~ParseData()"
+    "void Dialogue::GetDefaultPosition(Styles* lineStyle, int an, const wxSize& subsSize, float* posx, float* posy)"
+    "ParseData* Dialogue::ParseTags(wxString *tags, size_t ntags, bool plainText, const wxString& textToParse"
+    "void Dialogue::ClearParse()" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${position_gen}/styles_defs.inc"
+    "Styles::Styles()" "Styles *Styles::Copy()" "double Styles::GetOtlineDouble()" "double Styles::GetShadowDouble()"
+    "double Styles::GetSpacingDouble()" "double Styles::GetScaleXDouble()" "double Styles::GetScaleYDouble()"
+    "double Styles::GetFontSizeDouble()" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/UtilsWindows.cpp" "${position_gen}/utils_defs.inc"
+    "void CalcMovePosition(D3DXVECTOR2* point, double* moveTable, int time)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.cpp" "${position_gen}/config_defs.inc"
+    "wxString getfloat(float num, const wxString& format, bool Truncate)"
+    "size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignoreCase)" COMMAND_ERROR_IS_FATAL ANY)
+file(WRITE "${position_gen}/extracted.inc"
+    "#include \"visuals_defs.inc\"\n#include \"tagfind_defs.inc\"\n#include \"dialogue_defs.inc\"\n"
+    "#include \"styles_defs.inc\"\n#include \"utils_defs.inc\"\n#include \"config_defs.inc\"\n")
+add_executable(legacy_position_capture position_capture.cpp "${position_gen}/copy/VisualPosition.cpp"
+    "${position_gen}/copy/VisualMove.cpp" "${legacy_hs}/Timebase.cpp")
+# The stand-ins come first, so the copies' quoted includes find them; the
+# legacy directory supplies the Linux D3DX stand-ins and Timebase.h.
+target_include_directories(legacy_position_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/position" "${position_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_position_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_position_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_position_capture PRIVATE ${wx_libs})
