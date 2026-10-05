@@ -233,8 +233,12 @@ QAccessibleInterface *LineGridAccessible::focusChild() const
 
 QString LineGridAccessible::text(QAccessible::Text type) const
 {
-    if (type == QAccessible::Name)
+    if (type == QAccessible::Name) {
+        // R2: a Grid may name itself (the reference tray's).
+        if (const LineGrid *g = grid(); g && !g->accessibleName().isEmpty())
+            return g->accessibleName();
         return QObject::tr("Subtitle lines");
+    }
     return {};
 }
 

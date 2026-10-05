@@ -2594,6 +2594,14 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
+                        ShellMenuItem {
+                            objectName: "showPreview"
+                            readonly property string keys: root.boundKeys("GRID_SHOW_PREVIEW", 1)
+                            text: qsTr("Show subtitles preview") + (keys.length ? "\t" + keys : "")
+                            enabled: gridMenu.visible && root.app.canShowPreview()
+                            onTriggered: if (!root.gridGesture(this, "GRID_SHOW_PREVIEW")) root.app.showPreview()
+                        }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
                             objectName: "pasteTranslation"
@@ -2762,12 +2770,16 @@ ApplicationWindow {
                 objectName: "referencePanel"
                 visible: shell.hasReference
                 title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
-                HikariGrid {
-                    objectName: "referenceGrid"
+                // R2: its own navigation, linked matching and legacy's preview menu.
+                ReferenceTray {
+                    id: referenceTray
                     anchors.fill: parent
                     focus: true
-                    Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
-                    model: shell.referenceLines
+                    app: root.app
+                    shell: root.shell
+                    hotkeys: root.hotkeys
+                    shellRoot: root
+                    editingGrid: grid
                 }
             }
         }
@@ -4878,6 +4890,7 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
+        case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true // R2
         case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
         case "GRID_FILTER": root.app.filterLines(); return true
         case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true

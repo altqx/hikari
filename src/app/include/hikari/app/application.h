@@ -633,6 +633,41 @@ public:
     // MENU_COMPARE - 1, "Turn off comparison".
     Q_INVOKABLE void turnOffComparison();
     const application::SubtitleComparison &comparison() const { return m_comparison; }
+
+    // R2: reference navigation and the subtitles preview (legacy
+    // SubsGridPreview and SubsGrid::OnShowPreview / ShowSecondComparedLine at
+    // 20d647c4), in application_reference.cpp. GRID_SHOW_PREVIEW ("Show
+    // subtitles preview") is enabled with more than one tab and no reference
+    // shown (SubsGrid.cpp:277, 884-887).
+    Q_INVOKABLE bool canShowPreview() const;
+    Q_INVOKABLE bool showPreview();
+    // One-way linked matching from the editing target's active Line.
+    Q_INVOKABLE void setReferenceLinked(bool linked);
+    // The previous (-1) or next (+1) linked candidate.
+    Q_INVOKABLE bool stepReferenceMatch(int delta);
+    // In the no-match state: legacy's nearest Line, on request.
+    Q_INVOKABLE bool showNearestReferenceLine();
+    // The tray's close mark (legacy DestroyPreview): no reference is shown;
+    // its Document stays open as a tab.
+    Q_INVOKABLE void closeReference();
+    // The tray's own navigation: the reference's selection, never its content.
+    Q_INVOKABLE void selectReferenceLine(qulonglong id);
+    Q_INVOKABLE void clickReferenceLine(qulonglong id, int modifiers);
+    Q_INVOKABLE void extendReferenceSelection(int rows);
+    Q_INVOKABLE void dragReferenceSelection(qulonglong id);
+    Q_INVOKABLE void selectAllReferenceLines();
+    // PREVIEW_COPY (Ctrl+C in the preview): the reference's selected Lines.
+    Q_INVOKABLE bool copyReferenceLines();
+    // A content change asked of the reference (PREVIEW_PASTE's Ctrl+V): refused.
+    Q_INVOKABLE void refuseReferenceChange();
+    // The tray's menu (SubsGridPreview::ContextMenu): every occurrence of the
+    // editing Line in each other Document, [{text, checked}]; then one of them.
+    Q_INVOKABLE QVariantList referenceOccurrences();
+    Q_INVOKABLE bool chooseReferenceOccurrence(int index);
+    // While comparing with the linked reference: the reference row paired
+    // with the editing Grid's shown row `row` (legacy's synchronized scroll,
+    // ShowSecondComparedLine with setViaScroll), or -1.
+    Q_INVOKABLE int comparedReferenceRow(int row) const;
     QString lastSessionPath() const;
     // Writes LastSession.txt (legacy SaveLastSession), or `path`.
     bool saveLastSession(bool closing = false, const QString &path = {});
@@ -744,6 +779,19 @@ private:
     application::ComparedDocument comparedDocument(application::DocumentId id) const;
     void recompare();
     void refreshComparison();
+    // R2
+    bool m_referenceLinked = false;
+    application::LinkedMatch m_linkedMatch;
+    std::optional<std::pair<std::uint64_t, std::uint64_t>> m_linkedFrom; // (target, active Line) followed last
+    std::optional<std::uint64_t> m_linkedReference;                      // the reference it was followed in
+    std::vector<std::pair<application::DocumentId, application::Occurrence>> m_occurrenceMenu;
+    void followEditingLine(bool force = false);
+    void seekLinkedReference();
+    void showReferenceRow(std::size_t row);
+    void publishReferenceNavigation();
+    std::optional<application::DocumentId> comparedPartner() const;
+    application::GridSelection referenceGridSelection() const;
+    void applyReferenceSelection(application::Selection next);
     std::unique_ptr<ui::VisualToolsController> m_visualTools;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

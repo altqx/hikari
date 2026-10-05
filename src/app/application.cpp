@@ -1198,6 +1198,9 @@ void Application::refreshViews()
                      reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession)
         m_shell->setSelection(targetSession->selection());
+    if (referenceSession) // R2: the reference's own selection
+        m_shell->setReferenceSelection(referenceSession->selection());
+    followEditingLine(); // R2: a linked reference follows the active Line
     // The editor only ever edits the editing target, never the reference.
     if (target != m_editorDocument) {
         m_editorDocument = target;
@@ -1782,6 +1785,7 @@ bool Application::applySelection(application::Selection next)
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
     refreshVideo();
+    followEditingLine(); // R2
     return true;
 }
 

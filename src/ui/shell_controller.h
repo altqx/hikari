@@ -7,6 +7,7 @@
 
 #include "line_table_model.h"
 
+#include "hikari/application/reference_navigation.h"
 #include "hikari/application/workspace.h"
 
 #include <QObject>
@@ -37,6 +38,17 @@ class ShellController : public QObject {
     Q_PROPERTY(bool filtered READ filtered NOTIFY targetsChanged)
     // A transient status message (automation's set_status_text).
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
+    // R2: the reference tray's navigation. Linked: it follows the editing
+    // target's active Line one way; then the candidates' count, the one shown
+    // (0-based), the empty no-match state and whether legacy's nearest Line
+    // can be shown on request. A tab reference is another tab's Document
+    // (the subtitles preview).
+    Q_PROPERTY(bool referenceLinked READ referenceLinked NOTIFY referenceNavigationChanged)
+    Q_PROPERTY(int referenceMatchCount READ referenceMatchCount NOTIFY referenceNavigationChanged)
+    Q_PROPERTY(int referenceMatchIndex READ referenceMatchIndex NOTIFY referenceNavigationChanged)
+    Q_PROPERTY(bool referenceNoMatch READ referenceNoMatch NOTIFY referenceNavigationChanged)
+    Q_PROPERTY(bool referenceHasNearest READ referenceHasNearest NOTIFY referenceNavigationChanged)
+    Q_PROPERTY(bool referenceIsTab READ referenceIsTab NOTIFY targetsChanged)
 
 public:
     explicit ShellController(application::Workspace &workspace, QObject *parent = nullptr);
@@ -104,11 +116,29 @@ public:
     // The editing target's Lines in the order the Grid shows them.
     std::vector<core::LineId> displayedLines() const;
 
+    // R2: the reference's own selection (navigated independently).
+    void setReferenceSelection(const application::Selection &selection);
+    // The reference's Lines in the order the tray shows them (every row).
+    std::vector<core::LineId> referenceDisplayedLines() const;
+    // The reference's navigation state; `shown` is a Line a seek made active,
+    // for the tray to bring into view (legacy SubsGridPreview::MakeVisible).
+    void setReferenceNavigation(bool linked, const application::LinkedMatch &match);
+    void showReferenceLine(core::LineId line) { emit referenceLineShown(line.value); }
+    bool referenceLinked() const { return m_referenceLinked; }
+    int referenceMatchCount() const { return static_cast<int>(m_referenceMatch.count()); }
+    int referenceMatchIndex() const { return static_cast<int>(m_referenceMatch.index()); }
+    bool referenceNoMatch() const { return m_referenceLinked && m_referenceMatch.noMatch(); }
+    bool referenceHasNearest() const { return referenceNoMatch() && m_referenceMatch.nearest().has_value(); }
+    bool referenceIsTab() const { return m_workspace.referenceIsTab(); }
+
 signals:
     void targetsChanged();
     void activeLineChanged();
     void statusTextChanged();
     void hiddenColumnsChanged();
+    void referenceNavigationChanged();
+    // R2: a seek made this reference Line active: the tray brings it into view.
+    void referenceLineShown(qulonglong id);
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;
@@ -123,6 +153,8 @@ private:
     QString m_statusText;
     bool m_assFormat = true;
     bool m_endColumn = true;
+    bool m_referenceLinked = false;          // R2
+    application::LinkedMatch m_referenceMatch; // R2
 };
 
 } // namespace hikari::ui

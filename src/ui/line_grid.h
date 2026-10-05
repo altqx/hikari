@@ -48,6 +48,8 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
     Q_PROPERTY(qreal rowHeight READ rowHeight NOTIFY rowHeightChanged)
     Q_PROPERTY(int lastPaintedRowCount READ lastPaintedRowCount NOTIFY painted)
+    // R2: the table's name for assistive technology ("Subtitle lines" when empty).
+    Q_PROPERTY(QString accessibleName MEMBER m_accessibleName NOTIFY accessibleNameChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -61,6 +63,13 @@ public:
     const GridGeometry &geometry() const { return m_geometry; }
 
     Q_INVOKABLE int rowAt(qreal y) const;
+    // R2: brings a Line into view as legacy's subtitles preview did
+    // (SubsGridPreview::MakeVisible): when it is above the first shown row
+    // or within two rows of the bottom, the view moves so that it is half a
+    // page, less one row, from the top.
+    Q_INVOKABLE void makeLineVisible(qulonglong id);
+    // The first row shown at the top (contentY over the row height).
+    Q_INVOKABLE void scrollToTopRow(int row) { setContentY(row * m_geometry.rowHeight); }
 
     // Identity and state, resolved through a filter proxy when there is one.
     std::optional<core::LineId> lineAtRow(int row) const;
@@ -84,6 +93,7 @@ public:
 
     // Width of the hidden-block mark column (legacy posX 11 while filtered).
     double markWidth() const { return m_markWidth; }
+    QString accessibleName() const { return m_accessibleName; }
 
 signals:
     // A +/- mark was clicked: the hidden block after this Document row (-1:
@@ -113,6 +123,7 @@ signals:
     void contentHeightChanged();
     void rowHeightChanged();
     void painted();
+    void accessibleNameChanged();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -143,6 +154,7 @@ private:
     // Model columns in display order: those the model reports as shown.
     std::vector<int> m_columns;
     double m_markWidth = 0;
+    QString m_accessibleName;
     void updateColumns();
     std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;

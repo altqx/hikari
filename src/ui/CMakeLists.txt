@@ -28,6 +28,8 @@ hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # R1: the tab menu's "Subtitle comparison".
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
+# R2: the reference tray (navigation, linked matching, the preview menu).
+qt_target_qml_sources(hikari_ui QML_FILES ReferenceTray.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
