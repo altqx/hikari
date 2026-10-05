@@ -7,8 +7,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
     update_checker.cpp include/hikari/app/update_checker.h
-    style_manager_controller.cpp include/hikari/app/style_manager_controller.h
-    font_collector_controller.cpp include/hikari/app/font_collector_controller.h) # Y8
+    style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)
 target_include_directories(hikari_composition PUBLIC include)
 target_link_libraries(hikari_composition PUBLIC hikari_ui hikari_uiplugin hikari_backends hikari_application hikari_core
@@ -24,3 +23,5 @@ hikari_module(hikari_composition ALLOW hikari_ui hikari_ui_resources_1 hikari_ui
 qt_add_executable(hikarisub main.cpp)
 target_link_libraries(hikarisub PRIVATE hikari_composition)
 hikari_module(hikarisub ALLOW hikari_composition "Qt6::*")
+# Y8: the font collector's window state.
+target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
