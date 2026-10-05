@@ -126,7 +126,8 @@ add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_medi
 # K1: the vector icon set: the icon manifest test, the tint, the default
 # colours' contrast, live colours, and the rendering fixtures (contact sheets)
 # at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.
-hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg OFFSCREEN_ONLY)
+hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg Qt6::QuickControls2
+    OFFSCREEN_ONLY)
 target_compile_definitions(hikari_ui_icon_tests PRIVATE
     HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"

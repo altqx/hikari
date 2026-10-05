@@ -11,6 +11,7 @@
 // equal to the SVG files drawn at the device's pixels. With HIKARI_ICON_SHEET_DIR set the contact sheets are
 // written there (k1-<appearance>-<percent>.png).
 
+#include "controls_style.h"
 #include "icon_theme.h"
 #include "settings_store.h"
 
@@ -625,10 +626,15 @@ Rectangle {
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("rtlItem"))), QStringLiteral("image://hikari-icon/undo/202832/145c4c/1"));
         QCOMPARE(url(menu->findChild<QObject *>(QStringLiteral("mediaRtlItem"))),
                  QStringLiteral("image://hikari-icon/media-play/202832/145c4c/0"));
-        // a highlighted item: the whole icon in the highlighted text colour
+        // a highlighted item: the whole icon in the highlighted text colour;
+        // the Windows style keeps the item's text colour under its faint
+        // tint, so there the icon keeps its normal colours (ShellMenuItem.qml)
         undo->setProperty("highlighted", true);
         const QString highlighted = QGuiApplication::palette().color(QPalette::HighlightedText).name().mid(1);
-        QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/%1/%1/0").arg(highlighted));
+        if (ui::ControlsStyle::name() == QLatin1String("Windows"))
+            QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/202832/145c4c/0"));
+        else
+            QCOMPARE(url(undo), QStringLiteral("image://hikari-icon/undo/%1/%1/0").arg(highlighted));
         undo->setProperty("highlighted", false);
         // the submenu's item in the parent menu shows the submenu's icon
         auto *recent = menu->findChild<QObject *>(QStringLiteral("recent"));
