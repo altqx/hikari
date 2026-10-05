@@ -235,3 +235,8 @@ target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONT_FIXTURES="${HIKARI_FONT_FIXTURE_DIR}"
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
+
+# T4: the clips the visual tools write, rendered by libass, against the tools'
+# own outline and mask.
+hikari_add_gtest(hikari_backends_visual_clip_render_tests SOURCES visual_clip_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application LABELS backends)
