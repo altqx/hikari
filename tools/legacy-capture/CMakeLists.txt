@@ -136,15 +136,55 @@ execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/confi
     "wxString getfloat(float num, const wxString& format, bool Truncate)"
     "size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignoreCase)"
     COMMAND_ERROR_IS_FATAL ANY)
+# T5: the drawing's reading of a Line: SubsDialogue.h's TagData and ParseData,
+# Dialogue::ParseTags, ClearParse and GetDefaultPosition, and the Style's
+# scale (styles.cpp). The clips never reach them.
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${clip_gen}/tagdata_class.inc"
+    "class TagData" "class ParseData" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${clip_gen}/clip_dialogue.inc"
+    "TagData::TagData(const wxString &name, unsigned int _startTextPos)"
+    "void TagData::PutValue(const wxString &_value, bool _multiValue)"
+    "void TagData::AppendValue(const wxString& _value)"
+    "ParseData::ParseData()" "void ParseData::AddData(TagData *data)" "ParseData::~ParseData()"
+    "void Dialogue::ClearParse()"
+    "void Dialogue::GetDefaultPosition(Styles* lineStyle, int an, const wxSize& subsSize, float* posx, float* posy)"
+    "ParseData* Dialogue::ParseTags(wxString *tags, size_t ntags, bool plainText, const wxString& textToParse/* = L\"\"*/)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${clip_gen}/clip_styles.inc"
+    "double Styles::GetScaleXDouble()" "double Styles::GetScaleYDouble()" COMMAND_ERROR_IS_FATAL ANY)
 file(WRITE "${clip_gen}/extracted.inc"
-    "#include \"clip_visuals.inc\"\n#include \"clip_tagfind.inc\"\n#include \"clip_editbox.inc\"\n#include \"clip_config.inc\"\n")
-add_executable(legacy_clip_capture clip_capture.cpp "${clip_gen}/copy/VisualClipRect.cpp" "${clip_gen}/copy/VisualClips.cpp")
-# The stand-ins come first, so the copies' quoted includes find them; the
-# legacy directory supplies VisualClipPoint.h and the Linux D3DX stand-ins.
-target_include_directories(legacy_clip_capture PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/clip" "${clip_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
-target_compile_definitions(legacy_clip_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
-target_compile_options(legacy_clip_capture PRIVATE ${wx_cflags}
-    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
-    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
-target_link_libraries(legacy_clip_capture PRIVATE ${wx_libs})
+    "#include \"clip_visuals.inc\"\n#include \"clip_tagfind.inc\"\n#include \"clip_editbox.inc\"\n#include \"clip_config.inc\"\n"
+    "#include \"clip_dialogue.inc\"\n#include \"clip_styles.inc\"\n")
+# T5: the drawing's shapes (VisualDrawingShapes.h's ShapesSetting and Shapes,
+# Shapes' definitions and the presets' LoadSettings, GetNames and
+# SaveSettings); ShapesEdition (the dialog) is not run.
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualDrawingShapes.h" "${clip_gen}/shapes_class.inc"
+    "class ShapesSetting" "class Shapes : public DrawingAndClip" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualDrawingShapes.cpp" "${clip_gen}/shapes_defs.inc"
+    "enum {"
+    "void LoadSettings(std::vector<ShapesSetting>* shapes)"
+    "void GetNames(std::vector<ShapesSetting>* shapes, wxArrayString* nameList)"
+    "void SaveSettings(std::vector<ShapesSetting>* shapes)"
+    "Shapes::Shapes()" "void Shapes::OnMouseEvent(wxMouseEvent& evt)" "void Shapes::DrawVisual(int time)"
+    "void Shapes::SetShape(int curshape)" "void Shapes::GetVisual(wxString* drawing)"
+    "void Shapes::SetScale(wxString* txt, size_t position, int* diff)"
+    "int Shapes::HitTest(const D3DXVECTOR2& pos, bool diff)" "void Shapes::SortPoints()"
+    "void Shapes::SetDrawingScale()" "void Shapes::SetSquareShape(bool axisX)"
+    "D3DXVECTOR2 Shapes::PointToVideo(const D3DXVECTOR2& point)"
+    "D3DXVECTOR2 Shapes::PointToSubtitles(float x, float y)"
+    "D3DXVECTOR2 Shapes::CalcDrawingAnchor(int alignment, const std::vector<ClipPoint>* points)"
+    COMMAND_ERROR_IS_FATAL ANY)
+foreach(probe legacy_clip_capture legacy_drawing_capture)
+    add_executable(${probe} clip_capture.cpp "${clip_gen}/copy/VisualClipRect.cpp" "${clip_gen}/copy/VisualClips.cpp")
+    # The stand-ins come first, so the copies' quoted includes find them; the
+    # legacy directory supplies VisualClipPoint.h and the Linux D3DX stand-ins.
+    target_include_directories(${probe} PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/clip" "${clip_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+    target_compile_definitions(${probe} PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+    target_compile_options(${probe} PRIVATE ${wx_cflags}
+        -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+        -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+    target_link_libraries(${probe} PRIVATE ${wx_libs})
+endforeach()
+# T5: the same probe with the drawing tool (legacy Shapes, VECTORDRAW).
+target_compile_definitions(legacy_drawing_capture PRIVATE PROBE_DRAWING)
