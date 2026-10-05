@@ -14,7 +14,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
-#ifndef _WIN32
+#ifndef Q_OS_WIN // not _WIN32: moc sees only WIN32 (and so Q_OS_WIN)
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
 
@@ -48,7 +48,7 @@ private slots:
         QCOMPARE(containingFolder(QStringLiteral("ep01.mkv")), QStringLiteral("ep01.mkv"));
     }
 
-#ifndef _WIN32
+#ifndef Q_OS_WIN // not _WIN32: moc sees only WIN32 (and so Q_OS_WIN)
     void fileManagerShowsTheFileSelected()
     {
         const QString daemon = QStandardPaths::findExecutable(QStringLiteral("dbus-daemon"));
