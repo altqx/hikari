@@ -192,6 +192,7 @@ private slots:
         QObject *menu = openTabMenu(-1);
         QVERIFY(menu);
         QVERIFY(!menu->property("enabled").toBool());
+        QVERIFY(!entryOf(menu)->isEnabled()); // the tab menu's "Subtitle comparison" item
         closeTabMenu();
         openTabMenu(0); // the active tab
         QVERIFY(!menu->property("enabled").toBool());
@@ -200,6 +201,7 @@ private slots:
         openTabMenu(1);
         QTRY_VERIFY(named("documentTabMenu")->property("opened").toBool());
         QVERIFY(menu->property("enabled").toBool());
+        QVERIFY(entryOf(menu)->isEnabled());
         for (const char *name : {"compareByTimes", "compareByVisible", "compareByStyles", "compareSubtitles"})
             QVERIFY2(enabled(name), name);
         QVERIFY(!enabled("turnOffComparison"));
