@@ -26,3 +26,5 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# V6: timing and selecting Lines from the video, and the video following the active Line.
+target_sources(hikari_composition PRIVATE application_video_timing.cpp)

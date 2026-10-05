@@ -179,6 +179,9 @@ public:
     // _ALT), AUDIO_PLAY_500MS_BEFORE/AFTER/FIRST/LAST, AUDIO_PLAY_BEFORE_MARK,
     // AUDIO_PLAY_AFTER_MARK, AUDIO_PLAY_TO_END and AUDIO_STOP.
     Q_INVOKABLE void playSelection() { play(application::PlayMode::Selection); }
+    // V6: legacy AudioDisplay::Update(moveToEnd) after the Grid moved the
+    // video to the active Line (SubsGrid::SetVideoLineTime).
+    void followLine(bool moveToEnd) { update(moveToEnd); }
     Q_INVOKABLE void playLine() { play(application::PlayMode::Line); }
     Q_INVOKABLE void play500Before() { play(application::PlayMode::Before500); }
     Q_INVOKABLE void play500After() { play(application::PlayMode::After500); }

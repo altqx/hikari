@@ -859,6 +859,28 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
                 }
             }
+            // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
+            // OnMenuOpened enables them with a video and the editor).
+            ShellMenuItem {
+                iconRole: "set-start-time"
+                objectName: "setStartTimeMenuItem"
+                action: Action {
+                    id: setStartTimeAction
+                    text: qsTr("Insert start time from video")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_START_TIME")) root.app.setTimeFromVideo(false)
+                }
+            }
+            ShellMenuItem {
+                iconRole: "set-end-time"
+                objectName: "setEndTimeMenuItem"
+                action: Action {
+                    id: setEndTimeAction
+                    text: qsTr("Insert end time from video")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
+                }
+            }
             ShellMenuItem {
                 iconRole: "frame-previous"
                 action: Action {
@@ -1658,6 +1680,7 @@ ApplicationWindow {
                     color: root.video.keyframeShown ? "#e0a030" : palette.windowText
                     Accessible.name: qsTr("Video times")
                 }
+                VideoFollowChoices { Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
                     Layout.fillWidth: true
                     // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
@@ -2459,7 +2482,7 @@ ApplicationWindow {
                     onActiveLineRequested: id => root.app.selectLine(id)
                     onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
                     onExtendRequested: rows => root.app.extendSelection(rows)
-                    onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
+                    onLineClicked: (id, modifiers, endColumn, doubleClick) => root.app.clickLine(id, modifiers, endColumn, doubleClick)
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
@@ -2592,6 +2615,11 @@ ApplicationWindow {
                                 text: qsTr("Split lines by wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
+                        }
+                        // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
+                        ShellMenuItem {
+                            objectName: "selectVisibleLines"; text: qsTr("Select all lines visible on video")
+                            onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
                         ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
@@ -4691,6 +4719,7 @@ ApplicationWindow {
             GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
             GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
             GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
+            GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
             GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
             GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
             GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
@@ -4753,6 +4782,10 @@ ApplicationWindow {
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
+        // V6: SubsGrid::SelVideoLine and HikariSubFrame::OnAudioSnap
+        case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
+        case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
+        case "GLOBAL_SNAP_WITH_END": root.app.snapToKeyframe(false); return true
         }
         // Not in the rewrite yet (docs/qt/coverage.md, O2): the key is taken
         // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME and
@@ -4790,7 +4823,7 @@ ApplicationWindow {
             return true
         }
         switch (action) {
-        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.editor.commitAndAdvance(); return true
+        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true // V6: NextLine's play-after
         case "EDITBOX_COMMIT": root.editor.commit(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
@@ -4878,6 +4911,7 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
+        case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true // V6
         case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
         case "GRID_FILTER": root.app.filterLines(); return true
         case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true

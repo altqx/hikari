@@ -3608,6 +3608,9 @@ private slots:
         press(Qt::Key_Comma, Qt::ControlModifier); // no video: refused
         QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
 
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         // The active Line's start frame: 24 at 1.001 s (24000/1001 fps).
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
@@ -3625,6 +3628,9 @@ private slots:
     {
         QVERIFY(application->openFile(episode)); // 1.00-2.00 s and 3.00-4.00 s
         auto *session = application->files().session(*application->workspace().editingTarget());
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame().has_value(), 20000);
         item("editingGrid")->forceActiveFocus();
@@ -3649,6 +3655,9 @@ private slots:
     {
         QVERIFY(application->openFile(episode)); // 1.00-2.00 s and 3.00-4.00 s
         auto *session = application->files().session(*application->workspace().editingTarget());
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
@@ -6893,6 +6902,9 @@ private slots:
         QVERIFY(application->openFile(visualDocument("gesture.ass")));
         auto &tools = application->visualTools();
         tools.setTool(application::visual::Family::Position, std::make_unique<DragTool>());
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000); // the active Line's start
@@ -7479,6 +7491,237 @@ private slots:
             QMetaObject::invokeMethod(menu, "close");
             QTRY_VERIFY(!menu->property("visible").toBool());
         }
+    }
+
+    // V6: Insert start / end time from video (the Video menu, GLOBAL_SET_START_TIME
+    // Ctrl+Left and GLOBAL_SET_END_TIME Ctrl+Right): every selected Line gets the
+    // shown frame's legacy start (or end) representative plus GRID_INSERT_*_OFFSET,
+    // to centiseconds, one step each (HikariSubFrame.cpp:750-760, SubsGrid::SetStartTime).
+    void insertTimesFromTheVideo()
+    {
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00 s
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *start = item<QObject>("setStartTimeMenuItem");
+        auto *end = item<QObject>("setEndTimeMenuItem");
+        QVERIFY(start && end);
+        QVERIFY(!start->property("enabled").toBool()); // OnMenuOpened: a video and the editor
+        QVERIFY(!application->setTimeFromVideo(false));
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        QVERIFY(start->property("enabled").toBool());
+        QVERIFY(application->video().showFrameAt(24)); // 1001 ms
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 24);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        const auto steps = session->historySize();
+        QVERIFY(QMetaObject::invokeMethod(start, "click"));
+        // StartTimeFor(24) = 959 + (1001 - 959) / 2 + 5 = 985, to centiseconds 980
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Setting start time"));
+        // Ctrl+Right: EndTimeFor(24) = 1001 + (1042 - 1001) / 2 + 5 = 1026, to 1020
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Right, Qt::ControlModifier);
+        QTRY_COMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+        QCOMPARE(session->history().back().name, std::string("Setting end time"));
+        QCOMPARE(session->historySize(), steps + 2);
+        // the offset counts before the centiseconds: ZEROIT(985 + 25) = 1010
+        application->settingsStore()->set("grid.insertStartOffset", 25);
+        press(Qt::Key_Left, Qt::ControlModifier);
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 1'010'000);
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 3'000'000); // not selected
+        // each is one step: Undo takes the last back
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 980'000);
+        QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 1'020'000);
+    }
+
+    // V6: GLOBAL_SELECT_FROM_VIDEO (F2, SubsGrid::SelVideoLine) and the Grid's
+    // "Select all lines visible on video" (GRID_SELECT_VISIBLE_LINES, SelectVisible).
+    void selectLinesFromTheVideo()
+    {
+        const QString path = writeFile(dir, "v6-select.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.50,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,b\n"
+                                       "Comment: 0,0:00:00.40,0:00:01.20,Default,,0,0,0,,note\n"
+                                       "Dialogue: 0,0:00:01.50,0:00:01.90,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        QVERIFY(!application->selectLineFromVideo()); // no video: nothing
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
+        QVERIFY(application->video().showFrameAt(34)); // 34 * 1001 / 24 = 1417 ms
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 34);
+        keysNeverRepeat();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_F2);
+        // no Line holds 1417 ms; c starts 83 ms later, b 1017 ms earlier
+        QTRY_COMPARE(session->selection().active, std::optional(lines[3]->id));
+        QCOMPARE(session->selection().selected, std::set<core::LineId>{lines[3]->id});
+        QVERIFY(application->video().showFrameAt(11)); // 458 ms: a and b
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 11);
+        press(Qt::Key_F2);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[0]->id)); // the first holding it
+        auto *menuItem = named("selectVisibleLines");
+        QVERIFY(menuItem);
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        // Start - 5 <= 458 < End - 5, the Comment left out; the first becomes active
+        QTRY_COMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[1]->id}));
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        QVERIFY(application->video().showFrameAt(47)); // 1960 ms: none
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 47);
+        QVERIFY(application->selectLinesVisibleOnVideo());
+        QVERIFY(session->selection().selected.empty()); // legacy cleared the selection
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+    }
+
+    // V6: GLOBAL_SNAP_WITH_START / _END (Shift+Left / Shift+Right,
+    // HikariSubFrame::OnAudioSnap): the nearest keyframe (or other Line's
+    // boundary) within 5 s, needing the audio box and an indexed video; one
+    // "Snapping to keyframe" step.
+    void snapToKeyframeNeedsTheAudioBox()
+    {
+        const QString path = writeFile(dir, "v6-snap.ass",
+                                       "Dialogue: 0,0:00:00.00,0:00:00.30,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.45,0:00:00.95,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:01.10,0:00:01.50,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down); // b
+        QVERIFY(!application->snapToKeyframe(true)); // no audio box, no video
+        application->video().openVideo(nativeFixture("audiodelay.mkv")); // keyframes every 12 frames
+        auto &audio = application->audio();
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(!application->video().session().keyframes().empty());
+        const auto steps = session->historySize();
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Left, Qt::ShiftModifier);
+        // keyframe 12 (500 ms): StartTimeFor(12) = 458 + 21 + 5 = 484, to 480
+        QTRY_COMPARE(session->document().lines()[1]->start.value.microseconds(), 480'000);
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Snapping to keyframe"));
+        press(Qt::Key_Right, Qt::ShiftModifier);
+        // keyframe 24 (1001 ms): StartTimeFor(24) = 985, to 980
+        QTRY_COMPARE(session->document().lines()[1]->end.value.microseconds(), 980'000);
+        QCOMPARE(session->historySize(), steps + 2);
+        // the start again: 480 is on keyframe 12 (a zero difference does not
+        // count); the previous Line's End (AUDIO_INACTIVE_LINES_DISPLAY_MODE 1)
+        // is 180 ms away, nearer than keyframe 0 at 480 ms (HikariSubFrame.cpp:2539-2583)
+        QVERIFY(application->snapToKeyframe(true));
+        QCOMPARE(session->document().lines()[1]->start.value.microseconds(), 300'000);
+        QCOMPARE(session->historySize(), steps + 3);
+        audio.closeAudio();
+        QVERIFY(!application->snapToKeyframe(false)); // the audio box is gone
+    }
+
+    // V6: the video toolbar's "Move video to selected line on:"
+    // (MOVE_VIDEO_TO_ACTIVE_LINE) and OPEN_VIDEO_AT_ACTIVE_LINE: by legacy's
+    // defaults the video opens at its first frame and stays when the active
+    // Line changes; a double click moves it (the End column to the end);
+    // "Every line change" follows each change; "Editing line when paused"
+    // follows an edit.
+    void videoFollowsTheActiveLineAsChosen()
+    {
+        auto &settings = *application->settingsStore();
+        QCOMPARE(settings.integer("video.moveToActiveLine"), 0);
+        QCOMPARE(settings.integer("video.playAfterSelection"), 0);
+        QVERIFY(!settings.boolean("video.openAtActiveLine"));
+        auto *seekAfter = item<QObject>("videoSeekAfter");
+        auto *playAfter = item<QObject>("videoPlayAfter");
+        QVERIFY(seekAfter && playAfter);
+        QCOMPARE(seekAfter->property("model").toStringList(),
+                 (QStringList{"Double-clicking a line (always on)", "Every line change",
+                              "Clicking a line or editing when paused", "Clicking a line or editing",
+                              "Editing line when paused", "Editing"}));
+        QCOMPARE(playAfter->property("model").toStringList(),
+                 (QStringList{"Nothing", "Audio to the line end time", "Video and audio to the line end time",
+                              "Video and audio to the next line start time"}));
+        const QString path = writeFile(dir, "v6-follow.ass",
+                                       "Dialogue: 0,0:00:00.50,0:00:01.00,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,b\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        auto &video = application->video();
+        video.openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000); // not at a's start
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down); // b
+        QTest::qWait(200);
+        QCOMPARE(video.frame(), 0); // "Double-clicking a line": a key moves nothing
+        // a double click on b's End cell: the frame shown just before 1.50 s
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        int endColumn = -1;
+        for (int c = 0; c < grid->columnCount(); ++c)
+            if (grid->columnTitle(c) == QLatin1String("End"))
+                endColumn = c;
+        QVERIFY(endColumn >= 0);
+        const QPoint endCell = grid->mapToScene(grid->cellRect(1, endColumn).center()).toPoint();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, endCell);
+        QTRY_COMPARE(video.frame(), 35); // FrameShownAt(1499): 35 starts at 1459
+        // and on the Start cell, the frame at or after 1.00 s
+        int startColumn = endColumn - 1;
+        QCOMPARE(grid->columnTitle(startColumn), QStringLiteral("Start"));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier,
+                           grid->mapToScene(grid->cellRect(1, startColumn).center()).toPoint());
+        QTRY_COMPARE(video.frame(), 24);
+        // "Every line change", chosen in the list
+        QVERIFY(QMetaObject::invokeMethod(seekAfter, "activated", Q_ARG(int, 1)));
+        QCOMPARE(settings.integer("video.moveToActiveLine"), 1);
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Up); // a: 500 ms is frame 12
+        QTRY_COMPARE(video.frame(), 12);
+        press(Qt::Key_Down);
+        QTRY_COMPARE(video.frame(), 24);
+        // "Editing line when paused": an edit brings the video to the Line's start
+        settings.set("video.moveToActiveLine", 4);
+        QCOMPARE(seekAfter->property("currentIndex").toInt(), 4);
+        QVERIFY(video.showFrameAt(40));
+        QTRY_COMPARE(video.frame(), 40);
+        application->editor().setStartText(QStringLiteral("0:00:01.10"));
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(video.frame(), 27); // 1.10 s: frame 27 starts at 1126
+        // OPEN_VIDEO_AT_ACTIVE_LINE: the next open starts at b's start
+        settings.set("video.openAtActiveLine", true);
+        video.openVideo(nativeFixture("vfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo() && video.session().path() == nativeFixture("vfr.mkv").toStdString(), 20000);
+        const auto timebase = video.session().legacyTimebase();
+        QTRY_COMPARE(video.frame(), std::min(timebase.frameAt(1100), video.frameCount() - 1));
+    }
+
+    // V6: "On moving to another line play:" (VIDEO_PLAY_AFTER_SELECTION) after
+    // Enter (SubsGrid::NextLine, autoPlay): the video plays the new Line to
+    // the frame before its end (the next Line's start for the last choice),
+    // then pauses; a key move plays nothing.
+    void playAfterMovingToAnotherLine()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "v6-play.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:00.40,Default,,0,0,0,,a\n"
+                                       "Dialogue: 0,0:00:00.50,0:00:00.80,Default,,0,0,0,,b\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:01.20,Default,,0,0,0,,c\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &video = application->video();
+        video.openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000);
+        application->settingsStore()->set("video.playAfterSelection", 2); // video to the line end
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Down); // a key: no autoPlay
+        QTest::qWait(200);
+        QVERIFY(!video.playing());
+        auto *text = item("lineText");
+        text->forceActiveFocus();
+        press(Qt::Key_Return); // b becomes active, as NextLine
+        QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[2]->id));
+        QTRY_VERIFY_WITH_TIMEOUT(video.playing(), 10000);
+        // c plays from 1.00 s to the frame before 1.20 s (PlayEndBefore: frame 28 at 1167), then pauses
+        QTRY_VERIFY_WITH_TIMEOUT(!video.playing(), 10000);
+        QTRY_VERIFY(video.frame() >= 28 && video.frame() <= 29);
     }
 
     void theReferenceIsNeverEdited()

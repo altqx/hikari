@@ -101,8 +101,11 @@ signals:
     void activeLineRequested(qulonglong lineId);
     // Shift with arrows, Page, Home or End: extend by `rows` displayed rows.
     void extendRequested(int rows);
-    // A mouse press on a Line, with the keyboard modifiers held.
-    void lineClicked(qulonglong lineId, int modifiers);
+    // A mouse press on a Line, with the keyboard modifiers held. V6:
+    // `endColumn` the press is in the End column, `doubleClick` it is the
+    // second press of a double click (legacy LeftDClick; the Grid moves the
+    // video there, SubsGridWindow.cpp:1647).
+    void lineClicked(qulonglong lineId, int modifiers, bool endColumn, bool doubleClick);
     // Dragging with the button held reaches another Line (block select).
     void lineDragged(qulonglong lineId);
     void selectAllRequested();
@@ -119,6 +122,7 @@ protected:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
 
 private:
@@ -133,6 +137,8 @@ private:
                              const QColor &outline) const;
     // The model column shown at display position `column`.
     int modelColumn(int column) const;
+    // V6: the press at x is in the End column.
+    bool inEndColumn(qreal x) const;
 
     QPointer<QAbstractItemModel> m_model;
     std::vector<QMetaObject::Connection> m_connections;

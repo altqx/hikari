@@ -220,8 +220,9 @@ void Application::trackTabMedia()
             emit tabsChanged();
         }
         // A restored position is shown once the video is ready (legacy LoadVideo then Seek).
-        // Queued: the session applies the active Line's seek right after
-        // reporting Ready, and the tab's position comes after it. Until it has
+        // Queued: the session applies a pending seek (V6: the active Line's
+        // start with OPEN_VIDEO_AT_ACTIVE_LINE) right after reporting Ready,
+        // and the tab's position comes after it, as legacy Seek followed LoadVideo. Until it has
         // landed the tab's position is the pending one (saveLastSession, leaving).
         if (m_pendingTabSeek && !m_tabSeekQueued && m_pendingTabSeek->first == path && video.frameCount() > 0) {
             m_tabSeekQueued = true;

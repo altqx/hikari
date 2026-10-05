@@ -21,6 +21,7 @@
 #include "hikari/application/session_file.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/subtitle_comparison.h"
+#include "hikari/application/video_timing.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/portaudio_output.h"
@@ -231,7 +232,9 @@ public:
     // editor (a pending draft commits by policy); a refusal leaves everything as it was.
     Q_INVOKABLE void selectLine(qulonglong id);
     Q_INVOKABLE void extendSelection(int rows);
-    Q_INVOKABLE void clickLine(qulonglong id, int modifiers);
+    // V6: `endColumn` (the press is in the End column) and `doubleClick` carry
+    // what legacy's Grid click reads to move the video (SetVideoLineTime).
+    Q_INVOKABLE void clickLine(qulonglong id, int modifiers, bool endColumn = false, bool doubleClick = false);
     Q_INVOKABLE void dragSelection(qulonglong id);
     Q_INVOKABLE void selectAllLines();
     // The Grid's active Line was hidden: only the active Line moves.
@@ -526,6 +529,17 @@ public:
     // Video menu, enabled while the audio box exists): the box centred on the
     // video's time (VideoBox::Tell, 0 without video), with the mark there too.
     Q_INVOKABLE void setAudioFromVideo(bool mark);
+    // V6 (application_video_timing.cpp): GLOBAL_SET_START_TIME /
+    // GLOBAL_SET_END_TIME ("Insert start/end time from video"),
+    // GLOBAL_SELECT_FROM_VIDEO, GRID_SELECT_VISIBLE_LINES and
+    // GLOBAL_SNAP_WITH_START / _END; each false when legacy does nothing.
+    Q_INVOKABLE bool setTimeFromVideo(bool end);
+    Q_INVOKABLE bool selectLineFromVideo();
+    Q_INVOKABLE bool selectLinesVisibleOnVideo();
+    Q_INVOKABLE bool snapToKeyframe(bool start);
+    // EDITBOX_COMMIT_GO_NEXT_LINE (Enter): the editor's commit and advance,
+    // which legacy's SubsGrid::NextLine follows with the play-after choice.
+    Q_INVOKABLE bool commitAndAdvance();
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
@@ -762,6 +776,22 @@ private:
     std::optional<application::DocumentId> m_videoDocument;
     std::optional<std::uint64_t> m_videoRevision; // the revision whose content the overlay shows
     std::optional<core::LineId> m_videoLine;
+    // V6: how the video follows the active Line (application_video_timing.cpp).
+    // The next active-Line change comes from a Grid click (legacy
+    // SetLine(..., nochangeline = true, autoPlay)) or SubsGrid::NextLine.
+    struct LineChangeOrigin {
+        bool gridClick = false;
+        bool autoPlay = false;
+    };
+    std::optional<LineChangeOrigin> m_lineChangeOrigin;
+    void trackVideoFollow();
+    void followActiveLine(bool rowChanged, bool edited);
+    void followShownLine(bool rowChanged, LineChangeOrigin origin);
+    void followGridPress(std::optional<core::LineId> before, core::LineId line, int modifiers, bool endColumn,
+                         bool doubleClick);
+    void applyVideoFollow(const application::VideoFollow &follow);
+    application::VideoState videoState() const;
+    std::optional<application::FollowedLine> followedLine() const;
     struct Closing {
         application::DocumentId document;
         bool save = false;

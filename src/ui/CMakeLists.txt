@@ -44,3 +44,5 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# V6: the video toolbar's seek-after and play-after lists.
+qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
