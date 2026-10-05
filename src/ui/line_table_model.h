@@ -116,6 +116,8 @@ public:
     int columnCount(const QModelIndex &parent = {}) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
+    // O5: the headings in the interface language again.
+    void retranslate() { emit headerDataChanged(Qt::Horizontal, 0, ColumnCount - 1); }
     QHash<int, QByteArray> roleNames() const override;
 
 private:

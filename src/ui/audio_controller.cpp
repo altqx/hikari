@@ -51,6 +51,7 @@ void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesys
 AudioController::AudioController(application::DisplayAudioPort &own, QObject *parent)
     : QObject(parent), m_box(own)
 {
+    connect(this, &AudioController::changed, this, &AudioController::textsChanged);
     m_box.setObserver([this] { boxChanged(); });
     m_box.setLog([this](const std::string &message, application::AudioBox::LogLevel level) {
         emit logged(QString::fromStdString(message), level == application::AudioBox::LogLevel::Debug);

@@ -41,6 +41,7 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     : QObject(parent), m_session(source, renderer)
 {
     m_session.setObserver([this] { emit changed(); });
+    connect(this, &VideoController::changed, this, &VideoController::textsChanged);
 }
 
 void VideoController::offer(const application::MediaAssociations &associations)

@@ -87,12 +87,27 @@ void ShellController::setSelection(const application::Selection &selection)
     const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
         return std::find(shown.begin(), shown.end(), id) == shown.end();
     });
-    const auto count = static_cast<qsizetype>(selection.selected.size());
-    m_selectionStatus = count == 0 ? QString()
-                        : count == 1 ? tr("1 Line selected")
-                                     : tr("%1 Lines selected").arg(count);
-    if (hidden > 0)
-        m_selectionStatus += tr(" (%1 hidden)").arg(hidden);
+    m_selectedCount = static_cast<qsizetype>(selection.selected.size());
+    m_hiddenCount = hidden;
+    m_selectionStatus = selectionText();
+    emit activeLineChanged();
+}
+
+QString ShellController::selectionText() const
+{
+    const qsizetype count = m_selectedCount;
+    QString text = count == 0 ? QString() : count == 1 ? tr("1 Line selected") : tr("%1 Lines selected").arg(count);
+    if (m_hiddenCount > 0)
+        text += tr(" (%1 hidden)").arg(m_hiddenCount);
+    return text;
+}
+
+void ShellController::retranslate()
+{
+    m_selectionStatus = selectionText();
+    m_lines.retranslate();
+    m_referenceLines.retranslate();
+    emit targetsChanged();
     emit activeLineChanged();
 }
 
