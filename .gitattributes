@@ -1,0 +1,4 @@
+# O4: lupdate and the migration tool write the catalogs and the migration
+# record with LF and the tests compare them byte for byte, so a Windows
+# checkout must not convert them.
+/i18n/** text eol=lf
