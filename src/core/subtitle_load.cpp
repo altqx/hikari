@@ -41,9 +41,14 @@ std::optional<LoadResult> loadSubtitle(std::span<const std::byte> bytes, std::u8
 
 std::vector<std::byte> encodeSubtitle(const Document &document)
 {
+    return encodeSubtitle(document, AssSaveOptions{});
+}
+
+std::vector<std::byte> encodeSubtitle(const Document &document, const AssSaveOptions &options)
+{
     switch (document.format()) {
     case SubtitleFormat::Ass:
-        return encodeAss(document);
+        return encodeAss(document, options);
     case SubtitleFormat::Srt:
         return encodeSrt(document);
     default:

@@ -51,6 +51,22 @@ std::u8string assLineText(const LineRecord &line)
 
 } // namespace legacy
 
+namespace {
+
+// The original line already is a Comment (LoadASS takes any "Comm" line as one).
+bool startsWithComment(const std::vector<std::byte> &src, const SourceSpan &span)
+{
+    static constexpr std::string_view prefix = "Comment";
+    if (span.length < prefix.size())
+        return false;
+    for (std::size_t i = 0; i < prefix.size(); ++i)
+        if (static_cast<char>(src[span.offset + i]) != prefix[i])
+            return false;
+    return true;
+}
+
+} // namespace
+
 std::vector<std::byte> encodeAss(const Document &document)
 {
     return encodeAss(document, AssSaveOptions{});
@@ -60,6 +76,7 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
 {
     const std::u8string tlMode = document.scriptInfo(u8"TLMode").value_or(std::u8string{});
     const std::u8string tlStyle = document.scriptInfo(u8"TLMode Style").value_or(std::u8string{});
+    const bool tlYes = tlMode == u8"Yes"; // GetVisible's isTlmode
     const auto &src = document.source().bytes;
     std::vector<std::byte> out;
     out.reserve(src.size() + 64);
@@ -97,6 +114,41 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             if ((property && property->inserted) || (style && style->inserted)) {
                 append(newlines.wrap(*generated));
                 newlines.openEnd = false;
+                continue;
+            }
+            if (line && options.renderer &&
+                (tlYes ? line->originalSpan || !line->translation.empty() || line->unconfirmed
+                       : !line->translation.empty())) {
+                // SubsGrid::GetVisible (SubsGridBase.cpp:1564-1573): with a
+                // translation, the original line (GetRaw with the TLMode
+                // Style: "\fD" when Unconfirmed) unless hidden, then the
+                // translation line; otherwise GetRaw of the text alone.
+                const std::u8string &newline = newlines.newline;
+                std::u8string lines;
+                if (tlYes && !line->translation.empty()) {
+                    if (!options.hideOriginalOnVideo) {
+                        LineRecord original = *line;
+                        if (!tlStyle.empty()) {
+                            original.style = tlStyle;
+                            if (line->unconfirmed)
+                                original.effect = u8"\fD";
+                        }
+                        lines = legacy::assLineText(original) + newline;
+                    }
+                    LineRecord translated = *line;
+                    translated.text = line->translation;
+                    lines += legacy::assLineText(translated);
+                } else {
+                    lines = legacy::assLineText(*line);
+                }
+                if (line->inserted) {
+                    append(newlines.wrap(lines));
+                    newlines.openEnd = false;
+                } else {
+                    newlines.see(span);
+                    append(lines);
+                    copy(span.offset + span.length, span.terminatorLength);
+                }
                 continue;
             }
             if (line && line->inserted) {
@@ -157,6 +209,20 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             } else if (line && line->edited) {
                 append(legacy::assLineText(*line));
                 copy(span.offset + span.length, span.terminatorLength);
+            } else if (line && line->originalSpan && options.hideOriginalOnVideo && !tlMode.empty() &&
+                       tlMode != u8"Translated" && (!line->translation.empty() || line->unconfirmed) &&
+                       !startsWithComment(src, *line->originalSpan)) {
+                // E5: SaveFile writes every original again, as a Comment with
+                // the option on (GetRaw's hideOriginalOnVideo); the
+                // translation line after it keeps its bytes.
+                LineRecord original = *line;
+                original.style = tlStyle;
+                original.comment = true;
+                if (line->unconfirmed)
+                    original.effect = u8"\fD";
+                append(legacy::assLineText(original));
+                const std::size_t from = line->originalSpan->offset + line->originalSpan->length;
+                copy(from, span.offset + span.length + span.terminatorLength - from);
             } else {
                 copy(span.offset, span.length + span.terminatorLength);
             }
