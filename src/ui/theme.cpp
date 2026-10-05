@@ -1,6 +1,7 @@
 #include "theme.h"
 
 #include "settings_store.h"
+#include "style/style_colours.h"
 
 #include "hikari/application/settings.h"
 
@@ -488,9 +489,12 @@ public:
         next.content = content(next.code, next.roles);
         const bool same = next.code == state.code && next.choice == state.choice && next.roles == state.roles;
         state = std::move(next);
-        // With a profile the controls draw with the theme's palette.
+        // With a profile the controls draw with the theme's palette, and
+        // their keyboard focus in its focus role (the palette has no role
+        // for it); without one, Fusion's.
         if (settings && (force || !same))
             QGuiApplication::setPalette(palette(state.roles));
+        style::StyleColours::setFocus(settings ? state.roles.focus : QColor());
         if (force || !same)
             emit changed();
     }

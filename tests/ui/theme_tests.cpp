@@ -26,6 +26,7 @@
 #include <QQuickStyle>
 #include <QScopeGuard>
 #include <QTextStream>
+#include <QWindow>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -548,6 +549,108 @@ Window {
         store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Border)),
                        QStringLiteral("#00FF00"));
         QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
+    }
+
+    // visual-language.md: keyboard focus stays distinguishable from
+    // selection ("Selected row", "Keyboard, focus and tabs": the focus colour
+    // is distinct from selection and error). The controls draw their
+    // keyboard focus (visualFocus) in the focus role; the accent keeps the
+    // default button's outline and a focused field's border (the K2 card:
+    // the accent drives the focused field border). Live, in every theme and
+    // with every accent; without a profile Fusion's own.
+    void keyboardFocusInTheFocusRole()
+    {
+        ui::SettingsStore store;
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] {
+            ui::theme::useSettings(nullptr);
+            QGuiApplication::setPalette(before);
+        });
+        ui::theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
+        QQmlEngine engine;
+        QQmlComponent component(&engine);
+        component.setData(R"(
+import QtQuick
+import QtQuick.Controls
+Window {
+    width: 400; height: 400; visible: true
+    property var controls: [button, toolButton, combo, check, radio]
+    property var outlines: [button.background.border.color, toolButton.background.border.color,
+        combo.background.border.color, check.indicator.border.color, radio.indicator.border.color]
+    property color defaultOutline: primary.background.border.color
+    property color fieldOutline: field.background.border.color
+    property Item field: field
+    Column {
+        Button { id: button; text: "B" }
+        ToolButton { id: toolButton; text: "T" }
+        ComboBox { id: combo; model: ["a"] }
+        CheckBox { id: check; text: "c" }
+        RadioButton { id: radio; text: "r" }
+        Button { id: primary; text: "P"; highlighted: true }
+        TextField { id: field }
+    }
+}
+)", QUrl(QStringLiteral("qrc:/k2-focus.qml")));
+        std::unique_ptr<QObject> object(component.create());
+        QVERIFY2(object, qPrintable(component.errorString()));
+        auto *window = qobject_cast<QWindow *>(object.get());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+        QList<QObject *> controls;
+        for (const QVariant &c : object->property("controls").toList())
+            controls.append(c.value<QObject *>());
+        QCOMPARE(controls.size(), 5);
+        const auto outline = [&](qsizetype i) { return object->property("outlines").toList()[i].value<QColor>(); };
+        const auto colour = [&](const char *name) { return object->property(name).value<QColor>(); };
+        const auto tabTo = [](QObject *item) {
+            QVERIFY(QMetaObject::invokeMethod(item, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::TabFocusReason)));
+            QTRY_VERIFY(item->property("visualFocus").toBool());
+        };
+        const auto check = [&](const ui::theme::Roles &r, const QString &what) {
+            QVERIFY2(r.focus != r.accent, qPrintable(what));
+            for (qsizetype i = 0; i < controls.size(); ++i) {
+                tabTo(controls[i]);
+                QTRY_VERIFY2(outline(i) == r.focus,
+                             qPrintable(QStringLiteral("%1: control %2 focused %3, focus %4")
+                                            .arg(what).arg(i).arg(name(outline(i)), name(r.focus))));
+                for (qsizetype j = 0; j < controls.size(); ++j)
+                    if (j != i)
+                        // (the palette reaches the controls an event loop pass later)
+                        QTRY_VERIFY2(outline(j) == r.line, qPrintable(QStringLiteral("%1: control %2").arg(what).arg(j)));
+                // The default button keeps the accent's outline.
+                QTRY_VERIFY2(colour("defaultOutline") != r.focus && colour("defaultOutline") != r.line, qPrintable(what));
+            }
+            // A focused field's border is the accent's outline, not the focus role.
+            auto *field = object->property("field").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(field, "forceActiveFocus", Q_ARG(Qt::FocusReason, Qt::TabFocusReason)));
+            QTRY_VERIFY(field->property("activeFocus").toBool());
+            QTRY_COMPARE(colour("fieldOutline"), colour("defaultOutline"));
+            QVERIFY(colour("fieldOutline") != r.focus);
+        };
+        for (const Code code : ui::theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            check(ui::theme::current().roles, ui::theme::codeName(code));
+            if (QTest::currentTestFailed())
+                return;
+        }
+        // Every accent preset's focus colour reaches the controls.
+        for (const bool dark : {false, true}) {
+            store.setValue(QStringLiteral("appearance.theme"), dark ? QStringLiteral("dark") : QStringLiteral("light"));
+            for (const auto &a : ui::theme::accents(dark)) {
+                store.setValue(QLatin1String(dark ? ui::theme::kDarkAccentSetting : ui::theme::kLightAccentSetting),
+                               QLatin1String(a.key));
+                QCOMPARE(ui::theme::current().roles.focus, a.focus);
+                tabTo(controls[0]);
+                QTRY_COMPARE(outline(0), a.focus);
+            }
+        }
+        // Without a profile the controls are Fusion's: focus in the
+        // highlight's outline, as the default button's.
+        ui::theme::useSettings(nullptr);
+        tabTo(controls[0]);
+        QTRY_COMPARE(outline(0), colour("defaultOutline"));
     }
 
     // The swatch sheet for the user's review: per mode, the seven accents as
