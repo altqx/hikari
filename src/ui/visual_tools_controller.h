@@ -162,10 +162,6 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
-    // Legacy's renderer made the crosshair at open only for an ASS Document
-    // (RendererVideo.cpp:113-114) and again at the next edit (SetVisual,
-    // SubsGridBase.cpp:1181-1187).
-    bool m_crossPresent = false;
 };
 
 } // namespace hikari::ui

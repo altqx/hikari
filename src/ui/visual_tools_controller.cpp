@@ -69,7 +69,18 @@ void VisualToolsController::setTool(Family family, std::unique_ptr<VisualTool> t
 
 VisualTool *VisualToolsController::tool() const
 {
-    if (m_family == Family::Crosshair && !m_crossPresent)
+    // Legacy's renderer holds a tool (m_Visual) exactly while its tab's
+    // Document is ASS: made when the renderer opens unless the rail is
+    // disabled (RendererVideo.cpp:113-114, VideoBox.cpp:315-321), made when an
+    // ASS Document arrives with the video already open (VideoBox::
+    // DisableVisuals, VideoBox.cpp:1748-1758, from Notebook.cpp:1145,
+    // SubsGridBase.cpp:981, SubsGrid.cpp:1184, HikariSubFrame.cpp:1169) and
+    // deleted for any other format (RemoveVisual(false, true),
+    // RendererVideo.cpp:1133-1146). An edit never makes it while the
+    // crosshair is the tool (SubsGridBase.cpp:1168, EditBox.cpp:485, 979,
+    // SubsGridWindow.cpp:1399 run SetVisual only above CROSS).
+    const auto *s = editingSession();
+    if (!s || s->document().format() != core::SubtitleFormat::Ass)
         return nullptr;
     return m_tools[static_cast<std::size_t>(m_family)].get();
 }
@@ -105,14 +116,9 @@ void VisualToolsController::syncGeometry()
     const SourceGeometry geometry = m_video.session().sourceGeometry();
     if (geometry == m_geometry && m_view.hasVideo() == geometry.valid())
         return;
-    const bool opened = geometry.valid() && !m_view.hasVideo();
     m_geometry = geometry;
     if (geometry.valid()) {
         m_view.open(geometry);
-        if (opened) {
-            const auto *s = editingSession();
-            m_crossPresent = s && s->document().format() == core::SubtitleFormat::Ass;
-        }
     } else {
         m_view.close();
     }
@@ -147,8 +153,6 @@ void VisualToolsController::refresh()
         m_picker.clear();
         reset = true;
     } else if (revision != m_seenRevision) {
-        if (m_view.hasVideo())
-            m_crossPresent = true; // the next SetVisual makes it
         reset = true;
     }
     if (active != m_seenActive)
@@ -326,8 +330,6 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
-    if (m_view.hasVideo())
-        m_crossPresent = true; // RendererVideo::SetVisual makes the tool
     resetTool();
 }
 

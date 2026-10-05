@@ -6516,6 +6516,70 @@ private slots:
         QCOMPARE(tools.activeFamily(), 0);
     }
 
+    // T1: converting the Document moves the crosshair with it: to ASS
+    // makes it (HikariSubFrame::OnConversion, DisableVisuals(false),
+    // HikariSubFrame.cpp:1169), from ASS deletes it (RemoveVisual(true,
+    // true), HikariSubFrame.cpp:1166-1168; RendererVideo.cpp:1133-1146), and
+    // an edit never brings it back (SubsGrid::ShowEditOnVideo runs no
+    // SetVisual below CHANGEPOS, SubsGridBase.cpp:1168).
+    void visualCrosshairFollowsTheDocumentFormat()
+    {
+        const QString path = dir.filePath(QStringLiteral("cross.srt"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("1\n00:00:01,000 --> 00:00:02,000\nfirst\n\n2\n00:00:03,000 --> 00:00:04,000\nsecond\n\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &tools = application->visualTools();
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const QPoint p = videoPoint(tools.videoRect().center());
+        // SRT: no crosshair, not even after an edit, and a Ctrl+click
+        // writes nothing.
+        QVERIFY(!tools.tool());
+        QVERIFY(session->editDraftText(session->document().lines()[0]->id, u8"edited"));
+        QVERIFY(application->editor().commit());
+        QVERIFY(!tools.tool());
+        QTest::mouseMove(window, p);
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+        std::size_t steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p);
+        QCOMPARE(session->historySize(), steps);
+
+        // Converted to ASS (at the video's resolution, so no resolution
+        // question): the crosshair, hidden until the next move.
+        application->setConversionOptions({{QStringLiteral("resolutionWidth"), 320},
+                                           {QStringLiteral("resolutionHeight"), 240}});
+        QVERIFY(application->previewConversion(QStringLiteral("ass")).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->acceptConversion());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
+        QVERIFY(tools.railEnabled());
+        QVERIFY(tools.tool());
+        QVERIFY(tools.overlay().isEmpty());
+        QTest::mouseMove(window, p + QPoint(2, 1));
+        QTRY_COMPARE(tools.overlay().size(), 5);
+
+        // Back to SRT: gone, and an edit does not bring it back.
+        QVERIFY(application->previewConversion(QStringLiteral("srt")).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->acceptConversion());
+        QCOMPARE(session->document().format(), core::SubtitleFormat::Srt);
+        QVERIFY(!tools.railEnabled());
+        QVERIFY(!tools.tool());
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(session->editDraftText(session->document().lines()[1]->id, u8"typed"));
+        QVERIFY(application->editor().commit());
+        QVERIFY(!tools.tool());
+        QTest::mouseMove(window, p + QPoint(4, 3));
+        QVERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+        steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::ControlModifier, p + QPoint(4, 3));
+        QCOMPARE(session->historySize(), steps);
+    }
+
     // T1: the visual tools edit the editing target only. With the Protected
     // reference the only Document there is none, so the rail is disabled
     // and a Ctrl+click (legacy Cross's \pos, VisualCross.cpp) writes nothing
