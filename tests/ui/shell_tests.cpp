@@ -8489,6 +8489,9 @@ private slots:
             return QString();
         };
         application->selectLine(sign.value);
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
@@ -8757,6 +8760,9 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         const core::LineId sign = session->document().lines()[2]->id;
         application->selectLine(sign.value);
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
@@ -8835,6 +8841,9 @@ private slots:
             return QString();
         };
         application->selectLine(sign.value);
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("vfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_COMPARE_WITH_TIMEOUT(application->video().session().shownFrame(), std::optional<int>(12), 20000);
@@ -8886,6 +8895,9 @@ private slots:
         QVERIFY(application->openFile(visualDocument(
             "transform.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}third\n")));
         auto &tools = application->visualTools();
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
@@ -9268,6 +9280,9 @@ private slots:
     {
         QVERIFY(application->openFile(visualDocument("clip.ass")));
         auto &tools = application->visualTools();
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         // The active Line's start shown, not only requested: the tools take
@@ -9402,6 +9417,9 @@ private slots:
             "clipvideo.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(0,0)\\bord0\\shad0"
                              "\\clip(m 0 0 l 160 0 160 120 0 120)\\p1}m 0 0 l 320 0 320 240 0 240\n")));
         auto &tools = application->visualTools();
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
+        // default opens it at its first frame, VideoBox.cpp:407-410).
+        application->settingsStore()->set("video.openAtActiveLine", true);
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
