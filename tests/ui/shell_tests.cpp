@@ -11,6 +11,7 @@
 #include "line_table_model.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
+#include "media/mkv_fixture.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
 
@@ -1993,6 +1994,80 @@ private slots:
             // F4-rules-cr keeps it checked on both platforms.
             QVERIFY(rules[1].toMap().value(QStringLiteral("checked")).toBool());
         }
+    }
+
+    // Y9: the font collector's "Demux fonts from loaded MKV file"
+    // (FontCollector.cpp:181-183, 440-541, 913-982): enabled for an MKV
+    // video, read from FONT_COLLECTOR_FROM_MKV and never written; Start lists
+    // the font attachments, Apply writes their bytes into the folder or the
+    // archive with legacy's messages.
+    void fontCollectorDemuxesMkvFonts()
+    {
+        const QString subs = writeFile(dir, "mkvfonts.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n");
+        QVERIFY(application->openFile(subs));
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        auto &collector = application->fontCollector();
+        auto *dialog = named("fontCollectorDialog");
+        QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *fromMkv = dialogItem("fontCollectorDialog", "fontCollectorFromMkv");
+        QVERIFY(fromMkv);
+        QCOMPARE(fromMkv->property("text").toString(), QStringLiteral("Demux fonts from loaded MKV file"));
+        // Enabled for an MKV video whatever the Options choice (at open).
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
+        QVERIFY(fromMkv->property("enabled").toBool());
+        QVERIFY(!fromMkv->property("checked").toBool());
+        // An Options change: only the copy modes keep it enabled.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+        QVERIFY(fromMkv->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(fromMkv, "click"));
+        QVERIFY(collector.fromMkv());
+        const QString folder = QDir::toNativeSeparators(dir.filePath(QStringLiteral("mkvfonts")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", folder);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        const QString sep = QDir::separator();
+        QCOMPARE(collector.logText(), QStringLiteral("Font named \"Extract Sans.ttf\".\nFont named \"Extract Serif.otf\".\n"
+                                                     "\nReady to copy 2 fonts to \"%1\".\n")
+                                          .arg(folder + sep));
+        QVERIFY(!QFileInfo::exists(folder)); // nothing written before Apply
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        const QString log = collector.logText();
+        QVERIFY2(log.startsWith(QStringLiteral("Saved a font named \"Extract Sans.ttf\".\n \n"
+                                               "Saved a font named \"Extract Serif.otf\".\n \n"
+                                               "Completed successfully and copied 2 fonts.\nFinished in 00:00:")),
+                 qPrintable(log));
+        const auto fonts = mkvfixture::mkvExtractFonts();
+        for (const auto &[file, index] : {std::pair{"Extract Sans.ttf", 0}, std::pair{"Extract Serif.otf", 1}}) {
+            QFile f(QDir(folder).filePath(QLatin1String(file)));
+            QVERIFY2(f.open(QIODevice::ReadOnly), file);
+            QCOMPARE(f.readAll(), QByteArray::fromStdString(fonts[std::size_t(index)].data));
+        }
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
+        // The archive: one entry per font under its name.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
+        const QString archive = QDir::toNativeSeparators(dir.filePath(QStringLiteral("mkvfonts.zip")));
+        dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", archive);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QVERIFY(collector.logText().endsWith(QStringLiteral("Ready to add 2 fonts to the archive \"%1\".\n").arg(archive)));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorApply"), "click"));
+        QVERIFY(collector.waitIdle());
+        QFile zip(archive);
+        QVERIFY(zip.open(QIODevice::ReadOnly));
+        const QByteArray zipped = zip.readAll();
+        QVERIFY(zipped.contains("Extract Sans.ttf") && zipped.contains("Extract Serif.otf"));
+        // FONT_COLLECTOR_FROM_MKV is read, never written.
+        QVERIFY(!application->settingsStore()->boolean("fontCollector.fromMkv"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     // Y8: Subtitles > Font collector (legacy FontCollectorDialog): check

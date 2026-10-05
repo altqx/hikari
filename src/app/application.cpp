@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
@@ -552,6 +553,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                     tab.document = std::make_shared<core::Document>(session->document());
                 if (const auto destination = m_files->destination(id))
                     tab.path = QString::fromStdString(destination->value);
+                if (const auto media = m_tabMedia.find(id.value); media != m_tabMedia.end())
+                    tab.video = media->second.video; // Y9: the tab's VideoPath
                 out.push_back(std::move(tab));
             }
             return out;
@@ -574,6 +577,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             goTo(tab, [name](const core::LineRecord &l, int) { return core::toUtf16(l.style) == name; });
         };
         m_fontCollector = std::make_unique<FontCollectorController>(*m_settings, std::move(hooks));
+        // Y9: "Demux fonts from loaded MKV file" reads attachments through a
+        // media helper of its own.
+        m_fontCollector->setMatroskaPort(
+            std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)));
     }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.

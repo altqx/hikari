@@ -33,6 +33,7 @@ Dialog {
         path.text = collector.directory
         options.itemAt(collector.action).checked = true
         subsDirectory.checked = collector.useSubsDirectory
+        fromMkv.checked = collector.fromMkv
         acknowledge.checked = false
         open()
         startButton.forceActiveFocus()
@@ -152,6 +153,15 @@ Dialog {
             ToolTip.text: qsTr("Saves to the video folder\nwhen demuxing fonts from an MKV file.")
             ToolTip.visible: hovered
             onToggled: dialog.changeOptions()
+        }
+        // Y9: FontCollector.cpp:181-183, enabled for an MKV video (and,
+        // after an Options change, only for the copy modes).
+        CheckBox {
+            id: fromMkv
+            objectName: "fontCollectorFromMkv"
+            text: qsTr("Demux fonts from loaded MKV file")
+            enabled: !dialog.working && dialog.collector.fromMkvEnabled
+            onToggled: dialog.collector.setFromMkv(checked)
         }
         ScrollView {
             Layout.fillWidth: true
