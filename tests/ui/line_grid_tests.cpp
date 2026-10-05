@@ -2,11 +2,14 @@
 
 #include "line_grid.h"
 #include "line_table_model.h"
+#include "settings_store.h"
+#include "theme.h"
 #include "hikari/core/ass_load.h"
 
 #include <QDir>
 #include <QImage>
 #include <QPainter>
+#include <QScopeGuard>
 #include <QTest>
 
 #include <cstdio>
@@ -200,6 +203,67 @@ private slots:
         QCOMPARE(outline0, 0);
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comparison-frame.png")));
+    }
+
+    // K2: the Grid paints with the theme layer's roles in every theme: the
+    // header on the raised surface, rows on the panel with every other one
+    // in the theme's alternate shade, a selected row on the selected
+    // background with the 3-wide leading accent marker (visual-language.md,
+    // "Selected row marker"), the active Line outlined in the accent, the
+    // empty area below the rows on the panel. (The repaint on a theme change
+    // is hikari_ui_shell_tests themeSwitchRetintsEverySurface's.)
+    void paintsTheThemeRoles()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,plain\n"
+                             "Comment: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,a comment\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,selected\n"
+                             "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,active\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setDocument(core::loadAss(bytes).document);
+        model.setSelection({core::LineId{4}, {core::LineId{3}}}, core::LineId{3});
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 160));
+        grid.setModel(&model);
+        SettingsStore store;
+        auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
+        theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        // Between the Actor and Left columns' text (the Actor cells are empty).
+        QCOMPARE(grid.columnTitle(6), QStringLiteral("Left"));
+        const int right = int(grid.cellRect(0, 6).left()) - 6;
+        for (const auto code : theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
+            const auto &roles = theme::current().roles;
+            const auto &content = theme::current().content;
+            QImage image(720, 160, QImage::Format_ARGB32);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            painter.end();
+            QCOMPARE(grid.lastPaintedRowCount(), 4);
+            const auto expect = [&](int x, int y, const QColor &colour, const char *what) {
+                QVERIFY2(image.pixelColor(x, y) == colour,
+                         qPrintable(QStringLiteral("%1 %2: %3, expected %4")
+                                        .arg(theme::codeName(code), QLatin1String(what), image.pixelColor(x, y).name(),
+                                             colour.name())));
+            };
+            expect(right, int(grid.geometry().headerHeight / 2), roles.raised, "header");
+            expect(right, rowY(0), roles.panel, "row");
+            expect(right, rowY(1), content.gridAlternate, "alternate row");
+            if (!theme::isHighContrast(code)) // high contrast does not shade every other row
+                QVERIFY(content.gridAlternate != roles.panel);
+            expect(right, rowY(2), roles.select, "selected row");
+            expect(1, rowY(2), roles.accent, "selected marker");
+            expect(4, rowY(2), roles.select, "past the 3-wide marker");
+            expect(0, rowY(3), roles.accent, "active outline (left)");
+            expect(719, rowY(3), roles.accent, "active outline (right)");
+            expect(right, rowY(3), content.gridAlternate, "active row");
+            expect(right, 155, roles.panel, "below the rows");
+        }
     }
 
     void followsModelChanges()
