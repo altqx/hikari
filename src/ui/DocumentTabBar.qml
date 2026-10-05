@@ -1,12 +1,15 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Hikari.Ui
 
 // P6: legacy Notebook's tab bar below the workspace. One tab per Document
 // (the protected reference has its own tray). A click shows a tab; the
 // active tab's close mark or a middle click closes a tab through the close
 // review; "+" and a double click on the empty bar add a tab (both write the
-// session, as legacy AddPage(true, true) did).
+// session, as legacy AddPage(true, true) did). K1: the close mark, the new tab
+// button and the modified mark (legacy's "*" between the history step and the
+// name) are the set's icons.
 Item {
     id: bar
     objectName: "documentTabBar"
@@ -46,8 +49,13 @@ Item {
                     Accessible.role: Accessible.PageTab
                     Accessible.name: modelData.title
                     Accessible.checked: modelData.current
+                    Accessible.description: modelData.modified ? qsTr("Modified") : ""
+                    // "<history step>*<name>" while modified: the step, the
+                    // modified mark in place of the "*", the name.
+                    readonly property int mark: modelData.modified ? modelData.label.indexOf("*") : -1
                     implicitHeight: label.implicitHeight + 10
                     implicitWidth: label.implicitWidth + 12 + (closeMark.visible ? closeMark.implicitWidth : 0)
+                                   + (mark >= 0 ? step.implicitWidth + modifiedMark.width + 4 : 0)
                     ToolTip.visible: hovered
                     ToolTip.delay: 600
                     ToolTip.text: modelData.tip
@@ -59,20 +67,34 @@ Item {
                     contentItem: RowLayout {
                         spacing: 2
                         Label {
-                            id: label
-                            text: tab.text
+                            id: step
+                            visible: tab.mark >= 0
+                            text: tab.mark >= 0 ? tab.text.slice(0, tab.mark) : ""
                             font.bold: tab.checked
                             leftPadding: 4
                         }
-                        ToolButton {
+                        Icon {
+                            id: modifiedMark
+                            objectName: "documentTabModified" + tab.index
+                            visible: tab.mark >= 0
+                            iconRole: "document-modified"
+                        }
+                        Label {
+                            id: label
+                            text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
+                            font.bold: tab.checked
+                            leftPadding: tab.mark >= 0 ? 0 : 4
+                        }
+                        IconToolButton {
                             id: closeMark
                             objectName: "documentTabClose" + tab.index
                             visible: tab.checked
-                            text: "×"
+                            iconRole: "tab-close"
+                            text: qsTr("Close %1").arg(tab.modelData.title)
                             focusPolicy: Qt.NoFocus
+                            padding: 1
                             implicitWidth: 18
                             implicitHeight: 18
-                            Accessible.name: qsTr("Close %1").arg(tab.modelData.title)
                             onClicked: bar.closeRequested(tab.index)
                         }
                     }
@@ -83,11 +105,11 @@ Item {
                     }
                 }
             }
-            ToolButton {
+            IconToolButton {
                 objectName: "newTabButton"
-                text: "+"
+                iconRole: "tab-new"
+                text: qsTr("Open new tab")
                 focusPolicy: Qt.NoFocus
-                Accessible.name: qsTr("Open new tab")
                 onClicked: bar.app.addPage(true)
             }
         }

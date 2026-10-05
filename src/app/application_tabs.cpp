@@ -59,7 +59,9 @@ QVariantList Application::tabs() const
         const QString name = title ? qs(*title) : QString();
         QString label = name;
         // HikariSubFrame::Label: "<history step>*<name>" while modified.
-        if (auto *session = m_files->session(id); session && session->isDirty())
+        const auto *session = m_files->session(id);
+        const bool modified = session && session->isDirty();
+        if (modified)
             label = QStringLiteral("%1*%2").arg(session->historyCursor()).arg(name);
         // Notebook draws at most maxCharPerTab characters of a name.
         label.truncate(m_tabTextMax);
@@ -69,6 +71,7 @@ QVariantList Application::tabs() const
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("label"), label},
                             {QStringLiteral("title"), name},
+                            {QStringLiteral("modified"), modified},
                             {QStringLiteral("current"), target == id},
                             // The tab's tooltip: SubsName, then VideoName.
                             {QStringLiteral("tip"), name + QLatin1Char('\n') + video}};
