@@ -17,6 +17,8 @@ Dialog {
     required property LineEditorController editor
     required property var catalogs // Y6: FontCatalogsController
     title: qsTr("Select a font")
+    // K1: the title with its icon, as the other dialogs show theirs.
+    header: IconDialogHeader { objectName: "fontDialogTitle"; iconRole: "tag-font"; text: dialog.title }
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     property bool loading: false
@@ -105,6 +107,9 @@ Dialog {
                 ListView {
                     id: fontList
                     objectName: "fontList"
+                    // The list takes the room the group has (it left a wide
+                    // gap before the fields).
+                    Layout.fillWidth: true
                     Layout.preferredWidth: 250
                     Layout.preferredHeight: 200
                     clip: true
@@ -129,6 +134,7 @@ Dialog {
                         id: fontName
                         objectName: "fontName"
                         Layout.preferredWidth: 150
+                        placeholderText: qsTr("Font name")
                         Accessible.name: qsTr("Font name")
                         onTextChanged: {
                             // OnUpdateText: FontList::SetSelectionByPartialName.
@@ -144,6 +150,7 @@ Dialog {
                         id: fontSize
                         objectName: "fontSize"
                         Layout.preferredWidth: 80
+                        placeholderText: qsTr("Size")
                         Accessible.name: qsTr("Font size")
                         validator: DoubleValidator { bottom: 1; top: 10000; notation: DoubleValidator.StandardNotation }
                         onTextChanged: if (acceptableInput) dialog.changed()

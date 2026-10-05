@@ -70,7 +70,8 @@ private slots:
         QCOMPARE(macros.value(2).toMap().value("alias").toString(), QStringLiteral("host-fixture.lua:2"));
         QTRY_VERIFY(item(QStringLiteral("macro_0_2")));
         QCOMPARE(item(QStringLiteral("macro_0_2"))->property("text").toString(), QStringLiteral("Count"));
-        QCOMPARE(item(QStringLiteral("state_0"))->property("text").toString(), QStringLiteral("ready"));
+        QCOMPARE(item(QStringLiteral("state_0"))->property("scriptState").toString(), QStringLiteral("ready"));
+        QCOMPARE(item(QStringLiteral("state_0"))->property("text").toString(), QStringLiteral("Ready"));
     }
 
     void aFailedLoadSaysWhy()

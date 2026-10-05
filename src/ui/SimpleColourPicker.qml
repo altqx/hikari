@@ -186,6 +186,7 @@ Window {
             id: note
             objectName: "simpleDropperUnavailable"
             Layout.maximumWidth: 240
+            Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
             wrapMode: Text.WordWrap
             visible: text.length > 0
             text: window.sampler.available ? window.portalNote : window.sampler.unavailableReason
@@ -193,7 +194,10 @@ Window {
         CheckBox {
             id: moveWindow
             objectName: "moveWindow"
-            text: qsTr("Move the window\nto the color selection location")
+            text: qsTr("Move the window\nto the color selection location").replace("\n", " ")
+            Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
+            Layout.fillWidth: true
+            Layout.maximumWidth: 240
             checked: true
             // The portal reports no location.
             enabled: window.sampler.route === "grab"

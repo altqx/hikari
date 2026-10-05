@@ -38,6 +38,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
@@ -2722,15 +2723,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
-        QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Timing")));
+        QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
         QAccessibleInterface *editorTab = find(top, QAccessible::PageTab, QStringLiteral("Line editor"));
         QVERIFY(editorTab);
-        QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Timing"));
+        QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked); // Timing, just shown, is the selected tab
         QVERIFY(!editorTab->state().checked);
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Line editor")));
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Float tab group"))); // the title bar's, for both
-        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Timing"));
+        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Shift times"));
         QVERIFY(floatTiming);
         floatTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(timingDock->property("isFloating").toBool());
@@ -2738,7 +2739,7 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isFloating").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QAccessibleInterface *closeTiming = nullptr;
-        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Timing"))));
+        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Shift times"))));
         closeTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
@@ -4526,7 +4527,10 @@ private slots:
         // Scope rail on the left, results and change review on the right.
         const auto x = [&](const char *name) { return item(name)->mapToScene(QPointF(0, 0)).x(); };
         QVERIFY(x("findText") < x("findResultsTitle"));
-        QVERIFY(x("replaceAllButton") < x("replaceCheckedButton"));
+        QVERIFY(x("replaceAllButton") < x("findResultsTitle"));
+        // No results yet: the review footer waits for them.
+        QVERIFY(item("findResultsEmpty")->isVisible());
+        QVERIFY(!item("replaceCheckedButton")->isVisible());
         item("findText")->setProperty("editText", QStringLiteral("BETA"));
         item("findReplaceText")->setProperty("editText", QStringLiteral("B"));
         const auto steps = session->historySize();
@@ -6020,8 +6024,11 @@ private slots:
             QCOMPARE(found.size(), controls.size());
             for (std::size_t i = 0; i < controls.size(); ++i) {
                 QCOMPARE(found[i]->objectName(), QLatin1String("setting_") + QLatin1String(controls[i].setting));
+                // The legacy label, its hard line breaks shown as spaces (the
+                // check box wraps in the page's width).
                 if (controls[i].label)
-                    QCOMPARE(found[i]->property("text").toString(), QString::fromUtf8(controls[i].label));
+                    QCOMPARE(found[i]->property("text").toString(),
+                             QString::fromUtf8(controls[i].label).replace(QLatin1Char('\n'), QLatin1Char(' ')));
                 shown.insert(controls[i].setting);
             }
         }
@@ -9427,13 +9434,48 @@ private slots:
             QCOMPARE(button->property("text").toString(), QString::fromLatin1(tip.data(), tip.size()));
             QCOMPARE(button->property("checked").toBool(), i == 0);
             QVERIFY(button->isEnabled());
-            // K1: the family's icon of the set beside its name (legacy's bitmaps).
+            // K1: the family's icon of the set (legacy's bitmaps). The rail is
+            // an icon-only tool strip (visual-language.md, "Tool strips"):
+            // the icon is the button's content, the name its tooltip and
+            // accessible name, the on family the style's checked button,
+            // reached by Tab.
             auto *icon = visualItem(qPrintable(QStringLiteral("visualToolIcon%1").arg(i)));
             QVERIFY(icon && icon->isVisible());
             QVERIFY(icon->property("valid").toBool());
+            QCOMPARE(button->property("contentItem").value<QQuickItem *>(), icon);
+            QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+            const QString name = QString::fromLatin1(tip.data(), tip.size());
+            QVERIFY2(QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString().startsWith(name),
+                     qPrintable(name));
+            QCOMPARE(QQmlProperty(button, QStringLiteral("Accessible.name"), qmlContext(button)).read().toString(), name);
+            QAccessibleInterface *a11y = QAccessible::queryAccessibleInterface(button);
+            QVERIFY(a11y);
+            QCOMPARE(a11y->text(QAccessible::Name), name);
+            QVERIFY(button->property("focusPolicy").toInt() & Qt::TabFocus);
+            QVERIFY(button->width() <= 32);
         }
         QCOMPARE(visualItem("visualToolIcon0")->property("iconRole").toString(), QStringLiteral("tool-crosshair"));
         QCOMPARE(visualItem("visualToolIcon10")->property("iconRole").toString(), QStringLiteral("tool-all-tags"));
+        // No family name is drawn on the rail, which stays a narrow strip.
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            QVERIFY(rail);
+            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
+            QStringList names;
+            for (const auto &f : application::visual::families())
+                names << QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+            QList<QQuickItem *> pending{rail};
+            while (!pending.isEmpty()) {
+                QQuickItem *it = pending.takeLast();
+                pending << it->childItems();
+                if (it->isVisible() && it->inherits("QQuickText"))
+                    QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
+            }
+        }
+        // The crosshair has no options or values to edit and edits no batch:
+        // no tool strip below the video, and no "Targets" readout anywhere.
+        QVERIFY(!visualItem("visualToolValues")->isVisible());
+        QVERIFY(!visualItem("visualBatch"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
@@ -9568,9 +9610,23 @@ private slots:
 
         // The batch picker: both Lines picked, then the selection and the
         // active Line move to the second alone; the drag still edits both.
+        // It is an icon-only button whose state is its checked look (the
+        // count in its tooltip); Clear shows only while there is a batch.
+        auto *pick = visualItem("visualPickBatch");
+        QVERIFY(pick && pick->isVisible());
+        QCOMPARE(pick->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QCOMPARE(pick->property("iconRole").toString(), QStringLiteral("pick-lines"));
+        QCOMPARE(QQmlProperty(pick, QStringLiteral("Accessible.name"), qmlContext(pick)).read().toString(),
+                 QStringLiteral("Pick selected lines"));
+        QVERIFY(!pick->property("checked").toBool());
+        QVERIFY(!visualItem("visualClearBatch")->isVisible());
         application->selectAllLines();
-        QVERIFY(QMetaObject::invokeMethod(visualItem("visualPickBatch"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(pick, "click"));
         QCOMPARE(tools.batchCount(), 2);
+        QTRY_VERIFY(pick->property("checked").toBool());
+        QVERIFY(pick->property("tip").toString().contains(QStringLiteral("2 line")));
+        QTRY_VERIFY(visualItem("visualClearBatch")->isVisible());
+        QCOMPARE(visualItem("visualClearBatch")->property("iconRole").toString(), QStringLiteral("clear"));
         application->selectLine(second.value);
         const std::size_t before = session->historySize();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
@@ -9581,6 +9637,8 @@ private slots:
         QVERIFY(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\pos(")));
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualClearBatch"), "click"));
         QCOMPARE(tools.batchCount(), 0);
+        QTRY_VERIFY(!visualItem("visualClearBatch")->isVisible());
+        QVERIFY(!pick->property("checked").toBool());
 
         // Outside the Line's time: the warning, and the tool takes nothing.
         QVERIFY(application->video().showFrameAt(0));
@@ -12590,7 +12648,11 @@ private slots:
         wheelAt(c, -10); // never below 1
         QCOMPARE(view.zoomPercent(), 100);
         wheelAt(c, 3);
-        QCOMPARE(view.zoomPercent(), 130);
+        // Legacy truncates the zoom rectangle's float ratio (VideoBox.cpp:
+        // 1301-1315), so 1.3 reads 129 or 130 with the panel's width (the
+        // icon-only rail left the video a width where it reads 129).
+        const int zoomed = view.zoomPercent();
+        QVERIFY2(zoomed == 130 || zoomed == 129, qPrintable(QString::number(zoomed)));
         // Ctrl+wheel resized legacy's video window (VideoBox.cpp:500-511,
         // TabPanel::SetVideoWindowSizes); the docked panel's size is the
         // layout's, so it does nothing: no zoom, no size, no volume
@@ -12601,7 +12663,7 @@ private slots:
             const int volumeBefore = view.volume();
             wheelAt(c, 3, Qt::ControlModifier);
             wheelAt(c, -3, Qt::ControlModifier);
-            QCOMPARE(view.zoomPercent(), 130);
+            QCOMPARE(view.zoomPercent(), zoomed);
             QCOMPARE(item("videoPanel")->size(), panelSize);
             QCOMPARE(tools.videoRect(), videoArea);
             QCOMPARE(view.volume(), volumeBefore);

@@ -108,9 +108,11 @@ Dialog {
                 Layout.fillWidth: true
                 Accessible.name: qsTr("Catalogs:")
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCatalogAddCatalog"
+                iconRole: "add"
                 text: qsTr("Add")
+                tip: qsTr("Add a catalog with this name")
                 onClicked: {
                     const name = catalogField.editText
                     if (name.length > 0) {
@@ -120,14 +122,18 @@ Dialog {
                     }
                 }
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCatalogEdit"
+                iconRole: "edit"
                 text: qsTr("Edit")
+                tip: qsTr("Edit the catalog")
                 onClicked: edition.openFor(window.findIndex(catalogField.editText))
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCatalogDelete"
+                iconRole: "delete"
                 text: qsTr("Delete")
+                tip: qsTr("Delete the catalog")
                 onClicked: {
                     const name = catalogField.editText
                     const index = window.findIndex(name)
@@ -138,16 +144,18 @@ Dialog {
                     }
                 }
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCatalogLoad"
+                iconRole: "import"
                 text: qsTr("Load")
+                tip: qsTr("Load a catalog from a file")
                 onClicked: loadDialog.open()
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCatalogRefreshFonts"
+                iconRole: "refresh"
                 text: qsTr("Refresh fonts")
-                ToolTip.visible: hovered
-                ToolTip.text: qsTr("Reads the installed and external fonts again")
+                tip: qsTr("Refresh fonts: reads the installed and external fonts again")
                 onClicked: {
                     window.catalogs.refreshFonts()
                     const font = list.currentIndex >= 0 ? window.fonts[list.currentIndex] : ""
@@ -221,10 +229,18 @@ Dialog {
                             window.marked = marks
                         }
                     }
-                    Label { text: row.modelData; elide: Text.ElideRight; Layout.preferredWidth: 260 }
+                    // On the selection, the selection's text colour (the
+                    // label kept the window text colour on the highlight).
+                    Label {
+                        text: row.modelData
+                        elide: Text.ElideRight
+                        Layout.preferredWidth: 260
+                        color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
+                    }
                     Button {
                         objectName: "fontCatalogCell"
-                        text: window.rowCatalogs[row.index] || ""
+                        // An empty cell says so rather than draw a blank box.
+                        text: window.rowCatalogs[row.index] || "\u2014"
                         enabled: true
                         Layout.preferredWidth: 140
                         Accessible.name: qsTr("Catalog of %1").arg(row.modelData)
@@ -240,6 +256,7 @@ Dialog {
                         font.family: row.modelData
                         elide: Text.ElideRight
                         Layout.fillWidth: true
+                        color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
                     }
                 }
             }
@@ -253,9 +270,17 @@ Dialog {
             fillMode: Image.Pad
             source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
         }
+        // The footer: the autosave note in the muted colour, and Close
+        // (the window is not modal).
         RowLayout {
-            Label { objectName: "fontCatalogStatus"; text: window.catalogs.autosaveStatus; Layout.preferredWidth: 160 }
-            Label { text: qsTr("The catalog list has autosave; files are stored in the \"Config\" folder."); Layout.fillWidth: true; elide: Text.ElideRight }
+            Label { objectName: "fontCatalogStatus"; text: window.catalogs.autosaveStatus; color: Theme.muted }
+            Label {
+                text: qsTr("The catalog list has autosave; files are stored in the \"Config\" folder.")
+                color: Theme.muted
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+            Button { objectName: "fontCatalogClose"; text: qsTr("Close"); onClicked: window.close() }
         }
     }
 

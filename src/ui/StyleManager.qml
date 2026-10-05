@@ -242,11 +242,12 @@ Window {
                         ToolTip.text: qsTr("Style catalog")
                         onActivated: (i) => { manager.styles.chooseCatalog(model[i]); manager.storeSelected = [0] }
                     }
-                    Button { objectName: "newCatalog"; text: qsTr("New"); ToolTip.text: qsTr("New style catalog"); onClicked: newCatalog.open() }
-                    Button {
+                    IconToolButton { objectName: "newCatalog"; iconRole: "add"; text: qsTr("New"); tip: qsTr("New style catalog"); onClicked: newCatalog.open() }
+                    IconToolButton {
                         objectName: "deleteCatalog"
+                        iconRole: "delete"
                         text: qsTr("Delete")
-                        ToolTip.text: qsTr("Delete selected style catalog")
+                        tip: qsTr("Delete selected style catalog")
                         enabled: manager.styles.catalog !== "Default"
                         onClicked: deleteCatalogQuestion.open()
                     }
@@ -269,25 +270,32 @@ Window {
                         onPicked: (rows) => manager.storeSelected = rows
                         onEdit: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true)
                     }
+                    // The list's commands, an icon-only column of 22-pixel
+                    // buttons (legacy's text buttons and arrow bitmaps): the
+                    // name in the tooltip and as the accessible name.
                     ColumnLayout {
-                        Button { objectName: "storeNew"; text: qsTr("New"); ToolTip.text: qsTr("Create new style in storage"); onClicked: manager.beginEditing(manager.styles.beginNew(true), true) }
-                        Button { objectName: "storeCopy"; text: qsTr("Copy"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(true, manager.storeSelected[0]), true) }
-                        Button { objectName: "storeEdit"; text: qsTr("Edit"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true) }
-                        Button { text: qsTr("Load"); ToolTip.text: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.open() } }
-                        Button { objectName: "storeDelete"; text: qsTr("Delete"); enabled: manager.storeSelected.length > 0; onClicked: manager.storeSelected = manager.styles.removeStyles(true, manager.storeSelected) }
-                        Button { text: qsTr("Sort"); onClicked: { manager.styles.sortStyles(true); manager.storeSelected = [0] } }
-                        Button { text: "⇈"; Accessible.name: qsTr("Move selected styles to beginning"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 0) }
-                        Button { text: "↑"; Accessible.name: qsTr("Move selected styles up"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 1) }
-                        Button { text: "↓"; Accessible.name: qsTr("Move selected styles down"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 2) }
-                        Button { text: "⇊"; Accessible.name: qsTr("Move selected styles to end"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 3) }
+                        Layout.alignment: Qt.AlignTop
+                        spacing: 0
+                        IconToolButton { padding: 3; objectName: "storeNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new style in storage"); onClicked: manager.beginEditing(manager.styles.beginNew(true), true) }
+                        IconToolButton { padding: 3; objectName: "storeCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(true, manager.storeSelected[0]), true) }
+                        IconToolButton { padding: 3; objectName: "storeEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true) }
+                        IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.open() } }
+                        IconToolButton { padding: 3; objectName: "storeDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.storeSelected.length > 0; onClicked: manager.storeSelected = manager.styles.removeStyles(true, manager.storeSelected) }
+                        IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(true); manager.storeSelected = [0] } }
+                        ToolSeparator { orientation: Qt.Horizontal; Layout.preferredWidth: 22; padding: 0 }
+                        IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 0) }
+                        IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 1) }
+                        IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 2) }
+                        IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.storeSelected = manager.styles.moveStyles(true, manager.storeSelected, 3) }
                     }
                 }
             }
             RowLayout {
-                Button {
+                IconTextButton {
                     objectName: "addToStore"
-                    text: "↑ " + qsTr("Add to storage")
-                    ToolTip.text: qsTr("Copy style from ASS to storage")
+                    iconRole: "move-up"
+                    text: qsTr("Add to storage")
+                    tip: qsTr("Copy style from ASS to storage")
                     enabled: manager.assSelected.length > 0
                     onClicked: {
                         const rows = manager.assSelected
@@ -296,10 +304,11 @@ Window {
                         })
                     }
                 }
-                Button {
+                IconTextButton {
                     objectName: "addToAss"
-                    text: "↓ " + qsTr("Add to ASS")
-                    ToolTip.text: qsTr("Copy style from storage to ASS")
+                    iconRole: "move-down"
+                    text: qsTr("Add to ASS")
+                    tip: qsTr("Copy style from storage to ASS")
                     enabled: manager.storeSelected.length > 0 && manager.styles.available
                     onClicked: {
                         const rows = manager.storeSelected
@@ -308,9 +317,11 @@ Window {
                         })
                     }
                 }
-                Button {
+                IconTextButton {
                     objectName: "addToAllAss"
-                    text: "⇊ " + qsTr("Add to all open ASS files")
+                    iconRole: "move-to-bottom"
+                    text: qsTr("Add to all open ASS files")
+                    tip: qsTr("Copy style from storage to every open ASS file")
                     enabled: manager.storeSelected.length > 0
                     onClicked: {
                         const rows = manager.storeSelected
@@ -341,22 +352,27 @@ Window {
                         onEdit: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false)
                     }
                     ColumnLayout {
-                        Button { objectName: "assNew"; text: qsTr("New"); ToolTip.text: qsTr("Create new ASS style"); onClicked: manager.beginEditing(manager.styles.beginNew(false), false) }
-                        Button { objectName: "assCopy"; text: qsTr("Copy"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(false, manager.assSelected[0]), false) }
-                        Button { objectName: "assEdit"; text: qsTr("Edit"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false) }
-                        Button { text: qsTr("Load"); ToolTip.text: qsTr("Load style from external ASS file"); onClicked: { loadDialog.toStore = false; loadDialog.open() } }
-                        Button { objectName: "assDelete"; text: qsTr("Delete"); enabled: manager.assSelected.length > 0; onClicked: manager.assSelected = manager.styles.removeStyles(false, manager.assSelected) }
-                        Button { text: qsTr("Sort"); onClicked: { manager.styles.sortStyles(false); manager.assSelected = [0] } }
-                        Button {
+                        Layout.alignment: Qt.AlignTop
+                        spacing: 0
+                        IconToolButton { padding: 3; objectName: "assNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new ASS style"); onClicked: manager.beginEditing(manager.styles.beginNew(false), false) }
+                        IconToolButton { padding: 3; objectName: "assCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(false, manager.assSelected[0]), false) }
+                        IconToolButton { padding: 3; objectName: "assEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false) }
+                        IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file"); onClicked: { loadDialog.toStore = false; loadDialog.open() } }
+                        IconToolButton { padding: 3; objectName: "assDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.assSelected.length > 0; onClicked: manager.assSelected = manager.styles.removeStyles(false, manager.assSelected) }
+                        IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(false); manager.assSelected = [0] } }
+                        IconToolButton {
+                            padding: 3
                             objectName: "assClean"
+                            iconRole: "clear"
                             text: qsTr("Clear")
-                            ToolTip.text: qsTr("Delete unused ASS styles")
+                            tip: qsTr("Delete unused ASS styles")
                             onClicked: { message.title = qsTr("Status of deleted styles"); message.text = manager.styles.cleanStyles(); message.open() }
                         }
-                        Button { text: "⇈"; Accessible.name: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) }
-                        Button { text: "↑"; Accessible.name: qsTr("Move selected styles up"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 1) }
-                        Button { text: "↓"; Accessible.name: qsTr("Move selected styles down"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 2) }
-                        Button { text: "⇊"; Accessible.name: qsTr("Move selected styles to end"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 3) }
+                        ToolSeparator { orientation: Qt.Horizontal; Layout.preferredWidth: 22; padding: 0 }
+                        IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) }
+                        IconToolButton { padding: 3; iconRole: "move-up"; text: qsTr("Move selected styles up"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 1) }
+                        IconToolButton { padding: 3; iconRole: "move-down"; text: qsTr("Move selected styles down"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 2) }
+                        IconToolButton { padding: 3; iconRole: "move-to-bottom"; text: qsTr("Move selected styles to end"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 3) }
                     }
                 }
             }
@@ -480,10 +496,20 @@ Window {
                             ColumnLayout {
                                 required property string modelData
                                 property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
+                                // The colour's name above its swatch (a label drawn on the
+                                // swatch was unreadable on light or dark colours).
+                                Label { text: modelData }
                                 Button {
-                                    text: modelData
                                     Accessible.name: modelData
-                                    background: Rectangle { color: Qt.rgba(colour.r / 255, colour.g / 255, colour.b / 255, 1); border.width: 1 }
+                                    implicitWidth: 56
+                                    implicitHeight: 24
+                                    ToolTip.visible: hovered
+                                    ToolTip.text: modelData
+                                    background: Rectangle {
+                                        color: Qt.rgba(colour.r / 255, colour.g / 255, colour.b / 255, 1)
+                                        border.color: Theme.line
+                                        radius: 2
+                                    }
                                     onClicked: { colourPicker.target = parent; colourPicker.selectedColor = Qt.rgba(colour.r / 255, colour.g / 255, colour.b / 255, 1); colourPicker.open() }
                                 }
                                 SpinBox {
@@ -562,7 +588,7 @@ Window {
                             onWidthChanged: manager.updatePreview()
                         }
                         // Legacy STYLE_PREVIEW_TEXT, edited by clicking the preview.
-                        TextField { id: previewText; text: "Podgląd"; Accessible.name: qsTr("Preview text"); Layout.fillWidth: true; onTextEdited: manager.updatePreview() }
+                        TextField { id: previewText; text: manager.catalogs.previewText; Accessible.name: qsTr("Preview text"); Layout.fillWidth: true; onTextEdited: manager.updatePreview() }
                     }
                 }
                 RowLayout {

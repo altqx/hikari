@@ -61,24 +61,23 @@ FocusScope {
                 Accessible.role: Accessible.StaticText
                 Accessible.name: text
             }
-            Button {
+            IconToolButton {
                 objectName: "referenceNearest"
+                iconRole: "go-to-selection"
                 visible: tray.shell.referenceHasNearest
                 text: qsTr("Show nearest Line")
-                flat: true
                 onClicked: tray.app.showNearestReferenceLine()
-                Accessible.name: text
             }
             IconToolButton {
                 objectName: "referencePreviousMatch"
-                iconRole: "audio-previous-line"
+                iconRole: "match-previous"
                 text: qsTr("Previous match")
                 enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex > 0
                 onClicked: tray.app.stepReferenceMatch(-1)
             }
             IconToolButton {
                 objectName: "referenceNextMatch"
-                iconRole: "audio-next-line"
+                iconRole: "match-next"
                 text: qsTr("Next match")
                 enabled: tray.shell.referenceLinked && tray.shell.referenceMatchIndex + 1 < tray.shell.referenceMatchCount
                 onClicked: tray.app.stepReferenceMatch(1)

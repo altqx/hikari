@@ -80,8 +80,8 @@ ScrollView {
                             }
                             contentItem: Item {
                                 implicitWidth: 160
-                                // A sample of the theme: a panel with text, a
-                                // secondary line and an accent button.
+                                // A sample of the theme: a panel with its name,
+                                // secondary lines and an accent button.
                                 Rectangle {
                                     anchors.fill: parent
                                     anchors.margins: 6
@@ -93,7 +93,10 @@ ScrollView {
                                         y: 4
                                         spacing: 2
                                         Text { text: card.text; color: card.roles.text; font.bold: true }
-                                        Text { text: qsTr("Secondary"); color: card.roles.muted; font.pixelSize: 10 }
+                                        // a line of secondary text, drawn as a bar (a
+                                        // sample word read as a label)
+                                        Rectangle { width: 48; height: 3; radius: 1; color: card.roles.muted }
+                                        Rectangle { width: 32; height: 3; radius: 1; color: card.roles.muted }
                                     }
                                     Rectangle {
                                         anchors.right: parent.right
@@ -178,7 +181,7 @@ ScrollView {
                         Label { text: pick.colour; Layout.preferredWidth: 80 }
                         Button {
                             objectName: "highContrastChoose_" + pick.modelData.setting
-                            text: qsTr("Choose...")
+                            text: qsTr("Choose…")
                             Accessible.name: qsTr("Choose %1").arg(pick.modelData.name)
                             onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour)
                         }

@@ -102,43 +102,62 @@ Dialog {
             }
         }
         RowLayout {
-            ListView {
-                id: suggestionList
-                objectName: "spellSuggestions"
-                model: dialog.suggestions
-                clip: true
+            // The suggestions in a framed list, with an empty state.
+            Frame {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 220
                 Layout.minimumWidth: 220
-                Accessible.role: Accessible.List
-                Accessible.name: qsTr("Suggestions")
-                delegate: ItemDelegate {
-                    required property string modelData
-                    required property int index
-                    width: ListView.view.width
-                    text: modelData
-                    highlighted: ListView.isCurrentItem
-                    // A click brings the window back, as any click on
-                    // legacy's window does (OnActive); see actionPressed().
-                    focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
-                    onClicked: {
-                        suggestionList.currentIndex = index
-                        replacement.text = modelData
-                    }
-                    onDoubleClicked: {
-                        replacement.text = modelData
-                        dialog.replace()
+                padding: 1
+                background: Rectangle { color: Theme.field; border.color: Theme.line }
+                Label {
+                    anchors.centerIn: parent
+                    visible: suggestionList.count === 0
+                    color: Theme.muted
+                    text: qsTr("No suggestions")
+                }
+                ListView {
+                    id: suggestionList
+                    objectName: "spellSuggestions"
+                    model: dialog.suggestions
+                    clip: true
+                    anchors.fill: parent
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Suggestions")
+                    delegate: ItemDelegate {
+                        required property string modelData
+                        required property int index
+                        width: ListView.view.width
+                        text: modelData
+                        highlighted: ListView.isCurrentItem
+                        // A click brings the window back, as any click on
+                        // legacy's window does (OnActive); see actionPressed().
+                        focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
+                        onClicked: {
+                            suggestionList.currentIndex = index
+                            replacement.text = modelData
+                        }
+                        onDoubleClicked: {
+                            replacement.text = modelData
+                            dialog.replace()
+                        }
                     }
                 }
             }
             ColumnLayout {
                 Layout.alignment: Qt.AlignTop
                 CheckBox { id: ignoreComments; objectName: "spellIgnoreComments"; text: qsTr("Ignore comments") }
+                // The legacy label's line break is a space here; it wraps in
+                // the buttons' width and the column makes room for it.
                 CheckBox {
                     id: ignoreUpper
                     objectName: "spellIgnoreUpper"
-                    text: qsTr("Ignore words written entirely\nin uppercase")
+                    text: qsTr("Ignore words written entirely\nin uppercase").replace("\n", " ")
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 200
+                    // As tall as its wrapped label (the style sizes it for one line).
+                    Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
+                    Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
                 }
                 Button {
                     id: replaceButton

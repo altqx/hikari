@@ -535,6 +535,10 @@ std::vector<double> LineGrid::columnWidths(double total) const
         case LineTableModel::WrapsColumn: width = fit("00/00", 10); break;
         default: width = -1; break; // Text (and E5's Translation)
         }
+        // A fixed column is never narrower than its header (the "Wraps"
+        // header was cut).
+        if (width > 0 && m_model)
+            width = std::max(width, m.horizontalAdvance(m_model->headerData(c, Qt::Horizontal).toString()) + 8);
         w.push_back(width);
         used += std::max(0.0, width);
     }

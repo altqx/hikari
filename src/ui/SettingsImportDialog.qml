@@ -93,9 +93,10 @@ Dialog {
                 model: dialog.importer.roots
                 textRole: "path"
             }
-            Button {
+            IconToolButton {
                 objectName: "settingsImportChooseFolder"
-                text: qsTr("Choose folder...")
+                iconRole: "folder-open"
+                text: qsTr("Choose folder…")
                 onClicked: folderDialog.open()
             }
             Button {

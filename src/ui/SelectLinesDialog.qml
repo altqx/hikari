@@ -11,7 +11,9 @@ Dialog {
     id: dialog
     objectName: "selectLinesDialog"
     required property var app
-    title: qsTr("Select")
+    title: qsTr("Select lines") // the menu command's name (legacy titled it "Select")
+    // K1: the title with its icon, as the other dialogs show theirs.
+    header: IconDialogHeader { objectName: "selectLinesDialogTitle"; iconRole: "select-lines"; text: dialog.title }
     modal: false
     property var recent: []
 
@@ -75,10 +77,10 @@ Dialog {
                         Keys.onReturnPressed: dialog.run(false)
                         Keys.onEnterPressed: dialog.run(false)
                     }
-                    Button {
+                    IconToolButton {
                         objectName: "selectChooseStyles"
-                        text: "+"
-                        Accessible.name: qsTr("Choose styles")
+                        iconRole: "styles"
+                        text: qsTr("Choose styles")
                         onClicked: stylesDialog.openWith(dialog.app.styleNames())
                     }
                 }

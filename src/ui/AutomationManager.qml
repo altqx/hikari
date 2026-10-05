@@ -9,15 +9,22 @@ import Hikari.Ui
 Pane {
     id: root
     required property AutomationManagerController controller
+    // A size of its own (it lost the heading that gave it one): its window
+    // or panel sizes it otherwise.
+    implicitWidth: 420
+    implicitHeight: 360
 
     ColumnLayout {
         anchors.fill: parent
         spacing: 6
 
+        // While a script runs: Cancel. (No heading: the window or dock
+        // title names the tool.)
         RowLayout {
+            visible: root.controller.busy
             Label {
-                text: qsTr("Automation")
-                font.bold: true
+                text: qsTr("A script is running")
+                color: Theme.muted
                 Layout.fillWidth: true
             }
             Button {
@@ -26,6 +33,16 @@ Pane {
                 enabled: root.controller.busy
                 onClicked: root.controller.cancel()
             }
+        }
+        // The empty state.
+        Label {
+            objectName: "scriptsEmpty"
+            visible: scripts.count === 0
+            Layout.fillWidth: true
+            topPadding: 24
+            horizontalAlignment: Text.AlignHCenter
+            color: Theme.muted
+            text: qsTr("No scripts loaded")
         }
 
         ListView {
@@ -52,22 +69,32 @@ Pane {
                         Layout.fillWidth: true
                         elide: Text.ElideRight
                     }
+                    // The state in words, muted; a failure in the danger colour.
                     Label {
                         objectName: "state_" + script.index
-                        text: script.modelData.state
+                        readonly property string scriptState: script.modelData.state
+                        text: scriptState === "loading" ? qsTr("Loading")
+                            : scriptState === "ready" ? qsTr("Ready")
+                            : scriptState === "running" ? qsTr("Running")
+                            : scriptState === "failed" ? qsTr("Failed to load")
+                            : scriptState === "unavailable" ? qsTr("Unavailable") : scriptState
+                        color: scriptState === "failed" || scriptState === "unavailable" ? Theme.danger : Theme.muted
                     }
-                    Button {
+                    IconToolButton {
+                        iconRole: "refresh"
                         text: qsTr("Reload")
                         enabled: script.modelData.state !== "running" && script.modelData.state !== "loading"
                         onClicked: root.controller.reload(script.modelData.path)
                     }
-                    Button {
+                    IconToolButton {
                         objectName: "forceStop_" + script.index
+                        iconRole: "media-stop"
                         text: qsTr("Force stop")
                         visible: script.modelData.forceStopOffered
                         onClicked: root.controller.forceStop(script.modelData.path)
                     }
-                    Button {
+                    IconToolButton {
+                        iconRole: "unload"
                         text: qsTr("Unload")
                         enabled: script.modelData.state !== "running"
                         onClicked: root.controller.unload(script.modelData.path)
@@ -78,7 +105,7 @@ Pane {
                     visible: text !== ""
                     text: script.modelData.error
                     wrapMode: Text.Wrap
-                    color: palette.brightText
+                    color: Theme.danger
                     Layout.fillWidth: true
                 }
                 Repeater {

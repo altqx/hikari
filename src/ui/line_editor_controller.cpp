@@ -212,7 +212,8 @@ QString LineEditorController::saveStatus() const
     if (!status->outcome)
         return tr("Saving…");
     switch (*status->outcome) {
-    case application::WriteOutcome::Written: return tr("Saved");
+    // Edited since: "Saved" no longer holds (the tab's mark says Modified).
+    case application::WriteOutcome::Written: return dirty() ? QString() : tr("Saved");
     case application::WriteOutcome::DurabilityUncertain: return tr("Saved; the disk could not confirm it is stored");
     case application::WriteOutcome::Cancelled: return tr("Save cancelled; nothing was written");
     case application::WriteOutcome::Failed: return tr("Save failed; the file on disk is unchanged");

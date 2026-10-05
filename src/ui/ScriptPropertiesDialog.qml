@@ -10,7 +10,7 @@ Dialog {
     id: dialog
     objectName: "scriptPropertiesDialog"
     required property var app
-    title: qsTr("ASS subtitle properties")
+    title: qsTr("ASS file properties") // the menu command's name
     // K1: the title with the set's script-properties icon (legacy ScriptInfo SetIcon(ASSPROPS)).
     header: IconDialogHeader { objectName: "scriptPropertiesDialogTitle"; iconRole: "script-properties"; text: dialog.title }
     modal: true

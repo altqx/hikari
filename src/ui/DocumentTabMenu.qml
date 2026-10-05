@@ -9,7 +9,10 @@ import QtQuick.Controls
 // folders of the tab's subtitles, video, audio and keyframes that it has
 // (894-911, SelectInFolder), and R1's "Subtitle comparison" (915-956).
 // Legacy's "Show two tabs" split is left out: the protected reference stands
-// for it (P6). Legacy's tab menu items carry no icons.
+// for it (P6). Legacy's tab menu items carry no icons; here Save and Save
+// all show the icons the same commands have in the File menu, the folder
+// rows show-in-folder and the comparison compare (a command shows one icon
+// everywhere).
 ShellMenu {
     id: tabMenu
     objectName: "documentTabMenu"
@@ -59,12 +62,14 @@ ShellMenu {
     MenuSeparator {}
     ShellMenuItem {
         objectName: "tabMenuSave"
+        iconRole: "save"
         text: qsTr("Save")
         enabled: tabMenu.tabIndex >= 0 && tabMenu.menuState.save === true
         onTriggered: tabMenu.saveRequested(tabMenu.app.tabDocument(tabMenu.tabIndex))
     }
     ShellMenuItem {
         objectName: "tabMenuSaveAll"
+        iconRole: "save-all"
         text: qsTr("Save all")
         onTriggered: tabMenu.saveAllRequested()
     }
@@ -80,6 +85,7 @@ ShellMenu {
             required property var modelData
             required property int index
             objectName: "tabMenuFolder_" + modelData.kind
+            iconRole: "show-in-folder"
             text: modelData.kind === "subtitles" ? qsTr("Open the folder containing the subtitles")
                 : modelData.kind === "video" ? qsTr("Open video containing folder")
                 : modelData.kind === "audio" ? qsTr("Open audio containing folder")

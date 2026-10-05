@@ -155,252 +155,275 @@ Item {
         anchors.fill: parent
         spacing: 6
 
-        // The scope rail: mode, query and scope.
-        ScrollView {
-            id: rail
-            objectName: "searchRail"
+        // The scope rail: mode, query and scope, scrolling (with its scroll
+        // bar shown while there is more) above the action buttons, which
+        // stay in view.
+        ColumnLayout {
             Layout.preferredWidth: 360
             Layout.minimumWidth: 220
+            Layout.fillWidth: false // the results take the rest
             Layout.fillHeight: true
-            clip: true
-            contentWidth: availableWidth
+            spacing: 4
+            ScrollView {
+                id: rail
+                objectName: "searchRail"
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: availableWidth
+                ScrollBar.vertical.policy: contentHeight > availableHeight ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
 
-            ColumnLayout {
-                width: rail.availableWidth
-                spacing: 4
-                TabBar {
-                    id: modes
-                    objectName: "findTabs"
-                    Layout.fillWidth: true
-                    // K1: Find and Find and replace with the set's icons
-                    // (legacy's search and findreplace bitmaps, the Edit
-                    // menu's and FindReplaceDialog's).
-                    IconTabButton {
-                        objectName: "findTab"
-                        iconRole: "search"
-                        text: qsTr("Find")
-                    }
-                    IconTabButton {
-                        objectName: "replaceTab"
-                        iconRole: "find-replace"
-                        text: qsTr("Find and replace")
-                    }
-                    TabButton { text: qsTr("Find in subtitles") }
-                    onCurrentIndexChanged: {
-                        if (search.opened && currentIndex !== search.tab) {
-                            search.apply(search.app.switchFindReplaceTab(search.settings(), currentIndex))
-                            search.tab = currentIndex
+                ColumnLayout {
+                    width: rail.availableWidth
+                    spacing: 4
+                    TabBar {
+                        id: modes
+                        objectName: "findTabs"
+                        Layout.fillWidth: true
+                        // K1: the three modes with the set's icons (legacy's
+                        // search and findreplace bitmaps, the Edit menu's and
+                        // FindReplaceDialog's; find-in-files for the third,
+                        // which legacy drew without one). The tabs carry short
+                        // names that fit the rail; the full name is the tooltip
+                        // and the accessible name.
+                        IconTabButton {
+                            objectName: "findTab"
+                            iconRole: "search"
+                            text: qsTr("Find")
+                        }
+                        IconTabButton {
+                            objectName: "replaceTab"
+                            iconRole: "find-replace"
+                            text: qsTr("Replace")
+                            Accessible.name: qsTr("Find and replace")
+                            ToolTip.visible: hovered
+                            ToolTip.text: qsTr("Find and replace")
+                        }
+                        IconTabButton {
+                            objectName: "findInFilesTab"
+                            iconRole: "find-in-files"
+                            text: qsTr("In files")
+                            Accessible.name: qsTr("Find in subtitles")
+                            ToolTip.visible: hovered
+                            ToolTip.text: qsTr("Find in subtitles")
+                        }
+                        onCurrentIndexChanged: {
+                            if (search.opened && currentIndex !== search.tab) {
+                                search.apply(search.app.switchFindReplaceTab(search.settings(), currentIndex))
+                                search.tab = currentIndex
+                            }
                         }
                     }
-                }
-                GridLayout {
-                    columns: 2
-                    Layout.fillWidth: true
-                    Label { text: qsTr("Search text:") }
-                    ComboBox {
-                        id: findText
-                        objectName: "findText"
-                        editable: true
-                        model: search.finds
+                    GridLayout {
+                        columns: 2
                         Layout.fillWidth: true
-                        Accessible.name: qsTr("Search text:")
-                        Keys.onReturnPressed: search.confirm()
-                        Keys.onEnterPressed: search.confirm()
-                    }
-                    Label { text: qsTr("Replace with:"); visible: search.tab !== 0 }
-                    ComboBox {
-                        id: replaceText
-                        objectName: "findReplaceText"
-                        editable: true
-                        visible: search.tab !== 0
-                        model: search.replacements
-                        Layout.fillWidth: true
-                        Accessible.name: qsTr("Replace with:")
-                        Keys.onReturnPressed: search.confirm()
-                        Keys.onEnterPressed: search.confirm()
-                    }
-                    Label { text: qsTr("Filters:"); visible: search.tab === 2 }
-                    ComboBox {
-                        id: filtersText
-                        objectName: "findFilters"
-                        editable: true
-                        visible: search.tab === 2
-                        model: search.filterList
-                        Layout.fillWidth: true
-                        ToolTip.text: qsTr("Windows search filters separated by semicolons, e.g. \"*.ass; *.srt\".")
-                        ToolTip.visible: hovered
-                        Accessible.name: qsTr("Filters:")
-                        Keys.onReturnPressed: search.confirm()
-                    }
-                    Label { text: qsTr("Catalog:"); visible: search.tab === 2 }
-                    RowLayout {
-                        visible: search.tab === 2
-                        Layout.fillWidth: true
+                        Label { text: qsTr("Search text:") }
                         ComboBox {
-                            id: folderText
-                            objectName: "findFolder"
+                            id: findText
+                            objectName: "findText"
                             editable: true
-                            model: search.paths
+                            model: search.finds
                             Layout.fillWidth: true
-                            Accessible.name: qsTr("Subtitle search folder:")
+                            Accessible.name: qsTr("Search text:")
+                            Keys.onReturnPressed: search.confirm()
+                            Keys.onEnterPressed: search.confirm()
+                        }
+                        Label { text: qsTr("Replace with:"); visible: search.tab !== 0 }
+                        ComboBox {
+                            id: replaceText
+                            objectName: "findReplaceText"
+                            editable: true
+                            visible: search.tab !== 0
+                            model: search.replacements
+                            Layout.fillWidth: true
+                            Accessible.name: qsTr("Replace with:")
+                            Keys.onReturnPressed: search.confirm()
+                            Keys.onEnterPressed: search.confirm()
+                        }
+                        Label { text: qsTr("Filters:"); visible: search.tab === 2 }
+                        ComboBox {
+                            id: filtersText
+                            objectName: "findFilters"
+                            editable: true
+                            visible: search.tab === 2
+                            model: search.filterList
+                            Layout.fillWidth: true
+                            ToolTip.text: qsTr("Windows search filters separated by semicolons, e.g. \"*.ass; *.srt\".")
+                            ToolTip.visible: hovered
+                            Accessible.name: qsTr("Filters:")
                             Keys.onReturnPressed: search.confirm()
                         }
-                        Button {
-                            text: " ... "
-                            Accessible.name: qsTr("Choose save folder")
-                            onClicked: {
-                                search.skipActivation = true
-                                folderDialog.open()
-                            }
-                        }
-                    }
-                }
-                GridLayout {
-                    columns: 2
-                    Layout.fillWidth: true
-                    CheckBox { id: matchCase; objectName: "findMatchCase"; text: qsTr("Match case") }
-                    CheckBox { id: includeComments; objectName: "findIncludeComments"; text: qsTr("Include comments") }
-                    CheckBox { id: regex; objectName: "findRegex"; text: qsTr("Regular expressions") }
-                    // OnRecheck: Skip tags and Skip text exclude each other, as do
-                    // Beginning and End of text.
-                    CheckBox {
-                        id: skipTags
-                        objectName: "findSkipTags"
-                        text: qsTr("Skip tags")
-                        onToggled: if (checked) skipText.checked = false
-                    }
-                    CheckBox {
-                        id: startOfText
-                        objectName: "findStartOfText"
-                        text: qsTr("Beginning of text")
-                        onToggled: if (checked) endOfText.checked = false
-                    }
-                    CheckBox {
-                        id: skipText
-                        objectName: "findSkipText"
-                        text: qsTr("Skip text")
-                        onToggled: if (checked) skipTags.checked = false
-                    }
-                    CheckBox {
-                        id: endOfText
-                        objectName: "findEndOfText"
-                        text: qsTr("End of text")
-                        onToggled: if (checked) startOfText.checked = false
-                    }
-                }
-                GroupBox {
-                    title: qsTr("In field")
-                    Layout.fillWidth: true
-                    RowLayout {
-                        ButtonGroup { id: fieldGroup }
-                        Repeater {
-                            id: fields
-                            model: [qsTr("Text"), qsTr("Styles"), qsTr("Actor"), qsTr("Effect")]
-                            RadioButton { text: modelData; ButtonGroup.group: fieldGroup }
-                        }
-                    }
-                }
-                GroupBox {
-                    title: qsTr("Lines")
-                    visible: search.tab !== 2
-                    Layout.fillWidth: true
-                    ColumnLayout {
-                        anchors.fill: parent
+                        Label { text: qsTr("Catalog:"); visible: search.tab === 2 }
                         RowLayout {
-                            ButtonGroup { id: linesGroup }
-                            Repeater {
-                                id: lineButtons
-                                model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From selected")]
-                                // TabWindow::Reset: the next search starts over.
-                                RadioButton { text: modelData; ButtonGroup.group: linesGroup; onClicked: search.app.resetFindReplace() }
-                            }
-                        }
-                        RowLayout {
+                            visible: search.tab === 2
                             Layout.fillWidth: true
-                            Button {
-                                objectName: "findChooseStyles"
-                                text: "+"
-                                Accessible.name: qsTr("Choose styles")
+                            ComboBox {
+                                id: folderText
+                                objectName: "findFolder"
+                                editable: true
+                                model: search.paths
+                                Layout.fillWidth: true
+                                Accessible.name: qsTr("Subtitle search folder:")
+                                Keys.onReturnPressed: search.confirm()
+                            }
+                            IconToolButton {
+                                objectName: "findChooseFolder"
+                                iconRole: "folder-open"
+                                text: qsTr("Choose save folder")
                                 onClicked: {
                                     search.skipActivation = true
-                                    stylesDialog.openWith(search.app.styleNames())
+                                    folderDialog.open()
                                 }
-                            }
-                            TextField {
-                                id: styles
-                                objectName: "findStyles"
-                                Layout.fillWidth: true
-                                placeholderText: qsTr("Styles")
-                                Accessible.name: qsTr("Styles")
                             }
                         }
                     }
-                }
-                RowLayout {
-                    visible: search.tab === 2
-                    CheckBox { id: subfolders; objectName: "findSubfolders"; text: qsTr("Search in subfolders") }
-                    CheckBox { id: hiddenFolders; objectName: "findHiddenFolders"; text: qsTr("Search in hidden folders") }
-                }
-                GridLayout {
-                    columns: 2
-                    Layout.fillWidth: true
-                    enabled: !search.busy
-                    Button {
-                        objectName: "findButton"
-                        text: qsTr("Find")
+                    GridLayout {
+                        columns: 2
+                        Layout.fillWidth: true
+                        CheckBox { id: matchCase; objectName: "findMatchCase"; text: qsTr("Match case") }
+                        CheckBox { id: includeComments; objectName: "findIncludeComments"; text: qsTr("Include comments") }
+                        CheckBox { id: regex; objectName: "findRegex"; text: qsTr("Regular expressions") }
+                        // OnRecheck: Skip tags and Skip text exclude each other, as do
+                        // Beginning and End of text.
+                        CheckBox {
+                            id: skipTags
+                            objectName: "findSkipTags"
+                            text: qsTr("Skip tags")
+                            onToggled: if (checked) skipText.checked = false
+                        }
+                        CheckBox {
+                            id: startOfText
+                            objectName: "findStartOfText"
+                            text: qsTr("Beginning of text")
+                            onToggled: if (checked) endOfText.checked = false
+                        }
+                        CheckBox {
+                            id: skipText
+                            objectName: "findSkipText"
+                            text: qsTr("Skip text")
+                            onToggled: if (checked) skipTags.checked = false
+                        }
+                        CheckBox {
+                            id: endOfText
+                            objectName: "findEndOfText"
+                            text: qsTr("End of text")
+                            onToggled: if (checked) startOfText.checked = false
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("In field")
+                        Layout.fillWidth: true
+                        RowLayout {
+                            ButtonGroup { id: fieldGroup }
+                            Repeater {
+                                id: fields
+                                model: [qsTr("Text"), qsTr("Styles"), qsTr("Actor"), qsTr("Effect")]
+                                RadioButton { text: modelData; ButtonGroup.group: fieldGroup }
+                            }
+                        }
+                    }
+                    GroupBox {
+                        title: qsTr("Lines")
                         visible: search.tab !== 2
                         Layout.fillWidth: true
-                        onClicked: search.run("find")
+                        ColumnLayout {
+                            anchors.fill: parent
+                            RowLayout {
+                                ButtonGroup { id: linesGroup }
+                                Repeater {
+                                    id: lineButtons
+                                    model: [qsTr("All lines"), qsTr("Selected lines"), qsTr("From selected")]
+                                    // TabWindow::Reset: the next search starts over.
+                                    RadioButton { text: modelData; ButtonGroup.group: linesGroup; onClicked: search.app.resetFindReplace() }
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                IconToolButton {
+                                    objectName: "findChooseStyles"
+                                    iconRole: "styles"
+                                    text: qsTr("Choose styles")
+                                    onClicked: {
+                                        search.skipActivation = true
+                                        stylesDialog.openWith(search.app.styleNames())
+                                    }
+                                }
+                                TextField {
+                                    id: styles
+                                    objectName: "findStyles"
+                                    Layout.fillWidth: true
+                                    placeholderText: qsTr("Styles")
+                                    Accessible.name: qsTr("Styles")
+                                }
+                            }
+                        }
                     }
-                    Button {
-                        objectName: "findAllTabsButton"
-                        text: qsTr("Find in all open subtitles")
-                        visible: search.tab === 0
-                        Layout.fillWidth: true
-                        onClicked: search.run("findAllTabs")
-                    }
-                    Button {
-                        objectName: "findAllCurrentButton"
-                        text: qsTr("Find all in current subtitles")
-                        visible: search.tab === 0
-                        Layout.fillWidth: true
-                        onClicked: search.run("findAllCurrent")
-                    }
-                    Button {
-                        objectName: "replaceNextButton"
-                        text: qsTr("Replace next")
-                        visible: search.tab === 1
-                        Layout.fillWidth: true
-                        onClicked: search.run("replace")
-                    }
-                    Button {
-                        objectName: "replaceAllButton"
-                        text: qsTr("Replace all")
-                        visible: search.tab === 1
-                        Layout.fillWidth: true
-                        onClicked: search.run("replaceAll")
-                    }
-                    Button {
-                        objectName: "replaceAllTabsButton"
-                        text: qsTr("Replace in all open subtitles")
-                        visible: search.tab === 1
-                        Layout.fillWidth: true
-                        onClicked: search.run("replaceAllTabs")
-                    }
-                    Button {
-                        objectName: "findInFilesButton"
-                        text: qsTr("Find in subtitles")
+                    RowLayout {
                         visible: search.tab === 2
-                        Layout.fillWidth: true
-                        onClicked: search.run("findInFiles")
+                        CheckBox { id: subfolders; objectName: "findSubfolders"; text: qsTr("Search in subfolders") }
+                        CheckBox { id: hiddenFolders; objectName: "findHiddenFolders"; text: qsTr("Search in hidden folders") }
                     }
-                    Button {
-                        objectName: "replaceInFilesButton"
-                        text: qsTr("Replace in subtitles")
-                        visible: search.tab === 2
-                        Layout.fillWidth: true
-                        onClicked: search.run("replaceInFiles")
-                    }
+                }
+            }
+            GridLayout {
+                columns: 2
+                Layout.fillWidth: true
+                enabled: !search.busy
+                Button {
+                    objectName: "findButton"
+                    text: qsTr("Find")
+                    visible: search.tab !== 2
+                    Layout.fillWidth: true
+                    onClicked: search.run("find")
+                }
+                Button {
+                    objectName: "findAllTabsButton"
+                    text: qsTr("Find in all open subtitles")
+                    visible: search.tab === 0
+                    Layout.fillWidth: true
+                    onClicked: search.run("findAllTabs")
+                }
+                Button {
+                    objectName: "findAllCurrentButton"
+                    text: qsTr("Find all in current subtitles")
+                    visible: search.tab === 0
+                    Layout.fillWidth: true
+                    onClicked: search.run("findAllCurrent")
+                }
+                Button {
+                    objectName: "replaceNextButton"
+                    text: qsTr("Replace next")
+                    visible: search.tab === 1
+                    Layout.fillWidth: true
+                    onClicked: search.run("replace")
+                }
+                Button {
+                    objectName: "replaceAllButton"
+                    text: qsTr("Replace all")
+                    visible: search.tab === 1
+                    Layout.fillWidth: true
+                    onClicked: search.run("replaceAll")
+                }
+                Button {
+                    objectName: "replaceAllTabsButton"
+                    text: qsTr("Replace in all open subtitles")
+                    visible: search.tab === 1
+                    Layout.fillWidth: true
+                    onClicked: search.run("replaceAllTabs")
+                }
+                Button {
+                    objectName: "findInFilesButton"
+                    text: qsTr("Find in subtitles")
+                    visible: search.tab === 2
+                    Layout.fillWidth: true
+                    onClicked: search.run("findInFiles")
+                }
+                Button {
+                    objectName: "replaceInFilesButton"
+                    text: qsTr("Replace in subtitles")
+                    visible: search.tab === 2
+                    Layout.fillWidth: true
+                    onClicked: search.run("replaceInFiles")
                 }
             }
         }
@@ -420,12 +443,22 @@ Item {
                 font.bold: true
                 text: qsTr("Search results")
             }
+            // The empty state: one muted line in the middle of the pane, with
+            // the explanation in its tooltip.
             Label {
+                objectName: "findResultsEmpty"
                 visible: !search.resultsShown
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
                 wrapMode: Text.WordWrap
-                text: qsTr("Find all, Find in all open subtitles and Find in subtitles list their matches here; " +
-                           "check the ones to change and replace them.")
+                color: Theme.muted
+                text: qsTr("No results yet")
+                ToolTip.visible: emptyHover.hovered
+                ToolTip.text: qsTr("Find all, Find in all open subtitles and Find in subtitles list their matches here; " +
+                                   "check the ones to change and replace them.")
+                HoverHandler { id: emptyHover }
             }
             ListView {
                 id: resultsList
@@ -473,9 +506,10 @@ Item {
                     }
                 }
             }
-            Item { visible: !search.resultsShown; Layout.fillHeight: true }
+            // The review footer, once there are results to review.
             RowLayout {
                 Layout.fillWidth: true
+                visible: search.resultsShown
                 enabled: search.resultsShown && !search.busy
                 Button { text: qsTr("Check all"); onClicked: search.app.checkFindResults(true) }
                 Button { text: qsTr("Uncheck all"); onClicked: search.app.checkFindResults(false) }
@@ -487,6 +521,8 @@ Item {
                     model: search.replacements
                     Layout.fillWidth: true
                     Accessible.name: qsTr("Replace with:")
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Replace with:")
                 }
                 Button {
                     id: replaceChecked

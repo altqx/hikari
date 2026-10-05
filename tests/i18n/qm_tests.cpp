@@ -261,7 +261,9 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
                     m.state = TsState::Finished;
                     ++numerus;
                 }
-        ASSERT_EQ(numerus, 12) << language.toStdString();
+        // 13 since the UI polish: the batch picker's tooltip and description
+        // came, its untranslated "Targets: %n picked line(s)" went.
+        ASSERT_EQ(numerus, 13) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

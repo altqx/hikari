@@ -251,16 +251,15 @@ ColumnLayout {
                 currentIndex = Qt.binding(() => inspector.editor.styleIndex)
             }
         }
-        Button {
+        IconToolButton {
             id: styleEdit
             objectName: "styleEditButton"
-            text: qsTr("Edit")
+            iconRole: "edit"
+            text: qsTr("Edit style")
+            tip: qsTr("Edit style: allows quick editing of the current line's style")
             enabled: inspector.editor.hasLine && inspector.editor.assFields
             focusPolicy: Qt.TabFocus
-            Accessible.name: qsTr("Edit style")
             Accessible.description: qsTr("Allows quick editing of the current line's style")
-            ToolTip.visible: hovered
-            ToolTip.text: Accessible.description
             ToolTip.delay: 500
             onClicked: inspector.styleEditRequested(inspector.editor.style)
         }
