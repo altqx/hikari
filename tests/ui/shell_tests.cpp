@@ -3595,6 +3595,247 @@ private slots:
         QTRY_COMPARE(raw(false), QStringLiteral("{Gate {\\i1}keeper}"));
     }
 
+    // E5: a TLMode file for the translation mode controls: an Unconfirmed
+    // pair, a translated pair and an untranslated one whose original has tags.
+    // Without `tlMode`, the same file before translation mode: no TLMode
+    // keys, and each pair's lines are Lines of their own.
+    QString writeTranslationFile(const char *name, bool tlMode = true)
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QFile f(path);
+        f.open(QIODevice::WriteOnly);
+        f.write(tlMode ? "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+                       : "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n");
+        f.write("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,Gate\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Wieza\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,{\\i1}Wall {\\b1}high\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,\n");
+        return path;
+    }
+    QPoint centreOf(QQuickItem *it) const
+    {
+        return it->mapToScene(QPointF(it->width() / 2, it->height() / 2)).toPoint();
+    }
+    static QString q8(const std::u8string &s)
+    {
+        return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
+    }
+
+    // E5: the editor's "Translator mode" check box (EditBox::OnTlMode,
+    // SubsGrid::SetTlMode): one step each way, the turn-off asked first with
+    // No as the default, and one Undo per switch.
+    void translatorModeSwitchesWithOneStepEach()
+    {
+        auto *check = item("translatorMode");
+        QVERIFY(check);
+        QVERIFY(!check->isEnabled()); // no Document
+        QVERIFY(application->openFile(writeTranslationFile("e5-switch.ass", false)));
+        QTRY_VERIFY(check->isEnabled());
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!item("translationText")->isVisible());
+        QVERIFY(!item("notConfirmed")->isVisible());
+        const auto steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QTRY_VERIFY(application->editor().translationMode());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Turning on translator mode"));
+        QCOMPARE(session->document().scriptInfo(u8"TLMode Style"), std::optional<std::u8string>(u8"TLmode"));
+        QVERIFY(check->property("checked").toBool());
+        QTRY_VERIFY(item("translationText")->isVisible());
+        QVERIFY(item("notConfirmed")->isVisible());
+        QVERIFY(item("movingTags")->isVisible());
+
+        // Turning it off asks; No, the focused default, keeps it on.
+        auto *confirm = item<QObject>("translatorModeOffConfirm");
+        QVERIFY(confirm);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QTRY_VERIFY(confirm->property("opened").toBool());
+        QVERIFY(check->property("checked").toBool()); // still checked while it asks
+        press(Qt::Key_Space); // the focused No
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        QVERIFY(application->editor().translationMode());
+        QCOMPARE(session->historySize(), steps + 1);
+        // Yes turns it off as one step.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QTRY_VERIFY(confirm->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(confirm, "accept"));
+        QTRY_VERIFY(!application->editor().translationMode());
+        QCOMPARE(session->historySize(), steps + 2);
+        QCOMPARE(session->history().back().name, std::string("Turning off translator mode"));
+        QVERIFY(!check->property("checked").toBool());
+        QTRY_VERIFY(!item("translationText")->isVisible());
+        // One Undo per switch.
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(check->property("checked").toBool());
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(!application->editor().translationMode());
+        QVERIFY(!check->property("checked").toBool());
+    }
+
+    // E5: legacy enables the check box for ASS only.
+    void translatorModeIsForAssOnly()
+    {
+        const QString path = dir.filePath(QStringLiteral("e5.srt"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("1\n00:00:01,000 --> 00:00:02,000\nA\n\n");
+        }
+        QVERIFY(application->openFile(path));
+        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!application->turnOnTranslationMode());
+    }
+
+    // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
+    // as one step and shows the active Line's flag.
+    void notConfirmedFlipsTheSelectedLines()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-unconfirmed.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *button = item("notConfirmed");
+        QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
+        press(Qt::Key_A, Qt::ControlModifier);
+        QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
+        const auto steps = session->historySize();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Mark unconfirmed"));
+        const auto lines = session->document().lines();
+        QVERIFY(!lines[0]->unconfirmed);
+        QVERIFY(lines[1]->unconfirmed);
+        QVERIFY(lines[2]->unconfirmed);
+        QVERIFY(!button->property("checked").toBool());
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(button->property("checked").toBool());
+        QVERIFY(session->document().lines()[0]->unconfirmed);
+        QVERIFY(!session->document().lines()[1]->unconfirmed);
+    }
+
+    // E5: "Moving tags" (EditBox::SetTextWithTags): an untranslated Line is
+    // shown split, the Translated field takes the focus, and the first change
+    // makes both fields the draft.
+    void movingTagsSplitsAnUntranslatedLine()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        auto *moving = item("movingTags");
+        QVERIFY(!moving->property("checked").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
+        QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
+        QVERIFY(moving->property("checked").toBool());
+        QVERIFY(application->editor().moveTags());
+
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QCOMPARE(translated->property("cursorPosition").toInt(), 5);
+        // Shown only: the Document and the draft are untouched.
+        QVERIFY(!session->draftLine());
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        // A translated Line is shown whole.
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Up);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("Wieza"));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
+        QTRY_VERIFY(translated->hasActiveFocus());
+        // Typing in the Translated field: both fields become the draft.
+        QTest::keyClick(window, 'X');
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}X{\\b1}"));
+        QVERIFY(session->draftRecord());
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("Wall high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X{\\b1}"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("Wall high"));
+        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X{\\b1}"));
+        // Undo takes the edit back; turning Moving tags off shows the Line whole.
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
+        QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(translated->property("text").toString(), QString());
+    }
+
+    // E5: the Grid's "Original text" and "Translation" columns (legacy
+    // showOriginal: TL_MODE_SHOW_ORIGINAL or "TLMode Showtl" when the file
+    // loads; off when translation mode is turned off).
+    void gridShowsTheTranslationColumnWithTheOriginal()
+    {
+        application->settingsStore()->set("translation.showOriginal", true);
+        QVERIFY(application->openFile(writeTranslationFile("e5-columns.ass")));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QVERIFY(grid);
+        auto *model = grid->model();
+        QTRY_COMPARE(grid->columnTitle(grid->columnCount() - 1), QStringLiteral("Translation"));
+        QCOMPARE(grid->columnTitle(grid->columnCount() - 2), QStringLiteral("Original text"));
+        QCOMPARE(grid->cellText(0, grid->columnCount() - 2), QStringLiteral("Gate"));
+        QCOMPARE(grid->cellText(0, grid->columnCount() - 1), QStringLiteral("Brama"));
+        // The two share what the other columns leave (SubsGridWindow.cpp:481-485).
+        QCOMPARE(grid->cellRect(0, grid->columnCount() - 1).width(), grid->cellRect(0, grid->columnCount() - 2).width());
+        const int columns = grid->columnCount();
+        QVERIFY(application->turnOffTranslationMode()); // Save translation's switch
+        QTRY_COMPARE(grid->columnCount(), columns - 1);
+        QCOMPARE(grid->columnTitle(grid->columnCount() - 1), QStringLiteral("Text"));
+        QCOMPARE(grid->cellText(0, grid->columnCount() - 1), QStringLiteral("Brama"));
+        Q_UNUSED(model);
+    }
+
+    // E5: without the original shown, a translated Line's "Text" is its
+    // translation (SubsGridWindow.cpp:415).
+    void gridTextShowsTheTranslationWithoutTheOriginal()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-text.ass")));
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        QTRY_COMPARE(grid->columnTitle(grid->columnCount() - 1), QStringLiteral("Text"));
+        QCOMPARE(grid->cellText(0, grid->columnCount() - 1), QStringLiteral("Brama"));
+        QCOMPARE(grid->cellText(2, grid->columnCount() - 1), QStringLiteral("{\\i1}Wall {\\b1}high"));
+    }
+
+    // E5: TL_MODE_HIDE_ORIGINAL_ON_VIDEO also writes the originals as Comments
+    // when saving (SubsGrid::SaveFile).
+    void hideOriginalOnVideoSavesTheOriginalsAsComments()
+    {
+        application->settingsStore()->set("translation.hideOriginalOnVideo", true);
+        const QString path = writeTranslationFile("e5-hide.ass");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        session->setSelection({session->document().lines()[1]->id, {session->document().lines()[1]->id}, {}, {}});
+        QVERIFY(application::toggleUnconfirmed(*session).has_value()); // something to save
+        QVERIFY(application->editor().save());
+        application->waitForWrites();
+        QFile saved(path);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        const QByteArray bytes = saved.readAll();
+        QVERIFY2(bytes.contains("Comment: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,Gate\n"
+                                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                                "Comment: 0,0:00:03.00,0:00:04.00,O,,0,0,0,\fD,Tower\n"
+                                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Wieza\n"
+                                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,{\\i1}Wall {\\b1}high\n"),
+                 bytes.constData());
+    }
+
     // #101: Ctrl+, and Ctrl+. write the video time's distance from Start and End.
     void timeDifferenceMeasuresFromTheVideoFrame()
     {

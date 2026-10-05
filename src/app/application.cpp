@@ -509,6 +509,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
+    setUpTranslationControls(); // E5
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1192,6 +1193,7 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison(); // R1: an edited compared Document is compared again
+    m_shell->setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference)); // E5
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
@@ -1241,7 +1243,7 @@ void Application::refreshVideo()
         return;
     if (session->revision() != m_videoRevision) {
         m_videoRevision = session->revision();
-        m_video->session().setSubtitles(core::encodeAss(session->document()));
+        m_video->session().setSubtitles(rendererScript(session->document())); // E5: GetVisible
     }
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
@@ -1588,8 +1590,12 @@ bool Application::saveAll()
 bool Application::turnOffTranslationMode()
 {
     auto *session = targetSession();
-    if (!session || !application::turnOffTranslationMode(*session))
+    if (!session)
         return false;
+    showOriginal(*m_workspace.editingTarget());
+    if (!application::turnOffTranslationMode(*session))
+        return false;
+    originalColumns(*m_workspace.editingTarget()).turnedOff(session->document()); // E5: showOriginal = false
     m_editor->reloadFromSession();
     refreshViews();
     return true;
@@ -2113,7 +2119,7 @@ bool Application::autosave(application::DocumentId document)
     if (!session || !m_recovery->enabled())
         return false;
     application::RecoveryContent content;
-    content.bytes = core::encodeSubtitle(session->document());
+    content.bytes = core::encodeSubtitle(session->document(), m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2312,6 +2318,8 @@ bool Application::pasteTranslationFile(const QUrl &file)
     const QString extension = path.section(QLatin1Char('.'), -1);
     const auto shown = shownLines();
     const bool done = application::pasteTranslation(*session, toU8(text), toU8(extension), shown).has_value();
+    if (done)
+        originalColumns(*m_workspace.editingTarget()).pasted(session->document()); // E5: showOriginal = true
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -2328,6 +2336,9 @@ bool Application::shiftTranslation(int mode)
 {
     auto *session = targetSession();
     if (!session || mode < 0 || mode > 5)
+        return false;
+    // E5: MoveTextTL returns without showOriginal (SubsGrid.cpp:1037).
+    if (!showOriginal(*m_workspace.editingTarget()))
         return false;
     const auto shown = shownLines();
     const bool done =

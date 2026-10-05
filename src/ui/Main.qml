@@ -1285,6 +1285,11 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
+            // E5: Moving tags gives the Translated field the focus.
+            function onFieldFocusRequested(role) {
+                if (role === field.role)
+                    field.forceActiveFocus()
+            }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
         // translation mode) marks misspellings and bracket errors while
@@ -2358,6 +2363,11 @@ ApplicationWindow {
                             onToggled: root.editor.showTags = checked
                         }
                     }
+                    // E5: legacy BoxSizer5, the row under the tag buttons
+                    // that holds "Translator mode" (EditBox.cpp:233-239, 308).
+                    RowLayout {
+                        TranslatorModeCheck { app: root.app; editor: root.editor }
+                    }
 
                     RoleField {
                         id: lineText
@@ -2409,6 +2419,7 @@ ApplicationWindow {
                             ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
                             onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
                         }
+                        TranslationToggles { app: root.app; editor: root.editor } // E5
                     }
 
                     Label {

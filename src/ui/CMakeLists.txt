@@ -44,3 +44,6 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# E5: the Line editor's Translator mode check box and its Not confirmed and
+# Moving tags buttons.
+qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
