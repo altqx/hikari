@@ -125,14 +125,20 @@ private slots:
     {
         const QVariantList colours{QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45),
                                    QColor(0x00, 0x31, 0x76), QColor(0x36, 0x62, 0xA1)};
-        QVERIFY(!comparisonBackground(0, false, false, colours));
-        QCOMPARE(*comparisonBackground(2, false, false, colours), QColor(0x27, 0x2B, 0x32));
-        QCOMPARE(*comparisonBackground(1, false, false, colours), QColor(0x3A, 0x3E, 0x45));
-        QCOMPARE(*comparisonBackground(2, true, false, colours), QColor(0x00, 0x31, 0x76));
-        QCOMPARE(*comparisonBackground(1, true, false, colours), QColor(0x36, 0x62, 0xA1));
+        // legacy's dark GRID_SELECTION (config.cpp:422)
+        const QColor legacySelection(0x87, 0x91, 0xFD, 75);
+        QVERIFY(!comparisonBackground(0, false, false, colours, legacySelection));
+        QCOMPARE(*comparisonBackground(2, false, false, colours, legacySelection), QColor(0x27, 0x2B, 0x32));
+        QCOMPARE(*comparisonBackground(1, false, false, colours, legacySelection), QColor(0x3A, 0x3E, 0x45));
+        QCOMPARE(*comparisonBackground(2, true, false, colours, legacySelection), QColor(0x00, 0x31, 0x76));
+        QCOMPARE(*comparisonBackground(1, true, false, colours, legacySelection), QColor(0x36, 0x62, 0xA1));
         // #8791FD at alpha 75 over #272B32, in legacy's integer arithmetic:
         // r = 0x27 * 180 / 255 + (0x87 - 180 * 0x87 / 255) = 27 + 40 = 67.
-        QCOMPARE(*comparisonBackground(2, false, true, colours), QColor(67, 73, 110));
+        QCOMPARE(*comparisonBackground(2, false, true, colours, legacySelection), QColor(67, 73, 110));
+        // K2: GRID_SELECTION is a selection-type mark, the theme's accent at
+        // legacy's alpha 75 (Dark's green #9CDBC9): the same arithmetic.
+        // r = 27 + (0x9C - 180 * 0x9C / 255) = 27 + 46 = 73.
+        QCOMPARE(*comparisonBackground(2, false, true, colours, QColor(0x9C, 0xDB, 0xC9, 75)), QColor(73, 95, 95));
     }
 
     // R1: the painted rows: backgrounds per state, and the differing

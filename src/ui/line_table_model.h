@@ -90,11 +90,11 @@ public:
     // by Document row), or none.
     void setDocument(const core::Document &document, const std::vector<application::LineComparison> *comparison);
     using ComparisonColours = std::array<QColor, 5>;
-    // R1: the comparison colours are fixed per theme, not settings: legacy's
-    // theme defaults (config.cpp:427-431, LoadDefaultColors(dark); dark is
-    // every legacy theme but LightSentro, config.cpp:639). The rewrite's
-    // Grid uses the dark ones until the theme model arrives.
-    static ComparisonColours themeComparisonColours(bool dark);
+    // R1: the comparison colours are fixed per theme, not settings: the
+    // current theme's (K2, theme::content: Dark and Light are legacy's theme
+    // defaults, config.cpp:427-431, LoadDefaultColors(dark); the
+    // high-contrast themes' are drawn to match). The model follows the theme.
+    static ComparisonColours themeComparisonColours();
     void setComparisonColours(const ComparisonColours &colours);
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setHiddenColumns(int mask);
@@ -146,7 +146,7 @@ private:
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;
-    ComparisonColours m_comparisonColours = themeComparisonColours(true);
+    ComparisonColours m_comparisonColours = themeComparisonColours();
 };
 
 // Filtered view over a LineTableModel. Hidden Lines stay selected: the

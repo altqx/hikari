@@ -1,5 +1,6 @@
 #include "hikari/app/composition.h"
 #include "docking.h"
+#include "theme.h"
 
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
@@ -39,6 +40,8 @@ int run(int argc, char **argv, StartupMode mode)
     if (argc > 1)
         application.openFile(QString::fromLocal8Bit(argv[1]));
 
+    // K2: the controls draw with the theme layer's palette.
+    hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());

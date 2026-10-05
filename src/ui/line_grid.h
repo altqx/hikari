@@ -35,10 +35,12 @@ struct GridGeometry {
 // R1: a compared row's background (legacy SubsGridWindow.cpp:419-429): the
 // mismatch or match colour, their comment variants on a Comment, and a
 // selected row with GRID_SELECTION blended over it (GetColorWithAlpha,
-// config.h:566-575; the default theme's #8791FD at alpha 75,
+// config.h:566-575; legacy's dark theme's #8791FD at alpha 75,
 // config.cpp:415). `state` is ComparisonRole; nothing for 0. `colours` is
-// the model's ComparisonColoursRole.
-std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours);
+// the model's ComparisonColoursRole. `selection` is GRID_SELECTION with its
+// alpha: K2 makes it the theme's accent (a selection-type mark).
+std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
+                                           const QColor &selection);
 
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT

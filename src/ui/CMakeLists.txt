@@ -45,5 +45,7 @@ qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qm
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
-# the appearance state.
+# the appearance state, and the docking engine's separators, group frames and
+# floating windows in the theme's colours.
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
+qt_target_qml_sources(hikari_ui QML_FILES DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)

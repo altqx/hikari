@@ -27,6 +27,7 @@
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
 #include "icon_theme.h"
+#include "theme.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -493,6 +494,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     // K1: the icons take their colours from this profile.
     ui::IconTheme::useSettings(m_settings.get());
+    // K2: the theme layer follows this profile's appearance (the controls'
+    // palette and the owner-drawn items).
+    ui::theme::useSettings(m_settings.get());
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);

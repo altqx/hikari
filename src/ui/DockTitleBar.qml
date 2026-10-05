@@ -1,4 +1,5 @@
 import QtQuick
+import Hikari.Ui
 import "qrc:/kddockwidgets/qtquick/views/qml/" as KDDW
 
 // D1: a panel's title bar (docked group or floating window), the engine's
@@ -10,7 +11,7 @@ KDDW.TitleBarBase {
     id: root
     objectName: "dockTitleBar"
 
-    color: "#eff0f1"
+    color: Theme.raised // K2
     heightWhenVisible: 30
 
     Accessible.role: Accessible.TitleBar
@@ -46,7 +47,7 @@ KDDW.TitleBarBase {
         height: image.implicitHeight + 5
         width: image.implicitWidth + 5
         radius: 3
-        border.color: "#666666"
+        border.color: Theme.line
         border.width: mouseArea.containsMouse ? 1 : 0
         Accessible.role: Accessible.Button
         Accessible.name: button.name
@@ -69,6 +70,7 @@ KDDW.TitleBarBase {
 
     Text {
         text: root.title
+        color: Theme.text
         anchors.left: parent ? parent.left : undefined
         anchors.leftMargin: 5
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined

@@ -9,6 +9,7 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 Window {
+    color: Theme.panel // K2: a Window draws white unless told
     id: manager
     objectName: "styleManager"
     // K1: the set's styles icon as the window's (legacy stylestore SetIcon).

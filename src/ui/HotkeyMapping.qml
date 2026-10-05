@@ -9,8 +9,10 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Hikari.Ui
 
 Window {
+    color: Theme.panel // K2: a Window draws white unless told
     id: mapping
     objectName: "hotkeyMapping"
     required property var hotkeys
@@ -109,6 +111,7 @@ Window {
 
     // HikariMessageBox(message): OK only, the mapping window stays.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: refusal
         objectName: "hotkeyRefusal"
         property alias text: refusalText.text
@@ -135,6 +138,7 @@ Window {
     }
 
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: question
         objectName: "hotkeyQuestion"
         title: qsTr("Warning")
