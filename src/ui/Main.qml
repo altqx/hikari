@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
+    required property var fontCatalogs // Y6: FontCatalogsController
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
 
@@ -4115,6 +4116,7 @@ ApplicationWindow {
     StyleManager {
         id: styleManagerWindow
         styles: root.styleManager
+        catalogs: root.fontCatalogs
         app: root.app
     }
     SettingsDialog {
@@ -4235,6 +4237,7 @@ ApplicationWindow {
     FontDialog {
         id: fontDialog
         editor: root.editor
+        catalogs: root.fontCatalogs
         anchors.centerIn: parent
     }
     ColourPickerDialog {

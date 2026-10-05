@@ -14,6 +14,7 @@ Window {
     // K1: the set's styles icon as the window's (legacy stylestore SetIcon).
     Component.onCompleted: IconTheme.setWindowIcon(manager, "styles")
     required property var styles   // StyleManagerController
+    required property var catalogs // Y6: FontCatalogsController
     required property var app
     title: qsTr("Style manager")
     width: 980
@@ -99,6 +100,11 @@ Window {
             return
         editingStore = store
         values = map
+        // Y6: StyleChange makes its font list once (ChangeCatalog in its constructor).
+        if (!fontCatalogBar.made) {
+            fontCatalogBar.made = true
+            fontCatalogBar.reset()
+        }
         editor.load(map)
         editing = true
         updatePreview()
@@ -436,11 +442,24 @@ Window {
                                 objectName: "styleFont"
                                 editable: true
                                 Layout.fillWidth: true
-                                model: Qt.fontFamilies()
                                 Accessible.name: qsTr("Font")
                                 onEditTextChanged: manager.updatePreview()
                             }
                             TextField { id: sizeField; objectName: "styleSize"; Layout.preferredWidth: 66; Accessible.name: qsTr("Size"); onTextEdited: manager.updatePreview() }
+                        }
+                        // Y6: the font catalogs and the Filter (StyleChange's filtersizer).
+                        FontCatalogBar {
+                            id: fontCatalogBar
+                            property bool made: false
+                            Layout.fillWidth: true
+                            catalogs: manager.catalogs
+                            fontName: fontField.editText
+                            // HikariChoice::PutArray keeps the typed font.
+                            onListMade: {
+                                const text = fontField.editText
+                                fontField.model = fonts
+                                fontField.editText = text
+                            }
                         }
                         RowLayout {
                             CheckBox { id: boldBox; objectName: "styleBold"; text: qsTr("Bold"); onToggled: manager.updatePreview() }
