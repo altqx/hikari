@@ -1855,6 +1855,12 @@ private slots:
         QVERIFY(application->openFile(path));
         auto fonts = std::make_unique<hikari::testing::FakeFonts>();
         fonts->faces = {{"Arial", 400, false, "/fonts/arial.ttf"}, {"Times", 400, false, "/fonts/times.ttf"}};
+        // The whole Document also drew a character with a fallback file no
+        // family named: its block is CheckPathAndGlyphs' "Found font \"%s\"."
+        // (FontCollector.cpp:1088), which has no newline of its own.
+        hikari::testing::FakeFonts::add(fonts->document, {"Gothic", 400, false, "/fonts/gothic.ttf", U"x"},
+                                        application::SelectionStage::Fallback, U'x', "",
+                                        application::NameMatch::None);
         auto &collector = application->fontCollector();
         collector.setFontService(std::move(fonts));
         QString revealed;
@@ -1881,14 +1887,36 @@ private slots:
         QVERIFY(check.contains(QStringLiteral("\nFinished in 00:00:")));
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
 
-        // A double click on a Line number goes to it, on a Style's tab to its first Line.
+        // A double click in the log (OnConsoleDoubleClick, FontCollector.cpp:269-294)
+        // on a Line number goes to it, on a Style's tab to its first Line.
+        // The click lands on the rich-text log at the character's caret
+        // position, which is the offset in logText (legacy HitTest,
+        // HikariTextCtrl.cpp:1312-1358: the nearest caret position).
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto lines = session->document().lines();
-        collector.logDoubleClicked(int(check.indexOf(QStringLiteral("In lines: 2")) + 10));
-        QCOMPARE(session->selection().active, std::optional(lines[1]->id));
+        auto *logView = dialogItem("fontCollectorDialog", "fontCollectorLog");
+        QVERIFY(logView);
+        const auto pointAt = [&](int offset) {
+            QRectF r;
+            QMetaObject::invokeMethod(logView, "positionToRectangle", Q_RETURN_ARG(QRectF, r), Q_ARG(int, offset));
+            const QPointF local(r.x() + 1.5, r.center().y());
+            int hit = -1;
+            QMetaObject::invokeMethod(logView, "positionAt", Q_RETURN_ARG(int, hit), Q_ARG(qreal, local.x()),
+                                      Q_ARG(qreal, local.y()));
+            return std::pair{logView->mapToScene(local).toPoint(), hit};
+        };
+        for (const QString &at : {QStringLiteral("In lines: 2"), QStringLiteral(" - Sign tabs: 1"),
+                                  QStringLiteral("Font not found")}) {
+            const int offset = int(check.indexOf(at));
+            QCOMPARE(pointAt(offset).second, offset);
+        }
+        const auto lineNumber = pointAt(int(check.indexOf(QStringLiteral("In lines: 2")) + 10));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, lineNumber.first);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
         QSignalSpy styleRequested(&collector, &app::FontCollectorController::styleRequested);
-        collector.logDoubleClicked(int(check.indexOf(QStringLiteral(" - Sign tabs: 1")) + 14));
-        QCOMPARE(session->selection().active, std::optional(lines[2]->id));
+        const auto styleTab = pointAt(int(check.indexOf(QStringLiteral(" - Sign tabs: 1")) + 14));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, styleTab.first);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[2]->id));
         QCOMPARE(styleRequested.size(), 1);
         QCOMPARE(styleRequested.at(0).at(0).toString(), QStringLiteral("Sign"));
         QTRY_VERIFY(named("styleManager")->property("visible").toBool());
@@ -1917,8 +1945,13 @@ private slots:
         QCOMPARE(collector.copyPath(), QDir::toNativeSeparators(archive) + QStringLiteral(".zip"));
         const QString review = collector.logText();
         QVERIFY2(review.startsWith(QStringLiteral("Retrieved sizes and names of 2 fonts, elapsed time 00:00:")), qPrintable(review));
-        QVERIFY2(review.contains(QStringLiteral("Found font \"Arial\".Found \"/fonts/arial.ttf\" font file.\n")) ||
-                     review.contains(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\n")),
+        // GetAssFonts' header ends its line (FontCollector.cpp:602); the
+        // renderer's own file is in a block CheckPathAndGlyphs opened, whose
+        // header does not (FontCollector.cpp:1088, FontLogContent::DoLog).
+        QVERIFY2(review.contains(QStringLiteral("Found font \"Arial\"\nFound \"/fonts/arial.ttf\" font file.\nIn styles:\n")),
+                 qPrintable(review));
+        QVERIFY2(review.contains(QStringLiteral("Found font \"gothic.ttf\".The renderer also used \"/fonts/gothic.ttf\" "
+                                                "(fallback); it is not collected.\n\n")),
                  qPrintable(review));
         QVERIFY(review.contains(QStringLiteral("Ready to add 2 fonts to the archive")));
         QVERIFY(!QFile::exists(archive + QStringLiteral(".zip")));
