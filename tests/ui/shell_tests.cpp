@@ -5294,6 +5294,18 @@ private slots:
     {
         return it->mapToScene(QPointF(it->width() / 2, it->height() / 2)).toPoint();
     }
+    // In translation mode the Line editor's rows need more height than its
+    // dock has in the default 1280 x 800 layout: the translation buttons end
+    // at the dock's bottom edge, and with the Ubuntu runner's font metrics
+    // their centre falls a few pixels below it, on the dock below. A test
+    // clicking one gives the window the height for it first.
+    void roomInTheEditorFor(QQuickItem *button)
+    {
+        if (window->height() < 1000)
+            window->resize(window->width(), 1000);
+        auto *panel = item("editorPanel");
+        QTRY_VERIFY(panel->mapRectToScene(panel->boundingRect()).contains(button->mapRectToScene(button->boundingRect())));
+    }
     static QString q8(const std::u8string &s)
     {
         return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
@@ -5438,6 +5450,7 @@ private slots:
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
+        roomInTheEditorFor(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -5494,6 +5507,7 @@ private slots:
         application->editor().setShowTags(true);
         auto *moving = item("movingTags");
         QVERIFY(!moving->property("checked").toBool());
+        roomInTheEditorFor(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -5531,6 +5545,7 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        roomInTheEditorFor(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
