@@ -153,6 +153,9 @@ public:
     Q_INVOKABLE void reportFieldSelection(int role, int start, int end);
     std::pair<int, int> fieldSelection() const { return m_fieldSelection[translationMode() ? 1 : 0]; }
     std::pair<int, int> fieldSelectionOf(int role) const { return m_fieldSelection[role == 1 ? 1 : 0]; }
+    // T3: that selection in the raw text of `role` (the caret goes after
+    // hidden boundary tags, as the tag commands take it).
+    std::pair<long, long> rawFieldSelection(int role) const;
     // Selects text in the edited field (aegisub.gui.set_cursor/set_selection),
     // or in `role` (0 Original, 1 Translated) when given.
     void selectInField(int start, int end, int role = -1);

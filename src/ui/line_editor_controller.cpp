@@ -1207,6 +1207,21 @@ std::pair<int, int> LineEditorController::displaySpan(int role, int start, int e
     return {start, end};
 }
 
+std::pair<long, long> LineEditorController::rawFieldSelection(int role) const
+{
+    role = role == 1 ? 1 : 0;
+    const auto [start, end] = m_fieldSelection[role];
+    long from = start, to = end;
+    if (!m_showTags) {
+        if (const auto r = record()) {
+            const auto projection = core::project(core::toUtf16(roleText(*r, role)));
+            from = static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(start), true));
+            to = end == start ? from : static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(end), false));
+        }
+    }
+    return {from, to};
+}
+
 void LineEditorController::selectRaw(int role, int start, int end)
 {
     if (!record() || role < 0 || role > 1)

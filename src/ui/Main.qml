@@ -1557,7 +1557,7 @@ ApplicationWindow {
                 // T1: Esc cancels an open visual gesture first; keys no binding
                 // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
                 // hands them to the Visuals.
-                Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.gestureActive)
+                Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
                                                   || root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
@@ -1635,6 +1635,9 @@ ApplicationWindow {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
+                VisualToolOptions { // T3: the family's options (legacy VideoToolbar's second row)
+                    tools: root.visualTools
+                }
                 VisualToolValues {
                     Layout.fillWidth: true
                     tools: root.visualTools

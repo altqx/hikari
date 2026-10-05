@@ -9,6 +9,7 @@
 // owns the one open gesture (Esc cancels it), the batch picker, the
 // warnings (VIDEO_VISUAL_WARNINGS_OFF) and VIDEO_COPY_COORDS.
 
+#include "automation_services_qt.h"
 #include "hikari/application/visual_tools.h"
 #include "settings_store.h"
 
@@ -59,6 +60,12 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
     // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
+    // T3: the active family's options (legacy VideoToolbar's second row):
+    // name, kind ("toggle"/"choice"), iconRole, tooltip, checked, enabled,
+    // choices, index.
+    Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
+    // Esc has something to drop: an open gesture or a tool's pending step.
+    Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
@@ -67,6 +74,13 @@ public:
 
     // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
+    // T3: the Line editor's selection in the edited text (FindTag's mode 0).
+    void setEditorSelection(std::function<std::pair<long, long>()> selection)
+    {
+        m_editorSelection = std::move(selection);
+    }
+    // T3: puts the Line editor's caret where a tool's edit left it.
+    void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
     // The editing target, its content, active Line or format changed.
     void refresh();
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
@@ -88,6 +102,8 @@ public:
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
+    QVariantList options() const;
+    bool escapable() const;
 
     // The video area's logical size (the presenter's), the panel below it
     // and the window's device pixel ratio.
@@ -110,6 +126,8 @@ public:
     Q_INVOKABLE QString copyCoordinates(qreal x, qreal y);
     Q_INVOKABLE QString copyCoordinatesAtCursor(QQuickItem *area);
     Q_INVOKABLE bool setValue(const QString &name, const QString &text);
+    // T3: an option of the active family (0/1 for a toggle, the index for a choice).
+    Q_INVOKABLE bool setOption(const QString &name, int value);
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
@@ -126,6 +144,15 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    std::int64_t videoTimeMs() const override;
+    application::LegacyTimebase timebase() const override;
+    application::TextMeasurePort *textMeasure() const override { return &m_measure; }
+    std::pair<long, long> editorSelection() const override;
+    void setEditorSelection(long from, long to) override
+    {
+        if (m_placeSelection)
+            m_placeSelection(from, to);
+    }
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -135,6 +162,7 @@ signals:
     void changed();
     void overlayChanged();
     void geometryChanged();
+    void optionsChanged();
 
 private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
@@ -146,6 +174,9 @@ private:
     SettingsStore &m_settings;
     SessionProvider m_session;
     std::function<void()> m_edited;
+    std::function<std::pair<long, long>()> m_editorSelection;
+    std::function<void(long, long)> m_placeSelection;
+    mutable QtTextMeasurePort m_measure;
     application::visual::VideoView m_view;
     application::visual::SourceGeometry m_geometry;
     std::vector<std::unique_ptr<application::visual::VisualTool>> m_tools;
@@ -162,6 +193,7 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
+    std::int64_t m_seenTime = -1;
 };
 
 } // namespace hikari::ui

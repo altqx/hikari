@@ -12,6 +12,7 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QQuickItem>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <cmath>
@@ -51,6 +52,12 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
         emit changed(); // the shown frame's time moves the warnings
+        // T3: a \move's position follows the shown frame (legacy Draw ran
+        // DrawVisual on every frame, Visuals.cpp:504-529).
+        if (const auto time = videoTimeMs(); time != m_seenTime) {
+            m_seenTime = time;
+            emit overlayChanged();
+        }
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
@@ -174,6 +181,7 @@ void VisualToolsController::resetTool()
         t->reset(*this);
     emit changed();
     emit overlayChanged();
+    emit optionsChanged(); // the family, the format or the Line changed
 }
 
 std::optional<core::LineId> VisualToolsController::activeLine() const
@@ -222,12 +230,90 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
 
 bool VisualToolsController::escape()
 {
-    if (!m_gesture)
+    if (!m_gesture) {
+        // T3: with no gesture open Esc drops a tool's pending step (the
+        // first of RotationZ's two points, the card's evidence on #178).
+        auto *t = tool();
+        if (t && m_view.hasVideo() && t->cancelPending(*this)) {
+            emit changed();
+            emit overlayChanged();
+            return true;
+        }
         return false;
+    }
     m_gesture.reset();
+    // T3: the tool reads the unchanged text again (legacy SetCurVisual), so
+    // its handles go back to where the text puts them.
+    if (auto *t = tool(); t && t->family() != Family::Crosshair)
+        t->reset(*this);
     emit changed();
     emit overlayChanged();
     return true;
+}
+
+bool VisualToolsController::escapable() const
+{
+    if (m_gesture)
+        return true;
+    const auto *t = tool();
+    return t && m_view.hasVideo() && t->hasPending();
+}
+
+QVariantList VisualToolsController::options() const
+{
+    QVariantList out;
+    const auto *t = tool();
+    if (!t)
+        return out;
+    for (const ToolOption &o : t->options(*this)) {
+        QStringList choices;
+        for (const auto &c : o.choices)
+            choices.append(qs(c));
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
+                               {QStringLiteral("kind"), o.kind == ToolOption::Kind::Choice ? QStringLiteral("choice")
+                                                                                         : QStringLiteral("toggle")},
+                               {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
+                               {QStringLiteral("tooltip"), qs(o.tooltip)},
+                               {QStringLiteral("checked"), o.checked},
+                               {QStringLiteral("enabled"), o.enabled},
+                               {QStringLiteral("choices"), choices},
+                               {QStringLiteral("index"), o.index}});
+    }
+    return out;
+}
+
+bool VisualToolsController::setOption(const QString &name, int value)
+{
+    // Legacy VideoToolbar's item click: the tool takes its toggles
+    // (VideoBox.cpp:179-181, Visuals::ChangeTool); never during a gesture.
+    auto *t = tool();
+    if (!t || m_gesture)
+        return false;
+    const bool done = t->setOption(name.toStdString(), value, *this);
+    emit changed();
+    emit overlayChanged();
+    emit optionsChanged();
+    return done;
+}
+
+std::int64_t VisualToolsController::videoTimeMs() const
+{
+    // VideoBox::Tell: the shown frame's start.
+    const auto frame = m_video.session().shownFrame();
+    if (!frame)
+        return 0;
+    const auto start = m_video.session().frameStart(*frame);
+    return start ? start->microseconds() / 1000 : 0;
+}
+
+application::LegacyTimebase VisualToolsController::timebase() const
+{
+    return m_video.session().legacyTimebase();
+}
+
+std::pair<long, long> VisualToolsController::editorSelection() const
+{
+    return m_editorSelection ? m_editorSelection() : std::pair<long, long>{0, 0};
 }
 
 std::pair<int, int> VisualToolsController::measureLabel(std::u16string_view text) const
@@ -275,6 +361,8 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
         break;
     }
     p.leftDown = (buttons & Qt::LeftButton) != 0;
+    p.rightDown = (buttons & Qt::RightButton) != 0;
+    p.middleDown = (buttons & Qt::MiddleButton) != 0;
     p.control = (modifiers & Qt::ControlModifier) != 0;
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
@@ -330,6 +418,9 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
+    // RendererVideo::SetVisual made a new tool for the family (Visuals::Get).
+    if (auto *t = tool())
+        t->selected(*this);
     resetTool();
 }
 
@@ -441,6 +532,16 @@ QVariantList VisualToolsController::overlay() const
         return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
+    // Drawn first (T2, T3): filled shapes with a one-pixel border.
+    for (const OverlayPolygon &poly : o.polygons) {
+        QVariantList points;
+        for (const PointF &pt : poly.points)
+            points.append(QVariantList{L(pt.x), L(pt.y)});
+        out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("polygon")},
+                               {QStringLiteral("points"), points},
+                               {QStringLiteral("fill"), poly.fill ? colour(poly.fill) : QString()},
+                               {QStringLiteral("border"), poly.border ? colour(poly.border) : QString()}});
+    }
     for (const OverlayLine &l : o.lines)
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("line")},
                                {QStringLiteral("x1"), L(l.from.x)}, {QStringLiteral("y1"), L(l.from.y)},

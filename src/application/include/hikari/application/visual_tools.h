@@ -11,6 +11,7 @@
 // Esc, the warnings and the overlay drawing need no change.
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/legacy_timebase.h"
 #include "hikari/application/visual_view.h"
 
 #include <array>
@@ -23,6 +24,10 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+namespace hikari::application {
+class TextMeasurePort; // automation_services.h
+}
 
 namespace hikari::application::visual {
 
@@ -60,6 +65,7 @@ struct Pointer {
     int x = 0, y = 0;
     Button button = Button::None; // the button pressed or released
     bool leftDown = false;        // held during a move
+    bool rightDown = false, middleDown = false; // T3: the other buttons held (wx RightIsDown, MiddleIsDown)
     bool control = false, shift = false, alt = false;
     int wheelSteps = 0;
 };
@@ -91,11 +97,21 @@ struct OverlayCircle {
     std::uint32_t argb = 0xFFFFFFFF;
     bool filled = false;
 };
+// A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
+// triangle strip and line strip; T2). T3: a border of 0 draws the fill alone
+// (RotationZ's ring), a fill of 0 the border alone.
+struct OverlayPolygon {
+    std::vector<PointF> points;
+    std::uint32_t fill = 0;
+    std::uint32_t border = 0xFFFFFFFF;
+};
+// Drawn in this order: polygons, lines, circles, texts.
 struct Overlay {
     std::vector<OverlayLine> lines;
     std::vector<OverlayCircle> circles;
     std::vector<OverlayText> texts;
-    bool empty() const { return lines.empty() && circles.empty() && texts.empty(); }
+    std::vector<OverlayPolygon> polygons;
+    bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
 // A numeric value a tool shows below the canvas (the rail's keyboard and
@@ -105,6 +121,21 @@ struct ToolValue {
     std::u16string label;
     std::u16string text;
     bool editable = false;
+};
+
+// A tool's own option on the rail's second row (legacy VideoToolbar's
+// VisualItem for the family, T2-T6): a toggle with its icon role, or a
+// choice. setOption takes 0/1 for a toggle and the index for a choice.
+struct ToolOption {
+    enum class Kind { Toggle, Choice };
+    std::string name;
+    Kind kind = Kind::Toggle;
+    std::string iconRole;     // the K1 set's role (toggles)
+    std::u16string tooltip;   // legacy's help text
+    bool checked = false;     // a toggle's state
+    bool enabled = true;      // legacy's greyed icons
+    std::vector<std::u16string> choices;
+    int index = 0;            // a choice's selection
 };
 
 // One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
@@ -188,6 +219,28 @@ public:
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
     // The tool's drawing or values changed.
     virtual void toolChanged() = 0;
+
+    // T2: what Visuals read from the video and the Grid. The video's time
+    // (VideoBox::Tell: the shown frame's start in ms), its legacy Timebase
+    // (VideoBox::GetTimebase), the text measure GetTextSize uses
+    // (GetLineTextExtents; none: measuring fails), the Grid's "ignore
+    // filtering in some actions" (SubsGrid::ignoreFiltered) and HikariLog.
+    virtual std::int64_t videoTimeMs() const { return 0; }
+    virtual LegacyTimebase timebase() const { return {}; }
+    virtual TextMeasurePort *textMeasure() const { return nullptr; }
+    virtual bool ignoreFiltered() const { return false; }
+    virtual void log(std::u16string_view text) { (void)text; }
+    // T3: the Line editor's selection in the text the tools edit (legacy
+    // TagFindReplace::FindTag's editor->GetSelection with one Line selected,
+    // TagFindReplace.cpp:40-41), in UTF-16 code units.
+    virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
+    // Legacy put the editor's caret at the tag it changed
+    // (Visuals::SetVisual, Visuals.cpp:815); called after the commit.
+    virtual void setEditorSelection(long from, long to)
+    {
+        (void)from;
+        (void)to;
+    }
 };
 
 // One visual family. The host gives a tool only the events legacy's
@@ -223,6 +276,31 @@ public:
     // Legacy Visuals::Draw skipped these tools' warning (VisualCross overrides
     // Draw); the others are blocked outside their Line's time or on comments.
     virtual bool warnsOutsideLine() const { return family() != Family::Crosshair; }
+    // The family became the active one: legacy Visuals::Get made a new tool
+    // (RendererVideo::SetVisual), so the tool's own state starts over; the
+    // rail's options are the toolbar's and stay.
+    virtual void selected(VisualHost &host) { (void)host; }
+    // The rail's second row for the family (legacy VisualItem).
+    virtual std::vector<ToolOption> options(const VisualHost &host) const
+    {
+        (void)host;
+        return {};
+    }
+    virtual bool setOption(const std::string &name, int value, VisualHost &host)
+    {
+        (void)name;
+        (void)value;
+        (void)host;
+        return false;
+    }
+    // T3: Esc with no gesture open: true when the tool dropped a pending
+    // step (RotationZ's first point of the two-point angle).
+    virtual bool cancelPending(VisualHost &host)
+    {
+        (void)host;
+        return false;
+    }
+    virtual bool hasPending() const { return false; }
 };
 
 // The tool for a family: nullptr while its card (T2-T6) has not landed.

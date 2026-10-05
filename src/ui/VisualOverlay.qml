@@ -60,7 +60,24 @@ Item {
             const ctx = getContext("2d")
             ctx.reset()
             for (const s of shapes) {
-                if (s.type === "line") {
+                if (s.type === "polygon") { // T2, T3: a filled shape with a one-pixel border
+                    if (s.points.length < 2)
+                        continue
+                    ctx.beginPath()
+                    ctx.moveTo(s.points[0][0], s.points[0][1])
+                    for (let i = 1; i < s.points.length; ++i)
+                        ctx.lineTo(s.points[i][0], s.points[i][1])
+                    ctx.closePath()
+                    if (s.fill !== "") {
+                        ctx.fillStyle = s.fill
+                        ctx.fill()
+                    }
+                    if (s.border !== "") {
+                        ctx.strokeStyle = s.border
+                        ctx.lineWidth = 1
+                        ctx.stroke()
+                    }
+                } else if (s.type === "line") {
                     ctx.strokeStyle = s.color
                     ctx.lineWidth = s.width
                     ctx.beginPath()
