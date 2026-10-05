@@ -2,6 +2,99 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ta">
 <context>
+    <name>AlignmentChoice</name>
+    <message>
+        <source>Bottom-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Middle-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-center</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top-right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text position</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AppearancePage</name>
+    <message>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Follow system theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light or Dark as the system&apos;s colour scheme sets it; high contrast stays as chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Secondary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>UI colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset to default</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AspectRatioDialog</name>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AutomationManager</name>
     <message>
         <source>Automation</source>
@@ -21,6 +114,21 @@
     </message>
     <message>
         <source>Unload</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>AutomationNotices</name>
+    <message>
+        <source>Select a script editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Programs (*.exe)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*.*)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -60,6 +168,16 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap shortcuts between the color picker
+and the color selection window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking this option opens the color picker on left-click,
+and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -116,6 +234,58 @@
     </message>
     <message>
         <source>HTML colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hue:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lightness:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lightness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a colour from the screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -196,12 +366,321 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Modified</source>
+        <translation type="unfinished">மாற்றியமைக்கப்பட்ட</translation>
+    </message>
+    <message>
+        <source>Protected reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open new tab</source>
         <translation>புதிய தாவலைத் திறக்கவும்</translation>
+    </message>
+</context>
+<context>
+    <name>DummyVideoDialog</name>
+    <message>
+        <source>Dummy video options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This gives %1 frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video resolution:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Color:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checkerboard pattern</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FontCatalogBar</name>
+    <message>
+        <source>Font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds fonts to a previously created catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manages font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allows managing font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>Filters fonts to those containing the entered characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FontCatalogWindow</name>
+    <message>
+        <source>Manage font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">தொகு</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">நீக்கு</translation>
+    </message>
+    <message>
+        <source>Load</source>
+        <translation type="unfinished">சுமை</translation>
+    </message>
+    <message>
+        <source>Refresh fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reads the installed and external fonts again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>Save filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font name</source>
+        <translation type="unfinished">எழுத்துரு பெயர்</translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawn by Qt, not by the subtitle renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mark %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the name of the profile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose new catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with:</source>
+        <translation type="unfinished">இதனுடன் மாற்றவும்:</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished">தகவல்</translation>
+    </message>
+    <message>
+        <source>Enter a name for the new catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Prompt</source>
+        <translation type="unfinished">உடனடி</translation>
+    </message>
+    <message>
+        <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to delete this catalog?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose font catalog file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text files (*.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FontCollectorDialog</name>
+    <message>
+        <source>Font collector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to copy fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a name for the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Options</source>
+        <translation type="unfinished">விருப்பங்கள்</translation>
+    </message>
+    <message>
+        <source>Check availability of fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to selected folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to video / subtitles folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves to the video folder
+when demuxing fonts from an MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Demux fonts from loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font collector log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write this incomplete collection, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Start on tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+    <message>
+        <source>Choose save folder</source>
+        <translation type="unfinished">சேமி கோப்புறையைத் தேர்வுசெய்க</translation>
+    </message>
+    <message>
+        <source>Select the name of the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archive files (*.zip)</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -243,11 +722,365 @@
         <translation>ச்ட்ரைகெத்ரோ</translation>
     </message>
     <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Preview</source>
         <translation>முன்னோட்டம்</translation>
     </message>
     <message>
         <source>AaBbCcDdEeFfGg 0123456789</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitle renderer uses %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed under this name: the subtitle renderer substitutes %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not installed: the subtitle renderer falls back to %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No font answers this name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>FontsFromSubtitlesDialog</name>
+    <message>
+        <source>Add fonts from subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove all contents of catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from all open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.TagList</name>
+    <message>
+        <source>Transparency of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary color</source>
+        <translation type="unfinished">முதன்மை நிறம்</translation>
+    </message>
+    <message>
+        <source>Secondary color</source>
+        <translation type="unfinished">இரண்டாம் நிலை நிறம்</translation>
+    </message>
+    <message>
+        <source>Border color</source>
+        <translation type="unfinished">எல்லை நிறம்</translation>
+    </message>
+    <message>
+        <source>Shadow color</source>
+        <translation type="unfinished">நிழல் நிறம்</translation>
+    </message>
+    <message>
+        <source>PNG mask of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PNG mask of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency gradient of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of primary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of secondary color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of border color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient of shadow color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text alignment (SSA)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bold text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edge blur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blur of border, shadow or font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Thickness of border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector clip / rectangle clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font distortion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fading in / fading out of text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fading in / fading out of text (advanced version)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skew on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skew on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font name</source>
+        <translation type="unfinished">எழுத்துரு பெயர்</translation>
+    </message>
+    <message>
+        <source>Text rounding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation on Z axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font size</source>
+        <translation type="unfinished">எழுத்துரு அளவு</translation>
+    </message>
+    <message>
+        <source>Scale on X and Y axes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical font spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Italic text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reverse vector clip or rectangle clip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text jitter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing smooth transition</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke timing (not supported)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a circle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a curve (3 points)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text movement along a curve (4 points)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vector drawing movement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Anchor for rotation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawing and its scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offset of Y vector points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text wrap method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness seed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font point randomness on Z axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text strikethrough</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text shadow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text underline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow on X axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow on Y axis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Z coordinate for tags \frx and \fry</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -304,6 +1137,138 @@
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+</context>
+<context>
+    <name>LineCounters</name>
+    <message>
+        <source>Number of characters in each line.
+No more than 43 characters per line (maximum 2 lines).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per second.
+Should not exceed 15 characters per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time</source>
+        <translation type="unfinished">நேரம்</translation>
+    </message>
+    <message>
+        <source>Show times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">சட்டங்கள்</translation>
+    </message>
+    <message>
+        <source>Show frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>LineInspector</name>
+    <message>
+        <source>Comment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sets the line as a comment. Comments are not shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Layer</source>
+        <translation type="unfinished">அடுக்கு</translation>
+    </message>
+    <message>
+        <source>Line layer. Higher layers are on top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Line start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">முடிவு</translation>
+    </message>
+    <message>
+        <source>Line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation type="unfinished">தொகு</translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Allows quick editing of the current line&apos;s style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Actor</source>
+        <translation type="unfinished">நடிகர்</translation>
+    </message>
+    <message>
+        <source>Line actor label. Does not affect the appearance of the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished">இடது விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Line left margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished">வலது விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Line right margin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished">செங்குத்து விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Line top and bottom margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Effect</source>
+        <translation type="unfinished">விளைவு</translation>
+    </message>
+    <message>
+        <source>Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -561,12 +1526,52 @@
         <translation>கீஃப்ரேம்களைத் திறக்கவும்</translation>
     </message>
     <message>
+        <source>Import legacy settings...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run the last loaded script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert start time from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Insert end time from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Set audio position to video time</source>
         <translation>வீடியோ நேரத்துடன் ஆடியோவை அமைக்கவும்</translation>
     </message>
     <message>
         <source>Set audio marker to video time</source>
         <translation>வீடியோ நேரத்துடன் ஆடியோ மார்க்கரை அமைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Unload video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off video zoom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A&amp;udio</source>
@@ -673,12 +1678,20 @@
         <translation>மாற்றம்</translation>
     </message>
     <message>
+        <source>Font collector</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Resample subtitles</source>
         <translation>மறுவிற்பனை வசன வரிகள்</translation>
     </message>
     <message>
         <source>Check spelling</source>
         <translation>எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>&amp;Help</source>
@@ -757,6 +1770,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Previous file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pause</source>
         <translation>இடைநிறுத்தம்</translation>
     </message>
@@ -775,6 +1792,10 @@
     <message>
         <source>Stop</source>
         <translation>நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Audio</source>
@@ -821,8 +1842,16 @@
         <translation>கட்டுப்பாடு + சொடுக்கு பயன்படுத்தி இரண்டாவது குறுக்குவழியை அமைக்கலாம்</translation>
     </message>
     <message>
+        <source>Previous line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Play the previous line</source>
         <translation>முந்தைய வரியை விளையாடுங்கள்</translation>
+    </message>
+    <message>
+        <source>Next line</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play the next line</source>
@@ -909,6 +1938,10 @@
         <translation>செயலில் உள்ள வரியில் லீட்-அவுட் சேர்க்கவும்</translation>
     </message>
     <message>
+        <source>Commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Apply changes</source>
         <translation>மாற்றங்களைப் பயன்படுத்துங்கள்</translation>
     </message>
@@ -986,7 +2019,7 @@
     </message>
     <message>
         <source>Start</source>
-        <translation>தொடங்கு</translation>
+        <translation type="vanished">தொடங்கு</translation>
     </message>
     <message>
         <source>End</source>
@@ -994,50 +2027,30 @@
     </message>
     <message>
         <source>Left margin</source>
-        <translation>இடது விளிம்பு</translation>
+        <translation type="vanished">இடது விளிம்பு</translation>
     </message>
     <message>
         <source>Right margin</source>
-        <translation>வலது விளிம்பு</translation>
+        <translation type="vanished">வலது விளிம்பு</translation>
     </message>
     <message>
         <source>Vertical margin</source>
-        <translation>செங்குத்து விளிம்பு</translation>
-    </message>
-    <message>
-        <source>B</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">செங்குத்து விளிம்பு</translation>
     </message>
     <message>
         <source>Bold</source>
         <translation>தடிமான</translation>
     </message>
     <message>
-        <source>I</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Italic</source>
         <translation>சாய்வு</translation>
-    </message>
-    <message>
-        <source>U</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Underline</source>
         <translation>அடிக்கோடிட்டு</translation>
     </message>
     <message>
-        <source>S</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Strikeout</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Fn</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1067,10 +2080,6 @@
     <message>
         <source>Change number of buttons</source>
         <translation>பொத்தான்களின் அளவை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Show tags</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Original text</source>
@@ -1213,8 +2222,16 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Select all lines visible on video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Make tree</source>
         <translation>மரத்தை உருவாக்குங்கள்</translation>
+    </message>
+    <message>
+        <source>Show subtitles preview</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Paste translation text</source>
@@ -1349,11 +2366,23 @@
         <translation>நெடுவரிசைகளை ஒட்டவும்</translation>
     </message>
     <message>
+        <source>Delete text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete lines	Shift+Del</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1534,14 +2563,6 @@
     </message>
     <message>
         <source>Dismiss</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>No editing target</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>  |  Reference (protected): %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2381,6 +3402,41 @@ Match the resolution to the video?
     </message>
 </context>
 <context>
+    <name>MatroskaSubtitles</name>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">உறுதிப்படுத்தல்</translation>
+    </message>
+    <message>
+        <source>Save the file before loading subtitles from the MKV?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation type="unfinished">ஆம்</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation type="unfinished">இல்லை</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>The file does not contain any subtitle tracks.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading subtitles from Matroska.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MisspellReplacerDialog</name>
     <message>
         <source>Multireplacer</source>
@@ -2532,6 +3588,13 @@ in all tabs</source>
     </message>
 </context>
 <context>
+    <name>QGuiApplication</name>
+    <message>
+        <source>QT_LAYOUT_DIRECTION</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>The reference is protected (read-only).</source>
@@ -2595,6 +3658,63 @@ in all tabs</source>
     </message>
     <message>
         <source>the video could not be opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>RecentFilesMenu</name>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">எதுவுமில்லை</translation>
+    </message>
+</context>
+<context>
+    <name>ReferenceTray</name>
+    <message>
+        <source>Follow the editing Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Independent navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Match %1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show nearest Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reference Lines (protected, read-only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>ScreenDropperView</name>
+    <message>
+        <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3171,7 +4291,7 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Themes</source>
-        <translation>கருப்பொருள்கள்</translation>
+        <translation type="vanished">கருப்பொருள்கள்</translation>
     </message>
     <message>
         <source>Hotkeys</source>
@@ -3184,6 +4304,10 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Language (program restart required)</source>
         <translation type="vanished">மொழி (நிரல் மறுதொடக்கம் தேவை)</translation>
+    </message>
+    <message>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language</source>
@@ -3539,23 +4663,23 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Audio spectrum background</source>
-        <translation>ஆடியோ ச்பெக்ட்ரம் பின்னணி</translation>
+        <translation type="vanished">ஆடியோ ச்பெக்ட்ரம் பின்னணி</translation>
     </message>
     <message>
         <source>Audio spectrum echo</source>
-        <translation>ஆடியோ ச்பெக்ட்ரம் எதிரொலி</translation>
+        <translation type="vanished">ஆடியோ ச்பெக்ட்ரம் எதிரொலி</translation>
     </message>
     <message>
         <source>Audio spectrum</source>
-        <translation>ஆடியோ ச்பெக்ட்ரம்</translation>
+        <translation type="vanished">ஆடியோ ச்பெக்ட்ரம்</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation>பெயர்</translation>
+        <translation type="vanished">பெயர்</translation>
     </message>
     <message>
         <source>Color</source>
-        <translation>நிறம்</translation>
+        <translation type="vanished">நிறம்</translation>
     </message>
     <message>
         <source>Choose filtering</source>
@@ -3660,6 +4784,190 @@ removing audio cache files.</source>
     <message>
         <source>Warning</source>
         <translation>எச்சரிக்கை</translation>
+    </message>
+</context>
+<context>
+    <name>SettingsImport</name>
+    <message>
+        <source>Cannot read %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot write the snapshot</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>SettingsImportDialog</name>
+    <message>
+        <source>Import legacy settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the folder of a legacy installation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go back to the settings before the last import?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go back to the settings before the last import? These changes made since will be replaced:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installation:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose folder...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that are not UTF-8 are read as:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latin-1 (ISO 8859-1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Windows-1252</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">அனைத்தும்</translation>
+    </message>
+    <message>
+        <source>Changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unchanged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Superseded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Excluded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retired</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Proposed choice</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Legacy: %1    Now: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unresolved paths, kept as they are: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An import waits for the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An import waits for the next start. These settings changed since it was made keep your change:
+%1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+</context>
+<context>
+    <name>SimpleColourPicker</name>
+    <message>
+        <source>Color picker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Primary color</source>
+        <translation type="unfinished">முதன்மை நிறம்</translation>
+    </message>
+    <message>
+        <source>Secondary color</source>
+        <translation type="unfinished">இரண்டாம் நிலை நிறம்</translation>
+    </message>
+    <message>
+        <source>Border color</source>
+        <translation type="unfinished">எல்லை நிறம்</translation>
+    </message>
+    <message>
+        <source>Shadow color</source>
+        <translation type="unfinished">நிழல் நிறம்</translation>
+    </message>
+    <message>
+        <source>ASS colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick a colour from the screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the window
+to the color selection location</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
     </message>
 </context>
 <context>
@@ -4118,6 +5426,308 @@ in uppercase</source>
     </message>
 </context>
 <context>
+    <name>SubtitleComparisonMenu</name>
+    <message>
+        <source>Subtitle comparison</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by visible lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by selections</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare by selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off comparison</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TagListPopup</name>
+    <message>
+        <source>Tag list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show all tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show VSFiltermod tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>Theme</name>
+    <message>
+        <source>Red</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Blue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Purple</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pink</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TranslationToggles</name>
+    <message>
+        <source>Not confirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moving tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>TranslatorModeCheck</name>
+    <message>
+        <source>Translator mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translator mode displays and saves both foreign text and translation text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">உறுதிப்படுத்தல்</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to turn off translation mode?
+Foreign language text will be deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoChaptersMenu</name>
+    <message>
+        <source>Chapters</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoContextMenu</name>
+    <message>
+        <source>Copy video position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">இடைநிறுத்தம்</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">விளையாடுங்கள்</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">நிறுத்து</translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show / hide progress bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save frame with subtitles as PNG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy frame with subtitles to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save frame as PNG</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy frame to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoFileQuestion</name>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">உறுதிப்படுத்தல்</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to index the next video?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Are you sure you want to index the previous video?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoFollowChoices</name>
+    <message>
+        <source>Double-clicking a line (always on)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every line change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clicking a line or editing when paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clicking a line or editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing line when paused</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation type="unfinished">புதுப்பித்தார்</translation>
+    </message>
+    <message>
+        <source>Move video to selected line on:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio to the line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video and audio to the line end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video and audio to the next line start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On moving to another line play:</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoIndexingProgress</name>
+    <message>
+        <source>Indexing video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+</context>
+<context>
+    <name>VideoStreamsMenu</name>
+    <message>
+        <source>Streams</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>VideoVolumeSlider</name>
+    <message>
+        <source>Volume</source>
+        <translation type="unfinished">தொகுதி</translation>
+    </message>
+</context>
+<context>
+    <name>VisualToolOptions</name>
+    <message>
+        <source>Warning</source>
+        <translation type="unfinished">எச்சரிக்கை</translation>
+    </message>
+</context>
+<context>
+    <name>VisualToolValues</name>
+    <message numerus="yes">
+        <source>Targets: %n picked line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Targets: active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">தெளிவான</translation>
+    </message>
+</context>
+<context>
     <name>hikari::app::Application</name>
     <message>
         <source>Reached end. Search from the beginning?</source>
@@ -4196,6 +5806,10 @@ cause it was edited.</source>
     </message>
     <message>
         <source>%1 could not be restored; its backup is in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot change YCbCr matrix</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4467,6 +6081,30 @@ and will be changed to the default</source>
         <source>The tab of %1 has other work now; open the file in a new tab.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Indexing error occurred: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create VideoSource.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot convert video to RGBA</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Invalid FPS value.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The reference is protected (read-only).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find translation, language change failed</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>hikari::app::AutomationHotkeysController</name>
@@ -4482,10 +6120,6 @@ and will be changed to the default</source>
 <context>
     <name>hikari::app::AutomationShell</name>
     <message>
-        <source>The macro changed Styles or Script Info, which can&apos;t be applied yet; nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The Document changed while the macro ran; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4495,6 +6129,31 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>The macro&apos;s changes could not be applied; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Info</source>
+        <translation type="unfinished">தகவல்</translation>
+    </message>
+    <message>
+        <source>This subtitle file does not have any scripts added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Error loading Lua script: %1
+%2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot start editor.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4510,6 +6169,10 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Validation Lua script &apos;%1&apos; failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The script&apos;s helper ended; reload the script to use it again.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4519,10 +6182,428 @@ and will be changed to the default</source>
     </message>
 </context>
 <context>
+    <name>hikari::app::FontCatalogsController</name>
+    <message>
+        <source>All fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Without catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>For adding fonts to catalog,
+click &quot;Manage&quot; button first,
+to create new catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosave</source>
+        <translation type="unfinished">தானிசேமி</translation>
+    </message>
+    <message>
+        <source>Cannot load external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add external font file %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>hikari::app::FontCollectorController</name>
+    <message>
+        <source>%1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found &quot;%1&quot; font file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The renderer also used &quot;%1&quot; (%2); it is not collected.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added font &quot;%1&quot; to the archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; belongs to a style
+that is not used.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>
+Will not be copied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing normal style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing bold italics.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing bold.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; is missing italics.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot check the characters in font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font &quot;%1&quot; does not contain characters: &quot;%2&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters &quot;%1&quot; were drawn by the fallback font &quot;%2&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get the contents of font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open file &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find &quot;%1&quot; font in Fonts folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot copy font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot zip font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the folder where you want to copy fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No subtitles loaded. Load subtitles or deselect this option.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a name for the archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts</source>
+        <comment>the folder the font collector writes beside the subtitles</comment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The save path is not valid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The zip file already exists, delete it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">உறுதிப்படுத்தல்</translation>
+    </message>
+    <message>
+        <source>Found font &quot;%1&quot;
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Found font &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font not found &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In styles:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source> tabs: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In lines: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checked by the subtitle renderer (%1).
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab %1: the renderer could not read this Document; it was not checked.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Families the renderer did not find: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Families answered by a font of another name: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters no font has: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters drawn by a fallback font of this computer: %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab %1: with the collected fonts alone, %2 of %3 frames differ.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The collected fonts alone reproduce every frame.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finished, %1 %2.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not found %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot copy %1.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts do not contain all glyphs used in the text.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The renderer cannot reproduce the subtitles from these fonts alone: the collection is incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The output does not hold every collected font under its own name: the collection is incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing was cancelled.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The output is labelled incomplete (&quot;%1&quot;).
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed Successfully, %1 %2.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finished in %1ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled; nothing was written.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitle renderer is not available; the fonts cannot be checked.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot retrieve the font file sizes and names;
+copying will be canceled.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retrieved sizes and names of %1 fonts, elapsed time %2ms.
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to add %1 to the archive &quot;%2&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy %1 to &quot;%2&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This collection is incomplete. It is written only when you acknowledge that, and the output is then labelled incomplete.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Path is not available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video: %1
+
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This video is not an MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loaded MKV file does not have any fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font named &quot;%1&quot;.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(no folder)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved a font named &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot save font named &quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed, copied %1 fonts.
+Failed to copy %2 fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Completed successfully and copied %1 fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>hikari::app::HotkeysController</name>
+    <message>
+        <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
         <translation type="unfinished">விசை &quot;%1&quot; செல்லுபடியாகாது</translation>
+    </message>
+</context>
+<context>
+    <name>hikari::app::MatroskaController</name>
+    <message>
+        <source>Time elapsed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Indexing error occurred: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>hikari::app::SettingsImportController</name>
+    <message>
+        <source>%1 to import of %2 changes, %3 unchanged, %4 unresolved, %5 excluded, %6 retired</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No legacy settings were found beside the program. Choose the folder of a legacy installation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 holds no legacy settings (Config, Dictionary).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Imported. The settings take effect when HikariSub starts again; a setting you change before then keeps your change. The legacy files were not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to import: the chosen settings are already in effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The legacy files changed since they were read. Read them again to review the changes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The current settings changed since this review. Review the import again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The import could not be prepared; the current settings stay in effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There is no earlier generation of the settings to go back to.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The settings before the import take effect when HikariSub starts again.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4607,11 +6688,27 @@ Styles deleted:
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Start is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start is not a time such as 0:00:01.00.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>End is not a time such as 0:00:01.00.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start is not a time such as %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End is not a time such as %1.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4632,6 +6729,26 @@ Styles deleted:
     </message>
     <message>
         <source>The Document can&apos;t be saved right now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps: 0/86</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wraps: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters per second: %1&lt;=15</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration is not a frame number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration is not a time.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4657,6 +6774,22 @@ Styles deleted:
 </context>
 <context>
     <name>hikari::ui::LineGrid</name>
+    <message>
+        <source>changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>changed, saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unconfirmed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bookmarked</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -4670,6 +6803,28 @@ Styles deleted:
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+</context>
+<context>
+    <name>hikari::ui::LineTableModel</name>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">அசல் உரை</translation>
+    </message>
+</context>
+<context>
+    <name>hikari::ui::ScreenSampler</name>
+    <message>
+        <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop&apos;s screenshot portal is not in use here.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The desktop could not pick a colour from the screen.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4688,6 +6843,44 @@ Styles deleted:
     </message>
 </context>
 <context>
+    <name>hikari::ui::TagListController</name>
+    <message>
+        <source>%1, %2, %3 of %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>hikari::ui::Theme</name>
+    <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High contrast white</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>High contrast black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accent color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text and icons</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border color</source>
+        <translation type="unfinished">எல்லை நிறம்</translation>
+    </message>
+</context>
+<context>
     <name>hikari::ui::VideoController</name>
     <message>
         <source>Associated files:
@@ -4696,6 +6889,10 @@ Video: %1</source>
     </message>
     <message>
         <source>No video open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opening dummy video…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4708,6 +6905,13 @@ Video: %1</source>
     </message>
     <message>
         <source>Frame %1 of %2  %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>hikari::ui::VideoViewController</name>
+    <message>
+        <source>Aspect ratio: %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

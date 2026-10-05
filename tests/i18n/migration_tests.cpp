@@ -498,7 +498,10 @@ TEST(CheckedIn, KeyMapIsTheCandidateMapOfTheRecordedInputs)
 
 // The conversion reproduces the checked-in gettext catalogs and report, and
 // every migrated rewrite entry is still in the rewrite catalogs as migrated
-// (lupdate may since have added keys or marked some vanished).
+// (lupdate may since have added keys or marked some vanished). An entry
+// migrated without a translation whose source left the code is dropped by
+// lupdate (a vanished entry is kept only for its translation): nothing was
+// lost with it.
 TEST(CheckedIn, ConversionReproducesTheCatalogs)
 {
     const auto map = readKeyMap(readSource(QStringLiteral("i18n/migration/keymap.tsv")));
@@ -518,6 +521,9 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
         for (const TsContext &context : migrated->contexts)
             for (const TsMessage &m : context.messages) {
                 const TsMessage *now = checkedIn->find(context.name, m.source, m.comment);
+                if (!now && m.state == TsState::Unfinished &&
+                    std::ranges::all_of(m.translations, [](const QString &t) { return t.isEmpty(); }))
+                    continue;
                 ASSERT_NE(now, nullptr) << language.toStdString() << " " << m.source.toStdString();
                 EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
                 EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished) << m.source.toStdString();

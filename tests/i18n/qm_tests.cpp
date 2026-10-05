@@ -261,7 +261,7 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
                     m.state = TsState::Finished;
                     ++numerus;
                 }
-        ASSERT_EQ(numerus, 11) << language.toStdString();
+        ASSERT_EQ(numerus, 12) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);
