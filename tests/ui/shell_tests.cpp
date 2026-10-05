@@ -1296,18 +1296,30 @@ private slots:
         QWindow *floating = item("editorPanel")->window();
         QTRY_VERIFY(floating->isVisible());
         const QRect screen = window->screen()->availableGeometry();
-        auto reachable = [&] {
+        auto titleStrip = [&] {
             const QRect frame = floating->frameGeometry();
-            return screen.intersected(QRect(frame.topLeft(), QSize(frame.width(), 30))).width() >= 80;
+            return QRect(frame.topLeft(), QSize(frame.width(), 30));
         };
-        floating->setFramePosition(screen.topRight() + QPoint(400, 300));
-        QTRY_VERIFY(!reachable());
+        auto reachable = [&] { return screen.intersected(titleStrip()).width() >= 80; };
+        // Off every screen, not only the main window's: beside the main
+        // screen can be another monitor (the Windows gate VM has two).
+        const QList<QScreen *> screens = QGuiApplication::screens();
+        QRect allScreens;
+        for (QScreen *s : screens)
+            allScreens |= s->availableGeometry();
+        auto offEveryScreen = [&] {
+            const QRect strip = titleStrip();
+            return std::none_of(screens.begin(), screens.end(),
+                                [&](QScreen *s) { return s->availableGeometry().intersects(strip); });
+        };
+        floating->setFramePosition(QPoint(allScreens.right() + 400, screen.top() + 300));
+        QTRY_VERIFY(offEveryScreen());
         QCOMPARE(application->workspaceLayout().keepFloatingPanelsOnScreen(), 1);
         QTRY_VERIFY(reachable());
         QCOMPARE(application->workspaceLayout().keepFloatingPanelsOnScreen(), 0); // nothing else to move
 
-        floating->setFramePosition(QPoint(screen.left() - 3000, screen.top() - 2000));
-        QTRY_VERIFY(!reachable());
+        floating->setFramePosition(QPoint(allScreens.left() - 3000, allScreens.top() - 2000));
+        QTRY_VERIFY(offEveryScreen());
         QVERIFY(QMetaObject::invokeMethod(named("panelShowEditor"), "triggered"));
         QTRY_VERIFY(reachable());
         QVERIFY(screen.contains(floating->frameGeometry().topLeft()));
