@@ -99,6 +99,11 @@ FontCatalogsController::FontCatalogsController(ui::SettingsStore &settings, std:
 
 FontCatalogsController::~FontCatalogsController()
 {
+    // ~FontCatalogList: FCManagement.SaveCatalogs() (FontCatalogList.cpp:
+    // 218-221 at 20d647c4). A window that was made lived until the end, so
+    // the catalogs as they are then are written to FontCatalogs.txt.
+    if (m_windowMade)
+        save();
     stopResolver();
 }
 

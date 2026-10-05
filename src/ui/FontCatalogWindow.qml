@@ -4,7 +4,8 @@
 // installed font with its mark, its catalog (a menu of the catalogs) and a
 // sample; the preview; the status bar. Edits are autosaved to
 // FontCatalogsAutosave0..2.txt 20 s after the first, and FontCatalogs.txt is
-// written when the window is shown or hidden (CATALOG_CHANGED) and closed.
+// written when the window is shown or hidden (CATALOG_CHANGED) and, once a
+// window was made, when the application ends (~FontCatalogList).
 //
 // "Refresh fonts" (the card's explicit refresh, F47-refresh) reads the
 // installed and external fonts again at once.
@@ -41,6 +42,7 @@ Dialog {
         seek.text = ""
         filterField.text = catalogs.filterText
         created = true
+        catalogs.windowMade() // ~FontCatalogList saves at the end
         select(catalogs.styleFontIndex(fonts, styleFont))
         refreshPreview()
     }

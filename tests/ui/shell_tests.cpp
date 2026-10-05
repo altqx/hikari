@@ -1004,6 +1004,53 @@ private slots:
         application->fontCatalogs().waitResolved();
     }
 
+    // Y6: ~FontCatalogList saves the catalogs (FontCatalogList.cpp:218-221):
+    // once a catalog window was made, the application's end writes
+    // FontCatalogs.txt with the edits made while it is still open. Without
+    // a window the file is left as it was (not rewritten with a BOM).
+    void fontCatalogsAreSavedAtTheEndOnceAWindowWasMade()
+    {
+        QTemporaryDir catalogDir;
+        QVERIFY(catalogDir.isValid());
+        const QString file = catalogDir.filePath(QStringLiteral("FontCatalogs.txt"));
+        app::Application::Options options;
+        options.fontCatalogDir = catalogDir.path();
+        restartWith(options);
+        usePickerFonts();
+        const QByteArray plain("A={\r\n\tArial\r\n}\r\n");
+        {
+            QFile f(file);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(plain);
+        }
+        auto *dialog = openFontDialog(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(dialog);
+        QCOMPARE(dialogItem("fontDialog", "fontCatalogChoice")->property("model").toStringList(),
+                 (QStringList{"All fonts", "Without catalog", "A"}));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        application->fontCatalogs().waitResolved();
+        restartWith(options);
+        QCOMPARE(readAll(file), plain);
+
+        usePickerFonts();
+        dialog = openFontDialog(fontAss("end-open.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(dialog);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
+        auto *window = named("fontDialogCatalogWindow");
+        QTRY_VERIFY(window->property("visible").toBool());
+        dialogItem("fontDialogCatalogWindow", "fontCatalogField")->setProperty("editText", QStringLiteral("C"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
+        QVERIFY(!readAll(file).contains("C={")); // written when shown, before Add
+        application->fontCatalogs().waitResolved();
+        delete engine;
+        engine = nullptr;
+        delete application;
+        application = nullptr;
+        QCOMPARE(readAll(file), QByteArray("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"
+                                           "B={\r\n\tImpact\r\n}\r\nC={\r\n}\r\n"));
+        restartWith(app::Application::Options());
+    }
+
     // Y6: the font dialog's renderer report resolves on one worker thread:
     // asking never waits for an earlier resolution, a request still waiting
     // is replaced by a newer one, and waitResolved waits for the latest.
@@ -2829,10 +2876,14 @@ private:
     // audio box plays through the output without a device, at its pace.
     void restartWithoutSound()
     {
-        delete engine;
-        delete application;
         app::Application::Options options;
         options.playbackAudio = false;
+        restartWith(options);
+    }
+    void restartWith(const app::Application::Options &options)
+    {
+        delete engine;
+        delete application;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);

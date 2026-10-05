@@ -132,6 +132,10 @@ public:
     Q_INVOKABLE void loadCatalogsFrom(const QUrl &file);
     // SaveCatalogs (the windows' closing, CATALOG_CHANGED).
     Q_INVOKABLE void save();
+    // A "Manage font catalogs" window was made (new FontCatalogList): from
+    // then on ~FontCatalogList's SaveCatalogs runs when the controller goes
+    // at the application's end, keeping edits made while a window is open.
+    Q_INVOKABLE void windowMade() { m_windowMade = true; }
     // GetFontsFromASSDialog's OK: CollectFontsFromSubtitles then SaveCatalogs.
     Q_INVOKABLE bool collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
     // AddToCatalog with no catalog: legacy logged where to create one.
@@ -211,6 +215,7 @@ private:
     bool m_resolverStop = false;
     int m_resolveRequest = 0;  // the latest request made (GUI thread)
     int m_resolveAnswered = 0; // the latest request answered (GUI thread)
+    bool m_windowMade = false; // a FontCatalogList exists
 };
 
 // "image://fontcatalogpreview/<key>": the management window's preview.
