@@ -5,11 +5,12 @@
 // swatch. Shown while the control has keyboard focus (visualFocus). Place it
 // in the control's background; set radius to the background's.
 import QtQuick
+import QtQuick.Templates as T
 import Hikari.Ui
 
 Rectangle {
     id: ring
-    required property Item control
+    required property T.Control control
     readonly property int offset: 3
     objectName: "focusRing"
     anchors.fill: parent
@@ -18,5 +19,5 @@ Rectangle {
     color: "transparent"
     border.width: 2
     border.color: Theme.focus
-    visible: ring.control.visualFocus === true
+    visible: ring.control.visualFocus
 }
