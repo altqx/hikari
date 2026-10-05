@@ -106,3 +106,26 @@ TEST(Workspace, AReplacementTakesTheTabsPlace)
     EXPECT_FALSE(w.title(b));
     EXPECT_FALSE(w.replace(b, n));
 }
+
+// P9: two tabs trade places (legacy Notebook::OnMouseEvent swaps Pages[i] and
+// Pages[oldI], Notebook.cpp:537-556; OnTabSel swaps the chosen tab with the
+// first visible one, 1020-1039). The reference keeps out of the tabs and the
+// editing target stays with its Document.
+TEST(Workspace, SwappingTabsKeepsTheRoles)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto r = w.add("reference.ass");
+    ASSERT_TRUE(w.setReference(r));
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.setEditingTarget(c));
+    ASSERT_TRUE(w.swapTabs(0, 2));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{c, b, a}));
+    EXPECT_EQ(w.editingTarget(), c);
+    EXPECT_EQ(w.reference(), r);
+    EXPECT_TRUE(w.swapTabs(1, 1));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{c, b, a}));
+    EXPECT_FALSE(w.swapTabs(0, 3));
+    EXPECT_EQ(w.documents().size(), 4u);
+}

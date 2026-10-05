@@ -70,6 +70,19 @@ std::vector<DocumentId> Workspace::tabs() const
     return out;
 }
 
+bool Workspace::swapTabs(std::size_t a, std::size_t b)
+{
+    const auto order = tabs();
+    if (a >= order.size() || b >= order.size())
+        return false;
+    if (a == b)
+        return true;
+    const auto first = std::ranges::find(m_documents, order[a], &Entry::id);
+    const auto second = std::ranges::find(m_documents, order[b], &Entry::id);
+    std::iter_swap(first, second);
+    return true;
+}
+
 const Workspace::Entry *Workspace::find(DocumentId id) const
 {
     const auto it = std::ranges::find(m_documents, id, &Entry::id);

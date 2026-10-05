@@ -37,6 +37,10 @@ public:
     bool replace(DocumentId id, DocumentId replacement);
     // P6: the tabs, in order: every Document but the protected reference.
     std::vector<DocumentId> tabs() const;
+    // P9: tabs `a` and `b` (indices into tabs()) trade places, as legacy
+    // Notebook swaps two Pages (a tab dragged over another, the tab menu's
+    // choice). The roles stay with their Documents.
+    bool swapTabs(std::size_t a, std::size_t b);
 
     std::optional<DocumentId> editingTarget() const { return m_target; }
     std::optional<DocumentId> reference() const { return m_reference; }
