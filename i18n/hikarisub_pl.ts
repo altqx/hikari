@@ -95,6 +95,17 @@
     </message>
 </context>
 <context>
+    <name>AssociationOffer</name>
+    <message>
+        <source>Apply to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation type="unfinished">Nie</translation>
+    </message>
+</context>
+<context>
     <name>AutomationManager</name>
     <message>
         <source>Automation</source>
@@ -380,6 +391,37 @@ and the color selection window on right-click.</source>
     <message>
         <source>Open new tab</source>
         <translation>Otwórz nową zakładkę</translation>
+    </message>
+</context>
+<context>
+    <name>DocumentTabMenu</name>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Zapisz</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation type="unfinished">Zapisz wszystko</translation>
+    </message>
+    <message>
+        <source>Close all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the folder containing the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyframes containing folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1140,6 +1182,37 @@ when demuxing fonts from an MKV file.</source>
     </message>
 </context>
 <context>
+    <name>LegacyAutosaveList</name>
+    <message>
+        <source>Autosaves of the previous version (read only). Each opens as a new unsaved copy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Versions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>LineCounters</name>
     <message>
         <source>Number of characters in each line.
@@ -1755,7 +1828,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Load associated</source>
-        <translation>Wczytaj skojarzone</translation>
+        <translation type="vanished">Wczytaj skojarzone</translation>
     </message>
     <message>
         <source>No</source>
@@ -5466,6 +5539,25 @@ wielką literą</translation>
     </message>
 </context>
 <context>
+    <name>TabCommands</name>
+    <message>
+        <source>Prompt</source>
+        <translation type="unfinished">Pytanie</translation>
+    </message>
+    <message>
+        <source>All tabs will be closed, continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">Potwierdzenie</translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%1&quot;?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TagListPopup</name>
     <message>
         <source>Tag list</source>
@@ -5840,6 +5932,10 @@ bo została zedytowana.</translation>
         <translation>Plik napisów </translation>
     </message>
     <message>
+        <source>%1 could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5905,6 +6001,18 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto save folder is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open auto save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load autosave</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6120,6 +6228,40 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Cannot find translation, language change failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Associated files:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video from directory:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load associated</source>
+        <translation type="unfinished">Wczytaj skojarzone</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation type="unfinished">Tak</translation>
+    </message>
+    <message>
+        <source>Load from directory</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6901,11 +7043,6 @@ Usunięte style:
 </context>
 <context>
     <name>hikari::ui::VideoController</name>
-    <message>
-        <source>Associated files:
-Video: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>No video open</source>
         <translation type="unfinished"></translation>

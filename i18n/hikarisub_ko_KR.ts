@@ -95,6 +95,17 @@
     </message>
 </context>
 <context>
+    <name>AssociationOffer</name>
+    <message>
+        <source>Apply to All</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation type="unfinished">아니오</translation>
+    </message>
+</context>
+<context>
     <name>AutomationManager</name>
     <message>
         <source>Automation</source>
@@ -380,6 +391,37 @@ and the color selection window on right-click.</source>
     <message>
         <source>Open new tab</source>
         <translation>새 탭 열기</translation>
+    </message>
+</context>
+<context>
+    <name>DocumentTabMenu</name>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">저장</translation>
+    </message>
+    <message>
+        <source>Save all</source>
+        <translation type="unfinished">모두 저장</translation>
+    </message>
+    <message>
+        <source>Close all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the folder containing the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open audio containing folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open keyframes containing folder</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1140,6 +1182,37 @@ when demuxing fonts from an MKV file.</source>
     </message>
 </context>
 <context>
+    <name>LegacyAutosaveList</name>
+    <message>
+        <source>Autosaves of the previous version (read only). Each opens as a new unsaved copy.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Versions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>LineCounters</name>
     <message>
         <source>Number of characters in each line.
@@ -1755,7 +1828,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Load associated</source>
-        <translation>연결 파일 열기</translation>
+        <translation type="vanished">연결 파일 열기</translation>
     </message>
     <message>
         <source>No</source>
@@ -5461,6 +5534,25 @@ in uppercase</source>
     </message>
 </context>
 <context>
+    <name>TabCommands</name>
+    <message>
+        <source>Prompt</source>
+        <translation type="unfinished">질문</translation>
+    </message>
+    <message>
+        <source>All tabs will be closed, continue?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">확인해주세요</translation>
+    </message>
+    <message>
+        <source>Load subtitles named &quot;%1&quot;?</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>TagListPopup</name>
     <message>
         <source>Tag list</source>
@@ -5832,6 +5924,10 @@ cause it was edited.</source>
         <translation>자막 파일 </translation>
     </message>
     <message>
+        <source>%1 could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5897,6 +5993,18 @@ cause it was edited.</source>
     </message>
     <message>
         <source>%1 (recovered)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto save folder is empty</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot open auto save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load autosave</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6093,6 +6201,40 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Cannot find translation, language change failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Associated files:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video from directory:
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load associated</source>
+        <translation type="unfinished">연결 파일 열기</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation type="unfinished">예</translation>
+    </message>
+    <message>
+        <source>Load from directory</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6870,11 +7012,6 @@ Styles deleted:
 </context>
 <context>
     <name>hikari::ui::VideoController</name>
-    <message>
-        <source>Associated files:
-Video: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>No video open</source>
         <translation type="unfinished"></translation>
