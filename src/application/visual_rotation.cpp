@@ -32,11 +32,13 @@ PointF outPos(PointF p, float coeffW, float coeffH, PointF zm, PointF zs)
     return {((p.x / zs.x) + zm.x) * coeffW, ((p.y / zs.y) + zm.y) * coeffH};
 }
 
-// ChangeOrg's offsets: the \org's move with the zoom's offset added
-// (VisualRotationZ.cpp:302-303, VisualRotationXY.cpp:268-269).
-PointF orgOffset(PointF org, PointF lastOrg, float coeffW, float coeffH, PointF zm, PointF zs)
+// ChangeOrg's offsets: the \org's move in script coordinates. Legacy added
+// the zoom's offset to the move (VisualRotationZ.cpp:302-303,
+// VisualRotationXY.cpp:268-269), so a zoomed drag jumped by it; the offset is
+// a difference of two points and takes only the zoom's scale (T3-org-zoom).
+PointF orgOffset(PointF org, PointF lastOrg, float coeffW, float coeffH, PointF zs)
 {
-    return {(((org.x - lastOrg.x) / zs.x) + zm.x) * coeffW, (((org.y - lastOrg.y) / zs.y) + zm.y) * coeffH};
+    return {((org.x - lastOrg.x) / zs.x) * coeffW, ((org.y - lastOrg.y) / zs.y) * coeffH};
 }
 
 struct ItemInfo {
@@ -155,23 +157,27 @@ void RotationZTool::reset(VisualHost &host)
 
 void RotationZTool::changeTool(int tool, bool blockSetCurVisual, VisualHost &host)
 {
-    // RotationZ::ChangeTool (VisualRotationZ.cpp:422-441): with "change all"
-    // switched in the same call the two-point mode is not taken.
+    // RotationZ::ChangeTool (VisualRotationZ.cpp:422-441). Legacy took the
+    // two-point mode only when "change all" did not change in the same call,
+    // so choosing the family with both on lost the two-point mode; both are
+    // taken here (T3-two-points-change-all).
     const bool twoPointsTool = (tool & 1) != 0;
     const bool oldChangeAllTags = m_changeAllTags;
     m_changeAllTags = (tool & 2) != 0;
     m_replaceTagsInCursorPosition = !m_changeAllTags;
     m_preserveProportions = (tool & 4) != 0;
+    const bool twoPointsChanged = twoPointsTool != m_hasTwoPoints;
+    if (twoPointsChanged) {
+        m_hasTwoPoints = twoPointsTool;
+        m_visibility = {false, false};
+    }
     if (oldChangeAllTags != m_changeAllTags) {
         if (!blockSetCurVisual) {
             setCurVisual(host);
             host.toolChanged();
         }
-    } else if (twoPointsTool != m_hasTwoPoints) {
-        m_hasTwoPoints = twoPointsTool;
-        m_visibility = {false, false};
-        if (!blockSetCurVisual)
-            host.toolChanged();
+    } else if (twoPointsChanged && !blockSetCurVisual) {
+        host.toolChanged();
     }
 }
 
@@ -304,7 +310,7 @@ void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecor
     if (m_hasTwoPoints && (!m_visibility[0] || !m_visibility[1]))
         return;
     if (m_isOrg) {
-        const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+        const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomScale);
         changeOrg(ctx, m_find, text, dial, d.x, d.y);
         return;
     }
@@ -758,7 +764,7 @@ void RotationXYTool::changeVisualLine(std::u16string &text, const core::LineReco
 {
     // RotationXY::ChangeVisual(txt, dial, numOfSelections) (VisualRotationXY.cpp:265-313).
     if (m_isOrg) {
-        const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+        const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomScale);
         changeOrg(ctx, m_find, text, dial, d.x, d.y);
         return;
     }

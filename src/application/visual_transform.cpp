@@ -399,7 +399,7 @@ void writeClip(TagFind &find, u16 &text, u16 newclip, int vectorScale, const std
 // The rectangle clip's four values (VisualScale.cpp:750-774): the values
 // past the fourth overwrite what follows the array in legacy; they are
 // dropped here.
-bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, float addBottom, const Context *context)
+bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, const Context *context = nullptr)
 {
     double value = 0;
     float xy[4] = {0, 0, 0, 0};
@@ -419,7 +419,6 @@ bool rectanglePoints(const u16 &clip, std::vector<ClipPoint> &points, float addB
             context->log(u"Cannot read clip rectangle values.");
         return false;
     }
-    xy[3] += addBottom;
     points.push_back({xy[0], xy[1], u"m", true});
     points.push_back({xy[2], xy[1], u"l", true});
     points.push_back({xy[2], xy[3], u"l", true});
@@ -1185,9 +1184,12 @@ PointF rotateZ(PointF point, float sinOfAngle, float cosOfAngle, PointF pivot)
 void changeOrg(const Context &context, TagFind &find, u16 &text, const core::LineRecord &line, float coordx,
                float coordy)
 {
-    // Visuals::ChangeOrg (Visuals.cpp:905-934). With an \org found its end is
-    // moved by its start less one before ChangeText, so an \org that is not
-    // the block's first tag takes the characters after it with it (kept).
+    // Visuals::ChangeOrg (Visuals.cpp:905-934). FindTag gives the found
+    // \org's start and its last character; legacy then moved that end by the
+    // start less one as it did for an insertion, so an \org that was not the
+    // block's first tag took the characters after it with it. Only the
+    // insertion's end is set here; a found \org is replaced exactly
+    // (T3-change-org-end).
     double orgx = 0, orgy = 0;
     bool putInBrackets = false;
     long sx = 0, sy = 0;
@@ -1208,11 +1210,11 @@ void changeOrg(const Context &context, TagFind &find, u16 &text, const core::Lin
             const int append = changeText(text, posTag, !putInBrackets, sx, sy);
             sx += static_cast<long>(posTag.size()) + append;
             putInBrackets = false;
-        } else {
-            sy = 0;
         }
+        // An insertion at sx (ChangeText erases nothing when its end is
+        // before its start).
+        sy = sx - 1;
     }
-    sy += sx - 1;
     changeText(text,
                u"\\org(" + getfloat(static_cast<float>(orgx + coordx)) + u"," +
                    getfloat(static_cast<float>(orgy + coordy)) + u")",
@@ -1231,21 +1233,30 @@ void changeClipScale(TagFind &find, u16 &text, PointF pivot, float scalex, float
     const std::size_t clipFreq = freq(clip, u',');
     std::vector<ClipPoint> points;
     if (clipFreq >= 3) {
-        (void)rectanglePoints(clip, points, 0.f, nullptr);
+        (void)rectanglePoints(clip, points);
     } else {
         if (clipFreq >= 1) {
-            // clip.BeforeFirst(L',', &clip): the rest replaces the clip
-            // first, so the scale read is the tail's first characters.
-            const u16 vscale = beforeFirst(clip, u',', &clip);
+            // Legacy wrote clip.BeforeFirst(L',', &clip): the rest replaced
+            // the clip before the head was returned, so the scale read was
+            // the tail's first characters and the vector's scale was dropped
+            // (`\clip(2,m ...)` lost `2,`). The head is the scale here, as
+            // RotationZ's rewrite reads it (T3-scale-vector-clip).
+            u16 rest;
+            const u16 vscale = beforeFirst(clip, u',', &rest);
             const int vscaleint = atoi(vscale);
             if (vscaleint > 0)
                 vectorScale = vscaleint;
+            clip = rest;
         }
         points = vectorPoints(clip);
     }
+    // A scaled vector's points are in units of 1 / 2^(scale - 1) pixels, so
+    // the pivot is taken into them.
+    const float units = std::ldexp(1.f, vectorScale - 1);
+    const PointF p{pivot.x * units, pivot.y * units};
     writeClip(find, text, newclip, vectorScale, points, [&](const ClipPoint &pos, float &x, float &y) {
-        x = pivot.x + ((pos.x - pivot.x) * scalex) + 0.5f;
-        y = pivot.y + ((pos.y - pivot.y) * scaley) + 0.5f;
+        x = p.x + ((pos.x - p.x) * scalex) + 0.5f;
+        y = p.y + ((pos.y - p.y) * scaley) + 0.5f;
     });
 }
 
@@ -1261,7 +1272,9 @@ void changeClipRotationZ(TagFind &find, u16 &text, PointF pivot, float sinus, fl
     const std::size_t clipFreq = freq(clip, u',');
     std::vector<ClipPoint> points;
     if (clipFreq >= 3) {
-        (void)rectanglePoints(clip, points, 2.f, nullptr);
+        // Legacy added 2 to the bottom (VisualRotationZ.cpp:480), so every
+        // edit made the rectangle 2 taller; not here (T3-rotz-rect-clip).
+        (void)rectanglePoints(clip, points);
     } else {
         if (clipFreq >= 1) {
             const u16 vscale = beforeFirst(clip, u',', &clip1);

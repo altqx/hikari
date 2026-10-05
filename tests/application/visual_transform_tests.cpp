@@ -381,6 +381,48 @@ std::u8string editorText(const TestHost &host, const Case &c)
     return tl ? line->translation : line->text;
 }
 
+// The approved departures (docs/qt/compatibility-decisions.md, the T3 rows)
+// where the capture holds legacy's defect: the rewrite gives `expected`, and
+// legacy's text, kept as the old evidence, must still differ from it.
+struct Departure {
+    const char *entry;
+    const char *caseName;
+    std::size_t step;
+    std::size_t line;
+    const char8_t *expected;
+};
+
+const std::vector<Departure> &departures()
+{
+    static const std::vector<Departure> table{
+        // Scale keeps the vector clip's scale and moves its points (in
+        // half pixels) about the position by 1.2, then 1.21 after D.
+        {"T3-scale-vector-clip", "scale-several-preserve-proportions", 1, 2,
+         u8"{\\fscy120\\fscx120\\pos(768,252)\\clip(2,m -384 -216 l -264 -216 -264 -96 -384 -96)}Third"},
+        {"T3-scale-vector-clip", "scale-several-preserve-proportions", 2, 2,
+         u8"{\\fscy121\\fscx121\\pos(766.4,249.6)\\clip(2,m -403 -226 l -282 -226 -282 -105 -403 -105)}Third"},
+        // The \org after \an7 is replaced, \frz30 kept.
+        {"T3-change-org-end", "rotz-org-several", 0, 1, u8"{\\an7\\org(40,50)\\frz30}Second"},
+        // The rectangle turned without growing: its bottom corners are
+        // legacy's less 2 turned by the angle.
+        {"T3-rotz-rect-clip", "rotz-several-preserve", 1, 1,
+         u8"{\\pos(1050.922,777.889)\\clip(m 521 -265 l 667 -128 530 18 384 -119)\\frz1.941}Second"},
+        // A 10-pixel drag at 250% with the coefficient 3 moves the \org by
+        // 12; legacy added the zoom's offset (72, 48) times 3.
+        {"T3-org-zoom", "rotz-zoom-org", 1, 0, u8"{\\org(972,552)\\pos(960,540)}Zoom"},
+        {"T3-change-org-end, T3-org-zoom", "rotz-zoom-org", 1, 1, u8"{\\pos(30,40)\\org(112,112)}Other"},
+    };
+    return table;
+}
+
+const Departure *departureFor(const std::string &caseName, std::size_t step, std::size_t line)
+{
+    for (const Departure &d : departures())
+        if (caseName == d.caseName && step == d.step && line == d.line)
+            return &d;
+    return nullptr;
+}
+
 } // namespace
 
 TEST(VisualTransformText, GetfloatAndNumbersFollowLegacy)
@@ -417,12 +459,80 @@ TEST(VisualTransformText, ReplaceAllAddsTheFirstBlocksTag)
     EXPECT_EQ(text, u"{\\fscx100}Hello{\\fscx200}x");
 }
 
+// T3-scale-vector-clip and T3-rotz-rect-clip: Scale keeps a vector clip's
+// scale and scales its points about the pivot in the vector's units (legacy
+// wrote `\clip(m ...)`); RotationZ's rewrite leaves a rectangle's size alone
+// (legacy added 2 to the bottom on every edit).
+TEST(VisualTransformText, ClipRewritesKeepTheScaleAndTheRectangle)
+{
+    transform::TagFind find;
+    std::u16string vector = u"{\\clip(2,m 0 0 l 200 0 200 100 0 100)}A";
+    // Twice the size about (50, 25) pixels: (100, 50) in half pixels.
+    transform::changeClipScale(find, vector, {50, 25}, 2.f, 2.f);
+    EXPECT_EQ(vector, u"{\\clip(2,m -100 -50 l 300 -50 300 150 -100 150)}A");
+
+    std::u16string unscaled = u"{\\iclip(m 10 10 l 20 10 20 20)}A";
+    transform::changeClipScale(find, unscaled, {10, 10}, 2.f, 1.f);
+    EXPECT_EQ(unscaled, u"{\\iclip(m 10 10 l 30 10 30 20)}A");
+
+    // No turn, twice: the rectangle (written as a vector) keeps its corners.
+    std::u16string rect = u"{\\clip(100,50,300,150)}A";
+    transform::changeClipRotationZ(find, rect, {0, 0}, 0.f, 1.f);
+    EXPECT_EQ(rect, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
+    transform::changeClipRotationZ(find, rect, {0, 0}, 0.f, 1.f);
+    EXPECT_EQ(rect, u"{\\clip(m 100 50 l 300 50 300 150 100 150)}A");
+}
+
+// T3-change-org-end: ChangeOrg replaces an \org that is not the block's
+// first tag and keeps what follows it (legacy: `{\an7\org(40,50)30}`).
+TEST(VisualTransformText, ChangeOrgReplacesALaterOrgExactly)
+{
+    const auto cases = readCases();
+    const Case c = *std::find_if(cases.begin(), cases.end(), [](const Case &k) { return k.name == "rotz-org-several"; });
+    TestHost host;
+    setUp(host, c);
+    const transform::Context ctx = transform::context(host);
+    for (const auto &[before, after] : std::vector<std::pair<std::u16string, std::u16string>>{
+             {u"{\\an7\\org(10,20)\\frz30}Second", u"{\\an7\\org(40,50)\\frz30}Second"},
+             {u"{\\pos(30,40)\\org(100,100)}Other", u"{\\pos(30,40)\\org(130,130)}Other"},
+             {u"{\\org(1,2)}x", u"{\\org(31,32)}x"}}) {
+        transform::TagFind find;
+        std::u16string text = before;
+        transform::changeOrg(ctx, find, text, *lineOf(*host.s, *host.activeLine()), 30.f, 30.f);
+        EXPECT_EQ(text, after);
+    }
+}
+
+// T3-two-points-change-all: choosing RotationZ with "two points" and
+// "change all" both on takes the two-point mode (legacy's ChangeTool did not
+// when "change all" changed in the same call, VisualRotationZ.cpp:422-441).
+TEST(VisualTransformEdit, TwoPointsHoldWithChangeAll)
+{
+    const auto cases = readCases();
+    const Case c = *std::find_if(cases.begin(), cases.end(), [](const Case &k) { return k.name == "rotz-two-points"; });
+    TestHost host;
+    setUp(host, c);
+    RotationZTool tool;
+    tool.setToggled(1 | 2);
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.hasTwoPoints());
+    // "Change all" off keeps it, "two points" off drops it, on takes it again.
+    tool.setToggled(1, &host);
+    EXPECT_TRUE(tool.hasTwoPoints());
+    tool.setToggled(2, &host);
+    EXPECT_FALSE(tool.hasTwoPoints());
+    tool.setToggled(3, &host);
+    EXPECT_TRUE(tool.hasTwoPoints());
+}
+
 TEST(VisualCapture, ReplaysTheLegacyT3Probe)
 {
     const auto observations = readObservations();
     const auto cases = readCases();
     ASSERT_EQ(cases.size(), observations.size());
     int states = 0;
+    std::size_t departed = 0;
     for (const Case &c : cases) {
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(observations.contains(c.name));
@@ -515,6 +625,13 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
                 ASSERT_EQ(static_cast<std::size_t>(lines.size()), all.size());
                 for (std::size_t i = 0; i < all.size(); ++i) {
                     const QJsonArray l = lines[static_cast<qsizetype>(i)].toArray();
+                    if (const Departure *d = departureFor(c.name, step - 1, i)) {
+                        ++departed;
+                        EXPECT_NE(u8(l[0]), d->expected) << d->entry << ": legacy's text is the old evidence";
+                        EXPECT_EQ(lineOf(*host.s, all[i])->text, d->expected) << d->entry << ", line " << i;
+                        EXPECT_EQ(lineOf(*host.s, all[i])->translation, u8(l[1])) << "line " << i;
+                        continue;
+                    }
                     EXPECT_EQ(lineOf(*host.s, all[i])->text, u8(l[0])) << "line " << i;
                     EXPECT_EQ(lineOf(*host.s, all[i])->translation, u8(l[1])) << "line " << i;
                 }
@@ -607,6 +724,7 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
         EXPECT_EQ(step, steps.size());
     }
     EXPECT_GT(states, 70);
+    EXPECT_EQ(departed, departures().size());
 }
 
 // A commit the session refuses (a stale revision, a draft that cannot

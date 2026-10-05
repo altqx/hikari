@@ -176,8 +176,10 @@ void changeOrg(const Context &context, TagFind &find, std::u16string &text, cons
 
 // Scale::ChangeClipScale (VisualScale.cpp:741-827) and
 // RotationZ::ChangeClipRotationZ (VisualRotationZ.cpp:455-547): the first
-// \clip or \iclip moved about `pivot`. They differ as legacy's do (Scale
-// loses a vector clip's scale, RotationZ makes the rectangle 2 taller).
+// \clip or \iclip moved about `pivot`, a rectangle written as a vector. Both
+// keep a vector clip's scale (Scale moves its points about the pivot in the
+// vector's units) and a rectangle's size (T3-scale-vector-clip,
+// T3-rotz-rect-clip).
 void changeClipScale(TagFind &find, std::u16string &text, PointF pivot, float scalex, float scaley);
 void changeClipRotationZ(TagFind &find, std::u16string &text, PointF pivot, float sinus, float cosinus);
 
