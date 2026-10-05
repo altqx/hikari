@@ -218,6 +218,9 @@ ApplicationWindow {
     // A preset is the Editing arrangement with the panels it leaves closed
     // (Timing: Video; Translation and Typesetting: Audio).
     function applyPreset(name) {
+        // Before the first frame the default arrangement and the saved
+        // layout are not in place yet: settle them first.
+        root.settleArrangement()
         root.workspaceLayout.resetLayout()
         if (name === "Timing")
             videoDock.close()

@@ -42,6 +42,10 @@ class WorkspaceLayoutTest : public QObject {
         QVERIFY(!engine->rootObjects().isEmpty());
         auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
         QVERIFY(QTest::qWaitForWindowExposed(window));
+        // The saved layout is restored once the arrangement settles (its
+        // first frame, D3), which on a real platform's render thread comes
+        // after the window is exposed.
+        QTRY_VERIFY(window->property("arrangementSettled").toBool());
     }
     void stop()
     {
@@ -200,6 +204,39 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root = engine->rootObjects().first(), "applyPreset", Q_ARG(QVariant, QStringLiteral("Translation"))));
         QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
         QVERIFY(dock("videoDock")->property("isOpen").toBool());
+        stop();
+    }
+
+    // Native gate (X11, D3): the saved layout is restored at the first
+    // frame, so a save before then (the window closed at once) must not
+    // replace it with the default arrangement.
+    void aSaveBeforeTheSavedLayoutIsRestoredKeepsIt()
+    {
+        start();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "applyPreset", Q_ARG(QVariant, QStringLiteral("Timing"))));
+        stop();
+        QFile f(layoutFile());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        const QByteArray saved = f.readAll();
+        f.close();
+
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        application = std::make_unique<app::Application>(options);
+        engine = std::make_unique<QQmlApplicationEngine>();
+        QVERIFY(ui::attachDocking(*engine));
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        QVERIFY(!engine->rootObjects().first()->property("arrangementSettled").toBool());
+        QVERIFY(!application->workspaceLayout().save());
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), saved);
+        f.close();
+        QTRY_VERIFY(engine->rootObjects().first()->property("arrangementSettled").toBool());
+        QCOMPARE(application->workspaceLayout().preset(), QStringLiteral("Timing"));
+        QVERIFY(!dock("videoDock")->property("isOpen").toBool());
         stop();
     }
 

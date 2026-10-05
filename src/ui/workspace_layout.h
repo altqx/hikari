@@ -49,7 +49,9 @@ public:
     // At start: the saved layout, if it validates and restores; false (with a
     // notice when a file was there) leaves the default arrangement.
     Q_INVOKABLE bool restoreSaved();
-    // The current arrangement, when it changed since the last save.
+    // The current arrangement, when it changed since the last save; nothing
+    // until restoreSaved() has read the saved file, so a save before then
+    // (the window closed before its first frame) cannot replace it.
     Q_INVOKABLE bool save();
     Q_INVOKABLE bool resetLayout();
     Q_INVOKABLE bool restoreBackup();
@@ -90,6 +92,7 @@ private:
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;
+    bool m_loaded = false; // restoreSaved() has run
     bool m_menuHasFocus = false;
     QTimer m_screenCheck;
 };

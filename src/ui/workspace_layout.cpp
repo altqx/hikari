@@ -197,6 +197,7 @@ bool WorkspaceLayoutController::restorePayload(const QByteArray &payload)
 
 bool WorkspaceLayoutController::restoreSaved()
 {
+    m_loaded = true;
     if (m_file.isEmpty())
         return false;
     const auto bytes = readFile(m_file);
@@ -228,7 +229,7 @@ bool WorkspaceLayoutController::restoreSaved()
 
 bool WorkspaceLayoutController::save()
 {
-    if (m_file.isEmpty() || m_restoring)
+    if (m_file.isEmpty() || m_restoring || !m_loaded)
         return false;
     const QByteArray current = KDDockWidgets::LayoutSaver().serializeLayout();
     if (current == m_lastSaved)
