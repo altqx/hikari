@@ -231,7 +231,9 @@ std::optional<DummyVideo> parseDummyVideo(std::string_view text)
         return std::nullopt;
     video.width = wxAtoi(tokens[3]);
     video.height = wxAtoi(tokens[4]);
-    if (!video.width || !video.height)
+    // legacy refused 0 only (ProviderDummy.cpp:198-201) and then could not
+    // make a frame buffer for a negative size (V3-dummy-negative-size)
+    if (video.width <= 0 || video.height <= 0)
         return std::nullopt;
     // wxColour(int, int, int) keeps the low byte of each
     video.red = static_cast<std::uint8_t>(wxAtoi(tokens[5]));
@@ -353,8 +355,6 @@ void DummyVideoSource::frame(int index, FrameReady done)
         return done(std::unexpected(SourceError::EndOfStream));
     if (m_frame.empty())
         m_frame = dummyVideoFrame(*m_dummy);
-    // a negative size (a hand-written "?dummy" text) has no frame; legacy's
-    // ParseDummyData accepted it and its frame buffer could not be made
     if (m_frame.empty())
         return done(std::unexpected(SourceError::InvalidInput));
     IndexedFrame f;

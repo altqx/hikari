@@ -7787,6 +7787,14 @@ private slots:
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 1920);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 1080);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
+        // V3-dummy-colour-text: the colour is ASS text with a swatch beside
+        // it (legacy: a colour button); the swatch follows the text
+        auto *swatch = dialogItem("dummyVideoDialog", "dummyColourSwatch");
+        QVERIFY(swatch);
+        QCOMPARE(swatch->property("color").value<QColor>(), QColor(47, 163, 254));
+        dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&H0000FF&"));
+        QCOMPARE(swatch->property("color").value<QColor>(), QColor(255, 0, 0));
+        dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&HFEA32F&"));
         // a preset fills the size (OnResolutionChoose)
         auto *resolution = dialogItem("dummyVideoDialog", "dummyResolution");
         resolution->setProperty("currentIndex", 0);
@@ -7889,6 +7897,36 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
     }
 
+    // V3-next-file-no-recent: with no video and an empty recent list the
+    // previous/next file does nothing (legacy VideoBox::NextFile read
+    // videorec[videorec.size() - 1] of the empty list, VideoBox.cpp:691).
+    void nextFileWithNoVideoAndNoRecentDoesNothing()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        restartWithSettings(own.filePath(QStringLiteral("hikari.ini")));
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        QVERIFY(application->settingsStore()->list("recent.video").isEmpty());
+        QVERIFY(!video.loaded());
+        QVERIFY(!application->nextVideoFile(true));
+        QVERIFY(!application->nextVideoFile(false));
+        // the transport's buttons ask, and Yes changes nothing
+        auto *question = named("videoFileQuestion");
+        QVERIFY(question);
+        for (const char *button : {"nextFile", "previousFile"}) {
+            QVERIFY(QMetaObject::invokeMethod(visualItem(button), "click"));
+            QTRY_VERIFY(question->property("opened").toBool());
+            QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+            QTRY_VERIFY(!question->property("opened").toBool());
+        }
+        QTest::qWait(100);
+        QVERIFY(!video.loaded());
+        QVERIFY(!video.indexing());
+        QVERIFY(video.session().path().empty());
+        QVERIFY(application->settingsStore()->list("recent.video").isEmpty());
+    }
+
     // V3: chapters from the media helper at legacy positions (whole ms of
     // their starts), the chapter menu and its mark, VIDEO_NEXT_CHAPTER /
     // VIDEO_PREVIOUS_CHAPTER (M / N in the Video window) with prevchap; the
@@ -7913,6 +7951,26 @@ private slots:
         QVERIFY(!video.chapters()[1].toMap().value(QStringLiteral("checked")).toBool());
         auto *menu = named("videoChaptersMenu");
         QVERIFY(menu && menu->property("enabled").toBool());
+        // V3-video-menu-entries: Unload video, the streams and the chapters
+        // sit in the Video menu until V4's context menu hosts them
+        {
+            auto *videoMenu = named("videoMenu");
+            QVERIFY(videoMenu);
+            QSet<QObject *> hosted;
+            const int count = videoMenu->property("count").toInt();
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *entry = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(videoMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i)));
+                if (!entry)
+                    continue;
+                hosted.insert(entry);
+                if (auto *sub = entry->property("subMenu").value<QObject *>())
+                    hosted.insert(sub);
+            }
+            QVERIFY(hosted.contains(named("unloadVideoMenuItem")));
+            QVERIFY(hosted.contains(named("videoStreamsMenu")));
+            QVERIFY(hosted.contains(menu));
+        }
         QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
         QCOMPARE(menu->property("rows").toList().size(), 2);
         // the chapter at 1000 ms: the frame at or after it, 24 at 1001 ms
@@ -7968,6 +8026,19 @@ private slots:
         QVERIFY(video.indexing());
         QVERIFY(progress->isVisible());
         QCOMPARE(findItem(progress, QStringLiteral("videoIndexingProgress"))->property("indeterminate").toBool(), true);
+        // V3-indexing-inline: a strip inside the Video panel, not a modal
+        // window (legacy ProgressSink): no modal popup or window opens
+        {
+            bool inPanel = false;
+            for (QQuickItem *up = progress->parentItem(); up; up = up->parentItem())
+                inPanel = inPanel || up == item("videoPanel");
+            QVERIFY(inPanel);
+            for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
+                if (o->inherits("QQuickPopup"))
+                    QVERIFY2(!(o->property("modal").toBool() && o->property("opened").toBool()), qPrintable(o->objectName()));
+            QCOMPARE(QGuiApplication::modalWindow(), nullptr);
+            QVERIFY(video.indexing());
+        }
         const QString logged = application->log().lastMessage();
         QVERIFY(QMetaObject::invokeMethod(findItem(progress, QStringLiteral("cancelIndexing")), "click"));
         QCOMPARE(video.session().state(), application::VideoSession::State::Closed);

@@ -122,6 +122,13 @@ TEST(DummyVideo, ParsesWhatTheProviderAccepts)
     EXPECT_FALSE(parseDummyVideo("?dummy:x:10:640:480:0:0:0:"));  // fps not a number
     EXPECT_FALSE(parseDummyVideo("?dummy:25:0:640:480:0:0:0:"));  // no frames
     EXPECT_FALSE(parseDummyVideo("?dummy:25:10:0:480:0:0:0:"));   // no width
+    // V3-dummy-negative-size: legacy let a negative size through (only 0 was
+    // refused, ProviderDummy.cpp:198-201) and then could not make the frame
+    // buffer (m_framePlane = height * width * 4 < 0)
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:-8:4:0:0:0:"));
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:8:-4:0:0:0:"));
+    EXPECT_FALSE(parseDummyVideo("?dummy:25:10:-8:-4:0:0:0:"));
+    EXPECT_TRUE(parseDummyVideo("?dummy:25:10:1:1:0:0:0:"));
     EXPECT_TRUE(isDummyVideo("?dummy:25:10:640:480:0:0:0:"));
     EXPECT_FALSE(isDummyVideo("/v/a.mkv"));
 }
@@ -209,10 +216,14 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     // a text the provider refuses fails the open
     session.open("?dummy:25:0:8:4:1:2:3:");
     EXPECT_EQ(session.state(), VideoSession::State::Failed);
-    // a negative size, which ParseDummyData let through (and legacy could not
-    // make the frame buffer for): no frame is shown
+    // a negative size is refused as the open (V3-dummy-negative-size)
+    session.open("?dummy:25.000000:50:8:4:1:2:3:");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
     session.open("?dummy:25:10:-8:4:1:2:3:");
+    EXPECT_EQ(session.state(), VideoSession::State::Failed);
     EXPECT_FALSE(session.lastFrame());
+    session.open("?dummy:25:10:8:-4:1:2:3:");
+    EXPECT_EQ(session.state(), VideoSession::State::Failed);
     // a file goes to the media helper
     session.open("/v/a.mkv");
     EXPECT_EQ(media.opens, 1);

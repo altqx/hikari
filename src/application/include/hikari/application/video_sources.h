@@ -82,7 +82,7 @@ int dummyVideoDialogFrames();
 
 // ProviderDummy::ParseDummyData (ProviderDummy.cpp:144-223): nullopt for a
 // text it refuses (too few fields, a frame rate that does not parse, fewer
-// than one frame, a zero size).
+// than one frame, a zero size) and for a negative size (V3-dummy-negative-size).
 std::optional<DummyVideo> parseDummyVideo(std::string_view text);
 
 // ProviderDummy::GenerateFrame (ProviderDummy.cpp:98-142): one BGRA frame,
