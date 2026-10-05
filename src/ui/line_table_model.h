@@ -7,12 +7,15 @@
 // its own beyond the snapshot it was given.
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/document.h"
 #include "hikari/core/spelling.h"
 
 #include <QAbstractTableModel>
+#include <QColor>
 #include <QSortFilterProxyModel>
 
+#include <array>
 #include <functional>
 #include <optional>
 #include <unordered_map>
@@ -47,6 +50,10 @@ public:
     // IsFiltered: marks are drawn), and the mark before the first Line.
     static constexpr int FilteredRole = Qt::UserRole + 51;
     static constexpr int HeaderBlockRole = Qt::UserRole + 52;
+    // headerData role on section 0 (R1): the comparison colours, a list of
+    // GRID_COMPARISON_OUTLINE, _BACKGROUND_NOT_MATCH, _BACKGROUND_MATCH,
+    // _COMMENT_BACKGROUND_NOT_MATCH and _COMMENT_BACKGROUND_MATCH.
+    static constexpr int ComparisonColoursRole = Qt::UserRole + 53;
     enum Role {
         LineIdRole = Qt::UserRole + 1,
         CommentRole,
@@ -64,6 +71,12 @@ public:
         // F3: the Text column's spelling marks (legacy SpellErrors): flat
         // inclusive [start, end] pairs of the shown text; none for comments.
         SpellMarksRole,
+        // R1: the Line's comparison state (legacy SubsGridWindow.cpp:419-420):
+        // 0 not compared or no table, 1 a match (equal text), 2 a mismatch.
+        ComparisonRole,
+        // R1: the differing characters, flat inclusive [start, end] pairs
+        // (legacy lineCompare without its leading 1).
+        ComparisonMarksRole,
     };
     // GRID_HIDE_COLUMNS bits (legacy LAYER=1 ... EFFECT=256, CPS=512, WRAPS=8192).
     static int hideBit(Column column);
@@ -73,6 +86,16 @@ public:
     // Replaces the projected snapshot. Selection that names Lines no longer
     // present is dropped.
     void setDocument(const core::Document &document);
+    // R1: with the Document's comparison table (legacy SubsGrid::Comparison,
+    // by Document row), or none.
+    void setDocument(const core::Document &document, const std::vector<application::LineComparison> *comparison);
+    using ComparisonColours = std::array<QColor, 5>;
+    // R1: the comparison colours are fixed per theme, not settings: legacy's
+    // theme defaults (config.cpp:427-431, LoadDefaultColors(dark); dark is
+    // every legacy theme but LightSentro, config.cpp:639). The rewrite's
+    // Grid uses the dark ones until the theme model arrives.
+    static ComparisonColours themeComparisonColours(bool dark);
+    void setComparisonColours(const ComparisonColours &colours);
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setHiddenColumns(int mask);
     // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
@@ -106,6 +129,8 @@ private:
         int blockMark = 0;
         bool groupClosed = false; // descriptions: the first member is closed
         mutable std::optional<QVariantList> spellMarks; // checked when first shown (F3)
+        int comparison = 0;          // R1: ComparisonRole
+        QVariantList comparisonMarks; // R1: ComparisonMarksRole
     };
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
@@ -121,6 +146,7 @@ private:
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;
+    ComparisonColours m_comparisonColours = themeComparisonColours(true);
 };
 
 // Filtered view over a LineTableModel. Hidden Lines stay selected: the

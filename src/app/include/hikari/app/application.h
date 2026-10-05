@@ -19,6 +19,7 @@
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/session_file.h"
 #include "hikari/application/spell_checker.h"
+#include "hikari/application/subtitle_comparison.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/portaudio_output.h"
@@ -608,6 +609,24 @@ public:
     Q_INVOKABLE void scrollRestored() { m_scrollRestoring = false; }
     // The program closes: the session is written with "[Close session]".
     Q_INVOKABLE void endSession();
+
+    // R1: the tab menu's "Subtitle comparison" (legacy Notebook::ContextMenu,
+    // its ID_CHECK_EVENT handler and SubsGrid::SubsComparison at 20d647c4).
+    // The menu opened on tab `index` (-1: not on a tab): {enabled,
+    // canCompare, active, times, visible, selections, selectionsEnabled,
+    // styles, chosenStyles, styleItems: [{name, checked}]}. Opening it adds
+    // the checked styles to the chosen ones again, as legacy's did.
+    Q_INVOKABLE QVariantMap openComparisonMenu(int index);
+    // MENU_COMPARE + 1..4: flips SUBS_COMPARISON_TYPE's bit; the new value.
+    Q_INVOKABLE int toggleComparisonBit(int bit);
+    // A style of "Compare by selected styles" checked or unchecked; whether
+    // "Compare by selected styles" is now shown checked.
+    Q_INVOKABLE bool toggleComparisonStyle(const QString &name, bool checked);
+    // MENU_COMPARE: the editing target (CG1) with tab `index` (CG2).
+    Q_INVOKABLE bool compareWithTab(int index);
+    // MENU_COMPARE - 1, "Turn off comparison".
+    Q_INVOKABLE void turnOffComparison();
+    const application::SubtitleComparison &comparison() const { return m_comparison; }
     QString lastSessionPath() const;
     // Writes LastSession.txt (legacy SaveLastSession), or `path`.
     bool saveLastSession(bool closing = false, const QString &path = {});
@@ -709,6 +728,15 @@ private:
     void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
+    // R1: legacy's comparison statics and each grid's table, the revision
+    // each compared Document had when its table was last made, and whether a
+    // +/- mark or a group is being opened or closed (legacy FilterPartial).
+    application::SubtitleComparison m_comparison;
+    std::map<std::uint64_t, std::uint64_t> m_comparedRevisions;
+    bool m_partialFilter = false;
+    application::ComparedDocument comparedDocument(application::DocumentId id) const;
+    void recompare();
+    void refreshComparison();
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;

@@ -133,6 +133,10 @@ QVariantList Application::reviewCloseTab(int index)
 
 void Application::closeDocument(application::DocumentId document)
 {
+    // R1: Notebook::DeletePage removes the comparison, whichever tab goes
+    // (Notebook.cpp:241-242), and the tab's grid with its table.
+    m_comparison.remove();
+    m_comparison.forget(document);
     discardRecovery(document); // reviewed: saved or explicitly discarded
     m_files->close(document);
     m_workspace.remove(document); // the legacy DeletePage successor becomes active
@@ -176,6 +180,9 @@ void Application::replaceTarget(application::DocumentId replacement)
     discardRecovery(*old);
     m_files->close(*old);
     m_workspace.replace(*old, replacement);
+    // R1: SubsGrid::Clearing deletes the tab's table; CG1/CG2 still name the
+    // tab (HikariSubFrame.cpp:1386-1395 then finds no table to remove).
+    m_comparison.replaced(*old, replacement);
     forgetTab(*old);
     m_tabMedia[replacement.value] = media;
     refreshViews();
@@ -516,6 +523,10 @@ void Application::applySession()
     PendingSession pending = std::move(*m_pendingSession);
     m_pendingSession.reset();
     // Notebook::LoadLastSession destroys every tab (each was reviewed).
+    // R1-session-off: legacy destroyed them without RemoveComparison
+    // (Notebook.cpp:1388-1392), leaving hasCompare on and CG1/CG2 dangling;
+    // loading a session turns the comparison off.
+    m_comparison.remove();
     for (const auto id : m_workspace.documents()) {
         discardRecovery(id);
         m_files->close(id);
@@ -641,6 +652,7 @@ bool Application::retryRestore(int row)
         discardRecovery(entry.document);
         m_files->close(entry.document);
         m_workspace.replace(entry.document, *id);
+        m_comparison.replaced(entry.document, *id); // R1: as replaceTarget
         m_tabMedia.erase(entry.document.value);
         m_tabMedia[id->value] = kept;
         for (auto &u : m_unresolved)

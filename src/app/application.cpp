@@ -1147,8 +1147,11 @@ void Application::refreshViews()
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
+    refreshComparison(); // R1: an edited compared Document is compared again
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
-                     referenceSession ? &referenceSession->document() : nullptr);
+                     referenceSession ? &referenceSession->document() : nullptr,
+                     target ? m_comparison.table(*target) : nullptr,
+                     reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession)
         m_shell->setSelection(targetSession->selection());
     // The editor only ever edits the editing target, never the reference.
@@ -2010,7 +2013,12 @@ bool Application::turnOffFiltering()
 
 bool Application::toggleHiddenBlock(int documentRow)
 {
-    return runFilter([&](application::EditSession &s) { return application::toggleHiddenBlock(s, documentRow); });
+    // R1: legacy FilterPartial (SubsGridFiltering.cpp:102-128).
+    m_partialFilter = true;
+    const bool done =
+        runFilter([&](application::EditSession &s) { return application::toggleHiddenBlock(s, documentRow); });
+    m_partialFilter = false;
+    return done;
 }
 
 QStringList Application::styleNames() const
@@ -3842,7 +3850,13 @@ bool Application::makeGroups()
 
 bool Application::toggleGroup(qulonglong description)
 {
-    return runFilter([&](application::EditSession &s) { return application::toggleGroup(s, core::LineId{description}); });
+    // R1: a group description's click is legacy FilterPartial too
+    // (SubsGridWindow.cpp:1572).
+    m_partialFilter = true;
+    const bool done =
+        runFilter([&](application::EditSession &s) { return application::toggleGroup(s, core::LineId{description}); });
+    m_partialFilter = false;
+    return done;
 }
 
 bool Application::renameGroup(qulonglong description, const QString &text)
@@ -4187,7 +4201,8 @@ QVariantMap Application::openSettingsDialog()
 }
 
 // The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the audio spectrum's three (A2).
+// rewrite keeps theme colours: the audio spectrum's three (A2). The Grid's
+// comparison colours are fixed per theme (R1, LineTableModel).
 namespace {
 constexpr std::string_view kThemeColours[] = {application::kSpectrumBackgroundSetting,
                                               application::kSpectrumEchoSetting,

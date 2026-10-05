@@ -44,6 +44,16 @@ public:
     // Re-reads the workspace targets and projects the given snapshots: the
     // editing target's and the reference's (nullptr when there is none).
     void refresh(const core::Document *target, const core::Document *reference);
+    // R1: with each one's comparison table (nullptr for none).
+    void refresh(const core::Document *target, const core::Document *reference,
+                 const std::vector<application::LineComparison> *targetComparison,
+                 const std::vector<application::LineComparison> *referenceComparison);
+    // R1: the comparison colours of both Grids (GRID_COMPARISON_*).
+    void setComparisonColours(const LineTableModel::ComparisonColours &colours)
+    {
+        m_lines.setComparisonColours(colours);
+        m_referenceLines.setComparisonColours(colours);
+    }
 
     bool hasEditingTarget() const { return m_workspace.editingTarget().has_value(); }
     QString editingTitle() const;

@@ -556,7 +556,8 @@ Dialog {
 
             // Themes (legacy Themes page): its Name / Color list, as far as
             // the rewrite keeps theme colours (theme files and their choice
-            // are excluded): the audio spectrum's three (A2), in legacy's
+            // are excluded): the Grid's comparison colours (R1) and the audio
+            // spectrum's three (A2), in legacy's
             // rows and labels. A double click picks the colour; OK/Apply
             // save the changed ones and the audio display reads them again
             // (SetOptions' ID_COLOR_CONFIG, ChangeColors).

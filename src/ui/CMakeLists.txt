@@ -25,3 +25,5 @@ target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidge
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
 # O2: the "Hotkey mapping" window and its questions.
 qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
+# R1: the tab menu's "Subtitle comparison".
+qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)

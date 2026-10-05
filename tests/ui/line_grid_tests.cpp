@@ -118,6 +118,84 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-review-frame.png")));
     }
 
+    // R1: legacy SubsGridWindow.cpp:419-429: a compared row is painted in
+    // the mismatch or match colour (the comment ones on a Comment), and a
+    // selected one with GRID_SELECTION blended over it (GetColorWithAlpha).
+    void comparisonBackgrounds()
+    {
+        const QVariantList colours{QColor(0x27, 0x00, 0xFF), QColor(0x27, 0x2B, 0x32), QColor(0x3A, 0x3E, 0x45),
+                                   QColor(0x00, 0x31, 0x76), QColor(0x36, 0x62, 0xA1)};
+        QVERIFY(!comparisonBackground(0, false, false, colours));
+        QCOMPARE(*comparisonBackground(2, false, false, colours), QColor(0x27, 0x2B, 0x32));
+        QCOMPARE(*comparisonBackground(1, false, false, colours), QColor(0x3A, 0x3E, 0x45));
+        QCOMPARE(*comparisonBackground(2, true, false, colours), QColor(0x00, 0x31, 0x76));
+        QCOMPARE(*comparisonBackground(1, true, false, colours), QColor(0x36, 0x62, 0xA1));
+        // #8791FD at alpha 75 over #272B32, in legacy's integer arithmetic:
+        // r = 0x27 * 180 / 255 + (0x87 - 180 * 0x87 / 255) = 27 + 40 = 67.
+        QCOMPARE(*comparisonBackground(2, false, true, colours), QColor(67, 73, 110));
+    }
+
+    // R1: the painted rows: backgrounds per state, and the differing
+    // characters outlined in GRID_COMPARISON_OUTLINE (SubsGridWindow.cpp:
+    // 508-528); a row without a table is painted as before.
+    void paintsComparisonColours()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,same\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,WWWW differs\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,alone\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        std::vector<application::LineComparison> table(3);
+        table[0].differences = false;
+        table[0].matchedRow = 0;
+        table[1].marks = {1, 0, 3};
+        table[1].matchedRow = 1;
+        LineTableModel model;
+        model.setDocument(core::loadAss(bytes).document, &table);
+        model.setComparisonColours({QColor(0, 255, 0), QColor(200, 0, 0), QColor(0, 0, 200), QColor(1, 1, 1),
+                                    QColor(2, 2, 2)});
+        LineGrid grid;
+        grid.setSize(QSizeF(720, 120));
+        grid.setModel(&model);
+        QImage image(720, 120, QImage::Format_ARGB32);
+        QPainter painter(&image);
+        grid.paint(&painter);
+        painter.end();
+        const double rh = grid.rowHeight();
+        const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+        // A cell of the row away from any text (the margin column's right edge).
+        const QRectF text1 = grid.cellRect(1, grid.columnCount() - 1);
+        // The comparison colour from the second column on; the number column
+        // keeps the row's own background, as legacy paints column 0 in its
+        // label colour and only the others in kol (SubsGridWindow.cpp:495).
+        const QRectF number0 = grid.cellRect(0, 0);
+        QCOMPARE(grid.columnTitle(0), model.headerData(LineTableModel::NumberColumn, Qt::Horizontal).toString());
+        const int afterNumber = int(number0.right()) + 2;
+        QCOMPARE(image.pixelColor(afterNumber, rowY(0)), QColor(0, 0, 200));
+        QCOMPARE(image.pixelColor(afterNumber, rowY(1)), QColor(200, 0, 0));
+        QVERIFY(image.pixelColor(afterNumber, rowY(2)) != QColor(200, 0, 0) &&
+                image.pixelColor(afterNumber, rowY(2)) != QColor(0, 0, 200));
+        for (int row = 0; row < 3; ++row) {
+            const QColor number = image.pixelColor(2, rowY(row));
+            QVERIFY2(number != QColor(200, 0, 0) && number != QColor(0, 0, 200), qPrintable(number.name()));
+        }
+        // The outline colour around "WWWW" in the Text cell of row 1, and none
+        // in row 0's equal text.
+        int outline1 = 0, outline0 = 0;
+        const QRectF text0 = grid.cellRect(0, grid.columnCount() - 1);
+        for (int x = int(text1.left()); x < int(text1.left()) + 60; ++x)
+            for (int y = int(text1.top()); y < int(text1.bottom()); ++y)
+                outline1 += image.pixelColor(x, y) == QColor(0, 255, 0);
+        for (int x = int(text0.left()); x < int(text0.right()); ++x)
+            for (int y = int(text0.top()); y < int(text0.bottom()); ++y)
+                outline0 += image.pixelColor(x, y) == QColor(0, 255, 0);
+        QVERIFY2(outline1 > 10, qPrintable(QString::number(outline1)));
+        QCOMPARE(outline0, 0);
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-comparison-frame.png")));
+    }
+
     void followsModelChanges()
     {
         LineTableModel model;

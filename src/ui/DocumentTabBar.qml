@@ -21,6 +21,21 @@ Item {
         // A double click where there is no tab (legacy i == -1).
         onDoubleTapped: bar.app.addPage(true)
     }
+    TapHandler {
+        // A right click where there is no tab: the tab menu for none (-1).
+        acceptedButtons: Qt.RightButton
+        onTapped: eventPoint => bar.openTabMenu(-1, bar, eventPoint.position.x, eventPoint.position.y)
+    }
+
+    // Legacy Notebook::ContextMenu on tab `index` (-1: none), at (x, y) in
+    // `item`; its items are in DocumentTabMenu.qml.
+    function openTabMenu(index, item, x, y) {
+        tabMenu.openOn(index, item, x, y)
+    }
+    DocumentTabMenu {
+        id: tabMenu
+        app: bar.app
+    }
 
     Flickable {
         anchors.fill: parent
@@ -80,6 +95,12 @@ Item {
                     TapHandler {
                         acceptedButtons: Qt.MiddleButton
                         onTapped: bar.closeRequested(tab.index)
+                    }
+                    TapHandler {
+                        // The tab's own: the bar's handler does not see it.
+                        acceptedButtons: Qt.RightButton
+                        gesturePolicy: TapHandler.WithinBounds
+                        onTapped: eventPoint => bar.openTabMenu(tab.index, tab, eventPoint.position.x, eventPoint.position.y)
                     }
                 }
             }
