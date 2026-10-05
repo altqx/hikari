@@ -414,22 +414,26 @@ DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy, std::optio
 {
     DecodedText out;
     std::optional<std::string> text;
-    auto foldWindows = [&](std::string_view b) {
-        // The Windows build's text-mode read: it stopped at Ctrl+Z and turned
-        // CRLF into LF before decoding.
-        std::string s(b.substr(0, b.find('\x1A')));
+    auto fold = [&](std::string_view b) {
+        // The Windows build's text-mode read stopped at Ctrl+Z. CRLF reads
+        // as LF on every platform (O3-linux-crlf-blocks, approved
+        // 2026-10-05): the Windows build's text mode folded it, the Linux
+        // build kept each '\r' and lost every brace table (config.cpp:129-145).
+        std::string s(readBy == ReadBy::Windows ? b.substr(0, b.find('\x1A')) : b);
         std::string folded;
         folded.reserve(s.size());
         for (std::size_t i = 0; i < s.size(); ++i) {
-            if (s[i] == '\r' && i + 1 < s.size() && s[i + 1] == '\n')
+            if (s[i] == '\r' && i + 1 < s.size() && s[i + 1] == '\n') {
+                out.evidence.crlf = true;
                 continue;
+            }
             folded += s[i];
         }
         return folded;
     };
     if (bytes.starts_with("\xEF\xBB\xBF")) {
         out.evidence.utf8Bom = true;
-        std::string body = readBy == ReadBy::Windows ? foldWindows(bytes.substr(3)) : std::string(bytes.substr(3));
+        std::string body = fold(bytes.substr(3));
         out.evidence.validUtf8 = validUtf8(body);
         if (out.evidence.validUtf8) {
             text = std::move(body);
@@ -441,11 +445,11 @@ DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy, std::optio
         out.evidence.utf16Bom = true;
         const bool big = bytes.starts_with("\xFE\xFF");
         if (auto decoded = fromUtf16(bytes.substr(2), big)) {
-            text = readBy == ReadBy::Windows ? foldWindows(*decoded) : std::move(*decoded);
+            text = fold(*decoded);
             out.evidence.interpretation = big ? "UTF-16BE" : "UTF-16LE";
         }
     } else {
-        std::string body = readBy == ReadBy::Windows ? foldWindows(bytes) : std::string(bytes);
+        std::string body = fold(bytes);
         out.evidence.validUtf8 = validUtf8(body);
         if (out.evidence.validUtf8) {
             text = std::move(body);
@@ -680,11 +684,21 @@ HotkeyFile readHotkeyFile(std::string_view text, bool windows)
         file.header = std::string(trimRight(token));
         // int first = token.find("."); ver = token.Mid(first + 5).BeforeFirst(' ')
         // (Hotkeys.cpp:257-261): the build number of "0.8.0.build".
+        // O3-hotkeys-semver-header (approved 2026-10-05): a semantic version
+        // ("[HikariSub v0.0.1-rc.1]", read as configNeedsConversion reads it)
+        // is current; legacy read its build number as 0 and the file as
+        // outdated. Other headers keep LoadHkeys' rule.
+        const std::string_view name = mid(beforeFirst(token, ']'), 1);
+        file.semanticVersion = parseSemVer(beforeFirst(afterFirst(name, 'v'), ' ')).has_value();
         if (const auto dot = token.find('.'); dot != std::string::npos) {
             const std::string_view ver = beforeFirst(mid(token, codePoints(std::string_view(token).substr(0, dot)) + 5), ' ');
             file.version = hotkeyLabelNumber(ver, windows);
             file.accepted = file.version > 487;
             file.converted = file.version < 1141;
+        }
+        if (file.semanticVersion) {
+            file.accepted = true;
+            file.converted = false;
         }
         first = 1;
     }
@@ -763,6 +777,16 @@ std::string evidenceText(const TextEvidence &e)
     if (e.utf8Bom || e.utf16Bom)
         out += " with a BOM";
     return out;
+}
+
+// O3-linux-crlf-blocks: where the importer reads a file otherwise than the
+// Linux build did.
+std::string lineEndNote(const TextEvidence &e, ReadBy readBy)
+{
+    if (!e.crlf || readBy != ReadBy::Linux)
+        return {};
+    return "; CRLF read as LF on every platform (O3-linux-crlf-blocks): the Linux build kept each '\\r' and "
+           "dropped the brace tables (config.cpp:129-145)";
 }
 
 const SourceFile *findSource(const std::vector<SourceFile> &sources, SourceKind kind)
@@ -860,7 +884,8 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
         auto parsed = std::make_shared<ConfigFile>(readConfigFile(*decoded.text));
         configFiles.push_back(parsed); // the records outlive this lambda
-        std::string reason = evidenceText(decoded.evidence) + "; " + std::to_string(parsed->count) + " records";
+        std::string reason = evidenceText(decoded.evidence) + lineEndNote(decoded.evidence, options.readBy) + "; " +
+                             std::to_string(parsed->count) + " records";
         if (parsed->converted)
             reason += "; an old header: ConfigConverter's renames applied, the file left unchanged (config.cpp:561-564)";
         if (parsed->crashed)
@@ -1118,12 +1143,16 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
         }
         auto parsed = std::make_shared<HotkeyFile>(readHotkeyFile(*decoded.text, windows));
         hotkeyFiles.push_back(parsed);
-        std::string reason = evidenceText(decoded.evidence) + "; " + std::to_string(parsed->count) + " records";
+        std::string reason = evidenceText(decoded.evidence) + lineEndNote(decoded.evidence, options.readBy) + "; " +
+                             std::to_string(parsed->count) + " records";
         if (!parsed->accepted) {
             fileRow(s, Disposition::Unresolved, parsed->header,
                     reason + "; legacy found the header outdated and replaced the file with its defaults "
                              "(Hotkeys.cpp:250-277): its records stay unresolved");
         } else {
+            if (parsed->semanticVersion)
+                reason += "; a semantic version header, read as current (O3-hotkeys-semver-header): legacy read its "
+                          "build number as 0 and replaced the file with its defaults (Hotkeys.cpp:257-276)";
             if (parsed->converted)
                 reason += "; an old header: ConvertHotkeys' renames applied, the file left unchanged (Hotkeys.cpp:263-268)";
             if (parsed->count <= 10)

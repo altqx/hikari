@@ -16,8 +16,9 @@
 //   ConfigConverter renames for old headers (ConfigNeedToConvert), the
 //   record-count rule, AudioConfig's reset of the audio options, and each
 //   option's typed reading (GetBool, wxAtoi, GetTable).
-// - Hotkeys.txt / AudioHotkeys.txt: LoadHkeys' header rule, the
-//   ConvertHotkeys renames, "<SYMBOL or id> <G|S|E|V|A>=<accel>" and the
+// - Hotkeys.txt / AudioHotkeys.txt: LoadHkeys' header rule for four-part
+//   build headers (a semantic version header is current:
+//   O3-hotkeys-semver-header, approved 2026-10-05), the ConvertHotkeys renames, "<SYMBOL or id> <G|S|E|V|A>=<accel>" and the
 //   "Script <file>-<k>=<accel>" automation lines. A short file's valid
 //   bindings are read (C04-short-file, approved 2026-09-27).
 // - Rules.txt, Dictionary/UserDic.udic and Dictionary/*.dic/.aff pairs are
@@ -50,7 +51,9 @@ namespace hikari::application::settings_import {
 inline constexpr int kMappingVersion = 1;
 
 // Whose reading of the text files (R5-per-platform): the Windows build read in
-// text mode, so CRLF became LF; the Linux build kept every '\r'.
+// text mode, stopping at Ctrl+Z. CRLF reads as LF on every platform
+// (O3-linux-crlf-blocks, approved 2026-10-05), where the Linux build kept
+// every '\r' and so never closed a brace table.
 enum class ReadBy { Windows, Linux };
 #ifdef _WIN32
 inline constexpr ReadBy kReadBy = ReadBy::Windows;
@@ -87,10 +90,11 @@ struct TextEvidence {
     bool utf16Bom = false;
     bool validUtf8 = false;
     bool decoded = false;
+    bool crlf = false; // CR LF pairs were read as LF (O3-linux-crlf-blocks on Linux)
     std::string interpretation; // "UTF-8", "UTF-16LE", "Latin-1", ...; empty when not decoded
 };
 struct DecodedText {
-    std::optional<std::string> text; // UTF-8, line ends as `readBy` read them
+    std::optional<std::string> text; // UTF-8, CR LF read as LF
     TextEvidence evidence;
 };
 DecodedText decodeSettingsText(std::string_view bytes, ReadBy readBy,
@@ -142,7 +146,8 @@ struct HotkeyRecord {
 struct HotkeyFile {
     std::string header;     // the first line when it starts with '['
     int version = 0;        // wxAtoi of the build number LoadHkeys reads
-    bool accepted = false;  // checkVer: legacy did not replace the file with its defaults
+    bool semanticVersion = false; // "[<name> v<semver>]": read as current (O3-hotkeys-semver-header)
+    bool accepted = false;  // read: checkVer, or a semantic version header
     bool converted = false; // version < 1141: ConvertHotkeys renames
     int count = 0;          // LoadHkeys' g
     std::vector<HotkeyRecord> records;

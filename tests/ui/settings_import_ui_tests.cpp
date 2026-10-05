@@ -61,15 +61,15 @@ QByteArray configText(const QByteArray &extra)
     return out + extra;
 }
 
-// A legacy installation: Config/, Dictionary/, Themes/. The brace table
-// ends with "}\n": the Linux build keeps "}\r" open (R5-per-platform;
-// settings_import_tests CrlfIsReadAsEachPlatformsBuildReadIt).
+// A legacy installation: Config/, Dictionary/, Themes/, written with CRLF.
+// The brace table closes on every platform (O3-linux-crlf-blocks;
+// settings_import_tests CrlfIsAcceptedOnEveryPlatform).
 struct LegacyRoot {
     QTemporaryDir dir;
     LegacyRoot()
     {
         writeFile(path("Config/Config.txt"), configText("GRID_FONT=Arial\r\nGRID_FONT_SIZE=12\r\nPROGRAM_THEME=Mine\r\n"
-                                                        "TOOLBAR_ALIGNMENT=1\r\nSUBS_RECENT_FILES={\n\tD:\\media\\a.ass\n}\n"));
+                                                        "TOOLBAR_ALIGNMENT=1\r\nSUBS_RECENT_FILES={\r\n\tD:\\media\\a.ass\r\n}\r\n"));
         writeFile(path("Config/Hotkeys.txt"), "[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n"
                                               "GLOBAL_VIDEO_INDEXING G=Ctrl-Alt-I\r\nNOT_AN_ACTION G=Ctrl-K\r\n");
         writeFile(path("Config/Rules.txt"), "1\tteh\tthe\r\n");
@@ -168,10 +168,8 @@ private slots:
         const QJsonObject json = QJsonDocument::fromJson(readFile(snap->dir + QStringLiteral("/snapshot.json"))).object();
         const QJsonArray files = json.value(QStringLiteral("files")).toArray();
         QCOMPARE(files.size(), 4);
-        // Read as this platform's build read it: Windows folds CRLF (R5-per-platform).
-        QCOMPARE(files[0].toObject().value(QStringLiteral("header")).toString(),
-                 si::kReadBy == si::ReadBy::Windows ? QStringLiteral("[HikariSub v0.0.1-rc.1]")
-                                                    : QStringLiteral("[HikariSub v0.0.1-rc.1]\r"));
+        // CRLF reads as LF on every platform (O3-linux-crlf-blocks).
+        QCOMPARE(files[0].toObject().value(QStringLiteral("header")).toString(), QStringLiteral("[HikariSub v0.0.1-rc.1]"));
         QCOMPARE(files[3].toObject().value(QStringLiteral("encoding")).toString(), QStringLiteral("UTF-8"));
         QVERIFY(files[3].toObject().value(QStringLiteral("bom")).toBool());
         // The same bytes again: the same snapshot.

@@ -465,24 +465,61 @@ TEST(SettingsImport, ConfigRecordsAreReadAsSetRawOptionsReadsThem)
     EXPECT_EQ(open.unterminatedBlock, "SUBS_RECENT_FILES={\n\ta\n");
 }
 
-TEST(SettingsImport, CrlfIsReadAsEachPlatformsBuildReadIt)
+TEST(SettingsImport, CrlfIsAcceptedOnEveryPlatform)
 {
-    // R5-per-platform: the Windows build's text mode folds CRLF; the Linux
-    // build keeps '\r', so a brace table's "}\r" is no closing line and the
-    // block runs on (config.cpp:129-145).
-    const std::string body = padding() + "SUBS_RECENT_FILES={\r\n\ta.ass\r\n}\r\nGRID_FONT=Arial\r\n";
-    const Plan windows = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Windows));
-    EXPECT_EQ(rowOf(windows, "setting:recent.subtitles").value,
-              SettingValue(std::vector<std::string>{"a.ass"}));
-    EXPECT_EQ(rowOf(windows, "setting:grid.font").value, SettingValue(std::string("Arial")));
+    // O3-linux-crlf-blocks (approved 2026-10-05): the Linux build kept each
+    // '\r', so a brace table's "}\r" was no closing line and SetRawOptions
+    // dropped the block (config.cpp:129-145). The importer folds CRLF on
+    // every platform, as the Windows build's text mode did.
+    const std::string body = padding() + "SUBS_RECENT_FILES={\r\n\ta.ass\r\n\tb.ass\r\n}\r\nGRID_FONT=Arial\r\n";
+    for (const ReadBy by : {ReadBy::Windows, ReadBy::Linux}) {
+        SCOPED_TRACE(by == ReadBy::Windows ? "Windows" : "Linux");
+        const Plan plan = buildPlan({config(body)}, linuxHost(), readBy(by));
+        EXPECT_EQ(rowOf(plan, "setting:recent.subtitles").value,
+                  SettingValue(std::vector<std::string>{"a.ass", "b.ass"}));
+        EXPECT_EQ(rowOf(plan, "setting:recent.subtitles").disposition, Disposition::Change);
+        EXPECT_EQ(rowOf(plan, "setting:grid.font").value, SettingValue(std::string("Arial")));
 
-    const auto text = decodeSettingsText(config(body).bytes, ReadBy::Linux);
-    ASSERT_TRUE(text.text);
-    const ConfigFile linux = readConfigFile(*text.text);
-    // "SUBS_RECENT_FILES={\r" does not end with '{': a plain record "{".
-    const auto recent = std::ranges::find(linux.records, std::string("SUBS_RECENT_FILES"), &ConfigRecord::label);
-    ASSERT_NE(recent, linux.records.end());
-    EXPECT_EQ(recent->value, "{");
+        const auto text = decodeSettingsText(config(body).bytes, by);
+        ASSERT_TRUE(text.text);
+        EXPECT_EQ(text.text->find('\r'), std::string::npos);
+        EXPECT_TRUE(text.evidence.crlf);
+        const ConfigFile file = readConfigFile(*text.text);
+        EXPECT_TRUE(file.unterminatedBlock.empty());
+
+        // The same in UTF-16, folded after decoding.
+        std::string utf16 = "\xFF\xFE";
+        for (const char c : std::string(kHeader) + body) {
+            utf16 += c;
+            utf16 += '\0';
+        }
+        const auto wide = decodeSettingsText(utf16, by);
+        ASSERT_TRUE(wide.text);
+        EXPECT_EQ(wide.text->find('\r'), std::string::npos);
+
+        // Hotkey lines too: the header and each binding without the '\r'.
+        const Plan keys = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}, linuxHost(), readBy(by));
+        EXPECT_EQ(rowOf(keys, "file:Config/Hotkeys.txt").raw, "[Kainote v0.9.0.1500]");
+        EXPECT_EQ(rowOf(keys, "shortcut:GLOBAL_SAVE_SUBS:G").value, SettingValue(std::string("Ctrl-Alt-S")));
+    }
+    // Where the Linux build read the file otherwise, the file row says so.
+    const Plan linux = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Linux));
+    EXPECT_NE(rowOf(linux, "file:Config/Config.txt").reason.find("O3-linux-crlf-blocks"), std::string::npos);
+    const Plan windows = buildPlan({config(body)}, linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(windows, "file:Config/Config.txt").reason.find("O3-linux-crlf-blocks"), std::string::npos);
+    std::string lfBody = padding() + "GRID_FONT=Arial\n";
+    std::erase(lfBody, '\r');
+    const Plan lf = buildPlan({config(lfBody, "[HikariSub v0.0.1-rc.1]\n")}, linuxHost(), readBy(ReadBy::Linux));
+    EXPECT_EQ(rowOf(lf, "file:Config/Config.txt").reason.find("O3-linux-crlf-blocks"), std::string::npos);
+
+    // Only CR LF pairs fold; a lone '\r' stays. Ctrl+Z still ends the text
+    // only where the Windows build's text mode stopped at it.
+    const auto lone = decodeSettingsText("a\rb\r\nc\x1A" "d", ReadBy::Linux);
+    ASSERT_TRUE(lone.text);
+    EXPECT_EQ(*lone.text, "a\rb\nc\x1A" "d");
+    const auto ctrlZ = decodeSettingsText("a\rb\r\nc\x1A" "d", ReadBy::Windows);
+    ASSERT_TRUE(ctrlZ.text);
+    EXPECT_EQ(*ctrlZ.text, "a\rb\nc");
 }
 
 TEST(SettingsImport, ShortConfigFileIsWhatEachBuildPutInEffect)
@@ -690,18 +727,6 @@ TEST(SettingsImport, EmptyAndMalformedHotkeyFiles)
     EXPECT_EQ(rowOf(noHeader, "record:Config/Hotkeys.txt:1").disposition, Disposition::Unresolved);
     EXPECT_TRUE(proposedRows(noHeader).empty());
 
-    // The semantic-version header the running legacy build writes
-    // ("[HikariSub v0.0.1-rc.1]"): LoadHkeys reads the build number five
-    // characters past the first '.', finds none (wxAtoi 0, not past 487) and
-    // replaces the file with its defaults. Kept: unresolved (proposed
-    // departure in the O3 report).
-    const HotkeyFile own = readHotkeyFile("[HikariSub v0.0.1-rc.1]\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
-    EXPECT_EQ(own.version, 0);
-    EXPECT_FALSE(own.accepted);
-    const Plan semver = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n", kHeader)}, linuxHost(),
-                                  readBy(ReadBy::Windows));
-    EXPECT_EQ(rowOf(semver, "record:Config/Hotkeys.txt:2").disposition, Disposition::Unresolved);
-
     // Mixed: a record without a window letter, an invalid key, a number.
     const Plan mixed = buildPlan({hotkeys("GLOBAL_SAVE_SUBS X=Ctrl-Alt-S\r\nGLOBAL_UNDO G=Ctrl-Bogus\r\n"
                                           "5000 S=Ctrl-Alt-W\r\n")},
@@ -711,6 +736,64 @@ TEST(SettingsImport, EmptyAndMalformedHotkeyFiles)
     EXPECT_EQ(invalid.disposition, Disposition::Unresolved);
     EXPECT_NE(invalid.reason.find("\"Bogus\""), std::string::npos);
     EXPECT_EQ(rowOf(mixed, "shortcut:GLOBAL_SAVE_SUBS:S").value, SettingValue(std::string("Ctrl-Alt-W")));
+}
+
+TEST(SettingsImport, SemanticVersionHotkeyHeaderIsRead)
+{
+    // O3-hotkeys-semver-header (approved 2026-10-05): LoadHkeys reads the
+    // build number five characters past the header's first '.'
+    // (Hotkeys.cpp:257-276), so the running legacy build's own header
+    // "[HikariSub v0.0.1-rc.1]" read as 0 and the file as outdated. The
+    // importer reads a semantic version header as current and its bindings.
+    const HotkeyFile own = readHotkeyFile("[HikariSub v0.0.1-rc.1]\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
+    EXPECT_TRUE(own.semanticVersion);
+    EXPECT_TRUE(own.accepted);
+    EXPECT_FALSE(own.converted);
+    EXPECT_EQ(own.version, 0); // what legacy read, kept as evidence
+    ASSERT_EQ(own.records.size(), 1u);
+    for (const std::string_view header : {"[HikariSub v1.2.3]\n", "[HikariSub v0.0.1-rc.1+build.7] \n"}) {
+        const HotkeyFile f = readHotkeyFile(std::string(header) + "GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
+        EXPECT_TRUE(f.semanticVersion) << header;
+        EXPECT_TRUE(f.accepted) << header;
+        EXPECT_FALSE(f.converted) << header;
+    }
+
+    for (const ReadBy by : {ReadBy::Windows, ReadBy::Linux}) {
+        const Plan plan = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\nNOT_AN_ACTION G=Ctrl-K\r\n", kHeader)},
+                                    linuxHost(), readBy(by));
+        const PlanRow &file = rowOf(plan, "file:Config/Hotkeys.txt");
+        EXPECT_EQ(file.disposition, Disposition::Read);
+        EXPECT_NE(file.reason.find("O3-hotkeys-semver-header"), std::string::npos);
+        const PlanRow &save = rowOf(plan, "shortcut:GLOBAL_SAVE_SUBS:G");
+        EXPECT_EQ(save.disposition, Disposition::Change);
+        EXPECT_EQ(save.value, SettingValue(std::string("Ctrl-Alt-S")));
+        EXPECT_EQ(rowOf(plan, "record:Config/Hotkeys.txt:3").disposition, Disposition::Unresolved);
+        const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
+        HotkeyMap map;
+        readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
+        EXPECT_EQ(map.at(HotkeyId{hotkeyIdOf("GLOBAL_SAVE_SUBS"), GlobalHotkey}).accel, "Ctrl-Alt-S");
+    }
+
+    // Four-part headers keep LoadHkeys' rule: past 487 accepted, before 1141
+    // converted, 487 or less (and a header that is neither) outdated.
+    const HotkeyFile current = readHotkeyFile("[Kainote v0.9.0.1500]\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
+    EXPECT_FALSE(current.semanticVersion);
+    EXPECT_EQ(current.version, 1500);
+    EXPECT_TRUE(current.accepted);
+    EXPECT_FALSE(current.converted);
+    const HotkeyFile old = readHotkeyFile("[Kainote v0.8.0.1100]\nPlayPause W=Space\n");
+    EXPECT_TRUE(old.accepted);
+    EXPECT_TRUE(old.converted);
+    for (const std::string_view header : {"[Kainote v0.8.0.487]\n", "[HikariSub v0.0]\n", "[HikariSub v1.2.3.x]\n"}) {
+        const HotkeyFile f = readHotkeyFile(std::string(header) + "GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\n");
+        EXPECT_FALSE(f.semanticVersion) << header;
+        EXPECT_FALSE(f.accepted) << header;
+    }
+    const Plan outdated = buildPlan({hotkeys("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n", "[Kainote v0.8.0.487]\r\n")},
+                                    linuxHost(), readBy(ReadBy::Windows));
+    EXPECT_EQ(rowOf(outdated, "file:Config/Hotkeys.txt").disposition, Disposition::Unresolved);
+    EXPECT_EQ(rowOf(outdated, "record:Config/Hotkeys.txt:2").disposition, Disposition::Unresolved);
+    EXPECT_TRUE(proposedRows(outdated).empty());
 }
 
 TEST(SettingsImport, OldHotkeyNamesAreConvertedAndAbsentTargetsStayUnresolved)
