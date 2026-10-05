@@ -597,4 +597,22 @@ TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
     source.finishOpen();
     EXPECT_EQ(source.matrixCalls.size(), before);
     EXPECT_EQ(video.colourMatrix().source(), "TV.601");
+    // An untagged HD source with a Document matrix other than TV.601: its
+    // guess, BT.709, is set before the first frame (approved departure
+    // V4-untagged-matrix; legacy left the converter's BT.601 under the name
+    // TV.709), so a later "TV.709" has nothing to change.
+    source.colorSpace = 2;
+    source.colorRange = 0;
+    source.geometry.width = 1280;
+    source.geometry.height = 720;
+    video.open("/m/ep3.mkv");
+    video.setMatrix("PC.709");
+    source.frames.clear();
+    source.matrixCalls.clear();
+    source.finishOpen();
+    ASSERT_EQ(source.matrixCalls, (std::vector<std::pair<int, int>>{{1, 0}}));
+    EXPECT_EQ(source.framesBeforeMatrix, 0u);
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.size(), 1u);
 }

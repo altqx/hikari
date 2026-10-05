@@ -327,10 +327,10 @@ bool VideoViewController::snapshot(const QString &action)
     for (const QString &name :
          dir.entryList({QString::fromStdString(application::snapshotPattern(video))}, filters, QDir::Name))
         paths.push_back(QDir::toNativeSeparators(dir.filePath(name)).toStdString());
-    const int number = application::nextSnapshotNumber(paths);
     // m_Time: the paused frame's time (Timebase::MsAt).
     const int ms = session.legacyTimebase().msAt(frame->index);
-    const QString path = QString::fromStdString(application::snapshotPath(video, number, ms));
+    const QString path = QString::fromStdString(application::nextSnapshotPath(
+        video, paths, ms, [](const std::string &p) { return QFileInfo::exists(QString::fromStdString(p)); }));
     if (!picture.save(path, "PNG"))
         return false;
     m_lastSnapshot = path;
@@ -341,7 +341,9 @@ bool VideoViewController::snapshot(const QString &action)
 QVariantMap VideoViewController::recentFiles() const
 {
     // VideoBox::ContextMenu (VideoBox.cpp:946-960): the first twenty of each
-    // list; a missing file skips its row of both lists (the loop's continue).
+    // list; a missing file skips its own row only (approved departure
+    // V4-recent-rows: legacy's `continue` on a missing subtitle file skipped
+    // the video row of the same index too, VideoBox.cpp:952-960).
     const auto subtitles = m_settings.settings().list("recent.subtitles");
     const auto videos = m_settings.settings().list("recent.video");
     QVariantList subs, vids;
@@ -350,16 +352,10 @@ QVariantMap VideoViewController::recentFiles() const
         return QVariantMap{{QStringLiteral("path"), p}, {QStringLiteral("label"), QFileInfo(p).fileName()}};
     };
     for (std::size_t i = 0; i < 20; i++) {
-        if (i < subtitles.size()) {
-            if (!QFileInfo(QString::fromStdString(subtitles[i])).isFile())
-                continue;
+        if (i < subtitles.size() && QFileInfo(QString::fromStdString(subtitles[i])).isFile())
             subs << row(subtitles[i]);
-        }
-        if (i < videos.size()) {
-            if (!QFileInfo(QString::fromStdString(videos[i])).isFile())
-                continue;
+        if (i < videos.size() && QFileInfo(QString::fromStdString(videos[i])).isFile())
             vids << row(videos[i]);
-        }
     }
     return {{QStringLiteral("subtitles"), subs}, {QStringLiteral("videos"), vids}};
 }

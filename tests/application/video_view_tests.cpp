@@ -14,6 +14,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <string_view>
@@ -90,6 +91,29 @@ TEST(VideoZoom, ZoomModeAndResetMatchTheLegacyCaptures)
     VideoView odd = fit16x9();
     odd.toggleZoom(1200);
     EXPECT_EQ(odd.zoomPercent(), 2.f);
+}
+
+// GLOBAL_RESET_VIDEO_ZOOM gives the whole frame at every panel size
+// (approved departure V4-reset-zoom-rows): legacy divided the panel's size
+// by its float scale and truncated (RendererVideo.cpp:771-778), so a 720-row
+// frame shown 50 rows high came back as 719 rows.
+TEST(VideoZoom, ResetGivesTheWholeFrameAtEverySize)
+{
+    int legacyShort = 0;
+    for (int width = 40; width <= 700; ++width) {
+        VideoView v;
+        v.setClient(width, 1000, 40);
+        v.open(SourceGeometry{1280, 720, 0, 1});
+        v.zoomAt(2.f, width / 2, 10);
+        v.resetZoom();
+        ASSERT_EQ(v.sourceRect(), (IntRect{0, 0, 1280, 720})) << "panel width " << width;
+        const auto r = v.videoRect();
+        const int w = r.right - r.left, h = r.bottom - r.top;
+        const float xx = static_cast<float>(w) / 1280.f, yy = static_cast<float>(h) / 720.f;
+        if (static_cast<int>(static_cast<float>(w) / xx) != 1280 || static_cast<int>(static_cast<float>(h) / yy) != 720)
+            ++legacyShort;
+    }
+    EXPECT_GT(legacyShort, 0); // sizes where legacy lost a row or column were tried
 }
 
 // The zoom mode's drag (case pan-drag: press 320,180, move to 200,120) and
@@ -182,20 +206,39 @@ TEST(VideoVolume, KeysAndWheelStepAsLegacy)
     EXPECT_NEAR(videoVolumeGain(-86), std::pow(10.0, -73.96 / 20.0), 1e-15);
 }
 
-// SaveFrame's file name (RendererVideo.cpp:1228-1266).
-TEST(VideoSnapshot, NamesNumberTheFilesAsLegacy)
+// SaveFrame's file name (RendererVideo.cpp:1228-1266) and its number, read
+// from each file's name after the video's name (approved departure
+// V4-snapshot-number: legacy took the first "_<digits>_" anywhere in the
+// path, RendererVideo.cpp:1238-1249).
+TEST(VideoSnapshot, NamesNumberTheFilesFromTheirNames)
 {
     EXPECT_EQ(snapshotPattern("/videos/episode.01.mkv"), "episode.01_*_*.png");
     EXPECT_EQ(snapshotPath("/videos/episode.01.mkv", 1, 3'723'045), "/videos/episode.01_1_01;02;03,045.png");
     EXPECT_EQ(snapshotPath("C:\\v\\a.mkv", 12, 999), "C:\\v\\a_12_00;00;00,999.png");
-    EXPECT_EQ(nextSnapshotNumber({}), 1);
-    EXPECT_EQ(nextSnapshotNumber({"/v/a_1_00;00;01,000.png", "/v/a_3_00;00;01,000.png"}), 2);
-    EXPECT_EQ(nextSnapshotNumber({"/v/a_2_x.png", "/v/a_1_x.png", "/v/a_1_y.png"}), 3);
-    // The first "_<digits>_" of the whole path: a folder or video name
-    // holding one numbers every file by it (a legacy defect, kept: both
-    // files read 2, so the next is 1 and then 1 again — it overwrites).
-    EXPECT_EQ(nextSnapshotNumber({"/d_2_x/a_1_t.png", "/d_2_x/a_3_t.png"}), 1);
-    EXPECT_EQ(nextSnapshotNumber({"/v/show_01_a_1_t.png", "/v/show_01_a_2_t.png"}), 2);
+    EXPECT_EQ(nextSnapshotNumber("/v/a.mkv", {}), 1);
+    EXPECT_EQ(nextSnapshotNumber("/v/a.mkv", {"/v/a_1_00;00;01,000.png", "/v/a_3_00;00;01,000.png"}), 2);
+    EXPECT_EQ(nextSnapshotNumber("/v/a.mkv", {"/v/a_2_x.png", "/v/a_1_x.png", "/v/a_1_y.png"}), 3);
+    EXPECT_EQ(nextSnapshotNumber("C:\\v\\a.mkv", {"C:\\v\\a_1_x.png"}), 2);
+    // A folder holding "_<digits>_" does not number the files: legacy read
+    // both as 2 and gave 1 every time, overwriting a_1_t.png.
+    EXPECT_EQ(nextSnapshotNumber("/d_2_x/a.mkv", {"/d_2_x/a_1_t.png", "/d_2_x/a_3_t.png"}), 2);
+    // Nor a video name holding one: legacy read both as 1 (from "_01_") and
+    // gave 2, overwriting show_01_2_t.png.
+    EXPECT_EQ(nextSnapshotNumber("/v/show_01.mkv", {"/v/show_01_1_t.png", "/v/show_01_2_t.png"}), 3);
+    // A name without a number after the video's name holds none.
+    EXPECT_EQ(nextSnapshotNumber("/v/a.mkv", {"/v/a_x_1_t.png", "/v/a__t.png"}), 1);
+}
+
+// The PNG never replaces a file: a path that exists, though its number was
+// free by the listing (a hidden file, another letter case), takes the next.
+TEST(VideoSnapshot, NeverOverwritesAFile)
+{
+    const std::vector<std::string> taken{"/v/a_2_00;00;00,000.png", "/v/a_3_00;00;00,000.png"};
+    const auto exists = [&](const std::string &path) {
+        return path == "/v/a_1_00;00;00,000.png" || std::find(taken.begin(), taken.end(), path) != taken.end();
+    };
+    EXPECT_EQ(nextSnapshotPath("/v/a.mkv", {"/v/a_2_x.png"}, 0, exists), "/v/a_4_00;00;00,000.png");
+    EXPECT_EQ(nextSnapshotPath("/v/a.mkv", {}, 1001, exists), "/v/a_1_00;00;01,001.png");
 }
 
 // The snapshot is B, G, R of the frame (alpha dropped) as RGB; the subbed
@@ -352,14 +395,24 @@ TEST(VideoMatrix, OpenAppliesTheDocumentMatrix)
     // Other names leave the source's tags.
     EXPECT_EQ(m.open(kBt709, kRangeMpeg, 1920, 1080, "PC.709"), std::nullopt);
     EXPECT_EQ(m.applied(), "TV.709");
-    // Untagged: BT.709 for a frame wider than 1024 or at least 600 high
-    // (set only with "TV.709"; otherwise the converter's default), else BT.601.
+    // Untagged: BT.709 for a frame wider than 1024 or at least 600 high,
+    // else BT.601; the guess is the matrix the converter is given (approved
+    // departure V4-untagged-matrix: legacy set it only with "TV.709" and
+    // otherwise left the converter's default BT.601 under the name TV.709,
+    // ProviderFFMS2.cpp:396-412).
     EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1280, 720, "TV.709"), (Input{kBt709, kRangeUnspecified}));
     EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1024, 600, "TV.709"), (Input{kBt709, kRangeUnspecified}));
-    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1024, 599, "TV.709"), std::nullopt);
+    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1024, 599, "TV.709"), (Input{kBt470bg, kRangeUnspecified}));
     EXPECT_EQ(m.source(), "TV.601");
-    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1280, 720, ""), std::nullopt);
+    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1280, 720, ""), (Input{kBt709, kRangeUnspecified}));
     EXPECT_EQ(m.applied(), "TV.709");
+    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1920, 1080, "PC.709"), (Input{kBt709, kRangeUnspecified}));
+    EXPECT_EQ(m.applied(), "TV.709");
+    // "TV.601" still converts an untagged HD source as BT.601.
+    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1920, 1080, "TV.601"), (Input{kBt470bg, kRangeUnspecified}));
+    EXPECT_EQ(m.applied(), "TV.601");
+    // A tagged source keeps its tags as before.
+    EXPECT_EQ(m.open(kBt709, kRangeMpeg, 1920, 1080, ""), std::nullopt);
 }
 
 // ProviderFFMS2::SetColorSpace (ProviderFFMS2.cpp:950-982): legacy's answer
@@ -369,10 +422,10 @@ TEST(VideoMatrix, ChangesFollowLegacyState)
     using namespace ffms_colour;
     using Input = LegacyColourMatrix::Input;
     LegacyColourMatrix m;
-    // An untagged HD source opened with no matrix: the converter's default
-    // (BT.601), though named TV.709 (the guess).
-    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1920, 1080, ""), std::nullopt);
-    // "TV.709" names what is applied: nothing; the video stays BT.601.
+    // An untagged HD source opened with no matrix: converted as its guess,
+    // BT.709, the name it has (V4-untagged-matrix).
+    EXPECT_EQ(m.open(kUnspecified, kRangeUnspecified, 1920, 1080, ""), (Input{kBt709, kRangeUnspecified}));
+    // "TV.709" names what is applied: nothing to do, the video is BT.709.
     EXPECT_EQ(m.set("TV.709"), std::nullopt);
     // "TV.601": BT.601 set.
     auto change = m.set("TV.601");

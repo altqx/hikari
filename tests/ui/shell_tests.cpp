@@ -7624,17 +7624,10 @@ private slots:
         // GLOBAL_RESET_VIDEO_ZOOM: the whole frame.
         triggerAction("resetVideoZoomMenuItem");
         QVERIFY(!view.zoomed());
-        // The whole frame, in legacy's floats (RendererVideo.cpp:771-778):
-        // the bottom is the video height / (height / 240), truncated, which
-        // can be 239 for some panel heights.
-        {
-            const auto vr = tools.videoView().videoRect();
-            const float yy = static_cast<float>(vr.height()) / 240.f, xx = static_cast<float>(vr.width()) / 320.f;
-            const QRectF whole(0, 0, static_cast<int>(static_cast<float>(vr.width()) / xx),
-                               static_cast<int>(static_cast<float>(vr.height()) / yy));
-            QCOMPARE(tools.sourceRect(), whole);
-            QVERIFY(whole.width() >= 319 && whole.height() >= 239);
-        }
+        // The whole frame, every row and column at any panel size (approved
+        // departure V4-reset-zoom-rows; legacy's float division could drop
+        // the last, RendererVideo.cpp:771-778).
+        QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
         // The wheel over the video with the crosshair: a tenth a step, at the pointer.
         wheelAt(c, 5);
         QCOMPARE(view.zoomPercent(), 150);
@@ -7643,9 +7636,21 @@ private slots:
         QCOMPARE(view.zoomPercent(), 100);
         wheelAt(c, 3);
         QCOMPARE(view.zoomPercent(), 130);
-        // Ctrl+wheel (legacy's window height) zooms nothing.
-        wheelAt(c, 3, Qt::ControlModifier);
-        QCOMPARE(view.zoomPercent(), 130);
+        // Ctrl+wheel resized legacy's video window (VideoBox.cpp:500-511,
+        // TabPanel::SetVideoWindowSizes); the docked panel's size is the
+        // layout's, so it does nothing: no zoom, no size, no volume
+        // (approved departure V4-ctrl-wheel).
+        {
+            const QSizeF panelSize = item("videoPanel")->size();
+            const QRectF videoArea = tools.videoRect();
+            const int volumeBefore = view.volume();
+            wheelAt(c, 3, Qt::ControlModifier);
+            wheelAt(c, -3, Qt::ControlModifier);
+            QCOMPARE(view.zoomPercent(), 130);
+            QCOMPARE(item("videoPanel")->size(), panelSize);
+            QCOMPARE(tools.videoRect(), videoArea);
+            QCOMPARE(view.volume(), volumeBefore);
+        }
         // Ctrl+Shift+Z in the Video panel resets it.
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
@@ -7715,12 +7720,16 @@ private slots:
     void videoContextMenuAndSnapshots()
     {
         restartWithoutSound();
-        QTemporaryDir folder;
+        // A folder named with "_7_": legacy numbered every snapshot by the
+        // first "_<digits>_" of the path, so each save was number 1 and
+        // overwrote the last (V4-snapshot-number).
+        QTemporaryDir folder(QDir::tempPath() + QStringLiteral("/hikari_7_XXXXXX"));
         QVERIFY(folder.isValid());
         QVERIFY(v4Open(folder));
         // The recent lists (VideoBox.cpp:952-965): the first twenty of each,
-        // by file name; a missing file skips its row of both lists (legacy's
-        // `continue`), so b.mkv goes with missing.ass. recent.video is read
+        // by file name; a missing file skips its own row only (approved
+        // departure V4-recent-rows; legacy's `continue` skipped the row of
+        // both lists, so b.mkv went with missing.ass). recent.video is read
         // here; its writer is GLOBAL_RECENT_VIDEO's (V3 #182).
         for (const char *name : {"b.mkv", "c.mkv"}) {
             QFile f(folder.filePath(QLatin1String(name)));
@@ -7742,8 +7751,9 @@ private slots:
         QCOMPARE(text("videoMenuRecentSubtitles0"), QStringLiteral("clip.ass"));
         QVERIFY(!named("videoMenuRecentSubtitles1"));
         QCOMPARE(text("videoMenuRecentVideos0"), QStringLiteral("clip.mkv"));
-        QCOMPARE(text("videoMenuRecentVideos1"), QStringLiteral("c.mkv"));
-        QVERIFY(!named("videoMenuRecentVideos2"));
+        QCOMPARE(text("videoMenuRecentVideos1"), QStringLiteral("b.mkv"));
+        QCOMPARE(text("videoMenuRecentVideos2"), QStringLiteral("c.mkv"));
+        QVERIFY(!named("videoMenuRecentVideos3"));
         // Open video and Open subtitles carry their Global bindings.
         auto label = [&](const QString &name, const char *symbol) {
             const QString key = application->hotkeys().accelOf(QLatin1String(symbol), 0);
@@ -7790,6 +7800,7 @@ private slots:
         QTest::qWait(60); // VideoBox::OnAccelerator drops the same action within 50 ms (VideoBox.cpp:1137)
         QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_FRAME_TO_PNG"))));
         QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()), first);
+        QVERIFY(QFile::exists(second));
         // A later frame is named by its time (frame 24: 1001 ms).
         application->video().showFrameAt(24);
         QTRY_COMPARE(session.lastFrame() ? session.lastFrame()->index : -1, 24);
@@ -7909,6 +7920,69 @@ private slots:
         // Undo brings the Document's TV.709 back: the source's own matrix again.
         application->editor().discard();
         QVERIFY(QMetaObject::invokeMethod(root, "runGlobalHotkey", Q_ARG(QVariant, QStringLiteral("GLOBAL_UNDO"))));
+        QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt709), 10000);
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
+    }
+
+    // An untagged HD video is converted with the matrix it is named by,
+    // BT.709 (approved departure V4-untagged-matrix: legacy left the
+    // converter's BT.601 under the name TV.709 unless the Document said
+    // "TV.709", so choosing TV.709 then changed nothing,
+    // ProviderFFMS2.cpp:396-412 and 955-962).
+    void untaggedHdVideoIsConvertedAsItsMatrix()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/colorhd.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
+        QFile f(folder.filePath(QStringLiteral("clip.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\nYCbCr Matrix: PC.709\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:00.00,0:00:00.10,Default,,0,0,0,,x\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        application->video().openVideo(folder.filePath(QStringLiteral("clip.mkv")));
+        const auto &session = application->video().session();
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastFrame(), 20000);
+        QCOMPARE(session.colourMatrix().source(), std::string("TV.709"));
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
+        // The fixture's top-left patch (Y' 180, Cb 60, Cr 200, limited range).
+        auto pixel = [&] {
+            const auto &fr = *session.lastFrame();
+            const std::byte *p = fr.bgra.data() + std::size_t(fr.height / 4) * fr.stride + std::size_t(fr.width / 4) * 4;
+            return std::array<int, 3>{std::to_integer<int>(p[2]), std::to_integer<int>(p[1]), std::to_integer<int>(p[0])};
+        };
+        auto expected = [](double kr, double kb) {
+            const double y = (180 - 16) / 219.0, pb = (60 - 128) / 224.0, pr = (200 - 128) / 224.0;
+            const double r = y + 2 * (1 - kr) * pr, b = y + 2 * (1 - kb) * pb, g = (y - kr * r - kb * b) / (1 - kr - kb);
+            auto code = [](double v) { return int(std::lround(std::clamp(v, 0.0, 1.0) * 255)); };
+            return std::array<int, 3>{code(r), code(g), code(b)};
+        };
+        auto near = [](const std::array<int, 3> &a, const std::array<int, 3> &b) {
+            for (int k = 0; k < 3; ++k)
+                if (std::abs(a[k] - b[k]) > 3)
+                    return false;
+            return true;
+        };
+        const auto bt709 = expected(0.2126, 0.0722), bt601 = expected(0.299, 0.114);
+        QVERIFY2(near(pixel(), bt709), "the untagged HD frame is converted as BT.709, its name");
+        // Script properties: TV.601 converts it as BT.601, TV.709 back as BT.709.
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        auto choose = [&](int index, const QString &name) {
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
+            matrix->setProperty("currentIndex", index);
+            QCOMPARE(matrix->property("currentText").toString(), name);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        };
+        choose(1, QStringLiteral("TV.601"));
+        QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt601), 10000);
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.601"));
+        choose(3, QStringLiteral("TV.709"));
         QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt709), 10000);
         QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
     }

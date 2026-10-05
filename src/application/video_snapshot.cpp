@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <regex>
+#include <cstdlib>
 
 namespace hikari::application {
 
@@ -34,18 +34,48 @@ SnapshotImage snapshotImage(const IndexedFrame &frame, const OverlayFrame *overl
     return out;
 }
 
-int nextSnapshotNumber(const std::vector<std::string> &paths)
+namespace {
+
+// wxString::BeforeLast: empty when the character is not there.
+std::string_view beforeLast(std::string_view text, char c)
 {
-    // RendererVideo.cpp:1238-1258: the first "_<digits>_" of each path, then
-    // the smallest number from 1 that the sorted list does not hold.
-    static const std::regex findNum("_([0-9]+)_");
+    const auto at = text.rfind(c);
+    return at == std::string_view::npos ? std::string_view() : text.substr(0, at);
+}
+
+// The name after the last separator ('/' or '\\').
+std::string_view fileName(std::string_view path)
+{
+    const auto slash = path.find_last_of("/\\");
+    return slash == std::string_view::npos ? path : path.substr(slash + 1);
+}
+
+// The number a snapshot's file name holds: the digits between "<stem>_" and
+// the next '_', or 0 when the name does not continue the stem that way.
+int snapshotNumberOf(std::string_view name, std::string_view stem)
+{
+    if (name.size() <= stem.size() + 1 || name.substr(0, stem.size()) != stem || name[stem.size()] != '_')
+        return 0;
+    const std::string_view rest = name.substr(stem.size() + 1);
+    const auto end = rest.find_first_not_of("0123456789");
+    if (end == 0 || end == std::string_view::npos || rest[end] != '_')
+        return 0;
+    // wxAtoi: strtol's int, as legacy read it.
+    return static_cast<int>(std::strtol(std::string(rest.substr(0, end)).c_str(), nullptr, 10));
+}
+
+} // namespace
+
+int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string> &paths)
+{
+    // RendererVideo.cpp:1238-1258 took the first "_<digits>_" of each whole
+    // path; V4-snapshot-number reads it from the file name after the video's
+    // name. Then the smallest number from 1 that the sorted list does not hold.
+    const std::string_view stem = beforeLast(fileName(videoPath), '.');
     std::vector<int> nums;
     for (const std::string &file : paths) {
-        std::smatch match;
-        if (std::regex_search(file, match, findNum)) {
-            // wxAtoi: strtol's int, as legacy read it.
-            nums.push_back(static_cast<int>(std::strtol(match[1].str().c_str(), nullptr, 10)));
-        }
+        if (const int n = snapshotNumberOf(fileName(file), stem); n > 0)
+            nums.push_back(n);
     }
     std::sort(nums.begin(), nums.end());
     int num = 1;
@@ -57,17 +87,6 @@ int nextSnapshotNumber(const std::vector<std::string> &paths)
     }
     return num;
 }
-
-namespace {
-
-// wxString::BeforeLast: empty when the character is not there.
-std::string_view beforeLast(std::string_view text, char c)
-{
-    const auto at = text.rfind(c);
-    return at == std::string_view::npos ? std::string_view() : text.substr(0, at);
-}
-
-} // namespace
 
 std::string snapshotPath(std::string_view videoPath, int number, int ms)
 {
@@ -84,9 +103,19 @@ std::string snapshotPattern(std::string_view videoPath)
 {
     // HikariPathName: the name after the last separator (backslashes are
     // separators on Windows; elsewhere HikariNormalizePath makes them '/').
-    const auto slash = videoPath.find_last_of("/\\");
-    const std::string_view name = slash == std::string_view::npos ? videoPath : videoPath.substr(slash + 1);
-    return std::string(beforeLast(name, '.')) + "_*_*.png";
+    return std::string(beforeLast(fileName(videoPath), '.')) + "_*_*.png";
+}
+
+std::string nextSnapshotPath(std::string_view videoPath, const std::vector<std::string> &paths, int ms,
+                             const std::function<bool(const std::string &)> &exists)
+{
+    // V4-snapshot-number: a taken path (a file the listing missed) raises
+    // the number rather than being replaced.
+    for (int number = nextSnapshotNumber(videoPath, paths);; ++number) {
+        std::string path = snapshotPath(videoPath, number, ms);
+        if (!exists || !exists(path))
+            return path;
+    }
 }
 
 } // namespace hikari::application

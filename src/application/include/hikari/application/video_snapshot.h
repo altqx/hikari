@@ -12,6 +12,7 @@
 #include "hikari/application/subtitle_render.h"
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -32,12 +33,21 @@ struct SnapshotImage {
 // SaveFrame then copied B, G, R of each pixel (RendererVideo.cpp:1218-1223).
 SnapshotImage snapshotImage(const IndexedFrame &frame, const OverlayFrame *overlay);
 
-// The number SaveFrame gives the next PNG: every file of the video's folder
-// matching "<name without extension>_*_*.png" (wxDir::GetAllFiles, files
-// only) is searched, as its whole path, for the first "_<digits>_"
-// (wxRegEx "_([0-9]+)_"); the smallest number from 1 not among them.
-// `paths` are those files' full paths as legacy listed them.
-int nextSnapshotNumber(const std::vector<std::string> &paths);
+// The number SaveFrame gives the next PNG: of the files of the video's
+// folder matching "<name without extension>_*_*.png" (`paths`, full paths
+// as listed), each whose name continues the video's name with
+// "_<digits>_" holds that number; the smallest number from 1 not held.
+// Legacy searched each whole path for the first "_<digits>_" (wxRegEx
+// "_([0-9]+)_", RendererVideo.cpp:1238-1249), so a folder or video name
+// holding one numbered every file alike and a save overwrote an earlier
+// one; approved departure V4-snapshot-number reads the file name only.
+int nextSnapshotNumber(std::string_view videoPath, const std::vector<std::string> &paths);
+
+// The PNG SaveFrame writes: snapshotPath with nextSnapshotNumber, the
+// number raised while `exists` reports that path taken, so a save never
+// replaces a file (V4-snapshot-number).
+std::string nextSnapshotPath(std::string_view videoPath, const std::vector<std::string> &paths, int ms,
+                             const std::function<bool(const std::string &)> &exists);
 
 // The PNG's path: the video's path up to its last '.', then
 // "_<number>_<time>.png", the time the frame's start as SubsTime::raw(SRT)

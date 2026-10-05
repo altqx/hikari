@@ -48,12 +48,18 @@ std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace
     // ProviderFFMS2.cpp:368-369 and 393-414.
     m_colorSpace = colorSpace;
     m_colorRange = colorRange;
-    if (m_colorSpace == kUnspecified)
+    const bool untagged = m_colorSpace == kUnspecified;
+    if (untagged)
         m_colorSpace = width > 1024 || height >= 600 ? kBt709 : kBt470bg;
     m_applied = m_source = colourMatrixName(m_colorSpace, m_colorRange);
     std::optional<Input> input;
-    if (m_colorSpace == kBt709 && matrix == "TV.709")
-        input = Input{kBt709, m_colorRange};
+    // Approved departure V4-untagged-matrix: an untagged source is always
+    // converted as its guess, the matrix it is named by. Legacy set it only
+    // for a BT.709 guess with "TV.709" (ProviderFFMS2.cpp:396-412) and
+    // otherwise left the converter's default BT.601 under the name TV.709, so
+    // a later "TV.709" changed nothing (ProviderFFMS2.cpp:955-962).
+    if (untagged || (m_colorSpace == kBt709 && matrix == "TV.709"))
+        input = Input{m_colorSpace, m_colorRange};
     if (matrix == "TV.601") {
         m_applied = colourMatrixName(kBt470bg, m_colorRange);
         input = Input{kBt470bg, m_colorRange};

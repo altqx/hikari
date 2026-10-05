@@ -7,11 +7,13 @@
 //
 //   - opening (ProviderFFMS2::Init, ProviderFFMS2.cpp:368-414): the frame's
 //     matrix and range; an unspecified matrix is taken as BT.709 for a frame
-//     wider than 1024 or at least 600 high, else BT.601 (BT470BG). With the
-//     Document's "TV.709" a BT.709 source is set to BT.709 (an untagged one
-//     is otherwise converted with the converter's default); with "TV.601"
-//     every source is converted as BT.601; anything else leaves the source's
-//     own tags;
+//     wider than 1024 or at least 600 high, else BT.601 (BT470BG). An
+//     untagged source is converted as that guess (approved departure
+//     V4-untagged-matrix; legacy set it only with "TV.709" and otherwise
+//     converted an untagged HD source as the converter's default BT.601
+//     while naming it TV.709). With the Document's "TV.709" a BT.709 source
+//     is set to BT.709; with "TV.601" every source is converted as BT.601;
+//     anything else leaves the source's own tags;
 //   - a changed matrix (ProviderFFMS2::SetColorSpace, ProviderFFMS2.cpp:950-982):
 //     nothing when it names what is applied; the source's own matrix (the
 //     guess above for an untagged one) for the source's own name or any name
