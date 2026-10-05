@@ -4,6 +4,7 @@
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
 #include "hikari/application/grid_clipboard.h"
+#include "hikari/application/video_matrix.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
 #include "hikari/application/grid_groups.h"
@@ -64,6 +65,20 @@
 #endif
 
 namespace hikari::app {
+
+namespace {
+
+// V4: the matrix legacy's video saw for the Document (documentVideoMatrix).
+std::string videoMatrix(const core::Document &document)
+{
+    const auto value = document.scriptInfo(u8"YCbCr Matrix");
+    std::optional<std::string_view> text;
+    if (value)
+        text = std::string_view(reinterpret_cast<const char *>(value->data()), value->size());
+    return application::documentVideoMatrix(document.format() == core::SubtitleFormat::Ass, text);
+}
+
+} // namespace
 
 namespace {
 
@@ -509,6 +524,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
+    // V4: zoom, aspect, volume, the context menu and the snapshots; the
+    // general player takes the video volume.
+    m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
+    m_videoView->setPlayer(m_generalPlayer.get());
+    // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
+    m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1243,6 +1264,8 @@ void Application::refreshVideo()
         m_videoRevision = session->revision();
         m_video->session().setSubtitles(core::encodeAss(session->document()));
     }
+    // V4: the Script properties YCbCr matrix on the video's colours.
+    m_video->session().setMatrix(videoMatrix(session->document()));
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
@@ -4060,6 +4083,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
+            {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},

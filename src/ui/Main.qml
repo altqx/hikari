@@ -39,6 +39,7 @@ ApplicationWindow {
     required property var fontCollector // Y8: FontCollectorController
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
+    required property VideoViewController videoView // V4: zoom, aspect, volume, snapshots
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -946,6 +947,25 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
             }
+            // V4: GLOBAL_VIDEO_ZOOM and GLOBAL_RESET_VIDEO_ZOOM (legacy
+            // OnMenuOpened: a loaded video; the reset also a zoom != 1).
+            ShellMenuItem {
+                iconRole: "zoom"
+                objectName: "videoZoomMenuItem"
+                action: Action {
+                    id: videoZoomAction
+                    text: qsTr("Zoom video"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM")) root.videoView.toggleZoom()
+                }
+            }
+            ShellMenuItem {
+                objectName: "resetVideoZoomMenuItem"
+                action: Action {
+                    id: resetVideoZoomAction
+                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
+                }
+            }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
         // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO).
@@ -1568,6 +1588,11 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (event.key === Qt.Key_Menu) { // V4: WXK_WINDOWS_MENU, the menu at the pointer
+                        videoContextMenu.openAt(root.videoView.cursorIn(visualOverlay))
+                        event.accepted = true
+                    } else if (root.videoView.key(event.key, event.modifiers)) { // V4: Return in the zoom mode, Ctrl+Shift+Z
+                        event.accepted = true
                     } else if (root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)) {
                         event.accepted = true
                     }
@@ -1624,6 +1649,24 @@ ApplicationWindow {
                     tools: root.visualTools
                     focusTarget: videoPanel
                     panelHeight: videoControls.height
+                    view: root.videoView // V4
+                    onContextMenuRequested: (x, y) => videoContextMenu.openAt(Qt.point(x, y))
+                }
+                // V4: the zoom mode's frame, the context menu and the aspect ratio.
+                VideoZoomFrame {
+                    anchors.fill: presenter
+                    view: root.videoView
+                }
+                VideoContextMenu {
+                    id: videoContextMenu
+                    shell: root
+                    function openAt(point) {
+                        at = point
+                        popup(visualOverlay, point)
+                    }
+                    onOpenVideoRequested: videoDialog.open()
+                    onOpenSubtitlesRequested: openDialog.open()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
                 }
                 Label {
                     anchors.centerIn: presenter
@@ -1635,6 +1678,11 @@ ApplicationWindow {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
+                    // V4: the wheel over the panel is the volume's (VideoBox.cpp:519-534).
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120))
+                    }
                 VisualToolValues {
                     Layout.fillWidth: true
                     tools: root.visualTools
@@ -1720,6 +1768,10 @@ ApplicationWindow {
                         text: qsTr("Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
+                    }
+                    VideoVolumeSlider { // V4: legacy VolSlider at the right
+                        view: root.videoView
+                        hasVideo: root.video.hasVideo
                     }
                 }
                 }
@@ -3386,6 +3438,12 @@ ApplicationWindow {
         onAccepted: root.video.openVideoUrl(selectedFile)
     }
 
+    // V4: VIDEO_ASPECT_RATIO.
+    AspectRatioDialog {
+        id: aspectRatioDialog
+        view: root.videoView
+    }
+
     FileDialog {
         id: openDialog
         nameFilters: [qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"), qsTr("All files (*)")]
@@ -4693,6 +4751,7 @@ ApplicationWindow {
             GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
             GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
             GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
+            GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
             GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
             GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
             GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
@@ -4825,6 +4884,17 @@ ApplicationWindow {
         case "VIDEO_STOP": root.video.stop(); return true
         // T1: the pointer's position in the video window (VideoBox.cpp:1151).
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
+        // V4 (VideoBox.cpp:1147-1173).
+        case "VIDEO_VOLUME_PLUS": root.videoView.stepVolume(true); return true
+        case "VIDEO_VOLUME_MINUS": root.videoView.stepVolume(false); return true
+        case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_SAVE_FRAME_TO_PNG":
+        case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
+        case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
+        case "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD":
+            root.videoView.snapshot(action)
+            return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)

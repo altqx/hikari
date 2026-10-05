@@ -44,3 +44,7 @@ file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEP
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
+# V4: the video view's zoom, aspect, volume, context menu and snapshots.
+target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
+qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
+    VideoVolumeSlider.qml)

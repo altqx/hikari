@@ -41,6 +41,7 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <functional>
 #include <vector>
@@ -7488,6 +7489,398 @@ private slots:
         QVERIFY(!application->editor().editable());
         QVERIFY(item<QObject>("lineText")->property("readOnly").toBool());
     }
+    // V4 (#183): the Video panel's zoom, aspect ratio, volume, context menu
+    // and snapshots, against legacy VideoBox / RendererVideo at 20d647c4.
+    // The video is a copy of the cfr fixture in a folder of its own (the
+    // snapshots are written beside it); the Document matches its 320x240
+    // and draws a shape from 0 s to 5 s, so the overlay needs no font.
+    QString v4Folder(QTemporaryDir &folder)
+    {
+        const QString video = folder.filePath(QStringLiteral("clip.mkv"));
+        if (!QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), video))
+            return {};
+        QFile f(folder.filePath(QStringLiteral("clip.ass")));
+        if (!f.open(QIODevice::WriteOnly))
+            return {};
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                "MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H4030A0E0,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,7,0,0,0,1\n"
+                "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:00.00,0:00:05.00,Default,,0,0,0,,{\\pos(10,10)\\p1}m 0 0 l 120 0 100 80 0 90{\\p0}\n");
+        return f.fileName();
+    }
+    bool v4Open(QTemporaryDir &folder)
+    {
+        const QString subtitles = v4Folder(folder);
+        if (subtitles.isEmpty() || !application->openFile(subtitles))
+            return false;
+        application->video().openVideo(folder.filePath(QStringLiteral("clip.mkv")));
+        return QTest::qWaitFor([&] {
+            const auto &s = application->video().session();
+            return item("videoPresenter")->property("presentedGeneration").toULongLong() > 0 && s.lastFrame()
+                   && s.lastOverlay() && !s.lastOverlay()->empty;
+        }, 20000);
+    }
+    void wheelAt(QPoint at, int notches, Qt::KeyboardModifiers mods = Qt::NoModifier)
+    {
+        QWheelEvent wheel(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120 * notches), Qt::NoButton, mods,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &wheel);
+        QCoreApplication::processEvents();
+    }
+    // The CPU-BGRA/libass reference (tests/ui/presenter_tests.cpp): the
+    // frame, then the premultiplied overlay source-over, as RGB.
+    static QImage cpuReference(const application::IndexedFrame &f, const application::OverlayFrame *o)
+    {
+        QImage out(f.width, f.height, QImage::Format_RGB888);
+        for (int y = 0; y < f.height; ++y)
+            for (int x = 0; x < f.width; ++x) {
+                const std::byte *p = f.bgra.data() + static_cast<std::size_t>(y) * f.stride + x * 4;
+                int b = std::to_integer<int>(p[0]), g = std::to_integer<int>(p[1]), r = std::to_integer<int>(p[2]);
+                if (o && !o->empty) {
+                    const std::uint8_t *q = &o->pixels[static_cast<std::size_t>(y) * o->stride + x * 4];
+                    const int inv = 255 - q[3];
+                    b = q[0] + (b * inv + 127) / 255;
+                    g = q[1] + (g * inv + 127) / 255;
+                    r = q[2] + (r * inv + 127) / 255;
+                }
+                out.setPixel(x, y, qRgb(r, g, b));
+            }
+        return out;
+    }
+    static bool sameImage(const QImage &a, const QImage &b)
+    {
+        return a.size() == b.size()
+               && a.convertToFormat(QImage::Format_RGB888) == b.convertToFormat(QImage::Format_RGB888);
+    }
+    void triggerAction(const char *menuItem)
+    {
+        auto *action = named(menuItem)->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QCoreApplication::processEvents();
+    }
+
+private slots:
+
+    // GLOBAL_VIDEO_ZOOM / GLOBAL_RESET_VIDEO_ZOOM on the Video menu, Return
+    // and Ctrl+Shift+Z in the Video panel, the wheel over the video, the
+    // zoom mode's frame; VIDEO_ASPECT_RATIO's dialog; the volume keys,
+    // slider and wheel.
+    void videoViewZoomAspectAndVolume()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &view = application->videoView();
+        auto &tools = application->visualTools();
+        auto *presenter = item("videoPresenter");
+        // The Video menu's items (HikariSubFrame.cpp:283-284), K1's zoom icon.
+        auto *zoomItem = qobject_cast<QQuickItem *>(named("videoZoomMenuItem"));
+        QVERIFY(zoomItem);
+        QCOMPARE(zoomItem->property("iconRole").toString(), QStringLiteral("zoom"));
+        QCOMPARE(zoomItem->property("text").toString(), QStringLiteral("Zoom video"));
+        QVERIFY(zoomItem->isEnabled());
+        QVERIFY(!named("resetVideoZoomMenuItem")->property("enabled").toBool()); // no zoom yet
+        // GLOBAL_VIDEO_ZOOM: the zoom mode at VIDEO_ZOOM_PERCENT (unset: 2x)
+        // around the centre; the presenter shows that part of the frame and
+        // the frame's outline is drawn.
+        triggerAction("videoZoomMenuItem");
+        QVERIFY(view.zoomMode());
+        QCOMPARE(view.zoomPercent(), 200);
+        // Half the frame around its centre, in legacy's integer source
+        // rectangle (sourceFromZoomRect rounds the window's float zoom
+        // rectangle, so the panel's size can move it a pixel; the exact
+        // arithmetic is video_view_tests' against the legacy captures).
+        const QRectF zoomedSource = tools.sourceRect();
+        QVERIFY2(std::abs(zoomedSource.width() - 160) <= 1 && std::abs(zoomedSource.height() - 120) <= 1,
+                 qPrintable(QDebug::toString(zoomedSource)));
+        QVERIFY(std::abs(zoomedSource.center().x() - 160) <= 1 && std::abs(zoomedSource.center().y() - 120) <= 1);
+        QCOMPARE(presenter->property("sourceRect").toRectF(), zoomedSource);
+        QTRY_VERIFY(item("videoZoomFrame")->isVisible());
+        const QRectF video = tools.videoRect();
+        const QRectF frame = view.zoomFrame();
+        QCOMPARE(frame.center().x(), video.center().x() - 0.5); // to width - 1
+        // The tools are not drawn meanwhile, and the pointer is shown.
+        QTest::mouseMove(window, videoPoint(video.center()));
+        QTRY_VERIFY(tools.overlay().isEmpty());
+        QVERIFY(!tools.hideCursor());
+        // The zoom mode's drag pans (ZoomMouseHandle): left 20 pixels.
+        const QPoint c = videoPoint(video.center());
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, c);
+        QTest::mouseMove(window, c - QPoint(20, 0));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, c - QPoint(20, 0));
+        QTRY_VERIFY(tools.sourceRect().x() < 80);
+        // Return in the zoom mode leaves it, keeping the zoom.
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_Return);
+        QVERIFY(!view.zoomMode());
+        QVERIFY(view.zoomed());
+        QTRY_VERIFY(!item("videoZoomFrame")->isVisible());
+        QVERIFY(named("resetVideoZoomMenuItem")->property("enabled").toBool());
+        // GLOBAL_RESET_VIDEO_ZOOM: the whole frame.
+        triggerAction("resetVideoZoomMenuItem");
+        QVERIFY(!view.zoomed());
+        // The whole frame, in legacy's floats (RendererVideo.cpp:771-778):
+        // the bottom is the video height / (height / 240), truncated, which
+        // can be 239 for some panel heights.
+        {
+            const auto vr = tools.videoView().videoRect();
+            const float yy = static_cast<float>(vr.height()) / 240.f, xx = static_cast<float>(vr.width()) / 320.f;
+            const QRectF whole(0, 0, static_cast<int>(static_cast<float>(vr.width()) / xx),
+                               static_cast<int>(static_cast<float>(vr.height()) / yy));
+            QCOMPARE(tools.sourceRect(), whole);
+            QVERIFY(whole.width() >= 319 && whole.height() >= 239);
+        }
+        // The wheel over the video with the crosshair: a tenth a step, at the pointer.
+        wheelAt(c, 5);
+        QCOMPARE(view.zoomPercent(), 150);
+        QVERIFY(!view.zoomMode());
+        wheelAt(c, -10); // never below 1
+        QCOMPARE(view.zoomPercent(), 100);
+        wheelAt(c, 3);
+        QCOMPARE(view.zoomPercent(), 130);
+        // Ctrl+wheel (legacy's window height) zooms nothing.
+        wheelAt(c, 3, Qt::ControlModifier);
+        QCOMPARE(view.zoomPercent(), 130);
+        // Ctrl+Shift+Z in the Video panel resets it.
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
+        QCOMPARE(view.zoomPercent(), 100);
+
+        // VIDEO_ASPECT_RATIO (no default key): the dialog at the pointer,
+        // "Aspect ratio: 1.333" for 320x240; a slider at 350000 is 0.5.
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        auto *dialog = named("aspectRatioDialog");
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *label = named("aspectRatioLabel");
+        QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 1.333"));
+        auto *slider = named("aspectRatioSlider");
+        QCOMPARE(slider->property("value").toInt(), 525000); // 0.75 * 700000
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        const auto r = tools.videoView().videoRect();
+        QCOMPARE(r.height() * 2, r.width()); // letterboxed at 2:1
+        QCOMPARE(presenter->property("videoRect").toRectF(), tools.videoRect());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f); // until the next video opens
+
+        // The volume (VIDEO_VOLUME): Num . / Num 0 step 2 below 1 and above -91.
+        auto &player = application->generalPlayer();
+        auto *volume = item("videoVolume");
+        QVERIFY(volume && volume->isEnabled());
+        QCOMPARE(view.volume(), 0);
+        QCOMPARE(player.volume(), 1.0);
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_Period, Qt::KeypadModifier);
+        QCOMPARE(view.volume(), 0); // 2 is not below 1
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QTest::qWait(60); // the same action within 50 ms is dropped (VideoBox.cpp:1137)
+        press(Qt::Key_0, Qt::KeypadModifier);
+        QCOMPARE(view.volume(), -4);
+        QCOMPARE(volume->property("value").toInt(), -4);
+        QCOMPARE(application->settingsStore()->integer("video.volume"), -4);
+        QCOMPARE(player.volume(), std::pow(10.0, -16.0 / 100.0 / 20.0));
+        // The wheel over the panel: three a step.
+        auto *times = item("videoTimes");
+        wheelAt(times->mapToScene(QPointF(times->width() / 2, times->height() / 2)).toPoint(), -2);
+        QCOMPARE(view.volume(), -10);
+        // The slider.
+        volume->setProperty("value", -40);
+        QVERIFY(QMetaObject::invokeMethod(volume, "moved"));
+        QCOMPARE(view.volume(), -40);
+        QCOMPARE(player.volume(), std::pow(10.0, -1600.0 / 100.0 / 20.0));
+        // VIDEO_HIDE_PROGRESS_BAR switches VIDEO_PROGRESS_BAR (drawn in fullscreen, V5).
+        QVERIFY(application->settingsStore()->boolean("video.progressBar"));
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_HIDE_PROGRESS_BAR"))));
+        QVERIFY(!application->settingsStore()->boolean("video.progressBar"));
+    }
+
+    // The video's context menu (VideoBox::ContextMenu) on a right click and
+    // the menu key; its snapshots against the CPU-BGRA/libass reference at
+    // the paused frame, the PNGs beside the video and the clipboard read
+    // back; Shift+click maps a Video window hotkey (O2 left this gesture);
+    // VIDEO_PAUSE_ON_CLICK.
+    void videoContextMenuAndSnapshots()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto &tools = application->visualTools();
+        const QPoint c = videoPoint(tools.videoRect().center());
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, c);
+        auto *menu = named("videoContextMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto enabled = [&](const char *name) { return named(name)->property("enabled").toBool(); };
+        QCOMPARE(named("videoMenuPlayPause")->property("text").toString(), QStringLiteral("Play\tSpace"));
+        QVERIFY(enabled("videoMenuPlayPause"));
+        QVERIFY(!enabled("videoMenuStop")); // not playing
+        QVERIFY(!enabled("videoMenuProgressBar")); // fullscreen only
+        QVERIFY(enabled("videoMenuAspectRatio"));
+        for (const char *name : {"videoMenuSaveSubbedFrame", "videoMenuCopySubbedFrame", "videoMenuSaveFrame", "videoMenuCopyFrame"})
+            QVERIFY2(enabled(name), name);
+
+        // The snapshots: the paused frame as RGB; with subtitles, the
+        // overlay composited as the CPU reference does.
+        const auto &session = application->video().session();
+        const auto shownFrame = session.lastFrame();
+        const auto overlay = session.lastOverlay();
+        QCOMPARE(shownFrame->index, 0);
+        const QImage plain = cpuReference(*shownFrame, nullptr);
+        const QImage subbed = cpuReference(*shownFrame, overlay.get());
+        QVERIFY(plain != subbed);
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(named("videoMenuCopySubbedFrame"), "triggered"));
+        QTRY_VERIFY(!QGuiApplication::clipboard()->image().isNull());
+        QVERIFY(sameImage(QGuiApplication::clipboard()->image(), subbed));
+        QVERIFY(QMetaObject::invokeMethod(named("videoMenuCopyFrame"), "triggered"));
+        QTRY_VERIFY(sameImage(QGuiApplication::clipboard()->image(), plain));
+        // Saved beside the video as <name>_<n>_<time>.png, numbered from 1.
+        QVERIFY(QMetaObject::invokeMethod(named("videoMenuSaveSubbedFrame"), "triggered"));
+        const QString first = folder.filePath(QStringLiteral("clip_1_00;00;00,000.png"));
+        QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()), first);
+        QVERIFY(sameImage(QImage(first), subbed));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_FRAME_TO_PNG"))));
+        const QString second = folder.filePath(QStringLiteral("clip_2_00;00;00,000.png"));
+        QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()), second);
+        QVERIFY(sameImage(QImage(second), plain));
+        // A gap is filled first (the lowest number not taken).
+        QVERIFY(QFile::remove(first));
+        QTest::qWait(60); // VideoBox::OnAccelerator drops the same action within 50 ms (VideoBox.cpp:1137)
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_FRAME_TO_PNG"))));
+        QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()), first);
+        // A later frame is named by its time (frame 24: 1001 ms).
+        application->video().showFrameAt(24);
+        QTRY_COMPARE(session.lastFrame() ? session.lastFrame()->index : -1, 24);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD"))));
+        QTRY_VERIFY(sameImage(QGuiApplication::clipboard()->image(),
+                              cpuReference(*session.lastFrame(), session.lastOverlay().get())));
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_SAVE_SUBBED_FRAME_TO_PNG"))));
+        QCOMPARE(QDir::fromNativeSeparators(application->videoView().lastSnapshot()),
+                 folder.filePath(QStringLiteral("clip_3_00;00;01,001.png")));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        // Shift+click maps the item's Video window hotkey, with the window
+        // choice, instead of running it; the shortcut editor lists it.
+        auto &h = application->hotkeys();
+        auto *mapping = mappingWindow("hotkeyMapping");
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, c);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *aspectItem = qobject_cast<QQuickItem *>(named("videoMenuAspectRatio"));
+        QTRY_VERIFY(aspectItem->isVisible() && aspectItem->width() > 0);
+        clickWith(aspectItem, Qt::ShiftModifier);
+        QTRY_VERIFY(mapping->isVisible());
+        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
+                 QStringLiteral("Please enter a hotkey for \"Change aspect ratio\"."));
+        QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
+        QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
+        QVERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(!mapping->isVisible());
+        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_ASPECT_RATIO"), 3), QStringLiteral("Alt-Ctrl-J"));
+        QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("VIDEO_ASPECT_RATIO V=Alt-Ctrl-J")));
+        h.beginOptions();
+        QCOMPARE(hotkeyRow(QStringLiteral("Video Change aspect ratio")).value(QStringLiteral("accel")).toString(),
+                 QStringLiteral("Alt-Ctrl-J"));
+        // The new binding opens the dialog from the Video panel.
+        QTRY_VERIFY(window->isActive());
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY(named("aspectRatioDialog")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("aspectRatioDialog"), "close"));
+        QTRY_VERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        // The menu key opens the menu at the pointer.
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_Menu);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        // VIDEO_PAUSE_ON_CLICK: a left click plays or pauses (not with Ctrl).
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, c);
+        QVERIFY(!application->video().playing());
+        application->settingsStore()->set("video.pauseOnClick", true);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, c);
+        QTRY_VERIFY(application->video().playing());
+        QVERIFY(!application->videoView().canSnapshot()); // legacy: only while paused
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, c);
+        QTRY_VERIFY(!application->video().playing());
+    }
+
+    // The Script properties YCbCr matrix reaches the video's colours: the
+    // shown frame is decoded again with it (legacy ProviderFFMS2::SetColorSpace
+    // and Render while paused).
+    void scriptPropertiesMatrixRecoloursTheVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(folder.isValid());
+        QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/color709.mkv"), folder.filePath(QStringLiteral("clip.mkv")));
+        QFile f(folder.filePath(QStringLiteral("clip.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\nYCbCr Matrix: TV.709\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:00.00,0:00:00.10,Default,,0,0,0,,x\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        application->video().openVideo(folder.filePath(QStringLiteral("clip.mkv")));
+        const auto &session = application->video().session();
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastFrame(), 20000);
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
+        // The top-left patch (Y' 180, Cb 60, Cr 200, limited range) as
+        // R, G, B; its red saturates under both matrices, so all three
+        // channels are compared with each matrix's equations.
+        auto pixel = [&] {
+            const auto &fr = *session.lastFrame();
+            const std::byte *p = fr.bgra.data() + std::size_t(fr.height / 4) * fr.stride + std::size_t(fr.width / 4) * 4;
+            return std::array<int, 3>{std::to_integer<int>(p[2]), std::to_integer<int>(p[1]), std::to_integer<int>(p[0])};
+        };
+        auto expected = [](double kr, double kb) {
+            const double y = (180 - 16) / 219.0, pb = (60 - 128) / 224.0, pr = (200 - 128) / 224.0;
+            const double r = y + 2 * (1 - kr) * pr, b = y + 2 * (1 - kb) * pb, g = (y - kr * r - kb * b) / (1 - kr - kb);
+            auto code = [](double v) { return int(std::lround(std::clamp(v, 0.0, 1.0) * 255)); };
+            return std::array<int, 3>{code(r), code(g), code(b)};
+        };
+        auto near = [](const std::array<int, 3> &a, const std::array<int, 3> &b) {
+            for (int k = 0; k < 3; ++k)
+                if (std::abs(a[k] - b[k]) > 3)
+                    return false;
+            return true;
+        };
+        const auto bt709 = expected(0.2126, 0.0722), bt601 = expected(0.299, 0.114); // 255,167,47 and 255,159,54
+        QVERIFY(!near(bt709, bt601));
+        QVERIFY(near(pixel(), bt709));
+        // Script properties (Y3): the matrix changed to TV.601 (index 1).
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
+        QCOMPARE(matrix->property("currentText").toString(), QStringLiteral("TV.709"));
+        matrix->setProperty("currentIndex", 1);
+        QCOMPARE(matrix->property("currentText").toString(), QStringLiteral("TV.601"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt601), 10000);
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.601"));
+        auto *edited = application->files().session(*application->workspace().editingTarget());
+        QCOMPARE(edited->document().scriptInfo(u8"YCbCr Matrix"), std::optional<std::u8string>(u8"TV.601"));
+        // Undo brings the Document's TV.709 back: the source's own matrix again.
+        application->editor().discard();
+        QVERIFY(QMetaObject::invokeMethod(root, "runGlobalHotkey", Q_ARG(QVariant, QStringLiteral("GLOBAL_UNDO"))));
+        QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt709), 10000);
+        QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
+    }
+
 };
 
 QTEST_MAIN(ShellTest)

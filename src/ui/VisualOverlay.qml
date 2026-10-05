@@ -17,6 +17,18 @@ Item {
     property Item focusTarget: null
     // The height of the panel below the canvas (legacy m_PanelHeight).
     property real panelHeight: 0
+    // V4: the view's commands take the pointer first (VideoBox::OnMouseEvent's
+    // order: the zoom mode, the wheel's zoom, then the tool, the context
+    // menu and VIDEO_PAUSE_ON_CLICK); without one the tool has it alone.
+    property VideoViewController view: null
+    signal contextMenuRequested(real x, real y)
+
+    function route(kind, x, y, button, buttons, modifiers, steps) {
+        if (!view)
+            return tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
+        if (view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0))
+            contextMenuRequested(x, y)
+    }
 
     function sync() {
         const dpr = overlayItem.Window.window ? overlayItem.Window.window.devicePixelRatio : Screen.devicePixelRatio
@@ -33,20 +45,22 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-        cursorShape: overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
-        onEntered: overlayItem.tools.pointer(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onExited: overlayItem.tools.pointer(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onPositionChanged: mouse => overlayItem.tools.pointer(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        cursorShape: overlayItem.view && overlayItem.view.zoomMode
+                     ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
+                     : overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
+        onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
+        onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
+        onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus() // legacy SetFocus on the video
-            overlayItem.tools.pointer(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+            overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
-        onReleased: mouse => overlayItem.tools.pointer(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        onReleased: mouse => overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
-            overlayItem.tools.pointer(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
-                                      Math.round(wheel.angleDelta.y / 120))
-            wheel.accepted = false // the zoom and volume wheel stay the panel's (V4)
+            overlayItem.route(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
+                              Math.round(wheel.angleDelta.y / 120))
+            wheel.accepted = overlayItem.view !== null // V4: the view takes the wheel over the video
         }
     }
 
