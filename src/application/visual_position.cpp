@@ -220,11 +220,16 @@ void PositionTool::setCurVisual(VisualHost &host, bool fromGesture)
             sortPoints();
             setPosition(host);
             // ChangeMultiline(true, true): SetModified's dummy commit, after
-            // which legacy did not set the tool again (no ShowEditOnVideo).
+            // which legacy did not set the tool again (no ShowEditOnVideo),
+            // so its next drag replaced the old tag's span in the new text
+            // (`pos-rect-other-line`). T2-rect-reread: the Lines are read
+            // back here; the alignment now matches, so this does not repeat.
             if (!host.gesture()) {
                 m_dummyCommit = true;
-                (void)commitAll(host);
+                const bool committed = commitAll(host);
                 m_dummyCommit = false;
+                if (committed)
+                    setCurVisual(host, false);
                 if (host.session()) {
                     m_skipReset = true;
                     m_committedRevision = host.session()->revision();

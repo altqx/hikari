@@ -558,9 +558,9 @@ LinePosition linePosition(const ScriptState &state, const core::LineRecord &line
         const u16 rest1 = c2 == u16::npos ? u16() : rest.substr(c2 + 1);
         const bool res2 = toCDouble(u16v(rest).substr(0, c2), posy);
         if (withMove && group(pos, txt, 1) == u"move" && !rest1.empty()) {
-            // A \move with too few values leaves the end point's other
+            // A \move with too few values left the end point's other
             // coordinate as legacy's uninitialised moveTable had it; it is
-            // 0 here (a proposed departure in the T2 report).
+            // 0 here (approved departure T2-move-short).
             MoveTable move;
             int ipos = 0;
             for (const u16 &token : tokenize(rest1, u',', false)) {

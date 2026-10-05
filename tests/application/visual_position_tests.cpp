@@ -480,6 +480,36 @@ void setUpView(TestHost &host, const ProbeCase &c)
     }
 }
 
+// Approved departures (docs/qt/compatibility-decisions.md) where a dump's
+// legacy value is kept as the old evidence and the rewrite expects another.
+struct Departure {
+    std::string caseName;
+    int dump = 0;
+    int row = -1;           // a Line's text, or -1
+    std::u16string text;    // its expected text
+    int dataTextLength = -1; // data 0's tag length, or -1
+};
+
+const std::vector<Departure> &departures()
+{
+    // T2-rect-reread: the re-placed Line is read back, so dump 1 holds the
+    // written tag's length and dump 2's drag replaces the whole tag (legacy:
+    // 13, the old \pos(400,500), and "{\an7\pos(-16,10.5)5)}other").
+    static const std::vector<Departure> list{
+        {"pos-rect-other-line", 1, -1, {}, 15},
+        {"pos-rect-other-line", 2, 1, u"{\\an7\\pos(-16,10.5)}other", -1},
+    };
+    return list;
+}
+
+const Departure *departureFor(const std::string &caseName, int dump)
+{
+    for (const auto &d : departures())
+        if (d.caseName == caseName && d.dump == dump)
+            return &d;
+    return nullptr;
+}
+
 } // namespace
 
 TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
@@ -575,12 +605,19 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                 ASSERT_LT(next, observations.size());
                 const QJsonObject &o = observations[next++];
                 ASSERT_EQ(o[QStringLiteral("case")].toString().toStdString(), c.name);
+                const Departure *departure = departureFor(c.name, o[QStringLiteral("dump")].toInt());
                 ASSERT_EQ(o[QStringLiteral("dump")].toInt(), dump++);
                 // The Lines.
                 const QJsonArray lines = o[QStringLiteral("lines")].toArray();
                 for (std::size_t i = 0; i < rows.size(); i++) {
                     const auto *l = lineOf(*host.s, rows[i]);
-                    EXPECT_EQ(core::toUtf16(l->text), u16(lines[static_cast<int>(i)].toArray()[0])) << "row " << i;
+                    const std::u16string legacyText = u16(lines[static_cast<int>(i)].toArray()[0]);
+                    if (departure && departure->row == static_cast<int>(i)) {
+                        EXPECT_NE(legacyText, departure->text) << "the old evidence";
+                        EXPECT_EQ(core::toUtf16(l->text), departure->text) << "row " << i;
+                    } else {
+                        EXPECT_EQ(core::toUtf16(l->text), legacyText) << "row " << i;
+                    }
                     EXPECT_EQ(core::toUtf16(l->translation), u16(lines[static_cast<int>(i)].toArray()[1])) << "row " << i;
                 }
                 // One history step where legacy recorded one.
@@ -609,7 +646,12 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
                         EXPECT_EQ(d.lastpos, pair(l[QStringLiteral("lastpos")]));
                         const QJsonArray tp = l[QStringLiteral("textPos")].toArray();
                         EXPECT_EQ(static_cast<int>(d.textStart), tp[0].toInt());
-                        EXPECT_EQ(static_cast<int>(d.textLength), tp[1].toInt());
+                        if (departure && departure->dataTextLength >= 0 && i == 0) {
+                            EXPECT_NE(tp[1].toInt(), departure->dataTextLength) << "the old evidence";
+                            EXPECT_EQ(static_cast<int>(d.textLength), departure->dataTextLength);
+                        } else {
+                            EXPECT_EQ(static_cast<int>(d.textLength), tp[1].toInt());
+                        }
                         EXPECT_EQ(d.putInBracket, l[QStringLiteral("bracket")].toBool());
                         EXPECT_EQ(d.move.has_value(), l.contains(QStringLiteral("move")));
                         if (d.move && l.contains(QStringLiteral("move"))) {
@@ -881,6 +923,71 @@ TEST(VisualPositionOptions, RectangleGreysXAndYAndOneStaysOn)
     MoveTool move;
     ASSERT_EQ(move.options(host).size(), 1u);
     EXPECT_EQ(move.options(host)[0].iconRole, "two-points");
+}
+
+TEST(VisualPositionOptions, AnotherActiveLineUnderTheRectangleIsReadBack)
+{
+    // T2-rect-reread (the capture's `pos-rect-other-line`): with the
+    // rectangle shown, making another Line active re-places it with a
+    // commit; legacy did not set the tool again, so the next drag replaced
+    // the old \pos's length in the new text ("{\an7\pos(-16,10.5)5)}other").
+    // The Lines are read back after that commit.
+    std::string script(kScript);
+    script.replace(script.find("{\\pos(300,300)}x"), 16, "{\\pos(100,100)}Hello");
+    script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\an7\\pos(400,500)}other");
+    TestHost host;
+    standard(host);
+    host.s = std::make_unique<EditSession>(load(script));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[0], {rows[0]}, rows[0], std::nullopt});
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.applyToolValue(1 | 32 | 64 | 128 | 4, host); // by rectangle, X and Y, Center
+    tool.reset(host);
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 300, 200, Pointer::Button::None, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 300, 200, Pointer::Button::Left), host);
+    ASSERT_TRUE(tool.rectangleVisible());
+    // Another Line: re-placed in the rectangle, then read back.
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    tool.reset(host);
+    ASSERT_EQ(text(host, 1), u8"{\\an7\\pos(551,427.5)}other");
+    ASSERT_EQ(tool.data().size(), 1u);
+    EXPECT_EQ(tool.data()[0].textStart, 5u);
+    EXPECT_EQ(tool.data()[0].textLength, 15u); // \pos(551,427.5), not \pos(400,500)
+    // The next drag replaces the whole tag.
+    tool.pointer(at(Pointer::Kind::Press, 10, 10, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 12, 12, Pointer::Button::None, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 12, 12, Pointer::Button::Left), host);
+    EXPECT_EQ(text(host, 1), u8"{\\an7\\pos(-16,10.5)}other");
+}
+
+TEST(VisualPositionTags, AShortMoveEndsAtZero)
+{
+    // T2-move-short: \move(x1,y1,x2) left the end's y as legacy's
+    // uninitialised moveTable[1] had it (Visuals.cpp:853-860; VisualPosition.
+    // cpp:428-429 sets only moveTable[4]); the rewrite reads it as 0.
+    std::string script(kScript);
+    script.replace(script.find("{\\move(30,60,90,120,0,2000)}y"), 29, "{\\move(30,60,90)}y");
+    TestHost host;
+    standard(host, 1);
+    host.s = std::make_unique<EditSession>(load(script));
+    const auto rows = ids(*host.s);
+    host.s->setSelection({rows[1], {rows[1]}, rows[1], std::nullopt});
+    const LinePosition p = linePosition(scriptState(host), *lineOf(*host.s, rows[1]), true);
+    EXPECT_EQ(p.pos, (PointF{30, 60}));
+    ASSERT_TRUE(p.move);
+    EXPECT_EQ(p.move->values, (std::array<double, 4>{90, 0, 1000, 3000}));
+    EXPECT_EQ(p.move->count, 1);
+    // The Position tool's \move end follows: (90, 0) in script, (30, 0) in view.
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(tool.data().size(), 1u);
+    ASSERT_TRUE(tool.data()[0].move);
+    EXPECT_EQ(*tool.data()[0].move, (std::array<double, 4>{30, 0, 1000, 3000}));
 }
 
 TEST(VisualPositionValues, TypedPointWritesTheActiveLineAndMovesTheOthers)
