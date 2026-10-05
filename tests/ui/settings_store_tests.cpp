@@ -194,6 +194,35 @@ private slots:
         QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("Grid/HiddenColumns")).toInt(), 1);
     }
 
+    // K2: the colour settings K2 withdrew (A2's audio.spectrum* colours,
+    // K1's icons.<appearance>.<state> colours) leave a profile that saved
+    // them: no saved colour overrides the theme. Other values stay.
+    void withdrawnColourSettingsLeaveTheProfile()
+    {
+        QTemporaryDir dir;
+        const QString ini = dir.filePath(QStringLiteral("hikari.ini"));
+        {
+            QSettings s(ini, QSettings::IniFormat);
+            s.setValue(QStringLiteral("registry/schema"), 1);
+            for (const auto id : application::retiredSettings())
+                s.setValue(QStringLiteral("profile/") + QString::fromLatin1(id.data(), qsizetype(id.size())),
+                           QStringLiteral("#112233"));
+            s.setValue(QStringLiteral("profile/appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
+            s.setValue(QStringLiteral("profile/audio.spectrumOn"), true);
+        }
+        {
+            SettingsStore store(ini);
+            QCOMPARE(store.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
+            QVERIFY(store.boolean("audio.spectrumOn"));
+        }
+        const QSettings s(ini, QSettings::IniFormat);
+        for (const auto id : application::retiredSettings())
+            QVERIFY2(!s.contains(QStringLiteral("profile/") + QString::fromLatin1(id.data(), qsizetype(id.size()))),
+                     id.data());
+        QCOMPARE(s.value(QStringLiteral("profile/appearance.highContrastBlack.accent")).toString(), QStringLiteral("#00FF00"));
+        QVERIFY(s.value(QStringLiteral("profile/audio.spectrumOn")).toBool());
+    }
+
     // The panel reads the legacy options (SHIFT_TIMES_TIME 2000, backward
     // when SHIFT_TIMES_OPTIONS is unset) and stores nothing until it changes.
     void shiftTimesPanelStartsFromTheLegacyOptions()

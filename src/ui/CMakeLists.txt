@@ -41,11 +41,11 @@ target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
 target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
-qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
+qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
-# the appearance state, and the docking engine's separators, group frames and
-# floating windows in the theme's colours.
+# the appearance state, the Options dialog's Appearance page, and the docking
+# engine's separators and group frames in the theme's colours.
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
-qt_target_qml_sources(hikari_ui QML_FILES DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)

@@ -236,25 +236,6 @@ const std::vector<SettingDefinition> &definitions()
         // unset, LoadDefault's.
         {kHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {kAudioHotkeysSetting, "", StringList, Profile, Mapped, false, std::vector<std::string>()},
-        // A2: the spectrum's colours (legacy theme colours, config.cpp's defaults).
-        {kSpectrumBackgroundSetting, "", String, Profile, Mapped, false, std::string("#000000")},
-        {kSpectrumEchoSetting, "", String, Profile, Mapped, false, std::string("#674FD7")},
-        {kSpectrumInnerSetting, "", String, Profile, Mapped, false, std::string("#F4F4F4")},
-        // K1: the icon colours (docs/qt/ux/icons.md): light from the light
-        // tokens (text, accent, accent, a grey), dark from the dark ones, high
-        // contrast white, yellow, cyan (its focus colour) and a grey.
-        {kIconColourSettings[0][0], "", String, Profile, Mapped, false, std::string("#202832")},
-        {kIconColourSettings[0][1], "", String, Profile, Mapped, false, std::string("#145C4C")},
-        {kIconColourSettings[0][2], "", String, Profile, Mapped, false, std::string("#145C4C")},
-        {kIconColourSettings[0][3], "", String, Profile, Mapped, false, std::string("#74808B")},
-        {kIconColourSettings[1][0], "", String, Profile, Mapped, false, std::string("#E8EDF2")},
-        {kIconColourSettings[1][1], "", String, Profile, Mapped, false, std::string("#9CDBC9")},
-        {kIconColourSettings[1][2], "", String, Profile, Mapped, false, std::string("#9CDBC9")},
-        {kIconColourSettings[1][3], "", String, Profile, Mapped, false, std::string("#75818D")},
-        {kIconColourSettings[2][0], "", String, Profile, Mapped, false, std::string("#FFFFFF")},
-        {kIconColourSettings[2][1], "", String, Profile, Mapped, false, std::string("#FFFF00")},
-        {kIconColourSettings[2][2], "", String, Profile, Mapped, false, std::string("#00FFFF")},
-        {kIconColourSettings[2][3], "", String, Profile, Mapped, false, std::string("#8C8C8C")},
         // K2: the appearance (docs/qt/ux/visual-language.md, the user's
         // 2026-10-05 decision superseding A2-theme-colours): the theme
         // ("light", "dark", "highContrastWhite", "highContrastBlack"; legacy's
@@ -316,6 +297,18 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
     if (text.size() == 7)
         return 0xFF000000u | rgba;
     return (rgba & 0xFFu) << 24 | rgba >> 8; // #RRGGBBAA
+}
+
+std::span<const std::string_view> retiredSettings()
+{
+    // A2's spectrum colours and K1's icon colours, withdrawn by K2.
+    static const std::string_view ids[] = {
+        "audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner",
+        "icons.light.normal", "icons.light.accent", "icons.light.active", "icons.light.disabled",
+        "icons.dark.normal", "icons.dark.accent", "icons.dark.active", "icons.dark.disabled",
+        "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
+        "icons.highContrast.disabled"};
+    return ids;
 }
 
 std::span<const SettingDefinition> settingDefinitions()

@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <cctype>
 #include <map>
 #include <set>
 
@@ -186,29 +187,52 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
-// K1: the icon colours, per appearance and state, are the rewrite's own
-// profile settings ("#RRGGBB" text) with their theme defaults.
-TEST(SettingsRegistry, IconColoursArePerAppearanceSettings)
+// K2 (the user's 2026-10-05 decision, superseding A2-theme-colours): no
+// per-colour setting outside high contrast. Every setting whose default is a
+// colour, or a text setting whose id names a colour, is one of the high-contrast themes'
+// pickers, or the colour picker's recent colours (COLORPICKER_RECENT_COLORS:
+// document colours, not the appearance). A2's spectrum colours and K1's icon
+// colours are gone from the registry.
+TEST(SettingsRegistry, NoColourSettingOutsideHighContrast)
 {
-    const char *expected[3][4] = {{"#202832", "#145C4C", "#145C4C", "#74808B"},
-                                  {"#E8EDF2", "#9CDBC9", "#9CDBC9", "#75818D"},
-                                  {"#FFFFFF", "#FFFF00", "#00FFFF", "#8C8C8C"}};
+    const std::set<std::string_view> pickers{
+        "appearance.highContrastWhite.accent", "appearance.highContrastWhite.text",
+        "appearance.highContrastWhite.border", "appearance.highContrastBlack.accent",
+        "appearance.highContrastBlack.text",   "appearance.highContrastBlack.border"};
+    const std::set<std::string_view> documentColours{"colourPicker.recentColours"};
+    std::set<std::string_view> colourSettings;
+    for (const auto &s : settingDefinitions()) {
+        std::string id(s.id);
+        for (auto &c : id)
+            c = char(std::tolower(static_cast<unsigned char>(c)));
+        const auto *text = std::get_if<std::string>(&s.defaultValue);
+        const bool colourDefault = text && !text->empty() && parseSettingColour(*text).has_value();
+        const bool text_ = s.type == SettingType::String || s.type == SettingType::StringList;
+        const bool colourName =
+            text_ && (id.find("colour") != std::string::npos || id.find("color") != std::string::npos);
+        if (colourDefault || colourName)
+            colourSettings.insert(s.id);
+    }
+    std::set<std::string_view> expected(pickers);
+    expected.insert(documentColours.begin(), documentColours.end());
+    EXPECT_EQ(colourSettings, expected);
+    // The pickers are high-contrast settings of the rewrite's own.
+    for (const auto id : pickers) {
+        const auto *s = findSetting(id);
+        ASSERT_NE(s, nullptr) << id;
+        EXPECT_TRUE(s->legacyKey.empty());
+        EXPECT_EQ(s->scope, SettingScope::Profile);
+        EXPECT_NE(id.find("highContrast"), std::string_view::npos);
+    }
+    // The withdrawn ones are not settings any more (a profile's saved value
+    // is dropped by the INI store, settings_store_tests).
     MemorySettingsStorage storage;
     Settings settings(storage);
-    for (int a = 0; a < 3; ++a)
-        for (int s = 0; s < 4; ++s) {
-            const auto *setting = findSetting(kIconColourSettings[a][s]);
-            ASSERT_NE(setting, nullptr) << kIconColourSettings[a][s];
-            EXPECT_TRUE(setting->legacyKey.empty());
-            EXPECT_EQ(setting->type, SettingType::String);
-            EXPECT_EQ(setting->scope, SettingScope::Profile);
-            EXPECT_EQ(setting->defaultValue, SettingValue(std::string(expected[a][s])));
-            EXPECT_TRUE(parseSettingColour(expected[a][s]).has_value());
-            EXPECT_TRUE(settings.set(setting->id, std::string("#123456")));
-            settings.reset(setting->id);
-            EXPECT_EQ(settings.text(setting->id), expected[a][s]);
-        }
-    EXPECT_EQ(kIconColourSettings[1][2], "icons.dark.active");
+    EXPECT_EQ(retiredSettings().size(), 15u);
+    for (const auto id : retiredSettings()) {
+        EXPECT_EQ(findSetting(id), nullptr) << id;
+        EXPECT_FALSE(settings.set(id, std::string("#123456"))) << id;
+    }
 }
 
 // K2: the appearance settings and their defaults: the theme (legacy's

@@ -3,12 +3,10 @@
 // K1: the in-house vector icon set (docs/qt/ux/icons.md). Each UI icon is a
 // monochrome SVG on a 16-unit grid painted with currentColor, with at most
 // one accent layer (<g id="accent">). The set is tinted at run time from the
-// active theme's palette, live: its text colour, its accent (the accent layer,
-// and the whole icon while hovered or pressed) and its disabled text colour.
-// The appearance (light, dark or high contrast) follows the palette and the
-// platform's contrast preference. A colour saved in the profile's
-// icons.<appearance>.<slot> settings still wins until the theme model
-// (light, dark and high contrast with one user accent) replaces them.
+// theme layer (K2, theme.h), live: the theme's text colour, its accent (the
+// accent layer, and the whole icon while hovered or pressed) and its
+// disabled colour. There are no icon colour settings: in high contrast the
+// "Text and icons" and accent pickers recolour them with the text.
 
 #include <QByteArray>
 #include <QColor>
@@ -34,30 +32,7 @@ class QSvgRenderer;
 
 namespace hikari::ui {
 
-class SettingsStore;
-
 namespace icons {
-
-enum class Appearance { Light, Dark, HighContrast };
-// The colour slots of an appearance: the icon, its accent layer, the icon
-// while hovered or pressed, the icon while disabled.
-enum class Slot { Normal, Accent, Active, Disabled };
-
-inline constexpr std::array kAppearances{Appearance::Light, Appearance::Dark, Appearance::HighContrast};
-inline constexpr std::array kSlots{Slot::Normal, Slot::Accent, Slot::Active, Slot::Disabled};
-
-// "light", "dark", "highContrast".
-QString appearanceName(Appearance appearance);
-std::optional<Appearance> appearanceFromName(const QString &name);
-// The registry setting of a slot ("icons.dark.accent").
-std::string_view settingId(Appearance appearance, Slot slot);
-// The registry default of a slot.
-QColor defaultColour(Appearance appearance, Slot slot);
-// The surfaces icons sit on in an appearance: visual-language.md's bg, panel,
-// raised and field tokens.
-std::array<QColor, 4> surfaces(Appearance appearance);
-// WCAG 2.x contrast ratio of two opaque colours (1 to 21).
-double contrastRatio(const QColor &a, const QColor &b);
 
 // The set's manifest (src/ui/icons/manifest.json) and its SVG files, from the
 // QML module's resources.
@@ -80,13 +55,12 @@ QImage render(const QString &role, QSize pixels, const QColor &colour, const QCo
 
 } // namespace icons
 
-// The current appearance's icon colours, for QML (the IconTheme singleton;
-// one per engine, all following the same settings and palette).
+// The theme's icon colours, for QML (the IconTheme singleton; one per
+// engine, all following the theme layer).
 class IconTheme : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    Q_PROPERTY(QString appearance READ appearance NOTIFY changed FINAL)
     Q_PROPERTY(QColor normal READ normal NOTIFY changed FINAL)
     Q_PROPERTY(QColor accent READ accent NOTIFY changed FINAL)
     Q_PROPERTY(QColor active READ active NOTIFY changed FINAL)
@@ -96,7 +70,6 @@ public:
     explicit IconTheme(QObject *parent);
     static IconTheme *create(QQmlEngine *engine, QJSEngine *js);
 
-    QString appearance() const { return icons::appearanceName(m_appearance); }
     QColor normal() const { return m_colours[0]; }
     QColor accent() const { return m_colours[1]; }
     QColor active() const { return m_colours[2]; }
@@ -106,11 +79,6 @@ public:
     Q_INVOKABLE bool mirrors(const QString &role) const { return icons::mirrors(role); }
     Q_INVOKABLE QString label(const QString &role) const { return icons::label(role); }
     Q_INVOKABLE QStringList roles() const { return icons::roles(); }
-    // The theme default of an icon colour setting ("#RRGGBB"; empty when the
-    // id is not one).
-    Q_INVOKABLE QString defaultColour(const QString &settingId) const;
-    // The icon colour settings, appearance by appearance, slot by slot.
-    Q_INVOKABLE QStringList settingIds() const;
     // The icon as an image source, for the controls that draw one (menu
     // items, tab buttons): drawn by the engine's IconImageProvider in
     // `colour` with its accent layer in `accent`, flipped when `mirrored`.
@@ -119,19 +87,9 @@ public:
     // appearance's colours and kept in them while the window lives.
     Q_INVOKABLE void setWindowIcon(QObject *window, const QString &role);
 
-    // The appearance the palette and the platform ask for: high contrast
-    // when the platform prefers it, else dark when the application palette's
-    // window colour is dark, else light.
-    static icons::Appearance currentAppearance();
-    // Process-wide: the profile whose colours the icons use (none: the
-    // defaults), and an appearance that overrides the palette's (contact
-    // sheets and tests; nothing to follow the palette again).
-    static void useSettings(SettingsStore *settings);
-    static void forceAppearance(std::optional<icons::Appearance> appearance);
-    // A slot's colour: a colour saved in the profile for the appearance, else
-    // the application palette's (paletteColour).
-    static QColor colour(icons::Appearance appearance, icons::Slot slot);
-    static QColor paletteColour(icons::Slot slot);
+    // The theme's icon colours: its text, accent, the hover/pressed colour
+    // (the accent) and disabled colour.
+    static std::array<QColor, 4> colours();
 
 signals:
     void changed();
@@ -140,7 +98,6 @@ private:
     void refresh();
     void applyWindowIcon(QWindow *window, const QString &role) const;
 
-    icons::Appearance m_appearance = icons::Appearance::Light;
     std::array<QColor, 4> m_colours;
     QList<std::pair<QPointer<QWindow>, QString>> m_windows;
 };

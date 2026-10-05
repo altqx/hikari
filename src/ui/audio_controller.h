@@ -4,8 +4,9 @@
 // owns the audio box's audio and view, follows the active Line the way
 // legacy SetDialogue/Update do, and keeps the marks the application hands it
 // (other Lines, keyframes, the paused video's time). The AudioDisplay item
-// draws what scene() describes. Display options and colours are legacy's
-// defaults; the box's sliders and switches (A2) come from the settings registry.
+// draws what scene() describes. Display options are legacy's defaults and its
+// colours the theme layer's (K2); the box's sliders and switches (A2) come
+// from the settings registry.
 
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
@@ -303,7 +304,7 @@ signals:
 
 private:
     void loadBoxControls(); // legacy AudioBox's constructor
-    void loadSpectrumColours(); // legacy AudioSpectrum::ChangeColours
+    void loadThemeColours(); // K2: the theme's display colours (legacy ChangeColors)
     void applyVerticalZoom(int position, bool fromVolume);
     bool autoScrollSetting() const;
     void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);

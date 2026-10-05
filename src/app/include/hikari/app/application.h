@@ -837,8 +837,8 @@ private:
     // keeps its selection for the same Line (no SetDialogue).
     bool m_audioCommitting = false;
     void commitAudioTimes(const application::AudioCommitRequest &request);
-    // The Options dialog's Themes page colours (A2: the spectrum's).
-    void addThemeColours(QVariantMap &values) const;
+    // K2: the Options dialog's Appearance page settings.
+    void addAppearance(QVariantMap &values) const;
     void setAudioActive(int key);
     void seekVideoFromAudio(int ms);
     // P6

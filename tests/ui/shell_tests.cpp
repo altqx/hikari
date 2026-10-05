@@ -13,6 +13,7 @@
 #include "fake_font_service.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
+#include "theme.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -103,28 +104,6 @@ QString text(const core::LineRecord *line)
 }
 
 
-// K1: a theme's palette in visual-language.md's tokens (bg, raised, field;
-// the text, accent and disabled text colours are the icon colour settings'
-// defaults). The icons take their colours from the palette.
-QPalette themePalette(const QPalette &base, ui::icons::Appearance appearance)
-{
-    using ui::icons::Slot;
-    QPalette palette = base;
-    const QColor text = ui::icons::defaultColour(appearance, Slot::Normal);
-    const QColor disabled = ui::icons::defaultColour(appearance, Slot::Disabled);
-    const auto surfaces = ui::icons::surfaces(appearance);
-    for (const auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
-        const QColor ink = group == QPalette::Disabled ? disabled : text;
-        palette.setColor(group, QPalette::Window, surfaces[0]);
-        palette.setColor(group, QPalette::Button, surfaces[2]);
-        palette.setColor(group, QPalette::Base, surfaces[3]);
-        palette.setColor(group, QPalette::WindowText, ink);
-        palette.setColor(group, QPalette::ButtonText, ink);
-        palette.setColor(group, QPalette::Text, ink);
-        palette.setColor(group, QPalette::Accent, ui::icons::defaultColour(appearance, Slot::Accent));
-    }
-    return palette;
-}
 } // namespace
 
 class ShellTest : public QObject {
@@ -206,6 +185,10 @@ private slots:
     void initTestCase()
     {
         QVERIFY(dir.isValid());
+        // K2: following the system takes Light or Dark from the platform's
+        // colour scheme; the tests set it themselves (an unknown scheme keeps
+        // the chosen theme, Dark by default).
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
@@ -3993,11 +3976,10 @@ private slots:
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
-        // and the Themes page's colours (A2, K1's icon colours), which are not bound options
-        bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
-        for (const auto &appearance : application::kIconColourSettings)
-            for (const auto id : appearance)
-                bound.insert(std::string(id));
+        // and the Appearance page's settings (K2), which are not bound options
+        for (const auto &s : application::settingDefinitions())
+            if (s.id.starts_with("appearance."))
+                bound.insert(std::string(s.id));
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -5354,8 +5336,9 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Themes", "Hotkeys",
-                                     "Subtitle properties"}));
+        // (legacy's Themes page is K2's Appearance page, #206)
+        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
+                                     "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         QCOMPARE(hotkeyRows().size(), 226);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
@@ -6633,49 +6616,50 @@ private slots:
         QVERIFY(!mark->property("enabled").toBool());
     }
 
-    // A2: the spectrum's colours (legacy theme colours AUDIO_SPECTRUM_*) are
-    // settings with legacy's defaults, listed on the Options dialog's Themes
-    // page in legacy's rows; OK saves a changed one and the spectrum is drawn
-    // again with it (legacy ChangeColors, AudioDisplay::ChangeOptions,
-    // AudioSpectrum::ChangeColours); Set default leaves them.
-    void spectrumColoursAreThemeSettings()
+    // K2 (superseding A2-theme-colours): the audio display's colours are the
+    // theme layer's, fixed per theme, not settings. Dark keeps legacy's dark
+    // theme (config.cpp:451-472: the spectrum's AUDIO_SPECTRUM_* among them),
+    // Light has its matched values, and the selection-type marks
+    // (AUDIO_SELECTION_BACKGROUND at legacy's 0x37 alpha,
+    // AUDIO_WAVEFORM_SELECTED) take the accent. A theme change draws the
+    // display and the spectrum again at once (legacy ChangeColors,
+    // AudioSpectrum::ChangeColours).
+    void audioDisplayTakesTheThemeColours()
     {
         auto &settings = *application->settingsStore();
-        QCOMPARE(settings.text("audio.spectrumBackground"), QStringLiteral("#000000"));
-        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#674FD7"));
-        QCOMPARE(settings.text("audio.spectrumInner"), QStringLiteral("#F4F4F4"));
+        for (const char *id : {"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"})
+            QVERIFY2(!application::findSetting(id), id);
         QVERIFY(application->openFile(episode));
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         audio.setSpectrumOn(true);
+        // Dark (the default, the platform's scheme unknown): legacy's values.
+        QCOMPARE(ui::theme::current().code, ui::theme::Code::Dark);
+        const application::AudioDisplayOptions legacy;
+        QCOMPARE(audio.options().background, 0xFF36393Eu);
+        QCOMPARE(audio.options().spectrumBackground, 0xFF000000u);
+        QCOMPARE(audio.options().spectrumEcho, 0xFF674FD7u);
+        QCOMPARE(audio.options().spectrumInner, 0xFFF4F4F4u);
+        QCOMPARE(audio.options().cursor, legacy.cursor);
+        QCOMPARE(audio.options().waveform, legacy.waveform);
+        QCOMPARE(audio.options().keyframe, legacy.keyframe);
+        QCOMPARE(audio.options().selectionBackground, 0x379CDBC9u); // the green accent at 0x37
+        QCOMPARE(audio.options().waveformSelected, 0xFF9CDBC9u);
         const auto first = audio.spectrumImage();
         QVERIFY(first);
-        QCOMPARE(audio.options().spectrumEcho, 0xFF674FD7u);
-
-        auto *dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(dialogItem("settingsDialog", "settingsPageThemes"));
-        auto *list = dialogItem("settingsDialog", "themeColours");
-        QVERIFY(list);
-        QStringList rows;
-        for (const auto &row : list->property("model").toList())
-            rows << row.toMap().value(QStringLiteral("name")).toString();
-        QCOMPARE(rows, (QStringList{"Audio spectrum background", "Audio spectrum echo", "Audio spectrum"}));
-        auto values = dialog->property("values").toMap();
-        QCOMPARE(values.value(QStringLiteral("audio.spectrumEcho")).toString(), QStringLiteral("#674FD7"));
-        // the picked colour, then OK
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("audio.spectrumEcho")),
-                                          Q_ARG(QVariant, QStringLiteral("#112233"))));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#112233"));
-        QCOMPARE(audio.options().spectrumEcho, 0xFF112233u);
+        // Light: drawn again with the Light theme's colours.
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        const auto &light = ui::theme::current().content.audio;
+        QCOMPARE(audio.options().background, light.background);
+        QCOMPARE(audio.options().spectrumBackground, 0xFFFFFFFFu);
+        QCOMPARE(audio.options().selectionBackground, 0x37145C4Cu);
         const auto again = audio.spectrumImage();
         QVERIFY(again && again != first);
-        // the same picture a fresh renderer draws with the new palette
+        // the same picture a fresh renderer draws with the theme's colours
         application::AudioSpectrum fresh;
-        fresh.setColours(0xFF000000, 0xFF112233, 0xFFF4F4F4);
+        fresh.setColours(light.spectrumBackground, light.spectrumEcho, light.spectrumInner);
         fresh.setScaling(audio.view().scale());
         const auto &view = audio.view();
         std::vector<std::uint8_t> expected(std::size_t(view.width()) * view.height() * 4, 0);
@@ -6684,15 +6668,228 @@ private slots:
         fresh.render(*audio.box().audio(), view.position() * view.samples(), (view.position() + view.width()) * view.samples(),
                      expected.data(), view.width(), view.width(), view.height(), view.samplesPercent());
         QVERIFY(again->bgra == expected);
-        // "Set default" leaves the theme's colours
-        dialog = openSettings();
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QCOMPARE(dialog->property("values").toMap().value(QStringLiteral("audio.spectrumEcho")).toString(),
-                 QStringLiteral("#112233"));
+        // Another accent: the selection marks follow, the content stays.
+        settings.setValue(QStringLiteral("appearance.lightAccent"), QStringLiteral("blue"));
+        const QColor blue = ui::theme::accent(false, QStringLiteral("blue")).accent;
+        QCOMPARE(audio.options().waveformSelected, blue.rgba());
+        QCOMPARE(audio.options().selectionBackground, (blue.rgba() & 0x00FFFFFFu) | 0x37000000u);
+        QCOMPARE(audio.options().spectrumBackground, 0xFFFFFFFFu);
+        // Both high-contrast themes have their own fixed colours.
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack"));
+        QCOMPARE(audio.options().background, 0xFF000000u);
+        QCOMPARE(audio.options().waveformSelected, 0xFFFFFF00u);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastWhite"));
+        QCOMPARE(audio.options().background, 0xFFFFFFFFu);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        QCOMPARE(audio.options().spectrumEcho, 0xFF674FD7u);
+        QCOMPARE(audio.options().background, 0xFF36393Eu);
+    }
+
+    // K2: the Options dialog's Appearance page, in legacy's Themes page's
+    // place (after MuseScore 4, docs/research/musescore-appearance.md): the
+    // four themes, "Follow system theme", the mode's seven accent swatches,
+    // and in high contrast the accent, text-and-icons and border pickers with
+    // their reset. Every choice previews live; OK saves it, Cancel takes it
+    // back; choosing a theme by hand turns following off; Light and Dark
+    // remember their own accent; "Set default" leaves the appearance.
+    void appearancePagePreviewsSavesAndRestores()
+    {
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([] { ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown); });
+        auto *root = engine->rootObjects().first();
+        const auto code = [] { return ui::theme::codeName(ui::theme::current().code); };
+        const auto accent = [] { return ui::theme::current().roles.accent; };
+        const auto click = [&](const char *name) {
+            auto *control = dialogItem("settingsDialog", name);
+            QVERIFY2(control, name);
+            QVERIFY2(QMetaObject::invokeMethod(control, "click"), name);
+        };
+        const auto checked = [&](const char *name) { return dialogItem("settingsDialog", name)->property("checked").toBool(); };
+        QCOMPARE(code(), QStringLiteral("dark"));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0x17, 0x1B, 0x20)); // Dark's bg
+
+        // The page: four themes, seven swatches, the pickers hidden.
+        const auto openAppearance = [&] {
+            auto *shown = openSettings();
+            if (!QTest::qWaitFor([&] { return shown->property("visible").toBool(); }))
+                return static_cast<QObject *>(nullptr);
+            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+            return shown;
+        };
+        auto *dialog = openAppearance();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
+        for (const char *theme : {"appearanceTheme_light", "appearanceTheme_dark", "appearanceTheme_highContrastWhite",
+                                  "appearanceTheme_highContrastBlack"})
+            QVERIFY2(dialogItem("settingsDialog", theme), theme);
+        QVERIFY(checked("appearanceTheme_dark"));
+        QVERIFY(checked("appearanceFollowSystem"));
+        for (const auto &a : ui::theme::accents(true))
+            QVERIFY2(dialogItem("settingsDialog", qPrintable(QStringLiteral("accent_") + QLatin1String(a.key))), a.key);
+        QVERIFY(checked("accent_green"));
+        QVERIFY(dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
+        QVERIFY(!dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
+        QCOMPARE(QAccessible::queryAccessibleInterface(dialogItem("settingsDialog", "accent_blue"))->text(QAccessible::Name),
+                 QStringLiteral("Blue"));
+
+        // Light by hand: following turns off, the window retints at once
+        // (the preview), nothing is saved yet.
+        click("appearanceTheme_light");
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("light"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.followSystem")).toBool(), false);
+        QVERIFY(!checked("appearanceFollowSystem"));
+        QCOMPARE(code(), QStringLiteral("light"));
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
+        auto *controls = root->property("palette").value<QObject *>();
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        QCOMPARE(accent(), QColor(0x14, 0x5C, 0x4C));
+        click("accent_blue");
+        QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
+        QVERIFY(checked("accent_blue"));
+        QCOMPARE(settings.text("appearance.theme"), QStringLiteral("dark"));
+        // Cancel takes the preview back.
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(code(), QStringLiteral("dark"));
+        QCOMPARE(accent(), QColor(0x9C, 0xDB, 0xC9));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QVERIFY(!settings.isSet(QStringLiteral("appearance.theme")));
+        QVERIFY(!settings.isSet(QStringLiteral("appearance.lightAccent")));
+
+        // Again, then OK saves it; Dark keeps its own accent.
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        click("appearanceTheme_light");
+        click("accent_blue");
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(settings.text("audio.spectrumEcho"), QStringLiteral("#112233"));
+        QCOMPARE(settings.text("appearance.theme"), QStringLiteral("light"));
+        QVERIFY(!settings.boolean("appearance.followSystem"));
+        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("green"));
+        QCOMPARE(code(), QStringLiteral("light"));
+        QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        click("appearanceTheme_dark");
+        QVERIFY(checked("accent_green"));
+        click("accent_red");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+
+        // High contrast: the pickers in place of the swatches; a pick
+        // previews, persists with OK and resets to the theme's default.
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        click("appearanceTheme_highContrastBlack");
+        QCOMPARE(code(), QStringLiteral("highContrastBlack"));
+        QTRY_VERIFY(dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
+        QVERIFY(!dialogItem("settingsDialog", "appearanceAccents")->property("visible").toBool());
+        for (const char *pick : {"highContrastPick_appearance.highContrastBlack.accent",
+                                 "highContrastPick_appearance.highContrastBlack.text",
+                                 "highContrastPick_appearance.highContrastBlack.border"})
+            QVERIFY2(dialogItem("settingsDialog", pick), pick);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.accent")),
+                                          Q_ARG(QVariant, QStringLiteral("#00FF00"))));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("appearance.highContrastBlack.border")),
+                                          Q_ARG(QVariant, QStringLiteral("#FF00FF"))));
+        QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
+        QCOMPARE(ui::theme::current().roles.line, QColor(0xFF, 0x00, 0xFF));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#00FF00"));
+        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FF00FF"));
+        QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
+        // High contrast white keeps its own colours.
+        QCOMPARE(settings.text("appearance.highContrastWhite.accent"), QStringLiteral("#0037B3"));
+        // "Set default" leaves the appearance; the reset puts the picks back.
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                 QStringLiteral("#00FF00"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("highContrastBlack"));
+        click("resetHighContrast");
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
+                 QStringLiteral("#FFFF00"));
+        QCOMPARE(accent(), QColor(0xFF, 0xFF, 0x00));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.highContrastBlack.accent"), QStringLiteral("#FFFF00"));
+        QCOMPARE(settings.text("appearance.highContrastBlack.border"), QStringLiteral("#FFFFFF"));
+
+        // Follow system theme: Light or Dark from the platform's scheme,
+        // live; it keeps high contrast (black <-> white), never turns it on
+        // or off.
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        click("appearanceFollowSystem");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(settings.boolean("appearance.followSystem"));
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
+        QCOMPARE(code(), QStringLiteral("highContrastWhite"));
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Dark);
+        QCOMPARE(code(), QStringLiteral("highContrastBlack"));
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        QCOMPARE(code(), QStringLiteral("dark"));
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
+        QCOMPARE(code(), QStringLiteral("light"));
+        QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent); // Light's own accent
+        QCOMPARE(root->property("color").value<QColor>(), QColor(0xE5, 0xE9, 0xEC));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0xF9, 0xFA, 0xFB));
+        // Choosing a theme by hand on the page turns following off again.
+        QVERIFY((dialog = openAppearance()) != nullptr);
+        QVERIFY(checked("appearanceFollowSystem"));
+        QVERIFY(checked("appearanceTheme_light"));
+        click("appearanceTheme_dark");
+        QVERIFY(!checked("appearanceFollowSystem"));
+        QCOMPARE(code(), QStringLiteral("dark")); // the system says Light, the choice wins
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!settings.boolean("appearance.followSystem"));
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Light);
+        QCOMPARE(code(), QStringLiteral("dark"));
+    }
+
+    // K2: live switching retints every surface without a restart: the
+    // window's background, the controls' palette, the panels' title bars,
+    // the other windows, the icons, the Grid (painted rows) and the audio
+    // display.
+    void themeSwitchRetintsEverySurface()
+    {
+        auto &settings = *application->settingsStore();
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(application->audio().ready());
+        auto *root = engine->rootObjects().first();
+        auto *grid = item("editingGrid");
+        QVERIFY(grid);
+        const auto gridPixel = [&] {
+            const QImage shot = window->grabWindow();
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const QPointF at = grid->mapToScene(QPointF(grid->width() - 4, grid->height() - 4));
+            return QColor(shot.pixel(qRound(at.x() * dpr), qRound(at.y() * dpr)));
+        };
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto theme : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(theme));
+            const auto &roles = ui::theme::current().roles;
+            QCOMPARE(root->property("color").value<QColor>(), roles.background);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), roles.panel);
+            QTRY_COMPARE(controls->property("highlight").value<QColor>(), roles.accent);
+            for (auto *bar : root->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar")))
+                QCOMPARE(bar->property("color").value<QColor>(), roles.raised);
+            // every other window (a Window draws white unless told)
+            const auto windows = root->findChildren<QQuickWindow *>();
+            QVERIFY(windows.size() >= 10);
+            for (auto *other : windows)
+                QVERIFY2(other->color() == roles.panel || other->color() == roles.background,
+                         qPrintable(other->objectName() + QLatin1Char(' ') + other->color().name()));
+            QCOMPARE(ui::IconTheme::colours()[0], roles.text);
+            // the Grid's empty area below the rows: the panel surface
+            QTRY_COMPARE(gridPixel(), roles.panel);
+            QCOMPARE(application->audio().options().background, ui::theme::current().content.audio.background);
+        }
     }
 
     // A4-wasapi-default: the audio box's output is made with the host API
@@ -7124,28 +7321,17 @@ private slots:
 
     // K1: the video transport buttons show the set's icons (legacy VideoBox's
     // bitmap buttons, VideoBox.cpp:156-165), keep their names and tooltips,
-    // and every visible icon takes the theme palette's colours live: the
-    // light, dark and high-contrast themes' palettes, a colour saved by the
-    // Options dialog (in the profile, which still wins until the theme model
-    // replaces those settings) and the Reset icon colours button.
+    // and every visible icon takes the theme layer's colours live (K2): the
+    // Light, Dark and high-contrast themes, an accent preset and a
+    // high-contrast pick, with the controls' palette following.
     void videoTransportIconsFollowTheThemeLive()
     {
         restartWithoutSound(); // play / pause below plays the fixture
         auto &settings = *application->settingsStore();
-        // The light palette with every role set, so that setting it again
-        // reaches the windows (a palette's unset roles are not passed on).
-        const QPalette initial = QGuiApplication::palette();
-        QPalette before = initial;
-        for (int g = 0; g < QPalette::NColorGroups; ++g)
-            for (int r = 0; r < QPalette::NColorRoles; ++r) {
-                const auto group = QPalette::ColorGroup(g);
-                const auto role = QPalette::ColorRole(r);
-                before.setColor(group, role, before.color(group, role));
-            }
-        auto restore = qScopeGuard([&] {
-            QGuiApplication::setPalette(before);
-            ui::IconTheme::forceAppearance(std::nullopt);
-        });
+        const auto setTheme = [&](const char *code) {
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+        };
         struct Button {
             const char *name, *role, *accessibleName;
         };
@@ -7205,10 +7391,9 @@ private slots:
             QVERIFY(!button->property("tip").toString().isEmpty());
         }
         QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
-        // The light theme's palette. No video: the buttons are disabled, in
-        // the palette's disabled colour.
-        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Light));
-        QCOMPARE(ui::IconTheme::currentAppearance(), ui::icons::Appearance::Light);
+        // The Light theme. No video: the buttons are disabled, in the
+        // theme's disabled colour.
+        setTheme("light");
         QCOMPARE(colours(), all(QStringLiteral("#74808b")));
         QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
         saveTransport(QStringLiteral("transport-light-disabled.png"));
@@ -7228,74 +7413,32 @@ private slots:
         QCOMPARE(QAccessible::queryAccessibleInterface(visualItem("playPause"))->text(QAccessible::Name), QStringLiteral("Pause"));
         application->video().togglePlay();
         QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-play"));
-        // The palette turns dark (the dark theme's): the icons follow at once.
-        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Dark));
+        // Dark: the icons follow at once.
+        setTheme("dark");
         QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
-        // (the controls take the new palette at the next event loop pass)
+        // (the controls take the theme's palette at the next event loop pass)
         auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
         QVERIFY(controls);
-        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x17, 0x1B, 0x20));
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#9cdbc9"));
         QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
         saveTransport(QStringLiteral("transport-dark.png"));
-        // A colour saved by the Options dialog's Themes page.
-        auto *dialog = openSettings();
-        QVERIFY(dialog);
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(dialogItem("settingsDialog", "iconColours"));
-        QCOMPARE(dialogItem("settingsDialog", "iconColours")->property("count").toInt(), 12);
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
-                                          Q_ARG(QVariant, QStringLiteral("#FF8800"))));
-        QCOMPARE(colours(), all(QStringLiteral("#e8edf2"))); // staged only
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
-        QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
-        QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00))); // painted (the modal dialog no longer dims the window)
-        // "Set default" leaves the theme's colours.
-        QVERIFY(openSettings());
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#FF8800"));
-        // Reset icon colours stages the theme defaults; OK takes the
-        // colour out of the profile.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "resetIconColours"), "click"));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
-        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.light.disabled")).toString(), QStringLiteral("#74808B"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(!settings.contains("icons.dark.normal"));
-        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
-        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
-        // The default in another spelling (lower case, or with an opaque
-        // alpha) is the default too: it leaves the profile.
-        for (const auto &spelling : {QStringLiteral("#e8edf2"), QStringLiteral("#E8EDF2FF")}) {
-            QVERIFY(openSettings());
-            QTRY_VERIFY(dialog->property("visible").toBool());
-            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
-                                              Q_ARG(QVariant, QStringLiteral("#FF8800"))));
-            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
-            QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
-            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
-                                              Q_ARG(QVariant, spelling)));
-            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-            QTRY_VERIFY(!dialog->property("visible").toBool());
-            QVERIFY2(!settings.contains("icons.dark.normal"), qPrintable(spelling));
-            QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
-        }
-        // High contrast (the platform's preference; forced here, with the
-        // high-contrast theme's palette).
-        ui::IconTheme::forceAppearance(ui::icons::Appearance::HighContrast);
-        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::HighContrast));
+        // Dark's purple accent preset: the accent layer follows.
+        settings.setValue(QStringLiteral("appearance.darkAccent"), QStringLiteral("purple"));
+        QTRY_COMPARE(icon("previousFrame")->property("accentColor").value<QColor>(),
+                     ui::theme::accent(true, QStringLiteral("purple")).accent);
+        QCOMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        // High contrast black, then its "Text and icons" pick.
+        setTheme("highContrastBlack");
         QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#ffff00"));
-        ui::IconTheme::forceAppearance(std::nullopt);
-        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Dark));
+        settings.setValue(QStringLiteral("appearance.highContrastBlack.text"), QStringLiteral("#FF8800"));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
+        QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00)));
+        setTheme("dark");
         QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
         // Back at the first frame Previous frame is disabled: the dark
-        // appearance's disabled colour, accent included.
+        // theme's disabled colour, accent included.
         application->video().stepFrames(-1);
         QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#75818d"));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#75818d"));
@@ -7353,9 +7496,9 @@ private slots:
         }
         // The menus: the item's image is the set's icon in the palette's colours.
         auto *root = engine->rootObjects().first();
-        const QString normal = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Normal).name().mid(1);
-        const QString accent = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Accent).name().mid(1);
-        const QString disabled = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Disabled).name().mid(1);
+        const QString normal = ui::IconTheme::colours()[0].name().mid(1);
+        const QString accent = ui::IconTheme::colours()[1].name().mid(1);
+        const QString disabled = ui::IconTheme::colours()[3].name().mid(1);
         for (const Expected &e : {Expected{"settingsMenuItem", "settings", ""}, Expected{"aboutMenuItem", "about", ""},
                                   Expected{"openAudioMenuItem", "open-audio", ""}, Expected{"recentSubtitlesMenu", "recent-subtitles", ""},
                                   Expected{"loadLastSessionMenuItem", "last-session", ""}}) {
@@ -7416,9 +7559,10 @@ private slots:
         }
     }
 
-    // K1: screenshots of the wired surfaces for review (the main window, the
-    // audio box, the Line editor and the File menu) in the light and dark
-    // themes' palettes, written to HIKARI_SURFACE_SHOT_DIR when it is set.
+    // K1, K2: screenshots of the wired surfaces for review (the main window,
+    // the audio box, the Line editor, the File menu and the Options dialog's
+    // Appearance page) in the four themes of the theme layer, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (main-window-<theme>.png, ...).
     void surfaceScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -7426,8 +7570,7 @@ private slots:
             QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
         restartWithoutSound();
-        const QPalette before = QGuiApplication::palette();
-        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        auto &settings = *application->settingsStore();
         window->resize(1600, 900);
         QVERIFY(application->openFile(episode));
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
@@ -7435,8 +7578,9 @@ private slots:
         application->video().stepFrames(1);
         // (the resolution question the video asks)
         auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && mismatch->property("visible").toBool())
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
             QMetaObject::invokeMethod(mismatch, "close");
+        QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
         application->audio().openDummy();
         QTRY_VERIFY(application->audio().ready());
         QTRY_VERIFY(item("audioButtons")->isVisible());
@@ -7454,12 +7598,12 @@ private slots:
             return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
         };
         auto *root = engine->rootObjects().first();
-        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
-            QPalette palette = themePalette(before, appearance);
-            QGuiApplication::setPalette(palette);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             auto *controls = root->property("palette").value<QObject *>();
-            QTRY_COMPARE(controls->property("window").value<QColor>(), palette.color(QPalette::Window));
-            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
             QTest::qWait(200);
             const QImage shot = window->grabWindow();
             QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
@@ -7478,6 +7622,18 @@ private slots:
             QVERIFY(menuShot.copy(r).save(out + QStringLiteral("/file-menu") + suffix));
             QMetaObject::invokeMethod(menu, "close");
             QTRY_VERIFY(!menu->property("visible").toBool());
+            // K2: the Options dialog's Appearance page.
+            auto *dialog = openSettings();
+            QTRY_VERIFY(dialog->property("opened").toBool());
+            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
+            QTest::qWait(300);
+            const QImage dialogShot = window->grabWindow();
+            auto *dialogItemRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
+            QVERIFY(dialogShot.copy(crop(dialogItemRoot).adjusted(-8, -8, 8, 8).intersected(dialogShot.rect()))
+                        .save(out + QStringLiteral("/appearance-page") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
         }
     }
 
