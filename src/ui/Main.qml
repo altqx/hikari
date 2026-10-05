@@ -1573,6 +1573,18 @@ ApplicationWindow {
                 return "EDITBOX_COMMIT"
             return root.hotkeys.actionFor(2, event.key, event.modifiers)
         }
+        // TextEditor::OnKeyPress (DialogueTextEditor.cpp:534-545): Tab never
+        // goes into the text; it is a navigation event, forward or with
+        // Shift backward, to the next control in the tab order (the tag
+        // list, which takes its own keys first, closes as the field loses
+        // focus). Its window change flag (Ctrl) reached EditBox's
+        // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
+        // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
+        function tabOut(forward) {
+            const next = field.nextItemInFocusChain(forward)
+            if (next && next !== field)
+                next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        }
         Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== "" || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
             if (tagListPopup.key(event)) {
@@ -1583,6 +1595,9 @@ ApplicationWindow {
             const action = hotkeyAction(event)
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape) {
                 root.editor.discard()

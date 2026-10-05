@@ -5577,6 +5577,81 @@ private slots:
         QVERIFY(inTheEditorView(controls.first())); // the tag buttons
     }
 
+    // TextEditor::OnKeyPress (DialogueTextEditor.cpp:534-545 at 20d647c4):
+    // Tab in a Line editor text field is a navigation event, never a typed
+    // tab. Tab and Shift+Tab reach the neighbouring controls in the editor's
+    // tab order (the one below the fold brought into view); Ctrl, the wx
+    // window change, moves the same way, since EditBox's navigation handler
+    // (HikariContainer::OnNavigation) ignores it. An open tag list takes its
+    // own keys first and closes as the focus leaves.
+    void tabMovesOutOfTheLineEditorTextFields()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tab-out.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        auto *layer = item("layerField");
+        auto *view = item("editorScroll");
+        QTRY_VERIFY(translated->isVisible());
+        const QString originalText = original->property("text").toString();
+        const QString translatedText = translated->property("text").toString();
+        const auto nothingTyped = [&] {
+            return original->property("text").toString() == originalText
+                && translated->property("text").toString() == translatedText;
+        };
+        QQuickItem *beforeOriginal = original->nextItemInFocusChain(false);
+        QVERIFY(beforeOriginal && beforeOriginal != original && beforeOriginal != translated);
+
+        original->forceActiveFocus();
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
+        view->setProperty("contentY", 0);
+        QTRY_VERIFY(!inTheEditorView(layer));
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(layer->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(layer));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QCOMPARE(original->property("focusReason").toInt(), int(Qt::BacktabFocusReason));
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(beforeOriginal->hasActiveFocus());
+        QVERIFY(nothingTyped());
+
+        // Ctrl+Tab and Ctrl+Shift+Tab: the same moves.
+        original->forceActiveFocus();
+        press(Qt::Key_Tab, Qt::ControlModifier);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        press(Qt::Key_Backtab, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QVERIFY(nothingTyped());
+        QCOMPARE(application->editor().text(), originalText);
+        QCOMPARE(application->editor().translationText(), translatedText);
+
+        // The tag list first: Down moves its selection and the field keeps
+        // the focus; Tab then leaves the field, and the list closes.
+        application->editor().setShowTags(true);
+        auto *list = application->editor().tagList();
+        QTRY_COMPARE(original->property("text").toString(), originalText);
+        original->forceActiveFocus();
+        original->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        QCOMPARE(list->selection(), 0);
+        press(Qt::Key_Down);
+        QCOMPARE(list->selection(), 1);
+        QVERIFY(original->hasActiveFocus());
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_VERIFY(!list->open());
+        QCOMPARE(original->property("text").toString(), QStringLiteral("{\\") + originalText);
+        QCOMPARE(translated->property("text").toString(), translatedText);
+    }
+
     // Screenshots of translation mode in the default 1280 x 800 window, Light
     // and Dark: the Line editor at its top with its scroll bar, and
     // scrolled to the Line's fields by the keyboard focus.
