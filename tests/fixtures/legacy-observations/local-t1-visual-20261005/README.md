@@ -16,13 +16,16 @@ The cases: a 16:9 frame filling the window, pillarbox, letterbox, an anamorphic 
 
 ## Compared with the rewrite
 
-`VisualCapture.ReplaysTheLegacyProbe` (`hikari_application_visual_tools_tests`) sets every case up through `visual::VideoView` from logical coordinates at the case's device pixel ratio and replays it through `visual::CrosshairTool` and `visual::copyCoordinatesText`: every rectangle, zoom value, coefficient, conversion, label, label rectangle (on the video), line end, visibility flag, copied text and clicked Line text is equal, float for float. There is no difference to record.
+`VisualCapture.ReplaysTheLegacyProbe` (`hikari_application_visual_tools_tests`) sets every case up through `visual::VideoView` from logical coordinates at the case's device pixel ratio and replays it through `visual::CrosshairTool` and `visual::copyCoordinatesText`: every rectangle, zoom value, coefficient, conversion, label, label rectangle (on the video), line end, visibility flag, copied text and clicked Line text is equal, float for float, but for two approved departures (User, 2026-10-05, with the T1 review; [compatibility-decisions.md](../../../../docs/qt/compatibility-decisions.md)), for which this capture is the old evidence:
+
+- T1-copy-coords-view: the copied text is the crosshair's position under the pointer (the point's `label` as "x,y"), not the point's `copy`.
+- T1-wheel-zoom-stale: the case `zoom-wheel-stale` expects what `zoom-at-point` (the same zoom followed by `setvisual`) captured, since every zoom refreshes the tools' transform.
 
 The capture shows these legacy behaviours, kept:
 
 - The crosshair's label and click use their own coefficients, the script size over the video rectangle less one pixel on a side without a bar (`VisualCross.cpp:80-92`), so the centre of a 1280x720 frame in a 640x360 rectangle reads `961, 541` and a click there writes `\pos(961.502,541.504)`; the other tools' conversion (`GetCalculatedOutPos`) gives 960, 540.
 - The label truncates toward zero (`-106, 0` left of a pillarbox) and is drawn only on the video (bounds inclusive); off the video the crosshair stays on but is not drawn.
-- VIDEO_COPY_COORDS scales the pointer by the whole window less one pixel (`OnCopyCoords`), ignoring the letterbox and the zoom: left of a pillarbox it copies positive coordinates, and zoomed it copies the unzoomed position.
-- A zoom by the wheel (`SetZoom(percent, pos)`) does not refresh the tools' transform (`zoom-wheel-stale`): until the next resize, tool change or edit (`RendererVideo::SetVisual`), the crosshair reads and writes as if unzoomed.
 - `UpdateRects` scales the zoom rectangle by the video rectangle's right and bottom edges, not its size, and `ResetZoom` keeps the zoom mode on.
 - A click removes every `\pos` and `\move` with their arguments (the regex `\\(pos|move)([^\\}]+)`), anywhere in the text, then puts `\pos` first in the first block, or in a new one; in TLMode it edits the translation unless it is empty.
+
+The capture also shows the old behaviour of the two departures: VIDEO_COPY_COORDS scaled the pointer by the whole window less one pixel (`OnCopyCoords`), ignoring the letterbox and the zoom (left of a pillarbox it copied positive coordinates, zoomed the unzoomed position); and a zoom by the wheel (`SetZoom(percent, pos)`) did not refresh the tools' transform (`zoom-wheel-stale`), so until the next resize, tool change or edit (`RendererVideo::SetVisual`) the crosshair read and wrote as if unzoomed.

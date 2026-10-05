@@ -97,10 +97,12 @@ Item {
 
     // Visuals::DrawWarning (Visuals.cpp:531-546, the Direct3D path): bold
     // Tahoma a twentieth of the video's width high, red with a black outline
-    // (DRAWOUTTEXT), centred in the rectangle from the window's corner to the
-    // video's right and bottom edges ({0, 0, VideoSize.width, VideoSize.height},
-    // where SizeChanged's width and height are m_BackBufferRect's right and
-    // bottom, RendererVideo.cpp:321).
+    // (DRAWOUTTEXT). Direct3D centred it in {0, 0, VideoSize.width,
+    // VideoSize.height}, the window's corner to the video's right and bottom
+    // edges (RendererVideo.cpp:321), off-centre with a bar. Approved
+    // departure T1-warning-centre (docs/qt/compatibility-decisions.md): it is
+    // centred on the video rectangle, as legacy's wx path did
+    // (DrawWarningWx, Visuals.cpp:479-493).
     Label {
         objectName: "visualWarning"
         visible: text.length > 0
@@ -112,7 +114,7 @@ Item {
         font.bold: true
         font.pixelSize: Math.max(1, overlayItem.tools.videoRect.width / 20)
         horizontalAlignment: Text.AlignHCenter
-        x: (overlayItem.tools.videoRect.x + overlayItem.tools.videoRect.width - width) / 2
-        y: (overlayItem.tools.videoRect.y + overlayItem.tools.videoRect.height - height) / 2
+        x: overlayItem.tools.videoRect.x + (overlayItem.tools.videoRect.width - width) / 2
+        y: overlayItem.tools.videoRect.y + (overlayItem.tools.videoRect.height - height) / 2
     }
 }

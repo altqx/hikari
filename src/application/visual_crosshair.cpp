@@ -29,42 +29,60 @@ std::u8string toU8(const std::u16string &text)
 
 } // namespace
 
-std::u16string copyCoordinatesText(const VideoView &view, int x, int y)
-{
-    // VideoBox::OnCopyCoords (VideoBox.cpp:1395-1412).
-    const int w = view.clientWidth(), h = view.clientHeight();
-    const int nx = view.scriptWidth(), ny = view.scriptHeight();
-    const float coeffX = static_cast<float>(nx) / static_cast<float>(w - 1);
-    const float coeffY = static_cast<float>(ny) / static_cast<float>(h - view.panelHeight() - 1);
-    const int posx = static_cast<int>(static_cast<float>(x) * coeffX);
-    const int posy = static_cast<int>(static_cast<float>(y) * coeffY);
-    return number(posx) + u"," + number(posy);
-}
-
-void CrosshairTool::computeCoefficients(const VisualHost &host)
+CrossCoefficients crossCoefficients(const VideoView &view)
 {
     // Cross::SetCurVisual / OnMouseEvent's Entering (VisualCross.cpp:67-93,
     // 260-281): a side without a bar divides by one pixel less.
-    const VideoView &view = host.view();
+    CrossCoefficients out;
     int w = 0, h = 0;
     int diffW = 1, diffH = 1;
     if (view.hasVideo()) {
         const IntRect videoRect = view.videoRect();
-        m_diffX = videoRect.left;
-        m_diffY = videoRect.top;
-        w = videoRect.right - m_diffX;
-        h = videoRect.bottom - m_diffY;
-        if (m_diffX)
+        out.diffX = videoRect.left;
+        out.diffY = videoRect.top;
+        w = videoRect.right - out.diffX;
+        h = videoRect.bottom - out.diffY;
+        if (out.diffX)
             diffW = 0;
-        if (m_diffY)
+        if (out.diffY)
             diffH = 0;
     } else {
         w = view.clientWidth();
         h = view.clientHeight() - view.panelHeight();
-        m_diffX = m_diffY = 0;
     }
-    m_coeffX = static_cast<float>(view.scriptWidth()) / static_cast<float>(w - diffW);
-    m_coeffY = static_cast<float>(view.scriptHeight()) / static_cast<float>(h - diffH);
+    out.x = static_cast<float>(view.scriptWidth()) / static_cast<float>(w - diffW);
+    out.y = static_cast<float>(view.scriptHeight()) / static_cast<float>(h - diffH);
+    return out;
+}
+
+PointF crossScriptPoint(const VideoView &view, float coeffX, float coeffY, int x, int y)
+{
+    // Cross::OnMouseEvent (VisualCross.cpp:94-97, 112-113).
+    const float zx = (x / view.zoomScale().x) + view.zoomMove().x;
+    const float zy = (y / view.zoomScale().y) + view.zoomMove().y;
+    return {zx * coeffX, zy * coeffY};
+}
+
+std::u16string copyCoordinatesText(const VideoView &view, int x, int y)
+{
+    // VideoBox::OnCopyCoords (VideoBox.cpp:1395-1412) wrote "x,y" from the
+    // pointer scaled by the whole client less one pixel, so the letterbox,
+    // pillarbox and zoom were ignored. Approved departure
+    // T1-copy-coords-view (docs/qt/compatibility-decisions.md): the
+    // crosshair's own conversion, truncated as its label is, so the text is
+    // the script coordinate under the pointer.
+    const CrossCoefficients coeff = crossCoefficients(view);
+    const PointF script = crossScriptPoint(view, coeff.x, coeff.y, x, y);
+    return number(static_cast<int>(script.x)) + u"," + number(static_cast<int>(script.y));
+}
+
+void CrosshairTool::computeCoefficients(const VisualHost &host)
+{
+    const CrossCoefficients coeff = crossCoefficients(host.view());
+    m_coeffX = coeff.x;
+    m_coeffY = coeff.y;
+    m_diffX = coeff.diffX;
+    m_diffY = coeff.diffY;
 }
 
 void CrosshairTool::reset(VisualHost &host)
@@ -99,11 +117,9 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
         m_cross = true;
         computeCoefficients(host);
     }
-    const VideoView &view = host.view();
-    const float zx = (x / view.zoomScale().x) + view.zoomMove().x;
-    const float zy = (y / view.zoomScale().y) + view.zoomMove().y;
-    const int posx = static_cast<int>(zx * m_coeffX);
-    const int posy = static_cast<int>(zy * m_coeffY);
+    const PointF script = crossScriptPoint(host.view(), m_coeffX, m_coeffY, x, y);
+    const int posx = static_cast<int>(script.x);
+    const int posy = static_cast<int>(script.y);
     m_coords = number(posx) + u", " + number(posy);
     drawLines(x, y, host);
     host.toolChanged();
@@ -167,11 +183,9 @@ void CrosshairTool::putPosition(int x, int y, VisualHost &host)
     static const core::LegacyRegex posmov(u"\\\\(pos|move)([^\\\\}]+)", core::LegacyRegex::Advanced);
     posmov.replaceAll(ltext, u"");
 
-    const VideoView &view = host.view();
-    const float zx = (x / view.zoomScale().x) + view.zoomMove().x;
-    const float zy = (y / view.zoomScale().y) + view.zoomMove().y;
-    const float posx = zx * m_coeffX;
-    const float posy = zy * m_coeffY;
+    const PointF script = crossScriptPoint(host.view(), m_coeffX, m_coeffY, x, y);
+    const float posx = script.x;
+    const float posy = script.y;
     const std::u16string postxt =
         u"\\pos(" + toU16(legacy::floatText(posx)) + u"," + toU16(legacy::floatText(posy)) + u")";
     if (ltext.starts_with(u"{"))

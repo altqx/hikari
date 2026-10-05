@@ -6,7 +6,7 @@
 // arithmetic for the same pointer position.
 
 #include "hikari/app/application.h"
-#include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_view.h"
 #include "docking.h"
 
 #include <QClipboard>
@@ -164,10 +164,11 @@ int main(int argc, char **argv)
         const std::string label = std::to_string(lx) + ", " + std::to_string(ly);
         std::printf("label %s, expected %s\n", o.size() > 2 ? o[2].c_str() : "-", label.c_str());
         expect(o.size() > 2 && o[2] == label, "the crosshair's label reads the pointer's script position");
-        const QString copied =
-            QString::fromStdU16String(hikari::application::visual::copyCoordinatesText(view, x, y));
+        // VIDEO_COPY_COORDS: the same script position in legacy's "x,y" form
+        // (approved departure T1-copy-coords-view).
+        const QString copied = QStringLiteral("%1,%2").arg(lx).arg(ly);
         std::printf("copied %s, expected %s\n", qPrintable(QGuiApplication::clipboard()->text()), qPrintable(copied));
-        expect(QGuiApplication::clipboard()->text() == copied, "VIDEO_COPY_COORDS copies legacy's x,y text");
+        expect(QGuiApplication::clipboard()->text() == copied, "VIDEO_COPY_COORDS copies the script position as x,y");
         expect(tools.copied() == copied, "the copied text is recorded");
     }
     const auto target = application.workspace().editingTarget();

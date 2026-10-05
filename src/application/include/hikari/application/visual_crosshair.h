@@ -10,10 +10,22 @@
 
 namespace hikari::application::visual {
 
-// VideoBox::OnCopyCoords (VideoBox.cpp:1395-1412): the pointer's position in
-// the video window scaled to the script resolution by the whole client
-// (width - 1, height - panel - 1), letterbox and zoom ignored, truncated:
-// "x,y".
+// Cross's coefficients for the view (VisualCross.cpp:67-93): script units per
+// video-rectangle pixel, and the rectangle's left and top bars.
+struct CrossCoefficients {
+    float x = 0, y = 0;
+    int diffX = 0, diffY = 0;
+};
+CrossCoefficients crossCoefficients(const VideoView &view);
+// Cross's script position of a view point in device pixels: the tools' zoom
+// transform, then the given coefficients (VisualCross.cpp:94-97, 112-113).
+PointF crossScriptPoint(const VideoView &view, float coeffX, float coeffY, int x, int y);
+
+// VIDEO_COPY_COORDS (VideoBox::OnCopyCoords, VideoBox.cpp:1395-1412) in
+// legacy's text form "x,y": the script coordinate under the pointer, the
+// crosshair's conversion truncated as its label is. Approved departure
+// T1-copy-coords-view: legacy scaled the pointer by the whole client less
+// one pixel, ignoring the letterbox, the pillarbox and the zoom.
 std::u16string copyCoordinatesText(const VideoView &view, int x, int y);
 
 class CrosshairTool : public VisualTool {

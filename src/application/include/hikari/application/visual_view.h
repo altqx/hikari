@@ -90,12 +90,14 @@ public:
     int scriptHeight() const { return m_scriptHeight; }
 
     // RendererVideo::SetZoom(percent, mousePos): the wheel's zoom at a point.
-    // Like legacy it leaves the tools' transform as it was until
-    // refreshToolTransform (legacy's next SetVisual or resize).
+    // Legacy left the tools' transform as it was until its next SetVisual or
+    // resize; here the tools take the zoom at once (approved departure
+    // T1-wheel-zoom-stale).
     void zoomAt(float percent, int x, int y);
     // RendererVideo::SetZoom(): GLOBAL_VIDEO_ZOOM and Return in zoom mode
     // toggle the zoom mode; entering it unzoomed zooms by VIDEO_ZOOM_PERCENT
-    // / 100 (2 outside 1..11, the default when unset).
+    // / 100 (2 outside 1..11, the default when unset), and the tools take
+    // that zoom at once too (T1-wheel-zoom-stale).
     void toggleZoom(int zoomPercentOption);
     // RendererVideo::ResetZoom (GLOBAL_RESET_VIDEO_ZOOM, Ctrl+Shift+Z): the
     // whole frame; the zoom mode stays as it was.

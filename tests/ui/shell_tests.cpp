@@ -6414,12 +6414,15 @@ private slots:
         QVERIFY2(std::abs(xy[0].toInt() - script.x) <= 2 && std::abs(xy[1].toInt() - script.y) <= 2, qPrintable(label));
         QTRY_COMPARE(visualItem("visualValue_position")->property("text").toString(), label);
 
-        // VIDEO_COPY_COORDS at the pointer, in legacy's text form, through the
-        // Video window binding: VideoBox::OnAccelerator takes the pointer's
-        // position (VideoBox.cpp:1151) and OnCopyCoords (VideoBox.cpp:
-        // 1395-1412) scales it by the script size over the client less one
-        // pixel (the panel excluded) and truncates. The expected text is
-        // that formula here, not copyCoordinatesText.
+        // VIDEO_COPY_COORDS at the pointer, in legacy's text form "x,y",
+        // through the Video window binding: VideoBox::OnAccelerator takes the
+        // pointer's position (VideoBox.cpp:1151). Approved departure
+        // T1-copy-coords-view: the text is the script position under the
+        // pointer, the crosshair's conversion (its coefficients,
+        // VisualCross.cpp:80-92, and the tools' zoom, 94-97) truncated as
+        // its label is, computed here, not with copyCoordinatesText. Legacy
+        // OnCopyCoords (VideoBox.cpp:1395-1412) scaled by the whole client
+        // less one pixel, which a bar puts off.
         QGuiApplication::clipboard()->clear();
         item("videoPanel")->forceActiveFocus();
         const QPoint k = p + QPoint(7, 5);
@@ -6428,11 +6431,19 @@ private slots:
         press(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier);
         const QPointF at = item("visualOverlay")->mapFromScene(QPointF(k));
         const int devX = view.toDevice(at.x()), devY = view.toDevice(at.y());
-        const float coeffX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
-        const float coeffY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
-        const QString copied = QStringLiteral("%1,%2").arg(int(float(devX) * coeffX)).arg(int(float(devY) * coeffY));
+        QVERIFY(r.left > 0 || r.top > 0); // a bar, where legacy's text was off
+        const float crossX = float(view.scriptWidth()) / float(r.width() - (r.left ? 0 : 1));
+        const float crossY = float(view.scriptHeight()) / float(r.height() - (r.top ? 0 : 1));
+        const int sx = int(((devX / view.zoomScale().x) + view.zoomMove().x) * crossX);
+        const int sy = int(((devY / view.zoomScale().y) + view.zoomMove().y) * crossY);
+        const QString copied = QStringLiteral("%1,%2").arg(sx).arg(sy);
         QTRY_COMPARE(QGuiApplication::clipboard()->text(), copied);
         QCOMPARE(tools.copied(), copied);
+        // The crosshair's label at the same pointer reads the same position.
+        QCOMPARE(visualItem("visualValue_position")->property("text").toString(), QStringLiteral("%1, %2").arg(sx).arg(sy));
+        const float legacyX = float(view.scriptWidth()) / float(view.clientWidth() - 1);
+        const float legacyY = float(view.scriptHeight()) / float(view.clientHeight() - view.panelHeight() - 1);
+        QVERIFY(copied != QStringLiteral("%1,%2").arg(int(float(devX) * legacyX)).arg(int(float(devY) * legacyY)));
 
         // Ctrl+click: \pos at the pointer into the active Line, one step.
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -6521,6 +6532,19 @@ private slots:
         QVERIFY(application->video().showFrameAt(0));
         QTRY_COMPARE(tools.warning(), QStringLiteral("Line is not visible on video\nor has zero duration"));
         QTRY_VERIFY(item("visualWarning")->isVisible());
+        // Approved departure T1-warning-centre: centred on the video
+        // rectangle (legacy's wx path, Visuals.cpp:479-493), not in the
+        // window's corner to the video's far edges as legacy's Direct3D path
+        // drew it (Visuals.cpp:531-546), off-centre with a bar.
+        {
+            const QQuickItem *warning = item("visualWarning");
+            const QRectF video = tools.videoRect();
+            QVERIFY(video.left() > 0 || video.top() > 0);
+            QVERIFY2(std::abs(warning->x() + warning->width() / 2 - video.center().x()) <= 0.5,
+                     qPrintable(QStringLiteral("%1 in %2").arg(warning->x()).arg(video.left())));
+            QVERIFY2(std::abs(warning->y() + warning->height() / 2 - video.center().y()) <= 0.5,
+                     qPrintable(QStringLiteral("%1 in %2").arg(warning->y()).arg(video.top())));
+        }
         const std::size_t blocked = session->historySize();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p);

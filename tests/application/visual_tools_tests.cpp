@@ -2,7 +2,10 @@
 // and batch picker. The transform and crosshair replay the legacy probe's
 // captures (tools/legacy-capture/visual_capture.cpp over
 // inputs/visual-cases.txt; tests/fixtures/legacy-observations/
-// local-t1-visual-20261005) and must give legacy's numbers exactly.
+// local-t1-visual-20261005) and must give legacy's numbers exactly, but for
+// the approved departures T1-copy-coords-view and T1-wheel-zoom-stale
+// (docs/qt/compatibility-decisions.md), whose captures stay as the old
+// evidence.
 
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_tools.h"
@@ -190,6 +193,24 @@ std::u16string u16(const QJsonValue &v)
     return v.toString().toStdU16String();
 }
 
+// The entry of a capture array whose "at" is the given point.
+QJsonObject entryAt(const QJsonObject &o, const char *key, const QJsonValue &at)
+{
+    for (const QJsonValue &v : o[QLatin1String(key)].toArray())
+        if (v.toObject()[QStringLiteral("at")] == at)
+            return v.toObject();
+    ADD_FAILURE() << "no " << key << " entry at the point";
+    return {};
+}
+
+// Approved departure T1-copy-coords-view: VIDEO_COPY_COORDS copies the
+// crosshair's script position under the pointer (its label) in legacy's
+// "x,y" form.
+std::u16string copiedFromLabel(const QJsonValue &label)
+{
+    return label.toString().replace(QStringLiteral(", "), QStringLiteral(",")).toStdU16String();
+}
+
 // Sets the case up through the rewrite's logical coordinates: the probe's
 // device pixels divided by the case's device pixel ratio, rounded back.
 void setUp(TestHost &host, const Case &c)
@@ -270,10 +291,22 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
     const auto observations = readObservations();
     const auto cases = readCases();
     ASSERT_EQ(cases.size(), observations.size());
+    int copyDepartures = 0;
     for (const Case &c : cases) {
         SCOPED_TRACE(c.name);
         ASSERT_TRUE(observations.contains(c.name));
-        const QJsonObject &o = observations.at(c.name);
+        // Approved departure T1-wheel-zoom-stale: legacy's wheel zoom left
+        // the tools' transform unzoomed (the capture zoom-wheel-stale, kept
+        // as the old evidence); here the tools take the zoom at once, so the
+        // case gives what legacy gave once SetVisual ran: zoom-at-point, the
+        // same zoom followed by setvisual.
+        const bool staleZoom = c.name == "zoom-wheel-stale";
+        const QJsonObject &legacy = observations.at(c.name);
+        const QJsonObject &o = staleZoom ? observations.at("zoom-at-point") : legacy;
+        if (staleZoom) {
+            ASSERT_EQ(legacy[QStringLiteral("zoomOps")], QJsonArray{QStringLiteral("zoom 2.5 200 120")});
+            ASSERT_EQ(o[QStringLiteral("zoomOps")], (QJsonArray{QStringLiteral("zoom 2.5 200 120"), QStringLiteral("setvisual")}));
+        }
         TestHost host;
         host.s = std::make_unique<EditSession>(load(kScript));
         const core::LineId active = ids(*host.s).front();
@@ -298,8 +331,8 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
         // The crosshair: SetCurVisual, then a move to each point.
         CrosshairTool cross;
         cross.reset(host);
-        for (const QJsonValue &pv : o[QStringLiteral("points")].toArray()) {
-            const QJsonObject p = pv.toObject();
+        for (const QJsonValue &lv : legacy[QStringLiteral("points")].toArray()) {
+            const QJsonObject p = entryAt(o, "points", lv.toObject()[QStringLiteral("at")]);
             const int x = p[QStringLiteral("at")].toArray()[0].toInt();
             const int y = p[QStringLiteral("at")].toArray()[1].toInt();
             SCOPED_TRACE(std::to_string(x) + "," + std::to_string(y));
@@ -322,15 +355,20 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             } else {
                 EXPECT_TRUE(cross.overlay(host).empty());
             }
-            EXPECT_EQ(copyCoordinatesText(host.v, x, y), u16(p[QStringLiteral("copy")]));
+            const std::u16string copied = copiedFromLabel(p[QStringLiteral("label")]);
+            EXPECT_EQ(copyCoordinatesText(host.v, x, y), copied);
+            if (copied != u16(lv.toObject()[QStringLiteral("copy")]))
+                ++copyDepartures;
         }
-        for (const QJsonValue &sv : o[QStringLiteral("scriptPoints")].toArray()) {
-            const QJsonObject p = sv.toObject();
+        for (const QJsonValue &lv : legacy[QStringLiteral("scriptPoints")].toArray()) {
+            const QJsonObject p = entryAt(o, "scriptPoints", lv.toObject()[QStringLiteral("at")]);
             EXPECT_EQ(host.v.scriptToView(pair(p[QStringLiteral("at")])), pair(p[QStringLiteral("in")]));
         }
         // Ctrl+click and middle click: \pos into the active Line, one step.
-        for (const QJsonValue &kv : o[QStringLiteral("clicks")].toArray()) {
+        for (const QJsonValue &kv : legacy[QStringLiteral("clicks")].toArray()) {
             const QJsonObject k = kv.toObject();
+            // The \pos written where SetVisual had run (T1-wheel-zoom-stale).
+            const QJsonObject want = staleZoom ? entryAt(o, "clicks", k[QStringLiteral("at")]) : k;
             const int x = k[QStringLiteral("at")].toArray()[0].toInt();
             const int y = k[QStringLiteral("at")].toArray()[1].toInt();
             const bool tl = k[QStringLiteral("tlMode")].toBool();
@@ -357,12 +395,21 @@ TEST(VisualCapture, ReplaysTheLegacyProbe)
             }
             cross.pointer({Pointer::Kind::Move, x, y}, host);
             cross.pointer(press, host);
-            EXPECT_EQ(line(*host.s, id)->text, core::toUtf8(u16(k[QStringLiteral("newText")])));
+            const QString newText = want[QStringLiteral("newText")].toString().replace(
+                want[QStringLiteral("text")].toString(), k[QStringLiteral("text")].toString());
+            EXPECT_EQ(line(*host.s, id)->text, core::toUtf8(newText.toStdU16String()));
             EXPECT_EQ(line(*host.s, id)->translation, core::toUtf8(u16(k[QStringLiteral("newTl")])));
             EXPECT_EQ(host.s->historySize(), steps + 1);
             EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
         }
+        if (staleZoom) { // the old evidence: legacy's tools stayed unzoomed
+            EXPECT_NE(host.v.zoomScale(), pair(legacy[QStringLiteral("zoomScale")]));
+            EXPECT_NE(host.v.zoomMove(), pair(legacy[QStringLiteral("zoomMove")]));
+        }
     }
+    // The old evidence of T1-copy-coords-view: legacy's text differs from the
+    // script position under the pointer with a bar or a zoom.
+    EXPECT_GT(copyDepartures, 0);
 }
 
 TEST(VisualView, ForwardAndInverseRoundTrip)
