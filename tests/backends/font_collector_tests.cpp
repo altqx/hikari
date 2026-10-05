@@ -318,6 +318,84 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
 
 // Cancelled while writing: an archive is never published (a file of that
 // name stays as it was), a folder keeps its label.
+namespace {
+// Passes each call to the real output; the user cancels once the first
+// font is written.
+class CancelAfterFirstPut final : public CollectorOutput {
+public:
+    CancelAfterFirstPut(CollectorOutput &inner, std::atomic<bool> &cancel) : m_inner(inner), m_cancel(cancel) {}
+    bool open() override { return m_inner.open(); }
+    bool folderFailed() const override { return m_inner.folderFailed(); }
+    bool put(const std::u16string &name, const std::vector<std::byte> &bytes) override
+    {
+        const bool ok = m_inner.put(name, bytes);
+        m_cancel = true;
+        return ok;
+    }
+    bool label(const std::string &utf8Text) override { return m_inner.label(utf8Text); }
+    bool unlabel() override { return m_inner.unlabel(); }
+    bool commit() override { return m_inner.commit(); }
+    void discard() override { m_inner.discard(); }
+
+private:
+    CollectorOutput &m_inner;
+    std::atomic<bool> &m_cancel;
+};
+} // namespace
+
+// Cancelled after the first font is written: the folder keeps that font and
+// its label; the archive, one entry already added, is discarded and the
+// previous file of that name stays, with no temporary file left beside it.
+TEST(FontCollectorRenderer, CancellationMidWriteLeavesNothingUnlabelled)
+{
+    const auto doc = document(0, {"W,HikariProbeWeighted,0,0", "A,HikariProbeBase,0,0"},
+                              {"W,Regular", "W,{\\b1}Bold", "A,Base"});
+    LibassFontService service;
+    FontCollector collector(service);
+    std::atomic<bool> cancel{false};
+
+    QTemporaryDir dir;
+    const auto folderReview = collector.prepare({doc}, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(folderReview);
+    ASSERT_TRUE(folderReview->complete());
+    ASSERT_EQ(folderReview->files.size(), 3u);
+    const QString folder = dir.filePath(QStringLiteral("copy"));
+    {
+        FolderCollectorOutput real(folder);
+        CancelAfterFirstPut out(real, cancel);
+        const auto r = collector.apply(*folderReview, out, false, &cancel);
+        EXPECT_TRUE(r.cancelled);
+        EXPECT_FALSE(r.complete);
+        EXPECT_TRUE(r.labelled);
+        EXPECT_EQ(r.foundCount, 1);
+    }
+    const QString first = QString::fromStdU16String(folderReview->files.front().name);
+    EXPECT_EQ(QDir(folder).entryList(QDir::Files, QDir::Name),
+              (QStringList{QString::fromUtf8(backends::kIncompleteLabel), first}));
+    EXPECT_TRUE(readAll(QDir(folder).filePath(QString::fromUtf8(backends::kIncompleteLabel))).contains("Writing was cancelled."));
+    EXPECT_EQ(sha256(readAll(QDir(folder).filePath(first))), fixtureSha(first.toUtf8().constData()));
+
+    cancel = false;
+    const auto zipReview = collector.prepare({doc}, CollectorAction::Zip);
+    ASSERT_TRUE(zipReview);
+    const QString archive = dir.filePath(QStringLiteral("fonts.zip"));
+    {
+        QFile previous(archive);
+        ASSERT_TRUE(previous.open(QIODevice::WriteOnly));
+        previous.write("previous");
+    }
+    {
+        ZipCollectorOutput real(archive);
+        CancelAfterFirstPut out(real, cancel);
+        const auto r = collector.apply(*zipReview, out, false, &cancel);
+        EXPECT_TRUE(r.cancelled);
+        EXPECT_FALSE(r.written);
+        EXPECT_EQ(r.foundCount, 1);
+    }
+    EXPECT_EQ(readAll(archive), QByteArray("previous"));
+    EXPECT_EQ(QDir(dir.path()).entryList(QDir::Files), QStringList{QStringLiteral("fonts.zip")});
+}
+
 TEST(FontCollectorRenderer, CancellationLeavesNothingUnlabelled)
 {
     const auto doc = document(0, {"A,HikariProbeBase,0,0"}, {"A,Plain"});

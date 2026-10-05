@@ -76,6 +76,7 @@ public:
     std::vector<std::u16string> written;
     std::optional<std::string> labelText;
     bool committed = false, discarded = false, opened = false;
+    std::atomic<bool> *cancelAfterPut = nullptr;
     bool open() override
     {
         opened = true;
@@ -87,6 +88,8 @@ public:
         if (failing.contains(name))
             return false;
         written.push_back(name);
+        if (cancelAfterPut)
+            cancelAfterPut->store(true); // the user cancels while this file is written
         return true;
     }
     bool label(const std::string &text) override
@@ -357,6 +360,45 @@ TEST(FontCollectorApply, CancellationLeavesNothingUnlabelled)
     const auto none = collector.prepare(docs, CollectorAction::Zip, &cancel);
     ASSERT_FALSE(none);
     EXPECT_EQ(none.error(), FontError::Cancelled);
+}
+
+// Cancelled after the first font is written: the folder holds that font
+// and the label says the writing was cancelled; the archive with an entry
+// already added is discarded, never published.
+TEST(FontCollectorApply, CancellationMidWriteLeavesNothingUnlabelled)
+{
+    auto fonts = arialAndTimes();
+    FontCollector collector(fonts);
+    const std::vector<CollectorDocument> docs{
+        tab(0, script({"Default,Arial,0,0", "T,Times,0,0"}, {"Default,a", "T,b"}))};
+    std::atomic<bool> cancel{false};
+    const auto folder = collector.prepare(docs, CollectorAction::CopyToFolder);
+    ASSERT_TRUE(folder);
+    ASSERT_EQ(folder->files.size(), 2u);
+    ASSERT_TRUE(folder->complete());
+    MemoryOutput out;
+    out.cancelAfterPut = &cancel;
+    const auto r = collector.apply(*folder, out, false, &cancel);
+    EXPECT_TRUE(r.cancelled);
+    EXPECT_EQ(out.written, std::vector<std::u16string>{u"arial.ttf"});
+    EXPECT_EQ(r.foundCount, 1);
+    EXPECT_FALSE(r.complete);
+    EXPECT_TRUE(r.labelled);
+    ASSERT_TRUE(out.labelText);
+    EXPECT_NE(out.labelText->find("Writing was cancelled."), std::string::npos);
+
+    cancel = false;
+    const auto zip = collector.prepare(docs, CollectorAction::Zip);
+    ASSERT_TRUE(zip);
+    MemoryOutput archive;
+    archive.cancelAfterPut = &cancel;
+    const auto z = collector.apply(*zip, archive, false, &cancel);
+    EXPECT_TRUE(z.cancelled);
+    EXPECT_EQ(archive.written, std::vector<std::u16string>{u"arial.ttf"});
+    EXPECT_TRUE(archive.discarded);
+    EXPECT_FALSE(archive.committed);
+    EXPECT_FALSE(z.written);
+    EXPECT_FALSE(archive.labelText);
 }
 
 // The renderer's own files beyond the variants (here a fallback) are
