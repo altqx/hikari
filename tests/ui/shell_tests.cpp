@@ -2899,9 +2899,14 @@ private slots:
         QTRY_VERIFY(videoDock->property("isFloating").toBool());
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(dockHeader(QStringLiteral("Video")) && dockHeader(QStringLiteral("Video"))->window() != window);
-        // A narrow floating window: the menu has no room right of the button.
-        dockHeader(QStringLiteral("Video"))->window()->resize(330, 300);
-        QTRY_COMPARE(dockHeader(QStringLiteral("Video"))->window()->width(), 330);
+        // A narrow floating window: the menu has no room right of the button
+        // (as narrow as the panel's minimum and the window system allow).
+        {
+            QWindow *narrow = dockHeader(QStringLiteral("Video"))->window();
+            const int wide = narrow->width();
+            narrow->resize(330, 300);
+            QTRY_VERIFY(narrow->width() < wide);
+        }
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QCOMPARE(panelMenuItems(), (QStringList{QStringLiteral("Move panel…"), QStringLiteral("Dock"), QStringLiteral("Close")}));
         // Native gate (sway): the menu opens in the floating panel's window,
