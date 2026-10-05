@@ -102,7 +102,8 @@ std::vector<MatroskaFont> matroskaFonts(const std::vector<MatroskaAttachment> &a
 std::string matroskaSubtitlePath(const std::string &mkvPath, core::SubtitleFormat format);
 
 // The menus' checks: SubsGrid's GRID_SUBS_FROM_MKV (VideoName ends with
-// ".mkv" or ".ogm", SubsGrid.cpp:289, 879-881) and the font collector's
+// ".mkv" or ".ogm", SubsGrid.cpp:289, 879-881; legacy's check was
+// case-sensitive, here any case: Y9-mkv-case) and the font collector's
 // "Demux fonts from loaded MKV file" (VideoPath.Lower() ends with ".mkv",
 // FontCollector.cpp:182, 549); CopyMKVFontsFromTab's own check
 // (AfterLast('.').Lower() == "mkv", FontCollector.cpp:935-937).

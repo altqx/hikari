@@ -102,7 +102,10 @@ std::string matroskaSubtitlePath(const std::string &mkvPath, core::SubtitleForma
 
 bool subtitlesFromMkvEnabled(const std::u16string &videoName)
 {
-    return videoName.ends_with(u".mkv") || videoName.ends_with(u".ogm");
+    // Legacy's EndsWith was case-sensitive (Y9-mkv-case): any case here, as
+    // the collector's check.
+    const std::u16string lower = asciiLower(videoName);
+    return lower.ends_with(u".mkv") || lower.ends_with(u".ogm");
 }
 
 bool fontsFromMkvEnabled(const std::u16string &videoPath)

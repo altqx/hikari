@@ -167,10 +167,13 @@ TEST(MatroskaFonts, FontAttachmentsAndTheirNames)
 
 TEST(MatroskaChecks, MenuAndCollectorChecks)
 {
-    // GRID_SUBS_FROM_MKV: VideoName.EndsWith(".mkv" or ".ogm"), case-sensitive.
+    // GRID_SUBS_FROM_MKV: VideoName ends with ".mkv" or ".ogm" in any case
+    // (Y9-mkv-case; legacy's EndsWith was case-sensitive).
     EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.mkv"));
     EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.ogm"));
-    EXPECT_FALSE(subtitlesFromMkvEnabled(u"a.MKV"));
+    EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.MKV"));
+    EXPECT_TRUE(subtitlesFromMkvEnabled(u"a.Ogm"));
+    EXPECT_FALSE(subtitlesFromMkvEnabled(u"a.mkv.mp4"));
     EXPECT_FALSE(subtitlesFromMkvEnabled(u"a.mp4"));
     EXPECT_FALSE(subtitlesFromMkvEnabled(u""));
     // The collector's checkbox: VideoPath.Lower().EndsWith(".mkv").

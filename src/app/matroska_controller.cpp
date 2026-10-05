@@ -82,7 +82,8 @@ MatroskaController::~MatroskaController()
 
 void MatroskaController::refresh()
 {
-    // SubsGrid.cpp:289: tab->VideoName ends with ".mkv" or ".ogm".
+    // SubsGrid.cpp:289: tab->VideoName ends with ".mkv" or ".ogm", in any
+    // case here (Y9-mkv-case).
     const QString path = m_hooks.videoPath ? m_hooks.videoPath() : QString();
     const bool available = application::subtitlesFromMkvEnabled(QFileInfo(path).fileName().toStdU16String());
     if (available != m_available) {

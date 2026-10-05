@@ -282,11 +282,14 @@ void FontCollectorController::changeOptions(int action, bool useSubsDirectory)
 
 void FontCollectorController::setFromMkv(bool on)
 {
-    // The checkbox has no handler and FONT_COLLECTOR_FROM_MKV is never
-    // written (FontCollector.cpp:181-183).
+    // Legacy's checkbox had no handler, so FONT_COLLECTOR_FROM_MKV was read
+    // and never written (FontCollector.cpp:181-183); it is kept as the
+    // other options are (Y9-from-mkv-saved).
     if (m_fromMkv == on)
         return;
     m_fromMkv = on;
+    m_settings.set("fontCollector.fromMkv", on);
+    m_settings.sync();
     emit settingsChanged();
 }
 
@@ -356,8 +359,10 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
         if (allTabs || i == current)
             m_mkvVideos.push_back(tabs[std::size_t(i)].video);
     if (m_action == 0) {
-        // StartCollect at once: an MKV run writes into the window's last
-        // copypath (none yet: "Cannot create folder.").
+        // StartCollect at once. Legacy's MKV run here wrote into the window's
+        // last copypath ("Cannot create folder." without one, FontCollector.cpp:
+        // 440-447); it lists the MKV's fonts and writes nothing
+        // (Y9-mkv-check-only).
         if (m_runMkv)
             runMkvPrepare();
         else
@@ -375,8 +380,12 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     const QString subsPath = current >= 0 && current < int(tabs.size()) ? tabs[std::size_t(current)].path : QString();
     if (path.isEmpty() && !m_useSubsDirectory)
         return refuse(tr("Select the folder where you want to copy fonts"));
-    // subsfromMkv is the checkbox's value, enabled or not (FontCollector.cpp:453-467).
-    if (!m_fromMkv && m_useSubsDirectory && subsPath.isEmpty())
+    // Legacy's subsfromMkv was the checkbox's value, enabled or not
+    // (FontCollector.cpp:453-467); a disabled box could be checked there only
+    // in the check mode, which never reaches this. With the value kept
+    // (Y9-from-mkv-saved) a checked box is disabled for a video that is not
+    // an MKV file, and then demuxes nothing: the run's own MKV choice.
+    if (!m_runMkv && m_useSubsDirectory && subsPath.isEmpty())
         return refuse(tr("No subtitles loaded. Load subtitles or deselect this option."));
     const QString pathValue = normalizePath(path);
     const bool zip = m_action == 2;
@@ -385,7 +394,7 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     QString copypath;
     if (m_useSubsDirectory) {
         // sourcePath: the video when demuxing fonts from the MKV (480).
-        const QString sourcePath = m_fromMkv ? currentVideo() : subsPath;
+        const QString sourcePath = m_runMkv ? currentVideo() : subsPath;
         const QString rest = pathName(sourcePath);
         // Legacy always wrote a Polish "Czcionki" folder (FontCollector.cpp:
         // 482); the folder is named in the interface language
@@ -842,6 +851,14 @@ void FontCollectorController::mkvPrepared(bool cancelled)
             send(tr("Font named \"%1\".\n").arg(qs(font.name)), kNormal);
             ++count;
         }
+    }
+    if (m_runAction == CollectorAction::Check) {
+        // Y9-mkv-check-only: the list is the result; there is no review.
+        m_mkvTabs.clear();
+        logFinished();
+        emit logChanged();
+        setStage(Done);
+        return;
     }
     if (count == 0) {
         // Nothing to write: the run ends as legacy's did, with "Save folder".
