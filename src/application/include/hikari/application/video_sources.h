@@ -112,6 +112,9 @@ public:
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
     void nextPcm(std::int64_t maxFrames, PcmReady done) override;
+    // V4: the helper's converter; a dummy has none to set and takes any
+    // matrix (legacy ProviderDummy::SetColorSpace does nothing).
+    void setInputMatrix(int colorSpace, int colorRange, MatrixSet done) override;
     void cancelReads() override;
     std::uint64_t generation() const override;
     std::optional<OpenFailure> openFailure() const override;

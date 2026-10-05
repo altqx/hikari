@@ -397,6 +397,13 @@ void DummyVideoSource::nextPcm(std::int64_t maxFrames, PcmReady done)
     done(std::unexpected(SourceError::NotOpen));
 }
 
+void DummyVideoSource::setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
+{
+    if (!m_dummy)
+        return m_media.setInputMatrix(colorSpace, colorRange, std::move(done));
+    done({});
+}
+
 void DummyVideoSource::cancelReads()
 {
     m_media.cancelReads();
