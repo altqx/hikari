@@ -180,6 +180,15 @@ public:
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
+    const application::visual::VideoView &videoView() const { return m_view; }
+    // V4: legacy RendererVideo::HasVisual(true): a tool other than the
+    // crosshair, which keeps the wheel and the clicks to itself.
+    bool hasNonDefaultTool() const { return tool() && m_family != application::visual::Family::Crosshair; }
+    // V4: the zoom or the aspect ratio changed the view (RendererVideo::Zoom,
+    // ResetZoom, UpdateVideoWindow): the tools take it, and a tool other
+    // than the clips and the drawing starts again (SetCurVisual,
+    // RendererVideo.cpp:785-788 and 806-811).
+    void viewChanged();
     std::optional<application::CommandRefusal> lastRefusal() const { return m_lastRefusal; }
 
 signals:

@@ -246,6 +246,8 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 t.height = in.i32();
                 t.sarNum = in.i32();
                 t.sarDen = in.i32();
+                t.colorSpace = in.i32();
+                t.colorRange = in.i32();
                 if (!in.ok()) {
                     unused();
                     return done(std::unexpected(SourceError::BackendFailure));
@@ -335,6 +337,30 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
     if (!request)
         return finish(std::unexpected(errorOf(request.error())));
     m_reads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
+{
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
+    if (!m_open || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::InputMatrix)).i32(colorSpace).i32(colorRange).take(),
+        [generation, done, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return done(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return done(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return done(std::unexpected(errorOf(e->outcome, e->payload)));
+            done({});
+        });
+    if (!request)
+        done(std::unexpected(errorOf(request.error())));
 }
 
 void FfmsIndexedSource::openAudio(int track, AudioOpened done)

@@ -16,6 +16,7 @@
 #include "hikari/application/resample.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
+#include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "spelling_text.h"
@@ -562,6 +563,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_visualTools->setEditorSelectionPlacer([this, visualRole](long from, long to) {
         m_editor->selectRaw(visualRole(), static_cast<int>(from), static_cast<int>(to));
     });
+    // V4: zoom, aspect, volume, the context menu and the snapshots; the
+    // general player takes the video volume.
+    m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
+    m_videoView->setPlayer(m_generalPlayer.get());
+    // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
+    m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1367,6 +1374,8 @@ void Application::refreshVideo()
         m_videoRevision = session->revision();
         m_video->session().setSubtitles(m_visualTools->subtitles(session->document())); // T4: with the tool's preview
     }
+    // V4: the Script properties YCbCr matrix on the video's colours.
+    m_video->session().setMatrix(application::sessionVideoMatrix(*session));
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
@@ -4221,6 +4230,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
+            {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},

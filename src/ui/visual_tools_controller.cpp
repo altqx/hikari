@@ -204,6 +204,17 @@ void VisualToolsController::resetTool()
     updatePreview();
 }
 
+void VisualToolsController::viewChanged()
+{
+    m_view.refreshToolTransform();
+    auto *t = tool();
+    if (t && (m_family < Family::RectangleClip || m_family > Family::Drawing))
+        t->reset(*this);
+    emit geometryChanged();
+    emit overlayChanged();
+    emit changed();
+}
+
 std::optional<core::LineId> VisualToolsController::activeLine() const
 {
     const auto *s = editingSession();
@@ -628,7 +639,8 @@ QString VisualToolsController::warning() const
 
 bool VisualToolsController::hideCursor() const
 {
-    return m_overVideo && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
+    // V4: the zoom mode shows the pointer (ZoomMouseHandle's cursors).
+    return !m_view.zoomMode() && m_overVideo && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
 }
 
 QRectF VisualToolsController::videoRect() const
@@ -651,7 +663,9 @@ QVariantList VisualToolsController::overlay() const
 {
     QVariantList out;
     const auto *t = tool();
-    if (!t || !m_view.hasVideo())
+    // V4: the tools are not drawn in the zoom mode (RendererFFMS2.cpp:392,
+    // `m_Visual && !m_HasZoom`).
+    if (!t || !m_view.hasVideo() || m_view.zoomMode())
         return out;
     // Visuals::Draw draws the warning instead of the tool.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)

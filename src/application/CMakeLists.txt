@@ -66,3 +66,9 @@ set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE
 target_sources(hikari_application PRIVATE video_sources.cpp)
 set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# V4: the video view's volume, aspect and wheel zoom, the snapshots and the
+# YCbCr matrix. The wheel's zoom is legacy float arithmetic, built as
+# visual_view.cpp is.
+target_sources(hikari_application PRIVATE video_controls.cpp video_snapshot.cpp video_matrix.cpp)
+set_source_files_properties(video_controls.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

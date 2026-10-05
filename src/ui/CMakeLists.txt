@@ -70,3 +70,7 @@ qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml DockS
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
+# V4: the video view's zoom, aspect, volume, context menu and snapshots.
+target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
+qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
+    VideoVolumeSlider.qml)

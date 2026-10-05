@@ -23,9 +23,16 @@
 //                      u8 newIndex (1: indexed now, 0: read from indexFile),
 //                      u8 handedOff (1: the new index is in handoffFile),
 //                      i32 width, i32 height (frame 0's encoded size),
-//                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown)
-//         terminal failures (8): u8 stage, str text, as the audio box's below
+//                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown),
+//                      i32 colorSpace, i32 colorRange (V4: frame 0's
+//                      FFMS_CS_* matrix and FFMS_CR_* range)
+//         terminal failures (9): u8 stage, str text, as the audio box's below
 //                      (V3: legacy ProviderFFMS2::Init's log messages)
+// InputMatrix request: u8 InputMatrix, i32 colorSpace, i32 colorRange (V4:
+//                  FFMS_SetInputFormatV on the open video, the pixel format
+//                  kept; the next frames are converted with them)
+//         terminal Ok: empty
+//         terminal InvalidInput: not open; Failed: FFMS2's text
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open
@@ -99,16 +106,17 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 9; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+inline constexpr std::uint32_t kProtocolVersion = 10; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
                                                    // 5: Probe, a chosen track, the video's audio, DisplayRead;
                                                    // 6: index files and the audio track in Open, no shared display audio;
                                                    // 7: Open's index handoff, DisplayRead into a block buffer;
                                                    // 8: SubtitleTracks, Subtitles, Attachments (Y9);
-                                                   // 9: Open's failures carry their stage (V3)
+                                                   // 9: Open's failures carry their stage (V3);
+                                                   // 10: the frame's matrix in Open, InputMatrix (V4)
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
                                  OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11, SubtitleTracks = 12, Subtitles = 13,
-                                 Attachments = 14 };
+                                 Attachments = 14, InputMatrix = 15 };
 
 } // namespace hikari::backends::media

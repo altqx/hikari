@@ -466,8 +466,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V4 #183"
+   ]
   },
   {
    "role": "media-play",

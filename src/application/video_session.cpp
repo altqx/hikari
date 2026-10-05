@@ -87,6 +87,10 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
+        // V4: legacy ProviderFFMS2::Init's matrix, before the first frame.
+        if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,
+                                             m_docMatrix))
+            applyInputMatrix(*input, std::nullopt);
         notify();
         if (const auto seek = std::exchange(m_pendingSeek, std::nullopt))
             seekTo(*seek);
@@ -141,6 +145,38 @@ void VideoSession::setSubtitles(std::vector<std::byte> script)
         render();
         present();
     }
+}
+
+void VideoSession::setMatrix(std::string matrix)
+{
+    if (matrix == m_docMatrix)
+        return;
+    m_docMatrix = std::move(matrix);
+    if (m_state != State::Ready)
+        return; // the open takes it
+    // RendererFFMS2::SetColorSpace: the provider's SetColorSpace, then
+    // Render() while paused (RendererFFMS2.h:66-72).
+    if (auto change = m_colour.set(m_docMatrix)) {
+        applyInputMatrix(change->input, change);
+        if (!m_playing && m_requested)
+            showFrame(*m_requested);
+    }
+}
+
+void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::optional<LegacyColourMatrix::Change> change)
+{
+    const std::weak_ptr<bool> alive = m_alive;
+    const std::uint64_t generation = m_source.generation();
+    m_source.setInputMatrix(input.colorSpace, input.colorRange,
+                            [this, alive, generation, change](std::expected<void, SourceError> done) {
+                                if (alive.expired() || done || generation != m_source.generation())
+                                    return;
+                                if (change)
+                                    m_colour.revert(*change);
+                                if (m_log)
+                                    m_log("Cannot change YCbCr matrix"); // ProviderFFMS2.cpp:402, 408, 979
+                                notify();
+                            });
 }
 
 std::optional<core::DocumentTime> VideoSession::frameStart(int index) const

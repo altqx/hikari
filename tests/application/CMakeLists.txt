@@ -150,3 +150,6 @@ hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
     HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
+# V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
+hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
+    LIBRARIES hikari_application LABELS application)
