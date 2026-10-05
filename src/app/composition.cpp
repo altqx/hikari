@@ -42,6 +42,7 @@ int run(int argc, char **argv, StartupMode mode)
     QQmlApplicationEngine engine;
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
+    attachFontCatalogPreview(engine, application.fontCatalogs()); // Y6
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

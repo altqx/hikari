@@ -32,6 +32,8 @@ qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTab
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # O3: the legacy settings importer's window.
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
+# Y6: Font catalogs, the catalog window and "Add fonts from subtitles".
+qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.qml FontsFromSubtitlesDialog.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:

@@ -1,0 +1,3 @@
+# Legacy catalog bytes (BOM, CRLF, Latin-1, UTF-16): exact.
+* -text
+.gitattributes text

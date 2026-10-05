@@ -592,8 +592,16 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
 {
     if (width < 1 || height < 1)
         return;
+    const core::StyleValues style = styleOf(values, m_edit ? m_edit->opened : application::defaultStyle());
+    m_preview = renderStylePreview(m_renderer, style, width, height, text, m_hooks.fonts ? m_hooks.fonts() : std::vector<application::FontLease>());
+    ++m_previewKey;
+    emit previewChanged();
+}
+
+QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
+                          const QString &text, std::vector<application::FontLease> fonts)
+{
     // StylePreview::SubsText: the Style at alignment 5 on a script the preview's size.
-    core::StyleValues style = styleOf(values, m_edit ? m_edit->opened : application::defaultStyle());
     style.alignment = u8"5";
     const auto fields = core::legacy::styleRawFields(style);
     std::u8string line = u8"Style: ";
@@ -609,6 +617,7 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
     application::RenderSnapshot snapshot;
     snapshot.script.resize(script.size());
     std::memcpy(snapshot.script.data(), script.data(), script.size());
+    snapshot.fonts = std::move(fonts); // Y6: the external fonts
     // The checkered background: 10-pixel squares of the two preview colours.
     QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
     const QRgb one = qRgb(0x43, 0x43, 0x43), two = qRgb(0x62, 0x62, 0x62);
@@ -624,8 +633,8 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
             rowPixels[x] = phase ? one : two;
         }
     }
-    if (m_renderer.prepare(std::move(snapshot))) {
-        if (const auto frame = m_renderer.render(core::DocumentTime(1'000'000), width, height); frame && !frame->empty) {
+    if (renderer.prepare(std::move(snapshot))) {
+        if (const auto frame = renderer.render(core::DocumentTime(1'000'000), width, height); frame && !frame->empty) {
             // Premultiplied BGRA over the background.
             for (int y = 0; y < height; ++y) {
                 auto *dst = reinterpret_cast<QRgb *>(image.scanLine(y));
@@ -638,9 +647,7 @@ void StyleManagerController::renderPreview(const QVariantMap &values, int width,
             }
         }
     }
-    m_preview = image;
-    ++m_previewKey;
-    emit previewChanged();
+    return image;
 }
 
 namespace {

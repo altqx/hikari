@@ -560,6 +560,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_editor->reloadFromSession();
             refreshViews();
         };
+        hooks.fonts = [this] { // Y6: the external fonts render in the preview
+            return m_fontCatalogs ? m_fontCatalogs->externalFontLeases() : std::vector<application::FontLease>();
+        };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -596,6 +599,44 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             goTo(tab, [name](const core::LineRecord &l, int) { return core::toUtf16(l.style) == name; });
         };
         m_fontCollector = std::make_unique<FontCollectorController>(*m_settings, std::move(hooks));
+    }
+    {
+        // Y6: Font catalogs (legacy Config/FontCatalogs.txt) and the font
+        // lists of the font dialog, the Style editor and the catalog window.
+        QString dir = options.fontCatalogDir;
+        if (dir.isEmpty() && !m_settingsFile.isEmpty())
+            dir = QFileInfo(m_settingsFile).absolutePath();
+        if (dir.isEmpty()) {
+            m_fontCatalogTemp = std::make_unique<QTemporaryDir>();
+            dir = m_fontCatalogTemp->path();
+        }
+        FontCatalogsController::Hooks hooks;
+        // CollectFontsFromSubtitles: every tab from the first, or the active one.
+        hooks.documents = [this](bool all) {
+            std::vector<std::shared_ptr<const core::Document>> out;
+            const auto tabs = m_workspace.tabs();
+            const int current = currentTab();
+            for (int i = 0; i < int(tabs.size()); ++i)
+                if (all || i == current)
+                    if (auto *session = m_files->session(tabs[std::size_t(i)]))
+                        out.push_back(std::make_shared<core::Document>(session->document()));
+            return out;
+        };
+        hooks.log = [this](const QString &text) { m_log->log(text); };
+        // FontEnumerator's RefreshVideo(true): the video's subtitles render
+        // again with the external fonts.
+        hooks.fontsChanged = [this] {
+            if (!m_fontCatalogs)
+                return;
+            m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
+            if (m_videoDocument) {
+                m_videoRevision.reset();
+                refreshVideo();
+            }
+        };
+        m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
+                                                                  std::move(hooks));
+        m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
     }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
@@ -4088,6 +4129,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
+            {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 

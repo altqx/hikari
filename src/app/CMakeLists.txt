@@ -29,3 +29,5 @@ target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/
 # O3: the legacy settings importer's generations and window state.
 target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h
     settings_import_controller.cpp include/hikari/app/settings_import_controller.h)
+# Y6: Font catalogs, the font picker's lists and the external fonts folder.
+target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)

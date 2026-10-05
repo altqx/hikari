@@ -6,8 +6,14 @@
 // renderer read them: from the provider's stream, or from the file the
 // provider named. System faces are listed through the same provider libass
 // uses (its static fontconfig on Linux, DirectWrite on Windows).
+//
+// Y6: the font picker's faces add the environment's external fonts (read
+// from their bytes), coverage answers the font filter, and refresh() makes
+// the next listing read the installed fonts again (F47-refresh).
 
 #include "hikari/application/font_service.h"
+
+#include <atomic>
 
 namespace hikari::backends {
 
@@ -23,6 +29,15 @@ public:
     std::expected<application::ReimportCheck, application::FontError>
     verifyReimport(const std::vector<std::byte> &script, const application::FontCollection &collection,
                    const std::string &defaultFamily = {}) override;
+    std::vector<application::SystemFace> pickerFaces(const application::FontEnvironment &environment) override;
+    std::vector<bool> facesCover(const std::vector<application::SystemFace> &faces,
+                                 const application::FontEnvironment &environment,
+                                 const std::u32string &characters) override;
+    void refresh() override;
+    std::vector<std::string> fontDirectories() override;
+
+private:
+    std::atomic<bool> m_checkForUpdates{false}; // DirectWrite: rescan the system collection
 };
 
 } // namespace hikari::backends

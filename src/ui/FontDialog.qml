@@ -1,6 +1,11 @@
 // E1: the editor's font dialog (legacy FontDialog "Select a font"). Each
 // change is applied to the edited text at once, as legacy's FONT_CHANGED
 // does; Cancel takes every change back.
+//
+// Y6: the list is the FontService's families through the catalog choice and
+// the Filter ("Filtering and font catalogs", FontDialog.cpp:422-486,
+// 656-732); typing selects as FontList::SetSelectionByPartialName does; under
+// the preview the renderer reports the face it selected for the name.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -10,11 +15,17 @@ Dialog {
     id: dialog
     objectName: "fontDialog"
     required property LineEditorController editor
+    required property var catalogs // Y6: FontCatalogsController
     title: qsTr("Select a font")
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     property bool loading: false
-    readonly property var families: Qt.fontFamilies()
+    readonly property var families: catalogBar.fonts
+    // editedStyle->Fontname: the font the list selects after ChangeCatalog
+    // (the name opened with, then the name each change applied).
+    property string editedName: ""
+    property var resolution: ({})
+    property int resolveRequest: -1
 
     // Opens on the field `role` with its selection; false when the editor refuses.
     function openFor(role, selectionStart, selectionEnd) {
@@ -28,9 +39,11 @@ Dialog {
         italic.checked = f.italic
         underline.checked = f.underline
         strikeOut.checked = f.strikeOut
-        fontList.currentIndex = families.indexOf(f.name)
-        fontList.positionViewAtIndex(Math.max(0, fontList.currentIndex), ListView.Center)
+        editedName = f.name
+        catalogBar.fontName = f.name
+        catalogBar.reset() // the list, then SetSelectionByName(acst->Fontname)
         loading = false
+        resolve()
         open()
         return true
     }
@@ -42,6 +55,22 @@ Dialog {
         if (!loading)
             changeTimer.restart()
     }
+    function selectByName(name) {
+        fontList.currentIndex = catalogs.nameIndex(families, name)
+        fontList.positionViewAtIndex(Math.max(0, fontList.currentIndex), ListView.Center)
+    }
+    // Y6: what the renderer selects for the name (requested and resolved
+    // identities stay distinct, fonts.md).
+    function resolve() {
+        resolveRequest = catalogs.resolveFamily(fontName.text, bold.checked, italic.checked)
+    }
+    Connections {
+        target: dialog.catalogs
+        function onResolutionReady(requestId, result) {
+            if (requestId === dialog.resolveRequest)
+                dialog.resolution = result
+        }
+    }
     function flush() {
         if (changeTimer.running) {
             changeTimer.stop()
@@ -51,7 +80,11 @@ Dialog {
     Timer {
         id: changeTimer
         interval: 100
-        onTriggered: dialog.editor.changeFont(dialog.current())
+        onTriggered: {
+            dialog.editor.changeFont(dialog.current())
+            dialog.editedName = fontName.text
+            dialog.resolve()
+        }
     }
     onAccepted: {
         flush()
@@ -84,7 +117,7 @@ Dialog {
                         width: ListView.view.width
                         text: modelData
                         highlighted: ListView.isCurrentItem
-                        onClicked: {
+                        onClicked: { // OnFontChanged
                             fontList.currentIndex = index
                             fontName.text = modelData
                         }
@@ -98,15 +131,12 @@ Dialog {
                         Layout.preferredWidth: 150
                         Accessible.name: qsTr("Font name")
                         onTextChanged: {
-                            // Legacy selects the first font that starts with the text.
+                            // OnUpdateText: FontList::SetSelectionByPartialName.
                             if (!dialog.loading) {
-                                const lower = text.toLowerCase()
-                                const i = dialog.families.findIndex(f => f.toLowerCase().startsWith(lower))
-                                if (i >= 0) {
-                                    fontList.currentIndex = i
-                                    fontList.positionViewAtIndex(i, ListView.Contain)
-                                }
+                                fontList.currentIndex = dialog.catalogs.partialIndex(dialog.families, text)
+                                fontList.positionViewAtIndex(Math.max(0, fontList.currentIndex), ListView.Contain)
                             }
+                            catalogBar.fontName = text
                             dialog.changed()
                         }
                     }
@@ -126,6 +156,18 @@ Dialog {
             }
         }
         GroupBox {
+            title: qsTr("Filtering and font catalogs")
+            Layout.fillWidth: true
+            FontCatalogBar {
+                id: catalogBar
+                anchors.fill: parent
+                catalogs: dialog.catalogs
+                fontDialog: true
+                // ChangeCatalog: Fonts->SetSelectionByName(editedStyle->Fontname).
+                onListMade: dialog.selectByName(dialog.editedName)
+            }
+        }
+        GroupBox {
             title: qsTr("Preview")
             Layout.fillWidth: true
             Layout.preferredHeight: 120
@@ -142,6 +184,17 @@ Dialog {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Text.AlignHCenter
             }
+        }
+        Label {
+            objectName: "fontResolution"
+            Layout.fillWidth: true
+            wrapMode: Text.Wrap
+            readonly property var r: dialog.resolution
+            text: r.kind === "requested" ? qsTr("The subtitle renderer uses %1 (%2).").arg(r.family).arg(r.file)
+                : r.kind === "substituted" ? qsTr("Not installed under this name: the subtitle renderer substitutes %1 (%2).").arg(r.family).arg(r.file)
+                : r.kind === "fallback" ? qsTr("Not installed: the subtitle renderer falls back to %1 (%2).").arg(r.family).arg(r.file)
+                : r.kind === "missing" ? qsTr("No font answers this name.")
+                : ""
         }
     }
 }

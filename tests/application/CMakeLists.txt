@@ -115,3 +115,10 @@ hikari_add_gtest(hikari_application_settings_import_tests SOURCES settings_impor
 target_compile_definitions(hikari_application_settings_import_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_MIGRATION_MAP="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map")
+# Y6: Font catalogs (FontCatalogs.txt grammar, operations), the picker's
+# family lists and filter, and the external fonts folder.
+hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_include_directories(hikari_application_font_catalogs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_application_font_catalogs_tests PRIVATE
+    HIKARI_FONT_CATALOG_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/font-catalogs")
