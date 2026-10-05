@@ -1,5 +1,7 @@
 #include "hikari/application/video_matrix.h"
 
+#include "hikari/application/edit_session.h"
+
 namespace hikari::application {
 
 using namespace ffms_colour;
@@ -18,13 +20,26 @@ std::string colourMatrixName(int colorSpace, int colorRange)
     }
 }
 
-std::string documentVideoMatrix(bool ass, std::optional<std::string_view> scriptInfoValue)
+std::string documentVideoMatrix(bool ass, std::optional<std::string_view> scriptInfoValue, bool asLoaded)
 {
     if (!ass)
         return {};
-    if (!scriptInfoValue || scriptInfoValue->empty() || *scriptInfoValue == "None")
+    if (asLoaded && (!scriptInfoValue || scriptInfoValue->empty() || *scriptInfoValue == "None"))
         return "TV.601";
-    return std::string(*scriptInfoValue);
+    return std::string(scriptInfoValue.value_or(std::string_view{}));
+}
+
+std::string sessionVideoMatrix(const EditSession &session)
+{
+    const auto value = [](const core::Document &d) { return d.scriptInfo(u8"YCbCr Matrix"); };
+    const auto current = value(session.document());
+    bool asLoaded = true;
+    for (std::size_t step = 0; step < session.historyCursor() && asLoaded; ++step)
+        asLoaded = value(session.stepDocument(step)) == current;
+    std::optional<std::string_view> text;
+    if (current)
+        text = std::string_view(reinterpret_cast<const char *>(current->data()), current->size());
+    return documentVideoMatrix(session.document().format() == core::SubtitleFormat::Ass, text, asLoaded);
 }
 
 std::optional<LegacyColourMatrix::Input> LegacyColourMatrix::open(int colorSpace, int colorRange, int width, int height,

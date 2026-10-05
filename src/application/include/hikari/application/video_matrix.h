@@ -30,6 +30,8 @@
 
 namespace hikari::application {
 
+class EditSession;
+
 // FFMS2's colour constants (ffms.h FFMS_ColorSpaces / FFMS_ColorRanges,
 // libavutil's AVCOL_SPC_* / AVCOL_RANGE_* values).
 namespace ffms_colour {
@@ -49,12 +51,22 @@ inline constexpr int kRangeJpeg = 2;
 std::string colourMatrixName(int colorSpace, int colorRange);
 
 // The matrix legacy's video saw for a Document: an ASS Document's Script
-// Info "YCbCr Matrix", where a missing or "None" value reads "TV.601"
-// (legacy SubsLoader::LoadASS wrote that into every loaded ASS file,
-// SubsLoader.cpp:167-168, before the video saw it; approved departure
+// Info "YCbCr Matrix", and no matrix for any other format. A missing or
+// "None" value the file was loaded with reads "TV.601": legacy
+// SubsLoader::LoadASS wrote that into every loaded ASS file
+// (SubsLoader.cpp:167-168) before the video saw it, and approved departure
 // C03-ycbcr-on-load keeps the file as loaded, so the video takes legacy's
-// value here instead), and no matrix for any other format.
-std::string documentVideoMatrix(bool ass, std::optional<std::string_view> scriptInfoValue);
+// value here instead. A "None" the user chose in Script properties stays
+// "None": legacy wrote it and called SetColorSpace("None")
+// (HikariSubFrame.cpp:1241-1245), which gives the source's own matrix.
+std::string documentVideoMatrix(bool ass, std::optional<std::string_view> scriptInfoValue, bool asLoaded);
+
+// documentVideoMatrix for the session's Document, where the value is as
+// loaded while no kept history step up to the current one changed it (Undo
+// back to the opened value gives legacy's TV.601 again, as legacy's Undo
+// restored the TV.601 its load wrote, SubsGridBase.cpp:1023-1025). Steps
+// dropped past the 500-step history capacity are not seen.
+std::string sessionVideoMatrix(const EditSession &session);
 
 class LegacyColourMatrix {
 public:

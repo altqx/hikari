@@ -140,6 +140,8 @@ public:
         std::size_t activeRow = 0; // 1-based row of that Line in the step's Document, 0 for none
     };
     std::vector<HistoryStep> history() const;
+    // The Document a kept history step holds (0 <= step < historySize()).
+    const core::Document &stepDocument(std::size_t step) const { return m_states[step].document; }
     std::size_t historyCursor() const { return m_cursor; }
     // The step whose content is saved, while it is still in history.
     std::optional<std::size_t> savedStep() const;

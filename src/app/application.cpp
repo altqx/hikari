@@ -4,7 +4,6 @@
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
 #include "hikari/application/grid_clipboard.h"
-#include "hikari/application/video_matrix.h"
 #include "hikari/application/grid_commands.h"
 #include "hikari/application/grid_filtering.h"
 #include "hikari/application/grid_groups.h"
@@ -16,6 +15,7 @@
 #include "hikari/application/resample.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
+#include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "spelling_text.h"
@@ -65,20 +65,6 @@
 #endif
 
 namespace hikari::app {
-
-namespace {
-
-// V4: the matrix legacy's video saw for the Document (documentVideoMatrix).
-std::string videoMatrix(const core::Document &document)
-{
-    const auto value = document.scriptInfo(u8"YCbCr Matrix");
-    std::optional<std::string_view> text;
-    if (value)
-        text = std::string_view(reinterpret_cast<const char *>(value->data()), value->size());
-    return application::documentVideoMatrix(document.format() == core::SubtitleFormat::Ass, text);
-}
-
-} // namespace
 
 namespace {
 
@@ -1265,7 +1251,7 @@ void Application::refreshVideo()
         m_video->session().setSubtitles(core::encodeAss(session->document()));
     }
     // V4: the Script properties YCbCr matrix on the video's colours.
-    m_video->session().setMatrix(videoMatrix(session->document()));
+    m_video->session().setMatrix(application::sessionVideoMatrix(*session));
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;

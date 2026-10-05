@@ -5,13 +5,19 @@
 // (RendererVideo::SaveFrame) and the Script properties YCbCr matrix
 // (ProviderFFMS2::Init / SetColorSpace).
 #include "hikari/application/video_controls.h"
+#include "hikari/application/edit_session.h"
+#include "hikari/application/script_properties.h"
 #include "hikari/application/video_matrix.h"
 #include "hikari/application/video_snapshot.h"
 #include "hikari/application/visual_view.h"
+#include "hikari/core/ass_load.h"
 
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <cstring>
+#include <string_view>
+#include <vector>
 
 using namespace hikari::application;
 using visual::IntRect;
@@ -239,16 +245,90 @@ TEST(VideoMatrix, Names)
 }
 
 // The matrix legacy's video saw: a loaded ASS file without one, or with
-// "None", had "TV.601" written in by SubsLoader::LoadASS (C03-ycbcr-on-load
-// keeps the file; the video keeps legacy's value); other formats none.
+// "None", had "TV.601" written in by SubsLoader::LoadASS (SubsLoader.cpp:167-168;
+// C03-ycbcr-on-load keeps the file, the video keeps legacy's value); a "None"
+// chosen later stays "None" (HikariSubFrame.cpp:1241-1245); other formats none.
 TEST(VideoMatrix, DocumentMatrix)
 {
-    EXPECT_EQ(documentVideoMatrix(true, std::nullopt), "TV.601");
-    EXPECT_EQ(documentVideoMatrix(true, "None"), "TV.601");
-    EXPECT_EQ(documentVideoMatrix(true, ""), "TV.601");
-    EXPECT_EQ(documentVideoMatrix(true, "TV.709"), "TV.709");
-    EXPECT_EQ(documentVideoMatrix(true, "PC.709"), "PC.709");
-    EXPECT_EQ(documentVideoMatrix(false, "TV.709"), "");
+    EXPECT_EQ(documentVideoMatrix(true, std::nullopt, true), "TV.601");
+    EXPECT_EQ(documentVideoMatrix(true, "None", true), "TV.601");
+    EXPECT_EQ(documentVideoMatrix(true, "", true), "TV.601");
+    EXPECT_EQ(documentVideoMatrix(true, "None", false), "None");
+    EXPECT_EQ(documentVideoMatrix(true, "TV.709", true), "TV.709");
+    EXPECT_EQ(documentVideoMatrix(true, "PC.709", false), "PC.709");
+    EXPECT_EQ(documentVideoMatrix(false, "TV.709", true), "");
+}
+
+namespace {
+
+hikari::core::Document loadAss(std::string_view text)
+{
+    std::vector<std::byte> bytes(text.size());
+    std::memcpy(bytes.data(), text.data(), text.size());
+    return hikari::core::loadAss(bytes).document;
+}
+
+// Script properties' matrix choice, as the dialog's OK writes it.
+void chooseMatrix(EditSession &session, std::u8string_view name)
+{
+    auto p = scriptProperties(session.document());
+    for (std::size_t i = 0; i < matrixNames().size(); ++i)
+        if (matrixNames()[i] == name)
+            p.matrix = static_cast<int>(i);
+    ASSERT_TRUE(applyScriptProperties(session, p, ScriptPropertiesEdits{}, false).has_value());
+}
+
+constexpr std::string_view kNoneAss = "[Script Info]\nScriptType: v4.00+\nYCbCr Matrix: None\n\n[Events]\n"
+                                      "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                      "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n";
+
+} // namespace
+
+// The session's matrix: "None" as loaded is legacy's TV.601; "None" chosen in
+// Script properties is "None" (the source's own matrix through
+// LegacyColourMatrix::set), until Undo brings back the opened value, which
+// legacy's Undo restored as the TV.601 its load wrote (SubsGridBase.cpp:1023-1025).
+TEST(VideoMatrix, SessionMatrixKeepsAChosenNone)
+{
+    EditSession session{loadAss(kNoneAss)};
+    EXPECT_EQ(sessionVideoMatrix(session), "TV.601");
+    chooseMatrix(session, u8"TV.709");
+    EXPECT_EQ(sessionVideoMatrix(session), "TV.709");
+    chooseMatrix(session, u8"None");
+    EXPECT_EQ(session.document().scriptInfo(u8"YCbCr Matrix"), std::optional<std::u8string>(u8"None"));
+    EXPECT_EQ(sessionVideoMatrix(session), "None");
+    // A later edit that leaves the matrix alone keeps the chosen "None".
+    auto p = scriptProperties(session.document());
+    p.title = u8"Edited";
+    ScriptPropertiesEdits title;
+    title.title = true;
+    ASSERT_TRUE(applyScriptProperties(session, p, title, false).has_value());
+    EXPECT_EQ(sessionVideoMatrix(session), "None");
+    ASSERT_TRUE(session.undo());
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(sessionVideoMatrix(session), "TV.709");
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(sessionVideoMatrix(session), "TV.601");
+    ASSERT_TRUE(session.redo());
+    ASSERT_TRUE(session.redo());
+    EXPECT_EQ(sessionVideoMatrix(session), "None");
+
+    // A file loaded without the key is TV.601; a choice of TV.601 then "None"
+    // is the source's own.
+    EditSession bare{loadAss("[Script Info]\nScriptType: v4.00+\n\n[Events]\n")};
+    EXPECT_EQ(sessionVideoMatrix(bare), "TV.601");
+    chooseMatrix(bare, u8"TV.601");
+    chooseMatrix(bare, u8"None");
+    EXPECT_EQ(sessionVideoMatrix(bare), "None");
+
+    // The chosen "None" reaches the converter as legacy SetColorSpace("None"):
+    // the source's own matrix (ProviderFFMS2.cpp:950-962).
+    using namespace ffms_colour;
+    LegacyColourMatrix m;
+    m.open(kBt709, kRangeMpeg, 1920, 1080, "TV.601");
+    const auto change = m.set("None");
+    ASSERT_TRUE(change.has_value());
+    EXPECT_EQ(change->input, (LegacyColourMatrix::Input{kBt709, kRangeMpeg}));
 }
 
 // ProviderFFMS2::Init (ProviderFFMS2.cpp:393-414).
