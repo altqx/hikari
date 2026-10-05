@@ -10,6 +10,7 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/automation_shell.h"
+#include "hikari/application/associated_files.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
 #include "hikari/application/grid_commands.h"
@@ -145,6 +146,12 @@ public:
         // A1: legacy's FFMS2 index files (Indices); empty: "Indices" beside
         // the settings file, or none without one (tests).
         QString indexDir;
+        // P9: legacy SelectInFolder (the tab menu's folder items, a Ctrl+click
+        // on a recent file); unset: backends::selectInFolder. Tests record.
+        std::function<void(const QString &path)> revealInFolder;
+        // P9: legacy's autosave folder (Options.pathfull/Subs), read only;
+        // empty: "Subs" beside the settings file, or none without one.
+        QString legacyAutosaveDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -179,9 +186,33 @@ public:
     Q_INVOKABLE QVariantMap reviewOpen(const QString &path);
     Q_INVOKABLE QVariantMap reviewOpenUrl(const QUrl &url) { return reviewOpen(url.toLocalFile()); }
     // Dropped files by the legacy rules (OpenFile for one, OpenFiles for
-    // several, sorted): scripts load, the video opens; returns the subtitles
-    // to open with reviewOpen, or "".
-    Q_INVOKABLE QString openDropped(const QList<QUrl> &urls);
+    // several, sorted). One file: {kind: "subtitles" (open with reviewOpen),
+    // "video" (open with openVideoFile), or "" when it was handled (a script
+    // or keyframes)}. Several (P9, legacy OpenFiles): scripts load and the
+    // subtitles and videos open as tabs, pairing the i-th subtitles with the
+    // i-th video; {kind: "files", rows} with the close review's rows when the
+    // first subtitles go into the editing target and it has unsaved work
+    // (then finishClose() or cancelClose() carries the rest out).
+    Q_INVOKABLE QVariantMap openDropped(const QList<QUrl> &urls);
+    // P9: opening a video (legacy OpenFile on a video): subtitles named as
+    // the video beside it (FindFile) are offered first, {subtitles} ("" when
+    // none, or when the tab already has them). Then openVideo(path), or, on
+    // "Yes", reviewOpenWithVideo: the subtitles load into the tab (after the
+    // review) and the video opens afterwards.
+    Q_INVOKABLE QVariantMap openVideoFile(const QString &path);
+    Q_INVOKABLE QVariantMap openVideoFileUrl(const QUrl &url) { return openVideoFile(url.toLocalFile()); }
+    Q_INVOKABLE void openVideo(const QString &path);
+    Q_INVOKABLE QVariantMap reviewOpenWithVideo(const QString &subtitles, const QString &video);
+    // P9: a recent file's entry clicked; with Ctrl alone held (legacy
+    // OnRecent's wxMOD_CONTROL) it is shown in its folder instead of opened:
+    // true then.
+    Q_INVOKABLE bool revealRecent(const QString &path);
+    // P9: legacy SelectInFolder.
+    Q_INVOKABLE void showInFolder(const QString &path);
+    // P9: the "Associated files" question's answer for the editing target
+    // (0 load associated, 1 load from directory, 2 no); with Apply to All
+    // the same answer goes to the other questions of the same opening.
+    void answerAssociation(int answer, bool applyToAll);
     // GLOBAL_RECENT_SUBS: {path, label} rows, missing local files pruned first.
     Q_INVOKABLE QVariantList recentSubtitles();
     std::vector<std::string> recentEntries() const { return m_recent.entries(); }
@@ -210,9 +241,20 @@ public:
     // The dialog's file: the format's extension is added unless the path
     // already ends with it. "readonly" asks again; "" when the save started.
     Q_INVOKABLE QString saveChosen(const QUrl &file);
-    // GLOBAL_SAVE_ALL_SUBS: every modified Document that has a file. True
-    // when the editing target is modified without one (it needs the dialog).
-    Q_INVOKABLE bool saveAll();
+    // GLOBAL_SAVE_ALL_SUBS (legacy SaveAll, HikariSubFrame.cpp:2105-2113):
+    // every modified tab through Save's route, in tab order. Those saved in
+    // place are written now; the others, which need the "Save subtitle file"
+    // dialog (an Untitled Document, a converted format, the video name) or
+    // the read-only warning first, are returned in tab order as {id, route,
+    // title} for the dialogs to follow one after another (P9).
+    Q_INVOKABLE QVariantList saveAll();
+    // P9: Save for any tab (the tab menu's "Save", legacy Save(false, i)):
+    // saveRoute, saveDialogValues and saveChosen of Document `id` (0: the
+    // editing target), and the save in place.
+    Q_INVOKABLE QString saveRouteFor(qulonglong id) const;
+    Q_INVOKABLE QVariantMap saveDialogValuesFor(qulonglong id) const;
+    Q_INVOKABLE QString saveChosenFor(qulonglong id, const QUrl &file);
+    Q_INVOKABLE bool saveDocument(qulonglong id);
     // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
     Q_INVOKABLE bool turnOffTranslationMode();
     // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
@@ -616,6 +658,35 @@ public:
     // The program closes: the session is written with "[Close session]".
     Q_INVOKABLE void endSession();
 
+    // P9: the rest of the tab menu (legacy Notebook::ContextMenu,
+    // Notebook.cpp:882-969) on tab `index` (-1: not on a tab): {tabs:
+    // [{title, current}], save (Save is enabled: the tab is modified),
+    // folders: [{kind: "subtitles"|"video"|"audio"|"keyframes", path}] (the
+    // tab's files that have a path, in that order)}.
+    Q_INVOKABLE QVariantMap tabMenu(int index);
+    // MENU_CHOOSE + g (Notebook::OnTabSel): tab `index` trades places with
+    // the first visible tab, `firstVisible`, and is shown there.
+    Q_INVOKABLE void chooseTab(int index, int firstVisible);
+    // A tab dragged over another (Notebook::OnMouseEvent): the two trade
+    // places and the dragged tab is shown; endTabDrag writes the session once
+    // a drag swapped tabs (legacy tabsWasSwapped).
+    Q_INVOKABLE bool dragTab(int from, int to);
+    Q_INVOKABLE void endTabDrag();
+    // Document `id` of tab `index` (0: none).
+    Q_INVOKABLE qulonglong tabDocument(int index) const;
+    // MENU_CHOOSE - 1, "Close all tabs" (after legacy's "All tabs will be
+    // closed, continue?"): the close review's rows for every tab; with none,
+    // finishClose() closes them all and leaves one new Untitled tab.
+    Q_INVOKABLE QVariantList reviewCloseAll();
+    // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
+    // only): [{name, versions: [{written, file}]}], and the Files list's
+    // filter (AutoSaveOpen::FindFiles: the names to show, by index).
+    Q_INVOKABLE QVariantList legacyAutosaves();
+    Q_INVOKABLE QVariantList filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const;
+    // Opens a legacy autosave as a new unsaved copy (L58-recovery-copy); the
+    // file is not changed.
+    Q_INVOKABLE bool openLegacyAutosave(const QString &file);
+
     // R1: the tab menu's "Subtitle comparison" (legacy Notebook::ContextMenu,
     // its ID_CHECK_EVENT handler and SubsGrid::SubsComparison at 20d647c4).
     // The menu opened on tab `index` (-1: not on a tab): {enabled,
@@ -662,6 +733,36 @@ private:
     void refreshVideo();
     void writeFinished(const application::WriteResult &result);
     void newDocument();
+    // P9
+    void setupTabMenu(const Options &options);
+    std::function<void(const QString &)> m_revealInFolder;
+    QString m_legacyAutosaveDir;
+    bool m_tabsSwapped = false; // legacy tabsWasSwapped
+    struct PendingOffer {
+        application::AssociationOffer offer;
+        std::uint64_t batch = 0; // the opening it belongs to (legacy ResetPrompt)
+    };
+    std::map<std::uint64_t, PendingOffer> m_offers; // by Document
+    std::uint64_t m_openBatch = 0;
+    void offerAssociations(application::DocumentId document);
+    void showAssociationOffer();
+    void loadAssociations(application::DocumentId document, const application::AssociationLoad &load);
+    application::TabMediaPaths tabMediaPaths(application::DocumentId document) const;
+    QString tabVideo(application::DocumentId document) const;
+    std::optional<application::DocumentId> documentOf(qulonglong id) const;
+    QString m_videoAfterOpen; // reviewOpenWithVideo: the video once the subtitles loaded
+    bool m_openFromVideo = false; // the open is a video's same-named subtitles: no question
+    void closeAllTabs();
+    struct PendingFiles {
+        std::vector<application::StagedOpen> subtitles;
+        QStringList subtitlePaths;
+        QStringList videos;
+        int count = -1; // the tabs to make (legacy maxx, cut at a file that failed)
+        bool reuseFirst = false; // the first goes into the editing target
+    };
+    std::optional<PendingFiles> m_pendingFiles;
+    void applyFiles(PendingFiles files, bool skipFirst);
+    bool openInNewTab(application::StagedOpen staged, const QString &path);
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
 
@@ -848,6 +949,7 @@ private:
         QString audio;      // legacy AudioPath: an audio file of the tab's own ("" from the video, or none)
         QString keyframes;  // legacy KeyframesPath
         int scroll = 0;     // the Grid's first row
+        bool audioFromVideo = false; // P9: GLOBAL_AUDIO_FROM_VIDEO (legacy AudioPath = VideoPath)
     };
     struct UnresolvedRestore {
         application::DocumentId document;

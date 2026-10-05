@@ -157,6 +157,7 @@ void Application::closeDocument(application::DocumentId document)
 void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
+    m_offers.erase(document.value); // P9: its unanswered association question
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)
@@ -243,13 +244,19 @@ void Application::trackTabMedia()
             return;
         const QString native = QDir::toNativeSeparators(path);
         const QString video = QString::fromStdString(m_video->session().path());
-        m_tabMedia[target->value].audio = native == QDir::toNativeSeparators(video) ? QString() : native;
+        TabMedia &media = m_tabMedia[target->value];
+        const bool fromVideo = native == QDir::toNativeSeparators(video);
+        media.audio = fromVideo ? QString() : native;
+        if (!fromVideo)
+            media.audioFromVideo = false; // P9: another file is the tab's AudioPath now
     });
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
         const auto target = m_workspace.editingTarget();
         if (target && !m_audio->hasAudio())
-            if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end())
+            if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end()) {
                 it->second.audio.clear(); // GLOBAL_CLOSE_AUDIO: AudioPath cleared
+                it->second.audioFromVideo = false;
+            }
     });
 }
 
