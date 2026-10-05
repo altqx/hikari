@@ -40,3 +40,5 @@ target_sources(hikari_composition PRIVATE application_video_timing.cpp)
 # E5: translation mode controls (Translator mode, Moving tags, the Grid's
 # Original text / Translation columns, the original hidden on video).
 target_sources(hikari_composition PRIVATE application_translation.cpp)
+# O5: the interface language (catalogs, live switching, aegisub.gettext's lookup).
+target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)

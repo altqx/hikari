@@ -35,7 +35,7 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 3; // 3: RunValidated
+inline constexpr std::uint32_t kProtocolVersion = 4; // 3: RunValidated (S4); 4: HostService::Gettext (O5)
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3 };

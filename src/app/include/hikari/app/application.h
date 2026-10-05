@@ -13,6 +13,7 @@
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/matroska_controller.h"
+#include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -51,6 +52,7 @@
 #include "audio_controller.h"
 
 #include <QDate>
+#include <QFont>
 #include <QDateTime>
 #include <QLockFile>
 #include <QTemporaryDir>
@@ -107,6 +109,9 @@ signals:
     // results; the Multireplacer and its Search results close.
     void findReplaceDestroyed();
     void misspellReplacerDestroyed();
+    // O5: the interface language changed while the Options dialog is open:
+    // its dictionary choice's entries in the new language.
+    void settingsListsChanged(const QStringList &dictionaries);
 
 public:
     struct Options {
@@ -120,6 +125,11 @@ public:
         bool autoload = false;
         // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
+        // O5: the system's interface languages, most preferred first
+        // (QLocale::system().uiLanguages(); the composition sets it). On the
+        // first start (a settingsFile that does not exist yet) a Polish first
+        // one takes Polish for the interface and the spell checker.
+        QStringList systemUiLanguages;
         // P3: where recovery bundles live; empty: no autosave (tests).
         QString recoveryDir;
         // V1: whether video playback may open an audio device.
@@ -600,6 +610,9 @@ public:
     // Y9: GRID_SUBS_FROM_MKV (the font collector reads attachments through its own helper).
     MatroskaController &matroska() { return *m_matroska; }
     ui::LogController &log() { return *m_log; }
+    // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
+    // aegisub.gettext's catalog.
+    Localisation &localisation() { return *m_localisation; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
     // E1/O1: the Line editor's colour picker opens for the editing target
@@ -1054,6 +1067,18 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
+
+    // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
+    // start and whenever the setting changes; the strings the application
+    // and its controllers keep are rebuilt after a switch. The program font
+    // (PROGRAM_FONT, PROGRAM_FONT_SIZE) is the application's font, live.
+    std::unique_ptr<Localisation> m_localisation;
+    QString m_untitledTitle; // tr("Untitled") in the language the tabs were named in
+    QFont m_startFont;       // the application's font before the program font
+    void startLocalisation();
+    void switchLanguage();
+    void languageSwitched();
+    void applyProgramFont();
 };
 
 } // namespace hikari::app

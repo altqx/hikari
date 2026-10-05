@@ -142,6 +142,9 @@ public:
     void setSelection(const application::Selection &selection);
     // The editing target's Lines in the order the Grid shows them.
     std::vector<core::LineId> displayedLines() const;
+    // O5: the interface language changed: the selection status, the titles
+    // and both Grids' headings again.
+    void retranslate();
 
     // R2: the reference's own selection (navigated independently).
     void setReferenceSelection(const application::Selection &selection);
@@ -170,6 +173,7 @@ signals:
 
 private:
     QString titleOf(std::optional<application::DocumentId> id) const;
+    QString selectionText() const;
 
     application::Workspace &m_workspace;
     LineTableModel m_lines;
@@ -178,6 +182,7 @@ private:
     QString m_activeText;
     QString m_activeStyle;
     QString m_selectionStatus;
+    qsizetype m_selectedCount = 0, m_hiddenCount = 0; // what m_selectionStatus says
     QString m_statusText;
     bool m_assFormat = true;
     bool m_endColumn = true;

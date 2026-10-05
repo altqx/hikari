@@ -3183,7 +3183,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Language (program restart required)</source>
-        <translation>மொழி (நிரல் மறுதொடக்கம் தேவை)</translation>
+        <translation type="vanished">மொழி (நிரல் மறுதொடக்கம் தேவை)</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>

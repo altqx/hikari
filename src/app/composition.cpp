@@ -7,6 +7,7 @@
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QGuiApplication>
+#include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
 #include <QTimer>
@@ -34,6 +35,8 @@ int run(int argc, char **argv, StartupMode mode)
     // then the bundled one beside the executable (legacy's location).
     options.spellingBackend = backends::hunspellSpellingLoader();
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
+    // O5: the first start on a Polish system takes Polish (Application).
+    options.systemUiLanguages = QLocale::system().uiLanguages();
     Application application(options);
     application.setStartedWithPaths(argc > 1); // P6: no session at start then
     // A path on the command line opens as the editing target.

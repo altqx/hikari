@@ -68,6 +68,11 @@ public:
     // (LuaCommand::RunScript, OnRunScript, GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT)
     // and says so when validation fails, except from the menu.
     enum class RunOrigin { Menu, Hotkey, LastScript };
+    // O5: aegisub.gettext's lookup (application::HostService::Gettext).
+    void setTranslation(std::function<std::string(const std::string &)> translate)
+    {
+        m_router.setTranslation(std::move(translate));
+    }
 
     // AutomationServicePort: run() goes through the editing target's transaction.
     std::vector<application::ScriptStatus> scripts() const override { return m_manager.scripts(); }

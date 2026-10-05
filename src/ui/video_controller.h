@@ -26,11 +26,11 @@ class VideoController : public QObject {
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY changed)
-    Q_PROPERTY(QString status READ status NOTIFY changed)
+    Q_PROPERTY(QString status READ status NOTIFY textsChanged)
     Q_PROPERTY(int frame READ frame NOTIFY changed)
     Q_PROPERTY(int frameCount READ frameCount NOTIFY changed)
     Q_PROPERTY(bool offering READ offering NOTIFY changed)
-    Q_PROPERTY(QString offer READ offer NOTIFY changed)
+    Q_PROPERTY(QString offer READ offer NOTIFY textsChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
@@ -130,10 +130,14 @@ public:
     Q_INVOKABLE bool nextChapter();
     Q_INVOKABLE bool previousChapter();
 
+    // O5: the interface language changed (status and offer read it).
+    void retranslate() { emit textsChanged(); }
+
 signals:
     void changed();
     // V3: Unload video emptied the panel.
     void unloaded();
+    void textsChanged(); // with every change, and after a language switch
 
 private:
     void open(const QString &path);

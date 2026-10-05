@@ -442,6 +442,9 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
+    // O5: legacy LoadOptions() returns 2 when there is no settings file yet;
+    // decided before anything here may write one.
+    const bool firstStart = !options.settingsFile.isEmpty() && !QFileInfo::exists(options.settingsFile);
     m_reader = backends::makeFileReader();
     // Write outcomes arrive on the writer's thread; publish them on this one.
     m_port = backends::makeFilePort([this](application::PermitId permit, application::WriteOutcome outcome) {
@@ -518,6 +521,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_importStore->recover();
     }
     m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
+    // O5: the first start on a Polish system takes Polish for the interface
+    // and the spell checker, before anything reads either
+    // (hikarisubApp.cpp:319-325).
+    if (firstStart && Localisation::firstStartLanguage(options.systemUiLanguages) == u"pl") {
+        m_settings->set("program.language", QStringLiteral("pl"));
+        m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
+    }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     // K2: the theme layer follows this profile's appearance (the controls'
     // palette, the icons and the owner-drawn items).
@@ -985,6 +995,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     trackTabMedia(); // P6
     trackVideoSources(); // V3
     trackVideoFollow(); // V6
+    startLocalisation(); // O5
     refreshViews();
 }
 
@@ -1214,6 +1225,8 @@ Application::~Application()
     m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
     saveMisspellRules();
+    if (m_localisation)
+        QGuiApplication::setFont(m_startFont); // O5: the program font was the application's
 }
 
 // F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
@@ -4405,6 +4418,10 @@ void Application::settingChanged(const QString &id)
     }
     else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
         m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    else if (id == QLatin1String("program.language")) // O5: live, wherever it is written
+        switchLanguage();
+    else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
+        applyProgramFont(); // O5 (legacy SetOptions: Hikari->SetFont(*Options.GetFont()))
 }
 
 namespace {
@@ -4500,9 +4517,14 @@ QVariantMap Application::openSettingsDialog()
 {
     auto &lists = m_optionsLists;
     lists = {};
-    // No translation catalogues ship with the rewrite yet: English only.
+    // O5: English, then the catalogs (OptionsDialog.cpp:322-333: the
+    // available translations sorted, each by FindLanguage).
     lists.languageTags = {"en"};
     lists.languageNames = {"English"};
+    for (const QString &tag : m_localisation->catalogLanguages()) {
+        lists.languageTags.push_back(tag.toStdString());
+        lists.languageNames.push_back(languageName(tag).toStdString());
+    }
     lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
     // U1-unicode-case: every letter, whatever the interface language.
     lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {

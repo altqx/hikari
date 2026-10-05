@@ -198,6 +198,8 @@ void AutomationServiceRouter::handle(const HostServiceRequest &r, Reply reply)
         }
         return reply(std::move(out));
     }
+    case HostService::Gettext:
+        return m_translate ? reply(strings({m_translate(string(r, 0))})) : unavailable();
     }
     unavailable();
 }

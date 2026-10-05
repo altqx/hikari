@@ -182,3 +182,24 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 # Y7: the colour picker's option, simple-picker recent colour and screen sampler.
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
+# O5: the interface language over the embedded catalogs (live switching,
+# aegisub.gettext through the application, pseudolocalized and right-to-left
+# layouts, the program font).
+hikari_add_qttest(hikari_ui_language_tests SOURCES language_tests.cpp LIBRARIES hikari_composition hikari_translations)
+target_compile_definitions(hikari_ui_language_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_language_tests hikari_lua_helper hikari_automation_stage)
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)
+# O5-qt-catalog: a HikariSub and a Qt catalog that answer the same string,
+# compiled beside the test, for the catalogs' precedence.
+qt_add_lrelease(TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/hikarisub_pl.ts
+    ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/qt_pl.ts
+    QM_OUTPUT_DIRECTORY language-fixtures LRELEASE_TARGET hikari_ui_language_fixtures NO_GLOBAL_TARGET OPTIONS -silent)
+add_dependencies(hikari_ui_language_tests hikari_ui_language_fixtures)
+target_compile_definitions(hikari_ui_language_tests PRIVATE
+    HIKARI_LANGUAGE_FIXTURES="${CMAKE_CURRENT_BINARY_DIR}/language-fixtures")
+foreach(mode offscreen xvfb)
+    if(TEST hikari_ui_language_tests.${mode})
+        set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()

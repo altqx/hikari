@@ -48,6 +48,12 @@ Dialog {
         warnings = r.warnings
         showWarning()
     }
+    // O5: Apply switched the interface language: the dictionary choice's
+    // entry for an empty Dictionary folder in the new language.
+    Connections {
+        target: dialog.app
+        function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
+    }
     // The legacy constructor's "does not exist" message boxes, one at a time.
     function showWarning() {
         if (warnings.length === 0)
@@ -263,15 +269,18 @@ Dialog {
                 contentWidth: availableWidth
                 ColumnLayout {
                     width: parent.width
+                    // Legacy "Language (program restart required)": the
+                    // switch is live (O5-language-label).
                     GroupBox {
-                        title: qsTr("Language (program restart required)")
+                        objectName: "settingsLanguageGroup"
+                        title: qsTr("Language")
                         Layout.fillWidth: true
                         SettingChoice {
                             setting: "program.language"
                             anchors.left: parent.left
                             anchors.right: parent.right
                             model: dialog.languages
-                            Accessible.name: qsTr("Language (program restart required)")
+                            Accessible.name: qsTr("Language")
                         }
                     }
                     GroupBox {

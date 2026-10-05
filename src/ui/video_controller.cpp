@@ -44,6 +44,7 @@ VideoController::VideoController(application::IndexedSourcePort &source, applica
     : QObject(parent), m_session(source, renderer)
 {
     m_session.setObserver([this] { sessionChanged(); });
+    connect(this, &VideoController::changed, this, &VideoController::textsChanged); // O5
 }
 
 void VideoController::setMediaInfo(application::DisplayAudioPort *tracks, application::ChapterPort *chapters)

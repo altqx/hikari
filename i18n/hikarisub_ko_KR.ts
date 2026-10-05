@@ -3183,7 +3183,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Language (program restart required)</source>
-        <translation>현지화 (프로그램 재시작 후 적용)</translation>
+        <translation type="vanished">현지화 (프로그램 재시작 후 적용)</translation>
+    </message>
+    <message>
+        <source>Language</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
