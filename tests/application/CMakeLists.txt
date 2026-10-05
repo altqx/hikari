@@ -115,3 +115,10 @@ hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
     HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
+# T5: the drawing tool and its shape presets, with the legacy probe's
+# observations.
+hikari_add_gtest(hikari_application_visual_drawing_tests SOURCES visual_drawing_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_drawing_tests PRIVATE
+    HIKARI_DRAWING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/drawing-cases.txt"
+    HIKARI_DRAWING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t5-drawing-20261005/observations.jsonl")

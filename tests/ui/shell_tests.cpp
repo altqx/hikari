@@ -13,6 +13,7 @@
 #include "fake_font_service.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
+#include "shape_editor.h"
 
 #include <QAccessible>
 #include <QMimeData>
@@ -7348,6 +7349,226 @@ private slots:
         QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\clip(m 0 0 l 160 0 300 220 0 120)")),
                  qPrintable(text(session->document().lines()[2])));
         QTRY_COMPARE(alpha(230, 170), 255);
+    }
+
+    // T5: the drawing tool through the Video panel. Its row is legacy
+    // VectorItem for the drawing: the six point modes with their K1 icons and
+    // help texts, and the shape list ("Choose", the presets, "Edit"). A click
+    // in Add line writes a drawing into the Line as one "Visual vector drawing
+    // tool" step; with a preset chosen the modes take no click and a drag
+    // draws the preset into the rectangle shown over the video. "Edit" opens
+    // the "Vector shape editing" dialog (on the preset after the one chosen,
+    // as legacy); a save under a name another preset has asks to replace it
+    // or rename (accepted on #55); OK writes Config/ShapesSettings.txt
+    // (UTF-8 with a BOM, legacy's lines) and the list takes the new names;
+    // Restore default removes the file at once.
+    void visualDrawingShapesAndTheirEditor()
+    {
+        QTemporaryDir config;
+        QVERIFY(config.isValid());
+        auto &tools = application->visualTools();
+        const QString shapesFile = config.filePath(QStringLiteral("Config/ShapesSettings.txt"));
+        tools.setShapesFile(shapesFile);
+        QVERIFY(application->openFile(visualDocument("drawing.ass",
+                                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,40)}\n")));
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        const auto settle = [&] {
+            QRectF last;
+            return QTest::qWaitFor([&] {
+                QTest::qWait(50);
+                const QRectF r = tools.videoRect();
+                const bool same = r == last && !r.isEmpty();
+                last = r;
+                return same;
+            }, 5000);
+        };
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool8"), "click"));
+        QCOMPARE(tools.activeFamily(), 8);
+        QTRY_VERIFY(visualItem("visualOption_shape"));
+        QVERIFY(settle());
+        const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
+        for (int i = 0; i < 6; ++i) {
+            QQuickItem *mode = visualItem(qPrintable(QStringLiteral("visualOption_mode%1").arg(i)));
+            QVERIFY(mode);
+            QCOMPARE(mode->property("iconRole").toString(), QLatin1String(roles[i]));
+            QCOMPARE(mode->property("checked").toBool(), i == 1);
+            QVERIFY(mode->property("enabled").toBool());
+        }
+        QVERIFY(!visualItem("visualOption_invert")); // the drawing has no Invert clip
+        // The row's items are made again whenever the tool's options change:
+        // the list is looked up each time.
+        const auto list = [&] { return visualItem("visualOption_shape"); };
+        QCOMPARE(list()->property("model").toStringList(),
+                 (QStringList{QStringLiteral("Choose"), QStringLiteral("rectangle"), QStringLiteral("circle"),
+                              QStringLiteral("rounded square 1"), QStringLiteral("rounded square 2"),
+                              QStringLiteral("rounded square 3"), QStringLiteral("Edit")}));
+        QCOMPARE(list()->property("currentIndex").toInt(), 0);
+
+        // Free drawing: a click in Add line puts the first point.
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual vector drawing tool"));
+        QVERIFY2(text(session->document().lines()[0]).contains(QStringLiteral("\\p1")) &&
+                     text(session->document().lines()[0]).contains(QStringLiteral("}m ")),
+                 qPrintable(text(session->document().lines()[0])));
+
+        // A preset: the modes take no click; a drag draws it into the
+        // rectangle, one step.
+        application->selectLine(third.value);
+        QTRY_COMPARE(*session->selection().active, third);
+        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 1)));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
+        QTRY_VERIFY(!visualItem("visualOption_mode1")->property("enabled").toBool());
+        QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
+        const std::size_t shapeSteps = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, a + (b - a) * i / 4);
+        QVERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\an7\\pos(40,40)}"));
+        int lines = 0;
+        for (const QVariant &shape : tools.overlay())
+            lines += shape.toMap().value(QStringLiteral("type")).toString() == QLatin1String("line");
+        QCOMPARE(lines, 4); // the rectangle
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(session->historySize(), shapeSteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual vector drawing tool"));
+        // The rectangle preset written relative to the Line's \pos, one unit
+        // right and down of the drag's start (Shapes::GetVisual).
+        static const QRegularExpression drawn(QStringLiteral(
+            R"re(^\{\\p1\\an7\\pos\(40,40\)\}m ([0-9.]+) ([0-9.]+) l ([0-9.]+) \2 \3 ([0-9.]+) \1 \4\{\\p0\}$)re"));
+        const QRegularExpressionMatch m = drawn.match(text(session->document().lines()[2]));
+        QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
+        QVERIFY(m.captured(1).toDouble() > 1 && m.captured(2).toDouble() > 1);
+        QVERIFY(m.captured(3).toDouble() > m.captured(1).toDouble() && m.captured(4).toDouble() > m.captured(2).toDouble());
+
+        // "Edit": the dialog, on the preset after the one chosen (legacy).
+        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 6)));
+        QObject *dialog = named("shapesEditionDialog");
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Vector shape editing"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1); // the list keeps the chosen preset
+        ui::ShapeEditor *editor = tools.shapeEditor();
+        QVERIFY(editor);
+        QCOMPARE(editor->list().size(), 5);
+        QCOMPARE(editor->name(), QStringLiteral("circle"));
+        QCOMPARE(named("shapeName")->property("text").toString(), QStringLiteral("circle"));
+        QVERIFY(!named("shapeScalingMode")->property("enabled").toBool());
+        // The name of another preset: Replace or Rename.
+        named("shapeName")->setProperty("text", QStringLiteral("Rectangle"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapeName"), "textEdited"));
+        QCOMPARE(editor->name(), QStringLiteral("Rectangle"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesApply"), "click"));
+        QObject *clash = named("shapesClash");
+        QTRY_VERIFY(clash->property("visible").toBool());
+        QCOMPARE(named("shapesClashText")->property("text").toString(),
+                 QStringLiteral("A shape named \"rectangle\" already exists."));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesClashReplace"), "click"));
+        QTRY_VERIFY(!clash->property("visible").toBool());
+        QCOMPARE(editor->edition().presets().size(), 4u);
+        QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"Rectangle"));
+        QVERIFY(!QFile::exists(shapesFile)); // Apply keeps it in the dialog only
+        QVERIFY(QMetaObject::invokeMethod(named("shapesOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!tools.shapeEditor());
+        QFile saved(shapesFile);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        const QByteArray bytes = saved.readAll();
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
+        QVERIFY2(bytes.mid(3).startsWith("Shape: Rectangle; m -100 -100 b -45 -155 45 -155 100 -100 b "), bytes.constData());
+        QCOMPARE(bytes.count('\n'), 4);
+        QTRY_COMPARE(list()->property("model").toStringList().size(), 6);
+        QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("Rectangle"));
+        QCOMPARE(list()->property("currentIndex").toInt(), 1);
+
+        // Restore default: asked, then the file goes at once; Cancel keeps
+        // the presets the list has (legacy: only OK hands them back).
+        QVERIFY(QMetaObject::invokeMethod(list(), "activated", Q_ARG(int, 5)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "click"));
+        QObject *question = named("shapesQuestion");
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(named("shapesQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to reset to default?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_VERIFY(!QFile::exists(shapesFile));
+        QCOMPARE(tools.shapeEditor()->list().size(), 5);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(list()->property("model").toStringList().size(), 6);
+    }
+
+    // T5: the drawing's surfaces in the light and dark palettes (with
+    // HIKARI_SURFACE_SHOT_DIR): the Video panel with the drawing's row and a
+    // shape drawn, and the "Vector shape editing" dialog.
+    void visualDrawingScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        window->resize(1280, 860);
+        auto &tools = application->visualTools();
+        tools.setShapesFile({});
+        QVERIFY(application->openFile(visualDocument("drawing-shots.ass",
+                                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,40)\\1c&H3C9A2E&}\n")));
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool8"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_shape"));
+        QTest::qWait(300);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 2)));
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        QTest::mouseMove(window, a);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, a + (b - a) * i / 4);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_VERIFY(!tools.gestureActive());
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        auto *root = engine->rootObjects().first();
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            const QPalette palette = themePalette(before, appearance);
+            QGuiApplication::setPalette(palette);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), palette.color(QPalette::Window));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QTest::qWait(300);
+            QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/drawing-video-panel") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 6)));
+            QObject *dialog = named("shapesEditionDialog");
+            QTRY_VERIFY(dialog->property("opened").toBool());
+            QTest::qWait(300);
+            shot = window->grabWindow();
+            auto *frame = dialog->property("background").value<QQuickItem *>(); // the whole box
+            const QRect r = crop(frame).adjusted(-8, -8, 8, 8).intersected(shot.rect());
+            QVERIFY(shot.copy(r).save(out + QStringLiteral("/shapes-edition-dialog") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
     }
 
     // K1: the video transport buttons show the set's icons (legacy VideoBox's
