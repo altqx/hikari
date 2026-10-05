@@ -37,6 +37,7 @@ ApplicationWindow {
     required property var updates
     required property var styleManager
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
+    required property VisualToolsController visualTools // T1: the Video panel's visual tools
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -1462,14 +1463,25 @@ ApplicationWindow {
                 // O2: the Video window's bindings (VideoBox's table; by default
                 // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
                 // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
-                Keys.onShortcutOverride: event => event.accepted = root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
+                // T1: Esc cancels an open visual gesture first; keys no binding
+                // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
+                // hands them to the Visuals.
+                Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.gestureActive)
+                                                  || root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                 Keys.onPressed: event => {
+                    if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
+                        event.accepted = true
+                        return
+                    }
                     const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)) {
+                        event.accepted = true
                     }
                 }
+                Keys.onReleased: event => event.accepted = root.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
                 // The legacy "Associated files" confirmation, inline: the
                 // Document stays editable whatever is chosen.
@@ -1499,12 +1511,28 @@ ApplicationWindow {
                         }
                     }
                 }
+                // T1: the tool rail beside the canvas (layout A).
+                VisualToolRail {
+                    id: visualRail
+                    tools: root.visualTools
+                    anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
+                }
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
-                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: videoControls.top }
+                    anchors { left: visualRail.right; right: parent.right; top: parent.top; bottom: videoControls.top }
+                    // The visual tools' shared view places the frame (legacy UpdateRects).
+                    videoRect: root.visualTools.videoRect
+                    sourceRect: root.visualTools.sourceRect
                     Component.onCompleted: root.video.attachPresenter(presenter)
+                }
+                VisualOverlay {
+                    id: visualOverlay
+                    anchors.fill: presenter
+                    tools: root.visualTools
+                    focusTarget: videoPanel
+                    panelHeight: videoControls.height
                 }
                 Label {
                     anchors.centerIn: presenter
@@ -1516,6 +1544,10 @@ ApplicationWindow {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
+                VisualToolValues {
+                    Layout.fillWidth: true
+                    tools: root.visualTools
+                }
                 Slider {
                     objectName: "videoSlider"
                     Layout.fillWidth: true
@@ -4627,6 +4659,8 @@ ApplicationWindow {
         case "VIDEO_MINUTE_FORWARD": root.video.seekBy(60000); return true
         case "VIDEO_MINUTE_BACKWARD": root.video.seekBy(-60000); return true
         case "VIDEO_STOP": root.video.stop(); return true
+        // T1: the pointer's position in the video window (VideoBox.cpp:1151).
+        case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)

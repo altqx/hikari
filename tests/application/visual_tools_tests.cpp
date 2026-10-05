@@ -104,7 +104,7 @@ public:
     {
         return {7 * static_cast<int>(text.size()), 14};
     }
-    void changed() override { ++changes; }
+    void toolChanged() override { ++changes; }
 };
 
 // One case of inputs/visual-cases.txt.

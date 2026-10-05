@@ -72,7 +72,7 @@ void CrosshairTool::reset(VisualHost &host)
     // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next move.
     m_cross = false;
     computeCoefficients(host);
-    host.changed();
+    host.toolChanged();
 }
 
 void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
@@ -82,7 +82,7 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
     if (event.kind == Pointer::Kind::Release && event.button == Pointer::Button::Right) {
         if (m_cross) {
             m_cross = false;
-            host.changed();
+            host.toolChanged();
         }
         return;
     }
@@ -91,7 +91,7 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
     if (event.kind == Pointer::Kind::Leave) {
         if (m_cross) {
             m_cross = false;
-            host.changed();
+            host.toolChanged();
         }
         return;
     }
@@ -106,7 +106,7 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
     const int posy = static_cast<int>(zy * m_coeffY);
     m_coords = number(posx) + u", " + number(posy);
     drawLines(x, y, host);
-    host.changed();
+    host.toolChanged();
 
     if (event.kind == Pointer::Kind::Press &&
         (event.button == Pointer::Button::Middle || (event.button == Pointer::Button::Left && event.control)))

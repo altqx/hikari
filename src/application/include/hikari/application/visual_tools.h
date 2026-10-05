@@ -187,7 +187,7 @@ public:
     // the program font + 4, or the D3DX font's DT_CALCRECT).
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
     // The tool's drawing or values changed.
-    virtual void changed() = 0;
+    virtual void toolChanged() = 0;
 };
 
 // One visual family. The host gives a tool only the events legacy's

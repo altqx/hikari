@@ -34,6 +34,7 @@
 #include "shift_times_controller.h"
 #include "tag_buttons_controller.h"
 #include "grid_filter_controller.h"
+#include "visual_tools_controller.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -543,6 +544,8 @@ public:
     ui::WorkspaceLayoutController &workspaceLayout() { return *m_workspaceLayout; }
     ui::ShiftTimesController &shiftTimesSettings() { return *m_shiftTimes; }
     ui::GridFilterController &gridFilter() { return *m_gridFilter; }
+    // T1: the Video panel's visual tools.
+    ui::VisualToolsController &visualTools() { return *m_visualTools; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -709,6 +712,7 @@ private:
     void findFinished();
     QString m_pendingKeyframes; // opened before a video (legacy m_KeyframesFileName)
     std::unique_ptr<ui::GridFilterController> m_gridFilter;
+    std::unique_ptr<ui::VisualToolsController> m_visualTools;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;
