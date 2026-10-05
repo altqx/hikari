@@ -22,7 +22,9 @@ Dialog {
     height: Math.min(parent ? parent.height - 40 : 640, 640)
     closePolicy: Popup.CloseOnEscape
 
-    // The rows the filter shows.
+    // The rows the filter shows. importer.rows changes only with the plan;
+    // choosing rows changes importer.chosenIds, so the list keeps its
+    // delegates and where it is scrolled.
     property string filter: ""
     readonly property var shownRows: {
         const out = []
@@ -32,7 +34,12 @@ Dialog {
         return out
     }
 
+    // Settings edited since a waiting import was staged, kept at the next
+    // start over the import's values (settings-import.md step 5).
+    property var keptEdits: []
+
     function openDialog() {
+        keptEdits = importer.keptEdits()
         importer.discover()
         open()
         if (importer.roots.length > 0)
@@ -160,8 +167,14 @@ Dialog {
                     CheckBox {
                         objectName: "settingsImportChoose_" + rowFrame.modelData.id
                         enabled: rowFrame.modelData.selectable
-                        checked: rowFrame.modelData.chosen
-                        onToggled: dialog.importer.setChosen(rowFrame.modelData.id, checked)
+                        function isChosen() { return dialog.importer.chosenIds.indexOf(rowFrame.modelData.id) >= 0 }
+                        checked: isChosen()
+                        onToggled: {
+                            dialog.importer.setChosen(rowFrame.modelData.id, checked)
+                            // The click broke the binding: "Proposed choice" and
+                            // "All changes" still reach this row.
+                            checked = Qt.binding(isChosen)
+                        }
                         Accessible.name: rowFrame.modelData.key
                     }
                     ColumnLayout {
@@ -214,7 +227,11 @@ Dialog {
             wrapMode: Text.Wrap
             visible: text.length > 0
             text: dialog.importer.pending && dialog.importer.status.length === 0
-                  ? qsTr("An import waits for the next start.") : dialog.importer.status
+                  ? (dialog.keptEdits.length === 0
+                     ? qsTr("An import waits for the next start.")
+                     : qsTr("An import waits for the next start. These settings changed since it was made keep your change:\n%1")
+                           .arg(dialog.keptEdits.join("\n")))
+                  : dialog.importer.status
         }
     }
 

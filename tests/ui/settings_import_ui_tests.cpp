@@ -551,12 +551,32 @@ private slots:
         QCOMPARE(font.value(QStringLiteral("value")).toString(), QStringLiteral("Arial"));
         QCOMPARE(font.value(QStringLiteral("current")).toString(), QStringLiteral("Tahoma"));
         QCOMPARE(font.value(QStringLiteral("disposition")).toString(), QStringLiteral("change"));
-        QVERIFY(font.value(QStringLiteral("chosen")).toBool());
+        QVERIFY(c.chosenIds().contains(QStringLiteral("setting:grid.font")));
+        // Choosing rows leaves the plan (the window's list) as it is.
+        const int plans = plan.count();
+        QSignalSpy chosenSpy(&c, &app::SettingsImportController::chosenChanged);
+        const qsizetype proposed = c.chosenIds().size();
         c.setChosen(QStringLiteral("setting:grid.font"), false);
         QVERIFY(!c.chosen().contains("setting:grid.font"));
-        c.setChosen(QStringLiteral("setting:program.theme"), true); // excluded: not selectable
-        QVERIFY(!c.chosen().contains("setting:program.theme"));
-        QVERIFY(c.summary().contains(QStringLiteral("1 excluded")) || c.summary().contains(QStringLiteral("excluded")));
+        QVERIFY(!c.chosenIds().contains(QStringLiteral("setting:grid.font")));
+        QCOMPARE(chosenSpy.count(), 1);
+        c.setChosen(QStringLiteral("setting:grid.font"), false); // no change, no signal
+        QCOMPARE(chosenSpy.count(), 1);
+        c.setChosen(QStringLiteral("setting:PROGRAM_THEME"), true); // excluded: not selectable
+        QVERIFY(!c.chosen().contains("setting:PROGRAM_THEME"));
+        QCOMPARE(chosenSpy.count(), 1);
+        c.chooseAll(QStringLiteral("proposed"), true);
+        QCOMPARE(c.chosenIds().size(), proposed);
+        c.setChosen(QStringLiteral("setting:grid.font"), false);
+        QCOMPARE(plan.count(), plans);
+        // The theme setting and the theme file are the excluded rows.
+        QStringList excluded;
+        for (const auto &row : c.rows())
+            if (row.toMap().value(QStringLiteral("disposition")) == QStringLiteral("excluded"))
+                excluded << row.toMap().value(QStringLiteral("id")).toString();
+        QCOMPARE(excluded, (QStringList{"setting:PROGRAM_THEME", "file:Themes/Mine.txt"}));
+        QVERIFY2(c.summary().startsWith(QStringLiteral("%1 to import of ").arg(proposed - 1)), qPrintable(c.summary()));
+        QVERIFY2(c.summary().contains(QStringLiteral(", 2 excluded, ")), qPrintable(c.summary()));
         QVERIFY(c.importChosen());
         QVERIFY(c.pending());
         QVERIFY(c.status().contains(QStringLiteral("starts again")));

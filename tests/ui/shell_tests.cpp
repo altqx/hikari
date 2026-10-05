@@ -4184,6 +4184,33 @@ private slots:
                 theme = row.toMap();
         QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
         QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        // Choosing a row far down the list keeps the list where it is
+        // scrolled, and "Proposed choice" still reaches the clicked row.
+        {
+            const QVariantList all = importer.rows();
+            int last = int(all.size()) - 1;
+            while (last >= 0 && !all.at(last).toMap().value(QStringLiteral("selectable")).toBool())
+                --last;
+            QVERIFY(last > 0);
+            const QString id = all.at(last).toMap().value(QStringLiteral("id")).toString();
+            const bool proposed = importer.chosen().contains(id.toStdString());
+            QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
+            QQuickItem *box = nullptr;
+            QTRY_VERIFY((box = findItem(rows, QStringLiteral("settingsImportChoose_") + id)) != nullptr);
+            const QPointer<QQuickItem> sameBox(box);
+            const qreal scrolled = rows->property("contentY").toReal();
+            QVERIFY(scrolled > 0);
+            QCOMPARE(box->property("checked").toBool(), proposed);
+            QVERIFY(QMetaObject::invokeMethod(box, "click"));
+            QCOMPARE(importer.chosen().contains(id.toStdString()), !proposed);
+            QVERIFY(sameBox);
+            QCOMPARE(box->property("checked").toBool(), !proposed);
+            QCOMPARE(rows->property("contentY").toReal(), scrolled);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportProposed"), "click"));
+            QVERIFY(sameBox);
+            QCOMPARE(box->property("checked").toBool(), proposed);
+            QCOMPARE(rows->property("contentY").toReal(), scrolled);
+        }
         QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
         QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
             QStringLiteral("starts again")));

@@ -96,9 +96,16 @@ QVariantList SettingsImportController::rows() const
                            {QStringLiteral("disposition"), qs(si::dispositionName(r.disposition))},
                            {QStringLiteral("reason"), qs(r.reason)},
                            {QStringLiteral("selectable"), r.selectable},
-                           {QStringLiteral("chosen"), m_chosen.contains(r.id)},
                            {QStringLiteral("paths"), paths}};
     }
+    return out;
+}
+
+QStringList SettingsImportController::chosenIds() const
+{
+    QStringList out;
+    for (const auto &id : m_chosen)
+        out << qs(id);
     return out;
 }
 
@@ -168,9 +175,7 @@ bool SettingsImportController::choose(const QString &rootPath)
     }
     m_snapshot = std::move(snap);
     m_interpretation = 0;
-    rebuild();
-    m_chosen = si::proposedRows(*m_plan);
-    emit planChanged();
+    propose();
     setStatus({});
     return true;
 }
@@ -192,15 +197,21 @@ void SettingsImportController::rebuild()
     m_plan = si::buildPlan(m_snapshot->sources, m_store->destination(), o);
 }
 
+void SettingsImportController::propose()
+{
+    rebuild();
+    if (m_plan)
+        m_chosen = si::proposedRows(*m_plan);
+    emit planChanged();
+    emit chosenChanged();
+}
+
 void SettingsImportController::setInterpretation(int interpretation)
 {
     if (interpretation == m_interpretation)
         return;
     m_interpretation = interpretation;
-    rebuild();
-    if (m_plan)
-        m_chosen = si::proposedRows(*m_plan);
-    emit planChanged();
+    propose();
 }
 
 void SettingsImportController::setChosen(const QString &id, bool chosen)
@@ -210,11 +221,8 @@ void SettingsImportController::setChosen(const QString &id, bool chosen)
     const si::PlanRow *row = m_plan->row(id.toStdString());
     if (!row || !row->selectable)
         return;
-    if (chosen)
-        m_chosen.insert(row->id);
-    else
-        m_chosen.erase(row->id);
-    emit planChanged();
+    if (chosen ? m_chosen.insert(row->id).second : m_chosen.erase(row->id) > 0)
+        emit chosenChanged();
 }
 
 void SettingsImportController::chooseAll(const QString &which, bool chosen)
@@ -233,7 +241,7 @@ void SettingsImportController::chooseAll(const QString &which, bool chosen)
                 m_chosen.erase(r.id);
         }
     }
-    emit planChanged();
+    emit chosenChanged();
 }
 
 bool SettingsImportController::importChosen()
@@ -243,12 +251,10 @@ bool SettingsImportController::importChosen()
     const auto result = m_store->activate(*m_plan, m_chosen, *m_snapshot, m_revision);
     switch (result) {
     case SettingsImportStore::Result::Activated:
-        setStatus(tr("Imported. The settings take effect when HikariSub starts again; the legacy files were not "
-                     "changed."));
+        setStatus(tr("Imported. The settings take effect when HikariSub starts again; a setting you change before "
+                     "then keeps your change. The legacy files were not changed."));
         emit stateChanged();
-        rebuild();
-        m_chosen = si::proposedRows(*m_plan);
-        emit planChanged();
+        propose();
         return true;
     case SettingsImportStore::Result::NoChange:
         setStatus(tr("Nothing to import: the chosen settings are already in effect."));
@@ -258,9 +264,7 @@ bool SettingsImportController::importChosen()
         return false;
     case SettingsImportStore::Result::StaleDestination:
         setStatus(tr("The current settings changed since this review. Review the import again."));
-        rebuild();
-        m_chosen = si::proposedRows(*m_plan);
-        emit planChanged();
+        propose();
         return false;
     case SettingsImportStore::Result::StagingFailed:
         setStatus(tr("The import could not be prepared; the current settings stay in effect."));
@@ -276,6 +280,11 @@ QStringList SettingsImportController::rollbackEdits() const
     return m_store ? m_store->editsSinceActivation() : QStringList();
 }
 
+QStringList SettingsImportController::keptEdits() const
+{
+    return m_store ? m_store->editsKeptOverImport() : QStringList();
+}
+
 bool SettingsImportController::rollback()
 {
     if (!m_store)
@@ -288,9 +297,7 @@ bool SettingsImportController::rollback()
     setStatus(tr("The settings before the import take effect when HikariSub starts again."));
     emit stateChanged();
     if (m_snapshot) {
-        rebuild();
-        m_chosen = si::proposedRows(*m_plan);
-        emit planChanged();
+        propose();
     }
     return true;
 }

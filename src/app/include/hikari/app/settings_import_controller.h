@@ -28,9 +28,12 @@ class SettingsImportController : public QObject {
     Q_PROPERTY(QVariantList roots READ roots NOTIFY rootsChanged)
     Q_PROPERTY(QString root READ root NOTIFY planChanged)
     // {id, kind, source, key, raw, destination, value, current, disposition,
-    //  reason, selectable, chosen, paths}
+    //  reason, selectable, paths}: changes only with the plan, so choosing
+    //  rows keeps the review list (and where it is scrolled) as it is.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY planChanged)
-    Q_PROPERTY(QString summary READ summary NOTIFY planChanged)
+    // The ids of the rows chosen for import.
+    Q_PROPERTY(QStringList chosenIds READ chosenIds NOTIFY chosenChanged)
+    Q_PROPERTY(QString summary READ summary NOTIFY chosenChanged)
     Q_PROPERTY(bool ambiguousEncoding READ ambiguousEncoding NOTIFY planChanged)
     // 0: none chosen, 1: Latin-1, 2: Windows-1252 (for files that are not UTF-8).
     Q_PROPERTY(int interpretation READ interpretation WRITE setInterpretation NOTIFY planChanged)
@@ -45,6 +48,7 @@ public:
     QVariantList roots() const;
     QString root() const { return m_snapshot ? m_snapshot->root : QString(); }
     QVariantList rows() const;
+    QStringList chosenIds() const;
     QString summary() const;
     bool ambiguousEncoding() const { return m_plan && m_plan->ambiguousEncoding; }
     int interpretation() const { return m_interpretation; }
@@ -70,6 +74,8 @@ public:
     Q_INVOKABLE bool importChosen();
     // What a rollback would replace (changed since the active import).
     Q_INVOKABLE QStringList rollbackEdits() const;
+    // What the next start keeps against a waiting import (edited since).
+    Q_INVOKABLE QStringList keptEdits() const;
     Q_INVOKABLE bool rollback();
 
     const application::settings_import::Plan *plan() const { return m_plan ? &*m_plan : nullptr; }
@@ -78,11 +84,14 @@ public:
 signals:
     void rootsChanged();
     void planChanged();
+    void chosenChanged();
     void statusChanged();
     void stateChanged();
 
 private:
     void rebuild();
+    // A new plan with its proposed rows chosen.
+    void propose();
     void setStatus(const QString &status);
 
     SettingsImportStore *m_store;
