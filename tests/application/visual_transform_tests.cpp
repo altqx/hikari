@@ -660,3 +660,184 @@ TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
         EXPECT_EQ(handles(), before);                         // the unchanged text read again
     }
 }
+
+namespace {
+
+// A case of the probe with its one Line's text replaced.
+Case caseWith(const char *name, const std::string &from, const std::string &to)
+{
+    const auto cases = readCases();
+    const auto it = std::find_if(cases.begin(), cases.end(), [&](const Case &c) { return c.name == name; });
+    EXPECT_NE(it, cases.end());
+    Case c = *it;
+    const auto at = c.lines[0].find(from);
+    EXPECT_NE(at, std::string::npos);
+    c.lines[0].replace(at, from.size(), to);
+    return c;
+}
+
+void expectNear(PointF a, PointF b, float tolerance = 1e-3f)
+{
+    EXPECT_NEAR(a.x, b.x, tolerance);
+    EXPECT_NEAR(a.y, b.y, tolerance);
+}
+
+} // namespace
+
+// RotationZ::DrawVisual (VisualRotationZ.cpp:34-137) with an \org away from
+// the position: the ring between the radius (the distance from the \org
+// to the position, plus 40) and the radius + 10, its two circles, the angle
+// handle, the cross and the line to `to`.
+TEST(VisualOverlay, RotationZDrawsLegacysRingAndHandle)
+{
+    const Case c = caseWith("rotz-drag", "{\\pos(960,540)}Turn", "{\\pos(960,540)\\org(1200,600)\\frz30}Turn");
+    TestHost host;
+    setUp(host, c);
+    RotationZTool tool;
+    tool.setToggled(0);
+    tool.selected(host);
+    tool.reset(host);
+    const PointF org{400, 200}, from{320, 180}; // the coefficient 3
+    expectNear(tool.org(), org);
+    expectNear(tool.from(), from);
+    EXPECT_EQ(tool.lastmove().y, 30.f);
+    const Overlay o = tool.overlay(host);
+    const float rad = 0.01745329251994329576923690768489f;
+    const float radius = std::sqrt(80.f * 80.f + 20.f * 20.f) + 40;
+    // The triangle strip v5[0..361] (lines 66-77): the outer and inner
+    // vertices at 2j degrees, x by sin and y by cos, as one polygon (outer
+    // forwards, inner backwards) that fills the same annulus.
+    ASSERT_EQ(o.polygons.size(), 1u);
+    const OverlayPolygon &ring = o.polygons[0];
+    EXPECT_EQ(ring.fill, 0xAA121150u);
+    ASSERT_EQ(ring.points.size(), 362u);
+    for (int j = 0; j < 181; ++j) {
+        SCOPED_TRACE(j);
+        const float a = static_cast<float>(j * 2) * rad;
+        expectNear(ring.points[static_cast<std::size_t>(j)],
+                   {org.x + (radius + 10.f) * std::sin(a), org.y + (radius + 10.f) * std::cos(a)});
+        expectNear(ring.points[static_cast<std::size_t>(361 - j)], {org.x + radius * std::sin(a), org.y + radius * std::cos(a)});
+    }
+    // Its area is the annulus's (two 180-gons), so the inner circle is a hole
+    // whatever the fill rule: the outer and inner runs wind opposite ways.
+    double area = 0;
+    for (std::size_t i = 0; i < ring.points.size(); ++i) {
+        const PointF a = ring.points[i], b = ring.points[(i + 1) % ring.points.size()];
+        area += static_cast<double>(a.x) * b.y - static_cast<double>(b.x) * a.y;
+    }
+    const double gon = 90.0 * std::sin(2.0 * 3.14159265358979323846 / 180.0);
+    EXPECT_NEAR(std::fabs(area / 2), gon * ((radius + 10.0) * (radius + 10.0) - radius * radius), 0.5);
+    // The two circles (LINESTRIP over v5[364..544] and v5[545..725]), then
+    // the handle (lines 78-106), the cross and org to `to` (108-135).
+    ASSERT_EQ(o.lines.size(), 360u + 3u + 3u);
+    for (int j = 0; j < 180; ++j) {
+        const OverlayLine &outer = o.lines[static_cast<std::size_t>(2 * j)];
+        const OverlayLine &inner = o.lines[static_cast<std::size_t>(2 * j + 1)];
+        EXPECT_EQ(outer.argb, 0xAAFF0000u);
+        EXPECT_EQ(inner.argb, 0xAAFF0000u);
+        expectNear(outer.from, ring.points[static_cast<std::size_t>(j)]);
+        expectNear(outer.to, ring.points[static_cast<std::size_t>(j + 1)]);
+        expectNear(inner.from, ring.points[static_cast<std::size_t>(361 - j)]);
+        expectNear(inner.to, ring.points[static_cast<std::size_t>(360 - j)]);
+    }
+    const float xx1 = org.x + ((radius - 40) * std::sin(30.f * rad));
+    const float yy1 = org.y + ((radius - 40) * std::cos(30.f * rad));
+    const OverlayLine *l = &o.lines[360];
+    EXPECT_EQ(l[0].width, 10.f);
+    EXPECT_EQ(l[0].argb, 0xAAFF0000u);
+    expectNear(l[0].from, {xx1 - 5.f, yy1});
+    expectNear(l[0].to, {xx1 + 5.f, yy1});
+    expectNear(l[1].from, org);
+    expectNear(l[1].to, {xx1, yy1});
+    expectNear(l[2].from, {xx1 + radius * std::sin(120.f * rad), yy1 + radius * std::cos(120.f * rad)});
+    expectNear(l[2].to, {xx1 + radius * std::sin(-60.f * rad), yy1 + radius * std::cos(-60.f * rad)});
+    expectNear(l[3].from, {org.x - 10, org.y});
+    expectNear(l[3].to, {org.x + 10, org.y});
+    expectNear(l[4].from, {org.x, org.y - 10});
+    expectNear(l[4].to, {org.x, org.y + 10});
+    expectNear(l[5].from, org);
+    expectNear(l[5].to, tool.to());
+    for (int i = 1; i < 6; ++i) {
+        EXPECT_EQ(l[i].width, 2.f);
+        EXPECT_EQ(l[i].argb, 0xFFBB0000u);
+    }
+}
+
+// RotationXY::DrawVisual's grid (VisualRotationXY.cpp:37-181) against the
+// D3DX pipeline worked by hand: the world D3DXMatrixRotationYawPitchRoll
+// (-angle.x, angle.y, 0) (after the translation to the position when it is
+// not the \org), the view D3DXMatrixLookAtLH from (0, 0, -17.2) (a model
+// point at depth z + 17.2), the projection D3DXMatrixPerspectiveFovLH(120
+// degrees, the window's ratio) translated by the \org in clip space. So a
+// point (x, y, z) of the turned model lands at org + (x * xs, -y * ys) / d
+// * (W, H) / 2, with ys = 1 / tan(60 degrees), xs = ys / (W / H) and d its
+// depth.
+TEST(VisualOverlay, RotationXYGridProjectsAsD3DX)
+{
+    const float W = 640, H = 360;
+    const float ys = 1.f / std::tan(60.f * 0.017453292519943295769f), xs = ys / (W / H);
+    const PointF org{400, 150};
+    const auto expected = [&](float x, float y, float d) {
+        return PointF{org.x + x * xs / d * W / 2, org.y - y * ys / d * H / 2};
+    };
+    XYProjection p;
+    p.width = W;
+    p.height = H;
+    p.org = org;
+    p.from = org;
+    // Unturned: the grid's lines (VERTEX 0-87) in legacy's order, each
+    // LINELIST pair cut in two at the middle, eleven each way 5 apart from
+    // 25 to -25; the alpha rises by 155 / 12 a line (`ster` never turns, g
+    // never reaching 1), the sixth orange.
+    Overlay o;
+    drawXYGrid(o, p, 2);
+    ASSERT_EQ(o.lines.size(), 44u + 3u);
+    ASSERT_EQ(o.polygons.size(), 3u * 4u); // three TRIANGLEFANs of six vertices
+    float g = 1.f / 12.f;
+    for (int k = 0; k < 11; ++k) {
+        SCOPED_TRACE(k);
+        const float j = 25.f - 5.f * static_cast<float>(k);
+        const OverlayLine *l = &o.lines[static_cast<std::size_t>(4 * k)];
+        expectNear(l[0].from, expected(j, -30, 17.2f));
+        expectNear(l[0].to, expected(j, 0, 17.2f));
+        expectNear(l[1].to, expected(j, 30, 17.2f));
+        expectNear(l[2].from, expected(-30, j, 17.2f));
+        expectNear(l[3].to, expected(30, j, 17.2f));
+        const std::uint32_t rgb = k == 5 ? 0xFF9B24u : 0x7A3924u;
+        for (int i = 0; i < 4; ++i)
+            EXPECT_EQ(l[i].argb, (static_cast<std::uint32_t>(static_cast<int>(g * 155)) << 24) | rgb);
+        g += 1.f / 12.f;
+    }
+    // The axes (VERTEX 176-180, lines 126-128): y up for an1-3 (else down),
+    // x right unless an3, an6 or an9 ...
+    expectNear(o.lines[44].from, expected(0, 9, 17.2f));
+    expectNear(o.lines[44].to, org);
+    expectNear(o.lines[45].to, expected(9, 0, 17.2f));
+    expectNear(o.lines[46].to, expected(0, 0, 17.2f + 9.f));
+    for (int i = 44; i < 47; ++i)
+        EXPECT_EQ(o.lines[static_cast<std::size_t>(i)].argb, 0xFFBB0000u);
+    // ... the y arrow's cone (181-186) from its tip at 10.
+    expectNear(o.polygons[0].points[0], expected(0, 10, 17.2f));
+    // an9: y down, x left (addy, addx -9).
+    Overlay o9;
+    drawXYGrid(o9, p, 9);
+    expectNear(o9.lines[44].from, expected(0, -9, 17.2f));
+    expectNear(o9.lines[45].to, expected(-9, 0, 17.2f));
+    // \fry30 (angle.x 30, the yaw -30 degrees): x turns into depth, (10, 0, 0)
+    // to (10 cos 30, 0, 10 sin 30).
+    p.angle = {30, 0};
+    const float c30 = std::cos(30.f * 0.017453292519943295769f), s30 = std::sin(30.f * 0.017453292519943295769f);
+    expectNear(*projectXY(p, 10, 0, 0), expected(10 * c30, 0, 17.2f + 10 * s30));
+    expectNear(*projectXY(p, -10, 0, 0), expected(-10 * c30, 0, 17.2f - 10 * s30));
+    // \frx30 (angle.y 30, the pitch): (0, 10, 0) to (0, 10 cos 30, 10 sin 30).
+    p.angle = {0, 30};
+    expectNear(*projectXY(p, 0, 10, 0), expected(0, 10 * c30, 17.2f + 10 * s30));
+    // Behind the near plane (depth under 1) nothing is drawn.
+    p.angle = {90, 0};
+    EXPECT_FALSE(projectXY(p, -20, 0, 0));
+    // A position away from the \org: the model moves by (from - org) / W * 60
+    // and (org - from) / H * 60 before it turns.
+    p.angle = {0, 0};
+    p.from = {320, 180};
+    expectNear(*projectXY(p, 0, 0, 0), expected((320 - org.x) / W * 60, (org.y - 180) / H * 60, 17.2f));
+}
