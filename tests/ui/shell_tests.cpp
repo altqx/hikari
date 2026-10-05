@@ -11,6 +11,7 @@
 #include "line_table_model.h"
 #include "audio_display_item.h"
 #include "fake_font_service.h"
+#include "hikari/application/video_sources.h"
 #include "hikari/application/visual_crosshair.h"
 #include "icon_theme.h"
 
@@ -2444,6 +2445,26 @@ private:
         delete application;
         app::Application::Options options;
         options.playbackAudio = false;
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+
+    // V3: a session whose media helper is another program (no sound).
+    void restartWithMediaHelper(const QString &helper)
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.mediaHelper = helper;
         application = new app::Application(options);
         engine = new QQmlApplicationEngine;
         hikari::ui::attachDocking(*engine);
@@ -7509,6 +7530,11 @@ private slots:
         QVERIFY(application->openFile(episode));
         // the Open audio dialog without a video: the latest recent video's folder
         QCOMPARE(application->audioDialogFolder(), QUrl::fromLocalFile(own.path()));
+        // legacy OnMenuOpened's default case (HikariSubFrame.cpp:2270-2272):
+        // Open keyframes wants a video loaded
+        auto *openKeys = named("openKeyframesMenuItem");
+        QVERIFY(openKeys);
+        QVERIFY(!openKeys->property("enabled").toBool());
         auto *menu = named("recentVideoMenu");
         QVERIFY(menu);
         QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
@@ -7517,6 +7543,7 @@ private slots:
         auto &video = application->video();
         video.openVideo(clip);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(openKeys->property("enabled").toBool());
         const QString native = QDir::toNativeSeparators(clip);
         QCOMPARE(application->settingsStore()->list("recent.video"), QStringList{native});
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
@@ -7565,8 +7592,117 @@ private slots:
         // without a video the keyframes dialog starts in the latest recent keyframes' folder
         QVERIFY(video.unloadVideo());
         QVERIFY(!keyMenu->property("enabled").toBool()); // legacy OnMenuOpened: a video loaded
+        QVERIFY(!openKeys->property("enabled").toBool());
+        // and OnMenuSelected checks it for the hotkey too (HikariSubFrame.cpp:681-687)
+        QVERIFY(!named("openKeyframesMenuItem")->property("action").value<QObject *>()->property("enabled").toBool());
         QCOMPARE(application->keyframesDialogFolder(), QUrl::fromLocalFile(own.path()));
         QCOMPARE(application->audioDialogFolder(), QUrl::fromLocalFile(own.path()));
+    }
+
+    // V3: VideoBox::OpenKeyframes (VideoBox.cpp:1722-1742) with the audio
+    // box and no video: the file's frames at 24000/1001 fps become the box's
+    // keyframes and their snap times (AudioDisplay.cpp:2506-2509), a file
+    // kept for a video to come is dropped (m_KeyframesFileName.Empty()), and
+    // a file without keyframes gives "Invalid keyframes format" and leaves
+    // the box's keyframes.
+    void keyframesWithTheAudioBoxAndNoVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        auto write = [&](const char *name, const QByteArray &text) {
+            const QString path = own.filePath(QString::fromLatin1(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write(text);
+            return path;
+        };
+        const QString kept = write("kept.txt", "# keyframe format v1\nfps 0\n0\n7\n");
+        const QString keys = write("keys.txt", "# keyframe format v1\nfps 0\n0\n24\n48\n");
+        const QString bad = write("bad.txt", "not keyframes\n");
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        // without video or audio the file waits for a video
+        QCOMPARE(application->openKeyframesFile(kept), QString());
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(!video.hasVideo());
+        QVERIFY(audio.marks().keyframesMs.empty());
+        QCOMPARE(application->openKeyframesFile(keys), QString());
+        const auto ms = application::keyframesWithoutVideo({0, 24, 48});
+        QCOMPARE(audio.marks().keyframesMs, ms);
+        std::vector<int> snap;
+        for (const int keyMs : ms)
+            snap.push_back(application::keyframeSnapWithoutVideo(keyMs));
+        QCOMPARE(audio.keyframeSnapTimes(), snap);
+        QCOMPARE(application->openKeyframesFile(bad), QStringLiteral("Invalid keyframes format"));
+        QCOMPARE(audio.marks().keyframesMs, ms);
+        QCOMPARE(application->settingsStore()->list("recent.keyframes"),
+                 (QStringList{QDir::toNativeSeparators(bad), QDir::toNativeSeparators(keys), QDir::toNativeSeparators(kept)}));
+        // the kept file was dropped: a video opened now keeps its own keyframes
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(video.session().keyframes() != (std::vector<int>{0, 7}));
+    }
+
+    // V3: a failed video open is logged once with legacy ProviderFFMS2::Init's
+    // message for its stage (ProviderFFMS2.cpp:164-388): "Indexing error
+    // occurred: %s" with FFMS2's text, "Cannot create VideoSource.", "Cannot
+    // convert video to RGBA". Where legacy only wrote a debug message (the
+    // indexer could not be made) the panel's status is logged, as it is for
+    // a refused dummy text (ProviderDummy logs nothing), never the failure
+    // of the file before it. The helper fails at the stage its file names.
+    void aFailedVideoOpenLogsLegacysMessageForItsStage()
+    {
+        restartWithMediaHelper(QStringLiteral(HIKARI_FAILING_MEDIA_HELPER));
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        auto &log = application->log();
+        auto fail = [&](const QString &path) {
+            video.openVideo(path);
+            const std::string opened = application::isDummyVideo(path.toStdString())
+                                           ? path.toStdString()
+                                           : QDir::toNativeSeparators(path).toStdString();
+            QTRY_VERIFY_WITH_TIMEOUT(video.session().path() == opened &&
+                                         video.session().state() == application::VideoSession::State::Failed,
+                                     20000);
+        };
+        auto file = [&](const char *name) {
+            const QString path = own.filePath(QString::fromLatin1(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write("not a video");
+            return path;
+        };
+        const struct {
+            const char *name;
+            QString message;
+        } stages[] = {{"indexing.mkv", QStringLiteral("Indexing error occurred: fake indexing error")},
+                      {"source.mkv", QStringLiteral("Cannot create VideoSource.")},
+                      {"convert.mkv", QStringLiteral("Cannot convert video to RGBA")}};
+        for (const auto &stage : stages) {
+            const qsizetype before = log.history().count(stage.message);
+            fail(file(stage.name));
+            QCOMPARE(log.lastMessage(), stage.message);
+            QVERIFY(log.shown());
+            QCOMPARE(log.history().count(stage.message), before + 1); // once
+            log.close();
+        }
+        fail(file("indexer.mkv"));
+        QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
+        QCOMPARE(log.lastMessage(), video.status());
+        log.close();
+        // a refused dummy text after a failed file: the status, not the file's message
+        fail(file("source.mkv"));
+        QCOMPARE(log.lastMessage(), QStringLiteral("Cannot create VideoSource."));
+        log.close();
+        fail(QStringLiteral("?dummy:25:0:8:4:1:2:3:"));
+        QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
+        QVERIFY(!video.session().openFailure());
+        log.close();
     }
 
     // V3-unload-video: VIDEO_DELETE_FILE ("Unload video") empties the Video
