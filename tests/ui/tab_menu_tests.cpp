@@ -9,6 +9,7 @@
 #include "hikari/app/application.h"
 #include "hikari/application/session_file.h"
 #include "docking.h"
+#include "line_table_model.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -288,20 +289,32 @@ private slots:
 
     // OnTabSel (Notebook.cpp:1019-1039): the chosen tab trades places with
     // the first visible one and becomes active there; no session is written.
+    // P9-choose-refresh: the window shows the chosen tab at once (legacy
+    // sent no page-changed event, so the title and the rest stayed).
     void choosingATabMovesItToTheFirstVisiblePlace()
     {
         restoreThreeTabs();
         const QByteArray before = readAll(application->lastSessionPath());
+        auto gridText = [&] {
+            auto *lines = application->shell().lines();
+            return lines->index(0, ui::LineTableModel::TextColumn).data().toString();
+        };
+        QCOMPARE(window->title(), QStringLiteral("c.ass - HikariSub"));
+        QCOMPARE(gridText(), QStringLiteral("c"));
         openTabMenu(-1);
         trigger("tabMenuTab0"); // the first visible tab itself: shown, not moved
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
         QCOMPARE(application->currentTab(), 0);
+        QCOMPARE(window->title(), QStringLiteral("a.ass - HikariSub"));
+        QCOMPARE(gridText(), QStringLiteral("a"));
         closeTabMenu();
         openTabMenu(-1);
         trigger("tabMenuTab2");
         QCOMPARE(titles(), (QStringList{QStringLiteral("c.ass"), QStringLiteral("b.ass"), QStringLiteral("a.ass")}));
         QCOMPARE(application->currentTab(), 0);
         QCOMPARE(application->workspace().title(*application->workspace().editingTarget())->c_str(), std::string("c.ass"));
+        QCOMPARE(window->title(), QStringLiteral("c.ass - HikariSub"));
+        QCOMPARE(gridText(), QStringLiteral("c"));
         // With the bar scrolled so that the second tab is the first visible.
         application->chooseTab(0, 1);
         QCOMPARE(titles(), (QStringList{QStringLiteral("b.ass"), QStringLiteral("c.ass"), QStringLiteral("a.ass")}));
@@ -450,6 +463,50 @@ private slots:
         QMetaObject::invokeMethod(review, "close");
     }
 
+    // P9-close-all-review: one review lists every tab's unsaved work, and its
+    // Cancel closes nothing (legacy SavePrompt'ed tab by tab from the last,
+    // Notebook.cpp:984-996, so a Cancel left the later tabs closed).
+    void closeAllTabsReviewsOnceAndCancelClosesNothing()
+    {
+        restoreThreeTabs();
+        edit(0, "a changed");
+        edit(2, "c changed");
+        QObject *prompt = named("closeAllPrompt");
+        QObject *review = named("closeReview");
+        QVERIFY(prompt && review);
+        openTabMenu(1);
+        trigger("tabMenuCloseAll");
+        QTRY_VERIFY(prompt->property("visible").toBool());
+        QMetaObject::invokeMethod(prompt, "accept");
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVariantList rows = review->property("rows").toList();
+        QCOMPARE(rows.size(), 2); // both, in one review
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("a.ass"));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("c.ass"));
+        QObject *cancel = named("closeCancel");
+        QVERIFY(cancel);
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!review->property("visible").toBool());
+        QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
+        QVERIFY(session(0)->isDirty());
+        QVERIFY(session(2)->isDirty());
+        QCOMPARE(application->currentTab(), 2);
+        // Discard all closes every tab and leaves one Untitled tab.
+        openTabMenu(1);
+        trigger("tabMenuCloseAll");
+        QTRY_VERIFY(prompt->property("visible").toBool());
+        QMetaObject::invokeMethod(prompt, "accept");
+        QTRY_VERIFY(review->property("visible").toBool());
+        QCOMPARE(review->property("rows").toList().size(), 2);
+        QSignalSpy finished(application, &app::Application::closeFinished);
+        QVERIFY(QMetaObject::invokeMethod(named("closeDiscardAll"), "clicked"));
+        QTRY_COMPARE(finished.size(), 1);
+        QCOMPARE(titles(), QStringList{QStringLiteral("Untitled")});
+        QVERIFY(!readAll(dir.filePath(QStringLiteral("tabs/a.ass"))).contains("a changed"));
+        QVERIFY(!readAll(dir.filePath(QStringLiteral("tabs/c.ass"))).contains("c changed"));
+        QMetaObject::invokeMethod(review, "close");
+    }
+
     // OnRecent: Ctrl+click on a recent file shows it in its folder and opens
     // nothing; a plain click opens it.
     void controlClickOnARecentFileShowsItInItsFolder()
@@ -550,6 +607,51 @@ private slots:
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.srt"),
                                         QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.srt")}));
         QCOMPARE(application->currentTab(), 5);
+    }
+
+    // P9-drop-review: subtitles dropped with a video into a dirty Untitled
+    // tab review its work first (legacy OpenFiles' LoadSubtitles replaced it
+    // unasked, HikariSubFrame.cpp:1889-1892); Cancel leaves it, Discard
+    // loads the pair into it.
+    void droppedSubtitlesWithAVideoReviewADirtyUntitledTab()
+    {
+        const QString a = writeAss(dir.filePath(QStringLiteral("pair/a.ass")), {}, "a");
+        const QString b = writeAss(dir.filePath(QStringLiteral("pair/b.ass")), {}, "b");
+        const QString video = dir.filePath(QStringLiteral("pair/v.mkv"));
+        QFile::remove(video);
+        QVERIFY(QFile::copy(media("cfr.mkv"), video));
+        application->addPage(); // a new Untitled tab, the editing target
+        const QStringList before = titles();
+        const int mine = before.size() - 1;
+        edit(mine, "mine");
+        QVERIFY(application->targetUntitled());
+        // a.ass with v.mkv (one pair), b.ass alone after it.
+        const QList<QUrl> drop{QUrl::fromLocalFile(b), QUrl::fromLocalFile(video), QUrl::fromLocalFile(a)};
+        QVariantMap result = application->openDropped(drop);
+        QVariantList rows = result.value(QStringLiteral("rows")).toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(titles(), before); // nothing yet
+        QVERIFY(session(mine)->isDirty());
+        application->cancelClose(); // the pair is skipped, b.ass opens in a new tab
+        QCOMPARE(titles(), before + QStringList{QStringLiteral("b.ass")});
+        QVERIFY(session(mine)->isDirty());
+        QCOMPARE(application->tabMenu(mine).value(QStringLiteral("folders")).toList().size(), 0);
+        application->selectTab(mine);
+        result = application->openDropped(drop);
+        rows = result.value(QStringLiteral("rows")).toList();
+        QCOMPARE(rows.size(), 1);
+        QSignalSpy finished(application, &app::Application::closeFinished);
+        application->resolveClose({QVariantMap{{QStringLiteral("id"), rows[0].toMap().value(QStringLiteral("id"))},
+                                               {QStringLiteral("save"), false},
+                                               {QStringLiteral("path"), QString()}}});
+        QTRY_COMPARE(finished.size(), 1);
+        QStringList expected = before;
+        expected[mine] = QStringLiteral("a.ass");
+        expected << QStringLiteral("b.ass") << QStringLiteral("b.ass");
+        QCOMPARE(titles(), expected);
+        const QVariantList folders = application->tabMenu(mine).value(QStringLiteral("folders")).toList();
+        QCOMPARE(folders.size(), 2); // a.ass took the tab with the video
+        QCOMPARE(folders[1].toMap().value(QStringLiteral("path")).toString(), QDir::toNativeSeparators(video));
     }
 
     // Notebook::LoadVideo's question when subtitles open: the Script Info
@@ -749,6 +851,32 @@ private slots:
         QCOMPARE(hash(older), olderHash);
         QCOMPARE(hash(newer), newerHash);
         QCOMPARE(QDir(subs).entryList(QDir::Files).size(), 3);
+    }
+
+    // P9-no-legacy-folder-log: without a legacy Subs folder Open auto save
+    // logs nothing (legacy's FindFirstFileW failed and logged "Cannot open
+    // auto save folder", AutoSaveOpen.cpp:125-134); an existing empty folder
+    // still logs as legacy did.
+    void noLegacySubsFolderLogsNothing()
+    {
+        const QString subs = home.filePath(QStringLiteral("Subs"));
+        QVERIFY(QDir(subs).removeRecursively());
+        QVERIFY(!QFileInfo::exists(subs));
+        const QString before = application->log().history();
+        QVERIFY(application->legacyAutosaves().isEmpty());
+        QObject *recovery = named("recoveryWindow");
+        QVERIFY(QMetaObject::invokeMethod(recovery, "showBundles"));
+        QTRY_VERIFY(recovery->property("visible").toBool());
+        QCOMPARE(application->log().history(), before);
+        QVERIFY(!application->log().history().contains(QStringLiteral("auto save folder")));
+        QMetaObject::invokeMethod(recovery, "close");
+        QDir().mkpath(subs);
+        QVERIFY(application->legacyAutosaves().isEmpty());
+#ifdef _WIN32
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("Auto save folder is empty"));
+#else
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("Cannot open auto save folder"));
+#endif
     }
 };
 
