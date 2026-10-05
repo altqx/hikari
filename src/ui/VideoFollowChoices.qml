@@ -17,10 +17,19 @@ RowLayout {
     spacing: 2
 
     Item { Layout.fillWidth: true } // legacy draws the lists at the toolbar's right end
+    // Each list shows its widest choice when the panel has the room and
+    // narrows, its text cut, when it has not: the lists must not set the
+    // controls column's minimum width, which would widen the transport row
+    // and push Next frame and the volume past the panel's edge, under the
+    // next dock.
 
     ComboBox {
         id: seekAfter
         objectName: "videoSeekAfter"
+        Layout.fillWidth: true // a layout gives an item that does not fill its preferred width only
+        Layout.minimumWidth: 60
+        Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
         focusPolicy: Qt.NoFocus
         model: [qsTr("Double-clicking a line (always on)"), qsTr("Every line change"),
                 qsTr("Clicking a line or editing when paused"), qsTr("Clicking a line or editing"),
@@ -35,6 +44,10 @@ RowLayout {
     ComboBox {
         id: playAfter
         objectName: "videoPlayAfter"
+        Layout.fillWidth: true // a layout gives an item that does not fill its preferred width only
+        Layout.minimumWidth: 60
+        Layout.preferredWidth: implicitWidth
+        Layout.maximumWidth: implicitWidth
         focusPolicy: Qt.NoFocus
         model: [qsTr("Nothing"), qsTr("Audio to the line end time"), qsTr("Video and audio to the line end time"),
                 qsTr("Video and audio to the next line start time")]
