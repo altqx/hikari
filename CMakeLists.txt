@@ -19,7 +19,9 @@ include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
 add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool
+add_subdirectory(i18n) # O4: TS catalogs, QM in the build
 add_subdirectory(src)
+include(i18n/Extraction.cmake) # O4: lupdate and the migration, on request
 add_subdirectory(tests/dependency-load)
 if(BUILD_TESTING)
     include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariTesting.cmake")

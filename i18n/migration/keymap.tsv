@@ -1,0 +1,2270 @@
+# O4 key map: legacy gettext keys (Locale/template.pot at 20d647c4c769ab7f5d383cf3c1c33f03876a94e9) to the rewrite's Qt keys.
+# Reviewed input of hikari_i18n_migrate convert; regenerate with hikari_i18n_keymap.
+# input-commit	20d647c4c769ab7f5d383cf3c1c33f03876a94e9
+status	msgctxt	msgid	msgid_plural	context	source	comment	numerus	placeholders
+exact	\N	Search bar	\N	Main	Search bar		no	\N
+exact	\N	Horizontal stretching	\N	Main	Horizontal stretching		no	\N
+exact	\N	Vertical stretching	\N	Main	Vertical stretching		no	\N
+exact	\N	Volume	\N	Main	Volume		no	\N
+exact	\N	Link the volume and stretch sliders	\N	Main	Link the volume and stretch sliders		no	\N
+exact	\N	Play the previous line	\N	Main	Play the previous line		no	\N
+exact	\N	Play the next line	\N	Main	Play the next line		no	\N
+exact	\N	Play the current syllable / line	\N	Main	Play the current syllable / line		no	\N
+exact	\N	Play the current line	\N	Main	Play the current line		no	\N
+exact	\N	Stop playback	\N	Main	Stop playback		no	\N
+exact	\N	Play before the tag	\N	Main	Play before the tag		no	\N
+exact	\N	Play after the tag	\N	Main	Play after the tag		no	\N
+exact	\N	Play 500ms before the start time	\N	Main	Play 500ms before the start time		no	\N
+exact	\N	Play 500 ms after the start time	\N	Main	Play 500 ms after the start time		no	\N
+exact	\N	Play 500ms before the end time	\N	Main	Play 500ms before the end time		no	\N
+exact	\N	Play 500ms after the end time	\N	Main	Play 500ms after the end time		no	\N
+exact	\N	Play to the end	\N	Main	Play to the end		no	\N
+exact	\N	Add lead-in to the active line	\N	Main	Add lead-in to the active line		no	\N
+exact	\N	Add lead-out to the active line	\N	Main	Add lead-out to the active line		no	\N
+exact	\N	Apply changes	\N	Main	Apply changes		no	\N
+exact	\N	Go to selection	\N	Main	Go to selection		no	\N
+exact	\N	Enable / disable karaoke creation	\N	Main	Enable / disable karaoke creation		no	\N
+exact	\N	Enable / Disable automatic splitting of syllables	\N	Main	Enable / Disable automatic splitting of syllables		no	\N
+exact	\N	Automatically apply changes	\N	Main	Automatically apply changes		no	\N
+exact	\N	Go to the next line after applying changes	\N	Main	Go to the next line after applying changes		no	\N
+exact	\N	Auto-scroll to the active line	\N	Main	Auto-scroll to the active line		no	\N
+exact	\N	Spectrum mode	\N	Main	Spectrum mode		no	\N
+exact	\N	Enhance speech frequencies in the spectrum	\N	Main	Enhance speech frequencies in the spectrum		no	\N
+exact	\N	Invalid keyframes format	\N	hikari::app::Application	Invalid keyframes format		no	\N
+obsolete	\N	Error	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create Direct3D object	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create D3D9 device	\N	\N	\N	\N	\N	\N
+obsolete	\N	One of the DirectX settings failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set projection matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set world matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set view matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create surface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create D3DX line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create D3DX font	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create plain surface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot reset Direct3D	\N	\N	\N	\N	\N	\N
+exact	\N	Modified	\N	Main	Modified		no	\N
+obsolete	\N	Negative time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot lock texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot blit spectrum surfaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open auto save file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Find files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Filter list	\N	\N	\N	\N	\N	\N
+obsolete	\N	All words	\N	\N	\N	\N	\N	\N
+obsolete	\N	Files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Versions	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open	\N	\N	\N	\N	\N	\N
+exact	\N	Cancel	\N	AutomationManager	Cancel		no	\N
+exact	\N	Cancel	\N	HotkeyMapping	Cancel		no	\N
+exact	\N	Cancel	\N	Main	Cancel		no	\N
+exact	\N	Cancel	\N	ScriptPropertiesDialog	Cancel		no	\N
+exact	\N	Cancel	\N	SearchTool	Cancel		no	\N
+exact	\N	Cancel	\N	SettingsDialog	Cancel		no	\N
+exact	\N	Cancel	\N	StyleManager	Cancel		no	\N
+exact	\N	Cancel	\N	hikari::ui::AutomationDialogController	Cancel		no	\N
+obsolete	\N	Cannot open auto save folder	\N	\N	\N	\N	\N	\N
+exact	\N	Untitled	\N	hikari::app::Application	Untitled		no	\N
+obsolete	\N	Auto save folder is empty	\N	\N	\N	\N	\N	\N
+obsolete	\N	Failed to load autosave	\N	\N	\N	\N	\N	\N
+exact	\N	Remove temporary files	\N	Main	Remove temporary files		no	\N
+exact	\N	Remove files older than	\N	Main	Remove files older than		no	\N
+exact	\N	April	\N	Main	April		no	\N
+exact	\N	February	\N	Main	February		no	\N
+exact	\N	January	\N	Main	January		no	\N
+exact	\N	March	\N	Main	March		no	\N
+exact	\N	August	\N	Main	August		no	\N
+exact	\N	July	\N	Main	July		no	\N
+exact	\N	June	\N	Main	June		no	\N
+exact	\N	May	\N	Main	May		no	\N
+exact	\N	September	\N	Main	September		no	\N
+exact	\N	December	\N	Main	December		no	\N
+exact	\N	November	\N	Main	November		no	\N
+exact	\N	October	\N	Main	October		no	\N
+obsolete	\N	Remove from all folders	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all older files	\N	\N	\N	\N	\N	\N
+exact	\N	Auto save	\N	Main	Auto save		no	\N
+exact	\N	Remove selected autosave files	\N	Main	Remove selected autosave files		no	\N
+exact	\N	Remove all auto save files	\N	Main	Remove all auto save files		no	\N
+exact	\N	Remove older auto save files	\N	Main	Remove older auto save files		no	\N
+obsolete	\N	FFMS2 index	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove selected index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove older index files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cache	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove selected audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove older audio cache files	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Index files (*.ffindex)|*.ffindex	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cache files (*.w64)|*.w64	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose file to remove	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open temporary files folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Error initializing Lua script "%s":\n\n%s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	You are trying to load an Automation 3 script as an Automation 4 script. Automation 3 is no longer supported.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Macro named '%s' is already defined in the script '%s'	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred while executing the Lua script:\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Error loading Lua script: %s\n%s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Unknown error loading Lua script: %s.	\N	\N	\N	\N	\N	\N
+obsolete	\N	One or more autoload scripts contain errors.\nSee the script descriptions for more information.	\N	\N	\N	\N	\N	\N
+obsolete	\N	At least one script in the subtitle file contains errors.\nSee the script descriptions for more information.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select a script editor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Programs (*.exe)|*.exe|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Automation error	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot start editor.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Full Lua error description	\N	\N	\N	\N	\N	\N
+exact	\N	Edit	\N	StyleManager	Edit		no	\N
+obsolete	\N	Refresh	\N	\N	\N	\N	\N	\N
+exact	\N	List of automation shortcuts	\N	Main	List of automation shortcuts		no	\N
+exact	\N	Path and script name	\N	Main	Path and script name		no	\N
+exact	\N	Macro	\N	Main	Macro		no	\N
+exact	\N	Hotkey	\N	Main	Hotkey		no	\N
+exact	\N	Hotkey	\N	SettingsDialog	Hotkey		no	\N
+obsolete	\N	Autoload folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	From subs	\N	\N	\N	\N	\N	\N
+exact	\N	Map hotkey	\N	Main	Map hotkey		no	\N
+exact	\N	Map hotkey	\N	SettingsDialog	Map hotkey		no	\N
+exact	\N	Delete hotkey	\N	HotkeyMapping	Delete hotkey		no	\N
+exact	\N	Delete hotkey	\N	Main	Delete hotkey		no	\N
+exact	\N	Delete hotkey	\N	SettingsDialog	Delete hotkey		no	\N
+exact	\N	Audio	\N	Main	Audio		no	\N
+exact	\N	Audio	\N	SessionWindows	Audio		no	\N
+exact	\N	Audio	\N	SettingsDialog	Audio		no	\N
+exact	\N	Editor	\N	SettingsDialog	Editor		no	\N
+obsolete	\N	Global	\N	\N	\N	\N	\N	\N
+exact	\N	Subtitles	\N	ScriptPropertiesDialog	Subtitles		no	\N
+exact	\N	Subtitles	\N	SessionWindows	Subtitles		no	\N
+exact	\N	Video	\N	Main	Video		no	\N
+exact	\N	Video	\N	SessionWindows	Video		no	\N
+exact	\N	Video	\N	SettingsDialog	Video		no	\N
+obsolete	\N	This hotkey already exists for "%s".\nWhat to do?	\N	\N	\N	\N	\N	\N
+exact	\N	Warning	\N	HotkeyMapping	Warning		no	\N
+exact	\N	Warning	\N	Main	Warning		no	\N
+exact	\N	Warning	\N	SessionWindows	Warning		no	\N
+exact	\N	Warning	\N	SettingsDialog	Warning		no	\N
+exact	\N	Warning	\N	SpellCheckerDialog	Warning		no	\N
+exact	\N	Switch hotkeys	\N	HotkeyMapping	Switch hotkeys		no	\N
+obsolete	\N	This shortcut already exists in %s as a shortcut for "%s".\nWhat would you like to do?	\N	\N	\N	\N	\N	\N
+obsolete	\N	another window	\N	\N	\N	\N	\N	\N
+obsolete	\N	other windows	\N	\N	\N	\N	\N	\N
+exact	\N	Set anyway	\N	HotkeyMapping	Set anyway		no	\N
+exact	\N	Close	\N	Main	Close		no	\N
+exact	\N	Close	\N	SelectLinesDialog	Close		no	\N
+exact	\N	Close	\N	SessionWindows	Close		no	\N
+exact	\N	Close	\N	SpellCheckerDialog	Close		no	\N
+exact	\N	Close	\N	StyleManager	Close		no	\N
+obsolete	\N	dialogs	\N	\N	\N	\N	\N	\N
+obsolete	\N	styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add a line of class %s to a field of class %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Missing subtitles pointer	\N	\N	\N	\N	\N	\N
+exact	\N	Shortcut can be set using Shift + Click	\N	Main	Shortcut can be set using Shift + Click		no	\N
+exact	\N	Choose color	\N	ColourPickerDialog	Choose color		no	\N
+exact	\N	Choose color	\N	StyleManager	Choose color		no	\N
+exact	\N	Spectrum color	\N	ColourPickerDialog	Spectrum color		no	\N
+exact	\N	RGB color	\N	ColourPickerDialog	RGB color		no	\N
+obsolete	\N	HSL color	\N	\N	\N	\N	\N	\N
+obsolete	\N	HSV color	\N	\N	\N	\N	\N	\N
+exact	\N	Border color	\N	ColourPickerDialog	Border color		no	\N
+exact	\N	Border color	\N	Main	Border color		no	\N
+exact	\N	Primary color	\N	ColourPickerDialog	Primary color		no	\N
+exact	\N	Primary color	\N	Main	Primary color		no	\N
+exact	\N	Secondary color	\N	ColourPickerDialog	Secondary color		no	\N
+exact	\N	Shadow color	\N	ColourPickerDialog	Shadow color		no	\N
+exact	\N	Shadow color	\N	Main	Shadow color		no	\N
+obsolete	\N	Swap shortcuts between the color picker\nand the color selection window	\N	\N	\N	\N	\N	\N
+obsolete	\N	Checking this option opens the color picker on left-click,\nand the color selection window on right-click.	\N	\N	\N	\N	\N	\N
+exact	\N	Selected color:	\N	ColourPickerDialog	Selected color:		no	\N
+exact	\N	Red:	\N	ColourPickerDialog	Red:		no	\N
+exact	\N	Green:	\N	ColourPickerDialog	Green:		no	\N
+exact	\N	Blue:	\N	ColourPickerDialog	Blue:		no	\N
+obsolete	\N	Hue:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Saturation:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Lightness:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Value:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Color picker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the window\nto the color selection location	\N	\N	\N	\N	\N	\N
+obsolete	\N	Indexing error occurred: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	The file does not contain any subtitle tracks.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose subtitle track	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loading subtitles from Matroska.	\N	\N	\N	\N	\N	\N
+exact	\N	Fix suggestions	\N	Main	Fix suggestions		no	\N
+exact	\N	&Copy	\N	Main	&Copy		no	\N
+exact	\N	Cu&t	\N	Main	Cu&t		no	\N
+exact	\N	&Paste	\N	Main	&Paste		no	\N
+obsolete	\N	Search word translation on ling.pl	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search word translation on pl.ba.bla	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search for the selected phrase on Google	\N	\N	\N	\N	\N	\N
+obsolete	\N	Search for synonyms on synonimy.net	\N	\N	\N	\N	\N	\N
+exact	\N	Spellchecker	\N	Main	Spellchecker		no	\N
+exact	\N	Spellchecker	\N	SpellCheckerDialog	Spellchecker		no	\N
+exact	\N	Installed languages	\N	Main	Installed languages		no	\N
+placeholder	\N	&Add word "%s" to dictionary	\N	Main	&Add word "%1" to dictionary		no	%s -> %1
+exact	\N	&Delete	\N	Main	&Delete		no	\N
+obsolete	\N	Show status bar	\N	\N	\N	\N	\N	\N
+obsolete	\N	Automatically change quotes	\N	\N	\N	\N	\N	\N
+placeholder	\N	Error. Word "%s" was not added.	\N	Main	Error. Word "%1" was not added.		no	%s -> %1
+obsolete	\N	Dummy video options	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video resolution:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Checkerboard pattern	\N	\N	\N	\N	\N	\N
+obsolete	\N	Color:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Frames per second:	\N	\N	\N	\N	\N	\N
+obsolete	\N	This gives %i frames	\N	\N	\N	\N	\N	\N
+obsolete	\N	Duration:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Invalid FPS value.	\N	\N	\N	\N	\N	\N
+exact	\N	Enter ASS tag	\N	Main	Enter ASS tag		no	\N
+exact	\N	Insert Tag at text beginning	\N	Main	Insert Tag at text beginning		no	\N
+exact	\N	Plain text	\N	Main	Plain text		no	\N
+exact	\N	Tag inserted in place of cursor	\N	Main	Tag inserted in place of cursor		no	\N
+exact	\N	Button name	\N	Main	Button name		no	\N
+exact	\N	Button tag	\N	Main	Button tag		no	\N
+exact	\N	Save tag	\N	Main	Save tag		no	\N
+obsolete	\N	Bottom-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom-left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom-right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Middle-left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Middle-right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top-left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top-right	\N	\N	\N	\N	\N	\N
+exact	\N	Font selection	\N	Main	Font selection		no	\N
+exact	\N	Bold	\N	FontDialog	Bold		no	\N
+exact	\N	Bold	\N	Main	Bold		no	\N
+exact	\N	Bold	\N	StyleManager	Bold		no	\N
+exact	\N	Italic	\N	FontDialog	Italic		no	\N
+exact	\N	Italic	\N	Main	Italic		no	\N
+exact	\N	Italic	\N	StyleManager	Italic		no	\N
+exact	\N	Underline	\N	FontDialog	Underline		no	\N
+exact	\N	Underline	\N	Main	Underline		no	\N
+exact	\N	Underline	\N	StyleManager	Underline		no	\N
+exact	\N	Strikethrough	\N	FontDialog	Strikethrough		no	\N
+exact	\N	Strikethrough	\N	StyleManager	Strikethrough		no	\N
+exact	\N	Secondary color for karaoke	\N	Main	Secondary color for karaoke		no	\N
+obsolete	\N	Translator mode	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line: 0	\N	\N	\N	\N	\N	\N
+obsolete	\N	Wraps: 0/86	\N	\N	\N	\N	\N	\N
+obsolete	\N	Characters per second: 0<=15	\N	\N	\N	\N	\N	\N
+exact	\N	Time	\N	Main	Time		no	\N
+exact	\N	Frames	\N	Main	Frames		no	\N
+exact	\N	Paste all	\N	Main	Paste all		no	\N
+exact	\N	Paste the selected	\N	Main	Paste the selected		no	\N
+obsolete	\N	Hide original	\N	\N	\N	\N	\N	\N
+obsolete	\N	Not confirmed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moving tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Comment	\N	\N	\N	\N	\N	\N
+exact	\N	Actor	\N	Main	Actor		no	\N
+exact	\N	Actor	\N	SearchTool	Actor		no	\N
+exact	\N	Actor	\N	SelectLinesDialog	Actor		no	\N
+exact	\N	Actor	\N	hikari::app::Application	Actor		no	\N
+exact	\N	Effect	\N	Main	Effect		no	\N
+exact	\N	Effect	\N	SearchTool	Effect		no	\N
+exact	\N	Effect	\N	SelectLinesDialog	Effect		no	\N
+exact	\N	Effect	\N	hikari::app::Application	Effect		no	\N
+obsolete	\N	Line: %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Wraps: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Characters per second: %i<=15	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text position	\N	\N	\N	\N	\N	\N
+obsolete	\N	Translator mode displays and saves both foreign text and translation text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copies all foreign-language text to the translation field	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copies the selected foreign-language text to the translation field	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sets the line as a comment. Comments are not shown	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line layer. Higher layers are on top	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line duration	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Allows quick editing of the current line's style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line actor label. Does not affect the appearance of the subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line left margin	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line right margin	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line top and bottom margins	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line effect. Used to mark lines to which karaoke or VSFilter effects should be applied	\N	\N	\N	\N	\N	\N
+obsolete	\N	Number of characters in each line.\nNo more than 43 characters per line (maximum 2 lines).	\N	\N	\N	\N	\N	\N
+obsolete	\N	Characters per second.\nShould not exceed 15 characters per second	\N	\N	\N	\N	\N	\N
+exact	\N	Change number of buttons	\N	Main	Change number of buttons		no	\N
+exact	\N	No unconfirmed lines found	\N	hikari::ui::LineEditorController	No unconfirmed lines found		no	\N
+exact	\N	No untranslated lines found	\N	hikari::ui::LineEditorController	No untranslated lines found		no	\N
+exact	\N	Manage tag buttons	\N	Main	Manage tag buttons		no	\N
+exact	\N	Search text:	\N	SearchTool	Search text:		no	\N
+exact	\N	Search text:	\N	SelectLinesDialog	Search text:		no	\N
+exact	\N	Replace with:	\N	SearchTool	Replace with:		no	\N
+obsolete	\N	Windows search filters separated by semicolons, e.g. "*.ass; *.srt".\nBecause of the large video file,\nthe search for everything "*. *" Is changed to *.ass	\N	\N	\N	\N	\N	\N
+exact	\N	Filters:	\N	SearchTool	Filters:		no	\N
+exact	\N	Subtitle search folder:	\N	SearchTool	Subtitle search folder:		no	\N
+exact	\N	Choose save folder	\N	SearchTool	Choose save folder		no	\N
+exact	\N	Catalog:	\N	SearchTool	Catalog:		no	\N
+exact	\N	Catalog:	\N	StyleManager	Catalog:		no	\N
+exact	\N	Match case	\N	MisspellReplacerDialog	Match case		no	\N
+exact	\N	Match case	\N	SearchTool	Match case		no	\N
+exact	\N	Match case	\N	SelectLinesDialog	Match case		no	\N
+exact	\N	Regular expressions	\N	SearchTool	Regular expressions		no	\N
+exact	\N	Regular expressions	\N	SelectLinesDialog	Regular expressions		no	\N
+exact	\N	Beginning of text	\N	SearchTool	Beginning of text		no	\N
+exact	\N	End of text	\N	SearchTool	End of text		no	\N
+exact	\N	Include comments	\N	SearchTool	Include comments		no	\N
+exact	\N	Skip tags	\N	SearchTool	Skip tags		no	\N
+exact	\N	Skip text	\N	SearchTool	Skip text		no	\N
+exact	\N	In field	\N	SearchTool	In field		no	\N
+exact	\N	In field	\N	SelectLinesDialog	In field		no	\N
+exact	\N	Text	\N	SearchTool	Text		no	\N
+exact	\N	Text	\N	SelectLinesDialog	Text		no	\N
+exact	\N	Text	\N	hikari::app::Application	Text		no	\N
+exact	\N	Styles	\N	Main	Styles		no	\N
+exact	\N	Styles	\N	MisspellReplacerDialog	Styles		no	\N
+exact	\N	Styles	\N	SearchTool	Styles		no	\N
+exact	\N	Styles	\N	SelectLinesDialog	Styles		no	\N
+exact	\N	Styles	\N	hikari::app::Application	Styles		no	\N
+exact	\N	Find	\N	SearchTool	Find		no	\N
+exact	\N	Find	\N	SelectLinesDialog	Find		no	\N
+obsolete	\N	Find in all open\nsubtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Find all\nin current subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Replace next	\N	SearchTool	Replace next		no	\N
+exact	\N	Replace all	\N	SearchTool	Replace all		no	\N
+exact	\N	Replace all	\N	SpellCheckerDialog	Replace all		no	\N
+obsolete	\N	Replace in all open\nsubtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Find in subtitles	\N	SearchTool	Find in subtitles		no	\N
+exact	\N	Replace in subtitles	\N	SearchTool	Replace in subtitles		no	\N
+exact	\N	Search in subfolders	\N	SearchTool	Search in subfolders		no	\N
+obsolete	\N	Search in hidden\nfolders	\N	\N	\N	\N	\N	\N
+exact	\N	Lines	\N	SearchTool	Lines		no	\N
+exact	\N	All lines	\N	Main	All lines		no	\N
+exact	\N	All lines	\N	MisspellReplacerDialog	All lines		no	\N
+exact	\N	All lines	\N	SearchTool	All lines		no	\N
+exact	\N	Selected lines	\N	Main	Selected lines		no	\N
+exact	\N	Selected lines	\N	MisspellReplacerDialog	Selected lines		no	\N
+exact	\N	Selected lines	\N	SearchTool	Selected lines		no	\N
+exact	\N	From selected	\N	SearchTool	From selected		no	\N
+exact	\N	Find and replace	\N	Main	Find and replace		no	\N
+exact	\N	Find and replace	\N	SearchTool	Find and replace		no	\N
+exact	\N	Search results	\N	MisspellReplacerDialog	Search results		no	\N
+exact	\N	Search results	\N	SearchTool	Search results		no	\N
+exact	\N	Check all	\N	MisspellReplacerDialog	Check all		no	\N
+exact	\N	Check all	\N	SearchTool	Check all		no	\N
+exact	\N	Uncheck all	\N	MisspellReplacerDialog	Uncheck all		no	\N
+exact	\N	Uncheck all	\N	SearchTool	Uncheck all		no	\N
+exact	\N	Replace	\N	MisspellReplacerDialog	Replace		no	\N
+exact	\N	Replace	\N	SearchTool	Replace		no	\N
+exact	\N	Replace	\N	SpellCheckerDialog	Replace		no	\N
+placeholder	\N	Line %i: 	\N	MisspellReplacerDialog	Line %1: 		no	%i -> %1
+placeholder	\N	Line %i: 	\N	hikari::app::Application	Line %1: 		no	%i -> %1
+obsolete	\N	Select the name of the profile	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose new catalog name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new catalog	\N	\N	\N	\N	\N	\N
+exact	\N	Info	\N	hikari::app::Application	Info		no	\N
+obsolete	\N	Manage font catalogs	\N	\N	\N	\N	\N	\N
+exact	\N	Font name	\N	FontDialog	Font name		no	\N
+obsolete	\N	Catalog	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sample	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add	\N	\N	\N	\N	\N	\N
+exact	\N	Delete	\N	Main	Delete		no	\N
+exact	\N	Delete	\N	SelectLinesDialog	Delete		no	\N
+exact	\N	Delete	\N	StyleManager	Delete		no	\N
+exact	\N	Load	\N	StyleManager	Load		no	\N
+obsolete	\N	Save filter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to delete this catalog?	\N	\N	\N	\N	\N	\N
+exact	\N	Prompt	\N	SessionWindows	Prompt		no	\N
+exact	\N	Prompt	\N	StyleManager	Prompt		no	\N
+obsolete	\N	The catalog list has autosave; files are stored in the "Config" folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Catalogs:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Find:	\N	\N	\N	\N	\N	\N
+exact	\N	Autosave	\N	Main	Autosave		no	\N
+exact	\N	Choose video file	\N	Main	Choose video file		no	\N
+obsolete	\N	Text files (*.txt)|*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find elements of line %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	For adding fonts to catalog,\nclick "Manage" button first,\nto create new catalog.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add fonts from subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Catalog named "%s" already exists. What to do?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Merge	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove all contents of catalog	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add fonts from all open subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	In styles:\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	 tabs: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	In lines: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font collector	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select a folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Check availability of fonts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy to selected folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Zip	\N	\N	\N	\N	\N	\N
+exact	\N	Options	\N	ScriptPropertiesDialog	Options		no	\N
+exact	\N	Options	\N	SettingsDialog	Options		no	\N
+obsolete	\N	Save to video / subtitles folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Saves to the video folder\nwhen demuxing fonts from an MKV file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Demux fonts from loaded MKV file	\N	\N	\N	\N	\N	\N
+exact	\N	Start	\N	Main	Start		no	\N
+obsolete	\N	Start on tabs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select the name of the archive	\N	\N	\N	\N	\N	\N
+obsolete	\N	Archive files (*.zip)|*.zip	\N	\N	\N	\N	\N	\N
+obsolete	\N	No video or subtitles loaded	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select the folder where you want to copy fonts	\N	\N	\N	\N	\N	\N
+obsolete	\N	No subtitles loaded. Load subtitles or deselect this option.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose a name for the archive	\N	\N	\N	\N	\N	\N
+obsolete	\N	The save path is not valid.	\N	\N	\N	\N	\N	\N
+exact	\N	Confirmation	\N	Main	Confirmation		no	\N
+exact	\N	Confirmation	\N	StyleManager	Confirmation		no	\N
+exact	\N	Confirmation	\N	hikari::app::Application	Confirmation		no	\N
+obsolete	\N	The zip file already exists, delete it?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font not found "	\N	\N	\N	\N	\N	\N
+obsolete	\N	Found font "%s"\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot retrieve the font file sizes and names;\ncopying will be canceled.\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Retrieved sizes and names of %i fonts, elapsed time %sms.\n\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Path is not available	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" belongs to a style\nthat is not used.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Some fonts do not contain all glyphs used in the text.\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finished, %s %s.\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	copied	\N	\N	\N	\N	\N	\N
+obsolete	\N	found	\N	\N	\N	\N	\N	\N
+obsolete	found or copied	%d font	%d fonts	\N	\N	\N	\N	\N
+obsolete	\N	Not found %s.\n	\N	\N	\N	\N	\N	\N
+obsolete	not found or not copied	%d font	%d fonts	\N	\N	\N	\N	\N
+obsolete	\N	Cannot copy %s.\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Completed Successfully, %s %s.\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Added font "%s" to the archive.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot zip font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copied font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot copy font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video: %s\n\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	This video is not an MKV file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open MKV file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loaded MKV file does not have any fonts.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Saved a font named "	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot save font named "	\N	\N	\N	\N	\N	\N
+obsolete	\N	Completed, copied %i fonts.\nFailed to copy %i fonts.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Completed successfully and copied %i fonts.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Found font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	\nWill not be copied.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" belongs to a style\nthat is not used.%s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" is missing normal style.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" is missing bold italics.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" is missing bold.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" is missing italics.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot check the characters in font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font "%s" does not contain characters: "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get the contents of font "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open file "%s".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Size of font "%s" is different.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Could not read "%s" font from the Fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Found "%s" font file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find "%s" font in Fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Could not create process. Muxing canceled	\N	\N	\N	\N	\N	\N
+obsolete	\N	\nFinished in %sms	\N	\N	\N	\N	\N	\N
+exact	\N	Select a font	\N	FontDialog	Select a font		no	\N
+exact	\N	Font	\N	FontDialog	Font		no	\N
+exact	\N	Font	\N	StyleManager	Font		no	\N
+exact	\N	Preview	\N	FontDialog	Preview		no	\N
+obsolete	\N	All fonts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Without catalog	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adds fonts to a previously created catalog	\N	\N	\N	\N	\N	\N
+obsolete	\N	Manage	\N	\N	\N	\N	\N	\N
+obsolete	\N	Manages font catalogs	\N	\N	\N	\N	\N	\N
+exact	\N	Filter	\N	Main	Filter		no	\N
+obsolete	\N	Filters fonts to those containing the entered characters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Filtering and font catalogs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create notification handler for fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loading external fonts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create next notification handler for fonts folder.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing fonts from external folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loading fonts from external folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load external font folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Exit	\N	\N	\N	\N	\N	\N
+exact	\N	Open new tab	\N	DocumentTabBar	Open new tab		no	\N
+obsolete	\N	Close current tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Time shift window	\N	\N	\N	\N	\N	\N
+exact	\N	Convert to ASS	\N	Main	Convert to ASS		no	\N
+exact	\N	Convert to SRT	\N	Main	Convert to SRT		no	\N
+exact	\N	Convert to MDVD	\N	Main	Convert to MDVD		no	\N
+exact	\N	Convert to MPL2	\N	Main	Convert to MPL2		no	\N
+exact	\N	Convert to TMP	\N	Main	Convert to TMP		no	\N
+exact	\N	Style manager	\N	StyleManager	Style manager		no	\N
+obsolete	\N	Enable / Disable editor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Undo	\N	\N	\N	\N	\N	\N
+obsolete	\N	Redo	\N	\N	\N	\N	\N	\N
+obsolete	\N	History	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Save	\N	Main	Save		no	\N
+exact	\N	Save	\N	ScriptPropertiesDialog	Save		no	\N
+obsolete	\N	Save as...	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delete text	\N	\N	\N	\N	\N	\N
+exact	\N	Delete line	\N	Main	Delete line		no	\N
+obsolete	\N	Insert start time from video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert end time from video	\N	\N	\N	\N	\N	\N
+exact	\N	Play / Pause	\N	Main	Play / Pause		no	\N
+exact	\N	Previous frame	\N	Main	Previous frame		no	\N
+exact	\N	Next frame	\N	Main	Next frame		no	\N
+obsolete	\N	Previous line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next line	\N	\N	\N	\N	\N	\N
+exact	\N	Find next	\N	Main	Find next		no	\N
+obsolete	\N	Merge with previous line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Merge with next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change start time to nearest keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change end time to nearest keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select line at current video position	\N	\N	\N	\N	\N	\N
+obsolete	\N	HikariSub website	\N	\N	\N	\N	\N	\N
+obsolete	\N	Duplicate lines	\N	\N	\N	\N	\N	\N
+exact	\N	Copy columns	\N	Main	Copy columns		no	\N
+exact	\N	Paste columns	\N	Main	Paste columns		no	\N
+obsolete	\N	Show subtitles preview	\N	\N	\N	\N	\N	\N
+obsolete	\N	5 seconds forward	\N	\N	\N	\N	\N	\N
+obsolete	\N	5 seconds backward	\N	\N	\N	\N	\N	\N
+obsolete	\N	1 minute forward	\N	\N	\N	\N	\N	\N
+obsolete	\N	1 minute backward	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Volume up	\N	\N	\N	\N	\N	\N
+obsolete	\N	Volume down	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next chapter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous chapter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add bold	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add italic	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add line wrap	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert difference from the start	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert difference to the end	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next unconfirmed line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next untranslated line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Mark as unconfirmed and go to the next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Apply the changes and go to the next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Commit	\N	\N	\N	\N	\N	\N
+obsolete	\N	Commit alt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous line alt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Next line alt	\N	\N	\N	\N	\N	\N
+exact	\N	Play	\N	Main	Play		no	\N
+obsolete	\N	Play alt	\N	\N	\N	\N	\N	\N
+exact	\N	Play line	\N	Main	Play line		no	\N
+obsolete	\N	Play line alt	\N	\N	\N	\N	\N	\N
+exact	\N	Stop	\N	Main	Stop		no	\N
+obsolete	\N	Scroll left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play before the marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play after the marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play first 500ms	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play last 500ms	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play 500ms before	\N	\N	\N	\N	\N	\N
+obsolete	\N	Play 500ms after	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add lead-in	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add lead-out	\N	\N	\N	\N	\N	\N
+obsolete	\N	The shortcuts file is outdated and will be replaced with the default one	\N	\N	\N	\N	\N	\N
+placeholder	\N	Shortcut "%s" is invalid	\N	hikari::app::HotkeysController	Shortcut "%1" is invalid		no	%s -> %1
+obsolete	\N	This setting does not have a default hotkey with id %i to revert to	\N	\N	\N	\N	\N	\N
+exact	\N	Hotkey mapping	\N	HotkeyMapping	Hotkey mapping		no	\N
+exact	\N	Hotkey mapping	\N	Main	Hotkey mapping		no	\N
+exact	\N	Global hotkey	\N	HotkeyMapping	Global hotkey		no	\N
+exact	\N	Subtitle grid hotkey	\N	HotkeyMapping	Subtitle grid hotkey		no	\N
+exact	\N	Audio hotkey	\N	HotkeyMapping	Audio hotkey		no	\N
+exact	\N	Edit box hotkey	\N	HotkeyMapping	Edit box hotkey		no	\N
+exact	\N	Video hotkey	\N	HotkeyMapping	Video hotkey		no	\N
+placeholder	\N	Please enter a hotkey for "%s".	\N	HotkeyMapping	Please enter a hotkey for "%1".		no	%s -> %1
+placeholder	\N	Please enter a hotkey for "%s".	\N	Main	Please enter a hotkey for "%1".		no	%s -> %1
+obsolete	\N	Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt).	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot use shortcuts for copying, cutting, and pasting.	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot use the program exit shortcut.	\N	\N	\N	\N	\N	\N
+obsolete	\N	First tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	Third tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	4th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	5th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	6th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	7th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	8th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	9th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	10th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	11th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	12th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	13th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	14th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	15th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	16th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	17th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	18th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	19th tag button	\N	\N	\N	\N	\N	\N
+obsolete	\N	20th tag button	\N	\N	\N	\N	\N	\N
+exact	\N	Set times as a continuous (next line)	\N	Main	Set times as a continuous (next line)		no	\N
+exact	\N	Set times as a continuous (previous line)	\N	Main	Set times as a continuous (previous line)		no	\N
+exact	\N	Hide comments	\N	Main	Hide comments		no	\N
+exact	\N	Show unconfirmed	\N	Main	Show unconfirmed		no	\N
+exact	\N	Turn off filtering	\N	Main	Turn off filtering		no	\N
+exact	\N	Hide selected lines	\N	Main	Hide selected lines		no	\N
+exact	\N	Hide lines with styles	\N	Main	Hide lines with styles		no	\N
+exact	\N	Show untranslated	\N	Main	Show untranslated		no	\N
+exact	\N	Set FPS from video	\N	Main	Set FPS from video		no	\N
+exact	\N	Filter after loading subtitles	\N	Main	Filter after loading subtitles		no	\N
+exact	\N	Do not reset previous filtering	\N	Main	Do not reset previous filtering		no	\N
+exact	\N	Ignore filtering in some actions	\N	Main	Ignore filtering in some actions		no	\N
+exact	\N	Reverse filtering	\N	Main	Reverse filtering		no	\N
+exact	\N	Hide actor	\N	Main	Hide actor		no	\N
+exact	\N	Hide characters per second	\N	Main	Hide characters per second		no	\N
+exact	\N	Hide end time	\N	Main	Hide end time		no	\N
+exact	\N	Hide effect	\N	Main	Hide effect		no	\N
+exact	\N	Hide layer	\N	Main	Hide layer		no	\N
+exact	\N	Hide left margin	\N	Main	Hide left margin		no	\N
+exact	\N	Hide right margin	\N	Main	Hide right margin		no	\N
+exact	\N	Hide vertical margin	\N	Main	Hide vertical margin		no	\N
+exact	\N	Hide start time	\N	Main	Hide start time		no	\N
+exact	\N	Hide style	\N	Main	Hide style		no	\N
+exact	\N	Make tree	\N	Main	Make tree		no	\N
+obsolete	\N	Select all lines visible on video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert after	\N	\N	\N	\N	\N	\N
+exact	\N	Insert after with video time	\N	Main	Insert after with video time		no	\N
+exact	\N	Insert after with video frame time	\N	Main	Insert after with video frame time		no	\N
+obsolete	\N	Insert before	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert before with video time	\N	\N	\N	\N	\N	\N
+exact	\N	Insert before with video frame time	\N	Main	Insert before with video frame time		no	\N
+exact	\N	Join lines	\N	Main	Join lines		no	\N
+exact	\N	Join lines and keep first	\N	Main	Join lines and keep first		no	\N
+exact	\N	Join lines and keep last	\N	Main	Join lines and keep last		no	\N
+exact	\N	Paste translation text	\N	Main	Paste translation text		no	\N
+obsolete	\N	Load subtitles from an MKV file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Swap lines	\N	\N	\N	\N	\N	\N
+exact	\N	Dialogue shifting window	\N	Main	Dialogue shifting window		no	\N
+exact	\N	Set new FPS	\N	Main	Set new FPS		no	\N
+exact	\N	Split line at video time	\N	Main	Split line at video time		no	\N
+exact	\N	Split lines into frames	\N	Main	Split lines into frames		no	\N
+exact	\N	Split lines into characters	\N	Main	Split lines into characters		no	\N
+exact	\N	Split lines into words	\N	Main	Split lines into words		no	\N
+exact	\N	Split lines by wraps	\N	Main	Split lines by wraps		no	\N
+exact	\N	ASS file properties	\N	Main	ASS file properties		no	\N
+obsolete	\N	About	\N	\N	\N	\N	\N	\N
+obsolete	\N	Report an issue	\N	\N	\N	\N	\N	\N
+exact	\N	Open audio from video	\N	Main	Open audio from video		no	\N
+obsolete	\N	Load script	\N	\N	\N	\N	\N	\N
+exact	\N	Open shortcut mapping window	\N	Main	Open shortcut mapping window		no	\N
+exact	\N	Refresh autoload scripts	\N	Main	Refresh autoload scripts		no	\N
+exact	\N	Close audio	\N	Main	Close audio		no	\N
+exact	\N	Credits	\N	Main	Credits		no	\N
+obsolete	\N	Hide tags	\N	\N	\N	\N	\N	\N
+exact	\N	Open keyframes	\N	Main	Open keyframes		no	\N
+exact	\N	Open auto save	\N	Main	Open auto save		no	\N
+obsolete	\N	Run the last loaded script	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by actor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by effect	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort all lines by layer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by actor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by effect	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort selected lines by layer	\N	\N	\N	\N	\N	\N
+exact	\N	Shift times / run time post processor	\N	Main	Shift times / run time post processor		no	\N
+exact	\N	Go to previous keyframe	\N	Main	Go to previous keyframe		no	\N
+exact	\N	Go to next keyframe	\N	Main	Go to next keyframe		no	\N
+exact	\N	Resample subtitles	\N	Main	Resample subtitles		no	\N
+exact	\N	Undo to last save	\N	Main	Undo to last save		no	\N
+obsolete	\N	Open video with FFMS2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Zoom video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turn off video zoom	\N	\N	\N	\N	\N	\N
+obsolete	\N	View all	\N	\N	\N	\N	\N	\N
+obsolete	\N	View audio and subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View only subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View video and subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	View only video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clean styles of ASS file	\N	\N	\N	\N	\N	\N
+exact	\N	Fix minor errors (experimental)	\N	Main	Fix minor errors (experimental)		no	\N
+exact	\N	Load last session	\N	Main	Load last session		no	\N
+exact	\N	Open audio	\N	Main	Open audio		no	\N
+obsolete	\N	Play active line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove subtitles from the editor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save all subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save translation	\N	\N	\N	\N	\N	\N
+exact	\N	Save subtitles using the video name	\N	Main	Save subtitles using the video name		no	\N
+obsolete	\N	Select lines	\N	\N	\N	\N	\N	\N
+exact	\N	Set audio position to video time	\N	Main	Set audio position to video time		no	\N
+exact	\N	Set audio marker to video time	\N	Main	Set audio marker to video time		no	\N
+obsolete	\N	Settings	\N	\N	\N	\N	\N	\N
+exact	\N	Go to start time	\N	Main	Go to start time		no	\N
+exact	\N	Go to end time of line	\N	Main	Go to end time of line		no	\N
+exact	\N	Check spelling	\N	Main	Check spelling		no	\N
+obsolete	\N	Copy frame to clipboard	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save frame as PNG	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show / hide progress bar	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change aspect ratio	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy frame with subtitles to clipboard	\N	\N	\N	\N	\N	\N
+obsolete	\N	Full screen	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save frame with subtitles as PNG	\N	\N	\N	\N	\N	\N
+obsolete	\N	Apply to All	\N	\N	\N	\N	\N	\N
+exact	\N	Yes to all	\N	StyleManager	Yes to all		no	\N
+exact	\N	Yes	\N	Main	Yes		no	\N
+exact	\N	Yes	\N	SearchTool	Yes		no	\N
+exact	\N	Yes	\N	StyleManager	Yes		no	\N
+exact	\N	No	\N	Main	No		no	\N
+exact	\N	No	\N	SearchTool	No		no	\N
+exact	\N	No	\N	StyleManager	No		no	\N
+obsolete	\N	Help	\N	\N	\N	\N	\N	\N
+obsolete	\N	Untitled - 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video duration	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video scale	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video zoom	\N	\N	\N	\N	\N	\N
+obsolete	\N	Frames per second	\N	\N	\N	\N	\N	\N
+exact	\N	Subtitles resolution	\N	Main	Subtitles resolution		no	\N
+obsolete	\N	Video aspect ratio	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video file name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video resolution	\N	\N	\N	\N	\N	\N
+obsolete	\N	Loads previously loaded files	\N	\N	\N	\N	\N	\N
+exact	\N	Load session from file	\N	Main	Load session from file		no	\N
+obsolete	\N	Loads session from saved session file	\N	\N	\N	\N	\N	\N
+exact	\N	Save session to file	\N	Main	Save session to file		no	\N
+obsolete	\N	Saves session to file	\N	\N	\N	\N	\N	\N
+exact	\N	Ask whether to load the last session at program startup	\N	Main	Ask whether to load the last session at program startup		no	\N
+obsolete	\N	Asks whether to load previously loaded files at program startup	\N	\N	\N	\N	\N	\N
+exact	\N	Load last session after program start	\N	Main	Load last session after program start		no	\N
+obsolete	\N	Loads previously loaded files at program startup	\N	\N	\N	\N	\N	\N
+obsolete	\N	&Open subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open subtitle file	\N	\N	\N	\N	\N	\N
+exact	\N	&Save	\N	Main	&Save		no	\N
+obsolete	\N	Save current file	\N	\N	\N	\N	\N	\N
+exact	\N	Save &all	\N	Main	Save &all		no	\N
+obsolete	\N	Save &as...	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save as	\N	\N	\N	\N	\N	\N
+exact	\N	Save &translation	\N	Main	Save &translation		no	\N
+exact	\N	Recently opened &subtitles	\N	Main	Recently opened &subtitles		no	\N
+obsolete	\N	Recently opened subtitles	\N	\N	\N	\N	\N	\N
+exact	\N	Remove subtitles from the &editor	\N	Main	Remove subtitles from the &editor		no	\N
+obsolete	\N	Opens the selected autosave from the list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Opens the temporary file removal window	\N	\N	\N	\N	\N	\N
+exact	\N	Show / Hide log window	\N	Main	Show / Hide log window		no	\N
+exact	\N	Last session	\N	Main	Last session		no	\N
+obsolete	\N	Last session options	\N	\N	\N	\N	\N	\N
+exact	\N	&Settings	\N	Main	&Settings		no	\N
+obsolete	\N	Program settings	\N	\N	\N	\N	\N	\N
+obsolete	\N	&Exit\tAlt-F4	\N	\N	\N	\N	\N	\N
+obsolete	\N	Exit the program	\N	\N	\N	\N	\N	\N
+exact	\N	&File	\N	Main	&File		no	\N
+exact	\N	&Undo	\N	Main	&Undo		no	\N
+exact	\N	&Redo	\N	Main	&Redo		no	\N
+exact	\N	&History	\N	Main	&History		no	\N
+exact	\N	Find and re&place	\N	Main	Find and re&place		no	\N
+obsolete	\N	Searches for the specified text phrases and replaces them	\N	\N	\N	\N	\N	\N
+exact	\N	&Find	\N	Main	&Find		no	\N
+obsolete	\N	Searches for the specified text phrase	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finds the next occurrence of the phrase in the text	\N	\N	\N	\N	\N	\N
+exact	\N	The starting time	\N	Main	The starting time		no	\N
+exact	\N	The starting time	\N	hikari::app::Application	The starting time		no	\N
+obsolete	\N	Sort by start time	\N	\N	\N	\N	\N	\N
+exact	\N	End time	\N	Main	End time		no	\N
+exact	\N	End time	\N	SelectLinesDialog	End time		no	\N
+exact	\N	End time	\N	hikari::app::Application	End time		no	\N
+obsolete	\N	Sort by end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort by actor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort by effect	\N	\N	\N	\N	\N	\N
+exact	\N	Layer	\N	Main	Layer		no	\N
+exact	\N	Layer	\N	hikari::app::Application	Layer		no	\N
+obsolete	\N	Sort by layer	\N	\N	\N	\N	\N	\N
+exact	\N	So&rt all lines	\N	Main	So&rt all lines		no	\N
+obsolete	\N	Sorts all lines in ASS file	\N	\N	\N	\N	\N	\N
+exact	\N	So&rt selected lines	\N	Main	So&rt selected lines		no	\N
+obsolete	\N	Sorts selected lines in ASS file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turns on multireplacer	\N	\N	\N	\N	\N	\N
+exact	\N	Select &lines	\N	Main	Select &lines		no	\N
+obsolete	\N	Selects lines by expressions	\N	\N	\N	\N	\N	\N
+exact	\N	&Edit	\N	Main	&Edit		no	\N
+obsolete	\N	Opens video file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Recently opened videos	\N	\N	\N	\N	\N	\N
+obsolete	\N	Recently opened keyframes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open dummy video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts the start time from video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts the end time from video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Go to previous frame	\N	\N	\N	\N	\N	\N
+obsolete	\N	Go to next frame	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moves video to start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moves video to end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Plays / Pauses video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Opens video with FFMS2 for frame precision	\N	\N	\N	\N	\N	\N
+exact	\N	&Video	\N	Main	&Video		no	\N
+obsolete	\N	Opens audio file	\N	\N	\N	\N	\N	\N
+exact	\N	Recently opened audio	\N	Main	Recently opened audio		no	\N
+obsolete	\N	Opens audio from video	\N	\N	\N	\N	\N	\N
+exact	\N	Open blank 2h30m audio	\N	Main	Open blank 2h30m audio		no	\N
+obsolete	\N	Opens blank audio 2 hour and 30 minutes long	\N	\N	\N	\N	\N	\N
+obsolete	\N	Closes audio	\N	\N	\N	\N	\N	\N
+exact	\N	A&udio	\N	Main	A&udio		no	\N
+exact	\N	All	\N	SettingsDialog	All		no	\N
+obsolete	\N	Shows all windows	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only video window and subs window	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video and subs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio and subs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only audio window and subs window	\N	\N	\N	\N	\N	\N
+obsolete	\N	Only video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only video window	\N	\N	\N	\N	\N	\N
+obsolete	\N	Only subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows only the subtitle window	\N	\N	\N	\N	\N	\N
+obsolete	\N	View	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enables / disables editor	\N	\N	\N	\N	\N	\N
+exact	\N	ASS subtitle properties	\N	ScriptPropertiesDialog	ASS subtitle properties		no	\N
+exact	\N	Style &manager	\N	Main	Style &manager		no	\N
+obsolete	\N	Is used to manage ASS styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Converts to ASS format	\N	\N	\N	\N	\N	\N
+obsolete	\N	Converts to SRT format	\N	\N	\N	\N	\N	\N
+obsolete	\N	Converts to microDVD format	\N	\N	\N	\N	\N	\N
+obsolete	\N	Converts to MPL2 format	\N	\N	\N	\N	\N	\N
+obsolete	\N	Converts to TMPlayer format (not recommended)	\N	\N	\N	\N	\N	\N
+exact	\N	Conversion	\N	Main	Conversion		no	\N
+exact	\N	Conversion	\N	SettingsDialog	Conversion		no	\N
+obsolete	\N	Converts from one format to another	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shift &times...\tCtrl-I	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shifting subtitle times	\N	\N	\N	\N	\N	\N
+obsolete	\N	Hides tags in ASS and MDVD	\N	\N	\N	\N	\N	\N
+obsolete	\N	Su&btitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Au&tomation	\N	\N	\N	\N	\N	\N
+exact	\N	HikariSub &website	\N	Main	HikariSub &website		no	\N
+obsolete	\N	Opens the HikariSub website in the default browser	\N	\N	\N	\N	\N	\N
+exact	\N	&Report an issue	\N	Main	&Report an issue		no	\N
+obsolete	\N	Opens the HikariSub issue tracker	\N	\N	\N	\N	\N	\N
+exact	\N	&About	\N	Main	&About		no	\N
+obsolete	\N	Shows program info	\N	\N	\N	\N	\N	\N
+exact	\N	&Credits	\N	Main	&Credits		no	\N
+obsolete	\N	Shows credits	\N	\N	\N	\N	\N	\N
+exact	\N	&Help	\N	Main	&Help		no	\N
+obsolete	\N	Time elapsed: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose script	\N	\N	\N	\N	\N	\N
+obsolete	\N	Script files (*.lua),(*.moon)|*.lua;*.moon;	\N	\N	\N	\N	\N	\N
+obsolete	\N	This subtitle file does not have any scripts added	\N	\N	\N	\N	\N	\N
+obsolete	\N	Validation Lua script '%s' failed	\N	\N	\N	\N	\N	\N
+exact	\N	Choose subtitle file	\N	Main	Choose subtitle file		no	\N
+obsolete	\N	Subtitle files (*.ass),(*.ssa),(*.srt),(*.sub),(*.txt)|*.ass;*.ssa;*.srt;*.sub;*.txt|Videos with embedded subtitles (*.mkv),(*.ogm)|*.mkv;*.ogm	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video files (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.mpg),(*.mpeg),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.mpg;*.mpeg;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	HikariSub subtitle editor by altqx,\nversion %s from %s	\N	\N	\N	\N	\N	\N
+exact	\N	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n	\N	Main	Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n		no	\N
+exact	\N	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n	\N	Main	If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n		no	\N
+exact	\N	HikariSub includes parts of the following projects:\n	\N	Main	HikariSub includes parts of the following projects:\n		no	\N
+obsolete	\N	Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n	\N	\N	\N	\N	\N	\N
+exact	\N	About HikariSub	\N	Main	About HikariSub		no	\N
+exact	\N	Graphical help: (buttons, help pictures etc.)\n	\N	Main	Graphical help: (buttons, help pictures etc.)\n		no	\N
+exact	\N	- Xandros (new video buttons).\n	\N	Main	- Xandros (new video buttons).\n		no	\N
+exact	\N	- Devilkan (menu and toolbar buttons)\n	\N	Main	- Devilkan (menu and toolbar buttons)\n		no	\N
+exact	\N	- Zły Los (icons for file associations and menu).\n	\N	Main	- Zły Los (icons for file associations and menu).\n		no	\N
+exact	\N	Testers:\n	\N	Main	Testers:\n		no	\N
+exact	\N	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n	\N	Main	- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n		no	\N
+exact	\N	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n	\N	Main	- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n		no	\N
+exact	\N	helped with typesetting tools and came up with many more improvements).\n	\N	Main	helped with typesetting tools and came up with many more improvements).\n		no	\N
+exact	\N	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n	\N	Main	- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n		no	\N
+exact	\N	- mas1904 (found some errors and helping with crash debuging).\n	\N	Main	- mas1904 (found some errors and helping with crash debuging).\n		no	\N
+exact	\N	- Senami (made new themes and found some bugs).\n	\N	Main	- Senami (made new themes and found some bugs).\n		no	\N
+exact	\N	- altinat (Thai translation).\n	\N	Main	- altinat (Thai translation).\n		no	\N
+exact	\N	- labrie75 (Korean translation).\n	\N	Main	- labrie75 (Korean translation).\n		no	\N
+exact	\N	- Niskala5570 (Malay translation).\n	\N	Main	- Niskala5570 (Malay translation).\n		no	\N
+exact	\N	Thanks to other HikariSub users who reported bugs:\n	\N	Main	Thanks to other HikariSub users who reported bugs:\n		no	\N
+exact	\N	Subtitle file 	\N	Main	Subtitle file 		no	\N
+exact	\N	Subtitle file 	\N	hikari::app::Application	Subtitle file 		no	\N
+exact	\N	Save subtitle file	\N	Main	Save subtitle file		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	Main	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+exact	\N	Chosen file is read only,\nplease save with different name or change file attribute.	\N	SessionWindows	Chosen file is read only,\nplease save with different name or change file attribute.		no	\N
+obsolete	\N	Load subtitles named "%s"?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open subtitle file	\N	\N	\N	\N	\N	\N
+exact	\N	None	\N	Main	None		no	\N
+exact	\N	None	\N	SettingsDialog	None		no	\N
+exact	\N	None	\N	hikari::app::StyleManagerController	None		no	\N
+obsolete	\N	Save subtitles named "%s" before %s?	\N	\N	\N	\N	\N	\N
+obsolete	\N	exiting program	\N	\N	\N	\N	\N	\N
+obsolete	\N	closing tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	loading new subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	removing subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio hotkeys	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load audio configuration	\N	\N	\N	\N	\N	\N
+exact	\N	Choose audio file	\N	Main	Choose audio file		no	\N
+exact	\N	Audio and video files	\N	Main	Audio and video files		no	\N
+exact	\N	All files	\N	Main	All files		no	\N
+obsolete	\N	Undo to 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Redo to 	\N	\N	\N	\N	\N	\N
+exact	\N	Choose session file	\N	SessionWindows	Choose session file		no	\N
+obsolete	\N	Session file (*.kls),|*.kls	\N	\N	\N	\N	\N	\N
+exact	\N	Save session file	\N	SessionWindows	Save session file		no	\N
+obsolete	\N	Hotkey "%s" it's not script hotkey.	\N	\N	\N	\N	\N	\N
+exact	\N	Log window	\N	Main	Log window		no	\N
+exact	\N	Apply	\N	SettingsDialog	Apply		no	\N
+exact	\N	Apply	\N	StyleManager	Apply		no	\N
+exact	\N	 or 	\N	Main	 or 		no	\N
+exact	\N	Second shortcut can be set using Control + Click	\N	Main	Second shortcut can be set using Control + Click		no	\N
+exact	\N	Multireplacer	\N	MisspellReplacerDialog	Multireplacer		no	\N
+exact	\N	Rule editing	\N	MisspellReplacerDialog	Rule editing		no	\N
+exact	\N	Change to lower case	\N	MisspellReplacerDialog	Change to lower case		no	\N
+exact	\N	Change to upper case	\N	MisspellReplacerDialog	Change to upper case		no	\N
+exact	\N	Dont change case	\N	MisspellReplacerDialog	Dont change case		no	\N
+exact	\N	Replace only in tags	\N	MisspellReplacerDialog	Replace only in tags		no	\N
+exact	\N	Replace only in text	\N	MisspellReplacerDialog	Replace only in text		no	\N
+exact	\N	Search phrase (regular expresions)	\N	MisspellReplacerDialog	Search phrase (regular expresions)		no	\N
+exact	\N	Replace phrase	\N	MisspellReplacerDialog	Replace phrase		no	\N
+exact	\N	Rule description	\N	MisspellReplacerDialog	Rule description		no	\N
+exact	\N	Description	\N	MisspellReplacerDialog	Description		no	\N
+exact	\N	Rule find	\N	MisspellReplacerDialog	Rule find		no	\N
+exact	\N	Rule replace	\N	MisspellReplacerDialog	Rule replace		no	\N
+exact	\N	Which lines	\N	Main	Which lines		no	\N
+exact	\N	Which lines	\N	MisspellReplacerDialog	Which lines		no	\N
+exact	\N	According to the selected styles	\N	Main	According to the selected styles		no	\N
+exact	\N	According to the selected styles	\N	MisspellReplacerDialog	According to the selected styles		no	\N
+exact	\N	From the selected line	\N	Main	From the selected line		no	\N
+exact	\N	From the selected line	\N	MisspellReplacerDialog	From the selected line		no	\N
+exact	\N	Add rule	\N	MisspellReplacerDialog	Add rule		no	\N
+exact	\N	Edit rule	\N	MisspellReplacerDialog	Edit rule		no	\N
+exact	\N	Delete rule	\N	MisspellReplacerDialog	Delete rule		no	\N
+exact	\N	Find error	\N	MisspellReplacerDialog	Find error		no	\N
+exact	\N	Find errors\nin current tab	\N	MisspellReplacerDialog	Find errors\nin current tab		no	\N
+exact	\N	Find errors\nin all tabs	\N	MisspellReplacerDialog	Find errors\nin all tabs		no	\N
+exact	\N	Replace error	\N	MisspellReplacerDialog	Replace error		no	\N
+exact	\N	Replace all errors\nin current tab	\N	MisspellReplacerDialog	Replace all errors\nin current tab		no	\N
+exact	\N	Replace all errors\nin all tabs	\N	MisspellReplacerDialog	Replace all errors\nin all tabs		no	\N
+exact	\N	Cannot change rules\nwhen find results window is open	\N	hikari::app::Application	Cannot change rules\nwhen find results window is open		no	\N
+placeholder	\N	Line %i cannot be replaced,\ncause it was edited.	\N	hikari::app::Application	Line %1 cannot be replaced,\ncause it was edited.		no	%i -> %1
+placeholder	\N	Cannot replace "%s" to "%s", with rule "%s" in line %i.	\N	hikari::app::Application	Cannot replace "%1" to "%2", with rule "%3" in line %4.		no	%s %s %s %i -> %1 %2 %3 %4
+obsolete	\N	Remove space before comma or dot	\N	\N	\N	\N	\N	\N
+obsolete	\N	Remove doubled spaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace more then three dots to suspension point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace two dots to suspension point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Replace missing spaces after dot or comma	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing japanese suffixes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "sie"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "nie mozliwe"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "nie wazne"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "w ogole"	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing Polish "bede"	\N	\N	\N	\N	\N	\N
+placeholder	\N	Rule "%s" is invalid.	\N	hikari::app::Application	Rule "%1" is invalid.		no	%s -> %1
+obsolete	\N	Choose folder name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Create	\N	\N	\N	\N	\N	\N
+exact	\N	Save all	\N	Main	Save all		no	\N
+obsolete	\N	Close all tabs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open the folder containing the subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open video containing folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open audio containing folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open keyframes containing folder	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show one tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show two tabs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare by times	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare by visible lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare by selections	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare by styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare by selected styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Compare	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turn off comparison	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison	\N	\N	\N	\N	\N	\N
+obsolete	\N	All tabs will be closed, continue?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Keyframes: 	\N	\N	\N	\N	\N	\N
+obsolete	\N	Associated files:\n	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video from directory:\n	\N	\N	\N	\N	\N	\N
+exact	\N	Load associated	\N	Main	Load associated		no	\N
+obsolete	\N	Load from directory	\N	\N	\N	\N	\N	\N
+exact	\N	Session file is corrupt	\N	hikari::app::Application	Session file is corrupt		no	\N
+obsolete	\N	Cannot create file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read the file.	\N	\N	\N	\N	\N	\N
+obsolete	\N	The file was not opened.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot save to file.	\N	\N	\N	\N	\N	\N
+exact	\N	Open sorted subtitles	\N	SettingsDialog	Open sorted subtitles		no	\N
+exact	\N	Turn spell checking	\N	SettingsDialog	Turn spell checking		no	\N
+exact	\N	Select the line with the time line\nof the previous active tab	\N	SettingsDialog	Select the line with the time line\nof the previous active tab		no	\N
+exact	\N	Always open subtitles in a new tab	\N	SettingsDialog	Always open subtitles in a new tab		no	\N
+exact	\N	Show suggestions by double-clicking on misspell	\N	SettingsDialog	Show suggestions by double-clicking on misspell		no	\N
+exact	\N	Stay on selected line when editing times	\N	SettingsDialog	Stay on selected line when editing times		no	\N
+exact	\N	Turn off edits preview on video\n(re-opening tab is required)	\N	SettingsDialog	Turn off edits preview on video\n(re-opening tab is required)		no	\N
+exact	\N	Turn searching of visible line\nafter switching from full screen	\N	SettingsDialog	Turn searching of visible line\nafter switching from full screen		no	\N
+exact	\N	Change active line after add to selection	\N	SettingsDialog	Change active line after add to selection		no	\N
+exact	\N	Synchronize time shifting window in all tabs	\N	SettingsDialog	Synchronize time shifting window in all tabs		no	\N
+exact	\N	Hide original on video in translator mode	\N	SettingsDialog	Hide original on video in translator mode		no	\N
+exact	\N	Show original in translator mode	\N	SettingsDialog	Show original in translator mode		no	\N
+exact	\N	Do not change selections when duplicating dialogue lines	\N	SettingsDialog	Do not change selections when duplicating dialogue lines		no	\N
+exact	\N	Do not vertically center the active line in the subtitle grid	\N	SettingsDialog	Do not vertically center the active line in the subtitle grid		no	\N
+exact	\N	Use numpad shortcuts in text fields	\N	SettingsDialog	Use numpad shortcuts in text fields		no	\N
+exact	\N	Do not warn about resolution mismatch	\N	SettingsDialog	Do not warn about resolution mismatch		no	\N
+exact	\N	Turn off visual tools warning	\N	SettingsDialog	Turn off visual tools warning		no	\N
+exact	\N	Compatibility with older HikariSub scripts	\N	SettingsDialog	Compatibility with older HikariSub scripts		no	\N
+exact	\N	Language (program restart required)	\N	SettingsDialog	Language (program restart required)		no	\N
+exact	\N	Put files .dic and .aff to "Dictionary" folder	\N	hikari::app::Application	Put files .dic and .aff to "Dictionary" folder		no	\N
+exact	\N	Spell checker language ("Dictionary" folder)	\N	SettingsDialog	Spell checker language ("Dictionary" folder)		no	\N
+exact	\N	0 turns off saving while editing	\N	SettingsDialog	0 turns off saving while editing		no	\N
+exact	\N	Number of autosaves can be set from 2 to 1000000	\N	SettingsDialog	Number of autosaves can be set from 2 to 1000000		no	\N
+exact	\N	Number of tab name characters. Range from 20 to 150	\N	SettingsDialog	Number of tab name characters. Range from 20 to 150		no	\N
+exact	\N	Number of edits to save	\N	SettingsDialog	Number of edits to save		no	\N
+exact	\N	Maximum number of autosave files	\N	SettingsDialog	Maximum number of autosave files		no	\N
+exact	\N	Start frame offset in ms:	\N	SettingsDialog	Start frame offset in ms:		no	\N
+exact	\N	End frame offset in ms:	\N	SettingsDialog	End frame offset in ms:		no	\N
+exact	\N	ASS tag replacement:	\N	SettingsDialog	ASS tag replacement:		no	\N
+exact	\N	Number of tab name characters	\N	SettingsDialog	Number of tab name characters		no	\N
+exact	\N	LUA scripts tracking level	\N	SettingsDialog	LUA scripts tracking level		no	\N
+exact	\N	Subtitle grid font:	\N	SettingsDialog	Subtitle grid font:		no	\N
+exact	\N	Program font:	\N	SettingsDialog	Program font:		no	\N
+exact	\N	Calculate spaces and punctation characters for wraps	\N	SettingsDialog	Calculate spaces and punctation characters for wraps		no	\N
+exact	\N	Calculate spaces and punctation characters for CPS	\N	SettingsDialog	Calculate spaces and punctation characters for CPS		no	\N
+exact	\N	Autoload loading method	\N	SettingsDialog	Autoload loading method		no	\N
+exact	\N	After open menu	\N	SettingsDialog	After open menu		no	\N
+exact	\N	After open menu asynchronously	\N	SettingsDialog	After open menu asynchronously		no	\N
+exact	\N	After program start	\N	SettingsDialog	After program start		no	\N
+exact	\N	After program start asynchronously	\N	SettingsDialog	After program start asynchronously		no	\N
+exact	\N	Folder with external fonts	\N	SettingsDialog	Folder with external fonts		no	\N
+exact	\N	Choose	\N	SettingsDialog	Choose		no	\N
+exact	\N	Choose choose external font folder	\N	SettingsDialog	Choose choose external font folder		no	\N
+exact	\N	Choose catalog	\N	SettingsDialog	Choose catalog		no	\N
+exact	\N	Choose style	\N	SettingsDialog	Choose style		no	\N
+exact	\N	Choose FPS	\N	SettingsDialog	Choose FPS		no	\N
+exact	\N	Time for one letter in milliseconds	\N	Main	Time for one letter in milliseconds		no	\N
+exact	\N	Time for one letter in milliseconds	\N	SettingsDialog	Time for one letter in milliseconds		no	\N
+exact	\N	Tags to paste at the beginning of every ASS line	\N	Main	Tags to paste at the beginning of every ASS line		no	\N
+exact	\N	Tags to paste at the beginning of every ASS line	\N	SettingsDialog	Tags to paste at the beginning of every ASS line		no	\N
+exact	\N	Resolution when converting to ASS	\N	Main	Resolution when converting to ASS		no	\N
+exact	\N	Resolution when converting to ASS	\N	SettingsDialog	Resolution when converting to ASS		no	\N
+exact	\N	catalog for style	\N	hikari::app::Application	catalog for style		no	\N
+exact	\N	style	\N	hikari::app::Application	style		no	\N
+placeholder	\N	The selected %s for conversion does not exist\nand will be changed to the default	\N	hikari::app::Application	The selected %1 for conversion does not exist\nand will be changed to the default		no	%s -> %1
+exact	\N	FPS from video	\N	Main	FPS from video		no	\N
+exact	\N	FPS from video	\N	SettingsDialog	FPS from video		no	\N
+exact	\N	New end times	\N	Main	New end times		no	\N
+exact	\N	New end times	\N	SettingsDialog	New end times		no	\N
+exact	\N	Show window before conversion	\N	SettingsDialog	Show window before conversion		no	\N
+exact	\N	Left mouse button pauses video	\N	SettingsDialog	Left mouse button pauses video		no	\N
+exact	\N	Open video from context menu on full screen	\N	SettingsDialog	Open video from context menu on full screen		no	\N
+exact	\N	Open video with time of active line	\N	SettingsDialog	Open video with time of active line		no	\N
+exact	\N	Preferred audio (separated by semicolons)	\N	SettingsDialog	Preferred audio (separated by semicolons)		no	\N
+exact	\N	FFMS2 video seeking method (requires reloading)	\N	SettingsDialog	FFMS2 video seeking method (requires reloading)		no	\N
+obsolete	\N	Subtitle display filter	\N	\N	\N	\N	\N	\N
+exact	\N	Start video zoom in percent.	\N	SettingsDialog	Start video zoom in percent.		no	\N
+exact	\N	Linear	\N	SettingsDialog	Linear		no	\N
+exact	\N	Normal	\N	ScriptPropertiesDialog	Normal		no	\N
+exact	\N	Normal	\N	SettingsDialog	Normal		no	\N
+exact	\N	Aggressive (fast in rewind)	\N	SettingsDialog	Aggressive (fast in rewind)		no	\N
+exact	\N	Unsafe (always fast)	\N	SettingsDialog	Unsafe (always fast)		no	\N
+exact	\N	Choose filtering	\N	SettingsDialog	Choose filtering		no	\N
+exact	\N	Global shortcuts	\N	SettingsDialog	Global shortcuts		no	\N
+exact	\N	Set shortcuts	\N	SettingsDialog	Set shortcuts		no	\N
+exact	\N	Audio Shortcuts	\N	SettingsDialog	Audio Shortcuts		no	\N
+exact	\N	Editor shortcuts	\N	SettingsDialog	Editor shortcuts		no	\N
+exact	\N	Subtitle shortcuts	\N	SettingsDialog	Subtitle shortcuts		no	\N
+exact	\N	Video shortcuts	\N	SettingsDialog	Video shortcuts		no	\N
+exact	\N	Filtering mode:	\N	SettingsDialog	Filtering mode:		no	\N
+exact	\N	Function	\N	SettingsDialog	Function		no	\N
+exact	\N	Restore default hotkey	\N	SettingsDialog	Restore default hotkey		no	\N
+exact	\N	Show background selection	\N	SettingsDialog	Show background selection		no	\N
+exact	\N	Show seconds markers	\N	SettingsDialog	Show seconds markers		no	\N
+exact	\N	Show time next to cursor	\N	SettingsDialog	Show time next to cursor		no	\N
+exact	\N	Follow audio during playback	\N	SettingsDialog	Follow audio during playback		no	\N
+exact	\N	Show keyframes	\N	SettingsDialog	Show keyframes		no	\N
+exact	\N	Show video position	\N	SettingsDialog	Show video position		no	\N
+exact	\N	Activate the audio when hover	\N	SettingsDialog	Activate the audio when hover		no	\N
+exact	\N	Snap to keyframe	\N	SettingsDialog	Snap to keyframe		no	\N
+exact	\N	Snap to other lines	\N	SettingsDialog	Snap to other lines		no	\N
+exact	\N	Do not play audio after changing the line	\N	SettingsDialog	Do not play audio after changing the line		no	\N
+exact	\N	Merge all the "n" with the previous syllable	\N	SettingsDialog	Merge all the "n" with the previous syllable		no	\N
+exact	\N	Load audio into RAM	\N	SettingsDialog	Load audio into RAM		no	\N
+exact	\N	Move syllable line after click	\N	SettingsDialog	Move syllable line after click		no	\N
+exact	\N	Range from 0 to 10000, where 0 turns off\nremoving audio cache files.	\N	SettingsDialog	Range from 0 to 10000, where 0 turns off\nremoving audio cache files.		no	\N
+exact	\N	All visible	\N	SettingsDialog	All visible		no	\N
+exact	\N	Before and after the active	\N	SettingsDialog	Before and after the active		no	\N
+exact	\N	Audio delay in milliseconds	\N	SettingsDialog	Audio delay in milliseconds		no	\N
+exact	\N	Audio to play before and after the marker in milliseconds	\N	SettingsDialog	Audio to play before and after the marker in milliseconds		no	\N
+exact	\N	Lead-in	\N	Main	Lead-in		no	\N
+exact	\N	Lead-in	\N	SettingsDialog	Lead-in		no	\N
+exact	\N	Lead-out	\N	Main	Lead-out		no	\N
+exact	\N	Lead-out	\N	SettingsDialog	Lead-out		no	\N
+exact	\N	Line boundaries thickness	\N	SettingsDialog	Line boundaries thickness		no	\N
+exact	\N	Audio cache files limit	\N	SettingsDialog	Audio cache files limit		no	\N
+exact	\N	The way to display inactive lines	\N	SettingsDialog	The way to display inactive lines		no	\N
+obsolete	\N	Inactive window background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window border background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window border background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inactive window header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window invaded element header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window pressed element header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window closing upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window elements warning	\N	\N	\N	\N	\N	\N
+obsolete	\N	Window pressed closing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comment background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle dialogue background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle lines visible on video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle selection (transparency)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle active line border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle colliding lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle line border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle header background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle modified-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle saved-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle spelling-error background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle unconfirmed-line label	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison match background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison mismatch background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison comment match background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle comparison comment mismatch background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tag names	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tag values	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor curly braces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor line splitting and ASS drawings	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor tags operators	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template variables	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template code marks	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template functions	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template keywords	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor brackets background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor found words selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor template strings	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor inactive window selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editor spelling error background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio end marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio start marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio time shift marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio cursor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio inactive line marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio keyframes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio seconds boundaries	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio syllable marker	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio syllable text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio inactive line background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio the selection after modification	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio Inactive waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio modified waveform	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio selected waveform	\N	\N	\N	\N	\N	\N
+exact	\N	Audio spectrum	\N	SettingsDialog	Audio spectrum		no	\N
+exact	\N	Audio spectrum background	\N	SettingsDialog	Audio spectrum background		no	\N
+exact	\N	Audio spectrum echo	\N	SettingsDialog	Audio spectrum echo		no	\N
+obsolete	\N	Text field background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text field inactive window selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list background on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list pushed background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list border on focus	\N	\N	\N	\N	\N	\N
+obsolete	\N	Button and list inactive border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Togglebutton toggled background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar slider	\N	\N	\N	\N	\N	\N
+obsolete	\N	Togglebutton toggled border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar pushed slider	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scroll bar slider upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Staticbox border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list header background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list header text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Static list selection	\N	\N	\N	\N	\N	\N
+obsolete	\N	Status bar border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar background 1	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar background 2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection clicked bacground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu bar selection hover bacground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu selection background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Menu selection border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar background 1	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar background 2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab background of second visible tab	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab active text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab close upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab inactive text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tab bar arrow background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider path background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider path border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider border upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background of pushed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Slider background upon hover	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result file name background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result file name foreground	\N	\N	\N	\N	\N	\N
+obsolete	\N	Resize line dots	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result found phrase background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Finding result found phrase foreground	\N	\N	\N	\N	\N	\N
+obsolete	\N	First color of style preview background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second color of style preview background	\N	\N	\N	\N	\N	\N
+obsolete	\N	Theme name:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Name of the copied theme.\nDefault themes, DarkSentro and LightSentro,\ncannot be edited and must be copied.	\N	\N	\N	\N	\N	\N
+exact	\N	Copy	\N	SelectLinesDialog	Copy		no	\N
+exact	\N	Copy	\N	StyleManager	Copy		no	\N
+obsolete	\N	Warning! Transparency works only on the audio spectrum,\ntext field, and subtitle grid.	\N	\N	\N	\N	\N	\N
+exact	\N	Name	\N	SettingsDialog	Name		no	\N
+exact	\N	Color	\N	SettingsDialog	Color		no	\N
+obsolete	\N	ASS subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SRT subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SSA subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	SUB subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	TXT subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video AVI	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video MKV	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video MP4	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video OGM	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video 3GP	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video ASF	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video RM	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video RMVB	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video WMV	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video M2TS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video MPEG	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video MPG	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video TS	\N	\N	\N	\N	\N	\N
+obsolete	\N	WARNING! Behavior differs on each Windows version.\nFor example, on Windows 7 WMP blocked\nthe ability to change video associations.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deselect all	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select all	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select video	\N	\N	\N	\N	\N	\N
+exact	\N	Advanced	\N	SettingsDialog	Advanced		no	\N
+exact	\N	Themes	\N	SettingsDialog	Themes		no	\N
+exact	\N	Hotkeys	\N	SettingsDialog	Hotkeys		no	\N
+obsolete	\N	Associations	\N	\N	\N	\N	\N	\N
+exact	\N	Subtitle properties	\N	SettingsDialog	Subtitle properties		no	\N
+exact	\N	Set default	\N	SettingsDialog	Set default		no	\N
+exact	\N	Subtitle information	\N	ScriptPropertiesDialog	Subtitle information		no	\N
+exact	\N	Subtitle information	\N	SettingsDialog	Subtitle information		no	\N
+exact	\N	Author	\N	ScriptPropertiesDialog	Author		no	\N
+exact	\N	Author	\N	SettingsDialog	Author		no	\N
+exact	\N	Editing	\N	Main	Editing		no	\N
+exact	\N	Editing	\N	ScriptPropertiesDialog	Editing		no	\N
+exact	\N	Editing	\N	SettingsDialog	Editing		no	\N
+exact	\N	Proofreading	\N	ScriptPropertiesDialog	Proofreading		no	\N
+exact	\N	Proofreading	\N	SettingsDialog	Proofreading		no	\N
+exact	\N	Timer	\N	ScriptPropertiesDialog	Timer		no	\N
+exact	\N	Timer	\N	SettingsDialog	Timer		no	\N
+exact	\N	Title	\N	ScriptPropertiesDialog	Title		no	\N
+exact	\N	Title	\N	SettingsDialog	Title		no	\N
+exact	\N	Translator	\N	ScriptPropertiesDialog	Translator		no	\N
+exact	\N	Translator	\N	SettingsDialog	Translator		no	\N
+exact	\N	Always ask before changing subtitle information	\N	SettingsDialog	Always ask before changing subtitle information		no	\N
+obsolete	\N	Time elapsed: 00:00:00.00	\N	\N	\N	\N	\N	\N
+obsolete	\N	Indexing video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video frame size is too large	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get frame %i: %s	\N	\N	\N	\N	\N	\N
+exact	\N	Choose the track	\N	Main	Choose the track		no	\N
+obsolete	\N	Cannot save index, error %s occurred	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create VideoSource.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot convert video to RGBA	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot change YCbCr matrix	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot load the video track	\N	\N	\N	\N	\N	\N
+obsolete	\N	You cannot get information about the video	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred when creating audio source: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	An error occurred when converting audio: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delay failed, it's longer than audio duration time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Not enough RAM	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA processor service	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get DXVA GUIDs	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate DXVA formats	\N	\N	\N	\N	\N	\N
+obsolete	\N	This format is not supported by DXVA	\N	\N	\N	\N	\N	\N
+obsolete	\N	GetVideoProcessorCaps failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA surface %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create DXVA processor	\N	\N	\N	\N	\N	\N
+obsolete	\N	One of the DirectX vertices settings failed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create subtitle texture	\N	\N	\N	\N	\N	\N
+obsolete	\N	No frame buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot unlock subtitle texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot unlock texture buffer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot overlay surfaces	\N	\N	\N	\N	\N	\N
+obsolete	\N	Chapter %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video file does not contain a video stream	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create GStreamer pipeline (playbin)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create GStreamer video display module	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open video file: %s	\N	\N	\N	\N	\N	\N
+obsolete	\N	Track %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot set matrix projection	\N	\N	\N	\N	\N	\N
+exact	\N	Resolution	\N	ScriptPropertiesDialog	Resolution		no	\N
+exact	\N	From video	\N	ScriptPropertiesDialog	From video		no	\N
+exact	\N	Layout	\N	ScriptPropertiesDialog	Layout		no	\N
+exact	\N	YCbCr matrix	\N	ScriptPropertiesDialog	YCbCr matrix		no	\N
+exact	\N	0: Auto, top line wider	\N	ScriptPropertiesDialog	0: Auto, top line wider		no	\N
+obsolete	\N	1: End-of-line wrapping, only \\N breaks	\N	\N	\N	\N	\N	\N
+obsolete	\N	2: No wrapping, both \\n and \\N break	\N	\N	\N	\N	\N	\N
+exact	\N	3: Auto, bottom line wider	\N	ScriptPropertiesDialog	3: Auto, bottom line wider		no	\N
+exact	\N	Reversed	\N	ScriptPropertiesDialog	Reversed		no	\N
+exact	\N	Wrap style	\N	ScriptPropertiesDialog	Wrap style		no	\N
+exact	\N	Colliding lines	\N	ScriptPropertiesDialog	Colliding lines		no	\N
+exact	\N	Scale border and shadow	\N	ScriptPropertiesDialog	Scale border and shadow		no	\N
+exact	\N	Video height	\N	ScriptPropertiesDialog	Video height		no	\N
+exact	\N	Video width	\N	ScriptPropertiesDialog	Video width		no	\N
+obsolete	\N	How to wrap lines	\N	\N	\N	\N	\N	\N
+exact	\N	Select	\N	SelectLinesDialog	Select		no	\N
+exact	\N	With	\N	SelectLinesDialog	With		no	\N
+exact	\N	Without	\N	SelectLinesDialog	Without		no	\N
+exact	\N	Start time	\N	SelectLinesDialog	Start time		no	\N
+exact	\N	Dialogue / comments	\N	SelectLinesDialog	Dialogue / comments		no	\N
+exact	\N	Dialogue	\N	SelectLinesDialog	Dialogue		no	\N
+exact	\N	Comments	\N	SelectLinesDialog	Comments		no	\N
+exact	\N	Add to selection	\N	SelectLinesDialog	Add to selection		no	\N
+exact	\N	Deselect	\N	SelectLinesDialog	Deselect		no	\N
+exact	\N	Selection	\N	SelectLinesDialog	Selection		no	\N
+exact	\N	Do nothing	\N	SelectLinesDialog	Do nothing		no	\N
+exact	\N	Cut	\N	SelectLinesDialog	Cut		no	\N
+exact	\N	Move to beginning	\N	SelectLinesDialog	Move to beginning		no	\N
+exact	\N	Move to end	\N	SelectLinesDialog	Move to end		no	\N
+exact	\N	Set as comment	\N	SelectLinesDialog	Set as comment		no	\N
+exact	\N	Action	\N	SelectLinesDialog	Action		no	\N
+exact	\N	Select in all tabs	\N	SelectLinesDialog	Select in all tabs		no	\N
+placeholder	\N	%i lines selected.	\N	hikari::app::Application	%1 lines selected.		no	%i -> %1
+placeholder	\N	%i lines added to selection.	\N	hikari::app::Application	%1 lines added to selection.		no	%i -> %1
+placeholder	\N	%i lines deselected.	\N	hikari::app::Application	%1 lines deselected.		no	%i -> %1
+obsolete	\N	Write the name of the profile\nor select existing profile to overwrite	\N	\N	\N	\N	\N	\N
+obsolete	\N	Do you want to overwrite profile of name %s	\N	\N	\N	\N	\N	\N
+exact	\N	Post processor	\N	Main	Post processor		no	\N
+exact	\N	Shift times	\N	Main	Shift times		no	\N
+exact	\N	All times higher and equal	\N	Main	All times higher and equal		no	\N
+exact	\N	All times lower and equal	\N	Main	All times lower and equal		no	\N
+obsolete	\N	Profile editing	\N	\N	\N	\N	\N	\N
+exact	\N	Adding and editing profiles	\N	Main	Adding and editing profiles		no	\N
+exact	\N	Removing profiles	\N	Main	Removing profiles		no	\N
+exact	\N	Shift	\N	Main	Shift		no	\N
+exact	\N	Shift subtitle times	\N	Main	Shift subtitle times		no	\N
+exact	\N	Forward	\N	Main	Forward		no	\N
+exact	\N	Backward	\N	Main	Backward		no	\N
+exact	\N	Tag times	\N	Main	Tag times		no	\N
+exact	\N	Shift by video / audio	\N	Main	Shift by video / audio		no	\N
+exact	\N	Beginning	\N	Main	Beginning		no	\N
+exact	\N	End	\N	Main	End		no	\N
+obsolete	\N	Move the marker\nto video time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the marker\nto audio time	\N	\N	\N	\N	\N	\N
+exact	\N	A method of time shift	\N	Main	A method of time shift		no	\N
+exact	\N	Both times	\N	Main	Both times		no	\N
+exact	\N	Correction end times	\N	Main	Correction end times		no	\N
+exact	\N	Leave unchanged	\N	Main	Leave unchanged		no	\N
+exact	\N	Adjust overlapping times	\N	Main	Adjust overlapping times		no	\N
+exact	\N	New times	\N	Main	New times		no	\N
+obsolete	\N	Lead-in/lead-out	\N	\N	\N	\N	\N	\N
+exact	\N	Run post processor	\N	Main	Run post processor		no	\N
+exact	\N	Set times as continuous	\N	Main	Set times as continuous		no	\N
+obsolete	\N	Enable	\N	\N	\N	\N	\N	\N
+exact	\N	Start time threshold	\N	Main	Start time threshold		no	\N
+exact	\N	End time threshold	\N	Main	End time threshold		no	\N
+exact	\N	Snap to keyframes	\N	Main	Snap to keyframes		no	\N
+exact	\N	Before the start of time	\N	Main	Before the start of time		no	\N
+exact	\N	After the start time	\N	Main	After the start time		no	\N
+exact	\N	Before the end time	\N	Main	Before the end time		no	\N
+exact	\N	After the end time	\N	Main	After the end time		no	\N
+obsolete	\N	The choice of lines to move	\N	\N	\N	\N	\N	\N
+obsolete	\N	Select a style from the list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move according to the following styles (separated by a coma)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Time shifts	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the selected line \nto the time video ± time shift	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the selected lines to\nmark time audio ± time shift	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move the start time to the time video / audio	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moves the end time to the video/audio time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delays subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Speeds up subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shift times by time / frames	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shifts \\move, \\t, and \\fad tag times\nso their positions on video do not change\n(slows down time shifting)	\N	\N	\N	\N	\N	\N
+obsolete	\N	The choice of times to move	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correction end times, when they are improper or overlap each other	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts introduction to the start time (good when using fad)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Introduction time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserts introduction to the end time (good when using fad)	\N	\N	\N	\N	\N	\N
+obsolete	\N	End time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	Start time extension threshold	\N	\N	\N	\N	\N	\N
+obsolete	\N	End time extension threshold	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nbefore the start time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nafter the start time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nbefore the end time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	The maximum shift to a keyframe \nafter the end time in milliseconds	\N	\N	\N	\N	\N	\N
+obsolete	\N	There is no selected profile to remove	\N	\N	\N	\N	\N	\N
+obsolete	\N	Do you want to remove profile of name "%s"	\N	\N	\N	\N	\N	\N
+obsolete	\N	No dictionary files were found in the "%s\\Dictionary" folder.\nSpell checking will be disabled	\N	\N	\N	\N	\N	\N
+obsolete	\N	Unable to read the dictionary conversion format.	\N	\N	\N	\N	\N	\N
+exact	\N	Failed to initialize spell checker.	\N	hikari::app::Application	Failed to initialize spell checker.		no	\N
+exact	\N	Ignore comments	\N	SpellCheckerDialog	Ignore comments		no	\N
+exact	\N	Ignore words written entirely\nin uppercase	\N	SpellCheckerDialog	Ignore words written entirely\nin uppercase		no	\N
+exact	\N	Misspell word:	\N	SpellCheckerDialog	Misspell word:		no	\N
+exact	\N	Replace to:	\N	SpellCheckerDialog	Replace to:		no	\N
+exact	\N	Ignore	\N	SearchTool	Ignore		no	\N
+exact	\N	Ignore	\N	SpellCheckerDialog	Ignore		no	\N
+exact	\N	Ignore All	\N	SpellCheckerDialog	Ignore All		no	\N
+exact	\N	Add to dictionary	\N	SpellCheckerDialog	Add to dictionary		no	\N
+exact	\N	Remove from dictionary	\N	SpellCheckerDialog	Remove from dictionary		no	\N
+exact	\N	Remove from dictionary words added by user.	\N	SpellCheckerDialog	Remove from dictionary words added by user.		no	\N
+exact	\N	No spelling errors were found	\N	SpellCheckerDialog	No spelling errors were found		no	\N
+exact	\N	Words added to dictionary	\N	SpellCheckerDialog	Words added to dictionary		no	\N
+obsolete	\N	Style editing	\N	\N	\N	\N	\N	\N
+exact	\N	Style name:	\N	StyleManager	Style name:		no	\N
+exact	\N	Font and size:	\N	StyleManager	Font and size:		no	\N
+obsolete	\N	Allows managing font catalogs	\N	\N	\N	\N	\N	\N
+exact	\N	Colors and transparency:	\N	StyleManager	Colors and transparency:		no	\N
+exact	\N	First	\N	StyleManager	First		no	\N
+exact	\N	Second	\N	StyleManager	Second		no	\N
+exact	\N	Border	\N	StyleManager	Border		no	\N
+exact	\N	Shadow	\N	StyleManager	Shadow		no	\N
+exact	\N	Border:	\N	StyleManager	Border:		no	\N
+exact	\N	Scale X:	\N	StyleManager	Scale X:		no	\N
+exact	\N	Scale Y:	\N	StyleManager	Scale Y:		no	\N
+exact	\N	Shadow:	\N	StyleManager	Shadow:		no	\N
+exact	\N	Angle:	\N	StyleManager	Angle:		no	\N
+exact	\N	Border type:	\N	StyleManager	Border type:		no	\N
+exact	\N	Spacing:	\N	StyleManager	Spacing:		no	\N
+exact	\N	Opaque box	\N	StyleManager	Opaque box		no	\N
+exact	\N	Left margin:	\N	StyleManager	Left margin:		no	\N
+exact	\N	Right:	\N	StyleManager	Right:		no	\N
+exact	\N	Vertical:	\N	StyleManager	Vertical:		no	\N
+exact	\N	Alignment:	\N	StyleManager	Alignment:		no	\N
+exact	\N	0 - ANSI	\N	StyleManager	0 - ANSI		no	\N
+exact	\N	1 - Default	\N	StyleManager	1 - Default		no	\N
+exact	\N	2 - Symbol	\N	StyleManager	2 - Symbol		no	\N
+exact	\N	77 - Mac	\N	StyleManager	77 - Mac		no	\N
+exact	\N	128 - Japanese	\N	StyleManager	128 - Japanese		no	\N
+exact	\N	129 - Hangul	\N	StyleManager	129 - Hangul		no	\N
+exact	\N	130 - Johab	\N	StyleManager	130 - Johab		no	\N
+exact	\N	134 - Chinese GB2312	\N	StyleManager	134 - Chinese GB2312		no	\N
+exact	\N	135 - Chinese BIG5	\N	StyleManager	135 - Chinese BIG5		no	\N
+exact	\N	161 - Greek	\N	StyleManager	161 - Greek		no	\N
+exact	\N	162 - Turkish	\N	StyleManager	162 - Turkish		no	\N
+exact	\N	163 - Vietnamese	\N	StyleManager	163 - Vietnamese		no	\N
+exact	\N	177 - Hebrew	\N	StyleManager	177 - Hebrew		no	\N
+exact	\N	178 - Arabic	\N	StyleManager	178 - Arabic		no	\N
+exact	\N	186 - Baltic	\N	StyleManager	186 - Baltic		no	\N
+exact	\N	204 - Russian	\N	StyleManager	204 - Russian		no	\N
+exact	\N	222 - Thai	\N	StyleManager	222 - Thai		no	\N
+exact	\N	238 - Central European (Polish)	\N	StyleManager	238 - Central European (Polish)		no	\N
+exact	\N	255 - OEM	\N	StyleManager	255 - OEM		no	\N
+exact	\N	Text encoding:	\N	StyleManager	Text encoding:		no	\N
+exact	\N	Style preview:	\N	StyleManager	Style preview:		no	\N
+exact	\N	Change all selected styles?	\N	StyleManager	Change all selected styles?		no	\N
+obsolete	\N	Style name	\N	\N	\N	\N	\N	\N
+exact	\N	Font size	\N	FontDialog	Font size		no	\N
+exact	\N	Font size	\N	SettingsDialog	Font size		no	\N
+obsolete	\N	First color transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Second color transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow transparency, 0 - none, 255 - transparent	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border size in pixels	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow size in pixels	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale X in %	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale Y in %	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rotation in degrees	\N	\N	\N	\N	\N	\N
+obsolete	\N	Spacing in pixels (negative values permitted)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rectangular border	\N	\N	\N	\N	\N	\N
+exact	\N	Right margin	\N	Main	Right margin		no	\N
+exact	\N	Right margin	\N	hikari::app::Application	Right margin		no	\N
+exact	\N	Left margin	\N	Main	Left margin		no	\N
+exact	\N	Left margin	\N	hikari::app::Application	Left margin		no	\N
+exact	\N	Vertical margin	\N	Main	Vertical margin		no	\N
+exact	\N	Vertical margin	\N	hikari::app::Application	Vertical margin		no	\N
+obsolete	\N	Bottom left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bottom right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Top right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text encoding	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose columns	\N	\N	\N	\N	\N	\N
+exact	\N	Choose styles	\N	MisspellReplacerDialog	Choose styles		no	\N
+exact	\N	Choose styles	\N	SearchTool	Choose styles		no	\N
+exact	\N	Choose styles	\N	SelectLinesDialog	Choose styles		no	\N
+exact	\N	Choose styles	\N	StyleManager	Choose styles		no	\N
+obsolete	\N	Select columns	\N	\N	\N	\N	\N	\N
+exact	\N	Set	\N	Main	Set		no	\N
+obsolete	\N	%d element	%d elements	\N	\N	\N	\N	\N
+obsolete	\N	Opening subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	New subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line editing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editing multiple lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correcting spelling errors in the text field	\N	\N	\N	\N	\N	\N
+obsolete	\N	Duplicating lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining line with the previous line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining line with the next line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines and keeping the first	\N	\N	\N	\N	\N	\N
+obsolete	\N	Joining lines and keeping the last	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting columns	\N	\N	\N	\N	\N	\N
+obsolete	\N	Pasting translation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Moving translation text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting line times as continuous	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting FPS from video	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting custom FPS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Swapping lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitles conversion	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sorting subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turning on translator mode	\N	\N	\N	\N	\N	\N
+obsolete	\N	Turning off translator mode	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding a new line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserting line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing time on audio spectrum	\N	\N	\N	\N	\N	\N
+obsolete	\N	Snapping to keyframe	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing the subtitle header	\N	\N	\N	\N	\N	\N
+obsolete	\N	Selecting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shifting times	\N	\N	\N	\N	\N	\N
+obsolete	\N	Correcting spelling errors	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing subtitles resolution	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual positioning tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual movement tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual scaling tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual Z-axis rotation tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual X/Y-axis rotation tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual rectangular clipping tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual vector clipping tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual vector drawing tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual position adjustment tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual scale and rotation adjustment tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual Hydra tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fixing minor errors	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Setting tree description	\N	\N	\N	\N	\N	\N
+obsolete	\N	Adding line to tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Removing tree	\N	\N	\N	\N	\N	\N
+obsolete	\N	Automation script	\N	\N	\N	\N	\N	\N
+exact	\N	Filtering	\N	Main	Filtering		no	\N
+obsolete	\N	Removing filtering	\N	\N	\N	\N	\N	\N
+obsolete	\N	Splitting lines	\N	\N	\N	\N	\N	\N
+obsolete	\N	, active line %i	\N	\N	\N	\N	\N	\N
+exact	\N	Hide line wraps	\N	Main	Hide line wraps		no	\N
+obsolete	\N	Do not include selected lines	\N	\N	\N	\N	\N	\N
+exact	\N	Insert &before	\N	Main	Insert &before		no	\N
+exact	\N	Insert &after	\N	Main	Insert &after		no	\N
+exact	\N	Insert before with &video time	\N	Main	Insert before with &video time		no	\N
+obsolete	\N	Insert &after with video time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert lines	\N	\N	\N	\N	\N	\N
+exact	\N	&Duplicate lines	\N	Main	&Duplicate lines		no	\N
+exact	\N	&Swap	\N	Main	&Swap		no	\N
+exact	\N	Join &lines	\N	Main	Join &lines		no	\N
+exact	\N	Split lines	\N	Main	Split lines		no	\N
+obsolete	\N	Copy\tCtrl-C	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cut\tCtrl-X	\N	\N	\N	\N	\N	\N
+obsolete	\N	Paste\tCtrl-V	\N	\N	\N	\N	\N	\N
+exact	\N	Hide columns	\N	Main	Hide columns		no	\N
+obsolete	\N	Load subtitles from an MKV/OGM file	\N	\N	\N	\N	\N	\N
+exact	\N	Add lines	\N	Main	Add lines		no	\N
+exact	\N	Copy tree	\N	Main	Copy tree		no	\N
+exact	\N	Change description	\N	Main	Change description		no	\N
+exact	\N	Select tree lines	\N	Main	Select tree lines		no	\N
+exact	\N	Text into original	\N	hikari::app::Application	Text into original		no	\N
+exact	\N	Text into translation	\N	hikari::app::Application	Text into translation		no	\N
+exact	\N	Text without tags	\N	hikari::app::Application	Text without tags		no	\N
+obsolete	\N	Subtitle files (*.ass),(*.srt),(*.sub),(*.txt)|*.ass;*.srt;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save the file before loading subtitles from the MKV?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Failed to open subtitles	\N	\N	\N	\N	\N	\N
+placeholder	\N	In line %i, value '%s' cannot be scaled\nin tag '%s'	\N	hikari::app::Application	In line %1, value '%2' cannot be scaled\nin tag '%3'		no	%i %s %s -> %1 %2 %3
+exact	\N	Invalid FPS. Correct it in options and try again.	\N	hikari::app::Application	Invalid FPS. Correct it in options and try again.		no	\N
+exact	\N	Video was not loaded using FFMS2	\N	hikari::app::Application	Video was not loaded using FFMS2		no	\N
+exact	\N	No styles selected for time shifting	\N	hikari::app::Application	No styles selected for time shifting		no	\N
+placeholder	\N	Do you really want to shift only %s times?	\N	Main	Do you really want to shift only %1 times?		no	%s -> %1
+exact	\N	end	\N	Main	end		no	\N
+exact	\N	start	\N	Main	start		no	\N
+exact	\N	No lines selected for shifting	\N	hikari::app::Application	No lines selected for shifting		no	\N
+obsolete	\N	Are you sure you want to turn off translation mode?\nForeign language text will be deleted.	\N	\N	\N	\N	\N	\N
+exact	\N	Choose new FPS	\N	Main	Choose new FPS		no	\N
+exact	\N	Subtitles FPS	\N	Main	Subtitles FPS		no	\N
+exact	\N	New FPS	\N	Main	New FPS		no	\N
+obsolete	\N	Change FPS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Incorrect FPS	\N	\N	\N	\N	\N	\N
+exact	\N	Tree description	\N	Main	Tree description		no	\N
+exact	\N	Change tree name	\N	Main	Change tree name		no	\N
+exact	\N	Set tree name	\N	Main	Set tree name		no	\N
+obsolete	\N	Disable confirmation	\N	\N	\N	\N	\N	\N
+obsolete	\N	L.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Left	\N	\N	\N	\N	\N	\N
+obsolete	\N	Right	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vert.	\N	\N	\N	\N	\N	\N
+obsolete	\N	CPS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Wraps	\N	\N	\N	\N	\N	\N
+exact	\N	Original text	\N	Main	Original text		no	\N
+exact	\N	Translation	\N	Main	Translation		no	\N
+obsolete	\N	Cannot show preview cause grid height is too low	\N	\N	\N	\N	\N	\N
+obsolete	\N	This subtitle file is plain text and will be opened as ASS subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Invalid format (file may be corrupted or contain errors)	\N	\N	\N	\N	\N	\N
+exact	\N	Change resolution	\N	Main	Change resolution		no	\N
+exact	\N	Target resolution	\N	Main	Target resolution		no	\N
+exact	\N	From subtitles	\N	Main	From subtitles		no	\N
+exact	\N	Get from video	\N	Main	Get from video		no	\N
+exact	\N	No stretch	\N	Main	No stretch		no	\N
+exact	\N	Stretch	\N	Main	Stretch		no	\N
+exact	\N	Resample options	\N	Main	Resample options		no	\N
+exact	\N	Incompatible resolution	\N	Main	Incompatible resolution		no	\N
+placeholder	\N	The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %i x %i\nSubtitle resolution: %i x %i\n\nMatch the resolution to the video?\n	\N	Main	The video and subtitle resolutions are different.\nYou can change them now or use 'Change subtitle resolution'.\n\nVideo resolution: %1 x %2\nSubtitle resolution: %3 x %4\n\nMatch the resolution to the video?\n		no	%i %i %i %i -> %1 %2 %3 %4
+exact	\N	Change only the subtitle resolution	\N	Main	Change only the subtitle resolution		no	\N
+exact	\N	Resample subtitles (no stretch)	\N	Main	Resample subtitles (no stretch)		no	\N
+exact	\N	Resample subtitles (stretch)	\N	Main	Resample subtitles (stretch)		no	\N
+exact	\N	Change	\N	Main	Change		no	\N
+exact	\N	Do not change	\N	Main	Do not change		no	\N
+exact	\N	Disable warning	\N	Main	Disable warning		no	\N
+obsolete	\N	Libass works only with FFMS2	\N	\N	\N	\N	\N	\N
+obsolete	\N	Libass only opens ASS and SSA subtitles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot open subtitles in Libass	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot initialize CSRI.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create CSRI instance.	\N	\N	\N	\N	\N	\N
+obsolete	\N	CSRI does not support this format.	\N	\N	\N	\N	\N	\N
+exact	\N	Translation matching options	\N	Main	Translation matching options		no	\N
+exact	\N	Deletes the selected line.\nMoves the translation one line up.	\N	Main	Deletes the selected line.\nMoves the translation one line up.		no	\N
+exact	\N	Add line	\N	Main	Add line		no	\N
+exact	\N	Adds a blank line before the selected line.\nMoves the translation one line down.	\N	Main	Adds a blank line before the selected line.\nMoves the translation one line down.		no	\N
+exact	\N	Joins the selected line with the next line.\nMoves the translation one line up.	\N	Main	Joins the selected line with the next line.\nMoves the translation one line up.		no	\N
+exact	\N	Joins the selected line with the next line.\nMoves the original one line up.	\N	Main	Joins the selected line with the next line.\nMoves the original one line up.		no	\N
+exact	\N	Deletes the selected line.\nMoves the original one line up.	\N	Main	Deletes the selected line.\nMoves the original one line up.		no	\N
+exact	\N	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.	\N	Main	Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.		no	\N
+exact	\N	Original	\N	Main	Original		no	\N
+obsolete	\N	Description:\nOriginal - subtitle text with correct timing, used\nto compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.	\N	\N	\N	\N	\N	\N
+exact	\N	Reloading	\N	Main	Reloading		no	\N
+exact	\N	Subtitles were modified by another program. Reload?	\N	Main	Subtitles were modified by another program. Reload?		no	\N
+obsolete	\N	Show description	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show all tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show VSFiltermod tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency of primary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency of secondary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency of border color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency of shadow color	\N	\N	\N	\N	\N	\N
+obsolete	\N	PNG mask of primary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	PNG mask of secondary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	PNG mask of border color	\N	\N	\N	\N	\N	\N
+obsolete	\N	PNG mask of shadow color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency gradient of primary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency gradient of secondary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency gradient of border color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency gradient of shadow color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient of primary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient of secondary color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient of border color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient of shadow color	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text alignment (SSA)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Transparency	\N	\N	\N	\N	\N	\N
+obsolete	\N	Bold text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Edge blur	\N	\N	\N	\N	\N	\N
+obsolete	\N	Blur of border, shadow or font	\N	\N	\N	\N	\N	\N
+obsolete	\N	Thickness of border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector clip / rectangle clip	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font distortion	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fading in / fading out of text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Fading in / fading out of text (advanced version)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Skew on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Skew on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text rounding	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rotation on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rotation on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rotation on Z axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale on X and Y axes	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font spacing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vertical font spacing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Italic text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Reverse vector clip or rectangle clip	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text jitter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Karaoke timing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Karaoke timing smooth transition	\N	\N	\N	\N	\N	\N
+obsolete	\N	Karaoke timing border	\N	\N	\N	\N	\N	\N
+obsolete	\N	Karaoke timing (not supported)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text movement	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text movement along a circle	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text movement along a curve (3 points)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text movement along a curve (4 points)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector drawing movement	\N	\N	\N	\N	\N	\N
+obsolete	\N	Anchor for rotation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Drawing and its scale	\N	\N	\N	\N	\N	\N
+obsolete	\N	Offset of Y vector points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text wrap method	\N	\N	\N	\N	\N	\N
+obsolete	\N	Reset tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font point randomness	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font point randomness seed	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font point randomness on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font point randomness on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Font point randomness on Z axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text strikethrough	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text shadow	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text animation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text underline	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Border on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow on X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shadow on Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Z coordinate for tags \\frx and \\fry	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find element with id %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Choose toolbar icons	\N	\N	\N	\N	\N	\N
+obsolete	\N	At bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	On right	\N	\N	\N	\N	\N	\N
+obsolete	\N	On the left	\N	\N	\N	\N	\N	\N
+obsolete	\N	On top	\N	\N	\N	\N	\N	\N
+obsolete	\N	Toolbar alignment	\N	\N	\N	\N	\N	\N
+obsolete	\N	A new version (%s) is available. Update?	\N	\N	\N	\N	\N	\N
+exact	\N	Update	\N	Main	Update		no	\N
+obsolete	\N	Disable updates	\N	\N	\N	\N	\N	\N
+obsolete	\N	Update after closing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot download the new version of HikariSub	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find the HikariSub updater	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot close HikariSub	\N	\N	\N	\N	\N	\N
+obsolete	\N	Unable to retrieve information about the monitor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Aspect ratio: %5.3f	\N	\N	\N	\N	\N	\N
+obsolete	\N	The file is not a valid video file or is corrupted,\nor codecs or a splitter may be missing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to index the previous video?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to index the next video?	\N	\N	\N	\N	\N	\N
+exact	\N	Pause	\N	Main	Pause		no	\N
+obsolete	\N	Copy video position	\N	\N	\N	\N	\N	\N
+obsolete	\N	Full screen\tF	\N	\N	\N	\N	\N	\N
+obsolete	\N	Exit full screen\tEscape	\N	\N	\N	\N	\N	\N
+obsolete	\N	Switch full screen to monitor %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open in full screen on monitor %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Open editor	\N	\N	\N	\N	\N	\N
+obsolete	\N	Filters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shows used filters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to move loaded video to recycle bin?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Deleting	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video files(*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(*.rm),(*.3gp),(*.avs)|*.avi;*.mkv;*.mp4;*.ogm;*.wmv;*.asf;*.rmvb;*.rm;*.3gp;*.avs|All files (*.*)|*.*	\N	\N	\N	\N	\N	\N
+obsolete	\N	Subtitle files (*.ass),(*.sub),(*.txt)|*.ass;*.sub;*.txt	\N	\N	\N	\N	\N	\N
+obsolete	\N	Previous video file	\N	\N	\N	\N	\N	\N
+obsolete	\N	Show toolbar	\N	\N	\N	\N	\N	\N
+obsolete	\N	Position pointer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text positioning	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text moving	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text scaling	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text Z rotation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text X / Y rotation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Rectangle clipping	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector clipping	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector drawing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Position shifter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Hydra	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale and rotation shifter	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add Bézier curve	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add B-spline	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add separate point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delete point	\N	\N	\N	\N	\N	\N
+obsolete	\N	Invert clip	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move position points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change \\move starting points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change \\move ending points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move clips	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move drawings;\nuse only when you want\nto move drawing points.\nDo not combine with the first three options	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move \\org points	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set angle from 2 points.\nAfter setting 2 points below text on video\nit calculates angle from it.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing all Z-rotation tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Preserve proportions so that vector drawings and text\nkeep their original positions after rotation.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set scale by rectangle.\nAfter drawing rectangle text is scaled\nin two or one axis.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale width	\N	\N	\N	\N	\N	\N
+obsolete	\N	Preserve aspect ratio	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scale height	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set a custom rectangle for the current scale.\nIf automatic size calculation does not work correctly,\nyou can set a rectangle for the original scale.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Change all scale tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Preserve proportions so that vector drawings and text\nkeep their original positions after scaling.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or both axes\nfor the selected alignment.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Positioning in X axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Positioning in Y axis	\N	\N	\N	\N	\N	\N
+obsolete	\N	Set movement using 2 points and the video position.\nAfter placing the first point before the moving text,\nadvance the video by enough frames\nso that the same video element\nfor which the start point was set remains visible.\nMovement is generated by placing the second point.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing all X/Y-rotation tags	\N	\N	\N	\N	\N	\N
+obsolete	\N	Double-clicking a line (always on)	\N	\N	\N	\N	\N	\N
+obsolete	\N	Every line change	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clicking a line or editing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clicking a line or editing when paused	\N	\N	\N	\N	\N	\N
+obsolete	\N	Editing line when paused	\N	\N	\N	\N	\N	\N
+obsolete	\N	Audio to the line end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Nothing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video and audio to the line end time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video and audio to the next line start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Move video to selected line on:	\N	\N	\N	\N	\N	\N
+obsolete	\N	On moving to another line play:	\N	\N	\N	\N	\N	\N
+obsolete	\N	List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n place\nof start of drawing and click left mouse button and drag.	\N	\N	\N	\N	\N	\N
+obsolete	\N	List of tags that can edit visual tool	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient text increasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert	\N	\N	\N	\N	\N	\N
+obsolete	\N	Multiply	\N	\N	\N	\N	\N	\N
+obsolete	\N	Multiply+	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient line decreasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient line increasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Gradient text decreasing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tag change options:\nAdd - changes all tags by adding the slider value.\nInsert - inserts the tag at the cursor position for one line,\nor at the start for multiple lines.\nMultiply - multiplies the slider value by the selected line number;\nthe first line is not changed.\nGradient text increasing - inserts a tag at each character, increasing the value.\nGradient text decreasing - inserts a tag at each character, decreasing the value.\nGradient line increasing - inserts a tag in selected lines, increasing the value.\nGradient line decreasing - inserts a tag in selected lines, decreasing the value.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Edit listed tags and create new ones	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Left-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Right-below	\N	\N	\N	\N	\N	\N
+obsolete	\N	Center-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Left-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Right-above	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	Before-top	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-bottom	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-center	\N	\N	\N	\N	\N	\N
+obsolete	\N	After-top	\N	\N	\N	\N	\N	\N
+obsolete	\N	Text placing works similar like in styles	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tag editing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Edited tag	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add tag	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delete tag	\N	\N	\N	\N	\N	\N
+obsolete	\N	Name:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tag:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Minimal value:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Maximal value:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Step:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Insert Tag at text beginning of text	\N	\N	\N	\N	\N	\N
+obsolete	\N	Inserted at the cursor position	\N	\N	\N	\N	\N	\N
+obsolete	\N	Clip rectangle with \\t animation	\N	\N	\N	\N	\N	\N
+obsolete	\N	Decimal places:	\N	\N	\N	\N	\N	\N
+obsolete	\N	No additional values	\N	\N	\N	\N	\N	\N
+obsolete	\N	One additional value	\N	\N	\N	\N	\N	\N
+obsolete	\N	Two additional values	\N	\N	\N	\N	\N	\N
+obsolete	\N	Three additional values	\N	\N	\N	\N	\N	\N
+obsolete	\N	Used only when tag have 2 values or more	\N	\N	\N	\N	\N	\N
+obsolete	\N	Tag change options	\N	\N	\N	\N	\N	\N
+obsolete	\N	Value %i	\N	\N	\N	\N	\N	\N
+obsolete	\N	Additional values:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Restore default	\N	\N	\N	\N	\N	\N
+obsolete	\N	Are you sure you want to reset to default?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new tag.	\N	\N	\N	\N	\N	\N
+obsolete	\N	New tag already exists, enter another name.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot remove all tags from list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save changes to tag "%s"?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Tag" cannot be empty.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Maximum value" must contain a value\ngreater than field "Minimum value".	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Step" must contain a value greater than zero.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "Step" contains a number too large for the current min-max range.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Double "m" was blocked because of Vsfilter bug	\N	\N	\N	\N	\N	\N
+obsolete	\N	Vector shape editing	\N	\N	\N	\N	\N	\N
+obsolete	\N	Edited shape	\N	\N	\N	\N	\N	\N
+obsolete	\N	Add shape	\N	\N	\N	\N	\N	\N
+obsolete	\N	Delete shape	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changed is only width	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changed width and height	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing only drawing coordinates	\N	\N	\N	\N	\N	\N
+obsolete	\N	Changing scale	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scaling relative to cursor:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Scaling mode:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Get shape from active line	\N	\N	\N	\N	\N	\N
+obsolete	\N	Shape:	\N	\N	\N	\N	\N	\N
+obsolete	\N	Enter a name for the new shape.	\N	\N	\N	\N	\N	\N
+obsolete	\N	New shape name already exists, enter another name.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot remove all shapes from the list	\N	\N	\N	\N	\N	\N
+obsolete	\N	Save changes to shape "%s"?	\N	\N	\N	\N	\N	\N
+obsolete	\N	Field "shape" cannot be empty.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Video must be set at least one frame after the line's start time	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read clip rectangle values.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Visual editing tools\ndo not work on comments	\N	\N	\N	\N	\N	\N
+obsolete	\N	Line is not visible on video\nor has zero duration	\N	\N	\N	\N	\N	\N
+obsolete	\N	Some colors were absent from theme "%s" and were loaded from the default theme.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot load theme, reset to default	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot initialize COM	\N	\N	\N	\N	\N	\N
+obsolete	\N	Failed to initialize DirectShow	\N	\N	\N	\N	\N	\N
+obsolete	\N	Source filter not added	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add video renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create audio renderer instance	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot add Direct Sound renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate source pins	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate renderer pins	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate Direct Sound pins	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get renderer pin	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get dsound pin	\N	\N	\N	\N	\N	\N
+obsolete	\N	No IMediaTypes	\N	\N	\N	\N	\N	\N
+obsolete	\N	No track type info	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot connect source pin to video renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot connect source pin to audio renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot connect source pin to audio1 renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot find connected source pin	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get splitter pin info	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate splitter pins	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot connect source pin to video2 renderer	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get source pin	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create filters interface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create controller	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create search interface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot create audio interface	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot enumerate filters	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get filter name	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot get filter configuration	\N	\N	\N	\N	\N	\N
+exact	\N	Reached end. Search from the beginning?	\N	hikari::app::Application	Reached end. Search from the beginning?		no	\N
+obsolete	\N	Could not find the specified phrase "	\N	\N	\N	\N	\N	\N
+exact	\N	Find and Replace	\N	hikari::app::Application	Find and Replace		no	\N
+placeholder	\N	Replaced %i times.	\N	hikari::app::Application	Replaced %1 times.		no	%i -> %1
+exact	\N	Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder.	\N	hikari::app::Application	Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the 'ReplaceBackup' folder.		no	\N
+exact	\N	Search path is invalid	\N	hikari::app::Application	Search path is invalid		no	\N
+exact	\N	None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?	\N	hikari::app::Application	None of the selected styles exist in the subtitles being searched,\nso nothing will be found.\nWhat would you like to do?		no	\N
+exact	\N	Remove styles	\N	SearchTool	Remove styles		no	\N
+placeholder	\N	Styles named "%s" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?	\N	hikari::app::Application	Styles named "%1" do not exist in the subtitles being searched,\nwhich may significantly reduce the number of search results.\nWhat would you like to do?		no	%s -> %1
+exact	\N	Remove nonexistent styles	\N	SearchTool	Remove nonexistent styles		no	\N
+obsolete	\N	Not enough RAM. History partially deleted	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read settings.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
+obsolete	\N	Cannot read hotkeys.\nThe program will be terminated.	\N	\N	\N	\N	\N	\N
+exact	\N	Load last session?	\N	SessionWindows	Load last session?		no	\N
+exact	\N	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?	\N	SessionWindows	The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?		no	\N
+exact	\N	New	\N	StyleManager	New		no	\N
+exact	\N	Delete selected style catalog	\N	StyleManager	Delete selected style catalog		no	\N
+exact	\N	Styles stored:	\N	StyleManager	Styles stored:		no	\N
+exact	\N	Sort	\N	StyleManager	Sort		no	\N
+exact	\N	Move selected styles to beginning	\N	StyleManager	Move selected styles to beginning		no	\N
+exact	\N	Move selected styles up	\N	StyleManager	Move selected styles up		no	\N
+exact	\N	Move selected styles down	\N	StyleManager	Move selected styles down		no	\N
+exact	\N	Move selected styles to end	\N	StyleManager	Move selected styles to end		no	\N
+exact	\N	Add to storage	\N	StyleManager	Add to storage		no	\N
+exact	\N	Add to ASS	\N	StyleManager	Add to ASS		no	\N
+exact	\N	Add to all open ASS files	\N	StyleManager	Add to all open ASS files		no	\N
+exact	\N	Styles in ASS file:	\N	StyleManager	Styles in ASS file:		no	\N
+exact	\N	Clear	\N	StyleManager	Clear		no	\N
+obsolete	\N	Detach editing window	\N	\N	\N	\N	\N	\N
+placeholder	\N	Style named "%s" already exists. Replace?	\N	StyleManager	Style named "%1" already exists. Replace?		no	%s -> %1
+placeholder	\N	Style named "%s" already exists.	\N	hikari::app::StyleManagerController	Style named "%1" already exists.		no	%s -> %1
+exact	\N	Style name modified. Do you want to change all instances to the new name?	\N	StyleManager	Style name modified. Do you want to change all instances to the new name?		no	\N
+exact	\N	Choose ASS file	\N	StyleManager	Choose ASS file		no	\N
+obsolete	\N	ASS subtitle files(*.ass)|*.ass	\N	\N	\N	\N	\N	\N
+exact	\N	Copy of 	\N	hikari::app::StyleManagerController	Copy of 		no	\N
+obsolete	\N	New Style	\N	\N	\N	\N	\N	\N
+placeholder	\N	Styles used:\n%s\nStyles deleted:\n%s	\N	hikari::app::StyleManagerController	Styles used:\n%1\nStyles deleted:\n%2		no	%s %s -> %1 %2
+exact	\N	Status of deleted styles	\N	Main	Status of deleted styles		no	\N
+exact	\N	Status of deleted styles	\N	StyleManager	Status of deleted styles		no	\N
+exact	\N	Style catalog	\N	StyleManager	Style catalog		no	\N
+exact	\N	New style catalog	\N	StyleManager	New style catalog		no	\N
+exact	\N	Create new style in storage	\N	StyleManager	Create new style in storage		no	\N
+obsolete	\N	Edit selected storage style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy the style in storage	\N	\N	\N	\N	\N	\N
+exact	\N	Load style from external ASS file to storage	\N	StyleManager	Load style from external ASS file to storage		no	\N
+obsolete	\N	Delete style from storage	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort styles in storage	\N	\N	\N	\N	\N	\N
+exact	\N	Create new ASS style	\N	StyleManager	Create new ASS style		no	\N
+obsolete	\N	Edit selected ASS style	\N	\N	\N	\N	\N	\N
+obsolete	\N	Copy ASS style	\N	\N	\N	\N	\N	\N
+exact	\N	Load style from external ASS file	\N	StyleManager	Load style from external ASS file		no	\N
+obsolete	\N	Delete style from ASS	\N	\N	\N	\N	\N	\N
+obsolete	\N	Sort styles in ASS	\N	\N	\N	\N	\N	\N
+exact	\N	Copy style from ASS to storage	\N	StyleManager	Copy style from ASS to storage		no	\N
+exact	\N	Copy style from storage to ASS	\N	StyleManager	Copy style from storage to ASS		no	\N
+exact	\N	Delete unused ASS styles	\N	StyleManager	Delete unused ASS styles		no	\N
+new	\N	\N	\N	AutomationManager	Automation		no	\N
+new	\N	\N	\N	AutomationManager	Reload		no	\N
+new	\N	\N	\N	AutomationManager	Force stop		no	\N
+new	\N	\N	\N	AutomationManager	Unload		no	\N
+new	\N	\N	\N	ColourPickerDialog	Colour		no	\N
+new	\N	\N	\N	ColourPickerDialog	Saturation and value		no	\N
+new	\N	\N	\N	ColourPickerDialog	Hue		no	\N
+new	\N	\N	\N	ColourPickerDialog	Red		no	\N
+new	\N	\N	\N	ColourPickerDialog	Green		no	\N
+new	\N	\N	\N	ColourPickerDialog	Blue		no	\N
+new	\N	\N	\N	ColourPickerDialog	Alpha:		no	\N
+new	\N	\N	\N	ColourPickerDialog	Alpha		no	\N
+new	\N	\N	\N	ColourPickerDialog	ASS:		no	\N
+new	\N	\N	\N	ColourPickerDialog	ASS colour		no	\N
+new	\N	\N	\N	ColourPickerDialog	HTML:		no	\N
+new	\N	\N	\N	ColourPickerDialog	HTML colour		no	\N
+new	\N	\N	\N	ColourPickerDialog	Recent colors		no	\N
+new	\N	\N	\N	DockTabBar	Panels		no	\N
+new	\N	\N	\N	DockTabBar	Float %1		no	\N
+new	\N	\N	\N	DockTabBar	Close %1		no	\N
+new	\N	\N	\N	DockTitleBar	Minimize %1		no	\N
+new	\N	\N	\N	DockTitleBar	Minimize tab group		no	\N
+new	\N	\N	\N	DockTitleBar	Dock %1		no	\N
+new	\N	\N	\N	DockTitleBar	Dock tab group		no	\N
+new	\N	\N	\N	DockTitleBar	Float %1		no	\N
+new	\N	\N	\N	DockTitleBar	Float tab group		no	\N
+new	\N	\N	\N	DockTitleBar	Restore %1		no	\N
+new	\N	\N	\N	DockTitleBar	Restore tab group		no	\N
+new	\N	\N	\N	DockTitleBar	Maximize %1		no	\N
+new	\N	\N	\N	DockTitleBar	Maximize tab group		no	\N
+new	\N	\N	\N	DockTitleBar	Close %1		no	\N
+new	\N	\N	\N	DockTitleBar	Close tab group		no	\N
+new	\N	\N	\N	DocumentTabBar	Open documents		no	\N
+new	\N	\N	\N	DocumentTabBar	Close %1		no	\N
+new	\N	\N	\N	FontDialog	Fonts		no	\N
+new	\N	\N	\N	FontDialog	AaBbCcDdEeFfGg 0123456789		no	\N
+new	\N	\N	\N	HotkeyMapping	Window		no	\N
+new	\N	\N	\N	Main	%1 - HikariSub		no	\N
+new	\N	\N	\N	Main	&Open…		no	\N
+new	\N	\N	\N	Main	&Close		no	\N
+new	\N	\N	\N	Main	Open &Video…		no	\N
+new	\N	\N	\N	Main	Save &as…		no	\N
+new	\N	\N	\N	Main	E&xit		no	\N
+new	\N	\N	\N	Main	&Automation		no	\N
+new	\N	\N	\N	Main	&Load script…		no	\N
+new	\N	\N	\N	Main	Rerun last macro		no	\N
+new	\N	\N	\N	Main	Automation &manager		no	\N
+new	\N	\N	\N	Main	Open &video…		no	\N
+new	\N	\N	\N	Main	Vie&w		no	\N
+new	\N	\N	\N	Main	&Panels		no	\N
+new	\N	\N	\N	Main	Show		no	\N
+new	\N	\N	\N	Main	Hide		no	\N
+new	\N	\N	\N	Main	Float		no	\N
+new	\N	\N	\N	Main	Dock		no	\N
+new	\N	\N	\N	Main	&Move panel…		no	\N
+new	\N	\N	\N	Main	Layout &preset		no	\N
+new	\N	\N	\N	Main	Timing		no	\N
+new	\N	\N	\N	Main	Typesetting		no	\N
+new	\N	\N	\N	Main	&Reset layout		no	\N
+new	\N	\N	\N	Main	Restore the previous layout		no	\N
+new	\N	\N	\N	Main	&Subtitles		no	\N
+new	\N	\N	\N	Main	Shift &times...		no	\N
+new	\N	\N	\N	Main	Check for &updates		no	\N
+new	\N	\N	\N	Main	Video position		no	\N
+new	\N	\N	\N	Main	Video times		no	\N
+new	\N	\N	\N	Main	Audio display		no	\N
+new	\N	\N	\N	Main	Link		no	\N
+new	\N	\N	\N	Main	Before mark		no	\N
+new	\N	\N	\N	Main	After mark		no	\N
+new	\N	\N	\N	Main	500 before		no	\N
+new	\N	\N	\N	Main	500 first		no	\N
+new	\N	\N	\N	Main	500 last		no	\N
+new	\N	\N	\N	Main	500 after		no	\N
+new	\N	\N	\N	Main	To end		no	\N
+new	\N	\N	\N	Main	In		no	\N
+new	\N	\N	\N	Main	Out		no	\N
+new	\N	\N	\N	Main	Go		no	\N
+new	\N	\N	\N	Main	Karaoke		no	\N
+new	\N	\N	\N	Main	Auto split		no	\N
+new	\N	\N	\N	Main	Auto		no	\N
+new	\N	\N	\N	Main	Next		no	\N
+new	\N	\N	\N	Main	Auto-scroll		no	\N
+new	\N	\N	\N	Main	Spectrum		no	\N
+new	\N	\N	\N	Main	Speech		no	\N
+new	\N	\N	\N	Main	Line editor		no	\N
+new	\N	\N	\N	Main	Line editor: %1		no	\N
+new	\N	\N	\N	Main	B		no	\N
+new	\N	\N	\N	Main	I		no	\N
+new	\N	\N	\N	Main	U		no	\N
+new	\N	\N	\N	Main	S		no	\N
+new	\N	\N	\N	Main	Strikeout		no	\N
+new	\N	\N	\N	Main	Fn		no	\N
+new	\N	\N	\N	Main	Show tags		no	\N
+new	\N	\N	\N	Main	Line text		no	\N
+new	\N	\N	\N	Main	Translated text		no	\N
+new	\N	\N	\N	Main	Comment out original		no	\N
+new	\N	\N	\N	Main	Not applied: %1		no	\N
+new	\N	\N	\N	Main	Grid		no	\N
+new	\N	\N	\N	Main	Editing: %1		no	\N
+new	\N	\N	\N	Main	No document open		no	\N
+new	\N	\N	\N	Main	&Insert		no	\N
+new	\N	\N	\N	Main	Copy\tCtrl+C		no	\N
+new	\N	\N	\N	Main	Cut\tCtrl+X		no	\N
+new	\N	\N	\N	Main	Paste\tCtrl+V		no	\N
+new	\N	\N	\N	Main	Delete lines\tShift+Del		no	\N
+new	\N	\N	\N	Main	Reference		no	\N
+new	\N	\N	\N	Main	Reference (protected, read-only): %1		no	\N
+new	\N	\N	\N	Main	Move the marker to video time		no	\N
+new	\N	\N	\N	Main	Move the marker to audio time		no	\N
+new	\N	\N	\N	Main	Styles, separated by commas		no	\N
+new	\N	\N	\N	Main	Profiles		no	\N
+new	\N	\N	\N	Main	Search		no	\N
+new	\N	\N	\N	Main	Dismiss		no	\N
+new	\N	\N	\N	Main	No editing target		no	\N
+new	\N	\N	\N	Main	  |  Reference (protected): %1		no	\N
+new	\N	\N	\N	Main	History (1 element)		no	\N
+new	\N	\N	\N	Main	History (%1 elements)		no	\N
+new	\N	\N	\N	Main	OK		no	\N
+new	\N	\N	\N	Main	Unsaved changes		no	\N
+new	\N	\N	\N	Main	Choose where to save %1.		no	\N
+new	\N	\N	\N	Main	These Documents have unsaved changes:		no	\N
+new	\N	\N	\N	Main	Discard		no	\N
+new	\N	\N	\N	Main	Save as…		no	\N
+new	\N	\N	\N	Main	Discard all		no	\N
+new	\N	\N	\N	Main	Continue		no	\N
+new	\N	\N	\N	Main	ASS subtitles (*.ass)		no	\N
+new	\N	\N	\N	Main	All files (*)		no	\N
+new	\N	\N	\N	Main	Automation manager		no	\N
+new	\N	\N	\N	Main	Force stop		no	\N
+new	\N	\N	\N	Main	Automation scripts (*.lua *.moon)		no	\N
+new	\N	\N	\N	Main	Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)		no	\N
+new	\N	\N	\N	Main	Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)		no	\N
+new	\N	\N	\N	Main	Log		no	\N
+new	\N	\N	\N	Main	Move panel		no	\N
+new	\N	\N	\N	Main	Panel:		no	\N
+new	\N	\N	\N	Main	Panel		no	\N
+new	\N	\N	\N	Main	Place:		no	\N
+new	\N	\N	\N	Main	Tab with		no	\N
+new	\N	\N	\N	Main	Left of		no	\N
+new	\N	\N	\N	Main	Above		no	\N
+new	\N	\N	\N	Main	Right of		no	\N
+new	\N	\N	\N	Main	Below		no	\N
+new	\N	\N	\N	Main	Placement		no	\N
+new	\N	\N	\N	Main	Next to:		no	\N
+new	\N	\N	\N	Main	Next to panel		no	\N
+new	\N	\N	\N	Main	Move		no	\N
+new	\N	\N	\N	Main	Width:		no	\N
+new	\N	\N	\N	Main	Width		no	\N
+new	\N	\N	\N	Main	Height:		no	\N
+new	\N	\N	\N	Main	Height		no	\N
+new	\N	\N	\N	Main	Resize		no	\N
+new	\N	\N	\N	Main	Keyframes file (*.txt *.pass *.stats *.log)		no	\N
+new	\N	\N	\N	Main	Subtitle files (*.ass *.srt *.sub *.txt)		no	\N
+new	\N	\N	\N	Main	Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.		no	\N
+new	\N	\N	\N	Main	You already have the latest version		no	\N
+new	\N	\N	\N	Main	Cannot check for updates		no	\N
+new	\N	\N	\N	Main	A new version is available		no	\N
+new	\N	\N	\N	Main	You have version %1; version %2 is available		no	\N
+new	\N	\N	\N	Main	Check for updates automatically		no	\N
+new	\N	\N	\N	Main	Stable versions only		no	\N
+new	\N	\N	\N	Main	Open the download page		no	\N
+new	\N	\N	\N	Main	Remind me in a week		no	\N
+new	\N	\N	\N	Main	HikariSub subtitle editor by altqx,\nversion %1		no	\N
+new	\N	\N	\N	Main	Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n		no	\N
+new	\N	\N	\N	Main	FPS		no	\N
+new	\N	\N	\N	Main	Catalog for style		no	\N
+new	\N	\N	\N	Main	Style		no	\N
+new	\N	\N	\N	Main	The conversion will:		no	\N
+new	\N	\N	\N	Main	What the conversion changes		no	\N
+new	\N	\N	\N	Main	Convert		no	\N
+new	\N	\N	\N	Main	Insertion		no	\N
+new	\N	\N	\N	Main	Number of buttons		no	\N
+new	\N	\N	\N	Main	Line group		no	\N
+new	\N	\N	\N	Main	This would break the Line group “%1”. Nothing was changed. Remove the group (its description Line is deleted) and try again, or cancel.		no	\N
+new	\N	\N	\N	Main	This would leave group members outside a Line group. Nothing was changed.		no	\N
+new	\N	\N	\N	Main	Remove group		no	\N
+new	\N	\N	\N	Main	Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.		no	\N
+new	\N	\N	\N	Main	There is no unsaved work to recover.		no	\N
+new	\N	\N	\N	Main	%1 — %2		no	\N
+new	\N	\N	\N	Main	Open copy		no	\N
+new	\N	\N	\N	Main	Day		no	\N
+new	\N	\N	\N	Main	Month		no	\N
+new	\N	\N	\N	Main	Year		no	\N
+new	\N	\N	\N	Main	Import legacy hotkeys…		no	\N
+new	\N	\N	\N	Main	Hotkeys (Hotkeys.txt)		no	\N
+new	\N	\N	\N	Main	"%1" is already assigned to %2. Press it again to replace it.		no	\N
+new	\N	\N	\N	MisspellReplacerDialog	Rules		no	\N
+new	\N	\N	\N	QObject	The reference is protected (read-only).		no	\N
+new	\N	\N	\N	QObject	A macro is running on this document.		no	\N
+new	\N	\N	\N	QObject	The edited line cannot be committed.		no	\N
+new	\N	\N	\N	QObject	The change was refused.		no	\N
+new	\N	\N	\N	QObject	Subtitle lines		no	\N
+new	\N	\N	\N	QObject	Line %1		no	\N
+new	\N	\N	\N	QObject	Select whole characters.		no	\N
+new	\N	\N	\N	QObject	Braces and backslashes are ASS syntax: edit them with tags shown.		no	\N
+new	\N	\N	\N	QObject	This touches a drawing or malformed tag: edit it with tags shown.		no	\N
+new	\N	\N	\N	QObject	Select the whole line break or hard space.		no	\N
+new	\N	\N	\N	QObject	Here the text would become drawing or tag content: edit it with tags shown.		no	\N
+new	\N	\N	\N	QObject	the file could not be read		no	\N
+new	\N	\N	\N	QObject	the file has no usable video track		no	\N
+new	\N	\N	\N	QObject	the media helper ended		no	\N
+new	\N	\N	\N	QObject	a media component is missing		no	\N
+new	\N	\N	\N	QObject	the video could not be opened		no	\N
+new	\N	\N	\N	ScriptPropertiesDialog	Layout width		no	\N
+new	\N	\N	\N	ScriptPropertiesDialog	Layout height		no	\N
+new	\N	\N	\N	ScriptPropertiesDialog	Link the layout resolution to the subtitle resolution		no	\N
+new	\N	\N	\N	ScriptPropertiesDialog	1: End-of-line wrapping, only N breaks		no	\N
+new	\N	\N	\N	ScriptPropertiesDialog	2: No wrapping, both \n and N break		no	\N
+new	\N	\N	\N	SearchTool	Windows search filters separated by semicolons, e.g. "*.ass; *.srt".		no	\N
+new	\N	\N	\N	SearchTool	Search in hidden folders		no	\N
+new	\N	\N	\N	SearchTool	Find in all open subtitles		no	\N
+new	\N	\N	\N	SearchTool	Find all in current subtitles		no	\N
+new	\N	\N	\N	SearchTool	Replace in all open subtitles		no	\N
+new	\N	\N	\N	SearchTool	Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.		no	\N
+new	\N	\N	\N	SearchTool	OK		no	\N
+new	\N	\N	\N	SessionWindows	Session file (*.kls)		no	\N
+new	\N	\N	\N	SessionWindows	Session entries not restored		no	\N
+new	\N	\N	\N	SessionWindows	Keyframes		no	\N
+new	\N	\N	\N	SessionWindows	These files of the session could not be found. The tabs stay open; retry, choose the file, or remove the entry.		no	\N
+new	\N	\N	\N	SessionWindows	Tab %1 (%2) – %3: %4		no	\N
+new	\N	\N	\N	SessionWindows	Retry		no	\N
+new	\N	\N	\N	SessionWindows	Relink…		no	\N
+new	\N	\N	\N	SessionWindows	Remove		no	\N
+new	\N	\N	\N	SessionWindows	Choose the file		no	\N
+new	\N	\N	\N	SettingsDialog	Convert video colours on the GPU (requires reloading)		no	\N
+new	\N	\N	\N	SettingsDialog	Audio output		no	\N
+new	\N	\N	\N	SettingsDialog	Show hidden rows		no	\N
+new	\N	\N	\N	SettingsDialog	Hide the rows shown		no	\N
+new	\N	\N	\N	SpellCheckerDialog	Suggestions		no	\N
+new	\N	\N	\N	StyleManager	Size		no	\N
+new	\N	\N	\N	StyleManager	transparency		no	\N
+new	\N	\N	\N	StyleManager	Preview text		no	\N
+new	\N	\N	\N	StyleManager	New catalog		no	\N
+new	\N	\N	\N	StyleManager	Catalog name		no	\N
+new	\N	\N	\N	StyleManager	Do you really want to delete the catalog named "%1"?		no	\N
+new	\N	\N	\N	StyleManager	ASS subtitle files(*.ass)		no	\N
+new	\N	\N	\N	hikari::app::Application	Could not find the specified phrase "%1".		no	\N
+new	\N	\N	\N	hikari::app::Application	Invalid regular expression '%1': %2		no	\N
+new	\N	\N	\N	hikari::app::Application	Failed to find match for regular expression: %1		no	\N
+new	\N	\N	\N	hikari::app::Application	Cannot back up %1.		no	\N
+new	\N	\N	\N	hikari::app::Application	Cannot open file %1.		no	\N
+new	\N	\N	\N	hikari::app::Application	Cannot write file %1; it was left as it was.		no	\N
+new	\N	\N	\N	hikari::app::Application	%1 could not be restored; its backup is in %2.		no	\N
+new	\N	\N	\N	hikari::app::Application	Choose where to save the Untitled Document.		no	\N
+new	\N	\N	\N	hikari::app::Application	A Document could not be saved; nothing was closed.		no	\N
+new	\N	\N	\N	hikari::app::Application	Not closed, because saving failed or there is newer work: %1		no	\N
+new	\N	\N	\N	hikari::app::Application	Could not open %1; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::Application	Could not reload the subtitles; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::Application	The subtitles changed while reloading; nothing was replaced.		no	\N
+new	\N	\N	\N	hikari::app::Application	%1 (recovered)		no	\N
+new	\N	\N	\N	hikari::app::Application	No document open		no	\N
+new	\N	\N	\N	hikari::app::Application	The times could not be shifted.		no	\N
+new	\N	\N	\N	hikari::app::Application	No dictionary files were found in the "%1" folder.\nSpell checking will be disabled		no	\N
+new	\N	\N	\N	hikari::app::Application	The edited line cannot be committed.		no	\N
+new	\N	\N	\N	hikari::app::Application	This Document can't be converted to that format.		no	\N
+new	\N	\N	\N	hikari::app::Application	The script properties and styles are removed.		no	\N
+new	\N	\N	\N	hikari::app::Application	%n comment line(s) removed.		yes	\N
+new	\N	\N	\N	hikari::app::Application	%n drawing(s) removed.		yes	\N
+new	\N	\N	\N	hikari::app::Application	%n line(s) left without text removed.		yes	\N
+new	\N	\N	\N	hikari::app::Application	%n duplicate line(s) removed.		yes	\N
+new	\N	\N	\N	hikari::app::Application	Lines are sorted by time.		no	\N
+new	\N	\N	\N	hikari::app::Application	Formatting tags converted or removed in %n line(s).		yes	\N
+new	\N	\N	\N	hikari::app::Application	%n line(s) get the conversion style "%1".		yes	\N
+new	\N	\N	\N	hikari::app::Application	Layer, style, actor, margins or effect removed from %n line(s).		yes	\N
+new	\N	\N	\N	hikari::app::Application	Bookmarks, hidden lines and groups removed from %n line(s).		yes	\N
+new	\N	\N	\N	hikari::app::Application	Times changed (rounding, frames or new end times) in %n line(s).		yes	\N
+new	\N	\N	\N	hikari::app::Application	Could not find %1		no	\N
+new	\N	\N	\N	hikari::app::Application	The tab of %1 has other work now; open the file in a new tab.		no	\N
+new	\N	\N	\N	hikari::app::AutomationHotkeysController	Unresolved: the script or its macros changed		no	\N
+new	\N	\N	\N	hikari::app::AutomationHotkeysController	Unresolved: no loaded script has this macro		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The macro changed Styles or Script Info, which can't be applied yet; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The Document changed while the macro ran; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The protected reference can't be changed.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The macro's changes could not be applied; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	Open a Document to run a macro on.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The Line being edited can't be committed, so the macro can't start.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The macro was cancelled; nothing was changed.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The script's helper ended; reload the script to use it again.		no	\N
+new	\N	\N	\N	hikari::app::AutomationShell	The macro was force stopped; reload the script to use it again.		no	\N
+new	\N	\N	\N	hikari::app::StyleManagerController	The Document has no styles to edit.		no	\N
+new	\N	\N	\N	hikari::ui::AudioController	No audio open		no	\N
+new	\N	\N	\N	hikari::ui::AudioController	Indexing video %1%		no	\N
+new	\N	\N	\N	hikari::ui::AutomationDialogController	OK		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Saving…		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Saved		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Saved; the disk could not confirm it is stored		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Save cancelled; nothing was written		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Save failed; the file on disk is unchanged		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	End is before Start.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Margins must be between 0 and 9999.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Start is not a time such as 0:00:01.00.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	End is not a time such as 0:00:01.00.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Margins must be whole numbers.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	This Document can't be saved here.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	The file changed on disk since it was opened. Reload it, or save elsewhere.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Another open Document uses that file.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	The Document can't be saved right now.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	Unconfirmed applies in translation mode only.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	This search applies in translation mode only.		no	\N
+new	\N	\N	\N	hikari::ui::LineEditorController	%1, active line %2		no	\N
+new	\N	\N	\N	hikari::ui::LineGrid	%n selected, %1 hidden		yes	\N
+new	\N	\N	\N	hikari::ui::LineGrid	%n selected		yes	\N
+new	\N	\N	\N	hikari::ui::ShellController	1 Line selected		no	\N
+new	\N	\N	\N	hikari::ui::ShellController	%1 Lines selected		no	\N
+new	\N	\N	\N	hikari::ui::ShellController	 (%1 hidden)		no	\N
+new	\N	\N	\N	hikari::ui::VideoController	Associated files:\nVideo: %1		no	\N
+new	\N	\N	\N	hikari::ui::VideoController	No video open		no	\N
+new	\N	\N	\N	hikari::ui::VideoController	Indexing %1…		no	\N
+new	\N	\N	\N	hikari::ui::VideoController	Video unavailable: %1		no	\N
+new	\N	\N	\N	hikari::ui::VideoController	Frame %1 of %2  %3		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	the file is larger than %1 bytes		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it is not a layout file		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it was written by a newer version		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	its format is not known		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it names panels from a newer version		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it was made with %1		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it names an unknown panel (%1)		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it holds no layout		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	it holds no Classic arrangement		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	the docking engine could not restore it		no	\N
+new	\N	\N	\N	hikari::ui::WorkspaceLayoutController	The saved panel layout was not restored because %1. The Editing layout is shown; the saved file is kept at %2.		no	\N
