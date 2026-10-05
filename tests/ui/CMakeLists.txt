@@ -114,3 +114,8 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
 # P6: tab traversal and close review through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)
+# T1: the crosshair and VIDEO_COPY_COORDS through the real UI (Spix workflow).
+hikari_add_spix_test(hikari_ui_visual_tools_workflow SOURCES visual_tools_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_media_fixtures)
