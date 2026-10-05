@@ -49,6 +49,9 @@ public:
     // The overlay's subtitles (a Document's encoded ASS bytes). The shown
     // frame is rendered again.
     void setSubtitles(std::vector<std::byte> script);
+    // Y6: fonts given to the renderer with the subtitles from the next
+    // setSubtitles on (EXTERNAL_FONTS_DIRECTORY's fonts).
+    void setFonts(std::vector<FontLease> fonts) { m_fonts = std::move(fonts); }
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end or without video
     void showFrame(int index);
@@ -127,6 +130,7 @@ private:
 
     IndexedSourcePort &m_source;
     SubtitleRendererPort &m_renderer;
+    std::vector<FontLease> m_fonts; // Y6
     PresenterPort *m_presenter = nullptr;
     std::function<void()> m_observer;
     State m_state = State::Closed;

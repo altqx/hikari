@@ -34,6 +34,7 @@ public:
         std::function<application::EditSession *()> target;                  // the editing target
         std::function<std::vector<application::EditSession *>()> documents;  // every open Document
         std::function<void()> refresh;                                       // after a Document changed
+        std::function<std::vector<application::FontLease>()> fonts;          // Y6: the external fonts
     };
     StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent = nullptr);
 
@@ -111,6 +112,11 @@ private:
     QImage m_preview;
     int m_previewKey = 0;
 };
+
+// StylePreview: `style` at alignment 5 over the checkered background, the
+// size of the preview, rendered by libass with `fonts` in memory.
+QImage renderStylePreview(backends::LibassRenderer &renderer, core::StyleValues style, int width, int height,
+                          const QString &text, std::vector<application::FontLease> fonts = {});
 
 // "image://stylepreview/<key>": the controller's latest preview.
 void attachStylePreview(QQmlEngine &engine, StyleManagerController &controller);
