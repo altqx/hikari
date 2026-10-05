@@ -3,6 +3,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <set>
@@ -262,20 +263,30 @@ bool Document::rearrangeScriptInfo(const std::vector<PropertySlot> &slots)
     return true;
 }
 
-bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change)
+std::uint64_t newChangeVersion()
+{
+    static std::atomic<std::uint64_t> next{1};
+    return next.fetch_add(1, std::memory_order_relaxed);
+}
+
+bool Document::editLine(LineId id, const std::function<void(LineRecord &)> &change, ChangeMark mark)
 {
     for (auto &section : m_sections)
         for (auto &record : section.records)
             if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                const std::uint64_t version = line->changeVersion;
                 change(*line);
                 line->edited = true;
+                line->changeVersion = mark == ChangeMark::Changed ? newChangeVersion() : version;
                 return true;
             }
     return false;
 }
 
-std::optional<LineId> Document::insertLineAfter(LineId after, LineRecord line)
+std::optional<LineId> Document::insertLineAfter(LineId after, LineRecord line, ChangeMark mark)
 {
+    if (mark == ChangeMark::Changed)
+        line.changeVersion = newChangeVersion();
     for (auto &section : m_sections)
         for (std::size_t i = 0; i < section.records.size(); ++i)
             if (auto *prev = std::get_if<LineRecord>(&section.records[i]); prev && prev->id == after) {
@@ -305,8 +316,10 @@ void prepareInserted(LineRecord &line, LineId id, std::size_t offset)
 
 } // namespace
 
-std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line)
+std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line, ChangeMark mark)
 {
+    if (mark == ChangeMark::Changed)
+        line.changeVersion = newChangeVersion();
     for (auto &section : m_sections)
         for (std::size_t i = 0; i < section.records.size(); ++i)
             if (auto *next = std::get_if<LineRecord>(&section.records[i]); next && next->id == before) {
@@ -318,8 +331,10 @@ std::optional<LineId> Document::insertLineBefore(LineId before, LineRecord line)
     return std::nullopt;
 }
 
-std::optional<LineId> Document::appendLine(LineRecord line)
+std::optional<LineId> Document::appendLine(LineRecord line, ChangeMark mark)
 {
+    if (mark == ChangeMark::Changed)
+        line.changeVersion = newChangeVersion();
     for (auto it = m_sections.rbegin(); it != m_sections.rend(); ++it) {
         if (it->kind != SectionKind::Events)
             continue;
@@ -405,6 +420,17 @@ bool Document::moveLine(LineId id, std::optional<LineId> before)
     return false; // unreachable: both were checked above
 }
 
+bool Document::markLineChanged(LineId id)
+{
+    for (auto &section : m_sections)
+        for (auto &record : section.records)
+            if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
+                line->changeVersion = newChangeVersion();
+                return true;
+            }
+    return false;
+}
+
 bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
 {
     for (auto &section : m_sections)
@@ -412,6 +438,7 @@ bool Document::setLineUnconfirmed(LineId id, bool unconfirmed)
             if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
                 line->unconfirmed = unconfirmed;
                 line->edited = true;
+                line->changeVersion = newChangeVersion();
                 return true;
             }
     return false;
@@ -424,6 +451,7 @@ bool Document::setLineText(LineId id, std::u8string text)
             if (auto *line = std::get_if<LineRecord>(&record); line && line->id == id) {
                 line->text = std::move(text);
                 line->edited = true;
+                line->changeVersion = newChangeVersion();
                 return true;
             }
     return false;

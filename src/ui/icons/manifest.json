@@ -1221,8 +1221,7 @@
    "surfaces": [
     "menu:subtitles",
     "line-editor"
-   ],
-   "pending": "E6 #188"
+   ]
   },
   {
    "role": "automation",

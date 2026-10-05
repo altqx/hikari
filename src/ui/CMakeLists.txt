@@ -12,13 +12,16 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
     settings_store.cpp settings_store.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
-    visual_tools_controller.cpp visual_tools_controller.h)
+    visual_tools_controller.cpp visual_tools_controller.h
+    tag_list_controller.cpp tag_list_controller.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
     QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ColourPickerDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
+# E6: the Line editor's tag list.
+qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 target_link_libraries(hikari_ui PUBLIC hikari_application Qt6::Quick PRIVATE Qt6::QuickControls2 KDAB::kddockwidgets)
 # Some engine headers include their siblings relative to the kddockwidgets directory.
 get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DIRECTORIES)

@@ -1307,6 +1307,15 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
+            // (HikariSubFrame.cpp:344-345): the Grid's switch.
+            ShellMenuItem {
+                id: hideTagsItem
+                iconRole: "hide-tags"
+                objectName: "hideTagsMenuItem"
+                text: qsTr("Hide tags")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
+            }
         }
         ShellMenu {
             title: qsTr("&Help")
@@ -1557,8 +1566,12 @@ ApplicationWindow {
                 return "EDITBOX_COMMIT"
             return root.hotkeys.actionFor(2, event.key, event.modifiers)
         }
-        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== ""
+        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== "" || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
+            if (tagListPopup.key(event)) {
+                event.accepted = true
+                return
+            }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
             if (action !== "") {
@@ -1575,6 +1588,14 @@ ApplicationWindow {
                 root.editor.redo()
                 event.accepted = true
             }
+        }
+        // E6: the tag list (TextEditor's PopupTagList), on the raw text only:
+        // the hidden-tag view refuses ASS syntax, so no tag is typed there.
+        EditorTagList {
+            id: tagListPopup
+            field: field
+            controller: root.editor.tagList
+            enabled: root.editor.showTags && !field.readOnly
         }
     }
 
@@ -2507,11 +2528,15 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        CheckBox {
+                        // The hidden-tag view's switch (E6: the hide-tags icon,
+                        // checked while tags are hidden).
+                        IconToolButton {
                             objectName: "showTags"
-                            text: qsTr("Show tags")
-                            checked: root.editor.showTags
-                            onToggled: root.editor.showTags = checked
+                            iconRole: "hide-tags"
+                            text: qsTr("Hide tags")
+                            checkable: true
+                            checked: !root.editor.showTags
+                            onToggled: root.editor.showTags = !checked
                         }
                     }
                     // E5: legacy BoxSizer5, the row under the tag buttons
@@ -2920,6 +2945,8 @@ ApplicationWindow {
                         ShellMenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
                         ShellMenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
                         ShellMenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
+                        ShellMenuItem { objectName: "deleteText"; text: qsTr("Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
@@ -5017,6 +5044,12 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
+        // E6: OnMenuSelected's GLOBAL_HIDE_TAGS, OnChangeLine (SubsGrid::NextLine)
+        // and OnDelete's GLOBAL_REMOVE_TEXT (HikariSubFrame.cpp:835, 2443-2466).
+        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
+        case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
+        case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         // V6: SubsGrid::SelVideoLine and HikariSubFrame::OnAudioSnap
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true

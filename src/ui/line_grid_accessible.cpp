@@ -38,7 +38,12 @@ public:
         case QAccessible::Name:
             return m_grid->cellText(row, m_column); // the cell first: its displayed text
         case QAccessible::Description:
-            return QStringLiteral("%1, %2").arg(m_grid->cellText(row, 0), m_grid->columnTitle(m_column));
+        {
+            // E6: the label colour's State in words (the changed-Line mark).
+            const QString state = m_grid->rowStateText(row);
+            const QString base = QStringLiteral("%1, %2").arg(m_grid->cellText(row, 0), m_grid->columnTitle(m_column));
+            return state.isEmpty() ? base : base + QStringLiteral(", ") + state;
+        }
         default:
             return {};
         }

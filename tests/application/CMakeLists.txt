@@ -22,6 +22,8 @@ hikari_add_gtest(hikari_application_video_sources_tests SOURCES video_sources_te
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_selection_tests SOURCES grid_selection_tests.cpp
     LIBRARIES hikari_application LABELS application)
+hikari_add_gtest(hikari_application_changed_lines_tests SOURCES changed_lines_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_commands_tests SOURCES grid_commands_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_grid_clipboard_tests SOURCES grid_clipboard_tests.cpp

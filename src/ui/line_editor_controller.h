@@ -17,6 +17,7 @@
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
+#include "tag_list_controller.h"
 
 #include <QObject>
 #include <QStringList>
@@ -38,6 +39,8 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool hasLine READ hasLine NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool showTags READ showTags WRITE setShowTags NOTIFY changed)
+    // E6: the tag list popup of the text fields.
+    Q_PROPERTY(TagListController *tagList READ tagList CONSTANT)
     Q_PROPERTY(QString text READ text NOTIFY changed)
     // Translation mode (Script Info "TLMode: Yes"): Original above Translated.
     Q_PROPERTY(bool translationMode READ translationMode NOTIFY changed)
@@ -108,6 +111,7 @@ public:
     };
 
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
+    TagListController *tagList() { return &m_tagList; }
 
     // The Document being edited (the workspace's editing target), or none.
     // `editable` is false for a protected reference.
@@ -205,6 +209,9 @@ public:
     Q_INVOKABLE void setEndText(const QString &text);
     Q_INVOKABLE void setMarginText(int which, const QString &text); // 0 left, 1 right, 2 vertical
     Q_INVOKABLE bool commitAndAdvance(); // Enter, outside composition
+    // E6: GLOBAL_NEXT_LINE (1) / GLOBAL_PREVIOUS_LINE (-1), SubsGrid::NextLine:
+    // the next or previous shown Line; past the last shown one a new Line.
+    Q_INVOKABLE bool nextLine(int direction);
     Q_INVOKABLE bool commit();
     Q_INVOKABLE void discard();          // Esc
     Q_INVOKABLE bool undo();             // draft history first, then the Document
@@ -408,6 +415,7 @@ private:
     std::optional<application::DocumentId> m_document;
     bool m_editable = false;
     bool m_showTags = false; // tags hidden by default
+    TagListController m_tagList;
     QString m_shown[2];      // what the Original and Translated fields show
     QString m_problem;
     QString m_attempted;

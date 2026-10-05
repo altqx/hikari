@@ -1,5 +1,6 @@
 #include "line_grid.h"
 
+#include "icon_theme.h"
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
 #include "theme.h"
@@ -7,9 +8,11 @@
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPalette>
 
 #include <algorithm>
 #include <cmath>
@@ -213,6 +216,23 @@ int LineGrid::modelColumn(int column) const
 QString LineGrid::cellText(int row, int column) const
 {
     return m_model ? m_model->index(row, modelColumn(column)).data().toString() : QString();
+}
+
+QString LineGrid::rowStateText(int row) const
+{
+    if (!m_model || row < 0 || row >= m_model->rowCount())
+        return {};
+    const int state = m_model->index(row, 0).data(LineTableModel::LineStateRole).toInt();
+    QStringList words;
+    if ((state & 3) == 1)
+        words << tr("changed");
+    else if ((state & 3) == 2)
+        words << tr("changed, saved");
+    if (state & 4)
+        words << tr("unconfirmed");
+    if (state & 8)
+        words << tr("bookmarked");
+    return words.join(QStringLiteral(", "));
 }
 
 QString LineGrid::columnTitle(int column) const
@@ -555,6 +575,40 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
                   colour.blue() * invA / 0xFF + (b - invA * b / 0xFF));
 }
 
+// E6: legacy paints column 0 of every Line in its label colour by State
+// (SubsGridWindow.cpp:478-479, 495: j == 0 && !isHeadline ? label : kol),
+// over selection and comparison colours alike. The rewrite adds a shape for
+// the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
+// a filled dot for a changed Line, a ring for a changed and saved one
+// (E6-mark-shape). The mark takes the palette's Text role, or its Base role
+// where Text contrasts less with the label colour, until K2's Theme roles
+// replace the palette here.
+void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
+{
+    const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
+    if (colours.size() == 4)
+        painter->fillRect(cell, label);
+    const int changed = state & 3;
+    if (!changed)
+        return;
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    const QPalette palette = QGuiApplication::palette();
+    QColor mark = palette.color(QPalette::Text);
+    if (label.isValid() && icons::contrastRatio(palette.color(QPalette::Base), label) > icons::contrastRatio(mark, label))
+        mark = palette.color(QPalette::Base);
+    const QRectF dot(cell.right() - 9, cell.center().y() - 2.5, 5, 5);
+    if (changed == 1) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(mark);
+    } else {
+        painter->setPen(QPen(mark, 1));
+        painter->setBrush(Qt::NoBrush);
+    }
+    painter->drawEllipse(dot);
+    painter->restore();
+}
+
 // R1: legacy SubsGridWindow.cpp:508-528. Each run of differing characters
 // (inclusive offsets into the shown text, wxString::SubString) is drawn in
 // GRID_COMPARISON_OUTLINE one pixel left, right, above and below where the
@@ -638,6 +692,9 @@ void LineGrid::paint(QPainter *painter)
     const int count = m_geometry.visibleRowCount(m_contentY, bounds.height(), rows);
     const QVariantList comparisonColours =
         m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList() : QVariantList();
+    const QVariantList labelColours =
+        m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList() : QVariantList();
+    const bool numberShown = columns > 0 && modelColumn(0) == LineTableModel::NumberColumn;
     painter->save();
     painter->setClipRect(QRectF(0, m_geometry.headerHeight, bounds.width(), bounds.height() - m_geometry.headerHeight));
     for (int row = first; row < first + count; ++row) {
@@ -655,10 +712,13 @@ void LineGrid::paint(QPainter *painter)
                 comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection)) {
             // Legacy paints column 0, the number, in its label colour and the
             // other columns in kol (SubsGridWindow.cpp:495, j == 0 && !isHeadline
-            // ? label : kol); the number cell keeps the row's own background.
-            const double from = m_markWidth + (columns > 0 && modelColumn(0) == LineTableModel::NumberColumn ? widths[0] : 0);
+            // ? label : kol); the number cell takes its label colour (E6).
+            const double from = m_markWidth + (numberShown ? widths[0] : 0);
             painter->fillRect(QRectF(from, top, bounds.width() - from, rh), *compared);
         }
+        if (numberShown)
+            drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
+                      labelColours);
         painter->setPen(comment ? roles.muted : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
