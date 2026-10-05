@@ -116,6 +116,11 @@ public:
         bool autoload = false;
         // INI file holding the settings registry; empty: in memory only (tests).
         QString settingsFile;
+        // O5: the system's interface languages, most preferred first
+        // (QLocale::system().uiLanguages(); the composition sets it). On the
+        // first start (a settingsFile that does not exist yet) a Polish first
+        // one takes Polish for the interface and the spell checker.
+        QStringList systemUiLanguages;
         // P3: where recovery bundles live; empty: no autosave (tests).
         QString recoveryDir;
         // V1: whether video playback may open an audio device.

@@ -438,6 +438,9 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
+    // O5: legacy LoadOptions() returns 2 when there is no settings file yet;
+    // decided before anything here may write one.
+    const bool firstStart = !options.settingsFile.isEmpty() && !QFileInfo::exists(options.settingsFile);
     m_reader = backends::makeFileReader();
     // Write outcomes arrive on the writer's thread; publish them on this one.
     m_port = backends::makeFilePort([this](application::PermitId permit, application::WriteOutcome outcome) {
@@ -490,6 +493,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_dictionaryDirs << bundled;
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
+    // O5: the first start on a Polish system takes Polish for the interface
+    // and the spell checker, before anything reads either
+    // (hikarisubApp.cpp:319-325).
+    if (firstStart && Localisation::firstStartLanguage(options.systemUiLanguages) == u"pl") {
+        m_settings->set("program.language", QStringLiteral("pl"));
+        m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
+    }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     // K1: the icons take their colours from this profile.
     ui::IconTheme::useSettings(m_settings.get());

@@ -55,7 +55,7 @@ public:
     // catalogs. A tag with no catalog of its language gives `found` false.
     static QString resolve(const QString &tag, const QStringList &available, bool *found = nullptr);
 
-    // Legacy's first start (hikarisubApp.cpp:322-326): with no settings yet
+    // Legacy's first start (hikarisubApp.cpp:319-325): with no settings yet
     // and a Polish system interface language, PROGRAM_LANGUAGE and
     // DICTIONARY_LANGUAGE become "pl". `uiLanguages` is the system's
     // (QLocale::system().uiLanguages()), first preferred.

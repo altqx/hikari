@@ -5,7 +5,6 @@
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/backends/legacy_spelling.h"
 
-#include <QFileInfo>
 #include <QGuiApplication>
 #include <QLocale>
 #include <QQmlApplicationEngine>
@@ -35,14 +34,9 @@ int run(int argc, char **argv, StartupMode mode)
     // then the bundled one beside the executable (legacy's location).
     options.spellingBackend = backends::hunspellSpellingLoader();
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
-    // O5: legacy's first start (no settings yet) on a Polish system takes
-    // Polish for the interface and the spell checker (hikarisubApp.cpp:322-326).
-    const bool firstStart = !QFileInfo::exists(options.settingsFile);
+    // O5: the first start on a Polish system takes Polish (Application).
+    options.systemUiLanguages = QLocale::system().uiLanguages();
     Application application(options);
-    if (firstStart && Localisation::firstStartLanguage(QLocale::system().uiLanguages()) == u"pl") {
-        application.settingsStore()->set("program.language", QStringLiteral("pl"));
-        application.settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("pl"));
-    }
     application.setStartedWithPaths(argc > 1); // P6: no session at start then
     // A path on the command line opens as the editing target.
     if (argc > 1)

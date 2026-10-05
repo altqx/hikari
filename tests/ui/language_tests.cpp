@@ -72,10 +72,11 @@ class LanguageTest : public QObject {
     std::unique_ptr<QQmlApplicationEngine> engine;
     QQuickWindow *window = nullptr;
 
-    void start(const QString &settingsFile = {})
+    void start(const QString &settingsFile = {}, const QStringList &systemUiLanguages = {})
     {
         app::Application::Options options;
         options.settingsFile = settingsFile;
+        options.systemUiLanguages = systemUiLanguages;
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         ui::attachDocking(*engine);
@@ -241,7 +242,7 @@ private slots:
         // No catalog of the language: English, reported.
         QCOMPARE(resolve("de", false), QString());
         QCOMPARE(resolve("zz_ZZ", false), QString());
-        // Legacy's first start on a Polish system (hikarisubApp.cpp:322-326).
+        // Legacy's first start on a Polish system (hikarisubApp.cpp:319-325).
         QCOMPARE(app::Localisation::firstStartLanguage({QStringLiteral("pl-PL"), QStringLiteral("en-US")}), QStringLiteral("pl"));
         QCOMPARE(app::Localisation::firstStartLanguage({QStringLiteral("en-US"), QStringLiteral("pl-PL")}), QString());
         QCOMPARE(app::Localisation::firstStartLanguage({}), QString());
@@ -383,6 +384,42 @@ private slots:
         start(ini);
         QCOMPARE(application->settingsStore()->text("program.language"), QString());
         QVERIFY(!application->log().history().contains(QStringLiteral("Cannot find translation")));
+    }
+
+    // Legacy's first start: LoadOptions() finds no settings file (2) and the
+    // system's interface language is Polish, so PROGRAM_LANGUAGE and
+    // DICTIONARY_LANGUAGE become "pl" before either is read
+    // (hikarisubApp.cpp:319-325). Only then: a settings file that exists, or
+    // another first system language, leaves both as they are.
+    void firstStartOnAPolishSystemTakesPolish()
+    {
+        const QStringList polish{QStringLiteral("pl-PL"), QStringLiteral("en-US")};
+        const QString ini = dir.filePath(QStringLiteral("first-start/hikari.ini"));
+        QVERIFY(!QFile::exists(ini));
+        start(ini, polish);
+        QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("pl"));
+        // Read at start: the window opens in Polish.
+        QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
+        QCOMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
+        application->settingsStore()->set("program.language", QString());
+        application->settingsStore()->set("editor.dictionaryLanguage", QStringLiteral("en_US"));
+        application->settingsStore()->sync();
+        stop();
+        QVERIFY(QFile::exists(ini));
+        // The second start keeps what the settings say.
+        start(ini, polish);
+        QCOMPARE(application->settingsStore()->text("program.language"), QString());
+        QCOMPARE(application->dictionaryLanguage(), QStringLiteral("en_US"));
+        QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
+        stop();
+        // A first start whose first system language is not Polish (legacy
+        // GetSystemDefaultUILanguage() is one language, the first here).
+        const QString other = dir.filePath(QStringLiteral("first-start/other.ini"));
+        start(other, {QStringLiteral("en-US"), QStringLiteral("pl-PL")});
+        QCOMPARE(application->settingsStore()->text("program.language"), QString());
+        QVERIFY(application->dictionaryLanguage() != u"pl");
+        QCOMPARE(fileMenuTitle(), QStringLiteral("&File"));
     }
 
     // What controllers and models keep is made again after a switch: the
