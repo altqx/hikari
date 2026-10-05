@@ -87,10 +87,30 @@ void VideoPresenter::resolveLater(Done done, PresentResult result)
         this, [done = std::move(done), result = std::move(result)] { done(result); }, Qt::QueuedConnection);
 }
 
+void VideoPresenter::setVideoRect(const QRectF &rect)
+{
+    if (rect == m_videoRect)
+        return;
+    m_videoRect = rect;
+    emit placementChanged();
+    update(); // placement only
+}
+
+void VideoPresenter::setSourceRect(const QRectF &rect)
+{
+    if (rect == m_sourceRect)
+        return;
+    m_sourceRect = rect;
+    emit placementChanged();
+    update();
+}
+
 QRectF VideoPresenter::frameRect() const
 {
     if (!m_shown.frame)
         return {};
+    if (!m_videoRect.isEmpty())
+        return m_videoRect;
     const double displayWidth = m_shown.frame->width * m_shown.transform.pixelAspect;
     const double displayHeight = m_shown.frame->height;
     const double scale = std::min(width() / displayWidth, height() / displayHeight);
@@ -195,6 +215,12 @@ QSGNode *VideoPresenter::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *
     node->background->setRect(boundingRect());
     node->frame->setRect(target);
     node->overlay->setRect(node->overlayLease ? target : QRectF());
+    // T1: the zoomed part of the frame (and of its overlay, made at its size).
+    const QRectF whole(0, 0, m_shown.frame->width, m_shown.frame->height);
+    const QRectF source = m_sourceRect.isEmpty() ? whole : m_sourceRect;
+    node->frame->setSourceRect(source);
+    if (node->overlayLease)
+        node->overlay->setSourceRect(source);
     node->markDirty(QSGNode::DirtyGeometry);
 
     if (uploaded) {

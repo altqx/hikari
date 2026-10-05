@@ -243,6 +243,26 @@ private slots:
         QCOMPARE(presenter->frameRect(), QRectF(0, 16, 96, 32)); // 192:64 display fitted into 96:64
     }
 
+    void sharedVideoRectPlacesTheFrame()
+    {
+        // T1: the visual tools' view gives the rectangle (legacy
+        // m_BackBufferRect, integer pixels) and the zoomed part of the frame.
+        QVERIFY(presentAndWait({7, quadrants(), nullptr, {}}));
+        presenter->setVideoRect(QRectF(10, 4, 60, 40));
+        QCOMPARE(presenter->frameRect(), QRectF(10, 4, 60, 40));
+        presenter->setSourceRect(QRectF(0, 0, 48, 32)); // the top-left quadrant only
+        const auto placed = [&] {
+            const QImage grabbed = window->grabWindow();
+            const QColor inside(grabbed.pixel(40, 24)), outside(grabbed.pixel(5, 24));
+            return std::abs(inside.red() - 200) <= 2 && std::abs(inside.green() - 40) <= 2 &&
+                   outside == QColor(Qt::black);
+        };
+        QVERIFY(QTest::qWaitFor(placed, 10'000));
+        presenter->setVideoRect({});
+        presenter->setSourceRect({});
+        QCOMPARE(presenter->frameRect().isEmpty(), false);
+    }
+
     void invalidInputIsRefusedAtSubmission()
     {
         auto broken = quadrants();
