@@ -6440,6 +6440,22 @@ private slots:
         QVERIFY(!settings.contains("icons.dark.normal"));
         QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
         QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        // The default in another spelling (lower case, or with an opaque
+        // alpha) is the default too: it leaves the profile.
+        for (const auto &spelling : {QStringLiteral("#e8edf2"), QStringLiteral("#E8EDF2FF")}) {
+            QVERIFY(openSettings());
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                              Q_ARG(QVariant, QStringLiteral("#FF8800"))));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+            QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                              Q_ARG(QVariant, spelling)));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+            QVERIFY2(!settings.contains("icons.dark.normal"), qPrintable(spelling));
+            QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        }
         // High contrast (the platform's preference; forced here).
         ui::IconTheme::forceAppearance(ui::icons::Appearance::HighContrast);
         QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));

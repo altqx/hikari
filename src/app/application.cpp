@@ -4230,9 +4230,13 @@ void Application::applySettings(const QVariantMap &values)
         if (!application::parseSettingColour(colour) || colour == m_settings->settings().text(id))
             continue;
         // K1: an icon colour back at its theme default leaves the profile
-        // (it follows the default again); the icons repaint at once.
+        // (it follows the default again); the icons repaint at once. The
+        // colours are compared as colours, so "#9cdbc9" or "#9CDBC9FF" is
+        // the default "#9CDBC9" too.
         const auto *setting = application::findSetting(id);
-        if (isIconColour(id) && setting && std::get<std::string>(setting->defaultValue) == colour)
+        if (isIconColour(id) && setting
+            && application::parseSettingColour(std::get<std::string>(setting->defaultValue))
+                   == application::parseSettingColour(colour))
             m_settings->reset(qs(id));
         else
             m_settings->settings().set(id, colour);
