@@ -7,7 +7,8 @@ import Hikari.Ui
 // keyboard alternative, and the batch picker (accepted on #55): the Lines a
 // batch tool edits are picked from the Grid's selection and kept, whatever
 // the active Line or a later selection; with none picked a tool edits the
-// active Line.
+// active Line. The row never widens the video controls: what does not fit
+// the panel is cut off (Main.qml), never the transport row below it.
 RowLayout {
     id: values
     objectName: "visualToolValues"
@@ -30,9 +31,12 @@ RowLayout {
             }
         }
     }
-    Item { Layout.fillWidth: true }
+    // The rest of the row; the targets elide when the panel is narrow.
     Label {
         objectName: "visualBatch"
+        Layout.fillWidth: true
+        horizontalAlignment: Text.AlignRight
+        elide: Text.ElideRight
         text: values.tools.batchCount > 0 ? qsTr("Targets: %n picked line(s)", "", values.tools.batchCount)
                                           : qsTr("Targets: active line")
     }

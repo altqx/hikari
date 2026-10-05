@@ -1632,6 +1632,11 @@ ApplicationWindow {
                     spacing: 2
                 VisualToolValues {
                     Layout.fillWidth: true
+                    // Its fields and buttons do not shrink: wider text (a
+                    // translation, a larger font) or a narrow panel must not
+                    // widen the column and push Next frame out of the panel.
+                    Layout.minimumWidth: 0
+                    clip: true
                     tools: root.visualTools
                 }
                 Slider {
