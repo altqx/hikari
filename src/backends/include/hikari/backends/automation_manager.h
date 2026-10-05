@@ -10,6 +10,7 @@
 #include "hikari/application/automation_registry.h"
 #include "hikari/backends/lua_script_host.h"
 
+#include <QDateTime>
 #include <QObject>
 
 #include <map>
@@ -29,7 +30,12 @@ public:
     void unload(const std::string &path) override;
     bool run(const std::string &path, int ordinal) override;
     // L4: the macro runs against `snapshot`; its result is host(path)->lastResult().
-    bool run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot);
+    bool run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot,
+             bool validateFirst = false);
+    // S4 (legacy LuaScript::CheckLastModified): whether the script file's
+    // modification time differs from the one recorded when it last loaded;
+    // false when the file cannot be read.
+    bool modifiedSinceLoad(const std::string &path) const;
     void cancel() override;
     bool forceStop(const std::string &path) override;
     // Application quit: no new runs, running macros are cancelled, and helpers
@@ -61,6 +67,7 @@ private:
         std::unique_ptr<LuaScriptHost> host;
         std::uint64_t generation = 0;
         std::string sha256; // of the script file when this generation loaded
+        QDateTime modified; // the file's modification time when this generation started loading
     };
     void attach(const std::string &path, Entry &entry);
     void rebuildRegistry(); // in load order, from every script with macros

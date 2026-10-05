@@ -28,7 +28,9 @@ class LuaScriptHost : public QObject {
 public:
     enum class State { Idle, Loading, Ready, Running, LoadFailed, Unavailable };
     // ForceStopped: the user chose Force stop after the grace period.
-    enum class RunOutcome { Ok, Failed, Cancelled, HelperLost, ForceStopped };
+    // NotValid: the macro's validation function answered false (or raised an
+    // error, the message) and the macro did not run (S4).
+    enum class RunOutcome { Ok, Failed, Cancelled, HelperLost, ForceStopped, NotValid };
 
     using DialogReply = std::function<void(application::DialogResult)>;
     using DialogHandler = std::function<void(const application::DialogRequest &, DialogReply)>;
@@ -53,7 +55,9 @@ public:
     // False unless Ready (one macro at a time per script). The snapshot is the
     // subtitles object the macro sees; without one it sees an empty Document.
     bool run(int macroIndex);
-    bool run(int macroIndex, const application::MacroSnapshot &snapshot);
+    // With `validateFirst` the macro's validation function runs first, on
+    // the same subtitles object (legacy LuaCommand::Validate then Run).
+    bool run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst = false);
     // What the last successful run staged and returned (set before finished()).
     const std::optional<application::MacroResult> &lastResult() const { return m_lastResult; }
     // Latches the run as cancelled: it ends Cancelled even if the script then

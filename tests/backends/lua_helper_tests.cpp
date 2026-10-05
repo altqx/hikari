@@ -462,6 +462,88 @@ TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
     EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
 }
 
+// S4: with validateFirst (protocol RunValidated) the macro's validation
+// function runs first with (subtitles, selected rows, active row) and the
+// macro runs only when it answers true, as legacy LuaCommand::Validate before
+// Run (Automation.cpp:936-969; RunScript, OnRunScript and
+// GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT all validate first).
+TEST_F(LuaHelper, ValidationDecidesWhetherTheMacroRuns)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1}, l2{2};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_TRUE(host->info().macros[0].hasValidate);
+    auto runValidated = [&](const char *name, bool validateFirst = true) {
+        run = {};
+        const auto snapshot = snapshotForMacro(session);
+        return snapshot && host->run(macro(*host, name), *snapshot, validateFirst) &&
+               waitFor([&] { return run.outcome.has_value(); });
+    };
+    ASSERT_TRUE(runValidated("One line"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), QStringLiteral("validated 6 1 4"));
+    EXPECT_TRUE(host->lastResult()->valid);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "ran:one");
+
+    // false: the macro does not run, and nothing is staged.
+    session.setSelection(Selection{l1, {l1, l2}});
+    ASSERT_TRUE(runValidated("One line"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.isEmpty());
+    ASSERT_TRUE(host->lastResult());
+    EXPECT_FALSE(host->lastResult()->valid);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "one");
+    ASSERT_TRUE(runValidated("Never"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "one");
+
+    // A runtime error answers false with legacy's log text.
+    ASSERT_TRUE(runValidated("Broken"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.startsWith(QStringLiteral("Runtime error in Lua macro validation function:\n")))
+        << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("validation broke")));
+
+    // A macro without a validation function runs; Run alone never validates.
+    ASSERT_TRUE(runValidated("Unvalidated"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    ASSERT_TRUE(runValidated("Never", false));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "should not run");
+}
+
+// Validation and the macro work on one subtitles object (legacy AutoToFile
+// edits the file both see): an info line validation inserts reaches the
+// macro, whose rows count it (Run reads SInfoSize + StylesSize again,
+// Automation.cpp:976-984), and both apply as the macro's one step.
+TEST_F(LuaHelper, ValidationEditsReachTheMacroAsOneStep)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    EXPECT_EQ(snapshot->selected, std::vector<int>{4});
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Edits while validating"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    const auto steps = session.historySize();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Edits while validating"));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(texts(session)[0], "one|5|5|Validated");
+    EXPECT_EQ(session.document().scriptInfo(u8"Validated"), std::u8string(u8"yes"));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session)[0], "one");
+    EXPECT_FALSE(session.document().scriptInfo(u8"Validated"));
+}
+
 // A33-subinspector-linux: SubInspector's native library (the Windows DLL
 // legacy shipped; built from the same v0.5.1 source on Linux) loads through
 // requireffi and measures a rendered line through libass. The bounds depend

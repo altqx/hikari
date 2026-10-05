@@ -2103,7 +2103,41 @@ void installHostServices(lua_State *L)
     lua_setfield(L, -2, "gui");
 }
 
-void run(Reader &in, Responder &r, std::size_t payloadSize)
+// Legacy LuaCommand::Validate (Automation.cpp:936-969): the validation
+// function gets the subtitles object, the selected rows and the active row;
+// its first return is the answer (a second one, the help text, is not
+// shown). A runtime error answers false. The object stays the one the
+// macro then runs on, so edits made while validating reach the macro, as
+// legacy's AutoToFile edits the file both work on.
+bool validate(lua_State *L, int index, std::string &error)
+{
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
+    lua_getfield(L, -1, "validate");
+    lua_remove(L, -2);
+    if (!lua_isfunction(L, -1)) {
+        lua_pop(L, 1);
+        return true; // no COMMAND_VALIDATE: always valid
+    }
+    lua_pushcfunction(L, addStackTrace);
+    lua_insert(L, -2);
+    pushSubtitles(L);
+    lua_createtable(L, static_cast<int>(g_subs->lists.selected.size()), 0);
+    for (std::size_t i = 0; i < g_subs->lists.selected.size(); ++i) {
+        lua_pushinteger(L, g_subs->lists.selected[i]);
+        lua_rawseti(L, -2, static_cast<int>(i) + 1);
+    }
+    lua_pushinteger(L, g_subs->lists.active);
+    if (lua_pcall(L, 3, 2, -5)) {
+        error = "Runtime error in Lua macro validation function:\n" + stringOrEmpty(L, -1);
+        lua_pop(L, 2); // the error and the handler
+        return false;
+    }
+    const bool valid = lua_toboolean(L, -2) != 0;
+    lua_pop(L, 3); // two returns and the handler
+    return valid;
+}
+
+void run(Reader &in, Responder &r, std::size_t payloadSize, bool validateFirst)
 {
     const std::int32_t index = in.i32();
     auto snapshot = lua::decodeSnapshot(in, payloadSize);
@@ -2133,6 +2167,33 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
     lua_pushcfunction(L, setUndoPoint);
     lua_setfield(L, -2, "set_undo_point");
     lua_pop(L, 1);
+    if (validateFirst) {
+        // Legacy validates before LuaCommand::Run makes its progress sink.
+        removeSink(L);
+        const int oldOffset = static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1;
+        std::string error;
+        if (!validate(L, index, error)) {
+            MacroResult result;
+            result.info = std::move(staged.lists.info);
+            result.styles = std::move(staged.lists.styles);
+            result.dialogues = std::move(staged.lists.dialogues);
+            result.valid = false;
+            result.validationError = std::move(error);
+            g_subs = nullptr;
+            g_responder = nullptr;
+            g_services = nullptr;
+            return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+        }
+        installSink(L);
+        // Run counts the rows again against what validation left
+        // (selected_rows and currentLine + SInfoSize + StylesSize + 1).
+        const int shift =
+            static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1 - oldOffset;
+        for (int &row : staged.lists.selected)
+            row += shift;
+        if (staged.lists.active)
+            staged.lists.active += shift;
+    }
     lua_pushcfunction(L, addStackTrace);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
     lua_getfield(L, -1, "run");
@@ -2191,7 +2252,9 @@ int main()
         case lua::Command::Load:
             return load(in, r);
         case lua::Command::Run:
-            return run(in, r, request.payload.size());
+            return run(in, r, request.payload.size(), false);
+        case lua::Command::RunValidated:
+            return run(in, r, request.payload.size(), true);
         }
         r.terminal(Outcome::Unsupported);
     });
