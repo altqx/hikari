@@ -5,11 +5,15 @@
 #include "hikari/core/ass_load.h"
 
 #include <QDir>
+#include <QGuiApplication>
+#include <QPalette>
 #include <QImage>
 #include <QPainter>
 #include <QTest>
 
+#include <algorithm>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -244,6 +248,55 @@ private slots:
         QCOMPARE(grid.rowStateText(3), QStringLiteral("bookmarked"));
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
+    }
+
+    // E6 (E6-mark-shape): the dot and the ring take the palette's roles, not
+    // a fixed colour: Text, or Base where Text would not stand out from the
+    // label colour, so the mark stays visible under either palette until
+    // K2's Theme roles replace them.
+    void changedLineMarkTakesPaletteRoles()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,changed\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,saved\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setChangeState([](const core::LineRecord &l) { return l.id.value == 1 ? 1 : 2; });
+        model.setDocument(core::loadAss(bytes).document);
+        const QPalette original = QGuiApplication::palette();
+        const auto colours = LineTableModel::themeLabelColours(true);
+        const auto distance = [](const QColor &a, const QColor &b) {
+            return std::abs(a.red() - b.red()) + std::abs(a.green() - b.green()) + std::abs(a.blue() - b.blue());
+        };
+        // A light Text on the dark labels draws in Text; a dark Text draws in Base.
+        const QColor light(0xFF, 0xD0, 0x40), dark(0x10, 0x18, 0x08);
+        for (const bool lightText : {true, false}) {
+            QPalette palette = original;
+            palette.setColor(QPalette::Text, lightText ? light : dark);
+            palette.setColor(QPalette::Base, lightText ? dark : light);
+            QGuiApplication::setPalette(palette);
+            LineGrid grid;
+            grid.setSize(QSizeF(720, 100));
+            grid.setModel(&model);
+            QImage image(720, 100, QImage::Format_ARGB32);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            painter.end();
+            const double rh = grid.rowHeight();
+            const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
+            const int markX = int(grid.cellRect(0, 0).right() - 6.5);
+            // The dot's centre is the mark colour, light in both cases.
+            QVERIFY2(distance(image.pixelColor(markX, rowY(0)), light) <= 6,
+                     qPrintable(image.pixelColor(markX, rowY(0)).name()));
+            // The ring: the label colour inside, the mark colour around it.
+            QCOMPARE(image.pixelColor(markX, rowY(1)), colours[2]);
+            int nearest = 1000;
+            for (int x = markX - 3; x <= markX + 3; ++x)
+                nearest = std::min(nearest, distance(image.pixelColor(x, rowY(1)), light));
+            QVERIFY2(nearest < distance(colours[2], light) / 2, qPrintable(QString::number(nearest)));
+        }
+        QGuiApplication::setPalette(original);
     }
 
     // E6: hidden tags as painted (the Text column's swapped text).

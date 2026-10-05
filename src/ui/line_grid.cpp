@@ -1,14 +1,17 @@
 #include "line_grid.h"
 
+#include "icon_theme.h"
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
 
 #include <QAbstractProxyModel>
 #include <QAccessible>
 #include <QFontMetricsF>
+#include <QGuiApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPalette>
 
 #include <algorithm>
 #include <cmath>
@@ -532,17 +535,24 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
 // (SubsGridWindow.cpp:478-479, 495: j == 0 && !isHeadline ? label : kol),
 // over selection and comparison colours alike. The rewrite adds a shape for
 // the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
-// a filled dot for a changed Line, a ring for a changed and saved one.
+// a filled dot for a changed Line, a ring for a changed and saved one
+// (E6-mark-shape). The mark takes the palette's Text role, or its Base role
+// where Text contrasts less with the label colour, until K2's Theme roles
+// replace the palette here.
 void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
 {
+    const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
     if (colours.size() == 4)
-        painter->fillRect(cell, colours.value(LineTableModel::labelSlot(state)).value<QColor>());
+        painter->fillRect(cell, label);
     const int changed = state & 3;
     if (!changed)
         return;
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
-    const QColor mark(0xe6, 0xe8, 0xec);
+    const QPalette palette = QGuiApplication::palette();
+    QColor mark = palette.color(QPalette::Text);
+    if (label.isValid() && icons::contrastRatio(palette.color(QPalette::Base), label) > icons::contrastRatio(mark, label))
+        mark = palette.color(QPalette::Base);
     const QRectF dot(cell.right() - 9, cell.center().y() - 2.5, 5, 5);
     if (changed == 1) {
         painter->setPen(Qt::NoPen);
