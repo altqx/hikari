@@ -7051,6 +7051,14 @@ private slots:
         QCOMPARE(scale->from(), view.scriptToView({160, 120}));
         const QPoint p = videoPoint(QPointF(view.toLogical(scale->to().x), view.toLogical(scale->from().y)));
         const std::size_t steps = session->historySize();
+        // The Line editor's caret, which FindTag's mode 0 reads in the raw
+        // text (TagFindReplace.cpp:40-41): inside the first block, the tags
+        // shown.
+        application->editor().setShowTags(true);
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("{\\pos(160,120)}third"));
+        QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 10), Q_ARG(int, 10)));
+        QCOMPARE(application->editor().rawFieldSelection(0), (std::pair<long, long>{10, 10}));
         QTest::mouseMove(window, p);
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
         QTest::mouseMove(window, p + QPoint(10, 0));
@@ -7063,6 +7071,14 @@ private slots:
         const QString fscx = QStringLiteral("\\fscx") +
                              QString::number(100 + view.toDevice(20));
         QVERIFY2(thirdText().contains(fscx), qPrintable(thirdText()));
+        // The caret goes to the tag in the written text (Visuals::SetVisual,
+        // Visuals.cpp:813-815, kept through the Send at 818-825): the editor
+        // takes it after the commit's reload.
+        const int tagAt = static_cast<int>(thirdText().indexOf(QStringLiteral("\\fscx")));
+        QVERIFY(tagAt != 10);
+        QTRY_COMPARE(field->property("text").toString(), thirdText());
+        QTRY_COMPARE(field->property("cursorPosition").toInt(), tagAt);
+        QCOMPARE(application->editor().rawFieldSelection(0), (std::pair<long, long>{tagAt, tagAt}));
         QTRY_COMPARE(visualItem("visualValue_fscx")->property("text").toString(), fscx.mid(5));
         // Esc during a drag: no step, and the arrows go back to the text's.
         const PointF arrowsBefore = scale->to();
@@ -7078,6 +7094,54 @@ private slots:
         QCOMPARE(session->historySize(), steps + 1);
         QVERIFY2(thirdText().contains(fscx), qPrintable(thirdText()));
         QCOMPARE(scale->to(), arrowsBefore);
+        application->editor().setShowTags(false);
+
+        // The rectangle mode against the measured text: GetTextSize through
+        // GetLineTextExtents (Visuals.cpp:953-1133), here the app's
+        // QtTextMeasurePort on the Line's Style with the text's \fscx put in
+        // (TagValueToStyle), "third", the descent and leading passed swapped
+        // as legacy did.
+        QVERIFY(QMetaObject::invokeMethod(option("rectangle"), "click"));
+        QTRY_VERIFY(option("rectangle")->property("checked").toBool());
+        const auto ctx = transform::context(tools);
+        auto measuring = transform::lineStyle(ctx, u8"Default");
+        const QByteArray writtenX = QByteArray::number(100 + view.toDevice(20));
+        measuring.scaleX = std::u8string(reinterpret_cast<const char8_t *>(writtenX.constData()));
+        std::vector<std::string> fields;
+        for (const auto &field8 : core::legacy::styleRawFields(measuring))
+            fields.emplace_back(field8.begin(), field8.end());
+        const auto measured = tools.textMeasure()->measure(fields, "third");
+        QVERIFY(measured && measured->width > 0 && measured->height > 0);
+        QCOMPARE(scale->originalSize().x, static_cast<float>(measured->width));
+        QCOMPARE(scale->originalSize().y,
+                 static_cast<float>(measured->height) -
+                     (static_cast<float>(measured->descent) - static_cast<float>(measured->externalLeading)));
+        // A drawn rectangle sets the scale (Scale::SetScale, VisualScale.cpp:
+        // 678-700): its width less the border over the measured width, times
+        // the \fscx the text has ("change all", which the rectangle switches
+        // on, reads it from the start); the aspect ratio links \fscy. One step.
+        const std::size_t rectangleSteps = session->historySize();
+        const QPoint r0 = videoPoint(tools.videoRect().center() + QPointF(-40, -15)), r1 = r0 + QPoint(70, 30);
+        QTest::mouseMove(window, r0);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, r0);
+        QTest::mouseMove(window, r0 + QPoint(35, 15));
+        QTest::mouseMove(window, r1);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, r1);
+        QTRY_COMPARE(session->historySize(), rectangleSteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual scaling tool"));
+        QVERIFY(scale->rectangleVisible());
+        const auto &sizing = scale->sizingRectangle();
+        const float written = static_cast<float>(100 + view.toDevice(20)) / 100.f;
+        const float expected =
+            written * ((std::fabs(sizing[1].x - sizing[0].x) - scale->border().x) / scale->originalSize().x);
+        QCOMPARE(scale->scale().x, expected);
+        QCOMPARE(scale->scale().y, expected);
+        const QString rectangleScale = QString::fromStdU16String(transform::getfloat(expected * 100));
+        QVERIFY2(thirdText().contains(QStringLiteral("\\fscx") + rectangleScale) &&
+                     thirdText().contains(QStringLiteral("\\fscy") + rectangleScale),
+                 qPrintable(thirdText() + QStringLiteral(" / ") + rectangleScale));
+        QVERIFY(QMetaObject::invokeMethod(option("rectangle"), "click"));
+        QTRY_VERIFY(!option("rectangle")->property("checked").toBool());
 
         // Z rotation: RotationZItem (VideoToolbar.cpp:78-80, 827-865).
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool4"), "click"));
@@ -7133,16 +7197,34 @@ private slots:
         QTRY_VERIFY(option("changeAll"));
         QCOMPARE(option("changeAll")->property("tip").toString(), QStringLiteral("Changing all X/Y-rotation tags"));
         QVERIFY(!option("twoPoints"));
-        QTRY_VERIFY(tools.overlay().size() > 44);
+        // The grid as the panel draws it (the window without the panel,
+        // VisualRotationXY.cpp:49-50; its shapes are checked against D3DX in
+        // VisualOverlay.RotationXYGridProjectsAsD3DX): the three arrow cones'
+        // twelve triangles, 44 grid lines, the three axes and the cross, the
+        // axes meeting at the \org.
+        auto *xyTool = dynamic_cast<RotationXYTool *>(tools.tool());
+        QVERIFY(xyTool);
+        QTRY_COMPARE(tools.overlay().size(), qsizetype(12 + 44 + 3 + 2));
+        const QVariantMap yAxis = tools.overlay()[12 + 44].toMap();
+        QCOMPARE(yAxis.value(QStringLiteral("type")).toString(), QStringLiteral("line"));
+        QVERIFY(std::fabs(yAxis.value(QStringLiteral("x2")).toDouble() - view.toLogical(xyTool->org().x)) < 1e-3);
+        QVERIFY(std::fabs(yAxis.value(QStringLiteral("y2")).toDouble() - view.toLogical(xyTool->org().y)) < 1e-3);
         const std::size_t xy = session->historySize();
         const QPoint c = videoPoint(centre + QPointF(30, 30));
         QTest::mouseMove(window, c);
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, c);
         QTest::mouseMove(window, c + QPoint(25, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        const PointF pressedAt = xyTool->firstmove(); // the press (VisualRotationXY.cpp:214)
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, c + QPoint(25, 0));
         QTRY_COMPARE(session->historySize(), xy + 1);
         QCOMPARE(session->history().back().name, std::string("Visual X/Y-axis rotation tool"));
         QVERIFY2(thirdText().contains(QStringLiteral("\\fry%1").arg(view.toDevice(25))), qPrintable(thirdText()));
+        // Its own step does not reset the tool (legacy sent it with the
+        // visual dummy flag, so no SetVisual followed): the press point stays
+        // (a reset would make it `to`, VisualRotationXY.cpp:259).
+        QCOMPARE(xyTool->firstmove(), pressedAt);
+        QVERIFY(!(xyTool->firstmove() == xyTool->to()));
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool5"), "click"));
         QCOMPARE(tools.activeFamily(), 0);
         QTRY_VERIFY(!visualItem("visualToolOptions")->isVisible());
