@@ -198,6 +198,7 @@ private:
 };
 
 class VisualTool;
+struct ShapePreset; // shape_presets.h (T5)
 
 // The Video panel as a tool sees it.
 class VisualHost {
@@ -225,6 +226,12 @@ public:
     // showed in a message box; shown without blocking.
     virtual void bell() {}
     virtual void notice(std::u16string_view text) { (void)text; }
+    // T5: the video's time (VideoBox::Tell: the shown frame's start in ms; a
+    // \move drawing's position follows it) and the drawing's shape presets
+    // (VideoToolbar::GetShapesSettings: Config/ShapesSettings.txt, or
+    // legacy's defaults; null for none).
+    virtual std::int64_t videoTimeMs() const { return 0; }
+    virtual const std::vector<ShapePreset> *shapePresets() const { return nullptr; }
 };
 
 // One visual family. The host gives a tool only the events legacy's

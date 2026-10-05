@@ -2,6 +2,7 @@
 
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_drawing.h"
 
 #include <algorithm>
 #include <set>
@@ -173,6 +174,8 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<RectangleClipTool>(); // T4
     case Family::VectorClip:
         return std::make_unique<VectorClipTool>(); // T4
+    case Family::Drawing:
+        return std::make_unique<DrawingTool>(); // T5
     default:
         return nullptr;
     }

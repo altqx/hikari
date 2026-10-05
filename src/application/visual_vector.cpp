@@ -352,8 +352,8 @@ void VectorEditor::wheel(int steps)
     // VectorItem::SetItemToggled (VideoToolbar.h:117-123).
     mode -= steps;
     if (mode < 0)
-        mode = kModeCount - 1;
-    else if (mode >= kModeCount)
+        mode = modeCount - 1;
+    else if (mode >= modeCount)
         mode = 0;
 }
 

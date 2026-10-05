@@ -45,3 +45,7 @@ set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMP
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# T5: the drawing tool and its shape presets (no contraction either).
+target_sources(hikari_application PRIVATE visual_drawing.cpp shape_presets.cpp)
+set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

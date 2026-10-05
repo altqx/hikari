@@ -114,13 +114,16 @@ public:
     int mode = Line; // VectorItem::toggled = 1
     // VECTORDRAW: Shift nudges by a tenth.
     bool drawing = false;
+    // The toolbar's buttons the wheel cycles over: the clip's seven, the
+    // drawing's six (T5: VectorItem(false), VideoToolbar.h:99-101).
+    int modeCount = kModeCount;
 
     // Pointer and keys in the video window's device pixels (legacy
     // DrawingAndClip::OnMouseEvent / OnKeyPress). True when the event was used.
     void pointer(const Pointer &event, const VectorFrame &frame, const Callbacks &cb);
     bool key(const Key &event, const VectorFrame &frame, const Callbacks &cb);
     // The wheel's mode change (OnMouseEvent's first lines and
-    // VectorItem::SetItemToggled: wraps over the seven buttons).
+    // VectorItem::SetItemToggled: wraps over the modeCount buttons).
     void wheel(int steps);
     // DrawingAndClip::DrawVisual for the points and the tool's guides.
     void draw(Overlay &out, const VectorFrame &frame) const;
