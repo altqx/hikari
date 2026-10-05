@@ -66,7 +66,7 @@ private:
     PointF scaleToVideo(PointF point, const VideoView &view) const;
     void setSecondRectScale(const VideoView &view);
     bool beginEdit(VisualHost &host);
-    void finishEdit(VisualHost &host);
+    bool finishEdit(VisualHost &host);
 
     std::array<bool, 7> m_toggle{false, true, true, false, false, false, false};
 

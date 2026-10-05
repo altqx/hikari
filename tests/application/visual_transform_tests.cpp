@@ -22,6 +22,7 @@
 #include <QJsonObject>
 #include <QString>
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
@@ -102,6 +103,9 @@ public:
     // EditBox::Send (Visuals.cpp:791-796, 820-825); the action is the
     // history's VISUAL_* number (SubsFile.h:67-69).
     std::vector<std::string> history, sent;
+    // A refusal for the next commit (a stale revision, a draft that cannot
+    // commit): nothing is written.
+    std::optional<CommandRefusal> refuse;
 
     const VideoView &view() const override { return v; }
     const EditSession *session() const override { return s.get(); }
@@ -126,6 +130,12 @@ public:
                                    : name == familyInfo(Family::RotationXY).history ? "42"
                                                                                     : name;
         const bool several = !(g->targets().size() == 1 && g->targets().front() == activeLine());
+        if (refuse) {
+            g.reset();
+            const CommandRefusal r = *refuse;
+            refuse.reset();
+            return std::unexpected(r);
+        }
         const std::size_t steps = s->historySize();
         auto r = g->commit(*s);
         g.reset();
@@ -586,3 +596,67 @@ TEST(VisualCapture, ReplaysTheLegacyT3Probe)
     EXPECT_GT(states, 70);
 }
 
+// A commit the session refuses (a stale revision, a draft that cannot
+// commit) writes nothing, so the editor's caret stays where it was rather
+// than going to a tag that was never written, and the tool reads the
+// unchanged text again, as after Esc. Legacy had no refusal: its
+// SetVisual(false) always sent the editor (Visuals.cpp:817-829).
+TEST(VisualTransformEdit, ARefusedCommitLeavesTheCaretAndTheText)
+{
+    for (const char *name : {"scale-width-left-drag", "rotz-drag", "rotxy-left-right-middle"}) {
+        SCOPED_TRACE(name);
+        const auto cases = readCases();
+        const auto it = std::find_if(cases.begin(), cases.end(), [&](const Case &c) { return c.name == name; });
+        ASSERT_NE(it, cases.end());
+        Case c = *it;
+        c.caretFrom = c.caretTo = 7; // in the first block
+        TestHost host;
+        setUp(host, c);
+        std::unique_ptr<VisualTool> tool;
+        if (c.name.starts_with("scale"))
+            tool = std::make_unique<ScaleTool>();
+        else if (c.name.starts_with("rotz"))
+            tool = std::make_unique<RotationZTool>();
+        else
+            tool = std::make_unique<RotationXYTool>();
+        tool->selected(host);
+        tool->reset(host);
+        const auto handles = [&] {
+            if (const auto *s = dynamic_cast<const ScaleTool *>(tool.get()))
+                return std::pair{s->to(), s->editorCaret()};
+            if (const auto *z = dynamic_cast<const RotationZTool *>(tool.get()))
+                return std::pair{z->to(), z->editorCaret()};
+            const auto *xy = dynamic_cast<const RotationXYTool *>(tool.get());
+            return std::pair{xy->to(), xy->editorCaret()};
+        };
+        const auto before = handles();
+        const std::u8string text = lineOf(*host.s, *host.activeLine())->text;
+        const std::size_t steps = host.s->historySize();
+        const auto at = [](int x, int y, Pointer::Kind kind, bool down) {
+            Pointer p;
+            p.x = x;
+            p.y = y;
+            p.kind = kind;
+            p.button = Pointer::Button::Left;
+            p.leftDown = down;
+            return p;
+        };
+        // The drags of the cases above: a press on the width arrow (Scale),
+        // off the \org (RotationZ), anywhere (RotationXY), then a move.
+        const std::pair<int, int> press = c.name.starts_with("rotxy") ? std::pair{100, 100} : std::pair{420, 180};
+        tool->pointer(at(press.first, press.second, Pointer::Kind::Press, true), host);
+        Pointer move = at(press.first + 40, press.second + 30, Pointer::Kind::Move, true);
+        move.button = Pointer::Button::None;
+        tool->pointer(move, host);
+        ASSERT_TRUE(host.g && host.g->hasChanges());
+        EXPECT_NE(handles().second, before.second); // the tool holds the caret at the tag
+        host.refuse = CommandRefusal::StaleRevision;
+        tool->pointer(at(press.first + 40, press.second + 30, Pointer::Kind::Release, false), host);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps);
+        EXPECT_EQ(lineOf(*host.s, *host.activeLine())->text, text);
+        EXPECT_TRUE(host.sent.empty());
+        EXPECT_EQ(host.caret, (std::pair<long, long>{7, 7})); // not put at the unwritten tag
+        EXPECT_EQ(handles(), before);                         // the unchanged text read again
+    }
+}

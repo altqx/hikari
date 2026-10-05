@@ -63,7 +63,7 @@ private:
     std::pair<long, long> changeVisualEditor(std::u16string &text);
     float currentAngle() const;
     bool beginEdit(VisualHost &host);
-    void finishEdit(VisualHost &host);
+    bool finishEdit(VisualHost &host);
     void takeView(const VideoView &view);
 
     std::array<bool, 3> m_toggle{false, false, false};
@@ -131,7 +131,7 @@ private:
     void changeVisualLine(std::u16string &text, const core::LineRecord &line, const transform::Context &context);
     std::pair<long, long> changeVisualEditor(std::u16string &text);
     bool beginEdit(VisualHost &host);
-    void finishEdit(VisualHost &host);
+    bool finishEdit(VisualHost &host);
     void takeView(const VideoView &view);
 
     int m_toggled = -1;

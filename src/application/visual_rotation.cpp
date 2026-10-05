@@ -237,11 +237,15 @@ bool RotationZTool::beginEdit(VisualHost &host)
     return true;
 }
 
-void RotationZTool::finishEdit(VisualHost &host)
+bool RotationZTool::finishEdit(VisualHost &host)
 {
-    if (host.gesture())
-        (void)host.commitGesture();
+    // A refused commit (a stale revision, a draft that cannot commit) wrote
+    // nothing: the tool reads the unchanged text again, as after Esc.
+    const bool committed = !host.gesture() || host.commitGesture().has_value();
     m_editing.reset();
+    if (!committed)
+        reset(host);
+    return committed;
 }
 
 void RotationZTool::setVisual(bool dummy, VisualHost &host)
@@ -259,16 +263,16 @@ void RotationZTool::setVisual(bool dummy, VisualHost &host)
             g->stage(id, u8(txt), editsTranslation(line));
         }
         if (!dummy)
-            finishEdit(host);
+            (void)finishEdit(host);
     } else if (dummy) {
         std::u16string txt = m_replaceTagsInCursorPosition ? m_editorText : m_currentLineText;
         const auto pos = changeVisualEditor(txt);
         m_editorText = txt;
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
-    } else {
-        m_currentLineText = m_editorText;
-        finishEdit(host);
+    } else if (const std::u16string written = m_editorText; finishEdit(host)) {
+        // The caret goes to the tag only in the text that was written.
+        m_currentLineText = written;
         const auto [selFrom, selTo] = m_find.selection();
         host.setEditorSelection(selFrom, selTo);
     }
@@ -697,11 +701,15 @@ bool RotationXYTool::beginEdit(VisualHost &host)
     return true;
 }
 
-void RotationXYTool::finishEdit(VisualHost &host)
+bool RotationXYTool::finishEdit(VisualHost &host)
 {
-    if (host.gesture())
-        (void)host.commitGesture();
+    // A refused commit (a stale revision, a draft that cannot commit) wrote
+    // nothing: the tool reads the unchanged text again, as after Esc.
+    const bool committed = !host.gesture() || host.commitGesture().has_value();
     m_editing.reset();
+    if (!committed)
+        reset(host);
+    return committed;
 }
 
 void RotationXYTool::setVisual(bool dummy, VisualHost &host)
@@ -718,16 +726,16 @@ void RotationXYTool::setVisual(bool dummy, VisualHost &host)
             g->stage(id, u8(txt), editsTranslation(line));
         }
         if (!dummy)
-            finishEdit(host);
+            (void)finishEdit(host);
     } else if (dummy) {
         std::u16string txt = m_replaceTagsInCursorPosition ? m_editorText : m_currentLineText;
         const auto pos = changeVisualEditor(txt);
         m_editorText = txt;
         m_find.setSelection(pos.first, pos.first);
         g->stage(*m_editing, u8(txt), m_editorIsTranslation);
-    } else {
-        m_currentLineText = m_editorText;
-        finishEdit(host);
+    } else if (const std::u16string written = m_editorText; finishEdit(host)) {
+        // The caret goes to the tag only in the text that was written.
+        m_currentLineText = written;
         const auto [selFrom, selTo] = m_find.selection();
         host.setEditorSelection(selFrom, selTo);
     }
