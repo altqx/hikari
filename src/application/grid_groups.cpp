@@ -95,13 +95,17 @@ std::expected<void, CommandRefusal> makeGroups(EditSession &session, const LineV
                                                  description.comment = true;
                                                  description.style = first->style;
                                                  description.group = GroupMarker::Description;
-                                                 const auto id = d.insertLineBefore(run.front(), description);
+                                                 // E6: a new Dialogue (state 0); the members are
+                                                 // copied with keepstate (SubsGridFiltering.cpp:177-191).
+                                                 const auto id = d.insertLineBefore(run.front(), description,
+                                                                                    core::ChangeMark::Kept);
                                                  if (!id)
                                                      return false;
                                                  if (!firstDescription)
                                                      firstDescription = id;
                                                  for (const auto member : run)
-                                                     if (!d.editLine(member, [](core::LineRecord &l) { setOpen(l, false); }))
+                                                     if (!d.editLine(member, [](core::LineRecord &l) { setOpen(l, false); },
+                                                                     core::ChangeMark::Kept))
                                                          return false;
                                              }
                                              return true;
@@ -123,9 +127,10 @@ std::expected<void, CommandRefusal> toggleGroup(EditSession &session, core::Line
     const auto ran = session.run(Command{"Opening or closing tree", session.revision(), {members.begin(), members.end()},
                                          [&](core::Document &d) {
                                              for (const auto id : members)
+                                                 // E6: OpenCloseTree changes the Dialogues in place.
                                                  if (!d.editLine(id, [](core::LineRecord &l) {
                                                          setOpen(l, l.group == GroupMarker::Closed);
-                                                     }))
+                                                     }, core::ChangeMark::Kept))
                                                      return false;
                                              return true;
                                          }});
@@ -189,10 +194,11 @@ std::expected<void, CommandRefusal> selectGroup(EditSession &session, core::Line
         const auto ran = session.run(Command{"Opening or closing tree", session.revision(),
                                              {members.begin(), members.end()}, [&](core::Document &d) {
                                                  for (const auto id : members)
+                                                     // E6: TreeSelect opens them in place.
                                                      if (!d.editLine(id, [](core::LineRecord &l) {
                                                              if (l.group == GroupMarker::Closed)
                                                                  setOpen(l, true);
-                                                         }))
+                                                         }, core::ChangeMark::Kept))
                                                          return false;
                                                  return true;
                                              }});

@@ -336,12 +336,34 @@ std::expected<EditSession::SaveSnapshot, DraftProblem> EditSession::prepareSave(
     if (auto problem = draftProblem(); problem && m_policy == InvalidCommitPolicy::Block)
         return std::unexpected(*problem); // an invalid draft blocks the save, with its reason
     commitDraft();
+    auto &versions = m_preparedVersions[contentId().value];
+    versions.clear();
+    for (const auto *line : document().lines())
+        if (line->changeVersion != 0)
+            versions.push_back(line->changeVersion);
     return SaveSnapshot{document(), contentId(), m_revision};
 }
 
 void EditSession::markSaved(ContentId content)
 {
     m_saved = content;
+    if (const auto prepared = m_preparedVersions.find(content.value); prepared != m_preparedVersions.end()) {
+        m_savedVersions.insert(prepared->second.begin(), prepared->second.end());
+        m_preparedVersions.erase(prepared);
+        return;
+    }
+    for (const auto &state : m_states)
+        if (state.content == content)
+            for (const auto *line : state.document.lines())
+                if (line->changeVersion != 0)
+                    m_savedVersions.insert(line->changeVersion);
+}
+
+int EditSession::changeState(const core::LineRecord &line) const
+{
+    if (line.changeVersion == 0)
+        return 0;
+    return m_savedVersions.contains(line.changeVersion) ? 2 : 1;
 }
 
 bool EditSession::isDirty() const

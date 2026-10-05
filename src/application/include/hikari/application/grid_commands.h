@@ -42,6 +42,10 @@ std::expected<void, CommandRefusal> duplicateLines(EditSession &session, const L
 // GLOBAL_REMOVE_LINES: every selected Line, hidden ones included; an empty
 // Document gets the default Line. The Line now at the first deleted position becomes active.
 std::expected<void, CommandRefusal> deleteLines(EditSession &session);
+// GLOBAL_REMOVE_TEXT ("Deleting text", SubsGrid::DeleteText): the text of
+// each selected Line the Grid shows becomes empty (the translation stays),
+// one step even when it already was; refused with none shown and selected.
+std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible = {});
 
 enum class JoinKind {
     Join,         // GRID_JOIN_LINES (2 to 20 selected): earliest Start, latest End, texts joined with \N

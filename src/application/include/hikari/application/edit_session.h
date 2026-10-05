@@ -13,8 +13,10 @@
 #include <deque>
 #include <expected>
 #include <functional>
+#include <map>
 #include <optional>
 #include <set>
+#include <unordered_set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -159,7 +161,13 @@ public:
     const std::vector<core::LineId> &lastGroupBreak() const { return m_lastGroupBreak; }
     // How many commands GroupBreak has refused, so the shell can offer removal.
     std::uint64_t groupBreakCount() const { return m_groupBreakCount; }
+    // Also turns the changed Lines of that content saved (E6, legacy
+    // SaveFile's ChangeDialogueState(2) on every written changed Dialogue).
     void markSaved(ContentId content);
+    // E6: a Line's changed-Line mark, legacy State & 3: 0 not changed since
+    // loading, 1 changed, 2 changed and saved since. The same copy stays
+    // saved in every history step that holds it (legacy shared the object).
+    int changeState(const core::LineRecord &line) const;
     // No step is saved any more (legacy RemoveLastIterSave: the file was removed).
     void markUnsaved() { m_saved.reset(); }
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
@@ -184,6 +192,10 @@ private:
     Selection m_selection;
     std::optional<Draft> m_draft;
     std::optional<ContentId> m_saved;
+    std::unordered_set<std::uint64_t> m_savedVersions; // E6
+    // E6: the changed versions of each prepared save's snapshot, until its
+    // write is reported (its step may leave history meanwhile).
+    std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
