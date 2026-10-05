@@ -20,6 +20,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp helper_host.cp
     legacy_text_file.cpp include/hikari/backends/legacy_text_file.h
     include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h
+    ffms_matroska.cpp include/hikari/backends/ffms_matroska.h
     include/hikari/backends/helper_host.h
     legacy_spelling.cpp include/hikari/backends/legacy_spelling.h
     $<$<PLATFORM_ID:Linux>:posix_file_port.cpp> $<$<PLATFORM_ID:Linux>:posix_file_reader.cpp>

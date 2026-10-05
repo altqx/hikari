@@ -73,18 +73,39 @@
 //         terminal Failed, stage 4 (read): u8 stage, str text, bytes the
 //                  buffer's frames as FFMS2 left them (the frames it decoded
 //                  before failing, then what the buffer held)
+// Y9: legacy Demux (Demux.cpp at 20d647c4), each request on an indexer of
+// its own, independent of what is open. Strings are FFMS2's bytes up to their
+// NUL (not decoded). A file FFMS2 cannot index: terminal Failed, str text
+// (FFMS2's error text).
+// SubtitleTracks request: u8 SubtitleTracks, str path
+//         terminal Ok: i32 count, then per FFMS_TYPE_SUBTITLE track in order:
+//                      i32 track, str name, str language, str codec
+//                      (FFMS_GetSubtitleFormat; any codec, bitmaps included)
+// Subtitles request: u8 Subtitles, str path, i32 track
+//         progress: i64 start, i64 total (each packet, as legacy's callback)
+//         terminal Ok: str extradata (FFMS_GetSubtitleExtradata), i32 count,
+//                      then per packet in FFMS_GetSubtitles' order: i64 start,
+//                      i64 duration, str line
+//         terminal Cancelled: cancelled during or right after the read
+//         terminal InvalidInput: not a subtitle track
+// Attachments request: u8 Attachments, str path
+//         reply, per FFMS_TYPE_ATTACHMENT track in order: i32 track,
+//                      u8 hasFilename, str filename, str mimetype, bytes data
+//         terminal Ok: i32 count
 
 #include <cstdint>
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 7; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+inline constexpr std::uint32_t kProtocolVersion = 8; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
                                                    // 5: Probe, a chosen track, the video's audio, DisplayRead;
                                                    // 6: index files and the audio track in Open, no shared display audio;
-                                                   // 7: Open's index handoff, DisplayRead into a block buffer
+                                                   // 7: Open's index handoff, DisplayRead into a block buffer;
+                                                   // 8: SubtitleTracks, Subtitles, Attachments (Y9)
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,
-                                 OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11 };
+                                 OpenDisplayAudio = 8, Probe = 9, DisplayRead = 11, SubtitleTracks = 12, Subtitles = 13,
+                                 Attachments = 14 };
 
 } // namespace hikari::backends::media
