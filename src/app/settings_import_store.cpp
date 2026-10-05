@@ -190,7 +190,8 @@ void mergeInto(Map &out, const Map &base, const Map &target)
         for (const auto &[k, v] : *m)
             keys.insert(k);
     for (const auto &k : keys) {
-        const auto b = base.find(k), t = target.find(k), l = out.find(k);
+        const auto b = base.find(k), t = target.find(k);
+        const auto l = out.find(k);
         const bool inBase = b != base.end(), inTarget = t != target.end(), inLive = l != out.end();
         if (inBase == inTarget && (!inBase || b->second == t->second))
             continue; // the import leaves it as it was

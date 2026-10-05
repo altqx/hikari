@@ -5326,6 +5326,18 @@ private slots:
     {
         return it->mapToScene(QPointF(it->width() / 2, it->height() / 2)).toPoint();
     }
+    // In translation mode the Line editor's rows need more height than its
+    // dock has in the default 1280 x 800 layout: the translation buttons end
+    // at the dock's bottom edge, and with the Ubuntu runner's font metrics
+    // their centre falls a few pixels below it, on the dock below. A test
+    // clicking one gives the window the height for it first.
+    void roomInTheEditorFor(QQuickItem *button)
+    {
+        if (window->height() < 1000)
+            window->resize(window->width(), 1000);
+        auto *panel = item("editorPanel");
+        QTRY_VERIFY(panel->mapRectToScene(panel->boundingRect()).contains(button->mapRectToScene(button->boundingRect())));
+    }
     static QString q8(const std::u8string &s)
     {
         return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
@@ -5470,6 +5482,7 @@ private slots:
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
+        roomInTheEditorFor(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -5526,6 +5539,7 @@ private slots:
         application->editor().setShowTags(true);
         auto *moving = item("movingTags");
         QVERIFY(!moving->property("checked").toBool());
+        roomInTheEditorFor(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -5563,6 +5577,7 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        roomInTheEditorFor(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
@@ -10720,6 +10735,23 @@ private slots:
         const auto at = [&](qreal x, qreal y) {
             return videoPoint(v.topLeft() + QPointF(x * v.width() / 320, y * v.height() / 240));
         };
+        // The script point a pointer's device pixel writes: a point grabbed
+        // within a pixel of it follows the pointer through T1's inverse
+        // (DrawingAndClip::OnMouseEvent's GetCalculatedOutPos, "%6.0f"). A
+        // video rectangle smaller than the script leaves script integers
+        // without a pixel of their own (312x234 with Fedora's fonts puts 300
+        // and 220 between two), so the drop writes what its pixel maps to.
+        const auto &view = tools.videoView();
+        const auto device = [&](QPoint scene) {
+            const QPointF l = item("visualOverlay")->mapFromScene(QPointF(scene));
+            return application::visual::PointF{float(view.toDevice(l.x())), float(view.toDevice(l.y()))};
+        };
+        const auto written = [&](QPoint scene) {
+            const auto s = view.viewToScript(device(scene));
+            return QString::asprintf("%.0f %.0f", double(s.x), double(s.y));
+        };
+        const auto corner = view.scriptToView({160, 120});
+        QVERIFY(std::abs(corner.x - device(at(160, 120)).x) < 1 && std::abs(corner.y - device(at(160, 120)).y) < 1);
         const std::size_t steps = session->historySize();
         QTest::mouseMove(window, at(160, 120));
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at(160, 120));
@@ -10754,8 +10786,9 @@ private slots:
             QTest::mouseMove(window, at(160 + 35 * i, 120 + 25 * i));
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at(300, 220));
         QTRY_COMPARE(session->historySize(), steps + 1);
-        QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\clip(m 0 0 l 160 0 300 220 0 120)")),
-                 qPrintable(text(session->document().lines()[2])));
+        const QString clip = QStringLiteral("\\clip(m 0 0 l 160 0 %1 0 120)").arg(written(at(300, 220)));
+        QVERIFY2(text(session->document().lines()[2]).contains(clip),
+                 qPrintable(text(session->document().lines()[2]) + QStringLiteral(" lacks ") + clip));
         QTRY_COMPARE(alpha(230, 170), 255);
     }
 
