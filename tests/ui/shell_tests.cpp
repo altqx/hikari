@@ -6169,6 +6169,36 @@ private slots:
         QVERIFY(!application->automation().running());
     }
 
+    // S4: Automation > "Run the last loaded script" (HikariSubFrame.cpp:353,
+    // after Refresh autoload scripts) on a Document naming no scripts shows
+    // legacy's modal box (HikariSubFrame.cpp:920); a script editor asked for
+    // while a box shows opens once it is closed (legacy's boxes are modal).
+    void runTheLastLoadedScriptSaysWhenThereIsNone()
+    {
+        QVERIFY(application->openFile(episode));
+        QObject *run = named("loadLastScriptMenuItem");
+        QVERIFY(run);
+        QCOMPARE(run->property("text").toString(), QStringLiteral("Run the last loaded script"));
+        QVERIFY(QMetaObject::invokeMethod(run, "click"));
+        auto *notice = named("automationNotice");
+        QVERIFY(notice);
+        QTRY_VERIFY(notice->property("visible").toBool());
+        QCOMPARE(notice->property("title").toString(), QStringLiteral("Info"));
+        QCOMPARE(named("automationNoticeText")->property("text").toString(),
+                 QStringLiteral("This subtitle file does not have any scripts added"));
+        auto *editor = named("scriptEditorDialog");
+        QVERIFY(editor);
+        emit application->automation().chooseScriptEditor(QStringLiteral("/scripts/x.lua"));
+        QVERIFY(!editor->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
+        QTRY_VERIFY(!notice->property("visible").toBool());
+        QTRY_VERIFY(editor->property("visible").toBool());
+        QCOMPARE(editor->property("title").toString(), QStringLiteral("Select a script editor"));
+        QCOMPARE(editor->property("script").toString(), QStringLiteral("/scripts/x.lua"));
+        QVERIFY(QMetaObject::invokeMethod(editor, "reject"));
+        QTRY_VERIFY(!editor->property("visible").toBool());
+    }
+
     // A4: legacy AudioBox's play commands hand the player the frames each
     // asks for (AudioDisplay::Play at 48 kHz: ms * 48); the cursor follows
     // the output's clock and the player stops 8192 frames past the end.

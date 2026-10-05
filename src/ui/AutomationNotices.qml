@@ -46,11 +46,15 @@ Item {
         property alias text: noticeLabel.text
         parent: Overlay.overlay
         anchors.centerIn: parent
+        // A fixed width the text wraps in (a width from the text loops with the title's).
+        width: Math.min(420, parent ? parent.width - 32 : 420)
         modal: true // legacy HikariMessageBox is modal
         standardButtons: Dialog.Ok
         Label {
             id: noticeLabel
             objectName: "automationNoticeText"
+            width: notice.availableWidth
+            wrapMode: Text.Wrap
             Accessible.role: Accessible.AlertMessage
         }
         onClosed: {
@@ -73,7 +77,8 @@ Item {
         title: qsTr("Select a script editor")
         fileMode: Dialogs.FileDialog.OpenFile
         nameFilters: [qsTr("Programs (*.exe)"), qsTr("All files (*.*)")]
-        selectedFile: Qt.platform.os === "windows" ? "file:///C:/Windows/Notepad.exe" : ""
+        // The default file only where it exists (an empty one is a warning).
+        Component.onCompleted: if (Qt.platform.os === "windows") selectedFile = "file:///C:/Windows/Notepad.exe"
         onAccepted: notices.automation.editWith(selectedFile, script)
     }
 }
