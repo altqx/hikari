@@ -2404,246 +2404,360 @@ ApplicationWindow {
                     root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
                     event.accepted = true
                 }
-                ColumnLayout {
-                    anchors.fill: parent
+                // The dock keeps room for the tag buttons and a line of each
+                // text field shown (with the body's margins); the docking
+                // engine stops a separator there. The rest scrolls.
+                readonly property int minimumHeight: Math.ceil(8 + tagRow.implicitHeight + editorColumn.spacing
+                                                               + lineText.Layout.minimumHeight
+                                                               + (translationText.visible ? editorColumn.spacing
+                                                                  + translationText.Layout.minimumHeight : 0))
+                function reportMinimumHeight() { Docking.setMinimumSize("Editor", 0, minimumHeight) }
+                onMinimumHeightChanged: reportMinimumHeight()
+                Component.onCompleted: Qt.callLater(reportMinimumHeight)
 
-                    // The tag and colour buttons (legacy BoxSizer4).
-                    RowLayout {
-                        Layout.fillWidth: true
-                        // Ordinary ASS controls; they keep focus (and the
-                        // selection) in the text field.
-                        Repeater {
-                            // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
-                            // maps the hotkey, the tooltip shows it.
-                            // K1: the set's icons in place of the letters
-                            // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
-                            // bitmaps, EditBox.cpp:168-195).
-                            model: [
-                                { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
-                            ]
+                // A dock shorter than the Line editor's rows (translation mode
+                // in the default 1280 x 800 layout) scrolls them, with a thin
+                // bar beside them; nothing is cut off below the dock's edge.
+                // The wheel and the bar scroll; a mouse drag stays the text
+                // fields' selection, and touch flicks. The scrolled area
+                // takes the whole panel with the body's margin inside it, so
+                // focus rings keep the room they had at the panel's edges.
+                Flickable {
+                    id: editorScroll
+                    objectName: "editorScroll"
+                    anchors {
+                        fill: parent
+                        margins: -4
+                    }
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+                    acceptedButtons: Qt.NoButton
+                    readonly property int barWidth: 6
+                    readonly property bool overflows: editorColumn.implicitHeight + 8 > height + 0.5
+                    contentWidth: width - (overflows ? barWidth : 0)
+                    contentHeight: editorColumn.height + 8
+                    // Keyboard focus brings its control into view, and a text
+                    // field keeps its caret in view while it is typed in.
+                    readonly property Item focusItem: Window.activeFocusItem
+                    onFocusItemChanged: Qt.callLater(revealFocus)
+                    function inEditor(item) {
+                        for (let p = item; p; p = p.parent) {
+                            if (p === editorColumn)
+                                return true
+                        }
+                        return false
+                    }
+                    function reveal(item, rect) {
+                        const r = item.mapToItem(contentItem, rect)
+                        const room = 5 // the focus ring's (FocusRing: 3 out, 2 wide)
+                        let y = contentY
+                        if (r.y + r.height + room > y + height)
+                            y = r.y + r.height + room - height
+                        if (r.y - room < y)
+                            y = r.y - room
+                        contentY = Math.max(0, Math.min(y, contentHeight - height))
+                    }
+                    function revealFocus() {
+                        let item = focusItem
+                        if (!item || !inEditor(item))
+                            return
+                        // An editable box's text field brings the whole box.
+                        for (let p = item.parent; p && p !== editorColumn; p = p.parent) {
+                            if (p.activeFocus && p.height <= height)
+                                item = p
+                        }
+                        // A text field taller than the view keeps its caret in view.
+                        if ((item === lineText || item === translationText) && item.height + 6 > height)
+                            reveal(item, item.cursorRectangle)
+                        else
+                            reveal(item, Qt.rect(0, 0, item.width, item.height))
+                    }
+                    Connections {
+                        target: lineText
+                        function onCursorRectangleChanged() { if (lineText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
+                    }
+                    Connections {
+                        target: translationText
+                        function onCursorRectangleChanged() { if (translationText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
+                    }
+                    ScrollBar.vertical: ScrollBar {
+                        objectName: "editorScrollBar"
+                        parent: editorScroll
+                        x: editorScroll.width - width - 2 // inside the panel's border
+                        y: 2
+                        height: editorScroll.height - 4
+                        width: editorScroll.barWidth
+                        padding: 0
+                        policy: editorScroll.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        focusPolicy: Qt.NoFocus
+                        // A visible track in the boundary colour, as the
+                        // visual tool rail's and the audio display's.
+                        background: Rectangle {
+                            implicitWidth: editorScroll.barWidth
+                            radius: editorScroll.barWidth / 2
+                            color: Theme.field
+                            border.color: Theme.line
+                        }
+                        contentItem: Rectangle {
+                            implicitWidth: editorScroll.barWidth
+                            implicitHeight: 12
+                            radius: editorScroll.barWidth / 2
+                            color: parent.pressed ? Theme.text : Theme.muted
+                            opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: editorColumn
+                        objectName: "editorContent"
+                        // the body's margin, in the scrolled area
+                        x: 4
+                        y: 4
+                        width: editorScroll.contentWidth - 8
+                        // The rows' own heights, or the dock's when it is taller
+                        // (the text fields take the rest).
+                        height: Math.max(editorScroll.height - 8, implicitHeight)
+
+                        // The tag and colour buttons (legacy BoxSizer4).
+                        RowLayout {
+                            id: tagRow
+                            Layout.fillWidth: true
+                            // Ordinary ASS controls; they keep focus (and the
+                            // selection) in the text field.
+                            Repeater {
+                                // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
+                                // maps the hotkey, the tooltip shows it.
+                                // K1: the set's icons in place of the letters
+                                // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
+                                // bitmaps, EditBox.cpp:168-195).
+                                model: [
+                                    { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                    { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                    { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                    { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
+                                ]
+                                IconToolButton {
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "tag_" + modelData.tag
+                                    iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                            return
+                                        const field = translationText.activeFocus ? translationText : lineText
+                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    }
+                                }
+                            }
+                            // E1: Font selection and the four colours
+                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
                             IconToolButton {
-                                required property var modelData
-                                required property int index
-                                objectName: "tag_" + modelData.tag
-                                iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
-                                text: modelData.name
+                                objectName: "changeFont"
+                                iconRole: "tag-font"
+                                text: qsTr("Font selection")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
                                 onClicked: {
-                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                    if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
                                     const field = translationText.activeFocus ? translationText : lineText
-                                    root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
-                        }
-                        // E1: Font selection and the four colours
-                        // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                        IconToolButton {
-                            objectName: "changeFont"
-                            iconRole: "tag-font"
-                            text: qsTr("Font selection")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
-                            onClicked: {
-                                if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
-                                    return
-                                const field = translationText.activeFocus ? translationText : lineText
-                                fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
-                            }
-                        }
-                        Repeater {
-                            model: [
-                                { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                                { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                                { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                                { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
-                            ]
-                            IconToolButton {
-                                required property var modelData
-                                objectName: "changeColour" + modelData.number
-                                iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
-                                text: modelData.name
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                        return
-                                    root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
-                                }
-                                // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
-                                TapHandler {
-                                    acceptedButtons: Qt.RightButton
-                                    onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                translationText.activeFocus ? translationText : lineText)
-                                }
-                            }
-                        }
-                        // E4: Text position (legacy Ban, after the colours).
-                        AlignmentChoice {
-                            editor: root.editor
-                            onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
-                        }
-                        // E2: custom tag buttons; right click (or a button
-                        // without a tag) edits it.
-                        Repeater {
-                            model: root.tagButtons.buttons
-                            ToolButton {
-                                required property var modelData
-                                required property int index
-                                objectName: "tagButton" + index
-                                text: modelData.name
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                Accessible.description: modelData.tag
-                                ToolTip.visible: hovered && modelData.tag.length > 0
-                                ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
-                                        return
-                                    if (modelData.tag.length === 0)
-                                        tagButtonDialog.editButton(index)
-                                    else
-                                        root.applyTagButton(index)
-                                }
-                                TapHandler {
-                                    acceptedButtons: Qt.RightButton
-                                    onTapped: tagButtonDialog.editButton(index)
-                                }
-                            }
-                        }
-                        IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
-                            objectName: "manageTagButtons"
-                            iconRole: "menu-more"
-                            text: qsTr("Manage tag buttons")
-                            focusPolicy: Qt.NoFocus
-                            onClicked: tagButtonsMenu.popup()
-                            ShellMenu {
-                                id: tagButtonsMenu
-                                Instantiator {
-                                    model: root.tagButtons.buttons
-                                    delegate: ShellMenuItem {
-                                        required property var modelData
-                                        required property int index
-                                        text: modelData.name
-                                        onTriggered: root.applyTagButton(index)
+                            Repeater {
+                                model: [
+                                    { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
+                                    { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
+                                    { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
+                                    { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
+                                ]
+                                IconToolButton {
+                                    required property var modelData
+                                    objectName: "changeColour" + modelData.number
+                                    iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                            return
+                                        root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
                                     }
-                                    onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
-                                    onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
-                                }
-                                ShellMenuItem {
-                                    objectName: "changeTagButtonCount"
-                                    text: qsTr("Change number of buttons")
-                                    onTriggered: tagButtonCountDialog.open()
+                                    // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
+                                    TapHandler {
+                                        acceptedButtons: Qt.RightButton
+                                        onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
+                                                                                    translationText.activeFocus ? translationText : lineText)
+                                    }
                                 }
                             }
-                        }
-                        // The hidden-tag view's switch (E6: the hide-tags icon,
-                        // checked while tags are hidden).
-                        IconToolButton {
-                            objectName: "showTags"
-                            iconRole: "hide-tags"
-                            text: qsTr("Hide tags")
-                            checkable: true
-                            checked: !root.editor.showTags
-                            onToggled: root.editor.showTags = !checked
-                        }
-                    }
-                    // E5: legacy BoxSizer5, the row under the tag buttons
-                    // that holds "Translator mode" (EditBox.cpp:233-239, 308).
-                    RowLayout {
-                        TranslatorModeCheck { app: root.app; editor: root.editor }
-                    }
-
-                    // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
-                    LineCounters {
-                        editor: root.editor
-                        Layout.fillWidth: true
-                    }
-
-                    RoleField {
-                        id: lineText
-                        objectName: "lineText"
-                        role: 0
-                        focus: true
-                        Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
-                    }
-                    RoleField {
-                        id: translationText
-                        objectName: "translationText"
-                        role: 1
-                        visible: root.editor.translationMode
-                        Accessible.name: qsTr("Translated text")
-                    }
-                    // Legacy translation-mode buttons (EDITBOX_PASTE_*,
-                    // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                    RowLayout {
-                        visible: root.editor.translationMode
-                        Button {
-                            objectName: "pasteAllToTranslation"
-                            text: qsTr("Paste all")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
-                            onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
-                        }
-                        Button {
-                            objectName: "pasteSelectionToTranslation"
-                            text: qsTr("Paste the selected")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
-                            onClicked: {
-                                if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
-                                    return
-                                root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
-                                                                        translationText.cursorPosition)
+                            // E4: Text position (legacy Ban, after the colours).
+                            AlignmentChoice {
+                                editor: root.editor
+                                onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
+                            }
+                            // E2: custom tag buttons; right click (or a button
+                            // without a tag) edits it.
+                            Repeater {
+                                model: root.tagButtons.buttons
+                                ToolButton {
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "tagButton" + index
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    Accessible.name: modelData.name
+                                    Accessible.description: modelData.tag
+                                    ToolTip.visible: hovered && modelData.tag.length > 0
+                                    ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
+                                            return
+                                        if (modelData.tag.length === 0)
+                                            tagButtonDialog.editButton(index)
+                                        else
+                                            root.applyTagButton(index)
+                                    }
+                                    TapHandler {
+                                        acceptedButtons: Qt.RightButton
+                                        onTapped: tagButtonDialog.editButton(index)
+                                    }
+                                }
+                            }
+                            IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
+                                objectName: "manageTagButtons"
+                                iconRole: "menu-more"
+                                text: qsTr("Manage tag buttons")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: tagButtonsMenu.popup()
+                                ShellMenu {
+                                    id: tagButtonsMenu
+                                    Instantiator {
+                                        model: root.tagButtons.buttons
+                                        delegate: ShellMenuItem {
+                                            required property var modelData
+                                            required property int index
+                                            text: modelData.name
+                                            onTriggered: root.applyTagButton(index)
+                                        }
+                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
+                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
+                                    }
+                                    ShellMenuItem {
+                                        objectName: "changeTagButtonCount"
+                                        text: qsTr("Change number of buttons")
+                                        onTriggered: tagButtonCountDialog.open()
+                                    }
+                                }
+                            }
+                            // The hidden-tag view's switch (E6: the hide-tags icon,
+                            // checked while tags are hidden).
+                            IconToolButton {
+                                objectName: "showTags"
+                                iconRole: "hide-tags"
+                                text: qsTr("Hide tags")
+                                checkable: true
+                                checked: !root.editor.showTags
+                                onToggled: root.editor.showTags = !checked
                             }
                         }
-                        Button {
-                            objectName: "commentOutOriginal"
-                            text: qsTr("Comment out original")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
-                            onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
+                        // E5: legacy BoxSizer5, the row under the tag buttons
+                        // that holds "Translator mode" (EditBox.cpp:233-239, 308).
+                        RowLayout {
+                            TranslatorModeCheck { app: root.app; editor: root.editor }
                         }
-                        TranslationToggles { app: root.app; editor: root.editor } // E5
-                    }
 
-                    // E4: the Line's fields (legacy BoxSizer2, below the text).
-                    LineInspector {
-                        editor: root.editor
-                        hotkeys: root.hotkeys
-                        Layout.fillWidth: true
-                        onStyleEditRequested: style => styleManagerWindow.showFor(style)
-                    }
+                        // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
+                        LineCounters {
+                            editor: root.editor
+                            Layout.fillWidth: true
+                        }
 
-                    Label {
-                        objectName: "editorProblem"
-                        visible: text.length > 0
-                        text: root.editor.problem
-                        color: Theme.danger
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
-                        Accessible.role: Accessible.AlertMessage
-                    }
-                    Label {
-                        objectName: "editorAttempted"
-                        visible: root.editor.attempted.length > 0
-                        text: qsTr("Not applied: %1").arg(root.editor.attempted)
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
+                        RoleField {
+                            id: lineText
+                            objectName: "lineText"
+                            role: 0
+                            focus: true
+                            Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                        }
+                        RoleField {
+                            id: translationText
+                            objectName: "translationText"
+                            role: 1
+                            visible: root.editor.translationMode
+                            Accessible.name: qsTr("Translated text")
+                        }
+                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
+                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
+                        RowLayout {
+                            visible: root.editor.translationMode
+                            Button {
+                                objectName: "pasteAllToTranslation"
+                                text: qsTr("Paste all")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
+                                onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
+                            }
+                            Button {
+                                objectName: "pasteSelectionToTranslation"
+                                text: qsTr("Paste the selected")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
+                                onClicked: {
+                                    if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
+                                        return
+                                    root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
+                                                                            translationText.cursorPosition)
+                                }
+                            }
+                            Button {
+                                objectName: "commentOutOriginal"
+                                text: qsTr("Comment out original")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
+                                onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
+                            }
+                            TranslationToggles { app: root.app; editor: root.editor } // E5
+                        }
+
+                        // E4: the Line's fields (legacy BoxSizer2, below the text).
+                        LineInspector {
+                            editor: root.editor
+                            hotkeys: root.hotkeys
+                            Layout.fillWidth: true
+                            onStyleEditRequested: style => styleManagerWindow.showFor(style)
+                        }
+
+                        Label {
+                            objectName: "editorProblem"
+                            visible: text.length > 0
+                            text: root.editor.problem
+                            color: Theme.danger
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                            Accessible.role: Accessible.AlertMessage
+                        }
+                        Label {
+                            objectName: "editorAttempted"
+                            visible: root.editor.attempted.length > 0
+                            text: qsTr("Not applied: %1").arg(root.editor.attempted)
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
                     }
                 }
             }

@@ -5326,17 +5326,30 @@ private slots:
     {
         return it->mapToScene(QPointF(it->width() / 2, it->height() / 2)).toPoint();
     }
-    // In translation mode the Line editor's rows need more height than its
-    // dock has in the default 1280 x 800 layout: the translation buttons end
-    // at the dock's bottom edge, and with the Ubuntu runner's font metrics
-    // their centre falls a few pixels below it, on the dock below. A test
-    // clicking one gives the window the height for it first.
-    void roomInTheEditorFor(QQuickItem *button)
+    // Whether `control` lies whole in the Line editor's visible area.
+    bool inTheEditorView(QQuickItem *control)
     {
-        if (window->height() < 1000)
-            window->resize(window->width(), 1000);
-        auto *panel = item("editorPanel");
-        QTRY_VERIFY(panel->mapRectToScene(panel->boundingRect()).contains(button->mapRectToScene(button->boundingRect())));
+        auto *view = item("editorScroll");
+        return view->mapRectToScene(view->boundingRect()).contains(control->mapRectToScene(control->boundingRect()));
+    }
+    // In translation mode the Line editor's rows are taller than its dock in
+    // the default 1280 x 800 layout, and the editor scrolls them. A test
+    // clicking one of its controls scrolls it into view with the wheel over
+    // the editor, as a user would. (Each wheel event carries a later time:
+    // the Flickable takes the scroll's speed from it.)
+    void scrollTheEditorTo(QQuickItem *control)
+    {
+        static quint64 time = 0;
+        auto *view = item("editorScroll");
+        const QPoint over = view->mapToScene(QPointF(view->width() / 2, view->height() / 2)).toPoint();
+        for (int notch = 0; notch < 20 && !QTest::qWaitFor([&] { return inTheEditorView(control); }, 300); ++notch) {
+            const int up = control->mapToItem(view, QPointF(0, 0)).y() < 0 ? 1 : -1;
+            QWheelEvent wheel(over, window->mapToGlobal(over), QPoint(), QPoint(0, 120 * up), Qt::NoButton,
+                              Qt::NoModifier, Qt::NoScrollPhase, false);
+            wheel.setTimestamp(time += 1000);
+            QCoreApplication::sendEvent(window, &wheel);
+        }
+        QVERIFY2(inTheEditorView(control), qPrintable(control->objectName()));
     }
     static QString q8(const std::u8string &s)
     {
@@ -5470,6 +5483,136 @@ private slots:
         QCOMPARE(session->document().lines().size(), showOriginalSetting ? lines + 1 : lines);
     }
 
+    // The Line editor in a dock shorter than its rows (translation mode in
+    // the default 1280 x 800 layout) scrolls them: every control is reached
+    // by the wheel, and each one Tab reaches lies whole in the editor's view.
+    // The default proportions stay (legacy's 170 px audio box), and the dock
+    // keeps room for the tag buttons and the text fields when squeezed.
+    void lineEditorScrollsWhatItsDockCannotShow()
+    {
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        auto *panel = item("editorPanel");
+        auto *view = item("editorScroll");
+        auto *content = item("editorContent");
+        QTRY_VERIFY(view->property("overflows").toBool());
+        QVERIFY(item("editorScrollBar")->isVisible());
+        QVERIFY(panel->mapRectToScene(panel->boundingRect()).contains(view->mapRectToScene(view->boundingRect())));
+        QCOMPARE(view->property("contentY").toReal(), 0.0);
+        QTRY_VERIFY(!inTheEditorView(item("startField"))); // below the fold, once laid out
+        const qreal audioBody = item("audioPanel")->property("bodyHeight").toReal();
+        QVERIFY2(std::abs(audioBody - 170) <= 1, qPrintable(QString::number(audioBody)));
+
+        // The wheel brings every control into view.
+        QList<QQuickItem *> controls;
+        std::function<void(QQuickItem *)> collect = [&](QQuickItem *parent) {
+            for (QQuickItem *child : parent->childItems()) {
+                if (!child->isVisible())
+                    continue;
+                if (child->inherits("QQuickControl") || child->inherits("QQuickTextEdit"))
+                    controls << child;
+                else
+                    collect(child);
+            }
+        };
+        collect(content);
+        QVERIFY2(controls.size() >= 25, qPrintable(QString::number(controls.size())));
+        for (QQuickItem *control : std::as_const(controls))
+            scrollTheEditorTo(control);
+        scrollTheEditorTo(controls.first()); // and back up
+
+        // Tab: with the editor at its top, the first of the Line's fields
+        // (below the fold) takes the focus, and Tab goes on through them,
+        // the editor sent back to its top before each; every control the
+        // focus reaches is brought whole into view. Shift+Tab from the first
+        // goes back up to the Translated text.
+        const auto inEditor = [&](QQuickItem *it) {
+            for (; it; it = it->parentItem())
+                if (it == content)
+                    return true;
+            return false;
+        };
+        const auto focusedControl = [&] {
+            QQuickItem *it = window->activeFocusItem();
+            // an editable box's text field: the box
+            for (QQuickItem *p = it; p && p != content; p = p->parentItem())
+                if (p->hasActiveFocus() && p->inherits("QQuickControl"))
+                    it = p;
+            return it;
+        };
+        auto *layer = item("layerField");
+        view->setProperty("contentY", 0);
+        QTRY_VERIFY(!inTheEditorView(layer));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(inTheEditorView(layer));
+        QStringList reached{layer->objectName()};
+        for (int step = 0; step < 30; ++step) {
+            view->setProperty("contentY", 0);
+            press(Qt::Key_Tab);
+            QQuickItem *focused = focusedControl();
+            if (!inEditor(focused) || focused == layer)
+                break;
+            reached << focused->objectName();
+            QTRY_VERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
+        }
+        for (const char *name : {"startField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
+                                 "actorBox", "marginLeftField", "marginRightField", "marginVerticalField", "effectBox"})
+            QVERIFY2(reached.contains(QLatin1String(name)), qPrintable(reached.join(u' ')));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        auto *translated = item("translationText");
+        press(Qt::Key_Backtab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(translated));
+
+        // Squeezed, the dock keeps room for the tag buttons and the text fields.
+        const int minimum = panel->property("minimumHeight").toInt();
+        const qreal before = panel->height();
+        QVERIFY2(minimum > 90 && minimum < before, qPrintable(QString::number(minimum)));
+        ui::Docking docking;
+        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, 40 - int(before), 0, 0));
+        QTRY_VERIFY(panel->height() < before);
+        QVERIFY2(panel->height() >= minimum, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
+        view->setProperty("contentY", 0);
+        QVERIFY(inTheEditorView(controls.first())); // the tag buttons
+    }
+
+    // Screenshots of translation mode in the default 1280 x 800 window, Light
+    // and Dark: the Line editor at its top with its scroll bar, and
+    // scrolled to the Line's fields by the keyboard focus.
+    void translationModeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeTranslationFile("e5-shots.ass")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Tower"));
+        auto *view = item("editorScroll");
+        QTRY_VERIFY(view->property("overflows").toBool());
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        for (const auto code : {ui::theme::Code::Light, ui::theme::Code::Dark}) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+            view->setProperty("contentY", 0);
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode") + suffix));
+            item("startField")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(inTheEditorView(item("startField")));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode-fields") + suffix));
+        }
+    }
+
     // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
     // as one step and shows the active Line's flag.
     void notConfirmedFlipsTheSelectedLines()
@@ -5482,7 +5625,7 @@ private slots:
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
-        roomInTheEditorFor(button);
+        scrollTheEditorTo(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -5539,7 +5682,7 @@ private slots:
         application->editor().setShowTags(true);
         auto *moving = item("movingTags");
         QVERIFY(!moving->property("checked").toBool());
-        roomInTheEditorFor(moving);
+        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -5577,7 +5720,7 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        roomInTheEditorFor(moving);
+        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
