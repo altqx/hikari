@@ -23,7 +23,7 @@ namespace hikari::ui {
 
 namespace {
 
-enum PointerKind { Enter = 0, Leave = 1, Move = 2, Press = 3, Release = 4, Wheel = 5 };
+enum PointerKind { Enter = 0, Leave = 1, Move = 2, Press = 3, Release = 4, Wheel = 5, DoubleClick = 6 };
 
 } // namespace
 
@@ -172,25 +172,26 @@ void VideoViewController::zoomPointer(int kind, int x, int y, int button, int bu
     emit changed();
 }
 
-bool VideoViewController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
+int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
 {
     // VideoBox::OnMouseEvent (VideoBox.cpp:477-622).
     auto &view = m_tools.videoView();
     const bool control = (modifiers & Qt::ControlModifier) != 0;
     if (!m_video.hasVideo() || !view.hasVideo()) {
         m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps); // GetState() == None: nothing
-        return false;
+        return NoRequest;
     }
     if (view.zoomMode()) {
         zoomPointer(kind, view.toDevice(x), view.toDevice(y), button, buttons, wheelSteps);
-        return false;
+        return NoRequest;
     }
     if (kind == Wheel && wheelSteps != 0) {
         // Ctrl+wheel resized legacy's video window (TabPanel::SetVideoWindowSizes);
-        // the docked panel's size is the docking layout's.
-        if (control)
-            return false;
-        if (!m_tools.hasNonDefaultTool()) {
+        // the docked panel's size is the docking layout's. In fullscreen
+        // (`event.ControlDown() && !m_IsFullscreen`) it goes on to the tool.
+        if (control && !m_fullscreen)
+            return NoRequest;
+        if (!control && !m_tools.hasNonDefaultTool()) {
             const float current = view.zoomPercent();
             const float zoom = application::wheelZoomPercent(current, wheelSteps);
             if (current != zoom) {
@@ -202,13 +203,24 @@ bool VideoViewController::pointer(int kind, qreal x, qreal y, int button, int bu
     m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
     // Only the crosshair leaves the other clicks to the video.
     if (m_tools.hasNonDefaultTool())
-        return false;
+        return NoRequest;
     if (kind == Release && button == Qt::RightButton)
-        return true; // ContextMenu(event.GetPosition())
-    // LeftDClick: fullscreen (V5).
+        return ContextMenuRequest; // ContextMenu(event.GetPosition())
+    // V5: LeftDClick with no modifier, SetFullscreen() (VideoBox.cpp:554-569).
+    const int held = modifiers & (Qt::ShiftModifier | Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier);
+    if (kind == DoubleClick && button == Qt::LeftButton && held == 0)
+        return FullScreenRequest;
     if (pauseOnClick() && kind == Release && button == Qt::LeftButton && !control)
         m_video.togglePlay(); // VideoBox::Pause
-    return false;
+    return kind == Move ? MovedOverVideo : NoRequest;
+}
+
+void VideoViewController::setFullscreen(bool on)
+{
+    if (m_fullscreen == on)
+        return;
+    m_fullscreen = on;
+    emit changed();
 }
 
 void VideoViewController::panelWheel(int steps, int modifiers)
@@ -221,8 +233,9 @@ void VideoViewController::panelWheel(int steps, int modifiers)
         return;
     }
     // Ctrl+wheel outside fullscreen returned before the volume, doing
-    // nothing below the video (VideoBox.cpp:508-518).
-    if ((modifiers & Qt::ControlModifier) != 0)
+    // nothing below the video (VideoBox.cpp:508-518); in fullscreen the
+    // panel's wheel is the volume's with or without Ctrl.
+    if ((modifiers & Qt::ControlModifier) != 0 && !m_fullscreen)
         return;
     if (const auto v = application::videoVolumeWheelStep(volume(), steps))
         setVolume(*v);

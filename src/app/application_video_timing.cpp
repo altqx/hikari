@@ -293,3 +293,30 @@ bool Application::commitAndAdvance()
 }
 
 } // namespace hikari::app
+
+namespace hikari::app {
+
+bool Application::selectVisibleLineAfterFullScreen()
+{
+    // VideoBox.cpp:555-559: `tab->SubsPath != emptyString &&
+    // Options.GetBool(GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN)`.
+    if (!m_settings->boolean("grid.setVisibleLineAfterFullScreen") || targetUntitled())
+        return false;
+    m_editor->commit(); // tab->edit->Send(EDITBOX_LINE_EDITION, false)
+    return selectLineFromVideo();
+}
+
+bool Application::openEditorFromFullScreen()
+{
+    // VideoBox::OpenEditor (esc defaults to true: the window is not minimized).
+    if (!m_videoFullscreen->active())
+        return false;
+    if (m_video->playing())
+        m_video->pause();
+    m_settings->set("workspace.editorOn", true);
+    if (!targetUntitled())
+        selectLineFromVideo(); // tab->grid->SelVideoLine()
+    return m_videoFullscreen->leave();
+}
+
+} // namespace hikari::app

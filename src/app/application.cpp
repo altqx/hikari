@@ -597,6 +597,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // general player takes the video volume.
     m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
     m_videoView->setPlayer(m_generalPlayer.get());
+    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView); // V5
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
     m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
     setUpTranslationControls(); // E5
@@ -4510,6 +4511,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
             {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
+            {QStringLiteral("videoFullscreen"), QVariant::fromValue(m_videoFullscreen.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},

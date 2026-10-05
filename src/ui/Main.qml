@@ -44,6 +44,7 @@ ApplicationWindow {
     required property var settingsImport // O3: SettingsImportController
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
     required property VideoViewController videoView // V4: zoom, aspect, volume, snapshots
+    required property VideoFullscreenController videoFullscreen // V5: fullscreen and the monitors
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -359,6 +360,42 @@ ApplicationWindow {
         Qt.callLater(() => root.focusPanel(panel, Qt.OtherFocusReason))
     }
 
+    // V5: a double click on the picture (VideoBox.cpp:554-559): SetFullscreen(),
+    // and once out of fullscreen the Line shown at the video's time with
+    // GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN.
+    function videoDoubleClick() {
+        root.videoFullscreen.toggle(0)
+        if (!root.videoFullscreen.active)
+            root.app.selectVisibleLineAfterFullScreen()
+    }
+    // V5: OpenFile(path, fulls) and OpenFile in fullscreen: subtitles named
+    // as the video load without "Load subtitles named ...?" (asked only
+    // `!fulls && !IsFullScreen()`, HikariSubFrame.cpp:1351), then the video.
+    function openVideoUnasked(path) {
+        const found = root.app.openVideoFile(path)
+        if (found.subtitles.length === 0) {
+            root.app.openVideo(path)
+            return
+        }
+        const result = root.app.reviewOpenWithVideo(found.subtitles, path)
+        if (!result.ok)
+            return
+        if (result.rows.length === 0)
+            root.app.finishClose()
+        else
+            closeReview.review(result.rows)
+    }
+    // V5: OpenFiles with one file, a video: OpenFile(files[0], videos.size()
+    // == 1 && VIDEO_FULL_SCREEN_ON_START) (HikariSubFrame.cpp:1856-1858).
+    function openSingleVideo(path) {
+        if (root.app.settings.value("video.fullScreenOnStart")) {
+            root.videoFullscreen.enterWhenShown(path)
+            root.openVideoUnasked(path)
+        } else {
+            tabCommands.openVideoFile(path)
+        }
+    }
+
     // D1: a floating panel's window is part of the shell. The Classic
     // shortcuts work there too, and not in dialogs or tool windows.
     readonly property bool floatingPanelActive: {
@@ -369,7 +406,12 @@ ApplicationWindow {
     // legacy's menus took every key while shown (MenuBar::OnKey, Menu.cpp:1335):
     // Left and Right (Previous and Next frame) open and close submenus.
     readonly property bool menuHasKeys: root.workspaceLayout.menuHasFocus
-    readonly property bool shellActive: (root.workspaceLayout.focusWindow === root || floatingPanelActive) && !menuHasKeys
+    // V5: the fullscreen video window takes the Global bindings too
+    // (Fullscreen::SetAccels, VideoFullscreen.cpp:222-260).
+    readonly property bool videoFullscreenActive: root.workspaceLayout.focusWindow !== null
+                                                  && root.workspaceLayout.focusWindow === videoFullscreenWindow
+    readonly property bool shellActive: (root.workspaceLayout.focusWindow === root || floatingPanelActive
+                                         || videoFullscreenActive) && !menuHasKeys
     // O2: the Global window's accelerator table (HikariSubFrame::SetAccels,
     // HikariSubFrame.cpp:1754-1800), on the whole shell (legacy's Tabs). The
     // focused panel's own bindings come first (each panel takes its keys in
@@ -1659,7 +1701,7 @@ ApplicationWindow {
             if (result.kind === "subtitles")
                 root.openSubtitles(result.path)
             else if (result.kind === "video")
-                tabCommands.openVideoFile(result.path)
+                root.openSingleVideo(result.path)
             else if (result.kind === "files" && result.rows.length > 0)
                 closeReview.review(result.rows)
         }
@@ -1720,6 +1762,9 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (event.key === Qt.Key_F) { // V5: VideoBox::OnKeyPress's SetFullscreen()
+                        root.videoFullscreen.toggle(0)
+                        event.accepted = true
                     } else if (event.key === Qt.Key_Menu) { // V4: WXK_WINDOWS_MENU, the menu at the pointer
                         videoContextMenu.openAt(root.videoView.cursorIn(visualOverlay))
                         event.accepted = true
@@ -1751,11 +1796,24 @@ ApplicationWindow {
                     tools: root.visualTools
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
+                // Where the picture sits in the panel.
+                Item {
+                    id: videoStageDock
+                    anchors { left: visualRail.right; right: parent.right; top: parent.top; bottom: videoControls.top }
+                }
+                // V5: the picture, the visual tools' overlay and the zoom
+                // frame; they move into the fullscreen window while it is
+                // shown (one presenter: the video is shown in one place).
+                Item {
+                    id: videoStage
+                    objectName: "videoStage"
+                    parent: root.videoStageInFullscreen ? videoFullscreenWindow.stage : videoStageDock
+                    anchors.fill: parent
                 VideoPresenter {
                     id: presenter
                     objectName: "videoPresenter"
                     visible: root.video.hasVideo
-                    anchors { left: visualRail.right; right: parent.right; top: parent.top; bottom: videoControls.top }
+                    anchors.fill: parent
                     // The visual tools' shared view places the frame (legacy UpdateRects).
                     videoRect: root.visualTools.videoRect
                     sourceRect: root.visualTools.sourceRect
@@ -1765,15 +1823,31 @@ ApplicationWindow {
                     id: visualOverlay
                     anchors.fill: presenter
                     tools: root.visualTools
-                    focusTarget: videoPanel
-                    panelHeight: videoControls.height
+                    focusTarget: root.videoFullscreen.active ? videoFullscreenWindow.keyTarget : videoPanel
+                    // In fullscreen the pinned panel (m_PanelOnFullscreen) or none.
+                    panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
                     view: root.videoView // V4
-                    onContextMenuRequested: (x, y) => videoContextMenu.openAt(Qt.point(x, y))
+                    // V5: without "Show toolbar" the pointer shows (and after
+                    // a second hides) over the fullscreen picture.
+                    cursorOverride: !root.videoFullscreen.active || root.videoFullscreen.showToolbar ? -1
+                                    : videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : Qt.ArrowCursor
+                    onContextMenuRequested: (x, y) => {
+                        if (root.videoFullscreen.active)
+                            videoFullscreenWindow.openMenuAt(Qt.point(x, y))
+                        else
+                            videoContextMenu.openAt(Qt.point(x, y))
+                    }
+                    onFullScreenRequested: root.videoDoubleClick()
+                    onPointerMoved: (x, y) => {
+                        if (root.videoFullscreen.active)
+                            videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y).y)
+                    }
                 }
                 // V4: the zoom mode's frame, the context menu and the aspect ratio.
                 VideoZoomFrame {
                     anchors.fill: presenter
                     view: root.videoView
+                }
                 }
                 VideoContextMenu {
                     id: videoContextMenu
@@ -1787,7 +1861,7 @@ ApplicationWindow {
                     onAspectRatioRequested: aspectRatioDialog.openAtCursor()
                 }
                 Label {
-                    anchors.centerIn: presenter
+                    anchors.centerIn: videoStageDock
                     visible: !root.video.hasVideo
                     text: root.video.status
                 }
@@ -3681,7 +3755,9 @@ ApplicationWindow {
     FileDialog {
         id: videoDialog
         nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
-        onAccepted: tabCommands.openVideoFile(root.app.localPath(selectedFile)) // P9
+        // P9; V5: from the fullscreen window without the subtitles question.
+        onAccepted: root.videoFullscreen.active ? root.openVideoUnasked(root.app.localPath(selectedFile))
+                                                : tabCommands.openVideoFile(root.app.localPath(selectedFile))
         // V3: the subtitles' folder, else the latest recent video's
         function show() {
             currentFolder = root.app.videoDialogFolder()
@@ -3705,6 +3781,65 @@ ApplicationWindow {
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+    }
+
+    // V5: the fullscreen video window (legacy Fullscreen). What it asks
+    // shows in it, as legacy parented its dialogs to m_FullScreenWindow
+    // (VideoBox.cpp:895, 907, 1087, 1103).
+    VideoFullscreen {
+        id: videoFullscreenWindow
+        shell: root
+        controller: root.videoFullscreen
+        onOpenVideoRequested: videoDialog.show()
+        onOpenSubtitlesRequested: openDialog.open()
+        onAspectRatioRequested: aspectRatioDialog.openAtCursor()
+        onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        Component.onCompleted: {
+            root.videoFullscreen.setWindows(videoFullscreenWindow, root)
+            root.videoFullscreen.setFocusFallback(videoPanel)
+        }
+    }
+    Binding {
+        when: root.videoFullscreen.active
+        target: aspectRatioDialog; property: "parent"; value: videoFullscreenWindow.contentItem
+    }
+    Binding {
+        when: root.videoFullscreen.active
+        target: videoFileQuestion; property: "parent"; value: videoFullscreenWindow.contentItem
+    }
+    Binding {
+        when: root.videoFullscreen.active
+        target: videoDialog; property: "parentWindow"; value: videoFullscreenWindow
+    }
+    Binding {
+        when: root.videoFullscreen.active
+        target: openDialog; property: "parentWindow"; value: videoFullscreenWindow
+    }
+    // SetFullscreen(monitor) with another monitor than 0 hides the docked
+    // video while fullscreen lasts (m_IsOnAnotherMonitor, VideoBox.cpp:845-849)
+    // and leaving shows it again (761-766).
+    property bool videoDockClosedForFullscreen: false
+    // Where the picture is (Main's videoStage): moved once the dock is
+    // closed, as closing the dock takes its content back into the panel.
+    property bool videoStageInFullscreen: false
+    Connections {
+        target: root.videoFullscreen
+        function onActiveChanged() {
+            const fs = root.videoFullscreen
+            if (fs.active && fs.onAnotherMonitor && videoDock.isOpen) {
+                root.videoDockClosedForFullscreen = true
+                videoDock.close()
+            }
+            root.videoStageInFullscreen = fs.active
+            if (!fs.active && root.videoDockClosedForFullscreen) {
+                root.videoDockClosedForFullscreen = false
+                videoDock.open()
+            }
+            // The picture moved to another window: a frame submitted just
+            // before is refused there (the surface changed before upload),
+            // so the shown frame is submitted again once the move is done.
+            Qt.callLater(() => root.video.attachPresenter(presenter))
+        }
     }
 
     FileDialog {
@@ -5134,6 +5269,10 @@ ApplicationWindow {
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         // V6: SubsGrid::SelVideoLine and HikariSubFrame::OnAudioSnap
         case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
+        // V5: in fullscreen the frame's accelerators reach VideoBox::OnAccelerator,
+        // whose GLOBAL_EDITOR is OpenEditor (VideoBox.cpp:1162); the main
+        // window's editor switch is not in the rewrite.
+        case "GLOBAL_EDITOR": if (root.videoFullscreen.active) root.app.openEditorFromFullScreen(); return true
         case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
         case "GLOBAL_SNAP_WITH_END": root.app.snapToKeyframe(false); return true
         }
@@ -5220,6 +5359,9 @@ ApplicationWindow {
         case "VIDEO_VOLUME_PLUS": root.videoView.stepVolume(true); return true
         case "VIDEO_VOLUME_MINUS": root.videoView.stepVolume(false); return true
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
+        // V5 (VideoBox.cpp:1161-1162): SetFullscreen(), and GLOBAL_EDITOR's
+        // OpenEditor when it reaches the video (in fullscreen).
+        case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":

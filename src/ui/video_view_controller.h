@@ -10,7 +10,7 @@
 //     video (DrawZoom); the geometry is the visual tools' shared VideoView;
 //   - VIDEO_ASPECT_RATIO's AspectRatioDialog;
 //   - VIDEO_HIDE_PROGRESS_BAR (VIDEO_PROGRESS_BAR; the bar itself is the
-//     fullscreen window's, V5);
+//     fullscreen window's, V5: VideoFullscreenController);
 //   - the volume: VIDEO_VOLUME_PLUS / VIDEO_VOLUME_MINUS, the volume slider
 //     and the wheel over the panel (VIDEO_VOLUME, the general player's gain);
 //   - VIDEO_PAUSE_ON_CLICK and the video context menu's pointer (the order
@@ -61,6 +61,8 @@ class VideoViewController : public QObject {
     // The last PNG a snapshot wrote.
     Q_PROPERTY(QString lastSnapshot READ lastSnapshot NOTIFY changed)
     Q_PROPERTY(bool pauseOnClick READ pauseOnClick NOTIFY changed)
+    // V5: legacy m_IsFullscreen (the context menu's entries follow it).
+    Q_PROPERTY(bool fullscreen READ fullscreen NOTIFY changed)
 public:
     VideoViewController(VideoController &video, VisualToolsController &tools, SettingsStore &settings,
                         QObject *parent = nullptr);
@@ -84,20 +86,32 @@ public:
     Q_INVOKABLE bool toggleZoom();
     // GLOBAL_RESET_VIDEO_ZOOM (RendererVideo::ResetZoom).
     Q_INVOKABLE bool resetZoom();
+    // What a pointer event asks of the Video panel (pointer's answer).
+    // MovedOverVideo: a move that reached the fullscreen part of
+    // OnMouseEvent (after the zoom mode and a tool other than the crosshair).
+    enum PointerRequest { NoRequest = 0, ContextMenuRequest = 1, FullScreenRequest = 2, MovedOverVideo = 3 };
+    Q_ENUM(PointerRequest)
     // A pointer event over the video area (VisualToolsController::pointer's
-    // kinds and units), in VideoBox::OnMouseEvent's order: the zoom mode
-    // takes everything; the wheel zooms with the crosshair (Ctrl+wheel, the
-    // window height, is not the docked panel's); the visual tool; then the
-    // right button's release opens the context menu (true) and a left
-    // release without Ctrl pauses or plays with VIDEO_PAUSE_ON_CLICK.
-    Q_INVOKABLE bool pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
+    // kinds and units, 6 a double click), in VideoBox::OnMouseEvent's order:
+    // the zoom mode takes everything; the wheel zooms with the crosshair
+    // (Ctrl+wheel, the window height, is not the docked panel's; in
+    // fullscreen it goes on to the tool); the visual tool; then the right
+    // button's release opens the context menu (ContextMenuRequest), a left
+    // double click without modifiers switches fullscreen (V5,
+    // FullScreenRequest) and a left release without Ctrl pauses or plays
+    // with VIDEO_PAUSE_ON_CLICK.
+    Q_INVOKABLE int pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
     // The wheel over the panel below the video: the volume slider's wheel
     // (VideoBox.cpp:519-534), or the zoom mode's; Ctrl+wheel does nothing
-    // there (VideoBox.cpp:508-518, the docked panel is never fullscreen).
+    // under the docked panel (VideoBox.cpp:508-518) and is the volume's in
+    // fullscreen (V5: the Ctrl test is `!m_IsFullscreen`).
     Q_INVOKABLE void panelWheel(int steps, int modifiers = 0);
     // A key the Video panel's bindings left (VideoBox::OnKeyPress): Return
-    // in the zoom mode, Ctrl+Shift+Z.
+    // in the zoom mode, Ctrl+Shift+Z. F (fullscreen) is the panel's own.
     Q_INVOKABLE bool key(int key, int modifiers);
+    // V5: whether the video is shown fullscreen (legacy m_IsFullscreen).
+    bool fullscreen() const { return m_fullscreen; }
+    void setFullscreen(bool on);
 
     // VIDEO_VOLUME_PLUS / VIDEO_VOLUME_MINUS; the slider.
     Q_INVOKABLE bool stepVolume(bool up);
@@ -135,6 +149,7 @@ private:
     application::GeneralPlayerPort *m_player = nullptr;
     int m_zoomCursor = 0;
     QString m_lastSnapshot;
+    bool m_fullscreen = false;
 };
 
 } // namespace hikari::ui

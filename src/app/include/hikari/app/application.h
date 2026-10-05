@@ -47,6 +47,7 @@
 #include "grid_filter_controller.h"
 #include "visual_tools_controller.h"
 #include "video_view_controller.h"
+#include "video_fullscreen_controller.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -627,6 +628,17 @@ public:
     // GLOBAL_SNAP_WITH_START / _END; each false when legacy does nothing.
     Q_INVOKABLE bool setTimeFromVideo(bool end);
     Q_INVOKABLE bool selectLineFromVideo();
+    // V5: leaving fullscreen with a double click on the video selects the
+    // Line shown at the video's time when GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN
+    // is on and the Document has a file, after the Line editor's change is
+    // sent (VideoBox.cpp:555-559: Send(EDITBOX_LINE_EDITION, false), then
+    // SelVideoLine).
+    Q_INVOKABLE bool selectVisibleLineAfterFullScreen();
+    // V5: the fullscreen context menu's "Open editor" (GLOBAL_EDITOR in
+    // fullscreen, VideoBox::OpenEditor, VideoBox.cpp:1116-1130): pauses,
+    // turns the editor on (EDITOR_ON), selects the Line shown at the video's
+    // time when the Document has a file, and leaves fullscreen.
+    Q_INVOKABLE bool openEditorFromFullScreen();
     Q_INVOKABLE bool selectLinesVisibleOnVideo();
     Q_INVOKABLE bool snapToKeyframe(bool start);
     // EDITBOX_COMMIT_GO_NEXT_LINE (Enter): the editor's commit and advance,
@@ -666,6 +678,8 @@ public:
     // T1: the Video panel's visual tools.
     ui::VisualToolsController &visualTools() { return *m_visualTools; }
     ui::VideoViewController &videoView() { return *m_videoView; }
+    // V5: video fullscreen (VideoBox::SetFullscreen) and its monitor choice.
+    ui::VideoFullscreenController &videoFullscreen() { return *m_videoFullscreen; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -982,6 +996,7 @@ private:
     void applyReferenceSelection(application::Selection next);
     std::unique_ptr<ui::VisualToolsController> m_visualTools;
     std::unique_ptr<ui::VideoViewController> m_videoView; // V4
+    std::unique_ptr<ui::VideoFullscreenController> m_videoFullscreen; // V5
     // E5: each Document's legacy SubsGrid::showOriginal, with the file
     // generation it was set up for (a reload is a new LoadSubtitles).
     struct OriginalColumnsEntry {

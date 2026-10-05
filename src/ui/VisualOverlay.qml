@@ -21,13 +21,24 @@ Item {
     // order: the zoom mode, the wheel's zoom, then the tool, the context
     // menu and VIDEO_PAUSE_ON_CLICK); without one the tool has it alone.
     property VideoViewController view: null
+    // V5: fullscreen's pointer (VideoBox::OnMouseEvent's fullscreen part):
+    // each move reported, and the cursor it asks for over the video (-1: the
+    // tool's).
+    property int cursorOverride: -1
     signal contextMenuRequested(real x, real y)
+    signal fullScreenRequested()
+    signal pointerMoved(real x, real y)
 
     function route(kind, x, y, button, buttons, modifiers, steps) {
         if (!view)
             return tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
-        if (view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0))
+        const request = view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
+        if (request === VideoViewController.ContextMenuRequest)
             contextMenuRequested(x, y)
+        else if (request === VideoViewController.FullScreenRequest)
+            fullScreenRequested()
+        else if (request === VideoViewController.MovedOverVideo)
+            pointerMoved(x, y)
     }
 
     function sync() {
@@ -38,6 +49,11 @@ Item {
     onHeightChanged: sync()
     onPanelHeightChanged: sync()
     Component.onCompleted: sync()
+    // V5: moved into the fullscreen window (another screen, another scale).
+    readonly property var shownIn: Window.window
+    readonly property real shownScale: Window.window ? Window.window.devicePixelRatio : 1
+    onShownInChanged: sync()
+    onShownScaleChanged: sync()
 
     MouseArea {
         id: pointerArea
@@ -47,6 +63,7 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
         cursorShape: overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
+                     : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
                      : overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
         onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)

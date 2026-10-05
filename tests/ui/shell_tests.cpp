@@ -12942,6 +12942,458 @@ private slots:
         QCOMPARE(session.colourMatrix().applied(), std::string("TV.709"));
     }
 
+
+    // V5 (#184): video fullscreen (VideoBox::SetFullscreen, Fullscreen).
+    // Two Lines (0-1 s, 1-2 s) in a file beside its video, the video open.
+    bool v5Open(QTemporaryDir &folder)
+    {
+        if (!QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), folder.filePath(QStringLiteral("clip.mkv"))))
+            return false;
+        // The video's resolution as PlayRes: no "resolution mismatch" question
+        // comes up over the window.
+        const QString subtitles = folder.filePath(QStringLiteral("clip.ass"));
+        QFile f(subtitles);
+        if (!f.open(QIODevice::WriteOnly))
+            return false;
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,first\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,second\n");
+        f.close();
+        if (!application->openFile(subtitles))
+            return false;
+        application->video().openVideo(folder.filePath(QStringLiteral("clip.mkv")));
+        return QTest::qWaitFor([&] {
+            return item("videoPresenter")->property("presentedGeneration").toULongLong() > 0
+                   && application->video().session().lastFrame();
+        }, 20000);
+    }
+    QQuickWindow *fullscreenWindow() const { return qobject_cast<QQuickWindow *>(named("videoFullscreen")); }
+    QQuickItem *fullscreenItem(const char *name) const
+    {
+        auto *w = fullscreenWindow();
+        return w ? findItem(w->contentItem(), QLatin1String(name)) : nullptr;
+    }
+    application::EditSession *v5Session() const
+    {
+        return application->files().session(*application->workspace().editingTarget());
+    }
+
+    // F in the Video panel shows the picture fullscreen on the main window's
+    // monitor and leaves the main window as it was; the Video window's and
+    // the Global bindings work there; Esc leaves, pausing, and gives the
+    // keyboard back to what had it.
+    void videoFullscreenEnterAndLeave()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        keysNeverRepeat();
+        auto &fs = application->videoFullscreen();
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QVERIFY(fsWindow);
+        QVERIFY(!fsWindow->isVisible());
+        QVERIFY(!fs.active());
+        const QRect mainGeometry = window->geometry();
+        const auto mainVisibility = window->visibility();
+        auto *video = item("videoPanel");
+        video->forceActiveFocus();
+        // A frame shown just before: the move refuses its pending submission
+        // (the surface changed before upload) and the frame is submitted again.
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        press(Qt::Key_F);
+        QVERIFY(fs.active());
+        QTRY_VERIFY(application->video().session().lastPresent()
+                    && application->video().session().lastPresent()->outcome == application::PresentOutcome::Accepted
+                    && application->video().session().lastPresent()->stage == application::PresentStage::Rendered);
+        QTRY_VERIFY(fsWindow->isVisible());
+        QCOMPARE(fsWindow->visibility(), QWindow::FullScreen);
+        QCOMPARE(fsWindow->screen(), window->screen()); // SetFullscreen(0): the program's monitor
+        QTRY_COMPARE(fsWindow->geometry(), fsWindow->screen()->geometry());
+        QCOMPARE(fs.monitor(), 0);
+        QVERIFY(!fs.onAnotherMonitor());
+        QVERIFY(application->videoView().fullscreen());
+        // The picture, its overlay and the zoom moved into the window, and
+        // frames keep presenting there.
+        auto *presenter = item("videoPresenter");
+        QCOMPARE(presenter->window(), fsWindow);
+        QCOMPARE(item("visualOverlay")->window(), fsWindow);
+        // (cfr.mkv's frames move a white block: the picture changes.)
+        QTest::qWait(300);
+        const QRect picture = item("visualOverlay")->mapRectToScene(application->visualTools().videoRect()).toAlignedRect();
+        const QImage before = fsWindow->grabWindow().copy(picture);
+        QSignalSpy presented(presenter, SIGNAL(presented()));
+        QVERIFY(application->video().stepFrames(12));
+        QTRY_VERIFY(presented.count() > 0);
+        QTRY_VERIFY(fsWindow->grabWindow().copy(picture) != before);
+        // An indexed video: "Show toolbar" on, the panel stays and the
+        // picture ends above it (m_PanelOnFullscreen).
+        auto *panel = fullscreenItem("videoFullscreenPanel");
+        QVERIFY(panel && panel->isVisible());
+        QVERIFY(fullscreenItem("fullscreenShowToolbar")->property("checked").toBool());
+        QVERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QCOMPARE(presenter->width(), qreal(fsWindow->width()));
+        // The 4:3 picture fills the stage's width or height, centred.
+        const QRectF shownRect = application->visualTools().videoRect();
+        QVERIFY(qAbs(shownRect.width() - presenter->width()) <= 1 || qAbs(shownRect.height() - presenter->height()) <= 1);
+        QVERIFY(qAbs(shownRect.center().x() - presenter->width() / 2) <= 1);
+        QVERIFY(qAbs(shownRect.center().y() - presenter->height() / 2) <= 1);
+        // The transport's icon-only buttons name themselves.
+        for (const char *name : {"fullscreenPreviousFile", "fullscreenPlayPause", "fullscreenPlayLine", "fullscreenStop",
+                                 "fullscreenNextFile", "fullscreenShowToolbar"}) {
+            auto *button = fullscreenItem(name);
+            QVERIFY2(button, name);
+            QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+            QVERIFY2(!QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name).isEmpty(), name);
+        }
+        QCOMPARE(fullscreenItem("fullscreenShowToolbar")->property("tip").toString(), QStringLiteral("Show toolbar"));
+        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("text").toString(), QStringLiteral("clip.mkv"));
+        // The progress bar's times (VIDEO_PROGRESS_BAR is on by default).
+        auto *progress = fullscreenItem("videoFullscreenProgress");
+        QVERIFY(progress->isVisible());
+        QCOMPARE(fullscreenItem("videoFullscreenProgressText")->property("text").toString(),
+                 QStringLiteral("00:00:01 / 00:00:01")); // frame 42 at 1.75 s; LastTime 1.96 s, truncated
+        auto *bar = fullscreenItem("videoFullscreenProgressBar");
+        QVERIFY(bar->x() + bar->width() <= fsWindow->width());
+        // The window takes the keyboard: Space (the Video window's
+        // VIDEO_PLAY_PAUSE) plays and pauses, Right (the Global
+        // GLOBAL_NEXT_FRAME) steps.
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(application->hotkeys().accelOf(QStringLiteral("VIDEO_PLAY_PAUSE"), 3) == QStringLiteral("Space"));
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_VERIFY(application->video().playing());
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_VERIFY(!application->video().playing());
+        const int frame = application->video().frame();
+        QTest::keyClick(fsWindow, Qt::Key_Right);
+        QTRY_COMPARE(application->video().frame(), frame + 1);
+        // Leaving while playing pauses (the editor is always on).
+        QTest::keyClick(fsWindow, Qt::Key_Space);
+        QTRY_VERIFY(application->video().playing());
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(!fs.active());
+        QVERIFY(!application->video().playing());
+        QTRY_VERIFY(!fsWindow->isVisible());
+        QCOMPARE(presenter->window(), window);
+        QVERIFY(!application->videoView().fullscreen());
+        QCOMPARE(window->geometry(), mainGeometry);
+        QCOMPARE(window->visibility(), mainVisibility);
+        QVERIFY(becomesFocusWindow(window));
+        QTRY_COMPARE(window->activeFocusItem(), video);
+        // The picture is the panel's again.
+        QTRY_COMPARE(presenter->width(), item("videoStage")->parentItem()->width());
+
+        // From the Line editor through VIDEO_FULL_SCREEN (unbound by
+        // default): the Line editor has the keyboard back after B.
+        auto *lineText = item("lineText");
+        lineText->forceActiveFocus();
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_FULL_SCREEN"))));
+        QVERIFY(fs.active());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QTest::keyClick(fsWindow, Qt::Key_B);
+        QVERIFY(!fs.active());
+        QVERIFY(becomesFocusWindow(window));
+        QTRY_COMPARE(window->activeFocusItem(), lineText);
+        // F in the fullscreen window leaves too.
+        video->forceActiveFocus();
+        press(Qt::Key_F);
+        QVERIFY(fs.active());
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QTest::keyClick(fsWindow, Qt::Key_F);
+        QVERIFY(!fs.active());
+        // Without a video nothing happens (`if (!renderer) return`).
+        QVERIFY(application->video().unloadVideo());
+        video->forceActiveFocus();
+        press(Qt::Key_F);
+        QVERIFY(!fs.active());
+        QVERIFY(!fsWindow->isVisible());
+    }
+
+    // The context menu in fullscreen: "Exit full screen", "Open editor" and
+    // "Show / hide progress bar" enabled, no "Copy video position"; Open
+    // editor pauses, selects the Line shown at the video's time and leaves.
+    void videoFullscreenContextMenuAndOpenEditor()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto *session = v5Session();
+        const auto lines = session->document().lines();
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        auto text = [&](const char *name) { return named(name)->property("text").toString(); };
+        auto enabled = [&](const char *name) { return named(name)->property("enabled").toBool(); };
+        // Out of fullscreen.
+        auto &tools = application->visualTools();
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, videoPoint(tools.videoRect().center()));
+        auto *menu = named("videoContextMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(text("videoMenuFullScreen"), QStringLiteral("Full screen\tF"));
+        QVERIFY(enabled("videoMenuFullScreen"));
+        QVERIFY(!enabled("videoMenuOpenEditor"));
+        QVERIFY(named("videoMenuCopyCoords")->property("visible").toBool());
+        QVERIFY(!enabled("videoMenuProgressBar"));
+        // One monitor: no monitor entries (GetMonitorRect1 from 1).
+        QVERIFY(!named("videoMenuMonitor1"));
+        // Its order: Play, Stop, Full screen, Open editor, the recent lists.
+        QStringList order;
+        for (int i = 0; i < menu->property("count").toInt(); ++i) {
+            QObject *it = nullptr;
+            QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, *reinterpret_cast<QQuickItem **>(&it)),
+                                      Q_ARG(int, i));
+            order << (it ? it->objectName() : QString());
+        }
+        QCOMPARE(order.mid(0, 6), (QStringList{QStringLiteral("videoMenuCopyCoords"), QStringLiteral("videoMenuPlayPause"),
+                                              QStringLiteral("videoMenuStop"), QStringLiteral("videoMenuFullScreen"),
+                                              QStringLiteral("videoMenuOpenEditor"), QString()}));
+        QVERIFY(QMetaObject::invokeMethod(named("videoMenuFullScreen"), "triggered"));
+        QVERIFY(fs.active());
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        // In fullscreen, from the picture there.
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QCOMPARE(fsMenu->property("parent").value<QQuickItem *>()->window(), fsWindow);
+        QCOMPARE(text("fullscreenMenuFullScreen"), QStringLiteral("Exit full screen\tEscape"));
+        QVERIFY(!named("fullscreenMenuCopyCoords")->property("visible").toBool());
+        QVERIFY(enabled("fullscreenMenuOpenEditor"));
+        const QString editorKey = application->hotkeys().accelOf(QStringLiteral("GLOBAL_EDITOR"), 0);
+        QCOMPARE(editorKey, QStringLiteral("Ctrl-E"));
+        QCOMPARE(text("fullscreenMenuOpenEditor"), QStringLiteral("Open editor\tCtrl-E"));
+        QVERIFY(enabled("fullscreenMenuProgressBar"));
+        // Show / hide progress bar switches VIDEO_PROGRESS_BAR.
+        QVERIFY(fullscreenItem("videoFullscreenProgress")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenMenuProgressBar"), "triggered"));
+        QVERIFY(!application->settingsStore()->boolean("video.progressBar"));
+        QTRY_VERIFY(!fullscreenItem("videoFullscreenProgress")->isVisible());
+        QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        // A bound VIDEO_FULL_SCREEN replaces "F" / "Escape".
+        // Open editor: at 1.25 s (frame 30) the second Line, paused, out.
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(application->video().play());
+        QTRY_VERIFY(application->video().playing());
+        QVERIFY(application->video().pause());
+        QTRY_VERIFY(!application->video().playing());
+        const int at = application->video().frame();
+        QVERIFY(at >= 24 && at < 48);
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        application->settingsStore()->set("workspace.editorOn", false);
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenMenuOpenEditor"), "triggered"));
+        QVERIFY(!fs.active());
+        QVERIFY(application->settingsStore()->boolean("workspace.editorOn"));
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        // Ctrl+E (GLOBAL_EDITOR) in fullscreen is Open editor as well.
+        QVERIFY(application->video().showFrameAt(5));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 5);
+        QVERIFY(fs.toggle(0));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        keysNeverRepeat();
+        QTest::keyClick(fsWindow, Qt::Key_E, Qt::ControlModifier);
+        QTRY_VERIFY(!fs.active());
+        QTRY_COMPARE(session->selection().active, std::optional(lines[0]->id));
+    }
+
+    // A double click on the picture switches fullscreen; leaving that way
+    // selects the Line shown at the video's time with
+    // GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN (after the Line editor's
+    // change is sent), and only for a Document with a file.
+    void videoFullscreenDoubleClickAndVisibleLine()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto *session = v5Session();
+        const auto lines = session->document().lines();
+        auto &tools = application->visualTools();
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, videoPoint(tools.videoRect().center()));
+        QTRY_VERIFY(fs.active());
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto centre = [&] { return item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint(); };
+        // The setting off (its default): the active Line stays.
+        QVERIFY(!application->settingsStore()->boolean("grid.setVisibleLineAfterFullScreen"));
+        QTest::mouseDClick(fsWindow, Qt::LeftButton, Qt::NoModifier, centre());
+        QTRY_VERIFY(!fs.active());
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+        // On: the second Line, and the editor's change is sent first.
+        application->settingsStore()->set("grid.setVisibleLineAfterFullScreen", true);
+        application->editor().setActorText(QStringLiteral("Narrator"));
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, videoPoint(tools.videoRect().center()));
+        QTRY_VERIFY(fs.active());
+        QTest::mouseDClick(fsWindow, Qt::LeftButton, Qt::NoModifier, centre());
+        QTRY_VERIFY(!fs.active());
+        QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
+        QVERIFY(session->document().lines()[0]->actor == std::u8string(u8"Narrator"));
+        // A modifier held: no fullscreen (`event.GetModifiers() == 0`).
+        QTest::mouseDClick(window, Qt::LeftButton, Qt::ShiftModifier, videoPoint(tools.videoRect().center()));
+        QTest::qWait(100);
+        QVERIFY(!fs.active());
+        // Esc leaves without selecting (Fullscreen::OnKeyPress).
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(session->selection().active, std::optional(lines[0]->id));
+        QVERIFY(fs.toggle(0));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QTest::keyClick(fsWindow, Qt::Key_Escape);
+        QVERIFY(!fs.active());
+        QCOMPARE(session->selection().active, std::optional(lines[0]->id));
+    }
+
+    // "Show toolbar" off: the picture takes the whole window, the panel shows
+    // when the pointer goes below the picture and hides over it (the picture
+    // then has the keyboard), and the pointer hides after a second.
+    void videoFullscreenPanelFollowsThePointer()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *panel = fullscreenItem("videoFullscreenPanel");
+        auto *presenter = item("videoPresenter");
+        auto *showToolbar = fullscreenItem("fullscreenShowToolbar");
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier,
+                          showToolbar->mapToScene(QPointF(showToolbar->width() / 2, showToolbar->height() / 2)).toPoint());
+        QVERIFY(!fs.showToolbar());
+        QVERIFY(!showToolbar->property("checked").toBool());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QVERIFY(!fullscreenItem("fullscreenToolbar")->isVisible());
+        QVERIFY(panel->isVisible()); // still under the pointer
+        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
+        // Over the picture: hidden, the keyboard to the picture.
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3));
+        QTRY_VERIFY(!panel->isVisible());
+        QVERIFY(!fs.panelShown());
+        QVERIFY(fullscreenItem("videoFullscreenKeys")->hasActiveFocus());
+        // A second without moving hides the pointer.
+        QTRY_COMPARE_WITH_TIMEOUT(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::BlankCursor), 3000);
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3 + 10));
+        QTRY_COMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
+        // Below the picture: shown again.
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+        QTRY_VERIFY(panel->isVisible());
+        // Left out, the choice stays for the next time (the cached frame's check).
+        QVERIFY(fs.leave());
+        QVERIFY(fs.toggle(0));
+        QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(!fs.showToolbar());
+        QVERIFY(!panel->isVisible()); // `if (!m_PanelOnFullscreen) panel->Hide()`
+        // Pinned again: the picture ends above the panel.
+        fs.setShowToolbar(true);
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+        QTRY_VERIFY(panel->isVisible());
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
+        QTest::qWait(50);
+        QVERIFY(panel->isVisible()); // pinned: the pointer never hides it
+        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), -1); // the tool's cursor
+        // The wheel over the panel is the volume's, Ctrl held or not (in
+        // fullscreen; the docked panel ignores Ctrl+wheel, V4-ctrl-wheel).
+        const int volume = application->videoView().volume();
+        const QPoint below = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
+        QWheelEvent wheel(below, fsWindow->mapToGlobal(below), QPoint(), QPoint(0, -120), Qt::NoButton,
+                          Qt::ControlModifier, Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(fsWindow, &wheel);
+        QTRY_COMPARE(application->videoView().volume(), volume - 3);
+    }
+
+    // The fullscreen window follows the video: Unload video leaves it, and a
+    // single video opened with video.fullScreenOnStart (legacy OpenFiles'
+    // OpenFile(path, fulls)) goes fullscreen once shown.
+    void videoFullscreenFollowsTheVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QVERIFY(fs.toggle(0));
+        QVERIFY(application->video().unloadVideo());
+        QVERIFY(!fs.active());
+        QTRY_VERIFY(!fullscreenWindow()->isVisible());
+        QCOMPARE(item("videoPresenter")->window(), window);
+        auto *root = engine->rootObjects().first();
+        const QString video = folder.filePath(QStringLiteral("clip.mkv"));
+        // Off (the default): opened in the panel.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        QTest::qWait(100);
+        QVERIFY(!fs.active());
+        QVERIFY(application->video().unloadVideo());
+        // On: fullscreen once it is shown.
+        application->settingsStore()->set("video.fullScreenOnStart", true);
+        QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
+        QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
+        QTRY_VERIFY(fullscreenWindow()->isVisible());
+        QVERIFY(fs.leave());
+    }
+
+    // V5: screenshots of the fullscreen window for review in the four themes,
+    // written to HIKARI_SURFACE_SHOT_DIR when it is set: the pinned panel with
+    // its toolbar row (video-fullscreen-<theme>.png), the panel shown under the
+    // pointer without the toolbar (video-fullscreen-panel-<theme>.png) and the
+    // fullscreen context menu (video-fullscreen-menu-<theme>.png).
+    void videoFullscreenScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &settings = *application->settingsStore();
+        auto &fs = application->videoFullscreen();
+        QVERIFY(application->video().showFrameAt(30));
+        QTRY_COMPARE(application->video().session().shownFrame().value_or(-1), 30);
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *root = engine->rootObjects().first();
+        auto *fsMenu = named("videoFullscreenMenu");
+        auto &tools = application->visualTools();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            fs.setShowToolbar(true);
+            QTRY_VERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
+            QTest::qWait(300);
+            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen") + suffix));
+            // Unpinned, the pointer below the picture.
+            fs.setShowToolbar(false);
+            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
+            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+            QTRY_VERIFY(fullscreenItem("videoFullscreenPanel")->isVisible());
+            QTest::qWait(300);
+            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-panel") + suffix));
+            // The context menu over the picture.
+            const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
+            QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+            QTRY_VERIFY(fsMenu->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-menu") + suffix));
+            QMetaObject::invokeMethod(fsMenu, "close");
+            QTRY_VERIFY(!fsMenu->property("visible").toBool());
+        }
+        fs.setShowToolbar(true);
+        QVERIFY(fs.leave());
+    }
+
 };
 
 QTEST_MAIN(ShellTest)

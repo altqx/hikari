@@ -565,6 +565,17 @@
    ]
   },
   {
+   "role": "show-toolbar",
+   "file": "show-toolbar.svg",
+   "label": "Show toolbar",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-fullscreen"
+   ]
+  },
+  {
    "role": "open-audio",
    "file": "open-audio.svg",
    "label": "Open audio",

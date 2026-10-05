@@ -81,6 +81,9 @@ add_subdirectory(style)
 target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)
 # V4: the video view's zoom, aspect, volume, context menu and snapshots.
 target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller.h)
+# V5: video fullscreen and the monitor choice.
+target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
+qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.

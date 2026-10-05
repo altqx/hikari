@@ -4,6 +4,7 @@
 
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
+#include "hikari/application/recent_files.h"
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QGuiApplication>
@@ -39,9 +40,14 @@ int run(int argc, char **argv, StartupMode mode)
     options.systemUiLanguages = QLocale::system().uiLanguages();
     Application application(options);
     application.setStartedWithPaths(argc > 1); // P6: no session at start then
-    // A path on the command line opens as the editing target.
-    if (argc > 1)
-        application.openFile(QString::fromLocal8Bit(argv[1]));
+    // A path on the command line opens as the editing target. V5: a video
+    // opens as legacy OpenFiles opens one file (hikarisubApp.cpp:483-487),
+    // fullscreen with video.fullScreenOnStart, once the window is up.
+    const QString startPath = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QString();
+    const bool startVideo = !startPath.isEmpty() &&
+                            application::openKindOf(startPath.toStdString(), true) == application::OpenKind::Video;
+    if (argc > 1 && !startVideo)
+        application.openFile(startPath);
 
     // K2: the controls draw with the theme layer's palette.
     hikari::ui::theme::chooseControlsStyle();
@@ -55,6 +61,8 @@ int run(int argc, char **argv, StartupMode mode)
     engine.loadFromModule("Hikari.Ui", "Main");
     if (engine.rootObjects().isEmpty())
         return 2;
+    if (startVideo)
+        QMetaObject::invokeMethod(engine.rootObjects().first(), "openSingleVideo", Q_ARG(QVariant, startPath));
     if (mode == StartupMode::ExitAfterWindowCreated)
         QTimer::singleShot(0, &app, [] { QCoreApplication::exit(0); });
     else // legacy CallAfter(CheckOnStartup): once the window is up
