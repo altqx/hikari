@@ -37,9 +37,10 @@ Popup {
     closePolicy: Popup.NoAutoClose
     visible: controller.popupShown && (field.activeFocus || menuOpen)
 
+    // K2: the popup surface and its boundary.
     background: Rectangle {
-        color: popup.palette.window
-        border.color: popup.palette.mid
+        color: Theme.panel
+        border.color: Theme.line
     }
 
     contentItem: Item {
@@ -67,20 +68,21 @@ Popup {
                 Accessible.name: modelData
                 Accessible.selected: selected
                 Accessible.selectable: true
-                // The selected row: a rectangle inset by 2 (OnPaint).
+                // The selected row: a rectangle inset by 2 (OnPaint), on the
+                // theme's selected background with the accent's outline (K2).
                 Rectangle {
                     anchors.fill: parent
                     anchors.margins: 1
                     visible: row.selected
-                    color: popup.palette.highlight
-                    border.color: popup.palette.highlight.darker(1.3)
+                    color: Theme.select
+                    border.color: Theme.accent
                 }
                 Text {
                     x: 3
                     anchors.verticalCenter: parent.verticalCenter
                     text: row.modelData
                     font: popup.field.font
-                    color: row.selected ? popup.palette.highlightedText : popup.palette.windowText
+                    color: Theme.text
                     textFormat: Text.PlainText
                 }
             }
