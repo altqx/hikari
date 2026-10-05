@@ -22,6 +22,8 @@
 //                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
 //                    tagged BT.601 limited, BT.709 limited and BT.709 full
 //                    range (I2: the decoder must convert with the tags)
+//          colorhd   the same patches at 1280x720 with no matrix or range
+//                    tags (V4: legacy's guess for an untagged frame)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -38,7 +40,10 @@ extern "C" {
 
 namespace {
 
-constexpr int kWidth = 320, kHeight = 240, kBlocks = 4;
+// The frame size: 320x240, but V4's untagged HD colour fixture is 1280x720
+// (legacy took an untagged frame wider than 1024 or at least 600 high as BT.709).
+int kWidth = 320, kHeight = 240;
+constexpr int kBlocks = 4;
 
 void drawIndex(AVFrame *f, int index)
 {
@@ -143,7 +148,7 @@ int writeAudioOnly(const std::string &out)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd>");
     const std::string out = argv[1], kind = argv[2];
     if (kind == "audioonly")
         return writeAudioOnly(out);
@@ -151,6 +156,11 @@ int main(int argc, char **argv)
     const bool vfr = kind == "vfr";
     const bool tracks = kind == "tracks";
     const bool color = kind.starts_with("color");
+    const bool untagged = kind == "colorhd";
+    if (untagged) {
+        kWidth = 1280;
+        kHeight = 720;
+    }
     const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
@@ -170,7 +180,9 @@ int main(int argc, char **argv)
     enc->bit_rate = 2'000'000;
     if (kind == "sar") // T1: an anamorphic frame
         enc->sample_aspect_ratio = AVRational{32, 27};
-    if (color) {
+    if (untagged) {
+        enc->bit_rate = 8'000'000; // flat patches survive quantization; no tags
+    } else if (color) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
         enc->color_trc = kind == "color601" ? AVCOL_TRC_SMPTE170M : AVCOL_TRC_BT709;

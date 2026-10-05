@@ -52,6 +52,10 @@ struct SourceTimeline {
     // the video's aspect (ProviderFFMS2.cpp:362-366).
     int width = 0, height = 0;
     int sarNum = 0, sarDen = 0;
+    // V4: frame 0's Y'CbCr matrix and range (FFMS_Frame ColorSpace and
+    // ColorRange, FFMS_CS_* / FFMS_CR_*), as legacy ProviderFFMS2::Init read
+    // them for the Script properties matrix (ProviderFFMS2.cpp:368-369).
+    int colorSpace = 2, colorRange = 0; // unspecified
 };
 
 // How an open indexes (A1; legacy ProviderFFMS2::Init). Legacy indexed the
@@ -144,6 +148,17 @@ public:
     // Starts a resampled stream over the open audio track (replacing any other).
     virtual void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) = 0;
     virtual void nextPcm(std::int64_t maxFrames, PcmReady done) = 0;
+    // V4: the converter's input matrix and range (FFMS_SetInputFormatV with
+    // FFMS_CS_* / FFMS_CR_* values, the pixel format kept); frames decoded
+    // after it use them. A port that cannot convert otherwise reports
+    // Unsupported.
+    using MatrixSet = std::function<void(std::expected<void, SourceError>)>;
+    virtual void setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
+    {
+        (void)colorSpace;
+        (void)colorRange;
+        done(std::unexpected(SourceError::Unsupported));
+    }
     // Resolves every outstanding frame and audio request as Cancelled now;
     // the helper's late results are dropped.
     virtual void cancelReads() = 0;

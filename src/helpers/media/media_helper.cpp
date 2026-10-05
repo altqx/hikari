@@ -201,6 +201,10 @@ void open(Source &source, Reader &in, Responder &r)
     const FFMS_Frame *first = FFMS_GetFrame(video.get(), 0, &err);
     if (!first)
         return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    // V4: legacy ProviderFFMS2::Init's m_CS and m_CR, read from frame 0
+    // before the output format is set (ProviderFFMS2.cpp:368-369, 378);
+    // setting it resets the frame's colour fields.
+    const int firstColorSpace = first->ColorSpace, firstColorRange = first->ColorRange;
     const int formats[] = {AV_PIX_FMT_BGRA, -1};
     if (FFMS_SetOutputFormatV2(video.get(), formats, first->EncodedWidth, first->EncodedHeight,
                                FFMS_RESIZER_BICUBIC, &err) != 0)
@@ -230,6 +234,7 @@ void open(Source &source, Reader &in, Responder &r)
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
     // T1: legacy ProviderFFMS2::Init's frame size and SAR (ProviderFFMS2.cpp:362-366).
     out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
+    out.i32(firstColorSpace).i32(firstColorRange); // V4
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -260,6 +265,21 @@ void frame(Source &source, Reader &in, Responder &r)
     Writer out;
     out.i32(width).i32(height).i32(width * 4).i64(FFMS_GetFrameInfo(t, n)->PTS).bytes(pixels);
     r.terminal(Outcome::Ok, out.take());
+}
+
+// V4: legacy ProviderFFMS2's FFMS_SetInputFormatV (ProviderFFMS2.cpp:401,
+// 407, 958, 960): the matrix and range, the source's pixel format kept.
+void inputMatrix(Source &source, Reader &in, Responder &r)
+{
+    const int colorSpace = in.i32();
+    const int colorRange = in.i32();
+    if (!in.ok() || !source.video)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not open"));
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (FFMS_SetInputFormatV(source.video.get(), colorSpace, colorRange, FFMS_GetPixFmt(""), &err) != 0)
+        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    r.terminal(Outcome::Ok, {});
 }
 
 void openAudio(Source &source, Reader &in, Responder &r)
@@ -621,6 +641,8 @@ int main()
             return openDisplayAudio(source, in, r);
         case media::Command::Probe:
             return probe(in, r);
+        case media::Command::InputMatrix:
+            return inputMatrix(source, in, r);
         case media::Command::DisplayRead:
             return displayRead(source, in, r);
         }

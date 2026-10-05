@@ -42,6 +42,7 @@ public:
     void openAudio(int track, AudioOpened done) override;
     void audio(std::int64_t start, std::int64_t count, AudioReady done) override;
     void cancelReads() override;
+    void setInputMatrix(int colorSpace, int colorRange, MatrixSet done) override;
     void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) override;
     void nextPcm(std::int64_t maxFrames, PcmReady done) override;
     void chapters(const std::string &path, Listed done) override;
