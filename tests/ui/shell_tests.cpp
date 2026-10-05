@@ -12791,6 +12791,20 @@ private slots:
         auto *submenu = named("videoMenuFilters");
         QTRY_VERIFY(submenu->property("opened").toBool());
         QCOMPARE(submenu->property("count").toInt(), names.size());
+        // With HIKARI_SURFACE_SHOT_DIR set, the open menus are saved in Dark
+        // and Light for review (filters-menu-<theme>.png).
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            for (const char *code : {"dark", "light"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *back = submenu->property("background").value<QQuickItem *>();
+                QTRY_COMPARE(back->property("color").value<QColor>(), ui::theme::current().roles.field);
+                QTest::qWait(200);
+                QVERIFY(back->window()->grabWindow().save(out + QStringLiteral("/filters-menu-%1.png").arg(QLatin1String(code))));
+            }
+        }
         for (int i = 0; i < names.size(); ++i) {
             QQuickItem *item = nullptr;
             QMetaObject::invokeMethod(submenu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
