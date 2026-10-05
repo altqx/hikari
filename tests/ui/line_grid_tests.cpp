@@ -278,7 +278,9 @@ private slots:
                 QVERIFY(content.gridAlternate != roles.panel);
             expect(right, rowY(2), roles.select, "selected row");
             expect(1, rowY(2), roles.accent, "selected marker");
-            expect(4, rowY(2), roles.select, "past the 3-wide marker");
+            // E6: the number cell, at the row's left edge, is in its label colour.
+            const QColor label = LineTableModel::themeLabelColours(theme::isDark(code))[0];
+            expect(4, rowY(2), label, "past the 3-wide marker");
             expect(0, rowY(3), roles.accent, "active outline (left)");
             expect(719, rowY(3), roles.accent, "active outline (right)");
             expect(right, rowY(3), content.gridAlternate, "active row");
@@ -323,7 +325,8 @@ private slots:
         for (const auto code : theme::kCodes) {
             store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
             const auto &roles = theme::current().roles;
-            const auto &content = theme::current().content;
+            // E6: the number cell, at the row's left edge, is in its label colour.
+            const QColor label = LineTableModel::themeLabelColours(theme::isDark(code))[0];
             QVERIFY(roles.focus == roles.text && roles.focus != roles.accent && roles.focus != roles.select);
             const auto paint = [&] {
                 QImage image(720, 160, QImage::Format_ARGB32);
@@ -344,8 +347,8 @@ private slots:
             QTRY_VERIFY(!grid.hasActiveFocus());
             QImage image = paint();
             expect(image, 0, mid, roles.accent, "current outline");
-            expect(image, 1, mid, content.gridAlternate, "no ring");
-            expect(image, middle, top(1) + 1, content.gridAlternate, "no ring (top)");
+            expect(image, 1, mid, label, "no ring");
+            expect(image, middle, top(1) + 1, theme::current().content.gridAlternate, "no ring (top)");
             // Focused: the ring inside the outline, on all four sides.
             grid.forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY(grid.hasActiveFocus());
@@ -353,7 +356,7 @@ private slots:
             expect(image, 0, mid, roles.accent, "current outline (left)");
             expect(image, 1, mid, roles.focus, "ring (left)");
             expect(image, 2, mid, roles.focus, "ring (left, second)");
-            expect(image, 3, mid, content.gridAlternate, "inside the ring");
+            expect(image, 3, mid, label, "inside the ring");
             expect(image, 719, mid, roles.accent, "current outline (right)");
             expect(image, 718, mid, roles.focus, "ring (right)");
             expect(image, 717, mid, roles.focus, "ring (right, second)");
@@ -363,18 +366,19 @@ private slots:
             expect(image, middle, top(2) - 2, roles.focus, "ring (bottom)");
             expect(image, middle, top(2) - 1, roles.accent, "current outline (bottom)");
             // only on the current row
-            expect(image, 1, top(0) + int(rh / 2), roles.panel, "another row");
+            expect(image, 1, top(0) + int(rh / 2), label, "another row");
             expect(image, 1, top(2) + int(rh / 2), roles.accent, "a selected row's marker");
-            expect(image, 4, top(2) + int(rh / 2), roles.select, "a selected row");
+            expect(image, 4, top(2) + int(rh / 2), label, "a selected row");
+            expect(image, middle, top(2) + int(rh / 2), roles.select, "a selected row (its cells)");
             // A selected current row: the marker over the ring's left side.
             model.setSelection({core::LineId{3}, {core::LineId{3}}}, core::LineId{3});
             image = paint();
             const int selectedMid = top(2) + int(rh / 2);
             expect(image, 1, selectedMid, roles.accent, "marker over the ring");
-            expect(image, 3, selectedMid, roles.select, "past the marker");
+            expect(image, 3, selectedMid, label, "past the marker");
             expect(image, middle, top(2) + 1, roles.focus, "ring (top) on a selected row");
             expect(image, 718, selectedMid, roles.focus, "ring (right) on a selected row");
-            expect(image, 1, mid, content.gridAlternate, "the ring left with the current Line");
+            expect(image, 1, mid, label, "the ring left with the current Line");
             model.setSelection({core::LineId{2}, {core::LineId{3}}}, core::LineId{3});
             if (QTest::currentTestFailed())
                 return;
@@ -454,11 +458,12 @@ private slots:
         const double rh = grid.rowHeight();
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
         const QRectF number = grid.cellRect(0, 0);
-        // A pixel of the cell left of the number's text.
-        QCOMPARE(image.pixelColor(2, rowY(0)), colours[0]);
-        QCOMPARE(image.pixelColor(2, rowY(1)), colours[1]); // selected: still its label colour
-        QCOMPARE(image.pixelColor(2, rowY(2)), colours[2]);
-        QCOMPARE(image.pixelColor(2, rowY(3)), colours[3]);
+        // A pixel of the cell left of the number's text, past a selected
+        // row's 3-wide accent marker (K2).
+        QCOMPARE(image.pixelColor(3, rowY(0)), colours[0]);
+        QCOMPARE(image.pixelColor(3, rowY(1)), colours[1]); // selected: still its label colour
+        QCOMPARE(image.pixelColor(3, rowY(2)), colours[2]);
+        QCOMPARE(image.pixelColor(3, rowY(3)), colours[3]);
         // The mark's centre: filled for changed, the label colour inside a ring for saved.
         const int markX = int(number.right() - 6.5);
         QVERIFY(image.pixelColor(markX, rowY(1)) != colours[1]);
@@ -476,11 +481,10 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
     }
 
-    // E6 (E6-mark-shape): the dot and the ring take the palette's roles, not
-    // a fixed colour: Text, or Base where Text would not stand out from the
-    // label colour, so the mark stays visible under either palette until
-    // K2's Theme roles replace them.
-    void changedLineMarkTakesPaletteRoles()
+    // E6 (E6-mark-shape): the dot and the ring take the theme layer's roles,
+    // not a fixed colour: text, or field where text would not stand out from
+    // the label colour, so the mark stays visible in every theme (K2).
+    void changedLineMarkTakesThemeRoles()
     {
         const char *script = "[Events]\n"
                              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,changed\n"
@@ -490,18 +494,23 @@ private slots:
         LineTableModel model;
         model.setChangeState([](const core::LineRecord &l) { return l.id.value == 1 ? 1 : 2; });
         model.setDocument(core::loadAss(bytes).document);
-        const QPalette original = QGuiApplication::palette();
-        const auto colours = LineTableModel::themeLabelColours(true);
+        SettingsStore store;
+        auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
+        theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
         const auto distance = [](const QColor &a, const QColor &b) {
             return std::abs(a.red() - b.red()) + std::abs(a.green() - b.green()) + std::abs(a.blue() - b.blue());
         };
-        // A light Text on the dark labels draws in Text; a dark Text draws in Base.
-        const QColor light(0xFF, 0xD0, 0x40), dark(0x10, 0x18, 0x08);
-        for (const bool lightText : {true, false}) {
-            QPalette palette = original;
-            palette.setColor(QPalette::Text, lightText ? light : dark);
-            palette.setColor(QPalette::Base, lightText ? dark : light);
-            QGuiApplication::setPalette(palette);
+        for (const auto code : theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
+            const auto &roles = theme::current().roles;
+            const auto colours = LineTableModel::themeLabelColours(theme::isDark(code));
+            QCOMPARE(model.headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList().value(2).value<QColor>(),
+                     colours[2]); // the model follows the theme
+            const auto markOn = [&](const QColor &label) {
+                return theme::contrastRatio(roles.field, label) > theme::contrastRatio(roles.text, label) ? roles.field
+                                                                                                         : roles.text;
+            };
             LineGrid grid;
             grid.setSize(QSizeF(720, 100));
             grid.setModel(&model);
@@ -512,17 +521,17 @@ private slots:
             const double rh = grid.rowHeight();
             const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
             const int markX = int(grid.cellRect(0, 0).right() - 6.5);
-            // The dot's centre is the mark colour, light in both cases.
-            QVERIFY2(distance(image.pixelColor(markX, rowY(0)), light) <= 6,
-                     qPrintable(image.pixelColor(markX, rowY(0)).name()));
+            const QString name = theme::codeName(code);
+            // The dot's centre is the mark colour.
+            QVERIFY2(distance(image.pixelColor(markX, rowY(0)), markOn(colours[1])) <= 6,
+                     qPrintable(name + QLatin1Char(' ') + image.pixelColor(markX, rowY(0)).name()));
             // The ring: the label colour inside, the mark colour around it.
             QCOMPARE(image.pixelColor(markX, rowY(1)), colours[2]);
             int nearest = 1000;
             for (int x = markX - 3; x <= markX + 3; ++x)
-                nearest = std::min(nearest, distance(image.pixelColor(x, rowY(1)), light));
-            QVERIFY2(nearest < distance(colours[2], light) / 2, qPrintable(QString::number(nearest)));
+                nearest = std::min(nearest, distance(image.pixelColor(x, rowY(1)), markOn(colours[2])));
+            QVERIFY2(nearest < distance(colours[2], markOn(colours[2])) / 2, qPrintable(name + QLatin1Char(' ') + QString::number(nearest)));
         }
-        QGuiApplication::setPalette(original);
     }
 
     // E6: hidden tags as painted (the Text column's swapped text).

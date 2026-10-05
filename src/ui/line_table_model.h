@@ -113,10 +113,13 @@ public:
     static ComparisonColours themeComparisonColours();
     void setComparisonColours(const ComparisonColours &colours);
     // E6: the label colours are fixed per theme as well: legacy's theme
-    // defaults (config.cpp:422-425); the Grid uses the dark ones until the
-    // theme model arrives.
+    // defaults (config.cpp:422-425), the dark ones for Dark and High
+    // contrast black, the light ones for Light and High contrast white. The
+    // model follows the theme (K2).
     using LabelColours = std::array<QColor, 4>;
     static LabelColours themeLabelColours(bool dark);
+    static LabelColours themeLabelColours();
+    void setLabelColours(const LabelColours &colours);
     // E6: a Line's changed-Line mark, 0, 1 or 2 (EditSession::changeState),
     // read at the next setDocument. Unset: 0.
     using ChangeState = std::function<int(const core::LineRecord &)>;
@@ -206,7 +209,7 @@ private:
     int m_hidden = 0;
     std::optional<application::LegacyTimebase> m_frames;
     ComparisonColours m_comparisonColours = themeComparisonColours();
-    LabelColours m_labelColours = themeLabelColours(true);
+    LabelColours m_labelColours = themeLabelColours();
 };
 
 // Filtered view over a LineTableModel. Hidden Lines stay selected: the

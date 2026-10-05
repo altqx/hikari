@@ -95,8 +95,11 @@ void LineTableModel::setHiddenColumns(int mask)
 
 LineTableModel::LineTableModel(QObject *parent) : QAbstractTableModel(parent)
 {
-    // K2: the theme's comparison colours, live.
-    theme::onChanged(this, [this] { setComparisonColours(themeComparisonColours()); });
+    // K2: the theme's comparison and (E6) label colours, live.
+    theme::onChanged(this, [this] {
+        setComparisonColours(themeComparisonColours());
+        setLabelColours(themeLabelColours());
+    });
 }
 
 void LineTableModel::setFrameTimebase(std::optional<application::LegacyTimebase> frames)
@@ -192,6 +195,19 @@ LineTableModel::LabelColours LineTableModel::themeLabelColours(bool dark)
     if (dark)
         return {QColor(0x2F, 0x31, 0x36), QColor(0x32, 0x2F, 0x4E), QColor(0x20, 0x22, 0x25), QColor(0x92, 0x5B, 0x1F)};
     return {QColor(0x7F, 0x7F, 0x7F), QColor(0xB0, 0xAD, 0xD8), QColor(0xBF, 0xBF, 0xBF), QColor(0x92, 0x5B, 0x1F)};
+}
+
+LineTableModel::LabelColours LineTableModel::themeLabelColours()
+{
+    return themeLabelColours(theme::isDark(theme::current().code));
+}
+
+void LineTableModel::setLabelColours(const LabelColours &colours)
+{
+    if (colours == m_labelColours)
+        return;
+    m_labelColours = colours;
+    emit headerDataChanged(Qt::Horizontal, 0, 0);
 }
 
 const QVariantList &LineTableModel::spellMarksOf(const Row &row) const
