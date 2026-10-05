@@ -5188,6 +5188,64 @@ private slots:
         QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old1.w64"))));
         QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/old2.w64"))));
         QCOMPARE(QDir(folder.filePath(QStringLiteral("AudioCache"))).entryList(QDir::Files).size(), 10);
+        // P9: one dropped file is OpenFile alone (HikariSubFrame.cpp:1856-1859),
+        // without OpenFiles' DeleteAudioCache. OpenFile's (1407-1426) acts
+        // with a video open after its LoadVideo: dropped keyframes return
+        // before it (1335-1341) and trim nothing, though a video is open;
+        // dropped subtitles trim nothing when dropped, and leave the tab
+        // without a video (P6); a dropped video trims once it is ready.
+        const auto cacheCount = [&] {
+            return QDir(folder.filePath(QStringLiteral("AudioCache"))).entryList(QDir::Files).size();
+        };
+        for (int i = 0; i < 2; ++i) {
+            const QString old = folder.filePath(QStringLiteral("AudioCache/older%1.w64").arg(i));
+            QFile f(old);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("x");
+            f.close();
+            setAccessed(old, base.addDays(-10 + i));
+        }
+        QCOMPARE(cacheCount(), 12);
+        const QString keyframes = folder.filePath(QStringLiteral("drop_keyframes.txt"));
+        {
+            QFile k(keyframes);
+            QVERIFY(k.open(QIODevice::WriteOnly));
+            k.write("# keyframe format v1\nfps 0\n0\n24\n");
+        }
+        QCOMPARE(video.session().state(), application::VideoSession::State::Ready);
+        QCOMPARE(application->openDropped({QUrl::fromLocalFile(keyframes)}).value(QStringLiteral("kind")).toString(),
+                 QString());
+        QCOMPARE(cacheCount(), 12);
+        const QString subs = folder.filePath(QStringLiteral("subs/ep.ass"));
+        QVERIFY(QDir().mkpath(folder.filePath(QStringLiteral("subs"))));
+        {
+            QFile f(subs);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,ep\n");
+        }
+        QVariantMap dropped = application->openDropped({QUrl::fromLocalFile(subs)});
+        QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("subtitles"));
+        QCOMPARE(cacheCount(), 12);
+        // as Main.qml's openSubtitles goes on
+        const QVariantMap open = application->reviewOpen(dropped.value(QStringLiteral("path")).toString());
+        QVERIFY(open.value(QStringLiteral("ok")).toBool());
+        QVERIFY(open.value(QStringLiteral("rows")).toList().isEmpty());
+        application->finishClose();
+        QCOMPARE(video.session().state(), application::VideoSession::State::Closed);
+        QCOMPARE(cacheCount(), 12);
+        dropped = application->openDropped({QUrl::fromLocalFile(clip)});
+        QCOMPARE(dropped.value(QStringLiteral("kind")).toString(), QStringLiteral("video"));
+        QCOMPARE(cacheCount(), 12);
+        // as TabCommands.openVideoFile goes on: no subtitles named as the video
+        QVERIFY(application->openVideoFile(clip).value(QStringLiteral("subtitles")).toString().isEmpty());
+        application->openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(cacheCount(), 10, 20000);
+        QVERIFY(QFileInfo::exists(cache));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/older0.w64"))));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("AudioCache/older1.w64"))));
         delete application;
         application = nullptr;
     }

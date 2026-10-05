@@ -419,7 +419,13 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         return result(QString());
     }
     if (files.size() == 1) {
-        // OpenFiles with one file: OpenFile(files[0]).
+        // OpenFiles with one file: OpenFile(files[0]) and return, without
+        // OpenFiles' own DeleteAudioCache (HikariSubFrame.cpp:1856-1859).
+        // OpenFile's (1407-1426) acts only with a video open after its
+        // LoadVideo: here when the video it opens is ready
+        // (followVideoInAudio). Subtitles leave the tab without a video
+        // until their associated one opens (P6's replaceTarget). A script,
+        // keyframes or a refused file return before it (1327-1341).
         const QString &file = files.front();
         switch (application::openKindOf(file.toStdString(), true)) {
         case application::OpenKind::Subtitles: return result(QStringLiteral("subtitles"), file);
@@ -432,7 +438,6 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
             break;
         case application::OpenKind::Refused: break;
         }
-        trimAudioCache();
         return result(QString());
     }
     // Several (OpenFiles, 1835-1852): subtitles, scripts (loaded at once) and
