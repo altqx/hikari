@@ -27,6 +27,7 @@
 #include <QJsonObject>
 #include <QPainter>
 #include <QPalette>
+#include <QProcess>
 #include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
@@ -35,6 +36,7 @@
 #include <QQuickWindow>
 #include <QRegularExpression>
 #include <QScopeGuard>
+#include <QStandardPaths>
 #include <QSvgRenderer>
 #include <QTemporaryDir>
 #include <QXmlStreamReader>
@@ -413,6 +415,43 @@ private slots:
         const bool accent = ui::icons::source(role).contains("<g id=\"accent\">");
         QCOMPARE(blue, accent);
         QVERIFY(red || (accent && role == QLatin1String("document-modified"))); // the dot is its accent alone
+    }
+
+    // tools/icons/contact_sheet.py, the set's HTML contact sheet for review,
+    // shows the icons in the theme layer's colours: it reads each theme's
+    // background, text, accent (Light and Dark with the default preset) and
+    // disabled colours from theme.cpp, as IconTheme takes them. (It read
+    // K1's icon colour settings, which K2 withdrew, and exited.) Skipped
+    // without a Python 3 interpreter.
+    void contactSheetToolTakesTheThemeColours()
+    {
+        QString python = QStandardPaths::findExecutable(QStringLiteral("python3"));
+        if (python.isEmpty())
+            python = QStandardPaths::findExecutable(QStringLiteral("python"));
+        if (python.isEmpty())
+            QSKIP("no Python 3 interpreter");
+        QTemporaryDir dir;
+        QVERIFY(dir.isValid());
+        const QString page = dir.filePath(QStringLiteral("index.html"));
+        QProcess tool;
+        tool.start(python, {QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tools/icons/contact_sheet.py"), page});
+        QVERIFY(tool.waitForFinished(60000));
+        QVERIFY2(tool.exitStatus() == QProcess::NormalExit && tool.exitCode() == 0,
+                 qPrintable(QString::fromUtf8(tool.readAllStandardError() + tool.readAllStandardOutput())));
+        QFile file(page);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        const QString html = QString::fromUtf8(file.readAll());
+        const auto defaults = ui::theme::choiceFrom([](const char *) { return QVariant(); });
+        for (const auto code : ui::theme::kCodes) {
+            const auto r = ui::theme::resolve(code, defaults);
+            const QString id = ui::theme::codeName(code);
+            const auto hex = [](const QColor &c) { return c.name(QColor::HexRgb).toUpper(); };
+            const QString css = QStringLiteral(".%1{background:%2;color:%3}.%1 .accent{color:%4}"
+                                               ".%1 .hover,.%1 .hover .accent{color:%4}"
+                                               ".%1 .off,.%1 .off .accent{color:%5}")
+                                    .arg(id, hex(r.background), hex(r.text), hex(r.accent), hex(r.disabled));
+            QVERIFY2(html.contains(css), qPrintable(id + QStringLiteral(": expected ") + css));
+        }
     }
 
     // The icon colours are the theme's (K2): its text, accent (the accent
