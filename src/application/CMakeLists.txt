@@ -31,6 +31,8 @@ hikari_module(hikari_application ALLOW hikari_core)
 target_sources(hikari_application PRIVATE session_file.cpp)
 # R1: subtitle comparison (legacy SubsComparison and the tab menu's state).
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
+# P9: associated-file discovery and legacy Subs/ autosaves (read only).
+target_sources(hikari_application PRIVATE associated_files.cpp legacy_autosaves.cpp)
 # Y8: the font collector (renderer-verified collection).
 target_sources(hikari_application PRIVATE font_collector.cpp)
 # T1: the visual tools' shared transform, rail families, gestures, batch

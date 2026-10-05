@@ -108,3 +108,8 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# P9: associated-file discovery and the legacy Subs/ autosaves.
+hikari_add_gtest(hikari_application_associated_files_tests SOURCES associated_files_tests.cpp legacy_autosaves_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_compile_definitions(hikari_application_associated_files_tests PRIVATE
+    HIKARI_ASSOCIATION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/associations")
