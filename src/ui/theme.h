@@ -163,9 +163,12 @@ void endPreview();
 Qt::ColorScheme systemScheme();
 void forceSystemScheme(std::optional<Qt::ColorScheme> scheme);
 // The Qt Quick Controls style the theme's palette drives on every platform:
-// Fusion (the native Windows style draws with the system's colours, so the
-// four themes could not show there), unless QT_QUICK_CONTROLS_STYLE names
-// another. Called before the first engine loads the controls.
+// HikariStyle (src/ui/style), Fusion with every control outline in the
+// theme's boundary colour (the native Windows style draws with the system's
+// colours, so the four themes could not show there), unless
+// QT_QUICK_CONTROLS_STYLE names another. Called before the first engine
+// loads the controls.
+inline constexpr const char *kControlsStyle = "HikariStyle";
 void chooseControlsStyle();
 
 } // namespace theme

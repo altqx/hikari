@@ -9,6 +9,7 @@
 #include <QQuickStyle>
 #include <QStyleHints>
 #include <QtQml/qqmlengine.h>
+#include <QtQml/qqmlextensionplugin.h>
 
 #include <algorithm>
 #include <cmath>
@@ -553,8 +554,11 @@ void forceSystemScheme(std::optional<Qt::ColorScheme> scheme)
 
 void chooseControlsStyle()
 {
-    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE"))
-        QQuickStyle::setStyle(QStringLiteral("Fusion"));
+    if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {
+        QQuickStyle::setStyle(QString::fromLatin1(kControlsStyle));
+        // The controls the style leaves alone are Fusion's.
+        QQuickStyle::setFallbackStyle(QStringLiteral("Fusion"));
+    }
 }
 
 } // namespace theme
@@ -645,3 +649,6 @@ bool Theme::systemSchemeKnown() const
 } // namespace hikari::ui
 
 #include "theme.moc"
+
+// K2: the controls style (src/ui/style), a static QML plugin.
+Q_IMPORT_QML_PLUGIN(HikariStylePlugin)

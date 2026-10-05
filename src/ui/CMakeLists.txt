@@ -49,3 +49,7 @@ qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
 # engine's separators and group frames in the theme's colours.
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
 qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+# K2: the controls style (Fusion with the theme's control outlines), chosen by
+# theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
+add_subdirectory(style)
+target_link_libraries(hikari_ui PUBLIC hikari_ui_styleplugin)

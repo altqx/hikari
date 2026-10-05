@@ -189,6 +189,8 @@ private slots:
         // colour scheme; the tests set it themselves (an unknown scheme keeps
         // the chosen theme, Dark by default).
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
+        // The application's controls style (composition.cpp chooses it).
+        ui::theme::chooseControlsStyle();
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");
@@ -1068,6 +1070,9 @@ private slots:
             const QString path = it.next();
             const QString name = QFileInfo(path).fileName();
             if (name == QLatin1String("ShellMenu.qml") || name == QLatin1String("ShellMenuItem.qml"))
+                continue;
+            // K2: the controls style defines Menu itself (ShellMenu builds on it).
+            if (path.startsWith(QStringLiteral(HIKARI_UI_SOURCE_DIR "/style/")))
                 continue;
             QFile file(path);
             QVERIFY(file.open(QIODevice::ReadOnly));

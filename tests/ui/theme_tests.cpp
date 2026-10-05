@@ -23,6 +23,7 @@
 #include <QPainter>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QQuickStyle>
 #include <QScopeGuard>
 #include <QTextStream>
 #include <QtQml/qqmlextensionplugin.h>
@@ -80,6 +81,13 @@ class ThemeTests : public QObject {
     Q_OBJECT
 
 private slots:
+    void initTestCase()
+    {
+        // The application's controls style, chosen before any engine loads
+        // the controls (src/app/composition.cpp does the same).
+        ui::theme::chooseControlsStyle();
+    }
+
     void init()
     {
         ui::theme::useSettings(nullptr);
@@ -459,6 +467,87 @@ QtObject {
         QCOMPARE(object->property("accent").value<QColor>(), hex(0xFFFF00));
         QCOMPARE(object->property("panel").value<QColor>(), hex(0x080808));
         QVERIFY(object->property("highContrast").toBool());
+    }
+
+    // The controls style (src/ui/style): every control outline in the
+    // theme's boundary colour (the line role, the high-contrast border pick),
+    // live; Fusion's own, its window colour darkened 140%, measures about
+    // 1.1:1 against the Dark and High contrast black panels. The focused
+    // outline stays Fusion's accent-derived one.
+    void controlsOutlineInTheBoundaryColour()
+    {
+        QCOMPARE(QQuickStyle::name(), QStringLiteral("HikariStyle"));
+        ui::SettingsStore store;
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] {
+            ui::theme::useSettings(nullptr);
+            QGuiApplication::setPalette(before);
+        });
+        ui::theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
+        QQmlEngine engine;
+        QQmlComponent component(&engine);
+        component.setData(R"(
+import QtQuick
+import QtQuick.Controls
+Window {
+    width: 400; height: 400
+    property var outlines: [button.background.border.color, toolButton.background.border.color,
+        field.background.border.color, area.background.border.color, spin.background.border.color,
+        combo.background.border.color, check.indicator.border.color, radio.indicator.border.color,
+        group.background.border.color, frame.background.border.color, menu.background.border.color,
+        tab.background.border.color, tabBar.background.children[0].color]
+    // A control the style leaves alone is Fusion's (the qmldir's fallback),
+    // not Basic's: Fusion's slider handle is its SliderHandle item.
+    property string sliderHandle: String(slider.handle)
+    Column {
+        Button { id: button; text: "B" }
+        ToolButton { id: toolButton; text: "T" }
+        TextField { id: field }
+        TextArea { id: area }
+        SpinBox { id: spin }
+        ComboBox { id: combo; model: ["a"] }
+        CheckBox { id: check; text: "c" }
+        RadioButton { id: radio; text: "r" }
+        GroupBox { id: group; title: "g" }
+        Frame { id: frame }
+        TabBar { id: tabBar; TabButton { id: tab; text: "t" } }
+        Menu { id: menu; objectName: "menu" }
+        Slider { id: slider }
+    }
+}
+)", QUrl(QStringLiteral("qrc:/k2-controls.qml")));
+        std::unique_ptr<QObject> window(component.create());
+        QVERIFY2(window, qPrintable(component.errorString()));
+        QVERIFY2(window->property("sliderHandle").toString().startsWith(QStringLiteral("SliderHandle")),
+                 qPrintable(window->property("sliderHandle").toString()));
+        for (const Code code : ui::theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            const ui::theme::Roles &r = ui::theme::current().roles;
+            // The controls take the new application palette an event loop
+            // pass later; a closed menu when it opens (as the shell's do).
+            QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("menu")), "open");
+            QTRY_VERIFY_WITH_TIMEOUT(std::ranges::all_of(window->property("outlines").toList(),
+                                                         [&](const QVariant &c) { return c.value<QColor>() == r.line; }),
+                                     1000);
+            const auto outlines = window->property("outlines").toList();
+            QCOMPARE(outlines.size(), 13);
+            for (qsizetype i = 0; i < outlines.size(); ++i)
+                QVERIFY2(outlines[i].value<QColor>() == r.line,
+                         qPrintable(QStringLiteral("%1: control %2 outline %3, line %4").arg(ui::theme::codeName(code)).arg(i)
+                                        .arg(name(outlines[i].value<QColor>()), name(r.line))));
+            // Fusion's outline: what the controls drew before.
+            const QColor fusion = r.panel.darker(140);
+            if (code == Code::Dark || code == Code::HighContrastBlack)
+                QVERIFY(contrastRatio(fusion, r.panel) < 1.2);
+            if (ui::theme::isHighContrast(code))
+                QVERIFY(lowest(r.line, r) >= 7);
+        }
+        // The high-contrast border pick reaches the controls.
+        store.setValue(QStringLiteral("appearance.theme"), QStringLiteral("highContrastBlack"));
+        store.setValue(QString::fromLatin1(ui::theme::pickSetting(Code::HighContrastBlack, ui::theme::Pick::Border)),
+                       QStringLiteral("#00FF00"));
+        QTRY_COMPARE(window->property("outlines").toList().front().value<QColor>(), hex(0x00FF00));
     }
 
     // The swatch sheet for the user's review: per mode, the seven accents as
