@@ -16,7 +16,7 @@ foreach(input IN ITEMS "pl;pl.po" "ko_KR;ko_KR.po" "th_TH;th_TH.po" "ta;ta.po" "
     set(ts "${probe_dir}/legacy_plurals_${language}.ts")
     set(qm "${probe_dir}/legacy_plurals_${language}.qm")
     add_custom_command(OUTPUT "${qm}"
-        COMMAND hikari_i18n_migrate probe --po "${PROJECT_SOURCE_DIR}/Locale/${file}" --language ${language} --out "${ts}"
+        COMMAND ${HIKARI_I18N_RUN} $<TARGET_FILE:hikari_i18n_migrate> probe --po "${PROJECT_SOURCE_DIR}/Locale/${file}" --language ${language} --out "${ts}"
         COMMAND Qt6::lrelease -silent "${ts}" -qm "${qm}"
         DEPENDS hikari_i18n_migrate Qt6::lrelease "${PROJECT_SOURCE_DIR}/Locale/${file}"
         VERBATIM)
