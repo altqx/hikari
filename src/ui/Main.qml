@@ -38,6 +38,7 @@ ApplicationWindow {
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
+    required property var settingsImport // O3: SettingsImportController
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
 
     // Every registered macro, in load and registration order (the dynamic
@@ -641,6 +642,13 @@ ApplicationWindow {
                         text: qsTr("&Settings")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
+                }
+                // O3: the one-shot legacy settings importer (no legacy item).
+                ShellMenuItem {
+                    objectName: "importSettingsMenuItem"
+                    text: qsTr("Import legacy settings...")
+                    enabled: root.settingsImport.available
+                    onTriggered: settingsImportDialog.openDialog()
                 }
                 ShellMenuItem {
                     iconRole: "exit"
@@ -4116,6 +4124,11 @@ ApplicationWindow {
         id: styleManagerWindow
         styles: root.styleManager
         app: root.app
+    }
+    SettingsImportDialog {
+        id: settingsImportDialog
+        importer: root.settingsImport
+        anchors.centerIn: parent
     }
     SettingsDialog {
         id: settingsDialog

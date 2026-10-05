@@ -4133,6 +4133,88 @@ private slots:
                  int(open.value(QStringLiteral("catalogs")).toStringList().indexOf(accented)));
     }
 
+    // O3: File > Import legacy settings... (a ShellMenuItem) reviews a
+    // legacy installation's files, imports the chosen changes for the next
+    // start and rolls them back; the legacy files are never written.
+    void legacySettingsImportThroughTheWindow()
+    {
+        QTemporaryDir home, legacy;
+        QVERIFY(home.isValid() && legacy.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\n";
+        const QByteArray hotkeysText = "[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n";
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        for (const auto &[name, bytes] : {std::pair{"Config/Config.txt", config}, std::pair{"Config/Hotkeys.txt", hotkeysText}}) {
+            QFile f(legacy.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        }
+        restartWithSpelling(home.path(), false);
+        auto *menuItem = named("importSettingsMenuItem");
+        QVERIFY(menuItem);
+        QVERIFY(QByteArray(menuItem->metaObject()->className()).startsWith("ShellMenuItem"));
+        QVERIFY(menuItem->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto footerButton = [&](const char *name) {
+            auto *footer = dialog->property("footer").value<QQuickItem *>();
+            return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        };
+        QVERIFY(!footerButton("settingsImportImport")->property("enabled").toBool());
+
+        auto &importer = application->settingsImport();
+        QVERIFY(importer.addRoot(legacy.path()));
+        dialogItem("settingsImportDialog", "settingsImportRoots")->setProperty("currentIndex", importer.roots().size() - 1);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportRead"), "click"));
+        QCOMPARE(importer.root(), QDir::cleanPath(legacy.path()));
+        auto *rows = dialogItem("settingsImportDialog", "settingsImportRows");
+        QTRY_VERIFY(rows->property("count").toInt() > 0);
+        QVERIFY(importer.chosen().contains("setting:grid.font"));
+        QVERIFY(importer.chosen().contains("shortcut:GLOBAL_SAVE_SUBS:G"));
+        QVERIFY(dialogItem("settingsImportDialog", "settingsImportSummary")->property("text").toString().contains(
+            QStringLiteral("1 excluded")));
+        // The theme is shown, excluded, and cannot be chosen.
+        QVariantMap theme;
+        for (const auto &row : importer.rows())
+            if (row.toMap().value(QStringLiteral("key")) == QStringLiteral("PROGRAM_THEME"))
+                theme = row.toMap();
+        QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
+        QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
+        QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
+            QStringLiteral("starts again")));
+        // Not in effect in this session.
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(application->settingsStore()->list(application::kHotkeysSetting.data())
+                    .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
+        QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
+
+        // Roll back, asked first, in effect at the next start.
+        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+        dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
+        auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
+        QTRY_VERIFY(question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QVERIFY(application->settingsImport().pending());
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+        QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
+        // The legacy files are as they were.
+        QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
+        QVERIFY(f.open(QIODevice::ReadOnly));
+        QCOMPARE(f.readAll(), config);
+    }
+
     // R6-dictionary-location: the Main page lists the settings folder's
     // Dictionary first (user dictionaries), then the program folder's.
     void settingsDictionariesComeFromTheSettingsFolder()

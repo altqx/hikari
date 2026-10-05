@@ -5,6 +5,8 @@
 // coordinator, Documents, the workspace and the shell/editor presenters.
 
 #include "hikari/app/automation_hotkeys_controller.h"
+#include "hikari/app/settings_import_controller.h"
+#include "hikari/app/settings_import_store.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
@@ -533,6 +535,8 @@ public:
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
+    // O3: the "Import legacy settings" window.
+    SettingsImportController &settingsImport() { return *m_settingsImport; }
     // O2: the shortcut editor and the bindings in effect.
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
@@ -679,6 +683,9 @@ private:
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
     // O1: declared before everything that keeps a reference to it.
     std::unique_ptr<ui::SettingsStore> m_settings;
+    // O3: the legacy settings importer's generations (none without a file).
+    std::unique_ptr<SettingsImportStore> m_importStore;
+    std::unique_ptr<SettingsImportController> m_settingsImport;
     void settingChanged(const QString &id);
     // R6-dictionary-location: the settings folder's Dictionary (user
     // dictionaries), then the program folder's (bundled ones).
