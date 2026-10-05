@@ -11,7 +11,7 @@ Out of scope: the application icon and the file-type icons (kept as they are), a
 | `src/ui/icons/<role>.svg` | One icon per role, the shipped source. |
 | `src/ui/icons/manifest.json` | Per role: file, label (the legacy tooltip or menu text, the default accessible name), whether it has an accent layer, whether it mirrors, the legacy bitmaps it replaces, the surfaces using it, and `pending` (the later card that places it) for a role whose surface does not exist yet; and `notReplaced`, the legacy bitmaps left out with the reason (retired commands among them: GLOBAL_VIDEO_INDEXING's FFMS2 Indexing.png). |
 | `tools/icons/draw_icons.py` | How the icons are drawn: shared motifs (page, floppy, film frame, note, badges) and the rules below, enforced when it writes the SVGs and the manifest. Change an icon here and run it. |
-| `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`). |
+| `tools/icons/contact_sheet.py` | The HTML contact sheet for review (`out/k1/index.html`), in the theme layer's four themes (it reads their colours from `src/ui/theme.cpp`). |
 | `src/ui/Icon.qml`, `IconButton.qml`, `IconToolButton.qml` | The Icon item and the icon-only buttons. |
 | `src/ui/ShellMenuItem.qml`, `ShellMenu.qml` (their `iconRole`), `IconTabButton.qml` | Menu items, submenus and tab buttons with an icon (every shell menu is a ShellMenu, D1; a submenu's item shows the submenu's role): the style draws the control, the icon is its image source from `IconTheme`'s image provider (`image://hikari-icon/<role>/<colour>/<accent>/<mirrored>`, drawn at the device's pixels). |
 | `src/ui/IconDialogHeader.qml` | A dialog's title with its icon (legacy dialogs' SetIcon); windows take theirs with `IconTheme.setWindowIcon`. |
