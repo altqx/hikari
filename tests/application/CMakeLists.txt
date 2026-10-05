@@ -108,3 +108,9 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# T2: Position and Move, with the legacy probe's observations.
+hikari_add_gtest(hikari_application_visual_position_tests SOURCES visual_position_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_position_tests PRIVATE
+    HIKARI_POSITION_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/position-cases.txt"
+    HIKARI_POSITION_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t2-position-20261005/observations.jsonl")

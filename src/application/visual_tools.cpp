@@ -1,6 +1,7 @@
 #include "hikari/application/visual_tools.h"
 
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_position.h"
 
 #include <algorithm>
 #include <set>
@@ -170,6 +171,10 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
     switch (family) {
     case Family::Crosshair:
         return std::make_unique<CrosshairTool>();
+    case Family::Position:
+        return std::make_unique<PositionTool>();
+    case Family::Move:
+        return std::make_unique<MoveTool>();
     default:
         return nullptr;
     }
