@@ -91,6 +91,8 @@ public:
     // Undo and Redo are refused. Selection still moves.
     void setReadOnly(bool readOnly) { m_readOnly = readOnly; }
     bool isReadOnly() const { return m_readOnly; }
+    // A protected reference refuses every command (CommandRefusal::Protected).
+    bool isProtected() const { return m_protected; }
 
     // Selection changes are not history steps.
     void setSelection(Selection selection);
