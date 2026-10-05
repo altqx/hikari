@@ -23,7 +23,7 @@ tools/native-gate/run.sh                 # all four sessions, every step
 tools/native-gate/run.sh kwin -- video   # one session, chosen steps
 ```
 
-`HIKARI_TREE` names the checkout whose build is tested (default
+`GATE_CONTAINER` names the container (default `d1gate`). `HIKARI_TREE` names the checkout whose build is tested (default
 `/home/altq/Work/hikari-qt`; `HIKARI_TREE=$PWD tools/native-gate/run.sh` tests
 this worktree's build). `run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
 the host-built binaries and the Qt SDK under `out/sdk` run unchanged), starts
@@ -56,6 +56,7 @@ recorded as a pass.
 | `orca` | Orca's speech while F6 moves through the panels and a panel is floated from the menu |
 | `menutext` | Alt+V from the Line text field |
 | `tests` | `hikari_ui_shell_tests` (D1 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
+| `videofs` | V5 (#184): F in the Video panel shows the video fullscreen on the main window's output, Space and Right work there, Esc leaves with the main window's geometry and the focus restored; the context menu's "Open in full screen on monitor 2" puts it on the second output (scale 2 on sway, KWin and mutter; two RandR monitors on X11) and Esc brings the docked video back; then the `hikari_ui_video_fullscreen_workflow --monitors 2` Spix workflow under the session |
 | `a11y` | what AT-SPI exposes of the docking controls: named title-bar buttons and tabs (each with Float and Close), the Grid's table in the panel named Grid; pressing them through AT-SPI floats and docks |
 
 ## Other tools

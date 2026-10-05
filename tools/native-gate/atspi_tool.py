@@ -10,6 +10,8 @@
   atspi_tool.py text ROLE NAME                         the text of that object (Text interface)
   atspi_tool.py json                                   frames, panels, focus and texts as JSON
   atspi_tool.py press-showing NAME                     press every showing button with that name
+  atspi_tool.py fsjson                                 V5: each showing frame, whether it holds the
+                                                       full screen video, its buttons, times and focus
 
 Every line names the role, the accessible name, the states that matter for
 the gate (focused, active, showing, visible) and the screen extents.
@@ -233,6 +235,47 @@ def main():
         fo = focused(a)
         if fo:
             out["focus"] = describe(fo)
+            out["focusPath"] = path_of(fo)
+        print(json.dumps(out, indent=1))
+    elif cmd == "fsjson":
+        # V5 (#184): the fullscreen video window carries the main window's
+        # title, so frames are told apart by the pane named "Full screen video".
+        import json
+        out = {"frames": [], "focusPath": None}
+        for i in range(a.get_child_count()):
+            f = a.get_child_at_index(i)
+            st = f.get_state_set()
+            if not st.contains(Atspi.StateType.SHOWING):
+                continue
+            e = f.get_extents(Atspi.CoordType.SCREEN)
+            fr = {"name": f.get_name(), "active": st.contains(Atspi.StateType.ACTIVE),
+                  "x": e.x, "y": e.y, "w": e.width, "h": e.height, "fullscreen": False,
+                  "buttons": [], "times": None, "position": None, "panels": []}
+            for o in all_objects(f):
+                try:
+                    role = o.get_role_name()
+                    ost = o.get_state_set()
+                    name = o.get_name() or ""
+                except GLib.Error:
+                    continue
+                if not ost.contains(Atspi.StateType.SHOWING):
+                    continue
+                if role == "panel" and name == "Full screen video":
+                    fr["fullscreen"] = True
+                elif role == "panel" and name:
+                    fr["panels"].append(panel_id(name))
+                elif role in ("button", "push button", "toggle button", "check box") and name:
+                    fr["buttons"].append(name)
+                elif role == "slider" and name == "Video position":
+                    try:
+                        fr["position"] = Atspi.Value.get_current_value(o)
+                    except Exception:
+                        pass
+                elif role == "label" and name == "Video times":
+                    fr["times"] = text_of(o) or name
+            out["frames"].append(fr)
+        fo = focused(a)
+        if fo:
             out["focusPath"] = path_of(fo)
         print(json.dumps(out, indent=1))
     elif cmd == "press-showing":

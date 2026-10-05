@@ -15,9 +15,12 @@ while [ $# -gt 0 ]; do
     sessions+=("$1"); shift
 done
 [ ${#sessions[@]} -eq 0 ] && sessions=(sway kwin mutter x11)
+# GATE_CONTAINER names the container, so several worktrees can run the gate at once.
+c=${GATE_CONTAINER:-d1gate}
+evidence=${GATE_EVIDENCE:-$wt/out/native-gate-evidence}
 
 docker image inspect hikari-d1-gate >/dev/null 2>&1 || docker build -t hikari-d1-gate "$here"
-docker rm -f d1gate >/dev/null 2>&1 || true
+docker rm -f "$c" >/dev/null 2>&1 || true
 render=()
 # A render node lets KWin composite with OpenGL (its ScreenShot2 needs it);
 # Mesa still renders in software (llvmpipe) here.
@@ -30,25 +33,27 @@ mounts=(-v "$wt:$wt")
 [ "$tree" != "$wt" ] && mounts+=(-v "$tree:$tree:ro")
 sdk=$(readlink -f "$tree/out/sdk")
 case "$sdk" in "$tree"/*|"$wt"/*) ;; *) mounts+=(-v "$sdk:$sdk:ro") ;; esac
-docker run -d --init --name d1gate --cpus=3 --shm-size=1g "${render[@]}" \
+docker run -d --init --name "$c" --cpus=3 --shm-size=1g "${render[@]}" \
     "${mounts[@]}" \
-    -e HIKARI_TREE="$tree" -e GATE_DIR="$here" -e EVIDENCE="$wt/out/native-gate-evidence" \
+    -e HIKARI_TREE="$tree" -e GATE_DIR="$here" -e EVIDENCE="$evidence" \
     hikari-d1-gate sleep infinity >/dev/null
-docker exec d1gate "$here/build-tools.sh"
-mkdir -p "$wt/out/native-gate-evidence"
+docker exec "$c" "$here/build-tools.sh"
+mkdir -p "$evidence"
 
 for s in "${sessions[@]}"; do
     case $s in
-    sway) docker exec d1gate "$here/sessions/sway-start.sh" ;;
-    x11) docker exec d1gate "$here/sessions/x11-start.sh" ;;
-    kwin) docker exec d1gate env KWIN_OUTPUTS=2 "$here/sessions/kwin-start.sh"
-          docker exec -d d1gate "$here/sessions/enter.sh" kwin sh -c "exec python3 $here/eidaemon.py kwin > /tmp/ei-kwin.log 2>&1" ;;
-    mutter) docker exec d1gate env MUTTER_MON2=1600x1000 "$here/sessions/mutter-start.sh"
-            docker exec -d d1gate "$here/sessions/enter.sh" mutter sh -c "exec python3 $here/eidaemon.py mutter > /tmp/ei-mutter.log 2>&1" ;;
+    # sway-activate: sway with focus_on_window_activation focus (gate.py's SwayActivate).
+    sway|sway-activate) docker exec "$c" "$here/sessions/sway-start.sh" ;;
+    x11) docker exec "$c" "$here/sessions/x11-start.sh" ;;
+    kwin) docker exec "$c" env KWIN_OUTPUTS=2 "$here/sessions/kwin-start.sh"
+          docker exec -d "$c" "$here/sessions/enter.sh" kwin sh -c "exec python3 $here/eidaemon.py kwin > /tmp/ei-kwin.log 2>&1" ;;
+    mutter) docker exec "$c" env MUTTER_MON2=1600x1000 "$here/sessions/mutter-start.sh"
+            docker exec -d "$c" "$here/sessions/enter.sh" mutter sh -c "exec python3 $here/eidaemon.py mutter > /tmp/ei-mutter.log 2>&1" ;;
     esac
     sleep 3
-    docker exec d1gate "$here/sessions/enter.sh" "$s" python3 "$here/gate.py" "$s" "${steps[@]}" || true
+    session=$s; [ "$s" = sway-activate ] && session=sway
+    docker exec "$c" "$here/sessions/enter.sh" "$session" python3 "$here/gate.py" "$s" "${steps[@]}" || true
 done
-docker exec d1gate sh -c 'pacman -Q sway wlroots0.20 kwin mutter xorg-server-xvfb openbox orca at-spi2-core libei mesa' \
-    > "$wt/out/native-gate-evidence/versions.txt"
-echo "evidence: $wt/out/native-gate-evidence"
+docker exec "$c" sh -c 'pacman -Q sway wlroots0.20 kwin mutter xorg-server-xvfb openbox orca at-spi2-core libei mesa' \
+    > "$evidence/versions.txt"
+echo "evidence: $evidence"

@@ -27,13 +27,15 @@ parameters go through `run TASK --env K=V`. The VM definition is never changed.
 import argparse
 import base64
 import json
+import os
 import re
 import subprocess
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
-EVID = ROOT / "out" / "native-gate-evidence" / "windows"
+# GATE_EVIDENCE_WIN: another evidence directory (a card's own run).
+EVID = Path(os.environ.get("GATE_EVIDENCE_WIN") or ROOT / "out" / "native-gate-evidence" / "windows")
 PANELS = ["Video", "Audio", "Line editor", "Grid", "Reference", "Timing", "Search"]
 MAIN = "HikariSub"
 # Windows maps the absolute HID tablet to the primary monitor only (step
@@ -1304,10 +1306,154 @@ def step_a11y():
             f"invoked 'Float Timing' -> own window={tab_floated}", ev1 + ev2 + ["a11y-tabs.txt"])
 
 
+# ---------------------------------------------------------------- V5 (#184)
+def fs_frames(st, mons):
+    """(fullscreen, main): the fullscreen video window carries the main
+    window's title; it is the one covering a whole monitor."""
+    full = main = None
+    for f in st["frames"]:
+        if f["id"] != MAIN:
+            continue
+        if any((f["x"], f["y"], f["w"], f["h"]) == (m["x"], m["y"], m["w"], m["h"]) for m in mons):
+            full = f
+        else:
+            main = f
+    return full, main
+
+
+def fs_value(st, ctype, name):
+    return next((e["val"] for e in st.get("elements") or [] if e["t"] == ctype and e["n"] == name and not e["off"]),
+                None)
+
+
+def fs_has(st, ctype, name):
+    return bool(find(st, ctype, name))
+
+
+def step_video_fullscreen():
+    """V5 (#184): F in the Video panel shows the video fullscreen on the main
+    window's monitor; Space and Right work there; Esc leaves with the main
+    window's geometry and the keyboard focus as they were; the context menu's
+    "Open in full screen on monitor 2" puts it on the second monitor, at 100 %
+    and at 150 % (mixed DPI: GetDpiForWindow), and Esc brings the docked video
+    back. Real keys (SendInput); the menu items through UI Automation."""
+    if not LAYOUT.get("ep1_ass"):
+        verdict("videofs-enter-leave", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
+        return
+    d = displays("extend")
+    mons = monitors()
+    fresh(LAYOUT["ep1_ass"])
+    dismiss_notices()
+    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
+    time.sleep(5)
+    focus_main()
+    for _ in range(8):
+        if panel_of(uia()["focusPath"]) == "Video":
+            break
+        combo("f6")
+        time.sleep(0.8)
+    st0 = uia()
+    in_video = panel_of(st0["focusPath"]) == "Video"
+    _, main0 = fs_frames(st0, mons)
+    m0 = next((i for i, m in enumerate(mons) if main0 and inside(main0, m)), 0)
+    keys("f")
+    st1 = wait_for(lambda s: fs_frames(s, mons)[0] is not None and fs_frames(s, mons)[0]["active"], timeout=8)
+    full1, _ = fs_frames(st1, mons)
+    ev1, st1 = snap("videofs-1-fullscreen", monitor=m0, extra=f"# monitors\n{json.dumps(mons)}\n# displays\n{json.dumps(d)[:2000]}")
+    on1 = full1 is not None and inside(full1, mons[m0])
+    keys("space")
+    stp = wait_for(lambda s: fs_has(s, "Button", "Pause"), timeout=5)
+    playing = fs_has(stp, "Button", "Pause")
+    time.sleep(0.6)
+    keys("space")
+    sts = wait_for(lambda s: fs_has(s, "Button", "Play"), timeout=5)
+    paused = fs_has(sts, "Button", "Play")
+    before = fs_value(sts, "Slider", "Video position")
+    keys("right")
+    st_r = wait_for(lambda s: fs_value(s, "Slider", "Video position") != before, timeout=5)
+    after = fs_value(st_r, "Slider", "Video position")
+    keys("escape")
+    st2 = wait_for(lambda s: fs_frames(s, mons)[0] is None and fs_frames(s, mons)[1] is not None
+                   and fs_frames(s, mons)[1]["active"] and panel_of(s["focusPath"]) == "Video", timeout=8)
+    ev2, st2 = snap("videofs-2-left")
+    full2, main2 = fs_frames(st2, mons)
+    keys4 = ("x", "y", "w", "h")
+    same = main0 is not None and main2 is not None and all(main0[k] == main2[k] for k in keys4)
+    focus_back = panel_of(st2["focusPath"]) == "Video"
+    try:
+        stepped = before is not None and after is not None and float(after) == float(before) + 1
+    except ValueError:
+        stepped = False
+    verdict("videofs-enter-leave", "observed" if in_video and on1 and full1["active"] and full2 is None and main2
+            and main2["active"] and same and focus_back else "failed",
+            f"F in the Video panel (focus there: {in_video}): fullscreen window {full1} on monitor {m0} {mons[m0]}: {on1}; "
+            f"Esc: fullscreen gone {full2 is None}, main window active {main2 and main2['active']}, geometry before "
+            f"{main0 and {k: main0[k] for k in keys4}} after {main2 and {k: main2[k] for k in keys4}} same {same}; focus "
+            f"back in the Video panel: {focus_back} ({st2['focusPath']})", ev1 + ev2)
+    verdict("videofs-transport-keys", "observed" if playing and paused and stepped else "failed",
+            f"in fullscreen Space played (Pause shown: {playing}) and paused (Play shown again: {paused}); Right "
+            f"stepped the seek bar {before!r} -> {after!r}", ev1)
+
+    def second_monitor(tag, scale):
+        mons2 = monitors()
+        if len(mons2) < 2:
+            verdict(f"videofs-monitor-choice{tag}", "not-observable", f"only {len(mons2)} monitor(s) on the guest desktop")
+            return
+        second = next(i for i, m in enumerate(mons2) if not m["primary"])
+        focus_main()
+        for _ in range(8):
+            if panel_of(uia()["focusPath"]) == "Video":
+                break
+            combo("f6")
+            time.sleep(0.8)
+        _, main3a = fs_frames(uia(), mons2)
+        park_pointer()
+        keys("apps")
+        stm = wait_for(lambda s: "Open in full screen on monitor 2" in s["popupMenuItems"], timeout=4)
+        offered = "Open in full screen on monitor 2" in stm["popupMenuItems"]
+        if offered:
+            uia(do=[{"action": "invoke", "name": "Open in full screen on monitor 2", "type": "MenuItem"}], settle_ms=1500)
+        else:
+            keys("escape")
+        st3 = wait_for(lambda s: fs_frames(s, mons2)[0] is not None and fs_frames(s, mons2)[0]["active"], timeout=8)
+        st3 = uia(dpi=True)
+        full3, main3 = fs_frames(st3, mons2)
+        ev3, _ = snap(f"videofs-3-monitor2{tag}", monitor=second,
+                      extra=f"# monitors\n{json.dumps(mons2)}\n# popup menu items\n{json.dumps(stm['popupMenuItems'])}")
+        on2 = full3 is not None and (full3["x"], full3["y"], full3["w"], full3["h"]) == \
+            (mons2[second]["x"], mons2[second]["y"], mons2[second]["w"], mons2[second]["h"])
+        dpi_ok = full3 is not None and full3.get("dpi") == mons2[second]["dpi"]
+        dock_hidden = not any(p["id"] == "Video" for p in st3["panels"])
+        keys("escape")
+        st4 = wait_for(lambda s: fs_frames(s, mons2)[0] is None and any(p["id"] == "Video" for p in s["panels"])
+                       and panel_of(s["focusPath"]) == "Video", timeout=8)
+        ev4, st4 = snap(f"videofs-4-left-monitor2{tag}")
+        full4, main4 = fs_frames(st4, mons2)
+        dock_back = any(p["id"] == "Video" for p in st4["panels"])
+        same4 = main3a is not None and main4 is not None and all(main3a[k] == main4[k] for k in keys4)
+        focus4 = panel_of(st4["focusPath"]) == "Video"
+        verdict(f"videofs-monitor-choice{tag}", "observed" if offered and on2 and full3["active"] and dpi_ok and dock_hidden
+                and full4 is None and dock_back and same4 and focus4 else "failed",
+                f"monitors {mons2}; the menu key offered 'Open in full screen on monitor 2': {offered}; fullscreen window "
+                f"{full3} covering monitor {second} ({scale} %): {on2}, GetDpiForWindow {full3 and full3.get('dpi')} = the "
+                f"monitor's {mons2[second]['dpi']}: {dpi_ok}; docked Video hidden meanwhile: {dock_hidden}; Esc: fullscreen "
+                f"gone {full4 is None}, docked Video back {dock_back}, main geometry unchanged {same4}, focus back in the "
+                f"Video panel {focus4}", ev3 + ev4)
+
+    second_monitor("", 100)
+    # Mixed DPI: the second monitor at 150 % (Windows offers it from about 1920x1200).
+    d2 = displays("extend", scale2=150, second=(1920, 1200))
+    log("displays at 150 %:", json.dumps(d2)[:600])
+    second_monitor("-150", 150)
+    app_kill()
+    displays("extend")
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
-         "tests": step_test_executables, "a11y": step_a11y, "dpi": step_dpi}
+         "tests": step_test_executables, "a11y": step_a11y, "dpi": step_dpi,
+         "videofs": step_video_fullscreen}
 
 
 def main():
