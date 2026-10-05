@@ -1097,10 +1097,24 @@ private slots:
         sendMouse(window, QEvent::MouseButtonRelease, QPoint(-30, -30), Qt::LeftButton, Qt::NoButton);
         QCOMPARE(dialog->property("blue").toInt(), 3);
 
+        // A recent colour's tap takes its red, green and blue and keeps the
+        // alpha in effect (OnRecentSelect, ColorPicker.cpp:1130-1137:
+        // SetColor(color, 0, true, false), setAlpha false at :717).
+        application->colourPicker().loadFromString(QStringLiteral("&H80123456&"));
+        auto *swatch = dialogItem("colourDialog", "recent0");
+        QTRY_COMPARE(swatch->property("color").value<QColor>(), QColor(0x56, 0x34, 0x12));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(swatch));
+        QCOMPARE(dialog->property("red").toInt(), 0x56);
+        QCOMPARE(dialog->property("green").toInt(), 0x34);
+        QCOMPARE(dialog->property("blue").toInt(), 0x12);
+        QCOMPARE(dialog->property("alpha").toInt(), 0x40);
+        QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\1c&H123456&")));
+        QVERIFY(text->property("text").toString().contains(QStringLiteral("\\1a&H40&")));
+
         // The type choice puts the colour into the recent ones first.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("colourDialog", "colourType"), "activated", Q_ARG(int, 1)));
         const auto recent = application->colourPicker().recent().first().toMap();
-        QCOMPARE(recent.value(QStringLiteral("r")).toInt(), 1);
+        QCOMPARE(recent.value(QStringLiteral("r")).toInt(), 0x56);
         QCOMPARE(recent.value(QStringLiteral("a")).toInt(), 0x40);
 
         // The swap box writes the option at once.
