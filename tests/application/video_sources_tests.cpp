@@ -220,6 +220,56 @@ TEST(DummyVideo, SessionShowsTheDummyFromItsOwnSource)
     EXPECT_FALSE(session.dummy());
 }
 
+// A dummy's text, refused or not, reports no failure of the helper's: an
+// earlier file's failure (FFMS2's stage and text) stays with that file.
+// Legacy ProviderDummy logs nothing when its text is refused
+// (ProviderDummy.cpp:98-142), so the session gives its own status.
+TEST(DummyVideo, ARefusedTextDoesNotReportTheLastFilesFailure)
+{
+    struct Media : IndexedSourcePort {
+        std::uint64_t open(const std::string &, Progress, Opened done) override
+        {
+            done(std::unexpected(SourceError::BackendFailure));
+            return 1;
+        }
+        void cancelOpen() override {}
+        void frame(int, FrameReady) override {}
+        void openAudio(int, AudioOpened) override {}
+        void audio(std::int64_t, std::int64_t, AudioReady) override {}
+        void beginPcm(std::int64_t, std::int64_t, int, int, PcmBegun) override {}
+        void nextPcm(std::int64_t, PcmReady) override {}
+        void cancelReads() override {}
+        std::uint64_t generation() const override { return 1; }
+        std::optional<OpenFailure> openFailure() const override
+        {
+            return OpenFailure{OpenStage::Source, "no source"};
+        }
+    } media;
+    struct Renderer : SubtitleRendererPort {
+        std::expected<std::uint64_t, RenderError> prepare(RenderSnapshot) override { return 1; }
+        std::expected<OverlayFrame, RenderError> render(core::DocumentTime, int, int) override
+        {
+            return std::unexpected(RenderError::NoSnapshot);
+        }
+    } renderer;
+    DummyVideoSource source(media);
+    VideoSession session(source, renderer);
+    session.open("/v/a.mkv");
+    ASSERT_EQ(session.state(), VideoSession::State::Failed);
+    ASSERT_TRUE(session.openFailure());
+    EXPECT_EQ(session.openFailure()->stage, OpenStage::Source);
+    session.open("?dummy:25:0:8:4:1:2:3:"); // 0 frames: refused
+    ASSERT_EQ(session.state(), VideoSession::State::Failed);
+    EXPECT_FALSE(source.openFailure());
+    EXPECT_FALSE(session.openFailure());
+    session.open("?dummy:25:10:8:4:1:2:3:");
+    ASSERT_EQ(session.state(), VideoSession::State::Ready);
+    EXPECT_FALSE(source.openFailure());
+    session.open("/v/a.mkv"); // the file again: its own failure
+    ASSERT_TRUE(session.openFailure());
+    EXPECT_EQ(session.openFailure()->message, "no source");
+}
+
 // VideoBox::NextChap / PrevChap (VideoBox.cpp:1420-1468) with prevchap.
 TEST(Chapters, NextAndPreviousAsLegacyWalksThem)
 {

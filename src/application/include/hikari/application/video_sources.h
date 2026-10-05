@@ -121,6 +121,9 @@ public:
 private:
     IndexedSourcePort &m_media;
     std::optional<DummyVideo> m_dummy;
+    // the latest open was a dummy's text, refused or not: a refused text has
+    // no failure of the helper's to report (legacy ProviderDummy logs nothing)
+    bool m_dummyText = false;
     std::vector<std::byte> m_frame;
     std::uint64_t m_generation = 0; // the dummy's; above the helper's while a dummy is open
 };

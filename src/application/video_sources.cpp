@@ -306,7 +306,8 @@ std::uint64_t DummyVideoSource::open(const std::string &path, Progress progress,
 std::uint64_t DummyVideoSource::openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
                                             Opened done)
 {
-    if (!isDummyVideo(path)) {
+    m_dummyText = isDummyVideo(path);
+    if (!m_dummyText) {
         m_dummy.reset();
         m_frame.clear();
         return m_media.openIndexed(path, request, std::move(progress), std::move(done));
@@ -408,7 +409,7 @@ std::uint64_t DummyVideoSource::generation() const
 
 std::optional<OpenFailure> DummyVideoSource::openFailure() const
 {
-    return m_dummy ? std::nullopt : m_media.openFailure();
+    return m_dummyText ? std::nullopt : m_media.openFailure();
 }
 
 std::optional<int> nextChapter(const std::vector<int> &chapters, int vrtime, int &prevchap)
