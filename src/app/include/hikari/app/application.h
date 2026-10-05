@@ -9,6 +9,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
+#include "hikari/app/localisation.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -43,6 +44,7 @@
 #include "audio_controller.h"
 
 #include <QDate>
+#include <QFont>
 #include <QDateTime>
 #include <QLockFile>
 #include <QTimer>
@@ -98,6 +100,9 @@ signals:
     // results; the Multireplacer and its Search results close.
     void findReplaceDestroyed();
     void misspellReplacerDestroyed();
+    // O5: the interface language changed while the Options dialog is open:
+    // its dictionary choice's entries in the new language.
+    void settingsListsChanged(const QStringList &dictionaries);
 
 public:
     struct Options {
@@ -540,6 +545,9 @@ public:
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     ui::LogController &log() { return *m_log; }
+    // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
+    // aegisub.gettext's catalog.
+    Localisation &localisation() { return *m_localisation; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
     // E1/O1: the Line editor's colour picker opens for the editing target
@@ -883,6 +891,18 @@ private:
     bool keepTabAudio(const QString &videoPath);
     void trackTabMedia();
     int targetVideoPosition() const;
+
+    // O5 (application_language.cpp): the language from PROGRAM_LANGUAGE at
+    // start and whenever the setting changes; the strings the application
+    // and its controllers keep are rebuilt after a switch. The program font
+    // (PROGRAM_FONT, PROGRAM_FONT_SIZE) is the application's font, live.
+    std::unique_ptr<Localisation> m_localisation;
+    QString m_untitledTitle; // tr("Untitled") in the language the tabs were named in
+    QFont m_startFont;       // the application's font before the program font
+    void startLocalisation();
+    void switchLanguage();
+    void languageSwitched();
+    void applyProgramFont();
 };
 
 } // namespace hikari::app

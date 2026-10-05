@@ -47,6 +47,12 @@ Dialog {
         warnings = r.warnings
         showWarning()
     }
+    // O5: Apply switched the interface language: the dictionary choice's
+    // entry for an empty Dictionary folder in the new language.
+    Connections {
+        target: dialog.app
+        function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
+    }
     // The legacy constructor's "does not exist" message boxes, one at a time.
     function showWarning() {
         if (warnings.length === 0)

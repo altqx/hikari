@@ -57,6 +57,11 @@ public:
     void setDocumentChanged(std::function<void()> changed) { m_documentChanged = std::move(changed); }
     // The audio box whose audio aegisub.get_frequency_peaks reads (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);
+    // O5: aegisub.gettext's lookup (application::HostService::Gettext).
+    void setTranslation(std::function<std::string(const std::string &)> translate)
+    {
+        m_router.setTranslation(std::move(translate));
+    }
 
     // AutomationServicePort: run() goes through the editing target's transaction.
     std::vector<application::ScriptStatus> scripts() const override { return m_manager.scripts(); }

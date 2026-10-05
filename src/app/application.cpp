@@ -809,6 +809,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         });
     });
     trackTabMedia(); // P6
+    startLocalisation(); // O5
     refreshViews();
 }
 
@@ -1029,6 +1030,8 @@ Application::~Application()
     m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
     saveMisspellRules();
+    if (m_localisation)
+        QGuiApplication::setFont(m_startFont); // O5: the program font was the application's
 }
 
 // F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
@@ -4090,6 +4093,10 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("program.language")) // O5: live, wherever it is written
+        switchLanguage();
+    else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
+        applyProgramFont(); // O5 (legacy SetOptions: Hikari->SetFont(*Options.GetFont()))
 }
 
 namespace {
@@ -4185,9 +4192,14 @@ QVariantMap Application::openSettingsDialog()
 {
     auto &lists = m_optionsLists;
     lists = {};
-    // No translation catalogues ship with the rewrite yet: English only.
+    // O5: English, then the catalogs (OptionsDialog.cpp:322-333: the
+    // available translations sorted, each by FindLanguage).
     lists.languageTags = {"en"};
     lists.languageNames = {"English"};
+    for (const QString &tag : m_localisation->catalogLanguages()) {
+        lists.languageTags.push_back(tag.toStdString());
+        lists.languageNames.push_back(languageName(tag).toStdString());
+    }
     lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
     // U1-unicode-case: every letter, whatever the interface language.
     lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {
