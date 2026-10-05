@@ -5,10 +5,14 @@
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/text_projection.h"
 
 #include <QClipboard>
 #include <QColor>
 #include <QCursor>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QFontInfo>
 #include <QFontMetricsF>
 #include <QGuiApplication>
@@ -52,6 +56,10 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
         emit changed(); // the shown frame's time moves the warnings
+        // T5: legacy redrew the tools with each frame; a \move drawing's
+        // points follow the time (DrawingAndClip::DrawVisual).
+        if (m_family == Family::Drawing)
+            emit overlayChanged();
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
@@ -277,6 +285,116 @@ void VisualToolsController::toolChanged()
     updatePreview();
 }
 
+std::int64_t VisualToolsController::videoTimeMs() const
+{
+    // VideoBox::Tell: the shown frame's start.
+    const auto frame = m_video.session().shownFrame();
+    if (!frame)
+        return 0;
+    const auto start = m_video.session().frameStart(*frame);
+    return start ? start->microseconds() / 1000 : 0;
+}
+
+const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
+{
+    // VideoToolbar::GetShapesSettings: LoadSettings while there are none
+    // (VisualDrawingShapes.cpp:291-331): the file, read as UTF-8 (BOM
+    // dropped; the Windows build's text-mode read made CRLF LF), else
+    // legacy's defaults.
+    if (m_shapes.empty()) {
+        QFile f(m_shapesFile);
+        if (!m_shapesFile.isEmpty() && f.open(QIODevice::ReadOnly)) {
+            QByteArray bytes = f.readAll();
+            if (bytes.startsWith("\xEF\xBB\xBF"))
+                bytes.remove(0, 3);
+            QString text = QString::fromUtf8(bytes);
+#ifdef _WIN32
+            text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+#endif
+            m_shapes = parseShapePresets(text.toStdU16String());
+        } else {
+            m_shapes = defaultShapePresets();
+        }
+    }
+    return &m_shapes;
+}
+
+void VisualToolsController::saveShapes() const
+{
+    // SaveSettings (VisualDrawingShapes.cpp:341-353): UTF-8 with a BOM, the
+    // folder made when missing (OpenWrite).
+    if (m_shapesFile.isEmpty())
+        return;
+    QDir().mkpath(QFileInfo(m_shapesFile).absolutePath());
+    QFile f(m_shapesFile);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return;
+    f.write("\xEF\xBB\xBF");
+    f.write(QString::fromStdU16String(writeShapePresets(m_shapes)).toUtf8());
+}
+
+void VisualToolsController::openShapeEditor()
+{
+    if (m_shapeEditor)
+        return;
+    auto *drawing = tool();
+    int selection = 0;
+    for (const QVariant &o : std::as_const(m_options)) {
+        const QVariantMap m = o.toMap();
+        if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
+            selection = m.value(QStringLiteral("index")).toInt();
+    }
+    ShapeEditor::Hooks hooks;
+    hooks.activeLineText = [this]() -> std::u16string {
+        // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
+        // (Dialogue::GetTextNoCopy: its translation when it has one).
+        const auto *s = editingSession();
+        const auto active = activeLine();
+        if (!s || !active)
+            return {};
+        for (const auto *line : s->document().lines())
+            if (line->id == *active)
+                return core::toUtf16(line->translation.empty() ? line->text : line->translation);
+        return {};
+    };
+    hooks.removeFile = [this] {
+        if (!m_shapesFile.isEmpty())
+            QFile::remove(m_shapesFile);
+    };
+    hooks.defaults = [] { return defaultShapePresets(); };
+    hooks.finished = [this, drawing](std::optional<std::vector<ShapePreset>> presets) {
+        if (presets) {
+            // OK: VideoToolbar::SetShapesSettings, the list's names again,
+            // its selection kept (or the last preset's), and the tool told
+            // (ChangeTool -> SetShape, which keeps the shape it has when the
+            // selection is the same).
+            m_shapes = std::move(*presets);
+            saveShapes();
+            int selection = 0;
+            for (const QVariant &o : std::as_const(m_options)) {
+                const QVariantMap m = o.toMap();
+                if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
+                    selection = m.value(QStringLiteral("index")).toInt();
+            }
+            if (selection > static_cast<int>(m_shapes.size()))
+                selection = static_cast<int>(m_shapes.size());
+            if (drawing && drawing == tool())
+                drawing->setOption("shape", selection, *this);
+        }
+        if (m_shapeEditor)
+            m_shapeEditor->deleteLater();
+        m_shapeEditor = nullptr;
+        emit shapeEditorChanged();
+        refreshOptions();
+        emit optionsChanged();
+        emit overlayChanged();
+    };
+    // Legacy passed the list's selection ("Choose" being 0) as the editor's
+    // index of a preset.
+    m_shapeEditor = new ShapeEditor(*shapePresets(), selection, std::move(hooks), this);
+    emit shapeEditorChanged();
+}
+
 void VisualToolsController::bell()
 {
     // Legacy wxBell; counted (the shell has no audible bell to give).
@@ -332,6 +450,15 @@ bool VisualToolsController::setOption(const QString &name, int value)
     if (!t || !m_railEnabled)
         return false;
     m_notice.clear();
+    if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
+        value > static_cast<int>(m_shapes.size())) {
+        // The shape list's "Edit" (VectorItem::ShowContols, VideoToolbar.cpp:
+        // 516-536): the editor opens; the list keeps its selection.
+        openShapeEditor();
+        refreshOptions();
+        emit optionsChanged(); // the list shows the selection again
+        return true;
+    }
     const bool done = t->setOption(name.toStdString(), value, *this);
     emit changed();
     emit overlayChanged();

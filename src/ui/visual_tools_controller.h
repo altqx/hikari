@@ -9,8 +9,10 @@
 // owns the one open gesture (Esc cancels it), the batch picker, the
 // warnings (VIDEO_VISUAL_WARNINGS_OFF) and VIDEO_COPY_COORDS.
 
+#include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
 #include "settings_store.h"
+#include "shape_editor.h"
 
 #include <QFont>
 #include <QObject>
@@ -66,6 +68,9 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // legacy's modal "Warning" message box until OK.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
     Q_PROPERTY(QString notice READ notice NOTIFY changed)
+    // T5: the "Vector shape editing" dialog while the drawing's shape list's
+    // "Edit" has it open (null otherwise).
+    Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
 public:
     using SessionProvider = std::function<application::EditSession *()>;
     VisualToolsController(VideoController &video, SettingsStore &settings, SessionProvider session,
@@ -82,6 +87,11 @@ public:
     void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
     // The editing target, its content, active Line or format changed.
     void refresh();
+    // T5: the drawing's shape presets' file (legacy Config/ShapesSettings.txt
+    // beside the settings). Without one the presets are kept in memory.
+    void setShapesFile(const QString &path) { m_shapesFile = path; }
+    const QString &shapesFile() const { return m_shapesFile; }
+    ShapeEditor *shapeEditor() const { return m_shapeEditor; }
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
     void setTool(application::visual::Family family, std::unique_ptr<application::visual::VisualTool> tool);
     application::visual::VisualTool *tool() const;
@@ -151,6 +161,8 @@ public:
     void toolChanged() override;
     void bell() override;
     void notice(std::u16string_view text) override;
+    std::int64_t videoTimeMs() const override;
+    const std::vector<application::visual::ShapePreset> *shapePresets() const override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
@@ -161,6 +173,7 @@ signals:
     void overlayChanged();
     void geometryChanged();
     void optionsChanged();
+    void shapeEditorChanged();
 
 private:
     application::EditSession *editingSession() const { return m_session ? m_session() : nullptr; }
@@ -169,6 +182,8 @@ private:
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
     void refreshOptions();
+    void openShapeEditor();
+    void saveShapes() const;
 
     VideoController &m_video;
     SettingsStore &m_settings;
@@ -196,6 +211,9 @@ private:
     QVariantList m_options; // the tool's buttons as last shown
     int m_bells = 0;
     std::u8string m_previewKey; // what the preview showed last
+    QString m_shapesFile;
+    mutable std::vector<application::visual::ShapePreset> m_shapes; // VideoToolbar::shapes
+    QPointer<ShapeEditor> m_shapeEditor;
 };
 
 } // namespace hikari::ui

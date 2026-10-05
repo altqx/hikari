@@ -12,7 +12,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
     settings_store.cpp settings_store.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
-    visual_tools_controller.cpp visual_tools_controller.h)
+    visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -34,6 +34,8 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
 # T4: the active tool's own buttons (the clips' point modes and Invert clip).
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
+# T5: the drawing's "Vector shape editing" dialog.
+qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
 # the SVGs and their manifest as module resources, the Icon item, the
 # icon-only button, the menu items, tab button and dialog title that draw the

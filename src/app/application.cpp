@@ -505,6 +505,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
+    // T5: the drawing's shape presets beside the settings (legacy
+    // Config/ShapesSettings.txt); none without a settings file.
+    if (!m_settingsFile.isEmpty())
+        m_visualTools->setShapesFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ShapesSettings.txt"));
     m_visualTools->setEdited([this] {
         m_editor->reloadFromSession();
         refreshViews();
