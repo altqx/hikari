@@ -96,6 +96,9 @@ target_compile_definitions(hikari_application_session_file_tests PRIVATE
 # R1: subtitle comparison criteria, text differences and the menu's state.
 hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_comparison_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# R2: the reference tray's linked matching (legacy SeekForOccurences).
+hikari_add_gtest(hikari_application_reference_navigation_tests SOURCES reference_navigation_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # Y8: the font collector's scan, review and output rules.
 hikari_add_gtest(hikari_application_font_collector_tests SOURCES font_collector_tests.cpp
     LIBRARIES hikari_application LABELS application)
