@@ -184,7 +184,8 @@ void LineTableModel::setDocument(const core::Document &document,
         m_rows[r].blockMark = markAfter(static_cast<std::ptrdiff_t>(r));
     // R1: a row is painted from Comparison->at(key) (SubsGridWindow.cpp:419-
     // 420): a mismatch while lineCompare has entries, a match when the texts
-    // were equal. A row past the table (legacy std::out_of_range) has none.
+    // were equal. A row past the table (legacy std::out_of_range) paints
+    // plainly (R1-stale-table).
     if (comparison)
         for (std::size_t r = 0; r < n && r < comparison->size(); ++r) {
             const auto &c = (*comparison)[r];

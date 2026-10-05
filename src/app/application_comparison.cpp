@@ -58,7 +58,8 @@ void Application::recompare()
     // SubsComparison works on CG1 and CG2 whichever grid ran it. Legacy
     // dereferenced them unchecked: a grid that kept a table from an earlier
     // pair, edited after "Turn off comparison" or after either compared tab
-    // was gone, crashed it (R1-stale-table in the report); here nothing runs.
+    // was gone, crashed it; here nothing runs, and no such table is left
+    // (R1-stale-table).
     const auto first = m_comparison.first(), second = m_comparison.second();
     if (!first || !second)
         return;

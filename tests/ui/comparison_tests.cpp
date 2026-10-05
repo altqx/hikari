@@ -494,13 +494,12 @@ private slots:
         QCOMPARE(states(), QStringLiteral("=="));
     }
 
-    // Loading a session (Notebook::LoadLastSession, Notebook.cpp:1388-1393)
-    // destroys every tab without DeletePage, so neither RemoveComparison nor
-    // anything else clears hasCompare: the comparison stays on with its tabs
-    // gone, and "Turn off comparison" stays enabled (Notebook.cpp:938-939).
+    // R1-session-off: legacy Notebook::LoadLastSession (Notebook.cpp:1388-
+    // 1392) destroyed every tab without RemoveComparison, leaving hasCompare
+    // on and CG1/CG2 dangling. Loading a session turns the comparison off.
     // A session tab whose subtitles were missing and are loaded later
     // (retryRestore) is the same tab with other subtitles, as above.
-    void loadingASessionLeavesTheComparisonOn()
+    void loadingASessionTurnsComparisonOff()
     {
         const QString later = dir.filePath(QStringLiteral("later.ass"));
         QFile::remove(later);
@@ -523,18 +522,19 @@ private slots:
         QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
         QCOMPARE(application->unresolvedRestores().size(), qsizetype(1)); // later.ass
         const auto &c = application->comparison();
-        QVERIFY(c.active());
-        for (const auto id : application->workspace().tabs()) {
-            QVERIFY(c.first() != id);
-            QVERIFY(c.second() != id);
-            QVERIFY(!c.table(id));
-        }
+        QVERIFY(!c.active());
+        QVERIFY(!c.first());
+        QVERIFY(!c.second());
         QVERIFY(c.tabled().empty());
+        // The menu off a tab is disabled: nothing to turn off.
+        QObject *menu = openTabMenu(-1);
+        QVERIFY(!menu->property("enabled").toBool());
+        QVERIFY(!enabled("turnOffComparison"));
+        closeTabMenu();
         // The session's last tab (later.ass, missing) is the editing target.
         QCOMPARE(application->currentTab(), 1);
         application->selectTab(0);
         QCOMPARE(states(), QStringLiteral("..."));
-        // An edit compares nothing (no grid has a table).
         auto &editor = application->editor();
         editor.textEdited(QStringLiteral("uno"), 3);
         QVERIFY(editor.commit());
@@ -557,18 +557,36 @@ private slots:
         QCOMPARE(states(), QStringLiteral("xx="));
         application->selectTab(1);
         QCOMPARE(states(), QStringLiteral("xx=."));
-        // The menu with a session's comparison: Turn off is enabled and clears it.
-        cleanup();
-        init();
+    }
+
+    // R1-stale-table: legacy compared A-B, then A-C, and left B's table on
+    // its grid; after Turn off an edit of B ran SubsComparison through the
+    // null CG1/CG2 (SubsGridBase.cpp:1136-1138, 1749), and a table shorter
+    // than B's grid threw at Comparison->at (SubsGridWindow.cpp:419). A new
+    // pair drops the earlier pair's tables, Turn off leaves none, and B
+    // paints plainly, its added rows included.
+    void anEarlierPairKeepsNoTable()
+    {
+        application->openFile(write(dir, "third.ass", "Default", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,one\n"));
+        application->selectTab(0);
         QVERIFY(application->compareWithTab(1));
-        QVERIFY(application->reviewSession(QUrl::fromLocalFile(kls)).value(QStringLiteral("ok")).toBool());
-        application->finishClose();
-        QObject *menu = openTabMenu(-1);
-        QVERIFY(menu->property("enabled").toBool());
-        QVERIFY(enabled("turnOffComparison"));
-        QVERIFY(!enabled("compareSubtitles"));
-        trigger("turnOffComparison");
-        QVERIFY(!application->comparison().active());
+        application->selectTab(1);
+        QCOMPARE(states(), QStringLiteral("=x=."));
+        application->selectTab(0);
+        QVERIFY(application->compareWithTab(2));
+        QVERIFY(!application->comparison().table(application->workspace().tabs()[1]));
+        application->selectTab(1);
+        QCOMPARE(states(), QStringLiteral("...."));
+        application->selectTab(0);
+        application->turnOffComparison();
+        QVERIFY(application->comparison().tabled().empty());
+        // Edit B: a Line added, so its grid is longer than the old table.
+        application->selectTab(1);
+        application->selectLine(session(1).document().lines()[3]->id.value);
+        QVERIFY(application->duplicateLines());
+        QCOMPARE(session(1).document().lines().size(), std::size_t(5));
+        QCOMPARE(states(), QStringLiteral("....."));
+        QVERIFY(application->comparison().tabled().empty());
     }
 
     // Translation mode: each side's grid compares its translation when it

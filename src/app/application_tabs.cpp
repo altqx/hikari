@@ -523,11 +523,14 @@ void Application::applySession()
     PendingSession pending = std::move(*m_pendingSession);
     m_pendingSession.reset();
     // Notebook::LoadLastSession destroys every tab (each was reviewed).
+    // R1-session-off: legacy destroyed them without RemoveComparison
+    // (Notebook.cpp:1388-1392), leaving hasCompare on and CG1/CG2 dangling;
+    // loading a session turns the comparison off.
+    m_comparison.remove();
     for (const auto id : m_workspace.documents()) {
         discardRecovery(id);
         m_files->close(id);
         m_workspace.remove(id);
-        m_comparison.forget(id); // R1: the grids go; legacy leaves hasCompare as it was
     }
     m_tabMedia.clear();
     m_unresolved.clear();

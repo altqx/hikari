@@ -212,7 +212,10 @@ int SubtitleComparison::toggleStyle(int compareBy, const std::u8string &name, bo
 void SubtitleComparison::compare(DocumentId first, DocumentId second, const ComparedDocument &a,
                                  const ComparedDocument &b, int compareBy)
 {
-    // Notebook.cpp:948-951: CG1, CG2, SubsComparison, hasCompare.
+    // Notebook.cpp:948-951: CG1, CG2, SubsComparison, hasCompare. Legacy
+    // left the previous pair's tables on their grids, where no later
+    // comparison updated them (R1-stale-table): only the new pair has one.
+    m_tables.clear();
     m_first = first;
     m_second = second;
     recompare(a, b, compareBy);
@@ -231,13 +234,9 @@ void SubtitleComparison::recompare(const ComparedDocument &a, const ComparedDocu
 
 void SubtitleComparison::remove()
 {
-    // SubsGridBase.cpp:1888-1902: only while hasCompare.
-    if (!m_active)
-        return;
-    if (m_first)
-        m_tables.erase(m_first->value);
-    if (m_second)
-        m_tables.erase(m_second->value);
+    // SubsGridBase.cpp:1888-1902 removes CG1's and CG2's tables. Every table
+    // goes (R1-stale-table): none outlives the comparison.
+    m_tables.clear();
     m_first.reset();
     m_second.reset();
     m_active = false;

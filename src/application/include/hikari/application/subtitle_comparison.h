@@ -105,13 +105,15 @@ public:
     static int toggleBit(int compareBy, int bit) { return compareBy ^ bit; }
 
     // MENU_COMPARE (Notebook.cpp:947-951): CG1 and CG2 are set and compared.
-    // The previous pair's tables stay (legacy does not remove them first).
+    // Legacy left the previous pair's tables on their grids; here they go
+    // (R1-stale-table), so only the compared pair has tables.
     void compare(DocumentId first, DocumentId second, const ComparedDocument &a, const ComparedDocument &b,
                  int compareBy);
     // SubsComparison again for CG1 and CG2, as an edit, Undo or a filter on a
     // grid that has a table runs it (SetModified, DoUndo, RefreshSubsOnVideo).
     void recompare(const ComparedDocument &a, const ComparedDocument &b, int compareBy);
-    // RemoveComparison (SubsGridBase.cpp:1886-1903): CG1's and CG2's tables go.
+    // RemoveComparison (SubsGridBase.cpp:1886-1903): CG1's and CG2's tables
+    // go, and with them any other (R1-stale-table).
     void remove();
     // SubsGrid::Clearing (SubsGridBase.cpp:120): a Document's table goes when
     // its tab is cleared (other subtitles loaded into it); CG1/CG2 now name

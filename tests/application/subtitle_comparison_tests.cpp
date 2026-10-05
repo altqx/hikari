@@ -450,22 +450,27 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_EQ(states(*c.table(one)), "=x=");
     EXPECT_EQ(states(*c.table(two)), "=x=.");
 
-    // A new pair: the old tables stay (Notebook.cpp:948-951 sets CG1/CG2
-    // without RemoveComparison), and Turn off removes only the new pair's.
-    c.compare(three, four, first(), second(), compare_by::Times);
-    EXPECT_EQ(c.first(), three);
+    // R1-stale-table: a new pair drops the earlier pair's tables (legacy
+    // Notebook.cpp:948-951 left them on their grids, never compared again),
+    // and Turn off leaves no table.
+    c.compare(one, three, first(), second(), compare_by::Times);
+    EXPECT_EQ(c.first(), one);
     EXPECT_TRUE(c.table(one));
+    EXPECT_FALSE(c.table(two));
+    c.compare(three, four, first(), second(), compare_by::Times);
+    EXPECT_FALSE(c.table(one));
+    EXPECT_TRUE(c.table(three));
     c.remove();
     EXPECT_FALSE(c.active());
-    EXPECT_FALSE(c.table(three));
-    EXPECT_FALSE(c.table(four));
-    EXPECT_TRUE(c.table(one));
+    EXPECT_TRUE(c.tabled().empty());
     EXPECT_FALSE(c.first());
-    // Again: nothing (only while hasCompare).
+    // Again: nothing.
     c.remove();
-    EXPECT_TRUE(c.table(one));
+    EXPECT_TRUE(c.tabled().empty());
+    c.compare(one, two, first(), second(), 0);
     c.forget(one);
     EXPECT_FALSE(c.table(one));
+    c.remove();
 
     // Clearing a compared tab (other subtitles loaded into it) removes its
     // table; the pair now names the replacement and comparing again fills it.
