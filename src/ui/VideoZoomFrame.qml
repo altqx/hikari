@@ -5,11 +5,12 @@ import Hikari.Ui
 // (RendererVideo.cpp:831-871): everything from the video window's corner to
 // the video's right and bottom edges outside the zoom rectangle dimmed
 // (legacy 0x88000000), and the rectangle's one-pixel outline (legacy
-// 0xFFBB0000) through its corners x, y and width - 1, height - 1. The
-// colours are the theme palette's (the 2026-10-05 appearance decision: no
-// fixed or per-colour settings): the shadow role at legacy's 0x88 alpha for
-// the dimming and the highlight role for the outline, which the theme layer
-// (K2) can reroute. The visual tools are not drawn meanwhile.
+// 0xFFBB0000) through its corners x, y and width - 1, height - 1. No
+// per-colour settings (the 2026-10-05 appearance decision): the dimming
+// over the video is legacy's black at 0x88 in every theme, as the other
+// marks drawn on the video keep theirs, and the outline, a selection-type
+// mark, is the theme layer's (K2) accent. The visual tools are not drawn
+// meanwhile.
 Item {
     id: frame
     objectName: "videoZoomFrame"
@@ -17,7 +18,7 @@ Item {
     visible: view.zoomMode
     readonly property rect hole: view.zoomFrame
     readonly property rect bounds: view.zoomBounds
-    readonly property color dim: Qt.rgba(frame.palette.shadow.r, frame.palette.shadow.g, frame.palette.shadow.b, 0x88 / 255)
+    readonly property color dim: Qt.rgba(0, 0, 0, 0x88 / 255)
 
     Rectangle { // above the rectangle
         x: 0; y: 0
@@ -45,6 +46,6 @@ Item {
         width: frame.hole.width + 1; height: frame.hole.height + 1
         color: "transparent"
         border.width: 1
-        border.color: frame.palette.highlight
+        border.color: Theme.accent
     }
 }
