@@ -8,8 +8,10 @@ import QtQuick.Layouts
 // keyframes, "Video from directory:" with the same-named video beside the
 // subtitles; "Load associated" and "Load from directory" (each "Yes" when
 // alone), "No", and "Apply to All" for the rest of the same opening
-// (HikariMessageDialog's ASK_ONCE check). Escape answers No, as legacy's
-// escape id did.
+// (HikariMessageDialog's ASK_ONCE check). Legacy's dialog was modal and
+// Escape (its escape id) answered No; this question does not take the focus
+// from the Document, so Escape answers No while the focus is in it (reached
+// with Tab, or after "Apply to All"): the key comes up from its controls.
 Frame {
     id: offer
     objectName: "associationOffer"

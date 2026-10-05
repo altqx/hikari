@@ -640,6 +640,30 @@ private slots:
         QCOMPARE(QFileInfo(QString::fromStdString(application->video().session().path())).fileName(), QStringLiteral("one.mkv"));
     }
 
+    // Legacy's question was modal and Escape (its escape id) answered No.
+    // The inline question does not take the focus from the Document; with
+    // the focus in it (Tab, or "Apply to All" clicked) Escape answers No.
+    void escapeInTheQuestionAnswersNo()
+    {
+        const QString folder = dir.filePath(QStringLiteral("escape"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/esc.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/esc.mkv")));
+        const QString subs = writeAss(folder + QStringLiteral("/esc.ass"), {}, "esc");
+        QVERIFY(application->openFile(subs));
+        QVERIFY(application->video().offering());
+        QQuickItem *applyToAll = visualItem(QStringLiteral("associationApplyToAll"));
+        QVERIFY(applyToAll && applyToAll->isVisible());
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowFocused(window));
+        applyToAll->forceActiveFocus(Qt::TabFocusReason);
+        QVERIFY(applyToAll->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(!application->video().offering());
+        QTest::qWait(200);
+        QVERIFY(!application->video().hasVideo()); // No: nothing loads
+    }
+
     // OpenFile on a video: subtitles of the same name beside it are offered
     // ("Load subtitles named ...?"); Yes loads them into the tab, without the
     // association question, then the video.
