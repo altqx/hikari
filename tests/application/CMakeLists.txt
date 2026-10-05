@@ -108,3 +108,10 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# Y6: Font catalogs (FontCatalogs.txt grammar, operations), the picker's
+# family lists and filter, and the external fonts folder.
+hikari_add_gtest(hikari_application_font_catalogs_tests SOURCES font_catalogs_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+target_include_directories(hikari_application_font_catalogs_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+target_compile_definitions(hikari_application_font_catalogs_tests PRIVATE
+    HIKARI_FONT_CATALOG_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/font-catalogs")

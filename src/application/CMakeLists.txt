@@ -40,3 +40,5 @@ target_sources(hikari_application PRIVATE font_collector.cpp)
 target_sources(hikari_application PRIVATE visual_view.cpp visual_tools.cpp visual_crosshair.cpp)
 set_source_files_properties(visual_view.cpp visual_crosshair.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# Y6: Font catalogs, the picker's family lists and the external fonts folder.
+target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
