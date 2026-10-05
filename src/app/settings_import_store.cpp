@@ -176,40 +176,62 @@ std::optional<si::Profile> readProfile(const QString &dir, const QJsonObject &fr
     return p;
 }
 
-// The import's changes over what the live profile holds now: where the
-// generation differs from its base it wins, elsewhere the live value stays
-// (an edit made after staging is kept).
+// The import's changes over what the live profile holds now, three ways:
+// where the generation differs from its base (the live profile when it was
+// staged) and the live value is still the base's, the generation's value
+// goes in; a value edited since staging is kept, whatever the import
+// changes there (settings-import.md step 5: never overwrite later user
+// edits automatically); elsewhere the live value stays.
+template <class Map>
+void mergeInto(Map &out, const Map &base, const Map &target)
+{
+    std::set<std::string, std::less<>> keys;
+    for (const auto *m : {&base, &target})
+        for (const auto &[k, v] : *m)
+            keys.insert(k);
+    for (const auto &k : keys) {
+        const auto b = base.find(k), t = target.find(k), l = out.find(k);
+        const bool inBase = b != base.end(), inTarget = t != target.end(), inLive = l != out.end();
+        if (inBase == inTarget && (!inBase || b->second == t->second))
+            continue; // the import leaves it as it was
+        if (inBase != inLive || (inBase && b->second != l->second))
+            continue; // edited since staging: kept
+        if (inTarget)
+            out[k] = t->second;
+        else
+            out.erase(k);
+    }
+}
+
 si::Profile merged(const si::Profile &base, const si::Profile &target, const si::Profile &live)
 {
     si::Profile out = live;
-    std::set<std::string, std::less<>> keys;
-    for (const auto *p : {&base, &target})
-        for (const auto &[k, v] : p->values)
-            keys.insert(k);
-    for (const auto &k : keys) {
-        const auto b = base.values.find(k), t = target.values.find(k);
-        const bool inBase = b != base.values.end(), inTarget = t != target.values.end();
-        if (inBase == inTarget && (!inBase || b->second == t->second))
-            continue;
-        if (inTarget)
-            out.values[k] = t->second;
-        else
-            out.values.erase(k);
-    }
-    std::set<std::string, std::less<>> files;
-    for (const auto *p : {&base, &target})
-        for (const auto &[k, v] : p->files)
-            files.insert(k);
-    for (const auto &k : files) {
-        const auto b = base.files.find(k), t = target.files.find(k);
-        const bool inBase = b != base.files.end(), inTarget = t != target.files.end();
-        if (inBase == inTarget && (!inBase || b->second == t->second))
-            continue;
-        if (inTarget)
-            out.files[k] = t->second;
-        else
-            out.files.erase(k);
-    }
+    mergeInto(out.values, base.values, target.values);
+    mergeInto(out.files, base.files, target.files);
+    return out;
+}
+
+// What merged() keeps against the import: the settings and files the
+// generation changes that were edited since it was staged to another value.
+QStringList keptAgainst(const si::Profile &base, const si::Profile &target, const si::Profile &live)
+{
+    QStringList out;
+    const auto collect = [&](const auto &b, const auto &t, const auto &l) {
+        std::set<std::string, std::less<>> keys;
+        for (const auto *m : {&b, &t})
+            for (const auto &[k, v] : *m)
+                keys.insert(k);
+        for (const auto &k : keys) {
+            const auto bi = b.find(k), ti = t.find(k), li = l.find(k);
+            const auto same = [](auto x, auto xe, auto y, auto ye) {
+                return (x == xe) == (y == ye) && (x == xe || x->second == y->second);
+            };
+            if (!same(bi, b.end(), ti, t.end()) && !same(bi, b.end(), li, l.end()) && !same(ti, t.end(), li, l.end()))
+                out << qs(k);
+        }
+    };
+    collect(base.values, target.values, live.values);
+    collect(base.files, target.files, live.files);
     return out;
 }
 
@@ -588,7 +610,10 @@ SettingsImportStore::Result SettingsImportStore::activate(const si::Plan &plan,
     }
     Generation g;
     g.profile = imported;
-    g.base = current;
+    // The base is what the live profile holds now, not the destination: an
+    // earlier import still waiting for the next start is in `imported` and
+    // goes in with this one, and what is edited from here on is kept.
+    g.base = liveProfile();
     g.receipt = si::receiptOf(plan, chosen, ss(m_profileName));
     if (!stage(number, g))
         return Result::StagingFailed;
@@ -649,6 +674,15 @@ SettingsImportStore::Result SettingsImportStore::rollback()
     if (!writeManifest(back))
         return Result::StagingFailed;
     return Result::Activated;
+}
+
+QStringList SettingsImportStore::editsKeptOverImport() const
+{
+    const Manifest m = readManifest();
+    if (m.active == 0 || m.rollback || liveGeneration() == m.active)
+        return {};
+    const auto g = readGeneration(m.active);
+    return g ? keptAgainst(g->base, g->profile, liveProfile()) : QStringList();
 }
 
 void SettingsImportStore::materialize(const si::Profile &profile)

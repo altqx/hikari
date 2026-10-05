@@ -2,7 +2,9 @@
 // legacy roots listed, the snapshot with its hashes and the legacy files
 // left as they were, staged generations activated through the manifest at
 // the next start, an interrupted activation keeping the previous
-// generation, a repeated import as a no-op, edits made after staging kept,
+// generation (none, or an earlier import live or waiting), a repeated
+// import as a no-op, edits made after staging kept (also over the import's
+// own changes), two imports waiting for one start,
 // rollback to the previous complete generation with the edits it replaces,
 // stale sources and destinations refused; and the window's controller. The
 // readers and the plan are hikari_application_settings_import_tests.
@@ -316,6 +318,9 @@ private slots:
         QCOMPARE(again.settings->text("grid.font"), QStringLiteral("Arial"));
     }
 
+    // settings-import.md step 5: never overwrite later user edits
+    // automatically. An edit made after the import was staged is kept at the
+    // next start, also where the import changes the same setting.
     void editsAfterStagingAreKept()
     {
         LegacyRoot legacy;
@@ -323,15 +328,144 @@ private slots:
         {
             Session s(folder.path());
             const Review r = review(*s.store, legacy.dir.path());
-            s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot, r.revision);
+            QVERIFY(r.plan.row("setting:grid.font")->proposedImport);
+            QCOMPARE(s.store->activate(r.plan, si::proposedRows(r.plan), r.snapshot, r.revision),
+                     SettingsImportStore::Result::Activated);
+            QVERIFY(s.store->editsKeptOverImport().isEmpty());
             // Changed in the same session, after the import was staged.
             s.settings->set("grid.hideColumns", 6);
             s.settings->set("grid.font", QStringLiteral("Later"));
+            writeFile(folder.filePath(QStringLiteral("Rules.txt")), "1\tmine\tours\r\n");
+            QCOMPARE(s.store->editsKeptOverImport(), (QStringList{"grid.font", "Rules.txt"}));
+            // A plan made now compares with what the next start will hold.
+            QCOMPARE(std::get<std::string>(s.store->destination().values.at("grid.font")), std::string("Later"));
         }
         Session next(folder.path());
-        next.store->recover();
+        QVERIFY(next.store->recover());
         QCOMPARE(next.settings->integer("grid.hideColumns"), 6); // not touched by the import: kept
-        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial")); // the import's own change
+        QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Later")); // the import changes it: kept too
+        QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tmine\tours\r\n"));
+        QCOMPARE(next.settings->integer("grid.fontSize"), 12); // the import's other changes go in
+        QVERIFY(next.store->editsKeptOverImport().isEmpty());
+        // A rollback would replace them: they are not the import's.
+        QCOMPARE(next.store->editsSinceActivation(), (QStringList{"grid.font", "grid.hideColumns", "Rules.txt"}));
+    }
+
+    // Two imports before a start: the second one's base is the live
+    // profile, so the first one's changes go in with it.
+    void importsWaitingTogetherBothTakeEffect()
+    {
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        int first = 0;
+        {
+            Session s(folder.path());
+            const Review r = review(*s.store, legacy.dir.path());
+            auto chosen = si::proposedRows(r.plan);
+            QVERIFY(chosen.erase("setting:grid.fontSize"));
+            QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision), SettingsImportStore::Result::Activated);
+            first = s.store->activeGeneration();
+            const Review again = review(*s.store, legacy.dir.path());
+            chosen = si::proposedRows(again.plan);
+            chosen.insert("setting:grid.fontSize");
+            QCOMPARE(s.store->activate(again.plan, chosen, again.snapshot, again.revision),
+                     SettingsImportStore::Result::Activated);
+            QCOMPARE(s.store->previousGeneration(), first);
+        }
+        {
+            Session next(folder.path());
+            QVERIFY(next.store->recover());
+            QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Arial"));
+            QCOMPARE(next.settings->integer("grid.fontSize"), 12);
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
+            QVERIFY(next.settings->list(application::kHotkeysSetting.data())
+                        .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
+            QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
+        }
+        // Rolled back to the first import, whole.
+        Session back(folder.path());
+        QVERIFY(back.store->recover());
+        QCOMPARE(back.store->activeGeneration(), first);
+        QCOMPARE(back.settings->text("grid.font"), QStringLiteral("Arial"));
+        QVERIFY(!back.settings->isSet(QStringLiteral("grid.fontSize")));
+        QVERIFY(QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
+    }
+
+    // An activation interrupted while an earlier import is active, live or
+    // waiting for the next start: that import stays active, with the same
+    // previous generation, and the next start holds it.
+    void interruptedActivationKeepsTheActiveImport_data()
+    {
+        QTest::addColumn<int>("step");
+        QTest::addColumn<bool>("waiting");
+        for (const bool waiting : {false, true}) {
+            const char *when = waiting ? "waiting" : "live";
+            QTest::addRow("backup, %s", when) << int(SettingsImportStore::Step::Backup) << waiting;
+            QTest::addRow("files, %s", when) << int(SettingsImportStore::Step::Files) << waiting;
+            QTest::addRow("profile, %s", when) << int(SettingsImportStore::Step::Profile) << waiting;
+            QTest::addRow("complete, %s", when) << int(SettingsImportStore::Step::Complete) << waiting;
+            QTest::addRow("manifest, %s", when) << int(SettingsImportStore::Step::Manifest) << waiting;
+        }
+    }
+    void interruptedActivationKeepsTheActiveImport()
+    {
+        QFETCH(int, step);
+        QFETCH(bool, waiting);
+        LegacyRoot legacy;
+        QTemporaryDir folder;
+        int first = 0, previous = 0;
+        const auto importAgain = [&](Session &s) {
+            // An edit since the first import: the second one backs up the
+            // current profile before staging (the Backup step).
+            s.settings->set("grid.hideColumns", 4);
+            const Review r = review(*s.store, legacy.dir.path());
+            auto chosen = si::proposedRows(r.plan);
+            chosen.insert("setting:grid.fontSize");
+            s.store->failAt = [step](SettingsImportStore::Step at) { return int(at) == step; };
+            QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision), SettingsImportStore::Result::StagingFailed);
+            QCOMPARE(s.store->activeGeneration(), first);
+            QCOMPARE(s.store->previousGeneration(), previous);
+            QCOMPARE(s.store->pending(), waiting);
+            if (step != int(SettingsImportStore::Step::Backup) && step != int(SettingsImportStore::Step::Manifest))
+                QVERIFY(!s.store->incompleteStaging().isEmpty());
+        };
+        {
+            Session s(folder.path());
+            s.settings->set("grid.font", QStringLiteral("Mine"));
+            const Review r = review(*s.store, legacy.dir.path());
+            auto chosen = si::proposedRows(r.plan);
+            QVERIFY(chosen.erase("setting:grid.fontSize"));
+            QCOMPARE(s.store->activate(r.plan, chosen, r.snapshot, r.revision), SettingsImportStore::Result::Activated);
+            first = s.store->activeGeneration();
+            previous = s.store->previousGeneration();
+            QVERIFY(first > 0 && previous > 0);
+            if (waiting)
+                importAgain(s);
+        }
+        if (!waiting) {
+            Session s(folder.path());
+            QVERIFY(s.store->recover());
+            importAgain(s);
+        }
+        {
+            Session next(folder.path());
+            QCOMPARE(next.store->recover(), waiting);
+            QCOMPARE(next.store->activeGeneration(), first);
+            QCOMPARE(next.store->previousGeneration(), previous);
+            // The first import, and the edit made since; not the second import.
+            QCOMPARE(next.settings->text("grid.font"), QStringLiteral("Mine"));
+            QCOMPARE(readFile(folder.filePath(QStringLiteral("Rules.txt"))), QByteArray("1\tteh\tthe\r\n"));
+            QCOMPARE(next.settings->integer("grid.hideColumns"), 4);
+            QVERIFY(!next.settings->isSet(QStringLiteral("grid.fontSize")));
+            // Its rollback is still the one it had.
+            QCOMPARE(next.store->rollback(), SettingsImportStore::Result::Activated);
+        }
+        Session back(folder.path());
+        QVERIFY(back.store->recover());
+        QCOMPARE(back.store->activeGeneration(), previous);
+        QCOMPARE(back.settings->text("grid.font"), QStringLiteral("Mine"));
+        QVERIFY(!back.settings->isSet(QStringLiteral("grid.hideColumns")));
+        QVERIFY(!QFileInfo::exists(folder.filePath(QStringLiteral("Rules.txt"))));
     }
 
     void rollbackRestoresThePreviousGeneration()

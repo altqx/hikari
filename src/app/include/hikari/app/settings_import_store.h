@@ -10,10 +10,11 @@
 //
 // A generation activates at the next start (recover(), before anything
 // reads the profile): settings are read once by many windows, so a running
-// session keeps what it has. The import's own changes win over the live
-// profile, values edited after it was staged are kept; a rollback restores
-// the previous generation whole and reports what it replaces. Legacy files
-// are only read.
+// session keeps what it has. The import's changes go in where the live
+// profile still holds what it held at staging; a value edited since is
+// kept, also where the import changes it (step 5: never overwrite later
+// user edits automatically). A rollback restores the previous generation
+// whole and reports what it replaces. Legacy files are only read.
 //
 // Layout under Import/:
 //   manifest.json                {active, previous, pending, rollback}: the switch
@@ -110,6 +111,9 @@ public:
     // What a rollback would replace: settings and files changed since the
     // active generation (setting ids, file paths).
     QStringList editsSinceActivation() const;
+    // What the next start keeps against a waiting import: settings and files
+    // the import changes that were edited since it was staged.
+    QStringList editsKeptOverImport() const;
     Result rollback();
 
     // At start, before the profile is read: brings the live profile to the
