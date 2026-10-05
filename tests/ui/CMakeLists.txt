@@ -15,7 +15,7 @@ add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper
 # runners), so it gets more than the default 60 s.
 foreach(mode offscreen xvfb)
     if(TEST hikari_ui_shell_tests.${mode})
-        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 300)
+        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 900)
     endif()
 endforeach()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
