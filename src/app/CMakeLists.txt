@@ -26,3 +26,5 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# Y6: Font catalogs, the font picker's lists and the external fonts folder.
+target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)

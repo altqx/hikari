@@ -9,6 +9,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
+#include "hikari/app/font_catalogs_controller.h"
 #include "hikari/app/automation_shell.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/find_replace.h"
@@ -45,6 +46,7 @@
 #include <QDate>
 #include <QDateTime>
 #include <QLockFile>
+#include <QTemporaryDir>
 #include <QTimer>
 #include <QObject>
 #include <QUrl>
@@ -145,6 +147,10 @@ public:
         // A1: legacy's FFMS2 index files (Indices); empty: "Indices" beside
         // the settings file, or none without one (tests).
         QString indexDir;
+        // Y6: where FontCatalogs.txt and its autosave copies live (legacy
+        // Config); empty: beside the settings file, or a temporary
+        // directory of this Application without one (tests).
+        QString fontCatalogDir;
     };
     explicit Application(QObject *parent = nullptr);
     explicit Application(Options options, QObject *parent = nullptr);
@@ -539,6 +545,7 @@ public:
     StyleManagerController &styleManager() { return *m_styleManager; }
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
+    FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; } // Y6
     ui::LogController &log() { return *m_log; }
     ui::TagButtonsController &tagButtons() { return *m_tagButtons; }
     ui::ColourPickerController &colourPicker() { return *m_colourPicker; }
@@ -692,6 +699,8 @@ private:
     std::unique_ptr<UpdateChecker> m_updates;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
+    std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file
+    std::unique_ptr<FontCatalogsController> m_fontCatalogs;   // Y6
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
