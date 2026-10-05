@@ -18,6 +18,7 @@ add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/utf-8>" "$<$<COMPILE_LAN
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
+add_subdirectory(tools/i18n) # O4: the PO-to-TS migration tool
 add_subdirectory(src)
 add_subdirectory(tests/dependency-load)
 if(BUILD_TESTING)
