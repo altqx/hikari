@@ -19,8 +19,7 @@
 // top level runs.
 //
 // Not yet here, owned by the A33 automation cards: the native preloads
-// (lpeg, luabins, re/unicode/lfs) and MoonScript, and the gettext catalog
-// (identity for now).
+// (lpeg, luabins, re/unicode/lfs) and MoonScript.
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/lua_protocol.h"
@@ -285,11 +284,7 @@ int cancelScript(lua_State *L)
     return lua_error(L);
 }
 
-int gettext(lua_State *L)
-{
-    lua_pushstring(L, checkString(L, 1).c_str()); // catalog bridge: A33-compat
-    return 1;
-}
+int gettext(lua_State *L); // O5: through the host's catalog (below, with the host services)
 
 int include(lua_State *L)
 {
@@ -1982,6 +1977,21 @@ int decodePath(lua_State *L)
     const std::string path = checkString(L, 1);
     const auto reply = callHost(L, "decode_path", HostService::DecodePath, {}, {path});
     lua_pushstring(L, reply ? stringAt(*reply, 0).c_str() : path.c_str());
+    return 1;
+}
+
+// Legacy get_translation (Automation.cpp:83-88): check_string, then
+// wxGetTranslation(str) pushed with lua_pushstring, so the result ends at its
+// first NUL. O5: the application answers through the
+// HikariSub.Automation.Gettext QM of the current language (docs/qt/localisation.md,
+// "Lua compatibility"); it decides the lookup (the legacy UTF-8 conversion
+// and the untranslated source). Without an answer the source comes back, as
+// an untranslated key does.
+int gettext(lua_State *L)
+{
+    const std::string source = checkString(L, 1);
+    const auto reply = callHost(L, "gettext", HostService::Gettext, {}, {source});
+    lua_pushstring(L, reply && !reply->strings.empty() ? reply->strings.front().c_str() : source.c_str());
     return 1;
 }
 

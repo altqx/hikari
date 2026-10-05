@@ -128,6 +128,22 @@ TEST_F(RouterTest, UnattachedPortsAnswerUnavailable)
         EXPECT_EQ(r.status, HostServiceReply::Status::Unavailable);
 }
 
+// O5: aegisub.gettext goes to the application's lookup; without one it is
+// Unavailable and the helper keeps the source.
+TEST_F(RouterTest, GettextAnswersThroughTheTranslation)
+{
+    router.handle(request(HostService::Gettext, {}, {"Search bar"}), collect());
+    router.setTranslation([](const std::string &s) { return s == "Search bar" ? std::string("Pasek szukania") : s; });
+    router.handle(request(HostService::Gettext, {}, {"Search bar"}), collect());
+    router.handle(request(HostService::Gettext, {}, {"no such key"}), collect());
+    router.handle(request(HostService::Gettext), collect()); // no string: the empty source
+    ASSERT_EQ(replies.size(), 4u);
+    EXPECT_EQ(replies[0].status, HostServiceReply::Status::Unavailable);
+    EXPECT_EQ(replies[1].strings, std::vector<std::string>{"Pasek szukania"});
+    EXPECT_EQ(replies[2].strings, std::vector<std::string>{"no such key"});
+    EXPECT_EQ(replies[3].strings, std::vector<std::string>{""});
+}
+
 TEST_F(RouterTest, MediaAnswersInTheirUnits)
 {
     FakeMedia media;

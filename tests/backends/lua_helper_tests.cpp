@@ -18,6 +18,7 @@
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <functional>
@@ -623,6 +624,84 @@ TEST_F(LuaHelper, UnavailableServicesReturnNil)
     auto bare = load(fixture("services.lua"));
     ASSERT_TRUE(runMacro(*bare, macro(*bare, "Unavailable"), {}, run));
     EXPECT_EQ(run.log.value(0), "nil,nil,nil,nil,nil,nil,nil,nil,nil");
+}
+
+// O5: aegisub.gettext asks the host (HostService::Gettext) on each call, at
+// the top level as in a run, and keeps legacy get_translation's argument
+// handling (check_string: a number converts, anything else raises) and
+// lua_pushstring's result, which ends at the first NUL (Automation.cpp:83-88,
+// AutomationUtils.h:162-165). The fake catalog stands in for the
+// application's QM lookup.
+struct FakeCatalog {
+    std::map<std::string, std::string> entries;
+    std::vector<hikari::application::HostServiceRequest> requests;
+
+    LuaScriptHost::ServiceHandler handler()
+    {
+        return [this](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+            using hikari::application::HostServiceReply;
+            if (r.service != hikari::application::HostService::Gettext)
+                return reply(HostServiceReply::unavailable());
+            requests.push_back(r);
+            const std::string &source = r.strings.at(0);
+            HostServiceReply out;
+            const auto found = entries.find(source);
+            // The application turns bytes that are not UTF-8 into "" (Localisation::gettext).
+            out.strings = {found != entries.end() ? found->second : source.starts_with('\xff') ? std::string() : source};
+            reply(std::move(out));
+        };
+    }
+};
+
+TEST_F(LuaHelper, GettextAsksTheHostWithTheLegacyArguments)
+{
+    FakeCatalog catalog;
+    catalog.entries = {{"Search bar", "Pasek szukania"}};
+    auto host = load(fixture("gettext.lua"), catalog.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    // script_name and the macro's name, translated while the script loaded.
+    EXPECT_EQ(host->info().name, "Pasek szukania");
+    ASSERT_FALSE(catalog.requests.empty());
+    EXPECT_EQ(catalog.requests.front().run, 0u); // the top level
+    EXPECT_EQ(catalog.requests.front().strings, std::vector<std::string>{"Search bar"});
+    ASSERT_TRUE(runToEnd(*host, "Pasek szukania"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 7);
+    // A missing key and printf text come back as they are; a number converts.
+    EXPECT_EQ(run.log[0], "Pasek szukania|Pasek szukania|no such key|%d element|12|");
+    EXPECT_EQ(run.log[1], "3 element");
+    EXPECT_EQ(run.log[2], "1|string");
+    EXPECT_TRUE(run.log[3].startsWith("false|")) << run.log[3].toStdString();
+    EXPECT_TRUE(run.log[3].contains("string expected, got no value")) << run.log[3].toStdString();
+    EXPECT_TRUE(run.log[4].contains("string expected, got table")) << run.log[4].toStdString();
+    EXPECT_EQ(run.log[5], "6|Search"); // the host gets every byte, Lua the text to its NUL
+    EXPECT_EQ(run.log[6], "0");
+    const auto nul = std::find_if(catalog.requests.begin(), catalog.requests.end(),
+                                  [](const auto &r) { return r.strings.at(0).find('\0') != std::string::npos; });
+    ASSERT_NE(nul, catalog.requests.end());
+    EXPECT_EQ(nul->strings.at(0), std::string("Search\0bar", 10));
+
+    // The language changes between runs: the next lookup reads the new
+    // catalog; what the script already holds (its top-level value, its
+    // registered names) stays until it is reloaded.
+    catalog.entries = {{"Search bar", "Barre de recherche"}};
+    ASSERT_TRUE(runToEnd(*host, "Pasek szukania"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "Pasek szukania|Barre de recherche|no such key|%d element|12|");
+    EXPECT_EQ(host->info().name, "Pasek szukania");
+}
+
+// No answer (no handler, or Unavailable): the source, as for a key the
+// catalog does not have.
+TEST_F(LuaHelper, GettextWithoutAnAnswerIsTheSource)
+{
+    auto host = load(fixture("gettext.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_EQ(host->info().name, "Search bar");
+    ASSERT_TRUE(runToEnd(*host, "Search bar"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "Search bar|Search bar|no such key|%d element|12|");
+    EXPECT_EQ(run.log.value(6), "4");
 }
 
 TEST_F(LuaHelper, TextExtentsFollowTheLegacyChecks)
