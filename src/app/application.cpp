@@ -561,7 +561,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         auto *session = targetSession();
         if (!session)
             return;
-        m_video->session().setSubtitles(core::encodeAss(preview ? *preview : session->document()));
+        m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document())); // E5
         m_videoScript.clear(); // E4: the next refresh shows the draft again
     });
     m_visualTools->setLog([this](const QString &text) { m_log->log(text); });
@@ -588,6 +588,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_videoView->setPlayer(m_generalPlayer.get());
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
     m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
+    setUpTranslationControls(); // E5
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1358,6 +1359,7 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison(); // R1: an edited compared Document is compared again
+    m_shell->setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference)); // E5
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
@@ -1420,8 +1422,10 @@ void Application::refreshVideo()
             edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
         m_videoRevision = session->revision();
         m_videoShowsDraft = draft.has_value();
-        // T4: with the visual tool's preview (its Lines, the vector clip's mask).
-        auto script = m_visualTools->subtitles(draft ? *draft : session->document());
+        // T4: with the visual tool's preview (its Lines, the vector clip's
+        // mask); E5: as the renderer takes it (GetVisible).
+        auto script = m_visualTools->subtitles(draft ? *draft : session->document(),
+                                               [this](const core::Document &d) { return rendererScript(d); });
         if (script != m_videoScript) {
             m_videoScript = script;
             m_video->session().setSubtitles(std::move(script));
@@ -1780,8 +1784,12 @@ bool Application::saveAll()
 bool Application::turnOffTranslationMode()
 {
     auto *session = targetSession();
-    if (!session || !application::turnOffTranslationMode(*session))
+    if (!session)
         return false;
+    showOriginal(*m_workspace.editingTarget());
+    if (!application::turnOffTranslationMode(*session))
+        return false;
+    originalColumns(*m_workspace.editingTarget()).turnedOff(session->document()); // E5: showOriginal = false
     m_editor->reloadFromSession();
     refreshViews();
     return true;
@@ -2324,7 +2332,7 @@ bool Application::autosave(application::DocumentId document)
     if (!session || !m_recovery->enabled())
         return false;
     application::RecoveryContent content;
-    content.bytes = core::encodeSubtitle(session->document());
+    content.bytes = core::encodeSubtitle(session->document(), m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2554,6 +2562,8 @@ bool Application::pasteTranslationFile(const QUrl &file)
     const QString extension = path.section(QLatin1Char('.'), -1);
     const auto shown = shownLines();
     const bool done = application::pasteTranslation(*session, toU8(text), toU8(extension), shown).has_value();
+    if (done)
+        originalColumns(*m_workspace.editingTarget()).pasted(session->document()); // E5: showOriginal = true
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -2570,6 +2580,9 @@ bool Application::shiftTranslation(int mode)
 {
     auto *session = targetSession();
     if (!session || mode < 0 || mode > 5)
+        return false;
+    // E5: MoveTextTL returns without showOriginal (SubsGrid.cpp:1037).
+    if (!showOriginal(*m_workspace.editingTarget()))
         return false;
     const auto shown = shownLines();
     const bool done =

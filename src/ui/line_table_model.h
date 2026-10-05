@@ -42,6 +42,10 @@ public:
         CpsColumn,
         WrapsColumn,
         TextColumn,
+        // E5: "Translation", shown with the original (legacy showOriginal,
+        // SubsGridWindow.cpp:329-330 and 415-416); TextColumn is then
+        // "Original text".
+        TranslationColumn,
         ColumnCount
     };
     // headerData role: whether the column is shown (the Document's format
@@ -99,6 +103,10 @@ public:
     void setComparisonColours(const ComparisonColours &colours);
     void setSelection(const application::Selection &selection, std::optional<core::LineId> anchor);
     void setHiddenColumns(int mask);
+    // E5: legacy SubsGrid::showOriginal (application::OriginalColumns).
+    // Applied from the next setDocument.
+    void setShowOriginal(bool show) { m_showOriginal = show; }
+    bool showOriginal() const { return m_showOriginal; }
     // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
     // the Document's format, misspellings only when `spell` (bracket errors
     // always). Unset: no marks. Applied from the next setDocument.
@@ -148,6 +156,7 @@ private:
     std::optional<core::LineId> m_anchor;
     core::SubtitleFormat m_format = core::SubtitleFormat::Ass;
     bool m_translationMode = false;
+    bool m_showOriginal = false;
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;

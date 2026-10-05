@@ -76,6 +76,8 @@ bool LineTableModel::columnShown(int column) const
         if (tmp)
             return false;
         break;
+    case TranslationColumn:
+        return m_showOriginal; // SubsGridWindow.cpp:330
     default:
         break;
     }
@@ -302,7 +304,12 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         case EffectColumn: return qs(line.effect);
         case CpsColumn: return measuresOf(r).cps;
         case WrapsColumn: return measuresOf(r).wraps;
-        case TextColumn: return qs(line.text);
+        case TextColumn:
+            // SubsGridWindow.cpp:376 and 415: without the original shown, a
+            // translated Line shows its translation (isTl = hasTLMode &&
+            // TextTl != "").
+            return qs(!m_showOriginal && m_translationMode && !line.translation.empty() ? line.translation : line.text);
+        case TranslationColumn: return qs(line.translation);
         default: return {};
         }
     case LineIdRole:
@@ -363,7 +370,9 @@ QVariant LineTableModel::headerData(int section, Qt::Orientation orientation, in
         return {};
     // Legacy headings.
     static const char *names[] = {"#",     "L.",   "Start", "End",    "Styles", "Actor", "Left",
-                                  "Right", "Vert.", "Effect", "CPS", "Wraps",  "Text"};
+                                  "Right", "Vert.", "Effect", "CPS", "Wraps",  "Text", "Translation"};
+    if (section == TextColumn && m_showOriginal)
+        return tr("Original text"); // SubsGridWindow.cpp:329
     return tr(names[section]);
 }
 

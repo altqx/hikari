@@ -15,10 +15,21 @@ namespace hikari::core {
 // Document therefore encodes to exactly its input.
 std::vector<std::byte> encodeAss(const Document &document);
 
-// The legacy TL_MODE_HIDE_ORIGINAL_ON_VIDEO option: a regenerated TLMode
-// original is written as a Comment. Off by default, as in the legacy app.
+// The legacy TL_MODE_HIDE_ORIGINAL_ON_VIDEO option: a TLMode original is
+// written as a Comment (SubsGrid::SaveFile, SubsGridBase.cpp:308-375). Off by
+// default, as in the legacy app. E5: with it on, an unchanged pair with a
+// translation or Unconfirmed has its original line written again as a
+// Comment too (legacy writes every line again); the bytes from the end of
+// the original line on (the translation line) are kept.
 struct AssSaveOptions {
     bool hideOriginalOnVideo = false;
+    // E5: the script the video renderer reads, as SubsGrid::GetVisible
+    // (SubsGridBase.cpp:1516-1597) builds it. With "TLMode: Yes", a Line with a
+    // translation is its original line (TLMode Style, "\fD" effect when
+    // Unconfirmed), left out when hideOriginalOnVideo is on, then its
+    // translation line; any other Line is one line with its text, in its own
+    // Style and effect. Without "TLMode: Yes" every Line is its text alone.
+    bool renderer = false;
 };
 // An edited TLMode pair is regenerated as SubsGrid::SaveFile writes it: with a
 // translation or Unconfirmed, the original line (TLMode Style, "\fD" effect

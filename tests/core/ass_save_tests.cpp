@@ -183,6 +183,84 @@ TEST(AssSave, EditedUnconfirmedPairWritesTheOriginalWithFormFeedD)
               std::string::npos);
 }
 
+// E5: TL_MODE_HIDE_ORIGINAL_ON_VIDEO in SubsGrid::SaveFile
+// (SubsGridBase.cpp:358-367): every original with a translation or
+// Unconfirmed is written as a Comment (GetRaw's hideOriginalOnVideo), so an
+// unchanged pair's original line is written again; its translation line keeps
+// its bytes. An original that already is a Comment, and an untranslated pair,
+// stay as they are.
+TEST(AssSave, HideOriginalOnVideoCommentsUnchangedOriginals)
+{
+    const std::string input = "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                              "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\r\n"
+                              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,1,2,3,fx,uno\r\n"
+                              "Comment: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,two\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,,dos\n"
+                              "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,\fD,three\n"
+                              "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,\n"
+                              "Dialogue: 0,0:00:07.00,0:00:08.00,O,,0,0,0,,four\n"
+                              "Dialogue: 0,0:00:07.00,0:00:08.00,T,,0,0,0,,\n";
+    const auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 4u);
+    EXPECT_EQ(text(encodeAss(r.document)), input); // the option off: unchanged
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true})),
+              "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+              "Comment: 0,0:00:01.00,0:00:02.00,O,,1,2,3,fx,one\r\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,1,2,3,fx,uno\r\n"
+              "Comment: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,two\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,,dos\n"
+              "Comment: 0,0:00:05.00,0:00:06.00,O,,0,0,0,\fD,three\n"
+              "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,\n"
+              "Dialogue: 0,0:00:07.00,0:00:08.00,O,,0,0,0,,four\n"
+              "Dialogue: 0,0:00:07.00,0:00:08.00,T,,0,0,0,,\n");
+    // "TLMode: Translated" writes no original (SaveFile's `translated`).
+    const auto translated = loadAss(bytesOf("[Script Info]\nTLMode: Translated\n[Events]\n"
+                                            "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n"));
+    EXPECT_EQ(text(encodeAss(translated.document, AssSaveOptions{.hideOriginalOnVideo = true})),
+              "[Script Info]\nTLMode: Translated\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,uno\n");
+}
+
+// E5: the script the video renderer reads, as SubsGrid::GetVisible builds it
+// (SubsGridBase.cpp:1564-1573): with a translation, the original line in the
+// TLMode Style (left out with TL_MODE_HIDE_ORIGINAL_ON_VIDEO) then the
+// translation line; otherwise the Line's text alone in its own Style.
+TEST(AssSave, RendererScriptFollowsGetVisible)
+{
+    const std::string input = "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                              "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,one\n"
+                              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,\fD,two\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,fx,\n"
+                              "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,plain\n";
+    auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 3u);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,fx,one\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"
+              // Unconfirmed without a translation: GetRaw(txt), its own Style and effect.
+              "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,fx,two\n"
+              "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,plain\n");
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.hideOriginalOnVideo = true, .renderer = true})),
+              "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,T,,0,0,0,fx,two\n"
+              "Dialogue: 0,0:00:05.00,0:00:06.00,T,,0,0,0,,plain\n");
+    // An Unconfirmed translated Line: the original takes "\fD" (GetRaw with
+    // the TLMode Style).
+    const auto first = r.document.lines()[0]->id;
+    ASSERT_TRUE(r.document.setLineUnconfirmed(first, true));
+    EXPECT_NE(text(encodeAss(r.document, AssSaveOptions{.renderer = true}))
+                  .find("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,\fD,one\n"
+                        "Dialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,fx,uno\n"),
+              std::string::npos);
+    // Without translation mode nothing changes.
+    const std::string plain = "[Script Info]\n[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,T,,0,0,0,,x\n";
+    EXPECT_EQ(text(encodeAss(loadAss(bytesOf(plain)).document,
+                             AssSaveOptions{.hideOriginalOnVideo = true, .renderer = true})),
+              plain);
+}
+
 TEST(AssLoad, TLModePairingEdges)
 {
     const auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"

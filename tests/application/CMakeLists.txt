@@ -162,3 +162,7 @@ hikari_add_gtest(hikari_application_video_timing_tests SOURCES video_timing_test
 target_compile_definitions(hikari_application_video_timing_tests PRIVATE
     HIKARI_VIDEO_TIMING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/video-timing-cases.txt"
     HIKARI_VIDEO_TIMING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v6-video-timing-20261005/observations.jsonl")
+# E5: translation mode controls (Translator mode, Not confirmed, Moving tags,
+# the Grid's Original text / Translation columns).
+hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
+    LIBRARIES hikari_application LABELS application)

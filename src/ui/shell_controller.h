@@ -49,6 +49,12 @@ public:
                  const std::vector<application::LineComparison> *targetComparison,
                  const std::vector<application::LineComparison> *referenceComparison);
     // R1: the comparison colours of both Grids (GRID_COMPARISON_*).
+    // E5: legacy SubsGrid::showOriginal of each Grid, from the next refresh.
+    void setShowOriginal(bool target, bool reference)
+    {
+        m_lines.setShowOriginal(target);
+        m_referenceLines.setShowOriginal(reference);
+    }
     void setComparisonColours(const LineTableModel::ComparisonColours &colours)
     {
         m_lines.setComparisonColours(colours);

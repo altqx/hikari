@@ -158,6 +158,7 @@ void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
     m_matroskaPaths.erase(document.value);
+    m_originalColumns.erase(document.value); // E5: the tab's Grid goes with it
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });
     if (m_unresolved.size() != before)
@@ -555,6 +556,7 @@ void Application::applySession()
         m_workspace.remove(id);
     }
     m_tabMedia.clear();
+    m_originalColumns.clear(); // E5: every tab's Grid is destroyed
     m_unresolved.clear();
     std::optional<application::DocumentId> last;
     for (std::size_t i = 0; i < pending.tabs.size(); ++i) {
@@ -676,6 +678,7 @@ bool Application::retryRestore(int row)
         m_workspace.replace(entry.document, *id);
         m_comparison.replaced(entry.document, *id); // R1: as replaceTarget
         m_tabMedia.erase(entry.document.value);
+        m_originalColumns.erase(entry.document.value); // E5: as forgetTab
         m_tabMedia[id->value] = kept;
         for (auto &u : m_unresolved)
             if (u.document == entry.document)

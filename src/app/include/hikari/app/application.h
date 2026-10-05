@@ -27,6 +27,7 @@
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/application/video_timing.h"
+#include "hikari/application/translation_mode.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/portaudio_output.h"
@@ -227,6 +228,15 @@ public:
     Q_INVOKABLE bool saveAll();
     // GLOBAL_SAVE_TRANSLATION: translator mode off (one step), then the dialog.
     Q_INVOKABLE bool turnOffTranslationMode();
+    // E5 (application_translation.cpp): the editor's "Translator mode" check
+    // box is enabled for an ASS Document that has a file (legacy
+    // HikariSubFrame.cpp:2401); turning it on is one "Turning on translator
+    // mode" step; turning it off (after QML's confirmation) is
+    // turnOffTranslationMode. "Moving tags" writes AUTO_MOVE_TAGS_FROM_ORIGINAL.
+    Q_PROPERTY(bool translatorModeAvailable READ translatorModeAvailable NOTIFY tabsChanged)
+    bool translatorModeAvailable() const;
+    Q_INVOKABLE bool turnOnTranslationMode();
+    Q_INVOKABLE void setMoveTags(bool on);
     // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
@@ -807,6 +817,17 @@ private:
     void refreshComparison();
     std::unique_ptr<ui::VisualToolsController> m_visualTools;
     std::unique_ptr<ui::VideoViewController> m_videoView; // V4
+    // E5: each Document's legacy SubsGrid::showOriginal, with the file
+    // generation it was set up for (a reload is a new LoadSubtitles).
+    struct OriginalColumnsEntry {
+        std::uint64_t generation = 0;
+        application::OriginalColumns columns;
+    };
+    std::map<std::uint64_t, OriginalColumnsEntry> m_originalColumns;
+    application::OriginalColumns &originalColumns(application::DocumentId document);
+    bool showOriginal(application::DocumentId document);
+    void setUpTranslationControls();
+    std::vector<std::byte> rendererScript(const core::Document &document) const;
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;

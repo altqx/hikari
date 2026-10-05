@@ -149,8 +149,10 @@ public:
     Q_INVOKABLE void dismissNotice();
 
     // T4: the subtitles the video renders for a Document: as the preview
-    // gives it (the staged texts and the tool's Lines added), encoded.
-    std::vector<std::byte> subtitles(const core::Document &document) const;
+    // gives it (the staged texts and the tool's Lines added), encoded by
+    // `encode` (E5: the renderer's options), else as saved.
+    using Encoder = std::function<std::vector<std::byte>(const core::Document &)>;
+    std::vector<std::byte> subtitles(const core::Document &document, const Encoder &encode = {}) const;
 
     // VisualHost.
     const application::visual::VideoView &view() const override { return m_view; }

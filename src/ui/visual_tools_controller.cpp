@@ -410,12 +410,11 @@ bool VisualToolsController::previewDocument(const core::Document &document, core
     return true;
 }
 
-std::vector<std::byte> VisualToolsController::subtitles(const core::Document &document) const
+std::vector<std::byte> VisualToolsController::subtitles(const core::Document &document, const Encoder &encode) const
 {
     core::Document preview;
-    if (previewDocument(document, preview))
-        return core::encodeAss(preview);
-    return core::encodeAss(document);
+    const core::Document &shown = previewDocument(document, preview) ? preview : document;
+    return encode ? encode(shown) : core::encodeAss(shown);
 }
 
 void VisualToolsController::updatePreview()

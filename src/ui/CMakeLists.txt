@@ -78,3 +78,6 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
+# E5: the Line editor's Translator mode check box and its Not confirmed and
+# Moving tags buttons.
+qt_target_qml_sources(hikari_ui QML_FILES TranslatorModeCheck.qml TranslationToggles.qml)
