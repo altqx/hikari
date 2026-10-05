@@ -291,8 +291,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "open-keyframes",
@@ -318,8 +317,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "set-start-time",
@@ -552,8 +550,7 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "media-next-file",
@@ -568,8 +565,7 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "open-audio",

@@ -21,6 +21,7 @@
 #include "hikari/application/misspell_replacer.h"
 #include "hikari/application/options_dialog.h"
 #include "hikari/application/recent_files.h"
+#include "hikari/application/video_sources.h"
 #include "hikari/application/recovery_store.h"
 #include "hikari/application/session_file.h"
 #include "hikari/application/spell_checker.h"
@@ -526,11 +527,25 @@ public:
     // A1: the Audio menu. GLOBAL_AUDIO_FROM_VIDEO opens the video's file
     // again as audio; GLOBAL_RECENT_AUDIO lists {path, label} rows (missing
     // local files pruned first, as legacy AppendRecent); the GLOBAL_OPEN_AUDIO
-    // dialog starts in the video's folder (legacy: else the latest recent
-    // video's, which the rewrite does not list yet).
+    // dialog starts in the video's folder, else the latest recent video's (V3).
     Q_INVOKABLE void openAudioFromVideo();
     Q_INVOKABLE QVariantList recentAudio();
     Q_INVOKABLE QUrl audioDialogFolder() const;
+    // V3 (application_video.cpp): the Video menu's recent lists
+    // (GLOBAL_RECENT_VIDEO, GLOBAL_RECENT_KEYFRAMES: {path, label} rows,
+    // missing local files pruned first as legacy AppendRecent), keyframes
+    // opened from the dialog or the list (SetRecent(3) either way), the
+    // dialogs' folders (legacy OnMenuSelected), the dummy video
+    // (GLOBAL_OPEN_DUMMY_VIDEO; the error text to log, else empty) and
+    // VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE.
+    Q_INVOKABLE QVariantList recentVideos();
+    Q_INVOKABLE QVariantList recentKeyframes();
+    Q_INVOKABLE QString openKeyframesFile(const QString &path);
+    Q_INVOKABLE QUrl videoDialogFolder() const;
+    Q_INVOKABLE QUrl keyframesDialogFolder() const;
+    Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
+    Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
+    Q_INVOKABLE bool nextVideoFile(bool next);
     // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
     // Video menu, enabled while the audio box exists): the box centred on the
     // video's time (VideoBox::Tell, 0 without video), with the mark there too.
@@ -539,6 +554,7 @@ public:
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
     ui::VideoController &video() { return *m_video; }
+    backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback
     ui::AudioController &audio() { return *m_audio; }
     AutomationShell &automation() { return *m_automation; }
     AutomationHotkeysController &automationHotkeys() { return *m_automationHotkeys; }
@@ -688,6 +704,8 @@ private:
     std::unique_ptr<ui::LineEditorController> m_editor;
     std::optional<application::DocumentId> m_editorDocument;
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
+    // V3: the Video panel's source: dummy videos, else the media helper
+    std::unique_ptr<application::DummyVideoSource> m_videoSource;
     backends::LibassRenderer m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
@@ -853,6 +871,18 @@ private:
     std::unique_ptr<backends::AudioBoxPlayer> m_audioPlayer;
     void refreshAudio();
     void followVideoInAudio();
+    // V3 (application_video.cpp)
+    void trackVideoSources();
+    void logVideoFailure();
+    void rememberRecentVideo(const QString &path);
+    void rememberRecentKeyframes(const QString &path);
+    QVariantList recentRows(application::RecentFiles &list, const char *setting);
+    // keyframes opened with the audio box and no video, at 23.976 fps
+    bool keyframesWithoutVideo(const QString &path, QString &problem);
+    application::RecentFiles m_recentVideo;
+    application::RecentFiles m_recentKeyframes;
+    application::NextFileWalker m_nextFile;
+    QString m_recentVideoSeen; // the ready video last added to the list
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();
     // Legacy's index file for `path` and an audio track (-1: none).

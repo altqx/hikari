@@ -9,6 +9,7 @@
 #include <QKeySequence>
 #include <QMouseEvent>
 #include <algorithm>
+#include <utility>
 #include <set>
 
 namespace hikari::app {
@@ -185,6 +186,9 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     load();
     m_installed = m_live;
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
+    if (m_log)
+        for (const QString &notice : std::exchange(m_retiredNotices, {}))
+            m_log(notice);
     logInvalid(); // the frame's SetAccels(false) at startup
     // OK in the automation hotkeys window: SetHotkeysMap, SetAccels(true), SaveHkeys().
     connect(&m_scripts, &AutomationHotkeysController::committed, this, [this] {
@@ -213,6 +217,16 @@ void HotkeysController::load()
         application::readHotkeyLines(m_live, stdLines(m_settings.list(kAudioSetting)));
     else
         application::loadDefaultHotkeys(m_live, true);
+    // V3-indexing-retired: a binding of "Open video with FFMS2" (legacy
+    // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
+    // a notice, and the list is written without it so the notice is given once.
+    const auto dropped = application::dropRetiredHotkeys(m_live);
+    for (const auto &[key, hotkey] : dropped)
+        m_retiredNotices << tr("The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired "
+                               "and videos are always indexed.")
+                                .arg(qs(hotkey.accel));
+    if (!dropped.empty())
+        m_settings.set(kMainSetting, qLines(application::hotkeyLines(m_live, false)));
 }
 
 void HotkeysController::saveMain()

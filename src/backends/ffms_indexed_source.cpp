@@ -149,6 +149,7 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
     m_index = index;
     m_audio.reset();
     m_display.reset(); // the helper's Open replaces the box's audio too
+    m_openFailure.reset();
     // A1: the index the source held goes with it. For a chosen audio track
     // with an index file, a temporary file is made (exclusively, in the temp
     // folder) for the helper to hand a new index over in when that file
@@ -205,7 +206,19 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 }
                 if (e->outcome != Outcome::Ok) {
                     unused();
-                    return done(std::unexpected(errorOf(e->outcome, e->payload)));
+                    // V3: the stage and FFMS2's text (protocol 8)
+                    const auto failure = failureOf(e->outcome, e->payload);
+                    application::OpenFailure open;
+                    switch (failure.stage) {
+                    case application::AudioStage::Indexer: open.stage = application::OpenStage::Indexer; break;
+                    case application::AudioStage::Indexing: open.stage = application::OpenStage::Indexing; break;
+                    case application::AudioStage::Source: open.stage = application::OpenStage::Source; break;
+                    case application::AudioStage::Convert: open.stage = application::OpenStage::Convert; break;
+                    default: open.stage = application::OpenStage::Host; break;
+                    }
+                    open.message = failure.message;
+                    m_openFailure = std::move(open);
+                    return done(std::unexpected(failure.error));
                 }
                 application::SourceTimeline t;
                 t.generation = generation;

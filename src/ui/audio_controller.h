@@ -259,6 +259,7 @@ public:
     }
     // Each keyframe's snap time (StartTimeFor(FrameAt(keyframe))), in step with setKeyframes.
     void setKeyframeSnapTimes(std::vector<int> snapMs) { m_keyframeSnap = std::move(snapMs); }
+    const std::vector<int> &keyframeSnapTimes() const { return m_keyframeSnap; }
     bool hasMark() const { return m_timing.hasMark(); }
     int markMs() const { return m_timing.markMs(); }
     bool modified() const { return m_needCommit; }

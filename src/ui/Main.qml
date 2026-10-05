@@ -503,7 +503,7 @@ ApplicationWindow {
                     action: Action {
                         id: openVideoAction
                         text: qsTr("Open &Video…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
                     }
                 }
                 ShellMenuItem {
@@ -879,7 +879,52 @@ ApplicationWindow {
                 iconRole: "open-video"
                 action: Action {
                     text: qsTr("Open &video…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
+                }
+            }
+            // V3: legacy's order (HikariSubFrame.cpp:246-258): the recent
+            // videos (GLOBAL_RECENT_VIDEO), Open keyframes, the recent
+            // keyframes (GLOBAL_RECENT_KEYFRAMES) and Open dummy video.
+            // Legacy OnMenuOpened (HikariSubFrame.cpp:2252-2275) enables
+            // Open keyframes and the recent keyframes with a video loaded, and
+            // OnMenuSelected checks that for their hotkeys too (:681-687).
+            RecentFilesMenu {
+                iconRole: "recent-video"
+                objectName: "recentVideoMenu"
+                prefix: "recentVideo"
+                title: qsTr("Recently opened videos")
+                load: () => root.app.recentVideos()
+                onChosen: path => root.video.openVideo(path)
+            }
+            ShellMenuItem {
+                objectName: "openKeyframesMenuItem"
+                iconRole: "open-keyframes"
+                action: Action {
+                    id: openKeyframesAction
+                    text: qsTr("Open keyframes")
+                    enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
+                }
+            }
+            RecentFilesMenu {
+                iconRole: "recent-keyframes"
+                objectName: "recentKeyframesMenu"
+                prefix: "recentKeyframes"
+                title: qsTr("Recently opened keyframes")
+                enabled: root.video.hasVideo
+                load: () => root.app.recentKeyframes()
+                onChosen: path => {
+                    const problem = root.app.openKeyframesFile(path)
+                    if (problem.length > 0)
+                        root.log.log(problem)
+                }
+            }
+            ShellMenuItem {
+                objectName: "dummyVideoMenuItem"
+                action: Action {
+                    id: dummyVideoAction
+                    text: qsTr("Open dummy video")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
                 }
             }
             ShellMenuItem {
@@ -938,14 +983,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
                 }
             }
-            ShellMenuItem {
-                iconRole: "open-keyframes"
-                action: Action {
-                    id: openKeyframesAction
-                    text: qsTr("Open keyframes")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
-                }
-            }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
@@ -968,6 +1005,24 @@ ApplicationWindow {
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
                 }
+            }
+            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016)
+            // in the Video menu too: Unload video (VIDEO_DELETE_FILE,
+            // V3-unload-video), the streams and the chapters.
+            MenuSeparator {}
+            ShellMenuItem {
+                objectName: "unloadVideoMenuItem"
+                text: qsTr("Unload video")
+                enabled: root.video.loaded
+                onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
+            }
+            VideoStreamsMenu {
+                objectName: "videoStreamsMenu"
+                video: root.video
+            }
+            VideoChaptersMenu {
+                objectName: "videoChaptersMenu"
+                video: root.video
             }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
@@ -1622,6 +1677,12 @@ ApplicationWindow {
                         }
                     }
                 }
+                // V3: the indexing's progress and Cancel.
+                VideoIndexingProgress {
+                    video: root.video
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    z: 1
+                }
                 // T1: the tool rail beside the canvas (layout A).
                 VisualToolRail {
                     id: visualRail
@@ -1698,6 +1759,16 @@ ApplicationWindow {
                     // set's icons in place of legacy's bitmaps (play / pause
                     // as legacy ChangeButtonBMP swaps them, VideoBox.cpp:1414);
                     // the text stays the accessible name.
+                    // V3: legacy's Previous file / Next file buttons around
+                    // the transport (VideoBox.cpp:156-165), asking first.
+                    IconButton {
+                        objectName: "previousFile"
+                        iconRole: "media-previous-file"
+                        text: qsTr("Previous file")
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(qsTr("Previous file"), "VIDEO_PREVIOUS_FILE", 3)
+                        onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
+                    }
                     IconButton {
                         objectName: "playPause"
                         iconRole: root.video.playing ? "media-pause" : "media-play"
@@ -1732,6 +1803,14 @@ ApplicationWindow {
                         focusPolicy: Qt.NoFocus
                         tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
+                    }
+                    IconButton {
+                        objectName: "nextFile"
+                        iconRole: "media-next-file"
+                        text: qsTr("Next file")
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
+                        onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
                     }
                     IconButton {
                         objectName: "previousFrame"
@@ -3450,6 +3529,23 @@ ApplicationWindow {
         id: videoDialog
         nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
         onAccepted: root.video.openVideoUrl(selectedFile)
+        // V3: the subtitles' folder, else the latest recent video's
+        function show() {
+            currentFolder = root.app.videoDialogFolder()
+            open()
+        }
+    }
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
+    DummyVideoDialog {
+        id: dummyVideoDialog
+        app: root.app
+        anchors.centerIn: parent
+        onRefused: message => root.log.log(message)
+    }
+    VideoFileQuestion {
+        id: videoFileQuestion
+        app: root.app
+        anchors.centerIn: parent
     }
 
     FileDialog {
@@ -3772,9 +3868,15 @@ ApplicationWindow {
         title: qsTr("Choose video file")
         nameFilters: [qsTr("Keyframes file (*.txt *.pass *.stats *.log)"), qsTr("All files (*)")]
         onAccepted: {
-            const problem = root.app.openKeyframes(selectedFile)
+            // V3: the recent keyframes take the file too (SetRecent(3))
+            const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
                 root.log.log(problem)
+        }
+        // V3: the video's folder, else the latest recent keyframes'
+        function show() {
+            currentFolder = root.app.keyframesDialogFolder()
+            open()
         }
     }
     FileDialog {
@@ -4779,6 +4881,7 @@ ApplicationWindow {
             GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
             GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
             GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+            GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
             GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
             GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
             GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
@@ -4839,10 +4942,12 @@ ApplicationWindow {
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
         }
         // Not in the rewrite yet (docs/qt/coverage.md, O2): the key is taken
-        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME and
-        // GLOBAL_VIDEO_INDEXING change nothing in legacy either (OnMenuSelected
-        // reads the item's check without switching it), nor do the submenu
-        // ids (GLOBAL_SORT_LINES, GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*).
+        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME changes nothing in
+        // legacy either (OnMenuSelected reads the item's check without
+        // switching it), nor do the submenu ids (GLOBAL_SORT_LINES,
+        // GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*). GLOBAL_VIDEO_INDEXING
+        // is retired (V3-indexing-retired): its bindings are dropped as the
+        // hotkeys are read.
         return false
     }
     // EditBox::OnAccelerator for an Editor binding in `field` (the focused
@@ -4909,6 +5014,13 @@ ApplicationWindow {
         case "VIDEO_STOP": root.video.stop(); return true
         // T1: the pointer's position in the video window (VideoBox.cpp:1151).
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
+        // V3 (VideoBox.cpp:1145-1150, 1170): the folder walk asks first
+        // (OnPrew / OnNext), the chapters, Unload video (V3-unload-video).
+        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false); return true
+        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true); return true
+        case "VIDEO_PREVIOUS_CHAPTER": root.video.previousChapter(); return true
+        case "VIDEO_NEXT_CHAPTER": root.video.nextChapter(); return true
+        case "VIDEO_DELETE_FILE": root.video.unloadVideo(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)

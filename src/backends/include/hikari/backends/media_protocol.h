@@ -24,6 +24,8 @@
 //                      u8 handedOff (1: the new index is in handoffFile),
 //                      i32 width, i32 height (frame 0's encoded size),
 //                      i32 sarNum, i32 sarDen (the track's SAR; 0: unknown)
+//         terminal failures (8): u8 stage, str text, as the audio box's below
+//                      (V3: legacy ProviderFFMS2::Init's log messages)
 // Frame   request: u8 Frame, i32 index
 //         terminal Ok: i32 width, i32 height, i32 stride, i64 pts, bytes bgra
 //         terminal InvalidInput: past the end (EOF) or not open
@@ -97,11 +99,12 @@
 
 namespace hikari::backends::media {
 
-inline constexpr std::uint32_t kProtocolVersion = 8; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
+inline constexpr std::uint32_t kProtocolVersion = 9; // 2: audio tracks; 3: keyframes in the Open reply; 4: OpenDisplayAudio;
                                                    // 5: Probe, a chosen track, the video's audio, DisplayRead;
                                                    // 6: index files and the audio track in Open, no shared display audio;
                                                    // 7: Open's index handoff, DisplayRead into a block buffer;
-                                                   // 8: SubtitleTracks, Subtitles, Attachments (Y9)
+                                                   // 8: SubtitleTracks, Subtitles, Attachments (Y9);
+                                                   // 9: Open's failures carry their stage (V3)
 inline constexpr char kHelperName[] = "hikari-media-helper";
 
 enum class Command : std::uint8_t { Open = 1, Frame = 2, OpenAudio = 3, Audio = 4, Chapters = 5, PcmBegin = 6, PcmNext = 7,

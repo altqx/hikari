@@ -37,6 +37,11 @@ std::optional<MediaReference> resolve(const core::Document &document, std::u8str
     if (!value || value->empty())
         return std::nullopt;
     MediaReference ref{*value, std::nullopt};
+    // V3: a dummy video is no file (Notebook::LoadVideo, Notebook.cpp:1174-1175)
+    if (key == u8"Video File" && value->starts_with("?dummy")) {
+        ref.resolved = *value;
+        return ref;
+    }
     if (isAbsolute(*value, windows)) {
         if (exists(*value))
             ref.resolved = *value;

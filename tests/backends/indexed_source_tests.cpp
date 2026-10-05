@@ -364,6 +364,51 @@ TEST_F(Fixture, UnreadableFilesFailExplicitly)
     source.open(std::string(HIKARI_MEDIA_FIXTURES) + "/missing.mkv", {}, [&](auto r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_EQ(result->error(), SourceError::InvalidInput);
+    // V3 (protocol 8): FFMS_CreateIndexer's stage and FFMS2's text, which
+    // legacy logged as a debug message only (ProviderFFMS2.cpp:164)
+    const auto failure = source.openFailure();
+    ASSERT_TRUE(failure);
+    EXPECT_EQ(failure->stage, OpenStage::Indexer);
+    EXPECT_FALSE(failure->message.empty());
+    ASSERT_TRUE(open("cfr"));
+    EXPECT_FALSE(source.openFailure()) << "a later open that succeeds has no failure";
+}
+
+// V3: each stage of a failed open reaches the port with the helper's text
+// (protocol 8), from a helper that fails where FFMS2 rarely does on a real
+// file. Legacy ProviderFFMS2::Init logs "Indexing error occurred: %s"
+// (ProviderFFMS2.cpp:310), "Cannot create VideoSource." (:349) and "Cannot
+// convert video to RGBA" (:388) for them.
+struct FailingHelperFixture : Fixture {
+    backends::FfmsIndexedSource failing{QStringLiteral(HIKARI_FAILING_MEDIA_HELPER)};
+};
+
+TEST_F(FailingHelperFixture, EachStageAndItsTextReachThePort)
+{
+    const struct {
+        const char *file;
+        OpenStage stage;
+        SourceError error;
+        const char *text;
+    } cases[] = {{"/clips/indexer.mkv", OpenStage::Indexer, SourceError::InvalidInput, "fake indexer error"},
+                 {"/clips/indexing.mkv", OpenStage::Indexing, SourceError::BackendFailure, "fake indexing error"},
+                 {"/clips/source.mkv", OpenStage::Source, SourceError::BackendFailure, "fake source error"},
+                 {"/clips/convert.mkv", OpenStage::Convert, SourceError::BackendFailure, "fake convert error"},
+                 {"/clips/other.mkv", OpenStage::Host, SourceError::BackendFailure, "no such stage"}};
+    for (const auto &c : cases) {
+        std::optional<std::expected<SourceTimeline, SourceError>> result;
+        std::optional<OpenFailure> seen; // as the Opened callback reads it (VideoSession::open)
+        failing.open(c.file, {}, [&](auto r) {
+            seen = failing.openFailure();
+            result = std::move(r);
+        });
+        ASSERT_TRUE(waitFor([&] { return result.has_value(); })) << c.file;
+        ASSERT_FALSE(*result) << c.file;
+        EXPECT_EQ(result->error(), c.error) << c.file;
+        ASSERT_TRUE(seen) << c.file;
+        EXPECT_EQ(seen->stage, c.stage) << c.file;
+        EXPECT_EQ(seen->message, c.text) << c.file;
+    }
 }
 
 // N2: source PCM ranges. The audio fixture's left channel is the sample index

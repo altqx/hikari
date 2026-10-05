@@ -276,7 +276,7 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 22);
+        QCOMPARE(pending, 18);
     }
 
     void svgsAreMonochromeOnTheGrid_data()

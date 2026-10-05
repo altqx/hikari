@@ -10,8 +10,10 @@ hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp 
 target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
-    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
-add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_lua_helper hikari_automation_stage)
+    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
+    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>")
+add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
+    hikari_lua_helper hikari_automation_stage)
 # The whole shell suite runs in one process (about a minute here, more on CI
 # runners), so it gets more than the default 60 s.
 foreach(mode offscreen xvfb)

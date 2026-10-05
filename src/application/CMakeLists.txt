@@ -60,3 +60,9 @@ target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
+# V3: the Video panel's sources, tracks and chapters. The dummy video's
+# frame times and its checkerboard's HSL step are legacy float arithmetic,
+# built without floating-point contraction as above.
+target_sources(hikari_application PRIVATE video_sources.cpp)
+set_source_files_properties(video_sources.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")

@@ -14,6 +14,7 @@
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
+#include "hikari/application/video_sources.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_position.h"
@@ -3376,6 +3377,26 @@ private:
         QVERIFY(QTest::qWaitForWindowExposed(window));
     }
 
+    // V3: a session whose media helper is another program (no sound).
+    void restartWithMediaHelper(const QString &helper)
+    {
+        delete engine;
+        delete application;
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.mediaHelper = helper;
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+
 private slots:
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
@@ -6386,7 +6407,7 @@ private slots:
         QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        QCOMPARE(hotkeyRows().size(), 226);
+        QCOMPARE(hotkeyRows().size(), 225); // V3: "Open video with FFMS2" retired, never listed
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -9782,6 +9803,565 @@ private slots:
         QVERIFY(!application->workspace().editingTarget());
         QVERIFY(!application->editor().editable());
         QVERIFY(item<QObject>("lineText")->property("readOnly").toBool());
+    }
+
+    // V3: the Video menu's recent lists (legacy SetRecent/AppendRecent,
+    // HikariSubFrame.cpp:1510-1591): a video that loads is added (latest
+    // first, kept in the profile), missing local files leave the list when
+    // it is shown, a row opens its video; keyframes join their list whether
+    // or not they loaded (SetRecent(3)); the dialogs start in legacy's
+    // folders, and the Open audio dialog falls back to the latest recent
+    // video's folder (A1 left).
+    void videoRecentListsAndDialogFolders()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString ini = own.filePath(QStringLiteral("hikari.ini"));
+        const QString clip = own.filePath(QStringLiteral("clip.mkv"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), clip));
+        const QString gone = QDir::toNativeSeparators(own.filePath(QStringLiteral("gone.mkv")));
+        ui::SettingsStore(ini).set("recent.video", QStringList{gone});
+        restartWithSettings(ini);
+        QVERIFY(application->openFile(episode));
+        // the Open audio dialog without a video: the latest recent video's folder
+        QCOMPARE(application->audioDialogFolder(), QUrl::fromLocalFile(own.path()));
+        // legacy OnMenuOpened's default case (HikariSubFrame.cpp:2270-2272):
+        // Open keyframes wants a video loaded
+        auto *openKeys = named("openKeyframesMenuItem");
+        QVERIFY(openKeys);
+        QVERIFY(!openKeys->property("enabled").toBool());
+        auto *menu = named("recentVideoMenu");
+        QVERIFY(menu);
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("rows").toList().size(), 0); // pruned: "None"
+        QCOMPARE(application->settingsStore()->list("recent.video"), QStringList());
+        auto &video = application->video();
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(openKeys->property("enabled").toBool());
+        const QString native = QDir::toNativeSeparators(clip);
+        QCOMPARE(application->settingsStore()->list("recent.video"), QStringList{native});
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(application->settingsStore()->list("recent.video"), (QStringList{nativeFixture("cfr.mkv"), native}));
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        const auto rows = menu->property("rows").toList();
+        QCOMPARE(rows.size(), 2);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("1 cfr.mkv"));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("2 clip.mkv"));
+        auto *second = named("recentVideo1");
+        QVERIFY(second);
+        QVERIFY(QMetaObject::invokeMethod(second, "triggered"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), native, 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(application->settingsStore()->list("recent.video").first(), native);
+        // the video and keyframes dialogs: the subtitles' and the video's folders
+        QCOMPARE(application->videoDialogFolder(), QUrl::fromLocalFile(QFileInfo(episode).absolutePath()));
+        QCOMPARE(application->keyframesDialogFolder(), QUrl::fromLocalFile(own.path()));
+        // keyframes: the list takes the file, loaded or not
+        const QString keys = own.filePath(QStringLiteral("keys.txt"));
+        {
+            QFile f(keys);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("# keyframe format v1\nfps 0\n0\n12\n");
+        }
+        const QString bad = own.filePath(QStringLiteral("bad.txt"));
+        {
+            QFile f(bad);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("not keyframes\n");
+        }
+        QCOMPARE(application->openKeyframesFile(QUrl::fromLocalFile(keys).toString()), QString());
+        QCOMPARE(video.session().keyframes(), (std::vector<int>{0, 12}));
+        QCOMPARE(application->openKeyframesFile(bad), QStringLiteral("Invalid keyframes format"));
+        QCOMPARE(application->settingsStore()->list("recent.keyframes"),
+                 (QStringList{QDir::toNativeSeparators(bad), QDir::toNativeSeparators(keys)}));
+        auto *keyMenu = named("recentKeyframesMenu");
+        QVERIFY(keyMenu && keyMenu->property("enabled").toBool());
+        QVERIFY(QFile::remove(bad));
+        QVERIFY(QMetaObject::invokeMethod(keyMenu, "aboutToShow"));
+        QCOMPARE(keyMenu->property("rows").toList().size(), 1);
+        QVERIFY(QMetaObject::invokeMethod(named("recentKeyframes0"), "triggered"));
+        QCOMPARE(video.session().keyframes(), (std::vector<int>{0, 12}));
+        // without a video the keyframes dialog starts in the latest recent keyframes' folder
+        QVERIFY(video.unloadVideo());
+        QVERIFY(!keyMenu->property("enabled").toBool()); // legacy OnMenuOpened: a video loaded
+        QVERIFY(!openKeys->property("enabled").toBool());
+        // and OnMenuSelected checks it for the hotkey too (HikariSubFrame.cpp:681-687)
+        QVERIFY(!named("openKeyframesMenuItem")->property("action").value<QObject *>()->property("enabled").toBool());
+        QCOMPARE(application->keyframesDialogFolder(), QUrl::fromLocalFile(own.path()));
+        QCOMPARE(application->audioDialogFolder(), QUrl::fromLocalFile(own.path()));
+    }
+
+    // V3: VideoBox::OpenKeyframes (VideoBox.cpp:1722-1742) with the audio
+    // box and no video: the file's frames at 24000/1001 fps become the box's
+    // keyframes and their snap times (AudioDisplay.cpp:2506-2509), a file
+    // kept for a video to come is dropped (m_KeyframesFileName.Empty()), and
+    // a file without keyframes gives "Invalid keyframes format" and leaves
+    // the box's keyframes.
+    void keyframesWithTheAudioBoxAndNoVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        auto write = [&](const char *name, const QByteArray &text) {
+            const QString path = own.filePath(QString::fromLatin1(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write(text);
+            return path;
+        };
+        const QString kept = write("kept.txt", "# keyframe format v1\nfps 0\n0\n7\n");
+        const QString keys = write("keys.txt", "# keyframe format v1\nfps 0\n0\n24\n48\n");
+        const QString bad = write("bad.txt", "not keyframes\n");
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        // without video or audio the file waits for a video
+        QCOMPARE(application->openKeyframesFile(kept), QString());
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(!video.hasVideo());
+        QVERIFY(audio.marks().keyframesMs.empty());
+        QCOMPARE(application->openKeyframesFile(keys), QString());
+        const auto ms = application::keyframesWithoutVideo({0, 24, 48});
+        QCOMPARE(audio.marks().keyframesMs, ms);
+        std::vector<int> snap;
+        for (const int keyMs : ms)
+            snap.push_back(application::keyframeSnapWithoutVideo(keyMs));
+        QCOMPARE(audio.keyframeSnapTimes(), snap);
+        QCOMPARE(application->openKeyframesFile(bad), QStringLiteral("Invalid keyframes format"));
+        QCOMPARE(audio.marks().keyframesMs, ms);
+        QCOMPARE(application->settingsStore()->list("recent.keyframes"),
+                 (QStringList{QDir::toNativeSeparators(bad), QDir::toNativeSeparators(keys), QDir::toNativeSeparators(kept)}));
+        // the kept file was dropped: a video opened now keeps its own keyframes
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(video.session().keyframes() != (std::vector<int>{0, 7}));
+    }
+
+    // V3: a failed video open is logged once with legacy ProviderFFMS2::Init's
+    // message for its stage (ProviderFFMS2.cpp:164-388): "Indexing error
+    // occurred: %s" with FFMS2's text, "Cannot create VideoSource.", "Cannot
+    // convert video to RGBA". Where legacy only wrote a debug message (the
+    // indexer could not be made) the panel's status is logged, as it is for
+    // a refused dummy text (ProviderDummy logs nothing), never the failure
+    // of the file before it. The helper fails at the stage its file names.
+    void aFailedVideoOpenLogsLegacysMessageForItsStage()
+    {
+        restartWithMediaHelper(QStringLiteral(HIKARI_FAILING_MEDIA_HELPER));
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        auto &log = application->log();
+        auto fail = [&](const QString &path) {
+            video.openVideo(path);
+            const std::string opened = application::isDummyVideo(path.toStdString())
+                                           ? path.toStdString()
+                                           : QDir::toNativeSeparators(path).toStdString();
+            QTRY_VERIFY_WITH_TIMEOUT(video.session().path() == opened &&
+                                         video.session().state() == application::VideoSession::State::Failed,
+                                     20000);
+        };
+        auto file = [&](const char *name) {
+            const QString path = own.filePath(QString::fromLatin1(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write("not a video");
+            return path;
+        };
+        const struct {
+            const char *name;
+            QString message;
+        } stages[] = {{"indexing.mkv", QStringLiteral("Indexing error occurred: fake indexing error")},
+                      {"source.mkv", QStringLiteral("Cannot create VideoSource.")},
+                      {"convert.mkv", QStringLiteral("Cannot convert video to RGBA")}};
+        for (const auto &stage : stages) {
+            const qsizetype before = log.history().count(stage.message);
+            fail(file(stage.name));
+            QCOMPARE(log.lastMessage(), stage.message);
+            QVERIFY(log.shown());
+            QCOMPARE(log.history().count(stage.message), before + 1); // once
+            log.close();
+        }
+        fail(file("indexer.mkv"));
+        QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
+        QCOMPARE(log.lastMessage(), video.status());
+        log.close();
+        // a refused dummy text after a failed file: the status, not the file's message
+        fail(file("source.mkv"));
+        QCOMPARE(log.lastMessage(), QStringLiteral("Cannot create VideoSource."));
+        log.close();
+        fail(QStringLiteral("?dummy:25:0:8:4:1:2:3:"));
+        QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
+        QVERIFY(!video.session().openFailure());
+        log.close();
+    }
+
+    // V3-unload-video: VIDEO_DELETE_FILE ("Unload video") empties the Video
+    // panel as before any video; the file is never touched (legacy moved it
+    // to the recycle bin), the audio box stays until GLOBAL_CLOSE_AUDIO, and
+    // the tab no longer has the video.
+    void unloadVideoLeavesTheFileAndTheAudioBox()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString clip = own.filePath(QStringLiteral("clip.mkv"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"), clip));
+        const QByteArray before = [&] {
+            QFile f(clip);
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        }();
+        const QDateTime modified = QFileInfo(clip).lastModified();
+        QVERIFY(application->openFile(episode));
+        auto *item = named("unloadVideoMenuItem");
+        QVERIFY(item);
+        QVERIFY(!item->property("enabled").toBool()); // legacy: Enable(GetState() != None)
+        QCOMPARE(QString::fromStdString(application::hotkeyName(application::hotkeyIdOf("VIDEO_DELETE_FILE"))),
+                 QStringLiteral("Unload video"));
+        auto &video = application->video();
+        auto &audio = application->audio();
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && audio.box().fromVideo(), 20000);
+        QTRY_VERIFY(application->tabs().first().toMap().value(QStringLiteral("tip")).toString().contains(QStringLiteral("clip.mkv")));
+        QVERIFY(item->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QCOMPARE(video.session().state(), application::VideoSession::State::Closed);
+        QVERIFY(!video.hasVideo());
+        QCOMPARE(video.status(), QStringLiteral("No video open"));
+        QVERIFY(!visualItem("videoPresenter")->isVisible());
+        QVERIFY(!item->property("enabled").toBool());
+        QVERIFY(audio.hasAudio()); // the audio box stays
+        QVERIFY(!application->tabs().first().toMap().value(QStringLiteral("tip")).toString().contains(QStringLiteral("clip.mkv")));
+        QVERIFY(QFileInfo::exists(clip));
+        QCOMPARE(QFileInfo(clip).lastModified(), modified);
+        {
+            QFile f(clip);
+            QVERIFY(f.open(QIODevice::ReadOnly));
+            QCOMPARE(f.readAll(), before);
+        }
+        // the Video window's binding, once mapped, does the same
+        video.openVideo(clip);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVariant handled;
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "runVideoHotkey", Q_RETURN_ARG(QVariant, handled),
+                                          Q_ARG(QVariant, QStringLiteral("VIDEO_DELETE_FILE"))));
+        QVERIFY(handled.toBool());
+        QVERIFY(!video.hasVideo());
+        QVERIFY(QFileInfo::exists(clip));
+        // GLOBAL_CLOSE_AUDIO closes the box
+        auto *closeAudio = named("closeAudioMenuItem")->property("action").value<QObject *>();
+        QVERIFY(closeAudio);
+        QVERIFY(QMetaObject::invokeMethod(closeAudio, "trigger"));
+        QTRY_VERIFY(!audio.hasAudio());
+    }
+
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO (legacy DummyVideo, ProviderDummy): the
+    // dialog's defaults and frame count, a refused frame rate logged, the
+    // dummy's frames, duration and colour, the audio box left as it was, the
+    // recent list taking the dummy's text (and pruning it when shown, as
+    // legacy's IsMissingLocalFile does).
+    void dummyVideoFromItsDialog()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        auto *dialog = named("dummyVideoDialog");
+        QVERIFY(dialog);
+        auto *action = named("dummyVideoMenuItem")->property("action").value<QObject *>();
+        QVERIFY(action);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 35964 frames"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFps")->property("editText").toString(), QStringLiteral("23.976"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 1920);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 1080);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
+        // V3-dummy-colour-text: the colour is ASS text with a swatch beside
+        // it (legacy: a colour button); the swatch follows the text
+        auto *swatch = dialogItem("dummyVideoDialog", "dummyColourSwatch");
+        QVERIFY(swatch);
+        QCOMPARE(swatch->property("color").value<QColor>(), QColor(47, 163, 254));
+        dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&H0000FF&"));
+        QCOMPARE(swatch->property("color").value<QColor>(), QColor(255, 0, 0));
+        dialogItem("dummyVideoDialog", "dummyColour")->setProperty("text", QStringLiteral("&HFEA32F&"));
+        // a preset fills the size (OnResolutionChoose)
+        auto *resolution = dialogItem("dummyVideoDialog", "dummyResolution");
+        resolution->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(resolution, "activated", Q_ARG(int, 0)));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 640);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 480);
+        // a refused rate: logged, nothing opens
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("10"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QCOMPARE(application->log().lastMessage(), QStringLiteral("Invalid FPS value."));
+        QVERIFY(!application->video().loaded());
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:00:02.00"));
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 320);
+        dialogItem("dummyVideoDialog", "dummyHeight")->setProperty("value", 240);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        auto &video = application->video();
+        QTRY_VERIFY(video.hasVideo());
+        QVERIFY(video.dummy());
+        QCOMPARE(QString::fromStdString(video.session().path()), QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
+        QCOMPARE(video.frameCount(), 50);
+        QCOMPARE(video.session().legacyTimebase().msAt(49), 1960);
+        QTRY_VERIFY(video.session().lastFrame());
+        const auto frame = video.session().lastFrame();
+        QCOMPARE(frame->width, 320);
+        QCOMPARE(frame->height, 240);
+        QCOMPARE(int(frame->bgra[0]), 254);
+        QCOMPARE(int(frame->bgra[1]), 163);
+        QCOMPARE(int(frame->bgra[2]), 47);
+        QVERIFY(audio.ready()); // legacy loads the dummy without the audio (dontLoadAudio)
+        QCOMPARE(audio.path(), nativeFixture("audioonly.mkv"));
+        QVERIFY(!video.play()); // no file for the general player
+        QCOMPARE(application->settingsStore()->list("recent.video").first(), QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
+        QVERIFY(application->recentVideos().isEmpty()); // not a file: pruned when shown
+    }
+
+    // V3: VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (legacy VideoBox::NextFile,
+    // OnPrew, OnNext): the transport's buttons ask first, then the folder's
+    // next video in the file system's own listing order opens (other files
+    // skipped); past the last one the video goes back to its start and play
+    // toggles.
+    void nextFileWalksTheVideosFolder()
+    {
+        restartWithoutSound();
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
+        {
+            QFile f(own.filePath(QStringLiteral("notes.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        // the listing as legacy's wxDir::GetAllFiles reads it (unsorted)
+        QStringList videos;
+        for (const QString &name : QDir(own.path()).entryList(QDir::Files, QDir::Unsorted))
+            if (!name.endsWith(QLatin1String(".txt")))
+                videos << QDir::toNativeSeparators(own.filePath(name));
+        QCOMPARE(videos.size(), 3);
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(videos[0]);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        auto *question = named("videoFileQuestion");
+        QVERIFY(question);
+        // No: nothing happens
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to index the next video?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "reject"));
+        QTRY_VERIFY(!question->property("opened").toBool());
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
+        // Yes: the listing's next video
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(application->nextVideoFile(true));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[2], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // past the last: Seek(0) and Pause(false) plays from the start
+        video.showFrameAt(10);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(10));
+        QVERIFY(application->nextVideoFile(true));
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[2]);
+        QCOMPARE(video.session().requestedFrame(), std::optional<int>(0));
+        QVERIFY(video.playing());
+        QVERIFY(application->nextVideoFile(true)); // again: pauses at the start
+        QVERIFY(!video.playing());
+        // the previous button asks about the previous video
+        QVERIFY(QMetaObject::invokeMethod(visualItem("previousFile"), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to index the previous video?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+    }
+
+    // V3-next-file-no-recent: with no video and an empty recent list the
+    // previous/next file does nothing (legacy VideoBox::NextFile read
+    // videorec[videorec.size() - 1] of the empty list, VideoBox.cpp:691).
+    void nextFileWithNoVideoAndNoRecentDoesNothing()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        restartWithSettings(own.filePath(QStringLiteral("hikari.ini")));
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        QVERIFY(application->settingsStore()->list("recent.video").isEmpty());
+        QVERIFY(!video.loaded());
+        QVERIFY(!application->nextVideoFile(true));
+        QVERIFY(!application->nextVideoFile(false));
+        // the transport's buttons ask, and Yes changes nothing
+        auto *question = named("videoFileQuestion");
+        QVERIFY(question);
+        for (const char *button : {"nextFile", "previousFile"}) {
+            QVERIFY(QMetaObject::invokeMethod(visualItem(button), "click"));
+            QTRY_VERIFY(question->property("opened").toBool());
+            QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+            QTRY_VERIFY(!question->property("opened").toBool());
+        }
+        QTest::qWait(100);
+        QVERIFY(!video.loaded());
+        QVERIFY(!video.indexing());
+        QVERIFY(video.session().path().empty());
+        QVERIFY(application->settingsStore()->list("recent.video").isEmpty());
+    }
+
+    // V3: chapters from the media helper at legacy positions (whole ms of
+    // their starts), the chapter menu and its mark, VIDEO_NEXT_CHAPTER /
+    // VIDEO_PREVIOUS_CHAPTER (M / N in the Video window) with prevchap; the
+    // stream menu's audio tracks and a choice reaching general playback.
+    void chaptersAndStreamsOfTheVideo()
+    {
+        restartWithoutSound();
+        application->settingsStore()->set("video.acceptedAudioStream", QStringLiteral("eng")); // no track question
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(video.chapterCount(), 2, 20000);
+        auto rows = video.chapters();
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("Opening"));
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("time")).toString(), QStringLiteral("[0:00:00.00]"));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("Second"));
+        QCOMPARE(rows[1].toMap().value(QStringLiteral("time")).toString(), QStringLiteral("[0:00:01.00]"));
+        video.showFrameAt(0);
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        QVERIFY(video.chapters()[0].toMap().value(QStringLiteral("checked")).toBool());
+        QVERIFY(!video.chapters()[1].toMap().value(QStringLiteral("checked")).toBool());
+        auto *menu = named("videoChaptersMenu");
+        QVERIFY(menu && menu->property("enabled").toBool());
+        // V3-video-menu-entries: Unload video, the streams and the chapters
+        // sit in the Video menu until V4's context menu hosts them
+        {
+            auto *videoMenu = named("videoMenu");
+            QVERIFY(videoMenu);
+            QSet<QObject *> hosted;
+            const int count = videoMenu->property("count").toInt();
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *entry = nullptr;
+                QVERIFY(QMetaObject::invokeMethod(videoMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i)));
+                if (!entry)
+                    continue;
+                hosted.insert(entry);
+                if (auto *sub = entry->property("subMenu").value<QObject *>())
+                    hosted.insert(sub);
+            }
+            QVERIFY(hosted.contains(named("unloadVideoMenuItem")));
+            QVERIFY(hosted.contains(named("videoStreamsMenu")));
+            QVERIFY(hosted.contains(menu));
+        }
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QCOMPARE(menu->property("rows").toList().size(), 2);
+        // the chapter at 1000 ms: the frame at or after it, 24 at 1001 ms
+        QVERIFY(QMetaObject::invokeMethod(named("videoChapter1"), "triggered"));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(24));
+        QVERIFY(video.chapters()[1].toMap().value(QStringLiteral("checked")).toBool());
+        // M / N in the Video window
+        keysNeverRepeat();
+        item("videoPanel")->forceActiveFocus();
+        press(Qt::Key_M); // next: from the last, the first
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        press(Qt::Key_N); // previous at the first, jumped to last: wraps to the last
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(24));
+        // the stream menu: both audio tracks, the accepted one playing
+        QTRY_COMPARE_WITH_TIMEOUT(video.streamCount(), 2, 20000);
+        QTRY_COMPARE_WITH_TIMEOUT(video.streams()[1].toMap().value(QStringLiteral("label")).toString(),
+                                  QStringLiteral("A: Commentary [jpn] (pcm_s16le)"), 20000);
+        QCOMPARE(video.streams()[0].toMap().value(QStringLiteral("label")).toString(), QStringLiteral("A: Main [eng] (pcm_s16le)"));
+        QVERIFY(video.streams()[0].toMap().value(QStringLiteral("checked")).toBool());
+        auto *streams = named("videoStreamsMenu");
+        QVERIFY(streams && streams->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(streams, "aboutToShow"));
+        QVERIFY(QMetaObject::invokeMethod(named("videoStream1"), "triggered"));
+        QVERIFY(video.streams()[1].toMap().value(QStringLiteral("checked")).toBool());
+        QVERIFY(video.play());
+        QTRY_COMPARE_WITH_TIMEOUT(application->generalPlayer().description().activeAudio, 1, 20000);
+        // switched while playing, at once
+        QVERIFY(video.selectStream(0));
+        QTRY_COMPARE_WITH_TIMEOUT(application->generalPlayer().description().activeAudio, 0, 20000);
+        QVERIFY(video.pause());
+        // a new video: no chapters until its own arrive, prevchap again
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(video.chapterCount(), 0);
+        QVERIFY(!named("videoChaptersMenu")->property("enabled").toBool());
+        QVERIFY(!video.nextChapter());
+    }
+
+    // V3: indexing shows its progress with Cancel in the Video panel (legacy
+    // ProgressSink "Indexing video", here inline); Cancel leaves no video and
+    // logs nothing. GLOBAL_VIDEO_INDEXING is in no menu and its stored binding
+    // is dropped with a notice.
+    void indexingCancelsAndTheFfms2ToggleIsGone()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        auto *progress = visualItem("videoIndexing");
+        QVERIFY(progress);
+        QVERIFY(!progress->isVisible());
+        // straight to the session, so the click comes before the helper can answer
+        video.session().open(nativeFixture("longgop.mkv").toStdString());
+        QVERIFY(video.indexing());
+        QVERIFY(progress->isVisible());
+        QCOMPARE(findItem(progress, QStringLiteral("videoIndexingProgress"))->property("indeterminate").toBool(), true);
+        // V3-indexing-inline: a strip inside the Video panel, not a modal
+        // window (legacy ProgressSink): no modal popup or window opens
+        {
+            bool inPanel = false;
+            for (QQuickItem *up = progress->parentItem(); up; up = up->parentItem())
+                inPanel = inPanel || up == item("videoPanel");
+            QVERIFY(inPanel);
+            for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
+                if (o->inherits("QQuickPopup"))
+                    QVERIFY2(!(o->property("modal").toBool() && o->property("opened").toBool()), qPrintable(o->objectName()));
+            QCOMPARE(QGuiApplication::modalWindow(), nullptr);
+            QVERIFY(video.indexing());
+        }
+        const QString logged = application->log().lastMessage();
+        QVERIFY(QMetaObject::invokeMethod(findItem(progress, QStringLiteral("cancelIndexing")), "click"));
+        QCOMPARE(video.session().state(), application::VideoSession::State::Closed);
+        QVERIFY(!video.indexing());
+        QVERIFY(!progress->isVisible());
+        QTest::qWait(300);
+        QCOMPARE(video.session().state(), application::VideoSession::State::Closed);
+        QCOMPARE(application->log().lastMessage(), logged);
+        // the panel works again afterwards
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // nothing names the FFMS2 toggle (the Video settings page's "FFMS2
+        // video seeking method" is another option and stays)
+        auto *root = engine->rootObjects().first();
+        for (QObject *o : root->findChildren<QObject *>())
+            if (o->metaObject()->indexOfProperty("text") >= 0)
+                QVERIFY2(!o->property("text").toString().contains(QStringLiteral("Open video with FFMS2")),
+                         qPrintable(o->objectName()));
+        // a stored binding of it: dropped with a notice, and not written again
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString ini = own.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_VIDEO_INDEXING G=Ctrl-Shift-I"),
+                                                                    QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
+        restartWithSettings(ini);
+        QVERIFY(application->log().history().contains(QStringLiteral("Ctrl-Shift-I")));
+        QVERIFY(application->log().history().contains(QStringLiteral("Open video with FFMS2")));
+        QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
     }
 };
 
