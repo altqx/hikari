@@ -455,7 +455,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editor = std::make_unique<ui::LineEditorController>(*m_files);
     m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
-    m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
+    m_videoSource = std::make_unique<application::DummyVideoSource>(*m_mediaSource);
+    m_video = std::make_unique<ui::VideoController>(*m_videoSource, m_renderer);
+    m_video->setMediaInfo(m_mediaSource.get(), m_mediaSource.get()); // V3: track names, chapters
     // V1: playback through the general player; its frames are shown with the
     // overlay, and a pause hands back to the exact indexed frame.
     m_generalPlayer = std::make_unique<backends::QtGeneralPlayer>(options.playbackAudio);
@@ -626,13 +628,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         refreshVideo();
         scheduleAutosave();
     });
-    // A video that cannot be opened is reported in the log window once.
-    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        const bool failed = m_video->session().state() == application::VideoSession::State::Failed;
-        if (failed && !m_videoFailureLogged)
-            m_log->log(m_video->status());
-        m_videoFailureLogged = failed;
-    });
+    // A video that cannot be opened is reported in the log window once (V3:
+    // with legacy ProviderFFMS2's messages).
+    connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     // Y4: a newly shown video is compared with the editing target's resolution once.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
@@ -809,6 +807,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         });
     });
     trackTabMedia(); // P6
+    trackVideoSources(); // V3
     refreshViews();
 }
 
@@ -867,6 +866,9 @@ void Application::followVideoInAudio()
         m_audioFollowedVideo = QString::fromStdString(video.path());
         if (keepTabAudio(m_audioFollowedVideo)) {
             // P6: a restored tab's own audio file stays (legacy dontLoadAudio)
+        } else if (video.dummy()) {
+            // V3: legacy loads the dummy without changing the audio
+            // (Notebook::LoadVideo's dontLoadAudio, HikariSubFrame.cpp:1073)
         } else if (video.hasAudio()) {
             m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));
@@ -1005,10 +1007,12 @@ QVariantList Application::recentAudio()
 
 QUrl Application::audioDialogFolder() const
 {
-    // legacy OpenAudioInTab: the video's folder, else the latest recent
-    // video's (not yet: the rewrite keeps no recent video list)
-    const QString from = QString::fromStdString(m_video->session().path());
-    if (from.isEmpty())
+    // legacy OnOpenAudio (HikariSubFrame.cpp:2177-2178): the video's folder,
+    // else the latest recent video's (V3)
+    QString from = QString::fromStdString(m_video->session().path());
+    if (from.isEmpty() && !m_recentVideo.entries().empty())
+        from = QString::fromStdString(m_recentVideo.entries().front());
+    if (from.isEmpty() || application::isDummyVideo(from.toStdString()))
         return {};
     return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
@@ -2346,6 +2350,9 @@ QString Application::openKeyframes(const QUrl &file)
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path); // P6: legacy KeyframesPath
     auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready) {
+        // V3: with the audio box, at 23.976 fps (VideoBox::OpenKeyframes)
+        if (QString problem; keyframesWithoutVideo(path, problem))
+            return problem;
         m_pendingKeyframes = path; // applied when a video opens
         return {};
     }
