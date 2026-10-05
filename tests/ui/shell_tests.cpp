@@ -12,15 +12,19 @@
 #include "audio_display_item.h"
 #include "fake_font_service.h"
 #include "hikari/application/visual_crosshair.h"
+#include "icon_theme.h"
 
 #include <QAccessible>
 #include <QMimeData>
+#include <QPalette>
 #include <QClipboard>
 #include <QStyleHints>
 #include <QDirIterator>
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
+#include <QQmlExpression>
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
@@ -98,6 +102,29 @@ QString text(const core::LineRecord *line)
     return QString::fromUtf8(reinterpret_cast<const char *>(line->text.data()), qsizetype(line->text.size()));
 }
 
+
+// K1: a theme's palette in visual-language.md's tokens (bg, raised, field;
+// the text, accent and disabled text colours are the icon colour settings'
+// defaults). The icons take their colours from the palette.
+QPalette themePalette(const QPalette &base, ui::icons::Appearance appearance)
+{
+    using ui::icons::Slot;
+    QPalette palette = base;
+    const QColor text = ui::icons::defaultColour(appearance, Slot::Normal);
+    const QColor disabled = ui::icons::defaultColour(appearance, Slot::Disabled);
+    const auto surfaces = ui::icons::surfaces(appearance);
+    for (const auto group : {QPalette::Active, QPalette::Inactive, QPalette::Disabled}) {
+        const QColor ink = group == QPalette::Disabled ? disabled : text;
+        palette.setColor(group, QPalette::Window, surfaces[0]);
+        palette.setColor(group, QPalette::Button, surfaces[2]);
+        palette.setColor(group, QPalette::Base, surfaces[3]);
+        palette.setColor(group, QPalette::WindowText, ink);
+        palette.setColor(group, QPalette::ButtonText, ink);
+        palette.setColor(group, QPalette::Text, ink);
+        palette.setColor(group, QPalette::Accent, ui::icons::defaultColour(appearance, Slot::Accent));
+    }
+    return palette;
+}
 } // namespace
 
 class ShellTest : public QObject {
@@ -1043,6 +1070,36 @@ private slots:
         QTRY_VERIFY(root->property("shellActive").toBool());
     }
 
+    // D1: every menu and menu item in src/ui is a ShellMenu or ShellMenuItem
+    // (or a type built on them), so the keyboard's item shows its highlight on
+    // Windows and K1's iconRole reaches every item. A plain Menu or MenuItem
+    // is only the base of those two files.
+    void everyMenuIsAShellMenu()
+    {
+        static const QRegularExpression plain(
+            QStringLiteral(R"re((?:^|[^\w.])((?:\w+\.)?(?:Menu|MenuItem))\s*\{)re"), QRegularExpression::MultilineOption);
+        int files = 0;
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files,
+                        QDirIterator::Subdirectories);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            const QString name = QFileInfo(path).fileName();
+            if (name == QLatin1String("ShellMenu.qml") || name == QLatin1String("ShellMenuItem.qml"))
+                continue;
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            ++files;
+            const QString text = QString::fromUtf8(file.readAll());
+            for (auto m = plain.globalMatch(text); m.hasNext();) {
+                const auto match = m.next();
+                const int line = int(text.left(match.capturedStart(1)).count(QLatin1Char('\n'))) + 1;
+                QFAIL(qPrintable(QStringLiteral("%1:%2: %3 { instead of ShellMenu / ShellMenuItem")
+                                     .arg(name).arg(line).arg(match.captured(1))));
+            }
+        }
+        QVERIFY(files > 1);
+    }
+
     // D1: the keyboard placement window expresses drag placements and resizes.
     void placementWindowMovesTabsAndResizes()
     {
@@ -1975,8 +2032,14 @@ private slots:
         QVERIFY(dialog);
         auto *menuItem = named("fontCollectorMenuItem");
         QVERIFY(menuItem && menuItem->property("enabled").toBool());
+        // K1: the item and the window's title show the set's font-collector icon.
+        QQmlExpression iconSource(qmlContext(menuItem), menuItem, QStringLiteral("icon.source.toString()"));
+        QVERIFY(iconSource.evaluate().toString().startsWith(QLatin1String("image://hikari-icon/font-collector/")));
         QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
         QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *title = dialog->findChild<QQuickItem *>(QStringLiteral("fontCollectorDialogTitle"));
+        QVERIFY(title);
+        QCOMPARE(title->property("iconRole").toString(), QStringLiteral("font-collector"));
         // FONT_COLLECTOR_ACTION 0: the path controls are disabled.
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
         QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
@@ -3930,8 +3993,11 @@ private slots:
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
             held.insert(id.toStdString());
-        // and the Themes page's colours (A2), which are not bound options
+        // and the Themes page's colours (A2, K1's icon colours), which are not bound options
         bound.insert({"audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner"});
+        for (const auto &appearance : application::kIconColourSettings)
+            for (const auto id : appearance)
+                bound.insert(std::string(id));
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
@@ -6732,7 +6798,13 @@ private slots:
             QCOMPARE(button->property("text").toString(), QString::fromLatin1(tip.data(), tip.size()));
             QCOMPARE(button->property("checked").toBool(), i == 0);
             QVERIFY(button->isEnabled());
+            // K1: the family's icon of the set beside its name (legacy's bitmaps).
+            auto *icon = visualItem(qPrintable(QStringLiteral("visualToolIcon%1").arg(i)));
+            QVERIFY(icon && icon->isVisible());
+            QVERIFY(icon->property("valid").toBool());
         }
+        QCOMPARE(visualItem("visualToolIcon0")->property("iconRole").toString(), QStringLiteral("tool-crosshair"));
+        QCOMPARE(visualItem("visualToolIcon10")->property("iconRole").toString(), QStringLiteral("tool-all-tags"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
@@ -7048,6 +7120,365 @@ private slots:
         QCOMPARE(reference->revision(), revision);
         QCOMPARE(reference->historySize(), steps);
         QCOMPARE(text(reference->document().lines()[0]), QStringLiteral("ref"));
+    }
+
+    // K1: the video transport buttons show the set's icons (legacy VideoBox's
+    // bitmap buttons, VideoBox.cpp:156-165), keep their names and tooltips,
+    // and every visible icon takes the theme palette's colours live: the
+    // light, dark and high-contrast themes' palettes, a colour saved by the
+    // Options dialog (in the profile, which still wins until the theme model
+    // replaces those settings) and the Reset icon colours button.
+    void videoTransportIconsFollowTheThemeLive()
+    {
+        restartWithoutSound(); // play / pause below plays the fixture
+        auto &settings = *application->settingsStore();
+        // The light palette with every role set, so that setting it again
+        // reaches the windows (a palette's unset roles are not passed on).
+        const QPalette initial = QGuiApplication::palette();
+        QPalette before = initial;
+        for (int g = 0; g < QPalette::NColorGroups; ++g)
+            for (int r = 0; r < QPalette::NColorRoles; ++r) {
+                const auto group = QPalette::ColorGroup(g);
+                const auto role = QPalette::ColorRole(r);
+                before.setColor(group, role, before.color(group, role));
+            }
+        auto restore = qScopeGuard([&] {
+            QGuiApplication::setPalette(before);
+            ui::IconTheme::forceAppearance(std::nullopt);
+        });
+        struct Button {
+            const char *name, *role, *accessibleName;
+        };
+        const Button buttons[] = {{"playPause", "media-play", "Play"},
+                                  {"playActualLine", "play-line", "Play the current line"},
+                                  {"stopVideo", "media-stop", "Stop"},
+                                  {"previousFrame", "frame-previous", "Previous frame"},
+                                  {"nextFrame", "frame-next", "Next frame"}};
+        const auto icon = [&](const char *name) {
+            auto *button = visualItem(name);
+            return button ? button->property("contentItem").value<QQuickItem *>() : nullptr;
+        };
+        const auto colours = [&] {
+            QStringList out;
+            for (const auto &b : buttons)
+                out << icon(b.name)->property("color").value<QColor>().name();
+            return out;
+        };
+        const auto all = [](const QString &colour) { return QStringList(5, colour); };
+        // Whether the window shows `colour` inside each button.
+        const auto shown = [&](const QColor &colour) {
+            const QImage image = window->grabWindow();
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            for (const auto &b : buttons) {
+                auto *item = icon(b.name);
+                const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+                bool found = false;
+                for (int y = int(r.top() * dpr); y < int(r.bottom() * dpr) && !found; ++y)
+                    for (int x = int(r.left() * dpr); x < int(r.right() * dpr) && !found; ++x)
+                        found = QColor(image.pixel(x, y)) == colour;
+                if (!found)
+                    return false;
+            }
+            return true;
+        };
+        // With HIKARI_ICON_SHEET_DIR set, the transport row is saved for review.
+        const auto saveTransport = [&](const QString &name) {
+            const QString out = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
+            if (out.isEmpty())
+                return;
+            QRectF row;
+            for (const auto &b : buttons) {
+                auto *item = visualItem(b.name);
+                row |= item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            }
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            const QRect r = QRectF(row.topLeft() * dpr, row.size() * dpr).toAlignedRect().adjusted(-8, -8, 8, 8);
+            QDir().mkpath(out);
+            QVERIFY(window->grabWindow().copy(r).save(out + QLatin1Char('/') + name));
+        };
+        for (const auto &b : buttons) {
+            auto *button = visualItem(b.name);
+            QVERIFY2(button, b.name);
+            QCOMPARE(button->property("iconRole").toString(), QLatin1String(b.role));
+            QVERIFY(icon(b.name)->property("valid").toBool());
+            QCOMPARE(QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name), QLatin1String(b.accessibleName));
+            QVERIFY(!button->property("tip").toString().isEmpty());
+        }
+        QCOMPARE(visualItem("stopVideo")->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
+        // The light theme's palette. No video: the buttons are disabled, in
+        // the palette's disabled colour.
+        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Light));
+        QCOMPARE(ui::IconTheme::currentAppearance(), ui::icons::Appearance::Light);
+        QCOMPARE(colours(), all(QStringLiteral("#74808b")));
+        QVERIFY(shown(QColor(0x74, 0x80, 0x8B)));
+        saveTransport(QStringLiteral("transport-light-disabled.png"));
+        // With a video they are enabled: the icon colour with its accent.
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        application->video().stepFrames(1); // Previous frame enabled too
+        QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
+                 QStringLiteral("#145c4c"));
+        QTRY_VERIFY(shown(QColor(0x20, 0x28, 0x32)));
+        saveTransport(QStringLiteral("transport-light.png"));
+        // Play / pause swaps its icon as legacy ChangeButtonBMP swaps the
+        // bitmap (VideoBox.cpp:262, 1414-1418).
+        application->video().togglePlay();
+        QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-pause"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(visualItem("playPause"))->text(QAccessible::Name), QStringLiteral("Pause"));
+        application->video().togglePlay();
+        QTRY_COMPARE(visualItem("playPause")->property("iconRole").toString(), QStringLiteral("media-play"));
+        // The palette turns dark (the dark theme's): the icons follow at once.
+        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Dark));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        // (the controls take the new palette at the next event loop pass)
+        auto *controls = engine->rootObjects().first()->property("palette").value<QObject *>();
+        QVERIFY(controls);
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x17, 0x1B, 0x20));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#9cdbc9"));
+        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        saveTransport(QStringLiteral("transport-dark.png"));
+        // A colour saved by the Options dialog's Themes page.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(dialogItem("settingsDialog", "iconColours"));
+        QCOMPARE(dialogItem("settingsDialog", "iconColours")->property("count").toInt(), 12);
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                          Q_ARG(QVariant, QStringLiteral("#FF8800"))));
+        QCOMPARE(colours(), all(QStringLiteral("#e8edf2"))); // staged only
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#ff8800")));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(shown(QColor(0xFF, 0x88, 0x00))); // painted (the modal dialog no longer dims the window)
+        // "Set default" leaves the theme's colours.
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#FF8800"));
+        // Reset icon colours stages the theme defaults; OK takes the
+        // colour out of the profile.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "resetIconColours"), "click"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.dark.normal")).toString(), QStringLiteral("#E8EDF2"));
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("icons.light.disabled")).toString(), QStringLiteral("#74808B"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!settings.contains("icons.dark.normal"));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        QTRY_VERIFY(shown(QColor(0xE8, 0xED, 0xF2)));
+        // The default in another spelling (lower case, or with an opaque
+        // alpha) is the default too: it leaves the profile.
+        for (const auto &spelling : {QStringLiteral("#e8edf2"), QStringLiteral("#E8EDF2FF")}) {
+            QVERIFY(openSettings());
+            QTRY_VERIFY(dialog->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                              Q_ARG(QVariant, QStringLiteral("#FF8800"))));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+            QCOMPARE(settings.text("icons.dark.normal"), QStringLiteral("#FF8800"));
+            QVERIFY(QMetaObject::invokeMethod(dialog, "put", Q_ARG(QVariant, QStringLiteral("icons.dark.normal")),
+                                              Q_ARG(QVariant, spelling)));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+            QVERIFY2(!settings.contains("icons.dark.normal"), qPrintable(spelling));
+            QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        }
+        // High contrast (the platform's preference; forced here, with the
+        // high-contrast theme's palette).
+        ui::IconTheme::forceAppearance(ui::icons::Appearance::HighContrast);
+        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::HighContrast));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#ffffff")));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#ffff00"));
+        ui::IconTheme::forceAppearance(std::nullopt);
+        QGuiApplication::setPalette(themePalette(before, ui::icons::Appearance::Dark));
+        QTRY_COMPARE(colours(), all(QStringLiteral("#e8edf2")));
+        // Back at the first frame Previous frame is disabled: the dark
+        // appearance's disabled colour, accent included.
+        application->video().stepFrames(-1);
+        QTRY_COMPARE(icon("previousFrame")->property("color").value<QColor>().name(), QStringLiteral("#75818d"));
+        QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(), QStringLiteral("#75818d"));
+        QCOMPARE(icon("nextFrame")->property("color").value<QColor>().name(), QStringLiteral("#e8edf2"));
+    }
+
+    // K1: representative surfaces show the set's icons and keep their
+    // accessible names: the audio box's buttons (22 px squares, as legacy's
+    // MappedButtons), the Line editor's tag buttons, the menus (the icon as
+    // the item's image source), the document tabs (close, new and the
+    // modified mark), the Search tool's tabs, a dialog's title and the
+    // windows' icons.
+    void iconSurfacesShowTheSetWithTheirNames()
+    {
+        const auto name = [](QObject *object) {
+            auto *a = QAccessible::queryAccessibleInterface(object);
+            return a ? a->text(QAccessible::Name) : QString();
+        };
+        const auto icon = [](QQuickItem *control) {
+            auto *content = control ? control->property("contentItem").value<QQuickItem *>() : nullptr;
+            return content && content->property("valid").toBool() ? content->property("iconRole").toString() : QString();
+        };
+        const auto url = [](QObject *item) {
+            QQmlExpression expression(qmlContext(item), item, QStringLiteral("icon.source.toString()"));
+            return expression.evaluate().toString();
+        };
+        struct Expected {
+            const char *object, *role, *name;
+        };
+        // The audio box (its buttons exist before audio is open).
+        for (const Expected &e : {Expected{"audioPrevious", "audio-previous-line", "Play the previous line"},
+                                  Expected{"audioCommit", "commit", "Apply changes"},
+                                  Expected{"audioPlay500After", "play-after-end", "Play 500ms after the end time"},
+                                  Expected{"audioKaraoke", "karaoke", "Enable / disable karaoke creation"},
+                                  Expected{"audioSpectrumNonLinear", "spectrum-nonlinear", "Enhance speech frequencies in the spectrum"}}) {
+            auto *button = visualItem(e.object);
+            QVERIFY2(button, e.object);
+            QCOMPARE(icon(button), QLatin1String(e.role));
+            QCOMPARE(name(button), QLatin1String(e.name));
+            QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+            QCOMPARE(QSizeF(button->implicitWidth(), button->implicitHeight()), QSizeF(22, 22));
+        }
+        QCOMPARE(icon(visualItem("audioLink")), QStringLiteral("link"));
+        QCOMPARE(name(visualItem("audioLink")), QStringLiteral("Link the volume and stretch sliders"));
+        // The Line editor's tag buttons.
+        for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
+                                  Expected{"changeFont", "tag-font", "Font selection"},
+                                  Expected{"changeColour1", "colour-primary", "Primary color"},
+                                  Expected{"changeColour4", "colour-shadow", "Shadow color"}}) {
+            auto *button = visualItem(e.object);
+            QVERIFY2(button, e.object);
+            QCOMPARE(icon(button), QLatin1String(e.role));
+            QCOMPARE(name(button), QLatin1String(e.name));
+            QVERIFY(button->property("tip").toString().startsWith(QLatin1String(e.name)));
+        }
+        // The menus: the item's image is the set's icon in the palette's colours.
+        auto *root = engine->rootObjects().first();
+        const QString normal = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Normal).name().mid(1);
+        const QString accent = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Accent).name().mid(1);
+        const QString disabled = ui::IconTheme::colour(ui::IconTheme::currentAppearance(), ui::icons::Slot::Disabled).name().mid(1);
+        for (const Expected &e : {Expected{"settingsMenuItem", "settings", ""}, Expected{"aboutMenuItem", "about", ""},
+                                  Expected{"openAudioMenuItem", "open-audio", ""}, Expected{"recentSubtitlesMenu", "recent-subtitles", ""},
+                                  Expected{"loadLastSessionMenuItem", "last-session", ""}}) {
+            auto *menuItem = root->findChild<QObject *>(QLatin1String(e.object));
+            QVERIFY2(menuItem, e.object);
+            QCOMPARE(url(menuItem), QStringLiteral("image://hikari-icon/%1/%2/%3/0").arg(QLatin1String(e.role), normal, accent));
+        }
+        // a disabled item (no document: Save is disabled), the whole icon in the disabled colour
+        QCOMPARE(url(root->findChild<QObject *>(QStringLiteral("saveMenuItem"))),
+                 QStringLiteral("image://hikari-icon/save/%1/%1/0").arg(disabled));
+        // The document tabs: close, new and the modified mark.
+        QVERIFY(application->openFile(episode));
+        QTRY_VERIFY(visualItem("documentTabClose0") && visualItem("documentTabClose0")->isVisible());
+        auto *close = visualItem("documentTabClose0");
+        QCOMPARE(icon(close), QStringLiteral("tab-close"));
+        QCOMPARE(name(close), QStringLiteral("Close episode.ass"));
+        QCOMPARE(QSizeF(close->implicitWidth(), close->implicitHeight()), QSizeF(18, 18));
+        QCOMPARE(icon(visualItem("newTabButton")), QStringLiteral("tab-new"));
+        QCOMPARE(name(visualItem("newTabButton")), QStringLiteral("Open new tab"));
+        QVERIFY(!visualItem("documentTabModified0")->isVisible());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, 'x');
+        press(Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(visualItem("documentTab0")->property("text").toString(), QStringLiteral("1*episode.ass"));
+        QTRY_VERIFY(visualItem("documentTabModified0")->isVisible());
+        QCOMPARE(visualItem("documentTabModified0")->property("iconRole").toString(), QStringLiteral("document-modified"));
+        // The Search tool's tabs (Ctrl+H opens the tool).
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_H, Qt::ControlModifier);
+        QObject *tool = nullptr;
+        QTRY_VERIFY((tool = item<QObject>("searchTool")) != nullptr);
+        auto *findTab = tool->findChild<QObject *>(QStringLiteral("findTab"));
+        auto *replaceTab = tool->findChild<QObject *>(QStringLiteral("replaceTab"));
+        QVERIFY(findTab && replaceTab);
+        QCOMPARE(url(findTab), QStringLiteral("image://hikari-icon/search/%1/%2/0").arg(normal, accent));
+        QCOMPARE(url(replaceTab), QStringLiteral("image://hikari-icon/find-replace/%1/%2/0").arg(normal, accent));
+        QCOMPARE(findTab->property("text").toString(), QStringLiteral("Find"));
+        // A dialog's title shows its icon.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        auto *title = dialog->findChild<QQuickItem *>(QStringLiteral("settingsDialogTitle"));
+        QVERIFY(title && title->isVisible());
+        QCOMPARE(title->property("text").toString(), QStringLiteral("Options"));
+        auto *titleIcon = title->findChild<QQuickItem *>(QStringLiteral("dialogIcon"));
+        QVERIFY(titleIcon && titleIcon->property("valid").toBool());
+        QCOMPARE(titleIcon->property("iconRole").toString(), QStringLiteral("settings"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        // The windows' icons.
+        for (const char *w : {"historyWindow", "styleManager", "automationManagerWindow"}) {
+            auto *shown = root->findChild<QQuickWindow *>(QLatin1String(w));
+            QVERIFY2(shown && !shown->icon().isNull(), w);
+        }
+    }
+
+    // K1: screenshots of the wired surfaces for review (the main window, the
+    // audio box, the Line editor and the File menu) in the light and dark
+    // themes' palettes, written to HIKARI_SURFACE_SHOT_DIR when it is set.
+    void surfaceScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(episode));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        application->video().stepFrames(1);
+        // (the resolution question the video asks)
+        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && mismatch->property("visible").toBool())
+            QMetaObject::invokeMethod(mismatch, "close");
+        application->audio().openDummy();
+        QTRY_VERIFY(application->audio().ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 5);
+        QTest::keyClick(window, 'x');
+        press(Qt::Key_Return, Qt::ControlModifier); // a modified tab
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        auto *root = engine->rootObjects().first();
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            QPalette palette = themePalette(before, appearance);
+            QGuiApplication::setPalette(palette);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), palette.color(QPalette::Window));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            QTest::qWait(200);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
+            QVERIFY(shot.copy(crop(visualItem("audioPanel"))).save(out + QStringLiteral("/audio-box") + suffix));
+            QVERIFY(shot.copy(crop(visualItem("editorPanel"))).save(out + QStringLiteral("/line-editor") + suffix));
+            // The File menu, open.
+            auto *bar = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+            auto *menu = bar->property("menu").value<QObject *>();
+            QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, bar), Q_ARG(QPointF, QPointF(0, bar->height()))));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            auto *content = menu->property("contentItem").value<QQuickItem *>();
+            QTest::qWait(300);
+            const QImage menuShot = content->window()->grabWindow();
+            QRect r = crop(content);
+            r = (content->window() == window ? r.adjusted(-4, -4, 4, 4) : menuShot.rect()).intersected(menuShot.rect());
+            QVERIFY(menuShot.copy(r).save(out + QStringLiteral("/file-menu") + suffix));
+            QMetaObject::invokeMethod(menu, "close");
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        }
     }
 
     void theReferenceIsNeverEdited()

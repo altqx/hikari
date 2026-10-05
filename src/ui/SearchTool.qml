@@ -10,6 +10,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
+import Hikari.Ui
 
 Item {
     id: search
@@ -171,8 +172,19 @@ Item {
                     id: modes
                     objectName: "findTabs"
                     Layout.fillWidth: true
-                    TabButton { text: qsTr("Find") }
-                    TabButton { text: qsTr("Find and replace") }
+                    // K1: Find and Find and replace with the set's icons
+                    // (legacy's search and findreplace bitmaps, the Edit
+                    // menu's and FindReplaceDialog's).
+                    IconTabButton {
+                        objectName: "findTab"
+                        iconRole: "search"
+                        text: qsTr("Find")
+                    }
+                    IconTabButton {
+                        objectName: "replaceTab"
+                        iconRole: "find-replace"
+                        text: qsTr("Find and replace")
+                    }
                     TabButton { text: qsTr("Find in subtitles") }
                     onCurrentIndexChanged: {
                         if (search.opened && currentIndex !== search.tab) {

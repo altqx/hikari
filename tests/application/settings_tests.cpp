@@ -186,6 +186,31 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
     EXPECT_EQ(findSetting("subtitles.saveWithVideoName")->legacyKey, "SUBS_AUTONAMING");
 }
 
+// K1: the icon colours, per appearance and state, are the rewrite's own
+// profile settings ("#RRGGBB" text) with their theme defaults.
+TEST(SettingsRegistry, IconColoursArePerAppearanceSettings)
+{
+    const char *expected[3][4] = {{"#202832", "#145C4C", "#145C4C", "#74808B"},
+                                  {"#E8EDF2", "#9CDBC9", "#9CDBC9", "#75818D"},
+                                  {"#FFFFFF", "#FFFF00", "#00FFFF", "#8C8C8C"}};
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    for (int a = 0; a < 3; ++a)
+        for (int s = 0; s < 4; ++s) {
+            const auto *setting = findSetting(kIconColourSettings[a][s]);
+            ASSERT_NE(setting, nullptr) << kIconColourSettings[a][s];
+            EXPECT_TRUE(setting->legacyKey.empty());
+            EXPECT_EQ(setting->type, SettingType::String);
+            EXPECT_EQ(setting->scope, SettingScope::Profile);
+            EXPECT_EQ(setting->defaultValue, SettingValue(std::string(expected[a][s])));
+            EXPECT_TRUE(parseSettingColour(expected[a][s]).has_value());
+            EXPECT_TRUE(settings.set(setting->id, std::string("#123456")));
+            settings.reset(setting->id);
+            EXPECT_EQ(settings.text(setting->id), expected[a][s]);
+        }
+    EXPECT_EQ(kIconColourSettings[1][2], "icons.dark.active");
+}
+
 TEST(SettingsRegistry, ThemesAreExcludedAndUnresolvedOnesKept)
 {
     const auto *theme = findLegacySetting("PROGRAM_THEME");

@@ -116,11 +116,23 @@ Dialog {
     component TitleBar: Label {
         id: titleBar
         required property var popup
+        // K1: an icon of the set before the title (the multireplacer's is
+        // legacy's sellines bitmap, the Edit menu's).
+        property string iconRole: ""
         signal dragged() // the window was moved by its title
         text: popup.title
         font.bold: true
         padding: 12
+        leftPadding: iconRole.length && !LayoutMirroring.enabled ? 12 + 16 + 6 : 12
+        rightPadding: iconRole.length && LayoutMirroring.enabled ? 12 + 16 + 6 : 12
         elide: Label.ElideRight
+        Icon {
+            objectName: titleBar.objectName + "Icon"
+            visible: titleBar.iconRole.length > 0
+            iconRole: titleBar.iconRole
+            x: LayoutMirroring.enabled ? titleBar.width - 12 - width : 12
+            anchors.verticalCenter: parent.verticalCenter
+        }
         MouseArea {
             objectName: titleBar.objectName + "Drag"
             anchors.fill: parent
@@ -147,7 +159,7 @@ Dialog {
             }
         }
     }
-    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog; onDragged: dialog.centring = false }
+    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog; iconRole: "select-lines"; onDragged: dialog.centring = false }
 
     RowLayout {
         anchors.fill: parent

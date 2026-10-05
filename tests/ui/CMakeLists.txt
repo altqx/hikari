@@ -8,7 +8,8 @@ hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBR
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
-    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
+    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_lua_helper hikari_automation_stage)
 # The whole shell suite runs in one process (about a minute here, more on CI
 # runners), so it gets more than the default 60 s.
@@ -121,3 +122,20 @@ hikari_add_spix_test(hikari_ui_visual_tools_workflow SOURCES visual_tools_workfl
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_media_fixtures)
+# K1: the vector icon set: the icon manifest test, the tint, the default
+# colours' contrast, live colours, and the rendering fixtures (contact sheets)
+# at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.
+hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg OFFSCREEN_ONLY)
+target_compile_definitions(hikari_ui_icon_tests PRIVATE
+    HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
+    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
+    HIKARI_LEGACY_BITMAPS="${PROJECT_SOURCE_DIR}/HikariSub/Bitmaps")
+foreach(scale 150 200)
+    math(EXPR whole "${scale} / 100")
+    math(EXPR part "${scale} % 100")
+    add_test(NAME hikari_ui_icon_tests.scale${scale}
+        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheAppearanceAndColoursLive mirroredIconsPaintFlipped
+            imageSourcedControlsDrawTheSet)
+    set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
+endforeach()

@@ -23,6 +23,8 @@ Dialog {
     readonly property color successColour: "#008000"
     readonly property bool working: collector.stage === 1
     title: qsTr("Font collector")
+    // K1: the title with the set's font-collector icon (the Subtitles menu's FontCollector bitmap).
+    header: IconDialogHeader { objectName: "fontCollectorDialogTitle"; iconRole: "font-collector"; text: dialog.title }
     modal: false
     closePolicy: working ? Popup.NoAutoClose : Popup.CloseOnEscape
 

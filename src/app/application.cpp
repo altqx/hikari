@@ -26,6 +26,7 @@
 #include "hikari/application/media_association.h"
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
+#include "icon_theme.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -490,6 +491,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
+    // K1: the icons take their colours from this profile.
+    ui::IconTheme::useSettings(m_settings.get());
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
@@ -4245,17 +4248,31 @@ QVariantMap Application::openSettingsDialog()
 }
 
 // The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the audio spectrum's three (A2). The Grid's
-// comparison colours are fixed per theme (R1, LineTableModel).
+// rewrite keeps theme colours: the audio spectrum's three (A2) and the icon
+// colours of each appearance (K1). The Grid's comparison colours are fixed
+// per theme (R1, LineTableModel).
 namespace {
-constexpr std::string_view kThemeColours[] = {application::kSpectrumBackgroundSetting,
-                                              application::kSpectrumEchoSetting,
-                                              application::kSpectrumInnerSetting};
+std::vector<std::string_view> themeColours()
+{
+    std::vector<std::string_view> ids{application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
+                                      application::kSpectrumInnerSetting};
+    for (const auto &appearance : application::kIconColourSettings)
+        ids.insert(ids.end(), std::begin(appearance), std::end(appearance));
+    return ids;
+}
+
+bool isIconColour(std::string_view id)
+{
+    for (const auto &appearance : application::kIconColourSettings)
+        if (std::ranges::find(appearance, id) != std::end(appearance))
+            return true;
+    return false;
+}
 } // namespace
 
 void Application::addThemeColours(QVariantMap &values) const
 {
-    for (const auto id : kThemeColours)
+    for (const auto id : themeColours())
         values.insert(qs(id), qs(m_settings->settings().text(id)));
 }
 
@@ -4264,12 +4281,23 @@ void Application::applySettings(const QVariantMap &values)
     // SetOptions' ID_COLOR_CONFIG list: the changed colours are saved and
     // ChangeColors runs (the audio display's ChangeOptions: the spectrum
     // reads its colours again, through settingChanged).
-    for (const auto id : kThemeColours) {
+    for (const auto id : themeColours()) {
         const auto found = values.constFind(qs(id));
         if (found == values.cend())
             continue;
         const std::string colour = found->toString().toStdString();
-        if (application::parseSettingColour(colour) && colour != m_settings->settings().text(id))
+        if (!application::parseSettingColour(colour) || colour == m_settings->settings().text(id))
+            continue;
+        // K1: an icon colour back at its theme default leaves the profile
+        // (it follows the default again); the icons repaint at once. The
+        // colours are compared as colours, so "#9cdbc9" or "#9CDBC9FF" is
+        // the default "#9CDBC9" too.
+        const auto *setting = application::findSetting(id);
+        if (isIconColour(id) && setting
+            && application::parseSettingColour(std::get<std::string>(setting->defaultValue))
+                   == application::parseSettingColour(colour))
+            m_settings->reset(qs(id));
+        else
             m_settings->settings().set(id, colour);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
@@ -4338,11 +4366,12 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     // The theme's colours are not options: ResetDefault leaves them.
-    for (const std::string_view id : {std::string_view("recent.subtitles"), std::string_view("recent.video"),
-                                      std::string_view("recent.audio"), application::kAutomationHotkeysSetting,
-                                      application::kHotkeysSetting, application::kAudioHotkeysSetting,
-                                      application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
-                                      application::kSpectrumInnerSetting})
+    std::vector<std::string_view> keep{"recent.subtitles", "recent.video", "recent.audio",
+                                       application::kAutomationHotkeysSetting, application::kHotkeysSetting,
+                                       application::kAudioHotkeysSetting};
+    const auto colours = themeColours();
+    keep.insert(keep.end(), colours.begin(), colours.end());
+    for (const std::string_view id : keep)
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
     m_resettingSettings = true;
@@ -4387,7 +4416,7 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     auto refreshed =
         toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
     // the colour list keeps what it shows
-    for (const auto id : kThemeColours)
+    for (const auto id : themeColours())
         if (const auto found = values.constFind(qs(id)); found != values.cend())
             refreshed.insert(qs(id), *found);
     return refreshed;

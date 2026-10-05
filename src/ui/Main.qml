@@ -433,13 +433,15 @@ ApplicationWindow {
     }
 
     // Classic menus. Commands join through the shared action system as their
-    // cards land.
+    // cards land. K1: the items legacy drew with a bitmap (HikariSubFrame.cpp's
+    // AppendTool) show the set's icon (ShellMenuItem, ShellMenu).
     menuBar: MenuBar {
         MenuBarItem {
             objectName: "fileMenuBarItem"
             menu: ShellMenu {
                 title: qsTr("&File")
                 ShellMenuItem {
+                    iconRole: "open-subtitles"
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
@@ -448,6 +450,7 @@ ApplicationWindow {
                 }
                 ShellMenu {
                     id: recentMenu
+                    iconRole: "recent-subtitles"
                     objectName: "recentSubtitlesMenu"
                     title: qsTr("Recently opened &subtitles")
                     property var rows: []
@@ -472,6 +475,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "close-subtitles"
                     objectName: "newMenuItem"
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
                     action: Action {
@@ -490,6 +494,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "open-video"
                     objectName: "openVideoMenuItem"
                     action: Action {
                         id: openVideoAction
@@ -498,6 +503,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "save"
                     objectName: "saveMenuItem"
                     action: Action {
                         id: saveAction
@@ -507,6 +513,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "save-all"
                     objectName: "saveAllMenuItem"
                     action: Action {
                         id: saveAllAction
@@ -521,6 +528,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "save-as"
                     objectName: "saveAsMenuItem"
                     action: Action {
                         id: saveAsAction
@@ -530,6 +538,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "save-translation"
                     objectName: "saveTranslationMenuItem"
                     action: Action {
                         id: saveTranslationAction
@@ -544,6 +553,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "save-with-video-name"
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
                         id: saveWithVideoNameAction
@@ -585,10 +595,12 @@ ApplicationWindow {
                 }
                 // P6: legacy "Last session" submenu.
                 ShellMenu {
+                    iconRole: "last-session"
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
                     ShellMenuItem {
                         id: loadLastSessionItem
+                        iconRole: "last-session"
                         objectName: "loadLastSessionMenuItem"
                         text: qsTr("Load last session")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
@@ -622,6 +634,7 @@ ApplicationWindow {
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
                 ShellMenuItem {
+                    iconRole: "settings"
                     objectName: "settingsMenuItem"
                     action: Action {
                         id: settingsAction
@@ -630,6 +643,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "exit"
                     objectName: "exitMenuItem"
                     action: Action {
                         text: qsTr("E&xit")
@@ -640,20 +654,27 @@ ApplicationWindow {
         }
         ShellMenu {
             title: qsTr("&Edit")
-            Action {
-                id: undoAction
-                text: qsTr("&Undo")
-                enabled: root.editor.hasLine
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+            ShellMenuItem {
+                iconRole: "undo"
+                action: Action {
+                    id: undoAction
+                    text: qsTr("&Undo")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_UNDO")) root.editor.undo()
+                }
             }
-            Action {
-                id: redoAction
-                text: qsTr("&Redo")
-                enabled: root.editor.hasLine
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+            ShellMenuItem {
+                iconRole: "redo"
+                action: Action {
+                    id: redoAction
+                    text: qsTr("&Redo")
+                    enabled: root.editor.hasLine
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_REDO")) root.editor.redo()
+                }
             }
             // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
             ShellMenu {
+                iconRole: "sort"
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
                 enabled: root.editor.editable
@@ -671,6 +692,7 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
+                iconRole: "sort-selected"
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
                 enabled: root.editor.editable
@@ -688,6 +710,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "undo-to-last-save"
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
                     id: undoToLastSaveAction
@@ -697,6 +720,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "history"
                 objectName: "historyMenuItem"
                 action: Action {
                     id: historyAction
@@ -706,6 +730,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "select-lines"
                 objectName: "misspellMenuItem"
                 action: Action {
                     id: misspellAction
@@ -714,6 +739,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "select-lines"
                 objectName: "selectLinesMenuItem"
                 action: Action {
                     id: selectLinesAction
@@ -724,6 +750,7 @@ ApplicationWindow {
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
             ShellMenuItem {
+                iconRole: "find-replace"
                 objectName: "findReplaceMenuItem"
                 action: Action {
                     id: findReplaceAction
@@ -733,6 +760,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
                     id: findAction
@@ -742,6 +770,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "search"
                 objectName: "findNextMenuItem"
                 action: Action {
                     id: findNextAction
@@ -767,6 +796,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "automation"
                 objectName: "loadScriptMenuItem"
                 action: Action {
                     id: loadScriptAction
@@ -775,6 +805,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "automation"
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
                     id: reloadAutoloadAction
@@ -821,54 +852,82 @@ ApplicationWindow {
             objectName: "videoMenu"
             title: qsTr("&Video")
             // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
-            Action {
-                text: qsTr("Open &video…")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+            ShellMenuItem {
+                iconRole: "open-video"
+                action: Action {
+                    text: qsTr("Open &video…")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                }
             }
-            Action {
-                id: previousFrameAction
-                text: qsTr("Previous frame"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+            ShellMenuItem {
+                iconRole: "frame-previous"
+                action: Action {
+                    id: previousFrameAction
+                    text: qsTr("Previous frame"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PREVIOUS_FRAME")) root.video.stepFrames(-1)
+                }
             }
-            Action {
-                id: nextFrameAction
-                text: qsTr("Next frame"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+            ShellMenuItem {
+                iconRole: "frame-next"
+                action: Action {
+                    id: nextFrameAction
+                    text: qsTr("Next frame"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_NEXT_FRAME")) root.video.stepFrames(1)
+                }
             }
-            Action {
-                id: goToStartAction
-                text: qsTr("Go to start time"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+            ShellMenuItem {
+                iconRole: "video-to-start-time"
+                action: Action {
+                    id: goToStartAction
+                    text: qsTr("Go to start time"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_START_TIME")) root.video.goToLineStart()
+                }
             }
-            Action {
-                id: goToEndAction
-                text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+            ShellMenuItem {
+                iconRole: "video-to-end-time"
+                action: Action {
+                    id: goToEndAction
+                    text: qsTr("Go to end time of line"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_VIDEO_AT_END_TIME")) root.video.goToLineEnd()
+                }
             }
-            Action {
-                id: playPauseAction
-                text: qsTr("Play / Pause"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+            ShellMenuItem {
+                iconRole: root.video.playing ? "media-pause" : "media-play"
+                action: Action {
+                    id: playPauseAction
+                    text: qsTr("Play / Pause"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_PLAY_PAUSE")) root.video.togglePlay()
+                }
             }
-            Action {
-                id: previousKeyframeAction
-                text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+            ShellMenuItem {
+                iconRole: "keyframe-previous"
+                action: Action {
+                    id: previousKeyframeAction
+                    text: qsTr("Go to previous keyframe"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_PREVIOUS_KEYFRAME")) root.video.previousKeyframe()
+                }
             }
-            Action {
-                id: nextKeyframeAction
-                text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+            ShellMenuItem {
+                iconRole: "keyframe-next"
+                action: Action {
+                    id: nextKeyframeAction
+                    text: qsTr("Go to next keyframe"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
+                }
             }
-            Action {
-                id: openKeyframesAction
-                text: qsTr("Open keyframes")
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
+            ShellMenuItem {
+                iconRole: "open-keyframes"
+                action: Action {
+                    id: openKeyframesAction
+                    text: qsTr("Open keyframes")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
+                }
             }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
             ShellMenuItem {
+                iconRole: "audio-to-video-time"
                 objectName: "setAudioFromVideoMenuItem"
                 action: Action {
                     id: setAudioFromVideoAction
@@ -878,6 +937,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "audio-marker-to-video-time"
                 objectName: "setAudioMarkFromVideoMenuItem"
                 action: Action {
                     id: setAudioMarkFromVideoAction
@@ -894,6 +954,7 @@ ApplicationWindow {
             objectName: "audioMenu"
             title: qsTr("A&udio")
             ShellMenuItem {
+                iconRole: "open-audio"
                 objectName: "openAudioMenuItem"
                 action: Action {
                     id: openAudioAction
@@ -908,6 +969,7 @@ ApplicationWindow {
             }
             ShellMenu {
                 id: recentAudioMenu
+                iconRole: "recent-audio"
                 objectName: "recentAudioMenu"
                 title: qsTr("Recently opened audio")
                 property var rows: []
@@ -932,6 +994,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "audio-from-video"
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
                     id: audioFromVideoAction
@@ -949,6 +1012,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "close-audio"
                 objectName: "closeAudioMenuItem"
                 action: Action {
                     id: closeAudioAction
@@ -1050,6 +1114,7 @@ ApplicationWindow {
             title: qsTr("&Subtitles")
             ShellMenuItem {
                 id: showShiftTimesItem
+                iconRole: "shift-times"
                 objectName: "showShiftTimes"
                 text: qsTr("Shift &times...")
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHOW_SHIFT_TIMES")) root.showPanel(timingDock)
@@ -1063,6 +1128,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 id: styleManagerItem
+                iconRole: "styles"
                 objectName: "styleManagerMenuItem"
                 text: qsTr("Style &manager")
                 enabled: root.shell.hasEditingTarget
@@ -1070,6 +1136,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 id: assPropertiesItem
+                iconRole: "script-properties"
                 objectName: "assProperties"
                 text: qsTr("ASS file properties")
                 enabled: root.shell.hasEditingTarget
@@ -1077,6 +1144,7 @@ ApplicationWindow {
             }
             ShellMenu {
                 id: conversionMenu
+                iconRole: "convert"
                 objectName: "conversionMenu"
                 title: qsTr("Conversion")
                 property var targets: []
@@ -1085,6 +1153,7 @@ ApplicationWindow {
                     model: root.conversionItems
                     ShellMenuItem {
                         objectName: "convertTo_" + modelData[0]
+                        iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
                         onTriggered: if (!root.hotkeyGesture(modelData[2])) conversionDialog.openFor(modelData[0], modelData[1])
@@ -1096,12 +1165,14 @@ ApplicationWindow {
             ShellMenuItem {
                 id: fontCollectorItem
                 objectName: "fontCollectorMenuItem"
+                iconRole: "font-collector"
                 text: qsTr("Font collector")
                 enabled: root.shell.hasEditingTarget && root.shell.assColumns
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
             }
             ShellMenuItem {
                 id: resampleItem
+                iconRole: "resample"
                 objectName: "resampleMenuItem"
                 text: qsTr("Resample subtitles")
                 enabled: root.shell.hasEditingTarget
@@ -1110,6 +1181,7 @@ ApplicationWindow {
             // Legacy HikariSubFrame: after Resample subtitles.
             ShellMenuItem {
                 id: checkSpellingItem
+                iconRole: "spellchecker"
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
                 enabled: root.shell.hasEditingTarget
@@ -1119,6 +1191,7 @@ ApplicationWindow {
         ShellMenu {
             title: qsTr("&Help")
             ShellMenuItem {
+                iconRole: "help"
                 action: Action {
                     id: websiteAction
                     text: qsTr("HikariSub &website")
@@ -1126,6 +1199,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
                 action: Action {
                     id: reportIssueAction
@@ -1134,6 +1208,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "check-updates"
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
                     id: checkForUpdatesAction
@@ -1143,6 +1218,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "about"
                 objectName: "aboutMenuItem"
                 action: Action {
                     id: aboutAction
@@ -1151,6 +1227,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "credits"
                 objectName: "creditsMenuItem"
                 action: Action {
                     id: creditsAction
@@ -1585,27 +1662,28 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
                     // GLOBAL_PLAY_ACTUAL_LINE, VIDEO_STOP): the binding in the
-                    // tooltip, and Shift+click maps it (BitmapButton).
-                    Button {
+                    // tooltip, and Shift+click maps it (BitmapButton). K1: the
+                    // set's icons in place of legacy's bitmaps (play / pause
+                    // as legacy ChangeButtonBMP swaps them, VideoBox.cpp:1414);
+                    // the text stays the accessible name.
+                    IconButton {
                         objectName: "playPause"
+                        iconRole: root.video.playing ? "media-pause" : "media-play"
                         text: root.video.playing ? qsTr("Pause") : qsTr("Play")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Play / Pause"), "VIDEO_PLAY_PAUSE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PLAY_PAUSE", 3, "bitmap")) root.video.togglePlay()
                     }
                     // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
                     // Line editor's text.
-                    Button {
+                    IconButton {
                         objectName: "playActualLine"
+                        iconRole: "play-line"
                         text: qsTr("Play line")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Play the current line"), "GLOBAL_PLAY_ACTUAL_LINE", 0)
                         Accessible.name: qsTr("Play the current line")
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
@@ -1614,18 +1692,18 @@ ApplicationWindow {
                             root.video.playActualLine()
                         }
                     }
-                    Button {
+                    IconButton {
                         objectName: "stopVideo"
+                        iconRole: "media-stop"
                         text: qsTr("Stop")
                         enabled: root.video.hasVideo
                         focusPolicy: Qt.NoFocus
-                        ToolTip.visible: hovered
-                        readonly property string tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
-                        ToolTip.text: tip
+                        tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
-                    Button {
+                    IconButton {
                         objectName: "previousFrame"
+                        iconRole: "frame-previous"
                         text: qsTr("Previous frame")
                         enabled: root.video.hasVideo && root.video.frame > 0
                         onClicked: root.video.stepFrames(-1)
@@ -1636,8 +1714,9 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    Button {
+                    IconButton {
                         objectName: "nextFrame"
+                        iconRole: "frame-next"
                         text: qsTr("Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
@@ -1745,11 +1824,20 @@ ApplicationWindow {
                                 Accessible.name: ToolTip.text
                             }
                         }
+                        // K1: the set's link icon (legacy VerticalLink's
+                        // button_link bitmap, AudioBox.cpp:123).
                         ToolButton {
+                            id: audioLink
                             objectName: "audioLink"
                             Layout.fillWidth: true
                             Layout.bottomMargin: 2 // legacy wxBOTTOM 2
                             text: qsTr("Link")
+                            display: AbstractButton.IconOnly
+                            contentItem: Icon {
+                                iconRole: "link"
+                                hovered: audioLink.hovered
+                                pressed: audioLink.down
+                            }
                             checkable: true
                             checked: root.audio.linked
                             focusPolicy: Qt.NoFocus
@@ -1793,16 +1881,27 @@ ApplicationWindow {
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
                     // Legacy MappedButton's small square buttons; a Shift+click
                     // maps the action's Audio hotkey instead (Hotkeys::OnMapHkey).
+                    // K1: each shows the set's icon in place of legacy's
+                    // bitmap (AudioBox.cpp:149-193); its text is not drawn,
+                    // the tip stays its accessible name and tooltip.
                     component AudioButton: ToolButton {
+                        id: audioButton
                         property string symbol: ""
                         property string altSymbol: ""
                         property string tip: ""
+                        property string iconRole: ""
                         property int gap: 2
                         signal run()
                         focusPolicy: Qt.NoFocus
                         padding: 2
+                        display: AbstractButton.IconOnly
+                        contentItem: Icon {
+                            iconRole: audioButton.iconRole
+                            hovered: audioButton.hovered
+                            pressed: audioButton.down
+                        }
                         implicitHeight: 22
-                        implicitWidth: Math.max(22, implicitContentWidth + 8)
+                        implicitWidth: 22
                         Layout.rightMargin: gap
                         Accessible.name: tip
                         ToolTip.text: symbol.length ? audioPanel.audioTip(tip, symbol, altSymbol) : tip
@@ -1816,85 +1915,101 @@ ApplicationWindow {
                     // A3, A4: AUDIO_PREVIOUS, AUDIO_NEXT, AUDIO_PLAY,
                     // AUDIO_PLAY_LINE (two hotkeys each), AUDIO_STOP
                     AudioButton {
-                        objectName: "audioPrevious"; text: "◀"
+                        objectName: "audioPrevious"; text: qsTr("Previous line")
+                        iconRole: "audio-previous-line"
                         symbol: "AUDIO_PREVIOUS"; altSymbol: "AUDIO_PREVIOUS_ALT"; tip: qsTr("Play the previous line")
                         onRun: root.audio.previousLine()
                     }
                     AudioButton {
-                        objectName: "audioNext"; text: "▶"
+                        objectName: "audioNext"; text: qsTr("Next line")
+                        iconRole: "audio-next-line"
                         symbol: "AUDIO_NEXT"; altSymbol: "AUDIO_NEXT_ALT"; tip: qsTr("Play the next line")
                         onRun: root.audio.nextLine()
                     }
                     AudioButton {
                         objectName: "audioPlay"; text: qsTr("Play")
+                        iconRole: "audio-play"
                         symbol: "AUDIO_PLAY"; altSymbol: "AUDIO_PLAY_ALT"; tip: qsTr("Play the current syllable / line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY")
                     }
                     AudioButton {
                         objectName: "audioPlayLine"; text: qsTr("Play line")
+                        iconRole: "play-line"
                         symbol: "AUDIO_PLAY_LINE"; altSymbol: "AUDIO_PLAY_LINE_ALT"; tip: qsTr("Play the current line")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_LINE")
                     }
                     AudioButton {
                         objectName: "audioStop"; text: qsTr("Stop"); gap: 8
+                        iconRole: "media-stop"
                         symbol: "AUDIO_STOP"; tip: qsTr("Stop playback")
                         onRun: root.audio.runHotkey("AUDIO_STOP")
                     }
                     // A4: the mark plays (the ruler's mark, A3)
                     AudioButton {
                         objectName: "audioPlayBeforeMark"; text: qsTr("Before mark")
+                        iconRole: "play-before-mark"
                         symbol: "AUDIO_PLAY_BEFORE_MARK"; tip: qsTr("Play before the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_BEFORE_MARK")
                     }
                     AudioButton {
                         objectName: "audioPlayAfterMark"; text: qsTr("After mark"); gap: 8
+                        iconRole: "play-after-mark"
                         symbol: "AUDIO_PLAY_AFTER_MARK"; tip: qsTr("Play after the tag")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_AFTER_MARK")
                     }
                     // A4: the 500 ms plays and to the end
                     AudioButton {
                         objectName: "audioPlay500Before"; text: qsTr("500 before")
+                        iconRole: "play-before-start"
                         symbol: "AUDIO_PLAY_500MS_BEFORE"; tip: qsTr("Play 500ms before the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_BEFORE")
                     }
                     AudioButton {
                         objectName: "audioPlay500First"; text: qsTr("500 first")
+                        iconRole: "play-after-start"
                         symbol: "AUDIO_PLAY_500MS_FIRST"; tip: qsTr("Play 500 ms after the start time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_FIRST")
                     }
                     AudioButton {
                         objectName: "audioPlay500Last"; text: qsTr("500 last")
+                        iconRole: "play-before-end"
                         symbol: "AUDIO_PLAY_500MS_LAST"; tip: qsTr("Play 500ms before the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_LAST")
                     }
                     AudioButton {
                         objectName: "audioPlay500After"; text: qsTr("500 after")
+                        iconRole: "play-after-end"
                         symbol: "AUDIO_PLAY_500MS_AFTER"; tip: qsTr("Play 500ms after the end time")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_500MS_AFTER")
                     }
                     AudioButton {
                         objectName: "audioPlayToEnd"; text: qsTr("To end"); gap: 8
+                        iconRole: "play-to-end"
                         symbol: "AUDIO_PLAY_TO_END"; tip: qsTr("Play to the end")
                         onRun: root.audio.runHotkey("AUDIO_PLAY_TO_END")
                     }
                     // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT, AUDIO_GOTO
                     AudioButton {
                         objectName: "audioLeadIn"; text: qsTr("In")
+                        iconRole: "lead-in"
                         symbol: "AUDIO_LEAD_IN"; tip: qsTr("Add lead-in to the active line")
                         onRun: root.audio.leadIn()
                     }
                     AudioButton {
                         objectName: "audioLeadOut"; text: qsTr("Out"); gap: 8
+                        iconRole: "lead-out"
                         symbol: "AUDIO_LEAD_OUT"; tip: qsTr("Add lead-out to the active line")
                         onRun: root.audio.leadOut()
                     }
                     AudioButton {
-                        objectName: "audioCommit"; text: "✓"
+                        objectName: "audioCommit"; text: qsTr("Commit")
+                        iconRole: "commit"
                         symbol: "AUDIO_COMMIT"; altSymbol: "AUDIO_COMMIT_ALT"; tip: qsTr("Apply changes")
                         onRun: root.audio.commit()
                     }
                     AudioButton {
                         objectName: "audioGoto"; text: qsTr("Go"); gap: 8
+                        iconRole: "go-to-selection"
                         symbol: "AUDIO_GOTO"; tip: qsTr("Go to selection")
                         onRun: root.audio.goToSelection()
                     }
@@ -1903,6 +2018,7 @@ ApplicationWindow {
                     // splitting; each handler focuses the display.
                     AudioButton {
                         objectName: "audioKaraoke"
+                        iconRole: "karaoke"
                         text: qsTr("Karaoke")
                         checkable: true
                         checked: root.audio.karaoke
@@ -1914,6 +2030,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioKaraokeSplit"
+                        iconRole: "karaoke-split"
                         text: qsTr("Auto split"); gap: 8
                         checkable: true
                         checked: root.audio.karaokeSplitMode
@@ -1929,6 +2046,7 @@ ApplicationWindow {
                     AudioButton {
                         id: audioAutoCommit
                         objectName: "audioAutoCommit"
+                        iconRole: "auto-commit"
                         text: qsTr("Auto")
                         checkable: true
                         checked: root.app.settings.value("audio.autoCommit")
@@ -1948,6 +2066,7 @@ ApplicationWindow {
                     AudioButton {
                         id: audioNextCommit
                         objectName: "audioNextCommit"
+                        iconRole: "next-after-commit"
                         text: qsTr("Next")
                         checkable: true
                         checked: root.app.settings.value("audio.nextLineOnCommit")
@@ -1969,6 +2088,7 @@ ApplicationWindow {
                     // legacy's handlers do).
                     AudioButton {
                         objectName: "audioAutoScroll"
+                        iconRole: "auto-scroll"
                         text: qsTr("Auto-scroll")
                         checkable: true
                         checked: root.audio.autoScroll
@@ -1977,6 +2097,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioSpectrumMode"
+                        iconRole: "spectrum"
                         text: qsTr("Spectrum")
                         checkable: true
                         checked: root.audio.spectrumOn
@@ -1985,6 +2106,7 @@ ApplicationWindow {
                     }
                     AudioButton {
                         objectName: "audioSpectrumNonLinear"
+                        iconRole: "spectrum-nonlinear"
                         text: qsTr("Speech")
                         checkable: true
                         checked: root.audio.spectrumNonLinear
@@ -2109,21 +2231,24 @@ ApplicationWindow {
                         Repeater {
                             // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
                             // maps the hotkey, the tooltip shows it.
+                            // K1: the set's icons in place of the letters
+                            // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
+                            // bitmaps, EditBox.cpp:168-195).
                             model: [
-                                { tag: "b", label: qsTr("B"), name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                { tag: "i", label: qsTr("I"), name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                { tag: "u", label: qsTr("U"), name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                { tag: "s", label: qsTr("S"), name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
+                                { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
                             ]
-                            ToolButton {
+                            IconToolButton {
                                 required property var modelData
+                                required property int index
                                 objectName: "tag_" + modelData.tag
-                                text: modelData.label
+                                iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
+                                text: modelData.name
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return
@@ -2134,14 +2259,13 @@ ApplicationWindow {
                         }
                         // E1: Font selection and the four colours
                         // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                        ToolButton {
+                        IconToolButton {
                             objectName: "changeFont"
-                            text: qsTr("Fn")
+                            iconRole: "tag-font"
+                            text: qsTr("Font selection")
                             focusPolicy: Qt.NoFocus
                             enabled: root.editor.editable
-                            Accessible.name: qsTr("Font selection")
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
+                            tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
                             onClicked: {
                                 if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                     return
@@ -2156,15 +2280,14 @@ ApplicationWindow {
                                 { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
                                 { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
                             ]
-                            ToolButton {
+                            IconToolButton {
                                 required property var modelData
                                 objectName: "changeColour" + modelData.number
-                                text: modelData.number + "c"
+                                iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
+                                text: modelData.name
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                ToolTip.visible: hovered
-                                ToolTip.text: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return
@@ -2963,6 +3086,8 @@ ApplicationWindow {
     Window {
         id: historyWindow
         objectName: "historyWindow"
+        // K1: the set's history icon as the window's (as legacy's dialogs show theirs, SetIcon).
+        Component.onCompleted: IconTheme.setWindowIcon(historyWindow, "history")
         title: root.editor.history.length === 1 ? qsTr("History (1 element)")
                                                 : qsTr("History (%1 elements)").arg(root.editor.history.length)
         width: 360
@@ -3180,6 +3305,8 @@ ApplicationWindow {
     Window {
         id: automationManagerWindow
         objectName: "automationManagerWindow"
+        // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
+        Component.onCompleted: IconTheme.setWindowIcon(automationManagerWindow, "automation")
         title: qsTr("Automation manager")
         width: 560
         height: 420

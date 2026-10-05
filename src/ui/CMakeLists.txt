@@ -32,3 +32,15 @@ qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTab
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
+# K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
+# the SVGs and their manifest as module resources, the Icon item, the
+# icon-only button, the menu items, tab button and dialog title that draw the
+# set through IconTheme's image provider. Kept in this block of their own (not the shared lists
+# above) so the parallel cards' edits do not meet.
+target_sources(hikari_ui PRIVATE icon_theme.cpp icon_theme.h)
+target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
+file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
+qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml IconColours.qml
+    IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
+    RESOURCES icons/manifest.json ${hikari_icon_files})

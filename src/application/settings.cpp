@@ -240,6 +240,21 @@ const std::vector<SettingDefinition> &definitions()
         {kSpectrumBackgroundSetting, "", String, Profile, Mapped, false, std::string("#000000")},
         {kSpectrumEchoSetting, "", String, Profile, Mapped, false, std::string("#674FD7")},
         {kSpectrumInnerSetting, "", String, Profile, Mapped, false, std::string("#F4F4F4")},
+        // K1: the icon colours (docs/qt/ux/icons.md): light from the light
+        // tokens (text, accent, accent, a grey), dark from the dark ones, high
+        // contrast white, yellow, cyan (its focus colour) and a grey.
+        {kIconColourSettings[0][0], "", String, Profile, Mapped, false, std::string("#202832")},
+        {kIconColourSettings[0][1], "", String, Profile, Mapped, false, std::string("#145C4C")},
+        {kIconColourSettings[0][2], "", String, Profile, Mapped, false, std::string("#145C4C")},
+        {kIconColourSettings[0][3], "", String, Profile, Mapped, false, std::string("#74808B")},
+        {kIconColourSettings[1][0], "", String, Profile, Mapped, false, std::string("#E8EDF2")},
+        {kIconColourSettings[1][1], "", String, Profile, Mapped, false, std::string("#9CDBC9")},
+        {kIconColourSettings[1][2], "", String, Profile, Mapped, false, std::string("#9CDBC9")},
+        {kIconColourSettings[1][3], "", String, Profile, Mapped, false, std::string("#75818D")},
+        {kIconColourSettings[2][0], "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        {kIconColourSettings[2][1], "", String, Profile, Mapped, false, std::string("#FFFF00")},
+        {kIconColourSettings[2][2], "", String, Profile, Mapped, false, std::string("#00FFFF")},
+        {kIconColourSettings[2][3], "", String, Profile, Mapped, false, std::string("#8C8C8C")},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).

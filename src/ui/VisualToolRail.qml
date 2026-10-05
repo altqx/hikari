@@ -8,7 +8,9 @@ import Hikari.Ui
 // One family is on; choosing it again goes back to the crosshair
 // (VideoToolbar.cpp:205-233). For a Document that is not ASS the rail is
 // disabled (VideoToolbar::DisableVisuals). A family whose tool has not
-// landed yet (T2-T6) is selectable and draws nothing.
+// landed yet (T2-T6) is selectable and draws nothing. K1: each family's
+// button shows its icon of the set (legacy VideoToolbar's bitmaps, Cross.png
+// to AllTags.png) beside its name.
 Frame {
     id: rail
     objectName: "visualToolRail"
@@ -25,6 +27,7 @@ Frame {
             Repeater {
                 model: rail.tools.families
                 delegate: ToolButton {
+                    id: familyButton
                     required property var modelData
                     required property int index
                     objectName: "visualTool" + index
@@ -34,13 +37,24 @@ Frame {
                     enabled: rail.tools.railEnabled
                     focusPolicy: Qt.NoFocus
                     font.pixelSize: 11
-                    contentItem: Label {
-                        text: parent.text
-                        font: parent.font
-                        elide: Text.ElideRight
-                        horizontalAlignment: Text.AlignLeft
-                        verticalAlignment: Text.AlignVCenter
-                        opacity: modelData.available ? 1 : 0.7
+                    contentItem: RowLayout {
+                        spacing: 4
+                        opacity: familyButton.modelData.available ? 1 : 0.7
+                        Icon {
+                            objectName: "visualToolIcon" + familyButton.index
+                            // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][familyButton.index] ?? ""
+                            hovered: familyButton.hovered
+                            pressed: familyButton.down
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: familyButton.text
+                            font: familyButton.font
+                            elide: Text.ElideRight
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                        }
                     }
                     ToolTip.visible: hovered
                     ToolTip.text: modelData.name

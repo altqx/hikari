@@ -12,6 +12,8 @@ Dialog {
     objectName: "spellCheckerDialog"
     required property var app
     title: qsTr("Spellchecker")
+    // K1: the title with the set's spellchecker icon (the Subtitles menu's spellchecker bitmap).
+    header: IconDialogHeader { objectName: "spellCheckerDialogTitle"; iconRole: "spellchecker"; text: dialog.title }
     modal: false
     property var current: ({})
     property var suggestions: []

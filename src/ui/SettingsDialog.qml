@@ -20,6 +20,8 @@ Dialog {
     required property var app
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
     title: qsTr("Options")
+    // K1: the title with the set's settings icon (legacy OptionsDialog SetIcon(SETTINGS)).
+    header: IconDialogHeader { objectName: "settingsDialogTitle"; iconRole: "settings"; text: dialog.title }
     modal: true
     width: 640
     height: 600
@@ -57,6 +59,12 @@ Dialog {
         const v = Object.assign({}, values)
         v[setting] = value
         values = v
+    }
+    // The Themes page's colour picker for a colour row.
+    function pickThemeColour(setting, colour) {
+        themeColourDialog.setting = setting
+        themeColourDialog.selectedColor = colour
+        themeColourDialog.open()
     }
     // Apply keeps the controls as they are (legacy does not refresh them).
     function apply() {
@@ -560,7 +568,8 @@ Dialog {
             // spectrum's three (A2), in legacy's
             // rows and labels. A double click picks the colour; OK/Apply
             // save the changed ones and the audio display reads them again
-            // (SetOptions' ID_COLOR_CONFIG, ChangeColors).
+            // (SetOptions' ID_COLOR_CONFIG, ChangeColors). Below them the
+            // icon colours of each appearance (K1, IconColours.qml).
             ColumnLayout {
                 objectName: "settingsPageThemes"
                 ListView {
@@ -601,12 +610,16 @@ Dialog {
                         onClicked: themeColours.currentIndex = index
                         onDoubleClicked: {
                             themeColours.currentIndex = index
-                            themeColourDialog.setting = modelData.setting
-                            themeColourDialog.selectedColor = colour
-                            themeColourDialog.open()
+                            dialog.pickThemeColour(modelData.setting, colour)
                         }
                     }
                     Accessible.name: qsTr("Themes")
+                }
+                // K1: the icon colours of each appearance.
+                IconColours {
+                    dialog: dialog
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
                 }
             }
 
