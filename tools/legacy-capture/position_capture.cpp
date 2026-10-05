@@ -17,7 +17,8 @@
 // FindFromEnd (config.cpp). The stand-ins are in position/standins.h. The
 // Direct3D drawing (DrawRect, DrawCircle, DrawCross, DrawArrow,
 // DrawDashedLine, DrawWarning) is recorded instead of drawn; DrawArrow's
-// arithmetic is Visuals.cpp:308-336's.
+// arithmetic is Visuals.cpp:308-336's and DrawDashedLine's loop
+// Visuals.cpp:402-423's, each dash recorded where line->Draw draws it.
 //
 // Case file lines:
 //   case <name>
@@ -117,19 +118,45 @@ void Visuals::DrawCross(D3DXVECTOR2 position, D3DCOLOR color, bool)
 }
 void Visuals::DrawArrow(D3DXVECTOR2 from, D3DXVECTOR2 *to, int diff)
 {
-    // Visuals.cpp:308-336's arithmetic; the triangle is recorded by its tip.
+    // Visuals.cpp:308-336's arithmetic; the triangle is recorded by its corners.
     D3DXVECTOR2 pdiff = from - (*to);
     float len = sqrt((pdiff.x * pdiff.x) + (pdiff.y * pdiff.y));
     D3DXVECTOR2 diffUnits = (len == 0) ? D3DXVECTOR2(0, 0) : pdiff / len;
     D3DXVECTOR2 pend = (*to) + (diffUnits * (12 + diff));
-    D3DXVECTOR2 tip = pend - diffUnits * 12;
-    probeDraws.push_back({"arrow", tip.x, tip.y, pend.x, pend.y, 0, 0});
+    D3DXVECTOR2 halfbase = D3DXVECTOR2(-diffUnits.y, diffUnits.x) * 5.f;
+    D3DXVECTOR2 v3[3];
+    v3[0] = pend - diffUnits * 12;
+    v3[1] = pend + halfbase;
+    v3[2] = pend - halfbase;
+    // The triangle: its tip and where the line now ends, then its base.
+    probeDraws.push_back({"arrow", v3[0].x, v3[0].y, pend.x, pend.y, 0, 0});
+    probeDraws.push_back({"arrowbase", v3[1].x, v3[1].y, v3[2].x, v3[2].y, 0, 0});
     *to = pend;
 }
-void Visuals::DrawDashedLine(D3DXVECTOR2 *vector, size_t vectorSize, int, unsigned int color)
+void Visuals::DrawDashedLine(D3DXVECTOR2 *vector, size_t vectorSize, int dashLen, unsigned int color)
 {
+    // The whole line, then each dash as Visuals.cpp:402-423 draws it (its
+    // loop, with line->Draw recorded).
     if (vectorSize >= 2)
         probeDraws.push_back({"dashed", vector[0].x, vector[0].y, vector[1].x, vector[1].y, 0, color});
+    D3DXVECTOR2 actualPoint[2];
+    for (size_t i = 0; i < vectorSize - 1; i++){
+        size_t iPlus1 = (i < (vectorSize - 1)) ? i + 1 : 0;
+        D3DXVECTOR2 pdiff = vector[i] - vector[iPlus1];
+        float len = sqrt((pdiff.x * pdiff.x) + (pdiff.y * pdiff.y));
+        if (len == 0){ return; }
+        D3DXVECTOR2 diffUnits = pdiff / len;
+        float singleMovement = 1 / (len / (dashLen * 2));
+        actualPoint[0] = vector[i];
+        actualPoint[1] = actualPoint[0];
+        for (float j = 0; j <= 1; j += singleMovement){
+            actualPoint[1] -= diffUnits * dashLen;
+            if (j + singleMovement >= 1){ actualPoint[1] = vector[iPlus1]; }
+            probeDraws.push_back({"dash", actualPoint[0].x, actualPoint[0].y, actualPoint[1].x, actualPoint[1].y, 0, color});
+            actualPoint[1] -= diffUnits * dashLen;
+            actualPoint[0] -= (diffUnits * dashLen) * 2;
+        }
+    }
 }
 void Visuals::DrawWarning(bool comment)
 {

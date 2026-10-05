@@ -356,8 +356,10 @@ struct Draw {
         << d.color << ")";
 }
 
-// The overlay as the probe records legacy's drawing: squares and arrow
-// heads (by their tip and where the line ends), circles, crosses.
+// The overlay as the probe records legacy's drawing: squares, arrow heads
+// (DrawArrow, Visuals.cpp:308-337: the tip and where the line now ends, then
+// the base's two corners), circles, crosses, and the dashes of the helper
+// cross (DrawDashedLine, Visuals.cpp:402-423, each line->Draw).
 std::vector<Draw> draws(const Overlay &o)
 {
     std::vector<Draw> out;
@@ -366,7 +368,21 @@ std::vector<Draw> draws(const Overlay &o)
         if (p.points.size() == 4)
             out.push_back({p.fill == kHandleSelectedFill ? "rectsel" : "rect", p.points[0].x, p.points[0].y,
                            p.points[2].x, p.points[2].y, 0, 0});
+        if (p.points.size() == 3) {
+            // The arrow's line ends at pend, the middle of the base: found
+            // near it, then compared exactly. None found leaves it unequal.
+            const PointF mid{(p.points[1].x + p.points[2].x) / 2, (p.points[1].y + p.points[2].y) / 2};
+            PointF pend{-1e9f, -1e9f};
+            for (const auto &l : o.lines)
+                if (l.argb == kHandleBorder && std::abs(l.to.x - mid.x) < 1e-3f && std::abs(l.to.y - mid.y) < 1e-3f)
+                    pend = l.to;
+            out.push_back({"arrow", p.points[0].x, p.points[0].y, pend.x, pend.y, 0, 0});
+            out.push_back({"arrowbase", p.points[1].x, p.points[1].y, p.points[2].x, p.points[2].y, 0, 0});
+        }
     }
+    for (const auto &l : o.lines)
+        if (l.argb == kHelperColour)
+            out.push_back({"dash", l.from.x, l.from.y, l.to.x, l.to.y, 0, l.argb});
     for (const auto &c : o.circles)
         if (c.filled)
             out.push_back({c.argb == kHandleSelectedFill ? "circlesel" : "circle", c.centre.x, c.centre.y, 0, 0,
@@ -399,6 +415,11 @@ std::vector<Draw> legacyDraws(const QJsonArray &a)
         }
         else if (kind == "cross")
             out.push_back({kind, f(d[1]), f(d[2]), 0, 0, 0, static_cast<std::uint32_t>(d[6].toDouble())});
+        else if (kind == "arrow" || kind == "arrowbase")
+            out.push_back({kind, f(d[1]), f(d[2]), f(d[3]), f(d[4]), 0, 0});
+        else if (kind == "dash")
+            out.push_back({kind, f(d[1]), f(d[2]), f(d[3]), f(d[4]), 0, static_cast<std::uint32_t>(d[6].toDouble())});
+        // "dashed" is the whole line its dashes cover.
     }
     std::sort(out.begin(), out.end());
     return out;
