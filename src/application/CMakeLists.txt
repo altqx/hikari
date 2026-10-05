@@ -33,6 +33,8 @@ target_sources(hikari_application PRIVATE session_file.cpp)
 target_sources(hikari_application PRIVATE subtitle_comparison.cpp)
 # Y8: the font collector (renderer-verified collection).
 target_sources(hikari_application PRIVATE font_collector.cpp)
+# Y9: MKV extraction (subtitle tracks and font attachments).
+target_sources(hikari_application PRIVATE matroska.cpp)
 # T1: the visual tools' shared transform, rail families, gestures, batch
 # picker and the crosshair. Legacy's float steps must round as its build did,
 # so these files are built without floating-point contraction (as
