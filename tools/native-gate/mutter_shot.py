@@ -23,7 +23,10 @@ def connectors():
     res = bus.call_sync("org.gnome.Mutter.DisplayConfig", "/org/gnome/Mutter/DisplayConfig",
                         "org.gnome.Mutter.DisplayConfig", "GetCurrentState", None, None,
                         Gio.DBusCallFlags.NONE, 10000, None).unpack()
-    return [m[0][0] for m in res[1]]
+    # the monitors in the current layout (a monitor taken out of it, as step
+    # outputs does, has no picture), left to right
+    logical = sorted(res[2], key=lambda lm: (lm[0], lm[1]))
+    return [m[0] for lm in logical for m in lm[5]]
 
 
 def grab(connector, out):

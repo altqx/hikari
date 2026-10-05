@@ -37,16 +37,25 @@ REVIEWS = {
         "renders at 2x (right half of the screenshot)", ["outputs-0-on-scale2.png"]),
     ("mutter", "monitor-removal-reviewed"): ("observed",
         "after Meta-1 left the layout, mutter put the floating Line editor back on Meta-0, visible over the main window",
-        ["outputs-1-after-removal.png.Meta-0.png"]),
+        ["outputs-1-after-removal.png"]),
+    ("mutter", "fullscreen-visible"): ("observed",
+        "main window fullscreen (mutter, its toggle-fullscreen keybinding): the floating Line editor stays visible above it",
+        ["fullscreen-1-after-f6.png"]),
 }
 
 ITEMS = ["default-arrangement", "keyboard-float", "keyboard-float-move-panel", "draft-kept-across-float", "keyboard-dock",
          "draft-kept-across-dock", "keyboard-move-panel", "move-panel-defaults", "focus-after-float",
-         "f6-from-floating-panel", "f6-into-floating-panel", "shortcut-from-floating-panel", "pointer-float-button",
-         "pointer-dblclick-float-redock", "pointer-drag-dock", "video-float-redock", "layout-persistence",
+         "f6-from-floating-panel", "f6-into-floating-panel", "shortcut-from-floating-panel",
+         # D3: the "⋯" menu instead of float and close buttons, double-click, the drop highlight
+         "pointer-menu-undock", "pointer-dblclick-float-redock", "drop-highlight", "pointer-drag-dock",
+         "video-float-redock", "layout-persistence",
          "fullscreen-coexistence", "fullscreen-visible", "mixed-dpi", "mixed-dpi-rendering", "monitor-removal",
          "monitor-removal-reviewed", "monitor-removal-show-focus", "orca", "menu-mnemonic-from-text-field",
-         "test-executables", "grid-accessible", "title-bar-buttons-accessible", "tabs-accessible"]
+         "test-executables", "grid-accessible", "header-controls-accessible", "tabs-accessible",
+         # D3: the floating window and the header from the keyboard
+         "floating-borderless", "floating-header", "floating-shadow", "floating-no-compositor-frame",
+         "floating-header-composited", "floating-move", "wayland-free-part-dblclick-docks", "floating-resize",
+         "header-keyboard-menu", "header-keyboard-undock-dock", "header-keyboard-title-bar"]
 SESSIONS = ["sway", "sway-activate", "kwin", "mutter", "x11"]
 
 for (session, item), (status, detail, ev) in REVIEWS.items():

@@ -1,4 +1,4 @@
-# D1 native gate harness (Linux)
+# D1/D3 native gate harness (Linux)
 
 Observes the native gate in [docs/qt/docking.md](../../docs/qt/docking.md)
 ("Required native gate and review") for card D1 (#152) on real Linux
@@ -48,15 +48,17 @@ recorded as a pass.
 | `kbd` | View > Panels > Line editor > Float and Dock from the keyboard; the draft and the editing target across both |
 | `f6` | focus after Float, F6 from and into a floating panel, Ctrl+Shift+H from it |
 | `move` | View > Move panel… (keyboard placement window): Audio left of the Grid |
-| `pointer` | float button, double-click title bars, drag a floating panel onto the Grid with real compositor pointer input |
+| `pointer` | D3 with real compositor pointer input: Audio's "⋯" button and Undock in its menu; double-click on the docked Video header (floats) and on its floating header's title (docks); a floating panel dragged by its title over the Grid, with the accent drop highlight measured in the screenshot (`#9CDBC9`, the dark theme's default accent), and released there (docks) |
+| `floating` | D3's floating window: no frame or title bar from the window system (sway's container border, KWin's frame geometry, openbox's `_NET_FRAME_EXTENTS`, mutter's screenshot); the header inside the frame; the drawn shadow (see-through, not black) or, on X11 without a compositing manager, no shadow and no black margin, then the shadow again under picom; moved (X11: the engine's drag by the header's title; Wayland: the compositor's move from the header's free part, then a double-click there docks) and resized from the bottom-right corner through the window system |
+| `header` | D3's header from the keyboard: Shift+Tab from inside the Grid to its tab, Right to its "⋯", Space opens the menu, Escape closes it; Undock from the menu and Dock from the floating Grid's own menu; a title bar's "⋯" from the panel's first control |
 | `video` | Video panel with `cfr.mkv` (barcode frames) docked, floating, redocked: frames keep presenting while stepping |
 | `persist` | float Audio, close the main window through the compositor, restart: Audio comes back floating |
-| `fullscreen` | main window fullscreen by the compositor with a floating panel |
-| `outputs` | a floating panel on a scale-2 output (mixed DPI), then that output removed |
-| `orca` | Orca's speech while F6 moves through the panels and a panel is floated from the menu |
+| `fullscreen` | main window fullscreen by the compositor with a floating panel (mutter: its toggle-fullscreen keybinding, bound to Super+F in the session) |
+| `outputs` | a floating panel on a scale-2 output (mixed DPI; on mutter moved by its Super+Shift+Right and found at 2x in the screenshot), then that output removed; run last (sway's virtual pointer is given the new layout's extent with every move, but the output is gone for later steps) |
+| `orca` | Orca's speech while F6 moves through the panels, a panel is floated from the menu, and the Grid's tab, "⋯" button and menu are reached from the keyboard |
 | `menutext` | Alt+V from the Line text field |
-| `tests` | `hikari_ui_shell_tests` (D1 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
-| `a11y` | what AT-SPI exposes of the docking controls: named title-bar buttons and tabs (each with Float and Close), the Grid's table in the panel named Grid; pressing them through AT-SPI floats and docks |
+| `tests` | `hikari_ui_shell_tests` (D1 and D3 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
+| `a11y` | what AT-SPI exposes of the D3 headers: each lone panel's title bar named after it (Qt's AT-SPI bridge gives a title bar the role `text`) with its "<panel> options" button, the Grid's page tab; the menu's Undock and Dock pressed through AT-SPI float and dock Audio; a tab group's page tabs checked when selected, the options button on the selected one, a tab pressed selects it, and Undock floats Shift times; the Grid's table in the panel named Grid |
 
 ## Other tools
 
@@ -85,7 +87,10 @@ recorded as a pass.
 with `focus_on_window_activation focus`: sway's default (`urgent`) marks a
 window that asks for activation through xdg_activation_v1 urgent instead of
 focusing it, so cross-window F6 there depends on that setting. Its evidence
-goes to `sway-activate/`.
+goes to `sway-activate/`; `run.sh` does this for steps `f6`, `fullscreen`, `tests` and
+`outputs` after the sway session, in a fresh sway. Under sway's default a
+cross-window focus item is recorded not-observable only when the window that
+asked for activation is marked urgent (the app asked, sway refused).
 
 Harness lessons: the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
 cycles between them, so `open_view()` presses Alt+V until the View menu shows;
@@ -96,3 +101,11 @@ shrinks the output; sway needs one virtual keyboard that stays (each `wtype`
 run otherwise toggles the seat's keyboard and the client loses focus);
 mutter and KWin replace their libei devices when outputs change
 (`eiinject` follows the newest); PID 1 must reap (`docker run --init`).
+D3: pointer targets come from AT-SPI in window coordinates (`atspi_tool.py
+where`) plus the window's position from the compositor; mutter publishes no
+window geometry, so a floating panel there is found in a screenshot by its
+frame's 1-pixel boundary (`locate_floating`). The X11 session runs no
+compositing manager, so a floating panel has no shadow there; the `floating`
+step starts picom with an empty configuration (Arch's default one draws
+picom's own shadows) to see the drawn shadow, and moves the window over the
+main window first so the shadow has something to show through.
