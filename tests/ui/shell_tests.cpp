@@ -907,16 +907,35 @@ private slots:
         QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
         QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
         QCOMPARE(text->property("text").toString(), QStringLiteral("{\\3c&H302010&}first"));
-        // A pick now tags the shadow colour, with the reset of the colour the
-        // picker opened with (legacy keeps actualColor).
+        // A pick now tags the shadow colour.
         sendMouse(simple, QEvent::MouseMove, QPoint(-40, 10), Qt::NoButton, Qt::RightButton);
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\4c&H302010&")));
+        // Y7-simple-picker-type: the choice takes the colour in effect as
+        // the reset of later picks. The shadow chosen again is &H302010&; a
+        // white pick now tags it (legacy kept the white the picker opened
+        // with as the reset, saw no change and wrote nothing).
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        // Y7-recent-option-text: the same colour again stays first, one space
+        // apart (legacy left "&H00302010&  &H000000FF&").
+        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010& &H000000FF&"));
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0xff, 0xff, 0xff));
+            return image;
+        });
+        sendMouse(simple, QEvent::MouseMove, QPoint(-40, 12), Qt::NoButton, Qt::RightButton);
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\4c&HFFFFFF&\\3c&H302010&}first"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&HFFFFFF&"));
         QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
         QTRY_VERIFY(!simple->isVisible());
         QVERIFY(!sampler.tracking());
-        // The same colour again: removed and put first, leaving legacy's
-        // double space where it was.
-        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00302010&  &H000000FF&"));
+        QCOMPARE(settings->text("colourPicker.recentColours"), QStringLiteral("&H00FFFFFF& &H00302010& &H000000FF&"));
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
 
         // Cancel takes the picker's changes back.
         QVERIFY(application->editor().commit());
@@ -995,6 +1014,74 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(simple, "reject"));
         QTRY_VERIFY(!simple->isVisible());
         QCOMPARE(text->property("text").toString(), before);
+    }
+
+    // Y7-simple-picker-type (approved departure): on a line format (one
+    // colour, no colour types) the simple picker's type choice keeps the
+    // colour it shows, and the recent colour it adds is that colour. Legacy
+    // read the colour into a fresh AssColor that GetColor never sets below
+    // ASS (EditBox.cpp:908-912, 932-953), so the picker turned black and its
+    // next type choice added black to the recent colours.
+    void simpleColourPickerKeepsTheColourOnLineFormats()
+    {
+        // MicroDVD: a line format whose colour is markup ({C:BBGGRR}); SRT
+        // takes no colour (E1-nonass-font).
+        const QString path = dir.filePath(QStringLiteral("simple-colour.sub"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("{10}{20}first\n");
+        }
+        QVERIFY(application->openFile(path));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        application->editor().setShowTags(true);
+        auto &sampler = *application->colourPicker().sampler();
+        sampler.setRoute({QStringLiteral("grab"), {}});
+        sampler.setSource([](QPoint) {
+            QImage image(7, 7, QImage::Format_RGB32);
+            image.fill(qRgb(0x10, 0x20, 0x30));
+            return image;
+        });
+        auto *settings = application->settingsStore();
+        settings->set("colourPicker.recentColours", QStringLiteral("&H000000FF&"));
+        application->colourPicker().loadFromString(QStringLiteral("&H000000FF&"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+
+        QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, centreOf(visualItem("changeColour1")));
+        QQuickWindow *simple = shellWindow("simpleColourPicker");
+        QVERIFY(simple);
+        QTRY_VERIFY(simple->isVisible());
+        auto *hex = findItem(simple->contentItem(), QStringLiteral("hexColour"));
+        auto *type = findItem(simple->contentItem(), QStringLiteral("simpleColourType"));
+        const QString opened = hex->property("text").toString();
+        // Before any pick: the choice keeps the colour the picker opened with.
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 2)));
+        QCOMPARE(hex->property("text").toString(), opened);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("first"));
+
+        // A pick, then the choice: the picked colour stays in the picker.
+        sendMouse(simple, QEvent::MouseButtonPress, QPoint(-40, 10), Qt::RightButton, Qt::RightButton);
+        QTRY_VERIFY(text->property("text").toString() != QStringLiteral("first"));
+        const QString picked = text->property("text").toString();
+        QCOMPARE(picked, QStringLiteral("{C:302010}first"));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        sendMouse(simple, QEvent::MouseButtonRelease, QPoint(-40, 10), Qt::RightButton, Qt::NoButton);
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 3)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        QCOMPARE(text->property("text").toString(), picked);
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+        // The next choice adds that colour again, not black.
+        QVERIFY(QMetaObject::invokeMethod(type, "activated", Q_ARG(int, 0)));
+        QCOMPARE(hex->property("text").toString(), QStringLiteral("&H302010&"));
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
+        QVERIFY(QMetaObject::invokeMethod(simple, "accept"));
+        QTRY_VERIFY(!simple->isVisible());
+        QCOMPARE(text->property("text").toString(), picked);
+        QVERIFY(settings->text("colourPicker.recentColours").startsWith(QStringLiteral("&H00302010& ")));
     }
 
     // Y7: "Choose color"'s HSL and HSV values (UpdateFromRGB/HSL/HSV through

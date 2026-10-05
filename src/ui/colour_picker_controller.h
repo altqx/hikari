@@ -47,9 +47,9 @@ public:
     Q_INVOKABLE void addRecent(const QVariantMap &colour);
     // The simple picker's DialogColorPicker::AddRecent (ColorPicker.cpp:748-767):
     // with a "Choose color" picker created (opened) the colour goes into its
-    // list as addRecent does; without one the option text is edited: every
-    // "&HAABBGGRR&" equal to it removed (with "  " then made " "), the
-    // colour put first, and the text cut at its 32nd space.
+    // list as addRecent does; without one the option text is rewritten
+    // (Y7-recent-option-text): its colours read, every one equal to it
+    // dropped, the colour put first and the 32 newest one space apart.
     Q_INVOKABLE void addRecentFromSimplePicker(const QVariantMap &colour);
 
     bool switchClicks() const;

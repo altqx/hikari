@@ -67,15 +67,16 @@ void ColourPickerController::addRecentFromSimplePicker(const QVariantMap &colour
         addRecent(colour);
         return;
     }
-    QString recentString = m_settings->text(kKey);
+    // Y7-recent-option-text (approved departure from ColorPicker.cpp:755-766,
+    // which edited the text in place and left double spaces that cost a full
+    // option its last colour): the option is read as its colours, the colour
+    // moves to the front and the 32 newest are written one space apart.
     const QString stringColor = assText(colour, true);
-    const qsizetype reps = recentString.count(stringColor);
-    recentString.replace(stringColor, QString());
-    if (reps)
-        recentString.replace(QStringLiteral("  "), QStringLiteral(" "));
-    recentString = stringColor + QLatin1Char(' ') + recentString;
-    while (recentString.count(QLatin1Char(' ')) > 31)
-        recentString.truncate(recentString.lastIndexOf(QLatin1Char(' ')));
+    QStringList colours{stringColor};
+    for (const QString &token : m_settings->text(kKey).split(QLatin1Char(' '), Qt::SkipEmptyParts))
+        if (token.compare(stringColor, Qt::CaseInsensitive) != 0 && colours.size() < kRecent)
+            colours.append(token);
+    const QString recentString = colours.join(QLatin1Char(' '));
     m_settings->set(kKey, recentString);
     // Without a picker the list is the option (the next one reads it).
     loadFromString(recentString);

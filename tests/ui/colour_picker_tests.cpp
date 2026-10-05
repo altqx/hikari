@@ -80,6 +80,9 @@ private slots:
 
     // DialogColorPicker::AddRecent without a created picker
     // (ColorPicker.cpp:755-766): the option text is edited, not the list.
+    // Y7-recent-option-text (approved departure): the text stays the
+    // colours one space apart, and a colour that comes again moves to the
+    // front without costing a full option its last colour.
     void simplePickerRecentEditsTheOptionText()
     {
         ui::SettingsStore store;
@@ -88,25 +91,43 @@ private slots:
         picker.addRecentFromSimplePicker(rgba(0, 255, 0));
         QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H0000FF00& &H000000FF& &H00FF0000&"));
         QCOMPARE(picker.recent().first().toMap().value(QStringLiteral("g")).toInt(), 255);
-        // From an empty option the text keeps legacy's trailing space.
+        // The last colour coming again: no trailing space left behind.
+        picker.addRecentFromSimplePicker(rgba(0, 0, 255));
+        QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H00FF0000& &H0000FF00& &H000000FF&"));
+        // From an empty option: the one colour, no trailing space (legacy
+        // wrote "&H04030201& ").
         store.set("colourPicker.recentColours", QString());
         picker.addRecentFromSimplePicker(rgba(1, 2, 3, 4));
-        QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H04030201& "));
+        QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H04030201&"));
+        // An option text with runs of spaces is read as its colours.
+        store.set("colourPicker.recentColours", QStringLiteral("  &H000000FF&   &H04030201&  "));
+        picker.addRecentFromSimplePicker(rgba(1, 2, 3, 4));
+        QCOMPARE(store.text("colourPicker.recentColours"), QStringLiteral("&H04030201& &H000000FF&"));
 
-        // A full option whose first colour comes again: its removal leaves a
-        // leading space, so the text reaches 32 spaces and loses its last
-        // colour (the list would have kept it).
+        // A full option whose first colour comes again keeps all 32 colours
+        // (legacy left "&H00000000&  &H00000001&", reached 32 spaces and
+        // lost &H0000001F&).
         QStringList full;
         for (int i = 0; i < 32; ++i)
             full << QStringLiteral("&H000000%1&").arg(i, 2, 16, QLatin1Char('0')).toUpper();
         store.set("colourPicker.recentColours", full.join(QLatin1Char(' ')));
         picker.addRecentFromSimplePicker(rgba(0, 0, 0)); // "&H00000000&", the first one
-        const QString text = store.text("colourPicker.recentColours");
+        QString text = store.text("colourPicker.recentColours");
+        QCOMPARE(text, full.join(QLatin1Char(' ')));
+        QCOMPARE(picker.recent().at(31).toMap().value(QStringLiteral("r")).toInt(), 0x1f);
+        // A middle colour comes again: moved to the front, the rest in order.
+        picker.addRecentFromSimplePicker(rgba(0x10, 0, 0));
+        text = store.text("colourPicker.recentColours");
+        QStringList moved = full;
+        moved.move(16, 0);
+        QCOMPARE(text, moved.join(QLatin1Char(' ')));
+        // A new colour on a full option: the 32 newest kept.
+        picker.addRecentFromSimplePicker(rgba(0, 0, 0x7f));
+        text = store.text("colourPicker.recentColours");
         QCOMPARE(text.count(QLatin1Char(' ')), 31);
-        QVERIFY(text.startsWith(QStringLiteral("&H00000000&  &H00000001&")));
+        QVERIFY(text.startsWith(QStringLiteral("&H007F0000& &H00000010& &H00000000&")));
         QVERIFY(!text.contains(QStringLiteral("&H0000001F&")));
-        QCOMPARE(picker.recent().at(30).toMap().value(QStringLiteral("r")).toInt(), 0x1e);
-        QCOMPARE(picker.recent().at(31).toMap().value(QStringLiteral("r")).toInt(), 0); // padded black
+        QVERIFY(!text.contains(QStringLiteral("  ")));
 
         // With a created picker (opened for a window) the list takes it, as
         // AddColor does, and the option is the list's text.
