@@ -41,7 +41,7 @@ protected:
     {
         // Spix runs its commands in order on the GUI thread: a property read
         // first lets every earlier command finish before this direct call.
-        (void)getStringProperty("mainWindow/statusTargets", "text");
+        (void)getStringProperty("mainWindow", "title");
         std::string out = "none";
         QMetaObject::invokeMethod(qApp, [&] {
             const auto reference = application->workspace().reference();
@@ -81,7 +81,9 @@ protected:
             observed.push_back(referenceRow()); // 7: 3
             enterKey("mainWindow/referenceGrid", Qt::Key_V, spix::KeyModifiers::Control);
             wait(300ms);
-            observed.push_back(getStringProperty("mainWindow/statusTargets", "text")); // 8: names the reference
+            // 8: the tray still names the reference (the status bar no longer
+            // names the targets: the panel's title, its accessible name, does).
+            observed.push_back(getStringProperty("mainWindow/referencePanel", "title"));
             invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
             enterKey("mainWindow/editingGrid", Qt::Key_Down, spix::KeyModifiers::None);
             wait(300ms);
@@ -169,7 +171,7 @@ int main(int argc, char **argv)
         expect(o[4] == "Match 1 of 1" && o[5] == "2", "the editing Grid's Down arrow moves the linked reference");
         expect(o[6] == "Independent navigation", "unlinking makes the tray independent");
         expect(o[7] == "3", "the tray's Down arrow moves the reference");
-        expect(o[8].find("Reference (protected): ref.ass") != std::string::npos, "the status names the reference");
+        expect(o[8].find("Reference (protected, read-only): ref.ass") != std::string::npos, "the tray names the reference");
         expect(o[9] == "3", "an independent reference does not follow the editing Line");
         expect(o[10] == "none", "the close mark ends the reference");
         expect(o[11] == "tab kept", "the previewed tab stays");
