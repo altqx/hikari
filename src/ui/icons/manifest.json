@@ -467,19 +467,6 @@
    ]
   },
   {
-   "role": "ffms2-indexing",
-   "file": "ffms2-indexing.svg",
-   "label": "Open video with FFMS2",
-   "accent": true,
-   "mirror": false,
-   "legacy": [
-    "FFMS2 Indexing.png"
-   ],
-   "surfaces": [
-    "menu:video"
-   ]
-  },
-  {
    "role": "media-play",
    "file": "media-play.svg",
    "label": "Play",
@@ -1849,6 +1836,9 @@
   ],
   "not referenced by legacy (resource.rc has no entry)": [
    "ChangeAllTags.png"
+  ],
+  "retired commands (GLOBAL_VIDEO_INDEXING, wave 5 decision 2026-10-05)": [
+   "FFMS2 Indexing.png"
   ]
  }
 }

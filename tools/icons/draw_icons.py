@@ -293,8 +293,6 @@ icon("audio-marker-to-video-time", "Set audio marker to video time", ["SetVideoT
      [VIDEO], waveform(1.5, 4.5, 11.5) + accent(stroke("M10.5 14.5v-13h3.5l-1 1.5 1 1.5h-3.5")))
 icon("zoom", "Zoom video", ["Zoom.png"], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M6.5 4.5v4M4.5 6.5h4")))
-icon("ffms2-indexing", "Open video with FFMS2", ["FFMS2 Indexing.png"], [VIDEO],
-     stroke("M1.5 3.5h13M1.5 6.5h9") + rect(1.5, 9.5, 13, 4, 1) + accent(frect(3, 11, 6, 1)))
 
 # Media transport (video box, fullscreen, menus)
 icon("media-play", "Play", ["play.png", "play1.png", "PlayMenu.png"], [TRANSPORT, FULLSCREEN, VIDEO],
@@ -543,6 +541,9 @@ NOT_REPLACED = {
         "progressbar.png", "progresshandle.png"],
     "cursors (not UI icons)": ["blank.cur", "eyedropper.cur"],
     "not referenced by legacy (resource.rc has no entry)": ["ChangeAllTags.png"],
+    # The user's wave-5 decision (2026-10-05, #175): GLOBAL_VIDEO_INDEXING
+    # ("Open video with FFMS2") is retired, so its menu item and icon go.
+    "retired commands (GLOBAL_VIDEO_INDEXING, wave 5 decision 2026-10-05)": ["FFMS2 Indexing.png"],
 }
 
 
