@@ -115,11 +115,14 @@ Scan scan(const std::vector<CollectorDocument> &documents, const std::function<b
 
 // Legacy ParseTags(tags {"fn","b","i","p"}, 4, plainText = true)
 // (SubsDialogue.cpp:1086-1158): the tags and the plain-text runs in order.
+// `names` are the tags asked for, in legacy's order (Y6's catalog collection
+// asks for {"p","fn"}, FontCatalogList.cpp:940).
 struct Tag {
     std::u32string name; // fn, b, i, p, "plain" or "pvector"
     std::u32string value;
 };
 std::vector<Tag> parseTags(const std::u32string &text);
+std::vector<Tag> parseTags(const std::u32string &text, const std::vector<std::u32string> &names);
 
 } // namespace collector
 

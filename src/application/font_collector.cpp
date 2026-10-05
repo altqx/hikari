@@ -155,7 +155,12 @@ std::u16string variantKey(const std::u16string &family, int bold, int italic)
 std::vector<Tag> parseTags(const std::u32string &txt)
 {
     // SubsDialogue.cpp:1086-1158, with tags {"fn", "b", "i", "p"} and plainText.
-    static const u32 names[] = {U"fn", U"b", U"i", U"p"};
+    static const std::vector<u32> names{U"fn", U"b", U"i", U"p"};
+    return parseTags(txt, names);
+}
+
+std::vector<Tag> parseTags(const std::u32string &txt, const std::vector<std::u32string> &names)
+{
     std::vector<Tag> out;
     std::size_t pos = 0, plainStart = 0;
     bool hasDrawing = false, tagsBlock = false;
