@@ -47,8 +47,8 @@ qt_target_qml_sources(hikari_ui QML_FILES FontCatalogBar.qml FontCatalogWindow.q
 qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml)
-# T1: the visual tool rail, the overlay over the Video canvas and the values below it.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
+# T1: the visual tool rail, the overlay over the Video canvas, the tool strip below it and its readout.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml VisualToolReadout.qml)
 # T2-T4: the families' options row (Position, Move, Scale, the rotations, the
 # clips' point modes and Invert clip).
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
@@ -67,7 +67,7 @@ target_link_libraries(hikari_ui PRIVATE Qt6::Svg)
 file(GLOB hikari_icon_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/icons/*.svg")
 qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
-    IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
+    IconTabButton.qml IconDialogHeader.qml IconToolButton.qml IconTextButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
 # the appearance state, the Options dialog's Appearance page and its focus
