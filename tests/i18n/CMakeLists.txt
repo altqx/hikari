@@ -40,7 +40,8 @@ hikari_add_gtest(hikari_i18n_qm_tests SOURCES qm_tests.cpp
     LIBRARIES hikari_i18n hikari_translations LABELS i18n)
 add_dependencies(hikari_i18n_qm_tests hikari_i18n_probe)
 target_compile_definitions(hikari_i18n_qm_tests PRIVATE
-    HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}" HIKARI_PROBE_DIR="${probe_dir}" ${mo_definition})
+    HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}" HIKARI_PROBE_DIR="${probe_dir}"
+    HIKARI_LRELEASE="$<TARGET_FILE:Qt6::lrelease>" ${mo_definition})
 
 # Ordinary builds compile TS and never write it: every catalog still has the
 # hash it had when the build was configured.
@@ -48,3 +49,10 @@ add_test(NAME hikari_i18n_build_leaves_ts
     COMMAND "${CMAKE_COMMAND}" -DHASHES=${CMAKE_BINARY_DIR}/i18n/ts-at-configure.sha256
         -P "${CMAKE_CURRENT_SOURCE_DIR}/check_ts_hashes.cmake")
 set_tests_properties(hikari_i18n_build_leaves_ts PROPERTIES LABELS "i18n" TIMEOUT 60)
+
+# Extraction reads every source with a translation call (the targets listed
+# in i18n/Extraction.cmake), from the lupdate project qt_add_lupdate writes.
+add_test(NAME hikari_i18n_extraction_reads_every_caller
+    COMMAND "${CMAKE_COMMAND}" -DPROJECT_JSON=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.json
+        -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_extraction_sources.cmake")
+set_tests_properties(hikari_i18n_extraction_reads_every_caller PROPERTIES LABELS "i18n" TIMEOUT 60)

@@ -1,6 +1,9 @@
 # O4: the developer-invoked extraction and migration targets (see
 # i18n/CMakeLists.txt), included by the top-level CMakeLists.txt after src so
 # the source targets exist.
+# Every target with translation calls: the i18n test
+# hikari_i18n_extraction_reads_every_caller fails when a source under src/
+# calls qsTr/tr and none of these targets holds it.
 set(HIKARI_I18N_SOURCE_TARGETS hikarisub hikari_composition hikari_ui)
 set(hikari_i18n_dir "${CMAKE_CURRENT_LIST_DIR}")
 qt_add_lupdate(SOURCE_TARGETS ${HIKARI_I18N_SOURCE_TARGETS} TS_FILES ${HIKARI_I18N_UI_TS}
