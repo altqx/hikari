@@ -1,0 +1,168 @@
+case fit-16x9
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+points 0,0 1,1 100,50 320,180 333,77 639,359 640,360 639,0 0,359 -5,10 700,200 320,370 320,395
+scriptpoints 0,0 960,540 1919,1079 1920,1080 100.5,200.25 -10,-10
+click 320 180 ctrl Hello
+click 100 50 middle {\an7}Hello
+click 333 77 ctrl {\pos(1,2)\an7}Hello
+click 10 20 middle {\move(1,2,3,4)\bord2}x{\pos(5,6)}
+click 639 359 ctrl {}
+clicktl 320 180 ctrl Original|Translated
+clicktl 320 180 middle {\an1}Original|
+end
+case pillarbox
+client 800 400 40
+frame 640 360 1 1
+script 640 360
+points 0,0 79,10 80,10 81,10 400,180 719,359 720,359 721,200 799,359
+scriptpoints 0,0 320,180 639,359
+click 400 180 ctrl a
+end
+case letterbox
+client 640 500 40
+frame 1280 720 0 1
+script 1280 720
+points 0,0 0,49 0,50 320,230 320,409 320,410 639,459
+scriptpoints 0,0 640,360 1279,719
+end
+case anamorphic-sar
+client 800 520 40
+frame 720 480 32 27
+script 640 480
+points 0,0 400,240 799,479 10,10
+scriptpoints 0,0 320,240 639,479
+click 400 240 ctrl {\fs20}SAR
+end
+case aspect-override
+client 640 400 40
+frame 1280 720 0 1
+aspect 0.5
+script 1280 720
+points 0,0 0,19 0,20 320,180 639,339 639,340
+scriptpoints 0,0 640,360
+end
+case odd-width
+client 642 400 40
+frame 641 360 0 1
+script 641 360
+points 0,0 320,180 641,359
+scriptpoints 0,0 320.5,180
+end
+case script-differs
+client 640 400 40
+frame 1280 720 0 1
+script 640 480
+points 0,0 320,180 639,359 123,321
+scriptpoints 0,0 320,240 639,479
+click 123 321 ctrl text
+end
+case zoom-at-point
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+zoom 2.5 200 120
+setvisual
+points 0,0 100,100 320,180 639,359
+scriptpoints 0,0 960,540 300,300
+click 100 100 ctrl zoomed
+end
+case zoom-toggle
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+zoomtoggle
+setvisual
+points 0,0 320,180 639,359
+scriptpoints 960,540 480,270
+end
+case zoom-pillarbox
+client 800 400 40
+frame 640 360 1 1
+script 640 360
+zoom 3 500 100
+setvisual
+points 80,0 400,180 719,359
+scriptpoints 0,0 320,180
+end
+case zoom-reset
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+zoom 2.5 200 120
+setvisual
+resetzoom
+points 0,0 320,180 639,359
+scriptpoints 960,540
+end
+case dpr-125
+client 640 400 40
+frame 1920 1080 0 1
+script 1920 1080
+dpr 1.25
+points 0,0 5,5 320,180 625,355 639,359
+scriptpoints 0,0 960,540 1919,1079
+click 320 180 ctrl dpr
+end
+case dpr-150-pillarbox
+client 960 600 60
+frame 640 480 0 1
+script 640 480
+dpr 1.5
+points 0,0 120,0 121,3 480,270 839,539 840,539
+scriptpoints 0,0 320,240 639,479
+end
+case pan-drag
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+zoomtoggle
+drag 320 180 200 120
+zoomtoggle
+setvisual
+points 0,0 320,180 639,359
+scriptpoints 0,0 960,540 1919,1079
+click 320 180 ctrl panned
+end
+case pan-clamped
+client 640 400 40
+frame 1280 720 0 1
+script 1280 720
+zoom 4 600 300
+zoomtoggle
+drag 400 200 900 700
+zoomtoggle
+setvisual
+points 0,0 320,180 639,359
+scriptpoints 0,0 640,360 1279,719
+end
+case sar-aspect-zoom-dpr
+client 900 560 50
+frame 720 576 64 45
+aspect 0.5
+script 1024 576
+dpr 1.5
+zoom 1.5 450 255
+setvisual
+points 0,0 15,30 450,255 899,509
+scriptpoints 0,0 512,288 1023,575
+click 450 255 middle {\an5}all
+end
+case no-sar-aspect-tall
+client 400 700 40
+frame 1920 1080 0 1
+aspect 1.25
+script 1920 1080
+points 0,0 200,330 200,79 200,80 399,579
+scriptpoints 0,0 960,540
+end
+case zoom-wheel-stale
+client 640 400 40
+frame 1280 720 0 1
+script 1920 1080
+zoom 2.5 200 120
+points 0,0 100,100 320,180
+scriptpoints 960,540
+click 100 100 ctrl stale
+end

@@ -42,3 +42,50 @@ target_compile_options(legacy_karaoke_capture PRIVATE ${wx_cflags}
     -include "${LEGACY_SOURCE}/HikariSub/platform.h"
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_karaoke_capture PRIVATE ${wx_libs})
+
+# T1: the legacy video rectangle, zoom and pan, visual-tool coordinate conversions,
+# the crosshair (VisualCross.cpp, unchanged) and VIDEO_COPY_COORDS. The other
+# legacy definitions are copied out of their files unchanged
+# (extract_functions.py) into the probe's build tree; the GUI they touch is
+# stood in for by visual/standins.h.
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+set(visual_gen "${CMAKE_CURRENT_BINARY_DIR}/visual")
+set(legacy_hs "${LEGACY_SOURCE}/HikariSub")
+set(extract "${CMAKE_CURRENT_SOURCE_DIR}/extract_functions.py")
+file(MAKE_DIRECTORY "${visual_gen}")
+configure_file("${legacy_hs}/VisualCross.cpp" "${visual_gen}/copy/VisualCross.cpp" COPYONLY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${visual_gen}/visuals_inline.inc"
+    "inline float GetCalculatedInPosX(float posx)" "inline float GetCalculatedInPosY(float posy)"
+    "inline float GetCalculatedOutPosX(float posx)" "inline float GetCalculatedOutPosY(float posy)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${visual_gen}/cross_class.inc"
+    "class Cross : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/RendererVideo.h" "${visual_gen}/float_rect.inc"
+    "class FloatRect" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/RendererVideo.cpp" "${visual_gen}/renderer.inc"
+    "bool RendererVideo::UpdateRects(bool changeZoom)"
+    "void RendererVideo::SetZoom(float percent, const wxPoint& mousePos)"
+    "void RendererVideo::ResetZoom()"
+    "void RendererVideo::SetVisualZoom()"
+    "void RendererVideo::Zoom(const wxSize &size)"
+    "void RendererVideo::ZoomMouseHandle(wxMouseEvent &evt)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.cpp" "${visual_gen}/visuals.inc"
+    "void Visuals::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VideoBox.cpp" "${visual_gen}/videobox.inc"
+    "void VideoBox::OnCopyCoords(const wxPoint &pos)" "RECT VideoBox::GetVideoRect()"
+    "void VideoBox::GetWindowSize(int* x, int* y, bool withTabPanel)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.cpp" "${visual_gen}/config.inc"
+    "wxString getfloat(float num, const wxString& format, bool Truncate)" COMMAND_ERROR_IS_FATAL ANY)
+file(WRITE "${visual_gen}/extracted.inc"
+    "#include \"renderer.inc\"\n#include \"visuals.inc\"\n#include \"videobox.inc\"\n#include \"config.inc\"\n")
+add_executable(legacy_visual_capture visual_capture.cpp "${visual_gen}/copy/VisualCross.cpp")
+# The stand-ins come first, so the copy's quoted includes find them; the
+# legacy directory supplies only the Linux D3DX stand-ins (d3dx9.h, d3d9.h).
+target_include_directories(legacy_visual_capture PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/visual" "${visual_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_visual_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_visual_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_visual_capture PRIVATE ${wx_libs})
