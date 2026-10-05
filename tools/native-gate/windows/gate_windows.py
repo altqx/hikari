@@ -105,7 +105,15 @@ class Winix:
         job = next((j for j in reversed(self.lines(*args, timeout=timeout)) if j.get("type") == "job" or j.get("state")), {})
         if not job.get("id"):
             raise RuntimeError(f"task {name} did not start: {job}")
-        text = (self.call("job", "logs", job["id"], "--all") or {}).get("text", "")
+        # The whole log, page by page: `job logs --all` under --json gives
+        # only its tail (8 KB), which cut the tests task's output short.
+        text, offset = "", 0
+        for _ in range(200):
+            page = self.call("job", "logs", job["id"], "--offset", str(offset)) or {}
+            text += page.get("text", "")
+            if page.get("end") or page.get("nextOffset", offset) <= offset:
+                break
+            offset = page["nextOffset"]
         lines = [l[6:] if l.startswith(("[out] ", "[err] ")) else l for l in text.splitlines()]
         return job, lines
 
@@ -1074,7 +1082,9 @@ def step_test_executables():
     ok = len(exits) == 5 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
-    unexpected = [k for k in skips if "the compositor places windows" not in k]
+    # D2's screenshots run only with HIKARI_SURFACE_SHOT_DIR.
+    unexpected = [k for k in skips if "the compositor places windows" not in k
+                  and "HIKARI_SURFACE_SHOT_DIR is not set" not in k]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"exits {exits}; {summary}; skips: {skips}", ["test-executables.txt"])
