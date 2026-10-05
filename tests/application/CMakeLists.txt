@@ -93,3 +93,6 @@ hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_test
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
+# Y8: the font collector's scan, review and output rules.
+hikari_add_gtest(hikari_application_font_collector_tests SOURCES font_collector_tests.cpp
+    LIBRARIES hikari_application LABELS application)
