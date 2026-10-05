@@ -3,6 +3,11 @@
 # targets in i18n/Extraction.cmake). A library or QML module added later
 # with qsTr/tr calls but left out of that list would otherwise be skipped by
 # extraction, and the next hikari_lupdate would obsolete its keys.
+execute_process(COMMAND "${CMAKE_COMMAND}" -DIN_FILE=${PROJECT_IN} -DOUT_FILE=${PROJECT_JSON}
+    -P "${GENERATE_PROJECT}" RESULT_VARIABLE generated)
+if(NOT generated EQUAL 0)
+    message(FATAL_ERROR "could not write ${PROJECT_JSON} from ${PROJECT_IN}")
+endif()
 file(READ "${PROJECT_JSON}" json)
 
 set(extracted "")

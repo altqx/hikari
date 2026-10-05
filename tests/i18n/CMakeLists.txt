@@ -51,8 +51,13 @@ add_test(NAME hikari_i18n_build_leaves_ts
 set_tests_properties(hikari_i18n_build_leaves_ts PROPERTIES LABELS "i18n" TIMEOUT 60)
 
 # Extraction reads every source with a translation call (the targets listed
-# in i18n/Extraction.cmake), from the lupdate project qt_add_lupdate writes.
+# in i18n/Extraction.cmake), from the lupdate project qt_add_lupdate
+# configures. Only hikari_lupdate turns that project into JSON, and it also
+# rewrites the TS, so the test makes its own JSON from the configured project
+# as hikari_lupdate would; a fresh build dir has no other copy.
 add_test(NAME hikari_i18n_extraction_reads_every_caller
-    COMMAND "${CMAKE_COMMAND}" -DPROJECT_JSON=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.json
+    COMMAND "${CMAKE_COMMAND}" -DPROJECT_IN=${CMAKE_BINARY_DIR}/.lupdate/hikari_lupdate_project.cmake
+        -DPROJECT_JSON=${CMAKE_CURRENT_BINARY_DIR}/hikari_lupdate_project.json
+        -DGENERATE_PROJECT=${Qt6LinguistTools_DIR}/GenerateLUpdateProject.cmake
         -DSOURCE_DIR=${PROJECT_SOURCE_DIR} -P "${CMAKE_CURRENT_SOURCE_DIR}/check_extraction_sources.cmake")
 set_tests_properties(hikari_i18n_extraction_reads_every_caller PROPERTIES LABELS "i18n" TIMEOUT 60)
