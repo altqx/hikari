@@ -596,9 +596,14 @@ void LineGrid::paint(QPainter *painter)
         if (selected)
             background = QColor(0x2f, 0x4b, 0x6e);
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
-        if (const auto compared = comparisonBackground(comparison, comment, selected, comparisonColours))
-            background = *compared;
         painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
+        if (const auto compared = comparisonBackground(comparison, comment, selected, comparisonColours)) {
+            // Legacy paints column 0, the number, in its label colour and the
+            // other columns in kol (SubsGridWindow.cpp:495, j == 0 && !isHeadline
+            // ? label : kol); the number cell keeps the row's own background.
+            const double from = m_markWidth + (columns > 0 && modelColumn(0) == LineTableModel::NumberColumn ? widths[0] : 0);
+            painter->fillRect(QRectF(from, top, bounds.width() - from, rh), *compared);
+        }
         if (active) {
             painter->setPen(QColor(0x6c, 0xa8, 0xff));
             painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));

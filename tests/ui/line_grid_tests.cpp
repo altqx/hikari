@@ -166,9 +166,20 @@ private slots:
         const auto rowY = [&](int row) { return int(grid.geometry().headerHeight + row * rh + rh / 2); };
         // A cell of the row away from any text (the margin column's right edge).
         const QRectF text1 = grid.cellRect(1, grid.columnCount() - 1);
-        QCOMPARE(image.pixelColor(2, rowY(0)), QColor(0, 0, 200));
-        QCOMPARE(image.pixelColor(2, rowY(1)), QColor(200, 0, 0));
-        QVERIFY(image.pixelColor(2, rowY(2)) != QColor(200, 0, 0) && image.pixelColor(2, rowY(2)) != QColor(0, 0, 200));
+        // The comparison colour from the second column on; the number column
+        // keeps the row's own background, as legacy paints column 0 in its
+        // label colour and only the others in kol (SubsGridWindow.cpp:495).
+        const QRectF number0 = grid.cellRect(0, 0);
+        QCOMPARE(grid.columnTitle(0), model.headerData(LineTableModel::NumberColumn, Qt::Horizontal).toString());
+        const int afterNumber = int(number0.right()) + 2;
+        QCOMPARE(image.pixelColor(afterNumber, rowY(0)), QColor(0, 0, 200));
+        QCOMPARE(image.pixelColor(afterNumber, rowY(1)), QColor(200, 0, 0));
+        QVERIFY(image.pixelColor(afterNumber, rowY(2)) != QColor(200, 0, 0) &&
+                image.pixelColor(afterNumber, rowY(2)) != QColor(0, 0, 200));
+        for (int row = 0; row < 3; ++row) {
+            const QColor number = image.pixelColor(2, rowY(row));
+            QVERIFY2(number != QColor(200, 0, 0) && number != QColor(0, 0, 200), qPrintable(number.name()));
+        }
         // The outline colour around "WWWW" in the Text cell of row 1, and none
         // in row 0's equal text.
         int outline1 = 0, outline0 = 0;
