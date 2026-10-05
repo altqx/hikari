@@ -22,8 +22,10 @@ import Hikari.Ui
 // pointer is over the item the status bar's first field shows it (a
 // submenu's item shows the submenu's help; an item made for a menu's Action,
 // the Action's `help`), and the field empties when the pointer leaves it or
-// the menu closes (MenuDialog::OnMouseEvent and HideMenus, Menu.cpp:600-646
-// and 818-822; the keyboard's highlight did not show it).
+// the menu closes, whatever the field holds then, and before the chosen
+// command runs (MenuDialog::OnMouseEvent, SendEvent and HideMenus,
+// Menu.cpp:600-646, 673-682 and 818-822; the keyboard's highlight did not
+// show it).
 MenuItem {
     id: control
     property string iconRole
@@ -32,6 +34,9 @@ MenuItem {
         : subMenu && typeof subMenu.help === "string" ? subMenu.help
         : action && typeof action.help === "string" ? action.help : ""
     onHoveredChanged: hovered ? StatusHelp.show(control, shownHelp) : StatusHelp.hide(control)
+    // Legacy emptied the field before the chosen command ran (StatusHelp).
+    onReleased: if (!subMenu) StatusHelp.activating()
+    onTriggered: if (!subMenu) StatusHelp.activated()
     Component.onDestruction: StatusHelp.hide(control)
     readonly property string shownIconRole: iconRole.length > 0 ? iconRole
         : subMenu && typeof subMenu.iconRole === "string" ? subMenu.iconRole : ""

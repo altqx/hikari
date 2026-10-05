@@ -529,8 +529,9 @@ private slots:
         QTRY_VERIFY(!menu->property("visible").toBool());
         QTRY_COMPARE(shell.statusText(), QString());
 
-        // Text written while a menu is open by anything else (a command,
-        // Automation's set_status_text) stays when the menus close.
+        // The close empties the field whatever it holds, as HideMenus did
+        // (Menu.cpp:822): text a script or a timer wrote while a menu was
+        // open goes too.
         QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, barItem),
                                           Q_ARG(QPointF, QPointF(0, barItem->height()))));
         QTRY_VERIFY(menu->property("opened").toBool());
@@ -539,9 +540,62 @@ private slots:
         shell.setStatusText(QStringLiteral("set by a script"));
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_COMPARE(shell.statusText(), QString());
+
+        // So does the pointer leaving the item, as leaving the menu did
+        // (Menu.cpp:606).
+        QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        hover("saveAllMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save all subtitles"));
+        shell.setStatusText(QStringLiteral("set by a script"));
+        QTest::mouseMove(window, QPoint(window->width() - 5, window->height() - 5));
+        QTRY_COMPARE(shell.statusText(), QString());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        // Legacy queued the chosen command and emptied the field first
+        // (Menu.cpp:673-682), so the command found it empty and its own
+        // status text stays after the menus close.
+        QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        hover("newMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Remove subtitles from the editor"));
+        auto *newItem = qobject_cast<QQuickItem *>(named("newMenuItem"));
+        QString seenByCommand = QStringLiteral("not run");
+        // A command writing its own status text. Qt runs an item's command
+        // after `released` and before its menu closes (an Action's handler
+        // before the item's `triggered`), so one connected to `released`
+        // after the item's own handler runs where a real one does.
+        const auto command = connect(newItem, SIGNAL(released()), this, SLOT(statusWritingCommand()));
+        auto disconnectCommand = qScopeGuard([&] { disconnect(command); });
+        statusCommand = [&] {
+            seenByCommand = shell.statusText();
+            shell.setStatusText(QStringLiteral("set by the command"));
+        };
+        const QPointF centre = newItem->mapToScene(QPointF(newItem->width() / 2, newItem->height() / 2));
+        QTest::mouseClick(newItem->window(), Qt::LeftButton, {}, centre.toPoint());
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(seenByCommand, QString());
         QTest::qWait(50);
-        QCOMPARE(shell.statusText(), QStringLiteral("set by a script"));
+        QCOMPARE(shell.statusText(), QStringLiteral("set by the command"));
+        statusCommand = {};
     }
+
+public slots:
+    // menuHelpShowsInTheStatusBar's command (a public slot, not a test).
+    void statusWritingCommand()
+    {
+        if (statusCommand)
+            statusCommand();
+    }
+
+private:
+    std::function<void()> statusCommand;
+
+private slots:
 
     // P10: screenshots of the status bar for review, with a video, a menu's
     // help in the first field and the resolution warning, in the light and

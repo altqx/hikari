@@ -137,10 +137,7 @@ ApplicationWindow {
     Connections {
         target: StatusHelp
         function onShown(text) { root.shell.statusText = text }
-        function onWithdrawn(help) {
-            if (root.shell.statusText === help)
-                root.shell.statusText = ""
-        }
+        function onCleared() { root.shell.statusText = "" }
     }
     Connections {
         target: root.app
