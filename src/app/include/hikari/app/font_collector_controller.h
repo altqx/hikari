@@ -90,7 +90,8 @@ public:
     Q_INVOKABLE void chooseDirectory(const QString &path);
     // OnButtonStart. Returns {message} when legacy refused with a message
     // box, {question, archive} for "The zip file already exists, delete
-    // it?" (answer with confirmReplace), else {} and the run started.
+    // it?" (answer with confirmReplace), else {} and the run started. A Yes
+    // removes the archive only when Apply starts, not before the review.
     Q_INVOKABLE QVariantMap start(const QString &path, bool allTabs);
     Q_INVOKABLE bool confirmReplace(bool remove);
     // The staged review's Apply; `acknowledged` is the incomplete-output
@@ -153,6 +154,7 @@ private:
     bool m_canSaveFolder = false;
     QString m_copyPath;
     QString m_pendingArchive;
+    QString m_removeArchive; // answered Yes; removed when Apply starts
     std::vector<application::CollectorDocument> m_documents;
     application::CollectorAction m_runAction = application::CollectorAction::Check;
     std::optional<application::CollectorReview> m_review;

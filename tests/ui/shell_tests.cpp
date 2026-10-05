@@ -1973,6 +1973,51 @@ private slots:
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorSaveFolder")->property("enabled").toBool());
         QCOMPARE(application->settingsStore()->text("fontCollector.directory"), QDir::toNativeSeparators(archive));
 
+        // The archive now exists: Start asks "The zip file already exists,
+        // delete it?" (FontCollector.cpp:513-519). Legacy removed it on Yes
+        // and wrote at once; with the staged review the Yes is carried to
+        // Apply, so a review closed or refused keeps the user's archive.
+        const QString zipPath = archive + QStringLiteral(".zip");
+        {
+            QFile f(zipPath);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write("previous archive");
+        }
+        auto *replaceQuestion = root->findChild<QObject *>(QStringLiteral("fontCollectorReplaceQuestion"));
+        QVERIFY(replaceQuestion);
+        const auto readZip = [&] {
+            QFile f(zipPath);
+            return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        };
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
+        QCOMPARE(replaceQuestion->property("text").toString(), QStringLiteral("The zip file already exists, delete it?"));
+        QCOMPARE(replaceQuestion->property("title").toString(), QStringLiteral("Confirmation"));
+        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        collector.close();
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Options));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        // Yes again; the incomplete review is not acknowledged, so Apply is
+        // refused and the archive stays.
+        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        collector.apply(false);
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
+        QCOMPARE(readZip(), QByteArray("previous archive"));
+        // Apply with the acknowledgment removes it and writes the new one.
+        collector.apply(true);
+        QVERIFY(collector.waitIdle());
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QVERIFY(readZip().startsWith(QByteArray("PK\x03\x04", 4)));
+        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
+
         // "Save to video / subtitles folder.": Czcionki beside the subtitles.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorSubsDirectory"), "click"));

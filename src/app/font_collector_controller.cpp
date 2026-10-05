@@ -306,6 +306,7 @@ QVariantMap FontCollectorController::start(const QString &path, bool allTabs)
     }
     m_runAction = CollectorAction(m_action);
     m_pendingArchive.clear();
+    m_removeArchive.clear();
     if (m_action == 0) {
         runPrepare();
         return {};
@@ -368,10 +369,14 @@ bool FontCollectorController::confirmReplace(bool remove)
     if (m_pendingArchive.isEmpty())
         return false;
     const QString archive = std::exchange(m_pendingArchive, QString());
-    // Yes removes the archive now; when that fails nothing runs. No keeps
-    // it, and the new archive replaces it when written.
-    if (remove && !QFile::remove(archive))
-        return false;
+    // Legacy removes the archive on Yes (wxRemoveFile, FontCollector.cpp:514-518)
+    // and the run that writes the new one follows at once. Here a review
+    // stands between them and nothing is written until Apply (routing #60,
+    // L58-staged-replacement), so Yes is remembered and the archive removed
+    // when Apply starts writing; a review closed or refused keeps it. No
+    // keeps it, and the new archive replaces it when written.
+    if (remove)
+        m_removeArchive = archive;
     runPrepare();
     return true;
 }
@@ -602,6 +607,11 @@ void FontCollectorController::apply(bool acknowledged)
         return;
     if (!m_review->complete() && !acknowledged)
         return;
+    // The Yes to "The zip file already exists, delete it?": legacy's
+    // wxRemoveFile, and when it fails nothing runs (FontCollector.cpp:515-518).
+    if (!m_removeArchive.isEmpty() && QFileInfo::exists(m_removeArchive) && !QFile::remove(m_removeArchive))
+        return;
+    m_removeArchive.clear();
     join();
     m_cancel = false;
     m_clock.start();
@@ -666,6 +676,7 @@ void FontCollectorController::close()
     if (m_stage == Working && !waitIdle(m_closeWaitMs))
         return;
     m_review.reset();
+    m_removeArchive.clear(); // the review's Yes goes with it: the archive stays
     if (m_stage == Review)
         setStage(Options);
 }
