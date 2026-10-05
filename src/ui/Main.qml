@@ -820,6 +820,8 @@ ApplicationWindow {
                 action: Action {
                     id: loadLastScriptAction
                     text: qsTr("Run the last loaded script")
+                    // Legacy's modal progress dialog blocks it while a macro runs.
+                    enabled: !root.automation.running
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }

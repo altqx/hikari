@@ -6199,6 +6199,29 @@ private slots:
         QTRY_VERIFY(!editor->property("visible").toBool());
     }
 
+    // S4: legacy runs a macro behind a modal progress dialog
+    // (HikariSubFrame.cpp:916-936 returns only when it ends), so "Run the
+    // last loaded script" cannot be asked for meanwhile; its item (and the
+    // hotkey, which triggers the same Action) is disabled while a macro runs,
+    // as the macro items are.
+    void runTheLastLoadedScriptIsDisabledWhileAMacroRuns()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &automation = application->automation();
+        automation.load(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Wait for cancel"), 30000);
+        QObject *run = named("loadLastScriptMenuItem");
+        QVERIFY(run);
+        QVERIFY(run->property("enabled").toBool());
+        // "Wait for cancel" (shell-fixture.lua) runs until cancelled.
+        QVERIFY(automation.run(HIKARI_LUA_FIXTURES "/shell-fixture.lua", 1));
+        QTRY_VERIFY(!run->property("enabled").toBool());
+        QVERIFY(!named("macro_Wait for cancel")->property("enabled").toBool());
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QTRY_VERIFY(run->property("enabled").toBool());
+    }
+
     // A4: legacy AudioBox's play commands hand the player the frames each
     // asks for (AudioDisplay::Play at 48 kHz: ms * 48); the cursor follows
     // the output's clock and the player stops 8192 frames past the end.

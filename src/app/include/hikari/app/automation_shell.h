@@ -95,7 +95,8 @@ public:
     // scripts load and every script whose file changed reloads.
     Q_INVOKABLE void menuOpened();
     // GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT ("Run the last loaded script"): the
-    // first macro of the last Document script, validated first.
+    // first macro of the last Document script, validated first. Asked while
+    // another macro runs, it starts when that one ends.
     Q_INVOKABLE void runLastLoadedScript();
     // Legacy Automation::OnEdit: the script in AUTOMATION_SCRIPT_EDITOR, or
     // chooseScriptEditor first (none set, or Shift held).

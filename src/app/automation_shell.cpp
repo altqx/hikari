@@ -388,6 +388,8 @@ void AutomationShell::continueLastScript()
     using State = backends::LuaScriptHost::State;
     if (host && (host->state() == State::Loading || host->state() == State::Idle))
         return; // its top level still runs (legacy loads synchronously)
+    if (host && (m_run || m_manager.busy()))
+        return; // it waits for the active macro (legacy's modal progress dialog runs one at a time)
     const std::string path = *m_pendingLast;
     m_pendingLast.reset();
     if (!host)

@@ -226,6 +226,49 @@ private slots:
         app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
         QCOMPARE(notices.size(), 1);
+        // A script hotkey says so (HikariSubFrame::OnRunScript,
+        // HikariSubFrame.cpp:2636-2642 at 20d647c4).
+        auto &hotkeys = app->automationHotkeys();
+        hotkeys.begin();
+        hotkeys.setKeys(QStringLiteral("Script invalid.lua-0"), QStringLiteral("Ctrl+Shift+F9"));
+        hotkeys.commit();
+        QVERIFY(hotkeys.run(QStringLiteral("Script invalid.lua-0")));
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 3, 30'000);
+        QVERIFY(!done.last().at(0).toBool());
+        QCOMPARE(notices.size(), 2);
+        QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Error"));
+        QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        QCOMPARE(firstText(), std::string("Gate"));
+        QCOMPARE(session().historySize(), steps);
+    }
+
+    // Legacy runs one macro at a time behind a modal progress dialog
+    // (HikariSubFrame.cpp:916-936 runs to completion before anything else);
+    // asked while another macro runs, the last script's macro is not dropped:
+    // it runs when the active one ends.
+    void lastScriptWaitsForTheActiveMacro()
+    {
+        const QString script = QDir::toNativeSeparators(dir.filePath(QStringLiteral("waiting.lua")));
+        writeFile(script, prefixScript("after"));
+        QVERIFY(!open("waiting.ass", "|" + script.toUtf8()).isEmpty());
+        auto &automation = app->automation();
+        automation.menuOpened();
+        automation.load(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        QVERIFY(settled());
+        QSignalSpy done(&automation, &app::AutomationShell::runCompleted);
+        QSignalSpy notices(&automation, &app::AutomationShell::notice);
+        // "Wait for cancel" (shell-fixture.lua) runs until cancelled.
+        QVERIFY(automation.run(HIKARI_LUA_FIXTURES "/shell-fixture.lua", 1));
+        QVERIFY(automation.running());
+        automation.runLastLoadedScript();
+        QVERIFY(notices.isEmpty());
+        QCOMPARE(done.size(), 0);
+        automation.cancelRun();
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
+        QVERIFY(!done.first().at(0).toBool()); // cancelled
+        QVERIFY(done.last().at(0).toBool());
+        QCOMPARE(firstText(), std::string("after:Gate"));
+        QVERIFY(notices.isEmpty());
     }
 
     // HikariSubFrame.cpp:932-935: a script that did not load says why, then
