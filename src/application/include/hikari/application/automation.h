@@ -136,6 +136,13 @@ struct MacroResult {
     std::vector<MacroDialogueLine> dialogues;
     std::optional<std::vector<int>> selected; // nullopt: the macro returned none
     std::optional<int> active;
+    // S4: false when the macro's validation function answered false or
+    // raised an error (validationError, legacy "Runtime error in Lua macro
+    // validation function"); the macro did not run, the edits validation
+    // made are dropped and the lists are empty (S4-validation-edits).
+    // applyMacroResult refuses such a result.
+    bool valid = true;
+    std::string validationError;
 };
 
 // A host service a running macro asks for (L3; docs/qt/automation.md). The

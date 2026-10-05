@@ -539,6 +539,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     createFindReplace();
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
+    // S4: validation errors go to the log window; the script editor setting.
+    m_automation->setLog([this](const QString &line) { m_log->log(line); });
+    m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,

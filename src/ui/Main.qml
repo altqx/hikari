@@ -795,6 +795,8 @@ ApplicationWindow {
             id: automationMenu
             objectName: "automationMenu"
             title: qsTr("&Automation")
+            // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
+            onAboutToShow: root.automation.menuOpened()
             Action {
                 id: automationHotkeysAction
                 text: qsTr("Open shortcut mapping window")
@@ -821,6 +823,16 @@ ApplicationWindow {
                     id: reloadAutoloadAction
                     text: qsTr("Refresh autoload scripts")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
+                }
+            }
+            ShellMenuItem {
+                objectName: "loadLastScriptMenuItem"
+                action: Action {
+                    id: loadLastScriptAction
+                    text: qsTr("Run the last loaded script")
+                    // Legacy's modal progress dialog blocks it while a macro runs.
+                    enabled: !root.automation.running
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
             ShellMenuItem {
@@ -854,7 +866,7 @@ ApplicationWindow {
                             root.automationManager.run(modelData.path, modelData.ordinal)
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
+                onObjectAdded: (index, object) => automationMenu.insertItem(6 + index, object)
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
@@ -3339,6 +3351,9 @@ ApplicationWindow {
     AutomationFilePicker {
         picker: root.automationPicker
     }
+    AutomationNotices {
+        automation: root.automation
+    }
     Window {
         id: automationManagerWindow
         objectName: "automationManagerWindow"
@@ -4732,6 +4747,7 @@ ApplicationWindow {
             GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
             GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
             GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
+            GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
             GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
             GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
             GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,

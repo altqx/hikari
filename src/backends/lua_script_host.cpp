@@ -161,13 +161,13 @@ bool LuaScriptHost::run(int macroIndex)
     return run(macroIndex, application::MacroSnapshot{});
 }
 
-bool LuaScriptHost::run(int macroIndex, const application::MacroSnapshot &snapshot)
+bool LuaScriptHost::run(int macroIndex, const application::MacroSnapshot &snapshot, bool validateFirst)
 {
     if (m_state != State::Ready || macroIndex < 0 || static_cast<std::size_t>(macroIndex) >= m_info.macros.size())
         return false;
     m_lastResult.reset();
     Writer w;
-    w.i32(static_cast<std::int32_t>(lua::Command::Run)).i32(macroIndex);
+    w.i32(static_cast<std::int32_t>(validateFirst ? lua::Command::RunValidated : lua::Command::Run)).i32(macroIndex);
     const auto body = lua::encodeSnapshot(snapshot);
     auto payload = w.take();
     payload.insert(payload.end(), body.begin(), body.end());
@@ -286,6 +286,8 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
             m_lastResult = lua::decodeMacroResult(event->payload);
             if (!m_lastResult)
                 outcome = RunOutcome::Failed; // a malformed result applies nothing
+            else if (!m_lastResult->valid)
+                return endRun(RunOutcome::NotValid, QString::fromStdString(m_lastResult->validationError));
         }
         endRun(outcome, message);
         return;

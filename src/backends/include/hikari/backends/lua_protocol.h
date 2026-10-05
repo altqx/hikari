@@ -13,6 +13,11 @@
 //         Progress events and Service calls while it runs; Terminal Ok carries
 //         the MacroResult (staged lists and returned selection), Failed the
 //         error text, or Cancelled (aegisub.cancel() or a host Cancel).
+//   RunValidated: as Run, but the macro's validation function (when it has
+//         one) runs first on the same subtitles object, as legacy
+//         LuaCommand::Validate before Run (S4). When it returns false or
+//         raises an error the macro does not run: Terminal Ok carries a
+//         MacroResult with valid false (and the error text, if any).
 // Progress payloads start with an i32 ProgressEvent: Log (str), Set (f64
 // percent), Task (str), Title (str).
 // Service payloads start with an i32 Service; Dialog carries a DialogRequest
@@ -30,10 +35,10 @@
 
 namespace hikari::backends::lua {
 
-inline constexpr std::uint32_t kProtocolVersion = 2;
+inline constexpr std::uint32_t kProtocolVersion = 3; // 3: RunValidated
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
-enum class Command : std::int32_t { Load = 1, Run = 2 };
+enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3 };
 enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };
 

@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QElapsedTimer>
 #include <QFile>
+#include <QFileInfo>
 
 #include <algorithm>
 
@@ -19,6 +20,12 @@ std::string fileSha256(const std::string &path)
     if (!f.open(QIODevice::ReadOnly))
         return {};
     return QCryptographicHash::hash(f.readAll(), QCryptographicHash::Sha256).toHex().toStdString();
+}
+
+QDateTime modifiedTime(const std::string &path)
+{
+    const QFileInfo info(QString::fromStdString(path));
+    return info.isFile() ? info.lastModified() : QDateTime();
 }
 
 ScriptStatus::State stateOf(LuaScriptHost::State s)
@@ -135,6 +142,7 @@ void AutomationManager::load(const std::string &path)
     Entry entry;
     entry.host = std::make_unique<LuaScriptHost>(m_helperPath, QString::fromStdString(path), m_sharedInclude);
     entry.generation = 1;
+    entry.modified = modifiedTime(path);
     entry.host->setGracePeriod(m_graceMs);
     auto &stored = m_entries.emplace(path, std::move(entry)).first->second;
     m_order.push_back(path);
@@ -149,10 +157,22 @@ bool AutomationManager::reload(const std::string &path)
     if (it == m_entries.end() || it->second.host->state() == LuaScriptHost::State::Running)
         return false;
     ++it->second.generation;
+    it->second.modified = modifiedTime(path);
     it->second.host->restart(); // a new helper: the script's top level runs again
     rebuildRegistry();
     notify();
     return true;
+}
+
+bool AutomationManager::modifiedSinceLoad(const std::string &path) const
+{
+    const auto it = m_entries.find(path);
+    if (it == m_entries.end())
+        return false;
+    // Legacy compares the last write time (GetFileTime) and treats a file it
+    // cannot open as unchanged (Automation.cpp:751-773).
+    const QDateTime now = modifiedTime(path);
+    return now.isValid() && now != it->second.modified;
 }
 
 void AutomationManager::unload(const std::string &path)
@@ -171,12 +191,13 @@ bool AutomationManager::run(const std::string &path, int ordinal)
     return run(path, ordinal, application::MacroSnapshot{});
 }
 
-bool AutomationManager::run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot)
+bool AutomationManager::run(const std::string &path, int ordinal, const application::MacroSnapshot &snapshot,
+                            bool validateFirst)
 {
     if (m_shuttingDown || busy())
         return false; // one active macro application-wide
     LuaScriptHost *h = host(path);
-    if (!h || !h->run(ordinal, snapshot))
+    if (!h || !h->run(ordinal, snapshot, validateFirst))
         return false;
     notify();
     return true;
