@@ -187,7 +187,7 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
         return std::unexpected(SaveRefusal::InvalidDraft);
     return SavePlan{document,           entry->generation,
                     snapshot->revision, snapshot->content,
-                    destination,        core::encodeSubtitle(snapshot->document),
+                    destination,        core::encodeSubtitle(snapshot->document, m_saveOptions),
                     saveAs.has_value() && *saveAs != entry->destination};
 }
 

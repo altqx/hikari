@@ -108,3 +108,7 @@ target_compile_definitions(hikari_application_visual_tools_tests PRIVATE
     HIKARI_LEGACY_DIR="${PROJECT_SOURCE_DIR}/HikariSub"
     HIKARI_VISUAL_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-cases.txt"
     HIKARI_VISUAL_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t1-visual-20261005/observations.jsonl")
+# E5: translation mode controls (Translator mode, Not confirmed, Moving tags,
+# the Grid's Original text / Translation columns).
+hikari_add_gtest(hikari_application_translation_mode_tests SOURCES translation_mode_tests.cpp
+    LIBRARIES hikari_application LABELS application)

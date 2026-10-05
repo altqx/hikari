@@ -112,9 +112,13 @@ std::expected<void, CommandRefusal> turnOffTranslationMode(EditSession &session)
 {
     if (session.document().scriptInfo(u8"TLMode") != std::optional<u8>(u8"Yes"))
         return std::unexpected(CommandRefusal::Invalid);
+    // E5: a loaded pair without a translation is touched too, so that it is
+    // written again as the one line legacy's Dialogue is (SaveFile writes
+    // every line; byte-for-byte it would stay an original line in a Style
+    // that is gone plus an empty translation line).
     std::set<core::LineId> touches;
     for (const auto *line : session.document().lines())
-        if (!line->translation.empty() || line->unconfirmed)
+        if (!line->translation.empty() || line->unconfirmed || line->originalSpan)
             touches.insert(line->id);
     return session.run(Command{"Turning off translator mode", session.revision(), touches, [&](core::Document &d) {
         d.removeScriptInfo(u8"TLMode");

@@ -12,6 +12,7 @@
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/write_coordinator.h"
+#include "hikari/core/ass_save.h"
 
 #include <expected>
 #include <map>
@@ -107,6 +108,10 @@ public:
     // The WriteCoordinator's result listener must forward here.
     void onWriteResult(const WriteResult &result);
     std::optional<SaveStatus> lastSave(DocumentId document) const;
+    // E5: the ASS save options prepareSave encodes with (legacy SaveFile reads
+    // TL_MODE_HIDE_ORIGINAL_ON_VIDEO at every save).
+    void setSaveOptions(const core::AssSaveOptions &options) { m_saveOptions = options; }
+    const core::AssSaveOptions &saveOptions() const { return m_saveOptions; }
 
 private:
     struct Entry {
@@ -132,6 +137,7 @@ private:
     std::map<DocumentId, Entry> m_documents;
     std::map<PermitId, Pending> m_pending;
     std::uint64_t m_nextDocument = 1;
+    core::AssSaveOptions m_saveOptions;
 };
 
 } // namespace hikari::application
