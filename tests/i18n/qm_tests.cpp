@@ -1,5 +1,6 @@
 // O4: the QM the build compiles from the checked-in TS (embedded under
-// :/i18n by hikari_translations) answer exactly the finished entries; the
+// :/i18n by hikari_translations) answer exactly the finished entries, a
+// numerus one in the legacy plural form for each count; the
 // gettext catalogs answer as the legacy MO did through wxGetTranslation; and
 // Qt's numerus rules pick the legacy Plural-Forms' form for 0/1/2/5/12/22.
 
@@ -9,6 +10,8 @@
 
 #include <QFile>
 #include <QHash>
+#include <QProcess>
+#include <QTemporaryDir>
 #include <QTranslator>
 #include <QtEndian>
 
@@ -92,9 +95,14 @@ TEST(Qm, RewriteCatalogsAnswerFinishedEntriesOnly)
                 if (m.state == TsState::Vanished || m.state == TsState::Obsolete)
                     continue;
                 const bool done = m.state == TsState::Finished;
-                const QString expected = done ? m.translations.value(0) : QString();
-                EXPECT_EQ(lookup(translator, context.name, m, m.numerus ? 2 : -1), expected)
-                    << language.toStdString() << " " << context.name.toStdString() << " " << m.source.toStdString();
+                // A numerus entry answers the form Qt's rule picks for each
+                // count (equal to the legacy Plural-Forms', see
+                // NumerusRulesPickTheLegacyPluralForm); a plain one its text.
+                for (int n : m.numerus ? counts : QList<int>{-1}) {
+                    const QString expected = done ? m.translations.value(n < 0 ? 0 : legacyForm(language, n)) : QString();
+                    EXPECT_EQ(lookup(translator, context.name, m, n), expected)
+                        << language.toStdString() << " " << context.name.toStdString() << " " << m.source.toStdString() << " n=" << n;
+                }
                 ++(done ? finished : unfinished);
             }
         EXPECT_GT(finished, 700) << language.toStdString();
@@ -231,6 +239,48 @@ TEST(Qm, NumerusRulesPickTheLegacyPluralForm)
     EXPECT_EQ(pl.translate(pluralProbeContext, "%n font", "not found or not copied", 1), QStringLiteral("%n czcionki"));
     EXPECT_EQ(pl.translate(pluralProbeContext, "%n font", "found or copied", 22), QStringLiteral("%n czcionki"));
     EXPECT_EQ(pl.translate(pluralProbeContext, "%n font", "found or copied", 12), QStringLiteral("%n czcionek"));
+}
+
+// The rewrite's own numerus keys through lrelease and QTranslator: every
+// numerus entry of each checked-in catalog given distinct forms and marked
+// finished (the checked-in ones are all unfinished until translated), so the
+// form each count renders is visible. The legacy rendering is the form the
+// legacy Plural-Forms picks for that count (gettext and wx, legacyForm).
+TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    for (const QString &language : languages) {
+        TsCatalog catalog = readCatalog(source(QStringLiteral("i18n/hikarisub_%1.ts").arg(language)));
+        int numerus = 0;
+        for (TsContext &context : catalog.contexts)
+            for (TsMessage &m : context.messages)
+                if (m.numerus) {
+                    for (qsizetype form = 0; form < m.translations.size(); ++form)
+                        m.translations[form] = QStringLiteral("[%1] %2").arg(form).arg(m.source);
+                    m.state = TsState::Finished;
+                    ++numerus;
+                }
+        ASSERT_EQ(numerus, 11) << language.toStdString();
+        const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
+        const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
+        QFile file(ts);
+        ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+        file.write(writeTs(catalog));
+        file.close();
+        QProcess lrelease;
+        lrelease.start(QStringLiteral(HIKARI_LRELEASE), {QStringLiteral("-silent"), ts, QStringLiteral("-qm"), qm});
+        ASSERT_TRUE(lrelease.waitForFinished(60000));
+        ASSERT_EQ(lrelease.exitCode(), 0) << lrelease.readAllStandardError().toStdString();
+        QTranslator translator;
+        ASSERT_TRUE(translator.load(qm));
+        for (const TsContext &context : catalog.contexts)
+            for (const TsMessage &m : context.messages)
+                if (m.numerus)
+                    for (int n : counts)
+                        EXPECT_EQ(lookup(translator, context.name, m, n), QStringLiteral("[%1] %2").arg(legacyForm(language, n)).arg(m.source))
+                            << language.toStdString() << " n=" << n << " " << m.source.toStdString();
+    }
 }
 
 // The rewrite catalogs carry Qt's form count for their language on every
