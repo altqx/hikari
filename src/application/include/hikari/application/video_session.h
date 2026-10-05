@@ -108,6 +108,9 @@ public:
     const std::string &indexHandoff() const { return m_indexHandoff; }
     std::optional<SourceError> error() const { return m_error; }
     int frameCount() const { return static_cast<int>(m_starts.size()); }
+    // P10: the nominal rate as legacy's float m_FPS, (float)FPSNumerator /
+    // (float)FPSDenominator (ProviderFFMS2.cpp:361); 0 without video.
+    float legacyFps() const { return m_state == State::Ready ? m_legacyFps : 0.f; }
     // T1: the open video's frame size and SAR (the source's, else the first
     // frame shown's with no SAR); invalid without one. It stays when a
     // frame fails to decode, so the visual tools keep working.
@@ -140,6 +143,7 @@ private:
     std::shared_ptr<const IndexedFrame> m_shown;
     std::shared_ptr<const OverlayFrame> m_overlay;
     bool m_hasSubtitles = false;
+    float m_legacyFps = 0.f; // P10
     std::optional<PresentResult> m_lastPresent;
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
     // V1

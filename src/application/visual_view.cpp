@@ -20,7 +20,7 @@ float mid(float a, float b, float c)
 
 } // namespace
 
-float sourceAspectRatio(const SourceGeometry &source)
+AspectPair sourceAspect(const SourceGeometry &source)
 {
     // ProviderFFMS2.cpp:364-380.
     int arwidth = (source.sarNum == 0)
@@ -28,6 +28,10 @@ float sourceAspectRatio(const SourceGeometry &source)
                       : static_cast<int>(static_cast<float>(source.width) *
                                          (static_cast<float>(source.sarNum) / static_cast<float>(source.sarDen)));
     int arheight = source.height;
+    // Without a frame size (no video) there is no ratio: both sides 0 would
+    // divide forever (legacy always had a decoded frame here).
+    if (arwidth == 0 && arheight == 0)
+        return {};
     while (true) {
         bool divided = false;
         for (int i = 10; i > 1; i--) {
@@ -41,10 +45,16 @@ float sourceAspectRatio(const SourceGeometry &source)
         if (!divided)
             break;
     }
+    return {arwidth, arheight};
+}
+
+float sourceAspectRatio(const SourceGeometry &source)
+{
+    const AspectPair a = sourceAspect(source);
     // RendererFFMS2.cpp:488-489.
-    if (arheight == 0 || arwidth == 0)
+    if (a.height == 0 || a.width == 0)
         return 0.0f;
-    return static_cast<float>(arheight) / static_cast<float>(arwidth);
+    return static_cast<float>(a.height) / static_cast<float>(a.width);
 }
 
 void VideoView::open(const SourceGeometry &source)

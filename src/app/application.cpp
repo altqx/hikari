@@ -509,6 +509,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
+    // P10: the status bar's fields from the video, its view and the editing target.
+    m_statusBar = std::make_unique<ui::StatusBarController>(*m_video, *m_visualTools, [this]() -> const core::Document * {
+        auto *session = targetSession();
+        return session ? &session->document() : nullptr;
+    });
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -1208,6 +1213,8 @@ void Application::refreshViews()
     }
     refreshVideo();
     refreshAudio();
+    if (m_statusBar)
+        m_statusBar->refresh(); // P10
     emit tabsChanged(); // P6: titles, modified marks and the active tab
 }
 
@@ -2112,6 +2119,13 @@ bool Application::autosave(application::DocumentId document)
     auto *session = m_files->session(document);
     if (!session || !m_recovery->enabled())
         return false;
+    // P10: legacy SubsGrid::OnBackupTimer shows "Autosave" in the status
+    // bar's first field, and its grid's nullifyTimer empties the field 5 s
+    // after, whatever it shows then (SubsGridBase.cpp:1636-1651,
+    // SubsGrid.cpp:54-57); each grid had its own timer. (A precise timer: a
+    // coarse one may fire 5 % early.)
+    m_shell->setStatusText(tr("Autosave"));
+    QTimer::singleShot(5000, Qt::PreciseTimer, this, [this] { m_shell->setStatusText(QString()); });
     application::RecoveryContent content;
     content.bytes = core::encodeSubtitle(session->document());
     const auto format = session->document().format();
@@ -4060,6 +4074,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
+            {QStringLiteral("statusBar"), QVariant::fromValue(m_statusBar.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},

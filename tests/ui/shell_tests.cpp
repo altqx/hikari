@@ -330,6 +330,271 @@ private slots:
         QVERIFY(item("editingGrid")->hasActiveFocus());
     }
 
+    // P10: an ASS Document with a Script Info section but no PlayRes
+    // (GetASSRes's 1280 x 720), so that Resample can write its resolution
+    // (legacy AddSInfo adds to an existing section only).
+    QString scriptWithoutPlayRes()
+    {
+        const QString path = dir.filePath(QStringLiteral("status.ass"));
+        QFile f(path);
+        if (!f.open(QIODevice::WriteOnly))
+            return {};
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n");
+        return path;
+    }
+
+    // P10: a status bar field's text while it is shown (an empty middle
+    // field takes no space, as legacy's had width 0).
+    QString statusField(const char *name) const
+    {
+        QQuickItem *f = visualItem(name);
+        return f && f->isVisible() ? f->property("text").toString() : QString();
+    }
+    static void collectAccessible(QAccessibleInterface *iface, QList<QAccessibleInterface *> &out)
+    {
+        for (int i = 0; iface && i < iface->childCount(); ++i) {
+            QAccessibleInterface *child = iface->child(i);
+            if (!child)
+                continue;
+            out << child;
+            collectAccessible(child, out);
+        }
+    }
+    void closeMismatchQuestion()
+    {
+        // (Y4's resolution question, which comes a moment after the video)
+        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
+            QMetaObject::invokeMethod(mismatch, "close");
+            QTRY_VERIFY(!mismatch->property("visible").toBool());
+        }
+    }
+
+    // P10: legacy's nine status fields without and with media: the help
+    // field, the subtitles' resolution of an ASS Document, then the video's
+    // scale, zoom, duration, FPS, resolution, aspect ratio and file name,
+    // fields 5 and 7 in the warning colour while the resolutions differ;
+    // legacy's tooltips; static texts of the window's status bar for
+    // assistive technology, which take no keyboard focus.
+    void statusBarFieldsWithoutAndWithMedia()
+    {
+        restartWithoutSound();
+        static const char *const middle[] = {"statusVideoScale", "statusVideoZoom", "statusVideoDuration",
+                                             "statusFramesPerSecond", "statusVideoResolution", "statusAspectRatio",
+                                             "statusSubtitlesResolution"};
+        for (const char *name : middle) {
+            QQuickItem *f = visualItem(name);
+            QVERIFY2(f && !f->isVisible(), name);
+        }
+        // No main toolbar (user decision 2026-10-05, P10-no-main-toolbar):
+        // under the menu bar the window shows no row (its header is only
+        // D1's layout notice, hidden without one); the status bar is its
+        // bottom row, as legacy's.
+        auto *root = engine->rootObjects().first();
+        QVERIFY(root->property("menuBar").value<QObject *>());
+        auto *header = root->property("header").value<QQuickItem *>();
+        QVERIFY(!header || (header->objectName() == QLatin1String("layoutNotice") && !header->isVisible()));
+        QQuickItem *strip = visualItem("statusBar");
+        QVERIFY(strip && strip->isVisible());
+        QTRY_COMPARE(qRound(strip->mapToScene(QPointF(0, strip->height())).y()), qRound(window->contentItem()->height()));
+        // The first and last fields keep their share of the width.
+        QVERIFY(visualItem("statusText")->isVisible());
+        QVERIFY(visualItem("statusVideoName")->isVisible());
+        QCOMPARE(statusField("statusVideoName"), QString());
+
+        // An ASS Document without PlayRes: GetASSRes's 1280 x 720.
+        const QString script = scriptWithoutPlayRes();
+        QVERIFY(application->openFile(script));
+        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        QCOMPARE(statusField("statusVideoResolution"), QString());
+        QCOMPARE(statusField("statusVideoName"), QString());
+
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        closeMismatchQuestion();
+        QTRY_COMPARE(statusField("statusVideoResolution"), QStringLiteral("320 x 240"));
+        const auto &view = application->visualTools().videoView();
+        const auto scale = [&] {
+            return QString::number(static_cast<int>((static_cast<float>(view.clientWidth()) / 320.f) * 100)) +
+                   QLatin1Char('%');
+        };
+        QVERIFY(view.clientWidth() > 0);
+        QCOMPARE(statusField("statusVideoScale"), scale());
+        QCOMPARE(statusField("statusVideoZoom"), QStringLiteral("100%"));
+        QCOMPARE(statusField("statusVideoDuration"), QStringLiteral("00:00:01,960"));
+        QCOMPARE(statusField("statusFramesPerSecond"), QStringLiteral("23.976 FPS"));
+        QCOMPARE(statusField("statusAspectRatio"), QStringLiteral("4 : 3"));
+        QCOMPARE(statusField("statusVideoName"), QStringLiteral("cfr.mkv"));
+        QCOMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        // Never the editing target in the first field.
+        QVERIFY(!statusField("statusText").contains(QLatin1String("status.ass")));
+
+        // 320 x 240 against 1280 x 720: fields 5 and 7 in the warning colour.
+        QQuickItem *bar = visualItem("statusBar");
+        QVERIFY(bar);
+        const QColor warning = bar->property("warningColour").value<QColor>();
+        const auto colour = [&](const char *name) { return visualItem(name)->property("color").value<QColor>(); };
+        QCOMPARE(colour("statusVideoResolution"), warning);
+        QCOMPARE(colour("statusSubtitlesResolution"), warning);
+        QVERIFY(colour("statusFramesPerSecond") != warning);
+        // Legacy's tooltips.
+        QCOMPARE(visualItem("statusVideoResolution")->property("tip").toString(), QStringLiteral("Video resolution"));
+        QCOMPARE(visualItem("statusVideoName")->property("tip").toString(), QStringLiteral("Video file name"));
+        QCOMPARE(visualItem("statusText")->property("tip").toString(), QString());
+
+        // A wider window, a wider Video panel: the scale follows (UpdateVideoWindow).
+        const QString before = statusField("statusVideoScale");
+        window->resize(window->width() + 400, window->height());
+        QTRY_VERIFY(statusField("statusVideoScale") != before);
+        QCOMPARE(statusField("statusVideoScale"), scale());
+
+        // For assistive technology: the window's status bar, each shown
+        // field a static text named by its text and described by its tooltip.
+        QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(bar);
+        QVERIFY(iface);
+        QCOMPARE(iface->role(), QAccessible::StatusBar);
+        QList<QAccessibleInterface *> fields;
+        collectAccessible(iface, fields);
+        QAccessibleInterface *resolution = nullptr;
+        for (QAccessibleInterface *f : fields)
+            if (f->text(QAccessible::Name) == QLatin1String("320 x 240"))
+                resolution = f;
+        QVERIFY(resolution);
+        QCOMPARE(resolution->role(), QAccessible::StaticText);
+        QCOMPARE(resolution->text(QAccessible::Description), QStringLiteral("Video resolution"));
+        // Like legacy's (AcceptsFocus false) the strip takes no focus.
+        for (QQuickItem *f : bar->findChildren<QQuickItem *>())
+            QVERIFY2(!f->activeFocusOnTab(), qPrintable(f->objectName()));
+
+        // The resolution matched (Resample subtitles, SetSubsResolution): no warning.
+        QVERIFY(application->resample(1280, 720, 320, 240, false));
+        QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("320 x 240"));
+        QVERIFY(colour("statusVideoResolution") != warning);
+        QVERIFY(colour("statusSubtitlesResolution") != warning);
+    }
+
+    // P10: an anamorphic video's aspect ratio is legacy's reduced display
+    // pair (ProviderFFMS2.cpp:364-380), its resolution the encoded size.
+    void statusBarAnamorphicVideo()
+    {
+        restartWithoutSound();
+        QVERIFY(application->openFile(episode));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/sar.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        closeMismatchQuestion();
+        QTRY_COMPARE(statusField("statusAspectRatio"), QStringLiteral("379 : 240"));
+        QCOMPARE(statusField("statusVideoResolution"), QStringLiteral("320 x 240"));
+        QCOMPARE(statusField("statusVideoName"), QStringLiteral("sar.mkv"));
+    }
+
+    // P10: a menu item's help in the first field while the pointer is over
+    // it (MenuDialog::OnMouseEvent); an item without help empties it; the
+    // field empties when the menus close (HideMenus), and a command's own
+    // status text, written after legacy's menus hid, stays.
+    void menuHelpShowsInTheStatusBar()
+    {
+        // Controls follow the platform's hover hint, which the offscreen
+        // platform leaves off (desktop platforms turn it on).
+        QStyleHints *hints = QGuiApplication::styleHints();
+        const bool hoverHint = hints->useHoverEffects();
+        auto restoreHover = qScopeGuard([&] { hints->setUseHoverEffects(hoverHint); });
+        hints->setUseHoverEffects(true);
+        restartWithoutSound();
+        auto *root = engine->rootObjects().first();
+        auto *barItem = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+        auto *menu = barItem->property("menu").value<QObject *>();
+        auto &shell = application->shell();
+        const auto hover = [&](const char *name) {
+            auto *menuItem = qobject_cast<QQuickItem *>(named(name));
+            QVERIFY2(menuItem, name);
+            QTRY_VERIFY(menuItem->isVisible() && menuItem->width() > 0);
+            const QPointF p = menuItem->mapToScene(QPointF(menuItem->width() / 2, menuItem->height() / 2));
+            QTest::mouseMove(menuItem->window(), p.toPoint());
+            QTRY_VERIFY(menuItem->property("hovered").toBool());
+        };
+        QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        hover("saveMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save current file"));
+        hover("saveAsMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save as"));
+        hover("closeMenuItem"); // the rewrite's own: no help
+        QTRY_COMPARE(shell.statusText(), QString());
+        hover("saveMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save current file"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTRY_COMPARE(shell.statusText(), QString());
+
+        // Text written while a menu is open by anything else (a command,
+        // Automation's set_status_text) stays when the menus close.
+        QVERIFY(QMetaObject::invokeMethod(menu, "popup", Q_ARG(QQuickItem *, barItem),
+                                          Q_ARG(QPointF, QPointF(0, barItem->height()))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        hover("saveAllMenuItem");
+        QTRY_COMPARE(shell.statusText(), QStringLiteral("Save all subtitles"));
+        shell.setStatusText(QStringLiteral("set by a script"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QTest::qWait(50);
+        QCOMPARE(shell.statusText(), QStringLiteral("set by a script"));
+    }
+
+    // P10: screenshots of the status bar for review, with a video, a menu's
+    // help in the first field and the resolution warning, in the light and
+    // dark themes' palettes, written to HIKARI_SURFACE_SHOT_DIR when it is set.
+    void statusBarScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        const QPalette before = QGuiApplication::palette();
+        auto restore = qScopeGuard([&] { QGuiApplication::setPalette(before); });
+        window->resize(1600, 900);
+        QVERIFY(application->openFile(scriptWithoutPlayRes()));
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        closeMismatchQuestion();
+        QTRY_COMPARE(statusField("statusVideoResolution"), QStringLiteral("320 x 240"));
+        auto *root = engine->rootObjects().first();
+        QQuickItem *bar = visualItem("statusBar");
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        for (const auto appearance : {ui::icons::Appearance::Light, ui::icons::Appearance::Dark}) {
+            QPalette palette = themePalette(before, appearance);
+            QGuiApplication::setPalette(palette);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), palette.color(QPalette::Window));
+            const QString suffix = QLatin1Char('-') + ui::icons::appearanceName(appearance) + QStringLiteral(".png");
+            application->shell().setStatusText(QStringLiteral("Save current file"));
+            QTest::qWait(200);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.save(out + QStringLiteral("/main-window") + suffix));
+            QVERIFY(shot.copy(crop(bar)).save(out + QStringLiteral("/status-bar") + suffix));
+            // Matching resolutions, no help: the plain strip.
+            application->shell().setStatusText(QString());
+            QVERIFY(application->resample(1280, 720, 320, 240, false));
+            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("320 x 240"));
+            QTest::qWait(200);
+            QVERIFY(window->grabWindow().copy(crop(bar)).save(out + QStringLiteral("/status-bar-matching") + suffix));
+            application->editor().undo();
+            QTRY_COMPARE(statusField("statusSubtitlesResolution"), QStringLiteral("1280 x 720"));
+        }
+        // Nothing open: only the strip's two stretching fields, empty.
+        restartWithoutSound();
+        window->resize(1600, 900);
+        QTest::qWait(200);
+        QVERIFY(window->grabWindow().copy(crop(visualItem("statusBar"))).save(out + QStringLiteral("/status-bar-empty.png")));
+    }
+
     void gridActivationShowsTheLineInTheEditor()
     {
         QVERIFY(application->openFile(episode));

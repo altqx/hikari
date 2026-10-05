@@ -7,6 +7,8 @@ hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp LIBRARIES hikari
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_tag_buttons_tests SOURCES tag_buttons_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp LIBRARIES hikari_ui)
+# P10: the status bar's fields and the first field's progress text.
+hikari_add_qttest(hikari_ui_status_bar_tests SOURCES status_bar_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
@@ -63,6 +65,11 @@ hikari_add_spix_test(hikari_ui_video_workflow SOURCES video_workflow.cpp LIBRARI
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_video_workflow hikari_media_helper hikari_media_fixtures)
+# P10: the status bar's fields without and with media (Spix workflow).
+hikari_add_spix_test(hikari_ui_status_workflow SOURCES status_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_status_workflow hikari_media_helper hikari_media_fixtures)
 # V1: playback with the I4 handoff (Spix workflow).
 hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"

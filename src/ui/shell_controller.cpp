@@ -1,5 +1,9 @@
 #include "shell_controller.h"
 
+#include "hikari/core/ass_save.h"
+
+#include <QDateTime>
+
 #include <algorithm>
 
 namespace hikari::ui {
@@ -103,6 +107,39 @@ std::vector<core::LineId> ShellController::displayedLines() const
         if (const auto id = m_lines.lineAt(m_shown.mapToSource(m_shown.index(row, 0)).row()))
             out.push_back(*id);
     return out;
+}
+
+qint64 ShellController::progressNow() const
+{
+    return m_progressClock ? m_progressClock() : QDateTime::currentMSecsSinceEpoch();
+}
+
+void ShellController::startProgress(const QString &title)
+{
+    // ProgressSetup: the start time, then ProgressTitle when there is a title.
+    m_progressStart = progressNow();
+    if (title.isEmpty())
+        return;
+    m_progressTitle = title;
+    // ProgressTitle (HikariSubFrame.cpp:578-588): 0%, with the time since the start.
+    const qint64 elapsed = std::max<qint64>(progressNow() - m_progressStart, 0);
+    setStatusText(m_progressTitle + QStringLiteral(" 0%. ") +
+                  tr("Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
+}
+
+void ShellController::setProgress(int percent)
+{
+    // ProgressParcentProgress (HikariSubFrame.cpp:590-609): SubsTime's
+    // NewTime keeps a negative time at 0; raw() is the ASS form.
+    const qint64 elapsed = std::max<qint64>(progressNow() - m_progressStart, 0);
+    setStatusText(m_progressTitle + QLatin1Char(' ') + QString::number(percent) + QStringLiteral("%. ") +
+                  tr("Time elapsed: %1").arg(qs(core::legacy::assTimeText(elapsed))));
+}
+
+void ShellController::endProgress()
+{
+    // ProgressEnd (HikariSubFrame.cpp:611-621).
+    setStatusText(QString());
 }
 
 } // namespace hikari::ui

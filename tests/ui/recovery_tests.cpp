@@ -8,6 +8,7 @@
 #include "hikari/app/application.h"
 
 #include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QGuiApplication>
 #include <QProcess>
@@ -196,6 +197,24 @@ private slots:
         QVERIFY(running.autosaveNow());
         app::Application other(options());
         QVERIFY(other.recoveryBundles().isEmpty());
+    }
+
+    // P10: legacy SubsGrid::OnBackupTimer writes "Autosave" in the status
+    // bar's first field and its nullifyTimer empties the field 5 s later,
+    // whatever it shows then (SubsGridBase.cpp:1636-1651, SubsGrid.cpp:54-57).
+    void anAutosaveShowsInTheStatusBarForFiveSeconds()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("status.ass")), "x");
+        app::Application a(options());
+        QVERIFY(a.openFile(path));
+        edit(a, u8"changed");
+        QElapsedTimer clock;
+        clock.start();
+        QVERIFY(a.autosaveNow());
+        QCOMPARE(a.shell().statusText(), QStringLiteral("Autosave"));
+        a.shell().setStatusText(QStringLiteral("set_status_text"));
+        QTRY_COMPARE_WITH_TIMEOUT(a.shell().statusText(), QString(), 10000);
+        QVERIFY2(clock.elapsed() >= 4900, qPrintable(QString::number(clock.elapsed())));
     }
 };
 

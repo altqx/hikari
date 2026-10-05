@@ -39,6 +39,7 @@ ApplicationWindow {
     required property var fontCollector // Y8: FontCollectorController
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
+    required property StatusBarController statusBar // P10: the status bar's video and subtitle fields
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -51,21 +52,29 @@ ApplicationWindow {
     }
 
     // Subtitles > Conversion: target, label, GLOBAL_CONVERT_TO_* id.
+    // P10: with legacy's help (HikariSubFrame.cpp:323-331).
     readonly property var conversionItems: [
-        ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS"], ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT"],
-        ["mdvd", qsTr("Convert to MDVD"), "GLOBAL_CONVERT_TO_MDVD"], ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2"],
-        ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP"]]
+        ["ass", qsTr("Convert to ASS"), "GLOBAL_CONVERT_TO_ASS", qsTr("Converts to ASS format")],
+        ["srt", qsTr("Convert to SRT"), "GLOBAL_CONVERT_TO_SRT", qsTr("Converts to SRT format")],
+        ["mdvd", qsTr("Convert to MDVD"), "GLOBAL_CONVERT_TO_MDVD", qsTr("Converts to microDVD format")],
+        ["mpl2", qsTr("Convert to MPL2"), "GLOBAL_CONVERT_TO_MPL2", qsTr("Converts to MPL2 format")],
+        ["tmp", qsTr("Convert to TMP"), "GLOBAL_CONVERT_TO_TMP", qsTr("Converts to TMPlayer format (not recommended)")]]
 
-    // With their GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ids.
+    // With their GLOBAL_SORT_ALL_BY_* / GLOBAL_SORT_SELECTED_BY_* ids and
+    // legacy's help (P10, HikariSubFrame.cpp:227-234).
     readonly property var sortKeys: [
         { key: "start", label: qsTr("The starting time"), all: "GLOBAL_SORT_ALL_BY_START_TIMES",
-          selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES" },
+          selected: "GLOBAL_SORT_SELECTED_BY_START_TIMES", help: qsTr("Sort by start time") },
         { key: "end", label: qsTr("End time"), all: "GLOBAL_SORT_ALL_BY_END_TIMES",
-          selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES" },
-        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE" },
-        { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR" },
-        { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT" },
-        { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER" }
+          selected: "GLOBAL_SORT_SELECTED_BY_END_TIMES", help: qsTr("Sort by end time") },
+        { key: "style", label: qsTr("Styles"), all: "GLOBAL_SORT_ALL_BY_STYLE", selected: "GLOBAL_SORT_SELECTED_BY_STYLE",
+          help: qsTr("Sort by styles") },
+        { key: "actor", label: qsTr("Actor"), all: "GLOBAL_SORT_ALL_BY_ACTOR", selected: "GLOBAL_SORT_SELECTED_BY_ACTOR",
+          help: qsTr("Sort by actor") },
+        { key: "effect", label: qsTr("Effect"), all: "GLOBAL_SORT_ALL_BY_EFFECT", selected: "GLOBAL_SORT_SELECTED_BY_EFFECT",
+          help: qsTr("Sort by effect") },
+        { key: "layer", label: qsTr("Layer"), all: "GLOBAL_SORT_ALL_BY_LAYER", selected: "GLOBAL_SORT_SELECTED_BY_LAYER",
+          help: qsTr("Sort by layer") }
     ]
 
     // E2: a custom tag button. Types 0 and 1 work in the focused field like
@@ -123,6 +132,15 @@ ApplicationWindow {
         // HikariSubFrame::OnClose: FR->SaveOptions().
         searchTool.save()
         root.app.endSession() // P6: SaveLastSession(true)
+    }
+    // P10: the menus' help in the status bar's first field (StatusHelp).
+    Connections {
+        target: StatusHelp
+        function onShown(text) { root.shell.statusText = text }
+        function onWithdrawn(help) {
+            if (root.shell.statusText === help)
+                root.shell.statusText = ""
+        }
     }
     Connections {
         target: root.app
@@ -441,6 +459,7 @@ ApplicationWindow {
             menu: ShellMenu {
                 title: qsTr("&File")
                 ShellMenuItem {
+                    help: qsTr("Open subtitle file") // HikariSubFrame.cpp:178
                     iconRole: "open-subtitles"
                     action: Action {
                         id: openAction
@@ -449,6 +468,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenu {
+                    help: qsTr("Recently opened subtitles") // HikariSubFrame.cpp:188
                     id: recentMenu
                     iconRole: "recent-subtitles"
                     objectName: "recentSubtitlesMenu"
@@ -461,6 +481,7 @@ ApplicationWindow {
                             required property var modelData
                             required property int index
                             objectName: "recentSubtitles" + index
+                            help: qsTr("Open") + " " + modelData.path // HikariSubFrame.cpp:1574
                             text: modelData.label
                             onTriggered: root.openSubtitles(modelData.path)
                         }
@@ -475,6 +496,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Remove subtitles from the editor") // HikariSubFrame.cpp:190
                     iconRole: "close-subtitles"
                     objectName: "newMenuItem"
                     // Legacy GLOBAL_REMOVE_SUBS: the tab gets an Untitled default Document.
@@ -494,6 +516,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Opens video file") // HikariSubFrame.cpp:247
                     iconRole: "open-video"
                     objectName: "openVideoMenuItem"
                     action: Action {
@@ -503,6 +526,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Save current file") // HikariSubFrame.cpp:180
                     iconRole: "save"
                     objectName: "saveMenuItem"
                     action: Action {
@@ -513,6 +537,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Save all subtitles") // HikariSubFrame.cpp:182
                     iconRole: "save-all"
                     objectName: "saveAllMenuItem"
                     action: Action {
@@ -528,6 +553,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Save as") // HikariSubFrame.cpp:184
                     iconRole: "save-as"
                     objectName: "saveAsMenuItem"
                     action: Action {
@@ -538,6 +564,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Save translation") // HikariSubFrame.cpp:186
                     iconRole: "save-translation"
                     objectName: "saveTranslationMenuItem"
                     action: Action {
@@ -553,6 +580,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Save subtitles using the video name") // HikariSubFrame.cpp:192
                     iconRole: "save-with-video-name"
                     objectName: "saveWithVideoNameMenuItem"
                     action: Action {
@@ -571,6 +599,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Opens the selected autosave from the list") // HikariSubFrame.cpp:196
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
@@ -579,6 +608,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Opens the temporary file removal window") // HikariSubFrame.cpp:197
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
                         id: removeTemporaryAction
@@ -595,10 +625,12 @@ ApplicationWindow {
                 }
                 // P6: legacy "Last session" submenu.
                 ShellMenu {
+                    help: qsTr("Last session options") // HikariSubFrame.cpp:200
                     iconRole: "last-session"
                     objectName: "lastSessionMenu"
                     title: qsTr("Last session")
                     ShellMenuItem {
+                        help: qsTr("Loads previously loaded files") // HikariSubFrame.cpp:161
                         id: loadLastSessionItem
                         iconRole: "last-session"
                         objectName: "loadLastSessionMenuItem"
@@ -606,18 +638,21 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_LAST_SESSION")) sessionWindows.load()
                     }
                     ShellMenuItem {
+                        help: qsTr("Loads session from saved session file") // HikariSubFrame.cpp:163
                         id: loadSessionFileItem
                         objectName: "loadSessionFileMenuItem"
                         text: qsTr("Load session from file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
                     }
                     ShellMenuItem {
+                        help: qsTr("Saves session to file") // HikariSubFrame.cpp:165
                         id: saveSessionFileItem
                         objectName: "saveSessionFileMenuItem"
                         text: qsTr("Save session to file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
                     }
                     ShellMenuItem {
+                        help: qsTr("Asks whether to load previously loaded files at program startup") // HikariSubFrame.cpp:168
                         objectName: "askForLastSessionMenuItem"
                         text: qsTr("Ask whether to load the last session at program startup")
                         checkable: true
@@ -625,6 +660,7 @@ ApplicationWindow {
                         onToggled: root.app.sessionRestore = checked ? 1 : 0
                     }
                     ShellMenuItem {
+                        help: qsTr("Loads previously loaded files at program startup") // HikariSubFrame.cpp:172
                         objectName: "loadLastSessionOnStartMenuItem"
                         text: qsTr("Load last session after program start")
                         checkable: true
@@ -634,6 +670,7 @@ ApplicationWindow {
                 }
                 // O1: legacy GLOBAL_SETTINGS, the Options dialog.
                 ShellMenuItem {
+                    help: qsTr("Program settings") // HikariSubFrame.cpp:202
                     iconRole: "settings"
                     objectName: "settingsMenuItem"
                     action: Action {
@@ -643,6 +680,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    help: qsTr("Exit the program") // HikariSubFrame.cpp:204
                     iconRole: "exit"
                     objectName: "exitMenuItem"
                     action: Action {
@@ -655,6 +693,7 @@ ApplicationWindow {
         ShellMenu {
             title: qsTr("&Edit")
             ShellMenuItem {
+                help: qsTr("Undo") // HikariSubFrame.cpp:209
                 iconRole: "undo"
                 action: Action {
                     id: undoAction
@@ -664,6 +703,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Redo") // HikariSubFrame.cpp:214
                 iconRole: "redo"
                 action: Action {
                     id: redoAction
@@ -674,6 +714,7 @@ ApplicationWindow {
             }
             // Legacy GLOBAL_SORT_LINES / GLOBAL_SORT_SELECTED_LINES submenus.
             ShellMenu {
+                help: qsTr("Sorts all lines in ASS file") // HikariSubFrame.cpp:237
                 iconRole: "sort"
                 objectName: "sortAllMenu"
                 title: qsTr("So&rt all lines")
@@ -684,6 +725,7 @@ ApplicationWindow {
                     delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortAll_" + modelData.key
+                        help: modelData.help
                         text: modelData.label
                         onTriggered: if (!root.hotkeyGesture(modelData.all)) root.app.sortLines(modelData.key, false)
                     }
@@ -692,6 +734,7 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
+                help: qsTr("Sorts selected lines in ASS file") // HikariSubFrame.cpp:239
                 iconRole: "sort-selected"
                 objectName: "sortSelectedMenu"
                 title: qsTr("So&rt selected lines")
@@ -702,6 +745,7 @@ ApplicationWindow {
                     delegate: ShellMenuItem {
                         required property var modelData
                         objectName: "sortSelected_" + modelData.key
+                        help: modelData.help
                         text: modelData.label
                         onTriggered: if (!root.hotkeyGesture(modelData.selected)) root.app.sortLines(modelData.key, true)
                     }
@@ -710,6 +754,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Undo to last save") // HikariSubFrame.cpp:211
                 iconRole: "undo-to-last-save"
                 objectName: "undoToLastSaveMenuItem"
                 action: Action {
@@ -720,6 +765,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("History") // HikariSubFrame.cpp:216
                 iconRole: "history"
                 objectName: "historyMenuItem"
                 action: Action {
@@ -730,6 +776,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Turns on multireplacer") // HikariSubFrame.cpp:241
                 iconRole: "select-lines"
                 objectName: "misspellMenuItem"
                 action: Action {
@@ -739,6 +786,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Selects lines by expressions") // HikariSubFrame.cpp:243
                 iconRole: "select-lines"
                 objectName: "selectLinesMenuItem"
                 action: Action {
@@ -750,6 +798,7 @@ ApplicationWindow {
             }
             // F1: legacy GLOBAL_FIND_REPLACE, GLOBAL_SEARCH and GLOBAL_FIND_NEXT.
             ShellMenuItem {
+                help: qsTr("Searches for the specified text phrases and replaces them") // HikariSubFrame.cpp:218
                 iconRole: "find-replace"
                 objectName: "findReplaceMenuItem"
                 action: Action {
@@ -760,6 +809,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Searches for the specified text phrase") // HikariSubFrame.cpp:220
                 iconRole: "search"
                 objectName: "findMenuItem"
                 action: Action {
@@ -770,6 +820,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Finds the next occurrence of the phrase in the text") // HikariSubFrame.cpp:222
                 iconRole: "search"
                 objectName: "findNextMenuItem"
                 action: Action {
@@ -787,6 +838,7 @@ ApplicationWindow {
             title: qsTr("&Automation")
             Action {
                 id: automationHotkeysAction
+                property string help: qsTr("Open shortcut mapping window") // HikariSubFrame.cpp:355
                 text: qsTr("Open shortcut mapping window")
                 onTriggered: {
                     if (root.hotkeyGesture("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
@@ -796,6 +848,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Load script") // HikariSubFrame.cpp:349
                 iconRole: "automation"
                 objectName: "loadScriptMenuItem"
                 action: Action {
@@ -805,6 +858,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Refresh autoload scripts") // HikariSubFrame.cpp:351
                 iconRole: "automation"
                 objectName: "reloadAutoloadMenuItem"
                 action: Action {
@@ -853,6 +907,7 @@ ApplicationWindow {
             title: qsTr("&Video")
             // Each item: Shift+click maps its Global hotkey (OnMenuSelected).
             ShellMenuItem {
+                help: qsTr("Opens video file") // HikariSubFrame.cpp:247
                 iconRole: "open-video"
                 action: Action {
                     text: qsTr("Open &video…")
@@ -860,6 +915,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Go to previous frame") // HikariSubFrame.cpp:263
                 iconRole: "frame-previous"
                 action: Action {
                     id: previousFrameAction
@@ -868,6 +924,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Go to next frame") // HikariSubFrame.cpp:265
                 iconRole: "frame-next"
                 action: Action {
                     id: nextFrameAction
@@ -876,6 +933,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Moves video to start time") // HikariSubFrame.cpp:267
                 iconRole: "video-to-start-time"
                 action: Action {
                     id: goToStartAction
@@ -884,6 +942,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Moves video to end time") // HikariSubFrame.cpp:270
                 iconRole: "video-to-end-time"
                 action: Action {
                     id: goToEndAction
@@ -892,6 +951,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Plays / Pauses video") // HikariSubFrame.cpp:273
                 iconRole: root.video.playing ? "media-pause" : "media-play"
                 action: Action {
                     id: playPauseAction
@@ -916,6 +976,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Open keyframes") // HikariSubFrame.cpp:252
                 iconRole: "open-keyframes"
                 action: Action {
                     id: openKeyframesAction
@@ -954,6 +1015,7 @@ ApplicationWindow {
             objectName: "audioMenu"
             title: qsTr("A&udio")
             ShellMenuItem {
+                help: qsTr("Opens audio file") // HikariSubFrame.cpp:293
                 iconRole: "open-audio"
                 objectName: "openAudioMenuItem"
                 action: Action {
@@ -968,6 +1030,7 @@ ApplicationWindow {
                 }
             }
             ShellMenu {
+                help: qsTr("Recently opened audio") // HikariSubFrame.cpp:297
                 id: recentAudioMenu
                 iconRole: "recent-audio"
                 objectName: "recentAudioMenu"
@@ -980,6 +1043,7 @@ ApplicationWindow {
                         required property var modelData
                         required property int index
                         objectName: "recentAudio" + index
+                        help: qsTr("Open") + " " + modelData.path // HikariSubFrame.cpp:1574
                         text: modelData.label
                         onTriggered: root.audio.openAudio(modelData.path)
                     }
@@ -994,6 +1058,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Opens audio from video") // HikariSubFrame.cpp:299
                 iconRole: "audio-from-video"
                 objectName: "audioFromVideoMenuItem"
                 action: Action {
@@ -1004,6 +1069,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Opens blank audio 2 hour and 30 minutes long") // HikariSubFrame.cpp:301
                 objectName: "dummyAudioMenuItem"
                 action: Action {
                     id: dummyAudioAction
@@ -1012,6 +1078,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Closes audio") // HikariSubFrame.cpp:303
                 iconRole: "close-audio"
                 objectName: "closeAudioMenuItem"
                 action: Action {
@@ -1113,6 +1180,7 @@ ApplicationWindow {
             objectName: "subtitlesMenu"
             title: qsTr("&Subtitles")
             ShellMenuItem {
+                help: qsTr("Shifting subtitle times") // HikariSubFrame.cpp:336
                 id: showShiftTimesItem
                 iconRole: "shift-times"
                 objectName: "showShiftTimes"
@@ -1127,6 +1195,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_SHIFT_TIMES")) root.runShiftTimes()
             }
             ShellMenuItem {
+                help: qsTr("Is used to manage ASS styles") // HikariSubFrame.cpp:320
                 id: styleManagerItem
                 iconRole: "styles"
                 objectName: "styleManagerMenuItem"
@@ -1135,6 +1204,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_STYLE_MANAGER")) styleManagerWindow.showFor(root.app.activeLineStyle())
             }
             ShellMenuItem {
+                help: qsTr("ASS subtitle properties") // HikariSubFrame.cpp:318
                 id: assPropertiesItem
                 iconRole: "script-properties"
                 objectName: "assProperties"
@@ -1143,6 +1213,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_ASS_PROPERTIES")) scriptPropertiesDialog.openFor()
             }
             ShellMenu {
+                help: qsTr("Converts from one format to another") // HikariSubFrame.cpp:334
                 id: conversionMenu
                 iconRole: "convert"
                 objectName: "conversionMenu"
@@ -1153,6 +1224,7 @@ ApplicationWindow {
                     model: root.conversionItems
                     ShellMenuItem {
                         objectName: "convertTo_" + modelData[0]
+                        help: modelData[3]
                         iconRole: ["convert-ass", "convert-srt", "convert-mdvd", "convert-mpl2", "convert-tmp"][index]
                         text: modelData[1]
                         enabled: conversionMenu.targets.indexOf(modelData[0]) >= 0
@@ -1163,6 +1235,7 @@ ApplicationWindow {
             // Legacy SubsMenu: Font collector after Conversion and Shift times
             // (HikariSubFrame.cpp:338), enabled for subsFormat < SRT (2407).
             ShellMenuItem {
+                help: qsTr("Font collector") // HikariSubFrame.cpp:338
                 id: fontCollectorItem
                 objectName: "fontCollectorMenuItem"
                 iconRole: "font-collector"
@@ -1171,6 +1244,7 @@ ApplicationWindow {
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
             }
             ShellMenuItem {
+                help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
                 id: resampleItem
                 iconRole: "resample"
                 objectName: "resampleMenuItem"
@@ -1180,6 +1254,7 @@ ApplicationWindow {
             }
             // Legacy HikariSubFrame: after Resample subtitles.
             ShellMenuItem {
+                help: qsTr("Check spelling") // HikariSubFrame.cpp:342
                 id: checkSpellingItem
                 iconRole: "spellchecker"
                 objectName: "checkSpellingMenuItem"
@@ -1191,6 +1266,7 @@ ApplicationWindow {
         ShellMenu {
             title: qsTr("&Help")
             ShellMenuItem {
+                help: qsTr("Opens the HikariSub website in the default browser") // HikariSubFrame.cpp:360
                 iconRole: "help"
                 action: Action {
                     id: websiteAction
@@ -1199,6 +1275,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Opens the HikariSub issue tracker") // HikariSubFrame.cpp:362
                 iconRole: "report-issue"
                 objectName: "reportIssueMenuItem"
                 action: Action {
@@ -1208,6 +1285,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Checks whether a newer version is available") // HikariSubFrame.cpp:364
                 iconRole: "check-updates"
                 objectName: "checkForUpdatesMenuItem"
                 action: Action {
@@ -1218,6 +1296,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Shows program info") // HikariSubFrame.cpp:366
                 iconRole: "about"
                 objectName: "aboutMenuItem"
                 action: Action {
@@ -1227,6 +1306,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                help: qsTr("Shows credits") // HikariSubFrame.cpp:368
                 iconRole: "credits"
                 objectName: "creditsMenuItem"
                 action: Action {
@@ -3064,28 +3144,16 @@ ApplicationWindow {
         Layout.fillWidth: true
         onCloseRequested: index => root.closeTab(index)
       }
-      RowLayout {
-        // Legacy's first field: help and Automation status text (set_status_text),
-        // never the editing target, which the Document tab and the window
-        // title name.
-        Label {
-            objectName: "statusText"
-            padding: 4
-            text: shell.statusText
-            elide: Text.ElideRight
-            Layout.fillWidth: true
-        }
-        Label {
-            objectName: "selectionStatus"
-            padding: 4
-            text: shell.selectionStatus
-        }
-        Label {
-            objectName: "saveStatus"
-            padding: 4
-            text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
+      // P10: legacy's status bar. Its first field is help and progress text
+      // (Automation's set_status_text, menu help, "Autosave"), never the
+      // editing target, which the Document tab and the window title name.
+      StatusBar {
+        shell: root.shell
+        fieldsController: root.statusBar
+        selectionText: root.shell.selectionStatus
+        saveText: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
                   ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
-        }
+        Layout.fillWidth: true
       }
     }
 

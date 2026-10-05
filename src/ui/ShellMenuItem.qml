@@ -17,9 +17,22 @@ import Hikari.Ui
 // under its faint tint, so there the icon keeps its normal colours too.
 // Directional icons mirror in right-to-left layouts. A submenu's item shows
 // the submenu's iconRole (ShellMenu) the same way.
+//
+// P10: `help` is legacy's menu help (Menu::Append's help text). While the
+// pointer is over the item the status bar's first field shows it (a
+// submenu's item shows the submenu's help; an item made for a menu's Action,
+// the Action's `help`), and the field empties when the pointer leaves it or
+// the menu closes (MenuDialog::OnMouseEvent and HideMenus, Menu.cpp:600-646
+// and 818-822; the keyboard's highlight did not show it).
 MenuItem {
     id: control
     property string iconRole
+    property string help
+    readonly property string shownHelp: help.length > 0 ? help
+        : subMenu && typeof subMenu.help === "string" ? subMenu.help
+        : action && typeof action.help === "string" ? action.help : ""
+    onHoveredChanged: hovered ? StatusHelp.show(control, shownHelp) : StatusHelp.hide(control)
+    Component.onDestruction: StatusHelp.hide(control)
     readonly property string shownIconRole: iconRole.length > 0 ? iconRole
         : subMenu && typeof subMenu.iconRole === "string" ? subMenu.iconRole : ""
     readonly property bool windowsStyle: ControlsStyle.name === "Windows"

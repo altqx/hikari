@@ -30,6 +30,11 @@ qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 qt_target_qml_sources(hikari_ui QML_FILES SubtitleComparisonMenu.qml DocumentTabMenu.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
+# P10: the status bar (legacy HikariStatusBar's nine fields) and the help
+# text the menus and tool buttons show in its first field.
+target_sources(hikari_ui PRIVATE status_bar_controller.cpp status_bar_controller.h)
+set_source_files_properties(StatusHelp.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
+qt_target_qml_sources(hikari_ui QML_FILES StatusBar.qml StatusHelp.qml)
 # T1: the visual tool rail, the overlay over the Video canvas and the values below it.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml)
 # K1: the vector icon set (docs/qt/ux/icons.md), drawn by tools/icons/draw_icons.py:
