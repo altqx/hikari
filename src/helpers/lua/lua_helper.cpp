@@ -2108,7 +2108,9 @@ void installHostServices(lua_State *L)
 // its first return is the answer (a second one, the help text, is not
 // shown). A runtime error answers false. The object stays the one the
 // macro then runs on, so edits made while validating reach the macro, as
-// legacy's AutoToFile edits the file both work on.
+// legacy's AutoToFile edits the file both work on. When it answers false
+// those edits are dropped (S4-validation-edits; legacy kept them in the
+// file without an undo step).
 bool validate(lua_State *L, int index, std::string &error)
 {
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
@@ -2173,10 +2175,9 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, bool validateFirst)
         const int oldOffset = static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1;
         std::string error;
         if (!validate(L, index, error)) {
+            // S4-validation-edits: what validation staged is dropped; the
+            // result carries no lists and applies nothing.
             MacroResult result;
-            result.info = std::move(staged.lists.info);
-            result.styles = std::move(staged.lists.styles);
-            result.dialogues = std::move(staged.lists.dialogues);
             result.valid = false;
             result.validationError = std::move(error);
             g_subs = nullptr;

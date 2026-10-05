@@ -495,10 +495,10 @@ TEST_F(LuaHelper, ValidationDecidesWhetherTheMacroRuns)
     EXPECT_TRUE(run.message.isEmpty());
     ASSERT_TRUE(host->lastResult());
     EXPECT_FALSE(host->lastResult()->valid);
-    EXPECT_EQ(host->lastResult()->dialogues[0].text, "one");
+    EXPECT_TRUE(host->lastResult()->dialogues.empty());
     ASSERT_TRUE(runValidated("Never"));
     EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
-    EXPECT_EQ(host->lastResult()->dialogues[0].text, "one");
+    EXPECT_TRUE(host->lastResult()->dialogues.empty());
 
     // A runtime error answers false with legacy's log text.
     ASSERT_TRUE(runValidated("Broken"));
@@ -542,6 +542,46 @@ TEST_F(LuaHelper, ValidationEditsReachTheMacroAsOneStep)
     ASSERT_TRUE(session.undo());
     EXPECT_EQ(texts(session)[0], "one");
     EXPECT_FALSE(session.document().scriptInfo(u8"Validated"));
+}
+
+// S4-validation-edits: edits a validation function makes are dropped when
+// it answers false or raises an error; the result stages nothing and
+// applying it leaves the Document, its dirty state and history unchanged
+// (legacy AutoToFile edited the file in place and kept them without an undo
+// step, LuaCommand::Validate, Automation.cpp:936-969).
+TEST_F(LuaHelper, ValidationEditsAreDroppedWhenItAnswersFalse)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto steps = session.historySize();
+    const bool dirty = session.isDirty();
+    const auto before = texts(session);
+    for (const char *name : {"Edits then false", "Edits then error"}) {
+        SCOPED_TRACE(name);
+        const auto snapshot = snapshotForMacro(session);
+        ASSERT_TRUE(snapshot);
+        run = {};
+        ASSERT_TRUE(host->run(macro(*host, name), *snapshot, true));
+        ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+        ASSERT_TRUE(host->lastResult());
+        const auto &result = *host->lastResult();
+        EXPECT_FALSE(result.valid);
+        EXPECT_TRUE(result.info.empty());
+        EXPECT_TRUE(result.styles.empty());
+        EXPECT_TRUE(result.dialogues.empty());
+        const auto applied = applyMacroResult(session, *snapshot, result, name);
+        ASSERT_FALSE(applied);
+        EXPECT_EQ(applied.error().refusal, CommandRefusal::Invalid);
+        EXPECT_EQ(texts(session), before);
+        EXPECT_FALSE(session.document().scriptInfo(u8"Validated"));
+        EXPECT_EQ(session.historySize(), steps);
+        EXPECT_EQ(session.isDirty(), dirty);
+    }
 }
 
 // A33-subinspector-linux: SubInspector's native library (the Windows DLL

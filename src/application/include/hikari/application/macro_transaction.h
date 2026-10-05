@@ -34,6 +34,8 @@ struct MacroApplyFailure {
 // their bytes. A result identical to the snapshot changes nothing and adds
 // no step. The returned
 // selection (script indices, legacy rules) becomes the session's selection.
+// A result whose validation answered false (MacroResult::valid) is refused
+// as Invalid and changes nothing (S4-validation-edits).
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name);
 

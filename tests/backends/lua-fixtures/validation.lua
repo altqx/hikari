@@ -36,6 +36,25 @@ end, function(subs)
     return true
 end)
 
+-- Validation edits the subtitles and then answers false (or raises an
+-- error): the edits are dropped (S4-validation-edits).
+aegisub.register_macro("Edits then false", "", function(subs, sel)
+    local l = subs[sel[1]]
+    l.text = "should not run"
+    subs[sel[1]] = l
+end, function(subs, sel)
+    local l = subs[sel[1]]
+    l.text = "edited while validating"
+    subs[sel[1]] = l
+    subs.insert(3, { class = "info", section = "[Script Info]", key = "Validated", value = "yes" })
+    return false
+end)
+
+aegisub.register_macro("Edits then error", "", function() end, function(subs, sel)
+    subs.delete(sel[1])
+    error("validation broke after editing")
+end)
+
 aegisub.register_macro("Unvalidated", "", function(subs, sel)
     local l = subs[sel[1]]
     l.text = "plain"

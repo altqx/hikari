@@ -242,6 +242,42 @@ private slots:
         QCOMPARE(session().historySize(), steps);
     }
 
+    // S4-validation-edits: a validation function that edits the subtitles
+    // and then answers false leaves the Document as it was: no text or
+    // Script Info change, no undo step, not modified (legacy AutoToFile kept
+    // the edits in the file without an undo step, Automation.cpp:936-969).
+    void validationEditsAreDroppedWhenItAnswersFalse()
+    {
+        const QString script = dir.filePath(QStringLiteral("editing.lua"));
+        writeFile(script, "aegisub.register_macro(\"Guarded\", \"\", function(subs, sel)\n"
+                          "    local l = subs[sel[1]]; l.text = \"ran\"; subs[sel[1]] = l\n"
+                          "end, function(subs, sel)\n"
+                          "    local l = subs[sel[1]]; l.text = \"edited while validating\"; subs[sel[1]] = l\n"
+                          "    subs.insert(3, { class = \"info\", section = \"[Script Info]\",\n"
+                          "                     key = \"Validated\", value = \"yes\" })\n"
+                          "    return false\n"
+                          "end)\n");
+        QVERIFY(!open("editing.ass", "|" + QDir::toNativeSeparators(script).toUtf8()).isEmpty());
+        QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
+        QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        const auto steps = session().historySize();
+        const bool dirty = session().isDirty();
+        // "Run the last loaded script" and the menu both validate first.
+        app->automation().runLastLoadedScript();
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
+        QVERIFY(!done.first().at(0).toBool());
+        QCOMPARE(notices.size(), 1);
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Validation Lua script 'editing.lua' failed"));
+        app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
+        QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
+        QVERIFY(!done.last().at(0).toBool());
+        QCOMPARE(firstText(), std::string("Gate"));
+        QVERIFY(!session().document().scriptInfo(u8"Validated"));
+        QCOMPARE(session().historySize(), steps);
+        QCOMPARE(session().isDirty(), dirty);
+        QVERIFY(!session().isReadOnly());
+    }
+
     // Legacy runs one macro at a time behind a modal progress dialog
     // (HikariSubFrame.cpp:916-936 runs to completion before anything else);
     // asked while another macro runs, the last script's macro is not dropped:

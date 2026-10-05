@@ -376,3 +376,25 @@ TEST_F(MacroTest, ReturnedSelectionFollowsTheLegacyRules)
     ASSERT_TRUE(applyMacroResult(session, s, r, "Delete"));
     EXPECT_EQ(session.selection().selected, (std::set<core::LineId>{l2}));
 }
+
+// S4-validation-edits: a result whose validation function answered false
+// applies nothing, whatever it carries; the Document, its dirty state and
+// history stay as they were (legacy AutoToFile kept validation's edits in
+// the file without an undo step, LuaCommand::Validate, Automation.cpp:936-969).
+TEST_F(MacroTest, AResultThatFailedValidationChangesNothing)
+{
+    const auto s = snapshot();
+    const auto steps = session.historySize();
+    const bool dirty = session.isDirty();
+    MacroResult r = unchanged(s);
+    r.info.push_back({"Validated", "yes"});
+    r.dialogues[0].text = "edited while validating";
+    r.valid = false;
+    const auto applied = applyMacroResult(session, s, r, "Guarded");
+    ASSERT_FALSE(applied);
+    EXPECT_EQ(applied.error().error, MacroApplyError::Refused);
+    EXPECT_EQ(applied.error().refusal, CommandRefusal::Invalid);
+    EXPECT_EQ(save(session), std::string(kScript));
+    EXPECT_EQ(session.historySize(), steps);
+    EXPECT_EQ(session.isDirty(), dirty);
+}

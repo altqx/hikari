@@ -190,6 +190,10 @@ std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &sessi
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name)
 {
+    // S4-validation-edits: validation answered false, so whatever it staged
+    // is dropped and the Document stays as it was.
+    if (!result.valid)
+        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::Invalid});
     std::map<std::uint64_t, const MacroDialogueLine *> before;
     for (const auto &d : snapshot.dialogues)
         before[d.id] = &d;

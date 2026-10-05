@@ -138,8 +138,9 @@ struct MacroResult {
     std::optional<int> active;
     // S4: false when the macro's validation function answered false or
     // raised an error (validationError, legacy "Runtime error in Lua macro
-    // validation function"); the macro did not run and the lists are the
-    // snapshot's as validation left them.
+    // validation function"); the macro did not run, the edits validation
+    // made are dropped and the lists are empty (S4-validation-edits).
+    // applyMacroResult refuses such a result.
     bool valid = true;
     std::string validationError;
 };
