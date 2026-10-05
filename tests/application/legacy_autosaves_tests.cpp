@@ -109,8 +109,14 @@ TEST_F(LegacyAutosaves, OneVersionPerSecond)
     const auto files = listLegacyAutosaves(folder, u"Untitled", clock());
     ASSERT_EQ(files.size(), 1u);
     ASSERT_EQ(files[0].versions.size(), 1u);
-    const auto kept = files[0].versions[0].file.filename();
-    EXPECT_TRUE(kept == "ep_0_1.ass" || kept == "ep_0_2.ass"); // the first in listing order
+    // The first of the two in the folder's own listing order (readdir on
+    // Linux, FindNextFileW on Windows, as directory_iterator lists it).
+    fs::path first;
+    for (const auto &entry : fs::directory_iterator(folder))
+        if (first.empty())
+            first = entry.path().filename();
+    ASSERT_TRUE(first == "ep_0_1.ass" || first == "ep_0_2.ass");
+    EXPECT_EQ(files[0].versions[0].file.filename(), first);
 }
 
 // Reading only: the folder and its files stay exactly as they were.

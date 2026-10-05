@@ -73,9 +73,17 @@ TEST_F(SameNamedFile, FindsTheVideoBesideTheSubtitles)
     fs::create_directories(folder / "ep01.dir");
     const auto found = findSameNamedFile(subs, true);
     ASSERT_TRUE(found);
-    // Both "ep01.mkv" and "ep01.extra.mkv" match "ep01.*"; which comes first
-    // is the folder's listing order, as wxDir's.
-    EXPECT_TRUE(found->filename() == "ep01.mkv" || found->filename() == "ep01.extra.mkv");
+    // Both "ep01.mkv" and "ep01.extra.mkv" match "ep01.*"; the one found is
+    // the first of them in the folder's own listing order, as wxDir's
+    // (readdir on Linux, FindNextFileW on Windows, as directory_iterator
+    // lists it).
+    fs::path first;
+    for (const auto &entry : fs::directory_iterator(folder)) {
+        const auto name = entry.path().filename();
+        if (first.empty() && (name == "ep01.mkv" || name == "ep01.extra.mkv"))
+            first = name;
+    }
+    EXPECT_EQ(found->filename(), first);
 }
 
 TEST_F(SameNamedFile, FindsTheSubtitlesBesideAVideo)
