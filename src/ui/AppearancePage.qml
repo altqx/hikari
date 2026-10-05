@@ -76,6 +76,7 @@ ScrollView {
                                 color: card.roles.background
                                 border.color: card.checked ? Theme.accent : Theme.line
                                 border.width: card.checked ? 2 : 1
+                                FocusRing { control: card; radius: 1 }
                             }
                             contentItem: Item {
                                 implicitWidth: 160
@@ -141,6 +142,7 @@ ScrollView {
                             color: swatch.modelData.accent
                             border.color: swatch.checked ? Theme.text : Theme.line
                             border.width: swatch.checked ? 2 : 1
+                            FocusRing { control: swatch; radius: width / 2 }
                         }
                         contentItem: Item {}
                     }

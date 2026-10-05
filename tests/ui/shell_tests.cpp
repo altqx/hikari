@@ -6694,9 +6694,11 @@ private slots:
     // place (after MuseScore 4, docs/research/musescore-appearance.md): the
     // four themes, "Follow system theme", the mode's seven accent swatches,
     // and in high contrast the accent, text-and-icons and border pickers with
-    // their reset. Every choice previews live; OK saves it, Cancel takes it
-    // back; choosing a theme by hand turns following off; Light and Dark
-    // remember their own accent; "Set default" leaves the appearance.
+    // their reset. Every choice previews live; OK and Apply save it, Cancel takes it
+    // back (after Apply, back to the applied one); choosing a theme by hand
+    // turns following off; Light and Dark remember their own accent; "Set
+    // default" leaves the appearance; a focused card or swatch shows the
+    // focus ring.
     void appearancePagePreviewsSavesAndRestores()
     {
         auto &settings = *application->settingsStore();
@@ -6736,6 +6738,27 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "appearanceHighContrast")->property("visible").toBool());
         QCOMPARE(QAccessible::queryAccessibleInterface(dialogItem("settingsDialog", "accent_blue"))->text(QAccessible::Name),
                  QStringLiteral("Blue"));
+        // Keyboard focus on a theme card or a swatch: the focus role's ring,
+        // 2 wide and 3 beyond it (visual-language.md, "Keyboard focus ring"),
+        // apart from the accent or text border marking the chosen one.
+        for (const char *name : {"appearanceTheme_dark", "accent_green"}) {
+            auto *control = dialogItem("settingsDialog", name);
+            auto *background = control->property("background").value<QQuickItem *>();
+            QVERIFY2(background, name);
+            auto *ring = background->findChild<QQuickItem *>(QStringLiteral("focusRing"));
+            QVERIFY2(ring, name);
+            QVERIFY2(!ring->isVisible(), name);
+            control->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY2(ring->isVisible(), name);
+            const auto *border = ring->property("border").value<QObject *>();
+            QCOMPARE(border->property("color").value<QColor>(), ui::theme::current().roles.focus);
+            QCOMPARE(border->property("width").toInt(), 2);
+            QVERIFY(ui::theme::current().roles.focus != ui::theme::current().roles.accent);
+            QCOMPARE(ring->width(), control->width() + 10);
+            QCOMPARE(ring->x(), -5.0);
+            dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY2(!ring->isVisible(), name);
+        }
 
         // Light by hand: following turns off, the window retints at once
         // (the preview), nothing is saved yet.
@@ -6773,12 +6796,28 @@ private slots:
         QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("green"));
         QCOMPARE(code(), QStringLiteral("light"));
         QCOMPARE(accent(), ui::theme::accent(false, QStringLiteral("blue")).accent);
+        // Apply saves too and keeps the dialog open, the applied appearance
+        // showing; a later change previews, and Cancel takes back only that.
         QVERIFY((dialog = openAppearance()) != nullptr);
         click("appearanceTheme_dark");
         QVERIFY(checked("accent_green"));
         click("accent_red");
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QVERIFY(dialog->property("visible").toBool());
+        QCOMPARE(settings.text("appearance.theme"), QStringLiteral("dark"));
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
+        QCOMPARE(code(), QStringLiteral("dark"));
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
+        QTRY_COMPARE(controls->property("window").value<QColor>(), QColor(0x20, 0x26, 0x2D));
+        QVERIFY(checked("accent_red"));
+        click("accent_purple");
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("purple")).accent);
+        QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(code(), QStringLiteral("dark"));
+        QCOMPARE(accent(), ui::theme::accent(true, QStringLiteral("red")).accent);
         QCOMPARE(settings.text("appearance.darkAccent"), QStringLiteral("red"));
         QCOMPARE(settings.text("appearance.lightAccent"), QStringLiteral("blue"));
 

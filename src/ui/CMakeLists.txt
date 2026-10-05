@@ -45,10 +45,11 @@ qt_target_qml_sources(hikari_ui QML_FILES Icon.qml IconButton.qml
     IconTabButton.qml IconDialogHeader.qml IconToolButton.qml
     RESOURCES icons/manifest.json ${hikari_icon_files})
 # K2: the theme layer (docs/qt/ux/visual-language.md): the Theme singleton and
-# the appearance state, the Options dialog's Appearance page, and the docking
-# engine's separators and group frames in the theme's colours.
+# the appearance state, the Options dialog's Appearance page and its focus
+# ring, and the docking engine's separators and group frames in the theme's
+# colours.
 target_sources(hikari_ui PRIVATE theme.cpp theme.h)
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)
