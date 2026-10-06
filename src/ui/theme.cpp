@@ -8,6 +8,7 @@
 #include <QGuiApplication>
 #include <QPointer>
 #include <QQuickStyle>
+#include <QQuickWindow>
 #include <QStyleHints>
 #include <QtQml/qqmlengine.h>
 #include <QtQml/qqmlextensionplugin.h>
@@ -512,20 +513,31 @@ public:
             emit changed();
     }
 
-    // The Qt Quick Controls' popups (menus, dialogs) take their palettes
-    // from the controls' theme, which the style sets up from its own
-    // defaults when an engine first loads the controls and changes only
-    // when the application palette changes afterwards: the theme's palette
-    // set before that (the Application, before the engine) reached the
-    // windows but not the popups, so they stayed light under Dark until
-    // the theme next changed (W1). Once the engine has loaded, the palette
-    // is set again as a change.
-    void repalette()
+    // The popups (menus, dialogs) take the palette of their window, which a
+    // Qt Quick window makes when it is first read, from the controls' theme
+    // (the style's own defaults, which do not follow the application
+    // palette), and then changes only when the application palette changes.
+    // Made after the theme's palette was set (the Application sets it before
+    // the engine loads), it stayed light under Dark, the default, until the
+    // theme next changed (W1). So each window's palette is made at once,
+    // after the engine's load (Theme's constructor) or when a window made
+    // later first takes the focus (a floating panel), and the palette is
+    // then set again as a change.
+    void adopt(const QList<QWindow *> &windows, bool again = false)
     {
-        if (!settings)
-            return;
-        QGuiApplication::setPalette(QPalette());
-        QGuiApplication::setPalette(palette(state.roles));
+        bool added = again;
+        for (QWindow *window : windows) {
+            auto *quick = qobject_cast<QQuickWindow *>(window);
+            if (!quick || (quick->property(kAdopted).toBool() && !again))
+                continue;
+            quick->setProperty(kAdopted, true);
+            quick->property("palette"); // made now
+            added = true;
+        }
+        if (added && settings) {
+            QGuiApplication::setPalette(QPalette());
+            QGuiApplication::setPalette(palette(state.roles));
+        }
     }
 
 signals:
@@ -539,8 +551,15 @@ private:
         state.content = content(state.code, state.roles);
         if (auto *hints = QGuiApplication::styleHints())
             connect(hints, &QStyleHints::colorSchemeChanged, this, [this] { refresh(); });
+        if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+            connect(app, &QGuiApplication::focusWindowChanged, this, [this](QWindow *window) {
+                if (window)
+                    adopt({window});
+            });
         refresh();
     }
+
+    static constexpr const char *kAdopted = "hikariThemePalette";
 };
 
 } // namespace
@@ -562,10 +581,11 @@ void useSettings(SettingsStore *settings)
 
 namespace {
 
-// After the engine's load, when its popups exist (Hub::repalette).
+// After the engine's load: its windows' palettes (Hub::adopt).
 void repaletteAfterLoad()
 {
-    QMetaObject::invokeMethod(&Hub::get(), [] { Hub::get().repalette(); }, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        &Hub::get(), [] { Hub::get().adopt(QGuiApplication::topLevelWindows(), true); }, Qt::QueuedConnection);
 }
 
 } // namespace

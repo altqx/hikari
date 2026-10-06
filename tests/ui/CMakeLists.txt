@@ -91,6 +91,8 @@ hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIB
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 # P1: close review (L58-write-close).
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
+# K2 / W1: the popups take the theme's palette from the first engine's start.
+hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
 # S2: automation hotkeys with real Lua scripts.

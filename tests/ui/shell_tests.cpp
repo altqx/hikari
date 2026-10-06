@@ -12812,10 +12812,15 @@ private slots:
             QCOMPARE(item->property("text").toString(), names[i]);
             QCOMPARE(item->property("enabled").toBool(), names[i] == QLatin1String("MPEG Video Decoder"));
             // Whole: the label is not elided (the item is as wide as it asks).
+            // Not on Windows: offscreen there draws without the system's
+            // fonts (boxes), so the widths say nothing; the Windows desktop
+            // captures show the names whole.
             auto *label = item->property("contentItem").value<QQuickItem *>();
             QVERIFY(label);
+#ifndef Q_OS_WIN
             QVERIFY2(label->implicitWidth() <= label->width() + 0.5,
                      qPrintable(names[i] + QStringLiteral(": %1 > %2").arg(label->implicitWidth()).arg(label->width())));
+#endif
         }
         QVERIFY(QMetaObject::invokeMethod(menu, "close"));
         QTRY_VERIFY(!menu->property("visible").toBool());
