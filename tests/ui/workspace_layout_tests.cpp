@@ -280,7 +280,12 @@ private slots:
         QFile kept(layoutFile() + QStringLiteral(".unrestored"));
         QVERIFY(kept.open(QIODevice::ReadOnly));
         QCOMPARE(kept.readAll(), file);
-        // Saving later replaces it with a valid layout; the copy stays.
+        // Saving resumes once the layout changes and replaces the file with a
+        // valid layout; the copy stays. The change is the user's (closing a
+        // panel): the notice's own re-layout of the window may not have
+        // happened yet when the session ends (it had not on Windows).
+        QVERIFY(QMetaObject::invokeMethod(dock("audioDock"), "close"));
+        QTRY_VERIFY(!dock("audioDock")->property("isOpen").toBool());
         stop();
         QFile again(layoutFile());
         QVERIFY(again.open(QIODevice::ReadOnly));
