@@ -17,7 +17,10 @@
 #ifndef _WIN32
 #include <QDBusConnection>
 #include <QDBusConnectionInterface>
+#endif
 
+// moc does not see the compiler's _WIN32, so the classes and slots it reads
+// are declared on every platform; only the D-Bus test body is Linux-only.
 // The fake file manager: records each ShowItems call.
 class FakeFileManager : public QObject {
     Q_OBJECT
@@ -32,7 +35,6 @@ public slots:
         startupIds << startupId;
     }
 };
-#endif
 
 class ShowInFolderTests : public QObject {
     Q_OBJECT
@@ -48,9 +50,11 @@ private slots:
         QCOMPARE(containingFolder(QStringLiteral("ep01.mkv")), QStringLiteral("ep01.mkv"));
     }
 
-#ifndef _WIN32
     void fileManagerShowsTheFileSelected()
     {
+#ifdef _WIN32
+        QSKIP("the file manager is reached through D-Bus on Linux only");
+#else
         const QString daemon = QStandardPaths::findExecutable(QStringLiteral("dbus-daemon"));
         if (daemon.isEmpty())
             QSKIP("dbus-daemon is not installed");
@@ -110,8 +114,8 @@ private slots:
         QDBusConnection none = QDBusConnection(QStringLiteral("p9-none"));
         hikari::backends::selectInFolder(file, none, [&](const QString &folder) { fallbacks << folder; });
         QCOMPARE(fallbacks.size(), 2);
-    }
 #endif
+    }
 };
 
 QTEST_GUILESS_MAIN(ShowInFolderTests)
