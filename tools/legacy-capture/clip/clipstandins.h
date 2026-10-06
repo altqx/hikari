@@ -70,6 +70,7 @@ size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignore
 enum { TL_MODE_HIDE_ORIGINAL_ON_VIDEO };
 struct ProbeOptions {
     bool GetBool(int) const { return false; }
+    wxString pathfull = L"probe"; // T5: LoadSettings / SaveSettings' folder
 };
 extern ProbeOptions Options;
 
@@ -113,23 +114,20 @@ inline void CreateVERTEX(VERTEX *v, float X, float Y, D3DCOLOR Color, float Z = 
     v->Color = Color;
 }
 
+// T5: the fields the drawing reads (GetPosnScale, GetDefaultPosition,
+// SetCurVisual's frz), with GetScaleX/YDouble copied from styles.cpp.
 class Styles {
 public:
     wxString Name = L"Default";
-    wxString Alignment = L"2", MarginL = L"0", MarginV = L"0", Angle = L"0";
-    double GetScaleXDouble() { return 100.; }
-    double GetScaleYDouble() { return 100.; }
+    wxString Alignment = L"2", MarginL = L"0", MarginR = L"0", MarginV = L"0", Angle = L"0";
+    wxString ScaleX = L"100", ScaleY = L"100";
+    double GetScaleXDouble();
+    double GetScaleYDouble();
 };
 
-class TagData {
-public:
-    wxString tagName;
-    wxString value;
-};
-class ParseData {
-public:
-    std::vector<TagData *> tags;
-};
+// SubsDialogue.h's TagData and ParseData, copied (T5: Dialogue::ParseTags,
+// copied from SubsDialogue.cpp, fills them).
+#include "tagdata_class.inc"
 
 struct ProbeTime {
     int mstime = 0;
@@ -143,7 +141,6 @@ public:
     bool NonDialogue = false;
     int Layer = 0;
     int MarginL = 0, MarginR = 0, MarginV = 0;
-    ParseData parse;
     const wxString &GetTextNoCopy() { return (TextTl != emptyString) ? TextTl : Text; } // SubsDialogue.cpp:216-219
     wxString &GetText() { return (TextTl != emptyString) ? TextTl : Text; }             // CheckTlRef
     void SetText(const wxString &text)                                               // SubsDialogue.cpp:225-231
@@ -164,9 +161,12 @@ public:
         if (element == TXT)
             Text = text;
     }
-    ParseData *ParseTags(wxString *, size_t, bool = false) { return &parse; }
-    void ClearParse() {}
-    void GetDefaultPosition(Styles *, int, wxSize, float *x, float *y) { *x = 0; *y = 0; }
+    // Copied from SubsDialogue.cpp (T5: SetCurVisual reads the drawing
+    // with it; GetPosnScale places a Line without \pos with the other).
+    ParseData* parseData = nullptr;
+    ParseData* ParseTags(wxString *tags, size_t n, bool plainText = false, const wxString& textToParse = L"");
+    void ClearParse();
+    void GetDefaultPosition(Styles* lineStyle, int an, const wxSize &subsSize, float *posx, float *posy);
 };
 
 class TextEditor {
@@ -240,10 +240,12 @@ public:
     wxString *GetVisible(bool *visible = 0, wxPoint *point = nullptr, wxArrayInt *selected = nullptr, bool = false);
 };
 
+class ShapesSetting;
+
 class VideoToolbar {
 public:
     // VectorItem::SetItemToggled (VideoToolbar.h:117-123) with VectorItem's
-    // seven buttons.
+    // seven buttons (six for the drawing, VideoToolbar.h:99-101).
     int toggled = 1;
     int numIcons = 7;
     void SetItemToggled(int *item)
@@ -254,7 +256,42 @@ public:
         else if (toggled >= numIcons)
             toggled = (*item) = 0;
     }
-    int GetItemToggled() { return toggled; }
+    // VectorItem::GetItemToggled (VideoToolbar.h:108-115): the drawing's
+    // shape list's selection (0: "Choose") in the bits from 6 up.
+    int shapeListSelection = 0;
+    int GetItemToggled()
+    {
+        int value12 = toggled;
+        if (shapeListSelection) {
+            int value2 = shapeListSelection << 6;
+            value12 += value2;
+        }
+        return value12;
+    }
+    // VideoToolbar::GetShapesSettings / SetShapesSettings (VideoToolbar.h:
+    // 331-339): the presets, loaded at the first use.
+    static std::vector<ShapesSetting> shapes;
+    static std::vector<ShapesSetting> *GetShapesSettings();
+    static void SetShapesSettings(std::vector<ShapesSetting> *_shapes);
+};
+
+// T5: OpenWrite (OpennWrite.cpp) over files kept in memory: FileOpen reads
+// one the case gave (false when there is none), the constructor and
+// PartFileWrite write one as legacy does (a BOM before the first part).
+struct ProbeFiles {
+    std::vector<std::pair<std::string, wxString>> files;
+    wxString *find(const wxString &path);
+};
+extern ProbeFiles probeFiles;
+class OpenWrite {
+public:
+    OpenWrite() {}
+    OpenWrite(const wxString &fileName, bool clear = true);
+    bool FileOpen(const wxString &filename, wxString *riddenText, bool test = true);
+    void PartFileWrite(const wxString &parttext);
+private:
+    wxString path;
+    bool isfirst = true;
 };
 
 class VideoBox {

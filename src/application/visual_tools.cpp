@@ -1,10 +1,14 @@
 #include "hikari/application/visual_tools.h"
 
+#include "hikari/application/hotkeys.h"
+#include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
+#include "hikari/application/visual_shift.h"
 
 #include <algorithm>
 #include <set>
@@ -91,6 +95,16 @@ void Gesture::stage(core::LineId line, std::u8string text, bool translation)
 {
     if (m_before.contains(line))
         m_staged[{line, translation}] = std::move(text);
+}
+
+bool Gesture::changesAnyLine() const
+{
+    for (const auto &[key, text] : m_staged) {
+        const core::LineRecord &line = m_before.at(key.first);
+        if ((key.second ? line.translation : line.text) != text)
+            return true;
+    }
+    return false;
 }
 
 std::optional<std::u8string> Gesture::staged(core::LineId line, bool translation) const
@@ -184,6 +198,11 @@ std::vector<core::LineId> BatchPicker::targets(const EditSession &session) const
     return out;
 }
 
+std::string VisualHost::editorHotkey(int id) const
+{
+    return defaultHotkey({id, EditorHotkey});
+}
+
 std::unique_ptr<VisualTool> makeVisualTool(Family family)
 {
     // One line per tool. T2-T6 add theirs here; until then a family has no
@@ -205,6 +224,12 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
         return std::make_unique<RectangleClipTool>(); // T4
     case Family::VectorClip:
         return std::make_unique<VectorClipTool>(); // T4
+    case Family::Drawing:
+        return std::make_unique<DrawingTool>(); // T5
+    case Family::PositionShifter:
+        return std::make_unique<PositionShifterTool>(); // T6
+    case Family::Hydra:
+        return std::make_unique<AllTagsTool>(); // T6
     default:
         return nullptr;
     }

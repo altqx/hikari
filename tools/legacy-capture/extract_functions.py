@@ -6,7 +6,7 @@ Usage: extract_functions.py <source> <output> <signature>...
 Each signature is the start of a definition as it is written in the source
 (for example "bool RendererVideo::UpdateRects(bool changeZoom)" or
 "class FloatRect"); the definition runs from there to the brace that closes
-its body (and a following ';' for a class). Every signature must match
+its body (and a following ';' for a class, struct or enum). Every signature must match
 exactly once. The output holds the definitions in the order given, each after
 a #line directive naming its place in the source, so compiler messages and
 the probe's citations point at the legacy file.
@@ -51,7 +51,7 @@ def main():
         if first < 0 or text.find(signature, first + 1) >= 0:
             raise SystemExit(f"{source}: '{signature}' must occur exactly once")
         end = body_end(text, first)
-        if signature.startswith(("class ", "struct ")) and text[end:end + 1] == ";":
+        if signature.startswith(("class ", "struct ", "enum ")) and text[end:end + 1] == ";":
             end += 1
         line = text.count("\n", 0, first) + 1
         parts.append(f'#line {line} "{source}"\n{text[first:end]}\n')

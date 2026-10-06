@@ -102,4 +102,25 @@ Frame {
         if (button)
             button.forceActiveFocus(Qt.TabFocusReason)
     }
+    // A Video panel too short for the eleven families scrolls the rail so the
+    // on family stays in view: chosen by a hotkey or a menu, after a resize,
+    // or when the panel opens with a family below the fold.
+    function showActiveFamily() {
+        const button = families.itemAt(rail.tools.activeFamily)
+        const view = railScroll.contentItem
+        if (!button || !view || view.height <= 0)
+            return
+        const top = button.y
+        const bottom = button.y + button.height
+        if (top < view.contentY)
+            view.contentY = top
+        else if (bottom > view.contentY + view.height)
+            view.contentY = Math.min(bottom - view.height, Math.max(0, view.contentHeight - view.height))
+    }
+    // Only a change of family scrolls (the controller's changed() also
+    // fires for options and gestures), so a rail scrolled by hand stays put.
+    readonly property int activeFamily: tools.activeFamily
+    onActiveFamilyChanged: Qt.callLater(rail.showActiveFamily)
+    onHeightChanged: Qt.callLater(rail.showActiveFamily)
+    Component.onCompleted: Qt.callLater(rail.showActiveFamily)
 }

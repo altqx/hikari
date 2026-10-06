@@ -272,6 +272,13 @@ hikari_add_gtest(hikari_backends_visual_clip_render_tests SOURCES visual_clip_re
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_clip_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+
+# T5: the drawings the drawing tool reads and writes, rendered by libass,
+# against the tool's own points and shape rectangle.
+hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_drawing_render_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 # P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux).
 hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
 if(NOT WIN32)

@@ -16,13 +16,17 @@
 #include "hikari/core/ass_save.h"
 #include "media/mkv_fixture.h"
 #include "hikari/application/video_sources.h"
+#include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
+#include "hikari/application/visual_shift.h"
 #include "hikari/application/grid_translation.h"
 #include "icon_theme.h"
+#include "all_tags_editor.h"
+#include "shape_editor.h"
 #include "theme.h"
 #include "colour_picker_controller.h"
 #include "screen_sampler.h"
@@ -11812,6 +11816,766 @@ private slots:
         QVERIFY2(text(session->document().lines()[2]).contains(clip),
                  qPrintable(text(session->document().lines()[2]) + QStringLiteral(" lacks ") + clip));
         QTRY_COMPARE(alpha(230, 170), 255);
+    }
+
+    // T5: the drawing tool through the Video panel. Its row is legacy
+    // VectorItem for the drawing: the six point modes with their K1 icons and
+    // help texts, and the shape list ("Choose", the presets, "Edit"). A click
+    // in Add line writes a drawing into the Line as one "Visual vector drawing
+    // tool" step; with a preset chosen the modes take no click and a drag
+    // draws the preset into the rectangle shown over the video. "Edit" opens
+    // the "Vector shape editing" dialog on the preset chosen
+    // (T5-editor-opens-next); a save under a name another preset has asks
+    // to replace it or rename (accepted on #55); OK writes Config/ShapesSettings.txt
+    // (UTF-8 with a BOM, legacy's lines) and the list takes the new names;
+    // Restore default removes the file at once.
+    void visualDrawingShapesAndTheirEditor()
+    {
+        QTemporaryDir config;
+        QVERIFY(config.isValid());
+        auto &tools = application->visualTools();
+        const QString shapesFile = config.filePath(QStringLiteral("Config/ShapesSettings.txt"));
+        tools.setShapesFile(shapesFile);
+        QVERIFY(application->openFile(visualDocument("drawing.ass",
+                                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,40)}\n")));
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE).
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        const auto settle = [&] {
+            QRectF last;
+            return QTest::qWaitFor([&] {
+                QTest::qWait(50);
+                const QRectF r = tools.videoRect();
+                const bool same = r == last && !r.isEmpty();
+                last = r;
+                return same;
+            }, 5000);
+        };
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool8"), "click"));
+        QCOMPARE(tools.activeFamily(), 8);
+        QTRY_VERIFY(visualItem("visualOption_shape"));
+        QVERIFY(settle());
+        const char *roles[] = {"vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete"};
+        for (int i = 0; i < 6; ++i) {
+            QQuickItem *mode = visualItem(qPrintable(QStringLiteral("visualOption_mode%1").arg(i)));
+            QVERIFY(mode);
+            QCOMPARE(mode->property("iconRole").toString(), QLatin1String(roles[i]));
+            QCOMPARE(mode->property("checked").toBool(), i == 1);
+            QVERIFY(mode->property("enabled").toBool());
+        }
+        QVERIFY(!visualItem("visualOption_invert")); // the drawing has no Invert clip
+        // The row's items are made again whenever the tool's options change:
+        // the list is looked up each time.
+        const auto list = [&] { return visualItem("visualOption_shape"); };
+        QCOMPARE(list()->property("model").toStringList(),
+                 (QStringList{QStringLiteral("Choose"), QStringLiteral("rectangle"), QStringLiteral("circle"),
+                              QStringLiteral("rounded square 1"), QStringLiteral("rounded square 2"),
+                              QStringLiteral("rounded square 3"), QStringLiteral("Edit")}));
+        QCOMPARE(list()->property("currentIndex").toInt(), 0);
+        // The row is icon-only (the user's tool strip rule): the list is an
+        // icon button named by legacy's help text, its menu a ShellMenu.
+        const auto centreOf = [](QQuickItem *item) {
+            return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+        };
+        QVERIFY(!list()->inherits("QQuickComboBox"));
+        QCOMPARE(list()->property("iconRole").toString(), QStringLiteral("shape-presets"));
+        constexpr int iconOnly = 0; // AbstractButton.IconOnly
+        QCOMPARE(list()->property("display").toInt(), iconOnly);
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Name),
+                 QStringLiteral("List of ASS drawings with edit option."));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("Choose"));
+        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("List of ASS drawings with edit option.\n")));
+        QVERIFY(!list()->property("checked").toBool());
+        for (QQuickItem *item : visualItem("visualToolOptions")->childItems()) {
+            if (!item->inherits("QQuickLoader"))
+                continue;
+            auto *option = item->property("item").value<QQuickItem *>();
+            QVERIFY(option);
+            QVERIFY2(!option->inherits("QQuickComboBox"), qPrintable(option->objectName()));
+            QCOMPARE(option->property("display").toInt(), iconOnly);
+            QVERIFY(!option->property("iconRole").toString().isEmpty());
+            QVERIFY(!QAccessible::queryAccessibleInterface(option)->text(QAccessible::Name).isEmpty());
+        }
+        const auto menu = [&] { return list()->findChild<QObject *>(QStringLiteral("visualOption_shape_menu")); };
+        const auto menuItem = [&](int i) {
+            QQuickItem *item = nullptr;
+            QMetaObject::invokeMethod(menu(), "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+            return item;
+        };
+        // The entries in legacy's order, the chosen one checked, "Edit" after
+        // a separator.
+        const auto checkMenu = [&](const QStringList &entries, int chosen) {
+            QCOMPARE(menu()->property("count").toInt(), int(entries.size()) + 1);
+            for (int i = 0; i < entries.size(); ++i) {
+                QQuickItem *item = menuItem(i < entries.size() - 1 ? i : i + 1);
+                QVERIFY(item);
+                QCOMPARE(item->property("text").toString(), entries[i]);
+                QCOMPARE(item->property("checkable").toBool(), i < entries.size() - 1);
+                QCOMPARE(item->property("checked").toBool(), i == chosen);
+            }
+            QVERIFY(menuItem(int(entries.size()) - 1)->inherits("QQuickMenuSeparator"));
+        };
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        QVERIFY(list()->property("down").toBool());
+        checkMenu(list()->property("model").toStringList(), 0);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list())); // a second press closes it
+        QTRY_VERIFY(!menu()->property("visible").toBool());
+
+        // Free drawing: a click in Add line puts the first point.
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual vector drawing tool"));
+        QVERIFY2(text(session->document().lines()[0]).contains(QStringLiteral("\\p1")) &&
+                     text(session->document().lines()[0]).contains(QStringLiteral("}m ")),
+                 qPrintable(text(session->document().lines()[0])));
+
+        // A preset: the modes take no click; a drag draws it into the
+        // rectangle, one step.
+        application->selectLine(third.value);
+        QTRY_COMPARE(*session->selection().active, third);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem(1), "click"));
+        QTRY_VERIFY(!menu()->property("visible").toBool());
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
+        QVERIFY(list()->property("checked").toBool()); // on while a shape is chosen
+        QVERIFY(list()->property("tip").toString().startsWith(QStringLiteral("Shape: rectangle\nList of ASS drawings")));
+        QCOMPARE(QAccessible::queryAccessibleInterface(list())->text(QAccessible::Description), QStringLiteral("rectangle"));
+        QTRY_VERIFY(!visualItem("visualOption_mode1")->property("enabled").toBool());
+        QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
+        const std::size_t shapeSteps = session->historySize();
+        QTest::mouseMove(window, a);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, a + (b - a) * i / 4);
+        QVERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\an7\\pos(40,40)}"));
+        int lines = 0;
+        for (const QVariant &shape : tools.overlay())
+            lines += shape.toMap().value(QStringLiteral("type")).toString() == QLatin1String("line");
+        QCOMPARE(lines, 4); // the rectangle
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_COMPARE(session->historySize(), shapeSteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual vector drawing tool"));
+        // The rectangle preset written relative to the Line's \pos, one unit
+        // right and down of the drag's start (Shapes::GetVisual).
+        static const QRegularExpression drawn(QStringLiteral(
+            R"re(^\{\\p1\\an7\\pos\(40,40\)\}m ([0-9.]+) ([0-9.]+) l ([0-9.]+) \2 \3 ([0-9.]+) \1 \4\{\\p0\}$)re"));
+        const QRegularExpressionMatch m = drawn.match(text(session->document().lines()[2]));
+        QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
+        QVERIFY(m.captured(1).toDouble() > 1 && m.captured(2).toDouble() > 1);
+        QVERIFY(m.captured(3).toDouble() > m.captured(1).toDouble() && m.captured(4).toDouble() > m.captured(2).toDouble());
+
+        // "Edit": the dialog, on the preset chosen (T5-editor-opens-next:
+        // legacy opened on the one after it, "circle").
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        checkMenu(list()->property("model").toStringList(), 1);
+        QVERIFY(QMetaObject::invokeMethod(menuItem(7), "click"));
+        QTRY_VERIFY(!menu()->property("visible").toBool());
+        QObject *dialog = named("shapesEditionDialog");
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Vector shape editing"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1); // the list keeps the chosen preset
+        ui::ShapeEditor *editor = tools.shapeEditor();
+        QVERIFY(editor);
+        QCOMPARE(editor->list().size(), 5);
+        QCOMPARE(editor->name(), QStringLiteral("rectangle"));
+        QCOMPARE(named("shapeName")->property("text").toString(), QStringLiteral("rectangle"));
+        QVERIFY(!named("shapeScalingMode")->property("enabled").toBool());
+        // The name of another preset: Replace or Rename.
+        named("shapeName")->setProperty("text", QStringLiteral("Circle"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapeName"), "textEdited"));
+        QCOMPARE(editor->name(), QStringLiteral("Circle"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesApply"), "click"));
+        QObject *clash = named("shapesClash");
+        QTRY_VERIFY(clash->property("visible").toBool());
+        QCOMPARE(named("shapesClashText")->property("text").toString(),
+                 QStringLiteral("A shape named \"circle\" already exists."));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesClashReplace"), "click"));
+        QTRY_VERIFY(!clash->property("visible").toBool());
+        QCOMPARE(editor->edition().presets().size(), 4u);
+        QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"Circle"));
+        QVERIFY(!QFile::exists(shapesFile)); // Apply keeps it in the dialog only
+        QVERIFY(QMetaObject::invokeMethod(named("shapesOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!tools.shapeEditor());
+        QFile saved(shapesFile);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        const QByteArray bytes = saved.readAll();
+        saved.close(); // Windows removes no file a handle holds (Restore default below)
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
+        QVERIFY2(bytes.mid(3).startsWith("Shape: Circle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
+        QCOMPARE(bytes.count('\n'), 4);
+        QTRY_COMPARE(list()->property("model").toStringList().size(), 6);
+        QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("Circle"));
+        QCOMPARE(list()->property("currentIndex").toInt(), 1);
+
+        // Restore default: asked, then the file goes at once; Cancel keeps
+        // the presets the list has (legacy: only OK hands them back). The
+        // menu took the new names.
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
+        QTRY_VERIFY(menu()->property("opened").toBool());
+        checkMenu({QStringLiteral("Choose"), QStringLiteral("Circle"), QStringLiteral("rounded square 1"),
+                   QStringLiteral("rounded square 2"), QStringLiteral("rounded square 3"), QStringLiteral("Edit")},
+                  1);
+        QVERIFY(QMetaObject::invokeMethod(menuItem(6), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "click"));
+        QObject *question = named("shapesQuestion");
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(named("shapesQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to reset to default?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_VERIFY(!QFile::exists(shapesFile));
+        QCOMPARE(tools.shapeEditor()->list().size(), 5);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(list()->property("model").toStringList().size(), 6);
+    }
+
+    // T5: the drawing's surfaces in the light and dark palettes (with
+    // HIKARI_SURFACE_SHOT_DIR): the Video panel with the drawing's row and a
+    // shape drawn, the shape list's menu, and the "Vector shape editing" dialog.
+    void visualDrawingScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 860);
+        auto &tools = application->visualTools();
+        tools.setShapesFile({});
+        QVERIFY(application->openFile(visualDocument("drawing-shots.ass",
+                                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(40,40)\\1c&H3C9A2E&}\n")));
+        // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE).
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool8"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_shape"));
+        QTest::qWait(300);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 2)));
+        const QRectF v = tools.videoRect();
+        const QPoint a = videoPoint(v.topLeft() + QPointF(v.width() / 4, v.height() / 4));
+        const QPoint b = videoPoint(v.topLeft() + QPointF(v.width() * 3 / 4, v.height() * 3 / 4));
+        QTest::mouseMove(window, a);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, a);
+        for (int i = 1; i <= 4; ++i)
+            QTest::mouseMove(window, a + (b - a) * i / 4);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, b);
+        QTRY_VERIFY(!tools.gestureActive());
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        auto *root = engine->rootObjects().first();
+        for (const char *code : {"light", "dark"}) {
+            // K2: the theme layer's Light and Dark themes.
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QColor panel = controls->property("window").value<QColor>();
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            QTest::qWait(300);
+            QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/drawing-video-panel") + suffix));
+            // The shape list's menu under its button.
+            QQuickItem *button = visualItem("visualOption_shape");
+            auto *menu = button->findChild<QObject *>(QStringLiteral("visualOption_shape_menu"));
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                              button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint());
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QTest::qWait(300);
+            // The theme's palette, as the window's other menus.
+            QCOMPARE(menu->property("palette").value<QObject *>()->property("window").value<QColor>(),
+                     panel);
+            shot = window->grabWindow();
+            const QRect menuRect = crop(menu->property("background").value<QQuickItem *>()).united(crop(button));
+            QVERIFY(shot.copy(menuRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                        .save(out + QStringLiteral("/drawing-shape-menu") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 6)));
+            QObject *dialog = named("shapesEditionDialog");
+            QTRY_VERIFY(dialog->property("opened").toBool());
+            QTest::qWait(300);
+            shot = window->grabWindow();
+            auto *frame = dialog->property("background").value<QQuickItem *>(); // the whole box
+            const QRect r = crop(frame).adjusted(-8, -8, 8, 8).intersected(shot.rect());
+            QVERIFY(shot.copy(r).save(out + QStringLiteral("/shapes-edition-dialog") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
+    }
+
+    // T6: the Position shifter through the Video panel. Its row is legacy
+    // MoveAllItem: six toggles with their K1 icons and help texts, position
+    // points on. A drag of the position handle moves every chosen element of
+    // every target as one "Visual position adjustment tool" step: the batch
+    // picker's Lines the Grid shows (a Line the filter hides and a member of
+    // a closed Line group keep their text, as legacy's GetSelections left
+    // hidden Lines out). A, D, W and S move them by a script pixel.
+    void visualPositionShifterThroughThePanel()
+    {
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "shifter.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)\\org(100,100)}third\n"
+                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(40,40)\\org(10,10)}fourth\n"
+                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(60,60)}filtered\n"
+                           "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Group\n"
+                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,[tree_closed],0,0,0,,{\\pos(70,70)}grouped\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        const core::LineId third = lines[2]->id, fourth = lines[3]->id, filtered = lines[4]->id, grouped = lines[6]->id;
+        // The filter hides "filtered" (Hide selected lines).
+        session->setSelection({filtered, {filtered}, filtered, {}});
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("hideSelectedLines")), "triggered"));
+        QTRY_VERIFY(application->shell().filtered());
+        const auto shown = application->shell().displayedLines();
+        QVERIFY(std::find(shown.begin(), shown.end(), filtered) == shown.end());
+        QVERIFY(std::find(shown.begin(), shown.end(), grouped) == shown.end()); // the closed group's member
+        // The batch: third (active), fourth and both hidden Lines.
+        session->setSelection({third, {third, fourth, filtered, grouped}, third, {}});
+        application->selectLine(third.value);
+        session->setSelection({third, {third, fourth, filtered, grouped}, third, {}});
+        tools.pickBatch();
+        QCOMPARE(tools.batchCount(), 4);
+        QTRY_COMPARE(*session->selection().active, third);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool9"), "click"));
+        QCOMPARE(tools.activeFamily(), 9);
+        QTRY_VERIFY(visualItem("visualToolOptions")->isVisible());
+        // MoveAllItem (VideoToolbar.cpp:70-75, 354-414).
+        const char *names[] = {"positions", "moveStarts", "moveEnds", "clips", "drawings", "origins"};
+        const char *roles[] = {"shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings",
+                               "shift-origins"};
+        const char *tips[] = {"Move position points", "Change \\move starting points", "Change \\move ending points",
+                              "Move clips", "Move drawings;", "Move \\org points"};
+        const auto option = [&](const char *name) {
+            return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
+        };
+        constexpr int iconOnly = 0; // AbstractButton.IconOnly
+        for (int i = 0; i < 6; ++i) {
+            QQuickItem *b = option(names[i]);
+            QVERIFY2(b, names[i]);
+            QCOMPARE(b->property("iconRole").toString(), QLatin1String(roles[i]));
+            QCOMPARE(b->property("display").toInt(), iconOnly);
+            QCOMPARE(b->property("checked").toBool(), i == 0);
+            QVERIFY(b->isEnabled());
+            QVERIFY(b->property("tip").toString().startsWith(QLatin1String(tips[i])));
+            QVERIFY(!QAccessible::queryAccessibleInterface(b)->text(QAccessible::Name).isEmpty());
+        }
+        // \org points too.
+        QVERIFY(QMetaObject::invokeMethod(option("origins"), "click"));
+        QTRY_VERIFY(option("origins")->property("checked").toBool());
+        auto *shifter = dynamic_cast<PositionShifterTool *>(tools.tool());
+        QVERIFY(shifter);
+        QCOMPARE(shifter->selectedTags(), 33);
+        // The handles: the position's square and the \org's orange cross.
+        const auto &view = tools.videoView();
+        int squares = 0, crosses = 0;
+        for (const QVariant &shape : tools.overlay()) {
+            const QVariantMap m = shape.toMap();
+            squares += m.value(QStringLiteral("type")).toString() == QLatin1String("polygon");
+            crosses += m.value(QStringLiteral("type")).toString() == QLatin1String("line");
+        }
+        QCOMPARE(squares, 1);
+        QCOMPARE(crosses, 2);
+
+        // A drag of the position handle by 10 view pixels: one step.
+        const PointF handle = view.scriptToView({160, 120});
+        QCOMPARE(shifter->elements().back().elem, handle);
+        const QPoint p = videoPoint(QPointF(view.toLogical(handle.x), view.toLogical(handle.y)));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, p);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(5, 0));
+        QTest::mouseMove(window, p + QPoint(10, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\pos(160,120)\\org(100,100)}third"));
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(10, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual position adjustment tool"));
+        // Both shown targets move by the same amount: the 10 pixels in script
+        // pixels (whole pointer pixels from the handle, legacy's int diffs);
+        // the hidden Lines keep their text.
+        static const QRegularExpression pos(QStringLiteral(R"(\\pos\(([-0-9.]+),([-0-9.]+)\)\\org\(([-0-9.]+),([-0-9.]+)\))"));
+        const auto numbers = [&](int line) {
+            const auto m = pos.match(text(session->document().lines()[static_cast<qsizetype>(line)]));
+            return std::array<double, 4>{m.captured(1).toDouble(), m.captured(2).toDouble(), m.captured(3).toDouble(),
+                                         m.captured(4).toDouble()};
+        };
+        const auto a = numbers(2), b = numbers(3);
+        const double dx = a[0] - 160, dy = a[1] - 120;
+        QVERIFY2(std::abs(dx - (view.viewToScript({handle.x + view.toDevice(10), handle.y}).x - 160)) < 1.5,
+                 qPrintable(text(session->document().lines()[2])));
+        QVERIFY(std::abs(dy) < 1.5);
+        QVERIFY(std::abs((a[2] - 100) - dx) < 0.002 && std::abs((a[3] - 100) - dy) < 0.002);
+        QVERIFY(std::abs((b[0] - 40) - dx) < 0.002 && std::abs((b[1] - 40) - dy) < 0.002);
+        QVERIFY(std::abs((b[2] - 10) - dx) < 0.002 && std::abs((b[3] - 10) - dy) < 0.002);
+        QCOMPARE(text(session->document().lines()[4]), QStringLiteral("{\\pos(60,60)}filtered"));
+        QCOMPARE(text(session->document().lines()[6]), QStringLiteral("{\\pos(70,70)}grouped"));
+        // The tool reads the Lines again (SetModified's SetVisual).
+        QTRY_COMPARE(shifter->elements().back().elem,
+                     view.scriptToView({static_cast<float>(a[0]), static_cast<float>(a[1])}));
+
+        // D: a script pixel right, its own step.
+        visualItem("videoPanel")->forceActiveFocus();
+        const std::size_t keySteps = session->historySize();
+        QTest::keyClick(window, Qt::Key_D);
+        QTRY_COMPARE(session->historySize(), keySteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual position adjustment tool"));
+        const auto c = numbers(3);
+        QVERIFY2(std::abs(c[0] - b[0] - 1) < 0.002 && std::abs(c[1] - b[1]) < 0.002,
+                 qPrintable(text(session->document().lines()[3])));
+        QCOMPARE(text(session->document().lines()[4]), QStringLiteral("{\\pos(60,60)}filtered"));
+    }
+
+    // T6: the all-tags tool through the Video panel. Its row is legacy
+    // AllTagsItem as icons with their menus: the tag list ("blur" first),
+    // the change options (Insert) and Edit. The sliders are drawn over the
+    // video; dragging the thumb writes the tag into the Line editor's text
+    // at the caret as one "Visual Hydra tool" step. Edit opens "Tag editing":
+    // a new definition, OK writes Config/AllTagsSettings.txt (UTF-8 with a
+    // BOM, "HYDRA2.0" first) and the list takes it; Restore default removes
+    // the file at once.
+    void visualAllTagsThroughThePanel()
+    {
+        using namespace application::visual;
+        QTemporaryDir config;
+        QVERIFY(config.isValid());
+        auto &tools = application->visualTools();
+        const QString tagsFile = config.filePath(QStringLiteral("Config/AllTagsSettings.txt"));
+        tools.setAllTagsFile(tagsFile);
+        QVERIFY(application->openFile(visualDocument("alltags.ass",
+                                                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\blur2}third\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool10"), "click"));
+        QCOMPARE(tools.activeFamily(), 10);
+        QTRY_VERIFY(visualItem("visualOption_tag"));
+        constexpr int iconOnly = 0; // AbstractButton.IconOnly
+        const auto option = [&](const char *name) {
+            return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
+        };
+        const auto centreOf = [](QQuickItem *item) {
+            return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+        };
+        struct Row {
+            const char *name, *role, *accessibleName, *description;
+        };
+        for (const Row &r : {Row{"tag", "tag-list", "List of tags that can edit visual tool", "blur"},
+                             Row{"changeOption", "tag-change-option", "Tag change options:", "Insert"},
+                             Row{"edit", "tag-edit", "Edit listed tags and create new ones", ""}}) {
+            QQuickItem *b = option(r.name);
+            QVERIFY2(b, r.name);
+            QVERIFY(!b->inherits("QQuickComboBox"));
+            QCOMPARE(b->property("iconRole").toString(), QLatin1String(r.role));
+            QCOMPARE(b->property("display").toInt(), iconOnly);
+            QVERIFY(!b->property("checked").toBool());
+            QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Name), QLatin1String(r.accessibleName));
+            if (*r.description)
+                QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Description),
+                         QLatin1String(r.description));
+        }
+        QVERIFY(option("tag")->property("tip").toString().startsWith(QStringLiteral("blur\nList of tags")));
+        // The row's place settles with the panel's layout.
+        QRectF lastRow;
+        QVERIFY(QTest::qWaitFor([&] {
+            QTest::qWait(50);
+            const QRectF r = option("tag")->mapRectToScene(QRectF(0, 0, option("tag")->width(), option("tag")->height()));
+            const bool same = r == lastRow && r.width() > 0;
+            lastRow = r;
+            return same;
+        }, 5000));
+        // The tag list's menu: legacy's 22 definitions, no separator.
+        // The row's items are made again whenever the tool's options change:
+        // the menu is looked up each time.
+        const auto menuOf = [&] { return option("tag")->findChild<QObject *>(QStringLiteral("visualOption_tag_menu")); };
+        QVERIFY(menuOf());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(option("tag")));
+        QTRY_VERIFY(menuOf()->property("opened").toBool());
+        QCOMPARE(menuOf()->property("count").toInt(), 23); // the hidden separator and the entries
+        QVERIFY(QMetaObject::invokeMethod(menuOf(), "close"));
+        QTRY_VERIFY(!menuOf()->property("visible").toBool());
+        auto *allTags = dynamic_cast<AllTagsTool *>(tools.tool());
+        QVERIFY(allTags);
+        QCOMPARE(allTags->actualTag().tag, std::u16string(u"blur"));
+        QCOMPARE(allTags->mode(), static_cast<int>(PasteInsert));
+        QCOMPARE(allTags->sliders()[0].thumbValue, 2.f);
+        // The slider over the video: its track and thumb.
+        int polygons = 0;
+        for (const QVariant &shape : tools.overlay())
+            polygons += shape.toMap().value(QStringLiteral("type")).toString() == QLatin1String("polygon");
+        QCOMPARE(polygons, 2);
+
+        // The thumb dragged 58 device pixels right: \blur 12 at the caret's
+        // block, one step.
+        application->editor().setShowTags(true);
+        auto *field = item("lineText");
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("{\\blur2}third"));
+        QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 3), Q_ARG(int, 3)));
+        const auto &view = tools.videoView();
+        const auto &slider = allTags->sliders()[0];
+        const float coeff = (slider.right - slider.left) / 100.f;
+        const float thumbX = (2.f * coeff) + slider.left;
+        const QPoint thumb = videoPoint(QPointF(view.toLogical(thumbX), view.toLogical(slider.top - 2)));
+        const std::size_t steps = session->historySize();
+        QTest::mouseMove(window, thumb);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, thumb);
+        const int to = static_cast<int>(std::lround(view.toLogical(10.f * coeff)));
+        QTest::mouseMove(window, thumb + QPoint(to / 2, 0));
+        QTest::mouseMove(window, thumb + QPoint(to, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur2}third")); // not yet
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, thumb + QPoint(to, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual Hydra tool"));
+        static const QRegularExpression written(QStringLiteral(R"(^\{\\blur([0-9.]+)\}third$)"));
+        const auto m = written.match(text(session->document().lines()[2]));
+        QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
+        QVERIFY(std::abs(m.captured(1).toDouble() - 12.0) < 0.6);
+        // The editor takes the text, its caret at the tag.
+        QTRY_COMPARE(field->property("text").toString(), text(session->document().lines()[2]));
+        QTRY_COMPARE(field->property("cursorPosition").toInt(), 1);
+        application->editor().setShowTags(false);
+
+        // "fading" and the Line editor's "Insert difference from the start"
+        // (Ctrl+,) with the video a frame into the Line: the first value
+        // takes the time from the Line's start (AllTags::OnKeyPress).
+        QVERIFY(tools.setOption(QStringLiteral("tag"), 10));
+        QCOMPARE(allTags->actualTag().tag, std::u16string(u"fad"));
+        application->video().stepFrames(1);
+        // The tool reads the shown frame's time (VideoBox::Tell).
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(25), 20000);
+        const int since = static_cast<int>(tools.videoTimeMs()) - 1000;
+        const std::size_t keySteps = session->historySize();
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
+        QTRY_COMPARE(session->historySize(), keySteps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual Hydra tool"));
+        QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\fad(%1,0)").arg(since)),
+                 qPrintable(text(session->document().lines()[2])));
+        QVERIFY(session->undo());
+
+        // Choosing "border" brings its change option (Add).
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(option("tag")));
+        QTRY_VERIFY(menuOf()->property("opened").toBool());
+        QObject *border = menuOf()->findChild<QObject *>(QStringLiteral("visualOption_tag_1"));
+        QVERIFY(border);
+        QVERIFY(QMetaObject::invokeMethod(border, "triggered"));
+        QTRY_COMPARE(allTags->actualTag().tag, std::u16string(u"bord"));
+        QCOMPARE(allTags->mode(), static_cast<int>(PasteAdd));
+        QTRY_COMPARE(QAccessible::queryAccessibleInterface(option("changeOption"))->text(QAccessible::Description),
+                     QStringLiteral("Add"));
+        QTRY_VERIFY(!menuOf()->property("visible").toBool());
+
+        // Edit: "Tag editing", a new definition, OK.
+        QVERIFY(QMetaObject::invokeMethod(option("edit"), "click"));
+        QObject *dialog = named("tagsEditionDialog");
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Tag editing"));
+        ui::AllTagsEditor *editor = tools.tagsEditor();
+        QVERIFY(editor);
+        QCOMPARE(editor->selection(), 1); // the list's selection
+        QCOMPARE(editor->tag(), QStringLiteral("bord"));
+        QCOMPARE(named("tagsField_max")->property("text").toString(), QStringLiteral("50"));
+        QVERIFY(named("tagsField_value2"));
+        QVERIFY(!named("tagsField_value2")->property("enabled").toBool());
+        // An empty new name is refused.
+        QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
+        QObject *message = named("tagsMessage");
+        QTRY_VERIFY(message->property("visible").toBool());
+        QCOMPARE(named("tagsMessageText")->property("text").toString(), QStringLiteral("Enter a name for the new tag."));
+        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
+        QTRY_VERIFY(!message->property("visible").toBool());
+        named("newTagName")->setProperty("text", QStringLiteral("wide"));
+        QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
+        QTRY_COMPARE(editor->list().size(), 23);
+        QCOMPARE(editor->selection(), 22);
+        named("tagsTag")->setProperty("text", QStringLiteral("fscx"));
+        QVERIFY(QMetaObject::invokeMethod(named("tagsTag"), "textEdited"));
+        editor->setNumber(QStringLiteral("max"), QStringLiteral("400"));
+        QTRY_COMPARE(named("tagsField_max")->property("text").toString(), QStringLiteral("400"));
+        QVERIFY(!QFile::exists(tagsFile));
+        QVERIFY(QMetaObject::invokeMethod(named("tagsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!tools.tagsEditor());
+        QFile saved(tagsFile);
+        QVERIFY(saved.open(QIODevice::ReadOnly));
+        const QByteArray bytes = saved.readAll();
+        saved.close(); // Windows removes no file a handle holds (Restore default below)
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBFHYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
+        QVERIFY2(bytes.endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 0\n"), bytes.constData());
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
+        QCOMPARE(option("tag")->property("model").toStringList().last(), QStringLiteral("wide"));
+
+        // Restore default: asked, then the file goes at once; Cancel keeps
+        // the definitions the list has.
+        QVERIFY(QMetaObject::invokeMethod(option("edit"), "click"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("tagsRestoreDefault"), "click"));
+        QObject *question = named("tagsQuestion");
+        QTRY_VERIFY(question->property("visible").toBool());
+        QCOMPARE(named("tagsQuestionText")->property("text").toString(),
+                 QStringLiteral("Are you sure you want to reset to default?"));
+        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_VERIFY(!QFile::exists(tagsFile));
+        QCOMPARE(tools.tagsEditor()->list().size(), 22);
+        QVERIFY(QMetaObject::invokeMethod(named("tagsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(option("tag")->property("model").toStringList().size(), 23);
+        tools.setAllTagsFile({});
+    }
+
+    // A Video panel too short for the eleven families scrolls the rail so the
+    // on family stays in view (the shifter and the all-tags tool are the last
+    // two), and a family chosen above the fold scrolls it back.
+    void visualToolRailKeepsTheActiveFamilyInView()
+    {
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(
+            visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
+        window->resize(1280, 860);
+        QTRY_VERIFY(visualItem("visualToolRailScroll"));
+        QQuickItem *scroll = visualItem("visualToolRailScroll");
+        auto *view = scroll->property("contentItem").value<QQuickItem *>();
+        QVERIFY(view);
+        tools.selectFamily(0);
+        const auto inView = [&](int family) {
+            QQuickItem *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)));
+            if (!button || !button->isVisible())
+                return false;
+            const QRectF r = button->mapRectToItem(scroll, QRectF(0, 0, button->width(), button->height()));
+            return r.top() >= -0.5 && r.bottom() <= scroll->height() + 0.5;
+        };
+        const auto overflows = [&] { return view->property("contentHeight").toReal() > view->height() + 0.5; };
+        // Shrink the window until the rail overflows.
+        for (int h = 760; h >= 400 && !overflows(); h -= 40) {
+            window->resize(1280, h);
+            QTest::qWait(50);
+        }
+        QVERIFY2(overflows(), "the rail does not overflow");
+        QTRY_VERIFY(inView(0));
+        QVERIFY(!inView(10));
+        for (int family : {10, 9, 0, 10}) {
+            tools.selectFamily(family);
+            QCOMPARE(tools.activeFamily(), family);
+            QTRY_VERIFY2(inView(family), qPrintable(QString::number(family)));
+            QVERIFY(visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)))->property("checked").toBool());
+        }
+        tools.selectFamily(0);
+        window->resize(1280, 860);
+    }
+
+    // T6: the Position shifter's and the all-tags tool's surfaces in the
+    // Light and Dark themes (with HIKARI_SURFACE_SHOT_DIR): the Video panel
+    // with each row and its handles or sliders, the tag list's menu, and the
+    // "Tag editing" dialog.
+    void visualShifterAndTagsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        // Tall enough for the whole tool rail beside the video.
+        window->resize(1280, 1000);
+        auto &tools = application->visualTools();
+        tools.setAllTagsFile({});
+        QVERIFY(application->openFile(visualDocument(
+            "t6-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)\\org(120,90)"
+                            "\\clip(m 100 80 l 220 80 220 160 100 160)\\blur2}Shifted\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        auto *root = engine->rootObjects().first();
+        for (const char *code : {"light", "dark"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            // The shifter with clips and \org on.
+            tools.selectFamily(9);
+            QTRY_VERIFY(visualItem("visualOption_clips"));
+            if (!visualItem("visualOption_clips")->property("checked").toBool())
+                QVERIFY(tools.setOption(QStringLiteral("clips"), 1));
+            if (!visualItem("visualOption_origins")->property("checked").toBool())
+                QVERIFY(tools.setOption(QStringLiteral("origins"), 1));
+            QTest::qWait(300);
+            QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/shifter-video-panel") + suffix));
+            // The all-tags tool.
+            tools.selectFamily(10);
+            QTRY_VERIFY(visualItem("visualOption_tag"));
+            QTest::qWait(300);
+            shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/alltags-video-panel") + suffix));
+            QQuickItem *button = visualItem("visualOption_changeOption");
+            auto *menu = button->findChild<QObject *>(QStringLiteral("visualOption_changeOption_menu"));
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                              button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint());
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QTest::qWait(300);
+            shot = window->grabWindow();
+            const QRect menuRect = crop(menu->property("background").value<QQuickItem *>()).united(crop(button));
+            QVERIFY(shot.copy(menuRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                        .save(out + QStringLiteral("/alltags-change-menu") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+            QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
+            QObject *dialog = named("tagsEditionDialog");
+            QTRY_VERIFY(dialog->property("opened").toBool());
+            QTest::qWait(300);
+            shot = window->grabWindow();
+            auto *frame = dialog->property("background").value<QQuickItem *>();
+            QVERIFY(shot.copy(crop(frame).adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                        .save(out + QStringLiteral("/tags-edition-dialog") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("tagsCancel"), "click"));
+            QTRY_VERIFY(!dialog->property("visible").toBool());
+        }
     }
 
     // K1: the video transport buttons show the set's icons (legacy VideoBox's

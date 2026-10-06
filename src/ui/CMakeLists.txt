@@ -12,8 +12,9 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     spelling_text.cpp spelling_text.h spelling_highlighter.cpp spelling_highlighter.h
     settings_store.cpp settings_store.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
-    visual_tools_controller.cpp visual_tools_controller.h
-    tag_list_controller.cpp tag_list_controller.h)
+    visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
+    tag_list_controller.cpp tag_list_controller.h
+    all_tags_editor.cpp all_tags_editor.h)
 target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
@@ -54,6 +55,10 @@ qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml V
 # T2-T4: the families' options row (Position, Move, Scale, the rotations, the
 # clips' point modes and Invert clip).
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
+# T5: the drawing's "Vector shape editing" dialog.
+qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
+# T6: the all-tags tool's "Tag editing" dialog.
+qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 # V3: video sources, tracks and chapters: the recent lists, the stream and
 # chapter menus, the indexing progress, the next-file question and the dummy
 # video dialog.

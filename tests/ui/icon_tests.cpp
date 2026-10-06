@@ -270,7 +270,9 @@ private slots:
                                  "show-in-folder", "compare", "reference", "extract-subtitles", "multireplace",
                                  "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
                                  "match-next", "unload", "run-script", "settings-video", "settings-audio",
-                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass"})
+                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass",
+                                 // T6's position shifter and all-tags roles
+                                 "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
         int pending = 0;
@@ -285,8 +287,8 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // T6's position shifter options.
-        QCOMPARE(pending, 6);
+        // Every card that placed roles has landed.
+        QCOMPARE(pending, 0);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.

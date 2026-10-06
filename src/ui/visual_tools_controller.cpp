@@ -1,14 +1,20 @@
 #include "visual_tools_controller.h"
 
+#include "hikari/application/visual_all_tags.h"
+
 #include "video_controller.h"
 
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/text_projection.h"
 
 #include <QClipboard>
 #include <QColor>
 #include <QCursor>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QFontInfo>
 #include <QFontMetricsF>
 #include <QGuiApplication>
@@ -57,7 +63,8 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
             t->blocked(*this);
         emit changed(); // the shown frame's time moves the warnings
         // T3: a \move's position follows the shown frame (legacy Draw ran
-        // DrawVisual on every frame, Visuals.cpp:504-529).
+        // DrawVisual on every frame, Visuals.cpp:504-529);
+        // T5: so do a \move drawing's points (DrawingAndClip::DrawVisual).
         if (const auto time = videoTimeMs(); time != m_seenTime) {
             m_seenTime = time;
             emit overlayChanged();
@@ -326,6 +333,208 @@ void VisualToolsController::toolChanged()
     updatePreview();
 }
 
+std::int64_t VisualToolsController::videoTimeMs() const
+{
+    // VideoBox::Tell: the shown frame's start.
+    const auto frame = m_video.session().shownFrame();
+    if (!frame)
+        return 0;
+    const auto start = m_video.session().frameStart(*frame);
+    return start ? start->microseconds() / 1000 : 0;
+}
+
+const std::vector<ShapePreset> *VisualToolsController::shapePresets() const
+{
+    // VideoToolbar::GetShapesSettings: LoadSettings while there are none
+    // (VisualDrawingShapes.cpp:291-331): the file, read as UTF-8 (BOM
+    // dropped; the Windows build's text-mode read made CRLF LF), else
+    // legacy's defaults.
+    if (m_shapes.empty()) {
+        QFile f(m_shapesFile);
+        if (!m_shapesFile.isEmpty() && f.open(QIODevice::ReadOnly)) {
+            QByteArray bytes = f.readAll();
+            if (bytes.startsWith("\xEF\xBB\xBF"))
+                bytes.remove(0, 3);
+            QString text = QString::fromUtf8(bytes);
+#ifdef _WIN32
+            text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+#endif
+            m_shapes = parseShapePresets(text.toStdU16String());
+        } else {
+            m_shapes = defaultShapePresets();
+        }
+    }
+    return &m_shapes;
+}
+
+void VisualToolsController::saveShapes() const
+{
+    // SaveSettings (VisualDrawingShapes.cpp:341-353): UTF-8 with a BOM, the
+    // folder made when missing (OpenWrite).
+    if (m_shapesFile.isEmpty())
+        return;
+    QDir().mkpath(QFileInfo(m_shapesFile).absolutePath());
+    QFile f(m_shapesFile);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return;
+    f.write("\xEF\xBB\xBF");
+    f.write(QString::fromStdU16String(writeShapePresets(m_shapes)).toUtf8());
+}
+
+const std::vector<application::visual::AllTagsSetting> *VisualToolsController::allTagsSettings() const
+{
+    // VideoToolbar::GetTagsSettings: LoadSettings while there are none
+    // (VisualAllTagsEdition.cpp:457-547): the file, read as UTF-8 (BOM
+    // dropped; the Windows build's text-mode read made CRLF LF), else
+    // legacy's defaults, which replace a file of an older version. An empty
+    // list (a file with the version alone) is legacy's defaults too: legacy
+    // read past the end of it.
+    if (m_allTags.empty()) {
+        QFile f(m_tagsFile);
+        QString text;
+        if (!m_tagsFile.isEmpty() && f.open(QIODevice::ReadOnly)) {
+            QByteArray bytes = f.readAll();
+            if (bytes.startsWith("\xEF\xBB\xBF"))
+                bytes.remove(0, 3);
+            text = QString::fromUtf8(bytes);
+#ifdef _WIN32
+            text.replace(QStringLiteral("\r\n"), QStringLiteral("\n"));
+#endif
+        }
+        bool writeDefaults = false;
+        m_allTags = application::visual::parseAllTags(text.toStdU16String(), &writeDefaults);
+        if (writeDefaults && !m_tagsFile.isEmpty()) {
+            // OpenWrite::FileWrite: UTF-8 with a BOM.
+            QFile out(m_tagsFile);
+            if (out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+                out.write("\xEF\xBB\xBF");
+                out.write(QString::fromStdU16String(std::u16string(application::visual::defaultAllTagsText())).toUtf8());
+            }
+        }
+        if (m_allTags.empty())
+            m_allTags = application::visual::defaultAllTags();
+    }
+    return &m_allTags;
+}
+
+void VisualToolsController::saveAllTags() const
+{
+    // SaveSettings (VisualAllTagsEdition.cpp:557-575): UTF-8 with a BOM, the
+    // folder made when missing (OpenWrite).
+    if (m_tagsFile.isEmpty())
+        return;
+    QDir().mkpath(QFileInfo(m_tagsFile).absolutePath());
+    QFile f(m_tagsFile);
+    if (!f.open(QIODevice::WriteOnly | QIODevice::Truncate))
+        return;
+    f.write("\xEF\xBB\xBF");
+    f.write(QString::fromStdU16String(application::visual::writeAllTags(m_allTags)).toUtf8());
+}
+
+std::string VisualToolsController::editorHotkey(int id) const
+{
+    return m_editorHotkey ? m_editorHotkey(id) : VisualHost::editorHotkey(id);
+}
+
+void VisualToolsController::openTagsEditor()
+{
+    if (m_tagsEditor)
+        return;
+    auto *allTags = dynamic_cast<application::visual::AllTagsTool *>(tool());
+    if (!allTags)
+        return;
+    AllTagsEditor::Hooks hooks;
+    hooks.removeFile = [this] {
+        if (!m_tagsFile.isEmpty())
+            QFile::remove(m_tagsFile);
+    };
+    hooks.finished = [this, allTags](std::optional<std::vector<application::visual::AllTagsSetting>> tags) {
+        if (tags) {
+            // OK: VideoToolbar::SetTagsSettings, the list's names again (its
+            // selection kept by name) and the tool told (ChangeTool).
+            const auto oldNames = application::visual::allTagsNames(*allTagsSettings());
+            m_allTags = std::move(*tags);
+            if (m_allTags.empty())
+                m_allTags = application::visual::defaultAllTags();
+            saveAllTags();
+            if (allTags == tool())
+                allTags->definitionsChanged(oldNames, *this);
+        }
+        if (m_tagsEditor)
+            m_tagsEditor->deleteLater();
+        m_tagsEditor = nullptr;
+        emit tagsEditorChanged();
+        refreshOptions();
+        emit changed();
+        emit overlayChanged();
+    };
+    m_tagsEditor = new AllTagsEditor(*allTagsSettings(), allTags->toggled() & 0xFFFFF, std::move(hooks), this);
+    emit tagsEditorChanged();
+}
+
+void VisualToolsController::openShapeEditor()
+{
+    if (m_shapeEditor)
+        return;
+    auto *drawing = tool();
+    int selection = 0;
+    for (const QVariant &o : std::as_const(m_options)) {
+        const QVariantMap m = o.toMap();
+        if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
+            selection = m.value(QStringLiteral("index")).toInt();
+    }
+    ShapeEditor::Hooks hooks;
+    hooks.activeLineText = [this]() -> std::u16string {
+        // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
+        // (Dialogue::GetTextNoCopy: its translation when it has one).
+        const auto *s = editingSession();
+        const auto active = activeLine();
+        if (!s || !active)
+            return {};
+        for (const auto *line : s->document().lines())
+            if (line->id == *active)
+                return core::toUtf16(line->translation.empty() ? line->text : line->translation);
+        return {};
+    };
+    hooks.removeFile = [this] {
+        if (!m_shapesFile.isEmpty())
+            QFile::remove(m_shapesFile);
+    };
+    hooks.defaults = [] { return defaultShapePresets(); };
+    hooks.finished = [this, drawing](std::optional<std::vector<ShapePreset>> presets) {
+        if (presets) {
+            // OK: VideoToolbar::SetShapesSettings, the list's names again,
+            // its selection kept (or the last preset's), and the tool told
+            // (ChangeTool -> SetShape, which keeps the shape it has when the
+            // selection is the same).
+            m_shapes = std::move(*presets);
+            saveShapes();
+            int selection = 0;
+            for (const QVariant &o : std::as_const(m_options)) {
+                const QVariantMap m = o.toMap();
+                if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
+                    selection = m.value(QStringLiteral("index")).toInt();
+            }
+            if (selection > static_cast<int>(m_shapes.size()))
+                selection = static_cast<int>(m_shapes.size());
+            if (drawing && drawing == tool())
+                drawing->setOption("shape", selection, *this);
+        }
+        if (m_shapeEditor)
+            m_shapeEditor->deleteLater();
+        m_shapeEditor = nullptr;
+        emit shapeEditorChanged();
+        refreshOptions();
+        emit optionsChanged();
+        emit overlayChanged();
+    };
+    // The chosen preset: the list's selection less "Choose" (from "Choose"
+    // the first). Legacy passed the selection itself, opening on the preset
+    // after the one chosen (T5-editor-opens-next).
+    m_shapeEditor = new ShapeEditor(*shapePresets(), selection - 1, std::move(hooks), this);
+    emit shapeEditorChanged();
+}
+
 void VisualToolsController::bell()
 {
     // Legacy wxBell; counted (the shell has no audible bell to give).
@@ -366,7 +575,8 @@ void VisualToolsController::refreshOptions()
                                    {QStringLiteral("checked"), o.checked},
                                    {QStringLiteral("enabled"), o.enabled && m_railEnabled},
                                    {QStringLiteral("choices"), choices},
-                                   {QStringLiteral("index"), o.index}});
+                                   {QStringLiteral("index"), o.index},
+                                   {QStringLiteral("listEnds"), o.listEnds}});
         }
     }
     if (out == m_options)
@@ -383,6 +593,21 @@ bool VisualToolsController::setOption(const QString &name, int value)
     if (!t || !m_railEnabled || m_gesture)
         return false;
     m_notice.clear();
+    if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
+        value > static_cast<int>(m_shapes.size())) {
+        // The shape list's "Edit" (VectorItem::ShowContols, VideoToolbar.cpp:
+        // 516-536): the editor opens; the list keeps its selection.
+        openShapeEditor();
+        refreshOptions();
+        emit optionsChanged(); // the list shows the selection again
+        return true;
+    }
+    if (m_family == Family::Hydra && name == QStringLiteral("edit")) {
+        // The all-tags row's Edit (AllTagsItem, VideoToolbar.cpp:783-797):
+        // the "Tag editing" dialog on the list's selection.
+        openTagsEditor();
+        return true;
+    }
     const bool done = t->setOption(name.toStdString(), value, *this);
     emit changed();
     emit overlayChanged();
@@ -444,15 +669,6 @@ void VisualToolsController::updatePreview()
         m_preview(nullptr);
 }
 
-std::int64_t VisualToolsController::videoTimeMs() const
-{
-    // VideoBox::Tell: the shown frame's time.
-    const auto frame = m_video.session().shownFrame();
-    if (!frame)
-        return 0;
-    const auto start = m_video.session().frameStart(*frame);
-    return start ? start->microseconds() / 1000 : 0;
-}
 
 application::LegacyTimebase VisualToolsController::timebase() const
 {

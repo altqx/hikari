@@ -157,6 +157,20 @@ hikari_add_gtest(hikari_application_visual_clip_tests SOURCES visual_clip_tests.
 target_compile_definitions(hikari_application_visual_clip_tests PRIVATE
     HIKARI_CLIP_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/clip-cases.txt"
     HIKARI_CLIP_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t4-clip-20261005/observations.jsonl")
+# T5: the drawing tool and its shape presets, with the legacy probe's
+# observations.
+hikari_add_gtest(hikari_application_visual_drawing_tests SOURCES visual_drawing_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_drawing_tests PRIVATE
+    HIKARI_DRAWING_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/drawing-cases.txt"
+    HIKARI_DRAWING_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t5-drawing-20261005/observations.jsonl")
+# T6: the Position shifter and the all-tags tool with their definitions and
+# the "Tag editing" dialog's model, with the legacy probe's observations.
+hikari_add_gtest(hikari_application_visual_shift_tests SOURCES visual_shift_tests.cpp
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_visual_shift_tests PRIVATE
+    HIKARI_VISUAL_T6_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/visual-t6-cases.txt"
+    HIKARI_VISUAL_T6_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-t6-visual-20261006/observations.jsonl")
 # V4: the video view's zoom, aspect, volume, snapshot and matrix arithmetic.
 hikari_add_gtest(hikari_application_video_view_tests SOURCES video_view_tests.cpp
     LIBRARIES hikari_application LABELS application)

@@ -1628,6 +1628,17 @@
    ]
   },
   {
+   "role": "shape-presets",
+   "file": "shape-presets.svg",
+   "label": "Shape presets",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
    "role": "clip-invert",
    "file": "clip-invert.svg",
    "label": "Invert clip",
@@ -1651,8 +1662,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "shift-move-start",
@@ -1665,8 +1675,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "shift-move-end",
@@ -1679,8 +1688,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "shift-clips",
@@ -1693,8 +1701,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "shift-drawings",
@@ -1707,8 +1714,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "shift-origins",
@@ -1721,8 +1727,40 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
+  },
+  {
+   "role": "tag-list",
+   "file": "tag-list.svg",
+   "label": "Tag list",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tag-change-option",
+   "file": "tag-change-option.svg",
+   "label": "Tag change options",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "tag-edit",
+   "file": "tag-edit.svg",
+   "label": "Edit the tag list",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
   },
   {
    "role": "two-points",

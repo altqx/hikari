@@ -36,8 +36,29 @@
 //   client, frame, zoomat                   the rewrite's view (ignored here)
 //   dump                                    print the state
 //   end
+//
+// T5, legacy_drawing_capture only (PROBE_DRAWING): the drawing tool (legacy
+// Shapes, VECTORDRAW, VisualDrawingShapes.cpp and VisualClips.cpp) with the
+// presets' LoadSettings / SaveSettings, rendered after the set-up and after
+// every event as legacy's Draw ran DrawVisual (VisualClips.cpp:117-121 moves
+// a \move drawing's position there):
+//   tool draw                               Shapes (the drawing; six buttons)
+//   shapesfile <line>                       a line of Config/ShapesSettings.txt (none: legacy's defaults)
+//   shape <n>                               the toolbar's shape list (0 "Choose", 1.. the presets) -> ChangeTool
+//   time <ms>                               the video's time (VideoBox::Tell, default 1500)
+//   style <field> <value>                   the Style's Alignment, MarginL/R/V, Angle, ScaleX or ScaleY
+//   margins <l> <r> <v>                     the last Line's margins
+//   dclick <x> <y> [flags]                  a left double click
+//   savepresets                             SaveSettings on the presets (the dump shows the file)
 #include "Visuals.h"
 #include "VisualClips.h"
+#ifdef PROBE_DRAWING
+// VisualDrawingShapes.h's ShapesSetting and Shapes, copied; opened up so the
+// probe reads their state.
+#define private public
+#include "shapes_class.inc"
+#undef private
+#endif
 
 #include <cstdio>
 #include <iostream>
@@ -48,6 +69,61 @@ ProbeOptions Options;
 ProbeEvents probeEvents;
 
 #include "extracted.inc"
+#ifdef PROBE_DRAWING
+#include "shapes_defs.inc"
+
+std::vector<ShapesSetting> VideoToolbar::shapes;
+// VideoToolbar.h:331-339.
+std::vector<ShapesSetting> *VideoToolbar::GetShapesSettings()
+{
+    if (!shapes.size()) {
+        LoadSettings(&shapes);
+    }
+    return &shapes;
+}
+void VideoToolbar::SetShapesSettings(std::vector<ShapesSetting> *_shapes) { shapes = *(_shapes); }
+
+ProbeFiles probeFiles;
+wxString *ProbeFiles::find(const wxString &path)
+{
+    for (auto &f : files)
+        if (f.first == std::string(path.utf8_str()))
+            return &f.second;
+    return nullptr;
+}
+OpenWrite::OpenWrite(const wxString &fileName, bool clear) : path(fileName), isfirst(clear)
+{
+    // The file is created or, with clear, truncated (wxFile::write).
+    if (wxString *f = probeFiles.find(path)) {
+        if (clear)
+            f->clear();
+    } else {
+        probeFiles.files.push_back({std::string(path.utf8_str()), wxString()});
+    }
+}
+bool OpenWrite::FileOpen(const wxString &filename, wxString *riddenText, bool)
+{
+    // wxFFile::ReadAll with wxConvAuto: the BOM is dropped.
+    wxString *f = probeFiles.find(filename);
+    if (!f)
+        return false;
+    *riddenText = *f;
+    if (riddenText->StartsWith(wxString(wchar_t(0xFEFF))))
+        riddenText->Remove(0, 1);
+    return true;
+}
+void OpenWrite::PartFileWrite(const wxString &parttext)
+{
+    wxString *f = probeFiles.find(path);
+    if (isfirst) {
+        wchar_t bom = 0xFEFF;
+        *f << wxString(bom) + parttext;
+        isfirst = false;
+        return;
+    }
+    *f << parttext;
+}
+#endif
 
 // Stubs for the drawing the probe does not run (Visuals.cpp:337-425, 503-529).
 void Visuals::DrawRect(D3DXVECTOR2, bool, float) {}
@@ -77,6 +153,10 @@ struct Probe {
     Dialogue editLine;
     Visuals *visual = nullptr;
     int tool = CLIPRECT;
+#ifdef PROBE_DRAWING
+    ID3DXLine d3dLine;
+    IDirect3DDevice9 d3dDevice;
+#endif
     wxRect videoSize;
     D3DXVECTOR2 zoomMove{0, 0}, zoomScale{1, 1};
     int resetDepth = 0;
@@ -105,10 +185,33 @@ void setVisual(Probe &p)
     // one tool, so this is the branch for the same Visual, which drops the
     // cached Line text of the dummy renders (RendererVideo.cpp:1110).
     SAFE_DELETE(p.visual->dummytext);
+#ifdef PROBE_DRAWING
+    // The renderer's line and device, so DrawVisual runs.
+    p.visual->SizeChanged(p.videoSize, &p.d3dLine, nullptr, &p.d3dDevice);
+#else
     p.visual->SizeChanged(p.videoSize, nullptr, nullptr, nullptr);
+#endif
     p.visual->SetZoom(p.zoomMove, p.zoomScale);
     p.visual->SetVisual(&p.editLine, p.video.toolbar.GetItemToggled());
 }
+
+#ifdef PROBE_DRAWING
+// Visuals::Draw (Visuals.cpp:504-529) without its warning: DrawVisual while
+// the Line shows at the video's time.
+void render(Probe &p)
+{
+    Visuals *v = p.visual;
+    if (!(p.video.time >= v->start && p.video.time < v->end) ||
+        (v->notDialogue && v->Visual != VECTORDRAW && v->Visual != VECTORCLIP)) {
+        v->blockevents = true;
+        return;
+    }
+    v->blockevents = false;
+    v->DrawVisual(p.video.time);
+}
+#else
+void render(Probe &) {}
+#endif
 
 } // namespace
 
@@ -276,6 +379,39 @@ void dump(Probe &p, const std::string &name, int index)
                   << ",\"vectorScale\":" << d->vectorScale << ",\"mode\":" << d->tool << ",\"grabbed\":" << d->grabbed
                   << ",\"coeff\":[" << num(d->coeffW) << "," << num(d->coeffH) << "]"
                   << ",\"selecting\":" << (d->drawSelection ? "true" : "false");
+#ifdef PROBE_DRAWING
+        if (p.tool == VECTORDRAW) {
+            auto *s = static_cast<Shapes *>(p.visual);
+            std::cout << ",\"drawing\":{\"x\":" << num(d->_x) << ",\"y\":" << num(d->_y) << ",\"scale\":["
+                      << num(d->scale.x) << "," << num(d->scale.y) << "],\"an\":" << int(d->alignment)
+                      << ",\"frz\":" << num(d->frz) << ",\"org\":[" << num(d->org.x) << "," << num(d->org.y)
+                      << "],\"move\":[";
+            for (int i = 0; i < 7; ++i)
+                std::cout << (i ? "," : "") << num(d->moveValues[i]);
+            std::cout << "],\"shapeSelection\":" << d->shapeSelection << ",\"shape\":" << s->shape
+                      << ",\"rect\":[" << num(s->drawingRectangle[0].x) << "," << num(s->drawingRectangle[0].y) << ","
+                      << num(s->drawingRectangle[1].x) << "," << num(s->drawingRectangle[1].y)
+                      << "],\"rectVisible\":" << (s->rectangleVisible ? "true" : "false") << ",\"shapeScale\":["
+                      << num(s->shapeScale.x) << "," << num(s->shapeScale.y) << "],\"shapeSize\":["
+                      << num(s->shapeSize.x) << "," << num(s->shapeSize.y) << "],\"shapeGrabbed\":" << s->grabbed
+                      << ",\"diffs\":[" << d->diffs.x << "," << d->diffs.y << "],\"shapePoints\":[";
+            for (size_t i = 0; i < s->points.size(); ++i) {
+                const ClipPoint &c = s->points[i];
+                std::cout << (i ? "," : "") << "[" << num(c.x) << "," << num(c.y) << "," << json(c.type) << ","
+                          << (c.start ? 1 : 0) << "]";
+            }
+            std::cout << "]}";
+        }
+        std::cout << ",\"presets\":[";
+        for (size_t i = 0; i < VideoToolbar::shapes.size(); ++i) {
+            const ShapesSetting &ss = VideoToolbar::shapes[i];
+            std::cout << (i ? "," : "") << "[" << json(ss.name) << "," << json(ss.shape) << "," << int(ss.mode) << ","
+                      << int(ss.scalingMode) << "]";
+        }
+        std::cout << "]";
+        if (wxString *f = probeFiles.find(Options.pathfull + L"/Config/ShapesSettings.txt"))
+            std::cout << ",\"file\":" << json(*f);
+#endif
     }
     std::cout << "}\n";
 }
@@ -288,7 +424,7 @@ wxMouseEvent mouseEvent(wxEventType type, int x, int y, const std::string &flags
     e.SetControlDown(flags.find("ctrl") != std::string::npos);
     e.SetShiftDown(flags.find("shift") != std::string::npos);
     e.SetAltDown(flags.find("alt") != std::string::npos);
-    if (type == wxEVT_LEFT_DOWN || flags.find("left") != std::string::npos)
+    if (type == wxEVT_LEFT_DOWN || type == wxEVT_LEFT_DCLICK || flags.find("left") != std::string::npos)
         e.SetLeftDown(true);
     if (type == wxEVT_RIGHT_DOWN)
         e.SetRightDown(true);
@@ -325,6 +461,10 @@ void run(std::istream &in)
             p->tab.grid = &p->grid;
             p->tab.edit = &p->edit;
             p->video.time = 1500;
+#ifdef PROBE_DRAWING
+            VideoToolbar::shapes.clear();
+            probeFiles = ProbeFiles();
+#endif
         } else if (op == "script") {
             ls >> p->grid.subsWidth >> p->grid.subsHeight;
         } else if (op == "video") {
@@ -356,7 +496,7 @@ void run(std::istream &in)
         } else if (op == "tool") {
             std::string t;
             ls >> t;
-            p->tool = t == "rect" ? CLIPRECT : VECTORCLIP;
+            p->tool = t == "rect" ? CLIPRECT : t == "draw" ? VECTORDRAW : VECTORCLIP;
             {
                 const long caret = p->textEdit.from;
                 loadEditor(*p);
@@ -367,6 +507,12 @@ void run(std::istream &in)
             if (p->tool == CLIPRECT) {
                 p->visual = new ClipRect();
                 p->video.toolbar.toggled = 0;
+#ifdef PROBE_DRAWING
+            } else if (p->tool == VECTORDRAW) {
+                // Visuals::Get (Visuals.cpp:68-70); VectorItem(false) has six buttons.
+                p->visual = new Shapes();
+                p->video.toolbar.numIcons = 6;
+#endif
             } else {
                 p->visual = new DrawingAndClip();
             }
@@ -378,8 +524,44 @@ void run(std::istream &in)
             ls >> p->video.toolbar.toggled;
         } else if (op == "setvisual") {
             setVisual(*p);
+            render(*p);
+#ifdef PROBE_DRAWING
+        } else if (op == "shapesfile") {
+            const wxString path = Options.pathfull + L"/Config/ShapesSettings.txt";
+            if (!probeFiles.find(path))
+                probeFiles.files.push_back({std::string(path.utf8_str()), wxString()});
+            *probeFiles.find(path) << rest(ls) << L"\n";
+        } else if (op == "shape") {
+            // VectorItem's shape list (VideoToolbar.cpp:516-553): the
+            // selection, then ID_MOVE_TOOLBAR_EVENT -> RendererVideo::
+            // VisualChangeTool -> ChangeTool(GetItemToggled()).
+            ls >> p->video.toolbar.shapeListSelection;
+            p->visual->ChangeTool(p->video.toolbar.GetItemToggled());
+            render(*p);
+        } else if (op == "time") {
+            // A seek: the renderer draws the new frame (Draw -> DrawVisual).
+            ls >> p->video.time;
+            render(*p);
+        } else if (op == "style") {
+            std::string field;
+            ls >> field;
+            const wxString value = rest(ls);
+            Styles &st = p->file.style;
+            if (field == "Alignment") st.Alignment = value;
+            else if (field == "MarginL") st.MarginL = value;
+            else if (field == "MarginR") st.MarginR = value;
+            else if (field == "MarginV") st.MarginV = value;
+            else if (field == "Angle") st.Angle = value;
+            else if (field == "ScaleX") st.ScaleX = value;
+            else if (field == "ScaleY") st.ScaleY = value;
+        } else if (op == "margins") {
+            Dialogue *d = p->file.dialogues.back();
+            ls >> d->MarginL >> d->MarginR >> d->MarginV;
+        } else if (op == "savepresets") {
+            SaveSettings(VideoToolbar::GetShapesSettings());
+#endif
         } else if (op == "down" || op == "move" || op == "up" || op == "rdown" || op == "rup" || op == "mdown" ||
-                   op == "mup") {
+                   op == "mup" || op == "dclick") {
             int x, y;
             ls >> x >> y;
             std::string flags, f;
@@ -391,9 +573,11 @@ void run(std::istream &in)
                                      : op == "rdown" ? wxEVT_RIGHT_DOWN
                                      : op == "rup"   ? wxEVT_RIGHT_UP
                                      : op == "mdown" ? wxEVT_MIDDLE_DOWN
+                                     : op == "dclick" ? wxEVT_LEFT_DCLICK
                                                      : wxEVT_MIDDLE_UP;
             wxMouseEvent e = mouseEvent(type, x, y, flags);
             p->visual->OnMouseEvent(e);
+            render(*p);
         } else if (op == "wheel") {
             int x, y, steps;
             ls >> x >> y >> steps;
@@ -403,6 +587,7 @@ void run(std::istream &in)
             e.m_wheelRotation = steps * 120;
             e.m_wheelDelta = 120;
             p->visual->OnMouseEvent(e);
+            render(*p);
         } else if (op == "key") {
             std::string k, f, flags;
             ls >> k;
@@ -414,6 +599,7 @@ void run(std::istream &in)
             e.SetShiftDown(flags.find("shift") != std::string::npos);
             e.SetAltDown(flags.find("alt") != std::string::npos);
             p->visual->OnKeyPress(e);
+            render(*p);
         } else if (op == "activate") {
             // A click on another Grid row: EditBox::SetLine with the row
             // changed runs SetVisual (EditBox.cpp:485-488).
@@ -424,12 +610,14 @@ void run(std::istream &in)
             p->file.selections.push_back(i);
             loadEditor(*p);
             setVisual(*p);
+            render(*p);
         } else if (op == "client" || op == "frame" || op == "zoomat") {
             // The rewrite's view set-up; the probe runs with "video" and "zoom".
         } else if (op == "invert") {
             // VectorItem's normal button (6) / ClipRectangleItem's (0), through
             // RendererVideo::VisualChangeTool -> ChangeTool(tool, false).
             p->visual->ChangeTool(p->tool == CLIPRECT ? 0 : 6, false);
+            render(*p);
         } else if (op == "dump") {
             dump(*p, name, dumps++);
         } else if (op == "end") {

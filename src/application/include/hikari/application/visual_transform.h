@@ -73,6 +73,8 @@ public:
     // Replace (423-443): the last FindTag's place takes `replacement`.
     int replace(std::u16string_view replacement, std::u16string &text) const;
     const FindData &result() const { return m_result; }
+    // T6: TagFindReplace::SetResult.
+    void setResult(const FindData &result) { m_result = result; }
     std::pair<long, long> selection() const { return {m_selFrom, m_selTo}; }
     std::pair<long, long> positionInText() const { return {m_result.x, m_result.y}; }
     bool getDouble(double &out) const;                     // 555-564
