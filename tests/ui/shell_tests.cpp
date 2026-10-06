@@ -3905,7 +3905,10 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Turning off translator mode"));
         QVERIFY(!application->turnOffTranslationMode());
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(dir.filePath(QStringLiteral("translation")))), QString());
-        QTRY_VERIFY(!session->isDirty());
+        // The write ends flushed to disk (FlushFileBuffers, a write-through
+        // rename), which a busy VM disk can hold past QTRY's 5 s; the save
+        // status says how a write that did not finish ended.
+        QTRY_VERIFY2_WITH_TIMEOUT(!session->isDirty(), qPrintable(application->editor().saveStatus()), 20000);
         QFile written(dir.filePath(QStringLiteral("translation.ass")));
         QVERIFY(written.open(QIODevice::ReadOnly));
         const QByteArray bytes = written.readAll();
@@ -3919,7 +3922,7 @@ private slots:
                     .startsWith(QStringLiteral("1 ")));
         QVERIFY(session->isDirty());
         QVERIFY(application->saveAll().isEmpty()); // P9: nothing waits for the dialog
-        QTRY_VERIFY(!session->isDirty());
+        QTRY_VERIFY2_WITH_TIMEOUT(!session->isDirty(), qPrintable(application->editor().saveStatus()), 20000);
         QVERIFY(written.open(QIODevice::ReadOnly));
         QVERIFY(written.readAll().contains("Comment: 0,0:00:01.00"));
         // A read-only file is refused and asked again.
