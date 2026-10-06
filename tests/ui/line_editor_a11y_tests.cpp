@@ -5,7 +5,6 @@
 
 #include "a11y_tree.h"
 #include "docking.h"
-#include "theme.h"
 #include "hikari/app/application.h"
 
 #include <QFile>
@@ -27,10 +26,6 @@ private slots:
     void initTestCase()
     {
         enableAccessibility();
-        // The application's controls style (composition.cpp chooses it), not
-        // the platform's: Qt's native Windows style, which the application never
-        // shows, divides by zero painting offscreen.
-        hikari::ui::theme::chooseControlsStyle();
     }
 
     void metadataControlsAreNamed()

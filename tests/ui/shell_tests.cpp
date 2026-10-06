@@ -373,8 +373,6 @@ private slots:
         // colour scheme; the tests set it themselves (an unknown scheme keeps
         // the chosen theme, Dark by default).
         ui::theme::forceSystemScheme(Qt::ColorScheme::Unknown);
-        // The application's controls style (composition.cpp chooses it).
-        ui::theme::chooseControlsStyle();
         episode = writeFile(dir, "episode.ass",
                             "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,first\n"
                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,second\n");

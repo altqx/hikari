@@ -12,7 +12,6 @@
 #include "hikari/app/application.h"
 #include "hikari/app/localisation.h"
 #include "docking.h"
-#include "theme.h"
 
 #include <QAccessible>
 #include <QDir>
@@ -206,10 +205,6 @@ class LanguageTest : public QObject {
 private slots:
     void initTestCase()
     {
-        // The application's controls style (composition.cpp chooses it), not
-        // the platform's: Qt's native Windows style, which the application never
-        // shows, divides by zero painting offscreen.
-        hikari::ui::theme::chooseControlsStyle();
         QVERIFY(dir.isValid());
         episode = dir.filePath(QStringLiteral("episode.ass"));
         QFile f(episode);

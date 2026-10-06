@@ -399,10 +399,6 @@ int main(int argc, char **argv)
                                                             application.directShowPlayer());
     });
     expect(application.openFile(subtitles), "open the subtitles");
-    // The app's controls style (composition.cpp): the platform default on
-    // Windows is the native style, which divided by zero offscreen once the
-    // Filters submenu was shown (qtquickcontrols2nativestyleplugin, Qt 6.11.2).
-    hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
     g_engine = &engine;
     hikari::ui::attachDocking(engine);

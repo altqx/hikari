@@ -4,7 +4,6 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
-#include "theme.h"
 
 #include <QDir>
 #include <QFile>
@@ -99,10 +98,6 @@ QByteArray readAll(const QString &path)
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
-    // The application's controls style (composition.cpp chooses it), not
-    // the platform's: Qt's native Windows style, which the application never
-    // shows, divides by zero painting offscreen.
-    hikari::ui::theme::chooseControlsStyle();
     QTemporaryDir dir;
     const QString path = dir.filePath(QStringLiteral("copy.ass"));
     QFile::copy(QStringLiteral(HIKARI_FIXTURE_DIR "/inputs/unknown-sections.ass"), path);

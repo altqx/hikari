@@ -6,7 +6,6 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
-#include "theme.h"
 
 #include <QFile>
 #include <QQmlApplicationEngine>
@@ -81,13 +80,6 @@ class CloseReviewTests : public QObject {
     }
 
 private slots:
-    void initTestCase()
-    {
-        // The application's controls style (composition.cpp chooses it), not
-        // the platform's: Qt's native Windows style, which the application never
-        // shows, divides by zero painting offscreen.
-        hikari::ui::theme::chooseControlsStyle();
-    }
     void aCleanDocumentClosesWithoutReview()
     {
         app::Application a;

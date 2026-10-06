@@ -1,3 +1,9 @@
+# Every executable here starts in the UI tests' environment (the
+# application's controls style, the system's fonts offscreen on Windows;
+# ui_test_environment.cpp), linked into each at the end of this file.
+add_library(hikari_ui_test_environment OBJECT ui_test_environment.cpp)
+target_link_libraries(hikari_ui_test_environment PUBLIC hikari_ui Qt6::Core)
+
 hikari_add_qttest(hikari_ui_line_model_tests SOURCES line_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_grid_tests SOURCES line_grid_tests.cpp LIBRARIES hikari_ui)
 target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
@@ -260,5 +266,15 @@ target_compile_definitions(hikari_ui_language_tests PRIVATE
 foreach(mode offscreen xvfb)
     if(TEST hikari_ui_language_tests.${mode})
         set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
+
+# The UI tests' environment in every test and workflow above, and in any
+# added later (ui_test_environment.cpp says why).
+get_directory_property(hikari_ui_test_targets BUILDSYSTEM_TARGETS)
+foreach(target IN LISTS hikari_ui_test_targets)
+    get_target_property(type ${target} TYPE)
+    if(type STREQUAL "EXECUTABLE")
+        target_link_libraries(${target} PRIVATE hikari_ui_test_environment)
     endif()
 endforeach()
