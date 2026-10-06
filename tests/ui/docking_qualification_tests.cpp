@@ -499,6 +499,13 @@ private slots:
         QGuiApplication::sendEvent(window, &request);
         QTRY_COMPARE(asked.size(), 7);
         QCOMPARE(asked.at(6).at(0).toString(), QStringLiteral("Editor"));
+        // The request Main.qml's Shift+F10 makes on Windows (where it keeps
+        // the key from the system's menu mode) reaches the same header.
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(window));
+        docking()->requestKeyboardContextMenu();
+        QTRY_COMPARE(asked.size(), 8);
+        QCOMPARE(asked.at(7).at(0).toString(), QStringLiteral("Editor"));
         // Left and Right on the tabs select the neighbouring panel.
         const int before = group->property("currentTabIndex").toInt();
         QTest::keyClick(window, before == 0 ? Qt::Key_Right : Qt::Key_Left);

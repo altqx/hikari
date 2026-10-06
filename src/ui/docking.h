@@ -140,6 +140,10 @@ public:
     // header); whether the platform took it. systemMoveRequested says so to
     // tests on platforms that do not.
     Q_INVOKABLE bool startSystemMove(QQuickItem *from);
+    // Asks the focused control for its context menu, as the keyboard does
+    // (a QContextMenuEvent with the Keyboard reason to the focus window).
+    // Main.qml's Shift+F10 on Windows, which keeps the key from the system.
+    Q_INVOKABLE void requestKeyboardContextMenu();
 
 signals:
     void headersChanged();

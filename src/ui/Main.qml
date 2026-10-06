@@ -511,6 +511,18 @@ ApplicationWindow {
         enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
+    // Windows hands Shift+F10 to the system when no shortcut wants it; the
+    // system then asks for a context menu but also puts the window in its
+    // menu mode, which takes the next keys (native gate,
+    // header-menu-undock-dock-keyboard). Claimed here, the key reaches the
+    // focused control first (a panel header takes it); elsewhere it asks the
+    // focused control for its context menu, as Windows would.
+    Shortcut {
+        sequences: ["Shift+F10"]
+        context: Qt.ApplicationShortcut
+        enabled: Qt.platform.os === "windows" && !root.hotkeys.globalSequences.includes("Shift+F10")
+        onActivated: Docking.requestKeyboardContextMenu()
+    }
     // P6: a tab closed from the tab bar (its close mark or a middle click).
     function closeTab(index) {
         if (index === root.app.currentTab) {

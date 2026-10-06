@@ -22,6 +22,7 @@
 #include <kddockwidgets/qtquick/views/Group.h>
 #include <kddockwidgets/qtquick/views/TabBar.h>
 
+#include <QContextMenuEvent>
 #include <QGuiApplication>
 #include <QLoggingCategory>
 #include <QPointer>
@@ -381,6 +382,16 @@ bool Docking::startSystemMove(QQuickItem *from)
         return false;
     emit systemMoveRequested(window);
     return window->startSystemMove();
+}
+
+void Docking::requestKeyboardContextMenu()
+{
+    QWindow *window = QGuiApplication::focusWindow();
+    if (!window)
+        return;
+    // No position: Qt Quick asks the items at the focused item.
+    QContextMenuEvent request(QContextMenuEvent::Keyboard, QPoint(), QPoint());
+    QGuiApplication::sendEvent(window, &request);
 }
 
 QString Docking::dockNameAt(QObject *tabBar, int index) const
