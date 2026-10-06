@@ -17,10 +17,10 @@
 //   table, where libass's DirectWrite provider looks a family up
 //   (EnumFontFamilies, then CreateFontFaceFromHdc: "directwrite (with GDI)").
 //
-// SetUp waits until DirectWrite reports every family, asking it to check for
-// changes; TearDown removes all of it again, so nothing stays installed: it
-// waits for the font cache to let go of each file and reports a file it
-// could not remove as a failure.
+// SetUp waits until DirectWrite reports every family and opens a face from
+// every installed file, asking it to check for changes; TearDown removes all
+// of it again, so nothing stays installed: it waits for the font cache to let
+// go of each file and reports a file it could not remove as a failure.
 // A failed install is a test failure, never a skip: every test still runs.
 
 #ifdef _WIN32
@@ -137,16 +137,39 @@ public:
             if (!missing.empty())
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
+        const auto listed = std::chrono::steady_clock::now();
+        // Listed families are not yet served files: right after the previous
+        // test process removed the same files, the font cache can still list
+        // the families while their faces do not open from the new files, and
+        // the renderer then gets them as GDI streams without a path (seen as
+        // a collector naming collection.ttc "HikariProbeCollectionB-Regular.font").
+        // So wait until DirectWrite opens a face from each installed file.
+        std::vector<fs::path> unserved = m_owned;
+        while (!unserved.empty() && std::chrono::steady_clock::now() - start < std::chrono::seconds(30)) {
+            const std::vector<std::wstring> served = servedFiles(factory);
+            std::erase_if(unserved, [&served](const fs::path &file) {
+                for (const auto &path : served)
+                    if (CompareStringOrdinal(path.c_str(), -1, file.c_str(), -1, TRUE) == CSTR_EQUAL)
+                        return true;
+                return false;
+            });
+            if (!unserved.empty())
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
         factory->Release();
-        const auto ms =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
+        const auto now = std::chrono::steady_clock::now();
+        const auto ms = [&](auto at) {
+            return static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(at - start).count());
+        };
         std::fprintf(stderr,
                      "Windows user fonts: %zu files installed in %s (%zu left by an earlier run), DirectWrite "
-                     "listed %zu of %zu families after %lld ms\n",
+                     "listed %zu of %zu families after %lld ms and served %zu of %zu files after %lld ms\n",
                      m_owned.size(), folder.string().c_str(), m_reused, m_families.size() - missing.size(),
-                     m_families.size(), static_cast<long long>(ms));
+                     m_families.size(), ms(listed), m_owned.size() - unserved.size(), m_owned.size(), ms(now));
         for (const auto &family : missing)
             ADD_FAILURE() << "DirectWrite's system collection never listed " << fs::path(family).string();
+        for (const auto &file : unserved)
+            ADD_FAILURE() << "DirectWrite never opened a face from " << file.string();
     }
 
     void TearDown() override
@@ -177,6 +200,58 @@ public:
     }
 
 private:
+    // The files DirectWrite's system collection opens faces from (checked
+    // for changes), as it spells their paths.
+    static std::vector<std::wstring> servedFiles(IDWriteFactory *factory)
+    {
+        std::vector<std::wstring> out;
+        IDWriteFontCollection *collection = nullptr;
+        if (FAILED(factory->GetSystemFontCollection(&collection, TRUE)) || !collection)
+            return out;
+        for (UINT32 f = 0; f < collection->GetFontFamilyCount(); ++f) {
+            IDWriteFontFamily *family = nullptr;
+            if (FAILED(collection->GetFontFamily(f, &family)))
+                continue;
+            for (UINT32 i = 0; i < family->GetFontCount(); ++i) {
+                IDWriteFont *font = nullptr;
+                IDWriteFontFace *face = nullptr;
+                if (SUCCEEDED(family->GetFont(i, &font)) && SUCCEEDED(font->CreateFontFace(&face))) {
+                    UINT32 count = 1;
+                    IDWriteFontFile *file = nullptr;
+                    const void *key = nullptr;
+                    UINT32 keySize = 0;
+                    IDWriteFontFileLoader *loader = nullptr;
+                    IDWriteLocalFontFileLoader *local = nullptr;
+                    UINT32 length = 0;
+                    if (SUCCEEDED(face->GetFiles(&count, &file)) && file &&
+                        SUCCEEDED(file->GetReferenceKey(&key, &keySize)) && SUCCEEDED(file->GetLoader(&loader)) &&
+                        SUCCEEDED(loader->QueryInterface(__uuidof(IDWriteLocalFontFileLoader),
+                                                         reinterpret_cast<void **>(&local))) &&
+                        SUCCEEDED(local->GetFilePathLengthFromKey(key, keySize, &length))) {
+                        std::wstring path(length + 1, L'\0');
+                        if (SUCCEEDED(local->GetFilePathFromKey(key, keySize, path.data(), length + 1))) {
+                            path.resize(length);
+                            out.push_back(std::move(path));
+                        }
+                    }
+                    if (local)
+                        local->Release();
+                    if (loader)
+                        loader->Release();
+                    if (file)
+                        file->Release();
+                }
+                if (face)
+                    face->Release();
+                if (font)
+                    font->Release();
+            }
+            family->Release();
+        }
+        collection->Release();
+        return out;
+    }
+
     static constexpr const wchar_t *kFontsKey = L"Software\\Microsoft\\Windows NT\\CurrentVersion\\Fonts";
 
     // One value per file, recognisably the tests' own.
