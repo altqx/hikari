@@ -105,7 +105,8 @@ class Winix:
         job = next((j for j in reversed(self.lines(*args, timeout=timeout)) if j.get("type") == "job" or j.get("state")), {})
         if not job.get("id"):
             raise RuntimeError(f"task {name} did not start: {job}")
-        text = (self.call("job", "logs", job["id"], "--all") or {}).get("text", "")
+        # `job logs --all` pages the log: one JSON record per 64 KiB.
+        text = "".join(r.get("text", "") for r in self.lines("job", "logs", job["id"], "--all") if isinstance(r, dict))
         lines = [l[6:] if l.startswith(("[out] ", "[err] ")) else l for l in text.splitlines()]
         return job, lines
 
@@ -745,12 +746,20 @@ def step_f6_floating():
     keys("escape")
 
 
+def window_combos(st, frame):
+    """The combo boxes of one window (the Line editor's Style, Actor and
+    Effect, empty, are in the main window)."""
+    els = st.get("elements") or []
+    return {e["n"]: e["val"] or next((c["val"] or c["n"] for c in els if c["p"] == e["i"] and c["t"] in ("Text", "Edit")), None)
+            for e in els if e["t"] == "ComboBox" and not e["off"] and frame_id(e["win"]) == frame}
+
+
 def step_move_panel():
     fresh()
     open_view()
     keys("down", "down", "return", 1.2)
     st = wait_for(lambda s: "Move panel" in frames(s))
-    combos_open = st["combos"]
+    combos_open = window_combos(st, "Move panel")
     ev0, st = snap("move-panel-0-open", extra="# combo boxes\n" + json.dumps(combos_open, ensure_ascii=False))
     if "Move panel" not in frames(st):
         verdict("keyboard-move-panel", "failed", "View > Move panel… did not open the placement window", ev0)
@@ -759,15 +768,20 @@ def step_move_panel():
             f"placement window on open (Grid focused): {combos_open}", ev0)
     # Panel: Grid -> Audio (Up x2); Place: Left of (Down); Next to: Grid (Up x6, Down x3); Move.
     keys("up", "up", "tab", "down", "tab", *(["up"] * 6), *(["down"] * 3), 0.3)
-    combos_set = uia()["combos"]
+    combos_set = window_combos(uia(), "Move panel")
     keys("tab", "space", 1.5)
     ev1, st = snap("move-panel-1-left-of-grid", extra="# combo boxes before Move\n" + json.dumps(combos_set, ensure_ascii=False))
     pos = {p["id"]: p for p in st["panels"]}
     a, g = pos.get("Audio"), pos.get("Grid")
-    ok = a and g and a["frame"] == g["frame"] == MAIN and a["x"] < g["x"] and abs(a["y"] - g["y"]) < 3
+    # D3: side by side their headers share a row (Audio's a title bar, the
+    # Grid's a tab bar, whose content starts 8 lower), as in the Linux gate.
+    ah = next((t for t in find(st, "TitleBar", "Audio") if frame_id(t["win"]) == MAIN), None)
+    gh = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
+    ok = a and g and a["frame"] == g["frame"] == MAIN and a["x"] < g["x"] and ah and gh and abs(ah["y"] - gh["y"]) < 3
     verdict("keyboard-move-panel", "observed" if ok else "failed",
-            f"Move panel ({combos_set}) -> Audio {a and (a['x'], a['y'], a['w'], a['h'])}, "
-            f"Grid {g and (g['x'], g['y'], g['w'], g['h'])}; focus {st['focusPath']}", ev0 + ev1)
+            f"Move panel ({combos_set}) -> Audio {a and (a['x'], a['y'], a['w'], a['h'])} header "
+            f"{ah and (ah['x'], ah['y'], ah['w'], ah['h'])}, Grid {g and (g['x'], g['y'], g['w'], g['h'])} header "
+            f"{gh and (gh['x'], gh['y'], gh['w'], gh['h'])}; focus {st['focusPath']}", ev0 + ev1)
     close_window("Move panel")
 
 
@@ -1218,7 +1232,11 @@ def step_test_executables():
     ok = len(exits) == 4 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
-    unexpected = [k for k in skips if "the compositor places windows" not in k]
+    # Skips declared as platform limits, each observed for real by another
+    # item (as in the Linux gate): a synthetic drag between windows needs the
+    # offscreen platform (pointer).
+    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform")
+    unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
             f"exits {exits}; {summary}; skips: {skips}", ["test-executables.txt"])
@@ -1251,10 +1269,11 @@ def step_nvda():
         keys("down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
         f6_walk(3)
         ev, st = snap("nvda-0-after-float")
-        # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu.
+        # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu,
+        # Down reaches its first item (as the Linux gate's Orca step does).
         focus_main_compositor()
         header_how, _ = focus_header_control("TabItem", "Grid", "Grid")
-        keys("right", 0.8, "space", 1.2)
+        keys("right", 0.8, "space", 1.2, "down", 0.8)
         ev += snap("nvda-1-header-menu")[0]
         keys("escape", 0.8)
         time.sleep(2)
@@ -1339,14 +1358,30 @@ def step_outputs():
                     time.sleep(1.5)
                 moved_by = f"tablet drag of its title bar from {sx},{sy} to {tx},{ty}"
             else:
-                # Windows maps the tablet to the primary only, so the window
-                # moves the keyboard way: active (a click on its title), then
-                # Win+Shift+Right.
-                pointer([(sx, sy)])
-                time.sleep(0.5)
-                keys("win+shift+right", 1.5)
-                moved_by = (f"Win+Shift+Right after a click on its title (the tablet does not reach the second "
-                            f"monitor: `ui calibrate` {tx},{ty} landed at {cal.get('actual')})")
+                # Windows maps the tablet to the primary only, and a borderless
+                # tool window (D3) takes no Win+Shift+Right. With the main
+                # window on the monitor's left (bare desktop to drop on), the
+                # header's title is dragged (the engine's drag) to the
+                # primary's right edge: the window's centre goes onto the
+                # second monitor.
+                placed = fullscreen("left", width=480)
+                time.sleep(1)
+                st = uia()
+                src = title_point(st, "Audio", "Audio", dx=20)
+                ex, ey = prim["x"] + prim["w"] - 3, prim["y"] + 120
+                if src:
+                    sx, sy, _ = src
+                    try:
+                        pointer([(sx, sy)], hold=True)
+                        time.sleep(0.25)
+                        pointer([(sx, sy), (ex - 3, ey + 3), (ex, ey)], button="none", steps=25, delayMs=40)
+                        time.sleep(0.5)
+                    finally:
+                        release()
+                        time.sleep(1.5)
+                moved_by = (f"a tablet drag of its title from {src and src[:2]} to the primary's right edge {ex},{ey}, "
+                            f"the main window on the left ({placed}); the tablet does not reach the second monitor: "
+                            f"`ui calibrate` {tx},{ty} landed at {cal.get('actual')}")
         st = wait_for(lambda s: "Audio" in frames(s) and inside(frames(s)["Audio"], sec), timeout=6)
         st = uia(dpi=True)
         fa = frames(st).get("Audio")
@@ -1382,6 +1417,7 @@ def step_outputs():
                 f"then View > Panels > Audio > Show gives the focus to {focused_in!r} (active windows "
                 f"{active_frames(st)}; focus {st['focusPath']})", ev2)
     finally:
+        fullscreen("off")  # the main window back where it was, if step moved it
         r = displays("extend", scale2=100)
         ok = len(r.get("monitors") or []) == 2 and all(m["dpi"] == 96 and m["w"] == 1024 and m["h"] == 768
                                                       for m in r["monitors"])
@@ -1489,14 +1525,15 @@ def step_a11y():
     panel_menu("Timing", "Show")
     time.sleep(1)
     st = uia()
-    tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Timing")}
+    # Timing is titled Shift times (its tab, its "⋯" and its window).
+    tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Shift times")}
     lists = [el_path(st["elements"], e) for e in st["elements"] if e["t"] == "Tab" and e["n"] == "Panels" and not e["off"]]
-    tab_button = bool(find(st, "Button", "Timing options"))
+    tab_button = bool(find(st, "Button", "Shift times options"))
     ev2, st = snap("a11y-2-tabs")
-    uia(do=[{"action": "invoke", "name": "Timing options", "type": "Button", "after": 1000},
+    uia(do=[{"action": "invoke", "name": "Shift times options", "type": "Button", "after": 1000},
             {"action": "invoke", "name": "Undock", "type": "MenuItem"}])
-    st = wait_for(lambda s: "Timing" in frames(s))
-    tab_floated = "Timing" in frames(st)
+    st = wait_for(lambda s: "Shift times" in frames(s))
+    tab_floated = "Shift times" in frames(st)
     ev3, st = snap("a11y-3-undock-timing-tab")
     (EVID / "a11y-tabs.txt").write_text(json.dumps(
         {"tabs": {n: [h["path"] for h in hits] for n, hits in tabs.items()}, "tab lists": lists,
@@ -1504,7 +1541,7 @@ def step_a11y():
     verdict("tabs-accessible",
             "observed" if all(tabs.values()) and lists and tab_button and tab_floated else "failed",
             f"tab items { {n: bool(h) for n, h in tabs.items()} } in a tab list 'Panels' ({len(lists)}); the selected "
-            f"tab's 'Timing options': {tab_button}; its menu's Undock invoked -> own window={tab_floated}",
+            f"tab's 'Shift times options': {tab_button}; its menu's Undock invoked -> own window={tab_floated}",
             ev2 + ev3 + ["a11y-tabs.txt"])
 
 
