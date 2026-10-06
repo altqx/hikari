@@ -2092,6 +2092,50 @@ private slots:
         application->settingsStore()->set("fonts.externalDirectory", QString());
     }
 
+    // Y6: loading and unloading the external fonts draws the loaded video's
+    // subtitles again with them (FontEnumerator's RefreshVideo(true)): a
+    // Style in Titillium Web, not installed, takes the font once its folder
+    // is EXTERNAL_FONTS_DIRECTORY and loses it when the folder is cleared.
+    void externalFontsReachTheLoadedVideo()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("external-fonts.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 320\nPlayResY: 240\n\n[V4+ Styles]\nFormat: Name, Fontname, "
+                    "Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+                    "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, "
+                    "Encoding\nStyle: Default,Titillium Web,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,"
+                    "1,0,0,5,10,10,10,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+                    "Effect, Text\nDialogue: 0,0:00:00.00,0:00:10.00,Default,,0,0,0,,Wafer gym\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto &session = application->video().session();
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        session.seekTo(core::DocumentTime(1'500'000));
+        QTRY_VERIFY_WITH_TIMEOUT(session.shownFrame(), 20000);
+        QTRY_VERIFY2_WITH_TIMEOUT(session.lastOverlay() && !session.lastOverlay()->empty,
+                                  session.lastOverlay() ? "empty overlay" : "no overlay", 20000);
+        const auto fallback = session.lastOverlay();
+        QTemporaryDir fonts;
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_TEST_FONT), fonts.filePath(QStringLiteral("TitilliumWeb-Regular.ttf"))));
+        auto restore = qScopeGuard([&] { application->settingsStore()->reset(QStringLiteral("fonts.externalDirectory")); });
+        application->settingsStore()->set("fonts.externalDirectory", fonts.path() + QStringLiteral("/"));
+        QCOMPARE(application->fontCatalogs().externalFontLeases().size(), std::size_t(1));
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != fallback, 5000);
+        const auto external = session.lastOverlay();
+        QVERIFY(external && !external->empty);
+        QVERIFY(external->pixels != fallback->pixels); // drawn in Titillium Web
+        // Cleared: the fallback font again.
+        application->settingsStore()->set("fonts.externalDirectory", QString());
+        QVERIFY(application->fontCatalogs().externalFontLeases().empty());
+        QTRY_VERIFY_WITH_TIMEOUT(session.lastOverlay() != external, 5000);
+        QVERIFY(session.lastOverlay()->pixels == fallback->pixels);
+    }
+
     void colourPickerSetsColourAndAlphaAndRemembersIt()
     {
         QVERIFY(application->openFile(episode)); // "first" and "second", no Styles

@@ -765,6 +765,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
             if (m_videoDocument) {
                 m_videoRevision.reset();
+                m_videoScript.clear(); // the same script goes with the new fonts
                 refreshVideo();
             }
         };

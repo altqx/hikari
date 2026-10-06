@@ -13,7 +13,8 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
-    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>")
+    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
     hikari_lua_helper hikari_automation_stage)
 # W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter in the Csri
