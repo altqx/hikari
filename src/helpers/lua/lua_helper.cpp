@@ -19,8 +19,7 @@
 // top level runs.
 //
 // Not yet here, owned by the A33 automation cards: the native preloads
-// (lpeg, luabins, re/unicode/lfs) and MoonScript, and the gettext catalog
-// (identity for now).
+// (lpeg, luabins, re/unicode/lfs) and MoonScript.
 
 #include "hikari/backends/helper_endpoint.h"
 #include "hikari/backends/lua_protocol.h"
@@ -285,11 +284,7 @@ int cancelScript(lua_State *L)
     return lua_error(L);
 }
 
-int gettext(lua_State *L)
-{
-    lua_pushstring(L, checkString(L, 1).c_str()); // catalog bridge: A33-compat
-    return 1;
-}
+int gettext(lua_State *L); // O5: through the host's catalog (below, with the host services)
 
 int include(lua_State *L)
 {
@@ -1985,6 +1980,21 @@ int decodePath(lua_State *L)
     return 1;
 }
 
+// Legacy get_translation (Automation.cpp:83-88): check_string, then
+// wxGetTranslation(str) pushed with lua_pushstring, so the result ends at its
+// first NUL. O5: the application answers through the
+// HikariSub.Automation.Gettext QM of the current language (docs/qt/localisation.md,
+// "Lua compatibility"); it decides the lookup (the legacy UTF-8 conversion
+// and the untranslated source). Without an answer the source comes back, as
+// an untranslated key does.
+int gettext(lua_State *L)
+{
+    const std::string source = checkString(L, 1);
+    const auto reply = callHost(L, "gettext", HostService::Gettext, {}, {source});
+    lua_pushstring(L, reply && !reply->strings.empty() ? reply->strings.front().c_str() : source.c_str());
+    return 1;
+}
+
 int statusText(lua_State *L)
 {
     const std::string text = checkString(L, 1);
@@ -2103,7 +2113,43 @@ void installHostServices(lua_State *L)
     lua_setfield(L, -2, "gui");
 }
 
-void run(Reader &in, Responder &r, std::size_t payloadSize)
+// Legacy LuaCommand::Validate (Automation.cpp:936-969): the validation
+// function gets the subtitles object, the selected rows and the active row;
+// its first return is the answer (a second one, the help text, is not
+// shown). A runtime error answers false. The object stays the one the
+// macro then runs on, so edits made while validating reach the macro, as
+// legacy's AutoToFile edits the file both work on. When it answers false
+// those edits are dropped (S4-validation-edits; legacy kept them in the
+// file without an undo step).
+bool validate(lua_State *L, int index, std::string &error)
+{
+    lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
+    lua_getfield(L, -1, "validate");
+    lua_remove(L, -2);
+    if (!lua_isfunction(L, -1)) {
+        lua_pop(L, 1);
+        return true; // no COMMAND_VALIDATE: always valid
+    }
+    lua_pushcfunction(L, addStackTrace);
+    lua_insert(L, -2);
+    pushSubtitles(L);
+    lua_createtable(L, static_cast<int>(g_subs->lists.selected.size()), 0);
+    for (std::size_t i = 0; i < g_subs->lists.selected.size(); ++i) {
+        lua_pushinteger(L, g_subs->lists.selected[i]);
+        lua_rawseti(L, -2, static_cast<int>(i) + 1);
+    }
+    lua_pushinteger(L, g_subs->lists.active);
+    if (lua_pcall(L, 3, 2, -5)) {
+        error = "Runtime error in Lua macro validation function:\n" + stringOrEmpty(L, -1);
+        lua_pop(L, 2); // the error and the handler
+        return false;
+    }
+    const bool valid = lua_toboolean(L, -2) != 0;
+    lua_pop(L, 3); // two returns and the handler
+    return valid;
+}
+
+void run(Reader &in, Responder &r, std::size_t payloadSize, bool validateFirst)
 {
     const std::int32_t index = in.i32();
     auto snapshot = lua::decodeSnapshot(in, payloadSize);
@@ -2133,6 +2179,32 @@ void run(Reader &in, Responder &r, std::size_t payloadSize)
     lua_pushcfunction(L, setUndoPoint);
     lua_setfield(L, -2, "set_undo_point");
     lua_pop(L, 1);
+    if (validateFirst) {
+        // Legacy validates before LuaCommand::Run makes its progress sink.
+        removeSink(L);
+        const int oldOffset = static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1;
+        std::string error;
+        if (!validate(L, index, error)) {
+            // S4-validation-edits: what validation staged is dropped; the
+            // result carries no lists and applies nothing.
+            MacroResult result;
+            result.valid = false;
+            result.validationError = std::move(error);
+            g_subs = nullptr;
+            g_responder = nullptr;
+            g_services = nullptr;
+            return r.terminal(Outcome::Ok, lua::encodeMacroResult(result));
+        }
+        installSink(L);
+        // Run counts the rows again against what validation left
+        // (selected_rows and currentLine + SInfoSize + StylesSize + 1).
+        const int shift =
+            static_cast<int>(staged.lists.info.size() + staged.lists.styles.size()) + 1 - oldOffset;
+        for (int &row : staged.lists.selected)
+            row += shift;
+        if (staged.lists.active)
+            staged.lists.active += shift;
+    }
     lua_pushcfunction(L, addStackTrace);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
     lua_getfield(L, -1, "run");
@@ -2191,7 +2263,9 @@ int main()
         case lua::Command::Load:
             return load(in, r);
         case lua::Command::Run:
-            return run(in, r, request.payload.size());
+            return run(in, r, request.payload.size(), false);
+        case lua::Command::RunValidated:
+            return run(in, r, request.payload.size(), true);
         }
         r.terminal(Outcome::Unsupported);
     });

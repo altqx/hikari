@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Hikari.Ui
 
 // P6: session restore. The startup prompts (legacy hikarisubApp::OnInit),
 // the session file dialogs (legacy OnExternalSession) and the unresolved
@@ -97,6 +98,7 @@ Item {
     }
 
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: unresolvedWindow
         objectName: "unresolvedRestores"
         title: qsTr("Session entries not restored")

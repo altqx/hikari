@@ -149,6 +149,7 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
     m_index = index;
     m_audio.reset();
     m_display.reset(); // the helper's Open replaces the box's audio too
+    m_openFailure.reset();
     // A1: the index the source held goes with it. For a chosen audio track
     // with an index file, a temporary file is made (exclusively, in the temp
     // folder) for the helper to hand a new index over in when that file
@@ -205,7 +206,19 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 }
                 if (e->outcome != Outcome::Ok) {
                     unused();
-                    return done(std::unexpected(errorOf(e->outcome, e->payload)));
+                    // V3: the stage and FFMS2's text (protocol 8)
+                    const auto failure = failureOf(e->outcome, e->payload);
+                    application::OpenFailure open;
+                    switch (failure.stage) {
+                    case application::AudioStage::Indexer: open.stage = application::OpenStage::Indexer; break;
+                    case application::AudioStage::Indexing: open.stage = application::OpenStage::Indexing; break;
+                    case application::AudioStage::Source: open.stage = application::OpenStage::Source; break;
+                    case application::AudioStage::Convert: open.stage = application::OpenStage::Convert; break;
+                    default: open.stage = application::OpenStage::Host; break;
+                    }
+                    open.message = failure.message;
+                    m_openFailure = std::move(open);
+                    return done(std::unexpected(failure.error));
                 }
                 application::SourceTimeline t;
                 t.generation = generation;
@@ -233,6 +246,8 @@ std::uint64_t FfmsIndexedSource::openIndexed(const std::string &path, const appl
                 t.height = in.i32();
                 t.sarNum = in.i32();
                 t.sarDen = in.i32();
+                t.colorSpace = in.i32();
+                t.colorRange = in.i32();
                 if (!in.ok()) {
                     unused();
                     return done(std::unexpected(SourceError::BackendFailure));
@@ -322,6 +337,30 @@ void FfmsIndexedSource::frame(int index, FrameReady done)
     if (!request)
         return finish(std::unexpected(errorOf(request.error())));
     m_reads[ticket].request = *request;
+}
+
+void FfmsIndexedSource::setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
+{
+    if (m_lost)
+        return done(std::unexpected(SourceError::HelperLost));
+    if (!m_open || !m_host)
+        return done(std::unexpected(SourceError::NotOpen));
+    const std::uint64_t generation = m_generation;
+    auto request = m_host->request(generation,
+        Writer().u8(static_cast<std::uint8_t>(media::Command::InputMatrix)).i32(colorSpace).i32(colorRange).take(),
+        [generation, done, this](std::expected<Event, HostError> e) {
+            if (!e)
+                return done(std::unexpected(errorOf(e.error())));
+            if (e->kind != Kind::Terminal)
+                return;
+            if (generation != m_generation)
+                return done(std::unexpected(SourceError::Stale));
+            if (e->outcome != Outcome::Ok)
+                return done(std::unexpected(errorOf(e->outcome, e->payload)));
+            done({});
+        });
+    if (!request)
+        done(std::unexpected(errorOf(request.error())));
 }
 
 void FfmsIndexedSource::openAudio(int track, AudioOpened done)

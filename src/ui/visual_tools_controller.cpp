@@ -17,6 +17,7 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QQuickItem>
+#include <QStringList>
 #include <QVariantMap>
 
 #include <cmath>
@@ -55,11 +56,17 @@ VisualToolsController::VisualToolsController(VideoController &video, SettingsSto
     m_labelFont.setBold(true);
     connect(&m_video, &VideoController::changed, this, [this] {
         syncGeometry();
+        // The render: Visuals::Draw sets blockevents for the shown frame.
+        if (auto *t = tool(); t && m_view.hasVideo() && t->warnsOutsideLine() && currentWarning() != LineWarning::None)
+            t->blocked(*this);
         emit changed(); // the shown frame's time moves the warnings
-        // T5: legacy redrew the tools with each frame; a \move drawing's
-        // points follow the time (DrawingAndClip::DrawVisual).
-        if (m_family == Family::Drawing)
+        // T3: a \move's position follows the shown frame (legacy Draw ran
+        // DrawVisual on every frame, Visuals.cpp:504-529);
+        // T5: so do a \move drawing's points (DrawingAndClip::DrawVisual).
+        if (const auto time = videoTimeMs(); time != m_seenTime) {
+            m_seenTime = time;
             emit overlayChanged();
+        }
     });
     connect(&m_settings, &SettingsStore::changed, this, [this](const QString &id) {
         if (id == QStringLiteral("video.visualWarningsOff"))
@@ -156,6 +163,15 @@ void VisualToolsController::refresh()
     const void *id = s;
     const std::uint64_t revision = s ? s->revision() : 0;
     const auto active = s ? s->selection().active : std::nullopt;
+    // T2: the Line editor's text changed (legacy EditBox::OnEdit committed
+    // it and ran SetVisual, so the tool read the Line again).
+    std::optional<std::pair<std::u8string, std::u8string>> draft;
+    if (s && active)
+        if (const auto record = s->draftRecord(); record && record->id == *active)
+            draft = std::pair(record->text, record->translation);
+    if (draft != m_seenDraft && !m_gesture)
+        reset = true;
+    m_seenDraft = draft;
     if (id != m_seenSession) {
         // Another editing target: a gesture never moves to it.
         (void)escape();
@@ -191,6 +207,17 @@ void VisualToolsController::resetTool()
     emit overlayChanged();
     refreshOptions();
     updatePreview();
+}
+
+void VisualToolsController::viewChanged()
+{
+    m_view.refreshToolTransform();
+    auto *t = tool();
+    if (t && (m_family < Family::RectangleClip || m_family > Family::Drawing))
+        t->reset(*this);
+    emit geometryChanged();
+    emit overlayChanged();
+    emit changed();
 }
 
 std::optional<core::LineId> VisualToolsController::activeLine() const
@@ -231,13 +258,9 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
     m_gesture.reset();
     if (!result)
         m_lastRefusal = result.error();
-    // Legacy never reset a tool after its own edit: the tools commit
-    // through EditBox::Send(..., visualdummy) or SetModified(..., dummy),
-    // which skip ShowEditOnVideo's SetVisual (SubsGridBase.cpp:1147-1149),
-    // and the crosshair's ShowEditOnVideo only reopens the subtitles. So the
-    // tool keeps its state (the vector points' selection, a rectangle's
-    // fractions) and only another change of the Line resets it (T4).
-    if (result)
+    // T3: the tool's own step is no reason to reset it (legacy ran no
+    // SetVisual after a visual edit); refresh() sees the revision as seen.
+    if (const auto *t = tool(); result && t && t->keepsStateAfterCommit())
         m_seenRevision = s->revision();
     if (changes && m_edited)
         m_edited(); // the shell refreshes; refresh() follows
@@ -248,14 +271,37 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
 
 bool VisualToolsController::escape()
 {
-    if (!m_gesture)
+    if (!m_gesture) {
+        // T3: with no gesture open Esc drops a tool's pending step (the
+        // first of RotationZ's two points, the card's evidence on #178).
+        auto *t = tool();
+        if (t && m_view.hasVideo() && t->cancelPending(*this)) {
+            emit changed();
+            emit overlayChanged();
+            return true;
+        }
         return false;
+    }
     m_gesture.reset();
-    // T4: the tool goes back to the Line as it was (its points or corners
-    // moved with the cancelled drag).
-    resetTool();
+    // T2-T4: the tool reads its Lines again, as before the gesture (legacy
+    // SetCurVisual), so its handles, points or corners go back to where the
+    // text puts them.
+    if (auto *t = tool(); t && t->family() != Family::Crosshair) {
+        resetTool();
+    } else {
+        emit changed();
+        emit overlayChanged();
+    }
     updatePreview();
     return true;
+}
+
+bool VisualToolsController::escapable() const
+{
+    if (m_gesture)
+        return true;
+    const auto *t = tool();
+    return t && m_view.hasVideo() && t->hasPending();
 }
 
 std::pair<int, int> VisualToolsController::measureLabel(std::u16string_view text) const
@@ -433,7 +479,7 @@ void VisualToolsController::refreshOptions()
                                    {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
                                    {QStringLiteral("tooltip"), qs(o.tooltip)},
                                    {QStringLiteral("checked"), o.checked},
-                                   {QStringLiteral("enabled"), o.enabled},
+                                   {QStringLiteral("enabled"), o.enabled && m_railEnabled},
                                    {QStringLiteral("choices"), choices},
                                    {QStringLiteral("index"), o.index}});
         }
@@ -446,8 +492,10 @@ void VisualToolsController::refreshOptions()
 
 bool VisualToolsController::setOption(const QString &name, int value)
 {
+    // Legacy VideoToolbar's item click: the tool takes its toggles
+    // (VideoBox.cpp:179-181, Visuals::ChangeTool); never during a gesture.
     auto *t = tool();
-    if (!t || !m_railEnabled)
+    if (!t || !m_railEnabled || m_gesture)
         return false;
     m_notice.clear();
     if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
@@ -474,22 +522,23 @@ bool VisualToolsController::previewDocument(const core::Document &document, core
     std::vector<core::LineRecord> extra;
     if (t && m_view.hasVideo())
         extra = t->previewLines(*this);
-    if (!m_gesture && extra.empty())
+    const bool staged = m_gesture && m_gesture->hasChanges();
+    if (!staged && extra.empty())
         return false;
-    out = document;
-    if (m_gesture)
-        m_gesture->applyTo(out);
+    // T2: only the Lines the frame shows while a gesture has staged texts,
+    // as legacy's GetVisible sent: a long script is not reparsed on every
+    // pointer move.
+    out = staged ? m_gesture->preview(document, videoTimeMs(), m_video.session().playing()) : document;
     for (auto &line : extra)
         (void)out.appendLine(std::move(line));
     return true;
 }
 
-std::vector<std::byte> VisualToolsController::subtitles(const core::Document &document) const
+std::vector<std::byte> VisualToolsController::subtitles(const core::Document &document, const Encoder &encode) const
 {
     core::Document preview;
-    if (previewDocument(document, preview))
-        return core::encodeAss(preview);
-    return core::encodeAss(document);
+    const core::Document &shown = previewDocument(document, preview) ? preview : document;
+    return encode ? encode(shown) : core::encodeAss(shown);
 }
 
 void VisualToolsController::updatePreview()
@@ -519,6 +568,23 @@ void VisualToolsController::updatePreview()
         m_preview(nullptr);
 }
 
+
+application::LegacyTimebase VisualToolsController::timebase() const
+{
+    return m_video.session().legacyTimebase();
+}
+
+void VisualToolsController::log(std::u16string_view text)
+{
+    if (m_log)
+        m_log(qs(text));
+}
+
+std::pair<long, long> VisualToolsController::editorSelection() const
+{
+    return m_editorSelection ? m_editorSelection() : std::pair<long, long>{0, 0};
+}
+
 void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps)
 {
     Pointer p;
@@ -539,6 +605,8 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
         break;
     }
     p.leftDown = (buttons & Qt::LeftButton) != 0;
+    p.rightDown = (buttons & Qt::RightButton) != 0;
+    p.middleDown = (buttons & Qt::MiddleButton) != 0;
     p.control = (modifiers & Qt::ControlModifier) != 0;
     p.shift = (modifiers & Qt::ShiftModifier) != 0;
     p.alt = (modifiers & Qt::AltModifier) != 0;
@@ -557,6 +625,7 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     // Visuals::Draw's blockevents: a tool other than the crosshair takes no
     // events outside its Line's time or on a comment, warning shown or not.
     if (t->warnsOutsideLine() && currentWarning() != LineWarning::None) {
+        t->blocked(*this);
         if (m_gesture && p.kind == Pointer::Kind::Release)
             (void)escape(); // legacy released the mouse capture
         return;
@@ -570,8 +639,8 @@ bool VisualToolsController::key(int key, int modifiers, bool release, bool autoR
     auto *t = tool();
     if (!t || !m_view.hasVideo())
         return false;
-    if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
-        return false;
+    // VideoBox::OnKeyPress hands the keys to the tool whether or not its
+    // events are blocked (VideoBox.cpp:666-668; blockevents is the pointer's).
     Key k;
     k.key = key;
     k.release = release;
@@ -594,6 +663,9 @@ void VisualToolsController::selectFamily(int family)
         return;
     (void)escape();
     m_family = chosen;
+    // Visuals::Get made a new tool for the family (RendererVideo::SetVisual).
+    if (auto *t = tool())
+        t->selected(*this);
     resetTool();
 }
 
@@ -652,6 +724,9 @@ void VisualToolsController::clearBatch()
 LineWarning VisualToolsController::currentWarning() const
 {
     const auto *s = editingSession();
+    if (const auto *t = tool(); t && m_view.hasVideo())
+        if (const auto own = t->warning(*this))
+            return *own;
     const auto active = activeLine();
     const auto frame = m_video.session().shownFrame();
     if (!s || !active || !frame)
@@ -678,7 +753,8 @@ QString VisualToolsController::warning() const
 
 bool VisualToolsController::hideCursor() const
 {
-    return m_overVideo && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
+    // V4: the zoom mode shows the pointer (ZoomMouseHandle's cursors).
+    return !m_view.zoomMode() && m_overVideo && m_view.hasVideo() && m_railEnabled && m_family == Family::Crosshair && tool();
 }
 
 QRectF VisualToolsController::videoRect() const
@@ -701,11 +777,17 @@ QVariantList VisualToolsController::overlay() const
 {
     QVariantList out;
     const auto *t = tool();
-    if (!t || !m_view.hasVideo())
+    // V4: the tools are not drawn in the zoom mode (RendererFFMS2.cpp:392,
+    // `m_Visual && !m_HasZoom`).
+    if (!t || !m_view.hasVideo() || m_view.zoomMode())
+        return out;
+    // Visuals::Draw draws the warning instead of the tool.
+    if (t->warnsOutsideLine() && currentWarning() != LineWarning::None)
         return out;
     const Overlay o = t->overlay(*this);
     const auto L = [this](double device) { return m_view.toLogical(device); };
-    // Filled shapes, before the lines, or after them (T4: `above`).
+    // Filled shapes (T2-T4), before the lines, or after them (T4: `above`);
+    // a fill or border of 0 is not drawn (T3).
     const auto polygon = [&](const OverlayPolygon &p) {
         QVariantList contours;
         const auto contour = [&](const std::vector<PointF> &c) {
@@ -719,7 +801,7 @@ QVariantList VisualToolsController::overlay() const
             contour(c);
         out.append(QVariantMap{{QStringLiteral("type"), QStringLiteral("polygon")},
                                {QStringLiteral("contours"), contours},
-                               {QStringLiteral("color"), colour(p.fill)},
+                               {QStringLiteral("fill"), p.fill ? colour(p.fill) : QString()},
                                {QStringLiteral("border"), p.border ? colour(p.border) : QString()}});
     };
     for (const OverlayPolygon &p : o.polygons)

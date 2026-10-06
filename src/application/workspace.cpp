@@ -19,9 +19,10 @@ bool Workspace::add(DocumentId id, std::string title, bool asReference)
         return false;
     m_documents.push_back(Entry{id, std::move(title)});
     m_next = std::max(m_next, id.value + 1);
-    if (asReference)
+    if (asReference) {
         m_reference = id;
-    else if (!m_target)
+        m_referenceIsTab = false;
+    } else if (!m_target)
         m_target = id;
     return true;
 }
@@ -41,6 +42,9 @@ bool Workspace::remove(DocumentId id)
         m_target.reset();
         if (const auto after = tabs(); !after.empty())
             m_target = after[std::min(position, after.size() - 1)];
+        // R2: a tab reference taking its place stops being the reference.
+        if (m_target && m_target == m_reference)
+            m_reference.reset();
     }
     return true;
 }
@@ -65,9 +69,22 @@ std::vector<DocumentId> Workspace::tabs() const
 {
     std::vector<DocumentId> out;
     for (const auto &e : m_documents)
-        if (e.id != m_reference)
+        if (e.id != m_reference || m_referenceIsTab)
             out.push_back(e.id);
     return out;
+}
+
+bool Workspace::swapTabs(std::size_t a, std::size_t b)
+{
+    const auto order = tabs();
+    if (a >= order.size() || b >= order.size())
+        return false;
+    if (a == b)
+        return true;
+    const auto first = std::ranges::find(m_documents, order[a], &Entry::id);
+    const auto second = std::ranges::find(m_documents, order[b], &Entry::id);
+    std::iter_swap(first, second);
+    return true;
 }
 
 const Workspace::Entry *Workspace::find(DocumentId id) const
@@ -84,8 +101,10 @@ const std::string *Workspace::title(DocumentId id) const
 
 bool Workspace::setEditingTarget(DocumentId id)
 {
-    if (!find(id) || m_reference == id)
+    if (!find(id) || (m_reference == id && !m_referenceIsTab))
         return false;
+    if (m_reference == id)
+        m_reference.reset(); // R2: its tab was chosen
     m_target = id;
     return true;
 }
@@ -95,6 +114,16 @@ bool Workspace::setReference(std::optional<DocumentId> id)
     if (id && (!find(*id) || m_target == id))
         return false;
     m_reference = id;
+    m_referenceIsTab = false;
+    return true;
+}
+
+bool Workspace::setTabReference(DocumentId id)
+{
+    if (!find(id) || m_target == id)
+        return false;
+    m_reference = id;
+    m_referenceIsTab = true;
     return true;
 }
 

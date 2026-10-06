@@ -4,8 +4,9 @@
 // owns the audio box's audio and view, follows the active Line the way
 // legacy SetDialogue/Update do, and keeps the marks the application hands it
 // (other Lines, keyframes, the paused video's time). The AudioDisplay item
-// draws what scene() describes. Display options and colours are legacy's
-// defaults; the box's sliders and switches (A2) come from the settings registry.
+// draws what scene() describes. Display options are legacy's defaults and its
+// colours the theme layer's (K2); the box's sliders and switches (A2) come
+// from the settings registry.
 
 #include "hikari/application/audio_box.h"
 #include "hikari/application/audio_display.h"
@@ -43,7 +44,7 @@ class AudioController : public QObject {
     // The display draws: the decoding progress, then the waveform.
     Q_PROPERTY(bool loaded READ loaded NOTIFY changed)
     Q_PROPERTY(bool ready READ ready NOTIFY changed)
-    Q_PROPERTY(QString status READ status NOTIFY changed)
+    Q_PROPERTY(QString status READ status NOTIFY textsChanged)
     Q_PROPERTY(QString path READ path NOTIFY changed)
     // The scrollbar in legacy units (12 columns).
     Q_PROPERTY(int scrollPosition READ scrollPosition NOTIFY displayChanged)
@@ -80,6 +81,8 @@ public:
     bool ready() const { return m_box.state() == application::AudioBox::State::Ready; }
     QString status() const;
     QString path() const { return QString::fromStdString(m_box.path()); }
+    // O5: the interface language changed (status reads it).
+    void retranslate() { emit textsChanged(); }
 
     // GLOBAL_OPEN_AUDIO (a file), GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO.
     Q_INVOKABLE void openAudio(const QString &path);
@@ -179,6 +182,9 @@ public:
     // _ALT), AUDIO_PLAY_500MS_BEFORE/AFTER/FIRST/LAST, AUDIO_PLAY_BEFORE_MARK,
     // AUDIO_PLAY_AFTER_MARK, AUDIO_PLAY_TO_END and AUDIO_STOP.
     Q_INVOKABLE void playSelection() { play(application::PlayMode::Selection); }
+    // V6: legacy AudioDisplay::Update(moveToEnd) after the Grid moved the
+    // video to the active Line (SubsGrid::SetVideoLineTime).
+    void followLine(bool moveToEnd) { update(moveToEnd); }
     Q_INVOKABLE void playLine() { play(application::PlayMode::Line); }
     Q_INVOKABLE void play500Before() { play(application::PlayMode::Before500); }
     Q_INVOKABLE void play500After() { play(application::PlayMode::After500); }
@@ -258,6 +264,7 @@ public:
     }
     // Each keyframe's snap time (StartTimeFor(FrameAt(keyframe))), in step with setKeyframes.
     void setKeyframeSnapTimes(std::vector<int> snapMs) { m_keyframeSnap = std::move(snapMs); }
+    const std::vector<int> &keyframeSnapTimes() const { return m_keyframeSnap; }
     bool hasMark() const { return m_timing.hasMark(); }
     int markMs() const { return m_timing.markMs(); }
     bool modified() const { return m_needCommit; }
@@ -288,6 +295,7 @@ signals:
     void markChanged();
     void focusRequested();
     void changed();
+    void textsChanged(); // with every change, and after a language switch (O5)
     void displayChanged();
     void cursorChanged();
     // A file was opened and is loading (legacy SetRecent(2) after LoadAudio);
@@ -303,7 +311,7 @@ signals:
 
 private:
     void loadBoxControls(); // legacy AudioBox's constructor
-    void loadSpectrumColours(); // legacy AudioSpectrum::ChangeColours
+    void loadThemeColours(); // K2: the theme's display colours (legacy ChangeColors)
     void applyVerticalZoom(int position, bool fromVolume);
     bool autoScrollSetting() const;
     void ask(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer, bool forBox);

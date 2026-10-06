@@ -1,5 +1,6 @@
 #include "hikari/app/application.h"
 
+#include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
@@ -15,6 +16,7 @@
 #include "hikari/application/resample.h"
 #include "hikari/application/spell_checker.h"
 #include "hikari/application/legacy_dir.h"
+#include "hikari/application/video_matrix.h"
 #include "hikari/core/spelling.h"
 #include "hikari/core/text_projection.h"
 #include "spelling_text.h"
@@ -24,9 +26,10 @@
 #include "hikari/core/style.h"
 #include "hikari/core/subtitle_load.h"
 #include "hikari/application/media_association.h"
+#include "hikari/application/legacy_autosaves.h"
 #include "hikari/core/ass_save.h"
 #include "automation_services_qt.h"
-#include "icon_theme.h"
+#include "theme.h"
 
 #include <QClipboard>
 #include <QDesktopServices>
@@ -271,6 +274,8 @@ public:
             m_app.m_editor->selectRaw(application::translationMode(*session) ? 1 : 0, start, end);
         else if (role == 0)
             m_app.m_editor->selectRaw(0, start, end);
+        else if (role == 2 || role == 3)
+            m_app.m_editor->selectInBox(role, start, end); // E4: ActorEdit/EffectEdit->SetTextSelection
     }
     void changed(application::DocumentId) override
     {
@@ -438,6 +443,9 @@ Application::Application(QObject *parent) : Application(Options{}, parent) {}
 
 Application::Application(Options options, QObject *parent) : QObject(parent)
 {
+    // O5: legacy LoadOptions() returns 2 when there is no settings file yet;
+    // decided before anything here may write one.
+    const bool firstStart = !options.settingsFile.isEmpty() && !QFileInfo::exists(options.settingsFile);
     m_reader = backends::makeFileReader();
     // Write outcomes arrive on the writer's thread; publish them on this one.
     m_port = backends::makeFilePort([this](application::PermitId permit, application::WriteOutcome outcome) {
@@ -455,7 +463,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_editor = std::make_unique<ui::LineEditorController>(*m_files);
     m_editor->setCommittedListener([this] { refreshViews(); });
     m_mediaSource = std::make_unique<backends::FfmsIndexedSource>(mediaHelperPath(options.mediaHelper));
-    m_video = std::make_unique<ui::VideoController>(*m_mediaSource, m_renderer);
+    m_videoSource = std::make_unique<application::DummyVideoSource>(*m_mediaSource);
+    m_video = std::make_unique<ui::VideoController>(*m_videoSource, m_renderer);
+    m_video->setMediaInfo(m_mediaSource.get(), m_mediaSource.get()); // V3: track names, chapters
     // V1: playback through the general player; its frames are shown with the
     // overlay, and a pause hands back to the exact indexed frame.
     m_generalPlayer = std::make_unique<backends::QtGeneralPlayer>(options.playbackAudio);
@@ -490,12 +500,58 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_dictionaryDirs << bundled;
     // O1: the settings registry over the INI file (in memory without one).
     m_settings = std::make_unique<ui::SettingsStore>(m_settingsFile);
+    // O3: an import activated in an earlier session takes effect now, before
+    // anything reads the profile.
+    if (!m_settingsFile.isEmpty()) {
+        m_importStore = std::make_unique<SettingsImportStore>(*m_settings, QFileInfo(m_settingsFile).absolutePath());
+        m_importStore->macroProblem = [this](std::string_view alias) -> std::string {
+            const auto r = m_automation->manager().registry().resolve(std::string(alias));
+            if (!r.problem)
+                return {};
+            switch (*r.problem) {
+            case application::AliasProblem::MissingScript:
+                return "no loaded script has this file name";
+            case application::AliasProblem::BasenameCollision:
+                return "several loaded scripts have this file name";
+            case application::AliasProblem::OrdinalOutOfRange:
+                return "the script has no macro of this ordinal";
+            default:
+                return "the script's registration differs";
+            }
+        };
+        m_importStore->recover();
+    }
+    m_settingsImport = std::make_unique<SettingsImportController>(m_importStore.get());
+    // O5: the first start on a Polish system takes Polish for the interface
+    // and the spell checker, before anything reads either
+    // (hikarisubApp.cpp:319-325).
+    if (firstStart && Localisation::firstStartLanguage(options.systemUiLanguages) == u"pl") {
+        m_settings->set("program.language", QStringLiteral("pl"));
+        m_settings->set("editor.dictionaryLanguage", QStringLiteral("pl"));
+    }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
-    // K1: the icons take their colours from this profile.
-    ui::IconTheme::useSettings(m_settings.get());
+    // K2: the theme layer follows this profile's appearance (the controls'
+    // palette, the icons and the owner-drawn items).
+    ui::theme::useSettings(m_settings.get());
     m_tagButtons = std::make_unique<ui::TagButtonsController>(*m_settings);
     m_colourPicker = std::make_unique<ui::ColourPickerController>(*m_settings);
     m_shiftTimes = std::make_unique<ui::ShiftTimesController>(*m_settings);
+    // E4: the options the Line editor reads, and its Times/Frames switch
+    // (EDITBOX_TIMES_TO_FRAMES_SWITCH, saved when it is switched).
+    m_editor->setOptionsSource([this] {
+        ui::LineEditorController::Options o;
+        o.liveEditing = !m_settings->boolean("video.disableLiveEditing");
+        o.dontAdvanceOnTimes = m_settings->boolean("editor.dontGoToNextLineOnTimesEdit");
+        o.allCharsForCps = m_settings->boolean("grid.calcSpacesAndPunctuationForCps");
+        o.allCharsForWraps = m_settings->boolean("grid.calcSpacesAndPunctuationForWraps");
+        return o;
+    });
+    m_editor->setShowFramesSetting(m_settings->boolean("editor.timesToFramesSwitch"),
+                                   [this](bool on) { m_settings->set("editor.timesToFramesSwitch", on); });
+    connect(m_editor.get(), &ui::LineEditorController::frameDisplayChanged, this, [this] {
+        const auto *frames = m_editor->frameTimebase();
+        m_shell->setFrameTimebase(frames ? std::optional(*frames) : std::nullopt);
+    });
     m_selectOptions = m_settings->integer("selectLines.options");
     // Legacy keeps 20 when the dialog opens.
     m_selectRecent = m_settings->list("selectLines.recentSelections").mid(0, 20);
@@ -513,14 +569,41 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editor->reloadFromSession();
         refreshViews();
     });
-    // T2/T4: the video shows a gesture's staged texts (legacy's dummy
-    // rendering) and the tool's own Lines (the vector clip's mask).
+    // T2: the video shows a gesture's staged texts (legacy's dummy rendering),
+    // the tools log as legacy's HikariLog did, and they read the Grid's
+    // "Ignore filtering in some actions" (SubsGrid::ignoreFiltered).
     m_visualTools->setPreview([this](const core::Document *preview) {
         auto *session = targetSession();
         if (!session)
             return;
-        m_video->session().setSubtitles(core::encodeAss(preview ? *preview : session->document()));
+        m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document())); // E5
+        m_videoScript.clear(); // E4: the next refresh shows the draft again
     });
+    m_visualTools->setLog([this](const QString &text) { m_log->log(text); });
+    m_visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
+    // T3: the Line editor's caret in the text the tools edit (the
+    // translation in TLMode unless it is empty), for FindTag's mode 0.
+    const auto visualRole = [this] {
+        int role = 0;
+        if (const auto *s = targetSession(); s && application::translationMode(*s) && s->selection().active) {
+            const auto draft = s->draftRecord();
+            for (const auto *line : s->document().lines())
+                if (line->id == *s->selection().active)
+                    role = !((draft && draft->id == line->id) ? draft->translation : line->translation).empty() ? 1 : 0;
+        }
+        return role;
+    };
+    m_visualTools->setEditorSelection([this, visualRole]() { return m_editor->rawFieldSelection(visualRole()); });
+    m_visualTools->setEditorSelectionPlacer([this, visualRole](long from, long to) {
+        m_editor->selectRaw(visualRole(), static_cast<int>(from), static_cast<int>(to));
+    });
+    // V4: zoom, aspect, volume, the context menu and the snapshots; the
+    // general player takes the video volume.
+    m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
+    m_videoView->setPlayer(m_generalPlayer.get());
+    // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
+    m_video->session().setLog([this](const std::string &) { m_log->log(tr("Cannot change YCbCr matrix")); });
+    setUpTranslationControls(); // E5
     // F1: find and replace. Its options (FIND_REPLACE_OPTIONS,
     // FIND_REPLACE_STYLES) are read from the registry when the tool shows a
     // tab; its recent lists when the tool is first opened (openFindReplace).
@@ -528,6 +611,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     createFindReplace();
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
+    // S4: validation errors go to the log window; the script editor setting.
+    m_automation->setLog([this](const QString &line) { m_log->log(line); });
+    m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
@@ -550,6 +636,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_editor->reloadFromSession();
             refreshViews();
         };
+        hooks.fonts = [this] { // Y6: the external fonts render in the preview
+            return m_fontCatalogs ? m_fontCatalogs->externalFontLeases() : std::vector<application::FontLease>();
+        };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -564,6 +653,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                     tab.document = std::make_shared<core::Document>(session->document());
                 if (const auto destination = m_files->destination(id))
                     tab.path = QString::fromStdString(destination->value);
+                if (const auto media = m_tabMedia.find(id.value); media != m_tabMedia.end())
+                    tab.video = media->second.video; // Y9: the tab's VideoPath
                 out.push_back(std::move(tab));
             }
             return out;
@@ -586,6 +677,66 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             goTo(tab, [name](const core::LineRecord &l, int) { return core::toUtf16(l.style) == name; });
         };
         m_fontCollector = std::make_unique<FontCollectorController>(*m_settings, std::move(hooks));
+        // Y9: "Demux fonts from loaded MKV file" reads attachments through a
+        // media helper of its own.
+        m_fontCollector->setMatroskaPort(
+            std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)));
+    }
+    {
+        // Y9: GRID_SUBS_FROM_MKV on the editing target's tab video.
+        MatroskaController::Hooks hooks;
+        hooks.videoPath = [this] {
+            const auto target = m_workspace.editingTarget();
+            const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+            return it == m_tabMedia.end() ? QString() : it->second.video;
+        };
+        hooks.modified = [this] {
+            auto *session = targetSession();
+            return session && session->isDirty();
+        };
+        hooks.apply = [this](application::MatroskaLoaded loaded) { applyMatroska(std::move(loaded)); };
+        hooks.log = [this](const QString &text) { m_log->log(text); };
+        m_matroska = std::make_unique<MatroskaController>(
+            std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)), std::move(hooks));
+        connect(this, &Application::tabsChanged, m_matroska.get(), &MatroskaController::refresh);
+    }
+    {
+        // Y6: Font catalogs (legacy Config/FontCatalogs.txt) and the font
+        // lists of the font dialog, the Style editor and the catalog window.
+        QString dir = options.fontCatalogDir;
+        if (dir.isEmpty() && !m_settingsFile.isEmpty())
+            dir = QFileInfo(m_settingsFile).absolutePath();
+        if (dir.isEmpty()) {
+            m_fontCatalogTemp = std::make_unique<QTemporaryDir>();
+            dir = m_fontCatalogTemp->path();
+        }
+        FontCatalogsController::Hooks hooks;
+        // CollectFontsFromSubtitles: every tab from the first, or the active one.
+        hooks.documents = [this](bool all) {
+            std::vector<std::shared_ptr<const core::Document>> out;
+            const auto tabs = m_workspace.tabs();
+            const int current = currentTab();
+            for (int i = 0; i < int(tabs.size()); ++i)
+                if (all || i == current)
+                    if (auto *session = m_files->session(tabs[std::size_t(i)]))
+                        out.push_back(std::make_shared<core::Document>(session->document()));
+            return out;
+        };
+        hooks.log = [this](const QString &text) { m_log->log(text); };
+        // FontEnumerator's RefreshVideo(true): the video's subtitles render
+        // again with the external fonts.
+        hooks.fontsChanged = [this] {
+            if (!m_fontCatalogs)
+                return;
+            m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
+            if (m_videoDocument) {
+                m_videoRevision.reset();
+                refreshVideo();
+            }
+        };
+        m_fontCatalogs = std::make_unique<FontCatalogsController>(*m_settings, std::filesystem::path(dir.toStdU16String()),
+                                                                  std::move(hooks));
+        m_video->session().setFonts(m_fontCatalogs->externalFontLeases());
     }
     // P3: this session's lock marks it as running; bundles of sessions whose
     // lock is gone or stale were left by a crash.
@@ -621,12 +772,30 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             folders.emplace_back(m_bundledDictionaryDir.toStdU16String());
         m_spellChecker = std::make_unique<application::SpellChecker>(std::move(folders), options.spellingBackend);
     }
-    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell) {
+    m_shell->setSpelling([this](std::u16string_view text, core::SubtitleFormat format, bool spell, int replaceTagsLen) {
         application::SpellChecker *checker = m_spellingStarted ? m_spellChecker.get() : nullptr;
         return core::legacy::checkTextAndBrackets(text, format, m_spellingText.segment,
                                                   spell && m_settings->boolean("editor.spellchecker") && checker ? checker->wordCheck()
-                                                                                   : core::legacy::WordCheck{});
+                                                                                   : core::legacy::WordCheck{},
+                                                  replaceTagsLen);
     });
+    // E6: the changed-Line mark of each Grid's Document, and GRID_HIDE_TAGS
+    // with GRID_TAGS_SWAP_CHARACTER (SubsGrid.cpp:60, SubsGridWindow.cpp:249).
+    m_shell->setChangeStates(
+        [this](const core::LineRecord &line) {
+            const auto *session = targetSession();
+            return session ? session->changeState(line) : 0;
+        },
+        [this](const core::LineRecord &line) {
+            const auto reference = m_workspace.reference();
+            const auto *session = reference ? m_files->session(*reference) : nullptr;
+            return session ? session->changeState(line) : 0;
+        });
+    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    // E6: TEXT_EDITOR_TAG_LIST_OPTIONS, read when a tag list opens and
+    // written by its menu.
+    m_editor->tagList()->setOptionsStore([this] { return m_settings->integer("textEditor.tagListOptions"); },
+                                         [this](int options) { m_settings->set("textEditor.tagListOptions", options); });
     // GRID_HIDE_COLUMNS (G7).
     m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
     connect(m_shell.get(), &ui::ShellController::hiddenColumnsChanged, this,
@@ -638,13 +807,19 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         refreshVideo();
         scheduleAutosave();
     });
-    // A video that cannot be opened is reported in the log window once.
+    // E4: the editor's time fields show frames of the open video (TimeCtrl::SetVideoBox).
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
-        const bool failed = m_video->session().state() == application::VideoSession::State::Failed;
-        if (failed && !m_videoFailureLogged)
-            m_log->log(m_video->status());
-        m_videoFailureLogged = failed;
+        const auto &video = m_video->session();
+        const bool ready = video.state() == application::VideoSession::State::Ready;
+        const QString path = ready ? QString::fromStdString(video.path()) : QString();
+        if (path == m_editorTimebaseVideo)
+            return;
+        m_editorTimebaseVideo = path;
+        m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
+    // A video that cannot be opened is reported in the log window once (V3:
+    // with legacy ProviderFFMS2's messages).
+    connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     // Y4: a newly shown video is compared with the editing target's resolution once.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
         const auto &video = m_video->session();
@@ -666,6 +841,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_log->log(problem);
     });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
+    connect(m_editor.get(), &ui::LineEditorController::leftLineCommitted, this,
+            [this](qulonglong id) { m_leftEditedLine = core::LineId{id}; });
     connect(m_editor.get(), &ui::LineEditorController::lineChanged, this, [this](qulonglong id) {
         const auto target = m_workspace.editingTarget();
         auto *session = target ? m_files->session(*target) : nullptr;
@@ -673,6 +850,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return;
         session->setSelection(gridSelection().plain(session->selection(), core::LineId{id}));
         m_shell->setSelection(session->selection());
+        followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
     });
     // The editor's Start/End difference measures from the frame the Video panel shows.
     m_editor->setVideoTimeSource([this]() -> std::optional<std::int64_t> {
@@ -821,6 +999,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         });
     });
     trackTabMedia(); // P6
+    trackVideoSources(); // V3
+    trackVideoFollow(); // V6
+    startLocalisation(); // O5
+    setupTabMenu(options); // P9
     refreshViews();
 }
 
@@ -879,6 +1061,9 @@ void Application::followVideoInAudio()
         m_audioFollowedVideo = QString::fromStdString(video.path());
         if (keepTabAudio(m_audioFollowedVideo)) {
             // P6: a restored tab's own audio file stays (legacy dontLoadAudio)
+        } else if (video.dummy()) {
+            // V3: legacy loads the dummy without changing the audio
+            // (Notebook::LoadVideo's dontLoadAudio, HikariSubFrame.cpp:1073)
         } else if (video.hasAudio()) {
             m_audio->openFromVideo(m_audioFollowedVideo, video.audioTrack(), video.newIndex(),
                                    QString::fromStdString(video.indexHandoff()));
@@ -938,9 +1123,13 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
     if (outcome && outcome->stepped)
         refreshViews();
     m_audioCommitting = before;
-    // SubsGrid::NextLine: the next Line, selected alone
-    if (outcome && outcome->next)
+    // SubsGrid::NextLine: the next Line, selected alone; its SetLine plays
+    // the play-after choice (V6: autoPlay)
+    if (outcome && outcome->next) {
+        m_lineChangeOrigin = LineChangeOrigin{false, true};
         applySelection(gridSelection().plain(session->selection(), *outcome->next));
+        m_lineChangeOrigin.reset();
+    }
 }
 
 // A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).
@@ -984,8 +1173,12 @@ void Application::setAudioFromVideo(bool mark)
 void Application::openAudioFromVideo()
 {
     const auto &video = m_video->session();
-    if (video.state() == application::VideoSession::State::Ready)
+    if (video.state() == application::VideoSession::State::Ready) {
         m_audio->openAudio(QString::fromStdString(video.path()));
+        // P9: legacy AudioPath = VideoPath (OpenAudioInTab with no path).
+        if (const auto target = m_workspace.editingTarget())
+            m_tabMedia[target->value].audioFromVideo = true;
+    }
 }
 
 QVariantList Application::recentAudio()
@@ -1017,10 +1210,12 @@ QVariantList Application::recentAudio()
 
 QUrl Application::audioDialogFolder() const
 {
-    // legacy OpenAudioInTab: the video's folder, else the latest recent
-    // video's (not yet: the rewrite keeps no recent video list)
-    const QString from = QString::fromStdString(m_video->session().path());
-    if (from.isEmpty())
+    // legacy OnOpenAudio (HikariSubFrame.cpp:2177-2178): the video's folder,
+    // else the latest recent video's (V3)
+    QString from = QString::fromStdString(m_video->session().path());
+    if (from.isEmpty() && !m_recentVideo.entries().empty())
+        from = QString::fromStdString(m_recentVideo.entries().front());
+    if (from.isEmpty() || application::isDummyVideo(from.toStdString()))
         return {};
     return QUrl::fromLocalFile(QFileInfo(from).absolutePath());
 }
@@ -1041,6 +1236,8 @@ Application::~Application()
     m_audioSource.reset();
     m_port->waitIdle(); // no write may outlive the services it reports to
     saveMisspellRules();
+    if (m_localisation)
+        QGuiApplication::setFont(m_startFont); // O5: the program font was the application's
 }
 
 // F4: MisspellReplacer's destructor saves a non-empty rules list (SaveRules,
@@ -1124,8 +1321,11 @@ bool Application::openFile(const QString &path)
     const auto id = open(path);
     if (!id)
         return false;
+    ++m_openBatch; // P9: the association question (legacy OpenFile's LoadVideo prompt)
     if (emptyTab)
         replaceTarget(*id);
+    offerAssociations(*id);
+    showAssociationOffer();
     refreshViews();
     checkResolution();
     trimAudioCache();
@@ -1204,12 +1404,16 @@ void Application::refreshViews()
     auto *targetSession = target ? m_files->session(*target) : nullptr;
     auto *referenceSession = reference ? m_files->session(*reference) : nullptr;
     refreshComparison(); // R1: an edited compared Document is compared again
+    m_shell->setShowOriginal(target && showOriginal(*target), reference && showOriginal(*reference)); // E5
     m_shell->refresh(targetSession ? &targetSession->document() : nullptr,
                      referenceSession ? &referenceSession->document() : nullptr,
                      target ? m_comparison.table(*target) : nullptr,
                      reference ? m_comparison.table(*reference) : nullptr);
     if (targetSession)
         m_shell->setSelection(targetSession->selection());
+    if (referenceSession) // R2: the reference's own selection
+        m_shell->setReferenceSelection(referenceSession->selection());
+    followEditingLine(); // R2: a linked reference follows the active Line
     // The editor only ever edits the editing target, never the reference.
     if (target != m_editorDocument) {
         m_editorDocument = target;
@@ -1225,6 +1429,9 @@ void Application::refreshViews()
 
 void Application::refreshVideo()
 {
+    if (m_holdVideoRefresh)
+        return; // commitAndAdvance refreshes once the move is made
+    const auto left = std::exchange(m_leftEditedLine, std::nullopt);
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (target != m_videoDocument) {
@@ -1232,29 +1439,44 @@ void Application::refreshVideo()
         leaveTabMedia(previous); // P6: the tab shown so far keeps its video position
         m_videoDocument = target;
         m_videoRevision.reset();
+        m_videoScript.clear();
         m_videoLine.reset();
-        application::MediaAssociations associations;
-        const auto destination = target ? m_files->destination(*target) : std::nullopt;
-        if (session && destination) {
-#ifdef _WIN32
-            constexpr bool windows = true;
-#else
-            constexpr bool windows = false;
-#endif
-            associations = application::resolveMediaAssociations(
-                session->document(), destination->value,
-                [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, windows);
+        // P9: the question asked when the target's subtitles opened (legacy
+        // OpenFile's LoadVideo prompt), until it is answered; switching tabs
+        // asks nothing new. Y9: subtitles loaded from the tab's video keep it
+        // open.
+        if (!m_keepVideoOnEnter) {
+            m_video->resetForTarget();
+            showAssociationOffer();
         }
-        m_video->offer(associations);
         enterTabMedia(previous, target); // P6: the tab's own video, audio and keyframes
     }
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
-    if (session->revision() != m_videoRevision) {
+    bool edited = false;
+    // E4: live video editing (EditBox::OnEdit's OpenSubsLater, connected
+    // unless DISABLE_LIVE_VIDEO_EDITING, EditBox.cpp:349-352): the video
+    // shows the pending draft; without it, the committed Document only.
+    std::optional<core::Document> draft;
+    if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
+        draft = m_editor->draftDocument();
+    if (draft || m_videoShowsDraft || session->revision() != m_videoRevision) {
+        if (session->revision() != m_videoRevision)
+            edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
         m_videoRevision = session->revision();
-        m_video->session().setSubtitles(m_visualTools->subtitles(session->document())); // T4: with the tool's preview
+        m_videoShowsDraft = draft.has_value();
+        // T4: with the visual tool's preview (its Lines, the vector clip's
+        // mask); E5: as the renderer takes it (GetVisible).
+        auto script = m_visualTools->subtitles(draft ? *draft : session->document(),
+                                               [this](const core::Document &d) { return rendererScript(d); });
+        if (script != m_videoScript) {
+            m_videoScript = script;
+            m_video->session().setSubtitles(std::move(script));
+        }
     }
+    // V4: the Script properties YCbCr matrix on the video's colours.
+    m_video->session().setMatrix(application::sessionVideoMatrix(*session));
     const auto active = session->selection().active;
     // V2: the times field and the go-to commands follow the active Line.
     std::optional<std::pair<core::DocumentTime, core::DocumentTime>> lineTimes;
@@ -1263,12 +1485,15 @@ void Application::refreshVideo()
             if (line->id == *active)
                 lineTimes = std::pair(line->start.value, line->end.value);
     m_video->setActiveLineTimes(lineTimes);
+    // V6: the video follows the active Line as legacy's MOVE_VIDEO_TO_ACTIVE_LINE
+    // and VIDEO_PLAY_AFTER_SELECTION choices say (EditBox::SetLine), and an
+    // edit as ShowEditOnVideo does; the Document's first sight does neither.
+    bool rowChanged = false;
     if (active && active != m_videoLine) {
+        rowChanged = m_videoLine.has_value();
         m_videoLine = active;
-        for (const auto *line : session->document().lines())
-            if (line->id == *active)
-                m_video->session().seekTo(line->start.value);
     }
+    followActiveLine(rowChanged, edited, left);
 }
 
 namespace {
@@ -1306,7 +1531,11 @@ QVariantList Application::reviewClose(const QString &then)
     if (then != QLatin1String("open")) {
         m_pendingOpen.reset();
         m_pendingOpenPath.clear();
+        m_videoAfterOpen.clear(); // P9
+        m_openFromVideo = false;
     }
+    if (then != QLatin1String("files"))
+        m_pendingFiles.reset(); // P9
     std::vector<application::DocumentId> scope;
     if (then != QLatin1String("tab"))
         m_closingTab.reset(); // P6
@@ -1316,6 +1545,8 @@ QVariantList Application::reviewClose(const QString &then)
         scope = m_workspace.documents();
     else if (then == QLatin1String("tab")) // P6: a middle-clicked tab
         scope = m_closingTab ? std::vector{*m_closingTab} : std::vector<application::DocumentId>{};
+    else if (then == QLatin1String("all")) // P9: Close all tabs
+        scope = m_workspace.tabs();
     else if (const auto target = m_workspace.editingTarget())
         scope = {*target};
     QVariantList rows;
@@ -1376,6 +1607,11 @@ void Application::resolveClose(const QVariantList &choices)
 
 void Application::writeFinished(const application::WriteResult &result)
 {
+    // E6: the saved Lines' marks turn saved (SubsGridBase.cpp:391).
+    if ((result.outcome == application::WriteOutcome::Written ||
+         result.outcome == application::WriteOutcome::DurabilityUncertain) &&
+        (m_workspace.editingTarget() == result.document || m_workspace.reference() == result.document))
+        refreshViews();
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value); // legacy SetRecent after a save
@@ -1450,8 +1686,20 @@ void Application::finishClose()
         std::optional<application::DocumentId> id;
         if (m_pendingOpen)
             id = publish(std::move(*m_pendingOpen), m_pendingOpenPath, false);
+        const QString videoAfter = std::exchange(m_videoAfterOpen, QString());
+        const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
+            // P9: the folder's video and the Script Info associations are
+            // offered (LoadVideo's loadPrompt), but not for subtitles found
+            // beside a video, which opens after them.
+            ++m_openBatch;
+            if (!fromVideo) {
+                offerAssociations(*id);
+                showAssociationOffer();
+            } else if (!videoAfter.isEmpty()) {
+                m_video->openVideo(videoAfter);
+            }
             QTimer::singleShot(0, this, [this] { checkResolution(); });
         } else {
             closeEditingTarget();
@@ -1465,6 +1713,11 @@ void Application::finishClose()
     } else if (then == QLatin1String("tab")) {
         if (const auto tab = std::exchange(m_closingTab, std::nullopt))
             closeDocument(*tab); // P6
+    } else if (then == QLatin1String("all")) {
+        closeAllTabs(); // P9
+    } else if (then == QLatin1String("files")) {
+        if (auto files = std::exchange(m_pendingFiles, std::nullopt))
+            applyFiles(std::move(*files), false); // P9
     } else {
         closeEditingTarget();
     }
@@ -1482,7 +1735,13 @@ void Application::cancelClose()
     m_pendingOpenPath.clear();
     m_pendingSession.reset(); // P6
     m_closingTab.reset();
+    m_videoAfterOpen.clear(); // P9: OpenFile returned before LoadVideo
+    m_openFromVideo = false;
     endFindOpen(false);
+    // P9: a cancelled review of the first dropped subtitles skips them only
+    // (OpenFile returned true; OpenFiles went on with the next).
+    if (auto files = std::exchange(m_pendingFiles, std::nullopt))
+        applyFiles(std::move(*files), true);
 }
 
 bool Application::targetUntitled() const
@@ -1519,15 +1778,25 @@ bool readOnly(const QString &path)
 
 QString Application::saveRoute() const
 {
-    const auto target = m_workspace.editingTarget();
-    if (!target)
+    return saveRouteFor(0);
+}
+
+// P9: the Video a tab's Save looks at (legacy atab->VideoName): the shown
+// video for the editing target, a tab's own otherwise.
+static QString readyVideo(const application::VideoSession &video)
+{
+    return video.state() == application::VideoSession::State::Ready ? QString::fromStdString(video.path()) : QString();
+}
+
+QString Application::saveRouteFor(qulonglong id) const
+{
+    const auto document = documentOf(id);
+    if (!document)
         return {};
-    const auto destination = m_files->destination(*target);
+    const auto destination = m_files->destination(*document);
     const QString path = destination ? QString::fromStdString(destination->value) : QString();
-    const QString video = m_video->session().state() == application::VideoSession::State::Ready
-                              ? QString::fromStdString(m_video->session().path())
-                              : QString();
-    if (path.isEmpty() || m_formatChanged.contains(target->value) || (saveWithVideoName() && !video.isEmpty() &&
+    const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
+    if (path.isEmpty() || m_formatChanged.contains(document->value) || (saveWithVideoName() && !video.isEmpty() &&
                            beforeLast(QFileInfo(path).fileName(), u'.') != beforeLast(QFileInfo(video).fileName(), u'.')))
         return QStringLiteral("dialog");
     return readOnly(path) ? QStringLiteral("readonly") : QString();
@@ -1535,16 +1804,22 @@ QString Application::saveRoute() const
 
 QVariantMap Application::saveDialogValues() const
 {
-    auto *session = targetSession();
+    return saveDialogValuesFor(0);
+}
+
+QVariantMap Application::saveDialogValuesFor(qulonglong id) const
+{
+    const auto document = documentOf(id);
+    auto *session = document ? m_files->session(*document) : nullptr;
     if (!session)
         return {};
-    const auto target = m_workspace.editingTarget();
-    const auto destination = m_files->destination(*target);
-    const QString video = m_video->session().state() == application::VideoSession::State::Ready
-                              ? QString::fromStdString(m_video->session().path())
-                              : QString();
+    const auto destination = m_files->destination(*document);
+    const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
+    // Y9: subtitles loaded from an MKV are named after it (OnMkvSubs' SubsPath).
+    const auto matroskaPath = m_matroskaPaths.find(document->value);
     const QString path = !video.isEmpty() && saveWithVideoName() ? video
-                         : destination                           ? QString::fromStdString(destination->value)
+                         : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
+                         : matroskaPath != m_matroskaPaths.end()      ? matroskaPath->second
                                                                  : QString();
     const QString ext = extensionFor(session->document().format());
     const QString filter = ext == QStringLiteral("txt") ? tr("Subtitle file ") + QStringLiteral("(*.txt *.sub)")
@@ -1558,7 +1833,13 @@ QVariantMap Application::saveDialogValues() const
 
 QString Application::saveChosen(const QUrl &file)
 {
-    auto *session = targetSession();
+    return saveChosenFor(0, file);
+}
+
+QString Application::saveChosenFor(qulonglong id, const QUrl &file)
+{
+    const auto document = documentOf(id);
+    auto *session = document ? m_files->session(*document) : nullptr;
     QString path = file.toLocalFile();
     if (!session || path.isEmpty())
         return QStringLiteral("failed");
@@ -1570,23 +1851,48 @@ QString Application::saveChosen(const QUrl &file)
         path += u'.' + ext;
     if (readOnly(path))
         return QStringLiteral("readonly");
-    if (!saveAs(path))
+    auto plan = m_files->prepareSave(*document, application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()});
+    if (!plan || !m_files->startSave(std::move(*plan)))
         return QStringLiteral("failed");
-    if (const auto target = m_workspace.editingTarget())
-        m_formatChanged.erase(target->value); // legacy originalFormat = subsFormat
+    m_formatChanged.erase(document->value); // legacy originalFormat = subsFormat
+    if (*document == m_workspace.editingTarget())
+        m_editor->reloadFromSession();
+    refreshViews();
     return {};
 }
 
-bool Application::saveAll()
+bool Application::saveDocument(qulonglong id)
 {
-    bool targetNeedsDialog = false;
-    for (const auto id : m_workspace.documents()) {
+    const auto document = documentOf(id);
+    if (!document)
+        return false;
+    if (*document == m_workspace.editingTarget())
+        return m_editor->save(); // the Line editor reports a refusal
+    auto plan = m_files->prepareSave(*document);
+    const std::string *title = m_workspace.title(*document);
+    const QString name = title ? QString::fromStdString(*title) : QString();
+    if (!plan || !m_files->startSave(std::move(*plan))) {
+        m_log->log(tr("%1 could not be saved.").arg(name));
+        return false;
+    }
+    refreshViews();
+    return true;
+}
+
+QVariantList Application::saveAll()
+{
+    // Legacy SaveAll: Save(false, i, false) for every modified tab in order.
+    QVariantList later;
+    for (const auto id : m_workspace.tabs()) {
         auto *session = m_files->session(id);
         if (!session || !session->isDirty())
             continue;
-        const auto destination = m_files->destination(id);
-        if (!destination || destination->value.empty()) {
-            targetNeedsDialog = targetNeedsDialog || m_workspace.editingTarget() == id;
+        const QString route = saveRouteFor(id.value);
+        if (!route.isEmpty()) {
+            const std::string *title = m_workspace.title(id);
+            later << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
+                                 {QStringLiteral("route"), route},
+                                 {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()}};
             continue;
         }
         if (auto plan = m_files->prepareSave(id))
@@ -1594,14 +1900,18 @@ bool Application::saveAll()
     }
     m_editor->reloadFromSession();
     refreshViews();
-    return targetNeedsDialog;
+    return later;
 }
 
 bool Application::turnOffTranslationMode()
 {
     auto *session = targetSession();
-    if (!session || !application::turnOffTranslationMode(*session))
+    if (!session)
         return false;
+    showOriginal(*m_workspace.editingTarget());
+    if (!application::turnOffTranslationMode(*session))
+        return false;
+    originalColumns(*m_workspace.editingTarget()).turnedOff(session->document()); // E5: showOriginal = false
     m_editor->reloadFromSession();
     refreshViews();
     return true;
@@ -1625,46 +1935,18 @@ QVariantMap Application::reviewOpen(const QString &path)
         m_log->log(problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
+    // P9: OPEN_SUBS_IN_NEW_TAB (legacy OpenFile): with the option on and
+    // subtitles of a file in the tab, they open in a new tab, unasked
+    // (not for subtitles found beside a video, which load into the tab).
+    if (!m_openFromVideo && m_settings->boolean("subtitles.openInNewTab") && !targetUntitled()) {
+        const bool opened = openInNewTab(std::move(*staged), path);
+        return {{QStringLiteral("ok"), opened}, {QStringLiteral("problem"), QString()},
+                {QStringLiteral("rows"), QVariantList()}, {QStringLiteral("done"), true}};
+    }
     const QVariantList rows = reviewClose(QStringLiteral("open"));
     m_pendingOpen = std::move(*staged);
     m_pendingOpenPath = path;
     return {{QStringLiteral("ok"), true}, {QStringLiteral("problem"), QString()}, {QStringLiteral("rows"), rows}};
-}
-
-QString Application::openDropped(const QList<QUrl> &urls)
-{
-    QStringList files;
-    for (const QUrl &url : urls)
-        if (url.isLocalFile())
-            files << url.toLocalFile();
-    // Legacy sorts by the locale's collation.
-    QCollator collator;
-    std::sort(files.begin(), files.end(), [&](const QString &a, const QString &b) { return collator.compare(a, b) < 0; });
-    const bool single = files.size() == 1;
-    QString subtitles;
-    QString video;
-    for (const QString &file : files) {
-        switch (application::openKindOf(file.toStdString(), single)) {
-        case application::OpenKind::Subtitles:
-            if (subtitles.isEmpty())
-                subtitles = file; // one editing target until tabs arrive (D1)
-            break;
-        case application::OpenKind::Script:
-            m_automation->loadScript(QUrl::fromLocalFile(file));
-            break;
-        case application::OpenKind::Video:
-            if (video.isEmpty())
-                video = file;
-            break;
-        case application::OpenKind::Keyframes: // keyframes arrive with the video cards
-        case application::OpenKind::Refused:
-            break;
-        }
-    }
-    if (!video.isEmpty())
-        m_video->openVideo(video);
-    trimAudioCache(); // legacy OpenFiles
-    return subtitles;
 }
 
 void Application::rememberRecent(const std::string &path)
@@ -1754,6 +2036,7 @@ bool Application::reloadTarget()
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
     m_videoRevision.reset();
+    m_videoScript.clear();
     m_videoLine.reset();
     m_editor->reloadFromSession();
     refreshViews();
@@ -1794,6 +2077,7 @@ bool Application::applySelection(application::Selection next)
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
     refreshVideo();
+    followEditingLine(); // R2
     return true;
 }
 
@@ -1821,7 +2105,7 @@ void Application::extendSelection(int rows)
         applySelection(gridSelection().shiftKey(session->selection(), rows));
 }
 
-void Application::clickLine(qulonglong id, int modifiers)
+void Application::clickLine(qulonglong id, int modifiers, bool endColumn, bool doubleClick)
 {
     const auto target = m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
@@ -1830,12 +2114,30 @@ void Application::clickLine(qulonglong id, int modifiers)
     const auto rules = gridSelection();
     const bool ctrl = modifiers & Qt::ControlModifier, shift = modifiers & Qt::ShiftModifier;
     const core::LineId line{id};
-    if (shift)
+    const auto before = session->selection().active;
+    // V6: legacy SubsGrid::OnMouseEvent (SubsGridWindow.cpp:1625-1649): a
+    // press makes the Line active through SetLine(row, ..., nochangeline,
+    // autoPlay = !ctrl) when GRID_CHANGE_ACTIVE_ON_SELECTION is on or Ctrl is
+    // up; a double click does only with Ctrl (and then selects the Line alone).
+    std::optional<LineChangeOrigin> origin;
+    if (!shift && (doubleClick ? ctrl : (m_settings->boolean("grid.changeActiveOnSelection") || !ctrl)))
+        origin = LineChangeOrigin{true, !ctrl};
+    m_lineChangeOrigin = origin;
+    if (doubleClick) {
+        if (ctrl && !shift)
+            applySelection(rules.plain(session->selection(), line));
+    } else if (shift)
         applySelection(rules.shiftClick(session->selection(), line, ctrl));
     else if (ctrl)
         applySelection(rules.ctrlClick(session->selection(), line));
     else
         applySelection(rules.plain(session->selection(), line));
+    // A press on the active Line: SetLine's "goto done" still plays.
+    if (origin && m_lineChangeOrigin && session->selection().active == before)
+        followShownLine(false, *origin);
+    m_lineChangeOrigin.reset();
+    if (!shift)
+        followGridPress(before, line, modifiers, endColumn, doubleClick);
 }
 
 void Application::dragSelection(qulonglong id)
@@ -2125,7 +2427,7 @@ bool Application::autosave(application::DocumentId document)
     if (!session || !m_recovery->enabled())
         return false;
     application::RecoveryContent content;
-    content.bytes = core::encodeSubtitle(session->document());
+    content.bytes = core::encodeSubtitle(session->document(), m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2191,6 +2493,37 @@ QVariantList Application::recoveryBundles() const
     return out;
 }
 
+void Application::applyMatroska(application::MatroskaLoaded loaded)
+{
+    // SubsGrid::OnMkvSubs after GetSubtitles (SubsGrid.cpp:1149-1190) and
+    // GetSubtitles' Clearing/EndLoad (Demux.cpp:126-164): the tab's
+    // Document is replaced by the loaded one, which has unsaved work
+    // (EndLoad's ForgetSaved) and asks for a name at the next save
+    // (originalFormat = -1); SubsPath and SubsName are the video's name
+    // with ".ass" or ".srt". The tab keeps its video, audio and keyframes,
+    // and InsertSelection(currentLine) selects the row that was active.
+    const auto old = m_workspace.editingTarget();
+    int row = 0;
+    if (auto *session = old ? m_files->session(*old) : nullptr)
+        if (const auto active = session->selection().active) {
+            const auto lines = session->document().lines();
+            for (int i = 0; i < int(lines.size()); ++i)
+                if (lines[std::size_t(i)]->id == *active)
+                    row = i;
+        }
+    const QString subsPath = QDir::toNativeSeparators(QString::fromStdString(loaded.subtitlePath));
+    const auto id = m_files->createUnsaved(std::move(loaded.document));
+    if (auto *session = m_files->session(id)) {
+        selectLegacyActiveLine(*session);
+        selectRow(id, row);
+    }
+    m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
+    m_matroskaPaths[id.value] = subsPath;
+    replaceTarget(id, true);
+    // Hikari->SetSubsResolution (SubsGrid.cpp:1189).
+    QTimer::singleShot(0, this, [this] { checkResolution(); });
+}
+
 bool Application::recoverBundle(const QString &key, qulonglong generation)
 {
     const auto content = m_recovery ? m_recovery->read(key.toStdString(), generation) : std::nullopt;
@@ -2217,6 +2550,86 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
         }
     }
     m_workspace.add(id, tr("%1 (recovered)").arg(QString::fromStdString(content->title)).toStdString());
+    m_workspace.setEditingTarget(id);
+    refreshViews();
+    return true;
+}
+
+// P9: the legacy app's autosaves in its Subs folder (AutoSaveOpen), read only.
+QVariantList Application::legacyAutosaves()
+{
+    QVariantList rows;
+    if (m_legacyAutosaveDir.isEmpty() || !QFileInfo(m_legacyAutosaveDir).isDir())
+        return rows; // no legacy folder: nothing to list (and nothing logged)
+    const auto files = application::listLegacyAutosaves(std::filesystem::path(m_legacyAutosaveDir.toStdU16String()),
+                                                        tr("Untitled").toStdU16String());
+    if (files.empty()) {
+        // GenerateList: "Cannot open auto save folder" when FindFirstFileW
+        // finds nothing (the Linux build's, for an empty folder too; on
+        // Windows "." and ".." are found), else "Auto save folder is empty".
+#ifdef _WIN32
+        m_log->log(tr("Auto save folder is empty"));
+#else
+        m_log->log(QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+                       ? tr("Cannot open auto save folder")
+                       : tr("Auto save folder is empty"));
+#endif
+        return rows;
+    }
+    for (const auto &file : files) {
+        QVariantList versions;
+        for (const auto &version : file.versions)
+            versions << QVariantMap{{QStringLiteral("written"), QString::fromStdString(version.written)},
+                                    {QStringLiteral("file"), QString::fromStdU16String(version.file.u16string())}};
+        rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(file.name)},
+                            {QStringLiteral("versions"), versions}};
+    }
+    return rows;
+}
+
+QVariantList Application::filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const
+{
+    // AutoSaveOpen::FindFiles: the query's words (split at spaces, empty ones
+    // dropped: wxTOKEN_STRTOK) found in the lowered name, all of them or any
+    // ("All words"); an empty query shows every file. Lowering follows
+    // U1-unicode-case (every letter, whatever the interface language).
+    QVariantList shown;
+    const QStringList tokens = query.split(u' ', Qt::SkipEmptyParts);
+    for (int k = 0; k < files.size(); ++k) {
+        const QString name = files[k].toMap().value(QStringLiteral("name")).toString().toLower();
+        bool found = allWords;
+        for (const QString &token : tokens) {
+            const bool has = name.contains(token.toLower());
+            if (allWords && !has) {
+                found = false;
+                break;
+            }
+            if (!allWords && has) {
+                found = true;
+                break;
+            }
+        }
+        if (query.isEmpty() || found)
+            shown << k;
+    }
+    return shown;
+}
+
+bool Application::openLegacyAutosave(const QString &file)
+{
+    // Legacy OnOkClick opened the autosave itself (Hikari->OpenFile), so a
+    // save wrote into the Subs folder; under L58-recovery-copy it opens as a
+    // new unsaved Untitled copy and the file is only read.
+    auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
+    if (!staged) {
+        m_log->log(tr("Failed to load autosave"));
+        return false;
+    }
+    const auto id = m_files->createUnsaved(std::move(staged->load.document));
+    if (auto *session = m_files->session(id))
+        selectLegacyActiveLine(*session);
+    m_workspace.add(id, tr("%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
+    m_tabMedia[id.value]; // a new tab
     m_workspace.setEditingTarget(id);
     refreshViews();
     return true;
@@ -2324,6 +2737,8 @@ bool Application::pasteTranslationFile(const QUrl &file)
     const QString extension = path.section(QLatin1Char('.'), -1);
     const auto shown = shownLines();
     const bool done = application::pasteTranslation(*session, toU8(text), toU8(extension), shown).has_value();
+    if (done)
+        originalColumns(*m_workspace.editingTarget()).pasted(session->document()); // E5: showOriginal = true
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -2340,6 +2755,9 @@ bool Application::shiftTranslation(int mode)
 {
     auto *session = targetSession();
     if (!session || mode < 0 || mode > 5)
+        return false;
+    // E5: MoveTextTL returns without showOriginal (SubsGrid.cpp:1037).
+    if (!showOriginal(*m_workspace.editingTarget()))
         return false;
     const auto shown = shownLines();
     const bool done =
@@ -2358,6 +2776,9 @@ QString Application::openKeyframes(const QUrl &file)
         m_tabMedia[target->value].keyframes = QDir::toNativeSeparators(path); // P6: legacy KeyframesPath
     auto &video = m_video->session();
     if (video.state() != application::VideoSession::State::Ready) {
+        // V3: with the audio box, at 23.976 fps (VideoBox::OpenKeyframes)
+        if (QString problem; keyframesWithoutVideo(path, problem))
+            return problem;
         m_pendingKeyframes = path; // applied when a video opens
         return {};
     }
@@ -4013,6 +4434,26 @@ bool Application::deleteLines()
     return done;
 }
 
+// E6: GLOBAL_HIDE_TAGS, SubsGrid::HideOverrideTags (SubsGridWindow.cpp:1959-1965):
+// the Grid's switch flips and GRID_HIDE_TAGS keeps it.
+void Application::toggleHideTags()
+{
+    m_settings->set("grid.hideTags", !m_shell->hideTags());
+    m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+}
+
+// E6: GLOBAL_REMOVE_TEXT, SubsGrid::DeleteText (SubsGridBase.cpp:928-936).
+bool Application::deleteText()
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const bool done = application::deleteText(*session, shownLines()).has_value();
+    m_editor->reloadFromSession();
+    refreshViews();
+    return done;
+}
+
 bool Application::joinLines(const QString &kind)
 {
     const auto target = m_workspace.editingTarget();
@@ -4072,11 +4513,15 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("shiftTimes"), QVariant::fromValue(m_shiftTimes.get())},
             {QStringLiteral("gridFilter"), QVariant::fromValue(m_gridFilter.get())},
             {QStringLiteral("visualTools"), QVariant::fromValue(m_visualTools.get())},
+            {QStringLiteral("videoView"), QVariant::fromValue(m_videoView.get())},
             {QStringLiteral("automationHotkeys"), QVariant::fromValue(static_cast<QObject *>(m_automationHotkeys.get()))},
+            {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
+            {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
+            {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
             {QStringLiteral("app"), QVariant::fromValue(static_cast<QObject *>(this))}};
 }
 
@@ -4102,6 +4547,16 @@ void Application::settingChanged(const QString &id)
         m_recovery->setCapacity(m_settings->integer("autosave.maxFiles")); // SubsGridBase autosave
     else if (id == QLatin1String("grid.hideColumns") && !m_resettingSettings)
         m_shell->setHiddenColumns(m_settings->integer("grid.hideColumns"));
+    else if (id == QLatin1String("video.disableLiveEditing") || id.startsWith(QLatin1String("grid.calcSpaces"))) {
+        m_editor->optionsChanged(); // E4: the counters and Duration follow at once
+        refreshVideo();             // live editing on or off: the draft or the committed Lines
+    }
+    else if (id == QLatin1String("grid.hideTags") || id == QLatin1String("grid.tagsSwapCharacter"))
+        m_shell->setHideTags(m_settings->boolean("grid.hideTags"), m_settings->text("grid.tagsSwapCharacter"));
+    else if (id == QLatin1String("program.language")) // O5: live, wherever it is written
+        switchLanguage();
+    else if (id == QLatin1String("program.font") || id == QLatin1String("program.fontSize"))
+        applyProgramFont(); // O5 (legacy SetOptions: Hikari->SetFont(*Options.GetFont()))
 }
 
 namespace {
@@ -4197,9 +4652,14 @@ QVariantMap Application::openSettingsDialog()
 {
     auto &lists = m_optionsLists;
     lists = {};
-    // No translation catalogues ship with the rewrite yet: English only.
+    // O5: English, then the catalogs (OptionsDialog.cpp:322-333: the
+    // available translations sorted, each by FindLanguage).
     lists.languageTags = {"en"};
     lists.languageNames = {"English"};
+    for (const QString &tag : m_localisation->catalogLanguages()) {
+        lists.languageTags.push_back(tag.toStdString());
+        lists.languageNames.push_back(languageName(tag).toStdString());
+    }
     lists.findLanguage = [](std::string_view tag) { return languageName(qs(tag)).toStdString(); };
     // U1-unicode-case: every letter, whatever the interface language.
     lists.sameIgnoringCase = [](std::string_view a, std::string_view b) {
@@ -4250,7 +4710,7 @@ QVariantMap Application::openSettingsDialog()
     if (open.styleMissing)
         warnings << tr("The selected %1 for conversion does not exist\nand will be changed to the default").arg(tr("style"));
     auto values = toVariant(open.state);
-    addThemeColours(values);
+    addAppearance(values);
     return {{QStringLiteral("values"), values},
             {QStringLiteral("languages"), qList(lists.languageNames)},
             {QStringLiteral("dictionaries"), qList(lists.dictionaryNames)},
@@ -4259,58 +4719,50 @@ QVariantMap Application::openSettingsDialog()
             {QStringLiteral("warnings"), warnings}};
 }
 
-// The Themes page's colours (legacy's ID_COLOR_CONFIG list), as far as the
-// rewrite keeps theme colours: the audio spectrum's three (A2) and the icon
-// colours of each appearance (K1). The Grid's comparison colours are fixed
-// per theme (R1, LineTableModel).
+// K2: the Appearance page's settings (the theme, following the system, each
+// mode's accent preset and the high-contrast pickers), which replace legacy's
+// Themes page (theme files stay excluded). They are not legacy options:
+// "Set default" leaves them, as ResetDefault left the theme.
 namespace {
-std::vector<std::string_view> themeColours()
+std::vector<std::string_view> appearanceSettings()
 {
-    std::vector<std::string_view> ids{application::kSpectrumBackgroundSetting, application::kSpectrumEchoSetting,
-                                      application::kSpectrumInnerSetting};
-    for (const auto &appearance : application::kIconColourSettings)
-        ids.insert(ids.end(), std::begin(appearance), std::end(appearance));
+    std::vector<std::string_view> ids;
+    for (const auto &setting : application::settingDefinitions())
+        if (setting.id.starts_with("appearance."))
+            ids.push_back(setting.id);
     return ids;
 }
 
-bool isIconColour(std::string_view id)
+// A staged value the setting accepts: a theme's code, an accent preset's
+// key, a colour ("#RRGGBB" or "#RRGGBBAA").
+bool validAppearance(std::string_view id, const QVariant &value)
 {
-    for (const auto &appearance : application::kIconColourSettings)
-        if (std::ranges::find(appearance, id) != std::end(appearance))
-            return true;
-    return false;
+    if (id == ui::theme::kThemeSetting)
+        return ui::theme::codeFromName(value.toString()).has_value();
+    if (id == ui::theme::kFollowSystemSetting)
+        return value.typeId() == QMetaType::Bool;
+    if (id == ui::theme::kLightAccentSetting || id == ui::theme::kDarkAccentSetting) {
+        const bool dark = id == ui::theme::kDarkAccentSetting;
+        return ui::theme::accent(dark, value.toString()).key == value.toString();
+    }
+    return application::parseSettingColour(value.toString().toStdString()).has_value();
 }
 } // namespace
 
-void Application::addThemeColours(QVariantMap &values) const
+void Application::addAppearance(QVariantMap &values) const
 {
-    for (const auto id : themeColours())
-        values.insert(qs(id), qs(m_settings->settings().text(id)));
+    for (const auto id : appearanceSettings())
+        values.insert(qs(id), m_settings->value(qs(id)));
 }
 
 void Application::applySettings(const QVariantMap &values)
 {
-    // SetOptions' ID_COLOR_CONFIG list: the changed colours are saved and
-    // ChangeColors runs (the audio display's ChangeOptions: the spectrum
-    // reads its colours again, through settingChanged).
-    for (const auto id : themeColours()) {
+    // K2: the appearance, saved when it differs; the theme follows at once.
+    for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
-        if (found == values.cend())
+        if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
             continue;
-        const std::string colour = found->toString().toStdString();
-        if (!application::parseSettingColour(colour) || colour == m_settings->settings().text(id))
-            continue;
-        // K1: an icon colour back at its theme default leaves the profile
-        // (it follows the default again); the icons repaint at once. The
-        // colours are compared as colours, so "#9cdbc9" or "#9CDBC9FF" is
-        // the default "#9CDBC9" too.
-        const auto *setting = application::findSetting(id);
-        if (isIconColour(id) && setting
-            && application::parseSettingColour(std::get<std::string>(setting->defaultValue))
-                   == application::parseSettingColour(colour))
-            m_settings->reset(qs(id));
-        else
-            m_settings->settings().set(id, colour);
+        m_settings->setValue(qs(id), *found);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
@@ -4377,12 +4829,12 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     //   legacy next saves them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
-    // The theme's colours are not options: ResetDefault leaves them.
+    // The appearance is not an option: ResetDefault leaves it, as it left the theme.
     std::vector<std::string_view> keep{"recent.subtitles", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting};
-    const auto colours = themeColours();
-    keep.insert(keep.end(), colours.begin(), colours.end());
+    const auto appearance = appearanceSettings();
+    keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
         if (store.isSet(id))
             kept.emplace_back(id, store.value(id));
@@ -4427,8 +4879,8 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     m_hotkeys->resetDefaults();
     auto refreshed =
         toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
-    // the colour list keeps what it shows
-    for (const auto id : themeColours())
+    // the Appearance page keeps what it shows
+    for (const auto id : appearanceSettings())
         if (const auto found = values.constFind(qs(id)); found != values.cend())
             refreshed.insert(qs(id), *found);
     return refreshed;

@@ -195,8 +195,11 @@ void VideoView::resetZoom()
     m_zoomRect = {static_cast<float>(m_videoRect.left), static_cast<float>(m_videoRect.top),
                   static_cast<float>(m_videoRect.right), static_cast<float>(m_videoRect.bottom)};
     const int sizeX = m_videoRect.right - m_videoRect.left;
-    const int sizeY = m_videoRect.bottom - m_videoRect.top;
-    sourceFromZoomRect(static_cast<float>(sizeX), static_cast<float>(sizeY));
+    // Approved departure V4-reset-zoom-rows: the whole frame exactly. Legacy
+    // divided the panel's size by its float scale and truncated
+    // (RendererVideo.cpp:771-778), which at some panel sizes left the last
+    // row or column out (719 of 720).
+    m_sourceRect = {0, 0, m_width, m_height};
     m_zoomPercent = sizeX / (m_zoomRect.width - m_zoomRect.x);
     refreshToolTransform();
 }

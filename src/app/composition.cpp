@@ -1,11 +1,13 @@
 #include "hikari/app/composition.h"
 #include "docking.h"
+#include "theme.h"
 
 #include "hikari/app/application.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/backends/legacy_spelling.h"
 
 #include <QGuiApplication>
+#include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
 #include <QTimer>
@@ -33,15 +35,20 @@ int run(int argc, char **argv, StartupMode mode)
     // then the bundled one beside the executable (legacy's location).
     options.spellingBackend = backends::hunspellSpellingLoader();
     options.bundledDictionaryDir = QCoreApplication::applicationDirPath() + QStringLiteral("/Dictionary");
+    // O5: the first start on a Polish system takes Polish (Application).
+    options.systemUiLanguages = QLocale::system().uiLanguages();
     Application application(options);
     application.setStartedWithPaths(argc > 1); // P6: no session at start then
     // A path on the command line opens as the editing target.
     if (argc > 1)
         application.openFile(QString::fromLocal8Bit(argv[1]));
 
+    // K2: the controls draw with the theme layer's palette.
+    hikari::ui::theme::chooseControlsStyle();
     QQmlApplicationEngine engine;
     hikari::ui::attachDocking(engine);
     attachStylePreview(engine, application.styleManager());
+    attachFontCatalogPreview(engine, application.fontCatalogs()); // Y6
     engine.setInitialProperties(application.qmlProperties());
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed, &app,
                      [] { QCoreApplication::exit(2); }, Qt::QueuedConnection);

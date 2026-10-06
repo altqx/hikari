@@ -27,6 +27,8 @@ extern "C" {
 #include <windows.h>
 #else
 #include <fontconfig/fontconfig.h>
+// After fontconfig.h, which it needs.
+#include <fontconfig/fcfreetype.h>
 #endif
 
 namespace hikari::backends {
@@ -109,6 +111,7 @@ struct State {
     std::size_t current = 0;
     std::map<int, std::size_t> uidToFace; // the renderer's selector-local ids
     std::vector<std::pair<std::string, std::string>> attachments; // name, sha256
+    std::vector<std::pair<std::string, std::string>> externals;   // Y6: external font path, sha256
     application::FontCollection *collection = nullptr; // set while collecting a document
 };
 
@@ -209,6 +212,13 @@ void onSelected(void *data, const ASS_HikariFontSelection *s)
             face.attachment = name;
             break;
         }
+    // Y6: an external font (EXTERNAL_FONTS_DIRECTORY) is named by its file.
+    if (face.attachment.empty() && face.path.empty())
+        for (const auto &[name, hash] : st.externals)
+            if (hash == face.sha256) {
+                face.path = name;
+                break;
+            }
     if (st.collection)
         collectFace(st, face, bytes);
     const std::size_t index = st.report.faces.size();
@@ -292,6 +302,23 @@ std::string escapeText(const std::string &text)
     return out;
 }
 
+// Y6: EXTERNAL_FONTS_DIRECTORY's fonts, after the attachments. Legacy
+// registered them for the process (AddFontResourceExW FR_PRIVATE), so the
+// renderer saw them as installed fonts.
+void addExternalFonts(ASS_Library *library, const application::FontEnvironment &environment, State *state)
+{
+    for (const auto &f : environment.externalFonts) {
+        if (!f.bytes)
+            continue;
+        ass_add_font(library, f.name.c_str(), reinterpret_cast<const char *>(f.bytes->data()), int(f.bytes->size()));
+        if (state) {
+            std::vector<unsigned char> copy(reinterpret_cast<const unsigned char *>(f.bytes->data()),
+                                            reinterpret_cast<const unsigned char *>(f.bytes->data()) + f.bytes->size());
+            state->externals.emplace_back(f.name, sha256(copy));
+        }
+    }
+}
+
 } // namespace
 
 std::expected<FontReport, FontError> LibassFontService::resolve(const application::FontEnvironment &environment,
@@ -322,6 +349,7 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
                                         reinterpret_cast<const unsigned char *>(a.bytes->data()) + a.bytes->size());
         state.attachments.emplace_back(a.name, sha256(copy));
     }
+    addExternalFonts(library, environment, &state);
 
     for (std::size_t i = 0; i < requests.size(); ++i) {
         const auto &request = requests[i];
@@ -368,7 +396,9 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                                    reinterpret_cast<IUnknown **>(&factory))))
         return out;
     IDWriteFontCollection *collection = nullptr;
-    if (SUCCEEDED(factory->GetSystemFontCollection(&collection, FALSE))) {
+    // Y6 (F47-refresh): after refresh() the shared factory's collection is
+    // checked for installed and removed fonts.
+    if (SUCCEEDED(factory->GetSystemFontCollection(&collection, m_checkForUpdates.exchange(false) ? TRUE : FALSE))) {
         auto utf8 = [](const wchar_t *w) { return QString::fromWCharArray(w).toStdString(); };
         auto strings = [&](IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID id) {
             std::vector<std::string> values;
@@ -386,6 +416,30 @@ std::vector<SystemFace> LibassFontService::systemFaces()
             }
             return values;
         };
+        auto localized = [&](IDWriteFont *font, DWRITE_INFORMATIONAL_STRING_ID id) {
+            std::string value;
+            IDWriteLocalizedStrings *list = nullptr;
+            BOOL exists = FALSE;
+            if (SUCCEEDED(font->GetInformationalStrings(id, &list, &exists)) && exists && list) {
+                UINT32 index = 0;
+                BOOL found = FALSE;
+                wchar_t locale[LOCALE_NAME_MAX_LENGTH] = {};
+                if (GetUserDefaultLocaleName(locale, LOCALE_NAME_MAX_LENGTH) > 0)
+                    list->FindLocaleName(locale, &index, &found);
+                if (!found)
+                    list->FindLocaleName(L"en-us", &index, &found);
+                if (!found)
+                    index = 0;
+                UINT32 length = 0;
+                if (list->GetCount() > index && SUCCEEDED(list->GetStringLength(index, &length))) {
+                    std::wstring s(length + 1, L'\0');
+                    if (SUCCEEDED(list->GetString(index, s.data(), length + 1)))
+                        value = utf8(s.c_str());
+                }
+                list->Release();
+            }
+            return value;
+        };
         for (UINT32 f = 0; f < collection->GetFontFamilyCount(); ++f) {
             IDWriteFontFamily *family = nullptr;
             if (FAILED(collection->GetFontFamily(f, &family)))
@@ -397,6 +451,9 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                 SystemFace face;
                 // GDI-compatible family names, as libass's DirectWrite provider matches them.
                 face.families = strings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
+                // Y6: the name GDI's EnumFontFamiliesEx listed (FontEnumerator.cpp:155):
+                // the Win32 family name in the user's language, else English, else the first.
+                face.listedFamily = localized(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES);
                 for (auto &name : strings(font, DWRITE_INFORMATIONAL_STRING_PREFERRED_FAMILY_NAMES))
                     if (std::find(face.families.begin(), face.families.end(), name) == face.families.end())
                         face.families.push_back(name);
@@ -524,6 +581,7 @@ std::expected<Rendering, FontError> renderDocument(ASS_Library *library, const s
         if (a.bytes)
             ass_add_font(library, a.name.c_str(), reinterpret_cast<const char *>(a.bytes->data()),
                          int(a.bytes->size()));
+    addExternalFonts(library, environment, nullptr);
     ASS_Renderer *renderer = ass_renderer_init(library);
     if (!renderer)
         return std::unexpected(FontError::RendererUnavailable);
@@ -581,6 +639,12 @@ LibassFontService::collect(const std::vector<std::byte> &script, const applicati
                                         reinterpret_cast<const unsigned char *>(a.bytes->data()) + a.bytes->size());
         state.attachments.emplace_back(a.name, sha256(copy));
     }
+    for (const auto &f : environment.externalFonts)
+        if (f.bytes) {
+            std::vector<unsigned char> copy(reinterpret_cast<const unsigned char *>(f.bytes->data()),
+                                            reinterpret_cast<const unsigned char *>(f.bytes->data()) + f.bytes->size());
+            state.externals.emplace_back(f.name, sha256(copy));
+        }
     auto rendering = renderDocument(library, script, environment, cancel);
     ass_library_done(library);
     if (!rendering)
@@ -614,6 +678,248 @@ LibassFontService::verifyReimport(const std::vector<std::byte> &script, const ap
             check.differingFrames.push_back(i);
     check.identical = check.differingFrames.empty() && rendering->hashes.size() == collection.frameHashes.size();
     return check;
+}
+
+namespace {
+
+// Y6: the faces of one external font (EXTERNAL_FONTS_DIRECTORY), read from
+// its bytes as the platform listed them once legacy had registered the file:
+// fontconfig's view of the face on Linux (the shim's FcConfigAppFontAddFile,
+// platform.h:1230), the GDI family name (name ID 1 in the user's language,
+// else English, else the first) on Windows.
+std::vector<SystemFace> externalFaces(const application::FontAttachment &font)
+{
+    std::vector<SystemFace> out;
+    if (!font.bytes || font.bytes->empty())
+        return out;
+    FT_Library ft = nullptr;
+    if (FT_Init_FreeType(&ft))
+        return out;
+    const auto *data = reinterpret_cast<const FT_Byte *>(font.bytes->data());
+    const auto size = FT_Long(font.bytes->size());
+    long count = 0;
+    if (FT_Face probe = nullptr; !FT_New_Memory_Face(ft, data, size, -1, &probe)) {
+        count = probe->num_faces;
+        FT_Done_Face(probe);
+    }
+    for (long i = 0; i < count; ++i) {
+        FT_Face f = nullptr;
+        if (FT_New_Memory_Face(ft, data, size, i, &f))
+            continue;
+        SystemFace face;
+        face.index = int(i);
+        face.path = font.name;
+        face.externalFile = font.name;
+#ifdef _WIN32
+        std::vector<std::pair<FT_UShort, std::string>> names; // language, family
+        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total; ++n) {
+            FT_SfntName name;
+            if (!FT_Get_Sfnt_Name(f, n, &name) && name.name_id == TT_NAME_ID_FONT_FAMILY &&
+                name.platform_id == TT_PLATFORM_MICROSOFT) {
+                const std::string text = decodeName(name);
+                if (!text.empty())
+                    names.emplace_back(name.language_id, text);
+            }
+        }
+        const LANGID user = GetUserDefaultLangID();
+        for (const LANGID want : {user, LANGID(0x0409)}) {
+            for (const auto &[language, text] : names)
+                if (language == want && face.listedFamily.empty())
+                    face.listedFamily = text;
+        }
+        if (face.listedFamily.empty() && !names.empty())
+            face.listedFamily = names.front().second;
+        for (const auto &[language, text] : names)
+            if (std::find(face.families.begin(), face.families.end(), text) == face.families.end())
+                face.families.push_back(text);
+        face.weight = (f->style_flags & FT_STYLE_FLAG_BOLD) ? 700 : 400;
+        face.italic = (f->style_flags & FT_STYLE_FLAG_ITALIC) != 0;
+#else
+        if (FcPattern *p = FcFreeTypeQueryFace(f, reinterpret_cast<const FcChar8 *>(font.name.c_str()), unsigned(i), nullptr)) {
+            FcChar8 *s = nullptr;
+            for (int n = 0; FcPatternGetString(p, FC_FAMILY, n, &s) == FcResultMatch; ++n)
+                face.families.emplace_back(reinterpret_cast<const char *>(s));
+            if (FcPatternGetString(p, FC_STYLE, 0, &s) == FcResultMatch)
+                face.style = reinterpret_cast<const char *>(s);
+            if (FcPatternGetString(p, FC_POSTSCRIPT_NAME, 0, &s) == FcResultMatch)
+                face.postscriptName = reinterpret_cast<const char *>(s);
+            double weight = 0;
+            if (FcPatternGetDouble(p, FC_WEIGHT, 0, &weight) == FcResultMatch)
+                face.weight = int(FcWeightToOpenTypeDouble(weight));
+            int slant = 0;
+            if (FcPatternGetInteger(p, FC_SLANT, 0, &slant) == FcResultMatch)
+                face.italic = slant != FC_SLANT_ROMAN;
+            FcPatternDestroy(p);
+        }
+#endif
+        if (face.families.empty() && f->family_name)
+            face.families.emplace_back(f->family_name);
+        if (face.style.empty() && f->style_name)
+            face.style = f->style_name;
+        if (face.postscriptName.empty())
+            if (const char *ps = FT_Get_Postscript_Name(f))
+                face.postscriptName = ps;
+        out.push_back(std::move(face));
+        FT_Done_Face(f);
+    }
+    FT_Done_FreeType(ft);
+    return out;
+}
+
+// Whether `f` maps every character (U+0000 never: the shim's GetGlyphIndicesW
+// marks it missing, platform.h:1110).
+bool coversAll(FT_Face f, const std::u32string &characters)
+{
+    for (const char32_t c : characters)
+        if (c == 0 || FT_Get_Char_Index(f, FT_ULong(c)) == 0)
+            return false;
+    return true;
+}
+
+#ifndef _WIN32
+bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
+{
+    for (const char32_t c : characters)
+        if (c == 0 || !set || !FcCharSetHasChar(set, FcChar32(c)))
+            return false;
+    return true;
+}
+#endif
+
+} // namespace
+
+std::vector<SystemFace> LibassFontService::pickerFaces(const application::FontEnvironment &environment)
+{
+    std::vector<SystemFace> out = environment.systemFonts ? systemFaces() : std::vector<SystemFace>();
+    for (const auto &font : environment.externalFonts)
+        for (auto &face : externalFaces(font))
+            out.push_back(std::move(face));
+    return out;
+}
+
+std::vector<bool> LibassFontService::facesCover(const std::vector<SystemFace> &faces,
+                                                const application::FontEnvironment &environment,
+                                                const std::u32string &characters)
+{
+    std::vector<bool> out(faces.size(), false);
+    FT_Library ft = nullptr;
+    if (FT_Init_FreeType(&ft))
+        ft = nullptr;
+    // External fonts: their own bytes.
+    for (std::size_t i = 0; i < faces.size(); ++i) {
+        if (faces[i].externalFile.empty() || !ft)
+            continue;
+        const auto font = std::find_if(environment.externalFonts.begin(), environment.externalFonts.end(),
+                                       [&](const application::FontAttachment &a) { return a.name == faces[i].externalFile; });
+        if (font == environment.externalFonts.end() || !font->bytes)
+            continue;
+        FT_Face f = nullptr;
+        if (FT_New_Memory_Face(ft, reinterpret_cast<const FT_Byte *>(font->bytes->data()), FT_Long(font->bytes->size()),
+                               faces[i].index, &f))
+            continue;
+#ifdef _WIN32
+        out[i] = coversAll(f, characters);
+#else
+        FcCharSet *set = FcFreeTypeCharSet(f, nullptr);
+        out[i] = charsetCovers(set, characters);
+        if (set)
+            FcCharSetDestroy(set);
+#endif
+        FT_Done_Face(f);
+    }
+#ifdef _WIN32
+    // Installed fonts: GetGlyphIndicesW with the face selected
+    // (FontEnumerator::CheckGlyphsExists) reads its character map.
+    std::map<std::string, std::vector<std::size_t>> byPath;
+    for (std::size_t i = 0; i < faces.size(); ++i)
+        if (faces[i].externalFile.empty() && !faces[i].path.empty())
+            byPath[faces[i].path].push_back(i);
+    for (const auto &[path, indices] : byPath) {
+        QFile file(QString::fromStdString(path));
+        if (!ft || !file.open(QIODevice::ReadOnly))
+            continue;
+        const qint64 size = file.size();
+        uchar *data = size > 0 ? file.map(0, size) : nullptr;
+        if (!data)
+            continue;
+        for (const std::size_t i : indices) {
+            FT_Face f = nullptr;
+            if (FT_New_Memory_Face(ft, data, FT_Long(size), faces[i].index, &f))
+                continue;
+            out[i] = coversAll(f, characters);
+            FT_Done_Face(f);
+        }
+        file.unmap(data);
+    }
+#else
+    // Installed fonts: the charset of the face fontconfig lists (the shim's
+    // FcCharSetHasChar on the matched face, platform.h:1106).
+    if (FcInit()) {
+        FcPattern *pattern = FcPatternCreate();
+        FcObjectSet *objects = FcObjectSetBuild(FC_FILE, FC_INDEX, FC_CHARSET, nullptr);
+        if (FcFontSet *set = FcFontList(nullptr, pattern, objects)) {
+            std::map<std::pair<std::string, int>, FcCharSet *> sets;
+            for (int n = 0; n < set->nfont; ++n) {
+                FcChar8 *file = nullptr;
+                int index = 0;
+                FcCharSet *charset = nullptr;
+                if (FcPatternGetString(set->fonts[n], FC_FILE, 0, &file) != FcResultMatch)
+                    continue;
+                FcPatternGetInteger(set->fonts[n], FC_INDEX, 0, &index);
+                if (FcPatternGetCharSet(set->fonts[n], FC_CHARSET, 0, &charset) == FcResultMatch)
+                    sets.emplace(std::make_pair(std::string(reinterpret_cast<const char *>(file)), index), charset);
+            }
+            for (std::size_t i = 0; i < faces.size(); ++i)
+                if (faces[i].externalFile.empty())
+                    if (const auto it = sets.find({faces[i].path, faces[i].index}); it != sets.end())
+                        out[i] = charsetCovers(it->second, characters);
+            FcFontSetDestroy(set);
+        }
+        FcObjectSetDestroy(objects);
+        FcPatternDestroy(pattern);
+    }
+#endif
+    if (ft)
+        FT_Done_FreeType(ft);
+    return out;
+}
+
+void LibassFontService::refresh()
+{
+#ifdef _WIN32
+    m_checkForUpdates = true;
+#else
+    // The listing's configuration reads the font folders again; libass makes
+    // its own configuration for each renderer.
+    FcInitReinitialize();
+#endif
+}
+
+std::vector<std::string> LibassFontService::fontDirectories()
+{
+    std::vector<std::string> out;
+#ifdef _WIN32
+    // FontEnumerator::CheckFontsProc's two folders (FontEnumerator.cpp:362-374).
+    const QString windows = qEnvironmentVariable("WINDIR");
+    if (!windows.isEmpty())
+        out.push_back((windows + QStringLiteral("\\Fonts\\")).toStdString());
+    const QString local = qEnvironmentVariable("LOCALAPPDATA");
+    if (!local.isEmpty())
+        out.push_back((local + QStringLiteral("\\Microsoft\\Windows\\Fonts\\")).toStdString());
+#else
+    // hikarisub_linux_font_directories (platform.h:1186): fontconfig's font
+    // folders, sorted and once each.
+    if (!FcInit())
+        return out;
+    if (FcStrList *list = FcConfigGetFontDirs(FcConfigGetCurrent())) {
+        while (FcChar8 *directory = FcStrListNext(list))
+            out.emplace_back(reinterpret_cast<const char *>(directory));
+        FcStrListDone(list);
+    }
+    std::sort(out.begin(), out.end());
+    out.erase(std::unique(out.begin(), out.end()), out.end());
+#endif
+    return out;
 }
 
 } // namespace hikari::backends

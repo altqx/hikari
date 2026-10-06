@@ -12,6 +12,7 @@
 #include "hikari/application/audio_box.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/document_scripts.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/macro_transaction.h"
 #include "hikari/application/workspace.h"
@@ -21,6 +22,7 @@
 #include "automation_manager_controller.h"
 #include "automation_services_qt.h"
 #include "line_editor_controller.h"
+#include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
 
@@ -55,15 +57,30 @@ public:
 
     // Called after a macro changed the Document (the views show it again).
     void setDocumentChanged(std::function<void()> changed) { m_documentChanged = std::move(changed); }
-    // The audio box whose audio aegisub.get_frequency_peaks reads (null: none).
+    // The audio box whose audio aegisub.get_frequency_peaks reads, and whose
+    // presence aegisub.get_audio_selection checks (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);
+    // The log window (legacy HikariLog) and the settings (AUTOMATION_SCRIPT_EDITOR).
+    void setLog(std::function<void(const QString &)> log) { m_logLine = std::move(log); }
+    void setSettings(ui::SettingsStore *settings) { m_settings = settings; }
+
+    // How a run was asked for: legacy validates every run first
+    // (LuaCommand::RunScript, OnRunScript, GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT)
+    // and says so when validation fails, except from the menu.
+    enum class RunOrigin { Menu, Hotkey, LastScript };
+    // O5: aegisub.gettext's lookup (application::HostService::Gettext).
+    void setTranslation(std::function<std::string(const std::string &)> translate)
+    {
+        m_router.setTranslation(std::move(translate));
+    }
 
     // AutomationServicePort: run() goes through the editing target's transaction.
     std::vector<application::ScriptStatus> scripts() const override { return m_manager.scripts(); }
     void load(const std::string &path) override { m_manager.load(path); }
     bool reload(const std::string &path) override { return m_manager.reload(path); }
-    void unload(const std::string &path) override { m_manager.unload(path); }
-    bool run(const std::string &path, int ordinal) override;
+    void unload(const std::string &path) override;
+    bool run(const std::string &path, int ordinal) override { return run(path, ordinal, RunOrigin::Menu); }
+    bool run(const std::string &path, int ordinal, RunOrigin origin);
     void cancel() override { m_manager.cancel(); }
     bool forceStop(const std::string &path) override { return m_manager.forceStop(path); }
     void setObserver(std::function<void()> changed) override { m_manager.setObserver(std::move(changed)); }
@@ -71,7 +88,26 @@ public:
     // Legacy autoload: every .lua and .moon in Automation/automation/Autoload.
     Q_INVOKABLE void autoload();
     Q_INVOKABLE void reloadAutoload();
+    // Legacy Automation::Add for Load script and an opened .lua/.moon: the
+    // script joins the Document scripts and the editing target's Script Info
+    // names it ("Changing the subtitle header"); nothing happens for one
+    // listed already.
     Q_INVOKABLE void loadScript(const QUrl &file);
+    // S4, legacy Automation::AddFromSubs: the scripts the editing target's
+    // Script Info names ("Automation Scripts") load.
+    Q_INVOKABLE void addFromDocument();
+    // The Automation menu opens (legacy BuildMenu): with a Document open, its
+    // scripts load and every script whose file changed reloads.
+    Q_INVOKABLE void menuOpened();
+    // GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT ("Run the last loaded script"): the
+    // first macro of the last Document script, validated first. Asked while
+    // another macro runs, it starts when that one ends.
+    Q_INVOKABLE void runLastLoadedScript();
+    // Legacy Automation::OnEdit: the script in AUTOMATION_SCRIPT_EDITOR, or
+    // chooseScriptEditor first (none set, or Shift held).
+    Q_INVOKABLE void editScript(const QString &script);
+    Q_INVOKABLE void editWith(const QUrl &editor, const QString &script);
+    const application::DocumentScripts &documentScripts() const { return m_documentScripts; }
     Q_INVOKABLE bool rerunLast();
     Q_INVOKABLE void cancelRun() { m_manager.cancel(); }
     Q_INVOKABLE bool forceStopRun();
@@ -96,15 +132,23 @@ signals:
     void progressChanged();
     // A macro ended: its outcome and, when it changed nothing, why.
     void runCompleted(bool ok, const QString &message);
+    // A legacy message box (HikariMessageBox: title, text, OK).
+    void notice(const QString &title, const QString &text);
+    // Legacy "Select a script editor" (a program to open `script` with).
+    void chooseScriptEditor(const QString &script);
 
 private:
     struct Run {
         application::DocumentId target;
         application::MacroSnapshot snapshot;
         std::string path, macro;
+        RunOrigin origin = RunOrigin::Menu;
     };
     void finished(const QString &path, backends::LuaScriptHost::RunOutcome outcome, const QString &message);
     application::EditSession *session(application::DocumentId id) { return m_files.session(id); }
+    void loadDocumentScript(const std::string &path);
+    void continueLastScript();
+    void startEditor(const QString &editor, const QString &script);
 
     Paths m_paths;
     application::DocumentFiles &m_files;
@@ -124,6 +168,10 @@ private:
     std::function<void()> m_documentChanged;
     std::optional<Run> m_run;
     std::optional<std::pair<std::string, int>> m_last;
+    application::DocumentScripts m_documentScripts;
+    std::optional<std::string> m_pendingLast; // waiting for this script to load
+    std::function<void(const QString &)> m_logLine;
+    ui::SettingsStore *m_settings = nullptr;
     QString m_title, m_task, m_log, m_lastMessage;
     double m_progress = 0;
 };

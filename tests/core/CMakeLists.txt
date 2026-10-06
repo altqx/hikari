@@ -36,8 +36,24 @@ hikari_add_gtest(hikari_core_text_projection_tests SOURCES text_projection_tests
     LIBRARIES hikari_core Qt6::Core LABELS core)
 
 hikari_add_gtest(hikari_core_tag_commands_tests SOURCES tag_commands_tests.cpp LIBRARIES hikari_core LABELS core)
+hikari_add_gtest(hikari_core_tag_list_tests SOURCES tag_list_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_editor_font_colour_tests SOURCES editor_font_colour_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_clipboard_rows_tests SOURCES clipboard_rows_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_conversion_tests SOURCES conversion_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_legacy_regex_tests SOURCES legacy_regex_tests.cpp LIBRARIES hikari_core LABELS core)
 hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES hikari_core LABELS core)
+# Y9: subtitles read from a Matroska track (legacy Demux).
+hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)
+
+# Y7: the colour picker's conversions against legacy colorspace.cpp itself,
+# copied unchanged into the build and compiled against the stubs in
+# legacy-colorspace (a quoted include looks beside the source first, so the
+# copy keeps HikariSub/config.h out).
+set(_legacy_colorspace "${CMAKE_CURRENT_BINARY_DIR}/legacy-colorspace")
+configure_file("${PROJECT_SOURCE_DIR}/HikariSub/colorspace.cpp" "${_legacy_colorspace}/colorspace.cpp" COPYONLY)
+configure_file("${PROJECT_SOURCE_DIR}/HikariSub/colorspace.h" "${_legacy_colorspace}/colorspace.h" COPYONLY)
+hikari_add_gtest(hikari_core_colour_space_tests
+    SOURCES colour_space_tests.cpp "${_legacy_colorspace}/colorspace.cpp"
+    LIBRARIES hikari_core LABELS core)
+target_include_directories(hikari_core_colour_space_tests PRIVATE
+    "${_legacy_colorspace}" "${CMAKE_CURRENT_SOURCE_DIR}/legacy-colorspace")

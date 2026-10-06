@@ -81,6 +81,8 @@ std::u16string maskText(std::u16string_view tag, std::u16string_view body, int s
 class RectangleClipTool : public VisualTool {
 public:
     Family family() const override { return Family::RectangleClip; }
+    // Legacy sent the clips' edits as visual dummies: no SetVisual followed.
+    bool keepsStateAfterCommit() const override { return true; }
     void reset(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
     bool key(const Key &event, VisualHost &host) override;
@@ -112,6 +114,8 @@ private:
 class VectorClipTool : public VisualTool {
 public:
     Family family() const override { return Family::VectorClip; }
+    // Legacy sent the clips' edits as visual dummies: no SetVisual followed.
+    bool keepsStateAfterCommit() const override { return true; }
     void reset(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
     bool key(const Key &event, VisualHost &host) override;

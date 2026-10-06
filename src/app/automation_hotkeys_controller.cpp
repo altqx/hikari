@@ -231,7 +231,8 @@ bool AutomationHotkeysController::run(const QString &legacyName)
     if (it == m_committed.end())
         return false;
     const auto target = resolve(it->second);
-    return target && m_automation.run(target->first, target->second);
+    // HikariSubFrame::OnRunScript: validated first, failure said (S4).
+    return target && m_automation.run(target->first, target->second, AutomationShell::RunOrigin::Hotkey);
 }
 
 int AutomationHotkeysController::importLegacy(const QString &path)

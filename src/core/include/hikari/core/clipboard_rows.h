@@ -74,4 +74,17 @@ RawDialogueFields rawDialogueFields(std::u8string_view raw);
 // legacy writes Format 0 Lines). `column` is column::Text, Style, Actor or Effect.
 std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8string_view value);
 
+// Y9 (legacy Demux::GetSubtitles, which adds `new Dialogue(raw)` lines as
+// they are): Dialogue(raw) without any conversion. `format` is the legacy
+// Dialogue::Format it was read as (0 plain text, 1 ASS, 2 SRT, 3 TMPlayer,
+// 4 MicroDVD, 5 MPL2), `nonDialogue` its NonDialogue flag, and `raw`
+// Dialogue::GetRaw's text in that format, "\r\n" included.
+struct LegacyDialogue {
+    LineRecord line;
+    int format = 1;
+    bool nonDialogue = false;
+    std::u8string raw;
+};
+LegacyDialogue legacyDialogue(std::u8string_view raw);
+
 } // namespace hikari::core

@@ -285,6 +285,7 @@ std::vector<std::byte> encodeMacroResult(const application::MacroResult &result)
             w.i32(i);
     }
     w.u8(result.active.has_value()).i32(result.active.value_or(0));
+    w.u8(result.valid).str(result.validationError);
     return w.take();
 }
 
@@ -307,6 +308,8 @@ std::optional<application::MacroResult> decodeMacroResult(const std::vector<std:
     const int active = r.i32();
     if (hasActive)
         result.active = active;
+    result.valid = r.u8() != 0;
+    result.validationError = r.str();
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return result;

@@ -569,7 +569,6 @@ for card, roles in {
     "V4 #183": ["zoom"],
     "V6 #185": ["set-start-time", "set-end-time"],
     "E4 #186": ["alignment"],
-    "E6 #188": ["hide-tags"],
     "Y7 #190": ["eyedropper"],
     "Y8 #191": ["font-collector"],
     "D2 #201": ["editor", "view-all", "view-video-subs", "view-audio-subs", "view-only-video", "view-only-subs"],

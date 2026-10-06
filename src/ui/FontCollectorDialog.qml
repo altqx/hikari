@@ -18,9 +18,9 @@ Dialog {
     objectName: "fontCollectorDialog"
     required property var collector
     // FontCollectorDialog's colours: WINDOW_TEXT, WINDOW_WARNING_ELEMENTS and
-    // the success "#008000".
-    readonly property color warningColour: "#e0a030"
-    readonly property color successColour: "#008000"
+    // the success "#008000", from the theme (K2).
+    readonly property color warningColour: Theme.warning
+    readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
     title: qsTr("Font collector")
     // K1: the title with the set's font-collector icon (the Subtitles menu's FontCollector bitmap).
@@ -33,6 +33,7 @@ Dialog {
         path.text = collector.directory
         options.itemAt(collector.action).checked = true
         subsDirectory.checked = collector.useSubsDirectory
+        fromMkv.checked = collector.fromMkv
         acknowledge.checked = false
         open()
         startButton.forceActiveFocus()
@@ -152,6 +153,15 @@ Dialog {
             ToolTip.text: qsTr("Saves to the video folder\nwhen demuxing fonts from an MKV file.")
             ToolTip.visible: hovered
             onToggled: dialog.changeOptions()
+        }
+        // Y9: FontCollector.cpp:181-183, enabled for an MKV video (and,
+        // after an Options change, only for the copy modes).
+        CheckBox {
+            id: fromMkv
+            objectName: "fontCollectorFromMkv"
+            text: qsTr("Demux fonts from loaded MKV file")
+            enabled: !dialog.working && dialog.collector.fromMkvEnabled
+            onToggled: dialog.collector.setFromMkv(checked)
         }
         ScrollView {
             Layout.fillWidth: true

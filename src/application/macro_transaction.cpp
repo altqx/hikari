@@ -78,6 +78,67 @@ void assign(core::LineRecord &l, const MacroDialogueLine &d)
     l.unparsed = false;
 }
 
+// Pairs each staged entry with the next equal one of the snapshot, in order,
+// so unchanged Styles and Script Info properties keep their records and
+// bytes; the others are written from their fields.
+template <class T>
+std::vector<std::optional<std::size_t>> matchInOrder(const std::vector<T> &before, const std::vector<T> &after)
+{
+    std::vector<std::optional<std::size_t>> from;
+    std::size_t next = 0;
+    for (const auto &entry : after) {
+        std::optional<std::size_t> found;
+        for (std::size_t k = next; k < before.size() && !found; ++k)
+            if (before[k] == entry)
+                found = k;
+        if (found)
+            next = *found + 1;
+        from.push_back(found);
+    }
+    return from;
+}
+
+// S4: the macro's Script Info and Styles, applied in the macro's one step.
+// Legacy AutoToFile edits the file's SInfo and Styles lists in place
+// (AutomationToFile.cpp: index write 611-625, delete 713-747, deleterange
+// 777-796, append 822-830, insert 863-889); the staged lists are those lists.
+bool applyInfoAndStyles(core::Document &doc, const MacroSnapshot &snapshot, const MacroResult &result)
+{
+    if (result.info != snapshot.info) {
+        const auto from = matchInOrder(snapshot.info, result.info);
+        std::vector<core::Document::PropertySlot> slots;
+        for (std::size_t i = 0; i < result.info.size(); ++i) {
+            core::Document::PropertySlot slot;
+            slot.from = from[i];
+            if (!from[i])
+                slot.property = std::pair{wide(result.info[i].key), wide(result.info[i].value)};
+            slots.push_back(std::move(slot));
+        }
+        if (!doc.rearrangeScriptInfo(slots))
+            return false;
+    }
+    if (result.styles != snapshot.styles) {
+        const auto from = matchInOrder(snapshot.styles, result.styles);
+        std::vector<core::Document::StyleSlot> slots;
+        for (std::size_t i = 0; i < result.styles.size(); ++i) {
+            core::Document::StyleSlot slot;
+            slot.from = from[i];
+            if (!from[i]) {
+                std::vector<std::u8string> fields;
+                for (const auto &f : result.styles[i].fields)
+                    fields.push_back(wide(f));
+                if (fields.empty())
+                    return false;
+                slot.fields = std::move(fields);
+            }
+            slots.push_back(std::move(slot));
+        }
+        if (!doc.rearrangeStyles(slots))
+            return false;
+    }
+    return true;
+}
+
 bool sameFields(const MacroDialogueLine &a, const MacroDialogueLine &b)
 {
     return a.comment == b.comment && a.layer == b.layer && a.startMs == b.startMs && a.endMs == b.endMs &&
@@ -129,13 +190,15 @@ std::expected<MacroSnapshot, CommandRefusal> snapshotForMacro(EditSession &sessi
 std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, const MacroSnapshot &snapshot,
                                                         const MacroResult &result, const std::string &name)
 {
-    if (result.info != snapshot.info || result.styles != snapshot.styles)
-        return std::unexpected(MacroApplyFailure{MacroApplyError::UnsupportedChange, std::nullopt});
-
+    // S4-validation-edits: validation answered false, so whatever it staged
+    // is dropped and the Document stays as it was.
+    if (!result.valid)
+        return std::unexpected(MacroApplyFailure{MacroApplyError::Refused, CommandRefusal::Invalid});
     std::map<std::uint64_t, const MacroDialogueLine *> before;
     for (const auto &d : snapshot.dialogues)
         before[d.id] = &d;
-    bool changed = result.dialogues.size() != snapshot.dialogues.size();
+    const bool headerChanged = result.info != snapshot.info || result.styles != snapshot.styles;
+    bool changed = headerChanged || result.dialogues.size() != snapshot.dialogues.size();
     std::set<std::uint64_t> kept;
     for (std::size_t i = 0; i < result.dialogues.size(); ++i) {
         const auto &d = result.dialogues[i];
@@ -156,6 +219,8 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
         for (const auto &d : snapshot.dialogues)
             command.touches.insert(core::LineId{d.id});
         command.apply = [&](core::Document &doc) {
+            if (headerChanged && !applyInfoAndStyles(doc, snapshot, result))
+                return false;
             // Lines the macro removed.
             for (const auto &d : snapshot.dialogues)
                 if (!kept.contains(d.id) && !doc.removeLine(core::LineId{d.id}))
@@ -209,9 +274,11 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
 
     // The returned selection, by the legacy rules: an active row in range
     // replaces the selection; selected rows stop at the first out of range;
-    // the first selected becomes active when none was given.
+    // the first selected becomes active when none was given. The rows are
+    // read against the lists the macro left (legacy recounts SInfoSize and
+    // StylesSize after the run, Automation.cpp:1010).
     if (result.selected || result.active) {
-        const int offset = static_cast<int>(snapshot.info.size() + snapshot.styles.size()) + 1;
+        const int offset = static_cast<int>(result.info.size() + result.styles.size()) + 1;
         const auto lines = session.document().lines();
         auto lineAt = [&](int scriptIndex) -> std::optional<core::LineId> {
             const int i = scriptIndex - offset;

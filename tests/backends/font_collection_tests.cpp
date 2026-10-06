@@ -3,6 +3,10 @@
 // font changes, concurrent documents and cancellation. Fixtures are the
 // generated CC0 fonts; on Linux FONTCONFIG_FILE lists only them, the Qt OFL
 // fonts and an initially empty refresh directory.
+//
+// Y6: the font picker's faces (the provider's and EXTERNAL_FONTS_DIRECTORY's),
+// their character coverage for the font filter, and refresh() for the
+// listing (F47-refresh).
 #include "hikari/backends/libass_font_service.h"
 
 #include <QCryptographicHash>
@@ -12,6 +16,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <chrono>
 #include <filesystem>
 #include <thread>
 
@@ -101,6 +106,66 @@ const CollectedFont *font(const FontCollection &c, const std::string &name)
 }
 
 } // namespace
+
+// Y6: the external fonts (EXTERNAL_FONTS_DIRECTORY) are listed from their
+// bytes, every face of a collection, and named by their file; legacy
+// registered them for the process (FontEnumerator.cpp:637).
+TEST(FontPickerFaces, ExternalFontsAreListedFromTheirBytes)
+{
+    const std::string refresh = std::string(HIKARI_FONT_REFRESH_SOURCE) + "/refresh.ttf";
+    FontEnvironment env;
+    env.systemFonts = false;
+    env.externalFonts = {{refresh, load(refresh)}, {fixture("collection.ttc"), load(fixture("collection.ttc"))}};
+    LibassFontService service;
+    const auto faces = service.pickerFaces(env);
+    ASSERT_EQ(faces.size(), 3u);
+    EXPECT_EQ(faces[0].families.front(), "HikariProbeRefresh");
+    EXPECT_EQ(faces[0].externalFile, refresh);
+    EXPECT_EQ(faces[1].families.front(), "HikariProbeCollectionA");
+    EXPECT_EQ(faces[2].families.front(), "HikariProbeCollectionB");
+    EXPECT_EQ(faces[2].index, 1);
+    EXPECT_EQ(faces[2].externalFile, fixture("collection.ttc"));
+    // Bytes no face is read from list nothing.
+    env.externalFonts = {{"/x/broken.ttf", std::make_shared<std::vector<std::byte>>(16, std::byte{1})}};
+    EXPECT_TRUE(service.pickerFaces(env).empty());
+}
+
+// The font filter's check (FontEnumerator::CheckGlyphsExists): a face
+// covers the filter when it maps every character.
+TEST(FontPickerFaces, CoverageIsEveryCharacter)
+{
+    FontEnvironment env;
+    env.systemFonts = false;
+    env.externalFonts = {{fixture("base.ttf"), load(fixture("base.ttf"))},
+                         {fixture("fallback.ttf"), load(fixture("fallback.ttf"))}};
+    LibassFontService service;
+    const auto faces = service.pickerFaces(env);
+    ASSERT_EQ(faces.size(), 2u);
+    EXPECT_EQ(service.facesCover(faces, env, U"AB"), (std::vector<bool>{true, false}));
+    EXPECT_EQ(service.facesCover(faces, env, U"中"), (std::vector<bool>{false, true}));
+    EXPECT_EQ(service.facesCover(faces, env, U"A中"), (std::vector<bool>{false, false}));
+    EXPECT_EQ(service.facesCover(faces, env, std::u32string(1, U'\0')), (std::vector<bool>{false, false}));
+}
+
+// An external font renders as an installed one, and the renderer's
+// selection names its file (the substituted face the font dialog reports).
+TEST(FontPickerFaces, ExternalFontsRenderAndAreNamedByTheirFile)
+{
+    const std::string refresh = std::string(HIKARI_FONT_REFRESH_SOURCE) + "/refresh.ttf";
+    FontEnvironment env;
+    env.systemFonts = false;
+    env.externalFonts = {{refresh, load(refresh)}};
+    LibassFontService service;
+    const auto r = service.resolve(env, {{"HikariProbeRefresh", false, false, "A"}});
+    ASSERT_TRUE(r);
+    ASSERT_EQ(r->requests.size(), 1u);
+    ASSERT_FALSE(r->requests[0].faces.empty());
+    const auto &face = r->faces[r->requests[0].faces[0]];
+    EXPECT_TRUE(r->requests[0].requestedFamilyFound);
+    EXPECT_EQ(face.path, refresh);
+    EXPECT_TRUE(face.attachment.empty());
+    EXPECT_EQ(face.sha256, sha256Of(refresh));
+}
 
 TEST(FontCollection, EveryStyleAndInlineChangeIsCollectedAndReimportsIdentically)
 {
@@ -271,6 +336,58 @@ TEST(FontCollectionFontconfig, InstallingAFontIsSeenByTheNextGeneration)
     ASSERT_EQ(after->fonts.size(), 1u);
     EXPECT_EQ(after->fonts[0].path, installed.string());
     EXPECT_EQ(after->generation, 2u);
+}
+
+// Y6: installed faces' coverage is fontconfig's charset of the face (the
+// Linux build's GetGlyphIndicesW, platform.h:1106).
+TEST(FontPickerFacesFontconfig, InstalledFacesCoverWhatTheirCharsetHolds)
+{
+    LibassFontService service;
+    const FontEnvironment env;
+    const auto faces = service.pickerFaces(env);
+    std::vector<SystemFace> chosen;
+    for (const char *file : {"base.ttf", "fallback.ttf"})
+        for (const auto &f : faces)
+            if (f.path == fixture(file))
+                chosen.push_back(f);
+    ASSERT_EQ(chosen.size(), 2u);
+    EXPECT_EQ(service.facesCover(chosen, env, U"A"), (std::vector<bool>{true, false}));
+    EXPECT_EQ(service.facesCover(chosen, env, U"中"), (std::vector<bool>{false, true}));
+    // The folders a font change re-lists (hikarisub_linux_font_directories).
+    const auto dirs = service.fontDirectories();
+    EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_FIXTURES)), dirs.end());
+    EXPECT_NE(std::find(dirs.begin(), dirs.end(), std::string(HIKARI_FONT_REFRESH_DIR)), dirs.end());
+}
+
+// F47-refresh for the picker: the listing keeps what it read until
+// refresh(), which reads the installed fonts again.
+TEST(FontPickerFacesFontconfig, RefreshReadsTheInstalledFontsAgain)
+{
+    namespace fs = std::filesystem;
+    const fs::path installed = fs::path(HIKARI_FONT_REFRESH_DIR) / "picker-refresh.ttf";
+    fs::remove(installed);
+    LibassFontService service;
+    service.refresh();
+    const auto listed = [&] {
+        const auto faces = service.pickerFaces(FontEnvironment{});
+        return std::any_of(faces.begin(), faces.end(), [&](const SystemFace &f) { return f.path == installed.string(); });
+    };
+    // fontconfig trusts a folder's cache while the folder's modification
+    // time (whole seconds) is unchanged; each change here moves it on.
+    int seconds = 0;
+    const auto touch = [&] {
+        fs::last_write_time(installed.parent_path(), fs::file_time_type::clock::now() + std::chrono::seconds(++seconds * 2));
+    };
+    EXPECT_FALSE(listed());
+    fs::copy_file(fs::path(HIKARI_FONT_REFRESH_SOURCE) / "refresh.ttf", installed);
+    touch();
+    EXPECT_FALSE(listed()) << "the listing keeps its generation";
+    service.refresh();
+    EXPECT_TRUE(listed());
+    fs::remove(installed);
+    touch();
+    service.refresh();
+    EXPECT_FALSE(listed());
 }
 
 #endif

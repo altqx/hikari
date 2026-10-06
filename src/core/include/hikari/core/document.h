@@ -11,6 +11,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -100,7 +101,22 @@ struct LineRecord {
     std::optional<SourceSpan> originalSpan;
     std::u8string translation; // legacy TextTl; empty means untranslated
     bool unconfirmed = false;  // legacy State 4, written as the effect "\fD"
+    // E6: legacy State 1 and 2, the Grid's changed-Line mark. Each legacy
+    // Dialogue::Copy() without keepstate made a changed object
+    // (ChangeDialogueState(1), SubsDialogue.cpp:1071-1072), shared by the
+    // history steps after it until copied again; a save turned changed
+    // objects into saved ones (SubsGridBase.cpp:391). A changed Line carries
+    // a version unique to that copy (0: never changed since loading), so the
+    // session can mark exactly the saved copies, wherever history keeps them.
+    std::uint64_t changeVersion = 0;
 };
+
+// E6: how a Document mutation treats a Line's changed-Line mark: Changed
+// gives it a new version (legacy Copy()), Kept leaves it as it is (legacy
+// Copy(keepstate) or an in-place change, such as filtering's).
+enum class ChangeMark { Changed, Kept };
+// A version no other changed Line has (process-wide).
+std::uint64_t newChangeVersion();
 
 struct StyleRecord {
     std::u8string name;
@@ -185,19 +201,27 @@ public:
     bool setLineText(LineId id, std::u8string text);
     // Sets a Line's Unconfirmed state; like setLineText, the Line is regenerated.
     bool setLineUnconfirmed(LineId id, bool unconfirmed);
+    // E6: marks a Line changed without touching its fields or source bytes,
+    // as legacy's plain copy of a Dialogue that only moves (SwapRowsF, the
+    // sorts). False when no Line has this id.
+    bool markLineChanged(LineId id);
     // Changes any fields of one Line; the Line is then regenerated on save.
-    bool editLine(LineId id, const std::function<void(LineRecord &)> &change);
+    // Every mutation marks the Line changed unless `mark` is Kept (E6).
+    bool editLine(LineId id, const std::function<void(LineRecord &)> &change, ChangeMark mark = ChangeMark::Changed);
     // Inserts a new Line right after `after`, in the same section. Returns its
-    // id, or nullopt when `after` is unknown.
-    std::optional<LineId> insertLineAfter(LineId after, LineRecord line);
+    // id, or nullopt when `after` is unknown. Kept: the record's own
+    // changeVersion stays (0 for a new legacy Dialogue).
+    std::optional<LineId> insertLineAfter(LineId after, LineRecord line, ChangeMark mark = ChangeMark::Changed);
     // Inserts a new Line right before `before`, in the same section.
-    std::optional<LineId> insertLineBefore(LineId before, LineRecord line);
+    std::optional<LineId> insertLineBefore(LineId before, LineRecord line, ChangeMark mark = ChangeMark::Changed);
     // Appends a new Line at the end of the last Events section; nullopt when
     // the Document has none.
-    std::optional<LineId> appendLine(LineRecord line);
+    std::optional<LineId> appendLine(LineRecord line, ChangeMark mark = ChangeMark::Changed);
     // Removes a Line (its source bytes are no longer written). False when no
     // Line has this id.
     bool removeLine(LineId id);
+    // Removes every Line `remove` picks, in one pass; how many were removed.
+    std::size_t removeLinesIf(const std::function<bool(const LineRecord &)> &remove);
     // Moves a Line, keeping its id and source bytes, before `before`, or to
     // the end of the last Events section when `before` is nullopt. False when
     // either Line is unknown or they are the same Line.
@@ -230,6 +254,19 @@ public:
         std::optional<std::vector<std::u8string>> fields;
     };
     bool rearrangeStyles(const std::vector<StyleSlot> &slots);
+    // A macro's Script Info list (S4; the legacy SInfo vector a macro edits
+    // through its subtitles object): the properties become `slots` in this
+    // order, as rearrangeStyles does for Styles. A slot naming an existing
+    // property (`from`, document order across Script Info sections) keeps its
+    // bytes unless `property` gives a new key and value; extra slots go after
+    // the last property of the last Script Info section; properties beyond
+    // the slots are removed. Comments and blank lines stay where they are.
+    // False without a Script Info section or for an unknown `from`.
+    struct PropertySlot {
+        std::optional<std::size_t> from;
+        std::optional<std::pair<std::u8string, std::u8string>> property;
+    };
+    bool rearrangeScriptInfo(const std::vector<PropertySlot> &slots);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.

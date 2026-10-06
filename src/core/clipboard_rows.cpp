@@ -831,6 +831,17 @@ std::u8string rawDialogueWithField(std::u8string_view raw, int column, std::u8st
     return getRaw(d, toLine(d, static_cast<SubtitleFormat>(d.format)), false);
 }
 
+LegacyDialogue legacyDialogue(std::u8string_view raw)
+{
+    const Dialogue d = setRaw(raw);
+    // The Document's view of a Line keeps no format of its own: SRT, ASS and
+    // plain text lines differ only in what GetRaw writes for them.
+    const auto format = d.format == Mdvd ? SubtitleFormat::MicroDvd : SubtitleFormat::Ass;
+    LineRecord line = toLine(d, format);
+    std::u8string text = d.nonDialogue ? d.text + u8"\r\n" : getRaw(d, line, false);
+    return {std::move(line), d.format, d.nonDialogue, std::move(text)};
+}
+
 LineRecord dialogueFromRaw(std::u8string_view raw, SubtitleFormat format, const PasteConversion &conversion)
 {
     Dialogue d = setRaw(raw);

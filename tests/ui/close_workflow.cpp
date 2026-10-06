@@ -34,7 +34,8 @@ public:
     hikari::app::Application *application = nullptr;
 
 protected:
-    std::string targets() { return getStringProperty("mainWindow/statusTargets", "text"); }
+    // The window title names the editing target ("<name> - HikariSub").
+    std::string targets() { return getStringProperty("mainWindow", "title"); }
     void typeAndCommit(const std::string &text)
     {
         invokeMethod("mainWindow/editingGrid", "forceActiveFocus", {});
@@ -140,9 +141,9 @@ int main(int argc, char **argv)
     expect(o.size() == 5, "every step observed");
     if (o.size() == 5) {
         expect(o[0] == "review", "Ctrl+W with unsaved work shows the review");
-        expect(o[1].rfind("Editing: first.ass", 0) == 0, "Cancel keeps the Document open");
+        expect(o[1].rfind("first.ass - ", 0) == 0, "Cancel keeps the Document open");
         // P6: legacy DeletePage leaves a new empty tab when the last closes.
-        expect(o[2].rfind("Editing: Untitled", 0) == 0, "Discard all closes it (a new Untitled tab)");
+        expect(o[2].rfind("Untitled", 0) == 0, "Discard all closes it (a new Untitled tab)");
         expect(o[3] == "quit review", "closing the window reviews the quit");
         expect(o[4] == "false", "the window closes after Save all");
     }

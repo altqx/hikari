@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <expected>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -52,6 +53,24 @@ struct SourceTimeline {
     // the video's aspect (ProviderFFMS2.cpp:362-366).
     int width = 0, height = 0;
     int sarNum = 0, sarDen = 0;
+    // V4: frame 0's Y'CbCr matrix and range (FFMS_Frame ColorSpace and
+    // ColorRange, FFMS_CS_* / FFMS_CR_*), as legacy ProviderFFMS2::Init read
+    // them for the Script properties matrix (ProviderFFMS2.cpp:368-369).
+    int colorSpace = 2, colorRange = 0; // unspecified
+};
+
+// V3: where a video open failed, with FFMS2's text, so the log carries
+// legacy ProviderFFMS2::Init's messages (ProviderFFMS2.cpp:165-357).
+enum class OpenStage {
+    Indexer,  // FFMS_CreateIndexer: "Indexing error occurred: %s", a debug message only
+    Indexing, // FFMS_DoIndexing2: "Indexing error occurred: %s" (not when cancelled)
+    Source,   // FFMS_CreateVideoSource: "Cannot create VideoSource."
+    Convert,  // FFMS_SetOutputFormatV2: "Cannot convert video to RGBA"
+    Host,     // the helper itself, or no text
+};
+struct OpenFailure {
+    OpenStage stage = OpenStage::Host;
+    std::string message; // FFMS2's error text
 };
 
 // How an open indexes (A1; legacy ProviderFFMS2::Init). Legacy indexed the
@@ -134,6 +153,9 @@ public:
         return open(path, std::move(progress), std::move(done));
     }
     virtual void cancelOpen() = 0;
+    // V3: why the latest open failed, read in its Opened callback; nullopt
+    // when it did not fail or the port has no more to say than the error.
+    virtual std::optional<OpenFailure> openFailure() const { return std::nullopt; }
     virtual void frame(int index, FrameReady done) = 0;
     // Opens an audio track of the open source (its timeline's firstAudioTrack).
     virtual void openAudio(int track, AudioOpened done) = 0;
@@ -144,6 +166,17 @@ public:
     // Starts a resampled stream over the open audio track (replacing any other).
     virtual void beginPcm(std::int64_t start, std::int64_t count, int outRate, int outChannels, PcmBegun done) = 0;
     virtual void nextPcm(std::int64_t maxFrames, PcmReady done) = 0;
+    // V4: the converter's input matrix and range (FFMS_SetInputFormatV with
+    // FFMS_CS_* / FFMS_CR_* values, the pixel format kept); frames decoded
+    // after it use them. A port that cannot convert otherwise reports
+    // Unsupported.
+    using MatrixSet = std::function<void(std::expected<void, SourceError>)>;
+    virtual void setInputMatrix(int colorSpace, int colorRange, MatrixSet done)
+    {
+        (void)colorSpace;
+        (void)colorRange;
+        done(std::unexpected(SourceError::Unsupported));
+    }
     // Resolves every outstanding frame and audio request as Cancelled now;
     // the helper's late results are dropped.
     virtual void cancelReads() = 0;

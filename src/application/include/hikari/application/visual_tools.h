@@ -11,6 +11,7 @@
 // Esc, the warnings and the overlay drawing need no change.
 
 #include "hikari/application/edit_session.h"
+#include "hikari/application/legacy_timebase.h"
 #include "hikari/application/visual_view.h"
 
 #include <array>
@@ -23,6 +24,10 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
+namespace hikari::application {
+class TextMeasurePort; // automation_services.h
+}
 
 namespace hikari::application::visual {
 
@@ -54,12 +59,16 @@ const FamilyInfo &familyInfo(Family family);
 // A pointer event over the video window, in its device pixels (legacy
 // wxMouseEvent::GetX/GetY on VideoBox).
 struct Pointer {
-    enum class Kind { Enter, Leave, Move, Press, Release, Wheel };
+    // DoubleClick: the second press of a double click, after its Press
+    // (legacy wxEVT_LEFT_DCLICK; T2's Position uses it).
+    enum class Kind { Enter, Leave, Move, Press, Release, Wheel, DoubleClick };
     enum class Button { None, Left, Middle, Right };
     Kind kind = Kind::Move;
     int x = 0, y = 0;
     Button button = Button::None; // the button pressed or released
     bool leftDown = false;        // held during a move
+    bool rightDown = false;       // T2: legacy RightIsDown (Move drags with either)
+    bool middleDown = false;      // T3: legacy MiddleIsDown
     bool control = false, shift = false, alt = false;
     int wheelSteps = 0;
 };
@@ -92,10 +101,12 @@ struct OverlayCircle {
     bool filled = false;
 };
 // A filled polygon with a one-pixel border (legacy DrawRect's and DrawArrow's
-// triangle strip and line strip, the clips' masks). T4: `more` holds further
-// contours filled in the same path (non-zero: the rectangle clip's two fans
-// without a seam), and `above` draws it after the lines (the vector points'
-// handles, which legacy drew over the path) instead of before them.
+// triangle strip and line strip, the clips' masks; T2). T3: a border of 0
+// draws the fill alone (RotationZ's ring), a fill of 0 the border alone. T4:
+// `more` holds further contours filled in the same path (non-zero: the
+// rectangle clip's two fans without a seam), and `above` draws it after the
+// lines (the vector points' handles, which legacy drew over the path)
+// instead of before them.
 struct OverlayPolygon {
     std::vector<PointF> points;
     std::uint32_t fill = 0;
@@ -108,7 +119,7 @@ struct Overlay {
     std::vector<OverlayLine> lines;
     std::vector<OverlayCircle> circles;
     std::vector<OverlayText> texts;
-    std::vector<OverlayPolygon> polygons; // T4
+    std::vector<OverlayPolygon> polygons;
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
@@ -164,6 +175,12 @@ public:
     // The staged texts put into a copy of the Document (the video's preview
     // while the gesture is open, legacy's dummy rendering).
     void applyTo(core::Document &document) const;
+    // What the video renders while the gesture is open (Position::
+    // ChangeMultiline / Visuals::RenderSubs on SubsGrid::GetVisible,
+    // SubsGridBase.cpp:1517-1593): only the Lines shown at the video's time
+    // (5 ms either side, or any not yet over while playing), the targets
+    // with their staged texts while they show (VisualPosition.cpp:470-481).
+    core::Document preview(const core::Document &document, std::int64_t timeMs, bool playing) const;
 
     // One history step with every staged text. A pending draft on a target
     // is committed first, as every command does (its own step); the gesture
@@ -200,6 +217,9 @@ private:
 class VisualTool;
 struct ShapePreset; // shape_presets.h (T5)
 
+// The Line warnings (lineWarning below).
+enum class LineWarning { None, NotVisible, Comment };
+
 // The Video panel as a tool sees it.
 class VisualHost {
 public:
@@ -222,15 +242,35 @@ public:
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
     // The tool's drawing or values changed.
     virtual void toolChanged() = 0;
+
+    // T2: what Visuals read from the video and the Grid. The video's time
+    // (VideoBox::Tell: the shown frame's start in ms), its legacy Timebase
+    // (VideoBox::GetTimebase), the text measure GetTextSize uses
+    // (GetLineTextExtents; none: measuring fails), the Grid's "ignore
+    // filtering in some actions" (SubsGrid::ignoreFiltered) and HikariLog.
+    virtual std::int64_t videoTimeMs() const { return 0; }
+    virtual LegacyTimebase timebase() const { return {}; }
+    virtual TextMeasurePort *textMeasure() const { return nullptr; }
+    virtual bool ignoreFiltered() const { return false; }
+    virtual void log(std::u16string_view text) { (void)text; }
+    // T3: the Line editor's selection in the text the tools edit (legacy
+    // TagFindReplace::FindTag's editor->GetSelection with one Line selected,
+    // TagFindReplace.cpp:40-41), in UTF-16 code units.
+    virtual std::pair<long, long> editorSelection() const { return {0, 0}; }
+    // Legacy put the editor's caret at the tag it changed
+    // (Visuals::SetVisual, Visuals.cpp:815); called after the commit.
+    virtual void setEditorSelection(long from, long to)
+    {
+        (void)from;
+        (void)to;
+    }
     // T4: legacy wxBell (a refused point insertion) and a notice legacy
     // showed in a message box; shown without blocking.
     virtual void bell() {}
     virtual void notice(std::u16string_view text) { (void)text; }
-    // T5: the video's time (VideoBox::Tell: the shown frame's start in ms; a
-    // \move drawing's position follows it) and the drawing's shape presets
-    // (VideoToolbar::GetShapesSettings: Config/ShapesSettings.txt, or
-    // legacy's defaults; null for none).
-    virtual std::int64_t videoTimeMs() const { return 0; }
+    // T5: the drawing's shape presets (VideoToolbar::GetShapesSettings:
+    // Config/ShapesSettings.txt, or legacy's defaults; null for none). A
+    // \move drawing's position follows videoTimeMs.
     virtual const std::vector<ShapePreset> *shapePresets() const { return nullptr; }
 };
 
@@ -243,6 +283,12 @@ public:
     virtual Family family() const = 0;
     // Legacy SetCurVisual: the view, script resolution or active Line changed.
     virtual void reset(VisualHost &host) { (void)host; }
+    // T3: true when the tool's own commit must not reset it. The host resets
+    // a tool on every new revision; legacy's Scale and rotations sent their
+    // edit with the visual dummy flag, so no SetVisual followed it
+    // (Visuals.cpp:791-829, SubsGridBase.cpp:1125-1157) and the tool kept
+    // its state (the caret at the tag, the angles, the press point).
+    virtual bool keepsStateAfterCommit() const { return false; }
     virtual void pointer(const Pointer &event, VisualHost &host) = 0;
     // True when the tool used the key (a nudge: begin on press, commit on release).
     virtual bool key(const Key &event, VisualHost &host)
@@ -267,6 +313,22 @@ public:
     // Legacy Visuals::Draw skipped these tools' warning (VisualCross overrides
     // Draw); the others are blocked outside their Line's time or on comments.
     virtual bool warnsOutsideLine() const { return family() != Family::Crosshair; }
+    // A tool that overrides Visuals::Draw decides its own warning (T2's
+    // Position: none while any of its Lines is visible); nullopt: the
+    // active Line's (lineWarning).
+    virtual std::optional<LineWarning> warning(const VisualHost &host) const
+    {
+        (void)host;
+        return std::nullopt;
+    }
+    // Visuals::Draw found nothing to show and set blockevents: the host calls
+    // this when it renders, or takes a pointer event, while the tool is
+    // blocked. Position::Draw also ends a helper-cross drag there.
+    virtual void blocked(VisualHost &host) { (void)host; }
+    // The family became the active one: legacy Visuals::Get made a new tool
+    // (RendererVideo::SetVisual), so the tool's own state starts over; the
+    // rail's options are the toolbar's and stay.
+    virtual void selected(VisualHost &host) { (void)host; }
     // The rail's second row for the family (legacy VisualItem).
     virtual std::vector<ToolOption> options(const VisualHost &host) const
     {
@@ -280,6 +342,14 @@ public:
         (void)host;
         return false;
     }
+    // T3: Esc with no gesture open: true when the tool dropped a pending
+    // step (RotationZ's first point of the two-point angle).
+    virtual bool cancelPending(VisualHost &host)
+    {
+        (void)host;
+        return false;
+    }
+    virtual bool hasPending() const { return false; }
     // T4: Lines the video renders after the Document's while the tool is on
     // (legacy Visuals::AppendClipMask: the vector clip's mask).
     virtual std::vector<core::LineRecord> previewLines(const VisualHost &host) const
@@ -287,6 +357,7 @@ public:
         (void)host;
         return {};
     }
+
 };
 
 // The tool for a family: nullptr while its card (T2-T6) has not landed.
@@ -295,7 +366,6 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family);
 // Legacy Visuals::Draw / DrawWarning (Visuals.cpp:503-545): a tool other
 // than the crosshair works only on a Dialogue Line visible at the video's
 // time (start <= time < end); Vector clip and Drawing work on comments too.
-enum class LineWarning { None, NotVisible, Comment };
 LineWarning lineWarning(Family family, const core::LineRecord &line, std::int64_t videoMs);
 // "Line is not visible on video\nor has zero duration" /
 // "Visual editing tools\ndo not work on comments" (Visuals.cpp:534-535).

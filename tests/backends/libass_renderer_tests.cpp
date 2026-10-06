@@ -3,6 +3,8 @@
 // the results are deterministic.
 
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/core/ass_load.h"
+#include "hikari/core/ass_save.h"
 
 #include "image_compare.h"
 
@@ -11,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <string>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -146,4 +149,45 @@ TEST(LibassRenderer, ExplicitErrors)
     ASSERT_TRUE(renderer.prepare(snapshot(kDrawing)));
     EXPECT_EQ(renderer.render(core::DocumentTime(0), 0, 64).error(), RenderError::InvalidSize);
     EXPECT_EQ(renderer.render(core::DocumentTime(0), 96, 100000).error(), RenderError::InvalidSize);
+}
+
+// E5: TL_MODE_HIDE_ORIGINAL_ON_VIDEO. A TLMode pair (the original in the
+// top-aligned TLMode Style, the translation at the bottom) renders both
+// lines; with the option the renderer's script (SubsGrid::GetVisible) leaves
+// the original out, so nothing is drawn in the top half.
+TEST(LibassRenderer, HidingTheOriginalLeavesOnlyTheTranslation)
+{
+    const std::string script = "[Script Info]\nScriptType: v4.00+\nPlayResX: 96\nPlayResY: 64\nTLMode: Yes\n"
+                               "TLMode Style: O\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, "
+                               "SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, "
+                               "ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, "
+                               "MarginV, Encoding\n"
+                               "Style: D,Titillium Web,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,"
+                               "0,0,1,0,0,2,0,0,2,1\n"
+                               "Style: O,Titillium Web,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,"
+                               "0,0,1,0,0,8,0,0,2,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, "
+                               "MarginR, MarginV, Effect, Text\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,Brama\n";
+    std::vector<std::byte> bytes(script.size());
+    std::memcpy(bytes.data(), script.data(), script.size());
+    const auto document = core::loadAss(bytes).document;
+    ASSERT_EQ(document.lines().size(), 1u);
+    const auto inkIn = [](const OverlayFrame &f, int top, int bottom) {
+        for (int y = top; y < bottom; ++y)
+            for (int x = 0; x < f.width; ++x)
+                if (f.pixels[static_cast<std::size_t>(y) * f.stride + x * 4 + 3] != 0)
+                    return true;
+        return false;
+    };
+    for (const bool hide : {false, true}) {
+        const auto rendered = core::encodeAss(document, core::AssSaveOptions{.hideOriginalOnVideo = hide, .renderer = true});
+        backends::LibassRenderer renderer;
+        ASSERT_TRUE(renderer.prepare(RenderSnapshot{rendered, {FontLease{"Titillium Web", testFont()}}, "Titillium Web", false}));
+        const auto frame = renderer.render(core::DocumentTime(1'500'000), 96, 64);
+        ASSERT_TRUE(frame);
+        ASSERT_FALSE(frame->empty);
+        EXPECT_TRUE(inkIn(*frame, 32, 64)) << "the translation, hide " << hide;
+        EXPECT_EQ(inkIn(*frame, 0, 32), !hide) << "the original, hide " << hide;
+    }
 }

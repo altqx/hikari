@@ -3,6 +3,9 @@
 #include "hikari/application/visual_clip.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_drawing.h"
+#include "hikari/application/visual_position.h"
+#include "hikari/application/visual_rotation.h"
+#include "hikari/application/visual_scale.h"
 
 #include <algorithm>
 #include <set>
@@ -102,7 +105,26 @@ std::optional<std::u8string> Gesture::staged(core::LineId line, bool translation
 void Gesture::applyTo(core::Document &document) const
 {
     for (const auto &[key, text] : m_staged)
-        document.editLine(key.first, [&](core::LineRecord &line) { (key.second ? line.translation : line.text) = text; });
+        (void)document.editLine(key.first, [&](core::LineRecord &line) {
+            (key.second ? line.translation : line.text) = text;
+        });
+}
+
+core::Document Gesture::preview(const core::Document &document, std::int64_t timeMs, bool playing) const
+{
+    core::Document out = document;
+    const auto ms = [](const core::TimeField &t) { return t.value.microseconds() / 1000; };
+    out.removeLinesIf([&](const core::LineRecord &line) {
+        const std::int64_t start = ms(line.start), end = ms(line.end);
+        if (std::find(m_targets.begin(), m_targets.end(), line.id) != m_targets.end())
+            // ChangeMultiline's skipInvisible: a target shows while the video's
+            // time is within its own, or always while playing.
+            return !playing && !(timeMs >= start && timeMs <= end);
+        // GetVisible's window (toEnd while playing).
+        return !((playing && timeMs <= start - 5) || (timeMs >= start - 5 && timeMs < end + 5));
+    });
+    applyTo(out);
+    return out;
 }
 
 std::expected<void, CommandRefusal> Gesture::commit(EditSession &session) const
@@ -170,6 +192,16 @@ std::unique_ptr<VisualTool> makeVisualTool(Family family)
     switch (family) {
     case Family::Crosshair:
         return std::make_unique<CrosshairTool>();
+    case Family::Position:
+        return std::make_unique<PositionTool>();
+    case Family::Move:
+        return std::make_unique<MoveTool>();
+    case Family::Scale:
+        return std::make_unique<ScaleTool>();
+    case Family::RotationZ:
+        return std::make_unique<RotationZTool>();
+    case Family::RotationXY:
+        return std::make_unique<RotationXYTool>();
     case Family::RectangleClip:
         return std::make_unique<RectangleClipTool>(); // T4
     case Family::VectorClip:

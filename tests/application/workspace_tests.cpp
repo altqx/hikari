@@ -106,3 +106,106 @@ TEST(Workspace, AReplacementTakesTheTabsPlace)
     EXPECT_FALSE(w.title(b));
     EXPECT_FALSE(w.replace(b, n));
 }
+
+// R2: the subtitles preview shows another tab's Document as the protected
+// reference; it stays a tab (legacy's preview drew another tab's grid, the
+// tab stayed in the notebook: SubsGrid::ShowPreviewWindow, SubsGridWindow.cpp:2082-2106).
+TEST(Workspace, ATabReferenceStaysATabAndIsProtected)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    EXPECT_FALSE(w.setTabReference(a)); // never the editing target
+    ASSERT_TRUE(w.setTabReference(b));
+    EXPECT_EQ(w.reference(), b);
+    EXPECT_TRUE(w.referenceIsTab());
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, b, c}));
+    EXPECT_EQ(w.checkContentCommand(b).error(), TargetRefusal::ProtectedReference);
+    EXPECT_EQ(w.editingTarget(), a);
+    // Another tab becomes the reference instead.
+    ASSERT_TRUE(w.setTabReference(c));
+    EXPECT_EQ(w.reference(), c);
+    EXPECT_TRUE(w.checkContentCommand(b).error() == TargetRefusal::NotEditingTarget);
+}
+
+// R2: choosing the tab of a tab reference is the explicit operation that
+// makes it the editing target; it stops being the reference.
+TEST(Workspace, ChoosingATabReferencesTabEndsTheReference)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    ASSERT_TRUE(w.setTabReference(b));
+    ASSERT_TRUE(w.setEditingTarget(b));
+    EXPECT_EQ(w.editingTarget(), b);
+    EXPECT_FALSE(w.reference());
+    EXPECT_FALSE(w.referenceIsTab());
+    EXPECT_TRUE(w.checkContentCommand(b));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, b}));
+    // An opened reference (not a tab) still can't be chosen that way.
+    const auto ref = w.add("reference.ass");
+    ASSERT_TRUE(w.setReference(ref));
+    EXPECT_FALSE(w.referenceIsTab());
+    EXPECT_FALSE(w.setEditingTarget(ref));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, b}));
+}
+
+// R2: closing the editing target hands it to the tab now in its place (legacy
+// DeletePage); when that is the tab reference, it stops being the reference.
+TEST(Workspace, ClosingTheTargetBeforeATabReferenceEndsTheReference)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.setTabReference(b));
+    ASSERT_TRUE(w.remove(a));
+    EXPECT_EQ(w.editingTarget(), b);
+    EXPECT_FALSE(w.reference());
+    // Closing the tab reference itself ends it too; the target stays.
+    ASSERT_TRUE(w.setTabReference(c));
+    ASSERT_TRUE(w.remove(c));
+    EXPECT_FALSE(w.reference());
+    EXPECT_EQ(w.editingTarget(), b);
+}
+
+// R2: ending a tab reference keeps it where it was among the tabs; an
+// opened reference that stops being the reference becomes a tab in its order.
+TEST(Workspace, EndingAReferenceKeepsItsDocumentOpen)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto ref = w.add("reference.ass");
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.setReference(ref));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, c}));
+    ASSERT_TRUE(w.setTabReference(c)); // the opened reference becomes a tab
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, ref, c}));
+    ASSERT_TRUE(w.setReference(std::nullopt));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{a, ref, c}));
+    EXPECT_FALSE(w.reference());
+}
+
+// P9: two tabs trade places (legacy Notebook::OnMouseEvent swaps Pages[i] and
+// Pages[oldI], Notebook.cpp:537-556; OnTabSel swaps the chosen tab with the
+// first visible one, 1020-1039). The reference keeps out of the tabs and the
+// editing target stays with its Document.
+TEST(Workspace, SwappingTabsKeepsTheRoles)
+{
+    Workspace w;
+    const auto a = w.add("a.ass");
+    const auto r = w.add("reference.ass");
+    ASSERT_TRUE(w.setReference(r));
+    const auto b = w.add("b.ass");
+    const auto c = w.add("c.ass");
+    ASSERT_TRUE(w.setEditingTarget(c));
+    ASSERT_TRUE(w.swapTabs(0, 2));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{c, b, a}));
+    EXPECT_EQ(w.editingTarget(), c);
+    EXPECT_EQ(w.reference(), r);
+    EXPECT_TRUE(w.swapTabs(1, 1));
+    EXPECT_EQ(w.tabs(), (std::vector<DocumentId>{c, b, a}));
+    EXPECT_FALSE(w.swapTabs(0, 3));
+    EXPECT_EQ(w.documents().size(), 4u);
+}

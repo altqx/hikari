@@ -33,6 +33,7 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 Window {
+    color: Theme.panel // K2: a Window draws white unless told
     id: window
     required property AutomationDialogController controller
     // Which legacy build's keyboard navigation to follow ("windows" or not).

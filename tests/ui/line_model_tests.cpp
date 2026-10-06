@@ -128,6 +128,49 @@ private slots:
         QVERIFY(shown(LineTableModel::TextColumn));
     }
 
+    // E5: the translation column (legacy SubsGridWindow.cpp:329-330 and
+    // 370-416). Without the original shown, a translated Line shows its
+    // translation in "Text"; with it, "Original text" and "Translation".
+    void translationColumnFollowsShowOriginal()
+    {
+        const auto document = load("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Gate\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Brama\n"
+                                   "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Wall\n"
+                                   "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,\n");
+        LineTableModel model;
+        QAbstractItemModelTester tester(&model, QAbstractItemModelTester::FailureReportingMode::QtTest);
+        model.setDocument(document);
+        QCOMPARE(model.rowCount(), 2);
+        QVERIFY(!model.columnShown(LineTableModel::TranslationColumn));
+        QCOMPARE(model.headerData(LineTableModel::TextColumn, Qt::Horizontal).toString(), QStringLiteral("Text"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Brama"));
+        QCOMPARE(model.index(1, LineTableModel::TextColumn).data().toString(), QStringLiteral("Wall"));
+
+        model.setShowOriginal(true);
+        model.setDocument(document);
+        QVERIFY(model.columnShown(LineTableModel::TranslationColumn));
+        QCOMPARE(model.headerData(LineTableModel::TextColumn, Qt::Horizontal).toString(), QStringLiteral("Original text"));
+        QCOMPARE(model.headerData(LineTableModel::TranslationColumn, Qt::Horizontal).toString(),
+                 QStringLiteral("Translation"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+        QCOMPARE(model.index(0, LineTableModel::TranslationColumn).data().toString(), QStringLiteral("Brama"));
+        QCOMPARE(model.index(1, LineTableModel::TranslationColumn).data().toString(), QString());
+        // Hide columns never hides the text columns.
+        model.setHiddenColumns(0xFFFF);
+        QVERIFY(model.columnShown(LineTableModel::TextColumn));
+        QVERIFY(model.columnShown(LineTableModel::TranslationColumn));
+
+        // Outside translation mode the Text column is the text, even with a
+        // translation left in the record (isTl needs hasTLMode).
+        model.setShowOriginal(false);
+        model.setHiddenColumns(0);
+        auto off = document;
+        off.removeScriptInfo(u8"TLMode");
+        model.setDocument(off);
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data().toString(), QStringLiteral("Gate"));
+    }
+
     void identitySurvivesFilteringAndSorting()
     {
         LineTableModel model;
@@ -230,6 +273,97 @@ private slots:
         QCOMPARE(header.count(), 1);
         QCOMPARE(model.headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList().value(4),
                  QVariant(QColor(13, 14, 15)));
+    }
+
+    // E6: GLOBAL_HIDE_TAGS. Legacy SubsGrid::TagsPattern (SubsGridWindow.cpp:
+    // 34-39) replaces each "{...}" (SRT: "<...>") with GRID_TAGS_SWAP_CHARACTER
+    // through wxRegEx::ReplaceAll; "[^{]*" is greedy, so a block runs to the
+    // last "}" before the next "{".
+    void hiddenTagsAreSwappedInTheTextColumn()
+    {
+        LineTableModel model;
+        model.setDocument(load("[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Hello{\\i0} there\n"
+                               "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{a}b}c{d\n"
+                               "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,<i>kept</i>\n"));
+        const auto text = [&](int row) { return model.index(row, LineTableModel::TextColumn).data().toString(); };
+        QCOMPARE(text(0), QStringLiteral("{\\i1}Hello{\\i0} there"));
+        QSignalSpy changed(&model, &QAbstractItemModel::dataChanged);
+        model.setHideTags(true, QStringLiteral("\u2600"));
+        QCOMPARE(changed.count(), 1);
+        QCOMPARE(text(0), QStringLiteral("\u2600Hello\u2600 there"));
+        QCOMPARE(text(1), QStringLiteral("\u2600c{d")); // greedy to "b}", an unclosed "{d" stays
+        QCOMPARE(text(2), QStringLiteral("<i>kept</i>")); // ASS: only braces
+        // wxRegEx's replacement: "&" is the whole match.
+        model.setHideTags(true, QStringLiteral("[&]"));
+        QCOMPARE(text(0), QStringLiteral("[{\\i1}]Hello[{\\i0}] there"));
+        model.setHideTags(false, QStringLiteral("\u2600"));
+        QCOMPARE(text(0), QStringLiteral("{\\i1}Hello{\\i0} there"));
+        // SRT: "<...>".
+        const char *srt = "1\n00:00:01,000 --> 00:00:02,000\n<i>Hi</i> {x}\n\n";
+        std::vector<std::byte> bytes(std::strlen(srt));
+        std::memcpy(bytes.data(), srt, bytes.size());
+        model.setDocument(core::loadSrt(bytes).document);
+        model.setHideTags(true, QStringLiteral("*"));
+        QCOMPARE(text(0), QStringLiteral("*Hi* {x}"));
+        // Translation mode: the Text column is the original, which legacy's
+        // Original column shows with its tags (SubsGridWindow.cpp:405-410).
+        model.setDocument(load("[Script Info]\nTLMode: Yes\n[Events]\n"
+                               "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\b1}x\n"));
+        QCOMPARE(text(0), QStringLiteral("{\\b1}x"));
+    }
+
+    // E6: spelling marks of the swapped text (TextData::Init's tagReplaceLen).
+    void hiddenTagsGiveTheSpellingTheSwapLength()
+    {
+        LineTableModel model;
+        int seenLength = -2;
+        model.setSpelling(LineTableModel::TagSpelling(
+            [&](std::u16string_view, core::SubtitleFormat, bool, int replaceTagsLen) {
+                seenLength = replaceTagsLen;
+                return core::legacy::SpellMarks{{1, 2}, {}};
+            }));
+        model.setDocument(load("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}ab\n"));
+        QCOMPARE(model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole).toList().size(), 2);
+        QCOMPARE(seenLength, -1);
+        model.setHideTags(true, QStringLiteral("ab"));
+        model.index(0, LineTableModel::TextColumn).data(LineTableModel::SpellMarksRole);
+        QCOMPARE(seenLength, 2);
+    }
+
+    // E6: the label's State (Dialogue::GetState): the changed-Line mark from
+    // the session, 4 Unconfirmed, 8 bookmarked; the label slot by
+    // SubsGridWindow.cpp:478-479 and legacy's theme colours (config.cpp:422-425).
+    void lineStateAndLabelColours()
+    {
+        LineTableModel model;
+        model.setChangeState([](const core::LineRecord &l) { return l.id.value == 1 ? 1 : l.id.value == 2 ? 2 : 0; });
+        auto document = load("[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,b\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,[bookmark],0,0,0,,c\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,d\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,e\n");
+        // Unconfirmed (legacy State 4, read from a translation pair's "\f"
+        // "D" effect in TLMode) set directly.
+        QVERIFY(document.setLineUnconfirmed(document.lines()[3]->id, true));
+        model.setDocument(document);
+        QList<int> states;
+        for (int row = 0; row < model.rowCount(); ++row)
+            states << model.index(row, 0).data(LineTableModel::LineStateRole).toInt();
+        QCOMPARE(states, (QList<int>{1, 2, 8, 4, 0}));
+        QCOMPARE(LineTableModel::labelSlot(0), 0);
+        QCOMPARE(LineTableModel::labelSlot(1), 1);
+        QCOMPARE(LineTableModel::labelSlot(2), 2);
+        for (const int doubtful : {4, 5, 6, 8, 9, 12})
+            QCOMPARE(LineTableModel::labelSlot(doubtful), 3);
+        const auto colours = model.headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList();
+        QCOMPARE(colours.size(), 4);
+        QCOMPARE(colours[0].value<QColor>(), QColor(0x2F, 0x31, 0x36));
+        QCOMPARE(colours[1].value<QColor>(), QColor(0x32, 0x2F, 0x4E));
+        QCOMPARE(colours[2].value<QColor>(), QColor(0x20, 0x22, 0x25));
+        QCOMPARE(colours[3].value<QColor>(), QColor(0x92, 0x5B, 0x1F));
+        QCOMPARE(LineTableModel::themeLabelColours(false)[1], QColor(0xB0, 0xAD, 0xD8));
     }
 };
 

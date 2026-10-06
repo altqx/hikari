@@ -239,7 +239,8 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
                                                  core::LineRecord line;
                                                  line.style = u8"Default";
                                                  line.end.value = ms(5000);
-                                                 replacement = d.appendLine(line);
+                                                 // E6: a new Dialogue, not a copy (state 0).
+                                                 replacement = d.appendLine(line, core::ChangeMark::Kept);
                                                  return replacement.has_value();
                                              }
                                              return true;
@@ -249,6 +250,28 @@ std::expected<void, CommandRefusal> deleteLines(EditSession &session)
     const auto after = linesOf(session);
     if (!after.empty())
         session.setSelection(selectOnly(after[std::min<std::size_t>(static_cast<std::size_t>(first), after.size() - 1)]->id));
+    return {};
+}
+
+std::expected<void, CommandRefusal> deleteText(EditSession &session, const LineVisible &visible)
+{
+    // SubsGridBase.cpp:928-936: GetSelections (the shown selected Lines),
+    // CopyDialogue(i)->Text = "" for each, SetModified(GRID_DELETE_TEXT).
+    std::vector<core::LineId> lines;
+    for (const auto *l : linesOf(session))
+        if (session.selection().selected.contains(l->id) && (!visible || visible(l->id)))
+            lines.push_back(l->id);
+    if (lines.empty())
+        return std::unexpected(CommandRefusal::Invalid); // SubsGrid.cpp:844: sels > 0
+    const auto ran = session.run(Command{"Deleting text", session.revision(), {lines.begin(), lines.end()},
+                                         [&](core::Document &d) {
+                                             for (const auto id : lines)
+                                                 if (!d.setLineText(id, {}))
+                                                     return false;
+                                             return true;
+                                         }});
+    if (!ran)
+        return std::unexpected(ran.error());
     return {};
 }
 
@@ -364,8 +387,11 @@ std::expected<void, CommandRefusal> swapLines(EditSession &session)
         static_cast<std::size_t>(rows[1]) + 1 < lines.size() ? std::optional(lines[static_cast<std::size_t>(rows[1]) + 1]->id)
                                                              : std::nullopt;
     const auto ran = session.run(Command{"Swapping lines", session.revision(), {first.id, second.id}, [&](core::Document &d) {
-                                             // Both keep their identity and source bytes.
-                                             return d.moveLine(second.id, first.id) && d.moveLine(first.id, afterSecond);
+                                             // Both keep their identity and source bytes; both
+                                             // are copied and marked changed (SwapRowsF,
+                                             // SubsFile.cpp:1010-1017).
+                                             return d.moveLine(second.id, first.id) && d.moveLine(first.id, afterSecond) &&
+                                                    d.markLineChanged(first.id) && d.markLineChanged(second.id);
                                          }});
     if (!ran)
         return std::unexpected(ran.error());
@@ -473,6 +499,10 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
         if (selection.anchor == lines[i]->id)
             anchorRow = i;
     }
+    std::vector<core::LineId> moved;
+    for (const auto row : rows)
+        if (order[row] != lines[row]->id)
+            moved.push_back(order[row]);
     std::set<core::LineId> touched(order.begin(), order.end());
     const auto ran = session.run(Command{"Sorting subtitles", session.revision(), touched, [&](core::Document &d) {
                                              // Row by row, the wanted Line goes before the
@@ -489,6 +519,12 @@ std::expected<void, CommandRefusal> sortLines(EditSession &session, SortKey key,
                                                                          current.end(), order[k]));
                                                  current.insert(current.begin() + static_cast<std::ptrdiff_t>(k), order[k]);
                                              }
+                                             // SortAll / SortSelected (SubsFile.cpp:470-501): each
+                                             // Line that lands on another row is copied, so marked
+                                             // changed; the ones left in place keep their mark.
+                                             for (const auto id : moved)
+                                                 if (!d.markLineChanged(id))
+                                                     return false;
                                              return true;
                                          }});
     if (!ran)

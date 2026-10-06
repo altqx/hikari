@@ -116,6 +116,9 @@ public:
     void setFilePicker(FilePickerPort *port) { m_picker = port; }
     void setEditor(EditorPort *port) { m_editor = port; }
     void setPathContext(std::function<AutomationPathContext()> context) { m_paths = std::move(context); }
+    // O5: aegisub.gettext's lookup (the UTF-8 source in, its text out);
+    // without one the service is Unavailable and the script gets its source.
+    void setTranslation(std::function<std::string(const std::string &)> translate) { m_translate = std::move(translate); }
 
     void handle(const HostServiceRequest &request, Reply reply);
     // The run ended: an open picker is withdrawn and its answer dropped.
@@ -128,6 +131,7 @@ private:
     FilePickerPort *m_picker = nullptr;
     EditorPort *m_editor = nullptr;
     std::function<AutomationPathContext()> m_paths;
+    std::function<std::string(const std::string &)> m_translate;
     bool m_pickerOpen = false;
 };
 

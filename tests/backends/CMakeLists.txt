@@ -22,6 +22,12 @@ target_compile_definitions(hikari_backends_libass_tests PRIVATE
     HIKARI_REFERENCE_DIR="${PROJECT_SOURCE_DIR}/tests/references"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
     HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/libass")
+# T3: the Scale and rotation tools' origin and anchor against libass's renders.
+hikari_add_gtest(hikari_backends_visual_geometry_tests SOURCES visual_geometry_tests.cpp
+    LIBRARIES hikari_backends hikari_application Qt6::Gui LABELS backends)
+target_compile_definitions(hikari_backends_visual_geometry_tests PRIVATE
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf"
+    HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/visual-t3")
 
 add_executable(hikari_test_helper test_helper.cpp)
 target_link_libraries(hikari_test_helper PRIVATE hikari_helper_endpoint)
@@ -34,7 +40,7 @@ add_dependencies(hikari_backends_helper_tests hikari_test_helper)
 # runs (discovered GoogleTest cases did not honour a CTest setup fixture).
 set(HIKARI_MEDIA_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/media-fixtures")
 set(_hikari_media_fixtures "")
-foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 color709full audiodelay audioonly sar)
+foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 color709full colorhd audiodelay audioonly sar mkvextract)
     set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.mkv")
     add_custom_command(OUTPUT "${out}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
@@ -43,13 +49,28 @@ foreach(kind cfr vfr bframes longgop audio tracks unknown color601 color709 colo
         COMMENT "Generating media fixture ${kind}")
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
+# Y9: the Matroska subtitle and attachment fixtures, beside the media ones.
+foreach(kind subs onesub nosubs)
+    set(out "${HIKARI_MEDIA_FIXTURE_DIR}/mkv-${kind}.mkv")
+    add_custom_command(OUTPUT "${out}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
+        COMMAND hikari_mkv_fixture "${out}" ${kind}
+        DEPENDS hikari_mkv_fixture
+        COMMENT "Generating Matroska fixture ${kind}")
+    list(APPEND _hikari_media_fixtures "${out}")
+endforeach()
 add_custom_target(hikari_media_fixtures ALL DEPENDS ${_hikari_media_fixtures})
 hikari_add_gtest(hikari_backends_indexed_source_tests SOURCES indexed_source_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_indexed_source_tests PRIVATE
     HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
     HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
-add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_media_fixtures)
+# V3: a media helper whose Open fails at a chosen stage (protocol 8).
+add_executable(hikari_failing_media_helper failing_media_helper.cpp)
+target_link_libraries(hikari_failing_media_helper PRIVATE hikari_helper_endpoint)
+add_dependencies(hikari_backends_indexed_source_tests hikari_media_helper hikari_failing_media_helper
+    hikari_media_fixtures)
 
 # N6: the real-time engine everywhere; the PortAudio stream wherever an output
 # device exists (CI Linux provides a null ALSA PCM, HIKARI_TEST_AUDIO_DEVICE).
@@ -236,6 +257,15 @@ target_compile_definitions(hikari_backends_font_collector_tests PRIVATE
     HIKARI_FONTCONFIG_FILE="${CMAKE_CURRENT_BINARY_DIR}/font-fixtures.conf")
 add_dependencies(hikari_backends_font_collector_tests hikari_font_fixtures)
 
+# Y9: MKV extraction through the media helper (legacy Demux).
+hikari_add_gtest(hikari_backends_matroska_tests SOURCES matroska_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_include_directories(hikari_backends_matroska_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support/media")
+target_compile_definitions(hikari_backends_matroska_tests PRIVATE
+    HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+    HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+add_dependencies(hikari_backends_matroska_tests hikari_media_helper hikari_media_fixtures)
+
 # T4: the clips the visual tools write, rendered by libass, against the tools'
 # own outline and mask.
 hikari_add_gtest(hikari_backends_visual_clip_render_tests SOURCES visual_clip_render_tests.cpp
@@ -249,3 +279,8 @@ hikari_add_gtest(hikari_backends_visual_drawing_render_tests SOURCES visual_draw
     LIBRARIES hikari_backends hikari_application Qt6::Core LABELS backends)
 target_compile_definitions(hikari_backends_visual_drawing_render_tests PRIVATE
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
+# P9: legacy SelectInFolder (D-Bus file manager with a folder fallback on Linux).
+hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_tests.cpp LIBRARIES hikari_backends)
+if(NOT WIN32)
+    target_link_libraries(hikari_backends_show_in_folder_tests PRIVATE Qt6::DBus)
+endif()

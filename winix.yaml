@@ -30,8 +30,16 @@ tasks:
     artifacts: [out/build/windows-x64-release/provision-evidence]
   test:
     script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release --output-junit results.xml
-    timeoutSeconds: 1200
+    timeoutSeconds: 2700
     artifacts: [out/build/windows-x64-release/results.xml, out/build/windows-x64-release/Testing/Temporary/LastTest.log]
+  qttest:
+    # One QtTest executable offscreen with its output in a file, printed whole
+    # (ctest keeps none on Windows). TEST: the executable's name without .exe;
+    # ARGS: QtTest arguments (test functions, -v2, ...); TEST_TIMEOUT: seconds (300);
+    # FORMAT: QtTest's output format (txt; junitxml adds each function's time;
+    # none for a Spix workflow, which prints to the job log).
+    script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter "$env:TEST.exe" out/build/windows-x64-release | Select-Object -First 1; if (-not $exe) { Write-Output "no $env:TEST.exe"; exit 2 }; $limit = if ($env:TEST_TIMEOUT) { [int]$env:TEST_TIMEOUT } else { 300 }; $format = if ($env:FORMAT) { $env:FORMAT } else { 'txt' }; $out = "$env:TEMP/qttest-$env:TEST.$format"; Remove-Item $out -ErrorAction SilentlyContinue; $a = "$env:ARGS $(if ($format -ne 'none') { "-o $out,$format" })".Trim(); $sp = @{ FilePath = $exe.FullName; WorkingDirectory = $exe.DirectoryName; NoNewWindow = $true; PassThru = $true; RedirectStandardError = "$env:TEMP/qttest-err.txt" }; if ($a) { $sp.ArgumentList = $a }; $sw = [Diagnostics.Stopwatch]::StartNew(); $p = Start-Process @sp; $null = $p.Handle; if (-not $p.WaitForExit($limit * 1000)) { $p.Kill(); Write-Output "== $env:TEST TIMED OUT after $limit s"; $code = 1 } else { $code = $p.ExitCode; Write-Output "== $env:TEST exit $code after $([int]$sw.Elapsed.TotalSeconds) s" }; if (Test-Path $out) { Get-Content $out }; Write-Output '== stderr'; Get-Content "$env:TEMP/qttest-err.txt" -ErrorAction SilentlyContinue | Select-Object -Last 40; exit $code
+    timeoutSeconds: 1200
   shell:
     # Shell test functions one at a time (QtTest writes to a file), each limited to 90 s.
     script: $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; foreach ($f in 'selectLinesDialogSelectsAndActs','saveVariantsFollowTheLegacySave','aboutAndCreditsShowTheNotices','resolutionMismatchAndResample','f6AndShortcutsReachAFloatingPanel') { $out = "$env:TEMP/shell-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/shell-err.txt"; if (-not $p.WaitForExit(90000)) { $p.Kill(); Write-Output "== $f TIMED OUT" } else { Write-Output "== $f exit $($p.ExitCode)" }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|PASS|SKIP|QWARN|Totals' } }

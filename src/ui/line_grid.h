@@ -35,10 +35,12 @@ struct GridGeometry {
 // R1: a compared row's background (legacy SubsGridWindow.cpp:419-429): the
 // mismatch or match colour, their comment variants on a Comment, and a
 // selected row with GRID_SELECTION blended over it (GetColorWithAlpha,
-// config.h:566-575; the default theme's #8791FD at alpha 75,
+// config.h:566-575; legacy's dark theme's #8791FD at alpha 75,
 // config.cpp:415). `state` is ComparisonRole; nothing for 0. `colours` is
-// the model's ComparisonColoursRole.
-std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours);
+// the model's ComparisonColoursRole. `selection` is GRID_SELECTION with its
+// alpha: K2 makes it the theme's accent (a selection-type mark).
+std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
+                                           const QColor &selection);
 
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT
@@ -48,6 +50,8 @@ class LineGrid : public QQuickPaintedItem {
     Q_PROPERTY(qreal contentHeight READ contentHeight NOTIFY contentHeightChanged)
     Q_PROPERTY(qreal rowHeight READ rowHeight NOTIFY rowHeightChanged)
     Q_PROPERTY(int lastPaintedRowCount READ lastPaintedRowCount NOTIFY painted)
+    // R2: the table's name for assistive technology ("Subtitle lines" when empty).
+    Q_PROPERTY(QString accessibleName MEMBER m_accessibleName NOTIFY accessibleNameChanged)
 
 public:
     explicit LineGrid(QQuickItem *parent = nullptr);
@@ -61,6 +65,13 @@ public:
     const GridGeometry &geometry() const { return m_geometry; }
 
     Q_INVOKABLE int rowAt(qreal y) const;
+    // R2: brings a Line into view as legacy's subtitles preview did
+    // (SubsGridPreview::MakeVisible): when it is above the first shown row
+    // or within two rows of the bottom, the view moves so that it is half a
+    // page, less one row, from the top.
+    Q_INVOKABLE void makeLineVisible(qulonglong id);
+    // The first row shown at the top (contentY over the row height).
+    Q_INVOKABLE void scrollToTopRow(int row) { setContentY(row * m_geometry.rowHeight); }
 
     // Identity and state, resolved through a filter proxy when there is one.
     std::optional<core::LineId> lineAtRow(int row) const;
@@ -73,6 +84,9 @@ public:
     int selectedCount() const;                         // all selected Lines, shown or hidden
     int hiddenSelectedCount() const;
     QString cellText(int row, int column) const;
+    // E6: the row's legacy State in words for assistive technology ("changed",
+    // "changed, saved", "unconfirmed", "bookmarked"), empty for none.
+    QString rowStateText(int row) const;
     QString columnTitle(int column) const;
     int columnCount() const;
     QRectF cellRect(int row, int column) const;        // item coordinates
@@ -84,6 +98,7 @@ public:
 
     // Width of the hidden-block mark column (legacy posX 11 while filtered).
     double markWidth() const { return m_markWidth; }
+    QString accessibleName() const { return m_accessibleName; }
 
 signals:
     // A +/- mark was clicked: the hidden block after this Document row (-1:
@@ -101,8 +116,11 @@ signals:
     void activeLineRequested(qulonglong lineId);
     // Shift with arrows, Page, Home or End: extend by `rows` displayed rows.
     void extendRequested(int rows);
-    // A mouse press on a Line, with the keyboard modifiers held.
-    void lineClicked(qulonglong lineId, int modifiers);
+    // A mouse press on a Line, with the keyboard modifiers held. V6:
+    // `endColumn` the press is in the End column, `doubleClick` it is the
+    // second press of a double click (legacy LeftDClick; the Grid moves the
+    // video there, SubsGridWindow.cpp:1647).
+    void lineClicked(qulonglong lineId, int modifiers, bool endColumn, bool doubleClick);
     // Dragging with the button held reaches another Line (block select).
     void lineDragged(qulonglong lineId);
     void selectAllRequested();
@@ -113,13 +131,16 @@ signals:
     void contentHeightChanged();
     void rowHeightChanged();
     void painted();
+    void accessibleNameChanged();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 private:
     void modelLayoutChanged();
@@ -128,11 +149,14 @@ private:
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
+    void drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;
     // The model column shown at display position `column`.
     int modelColumn(int column) const;
+    // V6: the press at x is in the End column.
+    bool inEndColumn(qreal x) const;
 
     QPointer<QAbstractItemModel> m_model;
     std::vector<QMetaObject::Connection> m_connections;
@@ -143,6 +167,7 @@ private:
     // Model columns in display order: those the model reports as shown.
     std::vector<int> m_columns;
     double m_markWidth = 0;
+    QString m_accessibleName;
     void updateColumns();
     std::optional<core::LineId> m_dragLine; // the Line under a held button
     std::optional<core::LineId> m_announcedActive;

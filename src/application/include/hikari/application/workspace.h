@@ -35,8 +35,13 @@ public:
     // P6: `replacement` (already added) takes `id`'s tab position and roles,
     // and `id` goes (legacy loads new subtitles into the same tab).
     bool replace(DocumentId id, DocumentId replacement);
-    // P6: the tabs, in order: every Document but the protected reference.
+    // P6: the tabs, in order: every Document but the protected reference,
+    // unless the reference is a tab shown there (R2, setTabReference).
     std::vector<DocumentId> tabs() const;
+    // P9: tabs `a` and `b` (indices into tabs()) trade places, as legacy
+    // Notebook swaps two Pages (a tab dragged over another, the tab menu's
+    // choice). The roles stay with their Documents.
+    bool swapTabs(std::size_t a, std::size_t b);
 
     std::optional<DocumentId> editingTarget() const { return m_target; }
     std::optional<DocumentId> reference() const { return m_reference; }
@@ -45,9 +50,16 @@ public:
     std::vector<DocumentId> documents() const;    // in the order they were added
 
     // Explicit operations. The reference can't become the editing target this
-    // way (use promoteReference); a Document can't be both.
+    // way (use promoteReference); a Document can't be both. R2: choosing the
+    // tab of a tab reference does make it the editing target, and it stops
+    // being the reference.
     bool setEditingTarget(DocumentId id);
     bool setReference(std::optional<DocumentId> id);
+    // R2: another tab's Document becomes the protected reference and stays a
+    // tab (legacy's subtitles preview showed another tab's grid, which stayed
+    // in the notebook). A reference that was not a tab becomes one.
+    bool setTabReference(DocumentId id);
+    bool referenceIsTab() const { return m_reference && m_referenceIsTab; }
     // Makes the reference the editing target. It stops being protected; the
     // previous target stays open with its content and context.
     bool promoteReference();
@@ -65,6 +77,7 @@ private:
     std::vector<Entry> m_documents;
     std::optional<DocumentId> m_target;
     std::optional<DocumentId> m_reference;
+    bool m_referenceIsTab = false; // R2
     std::uint64_t m_next = 1;
 };
 

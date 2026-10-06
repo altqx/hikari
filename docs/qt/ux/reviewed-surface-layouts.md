@@ -21,6 +21,12 @@ These surfaces refine the accepted [shared Workspace](workspaces.md) and [Compac
 | File, Session and recovery | **B — Compact Home with task dialogs.** Optional Home uses compact entries; file/recovery tasks open in focused dialogs over Classic. Home is not mandatory startup, and the workspace remains the normal editing destination. | [User choice](https://github.com/altqx/hikari/issues/61#issuecomment-5853206789); [File/Session study](https://github.com/altqx/hikari/blob/00e8fca3eb6d02debf2b60858d0fa44b3b64c879/docs/prototypes/file-recovery-notes.md). |
 | Detailed Line editor | **B — Local inspector.** Keep the text beside a narrow Line/Tags/Review inspector with independent local scrolling. Original remains above Translated; owner, active text role, pending state and commit controls stay legible. | [User choice](https://github.com/altqx/hikari/issues/63#issuecomment-5853198552); [Line editor study](https://github.com/altqx/hikari/blob/4278e0a6793c52736d8eddf6c6dad77b8ffc82fa/docs/prototypes/line-editor-notes.md). |
 
+## Later presentation decisions
+
+| Surface | Decision | Approval |
+| --- | --- | --- |
+| Panel headers | **The dock title bar is the only panel header.** The user dropped the in-panel header on 2026-10-05: with docking, it repeated the dock's title. Panels keep their accessible names. The document name appears in the Document tab and the window title only. The Protected reference's tray is titled "Reference: <name>", since it has no tab. The status bar no longer names the editing target. The dock chrome takes the theme layer's roles (K2), so every appearance is consistent. Legacy had no panel headers, so this changes the rewrite's specification, not legacy behaviour. [D3](https://github.com/altqx/hikari/issues/207) reshapes the dock chrome after MuseScore 4's convention. | User review of the Classic shell screenshot, 2026-10-05; [visual language](visual-language.md#composition). |
+
 ## Behavior and evidence retained for follow-through
 
 The following items were not decided by these placement comments. Existing accepted contracts and later explicitly named decisions govern them; they must not be inferred from an A/B choice. Each linked study's capability ledger remains the detailed record of represented and unimplemented operations.

@@ -1,6 +1,7 @@
 #include "audio_controller.h"
 
 #include "settings_store.h"
+#include "theme.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -51,6 +52,7 @@ void deleteOldAudioCache(const std::filesystem::path &folder, const std::filesys
 AudioController::AudioController(application::DisplayAudioPort &own, QObject *parent)
     : QObject(parent), m_box(own)
 {
+    connect(this, &AudioController::changed, this, &AudioController::textsChanged);
     m_box.setObserver([this] { boxChanged(); });
     m_box.setLog([this](const std::string &message, application::AudioBox::LogLevel level) {
         emit logged(QString::fromStdString(message), level == application::AudioBox::LogLevel::Debug);
@@ -70,6 +72,12 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
     connect(this, &AudioController::volumeChanged, this, [this](float volume) {
         if (m_player)
             m_player->setVolume(volume);
+    });
+    // K2: the theme's colours, live.
+    loadThemeColours();
+    theme::onChanged(this, [this] {
+        loadThemeColours();
+        redraw();
     });
     newView();
 }
@@ -444,35 +452,17 @@ void AudioController::setSettingsStore(SettingsStore *store)
         disconnect(m_store, nullptr, this, nullptr);
     m_store = store;
     loadBoxControls();
-    loadSpectrumColours();
-    // Legacy ChangeOptions after the Options dialog (OK/Apply: ChangeColors):
-    // the spectrum renderer reads its colours again (ChangeColours).
-    if (m_store)
-        connect(m_store, &SettingsStore::changed, this, [this](const QString &id) {
-            if (id == QLatin1StringView(application::kSpectrumBackgroundSetting) ||
-                id == QLatin1StringView(application::kSpectrumEchoSetting) ||
-                id == QLatin1StringView(application::kSpectrumInnerSetting)) {
-                loadSpectrumColours();
-                redraw();
-            }
-        });
     emit boxControlsChanged();
     redraw();
 }
 
-// Legacy AudioSpectrum::ChangeColours: AUDIO_SPECTRUM_BACKGROUND, _ECHO and
-// _INNER (an unreadable value keeps legacy's default).
-void AudioController::loadSpectrumColours()
+// K2: the display's colours are the theme's, fixed per theme (Dark keeps
+// legacy's dark theme, config.cpp:451-472); the selection marks take the
+// accent. A theme change draws the display, and the spectrum, again (legacy
+// ChangeColors: AudioDisplay::ChangeOptions, AudioSpectrum::ChangeColours).
+void AudioController::loadThemeColours()
 {
-    const auto colour = [this](std::string_view id, std::uint32_t fallback) {
-        if (!m_store)
-            return fallback;
-        const QString text = m_store->value(QString::fromLatin1(id.data(), qsizetype(id.size()))).toString();
-        return application::parseSettingColour(text.toStdString()).value_or(fallback);
-    };
-    m_options.spectrumBackground = colour(application::kSpectrumBackgroundSetting, application::kSpectrumBackgroundDefault);
-    m_options.spectrumEcho = colour(application::kSpectrumEchoSetting, application::kSpectrumEchoDefault);
-    m_options.spectrumInner = colour(application::kSpectrumInnerSetting, application::kSpectrumInnerDefault);
+    theme::applyAudioColours(m_options, theme::current().content.audio);
     if (m_spectrum)
         m_spectrum->setColours(m_options.spectrumBackground, m_options.spectrumEcho, m_options.spectrumInner);
     m_spectrumImage.reset(); // drawn again with the new palette

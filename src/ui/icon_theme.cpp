@@ -1,11 +1,7 @@
 #include "icon_theme.h"
 
-#include "settings_store.h"
+#include "theme.h"
 
-#include "hikari/application/settings.h"
-
-#include <QAccessibilityHints>
-#include <QEvent>
 #include <QFile>
 #include <QGuiApplication>
 #include <QHash>
@@ -13,10 +9,8 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPainter>
-#include <QPalette>
 #include <QIcon>
 #include <QPixmap>
-#include <QStyleHints>
 #include <QSvgRenderer>
 #include <QWindow>
 #include <QtQml/qqmlengine.h>
@@ -59,70 +53,7 @@ const Manifest &manifest()
     return loaded;
 }
 
-int index(Appearance appearance)
-{
-    return static_cast<int>(appearance);
-}
-
 } // namespace
-
-QString appearanceName(Appearance appearance)
-{
-    switch (appearance) {
-    case Appearance::Light:
-        return QStringLiteral("light");
-    case Appearance::Dark:
-        return QStringLiteral("dark");
-    case Appearance::HighContrast:
-        return QStringLiteral("highContrast");
-    }
-    return QStringLiteral("light");
-}
-
-std::optional<Appearance> appearanceFromName(const QString &name)
-{
-    for (const auto appearance : kAppearances)
-        if (appearanceName(appearance) == name)
-            return appearance;
-    return std::nullopt;
-}
-
-std::string_view settingId(Appearance appearance, Slot slot)
-{
-    return application::kIconColourSettings[index(appearance)][static_cast<int>(slot)];
-}
-
-QColor defaultColour(Appearance appearance, Slot slot)
-{
-    const auto *setting = application::findSetting(settingId(appearance, slot));
-    if (!setting)
-        return {};
-    return QColor(QString::fromStdString(std::get<std::string>(setting->defaultValue)));
-}
-
-std::array<QColor, 4> surfaces(Appearance appearance)
-{
-    // visual-language.md, "Semantic appearance tokens": bg, panel, raised, field.
-    switch (appearance) {
-    case Appearance::Light:
-        return {QColor(QRgb(0xE5E9EC)), QColor(QRgb(0xF9FAFB)), QColor(QRgb(0xEDF0F3)), QColor(QRgb(0xFFFFFF))};
-    case Appearance::Dark:
-        return {QColor(QRgb(0x171B20)), QColor(QRgb(0x20262D)), QColor(QRgb(0x29313A)), QColor(QRgb(0x171D24))};
-    case Appearance::HighContrast:
-        return {QColor(QRgb(0x000000)), QColor(QRgb(0x080808)), QColor(QRgb(0x151515)), QColor(QRgb(0x000000))};
-    }
-    return {};
-}
-
-double contrastRatio(const QColor &a, const QColor &b)
-{
-    const auto luminance = [](const QColor &c) {
-        const auto channel = [](double v) { return v <= 0.04045 ? v / 12.92 : std::pow((v + 0.055) / 1.055, 2.4); };
-        return 0.2126 * channel(c.redF()) + 0.7152 * channel(c.greenF()) + 0.0722 * channel(c.blueF());
-    };
-    const double x = luminance(a), y = luminance(b);
-    return (std::max(x, y) + 0.05) / (std::min(x, y) + 0.05);
-}
 
 QString resourcePath(const QString &role)
 {
@@ -198,65 +129,9 @@ QImage render(const QString &role, QSize pixels, const QColor &colour, const QCo
 
 } // namespace icons
 
-namespace {
-
-// What every IconTheme follows: the profile's colours, the application
-// palette and the platform's contrast preference.
-class Hub : public QObject {
-    Q_OBJECT
-public:
-    static Hub &get()
-    {
-        static QPointer<Hub> hub;
-        if (!hub)
-            hub = new Hub(QCoreApplication::instance());
-        return *hub;
-    }
-
-    QPointer<SettingsStore> settings;
-    std::optional<icons::Appearance> forced;
-
-    void use(SettingsStore *store)
-    {
-        if (settings)
-            disconnect(settings, nullptr, this, nullptr);
-        settings = store;
-        if (store)
-            connect(store, &SettingsStore::changed, this, [this](const QString &id) {
-                if (id.startsWith(QLatin1String("icons.")))
-                    emit changed();
-            });
-        emit changed();
-    }
-
-signals:
-    void changed();
-
-protected:
-    bool eventFilter(QObject *watched, QEvent *event) override
-    {
-        if (watched == QCoreApplication::instance() && event->type() == QEvent::ApplicationPaletteChange)
-            emit changed();
-        return QObject::eventFilter(watched, event);
-    }
-
-private:
-    explicit Hub(QObject *parent) : QObject(parent)
-    {
-        if (auto *app = QCoreApplication::instance())
-            app->installEventFilter(this);
-        if (auto *hints = QGuiApplication::styleHints()) {
-            connect(hints, &QStyleHints::colorSchemeChanged, this, &Hub::changed);
-            connect(hints->accessibility(), &QAccessibilityHints::contrastPreferenceChanged, this, &Hub::changed);
-        }
-    }
-};
-
-} // namespace
-
 IconTheme::IconTheme(QObject *parent) : QObject(parent)
 {
-    connect(&Hub::get(), &Hub::changed, this, &IconTheme::refresh);
+    theme::onChanged(this, [this] { refresh(); });
     refresh();
 }
 
@@ -294,93 +169,18 @@ void IconTheme::applyWindowIcon(QWindow *window, const QString &role) const
     window->setIcon(icon);
 }
 
-icons::Appearance IconTheme::currentAppearance()
+std::array<QColor, 4> IconTheme::colours()
 {
-    if (Hub::get().forced)
-        return *Hub::get().forced;
-    if (const auto *hints = QGuiApplication::styleHints();
-        hints && hints->accessibility()->contrastPreference() == Qt::ContrastPreference::HighContrast)
-        return icons::Appearance::HighContrast;
-    return QGuiApplication::palette().color(QPalette::Window).lightnessF() < 0.5 ? icons::Appearance::Dark
-                                                                                  : icons::Appearance::Light;
-}
-
-void IconTheme::useSettings(SettingsStore *settings)
-{
-    Hub::get().use(settings);
-}
-
-void IconTheme::forceAppearance(std::optional<icons::Appearance> appearance)
-{
-    Hub::get().forced = appearance;
-    emit Hub::get().changed();
-}
-
-QColor IconTheme::colour(icons::Appearance appearance, icons::Slot slot)
-{
-    // A colour the user saved in the profile (icons.<appearance>.<slot>)
-    // still wins until the theme model replaces those settings. The registry's
-    // own parser reads the value, the same one applySettings validates with:
-    // "#RRGGBB", or "#RRGGBBAA" (QColor would read nine digits as #AARRGGBB).
-    // Anything it rejects is ignored. The tint paints the colour opaque
-    // (icons::tint writes #RRGGBB).
-    if (const auto &settings = Hub::get().settings) {
-        const char *id = icons::settingId(appearance, slot).data();
-        if (settings->contains(id)) {
-            const QString stored = settings->text(id);
-            if (const auto argb = application::parseSettingColour(stored.toStdString()))
-                return QColor::fromRgba(QRgb(*argb));
-        }
-    }
-    return paletteColour(slot);
-}
-
-QColor IconTheme::paletteColour(icons::Slot slot)
-{
-    // The active theme's palette: its text colour, its accent (the accent
-    // layer, and the whole icon while hovered or pressed) and its disabled
-    // text colour.
-    const QPalette palette = QGuiApplication::palette();
-    switch (slot) {
-    case icons::Slot::Normal:
-        return palette.color(QPalette::Active, QPalette::WindowText);
-    case icons::Slot::Accent:
-    case icons::Slot::Active:
-        return palette.color(QPalette::Active, QPalette::Accent);
-    case icons::Slot::Disabled:
-        return palette.color(QPalette::Disabled, QPalette::WindowText);
-    }
-    return palette.color(QPalette::Active, QPalette::WindowText);
-}
-
-QString IconTheme::defaultColour(const QString &settingId) const
-{
-    for (const auto appearance : icons::kAppearances)
-        for (const auto slot : icons::kSlots)
-            if (settingId == QLatin1String(icons::settingId(appearance, slot)))
-                return icons::defaultColour(appearance, slot).name(QColor::HexRgb).toUpper();
-    return {};
-}
-
-QStringList IconTheme::settingIds() const
-{
-    QStringList out;
-    for (const auto appearance : icons::kAppearances)
-        for (const auto slot : icons::kSlots)
-            out << QString::fromLatin1(icons::settingId(appearance, slot));
-    return out;
+    const auto &roles = theme::current().roles;
+    return {roles.text, roles.accent, roles.accent, roles.disabled};
 }
 
 void IconTheme::refresh()
 {
-    const auto appearance = currentAppearance();
-    std::array<QColor, 4> colours;
-    for (std::size_t i = 0; i < icons::kSlots.size(); ++i)
-        colours[i] = colour(appearance, icons::kSlots[i]);
-    if (appearance == m_appearance && colours == m_colours)
+    const auto next = colours();
+    if (next == m_colours)
         return;
-    m_appearance = appearance;
-    m_colours = colours;
+    m_colours = next;
     for (const auto &[window, role] : std::as_const(m_windows))
         if (window)
             applyWindowIcon(window, role);
@@ -476,4 +276,3 @@ void TintedSvg::paint(QPainter *painter)
 
 } // namespace hikari::ui
 
-#include "icon_theme.moc"

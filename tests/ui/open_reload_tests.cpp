@@ -257,13 +257,26 @@ private slots:
     {
         app::Application a;
         const QString b = writeFile(dir, "drop-b.srt", "b"), c = writeFile(dir, "drop-a.ass", "a");
-        // Several: sorted, the first subtitles open; archives are refused.
-        QCOMPARE(a.openDropped({QUrl::fromLocalFile(b), QUrl::fromLocalFile(c),
-                                QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.zip")))}),
-                 c);
-        QCOMPARE(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.7z")))}), QString());
-        QCOMPARE(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("k_keyframes.txt")))}), QString());
-        QCOMPARE(a.openDropped({QUrl(QStringLiteral("https://example.com/a.ass"))}), QString());
+        auto kind = [](const QVariantMap &r) { return r.value(QStringLiteral("kind")).toString(); };
+        // One file: OpenFile's route (the window reviews and opens it).
+        QVariantMap one = a.openDropped({QUrl::fromLocalFile(c)});
+        QCOMPARE(kind(one), QStringLiteral("subtitles"));
+        QCOMPARE(one.value(QStringLiteral("path")).toString(), c);
+        QCOMPARE(kind(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.mkv")))})), QStringLiteral("video"));
+        QCOMPARE(kind(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.7z")))})), QString());
+        QCOMPARE(kind(a.openDropped({QUrl::fromLocalFile(dir.filePath(QStringLiteral("k_keyframes.txt")))})), QString());
+        QCOMPARE(kind(a.openDropped({QUrl(QStringLiteral("https://example.com/a.ass"))})), QString());
+        // P9: several (legacy OpenFiles): sorted, archives refused, each
+        // subtitle file a tab; the first goes into the untouched Untitled tab.
+        const QVariantMap several = a.openDropped({QUrl::fromLocalFile(b), QUrl::fromLocalFile(c),
+                                                   QUrl::fromLocalFile(dir.filePath(QStringLiteral("x.zip")))});
+        QCOMPARE(kind(several), QStringLiteral("files"));
+        QVERIFY(several.value(QStringLiteral("rows")).toList().isEmpty());
+        QStringList titles;
+        for (const QVariant &tab : a.tabs())
+            titles << tab.toMap().value(QStringLiteral("title")).toString();
+        QCOMPARE(titles, (QStringList{QStringLiteral("drop-a.ass"), QStringLiteral("drop-b.srt")}));
+        QCOMPARE(a.currentTab(), 1); // the last one opened is shown
     }
 };
 

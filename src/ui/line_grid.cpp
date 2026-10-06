@@ -2,6 +2,7 @@
 
 #include "line_grid_accessible.h"
 #include "line_table_model.h"
+#include "theme.h"
 
 #include <QAbstractProxyModel>
 #include <QAccessible>
@@ -50,6 +51,8 @@ LineGrid::LineGrid(QQuickItem *parent) : QQuickPaintedItem(parent)
     installGridAccessibility();
     updateRowHeight();
     connect(this, &QQuickItem::heightChanged, this, [this] { setContentY(m_contentY); });
+    // K2: painted in the theme's colours, live.
+    theme::onChanged(this, [this] { update(); });
 }
 
 void LineGrid::updateRowHeight()
@@ -212,6 +215,23 @@ QString LineGrid::cellText(int row, int column) const
     return m_model ? m_model->index(row, modelColumn(column)).data().toString() : QString();
 }
 
+QString LineGrid::rowStateText(int row) const
+{
+    if (!m_model || row < 0 || row >= m_model->rowCount())
+        return {};
+    const int state = m_model->index(row, 0).data(LineTableModel::LineStateRole).toInt();
+    QStringList words;
+    if ((state & 3) == 1)
+        words << tr("changed");
+    else if ((state & 3) == 2)
+        words << tr("changed, saved");
+    if (state & 4)
+        words << tr("unconfirmed");
+    if (state & 8)
+        words << tr("bookmarked");
+    return words.join(QStringLiteral(", "));
+}
+
 QString LineGrid::columnTitle(int column) const
 {
     return m_model ? m_model->headerData(modelColumn(column), Qt::Horizontal).toString() : QString();
@@ -240,6 +260,19 @@ void LineGrid::scrollToRow(int row)
         setContentY(top);
     else if (top + m_geometry.rowHeight > m_contentY + body)
         setContentY(top + m_geometry.rowHeight - body);
+}
+
+void LineGrid::makeLineVisible(qulonglong id)
+{
+    // SubsGridPreview.cpp:76-89: erow the active row, panel rows
+    // h / (GridHeight + 1) (the header row included, as legacy counted it).
+    const int row = rowOfLine(core::LineId{id});
+    if (row < 0 || m_geometry.rowHeight <= 0)
+        return;
+    const int rows = static_cast<int>(height() / m_geometry.rowHeight);
+    const int top = static_cast<int>(m_contentY / m_geometry.rowHeight);
+    if (top > row || top + rows < row + 2)
+        setContentY(std::max(0, row - rows / 2 + 1) * m_geometry.rowHeight);
 }
 
 void LineGrid::keyPressEvent(QKeyEvent *event)
@@ -307,7 +340,7 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
             return;
         }
         if (const auto id = row >= 0 ? lineAtRow(row) : std::nullopt; id && !isRowSelected(row))
-            emit lineClicked(id->value, 0);
+            emit activeLineRequested(id->value); // a plain selection, not a press (V6: the video stays)
         emit contextMenuRequested(event->position().x(), event->position().y());
         event->accept();
         return;
@@ -343,8 +376,38 @@ void LineGrid::mousePressEvent(QMouseEvent *event)
     }
     m_dragLine = id;
     if (id)
-        emit lineClicked(id->value, static_cast<int>(event->modifiers()));
+        emit lineClicked(id->value, static_cast<int>(event->modifiers()), inEndColumn(event->position().x()), false);
     event->accept();
+}
+
+// V6: legacy's LeftDClick on a Line moves the video to it (SubsGridWindow.cpp:1647,
+// SetVideoLineTime); the press before it has already selected the Line.
+void LineGrid::mouseDoubleClickEvent(QMouseEvent *event)
+{
+    if (event->button() != Qt::LeftButton || (m_markWidth > 0 && event->position().x() < m_markWidth)) {
+        event->ignore();
+        return;
+    }
+    const int row = rowAt(event->position().y());
+    const auto id = row >= 0 ? lineAtRow(row) : std::nullopt;
+    if (!id || m_model->index(row, 0).data(LineTableModel::GroupRole).toInt() == 1) {
+        event->ignore();
+        return;
+    }
+    emit lineClicked(id->value, static_cast<int>(event->modifiers()), inEndColumn(event->position().x()), true);
+    event->accept();
+}
+
+bool LineGrid::inEndColumn(qreal x) const
+{
+    const auto widths = columnWidths(width() - m_markWidth);
+    double left = m_markWidth;
+    for (std::size_t c = 0; c < widths.size(); ++c) {
+        if (x >= left && x < left + widths[c])
+            return modelColumn(static_cast<int>(c)) == LineTableModel::EndColumn;
+        left += widths[c];
+    }
+    return false;
 }
 
 void LineGrid::mouseMoveEvent(QMouseEvent *event)
@@ -372,7 +435,14 @@ void LineGrid::mouseReleaseEvent(QMouseEvent *event)
 void LineGrid::focusInEvent(QFocusEvent *event)
 {
     QQuickPaintedItem::focusInEvent(event);
+    update(); // the focused cell's ring
     announceState(true);
+}
+
+void LineGrid::focusOutEvent(QFocusEvent *event)
+{
+    QQuickPaintedItem::focusOutEvent(event);
+    update();
 }
 
 void LineGrid::stateChanged()
@@ -463,14 +533,17 @@ std::vector<double> LineGrid::columnWidths(double total) const
         case LineTableModel::EffectColumn: width = 60; break;
         case LineTableModel::CpsColumn: width = fit("CPS", 10); break;
         case LineTableModel::WrapsColumn: width = fit("00/00", 10); break;
-        default: width = -1; break; // Text
+        default: width = -1; break; // Text (and E5's Translation)
         }
         w.push_back(width);
         used += std::max(0.0, width);
     }
+    // E5: with the original shown, "Original text" and "Translation" take
+    // half of the rest each (SubsGridWindow.cpp:481-485).
+    const auto rest = static_cast<double>(std::count_if(w.begin(), w.end(), [](double v) { return v < 0; }));
     for (double &v : w)
         if (v < 0)
-            v = std::max(40.0, total - used);
+            v = std::max(40.0, (total - used) / rest);
     return w;
 }
 
@@ -481,7 +554,7 @@ void LineGrid::drawBlockMark(QPainter *painter, double borderY, int mark, double
     if (!mark)
         return;
     painter->save();
-    painter->setPen(QColor(0xc8, 0xcc, 0xd4));
+    painter->setPen(theme::current().roles.muted);
     painter->setBrush(Qt::NoBrush);
     const QRectF box(1, borderY - 5, 9, 9);
     painter->drawRect(box);
@@ -495,7 +568,8 @@ void LineGrid::drawBlockMark(QPainter *painter, double borderY, int mark, double
 // F3: legacy TextData::DrawMisspells: behind each error range the width of
 // its text (trailing spaces trimmed), from the width of the text before it;
 // the full row height, in GRID_SPELLCHECKER's colour (dark default).
-std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours)
+std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
+                                           const QColor &selection)
 {
     if (state != 1 && state != 2)
         return std::nullopt;
@@ -506,9 +580,42 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
     if (!selected)
         return colour;
     // GetColorWithAlpha(seldial, kol), in its integer arithmetic.
-    constexpr int r = 0x87, g = 0x91, b = 0xFD, invA = 0xFF - 75;
+    const int r = selection.red(), g = selection.green(), b = selection.blue(), invA = 0xFF - selection.alpha();
     return QColor(colour.red() * invA / 0xFF + (r - invA * r / 0xFF), colour.green() * invA / 0xFF + (g - invA * g / 0xFF),
                   colour.blue() * invA / 0xFF + (b - invA * b / 0xFF));
+}
+
+// E6: legacy paints column 0 of every Line in its label colour by State
+// (SubsGridWindow.cpp:478-479, 495: j == 0 && !isHeadline ? label : kol),
+// over selection and comparison colours alike. The rewrite adds a shape for
+// the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
+// a filled dot for a changed Line, a ring for a changed and saved one
+// (E6-mark-shape). The mark takes the theme layer's text role, or its field
+// role where text contrasts less with the label colour.
+void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
+{
+    const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
+    if (colours.size() == 4)
+        painter->fillRect(cell, label);
+    const int changed = state & 3;
+    if (!changed)
+        return;
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing);
+    const auto &roles = theme::current().roles;
+    QColor mark = roles.text;
+    if (label.isValid() && theme::contrastRatio(roles.field, label) > theme::contrastRatio(mark, label))
+        mark = roles.field;
+    const QRectF dot(cell.right() - 9, cell.center().y() - 2.5, 5, 5);
+    if (changed == 1) {
+        painter->setPen(Qt::NoPen);
+        painter->setBrush(mark);
+    } else {
+        painter->setPen(QPen(mark, 1));
+        painter->setBrush(Qt::NoBrush);
+    }
+    painter->drawEllipse(dot);
+    painter->restore();
 }
 
 // R1: legacy SubsGridWindow.cpp:508-528. Each run of differing characters
@@ -555,7 +662,7 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
             error.chop(1);
         const double before = start > 0 ? metrics.horizontalAdvance(text.left(start)) : 0;
         painter->fillRect(QRectF(cell.x() + before, cell.y(), metrics.horizontalAdvance(error), cell.height()),
-                          QColor(0x94, 0x00, 0x00));
+                          theme::current().content.spellcheck);
     }
     painter->restore();
 }
@@ -563,7 +670,17 @@ void LineGrid::drawSpellMarks(QPainter *painter, const QRectF &cell, QString tex
 void LineGrid::paint(QPainter *painter)
 {
     const QRectF bounds = boundingRect();
-    painter->fillRect(bounds, QColor(0x20, 0x24, 0x2b));
+    // K2: the theme's roles: rows on the panel surface (every other one a
+    // shade apart), the header raised with secondary text, a selected row on
+    // the selected background with the leading accent marker, the active
+    // Line outlined in the accent, a Comment in secondary text. While the
+    // Grid has keyboard focus its focused cell, the active Line's row,
+    // carries the focus ring (visual-language.md, "Keyboard focus"): 2 wide
+    // in the focus role, the text colour, just inside the accent outline,
+    // under a selected row's marker.
+    const auto &roles = theme::current().roles;
+    const auto &content = theme::current().content;
+    painter->fillRect(bounds, roles.panel);
     m_lastPainted = 0;
     const int rows = m_model ? m_model->rowCount() : 0;
     const int columns = columnCount();
@@ -571,8 +688,8 @@ void LineGrid::paint(QPainter *painter)
     const double rh = m_geometry.rowHeight;
 
     // Header.
-    painter->fillRect(QRectF(0, 0, bounds.width(), m_geometry.headerHeight), QColor(0x2c, 0x31, 0x3a));
-    painter->setPen(QColor(0xc8, 0xcc, 0xd4));
+    painter->fillRect(QRectF(0, 0, bounds.width(), m_geometry.headerHeight), roles.raised);
+    painter->setPen(roles.muted);
     double x = m_markWidth;
     for (int c = 0; c < columns; ++c) {
         painter->drawText(QRectF(x + 4, 0, widths[c] - 8, m_geometry.headerHeight), Qt::AlignVCenter,
@@ -584,6 +701,9 @@ void LineGrid::paint(QPainter *painter)
     const int count = m_geometry.visibleRowCount(m_contentY, bounds.height(), rows);
     const QVariantList comparisonColours =
         m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::ComparisonColoursRole).toList() : QVariantList();
+    const QVariantList labelColours =
+        m_model ? m_model->headerData(0, Qt::Horizontal, LineTableModel::LabelColoursRole).toList() : QVariantList();
+    const bool numberShown = columns > 0 && modelColumn(0) == LineTableModel::NumberColumn;
     painter->save();
     painter->setClipRect(QRectF(0, m_geometry.headerHeight, bounds.width(), bounds.height() - m_geometry.headerHeight));
     for (int row = first; row < first + count; ++row) {
@@ -592,30 +712,30 @@ void LineGrid::paint(QPainter *painter)
         const bool selected = idx.data(LineTableModel::SelectedRole).toBool();
         const bool active = idx.data(LineTableModel::ActiveRole).toBool();
         const bool comment = idx.data(LineTableModel::CommentRole).toBool();
-        QColor background = row % 2 ? QColor(0x24, 0x29, 0x31) : QColor(0x20, 0x24, 0x2b);
+        QColor background = row % 2 ? content.gridAlternate : roles.panel;
         if (selected)
-            background = QColor(0x2f, 0x4b, 0x6e);
+            background = roles.select;
         const int comparison = idx.data(LineTableModel::ComparisonRole).toInt();
         painter->fillRect(QRectF(0, top, bounds.width(), rh), background);
-        if (const auto compared = comparisonBackground(comparison, comment, selected, comparisonColours)) {
+        if (const auto compared =
+                comparisonBackground(comparison, comment, selected, comparisonColours, content.comparisonSelection)) {
             // Legacy paints column 0, the number, in its label colour and the
             // other columns in kol (SubsGridWindow.cpp:495, j == 0 && !isHeadline
-            // ? label : kol); the number cell keeps the row's own background.
-            const double from = m_markWidth + (columns > 0 && modelColumn(0) == LineTableModel::NumberColumn ? widths[0] : 0);
+            // ? label : kol); the number cell takes its label colour (E6).
+            const double from = m_markWidth + (numberShown ? widths[0] : 0);
             painter->fillRect(QRectF(from, top, bounds.width() - from, rh), *compared);
         }
-        if (active) {
-            painter->setPen(QColor(0x6c, 0xa8, 0xff));
-            painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
-        }
-        painter->setPen(comment ? QColor(0x80, 0x86, 0x90) : QColor(0xe6, 0xe8, 0xec));
+        if (numberShown)
+            drawLabel(painter, QRectF(m_markWidth, top, widths[0], rh), idx.data(LineTableModel::LineStateRole).toInt(),
+                      labelColours);
+        painter->setPen(comment ? roles.muted : roles.text);
         x = m_markWidth;
         for (int c = 0; c < columns; ++c) {
             const int mc = modelColumn(c);
             // Legacy marks a fast CPS and bad wraps on their cells.
             if ((mc == LineTableModel::CpsColumn && idx.data(LineTableModel::CpsTooHighRole).toBool()) ||
                 (mc == LineTableModel::WrapsColumn && idx.data(LineTableModel::BadWrapsRole).toBool()))
-                painter->fillRect(QRectF(x, top, widths[c], rh), QColor(0x7a, 0x2e, 0x2e));
+                painter->fillRect(QRectF(x, top, widths[c], rh), content.gridWarning);
             QString text = m_model->index(row, mc).data().toString();
             if (mc == LineTableModel::NumberColumn && idx.data(LineTableModel::GroupRole).toInt() == 1) {
                 // A group description: [+] closed, [-] open.
@@ -637,6 +757,20 @@ void LineGrid::paint(QPainter *painter)
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             x += widths[c];
+        }
+        if (active && hasActiveFocus()) {
+            const double w = bounds.width();
+            painter->fillRect(QRectF(1, top + 1, w - 2, 2), roles.focus);
+            painter->fillRect(QRectF(1, top + rh - 3, w - 2, 2), roles.focus);
+            painter->fillRect(QRectF(1, top + 3, 2, rh - 6), roles.focus);
+            painter->fillRect(QRectF(w - 3, top + 3, 2, rh - 6), roles.focus);
+        }
+        if (selected)
+            painter->fillRect(QRectF(0, top, 3, rh), roles.accent);
+        if (active) {
+            painter->setPen(roles.accent);
+            painter->setBrush(Qt::NoBrush);
+            painter->drawRect(QRectF(0.5, top + 0.5, bounds.width() - 1, rh - 1));
         }
         ++m_lastPainted;
         if (m_markWidth > 0)

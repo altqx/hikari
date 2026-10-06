@@ -1,5 +1,7 @@
 #include "hikari/application/video_session.h"
 
+#include "hikari/application/video_sources.h"
+
 #include <algorithm>
 #include <utility>
 
@@ -28,14 +30,30 @@ void VideoSession::open(const std::string &path, IndexRequest index)
     const auto pendingSeek = m_pendingSeek;
     close();
     m_pendingSeek = pendingSeek;
+    m_openFailure.reset();
     m_path = path;
     m_state = State::Opening;
     const std::weak_ptr<bool> alive = m_alive;
     const int chosen = index.audioTrack;
-    m_source.openIndexed(path, index, nullptr, [this, alive, chosen](std::expected<SourceTimeline, SourceError> opened) {
+    // V3: legacy's "Indexing video" progress (ProviderFFMS2::UpdateProgress)
+    auto progress = [this, alive](std::int64_t done, std::int64_t total) {
         if (alive.expired() || m_state != State::Opening)
             return;
+        m_progress = std::pair(done, total);
+        notify();
+    };
+    m_source.openIndexed(path, index, progress, [this, alive, chosen](std::expected<SourceTimeline, SourceError> opened) {
+        if (alive.expired() || m_state != State::Opening)
+            return;
+        m_progress.reset();
         if (!opened) {
+            m_openFailure = m_source.openFailure();
+            if (opened.error() == SourceError::Cancelled) {
+                // V3: cancelled indexing leaves no video (legacy's failed
+                // provider deleted the renderer)
+                close();
+                return;
+            }
             m_state = State::Failed;
             m_error = opened.error();
             return notify();
@@ -63,11 +81,16 @@ void VideoSession::open(const std::string &path, IndexRequest index)
         const auto ordinal = std::find(opened->audioTracks.begin(), opened->audioTracks.end(), m_audioTrack);
         m_audioOrdinal = ordinal == opened->audioTracks.end() ? -1
                                                               : static_cast<int>(ordinal - opened->audioTracks.begin());
+        m_audioTracks = opened->audioTracks;
         m_newIndex = opened->newIndex;
         m_indexHandoff = opened->handoffIndexFile;
         m_fps = opened->fpsDenominator > 0 ? static_cast<double>(opened->fpsNumerator) / static_cast<double>(opened->fpsDenominator) : 0;
         m_geometry = {opened->width, opened->height, opened->sarNum, opened->sarDen};
         m_state = State::Ready;
+        // V4: legacy ProviderFFMS2::Init's matrix, before the first frame.
+        if (const auto input = m_colour.open(opened->colorSpace, opened->colorRange, opened->width, opened->height,
+                                             m_docMatrix))
+            applyInputMatrix(*input, std::nullopt);
         notify();
         if (const auto seek = std::exchange(m_pendingSeek, std::nullopt))
             seekTo(*seek);
@@ -98,6 +121,8 @@ void VideoSession::close()
     m_hasAudio = false;
     m_audioTrack = -1;
     m_audioOrdinal = -1;
+    m_audioTracks.clear();
+    m_progress.reset();
     m_newIndex = true;
     m_indexHandoff.clear();
     m_timeline.reset();
@@ -114,11 +139,44 @@ void VideoSession::setSubtitles(std::vector<std::byte> script)
 {
     RenderSnapshot snapshot;
     snapshot.script = std::move(script);
+    snapshot.fonts = m_fonts;
     m_hasSubtitles = m_renderer.prepare(std::move(snapshot)).has_value();
     if (m_shown) {
         render();
         present();
     }
+}
+
+void VideoSession::setMatrix(std::string matrix)
+{
+    if (matrix == m_docMatrix)
+        return;
+    m_docMatrix = std::move(matrix);
+    if (m_state != State::Ready)
+        return; // the open takes it
+    // RendererFFMS2::SetColorSpace: the provider's SetColorSpace, then
+    // Render() while paused (RendererFFMS2.h:66-72).
+    if (auto change = m_colour.set(m_docMatrix)) {
+        applyInputMatrix(change->input, change);
+        if (!m_playing && m_requested)
+            showFrame(*m_requested);
+    }
+}
+
+void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::optional<LegacyColourMatrix::Change> change)
+{
+    const std::weak_ptr<bool> alive = m_alive;
+    const std::uint64_t generation = m_source.generation();
+    m_source.setInputMatrix(input.colorSpace, input.colorRange,
+                            [this, alive, generation, change](std::expected<void, SourceError> done) {
+                                if (alive.expired() || done || generation != m_source.generation())
+                                    return;
+                                if (change)
+                                    m_colour.revert(*change);
+                                if (m_log)
+                                    m_log("Cannot change YCbCr matrix"); // ProviderFFMS2.cpp:402, 408, 979
+                                notify();
+                            });
 }
 
 std::optional<core::DocumentTime> VideoSession::frameStart(int index) const
@@ -252,9 +310,23 @@ void VideoSession::present()
     });
 }
 
+void VideoSession::cancelOpen()
+{
+    if (m_state != State::Opening)
+        return;
+    close(); // cancels the source's open (FFMS_CancelIndexing in the helper)
+}
+
+bool VideoSession::dummy() const
+{
+    return isDummyVideo(m_path);
+}
+
 bool VideoSession::play()
 {
-    if (!m_player || m_state != State::Ready || m_playing)
+    // V3: a dummy video has no file for the general player (legacy played it
+    // on the Windows provider thread only, ProviderDummy.cpp:229-235)
+    if (!m_player || m_state != State::Ready || m_playing || dummy())
         return false;
     m_playEndMs = 0;
     const std::int64_t fromUs = m_shown ? frameStart(m_shown->index).value_or(core::DocumentTime(0)).microseconds()
@@ -417,6 +489,44 @@ LegacyTimebase VideoSession::legacyTimebase() const
     return LegacyTimebase(std::move(timecodes), m_fps);
 }
 
+int VideoSession::tellMs() const
+{
+    if (m_state != State::Ready || m_starts.empty())
+        return 0;
+    if (m_playing && m_lastGeneralUs)
+        return static_cast<int>(*m_lastGeneralUs / 1000);
+    const int frame = std::clamp(m_requested.value_or(0), 0, frameCount() - 1);
+    return static_cast<int>(msOf(m_starts[static_cast<std::size_t>(frame)]));
+}
+
+int VideoSession::durationMs() const
+{
+    return m_state == State::Ready && !m_starts.empty() ? static_cast<int>(msOf(m_starts.back())) : 0;
+}
+
+void VideoSession::seekKeepPlaying(core::DocumentTime time, bool startTime)
+{
+    if (!m_playing || !m_timeline) {
+        if (startTime)
+            seekTo(time);
+        else
+            seekToEnd(time);
+        return;
+    }
+    int frame = 0;
+    if (startTime) {
+        const auto at = m_timeline->frameAtOrAfter(time);
+        frame = at ? static_cast<int>(at->value()) : frameCount() - 1;
+    } else {
+        const core::DocumentTime before(std::max<std::int64_t>(0, time.microseconds() - 1000));
+        const auto at = m_timeline->frameContaining(before);
+        frame = at ? static_cast<int>(at->value()) : (before.microseconds() <= 0 ? 0 : frameCount() - 1);
+    }
+    m_requested = frame;
+    m_playEndMs = 0; // legacy SetPosition resets the play end
+    startPlayback(m_starts[static_cast<std::size_t>(frame)].microseconds());
+}
+
 bool VideoSession::isKeyframe(int index) const
 {
     return std::binary_search(m_keyframes.begin(), m_keyframes.end(), index);
@@ -451,6 +561,63 @@ bool VideoSession::previousKeyframe()
             break;
         }
     showFrame(target);
+    return true;
+}
+
+int VideoSession::tell() const
+{
+    if (m_state != State::Ready)
+        return 0;
+    if (m_playing && m_lastGeneralUs)
+        return static_cast<int>(*m_lastGeneralUs / 1000);
+    const auto frame = m_shown && m_shown->index >= 0 ? std::optional(m_shown->index) : m_requested;
+    if (!frame || *frame < 0 || *frame >= frameCount())
+        return 0;
+    return static_cast<int>(msOf(m_starts[static_cast<std::size_t>(*frame)]));
+}
+
+bool VideoSession::seekToMs(int ms)
+{
+    if (m_state != State::Ready || !m_timeline)
+        return false;
+    // SeekFrame(timebase, ms, true): Timebase::FrameAt, clamped
+    int frame = 0;
+    if (ms > 0) {
+        const auto at = m_timeline->frameAtOrAfter(core::DocumentTime(std::int64_t{ms} * 1000));
+        frame = at ? static_cast<int>(at->value()) : frameCount() - 1;
+    }
+    if (m_playing) {
+        m_requested = frame;
+        m_lastGeneralUs.reset();
+        return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());
+    }
+    showFrame(frame);
+    return true;
+}
+
+bool VideoSession::restartToggled()
+{
+    if (m_state != State::Ready)
+        return false;
+    if (m_playing) {
+        seekToMs(0);
+        return pause();
+    }
+    showFrame(0);
+    if (!m_player || dummy())
+        return true;
+    m_playEndMs = 0;
+    return startPlayback(frameStart(0).value_or(core::DocumentTime(0)).microseconds());
+}
+
+bool VideoSession::selectPlaybackAudioTrack(int ordinal)
+{
+    if (m_state != State::Ready || ordinal < 0 || ordinal >= static_cast<int>(m_audioTracks.size()))
+        return false;
+    m_audioOrdinal = ordinal;
+    if (m_player && m_playerPath == m_path)
+        m_player->selectAudioTrack(ordinal);
+    notify();
     return true;
 }
 

@@ -13,8 +13,10 @@
 #include <deque>
 #include <expected>
 #include <functional>
+#include <map>
 #include <optional>
 #include <set>
+#include <unordered_set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -62,6 +64,12 @@ struct DraftChange {
     std::optional<std::u8string> translation; // TLMode translated role
     std::optional<core::DocumentTime> start, end;
     std::optional<std::int64_t> marginLeft, marginRight, marginVertical;
+    // E4: the Line editor's other fields (legacy EditBox::Send's cells
+    // COMMENT, LAYER, STYLE, ACTOR, EFFECT) and MicroDVD's authored frames.
+    std::optional<bool> comment;
+    std::optional<std::int64_t> layer;
+    std::optional<std::u8string> style, actor, effect;
+    std::optional<std::optional<std::int64_t>> startFrame, endFrame;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning
@@ -121,6 +129,13 @@ public:
     // The same step under another name (F3: legacy EditBox::Send with an
     // edition type, such as "Correcting spelling errors in the text field").
     bool commitDraftAs(std::string name);
+    // E4: legacy EditBox::Send through SubsGrid::ChangeLine. With several
+    // Lines selected, every field the draft holds (Send's modified cells)
+    // goes to each selected Line in one step; otherwise this is
+    // commitDraftAs(name). E63-invalid-commit blocks as commitDraft does;
+    // `leaving` is the commit on leave's legacy End correction for the edited
+    // Line (EditBox::SetLine on the next Line).
+    bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false);
     void discardDraft();
 
     std::expected<void, CommandRefusal> run(const Command &command);
@@ -140,6 +155,8 @@ public:
         std::size_t activeRow = 0; // 1-based row of that Line in the step's Document, 0 for none
     };
     std::vector<HistoryStep> history() const;
+    // The Document a kept history step holds (0 <= step < historySize()).
+    const core::Document &stepDocument(std::size_t step) const { return m_states[step].document; }
     std::size_t historyCursor() const { return m_cursor; }
     // The step whose content is saved, while it is still in history.
     std::optional<std::size_t> savedStep() const;
@@ -159,7 +176,13 @@ public:
     const std::vector<core::LineId> &lastGroupBreak() const { return m_lastGroupBreak; }
     // How many commands GroupBreak has refused, so the shell can offer removal.
     std::uint64_t groupBreakCount() const { return m_groupBreakCount; }
+    // Also turns the changed Lines of that content saved (E6, legacy
+    // SaveFile's ChangeDialogueState(2) on every written changed Dialogue).
     void markSaved(ContentId content);
+    // E6: a Line's changed-Line mark, legacy State & 3: 0 not changed since
+    // loading, 1 changed, 2 changed and saved since. The same copy stays
+    // saved in every history step that holds it (legacy shared the object).
+    int changeState(const core::LineRecord &line) const;
     // No step is saved any more (legacy RemoveLastIterSave: the file was removed).
     void markUnsaved() { m_saved.reset(); }
     bool isDirty() const; // committed content differs from the save point, or a draft is pending
@@ -184,6 +207,10 @@ private:
     Selection m_selection;
     std::optional<Draft> m_draft;
     std::optional<ContentId> m_saved;
+    std::unordered_set<std::uint64_t> m_savedVersions; // E6
+    // E6: the changed versions of each prepared save's snapshot, until its
+    // write is reported (its step may leave history meanwhile).
+    std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;

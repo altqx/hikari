@@ -17,6 +17,18 @@ Item {
     property Item focusTarget: null
     // The height of the panel below the canvas (legacy m_PanelHeight).
     property real panelHeight: 0
+    // V4: the view's commands take the pointer first (VideoBox::OnMouseEvent's
+    // order: the zoom mode, the wheel's zoom, then the tool, the context
+    // menu and VIDEO_PAUSE_ON_CLICK); without one the tool has it alone.
+    property VideoViewController view: null
+    signal contextMenuRequested(real x, real y)
+
+    function route(kind, x, y, button, buttons, modifiers, steps) {
+        if (!view)
+            return tools.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0)
+        if (view.pointer(kind, x, y, button, buttons, modifiers, steps ?? 0))
+            contextMenuRequested(x, y)
+    }
 
     function sync() {
         const dpr = overlayItem.Window.window ? overlayItem.Window.window.devicePixelRatio : Screen.devicePixelRatio
@@ -33,20 +45,24 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-        cursorShape: overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
-        onEntered: overlayItem.tools.pointer(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onExited: overlayItem.tools.pointer(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
-        onPositionChanged: mouse => overlayItem.tools.pointer(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
+        cursorShape: overlayItem.view && overlayItem.view.zoomMode
+                     ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
+                     : overlayItem.tools.hideCursor ? Qt.BlankCursor : Qt.ArrowCursor
+        onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
+        onExited: overlayItem.route(1, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)
+        onPositionChanged: mouse => overlayItem.route(2, mouse.x, mouse.y, Qt.NoButton, mouse.buttons, mouse.modifiers)
         onPressed: mouse => {
             if (overlayItem.focusTarget)
                 overlayItem.focusTarget.forceActiveFocus() // legacy SetFocus on the video
-            overlayItem.tools.pointer(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+            overlayItem.route(3, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         }
-        onReleased: mouse => overlayItem.tools.pointer(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        onReleased: mouse => overlayItem.route(4, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
+        // T2: legacy's wxEVT_LEFT_DCLICK (Position puts the Line there).
+        onDoubleClicked: mouse => overlayItem.route(6, mouse.x, mouse.y, mouse.button, mouse.buttons, mouse.modifiers)
         onWheel: wheel => {
-            overlayItem.tools.pointer(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
-                                      Math.round(wheel.angleDelta.y / 120))
-            wheel.accepted = false // the zoom and volume wheel stay the panel's (V4)
+            overlayItem.route(5, wheel.x, wheel.y, Qt.NoButton, wheel.buttons, wheel.modifiers,
+                              Math.round(wheel.angleDelta.y / 120))
+            wheel.accepted = overlayItem.view !== null // V4: the view takes the wheel over the video
         }
     }
 
@@ -60,7 +76,38 @@ Item {
             const ctx = getContext("2d")
             ctx.reset()
             for (const s of shapes) {
-                if (s.type === "line") {
+                if (s.type === "polygon") {
+                    // T2-T4: filled contours (one path, non-zero: the
+                    // rectangle clip's two fans without a seam), then the
+                    // first contour's one-pixel border; an empty fill or
+                    // border is not drawn (T3: RotationZ's ring).
+                    const first = s.contours.length > 0 ? s.contours[0] : []
+                    if (first.length < 2)
+                        continue
+                    if (s.fill !== "") {
+                        ctx.beginPath()
+                        for (const c of s.contours) {
+                            if (c.length === 0)
+                                continue
+                            ctx.moveTo(c[0].x, c[0].y)
+                            for (let i = 1; i < c.length; ++i)
+                                ctx.lineTo(c[i].x, c[i].y)
+                            ctx.closePath()
+                        }
+                        ctx.fillStyle = s.fill
+                        ctx.fill()
+                    }
+                    if (s.border !== "") {
+                        ctx.beginPath()
+                        ctx.moveTo(first[0].x, first[0].y)
+                        for (let i = 1; i < first.length; ++i)
+                            ctx.lineTo(first[i].x, first[i].y)
+                        ctx.closePath()
+                        ctx.strokeStyle = s.border
+                        ctx.lineWidth = 1
+                        ctx.stroke()
+                    }
+                } else if (s.type === "line") {
                     ctx.strokeStyle = s.color
                     ctx.lineWidth = s.width
                     ctx.beginPath()
@@ -75,30 +122,6 @@ Item {
                         ctx.fill()
                     } else {
                         ctx.strokeStyle = s.color
-                        ctx.lineWidth = 1
-                        ctx.stroke()
-                    }
-                } else if (s.type === "polygon") {
-                    // Filled contours (one path, non-zero), then the border.
-                    ctx.beginPath()
-                    for (const c of s.contours) {
-                        if (c.length === 0)
-                            continue
-                        ctx.moveTo(c[0].x, c[0].y)
-                        for (let i = 1; i < c.length; ++i)
-                            ctx.lineTo(c[i].x, c[i].y)
-                        ctx.closePath()
-                    }
-                    ctx.fillStyle = s.color
-                    ctx.fill()
-                    if (s.border !== "") {
-                        const c = s.contours[0]
-                        ctx.beginPath()
-                        ctx.moveTo(c[0].x, c[0].y)
-                        for (let i = 1; i < c.length; ++i)
-                            ctx.lineTo(c[i].x, c[i].y)
-                        ctx.closePath()
-                        ctx.strokeStyle = s.border
                         ctx.lineWidth = 1
                         ctx.stroke()
                     }

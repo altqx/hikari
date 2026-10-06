@@ -64,6 +64,18 @@ struct FakeSource : IndexedSourcePort {
     bool newIndex = true;
     std::string handoffIndexFile;
     SourceGeometry geometry; // T1: what the timeline reports (none by default)
+    int colorSpace = 2, colorRange = 0; // V4: frame 0's matrix and range (unspecified)
+    std::vector<std::pair<int, int>> matrixCalls;
+    std::size_t framesBeforeMatrix = 0; // frame requests made before the last matrix call
+    bool refuseMatrix = false;
+    void setInputMatrix(int cs, int cr, MatrixSet done) override
+    {
+        matrixCalls.emplace_back(cs, cr);
+        framesBeforeMatrix = frames.size();
+        if (refuseMatrix)
+            return done(std::unexpected(SourceError::BackendFailure));
+        done({});
+    }
     std::uint64_t openIndexed(const std::string &path, const IndexRequest &request, Progress progress,
                               Opened done) override
     {
@@ -71,11 +83,16 @@ struct FakeSource : IndexedSourcePort {
         return open(path, std::move(progress), std::move(done));
     }
     std::deque<std::pair<int, FrameReady>> frames;
-    std::uint64_t open(const std::string &, Progress, Opened done) override
+    Progress pendingProgress;                // V3
+    int cancelled = 0;                       // V3
+    std::optional<OpenFailure> failure;      // V3
+    std::uint64_t open(const std::string &, Progress progress, Opened done) override
     {
         pendingOpen = std::move(done);
+        pendingProgress = std::move(progress);
         return ++gen;
     }
+    std::optional<OpenFailure> openFailure() const override { return failure; }
     void finishOpen(bool ok = true)
     {
         if (!ok)
@@ -95,6 +112,8 @@ struct FakeSource : IndexedSourcePort {
         t.height = geometry.height;
         t.sarNum = geometry.sarNum;
         t.sarDen = geometry.sarDen;
+        t.colorSpace = colorSpace;
+        t.colorRange = colorRange;
         pendingOpen(t);
     }
     void fail(std::size_t which = 0)
@@ -117,7 +136,7 @@ struct FakeSource : IndexedSourcePort {
         f.bgra.resize(32);
         done(std::move(f));
     }
-    void cancelOpen() override {}
+    void cancelOpen() override { ++cancelled; }
     void frame(int index, FrameReady done) override { frames.emplace_back(index, std::move(done)); }
     void openAudio(int, AudioOpened) override {}
     void audio(std::int64_t, std::int64_t, AudioReady) override {}
@@ -537,4 +556,205 @@ TEST_F(VideoTest, PlayLinePlaysToTheFrameBeforeTheEnd)
     player.delivered();
     video.generalFrame(playerFrame(), 300'000);
     EXPECT_TRUE(video.playing());
+}
+
+// V3: legacy ProgressSink "Indexing video" and its Cancel
+// (ProviderFFMS2.cpp:89-97, 301-312): the progress while indexing, and a
+// cancelled indexing leaves no video (the failed provider deleted the
+// renderer) and nothing to log; a failure keeps the source's stage and text.
+TEST_F(VideoTest, IndexingReportsProgressAndCanBeCancelled)
+{
+    video.open("/m/ep1.mkv");
+    EXPECT_FALSE(video.indexingProgress());
+    ASSERT_TRUE(source.pendingProgress);
+    source.pendingProgress(25, 100);
+    ASSERT_TRUE(video.indexingProgress());
+    EXPECT_EQ(*video.indexingProgress(), std::make_pair(std::int64_t{25}, std::int64_t{100}));
+    video.cancelOpen();
+    EXPECT_EQ(source.cancelled, 1);
+    EXPECT_EQ(video.state(), VideoSession::State::Closed);
+    EXPECT_TRUE(video.path().empty());
+    EXPECT_FALSE(video.indexingProgress());
+    // the helper's late Cancelled answer changes nothing
+    source.pendingOpen(std::unexpected(SourceError::Cancelled));
+    EXPECT_EQ(video.state(), VideoSession::State::Closed);
+    // a cancelled answer the session did not ask for closes it too
+    video.open("/m/ep1.mkv");
+    source.failure = OpenFailure{OpenStage::Indexing, "Cancelled by user"};
+    source.pendingOpen(std::unexpected(SourceError::Cancelled));
+    EXPECT_EQ(video.state(), VideoSession::State::Closed);
+    // a failed indexing: Failed, with FFMS2's text
+    video.open("/m/ep2.mkv");
+    source.failure = OpenFailure{OpenStage::Indexing, "Codec not found"};
+    source.pendingOpen(std::unexpected(SourceError::BackendFailure));
+    EXPECT_EQ(video.state(), VideoSession::State::Failed);
+    ASSERT_TRUE(video.openFailure());
+    EXPECT_EQ(video.openFailure()->stage, OpenStage::Indexing);
+    EXPECT_EQ(video.openFailure()->message, "Codec not found");
+    video.open("/m/ep3.mkv");
+    EXPECT_FALSE(video.openFailure());
+    EXPECT_FALSE(video.dummy());
+}
+
+// V3: the stream menu's choice through both transports: chosen before
+// playback it is the track general playback opens with, chosen while playing
+// it switches the player at once, and it outlives the pause's handoff to the
+// indexed frame and the next play.
+TEST_F(VideoTest, AChosenAudioStreamPlaysThroughBothTransports)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    source.audioTracks = {1, 2, 4};
+    EXPECT_FALSE(video.selectPlaybackAudioTrack(0)); // no video
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    EXPECT_EQ(video.audioTracks(), (std::vector<int>{1, 2, 4}));
+    EXPECT_EQ(video.playbackAudioTrack(), 0);
+    EXPECT_FALSE(video.selectPlaybackAudioTrack(3));
+    EXPECT_FALSE(video.selectPlaybackAudioTrack(-1));
+    ASSERT_TRUE(video.selectPlaybackAudioTrack(2));
+    EXPECT_TRUE(player.calls.empty()); // the player has nothing open yet
+    ASSERT_TRUE(video.play());
+    MediaDescription d;
+    d.audioTracks.resize(3);
+    player.opened(d);
+    player.delivered();
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"open /m/ep1.mkv", "audio track 2", "seek 0", "play"}));
+    player.calls.clear();
+    ASSERT_TRUE(video.selectPlaybackAudioTrack(1)); // while playing: at once
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"audio track 1"}));
+    EXPECT_EQ(video.audioTrack(), 1); // the box's track is not the stream menu's
+    ASSERT_TRUE(video.pause());
+    source.answer();
+    player.calls.clear();
+    ASSERT_TRUE(video.play());
+    EXPECT_EQ(player.calls.front(), "audio track 1");
+    // a new video starts from its own track again
+    video.open("/m/ep2.mkv");
+    source.finishOpen();
+    EXPECT_EQ(video.playbackAudioTrack(), 0);
+}
+
+// V3: chapters seek with legacy Seek(ms) (SeekFrame: the frame at or after,
+// 0 at or before 0), and while playing the player goes on from there;
+// Tell() is the shown frame's start, or while playing the delivered time.
+TEST_F(VideoTest, ChapterSeeksAndTellFollowLegacy)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    EXPECT_FALSE(video.seekToMs(100));
+    EXPECT_EQ(video.tell(), 0);
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    ASSERT_TRUE(video.seekToMs(100)); // frames every 40 ms: 120 ms is frame 3
+    EXPECT_EQ(video.requestedFrame(), 3);
+    source.answer();
+    EXPECT_EQ(video.tell(), 120);
+    ASSERT_TRUE(video.seekToMs(-5));
+    EXPECT_EQ(video.requestedFrame(), 0);
+    source.answer();
+    ASSERT_TRUE(video.seekToMs(100000)); // past the end: the last frame
+    EXPECT_EQ(video.requestedFrame(), 9);
+    source.answer();
+    ASSERT_TRUE(video.play());
+    player.opened();
+    player.delivered();
+    video.generalFrame(playerFrame(), 360000);
+    EXPECT_EQ(video.tell(), 360);
+    player.calls.clear();
+    ASSERT_TRUE(video.seekToMs(160));
+    EXPECT_TRUE(video.playing());
+    EXPECT_EQ(player.calls, (std::vector<std::string>{"seek 160000"}));
+    player.delivered();
+    EXPECT_EQ(player.calls.back(), "play");
+}
+
+// V3: VideoBox::NextFile with no file that way: Seek(0) then Pause(false),
+// which toggles play.
+TEST_F(VideoTest, RestartGoesToTheStartAndTogglesPlay)
+{
+    FakePlayer player;
+    video.setGeneralPlayer(&player);
+    EXPECT_FALSE(video.restartToggled());
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    source.answer();
+    video.showFrame(5);
+    source.answer();
+    ASSERT_TRUE(video.restartToggled()); // paused: shows frame 0 and plays from it
+    EXPECT_EQ(video.requestedFrame(), 0);
+    EXPECT_TRUE(video.playing());
+    player.opened();
+    EXPECT_EQ(player.soughtUs, 0);
+    player.delivered();
+    video.generalFrame(playerFrame(), 200000);
+    ASSERT_TRUE(video.restartToggled()); // playing: back to the start, paused there
+    EXPECT_FALSE(video.playing());
+    EXPECT_EQ(video.requestedFrame(), 0);
+}
+
+// V4: the Script properties matrix through the source's input matrix
+// (legacy ProviderFFMS2::Init, then SetColorSpace with a Render while
+// paused, RendererFFMS2.h:66-72).
+TEST_F(VideoTest, TheDocumentMatrixSetsTheSourcesInputMatrix)
+{
+    std::vector<std::string> logged;
+    video.setLog([&](const std::string &message) { logged.push_back(message); });
+    video.setPresenter(&presenter);
+    source.colorSpace = 1; // BT.709, limited
+    source.colorRange = 1;
+    video.setMatrix("TV.601");
+    video.open("/m/ep1.mkv");
+    source.finishOpen();
+    // Before the first frame is asked for.
+    ASSERT_EQ(source.matrixCalls, (std::vector<std::pair<int, int>>{{5, 1}}));
+    EXPECT_EQ(source.framesBeforeMatrix, 0u);
+    ASSERT_EQ(source.frames.size(), 1u);
+    source.answer();
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.601");
+    // The source's own: BT.709 set, the shown frame decoded again.
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.back(), (std::pair<int, int>{1, 1}));
+    ASSERT_EQ(source.frames.size(), 1u);
+    EXPECT_EQ(source.frames[0].first, 0);
+    EXPECT_EQ(source.framesBeforeMatrix, 0u); // the frame after the matrix
+    source.answer();
+    // Unchanged: nothing.
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.size(), 2u);
+    EXPECT_TRUE(source.frames.empty());
+    // Refused: legacy's message, the old name kept.
+    source.refuseMatrix = true;
+    video.setMatrix("TV.601");
+    EXPECT_EQ(logged, (std::vector<std::string>{"Cannot change YCbCr matrix"}));
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
+    // A BT.601 source never takes "TV.709".
+    source.refuseMatrix = false;
+    source.colorSpace = 6;
+    video.setMatrix("TV.709");
+    video.open("/m/ep2.mkv");
+    const auto before = source.matrixCalls.size();
+    source.finishOpen();
+    EXPECT_EQ(source.matrixCalls.size(), before);
+    EXPECT_EQ(video.colourMatrix().source(), "TV.601");
+    // An untagged HD source with a Document matrix other than TV.601: its
+    // guess, BT.709, is set before the first frame (approved departure
+    // V4-untagged-matrix; legacy left the converter's BT.601 under the name
+    // TV.709), so a later "TV.709" has nothing to change.
+    source.colorSpace = 2;
+    source.colorRange = 0;
+    source.geometry.width = 1280;
+    source.geometry.height = 720;
+    video.open("/m/ep3.mkv");
+    video.setMatrix("PC.709");
+    source.frames.clear();
+    source.matrixCalls.clear();
+    source.finishOpen();
+    ASSERT_EQ(source.matrixCalls, (std::vector<std::pair<int, int>>{{1, 0}}));
+    EXPECT_EQ(source.framesBeforeMatrix, 0u);
+    EXPECT_EQ(video.colourMatrix().applied(), "TV.709");
+    video.setMatrix("TV.709");
+    EXPECT_EQ(source.matrixCalls.size(), 1u);
 }

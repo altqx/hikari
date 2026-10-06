@@ -17,6 +17,7 @@ ApplicationWindow {
     height: 800
     visible: true
     title: shell.hasEditingTarget ? qsTr("%1 - HikariSub").arg(shell.editingTitle) : "HikariSub"
+    color: Theme.background // K2: the application background between panels
 
     required property ShellController shell
     required property LineEditorController editor
@@ -37,8 +38,12 @@ ApplicationWindow {
     required property var updates
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
+    required property var fontCatalogs // Y6: FontCatalogsController
+    required property var matroska // Y9: MatroskaController (GRID_SUBS_FROM_MKV)
     required property var hotkeys // O2: the shortcut editor (HotkeysController)
+    required property var settingsImport // O3: SettingsImportController
     required property VisualToolsController visualTools // T1: the Video panel's visual tools
+    required property VideoViewController videoView // V4: zoom, aspect, volume, snapshots
 
     // Every registered macro, in load and registration order (the dynamic
     // part of the legacy Automation menu).
@@ -94,8 +99,8 @@ ApplicationWindow {
     // target's unsaved work is reviewed as for Close.
     function openSubtitles(path) {
         const result = root.app.reviewOpen(path)
-        if (!result.ok)
-            return // the log window shows the problem
+        if (!result.ok || result.done)
+            return // the log window shows the problem; P9: opened in a new tab
         else if (result.rows.length === 0)
             root.app.finishClose()
         else
@@ -462,7 +467,8 @@ ApplicationWindow {
                             required property int index
                             objectName: "recentSubtitles" + index
                             text: modelData.label
-                            onTriggered: root.openSubtitles(modelData.path)
+                            // P9: Ctrl+click shows the file in its folder.
+                            onTriggered: if (!root.app.revealRecent(modelData.path)) root.openSubtitles(modelData.path)
                         }
                         onObjectAdded: (index, object) => recentMenu.insertItem(index, object)
                         onObjectRemoved: (index, object) => recentMenu.removeItem(object)
@@ -499,7 +505,7 @@ ApplicationWindow {
                     action: Action {
                         id: openVideoAction
                         text: qsTr("Open &Video…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
                     }
                 }
                 ShellMenuItem {
@@ -522,8 +528,7 @@ ApplicationWindow {
                         onTriggered: {
                             if (root.hotkeyGesture("GLOBAL_SAVE_ALL_SUBS"))
                                 return
-                            if (root.app.saveAll())
-                                root.openSaveDialog()
+                            root.saveAllTabs()
                         }
                     }
                 }
@@ -641,6 +646,13 @@ ApplicationWindow {
                         text: qsTr("&Settings")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
                     }
+                }
+                // O3: the one-shot legacy settings importer (no legacy item).
+                ShellMenuItem {
+                    objectName: "importSettingsMenuItem"
+                    text: qsTr("Import legacy settings...")
+                    enabled: root.settingsImport.available
+                    onTriggered: settingsImportDialog.openDialog()
                 }
                 ShellMenuItem {
                     iconRole: "exit"
@@ -785,6 +797,8 @@ ApplicationWindow {
             id: automationMenu
             objectName: "automationMenu"
             title: qsTr("&Automation")
+            // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
+            onAboutToShow: root.automation.menuOpened()
             Action {
                 id: automationHotkeysAction
                 text: qsTr("Open shortcut mapping window")
@@ -811,6 +825,16 @@ ApplicationWindow {
                     id: reloadAutoloadAction
                     text: qsTr("Refresh autoload scripts")
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_RELOAD_AUTOLOAD")) root.automation.reloadAutoload()
+                }
+            }
+            ShellMenuItem {
+                objectName: "loadLastScriptMenuItem"
+                action: Action {
+                    id: loadLastScriptAction
+                    text: qsTr("Run the last loaded script")
+                    // Legacy's modal progress dialog blocks it while a macro runs.
+                    enabled: !root.automation.running
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
             ShellMenuItem {
@@ -844,7 +868,7 @@ ApplicationWindow {
                             root.automationManager.run(modelData.path, modelData.ordinal)
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
+                onObjectAdded: (index, object) => automationMenu.insertItem(6 + index, object)
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
@@ -856,7 +880,74 @@ ApplicationWindow {
                 iconRole: "open-video"
                 action: Action {
                     text: qsTr("Open &video…")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.open()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_VIDEO")) videoDialog.show()
+                }
+            }
+            // V3: legacy's order (HikariSubFrame.cpp:246-258): the recent
+            // videos (GLOBAL_RECENT_VIDEO), Open keyframes, the recent
+            // keyframes (GLOBAL_RECENT_KEYFRAMES) and Open dummy video.
+            // Legacy OnMenuOpened (HikariSubFrame.cpp:2252-2275) enables
+            // Open keyframes and the recent keyframes with a video loaded, and
+            // OnMenuSelected checks that for their hotkeys too (:681-687).
+            RecentFilesMenu {
+                iconRole: "recent-video"
+                objectName: "recentVideoMenu"
+                prefix: "recentVideo"
+                title: qsTr("Recently opened videos")
+                load: () => root.app.recentVideos()
+                onChosen: path => root.video.openVideo(path)
+            }
+            ShellMenuItem {
+                objectName: "openKeyframesMenuItem"
+                iconRole: "open-keyframes"
+                action: Action {
+                    id: openKeyframesAction
+                    text: qsTr("Open keyframes")
+                    enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.show()
+                }
+            }
+            RecentFilesMenu {
+                iconRole: "recent-keyframes"
+                objectName: "recentKeyframesMenu"
+                prefix: "recentKeyframes"
+                title: qsTr("Recently opened keyframes")
+                enabled: root.video.hasVideo
+                load: () => root.app.recentKeyframes()
+                onChosen: path => {
+                    const problem = root.app.openKeyframesFile(path)
+                    if (problem.length > 0)
+                        root.log.log(problem)
+                }
+            }
+            ShellMenuItem {
+                objectName: "dummyVideoMenuItem"
+                action: Action {
+                    id: dummyVideoAction
+                    text: qsTr("Open dummy video")
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
+                }
+            }
+            // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
+            // OnMenuOpened enables them with a video and the editor).
+            ShellMenuItem {
+                iconRole: "set-start-time"
+                objectName: "setStartTimeMenuItem"
+                action: Action {
+                    id: setStartTimeAction
+                    text: qsTr("Insert start time from video")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_START_TIME")) root.app.setTimeFromVideo(false)
+                }
+            }
+            ShellMenuItem {
+                iconRole: "set-end-time"
+                objectName: "setEndTimeMenuItem"
+                action: Action {
+                    id: setEndTimeAction
+                    text: qsTr("Insert end time from video")
+                    enabled: root.video.hasVideo && root.shell.hasEditingTarget
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_END_TIME")) root.app.setTimeFromVideo(true)
                 }
             }
             ShellMenuItem {
@@ -915,14 +1006,6 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_GO_TO_NEXT_KEYFRAME")) root.video.nextKeyframe()
                 }
             }
-            ShellMenuItem {
-                iconRole: "open-keyframes"
-                action: Action {
-                    id: openKeyframesAction
-                    text: qsTr("Open keyframes")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_KEYFRAMES")) keyframesDialog.open()
-                }
-            }
             // A3: GLOBAL_SET_AUDIO_FROM_VIDEO, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO
             // (legacy OnMenuOpened: ABox != nullptr && editor; the rewrite has
             // no GLOBAL_EDITOR switch, and its editor is the editing target's).
@@ -944,6 +1027,43 @@ ApplicationWindow {
                     text: qsTr("Set audio marker to video time")
                     enabled: root.audio.hasAudio && root.shell.hasEditingTarget
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_SET_AUDIO_MARK_FROM_VIDEO")) root.app.setAudioFromVideo(true)
+                }
+            }
+            // V3: legacy's video context menu entries (VideoBox.cpp:979-1016)
+            // in the Video menu too: Unload video (VIDEO_DELETE_FILE,
+            // V3-unload-video), the streams and the chapters.
+            MenuSeparator {}
+            ShellMenuItem {
+                objectName: "unloadVideoMenuItem"
+                text: qsTr("Unload video")
+                enabled: root.video.loaded
+                onTriggered: if (!root.hotkeyGesture("VIDEO_DELETE_FILE", 3)) root.video.unloadVideo()
+            }
+            VideoStreamsMenu {
+                objectName: "videoStreamsMenu"
+                video: root.video
+            }
+            VideoChaptersMenu {
+                objectName: "videoChaptersMenu"
+                video: root.video
+            }
+            // V4: GLOBAL_VIDEO_ZOOM and GLOBAL_RESET_VIDEO_ZOOM (legacy
+            // OnMenuOpened: a loaded video; the reset also a zoom != 1).
+            ShellMenuItem {
+                iconRole: "zoom"
+                objectName: "videoZoomMenuItem"
+                action: Action {
+                    id: videoZoomAction
+                    text: qsTr("Zoom video"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_ZOOM")) root.videoView.toggleZoom()
+                }
+            }
+            ShellMenuItem {
+                objectName: "resetVideoZoomMenuItem"
+                action: Action {
+                    id: resetVideoZoomAction
+                    text: qsTr("Turn off video zoom"); enabled: root.videoView.zoomed
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
         }
@@ -981,7 +1101,8 @@ ApplicationWindow {
                         required property int index
                         objectName: "recentAudio" + index
                         text: modelData.label
-                        onTriggered: root.audio.openAudio(modelData.path)
+                        // P9: Ctrl+click shows the file in its folder.
+                        onTriggered: if (!root.app.revealRecent(modelData.path)) root.audio.openAudio(modelData.path)
                     }
                     onObjectAdded: (index, object) => recentAudioMenu.insertItem(index, object)
                     onObjectRemoved: (index, object) => recentAudioMenu.removeItem(object)
@@ -1187,6 +1308,15 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
+            // (HikariSubFrame.cpp:344-345): the Grid's switch.
+            ShellMenuItem {
+                id: hideTagsItem
+                iconRole: "hide-tags"
+                objectName: "hideTagsMenuItem"
+                text: qsTr("Hide tags")
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_HIDE_TAGS")) root.app.toggleHideTags()
+            }
         }
         ShellMenu {
             title: qsTr("&Help")
@@ -1251,6 +1381,8 @@ ApplicationWindow {
         persistentSelection: true // the Original's selection survives for "Paste the selected"
         Layout.fillWidth: true
         Layout.fillHeight: true
+        // E4: the Line's fields take rows below; a short panel keeps a line of text.
+        Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
         function sync() {
@@ -1285,6 +1417,11 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
+            // E5: Moving tags gives the Translated field the focus.
+            function onFieldFocusRequested(role) {
+                if (role === field.role)
+                    field.forceActiveFocus()
+            }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
         // translation mode) marks misspellings and bracket errors while
@@ -1301,8 +1438,8 @@ ApplicationWindow {
             id: spellMarks
             objectName: field.objectName + "SpellMarks"
             document: field.textDocument
-            // Legacy EDITOR_SPELLCHECKER defaults (dark and light themes).
-            colour: field.palette.base.hslLightness < 0.5 ? "#940000" : "#ff6968"
+            // EDITOR_SPELLCHECKER: the theme's (K2; legacy's dark and light defaults).
+            colour: Theme.spellcheck
         }
         Connections {
             target: root.app
@@ -1430,8 +1567,12 @@ ApplicationWindow {
                 return "EDITBOX_COMMIT"
             return root.hotkeys.actionFor(2, event.key, event.modifiers)
         }
-        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== ""
+        Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== "" || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
+            if (tagListPopup.key(event)) {
+                event.accepted = true
+                return
+            }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
             if (action !== "") {
@@ -1449,8 +1590,20 @@ ApplicationWindow {
                 event.accepted = true
             }
         }
+        // E6: the tag list (TextEditor's PopupTagList), on the raw text only:
+        // the hidden-tag view refuses ASS syntax, so no tag is typed there.
+        EditorTagList {
+            id: tagListPopup
+            field: field
+            controller: root.editor.tagList
+            enabled: root.editor.showTags && !field.readOnly
+        }
     }
 
+    // A panel's body. Its dock's title bar (DockTitleBar.qml) is its only
+    // visible header: the user dropped the in-panel title row on 2026-10-05,
+    // since with docking it repeated the dock's title. The title stays the
+    // panel's name for assistive technology.
     component Panel: FocusScope {
         id: panel
         property string title
@@ -1464,25 +1617,18 @@ ApplicationWindow {
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
 
+        // K2 (visual-language.md, "Keyboard focus"): the boundary stays
+        // `line`; the panel holding the focus is ringed on its dock header
+        // (DockTitleBar.qml) in the focus role, not bordered in the accent.
         Rectangle {
             anchors.fill: parent
             color: panel.palette.base
-            border.width: panel.activeFocus ? 2 : 1
-            border.color: panel.activeFocus ? panel.palette.highlight : panel.palette.mid
-        }
-        Label {
-            id: heading
-            objectName: panel.objectName + "Title"
-            text: panel.title
-            font.bold: true
-            x: 8
-            y: 4
+            border.color: panel.palette.mid
         }
         Item {
             id: body
             anchors {
                 fill: parent
-                topMargin: heading.height + 8
                 margins: 4
             }
         }
@@ -1507,9 +1653,15 @@ ApplicationWindow {
             if (!drop.hasUrls)
                 return
             drop.accept(Qt.CopyAction)
-            const subtitles = root.app.openDropped(drop.urls)
-            if (subtitles.length > 0)
-                root.openSubtitles(subtitles)
+            // P9: legacy OpenFiles: one file opens as OpenFile does; several
+            // open as tabs, after a review of the editing target's work.
+            const result = root.app.openDropped(drop.urls)
+            if (result.kind === "subtitles")
+                root.openSubtitles(result.path)
+            else if (result.kind === "video")
+                tabCommands.openVideoFile(result.path)
+            else if (result.kind === "files" && result.rows.length > 0)
+                closeReview.review(result.rows)
         }
     }
 
@@ -1557,7 +1709,7 @@ ApplicationWindow {
                 // T1: Esc cancels an open visual gesture first; keys no binding
                 // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
                 // hands them to the Visuals.
-                Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.gestureActive)
+                Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
                                                   || root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
@@ -1568,6 +1720,11 @@ ApplicationWindow {
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
+                    } else if (event.key === Qt.Key_Menu) { // V4: WXK_WINDOWS_MENU, the menu at the pointer
+                        videoContextMenu.openAt(root.videoView.cursorIn(visualOverlay))
+                        event.accepted = true
+                    } else if (root.videoView.key(event.key, event.modifiers)) { // V4: Return in the zoom mode, Ctrl+Shift+Z
+                        event.accepted = true
                     } else if (root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)) {
                         event.accepted = true
                     }
@@ -1575,32 +1732,18 @@ ApplicationWindow {
                 Keys.onReleased: event => event.accepted = root.visualTools.key(event.key, event.modifiers, true, event.isAutoRepeat)
 
                 // The legacy "Associated files" confirmation, inline: the
-                // Document stays editable whatever is chosen.
-                Frame {
-                    id: associationOffer
-                    objectName: "associationOffer"
-                    visible: root.video.offering
+                // Document stays editable whatever is chosen (P9: its text,
+                // buttons and "Apply to All").
+                AssociationOffer {
+                    video: root.video
                     anchors { left: parent.left; right: parent.right; top: parent.top }
                     z: 1
-                    RowLayout {
-                        anchors.fill: parent
-                        Label {
-                            objectName: "associationText"
-                            text: root.video.offer
-                            Layout.fillWidth: true
-                            wrapMode: Text.Wrap
-                        }
-                        Button {
-                            objectName: "loadAssociated"
-                            text: qsTr("Load associated")
-                            onClicked: root.video.loadAssociated()
-                        }
-                        Button {
-                            objectName: "dismissAssociation"
-                            text: qsTr("No")
-                            onClicked: root.video.dismissOffer()
-                        }
-                    }
+                }
+                // V3: the indexing's progress and Cancel.
+                VideoIndexingProgress {
+                    video: root.video
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                    z: 1
                 }
                 // T1: the tool rail beside the canvas (layout A).
                 VisualToolRail {
@@ -1624,6 +1767,24 @@ ApplicationWindow {
                     tools: root.visualTools
                     focusTarget: videoPanel
                     panelHeight: videoControls.height
+                    view: root.videoView // V4
+                    onContextMenuRequested: (x, y) => videoContextMenu.openAt(Qt.point(x, y))
+                }
+                // V4: the zoom mode's frame, the context menu and the aspect ratio.
+                VideoZoomFrame {
+                    anchors.fill: presenter
+                    view: root.videoView
+                }
+                VideoContextMenu {
+                    id: videoContextMenu
+                    shell: root
+                    function openAt(point) {
+                        at = point
+                        popup(visualOverlay, point)
+                    }
+                    onOpenVideoRequested: videoDialog.open()
+                    onOpenSubtitlesRequested: openDialog.open()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
                 }
                 Label {
                     anchors.centerIn: presenter
@@ -1635,8 +1796,25 @@ ApplicationWindow {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
+                VisualToolOptions { // T2, T3: the family's options (legacy VideoToolbar's second row)
+                    Layout.fillWidth: true
+                    // As the values row: never widens the column.
+                    Layout.minimumWidth: 0
+                    clip: true
+                    tools: root.visualTools
+                }
+                    // V4: the wheel over the panel is the volume's (VideoBox.cpp:519-534).
+                    WheelHandler {
+                        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                        onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
+                    }
                 VisualToolValues {
                     Layout.fillWidth: true
+                    // Its fields and buttons do not shrink: wider text (a
+                    // translation, a larger font) or a narrow panel must not
+                    // widen the column and push Next frame out of the panel.
+                    Layout.minimumWidth: 0
+                    clip: true
                     tools: root.visualTools
                 }
                 Slider {
@@ -1655,9 +1833,10 @@ ApplicationWindow {
                     objectName: "videoTimes"
                     Layout.fillWidth: true
                     text: root.video.times
-                    color: root.video.keyframeShown ? "#e0a030" : palette.windowText
+                    color: root.video.keyframeShown ? Theme.warning : palette.windowText
                     Accessible.name: qsTr("Video times")
                 }
+                VideoFollowChoices { Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
                     Layout.fillWidth: true
                     // Legacy VideoBox's bitmap buttons (VIDEO_PLAY_PAUSE,
@@ -1666,6 +1845,16 @@ ApplicationWindow {
                     // set's icons in place of legacy's bitmaps (play / pause
                     // as legacy ChangeButtonBMP swaps them, VideoBox.cpp:1414);
                     // the text stays the accessible name.
+                    // V3: legacy's Previous file / Next file buttons around
+                    // the transport (VideoBox.cpp:156-165), asking first.
+                    IconButton {
+                        objectName: "previousFile"
+                        iconRole: "media-previous-file"
+                        text: qsTr("Previous file")
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(qsTr("Previous file"), "VIDEO_PREVIOUS_FILE", 3)
+                        onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
+                    }
                     IconButton {
                         objectName: "playPause"
                         iconRole: root.video.playing ? "media-pause" : "media-play"
@@ -1702,6 +1891,14 @@ ApplicationWindow {
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
                     IconButton {
+                        objectName: "nextFile"
+                        iconRole: "media-next-file"
+                        text: qsTr("Next file")
+                        focusPolicy: Qt.NoFocus
+                        tip: root.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
+                        onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
+                    }
+                    IconButton {
                         objectName: "previousFrame"
                         iconRole: "frame-previous"
                         text: qsTr("Previous frame")
@@ -1720,6 +1917,10 @@ ApplicationWindow {
                         text: qsTr("Next frame")
                         enabled: root.video.hasVideo && root.video.frame + 1 < root.video.frameCount
                         onClicked: root.video.stepFrames(1)
+                    }
+                    VideoVolumeSlider { // V4: legacy VolSlider at the right
+                        view: root.videoView
+                        hasVideo: root.video.hasVideo
                     }
                 }
                 }
@@ -2162,9 +2363,8 @@ ApplicationWindow {
                 // (TabPanel::SetAccels): a key its other controls do not take
                 // (the time and margin fields keep their editing keys) runs
                 // the Editor binding; the text fields route their own first.
-                // The commit keys stay the fields' own (OnNewline's rule for
-                // the time fields, EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT,
-                // EditBox.cpp:987-999, is not in the rewrite yet).
+                // The commit keys stay the fields' own (E4: LineInspector runs
+                // them with OnNewline's rule for the time fields).
                 function panelAction(event) {
                     if (lineText.activeFocus || translationText.activeFocus)
                         return ""
@@ -2182,50 +2382,9 @@ ApplicationWindow {
                 ColumnLayout {
                     anchors.fill: parent
 
-                    // Local inspector: timing and margins of the active Line.
+                    // The tag and colour buttons (legacy BoxSizer4).
                     RowLayout {
                         Layout.fillWidth: true
-                        component Field: TextField {
-                            property string value
-                            text: value
-                            enabled: root.editor.editable
-                            selectByMouse: true
-                            Layout.preferredWidth: 90
-                            onValueChanged: text = value
-                        }
-                        Field {
-                            objectName: "startField"
-                            value: root.editor.startText
-                            Accessible.name: qsTr("Start")
-                            onEditingFinished: root.editor.setStartText(text)
-                        }
-                        Field {
-                            objectName: "endField"
-                            value: root.editor.endText
-                            Accessible.name: qsTr("End")
-                            onEditingFinished: root.editor.setEndText(text)
-                        }
-                        Field {
-                            objectName: "marginLeftField"
-                            value: root.editor.marginLeftText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Left margin")
-                            onEditingFinished: root.editor.setMarginText(0, text)
-                        }
-                        Field {
-                            objectName: "marginRightField"
-                            value: root.editor.marginRightText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Right margin")
-                            onEditingFinished: root.editor.setMarginText(1, text)
-                        }
-                        Field {
-                            objectName: "marginVerticalField"
-                            value: root.editor.marginVerticalText
-                            Layout.preferredWidth: 50
-                            Accessible.name: qsTr("Vertical margin")
-                            onEditingFinished: root.editor.setMarginText(2, text)
-                        }
                         // Ordinary ASS controls; they keep focus (and the
                         // selection) in the text field.
                         Repeater {
@@ -2291,11 +2450,20 @@ ApplicationWindow {
                                 onClicked: {
                                     if (root.hotkeyGesture(modelData.symbol, 2, true))
                                         return
-                                    const field = translationText.activeFocus ? translationText : lineText
-                                    if (colourDialog.openFor(modelData.number, field.role, field.selectionStart, field.selectionEnd))
-                                        root.app.colourPickerOpened()
+                                    root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
+                                }
+                                // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
+                                TapHandler {
+                                    acceptedButtons: Qt.RightButton
+                                    onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
+                                                                                translationText.activeFocus ? translationText : lineText)
                                 }
                             }
+                        }
+                        // E4: Text position (legacy Ban, after the colours).
+                        AlignmentChoice {
+                            editor: root.editor
+                            onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
                         }
                         // E2: custom tag buttons; right click (or a button
                         // without a tag) edits it.
@@ -2351,12 +2519,27 @@ ApplicationWindow {
                                 }
                             }
                         }
-                        CheckBox {
+                        // The hidden-tag view's switch (E6: the hide-tags icon,
+                        // checked while tags are hidden).
+                        IconToolButton {
                             objectName: "showTags"
-                            text: qsTr("Show tags")
-                            checked: root.editor.showTags
-                            onToggled: root.editor.showTags = checked
+                            iconRole: "hide-tags"
+                            text: qsTr("Hide tags")
+                            checkable: true
+                            checked: !root.editor.showTags
+                            onToggled: root.editor.showTags = !checked
                         }
+                    }
+                    // E5: legacy BoxSizer5, the row under the tag buttons
+                    // that holds "Translator mode" (EditBox.cpp:233-239, 308).
+                    RowLayout {
+                        TranslatorModeCheck { app: root.app; editor: root.editor }
+                    }
+
+                    // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
+                    LineCounters {
+                        editor: root.editor
+                        Layout.fillWidth: true
                     }
 
                     RoleField {
@@ -2409,13 +2592,22 @@ ApplicationWindow {
                             ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
                             onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
                         }
+                        TranslationToggles { app: root.app; editor: root.editor } // E5
+                    }
+
+                    // E4: the Line's fields (legacy BoxSizer2, below the text).
+                    LineInspector {
+                        editor: root.editor
+                        hotkeys: root.hotkeys
+                        Layout.fillWidth: true
+                        onStyleEditRequested: style => styleManagerWindow.showFor(style)
                     }
 
                     Label {
                         objectName: "editorProblem"
                         visible: text.length > 0
                         text: root.editor.problem
-                        color: "firebrick"
+                        color: Theme.danger
                         wrapMode: Text.Wrap
                         Layout.fillWidth: true
                         Accessible.role: Accessible.AlertMessage
@@ -2459,7 +2651,7 @@ ApplicationWindow {
                     onActiveLineRequested: id => root.app.selectLine(id)
                     onActiveLineFallbackRequested: id => root.app.moveActiveLine(id)
                     onExtendRequested: rows => root.app.extendSelection(rows)
-                    onLineClicked: (id, modifiers) => root.app.clickLine(id, modifiers)
+                    onLineClicked: (id, modifiers, endColumn, doubleClick) => root.app.clickLine(id, modifiers, endColumn, doubleClick)
                     onLineDragged: id => root.app.dragSelection(id)
                     onSelectAllRequested: root.app.selectAllLines()
                     onContextMenuRequested: (x, y) => gridMenu.popup(grid, x, y)
@@ -2593,7 +2785,20 @@ ApplicationWindow {
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
                             }
                         }
+                        // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
+                        ShellMenuItem {
+                            objectName: "selectVisibleLines"; text: qsTr("Select all lines visible on video")
+                            onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
+                        }
                         ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
+                        ShellMenuItem {
+                            objectName: "showPreview"
+                            readonly property string keys: root.boundKeys("GRID_SHOW_PREVIEW", 1)
+                            text: qsTr("Show subtitles preview") + (keys.length ? "\t" + keys : "")
+                            enabled: gridMenu.visible && root.app.canShowPreview()
+                            onTriggered: if (!root.gridGesture(this, "GRID_SHOW_PREVIEW")) root.app.showPreview()
+                        }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
                             objectName: "pasteTranslation"
@@ -2739,6 +2944,8 @@ ApplicationWindow {
                         ShellMenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
                         ShellMenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
                         ShellMenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
+                        ShellMenuItem { objectName: "deleteText"; text: qsTr("Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
@@ -2746,7 +2953,22 @@ ApplicationWindow {
                             objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
                         }
+                        // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
+                        ShellMenuItem {
+                            objectName: "gridSubsFromMkv"; text: qsTr("Load subtitles from an MKV/OGM file")
+                            enabled: root.matroska.available
+                            onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
+                        }
                     }
+                }
+                // The Grid's empty state.
+                Label {
+                    objectName: "gridEmptyState"
+                    anchors.centerIn: parent
+                    visible: !shell.hasEditingTarget
+                    text: qsTr("No document open")
+                    color: gridPanel.palette.placeholderText
+                    Accessible.ignored: true // the panel's description says it
                 }
             }
         }
@@ -2755,19 +2977,25 @@ ApplicationWindow {
             id: referenceDock
             objectName: "referenceDock"
             uniqueName: "Reference"
-            title: qsTr("Reference")
+            // The tray's dock names the Protected reference: unlike the
+            // Grid's Document, no Document tab shows it.
+            title: shell.hasReference ? qsTr("Reference: %1").arg(shell.referenceTitle) : qsTr("Reference")
             Panel {
                 id: referencePanel
                 anchors.fill: parent
                 objectName: "referencePanel"
                 visible: shell.hasReference
                 title: qsTr("Reference (protected, read-only): %1").arg(shell.referenceTitle)
-                HikariGrid {
-                    objectName: "referenceGrid"
+                // R2: its own navigation, linked matching and legacy's preview menu.
+                ReferenceTray {
+                    id: referenceTray
                     anchors.fill: parent
                     focus: true
-                    Accessible.role: Accessible.Table // in the accessibility tree, as the Grid
-                    model: shell.referenceLines
+                    app: root.app
+                    shell: root.shell
+                    hotkeys: root.hotkeys
+                    shellRoot: root
+                    editingGrid: grid
                 }
             }
         }
@@ -3052,20 +3280,21 @@ ApplicationWindow {
         app: root.app
         Layout.fillWidth: true
         onCloseRequested: index => root.closeTab(index)
+        // P9: the tab menu's Save, Save all and Close all tabs.
+        onSaveRequested: id => root.saveSubtitles(id)
+        onSaveAllRequested: root.saveAllTabs()
+        onCloseAllRequested: tabCommands.confirmCloseAll()
       }
       RowLayout {
-        Label {
-            objectName: "statusTargets"
-            padding: 4
-            text: (shell.hasEditingTarget ? qsTr("Editing: %1").arg(shell.editingTitle) : qsTr("No editing target"))
-                  + (shell.hasReference ? qsTr("  |  Reference (protected): %1").arg(shell.referenceTitle) : "")
-            Layout.fillWidth: true
-        }
+        // Legacy's first field: help and Automation status text (set_status_text),
+        // never the editing target, which the Document tab and the window
+        // title name.
         Label {
             objectName: "statusText"
             padding: 4
             text: shell.statusText
-            visible: text.length > 0
+            elide: Text.ElideRight
+            Layout.fillWidth: true
         }
         Label {
             objectName: "selectionStatus"
@@ -3084,6 +3313,7 @@ ApplicationWindow {
     // Legacy HistoryDialog: every step, the current one selected; Set and a
     // double-click jump there and stay open, OK jumps and closes.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: historyWindow
         objectName: "historyWindow"
         // K1: the set's history icon as the window's (as legacy's dialogs show theirs, SetIcon).
@@ -3143,17 +3373,41 @@ ApplicationWindow {
 
     // Legacy HikariSubFrame::Save: "Save subtitle file" for the Document's
     // format, starting at its file (or the video's, with the video name).
-    function saveSubtitles() {
-        const route = root.app.saveRoute()
+    // P9: for any tab's Document `id` (none: the editing target), and Save
+    // all's queue of Documents that need the dialog, one after another.
+    function saveSubtitles(id) {
+        const document = id ?? 0
+        const route = root.app.saveRouteFor(document)
         if (route === "dialog")
-            openSaveDialog()
-        else if (route === "readonly")
+            openSaveDialog(document)
+        else if (route === "readonly") {
+            readOnlyWarning.document = document
             readOnlyWarning.open()
-        else
+        } else if (document === 0)
             root.editor.save()
+        else
+            root.app.saveDocument(document)
     }
-    function openSaveDialog() {
-        const v = root.app.saveDialogValues()
+    property var saveQueue: []
+    function saveAllTabs() {
+        saveQueue = root.app.saveAll()
+        saveNext()
+    }
+    function saveNext() {
+        if (saveQueue.length === 0)
+            return
+        const next = saveQueue[0]
+        saveQueue = saveQueue.slice(1)
+        if (next.route === "readonly") {
+            readOnlyWarning.document = next.id
+            readOnlyWarning.open()
+        } else {
+            openSaveDialog(next.id)
+        }
+    }
+    function openSaveDialog(id) {
+        const v = root.app.saveDialogValuesFor(id ?? 0)
+        saveAsDialog.document = id ?? 0
         saveAsDialog.nameFilters = [v.filter]
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
@@ -3167,9 +3421,29 @@ ApplicationWindow {
         title: qsTr("Save subtitle file")
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTr("Subtitle file ") + "(*.ass)"]
+        property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
-            if (root.app.saveChosen(selectedFile) === "readonly")
+            if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
+                readOnlyWarning.document = document
                 readOnlyWarning.open()
+            } else {
+                matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
+                root.saveNext()
+            }
+        }
+        onRejected: {
+            matroskaSubtitles.saveDone()
+            root.saveNext() // legacy SaveAll goes on with the next tab
+        }
+    }
+    // Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
+    MatroskaSubtitles {
+        id: matroskaSubtitles
+        matroska: root.matroska
+        save: function() {
+            const route = root.app.saveRoute()
+            root.saveSubtitles()
+            return route === "dialog" || route === "readonly"
         }
     }
     Dialog {
@@ -3180,13 +3454,32 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
         Label { text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.") }
-        onClosed: root.openSaveDialog()
+        property var document: 0
+        onClosed: root.openSaveDialog(document)
+    }
+
+    // P9: Close all tabs' question and a video's same-named subtitles.
+    TabCommands {
+        id: tabCommands
+        objectName: "tabCommands"
+        app: root.app
+        onCloseAllConfirmed: root.beginClose("all")
+        onSubtitlesWithVideo: (subtitles, video) => {
+            const result = root.app.reviewOpenWithVideo(subtitles, video)
+            if (!result.ok)
+                return
+            if (result.rows.length === 0)
+                root.app.finishClose()
+            else
+                closeReview.review(result.rows)
+        }
     }
 
     // The accepted close review: every affected Document with Save or Discard,
     // Save all, Discard all and Cancel. Nothing closes until every save is
     // acknowledged as written.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: closeReview
         objectName: "closeReview"
         title: qsTr("Unsaved changes")
@@ -3255,7 +3548,7 @@ ApplicationWindow {
                 objectName: "closeReviewProblem"
                 text: closeReview.problem
                 visible: text.length > 0
-                color: "firebrick"
+                color: Theme.danger
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }
@@ -3302,7 +3595,11 @@ ApplicationWindow {
     AutomationFilePicker {
         picker: root.automationPicker
     }
+    AutomationNotices {
+        automation: root.automation
+    }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationManagerWindow
         objectName: "automationManagerWindow"
         // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
@@ -3316,6 +3613,7 @@ ApplicationWindow {
         }
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationProgress
         objectName: "automationProgress"
         title: root.automation.runTitle
@@ -3383,7 +3681,30 @@ ApplicationWindow {
     FileDialog {
         id: videoDialog
         nameFilters: [qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTr("All files (*)")]
-        onAccepted: root.video.openVideoUrl(selectedFile)
+        onAccepted: tabCommands.openVideoFile(root.app.localPath(selectedFile)) // P9
+        // V3: the subtitles' folder, else the latest recent video's
+        function show() {
+            currentFolder = root.app.videoDialogFolder()
+            open()
+        }
+    }
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
+    DummyVideoDialog {
+        id: dummyVideoDialog
+        app: root.app
+        anchors.centerIn: parent
+        onRefused: message => root.log.log(message)
+    }
+    VideoFileQuestion {
+        id: videoFileQuestion
+        app: root.app
+        anchors.centerIn: parent
+    }
+
+    // V4: VIDEO_ASPECT_RATIO.
+    AspectRatioDialog {
+        id: aspectRatioDialog
+        view: root.videoView
     }
 
     FileDialog {
@@ -3394,6 +3715,7 @@ ApplicationWindow {
 
     // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: fpsWindow
         objectName: "fpsWindow"
         title: qsTr("Choose new FPS")
@@ -3447,6 +3769,7 @@ ApplicationWindow {
     // The column choice for Copy columns / Paste columns (legacy Stylelistbox),
     // checked as last chosen.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: columnsWindow
         objectName: "columnsWindow"
         title: paste ? qsTr("Paste columns") : qsTr("Copy columns")
@@ -3509,6 +3832,7 @@ ApplicationWindow {
     // Legacy LogWindow: a message pops it up with just that message; the File
     // menu entry shows the whole log.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: logWindow
         objectName: "logWindow"
         title: qsTr("Log window")
@@ -3551,6 +3875,7 @@ ApplicationWindow {
 
     // D1: every drag placement from the keyboard, and numeric resizing.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: placementWindow
         objectName: "placementWindow"
         title: qsTr("Move panel")
@@ -3702,9 +4027,15 @@ ApplicationWindow {
         title: qsTr("Choose video file")
         nameFilters: [qsTr("Keyframes file (*.txt *.pass *.stats *.log)"), qsTr("All files (*)")]
         onAccepted: {
-            const problem = root.app.openKeyframes(selectedFile)
+            // V3: the recent keyframes take the file too (SetRecent(3))
+            const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
                 root.log.log(problem)
+        }
+        // V3: the video's folder, else the latest recent keyframes'
+        function show() {
+            currentFolder = root.app.keyframesDialogFolder()
+            open()
         }
     }
     FileDialog {
@@ -3716,6 +4047,7 @@ ApplicationWindow {
     // Legacy TLDialog: moves the translation or the original against the
     // other from the first selected Line; it stays open while working.
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: translationShiftWindow
         objectName: "translationShiftWindow"
         title: qsTr("Translation matching options")
@@ -4115,7 +4447,13 @@ ApplicationWindow {
     StyleManager {
         id: styleManagerWindow
         styles: root.styleManager
+        catalogs: root.fontCatalogs
         app: root.app
+    }
+    SettingsImportDialog {
+        id: settingsImportDialog
+        importer: root.settingsImport
+        anchors.centerIn: parent
     }
     SettingsDialog {
         id: settingsDialog
@@ -4235,6 +4573,7 @@ ApplicationWindow {
     FontDialog {
         id: fontDialog
         editor: root.editor
+        catalogs: root.fontCatalogs
         anchors.centerIn: parent
     }
     ColourPickerDialog {
@@ -4243,9 +4582,26 @@ ApplicationWindow {
         picker: root.colourPicker
         anchors.centerIn: parent
     }
+    SimpleColourPicker {
+        id: simpleColourPicker
+        editor: root.editor
+        picker: root.colourPicker
+    }
+    // Y7: EditBox::AllColorClick (EditBox.cpp:862-919): a left click and the
+    // hotkey open "Choose color", a right click the simple "Color picker";
+    // COLORPICKER_SWITCH_CLICKS swaps them.
+    function colourClick(number, leftClick, field) {
+        if (root.colourPicker.switchClicks)
+            leftClick = !leftClick
+        if (!leftClick)
+            simpleColourPicker.openFor(number, field.role, field.selectionStart, field.selectionEnd)
+        else if (colourDialog.openFor(number, field.role, field.selectionStart, field.selectionEnd))
+            root.app.colourPickerOpened()
+    }
 
     // Legacy TagButtonDialog ("Enter ASS tag").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: tagButtonDialog
         objectName: "tagButtonDialog"
         title: qsTr("Enter ASS tag")
@@ -4331,6 +4687,7 @@ ApplicationWindow {
 
     // Legacy TreeDialog ("Tree description").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: groupDescriptionDialog
         objectName: "groupDescriptionDialog"
         title: qsTr("Tree description")
@@ -4388,6 +4745,7 @@ ApplicationWindow {
         }
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: groupBreakDialog
         objectName: "groupBreakDialog"
         title: qsTr("Line group")
@@ -4434,15 +4792,17 @@ ApplicationWindow {
             recoveryWindow.showBundles()
     }
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: recoveryWindow
         objectName: "recoveryWindow"
         title: qsTr("Open auto save")
         width: 560
-        height: 360
+        height: 560
         flags: Qt.Dialog
         property var bundles: []
         function showBundles() {
             bundles = root.app.recoveryBundles()
+            legacyAutosaves.reload() // P9
             show()
         }
         ColumnLayout {
@@ -4496,6 +4856,14 @@ ApplicationWindow {
                     }
                 }
             }
+            // P9: the legacy Subs/ autosaves, read only.
+            LegacyAutosaveList {
+                id: legacyAutosaves
+                app: root.app
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onOpened: recoveryWindow.close()
+            }
             Button {
                 Layout.alignment: Qt.AlignRight
                 objectName: "recoveryClose"
@@ -4508,6 +4876,7 @@ ApplicationWindow {
     // P4: legacy AutoSavesRemoving for the autosaves this application keeps
     // (no index or audio caches are written to disk).
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: temporaryFilesWindow
         objectName: "temporaryFilesWindow"
         title: qsTr("Remove temporary files")
@@ -4688,13 +5057,17 @@ ApplicationWindow {
             GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
             GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
             GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
+            GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
             GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
             GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
             GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
+            GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
             GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
             GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
+            GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
             GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
             GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+            GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
             GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
             GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
             GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
@@ -4752,13 +5125,25 @@ ApplicationWindow {
         case "GLOBAL_NEXT_TAB": root.app.changeTab(1); return true
         case "GLOBAL_PREVIOUS_TAB": root.app.changeTab(-1); return true
         case "GLOBAL_REMOVE_LINES": if (editing) root.app.deleteLines(); return true
+        // E6: OnMenuSelected's GLOBAL_HIDE_TAGS, OnChangeLine (SubsGrid::NextLine)
+        // and OnDelete's GLOBAL_REMOVE_TEXT (HikariSubFrame.cpp:835, 2443-2466).
+        case "GLOBAL_HIDE_TAGS": root.app.toggleHideTags(); return true
+        case "GLOBAL_PREVIOUS_LINE": if (editing) root.editor.nextLine(-1); return true
+        case "GLOBAL_NEXT_LINE": if (editing) root.editor.nextLine(1); return true
+        case "GLOBAL_REMOVE_TEXT": if (editing) root.app.deleteText(); return true
         case "GLOBAL_ADD_PAGE": root.app.addPage(); return true
+        // V6: SubsGrid::SelVideoLine and HikariSubFrame::OnAudioSnap
+        case "GLOBAL_SELECT_FROM_VIDEO": root.app.selectLineFromVideo(); return true
+        case "GLOBAL_SNAP_WITH_START": root.app.snapToKeyframe(true); return true
+        case "GLOBAL_SNAP_WITH_END": root.app.snapToKeyframe(false); return true
         }
         // Not in the rewrite yet (docs/qt/coverage.md, O2): the key is taken
-        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME and
-        // GLOBAL_VIDEO_INDEXING change nothing in legacy either (OnMenuSelected
-        // reads the item's check without switching it), nor do the submenu
-        // ids (GLOBAL_SORT_LINES, GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*).
+        // and nothing runs. GLOBAL_SAVE_WITH_VIDEO_NAME changes nothing in
+        // legacy either (OnMenuSelected reads the item's check without
+        // switching it), nor do the submenu ids (GLOBAL_SORT_LINES,
+        // GLOBAL_SORT_SELECTED_LINES, GLOBAL_RECENT_*). GLOBAL_VIDEO_INDEXING
+        // is retired (V3-indexing-retired): its bindings are dropped as the
+        // hotkeys are read.
         return false
     }
     // EditBox::OnAccelerator for an Editor binding in `field` (the focused
@@ -4779,8 +5164,7 @@ ApplicationWindow {
             return true
         }
         if (colours[action] !== undefined) {
-            if (colourDialog.openFor(colours[action], field.role, field.selectionStart, field.selectionEnd))
-                root.app.colourPickerOpened()
+            root.colourClick(colours[action], true, field)
             return true
         }
         if (action.startsWith("EDITBOX_TAG_BUTTON")) {
@@ -4790,7 +5174,7 @@ ApplicationWindow {
             return true
         }
         switch (action) {
-        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.editor.commitAndAdvance(); return true
+        case "EDITBOX_COMMIT_GO_NEXT_LINE": root.app.commitAndAdvance(); return true // V6: NextLine's play-after
         case "EDITBOX_COMMIT": root.editor.commit(); return true
         case "EDITBOX_SPLIT_LINE": root.editor.splitLine(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_SET_DOUBTFUL": root.editor.toggleUnconfirmedAndAdvance(); return true
@@ -4825,6 +5209,24 @@ ApplicationWindow {
         case "VIDEO_STOP": root.video.stop(); return true
         // T1: the pointer's position in the video window (VideoBox.cpp:1151).
         case "VIDEO_COPY_COORDS": root.visualTools.copyCoordinatesAtCursor(visualOverlay); return true
+        // V3 (VideoBox.cpp:1145-1150, 1170): the folder walk asks first
+        // (OnPrew / OnNext), the chapters, Unload video (V3-unload-video).
+        case "VIDEO_PREVIOUS_FILE": videoFileQuestion.ask(false); return true
+        case "VIDEO_NEXT_FILE": videoFileQuestion.ask(true); return true
+        case "VIDEO_PREVIOUS_CHAPTER": root.video.previousChapter(); return true
+        case "VIDEO_NEXT_CHAPTER": root.video.nextChapter(); return true
+        case "VIDEO_DELETE_FILE": root.video.unloadVideo(); return true
+        // V4 (VideoBox.cpp:1147-1173).
+        case "VIDEO_VOLUME_PLUS": root.videoView.stepVolume(true); return true
+        case "VIDEO_VOLUME_MINUS": root.videoView.stepVolume(false); return true
+        case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_SAVE_FRAME_TO_PNG":
+        case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
+        case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
+        case "VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD":
+            root.videoView.snapshot(action)
+            return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
@@ -4878,9 +5280,13 @@ ApplicationWindow {
         case "GRID_SPLIT_BY_WORDS": root.app.splitLines("words"); return true
         case "GRID_SPLIT_BY_WRAPS": root.app.splitLines("wraps"); return true
         case "GRID_TREE_MAKE": root.app.makeGroups(); return true
+        case "GRID_SELECT_VISIBLE_LINES": root.app.selectLinesVisibleOnVideo(); return true // V6
+        case "GRID_SHOW_PREVIEW": if (root.app.canShowPreview()) root.app.showPreview(); return true // R2
         case "GRID_HIDE_SELECTED": root.app.hideSelectedLines(); return true
         case "GRID_FILTER": root.app.filterLines(); return true
         case "GRID_FILTER_BY_NOTHING": root.app.turnOffFiltering(); return true
+        // SubsGrid::OnAccelerator (SubsGrid.cpp:879-881): only for a ".mkv" or ".ogm" video.
+        case "GRID_SUBS_FROM_MKV": matroskaSubtitles.begin(); return true
         case "GRID_FILTER_INVERT": root.gridFilter.inverted = !root.gridFilter.inverted; return true
         case "GRID_FILTER_DO_NOT_RESET": root.gridFilter.addToFilter = !root.gridFilter.addToFilter; return true
         case "GRID_FILTER_AFTER_SUBS_LOAD": root.gridFilter.afterLoad = !root.gridFilter.afterLoad; return true
@@ -4943,6 +5349,7 @@ ApplicationWindow {
 
     // Legacy AutomationHotkeysDialog ("List of automation shortcuts").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: automationHotkeysWindow
         objectName: "automationHotkeysWindow"
         title: qsTr("List of automation shortcuts")
@@ -4986,7 +5393,7 @@ ApplicationWindow {
                         Label { text: modelData.macro; elide: Text.ElideRight; Layout.preferredWidth: hotkeyList.width * 0.35 }
                         Label {
                             text: modelData.problem.length ? modelData.problem : modelData.keys
-                            color: modelData.problem.length ? "#e0a030" : palette.windowText
+                            color: modelData.problem.length ? Theme.warning : palette.windowText
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
@@ -5038,6 +5445,7 @@ ApplicationWindow {
     }
     // Legacy HkeysDialog ("Hotkey mapping").
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: hotkeyCapture
         objectName: "hotkeyCapture"
         title: qsTr("Hotkey mapping")
@@ -5100,6 +5508,7 @@ ApplicationWindow {
     }
 
     Window {
+        color: Theme.panel // K2: a Window draws white unless told
         id: reloadPrompt
         objectName: "reloadPrompt"
         title: qsTr("Reloading")

@@ -22,6 +22,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QVariantMap>
 
@@ -171,6 +172,7 @@ private:
     bool m_lastClickShiftHeld = false; // Shift with any other modifiers
     bool m_lastClickCtrlHeld = false;  // Ctrl with any other modifiers
     std::function<void(const QString &)> m_log;
+    QStringList m_retiredNotices; // V3: retired bindings dropped by load()
     std::function<qint64()> m_keyClock;
     qint64 m_lastCheckedTime = 0; // Config::lastCheckedTime
     QString m_lastCheckedId;      // Config::lastCheckedId

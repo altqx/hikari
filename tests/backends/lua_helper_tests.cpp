@@ -18,6 +18,7 @@
 #include <QElapsedTimer>
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <cstdio>
 #include <functional>
@@ -462,6 +463,128 @@ TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
     EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
 }
 
+// S4: with validateFirst (protocol RunValidated) the macro's validation
+// function runs first with (subtitles, selected rows, active row) and the
+// macro runs only when it answers true, as legacy LuaCommand::Validate before
+// Run (Automation.cpp:936-969; RunScript, OnRunScript and
+// GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT all validate first).
+TEST_F(LuaHelper, ValidationDecidesWhetherTheMacroRuns)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1}, l2{2};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_TRUE(host->info().macros[0].hasValidate);
+    auto runValidated = [&](const char *name, bool validateFirst = true) {
+        run = {};
+        const auto snapshot = snapshotForMacro(session);
+        return snapshot && host->run(macro(*host, name), *snapshot, validateFirst) &&
+               waitFor([&] { return run.outcome.has_value(); });
+    };
+    ASSERT_TRUE(runValidated("One line"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), QStringLiteral("validated 6 1 4"));
+    EXPECT_TRUE(host->lastResult()->valid);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "ran:one");
+
+    // false: the macro does not run, and nothing is staged.
+    session.setSelection(Selection{l1, {l1, l2}});
+    ASSERT_TRUE(runValidated("One line"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.isEmpty());
+    ASSERT_TRUE(host->lastResult());
+    EXPECT_FALSE(host->lastResult()->valid);
+    EXPECT_TRUE(host->lastResult()->dialogues.empty());
+    ASSERT_TRUE(runValidated("Never"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(host->lastResult()->dialogues.empty());
+
+    // A runtime error answers false with legacy's log text.
+    ASSERT_TRUE(runValidated("Broken"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+    EXPECT_TRUE(run.message.startsWith(QStringLiteral("Runtime error in Lua macro validation function:\n")))
+        << run.message.toStdString();
+    EXPECT_TRUE(run.message.contains(QStringLiteral("validation broke")));
+
+    // A macro without a validation function runs; Run alone never validates.
+    ASSERT_TRUE(runValidated("Unvalidated"));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    ASSERT_TRUE(runValidated("Never", false));
+    EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok);
+    EXPECT_EQ(host->lastResult()->dialogues[0].text, "should not run");
+}
+
+// Validation and the macro work on one subtitles object (legacy AutoToFile
+// edits the file both see): an info line validation inserts reaches the
+// macro, whose rows count it (Run reads SInfoSize + StylesSize again,
+// Automation.cpp:976-984), and both apply as the macro's one step.
+TEST_F(LuaHelper, ValidationEditsReachTheMacroAsOneStep)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    EXPECT_EQ(snapshot->selected, std::vector<int>{4});
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Edits while validating"), *snapshot, true));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    const auto steps = session.historySize();
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, *host->lastResult(), "Edits while validating"));
+    EXPECT_EQ(session.historySize(), steps + 1);
+    EXPECT_EQ(texts(session)[0], "one|5|5|Validated");
+    EXPECT_EQ(session.document().scriptInfo(u8"Validated"), std::u8string(u8"yes"));
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session)[0], "one");
+    EXPECT_FALSE(session.document().scriptInfo(u8"Validated"));
+}
+
+// S4-validation-edits: edits a validation function makes are dropped when
+// it answers false or raises an error; the result stages nothing and
+// applying it leaves the Document, its dirty state and history unchanged
+// (legacy AutoToFile edited the file in place and kept them without an undo
+// step, LuaCommand::Validate, Automation.cpp:936-969).
+TEST_F(LuaHelper, ValidationEditsAreDroppedWhenItAnswersFalse)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    const hikari::core::LineId l1{1};
+    session.setSelection(Selection{l1, {l1}});
+    auto host = load(fixture("validation.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    const auto steps = session.historySize();
+    const bool dirty = session.isDirty();
+    const auto before = texts(session);
+    for (const char *name : {"Edits then false", "Edits then error"}) {
+        SCOPED_TRACE(name);
+        const auto snapshot = snapshotForMacro(session);
+        ASSERT_TRUE(snapshot);
+        run = {};
+        ASSERT_TRUE(host->run(macro(*host, name), *snapshot, true));
+        ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid);
+        ASSERT_TRUE(host->lastResult());
+        const auto &result = *host->lastResult();
+        EXPECT_FALSE(result.valid);
+        EXPECT_TRUE(result.info.empty());
+        EXPECT_TRUE(result.styles.empty());
+        EXPECT_TRUE(result.dialogues.empty());
+        const auto applied = applyMacroResult(session, *snapshot, result, name);
+        ASSERT_FALSE(applied);
+        EXPECT_EQ(applied.error().refusal, CommandRefusal::Invalid);
+        EXPECT_EQ(texts(session), before);
+        EXPECT_FALSE(session.document().scriptInfo(u8"Validated"));
+        EXPECT_EQ(session.historySize(), steps);
+        EXPECT_EQ(session.isDirty(), dirty);
+    }
+}
+
 // A33-subinspector-linux: SubInspector's native library (the Windows DLL
 // legacy shipped; built from the same v0.5.1 source on Linux) loads through
 // requireffi and measures a rendered line through libass. The bounds depend
@@ -623,6 +746,84 @@ TEST_F(LuaHelper, UnavailableServicesReturnNil)
     auto bare = load(fixture("services.lua"));
     ASSERT_TRUE(runMacro(*bare, macro(*bare, "Unavailable"), {}, run));
     EXPECT_EQ(run.log.value(0), "nil,nil,nil,nil,nil,nil,nil,nil,nil");
+}
+
+// O5: aegisub.gettext asks the host (HostService::Gettext) on each call, at
+// the top level as in a run, and keeps legacy get_translation's argument
+// handling (check_string: a number converts, anything else raises) and
+// lua_pushstring's result, which ends at the first NUL (Automation.cpp:83-88,
+// AutomationUtils.h:162-165). The fake catalog stands in for the
+// application's QM lookup.
+struct FakeCatalog {
+    std::map<std::string, std::string> entries;
+    std::vector<hikari::application::HostServiceRequest> requests;
+
+    LuaScriptHost::ServiceHandler handler()
+    {
+        return [this](const hikari::application::HostServiceRequest &r, LuaScriptHost::ServiceReply reply) {
+            using hikari::application::HostServiceReply;
+            if (r.service != hikari::application::HostService::Gettext)
+                return reply(HostServiceReply::unavailable());
+            requests.push_back(r);
+            const std::string &source = r.strings.at(0);
+            HostServiceReply out;
+            const auto found = entries.find(source);
+            // The application turns bytes that are not UTF-8 into "" (Localisation::gettext).
+            out.strings = {found != entries.end() ? found->second : source.starts_with('\xff') ? std::string() : source};
+            reply(std::move(out));
+        };
+    }
+};
+
+TEST_F(LuaHelper, GettextAsksTheHostWithTheLegacyArguments)
+{
+    FakeCatalog catalog;
+    catalog.entries = {{"Search bar", "Pasek szukania"}};
+    auto host = load(fixture("gettext.lua"), catalog.handler());
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    // script_name and the macro's name, translated while the script loaded.
+    EXPECT_EQ(host->info().name, "Pasek szukania");
+    ASSERT_FALSE(catalog.requests.empty());
+    EXPECT_EQ(catalog.requests.front().run, 0u); // the top level
+    EXPECT_EQ(catalog.requests.front().strings, std::vector<std::string>{"Search bar"});
+    ASSERT_TRUE(runToEnd(*host, "Pasek szukania"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    ASSERT_EQ(run.log.size(), 7);
+    // A missing key and printf text come back as they are; a number converts.
+    EXPECT_EQ(run.log[0], "Pasek szukania|Pasek szukania|no such key|%d element|12|");
+    EXPECT_EQ(run.log[1], "3 element");
+    EXPECT_EQ(run.log[2], "1|string");
+    EXPECT_TRUE(run.log[3].startsWith("false|")) << run.log[3].toStdString();
+    EXPECT_TRUE(run.log[3].contains("string expected, got no value")) << run.log[3].toStdString();
+    EXPECT_TRUE(run.log[4].contains("string expected, got table")) << run.log[4].toStdString();
+    EXPECT_EQ(run.log[5], "6|Search"); // the host gets every byte, Lua the text to its NUL
+    EXPECT_EQ(run.log[6], "0");
+    const auto nul = std::find_if(catalog.requests.begin(), catalog.requests.end(),
+                                  [](const auto &r) { return r.strings.at(0).find('\0') != std::string::npos; });
+    ASSERT_NE(nul, catalog.requests.end());
+    EXPECT_EQ(nul->strings.at(0), std::string("Search\0bar", 10));
+
+    // The language changes between runs: the next lookup reads the new
+    // catalog; what the script already holds (its top-level value, its
+    // registered names) stays until it is reloaded.
+    catalog.entries = {{"Search bar", "Barre de recherche"}};
+    ASSERT_TRUE(runToEnd(*host, "Pasek szukania"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "Pasek szukania|Barre de recherche|no such key|%d element|12|");
+    EXPECT_EQ(host->info().name, "Pasek szukania");
+}
+
+// No answer (no handler, or Unavailable): the source, as for a key the
+// catalog does not have.
+TEST_F(LuaHelper, GettextWithoutAnAnswerIsTheSource)
+{
+    auto host = load(fixture("gettext.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    EXPECT_EQ(host->info().name, "Search bar");
+    ASSERT_TRUE(runToEnd(*host, "Search bar"));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(run.log.value(0), "Search bar|Search bar|no such key|%d element|12|");
+    EXPECT_EQ(run.log.value(6), "4");
 }
 
 TEST_F(LuaHelper, TextExtentsFollowTheLegacyChecks)

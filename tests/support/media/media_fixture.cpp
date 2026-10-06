@@ -18,10 +18,16 @@
 //          audioonly 2 s of 48 kHz stereo PCM and no video: left is
 //                    audioOnlySample(i), right half of it (A1)
 //          unknown   the cfr video written as a live stream: no duration
+//          mkvextract the cfr video with an ASS track ("Signs", eng, with
+//                    kMkvExtractHeader as its codec-private data), a SubRip
+//                    track ("Full", pol) and the font attachments of
+//                    mkvExtractFonts() (Y9)
 //          color601, color709, color709full
 //                    12 frames of four flat Y'CbCr quadrants (kColorPatches),
 //                    tagged BT.601 limited, BT.709 limited and BT.709 full
 //                    range (I2: the decoder must convert with the tags)
+//          colorhd   the same patches at 1280x720 with no matrix or range
+//                    tags (V4: legacy's guess for an untagged frame)
 extern "C" {
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
@@ -36,9 +42,14 @@ extern "C" {
 #include <cstring>
 #include <string>
 
+#include "mkv_fixture.h"
+
 namespace {
 
-constexpr int kWidth = 320, kHeight = 240, kBlocks = 4;
+// The frame size: 320x240, but V4's untagged HD colour fixture is 1280x720
+// (legacy took an untagged frame wider than 1024 or at least 600 high as BT.709).
+int kWidth = 320, kHeight = 240;
+constexpr int kBlocks = 4;
 
 void drawIndex(AVFrame *f, int index)
 {
@@ -143,14 +154,20 @@ int writeAudioOnly(const std::string &out)
 int main(int argc, char **argv)
 {
     if (argc != 3)
-        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full>");
+        return fail("usage: <out> <cfr|vfr|bframes|longgop|audio|audiodelay|audioonly|tracks|unknown|color601|color709|color709full|colorhd>");
     const std::string out = argv[1], kind = argv[2];
     if (kind == "audioonly")
         return writeAudioOnly(out);
     const bool delayed = kind == "audiodelay";
     const bool vfr = kind == "vfr";
     const bool tracks = kind == "tracks";
+    const bool extract = kind == "mkvextract";
     const bool color = kind.starts_with("color");
+    const bool untagged = kind == "colorhd";
+    if (untagged) {
+        kWidth = 1280;
+        kHeight = 720;
+    }
     const int frames = kind == "longgop" ? 300 : color ? 12 : 48;
 
     AVFormatContext *fmt = nullptr;
@@ -170,7 +187,9 @@ int main(int argc, char **argv)
     enc->bit_rate = 2'000'000;
     if (kind == "sar") // T1: an anamorphic frame
         enc->sample_aspect_ratio = AVRational{32, 27};
-    if (color) {
+    if (untagged) {
+        enc->bit_rate = 8'000'000; // flat patches survive quantization; no tags
+    } else if (color) {
         enc->colorspace = kind == "color601" ? AVCOL_SPC_SMPTE170M : AVCOL_SPC_BT709;
         enc->color_primaries = kind == "color601" ? AVCOL_PRI_SMPTE170M : AVCOL_PRI_BT709;
         enc->color_trc = kind == "color601" ? AVCOL_TRC_SMPTE170M : AVCOL_TRC_BT709;
@@ -224,6 +243,36 @@ int main(int argc, char **argv)
             chapter->end = (c + 1) * 1000;
             av_dict_set(&chapter->metadata, "title", c == 0 ? "Opening" : "Second", 0);
             fmt->chapters[c] = chapter;
+        }
+    }
+    AVStream *assTrack = nullptr, *srtTrack = nullptr;
+    if (extract) {
+        // Y9: two text tracks and font attachments beside the video.
+        assTrack = avformat_new_stream(fmt, nullptr);
+        assTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        assTrack->codecpar->codec_id = AV_CODEC_ID_ASS;
+        const std::string &header = mkvfixture::kMkvExtractHeader;
+        assTrack->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(header.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+        std::memcpy(assTrack->codecpar->extradata, header.data(), header.size());
+        assTrack->codecpar->extradata_size = int(header.size());
+        assTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&assTrack->metadata, "language", "eng", 0);
+        av_dict_set(&assTrack->metadata, "title", "Signs", 0);
+        srtTrack = avformat_new_stream(fmt, nullptr);
+        srtTrack->codecpar->codec_type = AVMEDIA_TYPE_SUBTITLE;
+        srtTrack->codecpar->codec_id = AV_CODEC_ID_SUBRIP;
+        srtTrack->time_base = AVRational{1, 1000};
+        av_dict_set(&srtTrack->metadata, "language", "pol", 0);
+        av_dict_set(&srtTrack->metadata, "title", "Full", 0);
+        for (const auto &font : mkvfixture::mkvExtractFonts()) {
+            AVStream *a = avformat_new_stream(fmt, nullptr);
+            a->codecpar->codec_type = AVMEDIA_TYPE_ATTACHMENT;
+            a->codecpar->codec_id = AV_CODEC_ID_TTF;
+            a->codecpar->extradata = static_cast<std::uint8_t *>(av_mallocz(font.data.size() + AV_INPUT_BUFFER_PADDING_SIZE));
+            std::memcpy(a->codecpar->extradata, font.data.data(), font.data.size());
+            a->codecpar->extradata_size = int(font.data.size());
+            av_dict_set(&a->metadata, "filename", font.filename.c_str(), 0);
+            av_dict_set(&a->metadata, "mimetype", font.mimetype.c_str(), 0);
         }
     }
     AVDictionary *muxerOptions = nullptr;
@@ -318,6 +367,22 @@ int main(int argc, char **argv)
         av_packet_rescale_ts(sp, AVRational{1, 1000}, ss->time_base);
         av_interleaved_write_frame(fmt, sp);
         av_packet_free(&sp);
+    }
+    if (extract) {
+        // Interleaved with nothing else: the video is already written.
+        const auto writeText = [&](AVStream *st, const mkvfixture::Packet &p) {
+            AVPacket *sp = av_packet_alloc();
+            av_new_packet(sp, int(p.data.size()));
+            std::memcpy(sp->data, p.data.data(), p.data.size());
+            sp->pts = sp->dts = p.start;
+            sp->duration = p.duration;
+            sp->stream_index = st->index;
+            av_packet_rescale_ts(sp, AVRational{1, 1000}, st->time_base);
+            av_interleaved_write_frame(fmt, sp);
+            av_packet_free(&sp);
+        };
+        for (const auto &[track, p] : mkvfixture::mkvExtractPackets())
+            writeText(track == 0 ? assTrack : srtTrack, p);
     }
     av_write_trailer(fmt);
     avio_closep(&fmt->pb);

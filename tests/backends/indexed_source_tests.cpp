@@ -305,14 +305,11 @@ struct ColorCase {
     bool full;
 };
 
-int colorError(Fixture &f, const ColorCase &c)
+// The largest channel error of a decoded colour fixture frame against the
+// case's equations.
+int frameColorError(const IndexedFrame &frame, const ColorCase &c)
 {
     static constexpr int kPatches[4][3] = {{180, 60, 200}, {81, 90, 240}, {145, 54, 34}, {41, 240, 110}};
-    if (!f.open(c.kind))
-        return 1000;
-    const auto frame = f.frame(5);
-    if (!frame)
-        return 1000;
     int worst = 0;
     for (int q = 0; q < 4; ++q) {
         const double y = c.full ? kPatches[q][0] / 255.0 : (kPatches[q][0] - 16) / 219.0;
@@ -321,8 +318,8 @@ int colorError(Fixture &f, const ColorCase &c)
         const double r = y + 2 * (1 - c.kr) * pr, b = y + 2 * (1 - c.kb) * pb;
         const double g = (y - c.kr * r - c.kb * b) / (1 - c.kr - c.kb);
         auto code = [](double v) { return int(std::lround(std::clamp(v, 0.0, 1.0) * 255)); };
-        const int x = (q % 2 ? 3 : 1) * frame->width / 4, yy = (q / 2 ? 3 : 1) * frame->height / 4;
-        const std::byte *p = frame->bgra.data() + std::size_t(yy) * frame->stride + std::size_t(x) * 4;
+        const int x = (q % 2 ? 3 : 1) * frame.width / 4, yy = (q / 2 ? 3 : 1) * frame.height / 4;
+        const std::byte *p = frame.bgra.data() + std::size_t(yy) * frame.stride + std::size_t(x) * 4;
         const int got[3] = {std::to_integer<int>(p[2]), std::to_integer<int>(p[1]), std::to_integer<int>(p[0])};
         const int want[3] = {code(r), code(g), code(b)};
         for (int k = 0; k < 3; ++k)
@@ -331,6 +328,16 @@ int colorError(Fixture &f, const ColorCase &c)
                      want[0], want[1], want[2]);
     }
     return worst;
+}
+
+int colorError(Fixture &f, const ColorCase &c)
+{
+    if (!f.open(c.kind))
+        return 1000;
+    const auto frame = f.frame(5);
+    if (!frame)
+        return 1000;
+    return frameColorError(*frame, c);
 }
 
 TEST_F(Fixture, Bt601LimitedRangeIsConvertedWithItsTags)
@@ -358,12 +365,130 @@ TEST_F(Fixture, ColorControlsDetectAWrongMatrixOrRange)
     EXPECT_GT(colorError(*this, {"color709full", 0.2126, 0.0722, false}), 10) << "full range read as limited";
 }
 
+// V4: the Open reply carries frame 0's matrix and range (legacy
+// ProviderFFMS2::Init's m_CS and m_CR), and InputMatrix sets the converter's
+// input matrix (legacy FFMS_SetInputFormatV for the Script properties
+// matrix): the frames that follow, the one shown again among them, are
+// converted with it.
+TEST_F(Fixture, OpenReportsTheFramesMatrixAndRange)
+{
+    auto t = open("color709");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorSpace, 1); // FFMS_CS_BT709
+    EXPECT_EQ(t->colorRange, 1); // FFMS_CR_MPEG
+    t = open("color709full");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorRange, 2); // FFMS_CR_JPEG
+    t = open("color601");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorSpace, 6); // FFMS_CS_SMPTE170M
+    t = open("colorhd");
+    ASSERT_TRUE(t);
+    EXPECT_EQ(t->colorSpace, 2); // unspecified
+    EXPECT_EQ(t->width, 1280);
+}
+
+TEST_F(Fixture, InputMatrixConvertsTheFollowingFrames)
+{
+    ASSERT_TRUE(open("color709"));
+    auto before = frame(5);
+    ASSERT_TRUE(before);
+    EXPECT_LE(frameColorError(*before, {"color709", 0.2126, 0.0722, false}), 3);
+    std::optional<std::expected<void, SourceError>> set;
+    // legacy's "TV.601": BT470BG in the source's range
+    source.setInputMatrix(5, 1, [&](auto r) { set = r; });
+    ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
+    ASSERT_TRUE(set->has_value());
+    const auto as601 = frame(5); // the same frame again
+    ASSERT_TRUE(as601);
+    EXPECT_LE(frameColorError(*as601, {"color709 as BT.601", 0.299, 0.114, false}), 3);
+    EXPECT_GT(frameColorError(*as601, {"color709 as BT.601, BT.709 control", 0.2126, 0.0722, false}), 20);
+    // back to the source's own
+    set.reset();
+    source.setInputMatrix(1, 1, [&](auto r) { set = r; });
+    ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
+    const auto again = frame(5);
+    ASSERT_TRUE(again);
+    EXPECT_LE(frameColorError(*again, {"color709 again", 0.2126, 0.0722, false}), 3);
+}
+
+// An untagged HD source: the converter's default is BT.601 (I2's
+// characterization), which legacy left as it was unless the Document said
+// "TV.709"; then its guess, BT.709, was set.
+TEST_F(Fixture, UntaggedHdTakesTheGuessedMatrixOnlyWhenSet)
+{
+    ASSERT_TRUE(open("colorhd"));
+    const auto plain = frame(5);
+    ASSERT_TRUE(plain);
+    EXPECT_LE(frameColorError(*plain, {"colorhd default", 0.299, 0.114, false}), 3);
+    std::optional<std::expected<void, SourceError>> set;
+    source.setInputMatrix(1, 0, [&](auto r) { set = r; });
+    ASSERT_TRUE(waitFor([&] { return set.has_value(); }));
+    ASSERT_TRUE(set->has_value());
+    const auto as709 = frame(5);
+    ASSERT_TRUE(as709);
+    EXPECT_LE(frameColorError(*as709, {"colorhd as BT.709", 0.2126, 0.0722, false}), 3);
+}
+
+TEST_F(Fixture, InputMatrixNeedsAnOpenVideo)
+{
+    std::optional<std::expected<void, SourceError>> set;
+    source.setInputMatrix(5, 1, [&](auto r) { set = r; });
+    ASSERT_TRUE(set.has_value());
+    EXPECT_EQ(set->error(), SourceError::NotOpen);
+}
+
 TEST_F(Fixture, UnreadableFilesFailExplicitly)
 {
     std::optional<std::expected<SourceTimeline, SourceError>> result;
     source.open(std::string(HIKARI_MEDIA_FIXTURES) + "/missing.mkv", {}, [&](auto r) { result = std::move(r); });
     ASSERT_TRUE(waitFor([&] { return result.has_value(); }));
     EXPECT_EQ(result->error(), SourceError::InvalidInput);
+    // V3 (protocol 8): FFMS_CreateIndexer's stage and FFMS2's text, which
+    // legacy logged as a debug message only (ProviderFFMS2.cpp:164)
+    const auto failure = source.openFailure();
+    ASSERT_TRUE(failure);
+    EXPECT_EQ(failure->stage, OpenStage::Indexer);
+    EXPECT_FALSE(failure->message.empty());
+    ASSERT_TRUE(open("cfr"));
+    EXPECT_FALSE(source.openFailure()) << "a later open that succeeds has no failure";
+}
+
+// V3: each stage of a failed open reaches the port with the helper's text
+// (protocol 8), from a helper that fails where FFMS2 rarely does on a real
+// file. Legacy ProviderFFMS2::Init logs "Indexing error occurred: %s"
+// (ProviderFFMS2.cpp:310), "Cannot create VideoSource." (:349) and "Cannot
+// convert video to RGBA" (:388) for them.
+struct FailingHelperFixture : Fixture {
+    backends::FfmsIndexedSource failing{QStringLiteral(HIKARI_FAILING_MEDIA_HELPER)};
+};
+
+TEST_F(FailingHelperFixture, EachStageAndItsTextReachThePort)
+{
+    const struct {
+        const char *file;
+        OpenStage stage;
+        SourceError error;
+        const char *text;
+    } cases[] = {{"/clips/indexer.mkv", OpenStage::Indexer, SourceError::InvalidInput, "fake indexer error"},
+                 {"/clips/indexing.mkv", OpenStage::Indexing, SourceError::BackendFailure, "fake indexing error"},
+                 {"/clips/source.mkv", OpenStage::Source, SourceError::BackendFailure, "fake source error"},
+                 {"/clips/convert.mkv", OpenStage::Convert, SourceError::BackendFailure, "fake convert error"},
+                 {"/clips/other.mkv", OpenStage::Host, SourceError::BackendFailure, "no such stage"}};
+    for (const auto &c : cases) {
+        std::optional<std::expected<SourceTimeline, SourceError>> result;
+        std::optional<OpenFailure> seen; // as the Opened callback reads it (VideoSession::open)
+        failing.open(c.file, {}, [&](auto r) {
+            seen = failing.openFailure();
+            result = std::move(r);
+        });
+        ASSERT_TRUE(waitFor([&] { return result.has_value(); })) << c.file;
+        ASSERT_FALSE(*result) << c.file;
+        EXPECT_EQ(result->error(), c.error) << c.file;
+        ASSERT_TRUE(seen) << c.file;
+        EXPECT_EQ(seen->stage, c.stage) << c.file;
+        EXPECT_EQ(seen->message, c.text) << c.file;
+    }
 }
 
 // N2: source PCM ranges. The audio fixture's left channel is the sample index

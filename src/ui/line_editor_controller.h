@@ -12,9 +12,12 @@
 // unchanged and reports the attempted text, so nothing typed is lost.
 
 #include "hikari/application/document_files.h"
+#include "hikari/application/editor_fields.h"
+#include "hikari/application/legacy_timebase.h"
 #include "hikari/core/editor_font_colour.h"
 #include "hikari/core/style.h"
 #include "hikari/core/tag_commands.h"
+#include "tag_list_controller.h"
 
 #include <QObject>
 #include <QStringList>
@@ -36,6 +39,8 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool hasLine READ hasLine NOTIFY changed)
     Q_PROPERTY(bool editable READ editable NOTIFY changed)
     Q_PROPERTY(bool showTags READ showTags WRITE setShowTags NOTIFY changed)
+    // E6: the tag list popup of the text fields.
+    Q_PROPERTY(TagListController *tagList READ tagList CONSTANT)
     Q_PROPERTY(QString text READ text NOTIFY changed)
     // Translation mode (Script Info "TLMode: Yes"): Original above Translated.
     Q_PROPERTY(bool translationMode READ translationMode NOTIFY changed)
@@ -56,11 +61,57 @@ class LineEditorController : public QObject {
     Q_PROPERTY(QStringList history READ history NOTIFY changed)
     Q_PROPERTY(int historyCursor READ historyCursor NOTIFY changed)
     Q_PROPERTY(bool canUndoToLastSave READ canUndoToLastSave NOTIFY changed)
-    // The field a requested selection belongs to (0 Original, 1 Translated).
+    // The field a requested selection belongs to (0 Original, 1 Translated,
+    // 2 Actor, 3 Effect).
     Q_PROPERTY(int selectionRole READ selectionRole NOTIFY selectionRequested)
+    // E4: the metadata fields (legacy EditBox's Comment, LayerEdit, DurEdit,
+    // StyleChoice, ActorEdit, EffectEdit and the \an choice Ban), enabled as
+    // EditBox::HideControls enables them for the Document's format.
+    Q_PROPERTY(bool assFields READ assFields NOTIFY changed)
+    Q_PROPERTY(bool hasEnd READ hasEnd NOTIFY changed)
+    Q_PROPERTY(bool comment READ comment NOTIFY changed)
+    Q_PROPERTY(QString layerText READ layerText NOTIFY changed)
+    Q_PROPERTY(QString durationText READ durationText NOTIFY changed)
+    Q_PROPERTY(QString style READ style NOTIFY changed)
+    Q_PROPERTY(QStringList styleNames READ styleNames NOTIFY changed)
+    Q_PROPERTY(int styleIndex READ styleIndex NOTIFY changed)
+    Q_PROPERTY(QString actor READ actor NOTIFY changed)
+    Q_PROPERTY(QString effect READ effect NOTIFY changed)
+    Q_PROPERTY(QStringList actors READ actors NOTIFY changed)
+    Q_PROPERTY(QStringList effects READ effects NOTIFY changed)
+    // 0..8 for "Bottom-left (an1)" .. "Top-right (an9)", -1 for none.
+    Q_PROPERTY(int alignmentIndex READ alignmentIndex NOTIFY changed)
+    // The counters (EditBox::UpdateChars): "Wraps: ..." and "Characters per
+    // second: ..." with their warnings; empty for a comment.
+    Q_PROPERTY(QString charsText READ charsText NOTIFY changed)
+    Q_PROPERTY(bool charsWarning READ charsWarning NOTIFY changed)
+    Q_PROPERTY(QString cpsText READ cpsText NOTIFY changed)
+    Q_PROPERTY(bool cpsWarning READ cpsWarning NOTIFY changed)
+    // Start and End in the warning colour while a live edit has Start after
+    // End (EditBox::OnEdit, EditBox.cpp:1526-1545), until the Line is sent
+    // or shown again (Send, EditBox.cpp:546-554; SetLine, EditBox.cpp:394-402).
+    Q_PROPERTY(bool startWarning READ startWarning NOTIFY changed)
+    Q_PROPERTY(bool endWarning READ endWarning NOTIFY changed)
+    // The Time/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH): enabled once a
+    // video was opened (Notebook::LoadVideo), as legacy enables it.
+    Q_PROPERTY(bool framesAvailable READ framesAvailable NOTIFY changed)
+    Q_PROPERTY(bool showFrames READ showFrames WRITE setShowFrames NOTIFY changed)
+    // E5: the active Line's Unconfirmed (legacy DoubtfulTL->SetValue in
+    // SetLine) and the "Moving tags" toggle (AUTO_MOVE_TAGS_FROM_ORIGINAL).
+    Q_PROPERTY(bool unconfirmed READ unconfirmed NOTIFY changed)
+    Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
 
 public:
+    // The options the editor reads where legacy reads them (O1's registry).
+    struct Options {
+        bool liveEditing = true;        // !DISABLE_LIVE_VIDEO_EDITING
+        bool dontAdvanceOnTimes = false; // EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT
+        bool allCharsForCps = false;     // CALC_SPACES_AND_PUNCTATION_FOR_CPS
+        bool allCharsForWraps = false;   // CALC_SPACES_AND_PUNCTATION_FOR_WRAPS
+    };
+
     explicit LineEditorController(application::DocumentFiles &files, QObject *parent = nullptr);
+    TagListController *tagList() { return &m_tagList; }
 
     // The Document being edited (the workspace's editing target), or none.
     // `editable` is false for a protected reference.
@@ -85,6 +136,70 @@ public:
     bool dirty() const;
     QString saveStatus() const;
 
+    // E4
+    void setOptionsSource(std::function<Options()> source) { m_options = std::move(source); }
+    // An option the editor reads changed: the counters and Duration follow at once.
+    void optionsChanged() { refresh(); }
+    // The open video's timebase (legacy TimeCtrl::SetVideoBox), or none.
+    void setVideoTimebase(std::optional<application::LegacyTimebase> timebase);
+    // EDITBOX_TIMES_TO_FRAMES_SWITCH as stored; the editor saves the switch through `store`.
+    void setShowFramesSetting(bool on, std::function<void(bool)> store);
+    bool assFields() const;
+    bool hasEnd() const;
+    bool comment() const;
+    QString layerText() const;
+    QString durationText() const;
+    QString style() const;
+    QStringList styleNames() const;
+    int styleIndex() const;
+    QString actor() const;
+    QString effect() const;
+    QStringList actors() const { return m_actors; }
+    QStringList effects() const { return m_effects; }
+    int alignmentIndex() const { return m_alignment >= 1 && m_alignment <= 9 ? m_alignment - 1 : -1; }
+    QString charsText() const;
+    bool charsWarning() const;
+    QString cpsText() const;
+    bool cpsWarning() const;
+    bool startWarning() const { return m_timeWarning[0]; }
+    bool endWarning() const { return m_timeWarning[1]; }
+    bool framesAvailable() const { return m_framesAvailable; }
+    bool showFrames() const { return m_showFrames; }
+    void setShowFrames(bool on);
+    // The timebase the times show frames of (switch on, exact), or nullptr.
+    const application::LegacyTimebase *frameTimebase() const;
+    // The Document with the pending draft applied (live video editing), or nullopt without a draft.
+    std::optional<core::Document> draftDocument() const;
+
+    // Legacy OnCommit through the Comment box and the Style choice: the field
+    // changes and the Line is sent at once (EditBox.cpp:323-325, 966-985).
+    Q_INVOKABLE bool setComment(bool comment);
+    Q_INVOKABLE bool chooseStyle(const QString &style);
+    // Typing in the Actor and Effect boxes changes the draft; picking from
+    // their lists sends the Line (ID_COMBO_BOX_CTRL, EditBox.cpp:322).
+    Q_INVOKABLE void setActorText(const QString &text);
+    Q_INVOKABLE void setEffectText(const QString &text);
+    Q_INVOKABLE bool chooseActor(const QString &text);
+    Q_INVOKABLE bool chooseEffect(const QString &text);
+    Q_INVOKABLE void setLayerText(const QString &text);
+    // DurEdit: End becomes Start + the duration (EditBox::OnEdit's durFocus
+    // branch), which runs only with live video editing on (EditBox.cpp:349-352).
+    Q_INVOKABLE void setDurationText(const QString &text);
+    // A time field's text changed while it is being typed (TimeCtrl's
+    // NUMBER_CHANGED, which runs EditBox::OnEdit with live video editing on,
+    // EditBox.cpp:343-346): `role` is TimeFieldRole's 0 Duration, 1 Start,
+    // 2 End. Start or End go to the draft and Duration follows; Duration moves
+    // End. Without live editing nothing happens until the field is applied.
+    // Text not yet in the field's form is left for the field's apply, since
+    // the legacy control only ever holds its form.
+    Q_INVOKABLE void timeTyped(int role, const QString &text);
+    // EditBox::OnAnChoice: \an<index + 1> into the first block of the edited
+    // text field (TextEdit, or TextEditOrig while the translation is empty).
+    Q_INVOKABLE bool chooseAlignment(int index);
+    // EDITBOX_COMMIT_GO_NEXT_LINE from a field (EditBox::OnNewline): the
+    // time fields commit and stay with EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT.
+    Q_INVOKABLE bool commitFromField(bool timeField);
+
     // The Grid or navigation asked for a Line; commits on leave.
     Q_INVOKABLE bool showLine(qulonglong id);
     // The text field now holds `newText` with the caret at `cursor`.
@@ -94,6 +209,9 @@ public:
     Q_INVOKABLE void setEndText(const QString &text);
     Q_INVOKABLE void setMarginText(int which, const QString &text); // 0 left, 1 right, 2 vertical
     Q_INVOKABLE bool commitAndAdvance(); // Enter, outside composition
+    // E6: GLOBAL_NEXT_LINE (1) / GLOBAL_PREVIOUS_LINE (-1), SubsGrid::NextLine:
+    // the next or previous shown Line; past the last shown one a new Line.
+    Q_INVOKABLE bool nextLine(int direction);
     Q_INVOKABLE bool commit();
     Q_INVOKABLE void discard();          // Esc
     Q_INVOKABLE bool undo();             // draft history first, then the Document
@@ -134,6 +252,12 @@ public:
     Q_INVOKABLE QVariantMap beginColour(int number, int role, int selectionStart, int selectionEnd);
     // The picker switched colours (legacy COLOR_TYPE_CHANGED): that colour in effect.
     Q_INVOKABLE QVariantMap switchColour(int number);
+    // Y7: the simple "Color picker" switched colours (EditBox.cpp:908-912).
+    // Y7-simple-picker-type: ASS formats get that colour in effect, which
+    // later changes take as their reset (as switchColour); the line formats
+    // keep the colour the picker shows (legacy turned it black and kept the
+    // reset of the colour the picker opened with).
+    Q_INVOKABLE QVariantMap simplePickerColour(int number);
     Q_INVOKABLE bool changeColour(const QVariantMap &colour);
     Q_INVOKABLE void endDialog(bool accepted);
     // Translation mode (legacy EditBox OnCopyAll, OnCopySelection, OnHideOriginal):
@@ -153,12 +277,18 @@ public:
     Q_INVOKABLE void reportFieldSelection(int role, int start, int end);
     std::pair<int, int> fieldSelection() const { return m_fieldSelection[translationMode() ? 1 : 0]; }
     std::pair<int, int> fieldSelectionOf(int role) const { return m_fieldSelection[role == 1 ? 1 : 0]; }
+    // T3: that selection in the raw text of `role` (the caret goes after
+    // hidden boundary tags, as the tag commands take it).
+    std::pair<long, long> rawFieldSelection(int role) const;
     // Selects text in the edited field (aegisub.gui.set_cursor/set_selection),
     // or in `role` (0 Original, 1 Translated) when given.
     void selectInField(int start, int end, int role = -1);
     // F1: selects [start, end) of the raw text of `role` (0 Original, 1
     // Translated) as find marks a match; offsets move past hidden tags.
     void selectRaw(int role, int start, int end);
+    // F1/E4: selects [start, end) of the Actor (role 2) or Effect (3) box
+    // (legacy ComboBoxCtrl::SetTextSelection, findreplace.cpp:366-371).
+    void selectInBox(int role, int start, int end);
     // F1: [start, end) of the raw text of `role` where the field shows it
     // (past hidden tags), as selectRaw would select it.
     std::pair<int, int> displaySpan(int role, int start, int end) const;
@@ -170,6 +300,22 @@ public:
     // goes to the next Line; Ctrl+D / Ctrl+R find the next unconfirmed or
     // untranslated visible Line, wrapping once.
     Q_INVOKABLE bool toggleUnconfirmedAndAdvance();
+    // E5: the "Not confirmed" button (EditBox::OnDoubtfulTl without
+    // NextLine): every selected Line's Unconfirmed flips, one step.
+    Q_INVOKABLE bool toggleUnconfirmed();
+    bool unconfirmed() const;
+    // E5: "Moving tags" (EditBox::SetTextWithTags, EditBox.cpp:1809-1858). With
+    // it on, in translation mode, an untranslated Line whose text holds a '}'
+    // is shown split when the editor shows the Line: its override blocks in
+    // the Translated field (which takes the focus, its caret after a leading
+    // block) and the rest in the Original field, while the Document keeps the
+    // text whole. The first change to either field (a keystroke or an editor
+    // command) makes both fields the Line's draft: the Original without the
+    // tags, the Translated with them. Only while no visual tool but the
+    // crosshair is active (legacy Visual <= CROSS).
+    bool moveTags() const { return m_moveTags; }
+    void setMoveTags(bool on); // shows the Line again, as OnAutoMoveTags does
+    void setVisualToolActive(std::function<bool()> active) { m_visualToolActive = std::move(active); }
     Q_INVOKABLE bool findNextUnconfirmed();
     Q_INVOKABLE bool findNextUntranslated();
     int selectionStart() const { return m_selectionStart; }
@@ -181,12 +327,30 @@ public:
 
 signals:
     void changed();
+    // The Grid's Start/End columns show frames or times (SubsGrid::ChangeTimeDisplay).
+    void frameDisplayChanged();
     void lineChanged(qulonglong id); // the active Line moved (keeps the Grid in step)
+    // V6: showLine committed `line`'s draft on leaving it (legacy SetLine's
+    // Send of the old Line, EditBox.cpp:383-384); emitted before changed().
+    void leftLineCommitted(qulonglong line);
     void selectionRequested();
+    void fieldFocusRequested(int role); // E5: 0 Original, 1 Translated
 
 private:
     application::EditSession *session() const;
-    std::optional<core::LineRecord> record() const; // the active Line, draft applied
+    std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
+    std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
+    // E5: the split Moving tags shows, for the Line it was made for.
+    struct Split {
+        core::LineId line;
+        std::u8string original, translation;
+    };
+    std::optional<Split> m_split;
+    std::optional<core::LineId> m_splitEvaluated; // the Line SetTextWithTags last ran for
+    bool m_moveTags = false;
+    std::function<bool()> m_visualToolActive;
+    void evaluateSplit(); // legacy SetTextWithTags, from SetLine
+    bool m_splitFocus = false; // the split asks for the Translated field's focus
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
@@ -211,6 +375,7 @@ private:
         core::legacy::FontValues actualFont, editedFont;
         int number = 1;
         core::legacy::TagColour actualColour;
+        core::legacy::TagColour editedColour; // the colour last chosen in the dialog
     };
     bool beginDialog(int role, int selectionStart, int selectionEnd);
     bool applyDialogChange(const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
@@ -230,10 +395,34 @@ private:
     void committed();
     QString problemText() const;
 
+    // E4
+    Options options() const { return m_options ? m_options() : Options{}; }
+    std::optional<core::LineRecord> committedRecord() const;
+    bool sendDraft(bool leaving = false); // EditBox::Send(EDITBOX_LINE_EDITION, ...)
+    void rebuildLists(); // EditBox::RebuildActorEffectLists
+    void lineShown();    // what EditBox::SetLine sets once per Line
+    bool setTime(application::TimeFieldRole role, const QString &text);
+    std::function<Options()> m_options;
+    std::optional<application::LegacyTimebase> m_timebase;
+    bool m_framesAvailable = false;
+    bool m_showFrames = false;
+    std::function<void(bool)> m_storeShowFrames;
+    QStringList m_actors, m_effects;
+    int m_alignment = 2;
+    bool m_durationEdited = false; // OnEdit's Duration after a Start/End edit
+    // StartEdit/EndEdit: the warning colour shown, and legacy's
+    // changedBackGround, which is set with it and never cleared.
+    bool m_timeWarning[2] = {false, false};
+    bool m_timeWarned[2] = {false, false};
+    void clearTimeWarnings();
+    std::optional<QString> m_typedDuration; // DurEdit keeps what was typed until SetLine
+    std::optional<core::LineId> m_shownLine;
+
     application::DocumentFiles &m_files;
     std::optional<application::DocumentId> m_document;
     bool m_editable = false;
     bool m_showTags = false; // tags hidden by default
+    TagListController m_tagList;
     QString m_shown[2];      // what the Original and Translated fields show
     QString m_problem;
     QString m_attempted;

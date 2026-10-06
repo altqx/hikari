@@ -291,8 +291,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "open-keyframes",
@@ -318,8 +317,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "set-start-time",
@@ -332,8 +330,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V6 #185"
+   ]
   },
   {
    "role": "set-end-time",
@@ -346,8 +343,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V6 #185"
+   ]
   },
   {
    "role": "frame-previous",
@@ -468,8 +464,7 @@
    ],
    "surfaces": [
     "menu:video"
-   ],
-   "pending": "V4 #183"
+   ]
   },
   {
    "role": "media-play",
@@ -552,8 +547,7 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "media-next-file",
@@ -568,8 +562,7 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen"
-   ],
-   "pending": "V3 #182"
+   ]
   },
   {
    "role": "open-audio",
@@ -633,7 +626,8 @@
     "button_prev.png"
    ],
    "surfaces": [
-    "audio-box"
+    "audio-box",
+    "reference-tray"
    ]
   },
   {
@@ -646,7 +640,8 @@
     "button_next.png"
    ],
    "surfaces": [
-    "audio-box"
+    "audio-box",
+    "reference-tray"
    ]
   },
   {
@@ -909,7 +904,8 @@
    "surfaces": [
     "audio-box",
     "visual-tools",
-    "script-properties"
+    "script-properties",
+    "reference-tray"
    ]
   },
   {
@@ -1038,8 +1034,7 @@
    "legacy": [],
    "surfaces": [
     "line-editor"
-   ],
-   "pending": "E4 #186"
+   ]
   },
   {
    "role": "editor",
@@ -1229,8 +1224,7 @@
    "surfaces": [
     "menu:subtitles",
     "line-editor"
-   ],
-   "pending": "E6 #188"
+   ]
   },
   {
    "role": "automation",
@@ -1525,8 +1519,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T6 #181"
+   ]
   },
   {
    "role": "vector-drag",
@@ -1725,8 +1718,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "frame-to-scale",
@@ -1739,8 +1731,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "scale-x",
@@ -1753,8 +1744,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "scale-y",
@@ -1767,8 +1757,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "original-frame",
@@ -1781,8 +1770,7 @@
    ],
    "surfaces": [
     "visual-tools"
-   ],
-   "pending": "T3 #178"
+   ]
   },
   {
    "role": "eyedropper",
@@ -1795,8 +1783,7 @@
    ],
    "surfaces": [
     "colour-picker"
-   ],
-   "pending": "Y7 #190"
+   ]
   },
   {
    "role": "tab-close",
@@ -1806,7 +1793,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "document-tabs"
+    "document-tabs",
+    "reference-tray"
    ]
   },
   {

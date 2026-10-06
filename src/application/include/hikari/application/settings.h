@@ -121,24 +121,10 @@ inline constexpr std::string_view kAutomationHotkeysSetting = "shortcuts.automat
 inline constexpr std::string_view kHotkeysSetting = "shortcuts.hotkeys";
 inline constexpr std::string_view kAudioHotkeysSetting = "shortcuts.audioHotkeys";
 
-// A2: the audio spectrum's colours, legacy's theme colours
-// AUDIO_SPECTRUM_BACKGROUND, AUDIO_SPECTRUM_ECHO and AUDIO_SPECTRUM_INNER
-// (config.cpp's defaults). They were theme entries, not Config.txt options;
-// theme files are excluded from migration (compatibility.md), so they are
-// settings of the rewrite's own, as "#RRGGBB" text.
-inline constexpr std::string_view kSpectrumBackgroundSetting = "audio.spectrumBackground";
-inline constexpr std::string_view kSpectrumEchoSetting = "audio.spectrumEcho";
-inline constexpr std::string_view kSpectrumInnerSetting = "audio.spectrumInner";
-// K1: the UI icons' colours, per appearance (light, dark, high contrast) and
-// state: normal, the accent layer, hover/pressed ("active") and disabled, as
-// "#RRGGBB" text. Theme colours of the rewrite's own (docs/qt/ux/icons.md);
-// their defaults meet WCAG 1.4.11's 3:1 against the appearance's surfaces.
-inline constexpr std::string_view kIconColourSettings[3][4] = {
-    {"icons.light.normal", "icons.light.accent", "icons.light.active", "icons.light.disabled"},
-    {"icons.dark.normal", "icons.dark.accent", "icons.dark.active", "icons.dark.disabled"},
-    {"icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
-     "icons.highContrast.disabled"},
-};
+// K2 withdrew the per-colour settings (A2's audio.spectrum* colours, K1's
+// icons.<appearance>.<state> colours) for the theme layer's fixed colours:
+// their ids, which a profile may still hold (the INI store drops them).
+std::span<const std::string_view> retiredSettings();
 // wxColour::Set's "#RRGGBB" (and "#RRGGBBAA") as 0xAARRGGBB; nothing when it
 // is not one.
 std::optional<std::uint32_t> parseSettingColour(std::string_view text);

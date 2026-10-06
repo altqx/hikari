@@ -3,42 +3,54 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// The active family's own options, legacy VideoToolbar's second row
-// (VisualItem). T4: the clips' buttons: VectorItem's point modes (one on at
-// a time) and Invert clip, ClipRectangleItem's Invert clip, each with its
-// icon of the K1 set and legacy's help text. A toggle shows its state; an
-// action acts at once. T5: the drawing's point modes (not usable while a
-// shape is chosen) and its shape list ("Choose", the presets, "Edit", which
-// opens the "Vector shape editing" dialog), an icon with its menu. A notice a tool gives is
-// legacy's HikariMessageBox titled "Warning" (VisualClips.cpp:1013-1016): a
-// modal box in the window, closed by OK.
+// T2-T4: the active family's own options, legacy VideoToolbar's second row
+// (the VisualItem of the family: PositionItem's "by rectangle", X and Y
+// toggles and its alignment choice, MoveItem's two points, ScaleItem,
+// RotationZItem, RotationXYItem, VectorItem's point modes (one on at a time)
+// and Invert clip, ClipRectangleItem's Invert clip, ...), in a row above the
+// values below the canvas (layout A). Each button shows its icon of the K1
+// set with legacy's help text as its tooltip; a greyed icon is a disabled
+// button (X and Y without the rectangle, as legacy greyed them), a pushed
+// one a checked toggle; an action acts at once. The item's links (an option
+// that switches another on) are the tool's (setOption). A notice a tool
+// gives is legacy's HikariMessageBox titled "Warning" (VisualClips.cpp:
+// 1013-1016): a modal box in the window, closed by OK. T5: the drawing's
+// point modes (not usable while a shape is chosen) and its shape list
+// ("Choose", the presets, "Edit", which opens the "Vector shape editing"
+// dialog), an icon with its menu; a choice without an icon is a list.
 RowLayout {
-    id: options
+    id: optionsRow
     objectName: "visualToolOptions"
     required property VisualToolsController tools
     spacing: 1
+    visible: repeater.count > 0
 
     Repeater {
-        model: options.tools.options
+        id: repeater
+        model: optionsRow.tools.options
         delegate: Loader {
             id: option
             required property var modelData
-            sourceComponent: modelData.kind === "choice" ? choiceComponent : buttonComponent
+            sourceComponent: modelData.kind !== "choice" ? buttonComponent
+                             : modelData.iconRole.length > 0 ? choiceComponent : listComponent
             Component {
                 id: buttonComponent
                 IconToolButton {
                     objectName: "visualOption_" + option.modelData.name
-                    // The K1 roles the options name (on one line: icon_tests reads them from it).
-                    iconRole: ["vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert"].indexOf(option.modelData.iconRole) >= 0 ? option.modelData.iconRole : ""
+                    // The roles the families' options show (one line: icon_tests reads the roles from it).
+                    iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
                     text: option.modelData.tooltip.split("\n")[0]
                     tip: option.modelData.tooltip
                     checkable: option.modelData.kind === "toggle"
                     checked: option.modelData.checked
-                    enabled: option.modelData.enabled && options.tools.railEnabled
+                    enabled: option.modelData.enabled && optionsRow.tools.railEnabled
                     focusPolicy: Qt.NoFocus
+                    // The tool decides (a greyed or linked option); the binding then
+                    // shows what it took, not the click's state.
                     onClicked: {
-                        options.tools.setOption(option.modelData.name, option.modelData.kind === "toggle" ? (checked ? 1 : 0) : 1)
-                        checked = Qt.binding(() => option.modelData.checked) // the tool's state, not the click's
+                        optionsRow.tools.setOption(option.modelData.name,
+                                                   option.modelData.kind === "toggle" ? (checked ? 1 : 0) : 1)
+                        checked = Qt.binding(() => option.modelData.checked)
                     }
                 }
             }
@@ -66,7 +78,7 @@ RowLayout {
                     Accessible.description: currentIndex >= 0 && currentIndex < model.length ? model[currentIndex] : ""
                     checked: currentIndex > 0
                     down: pressed || choiceMenu.visible
-                    enabled: option.modelData.enabled && options.tools.railEnabled
+                    enabled: option.modelData.enabled && optionsRow.tools.railEnabled
                     focusPolicy: Qt.NoFocus
                     onClicked: {
                         if (choiceMenu.visible)
@@ -74,7 +86,7 @@ RowLayout {
                         else
                             choiceMenu.popup(choice, 0, choice.height)
                     }
-                    onActivated: index => options.tools.setOption(option.modelData.name, index)
+                    onActivated: index => optionsRow.tools.setOption(option.modelData.name, index)
                     ShellMenu {
                         id: choiceMenu
                         objectName: choice.objectName + "_menu"
@@ -110,6 +122,22 @@ RowLayout {
                     }
                 }
             }
+            Component {
+                id: listComponent
+                // T2: a choice without an icon (PositionItem's alignment).
+                ComboBox {
+                    objectName: "visualOption_" + option.modelData.name
+                    model: option.modelData.choices
+                    currentIndex: option.modelData.index
+                    enabled: option.modelData.enabled && optionsRow.tools.railEnabled
+                    focusPolicy: Qt.NoFocus
+                    implicitContentWidthPolicy: ComboBox.WidestText
+                    Accessible.name: option.modelData.tooltip
+                    ToolTip.visible: hovered
+                    ToolTip.text: option.modelData.tooltip
+                    onActivated: index => optionsRow.tools.setOption(option.modelData.name, index)
+                }
+            }
         }
     }
     Dialog {
@@ -134,25 +162,25 @@ RowLayout {
             Accessible.role: Accessible.AlertMessage
             Accessible.name: text
         }
-        onClosed: options.tools.dismissNotice()
+        onClosed: optionsRow.tools.dismissNotice()
     }
     // T5: the shape list's "Edit".
     ShapesEditionDialog {
         id: shapesDialog
-        editor: options.tools.shapeEditor
+        editor: optionsRow.tools.shapeEditor
     }
     Connections {
-        target: options.tools
+        target: optionsRow.tools
         function onChanged() {
-            if (options.tools.notice.length > 0 && !noticeBox.visible) {
-                noticeText.text = options.tools.notice
+            if (optionsRow.tools.notice.length > 0 && !noticeBox.visible) {
+                noticeText.text = optionsRow.tools.notice
                 noticeBox.open()
             }
-            else if (options.tools.notice.length === 0 && noticeBox.visible)
+            else if (optionsRow.tools.notice.length === 0 && noticeBox.visible)
                 noticeBox.close()
         }
         function onShapeEditorChanged() {
-            if (options.tools.shapeEditor)
+            if (optionsRow.tools.shapeEditor)
                 shapesDialog.open()
             else if (shapesDialog.visible)
                 shapesDialog.close()

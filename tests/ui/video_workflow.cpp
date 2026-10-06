@@ -1,6 +1,7 @@
 // I1 workflow through the real UI (Spix): open a subtitle Document whose
 // Script Info names its video, accept the "Associated files" offer, select
-// the second Line and see that Line's start frame with its overlay, then step
+// the second Line ("Every line change", V6) and see that Line's start frame
+// with its overlay, then step
 // one frame. Frame identity is read from the barcode each fixture frame
 // carries. A Document whose video is missing offers nothing and stays
 // editable.
@@ -177,6 +178,10 @@ int main(int argc, char **argv)
             g_shown = s;
         });
         expect(application.openFile(subtitles), "open the subtitles");
+        // V6: the video follows a selected Line with the video toolbar's
+        // "Every line change" (legacy MOVE_VIDEO_TO_ACTIVE_LINE 1; its default
+        // moves the video only on a double click).
+        application.settingsStore()->set("video.moveToActiveLine", 1);
         QQmlApplicationEngine engine;
         hikari::ui::attachDocking(engine);
         engine.setInitialProperties(application.qmlProperties());

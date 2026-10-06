@@ -1,6 +1,7 @@
 hikari_add_qttest(hikari_ui_line_model_tests SOURCES line_model_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_line_grid_tests SOURCES line_grid_tests.cpp LIBRARIES hikari_ui)
-target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts")
+target_compile_definitions(hikari_ui_line_grid_tests PRIVATE HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts"
+    HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 hikari_add_qttest(hikari_ui_line_grid_a11y_tests SOURCES line_grid_a11y_tests.cpp LIBRARIES hikari_ui)
 hikari_add_qttest(hikari_ui_shell_tests SOURCES shell_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_log_controller_tests SOURCES log_controller_tests.cpp LIBRARIES hikari_ui)
@@ -9,17 +10,24 @@ hikari_add_qttest(hikari_ui_line_measures_tests SOURCES line_measures_tests.cpp 
 target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures"
-    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui")
-add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_lua_helper hikari_automation_stage)
+    HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
+    HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>")
+add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
+    hikari_lua_helper hikari_automation_stage)
 # The whole shell suite runs in one process (about a minute here, more on CI
 # runners), so it gets more than the default 60 s.
 foreach(mode offscreen xvfb)
     if(TEST hikari_ui_shell_tests.${mode})
-        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 300)
+        set_tests_properties(hikari_ui_shell_tests.${mode} PROPERTIES TIMEOUT 900)
     endif()
 endforeach()
 hikari_add_spix_test(hikari_ui_editor_workflow SOURCES editor_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_FIXTURE_DIR="${PROJECT_SOURCE_DIR}/docs/qt/fixtures/approved-departures")
+# E4: the Line editor's metadata fields in the accessibility tree (E2-a11y)
+# and through the real UI (Spix).
+hikari_add_qttest(hikari_ui_line_editor_a11y_tests SOURCES line_editor_a11y_tests.cpp
+    LIBRARIES hikari_composition hikari_a11y_testing)
+hikari_add_spix_test(hikari_ui_line_fields_workflow SOURCES line_fields_workflow.cpp LIBRARIES hikari_composition)
 # N8: script dialogs in fixed QML controls, round-tripped through the Lua helper.
 hikari_add_qttest(hikari_ui_automation_dialog_tests SOURCES automation_dialog_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
@@ -84,6 +92,14 @@ target_compile_definitions(hikari_ui_automation_hotkeys_tests PRIVATE
     HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_hotkeys_tests hikari_lua_helper hikari_automation_stage)
+# S4: Document scripts and "Run the last loaded script" with real Lua helpers and media.
+hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
+    LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
+    hikari_media_helper hikari_media_fixtures)
 hikari_add_spix_test(hikari_ui_close_workflow SOURCES close_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_open_workflow SOURCES open_workflow.cpp LIBRARIES hikari_composition)
 # S1: automation in the shell (Spix workflow, real helpers and video).
@@ -105,6 +121,8 @@ target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DI
 target_include_directories(hikari_ui_shell_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # O1: the settings registry over the INI file and the interim keys' move.
 hikari_add_qttest(hikari_ui_settings_store_tests SOURCES settings_store_tests.cpp LIBRARIES hikari_ui)
+# O3: the legacy settings importer's snapshot, generations and rollback.
+hikari_add_qttest(hikari_ui_settings_import_tests SOURCES settings_import_ui_tests.cpp LIBRARIES hikari_composition)
 # O2: remapping a command in the shortcut editor and using it (Spix workflow).
 hikari_add_spix_test(hikari_ui_shortcuts_workflow SOURCES shortcuts_workflow.cpp LIBRARIES hikari_composition)
 # P6: tabs and session restore through the composition.
@@ -115,32 +133,84 @@ target_compile_definitions(hikari_ui_session_tabs_tests PRIVATE
 add_dependencies(hikari_ui_session_tabs_tests hikari_media_fixtures hikari_media_helper)
 # P6: tab traversal and close review through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_tabs_workflow SOURCES tabs_workflow.cpp LIBRARIES hikari_composition)
+# P9: the tab menu, tab reordering, folders, drops, associated files and the
+# legacy autosaves through the composition and the real QML.
+hikari_add_qttest(hikari_ui_tab_menu_tests SOURCES tab_menu_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_tab_menu_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_tab_menu_tests hikari_media_fixtures hikari_media_helper)
+foreach(mode offscreen xvfb native)
+    if(TEST hikari_ui_tab_menu_tests.${mode})
+        set_tests_properties(hikari_ui_tab_menu_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
+endforeach()
 # R1: subtitle comparison through the composition and the tab menu.
 hikari_add_qttest(hikari_ui_comparison_tests SOURCES comparison_tests.cpp LIBRARIES hikari_composition)
+# R2: reference navigation, linked matching and the subtitles preview.
+hikari_add_qttest(hikari_ui_reference_tests SOURCES reference_tests.cpp LIBRARIES hikari_composition)
+hikari_add_spix_test(hikari_ui_reference_workflow SOURCES reference_workflow.cpp LIBRARIES hikari_composition)
 # T1: the crosshair and VIDEO_COPY_COORDS through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_visual_tools_workflow SOURCES visual_tools_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_tools_workflow hikari_media_helper hikari_media_fixtures)
+# T2: Position and Move's numeric and keyboard alternatives through the real UI (Spix workflow).
+hikari_add_spix_test(hikari_ui_visual_position_workflow SOURCES visual_position_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_visual_position_workflow hikari_media_helper hikari_media_fixtures)
 # T4: the vector and rectangle clips through the real UI (Spix workflow).
 hikari_add_spix_test(hikari_ui_visual_clips_workflow SOURCES visual_clips_workflow.cpp LIBRARIES hikari_composition
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_visual_clips_workflow hikari_media_helper hikari_media_fixtures)
-# K1: the vector icon set: the icon manifest test, the tint, the default
+# K1: the vector icon set: the icon manifest test, the tint, the theme
 # colours' contrast, live colours, and the rendering fixtures (contact sheets)
 # at 100% here and at 150% and 200% in the .scale150 / .scale200 runs.
-hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg OFFSCREEN_ONLY)
+hikari_add_qttest(hikari_ui_icon_tests SOURCES icon_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::Svg Qt6::QuickControls2
+    OFFSCREEN_ONLY)
 target_compile_definitions(hikari_ui_icon_tests PRIVATE
     HIKARI_ICON_DIR="${PROJECT_SOURCE_DIR}/src/ui/icons"
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
     HIKARI_LEGACY_BITMAPS="${PROJECT_SOURCE_DIR}/HikariSub/Bitmaps")
+# K2: the theme layer: role tables, accent presets and their contrast,
+# following the system, the high-contrast pickers, content colours, the live
+# preview and the Theme singleton; the swatch sheet with HIKARI_THEME_SHEET_DIR.
+hikari_add_qttest(hikari_ui_theme_tests SOURCES theme_tests.cpp LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 OFFSCREEN_ONLY)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")
     add_test(NAME hikari_ui_icon_tests.scale${scale}
-        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheAppearanceAndColoursLive mirroredIconsPaintFlipped
+        COMMAND $<TARGET_FILE:hikari_ui_icon_tests> contactSheets iconsFollowTheThemeLive mirroredIconsPaintFlipped
             imageSourcedControlsDrawTheSet)
     set_tests_properties(hikari_ui_icon_tests.scale${scale} PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=${whole}.${part}" LABELS "qttest;offscreen" TIMEOUT 120)
+endforeach()
+# V6: Lines timed from the video (Spix workflow).
+hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workflow.cpp LIBRARIES hikari_composition
+    DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
+# Y7: the colour picker's option, simple-picker recent colour and screen sampler.
+hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
+# O5: the interface language over the embedded catalogs (live switching,
+# aegisub.gettext through the application, pseudolocalized and right-to-left
+# layouts, the program font).
+hikari_add_qttest(hikari_ui_language_tests SOURCES language_tests.cpp LIBRARIES hikari_composition hikari_translations)
+target_compile_definitions(hikari_ui_language_tests PRIVATE HIKARI_SOURCE_DIR="${PROJECT_SOURCE_DIR}"
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_language_tests hikari_lua_helper hikari_automation_stage)
+find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS LinguistTools)
+# O5-qt-catalog: a HikariSub and a Qt catalog that answer the same string,
+# compiled beside the test, for the catalogs' precedence.
+qt_add_lrelease(TS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/hikarisub_pl.ts
+    ${CMAKE_CURRENT_SOURCE_DIR}/language-fixtures/qt_pl.ts
+    QM_OUTPUT_DIRECTORY language-fixtures LRELEASE_TARGET hikari_ui_language_fixtures NO_GLOBAL_TARGET OPTIONS -silent)
+add_dependencies(hikari_ui_language_tests hikari_ui_language_fixtures)
+target_compile_definitions(hikari_ui_language_tests PRIVATE
+    HIKARI_LANGUAGE_FIXTURES="${CMAKE_CURRENT_BINARY_DIR}/language-fixtures")
+foreach(mode offscreen xvfb)
+    if(TEST hikari_ui_language_tests.${mode})
+        set_tests_properties(hikari_ui_language_tests.${mode} PROPERTIES TIMEOUT 300)
+    endif()
 endforeach()

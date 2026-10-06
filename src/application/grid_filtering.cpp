@@ -25,8 +25,12 @@ bool shownFlag(LineVisibility v)
 }
 
 // Applies the visibilities that changed as one step; nothing changed, no step.
+// E6: legacy Filter, FilterPartial and TurnOffFiltering copy with keepstate
+// (SubsGridFiltering.cpp:78-95, 119, 212): the changed-Line mark stays;
+// HideSelections copies without it (146-156) and marks the Lines changed.
 std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const std::string &name,
-                                                    const std::map<std::uint64_t, LineVisibility> &target)
+                                                    const std::map<std::uint64_t, LineVisibility> &target,
+                                                    core::ChangeMark mark = core::ChangeMark::Kept)
 {
     std::vector<std::pair<core::LineId, LineVisibility>> changes;
     for (const auto *l : linesOf(session))
@@ -39,7 +43,7 @@ std::expected<void, CommandRefusal> applyVisibility(EditSession &session, const 
         touched.insert(c.first);
     const auto ran = session.run(Command{name, session.revision(), touched, [&](core::Document &d) {
                                              for (const auto &[id, v] : changes)
-                                                 if (!d.editLine(id, [&](core::LineRecord &l) { l.visibility = v; }))
+                                                 if (!d.editLine(id, [&](core::LineRecord &l) { l.visibility = v; }, mark))
                                                      return false;
                                              return true;
                                          }});
@@ -188,7 +192,7 @@ std::expected<void, CommandRefusal> hideSelectedLines(EditSession &session, cons
     if (!any)
         return std::unexpected(CommandRefusal::Invalid);
     keepBlocks(lines, target, hideNow, true);
-    return applyVisibility(session, "Filtering", target);
+    return applyVisibility(session, "Filtering", target, core::ChangeMark::Changed);
 }
 
 std::expected<void, CommandRefusal> turnOffFiltering(EditSession &session)

@@ -155,6 +155,15 @@ bool handOff(const std::string &handoffFile, FFMS_Index *index)
 
 constexpr int kEveryAudioTrack = -2;
 
+enum class Stage : std::uint8_t { Indexer = 0, Indexing = 1, Source = 2, Convert = 3, Read = 4, Host = 5 };
+
+// A failure with its stage and FFMS2's text: the audio box's requests (A1)
+// and, from protocol 8, Open (V3: legacy ProviderFFMS2::Init's messages).
+void failDisplay(Responder &r, Outcome outcome, Stage stage, const std::string &text)
+{
+    r.terminal(outcome, Writer().u8(static_cast<std::uint8_t>(stage)).str(text).take());
+}
+
 void open(Source &source, Reader &in, Responder &r)
 {
     const std::string path = in.str();
@@ -162,13 +171,13 @@ void open(Source &source, Reader &in, Responder &r)
     const std::string indexFile = in.str();
     const std::string handoffFile = in.str();
     if (!in.ok())
-        return r.terminal(Outcome::InvalidInput, bytesOf("malformed open"));
+        return failDisplay(r, Outcome::InvalidInput, Stage::Host, "malformed open");
     source = {};
     char buffer[1024];
     FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
     FFMS_Indexer *indexer = FFMS_CreateIndexer(path.c_str(), &err);
     if (!indexer)
-        return r.terminal(Outcome::InvalidInput, bytesOf(errorText(err)));
+        return failDisplay(r, Outcome::InvalidInput, Stage::Indexer, errorText(err));
     std::unique_ptr<FFMS_Index, IndexDeleter> index(readIndexFile(path, indexFile));
     const bool newIndex = !index;
     bool handedOff = false;
@@ -185,26 +194,30 @@ void open(Source &source, Reader &in, Responder &r)
             FFMS_TrackIndexSettings(indexer, audioTrack, 1, 0);
         index.reset(FFMS_DoIndexing2(indexer, FFMS_IEH_ABORT, &err));
         if (!index)
-            return r.terminal(r.cancelled() ? Outcome::Cancelled : Outcome::Failed, bytesOf(errorText(err)));
+            return failDisplay(r, r.cancelled() ? Outcome::Cancelled : Outcome::Failed, Stage::Indexing, errorText(err));
         if (!writeIndexFile(indexFile, index.get()) && !indexFile.empty())
             handedOff = handOff(handoffFile, index.get());
     }
     const int track = FFMS_GetFirstTrackOfType(index.get(), FFMS_TYPE_VIDEO, &err);
     if (track < 0)
-        return r.terminal(Outcome::Unsupported, bytesOf("no video track"));
+        return failDisplay(r, Outcome::Unsupported, Stage::Host, "no video track");
     // FFMS_SEEK_NORMAL: the accepted seek mode for exact indexed frames.
     std::unique_ptr<FFMS_VideoSource, VideoDeleter> video(
         FFMS_CreateVideoSource(path.c_str(), track, index.get(), 1, FFMS_SEEK_NORMAL, &err));
     if (!video)
-        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+        return failDisplay(r, Outcome::Failed, Stage::Source, errorText(err));
     const FFMS_VideoProperties *props = FFMS_GetVideoProperties(video.get());
     const FFMS_Frame *first = FFMS_GetFrame(video.get(), 0, &err);
     if (!first)
-        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+        return failDisplay(r, Outcome::Failed, Stage::Source, errorText(err));
+    // V4: legacy ProviderFFMS2::Init's m_CS and m_CR, read from frame 0
+    // before the output format is set (ProviderFFMS2.cpp:368-369, 378);
+    // setting it resets the frame's colour fields.
+    const int firstColorSpace = first->ColorSpace, firstColorRange = first->ColorRange;
     const int formats[] = {AV_PIX_FMT_BGRA, -1};
     if (FFMS_SetOutputFormatV2(video.get(), formats, first->EncodedWidth, first->EncodedHeight,
                                FFMS_RESIZER_BICUBIC, &err) != 0)
-        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+        return failDisplay(r, Outcome::Failed, Stage::Convert, errorText(err));
     FFMS_Track *t = FFMS_GetTrackFromVideo(video.get());
     const FFMS_TrackTimeBase *tb = FFMS_GetTimeBase(t);
     Writer out;
@@ -230,6 +243,7 @@ void open(Source &source, Reader &in, Responder &r)
     out.u8(newIndex ? 1 : 0).u8(handedOff ? 1 : 0);
     // T1: legacy ProviderFFMS2::Init's frame size and SAR (ProviderFFMS2.cpp:362-366).
     out.i32(first->EncodedWidth).i32(first->EncodedHeight).i32(props->SARNum).i32(props->SARDen);
+    out.i32(firstColorSpace).i32(firstColorRange); // V4
     source.path = path;
     source.index = std::move(index);
     source.video = std::move(video);
@@ -260,6 +274,21 @@ void frame(Source &source, Reader &in, Responder &r)
     Writer out;
     out.i32(width).i32(height).i32(width * 4).i64(FFMS_GetFrameInfo(t, n)->PTS).bytes(pixels);
     r.terminal(Outcome::Ok, out.take());
+}
+
+// V4: legacy ProviderFFMS2's FFMS_SetInputFormatV (ProviderFFMS2.cpp:401,
+// 407, 958, 960): the matrix and range, the source's pixel format kept.
+void inputMatrix(Source &source, Reader &in, Responder &r)
+{
+    const int colorSpace = in.i32();
+    const int colorRange = in.i32();
+    if (!in.ok() || !source.video)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not open"));
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    if (FFMS_SetInputFormatV(source.video.get(), colorSpace, colorRange, FFMS_GetPixFmt(""), &err) != 0)
+        return r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    r.terminal(Outcome::Ok, {});
 }
 
 void openAudio(Source &source, Reader &in, Responder &r)
@@ -298,12 +327,6 @@ void openAudio(Source &source, Reader &in, Responder &r)
 
 // A1: failures of the audio box's requests name their stage and carry
 // FFMS2's text (media_protocol.h).
-enum class Stage : std::uint8_t { Indexer = 0, Indexing = 1, Source = 2, Convert = 3, Read = 4, Host = 5 };
-
-void failDisplay(Responder &r, Outcome outcome, Stage stage, const std::string &text)
-{
-    r.terminal(outcome, Writer().u8(static_cast<std::uint8_t>(stage)).str(text).take());
-}
 
 std::string orEmpty(const char *text)
 {
@@ -594,6 +617,138 @@ void chapters(Reader &in, Responder &r)
     r.terminal(Outcome::Ok, w.take());
 }
 
+// Y9: legacy Demux (Demux.cpp at 20d647c4) through the project's FFMS2
+// extensions, each request on an indexer of its own (Demux::Open,
+// Demux.cpp:34-49). Strings leave as the bytes FFMS2 gives, up to their NUL,
+// as legacy read them into wxString; the application decodes them.
+
+namespace {
+
+struct IndexerDeleter {
+    void operator()(FFMS_Indexer *i) const { FFMS_CancelIndexing(i); } // Demux::Close (Demux.cpp:60-63)
+};
+using Indexer = std::unique_ptr<FFMS_Indexer, IndexerDeleter>;
+
+// FFMS_CreateIndexer; a failure is the terminal Failed with FFMS2's text,
+// which legacy logged as "Indexing error occurred: %s" (Demux.cpp:44-47).
+Indexer openIndexer(const std::string &path, Responder &r)
+{
+    char buffer[1024];
+    FFMS_ErrorInfo err{FFMS_ERROR_SUCCESS, FFMS_ERROR_SUCCESS, sizeof buffer, buffer};
+    Indexer indexer(FFMS_CreateIndexer(path.c_str(), &err));
+    if (!indexer)
+        r.terminal(Outcome::Failed, bytesOf(errorText(err)));
+    return indexer;
+}
+
+std::string textOrEmpty(const char *text)
+{
+    return text ? std::string(text) : std::string();
+}
+
+struct SubtitleRead {
+    Responder *responder;
+    std::vector<std::byte> packets;
+    std::int32_t count = 0;
+};
+
+// Demux::GetSubtitles' callback (Demux.cpp:262-315): every packet the
+// extension hands over, in its order, with its progress; a non-zero return
+// stops the read, as legacy's WasCancelled() did (Demux.cpp:314).
+int FFMS_CC onSubtitle(int64_t start, int64_t duration, int64_t total, const char *line, void *opaque)
+{
+    auto *read = static_cast<SubtitleRead *>(opaque);
+    auto packet = Writer().i64(start).i64(duration).str(textOrEmpty(line)).take();
+    read->packets.insert(read->packets.end(), packet.begin(), packet.end());
+    ++read->count;
+    read->responder->progress(Writer().i64(start).i64(total).take());
+    return read->responder->cancelled() ? 1 : 0;
+}
+
+} // namespace
+
+// The subtitle tracks in container order (Demux::GetSubtitles' list,
+// Demux.cpp:68-83): every FFMS_TYPE_SUBTITLE track with its name, language
+// and FFMS_GetSubtitleFormat; the application keeps the text codecs.
+void subtitleTracks(Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    if (!in.ok() || path.empty())
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed SubtitleTracks"));
+    const Indexer indexer = openIndexer(path, r);
+    if (!indexer)
+        return;
+    Writer tracks;
+    std::int32_t count = 0;
+    for (int i = 0; i < FFMS_GetNumTracksI(indexer.get()); ++i) {
+        if (FFMS_GetTrackTypeI(indexer.get(), i) != FFMS_TYPE_SUBTITLE)
+            continue;
+        tracks.i32(i)
+            .str(textOrEmpty(FFMS_GetTrackName(indexer.get(), i)))
+            .str(textOrEmpty(FFMS_GetTrackLanguage(indexer.get(), i)))
+            .str(textOrEmpty(FFMS_GetSubtitleFormat(indexer.get(), i)));
+        ++count;
+    }
+    auto list = tracks.take();
+    auto out = Writer().i32(count).take();
+    out.insert(out.end(), list.begin(), list.end());
+    r.terminal(Outcome::Ok, std::move(out));
+}
+
+// One track's packets and codec-private data (Demux.cpp:121, 131).
+void subtitles(Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    const std::int32_t track = in.i32();
+    if (!in.ok() || path.empty())
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed Subtitles"));
+    const Indexer indexer = openIndexer(path, r);
+    if (!indexer)
+        return;
+    if (track < 0 || track >= FFMS_GetNumTracksI(indexer.get()) ||
+        FFMS_GetTrackTypeI(indexer.get(), track) != FFMS_TYPE_SUBTITLE)
+        return r.terminal(Outcome::InvalidInput, bytesOf("not a subtitle track"));
+    SubtitleRead read{&r, {}, 0};
+    FFMS_GetSubtitles(indexer.get(), track, &onSubtitle, &read);
+    if (r.cancelled())
+        return r.terminal(Outcome::Cancelled);
+    auto out = Writer()
+                   .str(textOrEmpty(FFMS_GetSubtitleExtradata(indexer.get(), track)))
+                   .i32(read.count)
+                   .take();
+    out.insert(out.end(), read.packets.begin(), read.packets.end());
+    r.terminal(Outcome::Ok, std::move(out));
+}
+
+// Every attachment in container order (Demux::GetFontList, Demux.cpp:
+// 210-227), one Reply each with the bytes FFMS2's attachment holds.
+void attachments(Reader &in, Responder &r)
+{
+    const std::string path = in.str();
+    if (!in.ok() || path.empty())
+        return r.terminal(Outcome::InvalidInput, bytesOf("malformed Attachments"));
+    const Indexer indexer = openIndexer(path, r);
+    if (!indexer)
+        return;
+    std::int32_t count = 0;
+    for (int i = 0; i < FFMS_GetNumTracksI(indexer.get()); ++i) {
+        if (FFMS_GetTrackTypeI(indexer.get(), i) != FFMS_TYPE_ATTACHMENT)
+            continue;
+        if (r.cancelled())
+            return r.terminal(Outcome::Cancelled);
+        FFMS_Attachment *a = FFMS_GetAttachment(indexer.get(), i);
+        if (!a)
+            continue;
+        Writer w;
+        w.i32(i).u8(a->Filename ? 1 : 0).str(textOrEmpty(a->Filename)).str(textOrEmpty(a->Mimetype));
+        w.raw(a->Data, a->Data && a->DataSize > 0 ? static_cast<std::size_t>(a->DataSize) : 0);
+        FFMS_FreeAttachment(&a);
+        r.reply(w.take());
+        ++count;
+    }
+    r.terminal(Outcome::Ok, Writer().i32(count).take());
+}
+
 int main()
 {
     FFMS_Init(0, 0);
@@ -621,8 +776,16 @@ int main()
             return openDisplayAudio(source, in, r);
         case media::Command::Probe:
             return probe(in, r);
+        case media::Command::InputMatrix:
+            return inputMatrix(source, in, r);
         case media::Command::DisplayRead:
             return displayRead(source, in, r);
+        case media::Command::SubtitleTracks:
+            return subtitleTracks(in, r);
+        case media::Command::Subtitles:
+            return subtitles(in, r);
+        case media::Command::Attachments:
+            return attachments(in, r);
         }
         r.terminal(Outcome::Unsupported, bytesOf("unknown command"));
     });

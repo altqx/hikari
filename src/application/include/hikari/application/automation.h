@@ -136,6 +136,13 @@ struct MacroResult {
     std::vector<MacroDialogueLine> dialogues;
     std::optional<std::vector<int>> selected; // nullopt: the macro returned none
     std::optional<int> active;
+    // S4: false when the macro's validation function answered false or
+    // raised an error (validationError, legacy "Runtime error in Lua macro
+    // validation function"); the macro did not run, the edits validation
+    // made are dropped and the lists are empty (S4-validation-edits).
+    // applyMacroResult refuses such a result.
+    bool valid = true;
+    std::string validationError;
 };
 
 // A host service a running macro asks for (L3; docs/qt/automation.md). The
@@ -161,14 +168,16 @@ struct MacroResult {
 //   EditorModified            -> integers {modified}
 //   FrequencyPeaks            integers {start, end, freqStart, freqEnd, peek} -> integers {status, times...},
 //                             numbers {intensities} (status 1: an audio box without audio yet; Unavailable: none)
+//   Gettext                   strings {source} -> strings {text} (O5: aegisub.gettext through the
+//                             HikariSub.Automation.Gettext QM; Unavailable or no string: the source)
 // Unavailable is the legacy nil: no video, no Document, a cancelled picker.
 enum class HostService : std::int32_t {
     FrameFromMs = 1, MsFromFrame, VideoSize, Keyframes, Frame, AudioSelection, ProjectProperties, TextExtents,
     ClipboardGet, ClipboardSet, OpenFiles, SaveFile, StatusText, DecodePath, FileName,
     EditorCursor, SetEditorCursor, EditorSelection, SetEditorSelection, EditorModified,
-    FrequencyPeaks,
+    FrequencyPeaks, Gettext,
 };
-inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::FrequencyPeaks);
+inline constexpr std::int32_t kLastHostService = static_cast<std::int32_t>(HostService::Gettext);
 
 struct HostServiceRequest {
     HostService service = HostService::FrameFromMs;

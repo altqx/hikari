@@ -395,7 +395,7 @@ std::vector<std::string> commitOptionsDialog(Settings &settings, const OptionsLi
             std::string text = textOf(state, id);
             if (settings.text(id) != text) {
                 if (id == "fonts.externalDirectory")
-                    text = externalFontsPath(std::move(text), lists); // fonts reload: not yet
+                    text = externalFontsPath(std::move(text), lists); // Y6: the fonts reload on the change
                 write(id, text);
             }
             break;

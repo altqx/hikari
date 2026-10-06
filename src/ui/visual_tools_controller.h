@@ -11,6 +11,7 @@
 
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_tools.h"
+#include "automation_services_qt.h"
 #include "settings_store.h"
 #include "shape_editor.h"
 
@@ -56,13 +57,15 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(QRectF sourceRect READ sourceRect NOTIFY geometryChanged)
     // The tool's numeric values (shown below the canvas): name, label, text, editable.
     Q_PROPERTY(QVariantList values READ values NOTIFY changed)
+    // T3: Esc has something to drop: an open gesture or a tool's pending step.
+    Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
     // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
     // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
-    // The family's own options (legacy VideoToolbar's second row): name,
-    // kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
+    // T2-T4: the family's own options (legacy VideoToolbar's second row):
+    // name, kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
     // enabled, choices, index. T4: its own signal, so the row is rebuilt only
     // when it changes. And the notice a tool gave, which the shell shows as
     // legacy's modal "Warning" message box until OK.
@@ -79,12 +82,22 @@ public:
 
     // Called after a gesture changed the Document (the shell refreshes).
     void setEdited(std::function<void()> edited) { m_edited = std::move(edited); }
-    // The video shows the open gesture's staged texts (legacy's dummy
+    // T2, T4: the video shows the open gesture's staged texts (legacy's dummy
     // rendering, Visuals::RenderSubs) and the tool's own Lines (T4: the
     // vector clip's mask, Visuals::AppendClipMask): called with the Document
     // as it would be, or null when there is nothing to add (the committed
     // Document again).
     void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
+    // T2: HikariLog and the Grid's "Ignore filtering in some actions".
+    void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
+    void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
+    // T3: the Line editor's selection in the edited text (FindTag's mode 0).
+    void setEditorSelection(std::function<std::pair<long, long>()> selection)
+    {
+        m_editorSelection = std::move(selection);
+    }
+    // T3: puts the Line editor's caret where a tool's edit left it.
+    void setEditorSelectionPlacer(std::function<void(long, long)> place) { m_placeSelection = std::move(place); }
     // The editing target, its content, active Line or format changed.
     void refresh();
     // T5: the drawing's shape presets' file (legacy Config/ShapesSettings.txt
@@ -108,6 +121,7 @@ public:
     QRectF videoRect() const;
     QRectF sourceRect() const;
     QVariantList values() const;
+    bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
     QString copied() const { return m_copied; }
@@ -119,7 +133,8 @@ public:
     // and the window's device pixel ratio.
     Q_INVOKABLE void setViewport(qreal width, qreal height, qreal panelHeight, qreal devicePixelRatio);
     // A pointer event over the video area, in its logical coordinates:
-    // kind 0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel; button a
+    // kind 0 enter, 1 leave, 2 move, 3 press, 4 release, 5 wheel, 6 the
+    // second press of a double click (after its press); button a
     // Qt::MouseButton; modifiers Qt::KeyboardModifiers.
     Q_INVOKABLE void pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
     // A key while the Video panel has focus: true when the tool used it.
@@ -144,8 +159,10 @@ public:
     Q_INVOKABLE void dismissNotice();
 
     // T4: the subtitles the video renders for a Document: as the preview
-    // gives it (the staged texts and the tool's Lines added), encoded.
-    std::vector<std::byte> subtitles(const core::Document &document) const;
+    // gives it (the staged texts and the tool's Lines added), encoded by
+    // `encode` (E5: the renderer's options), else as saved.
+    using Encoder = std::function<std::vector<std::byte>(const core::Document &)>;
+    std::vector<std::byte> subtitles(const core::Document &document, const Encoder &encode = {}) const;
 
     // VisualHost.
     const application::visual::VideoView &view() const override { return m_view; }
@@ -159,13 +176,32 @@ public:
     void cancelGesture() override { (void)escape(); }
     std::pair<int, int> measureLabel(std::u16string_view text) const override;
     void toolChanged() override;
+    std::int64_t videoTimeMs() const override;
+    application::LegacyTimebase timebase() const override;
+    application::TextMeasurePort *textMeasure() const override { return &m_measure; }
+    bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
+    void log(std::u16string_view text) override;
+    std::pair<long, long> editorSelection() const override;
+    void setEditorSelection(long from, long to) override
+    {
+        if (m_placeSelection)
+            m_placeSelection(from, to);
+    }
     void bell() override;
     void notice(std::u16string_view text) override;
-    std::int64_t videoTimeMs() const override;
     const std::vector<application::visual::ShapePreset> *shapePresets() const override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
+    const application::visual::VideoView &videoView() const { return m_view; }
+    // V4: legacy RendererVideo::HasVisual(true): a tool other than the
+    // crosshair, which keeps the wheel and the clicks to itself.
+    bool hasNonDefaultTool() const { return tool() && m_family != application::visual::Family::Crosshair; }
+    // V4: the zoom or the aspect ratio changed the view (RendererVideo::Zoom,
+    // ResetZoom, UpdateVideoWindow): the tools take it, and a tool other
+    // than the clips and the drawing starts again (SetCurVisual,
+    // RendererVideo.cpp:785-788 and 806-811).
+    void viewChanged();
     std::optional<application::CommandRefusal> lastRefusal() const { return m_lastRefusal; }
 
 signals:
@@ -190,6 +226,11 @@ private:
     SessionProvider m_session;
     std::function<void()> m_edited;
     std::function<void(const core::Document *)> m_preview;
+    std::function<void(const QString &)> m_log;
+    std::function<bool()> m_ignoreFiltered;
+    std::function<std::pair<long, long>()> m_editorSelection;
+    std::function<void(long, long)> m_placeSelection;
+    mutable QtTextMeasurePort m_measure;
     bool previewDocument(const core::Document &document, core::Document &out) const;
     application::visual::VideoView m_view;
     application::visual::SourceGeometry m_geometry;
@@ -207,6 +248,8 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
+    std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
+    std::int64_t m_seenTime = -1;
     QString m_notice;
     QVariantList m_options; // the tool's buttons as last shown
     int m_bells = 0;

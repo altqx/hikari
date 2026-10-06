@@ -4,6 +4,9 @@
 add_library(hikari_composition STATIC composition.cpp application.cpp include/hikari/app/application.h
     application_tabs.cpp # P6: tabs and session restore
     application_comparison.cpp # R1: subtitle comparison
+    application_video.cpp # V3: video sources, tracks and chapters
+    application_reference.cpp # R2: reference navigation and the subtitles preview
+    application_tab_menu.cpp # P9: the tab menu, folders, drops and associated files
     automation_shell.cpp include/hikari/app/automation_shell.h
     automation_hotkeys_controller.cpp include/hikari/app/automation_hotkeys_controller.h
     hotkeys_controller.cpp include/hikari/app/hotkeys_controller.h
@@ -26,3 +29,17 @@ target_link_libraries(hikarisub PRIVATE hikari_composition hikari_translations) 
 hikari_module(hikarisub ALLOW hikari_composition hikari_translations "Qt6::*")
 # Y8: the font collector's window state.
 target_sources(hikari_composition PRIVATE font_collector_controller.cpp include/hikari/app/font_collector_controller.h)
+# O3: the legacy settings importer's generations and window state.
+target_sources(hikari_composition PRIVATE settings_import_store.cpp include/hikari/app/settings_import_store.h
+    settings_import_controller.cpp include/hikari/app/settings_import_controller.h)
+# Y6: Font catalogs, the font picker's lists and the external fonts folder.
+target_sources(hikari_composition PRIVATE font_catalogs_controller.cpp include/hikari/app/font_catalogs_controller.h)
+# Y9: GRID_SUBS_FROM_MKV.
+target_sources(hikari_composition PRIVATE matroska_controller.cpp include/hikari/app/matroska_controller.h)
+# V6: timing and selecting Lines from the video, and the video following the active Line.
+target_sources(hikari_composition PRIVATE application_video_timing.cpp)
+# E5: translation mode controls (Translator mode, Moving tags, the Grid's
+# Original text / Translation columns, the original hidden on video).
+target_sources(hikari_composition PRIVATE application_translation.cpp)
+# O5: the interface language (catalogs, live switching, aegisub.gettext's lookup).
+target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
