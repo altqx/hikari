@@ -45,12 +45,14 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "videoMenuPlayPause"
+        iconRole: menu.shell.video.playing ? "media-pause" : "media-play"
         text: (menu.shell.video.playing ? qsTr("Pause") : qsTr("Play")) + menu.keys("VIDEO_PLAY_PAUSE")
         enabled: menu.shell.video.hasVideo
         onTriggered: if (!menu.gesture("VIDEO_PLAY_PAUSE")) menu.shell.video.togglePlay()
     }
     ShellMenuItem {
         objectName: "videoMenuStop"
+        iconRole: "media-stop"
         text: qsTr("Stop") + menu.keys("VIDEO_STOP")
         enabled: menu.shell.video.playing
         onTriggered: if (!menu.gesture("VIDEO_STOP")) menu.shell.video.stop()
@@ -58,6 +60,7 @@ ShellMenu {
     ShellMenu {
         id: recentSubtitlesMenu
         objectName: "videoMenuRecentSubtitles"
+        iconRole: "recent-subtitles"
         title: qsTr("Recently opened subtitles")
         Instantiator {
             model: menu.recent.subtitles
@@ -75,6 +78,7 @@ ShellMenu {
     ShellMenu {
         id: recentVideosMenu
         objectName: "videoMenuRecentVideos"
+        iconRole: "recent-video"
         title: qsTr("Recently opened videos")
         Instantiator {
             model: menu.recent.videos
@@ -91,12 +95,14 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "videoMenuOpenVideo"
+        iconRole: "open-video"
         text: qsTr("Open video") + (menu.shell.boundKeys("GLOBAL_OPEN_VIDEO", 0).length
                                     ? "\t" + menu.shell.boundKeys("GLOBAL_OPEN_VIDEO", 0) : "")
         onTriggered: menu.openVideoRequested()
     }
     ShellMenuItem {
         objectName: "videoMenuOpenSubtitles"
+        iconRole: "open-subtitles"
         text: qsTr("Open subtitles") + (menu.shell.boundKeys("GLOBAL_OPEN_SUBS", 0).length
                                         ? "\t" + menu.shell.boundKeys("GLOBAL_OPEN_SUBS", 0) : "")
         onTriggered: menu.openSubtitlesRequested()
@@ -114,24 +120,28 @@ ShellMenu {
     }
     ShellMenuItem {
         objectName: "videoMenuSaveSubbedFrame"
+        iconRole: "frame-snapshot"
         text: qsTr("Save frame with subtitles as PNG") + menu.keys("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")) menu.shell.videoView.snapshot("VIDEO_SAVE_SUBBED_FRAME_TO_PNG")
     }
     ShellMenuItem {
         objectName: "videoMenuCopySubbedFrame"
+        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
         text: qsTr("Copy frame with subtitles to clipboard") + menu.keys("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")) menu.shell.videoView.snapshot("VIDEO_COPY_SUBBED_FRAME_TO_CLIPBOARD")
     }
     ShellMenuItem {
         objectName: "videoMenuSaveFrame"
+        iconRole: "frame-snapshot"
         text: qsTr("Save frame as PNG") + menu.keys("VIDEO_SAVE_FRAME_TO_PNG")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_SAVE_FRAME_TO_PNG")) menu.shell.videoView.snapshot("VIDEO_SAVE_FRAME_TO_PNG")
     }
     ShellMenuItem {
         objectName: "videoMenuCopyFrame"
+        iconRole: "edit-copy" // a copy to the clipboard, as Copy in the Grid and text menus
         text: qsTr("Copy frame to clipboard") + menu.keys("VIDEO_COPY_FRAME_TO_CLIPBOARD")
         enabled: menu.shell.videoView.canSnapshot
         onTriggered: if (!menu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) menu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")

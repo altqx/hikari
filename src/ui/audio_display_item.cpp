@@ -14,6 +14,7 @@
 #include <QSGTextNode>
 #include <QTextLayout>
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <memory>
@@ -126,6 +127,10 @@ Drawing describe(const std::vector<AudioShape> &shapes, const std::function<QFon
             qreal x = s.x1, y = s.y1;
             if (s.align != AudioShape::Align::TopLeft)
                 x = s.x1 + (s.x2 - s.x1 - w) / 2;
+            // The ruler's first time label starts at the display's edge
+            // rather than half outside it (legacy centred it on x = 0).
+            if (s.font == AudioShape::Font::Scale && s.align == AudioShape::Align::TopCenter)
+                x = std::max<qreal>(x, 0);
             if (s.align == AudioShape::Align::Center)
                 y = s.y1 + (s.y2 - s.y1 - h) / 2;
             out.items.emplace_back(Drawing::Text{std::move(layout), QPointF(std::round(x), std::round(y)),

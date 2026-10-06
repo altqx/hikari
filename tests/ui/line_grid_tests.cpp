@@ -534,6 +534,65 @@ private slots:
         }
     }
 
+    // UI polish: the number's digits sit on their label colour and read on
+    // it in every theme, for every Line state and on a Comment: they take the
+    // label's ink (text, or field where text contrasts less), at 4.5:1 or
+    // more, and are painted in it.
+    void numberDigitsReadOnTheirLabel()
+    {
+        const char *script = "[Events]\n"
+                             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,plain\n"
+                             "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,changed\n"
+                             "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,saved\n"
+                             "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,doubtful\n"
+                             "Comment: 0,0:00:09.00,0:00:10.00,Default,,0,0,0,,a comment\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setChangeState([](const core::LineRecord &l) {
+            return l.id.value == 2 ? 1 : l.id.value == 3 ? 2 : l.id.value == 4 ? 4 : 0;
+        });
+        model.setDocument(core::loadAss(bytes).document);
+        SettingsStore store;
+        auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
+        theme::useSettings(&store);
+        store.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto distance = [](const QColor &a, const QColor &b) {
+            return std::abs(a.red() - b.red()) + std::abs(a.green() - b.green()) + std::abs(a.blue() - b.blue());
+        };
+        for (const auto code : theme::kCodes) {
+            store.setValue(QStringLiteral("appearance.theme"), theme::codeName(code));
+            const auto &roles = theme::current().roles;
+            const auto colours = LineTableModel::themeLabelColours(theme::isDark(code));
+            LineGrid grid;
+            grid.setSize(QSizeF(720, 160));
+            grid.setModel(&model);
+            QImage image(720, 160, QImage::Format_ARGB32);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            painter.end();
+            const double rh = grid.rowHeight();
+            const QRectF number = grid.cellRect(0, 0);
+            const int labelOf[] = {0, 1, 2, 3, 0};
+            for (int row = 0; row < 5; ++row) {
+                const QColor label = colours[labelOf[row]];
+                const QColor ink = theme::contrastRatio(roles.field, label) > theme::contrastRatio(roles.text, label)
+                                       ? roles.field
+                                       : roles.text;
+                const QString what = theme::codeName(code) + QStringLiteral(" row %1").arg(row);
+                QVERIFY2(theme::contrastRatio(ink, label) >= 4.5,
+                         qPrintable(what + QStringLiteral(": %1 on %2").arg(ink.name(), label.name())));
+                // The digit's nearest pixel to the ink, left of the mark.
+                const int top = int(grid.geometry().headerHeight + row * rh);
+                int nearest = 1000;
+                for (int y = top + 2; y < int(top + rh) - 2; ++y)
+                    for (int x = int(number.left()) + 4; x < int(number.right()) - 12; ++x)
+                        nearest = std::min(nearest, distance(image.pixelColor(x, y), ink));
+                QVERIFY2(nearest <= 24, qPrintable(what + QStringLiteral(": %1").arg(nearest)));
+            }
+        }
+    }
+
     // E6: hidden tags as painted (the Text column's swapped text).
     void paintsHiddenTags()
     {

@@ -154,12 +154,19 @@ Item {
         objectName: "visualWarning"
         visible: text.length > 0
         text: overlayItem.tools.warning
-        color: "red"
-        style: Text.Outline
-        styleColor: "black"
-        font.family: "Tahoma"
+        // Legacy's text, size and centring; drawn in the theme's danger
+        // colour and the application's font on a scrim of the panel colour
+        // (legacy's pure red on a black outline in Tahoma read as an error
+        // banner).
+        color: Theme.danger
         font.bold: true
         font.pixelSize: Math.max(1, overlayItem.tools.videoRect.width / 20)
+        padding: Math.max(2, font.pixelSize / 3)
+        background: Rectangle {
+            color: Qt.alpha(Theme.panel, 0.85)
+            border.color: Theme.line
+            radius: 4
+        }
         horizontalAlignment: Text.AlignHCenter
         x: overlayItem.tools.videoRect.x + (overlayItem.tools.videoRect.width - width) / 2
         y: overlayItem.tools.videoRect.y + (overlayItem.tools.videoRect.height - height) / 2

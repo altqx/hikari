@@ -261,7 +261,16 @@ private slots:
                                  "commit", "tag-bold", "colour-shadow", "tag-font", "tab-close", "tab-new",
                                  "document-modified", "search", "find-replace", "history", "styles", "settings",
                                  "select-lines", "automation", "tool-crosshair", "tool-all-tags", "font-collector",
-                                 "vector-line", "clip-invert"})
+                                 "vector-line", "clip-invert",
+                                 // the UI polish's roles: the batch picker, the list and edit
+                                 // commands, the folders, the menus and the Options pages
+                                 "pick-lines", "clear", "move-to-top", "move-up", "move-down", "move-to-bottom",
+                                 "menu-more", "add", "remove", "edit", "duplicate", "delete", "import", "refresh",
+                                 "filter", "edit-copy", "edit-cut", "edit-paste", "folder-open", "find-in-files",
+                                 "show-in-folder", "compare", "reference", "extract-subtitles", "multireplace",
+                                 "close-video", "frame-snapshot", "zoom-reset", "volume", "match-previous",
+                                 "match-next", "unload", "run-script", "settings-video", "settings-audio",
+                                 "appearance", "hotkeys", "copy-to-storage", "copy-to-ass", "copy-to-all-ass"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
         int pending = 0;
@@ -276,7 +285,96 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        QCOMPARE(pending, 12);
+        // T6's position shifter options, D2's view arrangements, V5's full
+        // screen (D2's editor switch shares the editor role the Options
+        // dialog's Editor page shows).
+        QCOMPARE(pending, 13);
+    }
+
+    // The glyphs that stood in for icons, alone or as a prefix before words.
+    static bool isStandInGlyph(const QString &literal)
+    {
+        static const QRegularExpression alone(QStringLiteral(R"re(^\s*(\+|-|−|\.\.\.|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s*$)re"));
+        static const QRegularExpression prefix(QStringLiteral(R"re(^\s*(\+|…|⇈|⇊|↑|↓|←|→|↗|×|✕|▶|■)\s+\S)re"));
+        return alone.match(literal).hasMatch() || prefix.match(literal).hasMatch();
+    }
+    // Every button-like object in `qml` (its whole block, children
+    // included) whose text, a string or a qsTr() string, plain or followed
+    // by a concatenation, is or starts with a stand-in glyph. Every hit,
+    // not the first one.
+    static QStringList glyphButtons(const QString &qml)
+    {
+        static const QRegularExpression button(QStringLiteral(
+            R"re(\b(Button|ToolButton|RoundButton|TabButton|DelayButton|IconButton|IconToolButton|IconTextButton|IconTabButton|MenuItem|ShellMenuItem|CheckBox|RadioButton|Switch)\s*\{)re"));
+        static const QRegularExpression text(QStringLiteral("\\btext:\\s*(?:qsTr\\x28\\s*)?\"((?:[^\"\\\\]|\\\\.)*)\""));
+        QStringList out;
+        auto it = button.globalMatch(qml);
+        while (it.hasNext()) {
+            const auto m = it.next();
+            // The block, to its matching brace (braces in strings are rare
+            // enough in the shell's QML to ignore).
+            qsizetype at = m.capturedEnd(), depth = 1;
+            while (at < qml.size() && depth > 0) {
+                if (qml[at] == QLatin1Char('{'))
+                    ++depth;
+                else if (qml[at] == QLatin1Char('}'))
+                    --depth;
+                ++at;
+            }
+            const QString block = qml.mid(m.capturedEnd(), at - m.capturedEnd());
+            auto texts = text.globalMatch(block);
+            while (texts.hasNext()) {
+                const auto t = texts.next();
+                if (isStandInGlyph(t.captured(1)))
+                    out << m.captured(1) + QStringLiteral(" ") + t.captured(0);
+            }
+        }
+        return out;
+    }
+
+    // An icon button draws an icon of the set, never a glyph standing in
+    // for one: no button, tool button, menu item or check whose text is
+    // "+", "-", "...", an arrow, a cross or a transport glyph, or starts
+    // with one before its words (the Style manager's "⇈ ↑ ↓ ⇊", the "+"
+    // choosers and profile buttons, Find in subtitles' " ... "), whether a
+    // plain string, a qsTr() string or the first part of a concatenation;
+    // every button of every file is read. A Label's "×" between a width and
+    // a height is text, not a button. A script's own dialog
+    // (AutomationDialog.qml, defined by the script) is left as its script
+    // made it. The checker is first shown to catch the regressions it is for.
+    void noGlyphStandsInForAnIcon()
+    {
+        const QString caught = QStringLiteral(
+            "Item {\n"
+            "  Button { text: \"+\" }\n"
+            "  ToolButton { text: qsTr(\"-\"); onClicked: {} }\n"
+            "  IconTextButton { text: \"↑ \" + qsTr(\"Add to storage\") }\n"
+            "  Button { text: qsTr(\"↓ Add to ASS\") }\n"
+            "  ShellMenuItem { text: qsTr(\"…\") + menu.keys(\"X\") }\n"
+            "  RowLayout { Button { id: b; text: \"×\" } }\n"
+            "}\n");
+        QCOMPARE(glyphButtons(caught).size(), 6);
+        const QString passed = QStringLiteral(
+            "Item {\n"
+            "  Label { text: \"×\" }\n"
+            "  Button { text: qsTr(\"Add to storage\") }\n"
+            "  Button { text: qsTr(\"Open...\") }\n"
+            "  TextField { text: \"-00000.00\" }\n"
+            "}\n");
+        QCOMPARE(glyphButtons(passed), QStringList());
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files | QDir::NoDotAndDotDot,
+                        QDirIterator::Subdirectories);
+        int files = 0;
+        while (it.hasNext()) {
+            QFile file(it.next());
+            if (QFileInfo(file).fileName() == QLatin1String("AutomationDialog.qml"))
+                continue;
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            ++files;
+            const QStringList hits = glyphButtons(QString::fromUtf8(file.readAll()));
+            QVERIFY2(hits.isEmpty(), qPrintable(QFileInfo(file).fileName() + QStringLiteral(": ") + hits.join(QStringLiteral(" | "))));
+        }
+        QVERIFY(files > 50);
     }
 
     void svgsAreMonochromeOnTheGrid_data()
@@ -754,8 +852,9 @@ Rectangle {
         const QSet<QString> expected{
             // undo and redo
             QStringLiteral("undo"), QStringLiteral("redo"), QStringLiteral("undo-to-last-save"),
-            // list icons
+            // list icons (the polish's batch picker and Fix minor errors among them)
             QStringLiteral("sort"), QStringLiteral("sort-selected"), QStringLiteral("select-lines"),
+            QStringLiteral("pick-lines"), QStringLiteral("multireplace"), QStringLiteral("edit-paste"),
             // text-line icons
             QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
             QStringLiteral("view-only-subs"),
@@ -842,7 +941,17 @@ Rectangle {
     void contactSheets()
     {
         auto restore = qScopeGuard([] { ui::theme::endPreview(); });
-        const QStringList roles = ui::icons::roles();
+        // HIKARI_ICON_SHEET_ROLES (comma-separated) draws a sheet of those
+        // roles only, for reviewing new icons; HIKARI_ICON_SHEET_PREFIX names
+        // the files (default "k1").
+        QStringList roles = ui::icons::roles();
+        if (const QString only = qEnvironmentVariable("HIKARI_ICON_SHEET_ROLES"); !only.isEmpty()) {
+            const QStringList wanted = only.split(QLatin1Char(','), Qt::SkipEmptyParts);
+            for (const auto &role : wanted)
+                QVERIFY2(roles.contains(role), qPrintable(role));
+            roles = wanted;
+        }
+        const QString prefix = qEnvironmentVariable("HIKARI_ICON_SHEET_PREFIX", QStringLiteral("k1"));
         constexpr int columns = 8, cellWidth = 168, cellHeight = 44;
         const int rows = int((roles.size() + columns - 1) / columns);
         const QString outDir = qEnvironmentVariable("HIKARI_ICON_SHEET_DIR");
@@ -910,8 +1019,8 @@ Rectangle {
             QVERIFY2(worst <= 8, qPrintable(QStringLiteral("%1 differs by %2").arg(worstRole).arg(worst)));
             if (!outDir.isEmpty()) {
                 QDir().mkpath(outDir);
-                const QString name = QStringLiteral("%1/k1-%2-%3.png")
-                                         .arg(outDir, ui::theme::codeName(code))
+                const QString name = QStringLiteral("%1/%2-%3-%4.png")
+                                         .arg(outDir, prefix, ui::theme::codeName(code))
                                          .arg(qRound(dpr * 100));
                 QVERIFY(sheet.save(name));
             }

@@ -20,6 +20,8 @@ Dialog {
     required property LineEditorController editor
     required property ColourPickerController picker
     title: qsTr("Choose color")
+    // K1: the title with its icon, as the other dialogs show theirs.
+    header: IconDialogHeader { objectName: "colourPickerDialogTitle"; iconRole: "eyedropper"; text: dialog.title }
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     property bool loading: false
@@ -296,7 +298,10 @@ Dialog {
             // COLORPICKER_SWITCH_CLICKS, saved at each click.
             CheckBox {
                 objectName: "switchClicks"
-                text: qsTr("Swap shortcuts between the color picker\nand the color selection window")
+                text: qsTr("Swap shortcuts between the color picker\nand the color selection window").replace("\n", " ")
+                Component.onCompleted: if (contentItem && contentItem.wrapMode !== undefined) contentItem.wrapMode = Text.Wrap
+                Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
+                Layout.fillWidth: true
                 checked: dialog.picker.switchClicks
                 onToggled: dialog.picker.switchClicks = checked
                 ToolTip.visible: hovered

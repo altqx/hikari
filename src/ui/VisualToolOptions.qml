@@ -7,8 +7,8 @@ import Hikari.Ui
 // (the VisualItem of the family: PositionItem's "by rectangle", X and Y
 // toggles and its alignment choice, MoveItem's two points, ScaleItem,
 // RotationZItem, RotationXYItem, VectorItem's point modes (one on at a time)
-// and Invert clip, ClipRectangleItem's Invert clip, ...), in a row above the
-// values below the canvas (layout A). Each button shows its icon of the K1
+// and Invert clip, ClipRectangleItem's Invert clip, ...), first in the tool
+// strip below the canvas (VisualToolValues, layout A); absent with no option. Each button shows its icon of the K1
 // set with legacy's help text as its tooltip; a greyed icon is a disabled
 // button (X and Y without the rectangle, as legacy greyed them), a pushed
 // one a checked toggle; an action acts at once. The item's links (an option

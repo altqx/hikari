@@ -17,6 +17,8 @@ Dialog {
     objectName: "dummyVideoDialog"
     required property var app
     title: qsTr("Dummy video options")
+    // K1: the title with its icon, as the other dialogs show theirs.
+    header: IconDialogHeader { objectName: "dummyVideoDialogTitle"; iconRole: "open-video"; text: dialog.title }
     modal: true
     standardButtons: Dialog.Ok | Dialog.Cancel
     property var defaults: ({})
@@ -84,7 +86,7 @@ Dialog {
                     from: 300; to: 8000; editable: true
                     Accessible.name: qsTr("Width")
                 }
-                Label { text: "x" }
+                Label { text: "×" }
                 SpinBox {
                     id: heightBox
                     objectName: "dummyHeight"

@@ -127,7 +127,7 @@ Window {
             Button {
                 objectName: "hotkeyRefusalOk"
                 Layout.alignment: Qt.AlignHCenter
-                text: "OK"
+                text: qsTr("OK")
                 onClicked: {
                     refusal.close()
                     mapping.requestActivate()

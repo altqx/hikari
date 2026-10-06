@@ -14,7 +14,7 @@ RowLayout {
     id: choices
     objectName: "videoFollowChoices"
     required property SettingsStore settings
-    spacing: 2
+    spacing: 4
 
     Item { Layout.fillWidth: true } // legacy draws the lists at the toolbar's right end
     // Each list shows its widest choice when the panel has the room and
@@ -23,6 +23,14 @@ RowLayout {
     // and push Next frame and the volume past the panel's edge, under the
     // next dock.
 
+    // Each list names itself with a short muted caption (the full legacy
+    // label is its tooltip and accessible name): "Nothing" alone said
+    // nothing out of context.
+    Label {
+        text: qsTr("Seek on")
+        color: Theme.muted
+        Layout.leftMargin: 6
+    }
     ComboBox {
         id: seekAfter
         objectName: "videoSeekAfter"
@@ -40,6 +48,11 @@ RowLayout {
         ToolTip.text: qsTr("Move video to selected line on:")
         Accessible.name: qsTr("Move video to selected line on:")
         onActivated: index => choices.settings.setValue("video.moveToActiveLine", index)
+    }
+    Label {
+        text: qsTr("Then play")
+        color: Theme.muted
+        Layout.leftMargin: 10
     }
     ComboBox {
         id: playAfter

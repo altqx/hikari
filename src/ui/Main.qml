@@ -491,6 +491,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "tab-close"
                     objectName: "closeMenuItem"
                     action: Action {
                         id: closeAction
@@ -742,7 +743,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
-                iconRole: "select-lines"
+                iconRole: "multireplace"
                 objectName: "misspellMenuItem"
                 action: Action {
                     id: misspellAction
@@ -828,6 +829,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "run-script"
                 objectName: "loadLastScriptMenuItem"
                 action: Action {
                     id: loadLastScriptAction
@@ -1034,6 +1036,7 @@ ApplicationWindow {
             // V3-unload-video), the streams and the chapters.
             MenuSeparator {}
             ShellMenuItem {
+                iconRole: "close-video"
                 objectName: "unloadVideoMenuItem"
                 text: qsTr("Unload video")
                 enabled: root.video.loaded
@@ -1059,6 +1062,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "zoom-reset"
                 objectName: "resetVideoZoomMenuItem"
                 action: Action {
                     id: resetVideoZoomAction
@@ -1464,12 +1468,13 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => editMenu.removeItem(object)
             }
             MenuSeparator { visible: editMenu.suggestions.length > 0; height: visible ? implicitHeight : 0 }
-            ShellMenuItem { text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
-            ShellMenuItem { text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
-            ShellMenuItem { text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
+            ShellMenuItem { iconRole: "edit-copy"; text: qsTr("&Copy"); enabled: field.selectedText.length > 0; onTriggered: field.copy() }
+            ShellMenuItem { iconRole: "edit-cut"; text: qsTr("Cu&t"); enabled: field.selectedText.length > 0 && !field.readOnly; onTriggered: field.cut() }
+            ShellMenuItem { iconRole: "edit-paste"; text: qsTr("&Paste"); enabled: !field.readOnly; onTriggered: field.paste() }
             MenuSeparator {}
             ShellMenuItem {
                 id: spellingOnItem
+                iconRole: "spellchecker"
                 objectName: field.objectName + "SpellingOn"
                 text: qsTr("Spellchecker")
                 checkable: true
@@ -1527,6 +1532,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "delete"
                 text: qsTr("&Delete")
                 enabled: field.selectedText.length > 0 && !field.readOnly
                 onTriggered: field.remove(field.selectionStart, field.selectionEnd)
@@ -1567,6 +1573,18 @@ ApplicationWindow {
                 return "EDITBOX_COMMIT"
             return root.hotkeys.actionFor(2, event.key, event.modifiers)
         }
+        // TextEditor::OnKeyPress (DialogueTextEditor.cpp:534-545): Tab never
+        // goes into the text; it is a navigation event, forward or with
+        // Shift backward, to the next control in the tab order (the tag
+        // list, which takes its own keys first, closes as the field loses
+        // focus). Its window change flag (Ctrl) reached EditBox's
+        // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
+        // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
+        function tabOut(forward) {
+            const next = field.nextItemInFocusChain(forward)
+            if (next && next !== field)
+                next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+        }
         Keys.onShortcutOverride: event => event.accepted = hotkeyAction(event) !== "" || tagListPopup.takesKey(event)
         Keys.onPressed: event => {
             if (tagListPopup.key(event)) {
@@ -1577,6 +1595,9 @@ ApplicationWindow {
             const action = hotkeyAction(event)
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape) {
                 root.editor.discard()
@@ -1613,6 +1634,9 @@ ApplicationWindow {
         default property alias content: body.data
         readonly property real bodyHeight: body.height
         activeFocusOnTab: false
+        // A panel squeezed below its content's size cuts it off rather than
+        // draw over the next panel (the focus ring keeps the margin's room).
+        clip: true
         Accessible.role: Accessible.Pane
         Accessible.name: accessibleName
         Accessible.description: accessibleName !== title ? title : ""
@@ -1796,25 +1820,17 @@ ApplicationWindow {
                     id: videoControls
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                     spacing: 2
-                VisualToolOptions { // T2, T3: the family's options (legacy VideoToolbar's second row)
-                    Layout.fillWidth: true
-                    // As the values row: never widens the column.
-                    Layout.minimumWidth: 0
-                    clip: true
-                    tools: root.visualTools
-                }
                     // V4: the wheel over the panel is the volume's (VideoBox.cpp:519-534).
                     WheelHandler {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolValues {
+                VisualToolValues { // T1-T4: the family's options, values and batch picker
                     Layout.fillWidth: true
-                    // Its fields and buttons do not shrink: wider text (a
+                    // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
-                    // widen the column and push Next frame out of the panel.
+                    // push Next frame out of the panel.
                     Layout.minimumWidth: 0
-                    clip: true
                     tools: root.visualTools
                 }
                 Slider {
@@ -1829,12 +1845,26 @@ ApplicationWindow {
                     Accessible.name: qsTr("Video position")
                     onMoved: root.video.showFrameAt(Math.round(value))
                 }
-                Label {
-                    objectName: "videoTimes"
+                RowLayout {
                     Layout.fillWidth: true
-                    text: root.video.times
-                    color: root.video.keyframeShown ? Theme.warning : palette.windowText
-                    Accessible.name: qsTr("Video times")
+                    spacing: 10
+                    Label {
+                        objectName: "videoTimes"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        elide: Text.ElideRight
+                        text: root.video.times
+                        font.features: { "tnum": 1 }
+                        color: root.video.keyframeShown ? Theme.warning : palette.windowText
+                        Accessible.name: qsTr("Video times")
+                        // Legacy's times field: its parts named in the tooltip.
+                        Accessible.description: qsTr("Frame time; frame number; frames from the line's start frame; "
+                                                     + "milliseconds from the line's start and end")
+                        HoverHandler { id: timesHover }
+                        ToolTip.visible: timesHover.hovered && text.length > 0
+                        ToolTip.text: Accessible.description
+                    }
+                    VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
                 VideoFollowChoices { Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
@@ -1847,7 +1877,9 @@ ApplicationWindow {
                     // the text stays the accessible name.
                     // V3: legacy's Previous file / Next file buttons around
                     // the transport (VideoBox.cpp:156-165), asking first.
-                    IconButton {
+                    // Flat tool buttons, as the audio box's (one button
+                    // language for the two transports).
+                    IconToolButton {
                         objectName: "previousFile"
                         iconRole: "media-previous-file"
                         text: qsTr("Previous file")
@@ -1855,7 +1887,7 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTr("Previous file"), "VIDEO_PREVIOUS_FILE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_PREVIOUS_FILE", 3, "bitmap")) videoFileQuestion.ask(false)
                     }
-                    IconButton {
+                    IconToolButton {
                         objectName: "playPause"
                         iconRole: root.video.playing ? "media-pause" : "media-play"
                         text: root.video.playing ? qsTr("Pause") : qsTr("Play")
@@ -1866,7 +1898,7 @@ ApplicationWindow {
                     }
                     // A4: GLOBAL_PLAY_ACTUAL_LINE; legacy then focuses the
                     // Line editor's text.
-                    IconButton {
+                    IconToolButton {
                         objectName: "playActualLine"
                         iconRole: "play-line"
                         text: qsTr("Play line")
@@ -1881,7 +1913,7 @@ ApplicationWindow {
                             root.video.playActualLine()
                         }
                     }
-                    IconButton {
+                    IconToolButton {
                         objectName: "stopVideo"
                         iconRole: "media-stop"
                         text: qsTr("Stop")
@@ -1890,7 +1922,7 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTr("Stop"), "VIDEO_STOP", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_STOP", 3, "bitmap")) root.video.stop()
                     }
-                    IconButton {
+                    IconToolButton {
                         objectName: "nextFile"
                         iconRole: "media-next-file"
                         text: qsTr("Next file")
@@ -1898,7 +1930,7 @@ ApplicationWindow {
                         tip: root.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
                         onClicked: if (!root.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) videoFileQuestion.ask(true)
                     }
-                    IconButton {
+                    IconToolButton {
                         objectName: "previousFrame"
                         iconRole: "frame-previous"
                         text: qsTr("Previous frame")
@@ -1911,7 +1943,7 @@ ApplicationWindow {
                         Layout.fillWidth: true
                         horizontalAlignment: Text.AlignHCenter
                     }
-                    IconButton {
+                    IconToolButton {
                         objectName: "nextFrame"
                         iconRole: "frame-next"
                         text: qsTr("Next frame")
@@ -1965,6 +1997,14 @@ ApplicationWindow {
                     anchors { left: parent.left; right: audioSliders.left; bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
+                    // A visible track in the boundary colour: the handle alone
+                    // read as a stray pill.
+                    background: Rectangle {
+                        implicitHeight: 6
+                        radius: 3
+                        color: Theme.field
+                        border.color: Theme.line
+                    }
                     Binding on position {
                         when: !audioScroll.pressed
                         value: root.audio.scrollRange > 0 ? root.audio.scrollPosition / root.audio.scrollRange : 0
@@ -2379,251 +2419,366 @@ ApplicationWindow {
                     root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
                     event.accepted = true
                 }
-                ColumnLayout {
-                    anchors.fill: parent
+                // The dock keeps room for the tag buttons and a line of each
+                // text field shown (with the body's margins); the docking
+                // engine stops a separator there. The rest scrolls.
+                readonly property int minimumHeight: Math.ceil(8 + tagRow.implicitHeight + editorColumn.spacing
+                                                               + lineText.Layout.minimumHeight
+                                                               + (translationText.visible ? editorColumn.spacing
+                                                                  + translationText.Layout.minimumHeight : 0))
+                function reportMinimumHeight() { Docking.setMinimumSize("Editor", 0, minimumHeight) }
+                onMinimumHeightChanged: reportMinimumHeight()
+                Component.onCompleted: Qt.callLater(reportMinimumHeight)
 
-                    // The tag and colour buttons (legacy BoxSizer4).
-                    RowLayout {
-                        Layout.fillWidth: true
-                        // Ordinary ASS controls; they keep focus (and the
-                        // selection) in the text field.
-                        Repeater {
-                            // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
-                            // maps the hotkey, the tooltip shows it.
-                            // K1: the set's icons in place of the letters
-                            // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
-                            // bitmaps, EditBox.cpp:168-195).
-                            model: [
-                                { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
-                                { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
-                                { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
-                                { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
-                            ]
+                // A dock shorter than the Line editor's rows (translation mode
+                // in the default 1280 x 800 layout) scrolls them, with a thin
+                // bar beside them; nothing is cut off below the dock's edge.
+                // The wheel and the bar scroll; a mouse drag stays the text
+                // fields' selection, and touch flicks. The scrolled area
+                // takes the whole panel with the body's margin inside it, so
+                // focus rings keep the room they had at the panel's edges.
+                Flickable {
+                    id: editorScroll
+                    objectName: "editorScroll"
+                    anchors {
+                        fill: parent
+                        margins: -4
+                    }
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    flickableDirection: Flickable.VerticalFlick
+                    acceptedButtons: Qt.NoButton
+                    readonly property int barWidth: 6
+                    readonly property bool overflows: editorColumn.implicitHeight + 8 > height + 0.5
+                    contentWidth: width - (overflows ? barWidth : 0)
+                    contentHeight: editorColumn.height + 8
+                    // Keyboard focus brings its control into view, and a text
+                    // field keeps its caret in view while it is typed in.
+                    readonly property Item focusItem: Window.activeFocusItem
+                    onFocusItemChanged: Qt.callLater(revealFocus)
+                    function inEditor(item) {
+                        for (let p = item; p; p = p.parent) {
+                            if (p === editorColumn)
+                                return true
+                        }
+                        return false
+                    }
+                    function reveal(item, rect) {
+                        const r = item.mapToItem(contentItem, rect)
+                        const room = 5 // the focus ring's (FocusRing: 3 out, 2 wide)
+                        let y = contentY
+                        if (r.y + r.height + room > y + height)
+                            y = r.y + r.height + room - height
+                        if (r.y - room < y)
+                            y = r.y - room
+                        contentY = Math.max(0, Math.min(y, contentHeight - height))
+                    }
+                    function revealFocus() {
+                        let item = focusItem
+                        if (!item || !inEditor(item))
+                            return
+                        // An editable box's text field brings the whole box.
+                        for (let p = item.parent; p && p !== editorColumn; p = p.parent) {
+                            if (p.activeFocus && p.height <= height)
+                                item = p
+                        }
+                        // A text field taller than the view keeps its caret in view.
+                        if ((item === lineText || item === translationText) && item.height + 6 > height)
+                            reveal(item, item.cursorRectangle)
+                        else
+                            reveal(item, Qt.rect(0, 0, item.width, item.height))
+                    }
+                    Connections {
+                        target: lineText
+                        function onCursorRectangleChanged() { if (lineText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
+                    }
+                    Connections {
+                        target: translationText
+                        function onCursorRectangleChanged() { if (translationText.activeFocus) Qt.callLater(editorScroll.revealFocus) }
+                    }
+                    ScrollBar.vertical: ScrollBar {
+                        objectName: "editorScrollBar"
+                        parent: editorScroll
+                        x: editorScroll.width - width - 2 // inside the panel's border
+                        y: 2
+                        height: editorScroll.height - 4
+                        width: editorScroll.barWidth
+                        padding: 0
+                        policy: editorScroll.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                        focusPolicy: Qt.NoFocus
+                        // A visible track in the boundary colour, as the
+                        // visual tool rail's and the audio display's.
+                        background: Rectangle {
+                            implicitWidth: editorScroll.barWidth
+                            radius: editorScroll.barWidth / 2
+                            color: Theme.field
+                            border.color: Theme.line
+                        }
+                        contentItem: Rectangle {
+                            implicitWidth: editorScroll.barWidth
+                            implicitHeight: 12
+                            radius: editorScroll.barWidth / 2
+                            color: parent.pressed ? Theme.text : Theme.muted
+                            opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: editorColumn
+                        objectName: "editorContent"
+                        // the body's margin, in the scrolled area
+                        x: 4
+                        y: 4
+                        width: editorScroll.contentWidth - 8
+                        // The rows' own heights, or the dock's when it is taller
+                        // (the text fields take the rest).
+                        height: Math.max(editorScroll.height - 8, implicitHeight)
+
+                        // The tag and colour buttons (legacy BoxSizer4).
+                        RowLayout {
+                            id: tagRow
+                            Layout.fillWidth: true
+                            // Ordinary ASS controls; they keep focus (and the
+                            // selection) in the text field.
+                            Repeater {
+                                // O2: mapped buttons (EDITBOX_INSERT_BOLD ...): Shift+click
+                                // maps the hotkey, the tooltip shows it.
+                                // K1: the set's icons in place of the letters
+                                // (legacy EditBox's BOLD, ITALIC, UNDER, STRIKE
+                                // bitmaps, EditBox.cpp:168-195).
+                                model: [
+                                    { tag: "b", name: qsTr("Bold"), symbol: "EDITBOX_INSERT_BOLD" },
+                                    { tag: "i", name: qsTr("Italic"), symbol: "EDITBOX_INSERT_ITALIC" },
+                                    { tag: "u", name: qsTr("Underline"), symbol: "EDITBOX_CHANGE_UNDERLINE" },
+                                    { tag: "s", name: qsTr("Strikeout"), symbol: "EDITBOX_CHANGE_STRIKEOUT" }
+                                ]
+                                IconToolButton {
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "tag_" + modelData.tag
+                                    iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                            return
+                                        const field = translationText.activeFocus ? translationText : lineText
+                                        root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    }
+                                }
+                            }
+                            // E1: Font selection and the four colours
+                            // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
                             IconToolButton {
-                                required property var modelData
-                                required property int index
-                                objectName: "tag_" + modelData.tag
-                                iconRole: ["tag-bold", "tag-italic", "tag-underline", "tag-strikeout"][index]
-                                text: modelData.name
+                                objectName: "changeFont"
+                                iconRole: "tag-font"
+                                text: qsTr("Font selection")
                                 focusPolicy: Qt.NoFocus
                                 enabled: root.editor.editable
-                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
                                 onClicked: {
-                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                    if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
                                     const field = translationText.activeFocus ? translationText : lineText
-                                    root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
+                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
-                        }
-                        // E1: Font selection and the four colours
-                        // (EDITBOX_CHANGE_FONT, EDITBOX_CHANGE_COLOR_*).
-                        IconToolButton {
-                            objectName: "changeFont"
-                            iconRole: "tag-font"
-                            text: qsTr("Font selection")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            tip: root.mappedTip(qsTr("Font selection"), "EDITBOX_CHANGE_FONT", 2)
-                            onClicked: {
-                                if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
-                                    return
-                                const field = translationText.activeFocus ? translationText : lineText
-                                fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
-                            }
-                        }
-                        Repeater {
-                            model: [
-                                { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
-                                { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
-                                { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
-                                { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
-                            ]
-                            IconToolButton {
-                                required property var modelData
-                                objectName: "changeColour" + modelData.number
-                                iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
-                                text: modelData.name
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                tip: root.mappedTip(modelData.name, modelData.symbol, 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture(modelData.symbol, 2, true))
-                                        return
-                                    root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
-                                }
-                                // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
-                                TapHandler {
-                                    acceptedButtons: Qt.RightButton
-                                    onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                translationText.activeFocus ? translationText : lineText)
-                                }
-                            }
-                        }
-                        // E4: Text position (legacy Ban, after the colours).
-                        AlignmentChoice {
-                            editor: root.editor
-                            onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
-                        }
-                        // E2: custom tag buttons; right click (or a button
-                        // without a tag) edits it.
-                        Repeater {
-                            model: root.tagButtons.buttons
-                            ToolButton {
-                                required property var modelData
-                                required property int index
-                                objectName: "tagButton" + index
-                                text: modelData.name
-                                focusPolicy: Qt.NoFocus
-                                enabled: root.editor.editable
-                                Accessible.name: modelData.name
-                                Accessible.description: modelData.tag
-                                ToolTip.visible: hovered && modelData.tag.length > 0
-                                ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
-                                onClicked: {
-                                    if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
-                                        return
-                                    if (modelData.tag.length === 0)
-                                        tagButtonDialog.editButton(index)
-                                    else
-                                        root.applyTagButton(index)
-                                }
-                                TapHandler {
-                                    acceptedButtons: Qt.RightButton
-                                    onTapped: tagButtonDialog.editButton(index)
-                                }
-                            }
-                        }
-                        ToolButton {
-                            objectName: "manageTagButtons"
-                            text: qsTr("Manage tag buttons")
-                            focusPolicy: Qt.NoFocus
-                            onClicked: tagButtonsMenu.popup()
-                            ShellMenu {
-                                id: tagButtonsMenu
-                                Instantiator {
-                                    model: root.tagButtons.buttons
-                                    delegate: ShellMenuItem {
-                                        required property var modelData
-                                        required property int index
-                                        text: modelData.name
-                                        onTriggered: root.applyTagButton(index)
+                            Repeater {
+                                model: [
+                                    { number: 1, name: qsTr("Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
+                                    { number: 2, name: qsTr("Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
+                                    { number: 3, name: qsTr("Border color"), symbol: "EDITBOX_CHANGE_COLOR_OUTLINE" },
+                                    { number: 4, name: qsTr("Shadow color"), symbol: "EDITBOX_CHANGE_COLOR_SHADOW" }
+                                ]
+                                IconToolButton {
+                                    required property var modelData
+                                    objectName: "changeColour" + modelData.number
+                                    iconRole: ["colour-primary", "colour-secondary", "colour-outline", "colour-shadow"][modelData.number - 1]
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    tip: root.mappedTip(modelData.name, modelData.symbol, 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture(modelData.symbol, 2, true))
+                                            return
+                                        root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
                                     }
-                                    onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
-                                    onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
-                                }
-                                ShellMenuItem {
-                                    objectName: "changeTagButtonCount"
-                                    text: qsTr("Change number of buttons")
-                                    onTriggered: tagButtonCountDialog.open()
+                                    // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
+                                    TapHandler {
+                                        acceptedButtons: Qt.RightButton
+                                        onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
+                                                                                    translationText.activeFocus ? translationText : lineText)
+                                    }
                                 }
                             }
-                        }
-                        // The hidden-tag view's switch (E6: the hide-tags icon,
-                        // checked while tags are hidden).
-                        IconToolButton {
-                            objectName: "showTags"
-                            iconRole: "hide-tags"
-                            text: qsTr("Hide tags")
-                            checkable: true
-                            checked: !root.editor.showTags
-                            onToggled: root.editor.showTags = !checked
-                        }
-                    }
-                    // E5: legacy BoxSizer5, the row under the tag buttons
-                    // that holds "Translator mode" (EditBox.cpp:233-239, 308).
-                    RowLayout {
-                        TranslatorModeCheck { app: root.app; editor: root.editor }
-                    }
-
-                    // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
-                    LineCounters {
-                        editor: root.editor
-                        Layout.fillWidth: true
-                    }
-
-                    RoleField {
-                        id: lineText
-                        objectName: "lineText"
-                        role: 0
-                        focus: true
-                        Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
-                    }
-                    RoleField {
-                        id: translationText
-                        objectName: "translationText"
-                        role: 1
-                        visible: root.editor.translationMode
-                        Accessible.name: qsTr("Translated text")
-                    }
-                    // Legacy translation-mode buttons (EDITBOX_PASTE_*,
-                    // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
-                    // They wrap: a narrow editor, a larger font or longer
-                    // translated labels must not push them past the panel's
-                    // edge, out of reach.
-                    Flow {
-                        objectName: "translationButtons"
-                        visible: root.editor.translationMode
-                        Layout.fillWidth: true
-                        spacing: 5
-                        Button {
-                            objectName: "pasteAllToTranslation"
-                            text: qsTr("Paste all")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
-                            onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
-                        }
-                        Button {
-                            objectName: "pasteSelectionToTranslation"
-                            text: qsTr("Paste the selected")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
-                            onClicked: {
-                                if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
-                                    return
-                                root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
-                                                                        translationText.cursorPosition)
+                            // E4: Text position (legacy Ban, after the colours).
+                            AlignmentChoice {
+                                editor: root.editor
+                                onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
+                            }
+                            // E2: custom tag buttons; right click (or a button
+                            // without a tag) edits it.
+                            Repeater {
+                                model: root.tagButtons.buttons
+                                ToolButton {
+                                    required property var modelData
+                                    required property int index
+                                    objectName: "tagButton" + index
+                                    text: modelData.name
+                                    focusPolicy: Qt.NoFocus
+                                    enabled: root.editor.editable
+                                    Accessible.name: modelData.name
+                                    Accessible.description: modelData.tag
+                                    ToolTip.visible: hovered && modelData.tag.length > 0
+                                    ToolTip.text: root.mappedTip(modelData.tag, "EDITBOX_TAG_BUTTON" + (index + 1), 2)
+                                    onClicked: {
+                                        if (root.hotkeyGesture("EDITBOX_TAG_BUTTON" + (index + 1), 2, true))
+                                            return
+                                        if (modelData.tag.length === 0)
+                                            tagButtonDialog.editButton(index)
+                                        else
+                                            root.applyTagButton(index)
+                                    }
+                                    TapHandler {
+                                        acceptedButtons: Qt.RightButton
+                                        onTapped: tagButtonDialog.editButton(index)
+                                    }
+                                }
+                            }
+                            IconToolButton { // legacy's square MenuButton with ARROW_LIST_DOUBLE
+                                objectName: "manageTagButtons"
+                                iconRole: "menu-more"
+                                text: qsTr("Manage tag buttons")
+                                focusPolicy: Qt.NoFocus
+                                onClicked: tagButtonsMenu.popup()
+                                ShellMenu {
+                                    id: tagButtonsMenu
+                                    Instantiator {
+                                        model: root.tagButtons.buttons
+                                        delegate: ShellMenuItem {
+                                            required property var modelData
+                                            required property int index
+                                            text: modelData.name
+                                            onTriggered: root.applyTagButton(index)
+                                        }
+                                        onObjectAdded: (index, object) => tagButtonsMenu.insertItem(index, object)
+                                        onObjectRemoved: (index, object) => tagButtonsMenu.removeItem(object)
+                                    }
+                                    ShellMenuItem {
+                                        objectName: "changeTagButtonCount"
+                                        text: qsTr("Change number of buttons")
+                                        onTriggered: tagButtonCountDialog.open()
+                                    }
+                                }
+                            }
+                            // The hidden-tag view's switch (E6: the hide-tags icon,
+                            // checked while tags are hidden).
+                            IconToolButton {
+                                objectName: "showTags"
+                                iconRole: "hide-tags"
+                                text: qsTr("Hide tags")
+                                checkable: true
+                                checked: !root.editor.showTags
+                                onToggled: root.editor.showTags = !checked
                             }
                         }
-                        Button {
-                            objectName: "commentOutOriginal"
-                            text: qsTr("Comment out original")
-                            focusPolicy: Qt.NoFocus
-                            enabled: root.editor.editable
-                            ToolTip.visible: hovered
-                            ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
-                            onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
+                        // E5: legacy BoxSizer5, the row under the tag buttons
+                        // that holds "Translator mode" (EditBox.cpp:233-239, 308).
+                        RowLayout {
+                            TranslatorModeCheck { app: root.app; editor: root.editor }
                         }
-                        TranslationToggles { app: root.app; editor: root.editor } // E5
-                    }
 
-                    // E4: the Line's fields (legacy BoxSizer2, below the text).
-                    LineInspector {
-                        editor: root.editor
-                        hotkeys: root.hotkeys
-                        Layout.fillWidth: true
-                        onStyleEditRequested: style => styleManagerWindow.showFor(style)
-                    }
+                        // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
+                        LineCounters {
+                            editor: root.editor
+                            Layout.fillWidth: true
+                        }
 
-                    Label {
-                        objectName: "editorProblem"
-                        visible: text.length > 0
-                        text: root.editor.problem
-                        color: Theme.danger
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
-                        Accessible.role: Accessible.AlertMessage
-                    }
-                    Label {
-                        objectName: "editorAttempted"
-                        visible: root.editor.attempted.length > 0
-                        text: qsTr("Not applied: %1").arg(root.editor.attempted)
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
+                        RoleField {
+                            id: lineText
+                            objectName: "lineText"
+                            role: 0
+                            focus: true
+                            Accessible.name: root.editor.translationMode ? qsTr("Original text") : qsTr("Line text")
+                        }
+                        RoleField {
+                            id: translationText
+                            objectName: "translationText"
+                            role: 1
+                            visible: root.editor.translationMode
+                            Accessible.name: qsTr("Translated text")
+                        }
+                        // Legacy translation-mode buttons (EDITBOX_PASTE_*,
+                        // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
+                        // They wrap: a narrow editor, a larger font or longer
+                        // translated labels must not push them past the panel's
+                        // edge, out of reach.
+                        Flow {
+                            objectName: "translationButtons"
+                            visible: root.editor.translationMode
+                            Layout.fillWidth: true
+                            spacing: 5
+                            Button {
+                                objectName: "pasteAllToTranslation"
+                                text: qsTr("Paste all")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_ALL_TO_TRANSLATION", 2)
+                                onClicked: if (!root.hotkeyGesture("EDITBOX_PASTE_ALL_TO_TRANSLATION", 2, true)) root.editor.pasteAllToTranslation()
+                            }
+                            Button {
+                                objectName: "pasteSelectionToTranslation"
+                                text: qsTr("Paste the selected")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2)
+                                onClicked: {
+                                    if (root.hotkeyGesture("EDITBOX_PASTE_SELECTION_TO_TRANSLATION", 2, true))
+                                        return
+                                    root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd,
+                                                                            translationText.cursorPosition)
+                                }
+                            }
+                            Button {
+                                objectName: "commentOutOriginal"
+                                text: qsTr("Comment out original")
+                                focusPolicy: Qt.NoFocus
+                                enabled: root.editor.editable
+                                ToolTip.visible: hovered
+                                ToolTip.text: root.mappedTip(text, "EDITBOX_HIDE_ORIGINAL", 2)
+                                onClicked: if (!root.hotkeyGesture("EDITBOX_HIDE_ORIGINAL", 2, true)) root.editor.commentOutOriginal()
+                            }
+                            TranslationToggles { app: root.app; editor: root.editor } // E5
+                        }
+
+                        // E4: the Line's fields (legacy BoxSizer2, below the text).
+                        LineInspector {
+                            editor: root.editor
+                            hotkeys: root.hotkeys
+                            Layout.fillWidth: true
+                            onStyleEditRequested: style => styleManagerWindow.showFor(style)
+                        }
+
+                        Label {
+                            objectName: "editorProblem"
+                            visible: text.length > 0
+                            text: root.editor.problem
+                            color: Theme.danger
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                            Accessible.role: Accessible.AlertMessage
+                        }
+                        Label {
+                            objectName: "editorAttempted"
+                            visible: root.editor.attempted.length > 0
+                            text: qsTr("Not applied: %1").arg(root.editor.attempted)
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                        }
                     }
                 }
             }
@@ -2743,6 +2898,7 @@ ApplicationWindow {
                         }
                         ShellMenuItem {
                             objectName: "duplicateLines"
+                            iconRole: "duplicate"
                             // SetAccMenu: the binding's keys after the tab.
                             readonly property string keys: root.boundKeys("GRID_DUPLICATE_LINES", 1)
                             text: qsTr("&Duplicate lines") + (keys.length ? "\t" + keys : "")
@@ -2799,6 +2955,7 @@ ApplicationWindow {
                         ShellMenuItem { objectName: "makeTree"; text: qsTr("Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
+                            iconRole: "reference"
                             objectName: "showPreview"
                             readonly property string keys: root.boundKeys("GRID_SHOW_PREVIEW", 1)
                             text: qsTr("Show subtitles preview") + (keys.length ? "\t" + keys : "")
@@ -2828,6 +2985,7 @@ ApplicationWindow {
                         ShellMenu {
                             id: filteringMenu
                             objectName: "filteringMenu"
+                            iconRole: "filter"
                             title: qsTr("Filtering")
                             property var styleNames: []
                             onAboutToShow: styleNames = root.app.styleNames()
@@ -2945,22 +3103,24 @@ ApplicationWindow {
                             objectName: "setFpsFromVideo"; text: qsTr("Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
-                        ShellMenuItem { objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
-                        ShellMenuItem { objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
-                        ShellMenuItem { objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
+                        ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTr("Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
+                        ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTr("Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
+                        ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTr("Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
                         ShellMenuItem { objectName: "copyColumns"; text: qsTr("Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
                         ShellMenuItem { objectName: "pasteColumns"; text: qsTr("Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
                         ShellMenuItem { objectName: "deleteText"; text: qsTr("Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
-                        ShellMenuItem { objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
+                        ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTr("Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
                         ShellMenuItem {
+                            iconRole: "font-collector"
                             objectName: "gridFontCollector"; text: qsTr("Font collector"); enabled: root.shell.assColumns
                             onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
                         }
                         // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
+                            iconRole: "extract-subtitles"
                             objectName: "gridSubsFromMkv"; text: qsTr("Load subtitles from an MKV/OGM file")
                             enabled: root.matroska.available
                             onTriggered: if (!root.gridGesture(this, "GRID_SUBS_FROM_MKV")) matroskaSubtitles.begin()
@@ -3011,15 +3171,21 @@ ApplicationWindow {
             id: timingDock
             objectName: "timingDock"
             uniqueName: "Timing"
-            title: qsTr("Timing")
+            // One name for the tool: the menu's, the panel's and legacy's
+            // ("Shift times"); the uniqueName keeps saved layouts.
+            title: qsTr("Shift times")
             Panel {
                 id: timingPanel
                 objectName: "timingPanel"
                 anchors.fill: parent
                 title: qsTr("Shift times")
                 ScrollView {
+                    id: shiftScroll
                     anchors.fill: parent
                     clip: true
+                    // The scroll bar shows while the form is taller than the
+                    // panel (the post processor and profiles lay below it unseen).
+                    ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
                     ColumnLayout {
                         id: shiftForm
                         width: timingPanel.width - 20
@@ -3192,8 +3358,8 @@ ApplicationWindow {
                                     model: root.shiftTimes.profiles
                                     onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
                                 }
-                                Button { objectName: "shiftProfileSave"; text: "+"; Accessible.name: qsTr("Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
-                                Button { objectName: "shiftProfileRemove"; text: "-"; Accessible.name: qsTr("Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
+                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTr("Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
+                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTr("Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
                             }
                         }
                         Label {
@@ -3310,8 +3476,9 @@ ApplicationWindow {
         Label {
             objectName: "saveStatus"
             padding: 4
-            text: (root.editor.dirty ? qsTr("Modified") : "") + (root.editor.saveStatus.length
-                  ? (root.editor.dirty ? "  |  " : "") + root.editor.saveStatus : "")
+            // The last save's message only: the tab's modified mark says
+            // "Modified" (said once, visual-language.md).
+            text: root.editor.saveStatus
         }
       }
     }
@@ -3616,6 +3783,7 @@ ApplicationWindow {
         AutomationManager {
             anchors.fill: parent
             controller: root.automationManager
+            loadAction: loadScriptAction
         }
     }
     Window {
@@ -4093,10 +4261,14 @@ ApplicationWindow {
                     }
                 }
             }
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                text: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
+            // Legacy's description, behind an info button rather than
+            // printed under the buttons for good.
+            IconToolButton {
+                objectName: "translationShiftDescription"
+                Layout.alignment: Qt.AlignRight
+                iconRole: "about"
+                text: qsTr("Description")
+                tip: qsTr("Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
             }
         }
     }
@@ -4176,6 +4348,7 @@ ApplicationWindow {
         id: aboutDialog
         objectName: "aboutDialog"
         title: qsTr("About HikariSub")
+        header: IconDialogHeader { objectName: "aboutDialogTitle"; iconRole: "about"; text: aboutDialog.title }
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
@@ -4204,6 +4377,7 @@ ApplicationWindow {
         id: creditsDialog
         objectName: "creditsDialog"
         title: qsTr("Credits")
+        header: IconDialogHeader { objectName: "creditsDialogTitle"; iconRole: "credits"; text: creditsDialog.title }
         modal: true
         anchors.centerIn: parent
         standardButtons: Dialog.Ok
@@ -4282,7 +4456,7 @@ ApplicationWindow {
                 Label { text: qsTr("Resolution when converting to ASS") }
                 RowLayout {
                     TextField { id: convWidth; Accessible.name: qsTr("Width"); onEditingFinished: conversionDialog.set("resolutionWidth", text) }
-                    Label { text: " x " }
+                    Label { text: "×" }
                     TextField { id: convHeight; Accessible.name: qsTr("Height"); onEditingFinished: conversionDialog.set("resolutionHeight", text) }
                 }
             }
@@ -4322,7 +4496,8 @@ ApplicationWindow {
     Dialog {
         id: resampleDialog
         objectName: "resampleDialog"
-        title: qsTr("Change resolution")
+        title: qsTr("Resample subtitles") // the menu command's name (legacy: "Change resolution")
+        header: IconDialogHeader { objectName: "resampleDialogTitle"; iconRole: "resample"; text: resampleDialog.title }
         modal: true
         anchors.centerIn: parent
         property var initial: ({})
@@ -4347,7 +4522,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 RowLayout {
                     SpinBox { id: subsWidth; objectName: "resampleSubsWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Subtitles resolution") }
-                    Label { text: " x " }
+                    Label { text: "×" }
                     SpinBox { id: subsHeight; objectName: "resampleSubsHeight"; from: 100; to: 10000; editable: true }
                     Button {
                         text: qsTr("From subtitles")
@@ -4361,10 +4536,10 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 RowLayout {
                     SpinBox { id: targetWidth; objectName: "resampleWidth"; from: 100; to: 13000; editable: true; Accessible.name: qsTr("Target resolution") }
-                    Label { text: " x " }
+                    Label { text: "×" }
                     SpinBox { id: targetHeight; objectName: "resampleHeight"; from: 100; to: 10000; editable: true }
                     Button {
-                        text: qsTr("Get from video")
+                        text: qsTr("From video")
                         // Legacy compares the target with the subtitles' size here.
                         enabled: targetWidth.value !== resampleDialog.initial.subsWidth || targetHeight.value !== resampleDialog.initial.subsHeight
                         onClicked: { targetWidth.value = resampleDialog.initial.videoWidth; targetHeight.value = resampleDialog.initial.videoHeight }
@@ -4384,7 +4559,7 @@ ApplicationWindow {
                 Layout.alignment: Qt.AlignHCenter
                 Button {
                     objectName: "resampleOk"
-                    text: "OK"
+                    text: qsTr("OK")
                     onClicked: {
                         if (subsWidth.value === targetWidth.value && subsHeight.value === targetHeight.value)
                             return
@@ -4794,6 +4969,7 @@ ApplicationWindow {
     // P3: work left by a session that did not close cleanly. Each bundle opens
     // as a new unsaved copy (L58-recovery-copy) or is dismissed.
     Component.onCompleted: {
+        root.applyMenuShortcuts()
         if (root.app.recoveryBundles().length > 0)
             recoveryWindow.showBundles()
     }
@@ -4886,7 +5062,9 @@ ApplicationWindow {
         id: temporaryFilesWindow
         objectName: "temporaryFilesWindow"
         title: qsTr("Remove temporary files")
-        width: 520
+        // As wide as its rows need (the last row's button was cut at 520).
+        width: Math.max(520, temporaryContent.implicitWidth + 16)
+        minimumWidth: temporaryContent.implicitWidth + 16
         height: 380
         flags: Qt.Dialog
         property var bundles: []
@@ -4906,10 +5084,21 @@ ApplicationWindow {
             return new Date(parseInt(olderYear.text), olderMonth.currentIndex, olderDay.currentIndex + 1)
         }
         ColumnLayout {
+            id: temporaryContent
             anchors.fill: parent
             anchors.margins: 8
             Label { text: qsTr("Auto save") }
+            Label {
+                visible: temporaryFilesWindow.bundles.length === 0
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+                color: Theme.muted
+                text: qsTr("No auto save files")
+            }
             ListView {
+                visible: temporaryFilesWindow.bundles.length > 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
@@ -5029,6 +5218,74 @@ ApplicationWindow {
         if (item.enabled)
             item.triggered()
     }
+    // The Global window's ids the menus' actions and items run (OnMenuSelected).
+    function globalActions() {
+        return {
+        GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
+        GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
+        GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
+        GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
+        GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
+        GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
+        GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
+        GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
+        GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
+        GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
+        GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
+        GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
+        GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
+        GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
+        GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
+        GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
+        GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
+        GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+        GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
+        GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
+        GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
+        GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
+        // P6: OnPageClose (the rewrite's File > Close).
+        GLOBAL_CLOSE_PAGE: closeAction
+    }
+    }
+    function globalItems() {
+        return {
+        GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
+        GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
+        GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem, // Y8
+        GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
+        GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
+        GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem
+    }
+    }
+    // The menu bar's items show their Global binding at the right (legacy
+    // SetAccMenu wrote it after a tab), refreshed when the bindings change.
+    function applyMenuShortcuts() {
+        const symbolOf = new Map()
+        const actions = root.globalActions(), items = root.globalItems()
+        for (const s in actions)
+            symbolOf.set(actions[s], s)
+        for (const s in items)
+            symbolOf.set(items[s], s)
+        const walk = menu => {
+            for (let i = 0; i < menu.count; ++i) {
+                const item = menu.itemAt(i)
+                if (!item)
+                    continue
+                if (item.subMenu)
+                    walk(item.subMenu)
+                else if (item.shortcutText !== undefined) {
+                    const symbol = symbolOf.get(item.action) ?? symbolOf.get(item)
+                    item.shortcutText = symbol ? root.boundKeys(symbol, 0) : ""
+                }
+            }
+        }
+        for (let i = 0; i < root.menuBar.count; ++i)
+            walk(root.menuBar.menuAt(i))
+    }
+    Connections {
+        target: root.hotkeys
+        function onInstalledChanged() { root.applyMenuShortcuts() }
+    }
     // The frame's handlers of the Global window's bindings (HikariSubFrame:
     // OnMenuSelected, OnMenuSelected1, OnChangeLine, OnDelete, OnPageChange,
     // OnPageAdd, OnPageClose, OnAudioSnap, OnUseWindowHotkey), reached from
@@ -5054,40 +5311,8 @@ ApplicationWindow {
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_EDITOR", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
                                "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]
-        const actions = {
-            GLOBAL_SAVE_SUBS: saveAction, GLOBAL_SAVE_ALL_SUBS: saveAllAction, GLOBAL_SAVE_SUBS_AS: saveAsAction,
-            GLOBAL_SAVE_TRANSLATION: saveTranslationAction, GLOBAL_REMOVE_SUBS: removeSubsAction,
-            GLOBAL_REDO: redoAction, GLOBAL_UNDO: undoAction, GLOBAL_UNDO_TO_LAST_SAVE: undoToLastSaveAction,
-            GLOBAL_HISTORY: historyAction, GLOBAL_SEARCH: findAction, GLOBAL_FIND_REPLACE: findReplaceAction,
-            GLOBAL_FIND_NEXT: findNextAction, GLOBAL_MISSPELLS_REPLACER: misspellAction,
-            GLOBAL_OPEN_SELECT_LINES: selectLinesAction, GLOBAL_OPEN_AUDIO: openAudioAction,
-            GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
-            GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
-            GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-            GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
-            GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
-            GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
-            GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
-            GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
-            GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
-            GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
-            GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
-            GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
-            GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
-            GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
-            GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
-            GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
-            // P6: OnPageClose (the rewrite's File > Close).
-            GLOBAL_CLOSE_PAGE: closeAction
-        }
-        const items = {
-            GLOBAL_OPEN_SPELLCHECKER: checkSpellingItem, GLOBAL_OPEN_ASS_PROPERTIES: assPropertiesItem,
-            GLOBAL_OPEN_STYLE_MANAGER: styleManagerItem, GLOBAL_OPEN_SUBS_RESAMPLE: resampleItem,
-            GLOBAL_OPEN_FONT_COLLECTOR: fontCollectorItem, // Y8
-            GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
-            GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
-            GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem
-        }
+        const actions = root.globalActions()
+        const items = root.globalItems()
         if (menuSelected1.includes(symbol) && root.hotkeys.repeatedKey(symbol))
             return true
         if (actions[symbol] !== undefined) {

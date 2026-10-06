@@ -6,12 +6,20 @@
 // keyboard focus (visualFocus) the style's ring (FocusFrame: 2 wide, 3
 // beyond it, in the theme's focus role, the text colour) is drawn beside it,
 // and its buttons keep their colour (Fusion tints them with the accent).
-// Everything else is Fusion's.
+// Its numbers are plain digits (below). Everything else is Fusion's.
 import QtQuick
 import QtQuick.Controls.Fusion as F
 
 F.SpinBox {
     id: control
+    // Integers as plain digits: no thousands separators in pixel, time or
+    // count fields ("1280", not "1,280"); typed group separators are
+    // ignored. A spin box with its own text functions keeps them.
+    textFromValue: (value, locale) => String(value)
+    valueFromText: (text, locale) => {
+        const n = parseInt(text.replace(/[^0-9-]/g, ""), 10)
+        return isNaN(n) ? control.value : n
+    }
     background: Rectangle {
         implicitWidth: 120
         implicitHeight: 24

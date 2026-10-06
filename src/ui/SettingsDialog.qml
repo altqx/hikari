@@ -102,19 +102,26 @@ Dialog {
         reloaded()
     }
 
-    footer: DialogButtonBox {
-        Button { objectName: "settingsOk"; text: "OK"; DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-        Button { objectName: "settingsApply"; text: qsTr("Apply"); DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole }
-        Button { objectName: "settingsCancel"; text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+    // Set default on the left edge, apart from OK, Apply and Cancel on the right.
+    footer: RowLayout {
+        spacing: 0
         Button {
             objectName: "settingsDefault"
             text: qsTr("Set default")
-            DialogButtonBox.buttonRole: DialogButtonBox.ResetRole
+            Layout.leftMargin: 12
+            onClicked: {
+                dialog.values = dialog.app.resetSettings(dialog.values)
+                dialog.reloaded()
+            }
         }
-        onApplied: dialog.apply()
-        onReset: {
-            dialog.values = dialog.app.resetSettings(dialog.values)
-            dialog.reloaded()
+        DialogButtonBox {
+            Layout.fillWidth: true
+            Button { objectName: "settingsOk"; text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
+            Button { objectName: "settingsApply"; text: qsTr("Apply"); DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole }
+            Button { objectName: "settingsCancel"; text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+            onAccepted: dialog.accept()
+            onRejected: dialog.reject()
+            onApplied: dialog.apply()
         }
     }
     onAccepted: app.applySettings(values)
@@ -123,13 +130,21 @@ Dialog {
     onClosed: Theme.endPreview()
 
     // A check box bound to a boolean setting.
+    // Its label wraps in the page's width (the legacy strings' hard line
+    // breaks are spaces here).
     component SettingCheck: CheckBox {
         id: check
         required property string setting
         objectName: "setting_" + setting
+        Layout.fillWidth: text.length > 0
+        Layout.preferredHeight: Math.max(implicitIndicatorHeight, contentItem.implicitHeight) + topPadding + bottomPadding
         Accessible.name: text
         function refresh() { checked = dialog.values[setting] === true }
-        Component.onCompleted: refresh()
+        Component.onCompleted: {
+            if (contentItem && contentItem.wrapMode !== undefined)
+                contentItem.wrapMode = Text.Wrap
+            refresh()
+        }
         Connections { target: dialog; function onReloaded() { check.refresh() } }
         onToggled: dialog.put(setting, checked)
     }
@@ -235,23 +250,35 @@ Dialog {
             Layout.fillHeight: true
             clip: true
             // Legacy AddPage / AddSubPage order.
+            // The top-level pages show their icon of the set (MuseScore's
+            // Preferences); a sub-page's name lines up with its page's.
             model: [
-                {name: qsTr("Editor"), depth: 0},
+                {name: qsTr("Editor"), depth: 0, iconRole: "editor"},
                 {name: qsTr("Conversion"), depth: 1},
                 {name: qsTr("Advanced"), depth: 1},
-                {name: qsTr("Video"), depth: 0},
-                {name: qsTr("Audio"), depth: 0},
+                {name: qsTr("Video"), depth: 0, iconRole: "settings-video"},
+                {name: qsTr("Audio"), depth: 0, iconRole: "settings-audio"},
                 {name: qsTr("Advanced"), depth: 1},
-                {name: qsTr("Appearance"), depth: 0},
-                {name: qsTr("Hotkeys"), depth: 0},
-                {name: qsTr("Subtitle properties"), depth: 0}
+                {name: qsTr("Appearance"), depth: 0, iconRole: "appearance"},
+                {name: qsTr("Hotkeys"), depth: 0, iconRole: "hotkeys"},
+                {name: qsTr("Subtitle properties"), depth: 0, iconRole: "script-properties"}
             ]
             delegate: ItemDelegate {
+                id: pageItem
                 required property var modelData
                 required property int index
+                readonly property string role: modelData.iconRole ?? ""
+                readonly property bool iconOnHighlight: highlighted || down
                 width: ListView.view.width
                 text: modelData.name
-                leftPadding: 8 + modelData.depth * 16
+                icon.source: role.length === 0 ? ""
+                    : IconTheme.image(role, iconOnHighlight ? palette.highlightedText : IconTheme.normal,
+                                      iconOnHighlight ? palette.highlightedText : IconTheme.accent,
+                                      mirrored && IconTheme.mirrors(role))
+                icon.color: "transparent"
+                icon.width: 16
+                icon.height: 16
+                leftPadding: 8 + modelData.depth * (16 + spacing)
                 highlighted: ListView.isCurrentItem
                 onClicked: pageList.currentIndex = index
             }
@@ -291,17 +318,23 @@ Dialog {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             model: dialog.dictionaries
+                            // With no dictionary installed, a disabled box
+                            // that says so; with none chosen, it says that
+                            // (not a blank box).
+                            enabled: count > 0
+                            displayText: currentIndex >= 0 ? currentText
+                                       : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
                             Accessible.name: qsTr("Spell checker language (\"Dictionary\" folder)")
                         }
                     }
                     SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
                     SettingCheck { setting: "editor.spellchecker"; text: qsTr("Turn spell checking") }
-                    SettingCheck { setting: "grid.autoSelectLinesFromLastTab"; text: qsTr("Select the line with the time line\nof the previous active tab") }
+                    SettingCheck { setting: "grid.autoSelectLinesFromLastTab"; text: qsTr("Select the line with the time line\nof the previous active tab").replace("\n", " ") }
                     SettingCheck { setting: "editor.suggestionsOnDoubleClick"; text: qsTr("Show suggestions by double-clicking on misspell") }
                     SettingCheck { setting: "subtitles.openInNewTab"; text: qsTr("Always open subtitles in a new tab") }
                     SettingCheck { setting: "editor.dontGoToNextLineOnTimesEdit"; text: qsTr("Stay on selected line when editing times") }
-                    SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off edits preview on video\n(re-opening tab is required)") }
-                    SettingCheck { setting: "grid.setVisibleLineAfterFullScreen"; text: qsTr("Turn searching of visible line\nafter switching from full screen") }
+                    SettingCheck { setting: "video.disableLiveEditing"; text: qsTr("Turn off edits preview on video\n(re-opening tab is required)").replace("\n", " ") }
+                    SettingCheck { setting: "grid.setVisibleLineAfterFullScreen"; text: qsTr("Turn searching of visible line\nafter switching from full screen").replace("\n", " ") }
                     SettingCheck { setting: "shiftTimes.changeValuesWithTab"; text: qsTr("Synchronize time shifting window in all tabs") }
                     SettingCheck { setting: "grid.changeActiveOnSelection"; text: qsTr("Change active line after add to selection") }
                     SettingCheck { setting: "translation.showOriginal"; text: qsTr("Show original in translator mode") }
@@ -377,7 +410,7 @@ Dialog {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             SettingNumber { setting: "convert.resolutionWidth"; from: 1; to: 3000 }
-                            Label { text: " X " }
+                            Label { text: "×" }
                             SettingNumber { setting: "convert.resolutionHeight"; from: 1; to: 3000 }
                         }
                     }
@@ -679,7 +712,10 @@ Dialog {
                                 id: hotkeyText
                                 objectName: "hotkeyText"
                                 text: modelData.text
-                                color: modelData.textModified ? dialog.warningColour : palette.windowText
+                                // On the selection, the selection's text colour (the
+                                // window text was unreadable on the highlight).
+                                color: hotkeyRow.highlighted ? palette.highlightedText
+                                     : modelData.textModified ? dialog.warningColour : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.preferredWidth: hotkeyList.width * 0.7
                                 HoverHandler { id: textHover }
@@ -690,7 +726,8 @@ Dialog {
                                 id: hotkeyKeys
                                 objectName: "hotkeyKeys"
                                 text: modelData.accel
-                                color: modelData.keyModified ? dialog.warningColour : palette.windowText
+                                color: hotkeyRow.highlighted ? palette.highlightedText
+                                     : modelData.keyModified ? dialog.warningColour : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 HoverHandler { id: keysHover }
@@ -755,6 +792,18 @@ Dialog {
                             anchors.left: parent.left
                             anchors.right: parent.right
                             columns: 3
+                            // The check column's header: a checked field is
+                            // written into the subtitles' information
+                            // (SubsGrid::SwapAssProperties).
+                            Item { implicitWidth: 1; implicitHeight: 1 }
+                            Item { implicitWidth: 1; implicitHeight: 1 }
+                            Label {
+                                text: qsTr("Use")
+                                color: Theme.muted
+                                HoverHandler { id: useHover }
+                                ToolTip.visible: useHover.hovered
+                                ToolTip.text: qsTr("Write the value into the subtitles' information")
+                            }
                             Label { text: qsTr("Title") }
                             SettingText { setting: "scriptProperties.title"; Accessible.name: qsTr("Title") }
                             SettingCheck { setting: "scriptProperties.titleOn"; Accessible.name: qsTr("Title") }

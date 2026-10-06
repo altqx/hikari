@@ -59,7 +59,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Secondary</source>
+        <source>Choose…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -72,10 +72,6 @@
     </message>
     <message>
         <source>UI colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -108,12 +104,44 @@
 <context>
     <name>AutomationManager</name>
     <message>
-        <source>Automation</source>
+        <source>A script is running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>No scripts loaded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load script…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load an Automation script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unavailable</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Reload</source>
@@ -385,6 +413,10 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Modified (history step %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Close %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -513,7 +545,15 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose or type a catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add a catalog with this name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -521,19 +561,31 @@ and the color selection window on right-click.</source>
         <translation type="unfinished">தொகு</translation>
     </message>
     <message>
+        <source>Edit the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete</source>
         <translation type="unfinished">நீக்கு</translation>
+    </message>
+    <message>
+        <source>Delete the catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load</source>
         <translation type="unfinished">சுமை</translation>
     </message>
     <message>
+        <source>Load a catalog from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Refresh fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Reads the installed and external fonts again</source>
+        <source>Refresh fonts: reads the installed and external fonts again</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -581,6 +633,10 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+    <message>
         <source>Select the name of the profile</source>
         <translation type="unfinished"></translation>
     </message>
@@ -591,6 +647,10 @@ and the color selection window on right-click.</source>
     <message>
         <source>Replace with:</source>
         <translation type="unfinished">இதனுடன் மாற்றவும்:</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -645,6 +705,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Save folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Destination folder</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -744,6 +808,10 @@ when demuxing fonts from an MKV file.</source>
         <translation>எழுத்துரு பெயர்</translation>
     </message>
     <message>
+        <source>Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Font size</source>
         <translation>எழுத்துரு அளவு</translation>
     </message>
@@ -812,6 +880,10 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1161,6 +1233,10 @@ when demuxing fonts from an MKV file.</source>
         <translation type="unfinished">தயவுசெய்து &quot;%1&quot; க்கு ஆட்ச்கியை உள்ளிடவும்.</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>எச்சரிக்கை</translation>
     </message>
@@ -1293,10 +1369,14 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Edit</source>
-        <translation type="unfinished">தொகு</translation>
+        <translation type="obsolete">தொகு</translation>
     </message>
     <message>
         <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style: allows quick editing of the current line&apos;s style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1840,6 +1920,10 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Video times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame time; frame number; frames from the line&apos;s start frame; milliseconds from the line&apos;s start and end</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2639,8 +2723,12 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>From video</source>
+        <translation type="unfinished">வீடியோவிலிருந்து</translation>
+    </message>
+    <message>
         <source>Modified</source>
-        <translation>மாற்றியமைக்கப்பட்ட</translation>
+        <translation type="vanished">மாற்றியமைக்கப்பட்ட</translation>
     </message>
     <message>
         <source>History (1 element)</source>
@@ -2931,6 +3019,10 @@ Moves the translation one line up.</source>
  மொழிபெயர்ப்பு ஒரு வரிசையை நகர்த்துகிறது.</translation>
     </message>
     <message>
+        <source>Description</source>
+        <translation type="unfinished">விவரம்</translation>
+    </message>
+    <message>
         <source>Description:
 Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
 Translation - text pasted into subtitles with correct timing.</source>
@@ -3169,7 +3261,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change resolution</source>
-        <translation>தீர்மானத்தை மாற்றவும்</translation>
+        <translation type="vanished">தீர்மானத்தை மாற்றவும்</translation>
     </message>
     <message>
         <source>Subtitles resolution</source>
@@ -3185,7 +3277,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Get from video</source>
-        <translation>வீடியோவிலிருந்து</translation>
+        <translation type="vanished">வீடியோவிலிருந்து</translation>
     </message>
     <message>
         <source>Resample options</source>
@@ -3336,6 +3428,10 @@ Match the resolution to the video?
     <message>
         <source>Auto save</source>
         <translation>தானியங்கு சேமிப்பு</translation>
+    </message>
+    <message>
+        <source>No auto save files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove selected autosave files</source>
@@ -3513,7 +3609,11 @@ Match the resolution to the video?
     <name>MisspellReplacerDialog</name>
     <message>
         <source>Multireplacer</source>
-        <translation>மல்டிர்ப்ளேசர்</translation>
+        <translation type="vanished">மல்டிர்ப்ளேசர்</translation>
+    </message>
+    <message>
+        <source>Fix minor errors</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Rule editing</source>
@@ -3795,7 +3895,11 @@ in all tabs</source>
     <name>ScriptPropertiesDialog</name>
     <message>
         <source>ASS subtitle properties</source>
-        <translation>ASS வசன வரிகள் பண்புகள்</translation>
+        <translation type="vanished">ASS வசன வரிகள் பண்புகள்</translation>
+    </message>
+    <message>
+        <source>ASS file properties</source>
+        <translation type="unfinished">கழுதை கோப்பு பண்புகள்</translation>
     </message>
     <message>
         <source>Save</source>
@@ -3924,6 +4028,10 @@ in all tabs</source>
     <message>
         <source>Find and replace</source>
         <translation>கண்டுபிடித்து மாற்றவும்</translation>
+    </message>
+    <message>
+        <source>In files</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Find in subtitles</source>
@@ -4062,6 +4170,10 @@ in all tabs</source>
         <translation>முடிவுகளைத் தேடுகிறது</translation>
     </message>
     <message>
+        <source>No results yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find all, Find in all open subtitles and Find in subtitles list their matches here; check the ones to change and replace them.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4115,6 +4227,10 @@ in all tabs</source>
     <message>
         <source>Find</source>
         <translation>கண்டுபிடி</translation>
+    </message>
+    <message>
+        <source>Select lines</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>With</source>
@@ -4232,6 +4348,10 @@ in all tabs</source>
         <source>Close</source>
         <translation>மூடு</translation>
     </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SessionWindows</name>
@@ -4339,6 +4459,10 @@ please save with different name or change file attribute.</source>
         <translation>இயல்புநிலையை அமைக்கவும்</translation>
     </message>
     <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Font size</source>
         <translation>எழுத்துரு அளவு</translation>
     </message>
@@ -4389,6 +4513,14 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
         <translation>எழுத்துப்பிழை செக்கர் மொழி (&quot;அகராதி&quot; கோப்புறை)</translation>
+    </message>
+    <message>
+        <source>None chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open sorted subtitles</source>
@@ -4823,6 +4955,14 @@ removing audio cache files.</source>
         <translation>வசன வரிகள் செய்தி</translation>
     </message>
     <message>
+        <source>Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write the value into the subtitles&apos; information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Title</source>
         <translation>தலைப்பு</translation>
     </message>
@@ -4898,7 +5038,7 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Choose folder...</source>
+        <source>Choose folder…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5062,6 +5202,10 @@ to the color selection location</source>
         <translation>இதற்கு பதிலாக:</translation>
     </message>
     <message>
+        <source>No suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Suggestions</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5198,8 +5342,16 @@ in uppercase</source>
         <translation>நகலெடு</translation>
     </message>
     <message>
+        <source>Copy the selected style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Edit</source>
         <translation>தொகு</translation>
+    </message>
+    <message>
+        <source>Edit the selected style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load</source>
@@ -5210,8 +5362,16 @@ in uppercase</source>
         <translation>வெளிப்புற கழுதை கோப்பிலிருந்து சேமிப்பகத்திற்கு பாணியை ஏற்றவும்</translation>
     </message>
     <message>
+        <source>Delete the selected styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Sort</source>
         <translation>வரிசைப்படுத்து</translation>
+    </message>
+    <message>
+        <source>Sort the styles by name</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
@@ -5250,6 +5410,10 @@ in uppercase</source>
         <translation>திறந்த அனைத்து கழுதை கோப்புகளிலும் சேர்க்கவும்</translation>
     </message>
     <message>
+        <source>Copy style from storage to every open ASS file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Create new ASS style</source>
         <translation>புதிய கழுதை பாணியை உருவாக்கவும்</translation>
     </message>
@@ -5268,6 +5432,10 @@ in uppercase</source>
     <message>
         <source>Status of deleted styles</source>
         <translation>நீக்கப்பட்ட பாணிகளின் நிலை</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -5717,6 +5885,10 @@ Foreign language text will be deleted.</source>
 <context>
     <name>VideoFollowChoices</name>
     <message>
+        <source>Seek on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Double-clicking a line (always on)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5742,6 +5914,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Move video to selected line on:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Then play</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5798,25 +5974,43 @@ Foreign language text will be deleted.</source>
     </message>
 </context>
 <context>
+    <name>VisualToolRail</name>
+    <message>
+        <source>%1 (not available yet)</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VisualToolValues</name>
+    <message>
+        <source>Pick selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
-        <source>Targets: %n picked line(s)</source>
+        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
     </message>
     <message>
-        <source>Targets: active line</source>
+        <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>%n line(s) picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
-        <source>Pick selected lines</source>
+        <source>Clear picked lines</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation type="unfinished">தெளிவான</translation>
+        <translation type="obsolete">தெளிவான</translation>
     </message>
 </context>
 <context>

@@ -10,6 +10,7 @@ import QtQuick.Controls
 ShellMenu {
     id: comparison
     objectName: "subtitleComparisonMenu"
+    iconRole: "compare"
     title: qsTr("Subtitle comparison")
     required property var app
     // The tab the menu was opened on (-1: not on a tab), and what

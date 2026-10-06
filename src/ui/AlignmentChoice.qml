@@ -26,6 +26,8 @@ RowLayout {
                 qsTr("Middle-left") + " (an4)", qsTr("Center") + " (an5)", qsTr("Middle-right") + " (an6)",
                 qsTr("Top-left") + " (an7)", qsTr("Top-center") + " (an8)", qsTr("Top-right") + " (an9)"]
         currentIndex: alignment.editor.alignmentIndex
+        // As wide as its longest choice (the closed box cut "Bottom-center (an2)").
+        implicitContentWidthPolicy: ComboBox.WidestText
         focusPolicy: Qt.NoFocus
         Accessible.name: qsTr("Text position")
         ToolTip.visible: hovered

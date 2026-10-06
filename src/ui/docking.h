@@ -43,6 +43,10 @@ public:
     // at its edges, as the engine's DockWidget::resizeInLayout does; false
     // when it is not docked in a layout.
     Q_INVOKABLE bool resizeInLayout(const QString &uniqueName, int left, int top, int right, int bottom);
+    // The smallest size the panel `uniqueName` takes (its body, without the
+    // dock's header); the engine's separators stop there, docked or floating.
+    // False when there is no such panel.
+    Q_INVOKABLE bool setMinimumSize(const QString &uniqueName, int width, int height);
 };
 
 } // namespace hikari::ui

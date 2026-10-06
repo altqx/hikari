@@ -12,7 +12,7 @@ Dialog {
     id: dialog
     objectName: "misspellDialog"
     required property var app
-    title: qsTr("Multireplacer")
+    title: qsTr("Fix minor errors") // the menu command's name (legacy: "Multireplacer")
     modal: false
     // Modeless like the legacy window: a click elsewhere (the other dialog,
     // the editor, the grid) does not close it.
@@ -159,7 +159,7 @@ Dialog {
             }
         }
     }
-    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog; iconRole: "select-lines"; onDragged: dialog.centring = false }
+    header: TitleBar { objectName: "misspellDialogTitle"; popup: dialog; iconRole: "multireplace"; onDragged: dialog.centring = false }
 
     RowLayout {
         anchors.fill: parent
@@ -261,25 +261,28 @@ Dialog {
                     }
                     RowLayout {
                         // Legacy binds nothing to this button.
-                        Button { text: "+"; Accessible.name: qsTr("Choose styles") }
-                        TextField { id: styles; objectName: "misspellStyles"; Layout.fillWidth: true; Accessible.name: qsTr("Styles") }
+                        IconToolButton { iconRole: "styles"; text: qsTr("Choose styles") }
+                        TextField { id: styles; objectName: "misspellStyles"; Layout.fillWidth: true; placeholderText: qsTr("Styles"); Accessible.name: qsTr("Styles") }
                     }
                 }
             }
-            Button {
+            IconTextButton {
                 objectName: "misspellAddRule"
+                iconRole: "add"
                 text: qsTr("Add rule")
                 Layout.fillWidth: true
                 onClicked: if (dialog.app.addMisspellRule(dialog.fields())) dialog.reloadRules()
             }
-            Button {
+            IconTextButton {
                 objectName: "misspellEditRule"
+                iconRole: "edit"
                 text: qsTr("Edit rule")
                 Layout.fillWidth: true
                 onClicked: if (dialog.app.editMisspellRule(dialog.selectedRule, dialog.fields())) dialog.reloadRules()
             }
-            Button {
+            IconTextButton {
                 objectName: "misspellRemoveRule"
+                iconRole: "delete"
                 text: qsTr("Delete rule")
                 Layout.fillWidth: true
                 onClicked: if (dialog.app.removeMisspellRule(dialog.selectedRule)) dialog.reloadRules()
@@ -288,26 +291,26 @@ Dialog {
             Button { text: qsTr("Find error"); enabled: false; Layout.fillWidth: true }
             Button {
                 objectName: "misspellFindTab"
-                text: qsTr("Find errors\nin current tab")
+                text: qsTr("Find errors\nin current tab").replace("\n", " ")
                 Layout.fillWidth: true
                 onClicked: dialog.find(false)
             }
             Button {
                 objectName: "misspellFindAllTabs"
-                text: qsTr("Find errors\nin all tabs")
+                text: qsTr("Find errors\nin all tabs").replace("\n", " ")
                 Layout.fillWidth: true
                 onClicked: dialog.find(true)
             }
             Button { text: qsTr("Replace error"); enabled: false; Layout.fillWidth: true }
             Button {
                 objectName: "misspellReplaceTab"
-                text: qsTr("Replace all errors\nin current tab")
+                text: qsTr("Replace all errors\nin current tab").replace("\n", " ")
                 Layout.fillWidth: true
                 onClicked: dialog.app.replaceMisspells(dialog.scope(), false)
             }
             Button {
                 objectName: "misspellReplaceAllTabs"
-                text: qsTr("Replace all errors\nin all tabs")
+                text: qsTr("Replace all errors\nin all tabs").replace("\n", " ")
                 Layout.fillWidth: true
                 onClicked: dialog.app.replaceMisspells(dialog.scope(), true)
             }

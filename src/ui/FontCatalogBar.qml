@@ -135,19 +135,21 @@ RowLayout {
             bar.changeCatalog(false)
         }
     }
-    Button {
+    // An inline tool row beside the choice: icon-only, the help text as
+    // the tooltip and the name as the accessible name.
+    IconToolButton {
         id: addButton
         objectName: "fontCatalogAdd"
+        iconRole: "add"
         text: qsTr("Add")
-        ToolTip.visible: hovered
-        ToolTip.text: qsTr("Adds fonts to a previously created catalog")
+        tip: qsTr("Adds fonts to a previously created catalog")
         onClicked: bar.addToCatalog()
     }
-    Button {
+    IconToolButton {
         objectName: "fontCatalogManage"
+        iconRole: "settings"
         text: qsTr("Manage")
-        ToolTip.visible: hovered
-        ToolTip.text: bar.fontDialog ? qsTr("Manages font catalogs") : qsTr("Allows managing font catalogs")
+        tip: bar.fontDialog ? qsTr("Manages font catalogs") : qsTr("Allows managing font catalogs")
         onClicked: {
             if (!manageWindow.created)
                 manageWindow.create(bar.fontName)
@@ -156,13 +158,13 @@ RowLayout {
             manageWindow.open()
         }
     }
-    Button {
+    IconToolButton {
         id: filter
         objectName: "fontFilter"
+        iconRole: "filter"
         text: qsTr("Filter")
         checkable: true
-        ToolTip.visible: hovered
-        ToolTip.text: qsTr("Filters fonts to those containing the entered characters")
+        tip: qsTr("Filters fonts to those containing the entered characters")
         onToggled: bar.changeCatalog(true)
     }
 

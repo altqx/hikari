@@ -8,60 +8,98 @@ import Hikari.Ui
 // One family is on; choosing it again goes back to the crosshair
 // (VideoToolbar.cpp:205-233). For a Document that is not ASS the rail is
 // disabled (VideoToolbar::DisableVisuals). A family whose tool has not
-// landed yet (T2-T6) is selectable and draws nothing. K1: each family's
-// button shows its icon of the set (legacy VideoToolbar's bitmaps, Cross.png
-// to AllTags.png) beside its name.
+// landed yet (T2-T6) is selectable and draws nothing; its tooltip says so.
+// The rail is an icon-only tool strip (visual-language.md, "Tool strips"):
+// each family's button shows its icon of the K1 set (legacy VideoToolbar's
+// bitmaps, Cross.png to AllTags.png), the family's name is its tooltip and
+// accessible name, and the on family is the style's checked button. The
+// buttons take keyboard focus by Tab (not by a click, which leaves it with
+// the video), Up and Down move between them, Space chooses.
 Frame {
     id: rail
     objectName: "visualToolRail"
     required property VisualToolsController tools
     padding: 2
-    implicitWidth: 132
+    // A Video panel too short for the eleven families shows a thin scroll bar
+    // beside them: the families below the fold are reached by the mouse, and
+    // the bar says that there are more. The rail widens by the bar.
+    readonly property bool overflows: railScroll.contentHeight > railScroll.height + 0.5
+    readonly property int barWidth: 6
+    implicitWidth: 28 + (overflows ? barWidth + 1 : 0) + leftPadding + rightPadding
 
     ScrollView {
+        id: railScroll
+        objectName: "visualToolRailScroll"
         anchors.fill: parent
         clip: true
+        contentWidth: 28
+        ScrollBar.vertical: ScrollBar {
+            objectName: "visualToolRailScrollBar"
+            parent: railScroll
+            x: railScroll.width - width
+            y: 0
+            height: railScroll.height
+            width: rail.barWidth
+            padding: 0
+            policy: rail.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+            focusPolicy: Qt.NoFocus
+            // A visible track in the boundary colour, as the audio display's.
+            background: Rectangle {
+                implicitWidth: rail.barWidth
+                radius: rail.barWidth / 2
+                color: Theme.field
+                border.color: Theme.line
+            }
+            contentItem: Rectangle {
+                implicitWidth: rail.barWidth
+                implicitHeight: 12
+                radius: rail.barWidth / 2
+                color: parent.pressed ? Theme.text : Theme.muted
+                opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+            }
+        }
         ColumnLayout {
-            width: rail.availableWidth
+            width: 28
             spacing: 1
             Repeater {
+                id: families
                 model: rail.tools.families
                 delegate: ToolButton {
                     id: familyButton
                     required property var modelData
                     required property int index
                     objectName: "visualTool" + index
-                    Layout.fillWidth: true
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    Layout.alignment: Qt.AlignHCenter
                     text: modelData.name
+                    display: AbstractButton.IconOnly
                     checked: rail.tools.activeFamily === index
                     enabled: rail.tools.railEnabled
-                    focusPolicy: Qt.NoFocus
-                    font.pixelSize: 11
-                    contentItem: RowLayout {
-                        spacing: 4
-                        opacity: familyButton.modelData.available ? 1 : 0.7
-                        Icon {
-                            objectName: "visualToolIcon" + familyButton.index
-                            // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-                            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][familyButton.index] ?? ""
-                            hovered: familyButton.hovered
-                            pressed: familyButton.down
-                        }
-                        Label {
-                            Layout.fillWidth: true
-                            text: familyButton.text
-                            font: familyButton.font
-                            elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                        }
+                    focusPolicy: Qt.TabFocus
+                    contentItem: Icon {
+                        objectName: "visualToolIcon" + familyButton.index
+                        // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][familyButton.index] ?? ""
+                        hovered: familyButton.hovered
+                        pressed: familyButton.down
                     }
-                    ToolTip.visible: hovered
-                    ToolTip.text: modelData.name
+                    ToolTip.visible: hovered || visualFocus
+                    ToolTip.text: modelData.available ? modelData.name
+                                                      : qsTr("%1 (not available yet)").arg(modelData.name)
                     Accessible.name: modelData.name
+                    Accessible.checkable: true
+                    Keys.onUpPressed: rail.focusFamily(index - 1)
+                    Keys.onDownPressed: rail.focusFamily(index + 1)
                     onClicked: rail.tools.selectFamily(index)
                 }
             }
         }
+    }
+
+    function focusFamily(i) {
+        const button = families.itemAt((i + families.count) % families.count)
+        if (button)
+            button.forceActiveFocus(Qt.TabFocusReason)
     }
 }

@@ -38,6 +38,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQmlExpression>
+#include <QQmlProperty>
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
@@ -1279,7 +1280,13 @@ private slots:
         QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
         // Add: a new catalog in the choice, saved to FontCatalogsAutosave0.txt.
         auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
+        // The empty choice (legacy's) says what goes in it; typing hides that.
+        auto *placeholder = dialogItem("fontDialogCatalogWindow", "fontCatalogFieldPlaceholder");
+        QVERIFY(placeholder);
+        QCOMPARE(field->property("editText").toString(), QString());
+        QVERIFY(placeholder->isVisible());
         field->setProperty("editText", QStringLiteral("C"));
+        QVERIFY(!placeholder->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
@@ -2722,15 +2729,37 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("panelShowTiming"), "triggered"));
         QTRY_VERIFY(timingDock->property("isOpen").toBool());
         top = QAccessible::queryAccessibleInterface(window);
-        QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Timing")));
+        QTRY_VERIFY(find(top, QAccessible::PageTab, QStringLiteral("Shift times")));
         QAccessibleInterface *editorTab = find(top, QAccessible::PageTab, QStringLiteral("Line editor"));
         QVERIFY(editorTab);
-        QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Timing"));
+        QAccessibleInterface *timingTab = find(top, QAccessible::PageTab, QStringLiteral("Shift times"));
         QVERIFY(timingTab->state().checked); // Timing, just shown, is the selected tab
         QVERIFY(!editorTab->state().checked);
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Close Line editor")));
         QVERIFY(find(top, QAccessible::Button, QStringLiteral("Float tab group"))); // the title bar's, for both
-        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Timing"));
+        // The group's name is said once, by its tabs: the title bar above
+        // them draws no title (it would repeat the current tab's), while a
+        // single panel's title bar keeps its own.
+        {
+            int tabbedBars = 0, singleBars = 0;
+            for (auto *bar : engine->rootObjects().first()->findChildren<QQuickItem *>(QStringLiteral("dockTitleBar"))) {
+                if (!bar->isVisible())
+                    continue;
+                auto *title = bar->findChild<QQuickItem *>(QStringLiteral("dockTitleText"));
+                QVERIFY(title);
+                if (bar->property("tabbed").toBool()) {
+                    ++tabbedBars;
+                    QVERIFY2(!title->isVisible(), qPrintable(bar->property("title").toString()));
+                } else {
+                    ++singleBars;
+                    QVERIFY(title->isVisible());
+                    QCOMPARE(title->property("text").toString(), bar->property("title").toString());
+                }
+            }
+            QVERIFY(tabbedBars >= 1);
+            QVERIFY(singleBars >= 1);
+        }
+        QAccessibleInterface *floatTiming = find(top, QAccessible::Button, QStringLiteral("Float Shift times"));
         QVERIFY(floatTiming);
         floatTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(timingDock->property("isFloating").toBool());
@@ -2738,7 +2767,7 @@ private slots:
         QTRY_VERIFY(!timingDock->property("isFloating").toBool());
         top = QAccessible::queryAccessibleInterface(window);
         QAccessibleInterface *closeTiming = nullptr;
-        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Timing"))));
+        QTRY_VERIFY((closeTiming = find(top, QAccessible::Button, QStringLiteral("Close Shift times"))));
         closeTiming->actionInterface()->doAction(QAccessibleActionInterface::pressAction());
         QTRY_VERIFY(!timingDock->property("isOpen").toBool());
     }
@@ -4525,8 +4554,11 @@ private slots:
         QCOMPARE(tool->property("tab").toInt(), 1);
         // Scope rail on the left, results and change review on the right.
         const auto x = [&](const char *name) { return item(name)->mapToScene(QPointF(0, 0)).x(); };
-        QVERIFY(x("findText") < x("findResultsTitle"));
-        QVERIFY(x("replaceAllButton") < x("replaceCheckedButton"));
+        QVERIFY(x("findText") < x("findResultsPane"));
+        QVERIFY(x("replaceAllButton") < x("findResultsPane"));
+        // No results yet: the review footer waits for them.
+        QVERIFY(item("findResultsEmpty")->isVisible());
+        QVERIFY(!item("replaceCheckedButton")->isVisible());
         item("findText")->setProperty("editText", QStringLiteral("BETA"));
         item("findReplaceText")->setProperty("editText", QStringLiteral("B"));
         const auto steps = session->historySize();
@@ -5294,17 +5326,30 @@ private slots:
     {
         return it->mapToScene(QPointF(it->width() / 2, it->height() / 2)).toPoint();
     }
-    // In translation mode the Line editor's rows need more height than its
-    // dock has in the default 1280 x 800 layout: the translation buttons end
-    // at the dock's bottom edge, and with the Ubuntu runner's font metrics
-    // their centre falls a few pixels below it, on the dock below. A test
-    // clicking one gives the window the height for it first.
-    void roomInTheEditorFor(QQuickItem *button)
+    // Whether `control` lies whole in the Line editor's visible area.
+    bool inTheEditorView(QQuickItem *control)
     {
-        if (window->height() < 1000)
-            window->resize(window->width(), 1000);
-        auto *panel = item("editorPanel");
-        QTRY_VERIFY(panel->mapRectToScene(panel->boundingRect()).contains(button->mapRectToScene(button->boundingRect())));
+        auto *view = item("editorScroll");
+        return view->mapRectToScene(view->boundingRect()).contains(control->mapRectToScene(control->boundingRect()));
+    }
+    // In translation mode the Line editor's rows are taller than its dock in
+    // the default 1280 x 800 layout, and the editor scrolls them. A test
+    // clicking one of its controls scrolls it into view with the wheel over
+    // the editor, as a user would. (Each wheel event carries a later time:
+    // the Flickable takes the scroll's speed from it.)
+    void scrollTheEditorTo(QQuickItem *control)
+    {
+        static quint64 time = 0;
+        auto *view = item("editorScroll");
+        const QPoint over = view->mapToScene(QPointF(view->width() / 2, view->height() / 2)).toPoint();
+        for (int notch = 0; notch < 20 && !QTest::qWaitFor([&] { return inTheEditorView(control); }, 300); ++notch) {
+            const int up = control->mapToItem(view, QPointF(0, 0)).y() < 0 ? 1 : -1;
+            QWheelEvent wheel(over, window->mapToGlobal(over), QPoint(), QPoint(0, 120 * up), Qt::NoButton,
+                              Qt::NoModifier, Qt::NoScrollPhase, false);
+            wheel.setTimestamp(time += 1000);
+            QCoreApplication::sendEvent(window, &wheel);
+        }
+        QVERIFY2(inTheEditorView(control), qPrintable(control->objectName()));
     }
     static QString q8(const std::u8string &s)
     {
@@ -5438,6 +5483,211 @@ private slots:
         QCOMPARE(session->document().lines().size(), showOriginalSetting ? lines + 1 : lines);
     }
 
+    // The Line editor in a dock shorter than its rows (translation mode in
+    // the default 1280 x 800 layout) scrolls them: every control is reached
+    // by the wheel, and each one Tab reaches lies whole in the editor's view.
+    // The default proportions stay (legacy's 170 px audio box), and the dock
+    // keeps room for the tag buttons and the text fields when squeezed.
+    void lineEditorScrollsWhatItsDockCannotShow()
+    {
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        auto *panel = item("editorPanel");
+        auto *view = item("editorScroll");
+        auto *content = item("editorContent");
+        QTRY_VERIFY(view->property("overflows").toBool());
+        QVERIFY(item("editorScrollBar")->isVisible());
+        QVERIFY(panel->mapRectToScene(panel->boundingRect()).contains(view->mapRectToScene(view->boundingRect())));
+        QCOMPARE(view->property("contentY").toReal(), 0.0);
+        QTRY_VERIFY(!inTheEditorView(item("startField"))); // below the fold, once laid out
+        const qreal audioBody = item("audioPanel")->property("bodyHeight").toReal();
+        QVERIFY2(std::abs(audioBody - 170) <= 1, qPrintable(QString::number(audioBody)));
+
+        // The wheel brings every control into view.
+        QList<QQuickItem *> controls;
+        std::function<void(QQuickItem *)> collect = [&](QQuickItem *parent) {
+            for (QQuickItem *child : parent->childItems()) {
+                if (!child->isVisible())
+                    continue;
+                if (child->inherits("QQuickControl") || child->inherits("QQuickTextEdit"))
+                    controls << child;
+                else
+                    collect(child);
+            }
+        };
+        collect(content);
+        QVERIFY2(controls.size() >= 25, qPrintable(QString::number(controls.size())));
+        for (QQuickItem *control : std::as_const(controls))
+            scrollTheEditorTo(control);
+        scrollTheEditorTo(controls.first()); // and back up
+
+        // Tab: with the editor at its top, the first of the Line's fields
+        // (below the fold) takes the focus, and Tab goes on through them,
+        // the editor sent back to its top before each; every control the
+        // focus reaches is brought whole into view. Shift+Tab from the first
+        // goes back up to the Translated text.
+        const auto inEditor = [&](QQuickItem *it) {
+            for (; it; it = it->parentItem())
+                if (it == content)
+                    return true;
+            return false;
+        };
+        const auto focusedControl = [&] {
+            QQuickItem *it = window->activeFocusItem();
+            // an editable box's text field: the box
+            for (QQuickItem *p = it; p && p != content; p = p->parentItem())
+                if (p->hasActiveFocus() && p->inherits("QQuickControl"))
+                    it = p;
+            return it;
+        };
+        auto *layer = item("layerField");
+        view->setProperty("contentY", 0);
+        QTRY_VERIFY(!inTheEditorView(layer));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(inTheEditorView(layer));
+        QStringList reached{layer->objectName()};
+        for (int step = 0; step < 30; ++step) {
+            view->setProperty("contentY", 0);
+            press(Qt::Key_Tab);
+            QQuickItem *focused = focusedControl();
+            if (!inEditor(focused) || focused == layer)
+                break;
+            reached << focused->objectName();
+            QTRY_VERIFY2(inTheEditorView(focused), qPrintable(focused->objectName()));
+        }
+        for (const char *name : {"startField", "endField", "durationField", "styleChoice", "styleEditButton", "commentBox",
+                                 "actorBox", "marginLeftField", "marginRightField", "marginVerticalField", "effectBox"})
+            QVERIFY2(reached.contains(QLatin1String(name)), qPrintable(reached.join(u' ')));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        auto *translated = item("translationText");
+        press(Qt::Key_Backtab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(translated));
+
+        // Squeezed, the dock keeps room for the tag buttons and the text fields.
+        const int minimum = panel->property("minimumHeight").toInt();
+        const qreal before = panel->height();
+        QVERIFY2(minimum > 90 && minimum < before, qPrintable(QString::number(minimum)));
+        ui::Docking docking;
+        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, 40 - int(before), 0, 0));
+        QTRY_VERIFY(panel->height() < before);
+        QVERIFY2(panel->height() >= minimum, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
+        view->setProperty("contentY", 0);
+        QVERIFY(inTheEditorView(controls.first())); // the tag buttons
+    }
+
+    // TextEditor::OnKeyPress (DialogueTextEditor.cpp:534-545 at 20d647c4):
+    // Tab in a Line editor text field is a navigation event, never a typed
+    // tab. Tab and Shift+Tab reach the neighbouring controls in the editor's
+    // tab order (the one below the fold brought into view); Ctrl, the wx
+    // window change, moves the same way, since EditBox's navigation handler
+    // (HikariContainer::OnNavigation) ignores it. An open tag list takes its
+    // own keys first and closes as the focus leaves.
+    void tabMovesOutOfTheLineEditorTextFields()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tab-out.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        auto *layer = item("layerField");
+        auto *view = item("editorScroll");
+        QTRY_VERIFY(translated->isVisible());
+        const QString originalText = original->property("text").toString();
+        const QString translatedText = translated->property("text").toString();
+        const auto nothingTyped = [&] {
+            return original->property("text").toString() == originalText
+                && translated->property("text").toString() == translatedText;
+        };
+        QQuickItem *beforeOriginal = original->nextItemInFocusChain(false);
+        QVERIFY(beforeOriginal && beforeOriginal != original && beforeOriginal != translated);
+
+        original->forceActiveFocus();
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
+        view->setProperty("contentY", 0);
+        QTRY_VERIFY(!inTheEditorView(layer));
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(layer->hasActiveFocus());
+        QTRY_VERIFY(inTheEditorView(layer));
+        layer->forceActiveFocus(Qt::TabFocusReason);
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QCOMPARE(original->property("focusReason").toInt(), int(Qt::BacktabFocusReason));
+        press(Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(beforeOriginal->hasActiveFocus());
+        QVERIFY(nothingTyped());
+
+        // Ctrl+Tab and Ctrl+Shift+Tab: the same moves.
+        original->forceActiveFocus();
+        press(Qt::Key_Tab, Qt::ControlModifier);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        press(Qt::Key_Backtab, Qt::ControlModifier | Qt::ShiftModifier);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QVERIFY(nothingTyped());
+        QCOMPARE(application->editor().text(), originalText);
+        QCOMPARE(application->editor().translationText(), translatedText);
+
+        // The tag list first: Down moves its selection and the field keeps
+        // the focus; Tab then leaves the field, and the list closes.
+        application->editor().setShowTags(true);
+        auto *list = application->editor().tagList();
+        QTRY_COMPARE(original->property("text").toString(), originalText);
+        original->forceActiveFocus();
+        original->setProperty("cursorPosition", 0);
+        QTest::keyClick(window, '{');
+        QTest::keyClick(window, '\\');
+        QTRY_VERIFY(list->open());
+        QCOMPARE(list->selection(), 0);
+        press(Qt::Key_Down);
+        QCOMPARE(list->selection(), 1);
+        QVERIFY(original->hasActiveFocus());
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_VERIFY(!list->open());
+        QCOMPARE(original->property("text").toString(), QStringLiteral("{\\") + originalText);
+        QCOMPARE(translated->property("text").toString(), translatedText);
+    }
+
+    // Screenshots of translation mode in the default 1280 x 800 window, Light
+    // and Dark: the Line editor at its top with its scroll bar, and
+    // scrolled to the Line's fields by the keyboard focus.
+    void translationModeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QCOMPARE(window->size(), QSize(1280, 800));
+        QVERIFY(application->openFile(writeTranslationFile("e5-shots.ass")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        press(Qt::Key_Down);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Tower"));
+        auto *view = item("editorScroll");
+        QTRY_VERIFY(view->property("overflows").toBool());
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto *root = engine->rootObjects().first();
+        for (const auto code : {ui::theme::Code::Light, ui::theme::Code::Dark}) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            item("editingGrid")->forceActiveFocus(Qt::TabFocusReason);
+            view->setProperty("contentY", 0);
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode") + suffix));
+            item("startField")->forceActiveFocus(Qt::TabFocusReason);
+            QTRY_VERIFY(inTheEditorView(item("startField")));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode-fields") + suffix));
+        }
+    }
+
     // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
     // as one step and shows the active Line's flag.
     void notConfirmedFlipsTheSelectedLines()
@@ -5450,7 +5700,7 @@ private slots:
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
-        roomInTheEditorFor(button);
+        scrollTheEditorTo(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -5507,7 +5757,7 @@ private slots:
         application->editor().setShowTags(true);
         auto *moving = item("movingTags");
         QVERIFY(!moving->property("checked").toBool());
-        roomInTheEditorFor(moving);
+        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -5545,7 +5795,7 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        roomInTheEditorFor(moving);
+        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
@@ -6035,8 +6285,11 @@ private slots:
             QCOMPARE(found.size(), controls.size());
             for (std::size_t i = 0; i < controls.size(); ++i) {
                 QCOMPARE(found[i]->objectName(), QLatin1String("setting_") + QLatin1String(controls[i].setting));
+                // The legacy label, its hard line breaks shown as spaces (the
+                // check box wraps in the page's width).
                 if (controls[i].label)
-                    QCOMPARE(found[i]->property("text").toString(), QString::fromUtf8(controls[i].label));
+                    QCOMPARE(found[i]->property("text").toString(),
+                             QString::fromUtf8(controls[i].label).replace(QLatin1Char('\n'), QLatin1Char(' ')));
                 shown.insert(controls[i].setting);
             }
         }
@@ -9443,13 +9696,68 @@ private slots:
             QCOMPARE(button->property("text").toString(), QString::fromLatin1(tip.data(), tip.size()));
             QCOMPARE(button->property("checked").toBool(), i == 0);
             QVERIFY(button->isEnabled());
-            // K1: the family's icon of the set beside its name (legacy's bitmaps).
+            // K1: the family's icon of the set (legacy's bitmaps). The rail is
+            // an icon-only tool strip (visual-language.md, "Tool strips"):
+            // the icon is the button's content, the name its tooltip and
+            // accessible name, the on family the style's checked button,
+            // reached by Tab.
             auto *icon = visualItem(qPrintable(QStringLiteral("visualToolIcon%1").arg(i)));
             QVERIFY(icon && icon->isVisible());
             QVERIFY(icon->property("valid").toBool());
+            QCOMPARE(button->property("contentItem").value<QQuickItem *>(), icon);
+            QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+            const QString name = QString::fromLatin1(tip.data(), tip.size());
+            QVERIFY2(QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString().startsWith(name),
+                     qPrintable(name));
+            QCOMPARE(QQmlProperty(button, QStringLiteral("Accessible.name"), qmlContext(button)).read().toString(), name);
+            QAccessibleInterface *a11y = QAccessible::queryAccessibleInterface(button);
+            QVERIFY(a11y);
+            QCOMPARE(a11y->text(QAccessible::Name), name);
+            QVERIFY(button->property("focusPolicy").toInt() & Qt::TabFocus);
+            QVERIFY(button->width() <= 32);
         }
         QCOMPARE(visualItem("visualToolIcon0")->property("iconRole").toString(), QStringLiteral("tool-crosshair"));
         QCOMPARE(visualItem("visualToolIcon10")->property("iconRole").toString(), QStringLiteral("tool-all-tags"));
+        // No family name is drawn on the rail, which stays a narrow strip.
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            QVERIFY(rail);
+            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
+            QStringList names;
+            for (const auto &f : application::visual::families())
+                names << QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+            QList<QQuickItem *> pending{rail};
+            while (!pending.isEmpty()) {
+                QQuickItem *it = pending.takeLast();
+                pending << it->childItems();
+                if (it->isVisible() && it->inherits("QQuickText"))
+                    QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
+            }
+        }
+        // A Video panel too short for the eleven families: the rail shows a
+        // scroll bar beside them (the families below are reached by the
+        // mouse and the bar says there are more), still a narrow strip; tall
+        // enough, no bar.
+        {
+            QQuickItem *rail = visualItem("visualToolRail");
+            auto *bar = visualItem("visualToolRailScrollBar");
+            QVERIFY(bar);
+            const QSize was = window->size();
+            window->resize(1100, 520);
+            QTRY_VERIFY(rail->property("overflows").toBool());
+            QTRY_VERIFY(bar->isVisible());
+            QVERIFY2(rail->width() <= 40, qPrintable(QString::number(rail->width())));
+            auto *last = visualItem("visualTool10");
+            QVERIFY(last->mapToItem(rail, QPointF(0, 0)).x() + last->width() <= bar->mapToItem(rail, QPointF(0, 0)).x());
+            window->resize(1600, 1400);
+            QTRY_VERIFY(!rail->property("overflows").toBool());
+            QTRY_VERIFY(!bar->isVisible());
+            window->resize(was);
+        }
+        // The crosshair has no options or values to edit and edits no batch:
+        // no tool strip below the video, and no "Targets" readout anywhere.
+        QVERIFY(!visualItem("visualToolValues")->isVisible());
+        QVERIFY(!visualItem("visualBatch"));
         QVERIFY(tools.overlay().isEmpty()); // no video: no tools (VideoBox state None)
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
@@ -9584,9 +9892,23 @@ private slots:
 
         // The batch picker: both Lines picked, then the selection and the
         // active Line move to the second alone; the drag still edits both.
+        // It is an icon-only button whose state is its checked look (the
+        // count in its tooltip); Clear shows only while there is a batch.
+        auto *pick = visualItem("visualPickBatch");
+        QVERIFY(pick && pick->isVisible());
+        QCOMPARE(pick->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QCOMPARE(pick->property("iconRole").toString(), QStringLiteral("pick-lines"));
+        QCOMPARE(QQmlProperty(pick, QStringLiteral("Accessible.name"), qmlContext(pick)).read().toString(),
+                 QStringLiteral("Pick selected lines"));
+        QVERIFY(!pick->property("checked").toBool());
+        QVERIFY(!visualItem("visualClearBatch")->isVisible());
         application->selectAllLines();
-        QVERIFY(QMetaObject::invokeMethod(visualItem("visualPickBatch"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(pick, "click"));
         QCOMPARE(tools.batchCount(), 2);
+        QTRY_VERIFY(pick->property("checked").toBool());
+        QVERIFY(pick->property("tip").toString().contains(QStringLiteral("2 line")));
+        QTRY_VERIFY(visualItem("visualClearBatch")->isVisible());
+        QCOMPARE(visualItem("visualClearBatch")->property("iconRole").toString(), QStringLiteral("clear"));
         application->selectLine(second.value);
         const std::size_t before = session->historySize();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
@@ -9597,6 +9919,8 @@ private slots:
         QVERIFY(text(session->document().lines()[1]).startsWith(QStringLiteral("{\\pos(")));
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualClearBatch"), "click"));
         QCOMPARE(tools.batchCount(), 0);
+        QTRY_VERIFY(!visualItem("visualClearBatch")->isVisible());
+        QVERIFY(!pick->property("checked").toBool());
 
         // Outside the Line's time: the warning, and the tool takes nothing.
         QVERIFY(application->video().showFrameAt(0));
@@ -12624,7 +12948,11 @@ private slots:
         wheelAt(c, -10); // never below 1
         QCOMPARE(view.zoomPercent(), 100);
         wheelAt(c, 3);
-        QCOMPARE(view.zoomPercent(), 130);
+        // Legacy truncates the zoom rectangle's float ratio (VideoBox.cpp:
+        // 1301-1315), so 1.3 reads 129 or 130 with the panel's width (the
+        // icon-only rail left the video a width where it reads 129).
+        const int zoomed = view.zoomPercent();
+        QVERIFY2(zoomed == 130 || zoomed == 129, qPrintable(QString::number(zoomed)));
         // Ctrl+wheel resized legacy's video window (VideoBox.cpp:500-511,
         // TabPanel::SetVideoWindowSizes); the docked panel's size is the
         // layout's, so it does nothing: no zoom, no size, no volume
@@ -12635,7 +12963,7 @@ private slots:
             const int volumeBefore = view.volume();
             wheelAt(c, 3, Qt::ControlModifier);
             wheelAt(c, -3, Qt::ControlModifier);
-            QCOMPARE(view.zoomPercent(), 130);
+            QCOMPARE(view.zoomPercent(), zoomed);
             QCOMPARE(item("videoPanel")->size(), panelSize);
             QCOMPARE(tools.videoRect(), videoArea);
             QCOMPARE(view.volume(), volumeBefore);
@@ -12660,7 +12988,10 @@ private slots:
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
         const auto r = tools.videoView().videoRect();
-        QCOMPARE(r.height() * 2, r.width()); // letterboxed at 2:1
+        // Letterboxed at 2:1, to the pixel: an odd video width (the visual
+        // tool rail widens by its scroll bar in a short panel) has no exact
+        // half.
+        QVERIFY2(std::abs(r.height() * 2 - r.width()) <= 1, qPrintable(QStringLiteral("%1x%2").arg(r.width()).arg(r.height())));
         QCOMPARE(presenter->property("videoRect").toRectF(), tools.videoRect());
         QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
         QTRY_VERIFY(!dialog->property("visible").toBool());

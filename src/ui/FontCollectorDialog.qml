@@ -111,6 +111,7 @@ Dialog {
                 enabled: !dialog.working && dialog.collector.action !== 0
                 onAccepted: dialog.start(false)
                 Accessible.name: qsTr("Save folder")
+                placeholderText: qsTr("Destination folder")
                 // HikariTextValidator with wxFILTER_EXCLUDE_CHAR_LIST: / * ? " < > |
                 // on Windows; elsewhere '/' separates the folders, so it is
                 // accepted (FC-slash-linux).
@@ -118,8 +119,9 @@ Dialog {
                     regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
                 }
             }
-            Button {
+            IconToolButton {
                 objectName: "fontCollectorChoosePath"
+                iconRole: "folder-open"
                 text: qsTr("Select a folder")
                 enabled: path.enabled
                 onClicked: dialog.choosePath()

@@ -81,7 +81,12 @@ KDDW.TitleBarBase {
         visible: root.isFocused
     }
 
+    // A group of tabs names its panels in the tabs, once: the title bar
+    // above them shows only the group's buttons (it would repeat the
+    // current tab's name).
     Text {
+        objectName: "dockTitleText"
+        visible: !root.tabbed
         text: root.title
         color: Theme.text
         anchors.left: parent ? parent.left : undefined

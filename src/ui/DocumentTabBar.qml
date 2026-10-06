@@ -192,15 +192,20 @@ Item {
                     // R2: the tab shown as the protected reference says so.
                     Accessible.description: [tabModified ? qsTr("Modified") : "",
                                              tabReference ? qsTr("Protected reference") : ""].filter(s => s.length > 0).join(", ")
-                    // "<history step>*<name>" while modified: the step, the
-                    // modified mark in place of the "*", the name.
+                    // "<history step>*<name>" while modified: the modified
+                    // mark in place of the "*", then the name; the step (a
+                    // bare number on the tab read as a counter) is in the
+                    // tooltip. Every tab keeps the close button's slot, so
+                    // a tab's width does not change as it becomes current.
                     readonly property int mark: tabModified ? tabLabel.indexOf("*") : -1
+                    readonly property string stepText: mark >= 0 ? tabLabel.slice(0, mark) : ""
                     implicitHeight: label.implicitHeight + 10
-                    implicitWidth: label.implicitWidth + 12 + (closeMark.visible ? closeMark.implicitWidth : 0)
-                                   + (mark >= 0 ? step.implicitWidth + modifiedMark.width + 4 : 0)
+                    implicitWidth: label.implicitWidth + 12 + closeMark.implicitWidth
+                                   + (mark >= 0 ? modifiedMark.width + 4 : 0)
                     ToolTip.visible: hovered
                     ToolTip.delay: 600
-                    ToolTip.text: tabTip
+                    ToolTip.text: stepText.length > 0
+                                  ? tabTip + "\n" + qsTr("Modified (history step %1)").arg(stepText) : tabTip
                     background: Rectangle {
                         color: tab.checked ? palette.base : (tab.hovered ? palette.midlight : palette.button)
                         border.color: tab.checked ? palette.highlight : palette.mid
@@ -208,29 +213,27 @@ Item {
                     }
                     contentItem: RowLayout {
                         spacing: 2
-                        Label {
-                            id: step
-                            visible: tab.mark >= 0
-                            text: tab.mark >= 0 ? tab.text.slice(0, tab.mark) : ""
-                            font.bold: tab.checked
-                            leftPadding: 4
-                        }
                         Icon {
                             id: modifiedMark
                             objectName: "documentTabModified" + tab.index
                             visible: tab.mark >= 0
                             iconRole: "document-modified"
+                            Layout.leftMargin: 4
                         }
                         Label {
                             id: label
                             text: tab.mark >= 0 ? tab.text.slice(tab.mark + 1) : tab.text
-                            font.bold: tab.checked
+                            // Not bold when current: the tab's surface and
+                            // border mark it, and a bold name widened the tab.
                             leftPadding: tab.mark >= 0 ? 0 : 4
                         }
                         IconToolButton {
                             id: closeMark
                             objectName: "documentTabClose" + tab.index
-                            visible: tab.checked
+                            visible: true
+                            opacity: tab.checked ? 1 : 0
+                            enabled: tab.checked
+                            Accessible.ignored: !tab.checked
                             iconRole: "tab-close"
                             text: qsTr("Close %1").arg(tab.tabTitle)
                             focusPolicy: Qt.NoFocus

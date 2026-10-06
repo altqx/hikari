@@ -9,6 +9,7 @@
 #include <kddockwidgets/core/DockWidget.h>
 #include <kddockwidgets/core/DropArea.h>
 #include <kddockwidgets/core/FloatingWindow.h>
+#include <kddockwidgets/core/Group.h>
 #include <kddockwidgets/core/MainWindow.h>
 #include <kddockwidgets/core/Platform.h>
 #include <kddockwidgets/qtquick/Platform.h>
@@ -150,6 +151,26 @@ bool Docking::resizeInLayout(const QString &uniqueName, int left, int top, int r
     if (!dock || dock->isFloating() || !dock->isOpen())
         return false;
     dock->resizeInLayout(left, top, right, bottom);
+    return true;
+}
+
+bool Docking::setMinimumSize(const QString &uniqueName, int width, int height)
+{
+    auto *registry = KDDockWidgets::Core::Platform::instance() ? KDDockWidgets::DockRegistry::self() : nullptr;
+    KDDockWidgets::Core::DockWidget *dock = registry ? registry->dockByName(uniqueName) : nullptr;
+    if (!dock)
+        return false;
+    dock->view()->setMinimumSize(KDDockWidgets::Size(width, height));
+    // The group holding the panel takes its panels' largest minimum; the
+    // QtQuick frontend has no layouts to pass the change on, so its group
+    // is told to measure again (QtQuick::Group::updateConstraints does the
+    // same when a tab comes or goes).
+    for (KDDockWidgets::Core::Group *group : registry->groups()) {
+        if (!group->containsDockWidget(dock))
+            continue;
+        if (auto *view = qobject_cast<KDDockWidgets::QtQuick::View *>(KDDockWidgets::QtQuick::asQQuickItem(group->view())))
+            view->updateGeometry();
+    }
     return true;
 }
 

@@ -102,43 +102,72 @@ Dialog {
             }
         }
         RowLayout {
-            ListView {
-                id: suggestionList
-                objectName: "spellSuggestions"
-                model: dialog.suggestions
-                clip: true
+            // The suggestions in a framed list, with an empty state.
+            Frame {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 220
                 Layout.minimumWidth: 220
-                Accessible.role: Accessible.List
-                Accessible.name: qsTr("Suggestions")
-                delegate: ItemDelegate {
-                    required property string modelData
-                    required property int index
-                    width: ListView.view.width
-                    text: modelData
-                    highlighted: ListView.isCurrentItem
-                    // A click brings the window back, as any click on
-                    // legacy's window does (OnActive); see actionPressed().
-                    focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
-                    onClicked: {
-                        suggestionList.currentIndex = index
-                        replacement.text = modelData
-                    }
-                    onDoubleClicked: {
-                        replacement.text = modelData
-                        dialog.replace()
+                padding: 1
+                background: Rectangle { color: Theme.field; border.color: Theme.line }
+                Label {
+                    anchors.centerIn: parent
+                    visible: suggestionList.count === 0
+                    color: Theme.muted
+                    text: qsTr("No suggestions")
+                }
+                ListView {
+                    id: suggestionList
+                    objectName: "spellSuggestions"
+                    model: dialog.suggestions
+                    clip: true
+                    anchors.fill: parent
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Suggestions")
+                    delegate: ItemDelegate {
+                        required property string modelData
+                        required property int index
+                        width: ListView.view.width
+                        text: modelData
+                        highlighted: ListView.isCurrentItem
+                        // A click brings the window back, as any click on
+                        // legacy's window does (OnActive); see actionPressed().
+                        focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
+                        onClicked: {
+                            suggestionList.currentIndex = index
+                            replacement.text = modelData
+                        }
+                        onDoubleClicked: {
+                            replacement.text = modelData
+                            dialog.replace()
+                        }
                     }
                 }
             }
             ColumnLayout {
+                id: actionsColumn
                 Layout.alignment: Qt.AlignTop
+                // Never squeezed below its controls' height (they ran into
+                // each other when the dialog was short).
+                Layout.minimumHeight: implicitHeight
                 CheckBox { id: ignoreComments; objectName: "spellIgnoreComments"; text: qsTr("Ignore comments") }
-                CheckBox {
-                    id: ignoreUpper
-                    objectName: "spellIgnoreUpper"
-                    text: qsTr("Ignore words written entirely\nin uppercase")
+                // Legacy's two-line label beside its box, in a row as tall as
+                // both lines (the style's check box drew the second line into
+                // the Replace button below it); a click on it toggles the box.
+                RowLayout {
+                    spacing: 0
+                    CheckBox {
+                        id: ignoreUpper
+                        objectName: "spellIgnoreUpper"
+                        Layout.alignment: Qt.AlignTop
+                        Accessible.name: upperLabel.text.replace("\n", " ")
+                    }
+                    Label {
+                        id: upperLabel
+                        text: qsTr("Ignore words written entirely\nin uppercase")
+                        Layout.alignment: Qt.AlignVCenter
+                        TapHandler { onTapped: ignoreUpper.toggle() }
+                    }
                 }
                 Button {
                     id: replaceButton

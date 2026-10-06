@@ -535,6 +535,10 @@ std::vector<double> LineGrid::columnWidths(double total) const
         case LineTableModel::WrapsColumn: width = fit("00/00", 10); break;
         default: width = -1; break; // Text (and E5's Translation)
         }
+        // A fixed column is never narrower than its header (the "Wraps"
+        // header was cut).
+        if (width > 0 && m_model)
+            width = std::max(width, m.horizontalAdvance(m_model->headerData(c, Qt::Horizontal).toString()) + 8);
         w.push_back(width);
         used += std::max(0.0, width);
     }
@@ -585,13 +589,23 @@ std::optional<QColor> comparisonBackground(int state, bool comment, bool selecte
                   colour.blue() * invA / 0xFF + (b - invA * b / 0xFF));
 }
 
+// The ink on a label colour, the number's digits and the changed-Line mark:
+// the theme's text role, or its field role where text contrasts less with
+// the label (a dark or saturated label in a light theme).
+static QColor labelInk(const QColor &label)
+{
+    const auto &roles = theme::current().roles;
+    if (label.isValid() && theme::contrastRatio(roles.field, label) > theme::contrastRatio(roles.text, label))
+        return roles.field;
+    return roles.text;
+}
+
 // E6: legacy paints column 0 of every Line in its label colour by State
 // (SubsGridWindow.cpp:478-479, 495: j == 0 && !isHeadline ? label : kol),
 // over selection and comparison colours alike. The rewrite adds a shape for
 // the changed-Line mark, so it does not rest on colour alone (subtitle-grid.md):
 // a filled dot for a changed Line, a ring for a changed and saved one
-// (E6-mark-shape). The mark takes the theme layer's text role, or its field
-// role where text contrasts less with the label colour.
+// (E6-mark-shape). The mark takes the label's ink (labelInk).
 void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const
 {
     const QColor label = colours.value(LineTableModel::labelSlot(state)).value<QColor>();
@@ -602,10 +616,7 @@ void LineGrid::drawLabel(QPainter *painter, const QRectF &cell, int state, const
         return;
     painter->save();
     painter->setRenderHint(QPainter::Antialiasing);
-    const auto &roles = theme::current().roles;
-    QColor mark = roles.text;
-    if (label.isValid() && theme::contrastRatio(roles.field, label) > theme::contrastRatio(mark, label))
-        mark = roles.field;
+    const QColor mark = labelInk(label);
     // The centre on a device pixel corner, so the ring's 1-wide pen falls on
     // whole pixels: at a fractional column edge or row height (other fonts,
     // another platform) it would otherwise smear over two half-tone pixels.
@@ -760,8 +771,19 @@ void LineGrid::paint(QPainter *painter)
                                         idx.data(LineTableModel::ComparisonMarksRole).toList(),
                                         comparisonColours.value(0).value<QColor>());
             }
+            // The number sits on its label colour: its digits take the
+            // label's ink, as the mark does, a comment's included (muted
+            // text would not stand out from a mid-tone label).
+            const bool onLabel = c == 0 && numberShown && labelColours.size() == 4;
+            if (onLabel) {
+                painter->save();
+                painter->setPen(labelInk(labelColours.value(LineTableModel::labelSlot(
+                                             idx.data(LineTableModel::LineStateRole).toInt())).value<QColor>()));
+            }
             painter->drawText(QRectF(x + 4, top, widths[c] - 8, rh), Qt::AlignVCenter | Qt::TextSingleLine,
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
+            if (onLabel)
+                painter->restore();
             x += widths[c];
         }
         if (active && hasActiveFocus()) {
