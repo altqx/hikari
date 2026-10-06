@@ -1,4 +1,5 @@
 #include "docking.h"
+#include "window_decorations.h"
 
 #include <kddockwidgets/Config.h>
 #include <kddockwidgets/KDDockWidgets.h>
@@ -17,6 +18,7 @@
 #include <kddockwidgets/qtquick/Platform.h>
 #include <kddockwidgets/qtquick/View.h>
 #include <kddockwidgets/qtquick/ViewFactory.h>
+#include <kddockwidgets/qtquick/views/FloatingWindow.h>
 #include <kddockwidgets/qtquick/views/Group.h>
 #include <kddockwidgets/qtquick/views/TabBar.h>
 
@@ -229,6 +231,10 @@ void configureEngine()
     config.setInternalFlags(config.internalFlags() | Config::InternalFlag_UseTransparentFloatingWindow);
     KDDockWidgets::Core::FloatingWindow::s_windowFlagsOverride =
         Qt::Tool | Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint;
+    // Frameless is not enough on Wayland (window_decorations.h): the window
+    // asks the compositor itself, before it is first shown.
+    KDDockWidgets::QtQuick::FloatingWindow::setQuickWindowCreationCallback(
+        [](QQuickView *window, KDDockWidgets::QtQuick::MainWindow *) { windowdecorations::requestNone(window); });
 }
 } // namespace
 
@@ -339,6 +345,20 @@ int keepFloatingPanelsOnScreen()
         ++moved;
     }
     return moved;
+}
+
+Docking::Docking(QObject *parent)
+    : QObject(parent)
+{
+    connect(windowdecorations::notifier(), &windowdecorations::Notifier::changed, this, [this] {
+        ++m_windowTitleRevision;
+        emit windowSystemTitlesChanged();
+    });
+}
+
+bool Docking::windowSystemTitle(QWindow *window) const
+{
+    return windowdecorations::hasSystemTitleBar(window);
 }
 
 bool Docking::platformNeedsSystemMove()

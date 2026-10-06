@@ -52,6 +52,15 @@ KDDWViews.TabBarBase {
     readonly property string currentTitle: currentTab ? currentTab.text : ""
     readonly property bool titleMode: root.count === 1 && !(Docking.headerRevision, Docking.isHorizontal(nameAt(0)))
     readonly property bool floating: Window.window !== null && Window.window.transientParent !== null
+    // A compositor that frames the floating window although it asked for
+    // no frame (Docking.windowSystemTitle) names it in its own title bar.
+    // A lone panel's header whose title is the window's (the window holds
+    // only its group) leaves the name to it and keeps the "⋯" button; tabs
+    // stay.
+    // (The revision is compared, not just read: a compiled binding drops a
+    // read whose value it does not use, and the dependency with it.)
+    readonly property bool systemTitle: floating && Window.window.title === currentTitle
+                                        && Docking.windowTitleRevision >= 0 && Docking.windowSystemTitle(Window.window)
     readonly property bool panelFocused: root.groupCpp !== null && root.groupCpp.titleBar !== null
                                          && root.groupCpp.titleBar.isFocused
     readonly property bool menuOpen: Docking.openMenu.length > 0 && Docking.openMenu === root.currentName
@@ -119,7 +128,7 @@ KDDWViews.TabBarBase {
     Text {
         id: titleText
         objectName: "dockTitleText"
-        visible: root.titleMode
+        visible: root.titleMode && !root.systemTitle
         x: 12
         width: Math.max(0, menuButton.x - x - 4)
         anchors.verticalCenter: parent.verticalCenter

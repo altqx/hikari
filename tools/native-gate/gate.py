@@ -918,7 +918,7 @@ def step_floating():
     the engine's drag by the header; Wayland: the compositor's move from the
     header's free part) and resized from the shadow through the window
     system."""
-    fresh()
+    fresh(env={"QT_LOGGING_RULES": "hikari.decorations.debug=true"})
     how = float_panel("Audio", "floating")
     st = wait_for(lambda s: "Audio" in frames(s))
     r = origin("Audio")
@@ -984,6 +984,8 @@ def step_floating():
     verdict("floating-resize", "observed" if grew else "failed",
             f"dragged the window's bottom-right corner {cx},{cy} ({'the shadow' if shadow else 'the band inside the frame'}) "
             f"by 90,70: {w0}x{h0} -> {fr.get('w')}x{fr.get('h')}", ev2)
+    if B.name.startswith("sway"):
+        floating_forced_frame()
     if B.name == "x11":
         # With a compositing manager the drawn shadow comes back (Qt follows
         # the _NET_WM_CM_S0 selection; a window floated now reads it).
@@ -1025,9 +1027,8 @@ def floating_decoration(title, r):
         border = re.search(r"border=(\S+)", line)
         border = border.group(1) if border else "?"
         verdict("floating-borderless", "observed" if border in ("none", "csd") else "failed",
-                f"sway's container border for the floating {title}: {border!r} ({line.strip()}). Qt creates no "
-                f"xdg-decoration object for a frameless window, so sway applies its default server-side title "
-                f"bar and border", ["float-0-window.png"])
+                f"sway's container border for the floating {title}: {border!r} ({line.strip()}); the window asks "
+                f"for client-side decorations through xdg-decoration ({decoration_log()})", ["float-0-window.png"])
     elif B.name == "kwin":
         line = next((l for l in B.windows().splitlines() if f'"{title}"' in l), "")
         m = re.search(r"(\d+)x(\d+) output", line)
@@ -1046,6 +1047,62 @@ def floating_decoration(title, r):
                 f"mutter draws no frame for Wayland clients without xdg-decoration; the floating {title}'s own "
                 f"1-pixel frame was found in the screenshot where the window's size puts it: {r}",
                 ["float-0-window.png"])
+
+
+def decoration_log():
+    """What the app logged of the compositor's decoration answers
+    (hikari.decorations, enabled by step floating)."""
+    try:
+        with open(os.path.join(os.environ["XDG_RUNTIME_DIR"], "app.log"), errors="replace") as f:
+            lines = [l.strip() for l in f if "decorat" in l]
+    except OSError:
+        return "no app log"
+    return "; ".join(lines[-3:]) or "nothing logged"
+
+
+def title_ink(png, box):
+    """Pixels in box (x, y, w, h) of a screenshot that stand out from the
+    box's most common colour: the drawn title's letters."""
+    iw, ih, raw = raw_pixels(os.path.join(EVID, png))
+    x, y, w, h = box
+    pixels = [tuple(raw[(py * iw + px) * 3:(py * iw + px) * 3 + 3])
+              for py in range(max(0, y), min(ih, y + h)) for px in range(max(0, x), min(iw, x + w))]
+    if not pixels:
+        return 0
+    ground = max(set(pixels), key=pixels.count)
+    return sum(1 for p in pixels if sum(abs(a - b) for a, b in zip(p, ground)) > 120)
+
+
+def floating_forced_frame():
+    """sway: a border rule frames the floating panel anyway (server-side
+    decorations, sent through xdg-decoration). sway's title bar names the
+    window, so the header drops its own title and keeps the "⋯" button;
+    border csd gives the title back."""
+    def look(tag):
+        ev, st = B.snap(f"float-4-{tag}")
+        r = origin("Audio")
+        hdr = where("text", "Audio", "Audio")
+        btn = where("button", "Audio options", "Audio")
+        if not r or not hdr:
+            return ev, r, None, bool(btn), ""
+        box = (r[0] + hdr[0]["x"] + 8, r[1] + hdr[0]["y"] + 6, 70, HEADER - 12)
+        line = next((l for l in B.windows().splitlines() if "'Audio'" in l), "")
+        border = re.search(r"border=(\S+)", line)
+        return ev, r, title_ink(ev[0], box), bool(btn), border.group(1) if border else "?"
+
+    ev0, r0, ink0, btn0, border0 = look("own-title")
+    B.msg('[app_id="hikarisub" floating] border normal')
+    time.sleep(1.5)
+    ev1, r1, ink1, btn1, border1 = look("forced-frame")
+    log1 = decoration_log()
+    B.msg('[app_id="hikarisub" floating] border csd')
+    time.sleep(1.5)
+    ev2, r2, ink2, btn2, border2 = look("frame-gone")
+    ok = (border0 == "csd" and ink0 and ink0 >= 20 and border1 == "normal" and ink1 is not None and ink1 <= 2
+          and btn1 and "server-side" in log1 and border2 == "csd" and ink2 and ink2 >= 20 and btn2)
+    verdict("floating-forced-frame", "observed" if ok else "failed",
+            f"border {border0} -> 'border normal' -> {border1} -> 'border csd' -> {border2}; title ink in the header "
+            f"{ink0} -> {ink1} -> {ink2}; '⋯' shown {btn0} -> {btn1} -> {btn2}; app log: {log1}", ev0 + ev1 + ev2)
 
 
 def floating_frame(r, shadow, shot, suffix=""):

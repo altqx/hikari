@@ -82,8 +82,11 @@ class Docking : public QObject {
     // The panel whose menu is open (Main.qml sets it), so its "⋯" button
     // shows as pressed.
     Q_PROPERTY(QString openMenu READ openMenu WRITE setOpenMenu NOTIFY openMenuChanged FINAL)
+    // Bumped when the window system starts or stops drawing a title bar on
+    // a floating panel's window (windowSystemTitle).
+    Q_PROPERTY(int windowTitleRevision READ windowTitleRevision NOTIFY windowSystemTitlesChanged FINAL)
 public:
-    using QObject::QObject;
+    explicit Docking(QObject *parent = nullptr);
 
     // Whether the platform needs the compositor to move windows (Wayland).
     static bool platformNeedsSystemMove();
@@ -95,6 +98,13 @@ public:
     int headerRevision() const { return m_revision; }
     QString openMenu() const { return m_openMenu; }
     void setOpenMenu(const QString &uniqueName);
+    int windowTitleRevision() const { return m_windowTitleRevision; }
+
+    // Whether the window system draws its own title bar on `window` (a
+    // Wayland compositor that frames a floating panel's window although it
+    // asked for no frame; window_decorations.h). Its headers then leave the
+    // name to that title bar.
+    Q_INVOKABLE bool windowSystemTitle(QWindow *window) const;
 
     // The uniqueName of the panel of tab `index` of `tabBar` (the engine's
     // TabBarView); empty when there is none.
@@ -137,6 +147,7 @@ signals:
     void systemMoveRequested(QWindow *window);
     void menuRequested(const QString &uniqueName, QQuickItem *anchor);
     void openMenuChanged();
+    void windowSystemTitlesChanged();
 
 private:
     struct Header {
@@ -147,6 +158,7 @@ private:
     int m_revision = 0;
     bool m_systemMove = platformNeedsSystemMove();
     QString m_openMenu;
+    int m_windowTitleRevision = 0;
 };
 
 } // namespace hikari::ui

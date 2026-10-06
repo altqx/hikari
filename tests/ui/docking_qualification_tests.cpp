@@ -14,6 +14,7 @@
 // (hikari_ui_shell_tests).
 
 #include "docking.h"
+#include "window_decorations.h"
 
 #include <kddockwidgets/Config.h>
 #include <kddockwidgets/KDDockWidgets.h>
@@ -588,6 +589,75 @@ private slots:
         QCOMPARE(right->mapToScene(QPointF(right->width(), 0)).x(), qreal(floating->width()));
         QVERIFY(audio->setProperty("isFloating", false));
         QTRY_VERIFY(!audio->property("isFloating").toBool());
+    }
+
+    // Wayland (window_decorations.h): a compositor can frame a floating
+    // panel's window although it asked for no frame (sway with a border
+    // rule), and its title bar then names the window. A lone panel's header
+    // leaves the name to it, keeping the "⋯" button and its accessible
+    // name; a floating window of several groups keeps its groups' titles
+    // and drops its own title bar's. The compositor's answer is simulated
+    // here; the native gate (floating-forced-frame) has sway's.
+    void aWindowSystemTitleBarTakesTheWindowsName()
+    {
+        using hikari::ui::windowdecorations::overrideSystemTitleBar;
+        restoreInitial();
+        auto *audio = dock("Audio");
+        QVERIFY(audio->setProperty("isFloating", true));
+        QQuickItem *bar = nullptr;
+        QTRY_VERIFY((bar = header(QStringLiteral("Audio"))) && bar->window() != window);
+        QWindow *floating = bar->window();
+        QCOMPARE(floating->title(), QStringLiteral("Audio"));
+        QQuickItem *title = childNamed(bar, QStringLiteral("dockTitleText"));
+        QQuickItem *button = childNamed(bar, QStringLiteral("dockMenuButton"));
+        QVERIFY(title && button);
+        QVERIFY(title->isVisible() && button->isVisible());
+        QVERIFY(!docking()->windowSystemTitle(floating));
+        const auto unset = qScopeGuard([floating = QPointer<QWindow>(floating)] {
+            if (floating)
+                overrideSystemTitleBar(floating, std::nullopt);
+        });
+        QSignalSpy changes(docking(), &hikari::ui::Docking::windowSystemTitlesChanged);
+        overrideSystemTitleBar(floating, true);
+        QCOMPARE(changes.count(), 1);
+        QVERIFY(docking()->windowSystemTitle(floating));
+        QTRY_VERIFY(!title->isVisible());
+        QVERIFY(button->isVisible());
+        QVERIFY(bar->property("titleMode").toBool());
+        QAccessibleInterface *named = QAccessible::queryAccessibleInterface(bar);
+        QVERIFY(named);
+        QCOMPARE(named->text(QAccessible::Name), QStringLiteral("Audio"));
+        // The main window's headers keep their titles.
+        QVERIFY(!docking()->windowSystemTitle(window));
+        QVERIFY(childNamed(header(QStringLiteral("Video")), QStringLiteral("dockTitleText"))->isVisible());
+        // The compositor stops framing it: the title is back.
+        overrideSystemTitleBar(floating, false);
+        QTRY_VERIFY(title->isVisible());
+        QVERIFY(audio->setProperty("isFloating", false));
+        QTRY_VERIFY(!audio->property("isFloating").toBool());
+
+        // Two groups in one window: the window is named after the
+        // application, its groups keep their titles, its title bar drops
+        // its own and keeps the "⋯".
+        auto *video = dock("Video");
+        QVERIFY(video->setProperty("isFloating", true));
+        QQuickItem *videoBar = nullptr;
+        QTRY_VERIFY((videoBar = header(QStringLiteral("Video"))) && videoBar->window() != window);
+        auto *pair = qobject_cast<QQuickWindow *>(videoBar->window());
+        QVERIFY(QMetaObject::invokeMethod(window, "pairFloating"));
+        QTRY_VERIFY(header(QStringLiteral("Audio")) && header(QStringLiteral("Audio"))->window() == pair);
+        QTRY_VERIFY(!itemsNamed(pair, QStringLiteral("dockTitleBar")).isEmpty());
+        QQuickItem *titleBar = itemsNamed(pair, QStringLiteral("dockTitleBar")).first();
+        QQuickItem *barTitle = childNamed(titleBar, QStringLiteral("dockTitleText"));
+        QVERIFY(barTitle && barTitle->isVisible());
+        overrideSystemTitleBar(pair, true);
+        QTRY_VERIFY(!barTitle->isVisible());
+        QVERIFY(childNamed(titleBar, QStringLiteral("dockMenuButton"))->isVisible());
+        for (const QString &panel : {QStringLiteral("Video"), QStringLiteral("Audio")})
+            QVERIFY2(childNamed(header(panel), QStringLiteral("dockTitleText"))->isVisible(), qPrintable(panel));
+        overrideSystemTitleBar(pair, std::nullopt);
+        QTRY_VERIFY(barTitle->isVisible());
+        restoreInitial();
     }
 
     // D3: separators are 1 pixel wide, in the theme's boundary colour.

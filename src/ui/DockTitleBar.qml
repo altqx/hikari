@@ -20,6 +20,10 @@ KDDWViews.TitleBarBase {
     color: Theme.field
     heightWhenVisible: 35
 
+    // A compositor that frames the window although it asked for no frame
+    // (Docking.windowSystemTitle) shows its title: the bar keeps the "⋯".
+    readonly property bool systemTitle: Docking.windowTitleRevision >= 0 && Docking.windowSystemTitle(Window.window)
+
     Accessible.role: Accessible.TitleBar
     Accessible.name: root.title
     // Every group loads one; only a floating window of several groups shows it.
@@ -35,6 +39,7 @@ KDDWViews.TitleBarBase {
     Text {
         id: titleText
         objectName: "dockTitleText"
+        visible: !root.systemTitle
         x: 12
         width: Math.max(0, menuButton.x - x - 4)
         anchors.verticalCenter: parent.verticalCenter
