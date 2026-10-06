@@ -15620,6 +15620,47 @@ private slots:
         QTRY_COMPARE(application->videoView().volume(), volume - 3);
     }
 
+    // V5-volume-slider: the fullscreen panel shows the Video panel's volume
+    // slider with every player (legacy only for DirectShow,
+    // VideoFullscreen.cpp:164-168); it sets the player's volume and the main
+    // window's slider follows.
+    void videoFullscreenVolumeSlider()
+    {
+        restartWithoutSound();
+        QTemporaryDir folder;
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        auto &view = application->videoView();
+        auto &player = application->generalPlayer();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *volume = fullscreenItem("fullscreenVolume");
+        QVERIFY(volume);
+        QTRY_VERIFY(volume->isVisible());
+        QVERIFY(volume->isEnabled());
+        // At the right of the transport's row, after the file name.
+        auto *name = fullscreenItem("fullscreenVideoName");
+        QVERIFY(volume->mapToScene(QPointF(0, 0)).x() >= name->mapToScene(QPointF(name->width(), 0)).x());
+        QVERIFY(volume->mapToScene(QPointF(volume->width(), 0)).x() <= fsWindow->width());
+        // Icon-only: named in the tooltip and to assistive technology.
+        QCOMPARE(QAccessible::queryAccessibleInterface(volume)->text(QAccessible::Name), QStringLiteral("Volume"));
+        QCOMPARE(QQmlProperty(volume, QStringLiteral("ToolTip.text"), qmlContext(volume)).read().toString(), QStringLiteral("Volume"));
+        auto *mainVolume = item("videoVolume");
+        QVERIFY(mainVolume && mainVolume->window() == window);
+        QCOMPARE(view.volume(), 0);
+        QCOMPARE(volume->property("value").toInt(), 0);
+        volume->setProperty("value", -40);
+        QVERIFY(QMetaObject::invokeMethod(volume, "moved"));
+        QCOMPARE(view.volume(), -40);
+        QCOMPARE(player.volume(), std::pow(10.0, -1600.0 / 100.0 / 20.0));
+        QCOMPARE(mainVolume->property("value").toInt(), -40);
+        // The other way: the main window's change shows here.
+        view.setVolume(-10);
+        QCOMPARE(volume->property("value").toInt(), -10);
+        QVERIFY(fs.leave());
+    }
+
     // The fullscreen window follows the video: Unload video leaves it, and a
     // single video opened with video.fullScreenOnStart (legacy OpenFiles'
     // OpenFile(path, fulls)) goes fullscreen once shown.

@@ -14,10 +14,10 @@ import Hikari.Ui
 // At the bottom the panel (legacy `panel`): the seek bar across, then the
 // transport (Previous file, Play / Pause, Play the current line, Stop, Next
 // file), "Show toolbar", the times field and the video's file name, and
-// with "Show toolbar" the visual tool row (legacy VideoToolbar). Legacy's
-// volume slider shows only for a DirectShow video (VideoFullscreen.cpp:
-// 164-168); the rewrite always indexes (V3-indexing-retired), so it is not
-// shown, and the wheel over the panel still sets the volume.
+// with "Show toolbar" the visual tool row (legacy VideoToolbar). At the
+// row's right the Video panel's volume slider: legacy showed it only for a
+// DirectShow video (VideoFullscreen.cpp:164-168), the rewrite with every
+// player (V5-volume-slider); the wheel over the panel sets the volume too.
 // Icon-only buttons name themselves in a tooltip and to assistive
 // technology. With "Show toolbar" the panel stays and the picture ends above
 // it (m_PanelOnFullscreen); without, the picture takes the whole window, the
@@ -304,6 +304,12 @@ Window {
                         text: fs.controller.videoName
                         color: Theme.text
                         elide: Text.ElideMiddle
+                    }
+                    // Legacy volslider at the row's right (asize.x - 110): the Video panel's control.
+                    VideoVolumeSlider {
+                        sliderName: "fullscreenVolume"
+                        view: fs.shell.videoView
+                        hasVideo: fs.shell.video.hasVideo
                     }
                 }
                 // The toolbar row (legacy vToolbar): the visual tool families
