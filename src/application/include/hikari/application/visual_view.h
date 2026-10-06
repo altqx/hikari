@@ -57,6 +57,16 @@ struct SourceGeometry {
     bool operator==(const SourceGeometry &) const = default;
 };
 
+// Legacy m_arwidth : m_arheight of a source (ProviderFFMS2.cpp:364-380):
+// the display width (the encoded width times the SAR, truncated) and the
+// height, both divided by common factors from 10 down to 2 while one
+// divides. The status bar's aspect ratio field (P10) shows it.
+struct AspectPair {
+    int width = 0, height = 0;
+    bool operator==(const AspectPair &) const = default;
+};
+AspectPair sourceAspect(const SourceGeometry &source);
+
 // Legacy m_AspectRatio (height / width) of a source: the display width is
 // the encoded width times the SAR (truncated), both sides divided by common
 // factors from 10 down to 2 while one divides (ProviderFFMS2.cpp:366-380),

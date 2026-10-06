@@ -11,6 +11,8 @@
 #include "hikari/application/workspace.h"
 
 #include <QObject>
+
+#include <functional>
 #include <QtQml/qqmlregistration.h>
 
 namespace hikari::ui {
@@ -39,7 +41,10 @@ class ShellController : public QObject {
     // E6: GLOBAL_HIDE_TAGS (GRID_HIDE_TAGS): the Grids show override tags as
     // GRID_TAGS_SWAP_CHARACTER.
     Q_PROPERTY(bool hideTags READ hideTags NOTIFY hideTagsChanged)
-    // A transient status message (automation's set_status_text).
+    // The status bar's first field (P10, legacy HikariStatusBar field 0):
+    // help and progress text. Automation's set_status_text, the menus' and
+    // tool buttons' help, "Autosave" and progress write it, the last one wins
+    // (legacy SetStatusText(text, 0)). It never names the editing target.
     Q_PROPERTY(QString statusText READ statusText WRITE setStatusText NOTIFY statusTextChanged)
     // R2: the reference tray's navigation. Linked: it follows the editing
     // target's active Line one way; then the candidates' count, the one shown
@@ -94,6 +99,18 @@ public:
             emit statusTextChanged();
         }
     }
+
+    // P10: a task's progress in the first field (legacy ProgressSinkSilent:
+    // HikariSubFrame::ProgressSetup/ProgressTitle, ProgressParcentProgress
+    // and ProgressEnd, HikariSubFrame.cpp:559-621): "<title> <n>%. Time
+    // elapsed: <H:MM:SS.cc>", the time since the task started; the end
+    // empties the field. A start without a title shows nothing until the
+    // first percentage (ProgressSetup calls ProgressTitle only with one).
+    void startProgress(const QString &title);
+    void setProgress(int percent);
+    void endProgress();
+    // The milliseconds since startProgress (tests replace the clock).
+    void setProgressClock(std::function<qint64()> clock) { m_progressClock = std::move(clock); }
 
     int hiddenColumns() const { return m_lines.hiddenColumns(); }
     void setHiddenColumns(int mask)
@@ -184,6 +201,10 @@ private:
     QString m_selectionStatus;
     qsizetype m_selectedCount = 0, m_hiddenCount = 0; // what m_selectionStatus says
     QString m_statusText;
+    QString m_progressTitle;
+    qint64 m_progressStart = 0;
+    std::function<qint64()> m_progressClock;
+    qint64 progressNow() const;
     bool m_assFormat = true;
     bool m_endColumn = true;
     bool m_referenceLinked = false;          // R2

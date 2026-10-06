@@ -68,6 +68,10 @@ void VideoSession::open(const std::string &path, IndexRequest index)
             exact = exact && us.has_value();
             m_starts.emplace_back(us.value_or(0));
         }
+        // P10: legacy's float m_FPS (ProviderFFMS2.cpp:361), for the status bar.
+        m_legacyFps = opened->fpsDenominator != 0 ? static_cast<float>(opened->fpsNumerator) /
+                                                        static_cast<float>(opened->fpsDenominator)
+                                                  : 0.f;
         if (!exact || m_starts.empty()) {
             m_state = State::Failed;
             m_error = SourceError::Unsupported;

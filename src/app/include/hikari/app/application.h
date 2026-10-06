@@ -47,6 +47,7 @@
 #include "grid_filter_controller.h"
 #include "visual_tools_controller.h"
 #include "video_view_controller.h"
+#include "status_bar_controller.h"
 #include "settings_store.h"
 #include "shell_controller.h"
 #include "video_controller.h"
@@ -666,6 +667,8 @@ public:
     // T1: the Video panel's visual tools.
     ui::VisualToolsController &visualTools() { return *m_visualTools; }
     ui::VideoViewController &videoView() { return *m_videoView; }
+    // P10: the status bar's video and subtitle fields.
+    ui::StatusBarController &statusBar() { return *m_statusBar; }
     application::DocumentFiles &files() { return *m_files; }
     application::Workspace &workspace() { return m_workspace; }
     // Properties for Main.qml.
@@ -993,6 +996,7 @@ private:
     bool showOriginal(application::DocumentId document);
     void setUpTranslationControls();
     std::vector<std::byte> rendererScript(const core::Document &document) const;
+    std::unique_ptr<ui::StatusBarController> m_statusBar; // P10
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;
     std::uint64_t m_seenGroupBreaks = 0;
