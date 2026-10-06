@@ -36,6 +36,7 @@
 #include "hikari/backends/ffms_indexed_source.h"
 #include "hikari/backends/legacy_spelling.h"
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/backends/qt_general_player.h"
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
@@ -401,6 +402,13 @@ public:
     // The SubsMismatchResolutionDialog's Change: 0 only the resolution,
     // 1 resample (no stretch), 2 resample (stretch).
     Q_INVOKABLE bool matchVideoResolution(int option);
+    // W2: the About notice's CSRI line (the Windows CSRI adapter, after
+    // legacy CsriMod) and its VSFilter line (the build ships xy-VSFilter,
+    // HIKARI_WITH_VSFILTER).
+    Q_PROPERTY(bool includesCsri READ includesCsri CONSTANT)
+    Q_PROPERTY(bool includesVsfilter READ includesVsfilter CONSTANT)
+    static bool includesCsri();
+    static bool includesVsfilter();
     // "Disable warning" (legacy DONT_ASK_FOR_BAD_RESOLUTION, video.dontAskForBadResolution).
     Q_PROPERTY(bool askForBadResolution READ askForBadResolution WRITE setAskForBadResolution NOTIFY askForBadResolutionChanged)
     bool askForBadResolution() const { return !m_settings->boolean("video.dontAskForBadResolution"); }
@@ -667,6 +675,7 @@ public:
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; } // Y6
     // Y9: GRID_SUBS_FROM_MKV (the font collector reads attachments through its own helper).
     MatroskaController &matroska() { return *m_matroska; }
+    backends::SubtitleRendererSelection &subtitleRenderer() { return m_renderer; } // W2
     ui::LogController &log() { return *m_log; }
     // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
     // aegisub.gettext's catalog.
@@ -924,7 +933,8 @@ private:
     std::unique_ptr<backends::FfmsIndexedSource> m_mediaSource;
     // V3: the Video panel's source: dummy videos, else the media helper
     std::unique_ptr<application::DummyVideoSource> m_videoSource;
-    backends::LibassRenderer m_renderer;
+    // W2: libass, or a CSRI renderer (xy-VSFilter) on Windows, by video.subtitleProvider.
+    backends::SubtitleRendererSelection m_renderer;
     std::unique_ptr<ui::VideoController> m_video;
     std::unique_ptr<backends::QtGeneralPlayer> m_generalPlayer;
     // O1: declared before everything that keeps a reference to it.

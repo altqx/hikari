@@ -1,0 +1,14 @@
+{
+  "name": "hikari-xy-vsfilter",
+  "version-string": "3.2-hikari-c4297ed0",
+  "description": "The optional xy-VSFilter CSRI subtitle renderer (W2), built from the pinned altqx/xy-VSFilter fork with the legacy DirectShow BaseClasses",
+  "homepage": "https://github.com/altqx/xy-VSFilter",
+  "license": "GPL-2.0-or-later",
+  "supports": "windows & x64 & !uwp & !mingw",
+  "dependencies": [
+    "boost-flyweight",
+    "boost-smart-ptr",
+    {"name": "vcpkg-cmake", "host": true},
+    {"name": "vcpkg-cmake-config", "host": true}
+  ]
+}

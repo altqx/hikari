@@ -1,0 +1,8 @@
+@PACKAGE_INIT@
+# The xy-VSFilter CSRI renderer DLL, loaded at run time from <app>/Csri.
+if(NOT TARGET HikariXyVSFilter::csri)
+    add_library(HikariXyVSFilter::csri MODULE IMPORTED)
+    set_target_properties(HikariXyVSFilter::csri PROPERTIES
+        IMPORTED_LOCATION "${PACKAGE_PREFIX_DIR}/bin/xy-VSFilter_hikarisub.dll")
+endif()
+check_required_components(HikariXyVSFilter)

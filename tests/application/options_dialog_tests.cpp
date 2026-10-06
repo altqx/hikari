@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+
 #include <string>
 #include <vector>
 
@@ -81,7 +83,7 @@ constexpr LegacyBinding kLegacy[] = {
     {"CONVERT_RESOLUTION_WIDTH", OptionsControl::Number, OptionsPage::Conversion},
     {"CONVERT_RESOLUTION_HEIGHT", OptionsControl::Number, OptionsPage::Conversion},
     {"CONVERT_ASS_TAGS_TO_INSERT_IN_LINE", OptionsControl::Text, OptionsPage::Conversion},
-    // :583-635 (VSFILTER_INSTANCE, bound last, is not offered).
+    // :583-638, VSFILTER_INSTANCE bound last (W2).
     {"VIDEO_FULL_SCREEN_ON_START", OptionsControl::Check, OptionsPage::Video},
     {"VIDEO_PAUSE_ON_CLICK", OptionsControl::Check, OptionsPage::Video},
     {"OPEN_VIDEO_AT_ACTIVE_LINE", OptionsControl::Check, OptionsPage::Video},
@@ -89,6 +91,7 @@ constexpr LegacyBinding kLegacy[] = {
     {"ACCEPTED_AUDIO_STREAM", OptionsControl::Text, OptionsPage::Video},
     {"FFMS2_VIDEO_SEEKING", OptionsControl::IndexChoice, OptionsPage::Video},
     {"VIDEO_ZOOM_PERCENT", OptionsControl::ZoomText, OptionsPage::Video},
+    {"VSFILTER_INSTANCE", OptionsControl::Renderer, OptionsPage::Video},
     // :704-715 opts[13].
     {"AUDIO_DRAW_TIME_CURSOR", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_DRAW_SECONDARY_LINES", OptionsControl::Check, OptionsPage::Audio},
@@ -177,7 +180,6 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(findOptionsBinding("audio.inactiveLinesDisplayMode")->entries, 3);
     EXPECT_EQ(findOptionsBinding("grid.font")->sizeSetting, "grid.fontSize");
     EXPECT_EQ(findOptionsBinding("program.font")->sizeSetting, "program.fontSize");
-    EXPECT_EQ(findOptionsBinding("video.subtitleProvider"), nullptr);
 }
 
 TEST(OptionsDialog, OpensWithTheControlsLegacyShows)
@@ -412,6 +414,60 @@ TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)
     commitOptionsDialog(settings, l, state);
     EXPECT_EQ(settings.text("program.language"), "pl");
     EXPECT_FALSE(settings.isSet("editor.dictionaryLanguage")); // no symbol to write
+}
+
+// W2: "Subtitle display filter" (OptionsDialog.cpp:616-638, 1145-1152): the
+// CSRI renderers then libass; the selection's name is written.
+TEST(OptionsDialog, TheSubtitleDisplayFilterChoosesARendererByName)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    auto l = lists();
+    // Only libass (Linux, or Windows without a CSRI renderer): not offered.
+    l.renderers = {"libass"};
+    auto state = openOptionsDialog(settings, l).state;
+    EXPECT_FALSE(state.contains("video.subtitleProvider"));
+    EXPECT_FALSE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("video.subtitleProvider")));
+    EXPECT_FALSE(settings.isSet("video.subtitleProvider"));
+    settings.resetAll();
+    EXPECT_FALSE(refreshOptionsDialogAfterReset(settings, l, state).contains("video.subtitleProvider"));
+
+    l.renderers = {"xy-vsfilter_textsub", "vsfiltermod_textsub", "libass"};
+    // Unset reads as libass (W2-libass-default; legacy Windows showed the
+    // first entry, its default CSRI renderer). OK writes the shown name when
+    // it differs, as SetOptions does.
+    state = openOptionsDialog(settings, l).state;
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 2);
+    EXPECT_TRUE(std::ranges::contains(commitOptionsDialog(settings, l, state), std::string("video.subtitleProvider")));
+    EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
+    settings.set("video.subtitleProvider", std::string("xy-vsfilter_textsub"));
+    state = openOptionsDialog(settings, l).state;
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
+    // Index is exact: another case is not listed.
+    settings.set("video.subtitleProvider", std::string("LIBASS"));
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 0);
+    state["video.subtitleProvider"] = std::int64_t{1};
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.text("video.subtitleProvider"), "vsfiltermod_textsub");
+    // Set default: the default is unset, which is libass, so the choice shows
+    // libass (legacy's SetSelection(GetInt("")) showed the first entry, its
+    // default CSRI renderer) and OK keeps the video on libass.
+    settings.resetAll();
+    state = refreshOptionsDialogAfterReset(settings, l, state);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 2);
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.text("video.subtitleProvider"), "libass");
+    // libass listed first: the reset still finds it by name.
+    l.renderers = {"libass", "xy-vsfilter_textsub"};
+    settings.resetAll();
+    state = refreshOptionsDialogAfterReset(settings, l, openOptionsDialog(settings, l).state);
+    EXPECT_EQ(intOf(state, "video.subtitleProvider"), 0);
+    // A name that is not listed opens on the first entry, the default CSRI
+    // renderer the selection falls back to (GetVSFilter), so OK names what
+    // draws.
+    l.renderers = {"xy-vsfilter_textsub", "libass"};
+    settings.set("video.subtitleProvider", std::string("removed_textsub"));
+    EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.subtitleProvider"), 0);
 }
 
 TEST(OptionsDialog, ChangingTheCatalogListsItsStyles)

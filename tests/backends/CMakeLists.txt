@@ -290,3 +290,23 @@ hikari_add_qttest(hikari_backends_show_in_folder_tests SOURCES show_in_folder_te
 if(NOT WIN32)
     target_link_libraries(hikari_backends_show_in_folder_tests PRIVATE Qt6::DBus)
 endif()
+
+# W2: the CSRI adapter against legacy SubtitlesVSFilter/CsriMod through a fake
+# renderer. On Linux the adapter is compiled into this test only.
+hikari_add_gtest(hikari_backends_csri_tests SOURCES csri_renderer_tests.cpp
+    $<$<NOT:$<PLATFORM_ID:Windows>>:${PROJECT_SOURCE_DIR}/src/backends/csri_renderer.cpp>
+    LIBRARIES hikari_backends LABELS backends)
+# W2 (Windows, HIKARI_WITH_VSFILTER): the recipe's xy-VSFilter through the
+# adapter, against the legacy release's (HIKARI_LEGACY_CSRI).
+if(WIN32 AND HIKARI_WITH_VSFILTER)
+    hikari_add_gtest(hikari_backends_vsfilter_tests SOURCES csri_vsfilter_tests.cpp
+        LIBRARIES hikari_backends Qt6::Gui LABELS backends PROPERTIES TIMEOUT 300)
+    set(_w2_csri "${CMAKE_CURRENT_BINARY_DIR}/vsfilter-csri")
+    add_custom_command(TARGET hikari_backends_vsfilter_tests POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${_w2_csri}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:HikariXyVSFilter::csri>"
+            "${_w2_csri}/xy-VSFilter_hikarisub.dll"
+        VERBATIM)
+    target_compile_definitions(hikari_backends_vsfilter_tests PRIVATE HIKARI_VSFILTER_CSRI_DIR="${_w2_csri}"
+        HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter")
+endif()

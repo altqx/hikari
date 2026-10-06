@@ -50,6 +50,14 @@
       }
     },
     {
+      "name": "windows-x64-vsfilter",
+      "inherits": "windows-x64-release",
+      "displayName": "Windows x64 release with the optional xy-VSFilter renderer (W2)",
+      "cacheVariables": {
+        "HIKARI_WITH_VSFILTER": "ON"
+      }
+    },
+    {
       "name": "provision",
       "inherits": "base",
       "displayName": "Provision locked dependencies only",
@@ -70,6 +78,10 @@
     {
       "name": "windows-x64-release",
       "configurePreset": "windows-x64-release"
+    },
+    {
+      "name": "windows-x64-vsfilter",
+      "configurePreset": "windows-x64-vsfilter"
     }
   ],
   "testPresets": [
@@ -100,6 +112,21 @@
     {
       "name": "windows-x64-release",
       "configurePreset": "windows-x64-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "filter": {
+        "exclude": {
+          "label": "perf"
+        }
+      },
+      "environment": {
+        "PATH": "${sourceDir}/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$penv{PATH}"
+      }
+    },
+    {
+      "name": "windows-x64-vsfilter",
+      "configurePreset": "windows-x64-vsfilter",
       "output": {
         "outputOnFailure": true
       },
@@ -243,6 +270,23 @@
         {
           "type": "test",
           "name": "windows-x64-release"
+        }
+      ]
+    },
+    {
+      "name": "windows-x64-vsfilter",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "windows-x64-vsfilter"
+        },
+        {
+          "type": "build",
+          "name": "windows-x64-vsfilter"
+        },
+        {
+          "type": "test",
+          "name": "windows-x64-vsfilter"
         }
       ]
     },

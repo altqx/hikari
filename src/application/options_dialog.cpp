@@ -77,7 +77,7 @@ constexpr OptionsBinding kBindings[] = {
     {"convert.resolutionWidth", Number, Conversion, 1, 3000},
     {"convert.resolutionHeight", Number, Conversion, 1, 3000},
     {"convert.assTagsToInsertInLine", Text, Conversion},
-    // video (VSFILTER_INSTANCE, the subtitle display filter, is not offered).
+    // video.
     {"video.fullScreenOnStart", Check, Video},
     {"video.pauseOnClick", Check, Video},
     {"video.openAtActiveLine", Check, Video},
@@ -85,6 +85,9 @@ constexpr OptionsBinding kBindings[] = {
     {"video.acceptedAudioStream", Text, Video},
     {"video.ffms2Seeking", IndexChoice, Video, 0, 0, 4},
     {"video.zoomPercent", ZoomText, Video},
+    // W2: VSFILTER_INSTANCE, "Subtitle display filter", bound last
+    // (OptionsDialog.cpp:616-638); offered only with a CSRI renderer.
+    {"video.subtitleProvider", Renderer, Video},
     // AudioMain.
     {"audio.drawTimeCursor", Check, Audio},
     {"audio.drawSecondaryLines", Check, Audio},
@@ -176,6 +179,8 @@ const std::vector<std::string> &choiceList(const OptionsLists &lists, OptionsCon
         return lists.dictionaryNames;
     case Catalog:
         return lists.catalogs;
+    case Renderer:
+        return lists.renderers;
     default:
         return lists.styles;
     }
@@ -315,6 +320,18 @@ OptionsOpening openOptionsDialog(Settings &settings, const OptionsLists &lists)
             state[id] = select(std::int64_t{-1}, sel, lists.styles.size());
             break;
         }
+        case Renderer: {
+            if (lists.renderers.size() < 2)
+                break; // not offered
+            // vsfilters.Index(name), the first entry when it is not listed.
+            // Unset reads as libass (W2: CSRI is chosen explicitly), so OK
+            // does not switch to the first CSRI renderer.
+            const std::string name = settings.text(id).empty() ? std::string("libass") : settings.text(id);
+            const auto it = std::ranges::find(lists.renderers, name);
+            const auto sel = it == lists.renderers.end() ? 0 : std::int64_t(it - lists.renderers.begin());
+            state[id] = select(std::int64_t{-1}, sel, lists.renderers.size());
+            break;
+        }
         case ComboText: {
             const std::string text = settings.text(id);
             const auto it = std::ranges::find_if(kFps, [&](std::string_view f) {
@@ -376,7 +393,8 @@ std::vector<std::string> commitOptionsDialog(Settings &settings, const OptionsLi
             break;
         }
         case Catalog:
-        case Style: {
+        case Style:
+        case Renderer: {
             // GetString(GetSelection()): empty past the list.
             const auto &values = choiceList(lists, b.control);
             const std::int64_t sel = intOf(state, id);
@@ -439,6 +457,21 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
             // Cast to HikariTextCtrl: its SetValue (not virtual) shows the raw text.
             state[id] = zoomText(settings, id);
             break;
+        case Renderer:
+            if (!state.contains(id))
+                break; // not offered
+            if (settings.text(id).empty()) {
+                // The default is unset, which is libass (W2: CSRI is chosen
+                // explicitly). Legacy's SetSelection(GetInt("")) showed the
+                // first entry, its default CSRI renderer, and OK would then
+                // switch to it; show libass as the opening does.
+                const auto it = std::ranges::find(lists.renderers, std::string("libass"));
+                if (it != lists.renderers.end()) {
+                    state[id] = std::int64_t(it - lists.renderers.begin());
+                    break;
+                }
+            }
+            [[fallthrough]];
         case Language:
         case Dictionary:
         case Catalog:
