@@ -285,10 +285,8 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // T6's position shifter options, D2's view arrangements, V5's full
-        // screen (D2's editor switch shares the editor role the Options
-        // dialog's Editor page shows).
-        QCOMPARE(pending, 13);
+        // T6's position shifter options and V5's full screen.
+        QCOMPARE(pending, 8);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.

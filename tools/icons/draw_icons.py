@@ -675,7 +675,6 @@ for card, roles in {
     "T6 #181": ["shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings",
                 "shift-origins"],
     "V5 #184": ["fullscreen", "fullscreen-exit"],
-    "D2 #201": ["view-all", "view-video-subs", "view-audio-subs", "view-only-video", "view-only-subs"],
 }.items():
     for role in roles:
         PENDING[role] = card

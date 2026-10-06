@@ -11,6 +11,8 @@
   atspi_tool.py json                                   frames, panels, focus and texts as JSON
   atspi_tool.py press-showing NAME                     press every showing button with that name
   atspi_tool.py where ROLE NAME                        showing objects with that role and name, window coordinates (JSON)
+  atspi_tool.py menu                                   the showing popup menus' items, in order, with
+                                                       whether each is enabled and focused (JSON)
 
 Every line names the role, the accessible name, the states that matter for
 the gate (focused, active, showing, visible) and the screen extents.
@@ -258,6 +260,27 @@ def main():
                 out.append({"frame": frame_id(f.get_name()), "x": e.x, "y": e.y, "w": e.width, "h": e.height,
                             "states": states(o)})
         print(json.dumps(out))
+    elif cmd == "menu":
+        # D2: the keyboard skips disabled items, so a path through a menu
+        # counts the enabled ones (AT-SPI does not follow the highlight).
+        import json
+        menus = []
+        for o in all_objects(a):
+            try:
+                if o.get_role_name() == "popup menu" and o.get_state_set().contains(Atspi.StateType.SHOWING):
+                    items = []
+                    for i in range(o.get_child_count()):
+                        c = o.get_child_at_index(i)
+                        if c is None or c.get_role_name() != "menu item":
+                            continue
+                        cs = c.get_state_set()
+                        items.append({"name": c.get_name(), "enabled": cs.contains(Atspi.StateType.ENABLED)
+                                      or cs.contains(Atspi.StateType.SENSITIVE),
+                                      "focused": cs.contains(Atspi.StateType.FOCUSED)})
+                    menus.append(items)
+            except GLib.Error:
+                pass
+        print(json.dumps(menus))
     elif cmd == "press-showing":
         for o in all_objects(a):
             try:

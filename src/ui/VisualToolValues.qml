@@ -30,7 +30,9 @@ RowLayout {
                 ++n
         return n
     }
-    visible: batchTool || options.visible || editableCount > 0
+    // D2: false in the player layout (legacy's video toolbar hidden).
+    property bool shownInLayout: true
+    visible: shownInLayout && (batchTool || options.visible || editableCount > 0)
     spacing: 4
 
     // The value fields fit a coordinate ("-00000.00"), not the panel.

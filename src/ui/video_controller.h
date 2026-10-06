@@ -119,6 +119,9 @@ public:
     Q_INVOKABLE bool goToLineEnd();
     // The active Line's times, for the times field and the go-to commands.
     void setActiveLineTimes(std::optional<std::pair<core::DocumentTime, core::DocumentTime>> times);
+    // D2: with the editor off the times field leaves out the ms from the
+    // active Line's start and end (VideoBox::ShowTimes, `if (tab->editor)`).
+    void setEditorOn(bool on);
 
     // V3: where the stream menu's track names and the chapters come from
     // (the media helper's probe and chapter list); none: no names, no chapters.
@@ -181,6 +184,7 @@ private:
     std::vector<application::Chapter> m_chapters;
     int m_prevChapter = -1; // legacy prevchap
     std::shared_ptr<bool> m_alive = std::make_shared<bool>(true);
+    bool m_editorOn = true;
 };
 
 } // namespace hikari::ui

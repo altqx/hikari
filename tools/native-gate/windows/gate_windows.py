@@ -568,11 +568,38 @@ def open_view():
 SUBMENU = {"key": "right", "checked": False}
 
 
+def menu_to(name, opener=None):
+    """Open a menu (the View menu by default) and press Down until the
+    highlight is on the item NAME. D2 put the five arrangements first in the
+    View menu, enabled by what is open, and Down skips disabled items, so the
+    Downs are counted among the enabled popup menu items UI Automation lists."""
+    if opener is None:
+        if not open_view():
+            return False
+    else:
+        park_pointer()
+        keys(opener, 0.6)
+    st = uia()
+    els = st.get("elements") or []
+    items = [e for e in els if e["t"] == "MenuItem" and not e["off"]
+             and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e))]
+    enabled = [e["n"] for e in items if e["en"]]
+    if name not in enabled:
+        log(f"menu_to: {name!r} is not an enabled item of {[(e['n'], e['en']) for e in items]}")
+        return False
+    keys(*(["down"] * (enabled.index(name) + 1)), delay=0.3)
+    return True
+
+
+def view_to(name):
+    return menu_to(name)
+
+
 def panel_menu(name, item):
     """View > Panels > NAME > ITEM (Show, Hide, Float, Dock) from the keyboard."""
-    open_view()
+    view_to("Panels")
     k = SUBMENU["key"]
-    seq = ["down", k, 0.3] + ["down"] * PANELS.index(name) + [k, 0.3]
+    seq = [k, 0.3] + ["down"] * PANELS.index(name) + [k, 0.3]
     seq += ["down"] * ["Show", "Hide", "Float", "Dock"].index(item) + ["return"]
     keys(*seq)
     time.sleep(1.2)
@@ -613,8 +640,8 @@ def float_panel(name, tag):
     log(f"{tag}: View > Panels > {name} > Float did not float it; using View > Move panel…")
     keys("escape", "escape", "escape", "escape")
     focus_main_compositor()
-    open_view()
-    keys("down", "down", "return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
+    view_to("Move panel…")
+    keys("return", 1.2, "home", *(["down"] * PANELS.index(name)), "tab", "home",
          *(["down"] * 5), "tab", "space", 1.5)
     st = wait_for(lambda s: name in frames(s), timeout=4)
     if "Move panel" in frames(st):
@@ -690,9 +717,9 @@ def step_keyboard_float_dock():
         log("Dock at the 4th position did not dock; trying the 3rd (disabled items skipped)")
         keys("escape", "escape", "escape")
         focus_main()
-        open_view()
+        view_to("Panels")
         k = SUBMENU["key"]
-        keys("down", k, 0.3, "down", "down", k, 0.3, "down", "down", "return")
+        keys(k, 0.3, "down", "down", k, 0.3, "down", "down", "return")
         st = wait_for(lambda s: "Line editor" not in frames(s))
     ev2, st = snap("kbd-2-docked")
     docked = "Line editor" not in frames(st) and panel_frame(st, "Line editor") == MAIN
@@ -756,8 +783,8 @@ def window_combos(st, frame):
 
 def step_move_panel():
     fresh()
-    open_view()
-    keys("down", "down", "return", 1.2)
+    view_to("Move panel…")
+    keys("return", 1.2)
     st = wait_for(lambda s: "Move panel" in frames(s))
     combos_open = window_combos(st, "Move panel")
     ev0, st = snap("move-panel-0-open", extra="# combo boxes\n" + json.dumps(combos_open, ensure_ascii=False))
@@ -1120,9 +1147,9 @@ def step_video():
     if "Video" in frames(st):
         keys("escape", "escape", "escape", "escape")
         focus_main_compositor()
-        open_view()
+        view_to("Panels")
         k = SUBMENU["key"]
-        keys("down", k, 0.3, k, 0.3, "down", "down", "return")
+        keys(k, 0.3, k, 0.3, "down", "down", "return")
         wait_for(lambda s: "Video" not in frames(s), timeout=4)
     time.sleep(2)
     ev4, l4 = state("4-redocked")
@@ -1229,13 +1256,15 @@ def step_test_executables():
     text = "\n".join(lines)
     (EVID / "test-executables.txt").write_text(f"# winix job {job.get('id')} ({job.get('state')})\n{text}\n")
     exits = re.findall(r"^### (\S+) .*\(exit (.+)\)$", text, re.M)
-    ok = len(exits) == 4 and all(code == "0" for _, code in exits)
+    ok = len(exits) == 5 and all(code == "0" for _, code in exits)
     summary = "; ".join(re.findall(r"Totals: [^,]+, [^,]+, [^,]+", text))
     skips = re.findall(r"SKIP\s*:.*", text)
     # Skips declared as platform limits, each observed for real by another
     # item (as in the Linux gate): a synthetic drag between windows needs the
-    # offscreen platform (pointer).
-    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform")
+    # offscreen platform (pointer). D2's screenshots run only with
+    # HIKARI_SURFACE_SHOT_DIR.
+    known = ("the compositor places windows", "a synthetic drag between windows needs the offscreen platform",
+             "HIKARI_SURFACE_SHOT_DIR is not set")
     unexpected = [k for k in skips if not any(reason in k for reason in known)]
     log("tests", exits, summary, skips)
     verdict("test-executables", "observed" if ok and not unexpected else "failed",
@@ -1264,9 +1293,9 @@ def step_nvda():
     try:
         focus_main_compositor()
         f6_walk(4)
-        open_view()
+        view_to("Panels")
         k = SUBMENU["key"]
-        keys("down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
+        keys(k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
         f6_walk(3)
         ev, st = snap("nvda-0-after-float")
         # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu,
@@ -1614,10 +1643,121 @@ def step_header():
             f"docked={docked}; focus {st['focusPath']}", ev2 + ev3)
 
 
+# ---------------------------------------------------------------- D2
+CORE = ("Video", "Audio", "Line editor", "Grid")
+# Legacy's View menu (HikariSubFrame.cpp:308-312) and the core panels each
+# arrangement shows (OnMenuSelected, HikariSubFrame.cpp:849-892), in the
+# order the gate applies them (All last: the round trip). As gate.py.
+ARRANGEMENTS = [("Only subtitles", {"Line editor", "Grid"}), ("Only video", {"Video"}),
+                ("Video and subs", {"Video", "Line editor", "Grid"}), ("Audio and subs", {"Audio", "Line editor", "Grid"}),
+                ("All", set(CORE))]
+
+
+def core_panels(st):
+    """The core panels shown docked in the main window, with their places."""
+    return {p["id"]: (p["x"], p["y"], p["w"], p["h"]) for p in st["panels"] if p["id"] in CORE and p["frame"] == MAIN}
+
+
+def same_places(a, b, slack=2):
+    return set(a) == set(b) and all(all(abs(x - y) <= slack for x, y in zip(a[k], b[k])) for k in a)
+
+
+def type_draft():
+    """A draft in the Line editor (" draft" typed at the end of the Line
+    text), then F6 to the Grid, where the menus open from."""
+    set_focus("Line text")
+    keys("end")
+    type_text(" draft")
+    time.sleep(0.8)
+    keys("f6", 0.5)
+    return uia()["texts"].get("Line text")
+
+
+def step_views():
+    """D2: View > All, Video and subs, Audio and subs, Only video and Only
+    subtitles from the keyboard over the docked Workspace: the panels each
+    shows, the focus on a shown panel, the draft kept, and All back to the
+    places the panels had."""
+    if not LAYOUT.get("ep1_ass"):
+        verdict("view-arrangements", "error", "no cfr.mkv media fixture in the VM's build tree (run the test task once)")
+        return
+    fresh(LAYOUT["ep1_ass"])
+    dismiss_notices()
+    uia(do=[{"action": "invoke", "name": "Load associated", "type": "Button", "all": True}])
+    time.sleep(5)
+    focus_main()
+    # Blank audio after the video (a video without audio closes the box).
+    blank = menu_to("Open blank 2h30m audio", opener="alt+u")
+    keys("return", 2.5)
+    draft = type_draft()
+    ev, st = snap("views-0-editing")
+    evidence = list(ev)
+    base = core_panels(st)
+    rows, shown_ok, focus_ok, draft_ok = [], True, True, True
+    for i, (label, want) in enumerate(ARRANGEMENTS, 1):
+        reached = view_to(label)
+        keys("return", 1.5)
+        st = wait_for(lambda s: set(core_panels(s)) == want, timeout=5)
+        ev, st = snap(f"views-{i}-" + label.lower().replace(" ", "-"))
+        evidence += ev
+        shown = set(core_panels(st))
+        focus = panel_of(st["focusPath"])
+        text = st["texts"].get("Line text")
+        shown_ok &= reached and shown == want
+        focus_ok &= focus in want
+        if "Line editor" in want:
+            draft_ok &= text == draft
+        rows.append(f"{label}: reached={reached} shown={sorted(shown)} focus={focus} Line text={text!r}")
+    back = same_places(core_panels(st), base)
+    (EVID / "views.txt").write_text(
+        f"blank audio from the keyboard: {blank}\nediting: {base}\nafter All: {core_panels(st)}\n" + "\n".join(rows))
+    evidence.append("views.txt")
+    detail = "; ".join(rows)
+    verdict("view-arrangements", "observed" if shown_ok and base and set(base) == set(CORE) else "failed",
+            f"from the keyboard, the core panels each arrangement shows: {detail}", evidence)
+    verdict("view-focus-on-shown-panel", "observed" if focus_ok else "failed",
+            f"the focus after each arrangement is on a shown panel: {detail}", evidence)
+    verdict("view-draft-kept", "observed" if draft_ok and draft and draft.endswith(" draft") else "failed",
+            f"Line text with the draft {draft!r}: {detail}", evidence)
+    verdict("view-all-round-trip", "observed" if back else "failed",
+            f"View > All returns each panel to its place (2 px): before {base}, after {core_panels(st)}", evidence)
+
+
+def step_editor():
+    """D2: GLOBAL_EDITOR (Ctrl+E, SendInput): the player layout (only the
+    Video panel, with the focus), and back to the arrangement it held, the
+    focus on the Grid and the draft kept."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    draft = type_draft()
+    ev0, st = snap("editor-0-on")
+    base = core_panels(st)
+    keys("ctrl+e", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) == {"Video"}, timeout=5)
+    ev1, st = snap("editor-1-off")
+    off = set(core_panels(st))
+    focus_off = panel_of(st["focusPath"])
+    keys("ctrl+e", 1.5)
+    st = wait_for(lambda s: set(core_panels(s)) == set(base), timeout=5)
+    time.sleep(1)
+    ev2, st = snap("editor-2-on-again")
+    on = core_panels(st)
+    focus_on = panel_of(st["focusPath"])
+    text = st["texts"].get("Line text")
+    evidence = ev0 + ev1 + ev2
+    verdict("editor-player-layout", "observed" if off == {"Video"} and focus_off == "Video" else "failed",
+            f"Ctrl+E: panels shown {sorted(off)}, focus on {focus_off}", evidence)
+    verdict("editor-round-trip", "observed" if base and same_places(on, base) else "failed",
+            f"Ctrl+E again: before {base}, after {on}", evidence)
+    verdict("editor-focus-and-draft", "observed" if focus_on == "Grid" and draft and text == draft else "failed",
+            f"focus on {focus_on}; Line text {draft!r} -> {text!r}", evidence)
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
-         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi}
+         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi,
+         "views": step_views, "editor": step_editor}
 
 
 def main():

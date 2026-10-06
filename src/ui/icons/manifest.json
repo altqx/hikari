@@ -1336,8 +1336,7 @@
    "legacy": [],
    "surfaces": [
     "menu:view"
-   ],
-   "pending": "D2 #201"
+   ]
   },
   {
    "role": "view-video-subs",
@@ -1348,8 +1347,7 @@
    "legacy": [],
    "surfaces": [
     "menu:view"
-   ],
-   "pending": "D2 #201"
+   ]
   },
   {
    "role": "view-audio-subs",
@@ -1360,8 +1358,7 @@
    "legacy": [],
    "surfaces": [
     "menu:view"
-   ],
-   "pending": "D2 #201"
+   ]
   },
   {
    "role": "view-only-video",
@@ -1372,8 +1369,7 @@
    "legacy": [],
    "surfaces": [
     "menu:view"
-   ],
-   "pending": "D2 #201"
+   ]
   },
   {
    "role": "view-only-subs",
@@ -1384,8 +1380,7 @@
    "legacy": [],
    "surfaces": [
     "menu:view"
-   ],
-   "pending": "D2 #201"
+   ]
   },
   {
    "role": "tool-crosshair",

@@ -23,7 +23,8 @@ tools/native-gate/run.sh                 # all four sessions, every step
 tools/native-gate/run.sh kwin -- video   # one session, chosen steps
 ```
 
-`HIKARI_TREE` names the checkout whose build is tested (default
+`GATE_CONTAINER` names the container (default `d1gate`), so a gate of
+another worktree can run beside one already up. `HIKARI_TREE` names the checkout whose build is tested (default
 `/home/altq/Work/hikari-qt`; `HIKARI_TREE=$PWD tools/native-gate/run.sh` tests
 this worktree's build). `run.sh` builds the `hikari-d1-gate` image (Arch Linux, the host's distro, so
 the host-built binaries and the Qt SDK under `out/sdk` run unchanged), starts
@@ -58,6 +59,8 @@ recorded as a pass.
 | `orca` | Orca's speech while F6 moves through the panels, a panel is floated from the menu, and the Grid's tab, "⋯" button and menu are reached from the keyboard |
 | `menutext` | Alt+V from the Line text field |
 | `tests` | `hikari_ui_shell_tests` (D1 and D3 functions), `hikari_ui_docking_qualification_tests`, `hikari_ui_workspace_layout_tests` under the real platform |
+| `views` | D2 (#201): View > Only subtitles, Only video, Video and subs, Audio and subs and All from the keyboard (with `ep1.mkv` and blank audio from Audio > Open blank 2h30m audio): the core panels each shows, the focus on a shown panel, the Line editor's draft kept, All back to the panels' places |
+| `editor` | D2: Ctrl+E (GLOBAL_EDITOR) through the compositor: only the Video panel, with the focus; Ctrl+E again: the arrangement back at its places, the focus on the Grid, the draft kept |
 | `a11y` | what AT-SPI exposes of the D3 headers: each lone panel's title bar named after it (Qt's AT-SPI bridge gives a title bar the role `text`) with its "<panel> options" button, the Grid's page tab; the menu's Undock and Dock pressed through AT-SPI float and dock Audio; a tab group's page tabs checked when selected, the options button on the selected one, a tab pressed selects it, and Undock floats Shift times; the Grid's table in the panel named Grid |
 
 ## Other tools
@@ -92,7 +95,10 @@ goes to `sway-activate/`; `run.sh` does this for steps `f6`, `fullscreen`, `test
 cross-window focus item is recorded not-observable only when the window that
 asked for activation is marked urgent (the app asked, sway refused).
 
-Harness lessons: the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
+Harness lessons: the View menu starts with D2's five arrangements, enabled
+by what is open, and Down skips disabled items, so `view_to()` presses Down
+until the wanted item has the AT-SPI focus instead of counting positions;
+the menu bar has two Alt+V mnemonics (&Video, &View) and Qt
 cycles between them, so `open_view()` presses Alt+V until the View menu shows;
 Qt keeps hidden windows titled HikariSub, so X11 window searches use
 `--onlyvisible`; removing a RandR monitor on Xvfb leaves the output's own

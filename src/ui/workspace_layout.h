@@ -35,6 +35,10 @@ class WorkspaceLayoutController : public QObject {
     // the shell's while one is open: the shell's shortcuts stay off then, as
     // legacy's menu took every key while it was shown (D1 Windows gate).
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
+    // D2: the player layout (GLOBAL_EDITOR off) holds the editing
+    // arrangement until the editor comes back; nothing is saved meanwhile,
+    // so the saved layout stays the editing one.
+    Q_PROPERTY(bool holding READ holding NOTIFY changed)
 public:
     static constexpr int kSchema = 1;
     static constexpr int kPanelRegistry = 3; // 2: Timing (F5), 3: Search (F1)
@@ -64,6 +68,24 @@ public:
     // Floating panel windows whose title bar no screen shows move onto the
     // main window's screen (also done when screens change and after a restore).
     Q_INVOKABLE int keepFloatingPanelsOnScreen();
+    // D2: legacy View menu's arrangements (HikariSubFrame.cpp:849-892), by
+    // their GLOBAL_VIEW_* names: the core panels each one shows (the others
+    // of Video, Audio, Editor and Grid are hidden). Empty for another name.
+    Q_INVOKABLE static QStringList arrangementPanels(const QString &arrangement);
+    static const QStringList &arrangements();
+    // D2: holds the current arrangement (the player layout follows), and
+    // gives it back; false when nothing is held or it does not restore.
+    Q_INVOKABLE void holdArrangement();
+    Q_INVOKABLE bool releaseArrangement();
+    bool holding() const { return !m_held.isEmpty(); }
+    // D2: the arrangement as it was when Video, Audio, Editor and Grid were
+    // last all shown (the shell remembers it before an arrangement hides
+    // one, and while they stay shown); an arrangement that shows a hidden
+    // core panel again starts from it, as legacy's views laid the panels
+    // out at their own sizes (VIDEO_WINDOW_SIZE). Reset layout, a preset,
+    // the backup and the saved layout at start forget it.
+    Q_INVOKABLE void rememberFullArrangement();
+    Q_INVOKABLE bool restoreFullArrangement();
 
     QString notice() const { return m_notice; }
     QString preset() const { return m_preset; }
@@ -83,12 +105,14 @@ signals:
     void menuHasFocusChanged();
 
 private:
-    bool restorePayload(const QByteArray &payload);
+    bool restorePayload(const QByteArray &payload, bool inPlace = false);
     QString backupFile() const { return m_file + QStringLiteral(".bak"); }
 
     QString m_file;
     QByteArray m_default;
     QByteArray m_lastSaved;
+    QByteArray m_held;
+    QByteArray m_full;
     QString m_notice;
     QString m_preset = QStringLiteral("Editing");
     bool m_restoring = false;

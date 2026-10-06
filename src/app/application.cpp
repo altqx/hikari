@@ -558,6 +558,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // D1: the panel layout beside the settings (none without a settings file).
     m_workspaceLayout = std::make_unique<ui::WorkspaceLayoutController>(
         m_settingsFile.isEmpty() ? QString() : QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/layout.json"));
+    m_video->setEditorOn(editorOn()); // D2: EDITOR_ON as stored
     m_gridFilter = std::make_unique<ui::GridFilterController>(*m_settings);
     // T1: the visual tools edit the editing target, never the reference.
     m_visualTools = std::make_unique<ui::VisualToolsController>(*m_video, *m_settings, [this] { return targetSession(); });
@@ -1325,6 +1326,7 @@ bool Application::openFile(const QString &path)
     ++m_openBatch; // P9: the association question (legacy OpenFile's LoadVideo prompt)
     if (emptyTab)
         replaceTarget(*id);
+    editorOnForSubtitles(); // D2: HikariSubFrame::OpenFile
     offerAssociations(*id);
     showAssociationOffer();
     refreshViews();
@@ -1430,6 +1432,48 @@ void Application::refreshViews()
     emit tabsChanged(); // P6: titles, modified marks and the active tab
 }
 
+bool Application::showVideoSubtitles()
+{
+    const auto target = m_videoDocument;
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!editorOn()) {
+        // D2: the player layout shows the video without subtitles (legacy
+        // LoadVideo's OpenSubs(CLOSE_SUBTITLES) with the editor off,
+        // HikariSubFrame.cpp:1416; RendererDirectShow::ChangeVobsub(true)
+        // from HideEditor, and ChangeVobsub() again when it comes back).
+        m_videoRevision.reset();
+        m_videoShowsDraft = false;
+        m_videoScript.clear();
+        if (m_video->session().hasSubtitles())
+            m_video->session().closeSubtitles();
+        return false;
+    }
+    if (!session)
+        return false;
+    bool edited = false;
+    // E4: live video editing (EditBox::OnEdit's OpenSubsLater, connected
+    // unless DISABLE_LIVE_VIDEO_EDITING, EditBox.cpp:349-352): the video
+    // shows the pending draft; without it, the committed Document only.
+    std::optional<core::Document> draft;
+    if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
+        draft = m_editor->draftDocument();
+    if (draft || m_videoShowsDraft || session->revision() != m_videoRevision) {
+        if (session->revision() != m_videoRevision)
+            edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
+        m_videoRevision = session->revision();
+        m_videoShowsDraft = draft.has_value();
+        // T4: with the visual tool's preview (its Lines, the vector clip's
+        // mask); E5: as the renderer takes it (GetVisible).
+        auto script = m_visualTools->subtitles(draft ? *draft : session->document(),
+                                               [this](const core::Document &d) { return rendererScript(d); });
+        if (script != m_videoScript) {
+            m_videoScript = script;
+            m_video->session().setSubtitles(std::move(script));
+        }
+    }
+    return edited;
+}
+
 void Application::refreshVideo()
 {
     if (m_holdVideoRefresh)
@@ -1457,27 +1501,7 @@ void Application::refreshVideo()
     m_visualTools->refresh(); // T1: the script resolution, the format and the active Line
     if (!session)
         return;
-    bool edited = false;
-    // E4: live video editing (EditBox::OnEdit's OpenSubsLater, connected
-    // unless DISABLE_LIVE_VIDEO_EDITING, EditBox.cpp:349-352): the video
-    // shows the pending draft; without it, the committed Document only.
-    std::optional<core::Document> draft;
-    if (!m_settings->boolean("video.disableLiveEditing") && m_editorDocument == target && m_video->hasVideo())
-        draft = m_editor->draftDocument();
-    if (draft || m_videoShowsDraft || session->revision() != m_videoRevision) {
-        if (session->revision() != m_videoRevision)
-            edited = m_videoRevision.has_value(); // V6: legacy SetModified / Undo
-        m_videoRevision = session->revision();
-        m_videoShowsDraft = draft.has_value();
-        // T4: with the visual tool's preview (its Lines, the vector clip's
-        // mask); E5: as the renderer takes it (GetVisible).
-        auto script = m_visualTools->subtitles(draft ? *draft : session->document(),
-                                               [this](const core::Document &d) { return rendererScript(d); });
-        if (script != m_videoScript) {
-            m_videoScript = script;
-            m_video->session().setSubtitles(std::move(script));
-        }
-    }
+    const bool edited = showVideoSubtitles();
     // V4: the Script properties YCbCr matrix on the video's colours.
     m_video->session().setMatrix(application::sessionVideoMatrix(*session));
     const auto active = session->selection().active;
@@ -1693,6 +1717,7 @@ void Application::finishClose()
         const bool fromVideo = std::exchange(m_openFromVideo, false);
         if (id) {
             replaceTarget(*id); // P6: loaded into the same tab (legacy OpenFile)
+            editorOnForSubtitles(); // D2: OpenFile's HideEditor (HikariSubFrame.cpp:1402)
             // P9: the folder's video and the Script Info associations are
             // offered (LoadVideo's loadPrompt), but not for subtitles found
             // beside a video, which opens after them.

@@ -4,10 +4,13 @@
 # host's display: every compositor runs headless inside it), starts each
 # SESSION (sway, kwin, mutter, x11; default all four) and runs gate.py there.
 # Evidence lands in out/native-gate-evidence/<session>/ of this worktree.
+# GATE_CONTAINER names the container (default d1gate), so gates of several
+# worktrees can run side by side.
 set -euo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 wt=$(cd "$here/../.." && pwd)
 tree=${HIKARI_TREE:-/home/altq/Work/hikari-qt}
+ctr=${GATE_CONTAINER:-d1gate}
 sessions=()
 steps=()
 while [ $# -gt 0 ]; do
@@ -17,7 +20,7 @@ done
 [ ${#sessions[@]} -eq 0 ] && sessions=(sway kwin mutter x11)
 
 docker image inspect hikari-d1-gate >/dev/null 2>&1 || docker build -t hikari-d1-gate "$here"
-docker rm -f d1gate >/dev/null 2>&1 || true
+docker rm -f "$ctr" >/dev/null 2>&1 || true
 render=()
 # A render node lets KWin composite with OpenGL (its ScreenShot2 needs it);
 # Mesa still renders in software (llvmpipe) here.
@@ -30,33 +33,33 @@ mounts=(-v "$wt:$wt")
 [ "$tree" != "$wt" ] && mounts+=(-v "$tree:$tree:ro")
 sdk=$(readlink -f "$tree/out/sdk")
 case "$sdk" in "$tree"/*|"$wt"/*) ;; *) mounts+=(-v "$sdk:$sdk:ro") ;; esac
-docker run -d --init --name d1gate --cpus=3 --shm-size=1g "${render[@]}" \
+docker run -d --init --name "$ctr" --cpus=3 --shm-size=1g "${render[@]}" \
     "${mounts[@]}" \
     -e HIKARI_TREE="$tree" -e GATE_DIR="$here" -e EVIDENCE="$wt/out/native-gate-evidence" \
     hikari-d1-gate sleep infinity >/dev/null
-docker exec d1gate "$here/build-tools.sh"
+docker exec "$ctr" "$here/build-tools.sh"
 mkdir -p "$wt/out/native-gate-evidence"
 
 for s in "${sessions[@]}"; do
     case $s in
-    sway) docker exec d1gate "$here/sessions/sway-start.sh" ;;
-    x11) docker exec d1gate "$here/sessions/x11-start.sh" ;;
-    kwin) docker exec d1gate env KWIN_OUTPUTS=2 "$here/sessions/kwin-start.sh"
-          docker exec -d d1gate "$here/sessions/enter.sh" kwin sh -c "exec python3 $here/eidaemon.py kwin > /tmp/ei-kwin.log 2>&1" ;;
-    mutter) docker exec d1gate env MUTTER_MON2=1600x1000 "$here/sessions/mutter-start.sh"
-            docker exec -d d1gate "$here/sessions/enter.sh" mutter sh -c "exec python3 $here/eidaemon.py mutter > /tmp/ei-mutter.log 2>&1" ;;
+    sway) docker exec "$ctr" "$here/sessions/sway-start.sh" ;;
+    x11) docker exec "$ctr" "$here/sessions/x11-start.sh" ;;
+    kwin) docker exec "$ctr" env KWIN_OUTPUTS=2 "$here/sessions/kwin-start.sh"
+          docker exec -d "$ctr" "$here/sessions/enter.sh" kwin sh -c "exec python3 $here/eidaemon.py kwin > /tmp/ei-kwin.log 2>&1" ;;
+    mutter) docker exec "$ctr" env MUTTER_MON2=1600x1000 "$here/sessions/mutter-start.sh"
+            docker exec -d "$ctr" "$here/sessions/enter.sh" mutter sh -c "exec python3 $here/eidaemon.py mutter > /tmp/ei-mutter.log 2>&1" ;;
     esac
     sleep 3
-    docker exec d1gate "$here/sessions/enter.sh" "$s" python3 "$here/gate.py" "$s" "${steps[@]}" || true
+    docker exec "$ctr" "$here/sessions/enter.sh" "$s" python3 "$here/gate.py" "$s" "${steps[@]}" || true
     if [ "$s" = sway ] && [ ${#steps[@]} -eq 0 ]; then
         # Cross-window focus again with focus_on_window_activation focus
         # (sway's default, urgent, refuses activation): a fresh session, as
         # step outputs removed HEADLESS-2. Evidence in sway-activate/.
-        docker exec d1gate "$here/sessions/sway-start.sh"
+        docker exec "$ctr" "$here/sessions/sway-start.sh"
         sleep 3
-        docker exec d1gate "$here/sessions/enter.sh" sway python3 "$here/gate.py" sway-activate f6 fullscreen tests outputs || true
+        docker exec "$ctr" "$here/sessions/enter.sh" sway python3 "$here/gate.py" sway-activate f6 fullscreen tests outputs || true
     fi
 done
-docker exec d1gate sh -c 'pacman -Q sway wlroots0.20 kwin mutter xorg-server-xvfb openbox orca at-spi2-core libei mesa' \
+docker exec "$ctr" sh -c 'pacman -Q sway wlroots0.20 kwin mutter xorg-server-xvfb openbox orca at-spi2-core libei mesa' \
     > "$wt/out/native-gate-evidence/versions.txt"
 echo "evidence: $wt/out/native-gate-evidence"

@@ -183,6 +183,15 @@ void VideoSession::applyInputMatrix(LegacyColourMatrix::Input input, std::option
                             });
 }
 
+void VideoSession::closeSubtitles()
+{
+    m_hasSubtitles = false;
+    if (m_shown) {
+        render();
+        present();
+    }
+}
+
 std::optional<core::DocumentTime> VideoSession::frameStart(int index) const
 {
     if (index < 0 || index >= frameCount())

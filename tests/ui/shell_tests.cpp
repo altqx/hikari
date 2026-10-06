@@ -2805,6 +2805,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(view, "open"));
         QTRY_VERIFY(view->property("opened").toBool());
         QVERIFY(root->property("menuHasKeys").toBool());
+        // D2: the View menu starts with legacy's arrangements; without a
+        // video or audio only "Only subtitles" is enabled, and Down skips
+        // the others.
+        press(Qt::Key_Down);
+        QCOMPARE(current(view)->objectName(), QStringLiteral("viewOnlySubtitles"));
         press(Qt::Key_Down); // View > Panels
         QCOMPARE(current(view)->property("subMenu").value<QObject *>(), panels);
         QVERIFY(showsHighlight(current(view)));

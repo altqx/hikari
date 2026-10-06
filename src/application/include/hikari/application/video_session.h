@@ -73,6 +73,10 @@ public:
     const std::string &matrix() const { return m_docMatrix; }
     const LegacyColourMatrix &colourMatrix() const { return m_colour; }
     void setLog(std::function<void(const std::string &)> log) { m_log = std::move(log); }
+    // D2: the video without subtitles (legacy OpenSubs(CLOSE_SUBTITLES) in
+    // the player layout); setSubtitles shows them again.
+    void closeSubtitles();
+    bool hasSubtitles() const { return m_hasSubtitles; }
     void seekTo(core::DocumentTime start);
     bool step(int frames); // false at either end or without video
     void showFrame(int index);
