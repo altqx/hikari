@@ -101,8 +101,12 @@ tasks:
     visualStudio: false
     timeoutSeconds: 300
   fonts:
-    # Font identity (N4) through DirectWrite, verbose for the provider line.
-    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection)[.]" -V
+    # Font identity (N4), collection (I5) and the collector (Y8) through DirectWrite, verbose for the provider line.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^(FontIdentity|DirectWriteIdentity|FontCollection|FontCollectorRenderer|FontFixtureFiles)[.]" -V
+    timeoutSeconds: 600
+  font-cleanup:
+    # Y8W: the font fixture removes what it installs, including what a run that never reached its cleanup left (tools/winix/font-cleanup.ps1).
+    script: ./tools/winix/font-cleanup.ps1
     timeoutSeconds: 600
   packaging:
     # Helper package manifests (I6), verbose so the closure is recorded.

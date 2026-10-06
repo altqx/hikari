@@ -387,10 +387,42 @@ std::expected<FontReport, FontError> LibassFontService::resolve(const applicatio
     return std::move(state.report);
 }
 
+#ifdef _WIN32
+namespace {
+// A font file's path as the file system spells it. DirectWrite's font cache
+// hands back its paths upper-cased (C:\WINDOWS\FONTS\YUGOTHB.TTC); legacy
+// listed the font folders with FindFirstFile and so named and copied each
+// file as it is spelt on disk (FontCollector.cpp:733-786), as this does.
+std::wstring onDiskPath(const std::wstring &path)
+{
+    HANDLE file = CreateFileW(path.c_str(), FILE_READ_ATTRIBUTES, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+                              nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
+    if (file == INVALID_HANDLE_VALUE)
+        return path;
+    std::wstring out(MAX_PATH, L'\0');
+    DWORD n = GetFinalPathNameByHandleW(file, out.data(), DWORD(out.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    if (n >= out.size()) {
+        out.resize(n + 1);
+        n = GetFinalPathNameByHandleW(file, out.data(), DWORD(out.size()), FILE_NAME_NORMALIZED | VOLUME_NAME_DOS);
+    }
+    CloseHandle(file);
+    if (n == 0 || n >= out.size())
+        return path;
+    out.resize(n);
+    if (out.starts_with(L"\\\\?\\UNC\\"))
+        return L"\\\\" + out.substr(8);
+    if (out.starts_with(L"\\\\?\\"))
+        return out.substr(4);
+    return out;
+}
+} // namespace
+#endif
+
 std::vector<SystemFace> LibassFontService::systemFaces()
 {
     std::vector<SystemFace> out;
 #ifdef _WIN32
+    std::map<std::wstring, std::string> spelt; // DirectWrite's path -> the file system's, per file
     IDWriteFactory *factory = nullptr;
     if (FAILED(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
                                    reinterpret_cast<IUnknown **>(&factory))))
@@ -479,8 +511,13 @@ std::vector<SystemFace> LibassFontService::systemFaces()
                             UINT32 length = 0;
                             if (SUCCEEDED(local->GetFilePathLengthFromKey(key, keySize, &length))) {
                                 std::wstring path(length + 1, L'\0');
-                                if (SUCCEEDED(local->GetFilePathFromKey(key, keySize, path.data(), length + 1)))
-                                    face.path = utf8(path.c_str());
+                                if (SUCCEEDED(local->GetFilePathFromKey(key, keySize, path.data(), length + 1))) {
+                                    path.resize(length);
+                                    auto known = spelt.find(path);
+                                    if (known == spelt.end())
+                                        known = spelt.emplace(path, utf8(onDiskPath(path).c_str())).first;
+                                    face.path = known->second;
+                                }
                             }
                             local->Release();
                         }

@@ -3,8 +3,12 @@
 // contents, both meanings of the font count, partial output written only
 // after acknowledgment and labelled, cancellation leaving nothing
 // unlabelled, and the written fonts reimported into a clean environment.
-// The system provider is fontconfig over the generated CC0 fixtures only
-// (FONTCONFIG_FILE), so every selection is deterministic.
+// On Linux the system provider is fontconfig over the generated CC0 fixtures
+// only (FONTCONFIG_FILE), so every selection is deterministic. On Windows it
+// is libass's DirectWrite provider over the installed fonts, with the
+// fixtures the Documents name installed for the current user for the length
+// of the test process (Y8W, windows_user_fonts.h); fallback comes from
+// DirectWrite's own resolver and is reported as whichever file it chose.
 #include "hikari/backends/font_collector_output.h"
 #include "hikari/backends/libass_font_service.h"
 
@@ -17,9 +21,24 @@
 #include <gtest/gtest.h>
 #include <zlib.h>
 
+#include <algorithm>
+#include <atomic>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <map>
+#include <thread>
+
+#include "fonts/fixture_files.h"
+
+#ifdef _WIN32
+#include "fonts/windows_user_fonts.h"
+#else
+#include <unistd.h>
+#endif
 
 using namespace hikari;
 using namespace hikari::application;
@@ -27,16 +46,47 @@ using hikari::backends::FolderCollectorOutput;
 using hikari::backends::LibassFontService;
 using hikari::backends::ZipCollectorOutput;
 
-#ifndef _WIN32
-
 namespace {
 
+#ifndef _WIN32
 // Set before fontconfig first initializes (as the I5 tests do).
 [[maybe_unused]] const bool kPrivateFontconfig = setenv("FONTCONFIG_FILE", HIKARI_FONTCONFIG_FILE, 1) == 0;
+#else
+// The fixtures the Documents below name, installed for this process's
+// tests; fallback.ttf is not, so DirectWrite's resolver picks a system font.
+// DirectWrite's collection lists legacy.ttf under its typographic family
+// (HikariProbeModern); GDI, where libass looks, under HikariProbeLegacy.
+[[maybe_unused]] ::testing::Environment *const kUserFonts =
+    ::testing::AddGlobalTestEnvironment(new hikari::testing::WindowsUserFonts(
+        HIKARI_FONT_FIXTURES, {L"base.ttf", L"base-bold.ttf", L"weighted.ttf", L"legacy.ttf", L"collection.ttc"},
+        {L"HikariProbeBase", L"HikariProbeWeighted", L"HikariProbeModern", L"HikariProbeCollectionB"}));
+#endif
 
 std::string fixture(const char *name)
 {
     return std::string(HIKARI_FONT_FIXTURES) + "/" + name;
+}
+
+// A fixture's path as the provider names it: fontconfig the configured
+// directory's, DirectWrite the installed copy's in the user's font folder.
+std::u16string installed(const char *name)
+{
+#ifdef _WIN32
+    return (hikari::testing::WindowsUserFonts::userFontFolder() / name).make_preferred().u16string();
+#else
+    return QString::fromStdString(fixture(name)).toStdU16String();
+#endif
+}
+
+// The system provider the collector renders with: fontconfig, or libass's
+// DirectWrite provider ("directwrite (with GDI)" on the desktop).
+bool systemProvider(const std::string &provider)
+{
+#ifdef _WIN32
+    return provider.rfind("directwrite", 0) == 0;
+#else
+    return provider == "fontconfig";
+#endif
 }
 
 QByteArray readAll(const QString &path)
@@ -171,18 +221,19 @@ TEST(FontCollectorRenderer, ZipHoldsTheSelectedBytesAndReimportsIdentically)
     FontCollector collector(service);
     const auto review = collector.prepare({doc}, CollectorAction::Zip);
     ASSERT_TRUE(review);
-    EXPECT_EQ(review->provider, "fontconfig");
+    std::fprintf(stderr, "provider: %s\n", review->provider.c_str());
+    EXPECT_TRUE(systemProvider(review->provider)) << review->provider;
     ASSERT_TRUE(review->retrievedFonts);
     EXPECT_TRUE(review->complete()) << FontCollector::labelText(*review, nullptr);
     std::vector<std::u16string> names;
     for (const auto &f : review->files)
         names.push_back(f.name);
-    EXPECT_EQ(names, (std::vector<std::u16string>{u"base.ttf", u"collection.ttc", u"legacy.ttf", u"base-bold.ttf"}));
+    ASSERT_EQ(names, (std::vector<std::u16string>{u"base.ttf", u"collection.ttc", u"legacy.ttf", u"base-bold.ttf"}));
     EXPECT_EQ(file(*review, u"base.ttf")->sha256, fixtureSha("base.ttf"));
     EXPECT_EQ(file(*review, u"collection.ttc")->sha256, fixtureSha("collection.ttc"));
     EXPECT_EQ(file(*review, u"collection.ttc")->faces, std::vector<long>{1});
     EXPECT_EQ(file(*review, u"base-bold.ttf")->sha256, fixtureSha("base-bold.ttf"));
-    EXPECT_EQ(file(*review, u"legacy.ttf")->shown, QString::fromStdString(fixture("legacy.ttf")).toStdU16String());
+    EXPECT_EQ(file(*review, u"legacy.ttf")->shown, installed("legacy.ttf"));
     ASSERT_EQ(review->reimports.size(), 1u);
     EXPECT_TRUE(review->reimports[0].identical);
     EXPECT_EQ(review->reimports[0].frames, 4u);
@@ -270,11 +321,24 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_EQ(review->fallbackGlyphs, std::vector<std::uint32_t>{0x4e2d});
     ASSERT_EQ(review->files.size(), 1u);
     EXPECT_EQ(review->files[0].name, u"base.ttf");
-    bool fallbackReported = false;
+    const RendererFile *fallback = nullptr;
     for (const auto &f : review->rendererFiles)
-        if (f.shown == QString::fromStdString(fixture("fallback.ttf")).toStdU16String())
-            fallbackReported = std::find(f.roles.begin(), f.roles.end(), "fallback U+4E2D") != f.roles.end();
-    EXPECT_TRUE(fallbackReported);
+        if (std::find(f.roles.begin(), f.roles.end(), "fallback U+4E2D") != f.roles.end())
+            fallback = &f;
+    ASSERT_NE(fallback, nullptr) << "the fallback file is reported with its role";
+#ifdef _WIN32
+    // DirectWrite's resolver chose an installed system font; whichever it is,
+    // it is a file with bytes, reported and not collected.
+    std::fprintf(stderr, "fallback for U+4E2D: %s (%s, faces %zu)\n",
+                 QString::fromStdU16String(fallback->shown).toUtf8().constData(), fallback->sha256.substr(0, 12).c_str(),
+                 fallback->faces.size());
+    EXPECT_FALSE(fallback->sha256.empty());
+    EXPECT_NE(fallback->shown.find(u'\\'), std::u16string::npos) << "named from the installed file's path";
+#else
+    EXPECT_EQ(fallback->shown, installed("fallback.ttf"));
+#endif
+    for (const auto &f : review->files)
+        EXPECT_NE(f.sha256, fallback->sha256) << "the fallback file is not collected";
     // Without the fallback the clean reimport differs on the frame that used it.
     ASSERT_EQ(review->reimports.size(), 1u);
     EXPECT_FALSE(review->reimports[0].identical);
@@ -300,7 +364,8 @@ TEST(FontCollectorRenderer, PartialOutputOnlyAfterAcknowledgmentAndLabelled)
     EXPECT_TRUE(label.contains(QStringLiteral("INCOMPLETE")));
     EXPECT_TRUE(label.contains(QStringLiteral("NoSuchFamily")));
     EXPECT_TRUE(label.contains(QStringLiteral("U+4E2D")));
-    EXPECT_TRUE(label.contains(QStringLiteral("fallback.ttf (fallback U+4E2D), not collected")));
+    EXPECT_TRUE(label.contains(QString::fromStdU16String(fallback->shown) + QStringLiteral(" (fallback U+4E2D), not collected")))
+        << label.toStdString();
 
     // The same review as an archive: the label is an entry of it.
     const QString archive = dir.filePath(QStringLiteral("partial.zip"));
@@ -438,4 +503,176 @@ TEST(FontCollectorRenderer, CancellationLeavesNothingUnlabelled)
     EXPECT_EQ(none.error(), FontError::Cancelled);
 }
 
+// Y8W: the fixture files the Windows fixture places in the user's font
+// folder belong to the tests whether copied now or left by a run that never
+// reached its cleanup, and are removed even while the font cache still
+// holds them for a moment; another file of that name is never touched.
+namespace {
+
+namespace fs = std::filesystem;
+using hikari::testing::FixturePlacement;
+
+void writeFile(const fs::path &path, const std::string &bytes)
+{
+    std::ofstream(path, std::ios::binary) << bytes;
+}
+
+std::string readFile(const fs::path &path)
+{
+    std::ifstream in(path, std::ios::binary);
+    return {std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+}
+
+// Keeps `path` from being removed until release(): on Windows a handle
+// without FILE_SHARE_DELETE (as the font cache holds a font), elsewhere a
+// read-only parent folder.
+class RemovalBlocker {
+public:
+    explicit RemovalBlocker(fs::path path) : m_path(std::move(path))
+    {
+#ifdef _WIN32
+        m_handle = CreateFileW(m_path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                               FILE_ATTRIBUTE_NORMAL, nullptr);
+        m_blocking = m_handle != INVALID_HANDLE_VALUE;
+#else
+        std::error_code ec;
+        fs::permissions(m_path.parent_path(), fs::perms::owner_read | fs::perms::owner_exec, fs::perm_options::replace,
+                        ec);
+        m_blocking = !ec && geteuid() != 0;
 #endif
+    }
+    ~RemovalBlocker() { release(); }
+    bool blocking() const { return m_blocking; }
+    void release()
+    {
+#ifdef _WIN32
+        if (m_handle != INVALID_HANDLE_VALUE)
+            CloseHandle(m_handle);
+        m_handle = INVALID_HANDLE_VALUE;
+#else
+        std::error_code ec;
+        fs::permissions(m_path.parent_path(), fs::perms::owner_all, fs::perm_options::replace, ec);
+#endif
+    }
+
+private:
+    fs::path m_path;
+    bool m_blocking = false;
+#ifdef _WIN32
+    HANDLE m_handle = INVALID_HANDLE_VALUE;
+#endif
+};
+
+} // namespace
+
+TEST(FontFixtureFiles, ACopiedFixtureIsOwnedAndRemoved)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path source = fixture("base.ttf");
+    const fs::path target = folder / "base.ttf";
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(source, target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Copied);
+    EXPECT_TRUE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_EQ(readFile(target), readFile(source));
+
+    EXPECT_TRUE(hikari::testing::removeFixtureFile(target, std::chrono::seconds(5), ec)) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, TheFixtureLeftByAnEarlierRunIsOwnedAndRemoved)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path source = fixture("base-bold.ttf");
+    const fs::path target = folder / "base-bold.ttf";
+    // A run that crashed, or whose removal failed, left its copy behind.
+    fs::copy_file(source, target);
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(source, target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Reused);
+    EXPECT_TRUE(hikari::testing::ownsPlacedFixture(placed));
+
+    EXPECT_TRUE(hikari::testing::removeFixtureFile(target, std::chrono::seconds(5), ec)) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, AnotherFileOfThatNameIsLeftAlone)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path target = folder / "weighted.ttf";
+    writeFile(target, "someone else's font");
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(fixture("weighted.ttf"), target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Foreign);
+    EXPECT_FALSE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_EQ(readFile(target), "someone else's font");
+}
+
+TEST(FontFixtureFiles, AFailedCopyIsNotOwned)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = dir.path().toStdU16String();
+    const fs::path target = folder / "missing.ttf";
+
+    std::error_code ec;
+    const FixturePlacement placed = hikari::testing::placeFixtureFile(folder / "no-such-source.ttf", target, ec);
+    EXPECT_EQ(placed, FixturePlacement::Failed);
+    EXPECT_TRUE(ec);
+    EXPECT_FALSE(hikari::testing::ownsPlacedFixture(placed));
+    EXPECT_FALSE(fs::exists(target));
+}
+
+TEST(FontFixtureFiles, RemovalWaitsForTheHolderToLetGo)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = fs::path(dir.path().toStdU16String()) / "fonts";
+    fs::create_directories(folder);
+    const fs::path target = folder / "legacy.ttf";
+    fs::copy_file(fixture("legacy.ttf"), target);
+
+    RemovalBlocker blocker(target);
+    if (!blocker.blocking())
+        GTEST_SKIP() << "nothing here keeps a file from being removed (running as root)";
+    std::thread letGo([&] {
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        blocker.release();
+    });
+    std::error_code ec;
+    const auto start = std::chrono::steady_clock::now();
+    const bool removed = hikari::testing::removeFixtureFile(target, std::chrono::seconds(10), ec);
+    const auto waited = std::chrono::steady_clock::now() - start;
+    letGo.join();
+    EXPECT_TRUE(removed) << ec.message();
+    EXPECT_FALSE(fs::exists(target));
+    EXPECT_GE(waited, std::chrono::milliseconds(250));
+}
+
+TEST(FontFixtureFiles, AFileThatStaysHeldIsReported)
+{
+    QTemporaryDir dir;
+    ASSERT_TRUE(dir.isValid());
+    const fs::path folder = fs::path(dir.path().toStdU16String()) / "fonts";
+    fs::create_directories(folder);
+    const fs::path target = folder / "collection.ttc";
+    fs::copy_file(fixture("collection.ttc"), target);
+
+    RemovalBlocker blocker(target);
+    if (!blocker.blocking())
+        GTEST_SKIP() << "nothing here keeps a file from being removed (running as root)";
+    std::error_code ec;
+    EXPECT_FALSE(hikari::testing::removeFixtureFile(target, std::chrono::milliseconds(200), ec));
+    EXPECT_TRUE(ec);
+    blocker.release();
+    EXPECT_TRUE(fs::exists(target));
+}
