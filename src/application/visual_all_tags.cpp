@@ -202,6 +202,14 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
             i = static_cast<std::size_t>(static_cast<long>(i) + put(res));
             // Not taken as a normal character.
             i++;
+            // A \h after the block takes the next visible character too, as
+            // at the start (T6-gradient-hard-space: legacy stepped onto its
+            // "h" and put a tag inside it); a block or tag after it is read.
+            if (i + 1 < text.size() && text[i] == u'\\' && text[i + 1] == u'h') {
+                i++;
+                if (i + 1 < text.size() && text[i + 1] != u'{' && text[i + 1] != u'\\')
+                    i++;
+            }
         } else if (ch == u'\\' && !block) {
             if (i < text.size() - 1) {
                 const char16_t nch = text[i + 1];
@@ -883,18 +891,32 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
         m_rholding = false;
     // The count is read again for each slider: a tag changed by the first
     // (Shift and the wheel) changes it.
+    std::array<bool, 4> wheeled{};
     for (int i = 0; i < m_actualTag.numOfValues && i < 4; i++)
-        sliderMouse(i, event, host);
+        wheeled[static_cast<std::size_t>(i)] = sliderMouse(i, event, host);
+    // Every slider takes the wheel's step, written as one step
+    // (T6-wheel-one-step: legacy's sliders each wrote their own).
+    if (std::find(wheeled.begin(), wheeled.end(), true) != wheeled.end()) {
+        if (several(host)) {
+            setVisual(false, host);
+        } else {
+            setVisual(true, host);
+            setVisual(false, host);
+        }
+        for (std::size_t i = 0; i < wheeled.size(); i++)
+            if (wheeled[i])
+                m_slider[i].holding = false;
+    }
 }
 
-void AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
+bool AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
 {
     // AllTagsSlider::OnMouseEvent (VisualAllTagsControls.cpp:87-246).
     Slider &s = m_slider[static_cast<std::size_t>(index)];
     const float range = m_actualTag.rangeMax - m_actualTag.rangeMin;
     if (range <= 0) {
         host.log(u"Bad range");
-        return;
+        return false;
     }
     const float thumbposdiff = -m_actualTag.rangeMin;
     const float sliderRange = s.right - s.left;
@@ -926,7 +948,7 @@ void AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
                 selection = 0;
             m_listSelection = selection;
             changeTool(tool, false, host);
-            return;
+            return false;
         }
         const int rot = event.wheelSteps;
         if (m_mode != 2)
@@ -936,17 +958,11 @@ void AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
         if (s.firstThumbValue != s.thumbValue) {
             s.onThumb = true;
             s.onSlider = false;
-            // Holding set first, so the value is used.
+            // Holding set first, so the value is used (pointer writes it).
             s.holding = true;
-            if (several(host)) {
-                setVisual(false, host);
-            } else {
-                setVisual(true, host);
-                setVisual(false, host);
-            }
-            s.holding = false;
+            return true;
         }
-        return;
+        return false;
     }
 
     const float thumbpos = ((s.thumbValue + thumbposdiff) * coeff) + s.left;
@@ -1026,6 +1042,7 @@ void AllTagsTool::sliderMouse(int index, const Pointer &event, VisualHost &host)
         setVisual(false, host);
         s.holding = false;
     }
+    return false;
 }
 
 bool AllTagsTool::key(const Key &event, VisualHost &host)

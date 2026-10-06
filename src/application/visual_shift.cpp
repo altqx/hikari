@@ -282,6 +282,9 @@ void PositionShifterTool::setCurVisual(VisualHost &host)
         m_drawingPos = calcMovePos(ctx, m_moveValues, m_start, m_end);
     m_from = m_to = PointF{inX(m_drawingPos.x), inY(m_drawingPos.y)};
     m_elems.clear();
+    // The Line's own vector clip scale, 1 without one (T6-clip-scale-carry:
+    // legacy kept the last Line's).
+    m_vectorClipScale = 1.f;
 
     double orx = m_drawingPos.x, ory = m_drawingPos.y;
     if (m_find.findTag(u"org\\(([^\\)]+)", editor, 0)) {
@@ -465,8 +468,8 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
                 i == m_elems.size() - 1) {
                 m_numElem = static_cast<int>(i);
                 m_beforeMove = m_lastmove = m_elems[i].elem;
-                m_diffsX = static_cast<int>(m_elems[i].elem.x - x);
-                m_diffsY = static_cast<int>(m_elems[i].elem.y - y);
+                m_diffsX = m_elems[i].elem.x - x;
+                m_diffsY = m_elems[i].elem.y - y;
             }
         }
         m_firstmove = PointF{static_cast<float>(x), static_cast<float>(y)};
@@ -480,8 +483,8 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
                 continue;
             m_numElem = static_cast<int>(i);
             m_beforeMove = m_lastmove = m_elems[i].elem;
-            m_diffsX = static_cast<int>(m_elems[i].elem.x - x);
-            m_diffsY = static_cast<int>(m_elems[i].elem.y - y);
+            m_diffsX = m_elems[i].elem.x - x;
+            m_diffsY = m_elems[i].elem.y - y;
             break;
         }
         m_firstmove = PointF{static_cast<float>(x), static_cast<float>(y)};
@@ -498,10 +501,10 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
                 m_axis = diffx > diffy ? 1 : 2;
             m_lastmove = held.elem;
             if (m_axis == 1) {
-                held.elem.x = static_cast<float>(x + m_diffsX);
+                held.elem.x = x + m_diffsX;
                 held.elem.y = m_beforeMove.y;
             } else if (m_axis == 2) {
-                held.elem.y = static_cast<float>(y + m_diffsY);
+                held.elem.y = y + m_diffsY;
                 held.elem.x = m_beforeMove.x;
             }
             const PointF moving{held.elem.x - m_lastmove.x, held.elem.y - m_lastmove.y};
@@ -515,8 +518,8 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
             }
         } else {
             m_lastmove = held.elem;
-            held.elem.x = static_cast<float>(x + m_diffsX);
-            held.elem.y = static_cast<float>(y + m_diffsY);
+            held.elem.x = x + m_diffsX;
+            held.elem.y = y + m_diffsY;
             const PointF moving{held.elem.x - m_lastmove.x, held.elem.y - m_lastmove.y};
             for (std::size_t j = 0; j < m_elems.size(); j++) {
                 if (static_cast<int>(j) == m_numElem || !(m_selectedTags & m_elems[j].type))

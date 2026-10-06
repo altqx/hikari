@@ -3,10 +3,11 @@
 // inputs/visual-t6-cases.txt; tests/fixtures/legacy-observations/
 // local-t6-visual-20261006): every Line's text and translation after each
 // step, the editor's text and caret on the one-Line path, the commits, the
-// tools' state and what they draw must be legacy's exactly. The tag
-// definitions' file is read and written as legacy's LoadSettings and
-// SaveSettings did, and the "Tag editing" dialog's model follows
-// AllTagsEdition.
+// tools' state and what they draw must be legacy's exactly, but for the
+// approved departures (departureFor), which keep the capture as legacy's
+// record. The tag definitions' file is read and written as legacy's
+// LoadSettings and SaveSettings did, and the "Tag editing" dialog's model
+// follows AllTagsEdition.
 
 #include "hikari/application/all_tags.h"
 #include "hikari/application/automation_services.h"
@@ -790,6 +791,207 @@ TEST(VisualShiftEdit, ALargeBatchAsksForTheShownLinesOnce)
     }
 }
 
+namespace {
+
+// The probe's usual view (640x400 with a 40-pixel panel over a 1280x720
+// frame, a 1920x1080 script: the coefficient 3) with these Lines, the first
+// active.
+Case departureCase(std::vector<std::string> texts)
+{
+    Case c;
+    c.clientW = 640;
+    c.clientH = 400;
+    c.panel = 40;
+    c.frame.width = 1280;
+    c.frame.height = 720;
+    c.frame.sarNum = 0;
+    c.frame.sarDen = 1;
+    c.scriptW = 1920;
+    c.scriptH = 1080;
+    c.time = 1500;
+    c.fps = 25;
+    c.styles.push_back("Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,"
+                       "2,2,20,20,20,1");
+    for (const auto &text : texts) {
+        c.lines.push_back("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,," + text);
+        c.translations.push_back({});
+    }
+    return c;
+}
+
+Pointer pointerAt(Pointer::Kind kind, int x, int y, Pointer::Button button = Pointer::Button::None, bool left = false)
+{
+    Pointer p;
+    p.kind = kind;
+    p.x = x;
+    p.y = y;
+    p.button = button;
+    p.leftDown = left;
+    return p;
+}
+
+} // namespace
+
+// T6-gradient-hard-space (compatibility-decisions.md): a \h right after a
+// block is one character with the next, as a \h at the start is. Legacy's
+// ReplaceAllByChar stepped past the block onto the "h" and put the tag
+// inside the \h ("{\blur12.1}\{\blur9.1}h…", tags-gradient-text).
+TEST(VisualShiftDeparture, TheTextGradientKeepsAHardSpaceAfterABlock)
+{
+    // tags-gradient-text: an increasing gradient, then a decreasing one.
+    TestHost host;
+    setUp(host, departureCase({"\\hAb c{\\i1}d\\Ne\\h"}));
+    AllTagsTool tags;
+    tags.setToggled(PasteGradientTextIncrease << 20); // blur
+    tags.selected(host);
+    tags.reset(host);
+    tags.pointer(pointerAt(Pointer::Kind::Press, 41, 30, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Move, 100, 30, Pointer::Button::None, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Release, 100, 30, Pointer::Button::Left), host);
+    const core::LineId active = *host.s->selection().active;
+    EXPECT_EQ(lineOf(*host.s, active)->text, u8"{\\blur0}\\hA{\\blur0.5}b {\\blur0.9}c{\\i1\\blur1.4}d\\N{\\blur1.9}e\\h");
+    tags.setToggled(PasteGradientTextDecrease << 20, &host);
+    tags.reset(host);
+    tags.pointer(pointerAt(Pointer::Kind::Press, 100, 38, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Release, 100, 38, Pointer::Button::Left), host);
+    EXPECT_EQ(lineOf(*host.s, active)->text, u8"{\\blur12.1}\\hA{\\blur9.6}b {\\blur6.9}c{\\i1\\blur4.4}d\\N{\\blur1.9}e\\h");
+}
+
+// T6-clip-scale-carry (compatibility-decisions.md): a vector clip's scale is
+// each Line's own. Legacy's MoveAll set vectorClipScale only when a Line's
+// clip had a scale, so the next Line's clip was drawn at the last one's.
+TEST(VisualShiftDeparture, AVectorClipsScaleIsEachLinesOwn)
+{
+    TestHost host;
+    setUp(host, departureCase({"{\\clip(3,m 0 0 l 1200 0 1200 1200)}A", "{\\clip(m 30 30 l 300 30 300 300)}B"}));
+    PositionShifterTool shifter;
+    shifter.setToggled(PositionShifterTool::Clip);
+    shifter.selected(host);
+    shifter.reset(host);
+    EXPECT_EQ(shifter.vectorClipScale(), 4.f);
+    const core::LineId second = ids(*host.s)[1];
+    host.s->setSelection({second, {second}, second, std::nullopt});
+    host.targets = {second};
+    shifter.reset(host);
+    EXPECT_EQ(shifter.vectorClipScale(), 1.f);
+    ASSERT_EQ(shifter.elements().size(), 1u);
+    ASSERT_TRUE(shifter.elements()[0].points);
+    EXPECT_EQ((*shifter.elements()[0].points)[0].x, 10.f); // 30 script pixels at the coefficient 3
+    EXPECT_EQ((*shifter.elements()[0].points)[2].y, 100.f);
+}
+
+// T6-drag-offset (compatibility-decisions.md): a drag keeps the exact offset
+// between the pointer and the handle. Legacy kept it as a wxPoint, so the
+// handle jumped by the fraction at the first move and a 10-pixel drag of
+// \pos(961,541) wrote \pos(990,540).
+TEST(VisualShiftDeparture, ADragKeepsTheExactOffset)
+{
+    TestHost host;
+    setUp(host, departureCase({"{\\pos(961,541)}Hello"}));
+    PositionShifterTool shifter;
+    shifter.selected(host);
+    shifter.reset(host);
+    ASSERT_EQ(shifter.elements().size(), 1u);
+    const PointF handle = shifter.elements()[0].elem;
+    shifter.pointer(pointerAt(Pointer::Kind::Press, 320, 180, Pointer::Button::Left, true), host);
+    shifter.pointer(pointerAt(Pointer::Kind::Move, 330, 180, Pointer::Button::None, true), host);
+    EXPECT_EQ(shifter.elements()[0].elem.x, handle.x + 10);
+    EXPECT_EQ(shifter.elements()[0].elem.y, handle.y);
+    shifter.pointer(pointerAt(Pointer::Kind::Release, 330, 180, Pointer::Button::Left), host);
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(991,541)}Hello");
+}
+
+// T6-wheel-one-step (compatibility-decisions.md): one wheel step over a
+// definition of several values is one history step. Legacy's every slider
+// took the wheel and wrote its own value as a step: three for a colour
+// (tags-wheel-colour).
+TEST(VisualShiftDeparture, OneWheelStepIsOneHistoryStep)
+{
+    TestHost host;
+    Case c = departureCase({"{\\1c&H102030&}Colour"});
+    c.caretFrom = c.caretTo = 1;
+    setUp(host, c);
+    AllTagsTool tags;
+    tags.setToggled((PasteInsert << 20) + 7); // Insert, 1c
+    tags.selected(host);
+    tags.reset(host);
+    const std::size_t steps = host.s->historySize();
+    Pointer wheel = pointerAt(Pointer::Kind::Wheel, 300, 200);
+    wheel.wheelSteps = 1;
+    tags.pointer(wheel, host);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(host.sent.size(), 1u);
+    EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\1c&H112131&}Colour");
+}
+
+namespace {
+
+// Approved departures (docs/qt/compatibility-decisions.md): the states where
+// the rewrite expects other Lines than the capture, which stays legacy's
+// record (each changed value is checked to differ from it).
+struct Departure {
+    std::string caseName;
+    std::size_t step = 0;
+    // A Line's text (field 0) or translation (field 1) instead of legacy's.
+    std::vector<std::tuple<std::size_t, int, std::u8string>> lines;
+    std::optional<std::vector<std::string>> sent; // the commits instead of legacy's
+    bool editor = false;  // the one-Line editor's text is the first Line's
+    bool handles = false; // the shifter's state follows the moved handles: not compared
+};
+
+const Departure *departureFor(const std::string &caseName, std::size_t step)
+{
+    static const std::vector<Departure> list{
+        // T6-drag-offset: the handle keeps the pointer's exact offset, so a
+        // drag of a handle at a fractional place moves the Lines by the
+        // pointer's whole pixels (legacy: the fraction dropped at the first
+        // move).
+        {"shift-clips", 1, {}, std::nullopt, false, true},
+        {"shift-clips",
+         2,
+         {{0, 0, u8"{\\clip(2,m 206 218 l 406 218 b 456 268 456 368 406 418 s 306 468 256 468 206 418 c)}Scaled"},
+          {1, 0, u8"{\\clip(m 13 19 l 23 19 23 29){\\iclip(4,12,33,50)}Two clips"},
+          {2, 0, u8"{\\clip(3,9,1923,1089)\\clip(m 0 0 l 5 5)}Rect then vector"}},
+         std::nullopt,
+         false,
+         true},
+        {"shift-drawing",
+         4,
+         {{1, 0, u8"{\\an5\\pos(900,500)\\fscx200\\org(800,400)\\frz30\\p2}m -15 -96 b 85 -96 185 4 185 104 s 85 204 -15 104 -15 4 c{\\p0}"}},
+         std::nullopt,
+         false,
+         true},
+        {"shift-drawing",
+         5,
+         {{1, 0, u8"{\\an5\\pos(900,500)\\fscx200\\org(800,400)\\frz30\\p2}m -15 -96 b 85 -96 185 4 185 104 s 85 204 -15 104 -15 4 c{\\p0}"}}},
+        {"shift-drawing",
+         6,
+         {{1, 0, u8"{\\an5\\pos(900,500)\\fscx200\\org(800,400)\\frz30\\p2}m -15 -96 b 85 -96 185 4 185 104 s 85 204 -15 104 -15 4 c{\\p0}"}}},
+        {"shift-nothing", 3, {{1, 0, u8"{\\pos(abc,14)\\move(13,14)}Odd"}}, std::nullopt, false, true},
+        {"shift-tlmode",
+         1,
+         {{0, 1, u8"{\\pos(930,530)}Translation"}, {1, 0, u8"{\\pos(60,60)}Only original"}},
+         std::nullopt,
+         false,
+         true},
+        {"shift-zoomed", 1, {{0, 0, u8"{\\pos(412,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
+        {"shift-zoomed", 2, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
+        {"shift-zoomed", 3, {{0, 0, u8"{\\pos(412.04,312)\\clip(m 312 312 l 512 312 512 512)\\an7\\p1}m 0 0 l 10 10{\\p0}"}}, std::nullopt, false, true},
+        // T6-gradient-hard-space: the \h after the first block stays whole
+        // and five tags take the five characters (legacy:
+        // "{\blur12.1}\{\blur9.1}h{\blur6}A…{\blur-4.1}e\h").
+        {"tags-gradient-text", 2, {{0, 0, u8"{\\blur12.1}\\hA{\\blur9.6}b {\\blur6.9}c{\\i1\\blur4.4}d\\N{\\blur1.9}e\\h"}}, std::nullopt, true},
+        // T6-wheel-one-step: the colour's three values in one step (legacy: three).
+        {"tags-wheel-colour", 0, {}, std::vector<std::string>{"47"}},
+    };
+    for (const auto &d : list)
+        if (d.caseName == caseName && d.step == step)
+            return &d;
+    return nullptr;
+}
+
+} // namespace
+
 TEST(VisualCapture, ReplaysTheLegacyT6Probe)
 {
     const auto observations = readObservations();
@@ -934,18 +1136,32 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
                 const QJsonObject &o = steps[step++];
                 ++states;
                 SCOPED_TRACE("step " + std::to_string(step - 1));
-                // Every Line as legacy's grid held it.
+                const Departure *departure = departureFor(c.name, step - 1);
+                // Every Line as legacy's grid held it, or as a departure
+                // expects it.
                 const QJsonArray lines = o[QStringLiteral("lines")].toArray();
                 ASSERT_EQ(static_cast<std::size_t>(lines.size()), all.size());
                 for (std::size_t i = 0; i < all.size(); ++i) {
                     const QJsonArray l = lines[static_cast<qsizetype>(i)].toArray();
-                    EXPECT_EQ(lineOf(*host.s, all[i])->text, u8(l[0])) << "line " << i;
-                    EXPECT_EQ(lineOf(*host.s, all[i])->translation, u8(l[1])) << "line " << i;
+                    std::u8string expected[2] = {u8(l[0]), u8(l[1])};
+                    if (departure)
+                        for (const auto &[index, field, value] : departure->lines)
+                            if (index == i) {
+                                EXPECT_NE(value, expected[field]) << "the old evidence, line " << i;
+                                expected[field] = value;
+                            }
+                    EXPECT_EQ(lineOf(*host.s, all[i])->text, expected[0]) << "line " << i;
+                    EXPECT_EQ(lineOf(*host.s, all[i])->translation, expected[1]) << "line " << i;
                 }
                 // The commits (SetModified, Send) that changed a Line, and
                 // the log.
                 EXPECT_EQ(host.history, strings(o[QStringLiteral("history")], true));
-                EXPECT_EQ(host.sent, strings(o[QStringLiteral("sent")], true));
+                if (departure && departure->sent) {
+                    EXPECT_NE(*departure->sent, strings(o[QStringLiteral("sent")], true)) << "the old evidence";
+                    EXPECT_EQ(host.sent, *departure->sent);
+                } else {
+                    EXPECT_EQ(host.sent, strings(o[QStringLiteral("sent")], true));
+                }
                 std::vector<std::string> logged;
                 for (const auto &l : host.logged)
                     logged.push_back(QString::fromStdU16String(l).toStdString());
@@ -962,7 +1178,7 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
                 }
                 if (!tool)
                     continue;
-                if (auto *m = shifter()) {
+                if (auto *m = shifter(); m && !(departure && departure->handles)) {
                     const QJsonArray elems = o[QStringLiteral("elems")].toArray();
                     ASSERT_EQ(m->elements().size(), static_cast<std::size_t>(elems.size()));
                     for (std::size_t i = 0; i < m->elements().size(); ++i) {
@@ -1013,7 +1229,12 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
                         if (host.g)
                             if (const auto staged = host.g->staged(all[static_cast<std::size_t>(active)], tl))
                                 editor = *staged;
-                        EXPECT_EQ(editor, u8(o[QStringLiteral("editor")]));
+                        if (departure && departure->editor) {
+                            EXPECT_NE(editor, u8(o[QStringLiteral("editor")])) << "the old evidence";
+                            EXPECT_EQ(editor, std::get<2>(departure->lines.front()));
+                        } else {
+                            EXPECT_EQ(editor, u8(o[QStringLiteral("editor")]));
+                        }
                         EXPECT_EQ(a->editorCaret(), legacyCaret) << "the tool's caret";
                     }
                     expectTags(std::vector<AllTagsSetting>{a->actualTag()}, o[QStringLiteral("actualTag")].toArray());

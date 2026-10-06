@@ -90,7 +90,9 @@ private:
     int m_numElem = -1;
     bool m_dragging = false; // a button holds a handle
     int m_selectedTags = 1;
-    int m_diffsX = 0, m_diffsY = 0; // wxPoint
+    // The pointer's offset from the held handle (T6-drag-offset: legacy's
+    // wxPoint dropped the fraction).
+    float m_diffsX = 0, m_diffsY = 0;
     PointF m_beforeMove;
     // DrawVisual moves a \move drawing's position to the video's time.
     mutable PointF m_drawingPos{0, 0};

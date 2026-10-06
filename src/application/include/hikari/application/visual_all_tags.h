@@ -95,7 +95,8 @@ private:
     long changeVisualEditor(std::u16string &text);                     // ChangeVisual(txt)
     void changeVisualLine(std::u16string &text, std::size_t numOfSelections); // ChangeVisual(txt, dial, n)
     // AllTagsSlider.
-    void sliderMouse(int index, const Pointer &event, VisualHost &host);
+    // True when the wheel stepped the slider (held until pointer writes it).
+    bool sliderMouse(int index, const Pointer &event, VisualHost &host);
     void drawSlider(Overlay &out, const VisualHost &host, const Slider &slider) const;
     float diffValue(const Slider &slider) const; // GetDiffValue
     // Visuals::SetVisual(dummy) through a gesture.
