@@ -6,8 +6,10 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <cerrno>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
 // Built without floating-point contraction, as visual_view.cpp.
 

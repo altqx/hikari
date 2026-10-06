@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
+#include <cstdlib>
 
 // Built without floating-point contraction, as visual_view.cpp.
 
