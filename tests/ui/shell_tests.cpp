@@ -11331,6 +11331,46 @@ private slots:
         tools.setAllTagsFile({});
     }
 
+    // A Video panel too short for the eleven families scrolls the rail so the
+    // on family stays in view (the shifter and the all-tags tool are the last
+    // two), and a family chosen above the fold scrolls it back.
+    void visualToolRailKeepsTheActiveFamilyInView()
+    {
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(
+            visualDocument("rail.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(160,120)}Rail\n")));
+        window->resize(1280, 860);
+        QTRY_VERIFY(visualItem("visualToolRailScroll"));
+        QQuickItem *scroll = visualItem("visualToolRailScroll");
+        auto *view = scroll->property("contentItem").value<QQuickItem *>();
+        QVERIFY(view);
+        tools.selectFamily(0);
+        const auto inView = [&](int family) {
+            QQuickItem *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)));
+            if (!button || !button->isVisible())
+                return false;
+            const QRectF r = button->mapRectToItem(scroll, QRectF(0, 0, button->width(), button->height()));
+            return r.top() >= -0.5 && r.bottom() <= scroll->height() + 0.5;
+        };
+        const auto overflows = [&] { return view->property("contentHeight").toReal() > view->height() + 0.5; };
+        // Shrink the window until the rail overflows.
+        for (int h = 760; h >= 400 && !overflows(); h -= 40) {
+            window->resize(1280, h);
+            QTest::qWait(50);
+        }
+        QVERIFY2(overflows(), "the rail does not overflow");
+        QTRY_VERIFY(inView(0));
+        QVERIFY(!inView(10));
+        for (int family : {10, 9, 0, 10}) {
+            tools.selectFamily(family);
+            QCOMPARE(tools.activeFamily(), family);
+            QTRY_VERIFY2(inView(family), qPrintable(QString::number(family)));
+            QVERIFY(visualItem(qPrintable(QStringLiteral("visualTool%1").arg(family)))->property("checked").toBool());
+        }
+        tools.selectFamily(0);
+        window->resize(1280, 860);
+    }
+
     // T6: the Position shifter's and the all-tags tool's surfaces in the
     // Light and Dark themes (with HIKARI_SURFACE_SHOT_DIR): the Video panel
     // with each row and its handles or sliders, the tag list's menu, and the
@@ -11344,7 +11384,8 @@ private slots:
         auto &settings = *application->settingsStore();
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
-        window->resize(1280, 860);
+        // Tall enough for the whole tool rail beside the video.
+        window->resize(1280, 1000);
         auto &tools = application->visualTools();
         tools.setAllTagsFile({});
         QVERIFY(application->openFile(visualDocument(
