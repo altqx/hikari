@@ -528,9 +528,10 @@ void VisualToolsController::openShapeEditor()
         emit optionsChanged();
         emit overlayChanged();
     };
-    // Legacy passed the list's selection ("Choose" being 0) as the editor's
-    // index of a preset.
-    m_shapeEditor = new ShapeEditor(*shapePresets(), selection, std::move(hooks), this);
+    // The chosen preset: the list's selection less "Choose" (from "Choose"
+    // the first). Legacy passed the selection itself, opening on the preset
+    // after the one chosen (T5-editor-opens-next).
+    m_shapeEditor = new ShapeEditor(*shapePresets(), selection - 1, std::move(hooks), this);
     emit shapeEditorChanged();
 }
 

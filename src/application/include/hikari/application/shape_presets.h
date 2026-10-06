@@ -67,15 +67,14 @@ public:
         std::u16string title;
     };
 
-    // curShape out of range starts on the first preset (legacy: the
-    // toolbar passes its list's selection, "Choose" being 0, so the editor
-    // opens on the preset after the one chosen).
+    // curShape is a preset's index; out of range the first (the toolbar
+    // gives its list's selection less "Choose", T5-editor-opens-next).
     ShapesEdition(std::vector<ShapePreset> presets, int curShape);
 
     const std::vector<ShapePreset> &presets() const { return m_presets; }
     // The dialog's list of presets as legacy's HikariChoice holds it: names
-    // are added and removed with the presets but a rename by Apply does not
-    // reach it (legacy never refreshed it).
+    // are added and removed with the presets, and a save puts a rename
+    // there (T5-dialog-list-stale: legacy never refreshed it).
     const std::vector<std::u16string> &list() const { return m_list; }
     int selection() const { return m_selection; }
     const ShapePreset &current() const { return m_current; }
@@ -93,7 +92,8 @@ public:
     // CheckModified: a field differs from `current`.
     bool modified() const;
     // OnListChanged's question when modified(): "Save changes to shape
-    // \"%s\"?" (legacy names the shape's text, not its name).
+    // \"%s\"?" with the preset's name (T5-save-question-text: legacy's
+    // showed the shape's text).
     Message saveChangesQuestion() const;
     // SetShape: the list's `index` (out of range: the first) becomes the
     // selection and the fields show it.

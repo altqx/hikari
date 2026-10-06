@@ -10696,9 +10696,9 @@ private slots:
     // in Add line writes a drawing into the Line as one "Visual vector drawing
     // tool" step; with a preset chosen the modes take no click and a drag
     // draws the preset into the rectangle shown over the video. "Edit" opens
-    // the "Vector shape editing" dialog (on the preset after the one chosen,
-    // as legacy); a save under a name another preset has asks to replace it
-    // or rename (accepted on #55); OK writes Config/ShapesSettings.txt
+    // the "Vector shape editing" dialog on the preset chosen
+    // (T5-editor-opens-next); a save under a name another preset has asks
+    // to replace it or rename (accepted on #55); OK writes Config/ShapesSettings.txt
     // (UTF-8 with a BOM, legacy's lines) and the list takes the new names;
     // Restore default removes the file at once.
     void visualDrawingShapesAndTheirEditor()
@@ -10848,7 +10848,8 @@ private slots:
         QVERIFY(m.captured(1).toDouble() > 1 && m.captured(2).toDouble() > 1);
         QVERIFY(m.captured(3).toDouble() > m.captured(1).toDouble() && m.captured(4).toDouble() > m.captured(2).toDouble());
 
-        // "Edit": the dialog, on the preset after the one chosen (legacy).
+        // "Edit": the dialog, on the preset chosen (T5-editor-opens-next:
+        // legacy opened on the one after it, "circle").
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
         QTRY_VERIFY(menu()->property("opened").toBool());
         checkMenu(list()->property("model").toStringList(), 1);
@@ -10862,22 +10863,22 @@ private slots:
         ui::ShapeEditor *editor = tools.shapeEditor();
         QVERIFY(editor);
         QCOMPARE(editor->list().size(), 5);
-        QCOMPARE(editor->name(), QStringLiteral("circle"));
-        QCOMPARE(named("shapeName")->property("text").toString(), QStringLiteral("circle"));
+        QCOMPARE(editor->name(), QStringLiteral("rectangle"));
+        QCOMPARE(named("shapeName")->property("text").toString(), QStringLiteral("rectangle"));
         QVERIFY(!named("shapeScalingMode")->property("enabled").toBool());
         // The name of another preset: Replace or Rename.
-        named("shapeName")->setProperty("text", QStringLiteral("Rectangle"));
+        named("shapeName")->setProperty("text", QStringLiteral("Circle"));
         QVERIFY(QMetaObject::invokeMethod(named("shapeName"), "textEdited"));
-        QCOMPARE(editor->name(), QStringLiteral("Rectangle"));
+        QCOMPARE(editor->name(), QStringLiteral("Circle"));
         QVERIFY(QMetaObject::invokeMethod(named("shapesApply"), "click"));
         QObject *clash = named("shapesClash");
         QTRY_VERIFY(clash->property("visible").toBool());
         QCOMPARE(named("shapesClashText")->property("text").toString(),
-                 QStringLiteral("A shape named \"rectangle\" already exists."));
+                 QStringLiteral("A shape named \"circle\" already exists."));
         QVERIFY(QMetaObject::invokeMethod(named("shapesClashReplace"), "click"));
         QTRY_VERIFY(!clash->property("visible").toBool());
         QCOMPARE(editor->edition().presets().size(), 4u);
-        QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"Rectangle"));
+        QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"Circle"));
         QVERIFY(!QFile::exists(shapesFile)); // Apply keeps it in the dialog only
         QVERIFY(QMetaObject::invokeMethod(named("shapesOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
@@ -10887,10 +10888,10 @@ private slots:
         const QByteArray bytes = saved.readAll();
         saved.close(); // Windows removes no file a handle holds (Restore default below)
         QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
-        QVERIFY2(bytes.mid(3).startsWith("Shape: Rectangle; m -100 -100 b -45 -155 45 -155 100 -100 b "), bytes.constData());
+        QVERIFY2(bytes.mid(3).startsWith("Shape: Circle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
         QCOMPARE(bytes.count('\n'), 4);
         QTRY_COMPARE(list()->property("model").toStringList().size(), 6);
-        QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("Rectangle"));
+        QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("Circle"));
         QCOMPARE(list()->property("currentIndex").toInt(), 1);
 
         // Restore default: asked, then the file goes at once; Cancel keeps
@@ -10898,7 +10899,7 @@ private slots:
         // menu took the new names.
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
         QTRY_VERIFY(menu()->property("opened").toBool());
-        checkMenu({QStringLiteral("Choose"), QStringLiteral("Rectangle"), QStringLiteral("rounded square 1"),
+        checkMenu({QStringLiteral("Choose"), QStringLiteral("Circle"), QStringLiteral("rounded square 1"),
                    QStringLiteral("rounded square 2"), QStringLiteral("rounded square 3"), QStringLiteral("Edit")},
                   1);
         QVERIFY(QMetaObject::invokeMethod(menuItem(6), "click"));

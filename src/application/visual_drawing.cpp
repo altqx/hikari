@@ -793,26 +793,24 @@ std::u16string DrawingTool::body() const
 void DrawingTool::setScaleTags(u16 &txt, std::size_t position, int *diff) const
 {
     // Shapes::SetScale (VisualDrawingShapes.cpp:604-625): FindTag from the
-    // start (SetFromTo(0, position), mode 3). `diff` is legacy's: the old
-    // tag's length less the new one's, which ChangeVectorVisual adds to the
-    // drawing's place.
+    // start (SetFromTo(0, position), mode 3). `diff` is what the tags added
+    // to the text before the drawing, which ChangeVectorVisual adds to the
+    // drawing's place (T5-change-scale-garble: legacy's, the old tag's
+    // length less the new one's, moved it the wrong way).
     (void)position;
+    const std::size_t oldLength = txt.size();
     if (m_current.scalingMode == ShapePreset::ChangeScale && m_shapeScale.x > 0.f) {
         auto f = find(txt, u"fscx([0-9.-]+)");
-        auto textPos = f.position();
         u16 newTag = u"\\fscx" + legacy::getfloat(m_shapeScale.x * 100);
         replaceFound(f, newTag, txt);
-        if (diff)
-            *diff = static_cast<int>((textPos.second - textPos.first + 1) - static_cast<long>(newTag.length()));
         if (m_current.mode != ShapePreset::OnlyScaleX) {
             f = find(txt, u"fscy([0-9.-]+)");
-            textPos = f.position();
             newTag = u"\\fscy" + legacy::getfloat(m_shapeScale.y * 100);
             replaceFound(f, newTag, txt);
-            if (diff)
-                *diff += static_cast<int>((textPos.second - textPos.first + 1) - static_cast<long>(newTag.length()));
         }
     }
+    if (diff)
+        *diff = static_cast<int>(txt.size()) - static_cast<int>(oldLength);
 }
 
 VectorEditor::Callbacks DrawingTool::callbacks(VisualHost &host)

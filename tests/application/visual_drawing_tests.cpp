@@ -6,7 +6,9 @@
 // committed text, the editor's text during a gesture, the points, the
 // drawing's position, scale, alignment and rotation, the shape rectangle,
 // its scale and the presets read and written must be legacy's, float for
-// float. No case differs: the rewrite keeps every outcome legacy gave.
+// float. No case differs but those of the approved departure
+// T5-change-scale-garble (departureFor), which keep legacy's text as the old
+// evidence.
 
 #include "hikari/application/shape_presets.h"
 #include "hikari/application/visual_drawing.h"
@@ -419,18 +421,56 @@ struct Replay {
     int steps() const { return static_cast<int>(host.s->historySize() - historyStart); }
 };
 
-void compareDump(Replay &r, const QJsonObject &o)
+// Approved departures (docs/qt/compatibility-decisions.md) where a dump's
+// legacy text is kept as the old evidence and the rewrite expects another.
+struct Departure {
+    std::string caseName;
+    int dump = 0;
+    std::u8string text;   // the first Line's committed text
+    std::u8string editor; // the Line editor's text
+};
+
+const Departure *departureFor(const std::string &caseName, int dump)
+{
+    // T5-change-scale-garble: the drawing's place moves by what \fscx and
+    // \fscy added, so the next sample replaces the drawing, not the tags
+    // (legacy: "{\fscy12m 1 1 l 301 ...", "{\fscx9300\fscy9300\an7\pos(m 1 1 ...").
+    static const std::vector<Departure> list{
+        {"shapes-change-scale-new-tags", 1, u8"{\\an7\\pos(300,300)}Text",
+         u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}"},
+        {"shapes-change-scale-new-tags", 2,
+         u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}",
+         u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}"},
+        {"shapes-change-scale-longer-tags", 1,
+         u8"{\\fscx9300\\fscy9300\\an7\\pos(300,300)\\p1}m 1 1 l 30001 1 30001 30001 1 30001{\\p0}{After}",
+         u8"{\\fscx9300\\fscy9300\\an7\\pos(300,300)\\p1}m 1 1 l 30001 1 30001 30001 1 30001{\\p0}{After}"},
+    };
+    for (const auto &d : list)
+        if (d.caseName == caseName && d.dump == dump)
+            return &d;
+    return nullptr;
+}
+
+void compareDump(Replay &r, const QJsonObject &o, const Departure *departure)
 {
     const EditSession &s = *r.host.s;
     const bool multi = r.host.g && r.host.g->targets().size() > 1;
     const QJsonArray texts = o[QStringLiteral("texts")].toArray();
     for (int i = 0; i < texts.size(); ++i) {
         const auto *l = line(s, r.lineIds[i]);
-        EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
+        if (departure && i == 0) {
+            EXPECT_EQ(l->text, departure->text) << "line " << i;
+        } else {
+            EXPECT_EQ(l->text, u8(texts[i].toArray()[0])) << "line " << i;
+        }
         EXPECT_EQ(l->translation, u8(texts[i].toArray()[1])) << "line " << i;
     }
-    if (!multi)
+    if (departure) {
+        EXPECT_NE(departure->editor, u8(o[QStringLiteral("editor")])) << "the old evidence";
+        EXPECT_EQ(r.editorText(), departure->editor);
+    } else if (!multi) {
         EXPECT_EQ(r.editorText(), u8(o[QStringLiteral("editor")]));
+    }
     EXPECT_EQ(r.steps(), o[QStringLiteral("steps")].toInt());
     const QJsonArray history = o[QStringLiteral("history")].toArray();
     if (r.steps() > 0 && !history.isEmpty()) {
@@ -549,7 +589,7 @@ TEST(DrawingCapture, ReplaysTheLegacyProbe)
                 continue;
             }
             SCOPED_TRACE("dump " + std::to_string(dump));
-            compareDump(r, byCase[c.name].at(dump));
+            compareDump(r, byCase[c.name].at(dump), departureFor(c.name, dump));
             ++dump;
         }
         EXPECT_EQ(static_cast<std::size_t>(dump), byCase[c.name].size());
@@ -603,11 +643,10 @@ TEST(ShapePresets, ReadAndWriteLikeLegacy)
 
 // --- The "Vector shape editing" dialog ---------------------------------------
 
-TEST(ShapesEdition, OpensOnTheListsIndexLikeLegacy)
+TEST(ShapesEdition, OpensOnThePresetsIndex)
 {
-    // VectorItem passed its list's selection ("Choose" being 0) as the
-    // editor's preset index: the preset after the one chosen; out of range
-    // the first.
+    // A preset's index (the controller gives the shape list's selection
+    // less its "Choose", T5-editor-opens-next); out of range the first.
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 2).current().name, u"rounded square 1");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 5).current().name, u"rectangle");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), -1).selection(), 0);
@@ -641,19 +680,15 @@ TEST(ShapesEdition, AddAndDelete)
     EXPECT_EQ(one.removeShape()->text, u"Cannot remove all shapes from the list");
 }
 
-TEST(ShapesEdition, ApplyKeepsOkGivesBackAndTheListIsLegacys)
+TEST(ShapesEdition, ApplyKeepsAndOkGivesBack)
 {
     ShapesEdition e(defaultShapePresets(), 0);
     e.shape = u"m 0 0 l 50 0 50 50";
     e.name = u"square";
     EXPECT_TRUE(e.modified());
-    EXPECT_EQ(e.saveChangesQuestion().text, u"Save changes to shape \"m 0 0 l 100 0 100 100 0 100\"?");
     EXPECT_TRUE(e.save().saved());
     EXPECT_FALSE(e.modified());
     EXPECT_EQ(e.presets()[0], (ShapePreset{u"square", u"m 0 0 l 50 0 50 50", 0, 0}));
-    // Legacy's list never took a rename (only Add, Delete and Restore default
-    // changed it).
-    EXPECT_EQ(e.list()[0], u"rectangle");
     // An empty shape is refused; an empty name becomes "Untitled".
     e.shape.clear();
     EXPECT_EQ(e.save().error->text, u"Field \"shape\" cannot be empty.");
@@ -662,6 +697,28 @@ TEST(ShapesEdition, ApplyKeepsOkGivesBackAndTheListIsLegacys)
     EXPECT_TRUE(e.save().saved());
     EXPECT_EQ(e.name, u"Untitled");
     EXPECT_EQ(e.presets()[0].name, u"Untitled");
+}
+
+TEST(ShapesEdition, ARenameByApplyReachesTheList)
+{
+    // T5-dialog-list-stale (compatibility-decisions.md): legacy's list never
+    // took a rename (only Add, Delete and Restore default changed it).
+    ShapesEdition e(defaultShapePresets(), 0);
+    e.name = u"square";
+    EXPECT_TRUE(e.save().saved());
+    EXPECT_EQ(e.list()[0], u"square");
+    EXPECT_EQ(e.list().size(), 5u);
+}
+
+TEST(ShapesEdition, TheSaveChangesQuestionNamesTheShape)
+{
+    // T5-save-question-text (compatibility-decisions.md): legacy's question
+    // showed the shape's drawing text.
+    ShapesEdition e(defaultShapePresets(), 0);
+    e.shape = u"m 0 0 l 50 0 50 50";
+    EXPECT_TRUE(e.modified());
+    EXPECT_EQ(e.saveChangesQuestion().text, u"Save changes to shape \"rectangle\"?");
+    EXPECT_EQ(e.saveChangesQuestion().title, u"Confirmation");
 }
 
 TEST(ShapesEdition, SavingUnderAnExistingNameAsksReplaceOrRename)
@@ -902,4 +959,37 @@ TEST(DrawingTool, MoveFollowsTheVideosTime)
     host.timeMs = 2500;
     (void)tool.overlay(host);
     EXPECT_EQ(tool.position(), (PointF{900, 600}));
+}
+
+TEST(DrawingDeparture, ChangingScaleKeepsTheDrawingInPlace)
+{
+    // T5-change-scale-garble (compatibility-decisions.md): when "Changing
+    // scale" adds \fscx / \fscy, legacy's Shapes::SetScale diff moved the
+    // drawing's place the wrong way and the next sample wrote the drawing
+    // into the tags ("{\fscy12m 1 1 l 301 1 301 181 1 1810)}m 1 1 ...").
+    TestHost host;
+    host.s = std::make_unique<EditSession>(
+        load("[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[Events]\n"
+             "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(300,300)}Text\n"));
+    const auto id = ids(*host.s)[0];
+    host.s->setSelection({id, {id}, id, std::nullopt});
+    host.v.setClient(640, 360, 0);
+    host.v.setScript(1920, 1080);
+    host.v.open({1280, 720, 0, 1});
+    host.shapesFile = u"Shape: scaled; m 0 0 l 100 0 100 100 0 100; 0; 1\n";
+    DrawingTool tool;
+    host.tool = &tool;
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("shape", 1, host));
+    const std::size_t steps = host.s->historySize();
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, true, Pointer::Button::Left), host);
+    tool.pointer(at(Pointer::Kind::Move, 150, 140, true), host);
+    ASSERT_TRUE(host.g);
+    EXPECT_EQ(*host.g->staged(id, false),
+              u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 151 1 151 121 1 121{\\p0}{Text}");
+    tool.pointer(at(Pointer::Kind::Move, 200, 160, true), host);
+    tool.pointer(at(Pointer::Kind::Release, 200, 160, false, Pointer::Button::Left), host);
+    EXPECT_EQ(line(*host.s, id)->text,
+              u8"{\\fscy120\\fscx150\\p1\\an7\\pos(300,300)}m 1 1 l 301 1 301 181 1 181{\\p0}{Text}");
+    EXPECT_EQ(host.s->historySize(), steps + 1);
 }

@@ -246,8 +246,9 @@ bool ShapesEdition::modified() const
 
 ShapesEdition::Message ShapesEdition::saveChangesQuestion() const
 {
-    // OnListChanged formats the current preset's shape into the question.
-    return {u"Save changes to shape \"" + m_current.shape + u"\"?", u"Confirmation"};
+    // OnListChanged formatted the current preset's shape into the question;
+    // its name says which (T5-save-question-text).
+    return {u"Save changes to shape \"" + m_current.name + u"\"?", u"Confirmation"};
 }
 
 void ShapesEdition::select(int num)
@@ -318,6 +319,9 @@ ShapesEdition::SaveResult ShapesEdition::save()
         }
     }
     m_presets[static_cast<std::size_t>(m_selection)] = m_current;
+    // The list takes a rename (T5-dialog-list-stale: legacy's kept the old
+    // name).
+    m_list[static_cast<std::size_t>(m_selection)] = m_current.name;
     return result;
 }
 
