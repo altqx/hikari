@@ -10885,6 +10885,7 @@ private slots:
         QFile saved(shapesFile);
         QVERIFY(saved.open(QIODevice::ReadOnly));
         const QByteArray bytes = saved.readAll();
+        saved.close(); // Windows removes no file a handle holds (Restore default below)
         QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
         QVERIFY2(bytes.mid(3).startsWith("Shape: Rectangle; m -100 -100 b -45 -155 45 -155 100 -100 b "), bytes.constData());
         QCOMPARE(bytes.count('\n'), 4);
@@ -11306,6 +11307,7 @@ private slots:
         QFile saved(tagsFile);
         QVERIFY(saved.open(QIODevice::ReadOnly));
         const QByteArray bytes = saved.readAll();
+        saved.close(); // Windows removes no file a handle holds (Restore default below)
         QVERIFY(bytes.startsWith("\xEF\xBB\xBFHYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
         QVERIFY2(bytes.endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 0\n"), bytes.constData());
         QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
