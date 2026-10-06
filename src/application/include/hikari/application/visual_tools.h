@@ -146,6 +146,9 @@ struct ToolOption {
     bool enabled = true;      // legacy's greyed icons
     std::vector<std::u16string> choices;
     int index = 0;            // a choice's selection
+    // T5: legacy's shape list: the first entry is "no choice" and the last
+    // an action ("Edit"); the row's menu puts it after a separator.
+    bool listEnds = false;
 };
 
 // One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
@@ -170,6 +173,8 @@ public:
     // Stages a target's text, or its translation (TLMode's translated role).
     void stage(core::LineId line, std::u8string text, bool translation = false);
     bool hasChanges() const { return !m_staged.empty(); }
+    // T6: a staged text that differs from the target's as the gesture began.
+    bool changesAnyLine() const;
     // The staged text of a target, if any.
     std::optional<std::u8string> staged(core::LineId line, bool translation = false) const;
     // The staged texts put into a copy of the Document (the video's preview
@@ -216,6 +221,7 @@ private:
 
 class VisualTool;
 struct ShapePreset; // shape_presets.h (T5)
+struct AllTagsSetting; // all_tags.h (T6)
 
 // The Line warnings (lineWarning below).
 enum class LineWarning { None, NotVisible, Comment };
@@ -272,6 +278,24 @@ public:
     // Config/ShapesSettings.txt, or legacy's defaults; null for none). A
     // \move drawing's position follows videoTimeMs.
     virtual const std::vector<ShapePreset> *shapePresets() const { return nullptr; }
+    // T6: whether the Grid shows a Line (legacy Dialogue::isVisible: not
+    // hidden by the Grid filter or a closed Line group). The Position
+    // shifter and the all-tags tool edit only the selected Lines it shows
+    // (SubsFile::GetSelections, SubsFile.cpp:503-512).
+    virtual bool lineShown(core::LineId line) const
+    {
+        (void)line;
+        return true;
+    }
+    // T6: the all-tags tool's definitions (VideoToolbar::GetTagsSettings:
+    // Config/AllTagsSettings.txt, or legacy's defaults) and the toolbar's
+    // selection in their list after a change the tool made (Shift+wheel,
+    // AllTagsItem::SetItemToggled).
+    virtual const std::vector<AllTagsSetting> *allTagsSettings() const { return nullptr; }
+    // T6: the accelerator text ("Ctrl-,") the Line editor's hotkey `id` has
+    // (Hotkeys::GetHKey with EDITBOX_HOTKEY); legacy's default unless the
+    // host knows the user's.
+    virtual std::string editorHotkey(int id) const;
 };
 
 // One visual family. The host gives a tool only the events legacy's

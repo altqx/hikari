@@ -66,6 +66,11 @@ set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # T5: the drawing tool and its shape presets (no contraction either).
 target_sources(hikari_application PRIVATE visual_drawing.cpp shape_presets.cpp)
+# T6: the Position shifter and the all-tags tool with its tag definitions
+# (no contraction either).
+target_sources(hikari_application PRIVATE visual_shift.cpp visual_all_tags.cpp all_tags.cpp)
+set_source_files_properties(visual_shift.cpp visual_all_tags.cpp PROPERTIES COMPILE_OPTIONS
+    "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 set_source_files_properties(visual_drawing.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # V3: the Video panel's sources, tracks and chapters. The dummy video's
