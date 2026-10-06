@@ -163,7 +163,13 @@ public:
         ++bells;
         logged.emplace_back(u"bell");
     }
-    bool lineShown(core::LineId line) const override { return !hidden.contains(line); }
+    // How often a tool asked which Lines the Grid shows.
+    mutable int shownAsked = 0;
+    std::function<bool(core::LineId)> shownLines() const override
+    {
+        ++shownAsked;
+        return [this](core::LineId line) { return !hidden.contains(line); };
+    }
     const std::vector<AllTagsSetting> *allTagsSettings() const override { return &tags; }
 };
 
@@ -706,6 +712,81 @@ TEST(VisualShiftEdit, EscEndsTheDragWithoutAStep)
         EXPECT_FALSE(host.g);
         EXPECT_EQ(host.s->historySize(), steps);
         EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(960,540)\\blur2}Hello");
+    }
+}
+
+// A gesture over a large batch asks the host for the shown Lines once, not
+// once per target, and still leaves the hidden ones out.
+TEST(VisualShiftEdit, ALargeBatchAsksForTheShownLinesOnce)
+{
+    TestHost host;
+    Case c;
+    c.clientW = 640;
+    c.clientH = 400;
+    c.panel = 40;
+    c.frame.width = 1280;
+    c.frame.height = 720;
+    c.frame.sarNum = 0;
+    c.frame.sarDen = 1;
+    c.scriptW = 1920;
+    c.scriptH = 1080;
+    c.time = 1500;
+    c.fps = 25;
+    c.styles.push_back("Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,"
+                       "2,2,20,20,20,1");
+    constexpr int count = 2000;
+    for (int i = 0; i < count; ++i) {
+        c.lines.push_back("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(960,540)\\blur2}Line " + std::to_string(i));
+        c.translations.push_back({});
+        c.select.push_back(i);
+        if (i % 3 == 1)
+            c.hidden.push_back(i);
+    }
+    setUp(host, c);
+    std::vector<core::LineId> shown;
+    for (const core::LineId id : host.targets)
+        if (!host.hidden.contains(id))
+            shown.push_back(id);
+    const auto press = [&](VisualTool &tool, int x, int y) {
+        Pointer p;
+        p.kind = Pointer::Kind::Press;
+        p.button = Pointer::Button::Left;
+        p.leftDown = true;
+        p.x = x;
+        p.y = y;
+        tool.pointer(p, host);
+    };
+    {
+        PositionShifterTool shifter;
+        shifter.selected(host);
+        shifter.reset(host);
+        host.shownAsked = 0;
+        press(shifter, 320, 180);
+        ASSERT_TRUE(host.g);
+        EXPECT_EQ(host.shownAsked, 1);
+        EXPECT_EQ(host.g->targets(), shown);
+        host.cancelGesture();
+        shifter.reset(host);
+    }
+    {
+        AllTagsTool tags;
+        tags.setToggled(0); // Add, blur
+        tags.selected(host);
+        tags.reset(host);
+        host.shownAsked = 0;
+        const float thumb = 30 + 2 * 5.8f;
+        press(tags, static_cast<int>(thumb), 30);
+        Pointer drag;
+        drag.kind = Pointer::Kind::Move;
+        drag.leftDown = true;
+        drag.x = 100;
+        drag.y = 30;
+        tags.pointer(drag, host);
+        ASSERT_TRUE(host.g);
+        EXPECT_EQ(host.shownAsked, 1);
+        EXPECT_EQ(host.g->targets(), shown);
+        host.cancelGesture();
+        tags.reset(host);
     }
 }
 

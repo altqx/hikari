@@ -278,15 +278,13 @@ public:
     // Config/ShapesSettings.txt, or legacy's defaults; null for none). A
     // \move drawing's position follows videoTimeMs.
     virtual const std::vector<ShapePreset> *shapePresets() const { return nullptr; }
-    // T6: whether the Grid shows a Line (legacy Dialogue::isVisible: not
+    // T6: which Lines the Grid shows (legacy Dialogue::isVisible: not
     // hidden by the Grid filter or a closed Line group). The Position
     // shifter and the all-tags tool edit only the selected Lines it shows
-    // (SubsFile::GetSelections, SubsFile.cpp:503-512).
-    virtual bool lineShown(core::LineId line) const
-    {
-        (void)line;
-        return true;
-    }
+    // (SubsFile::GetSelections, SubsFile.cpp:503-512). A tool asks once per
+    // gesture and tests every target against the answer, so a large batch
+    // costs one pass over the Grid; an empty function means every Line.
+    virtual std::function<bool(core::LineId)> shownLines() const { return {}; }
     // T6: the all-tags tool's definitions (VideoToolbar::GetTagsSettings:
     // Config/AllTagsSettings.txt, or legacy's defaults) and the toolbar's
     // selection in their list after a change the tool made (Shift+wheel,

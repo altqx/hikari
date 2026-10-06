@@ -572,10 +572,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // the all-tags tool takes the Line editor's "Insert difference" keys.
     if (!m_settingsFile.isEmpty())
         m_visualTools->setAllTagsFile(QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/AllTagsSettings.txt"));
-    m_visualTools->setLineShown([this](core::LineId id) {
-        const auto shown = m_shell->displayedLines();
-        return std::find(shown.begin(), shown.end(), id) != shown.end();
-    });
+    m_visualTools->setShownLines([this] { return shownLines(); });
     m_visualTools->setEditorHotkey([this](int id) {
         if (!m_hotkeys)
             return application::defaultHotkey({id, application::EditorHotkey});

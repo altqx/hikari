@@ -116,7 +116,7 @@ public:
     void setAllTagsFile(const QString &path) { m_tagsFile = path; }
     const QString &allTagsFile() const { return m_tagsFile; }
     AllTagsEditor *tagsEditor() const { return m_tagsEditor; }
-    void setLineShown(std::function<bool(core::LineId)> shown) { m_lineShown = std::move(shown); }
+    void setShownLines(std::function<std::function<bool(core::LineId)>()> shown) { m_shownLines = std::move(shown); }
     void setEditorHotkey(std::function<std::string(int)> accel) { m_editorHotkey = std::move(accel); }
     // Replaces a family's tool (tests; T2-T6 use makeVisualTool).
     void setTool(application::visual::Family family, std::unique_ptr<application::visual::VisualTool> tool);
@@ -203,7 +203,10 @@ public:
     void bell() override;
     void notice(std::u16string_view text) override;
     const std::vector<application::visual::ShapePreset> *shapePresets() const override;
-    bool lineShown(core::LineId line) const override { return !m_lineShown || m_lineShown(line); }
+    std::function<bool(core::LineId)> shownLines() const override
+    {
+        return m_shownLines ? m_shownLines() : std::function<bool(core::LineId)>{};
+    }
     const std::vector<application::visual::AllTagsSetting> *allTagsSettings() const override;
     std::string editorHotkey(int id) const override;
 
@@ -279,7 +282,7 @@ private:
     QString m_tagsFile;
     mutable std::vector<application::visual::AllTagsSetting> m_allTags; // VideoToolbar::tags
     QPointer<AllTagsEditor> m_tagsEditor;
-    std::function<bool(core::LineId)> m_lineShown;
+    std::function<std::function<bool(core::LineId)>()> m_shownLines;
     std::function<std::string(int)> m_editorHotkey;
 };
 

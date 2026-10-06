@@ -423,8 +423,9 @@ bool PositionShifterTool::beginEdit(VisualHost &host)
     if (host.gesture())
         return true;
     std::vector<core::LineId> targets;
+    const auto shown = host.shownLines();
     for (const core::LineId id : host.batchTargets())
-        if (host.lineShown(id))
+        if (!shown || shown(id))
             targets.push_back(id);
     if (targets.empty())
         return false;

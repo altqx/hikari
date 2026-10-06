@@ -780,8 +780,9 @@ bool AllTagsTool::beginEdit(VisualHost &host)
     const bool many = severalLines(targets, host.activeLine());
     m_targets.clear();
     if (many) {
+        const auto shown = host.shownLines();
         for (const core::LineId id : targets)
-            if (host.lineShown(id))
+            if (!shown || shown(id))
                 m_targets.push_back(id);
     } else {
         m_targets = targets;
