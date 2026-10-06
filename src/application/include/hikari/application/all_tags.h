@@ -124,7 +124,8 @@ public:
 
     const std::vector<AllTagsSetting> &tags() const { return m_tags; }
     // The list as legacy's HikariChoice holds it: names are added and
-    // removed with the definitions but a rename by Apply does not reach it.
+    // removed with the definitions, and a save puts a rename there
+    // (T6-dialog-list-stale: legacy never refreshed it).
     const std::vector<std::u16string> &list() const { return m_list; }
     int selection() const { return m_selection; }
     const AllTagsSetting &current() const { return m_current; }

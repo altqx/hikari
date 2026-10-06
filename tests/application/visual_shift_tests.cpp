@@ -629,6 +629,19 @@ TEST(AllTagsEdition, AddDeleteSaveAndRestoreFollowLegacy)
     EXPECT_EQ(one.removeTag()->text, u"Cannot remove all tags from list");
 }
 
+// T6-dialog-list-stale (compatibility-decisions.md): a save puts a rename
+// into the dialog's list. Legacy's list kept the old name (only Add, Delete
+// and Restore default changed it).
+TEST(AllTagsEdition, ARenameByApplyReachesTheList)
+{
+    AllTagsEdition e(defaultAllTags(), 0);
+    e.name = u"soft edges";
+    EXPECT_FALSE(e.save());
+    EXPECT_EQ(e.tags()[0].name, u"soft edges");
+    EXPECT_EQ(e.list()[0], u"soft edges");
+    EXPECT_EQ(e.list().size(), 22u);
+}
+
 // Esc during a drag (the host cancels the gesture and resets the tool):
 // nothing is recorded, and moving on or releasing the button afterwards
 // writes nothing either. Legacy had no Esc for these tools.
@@ -855,6 +868,27 @@ TEST(VisualShiftDeparture, TheTextGradientKeepsAHardSpaceAfterABlock)
     tags.pointer(pointerAt(Pointer::Kind::Press, 100, 38, Pointer::Button::Left, true), host);
     tags.pointer(pointerAt(Pointer::Kind::Release, 100, 38, Pointer::Button::Left), host);
     EXPECT_EQ(lineOf(*host.s, active)->text, u8"{\\blur12.1}\\hA{\\blur9.6}b {\\blur6.9}c{\\i1\\blur4.4}d\\N{\\blur1.9}e\\h");
+}
+
+// T6-gradient-line-break (compatibility-decisions.md): a \N right after a
+// block takes the next character with the block's tag, as a \h does.
+// Legacy's ReplaceAllByChar stepped past the block onto the "N" and put a
+// tag inside the \N ("{\blur0}A{\i1\blur0.9}\{\blur1.9}N{\blur2.8}b …",
+// four tags for three characters).
+TEST(VisualShiftDeparture, TheTextGradientKeepsALineBreakAfterABlock)
+{
+    TestHost host;
+    setUp(host, departureCase({"A{\\i1}\\Nb c"}));
+    AllTagsTool tags;
+    tags.setToggled(PasteGradientTextIncrease << 20); // blur
+    tags.selected(host);
+    tags.reset(host);
+    tags.pointer(pointerAt(Pointer::Kind::Press, 41, 30, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Move, 100, 30, Pointer::Button::None, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Release, 100, 30, Pointer::Button::Left), host);
+    const std::u8string text = lineOf(*host.s, *host.s->selection().active)->text;
+    EXPECT_EQ(text.find(u8"\\{"), std::u8string::npos) << std::string(text.begin(), text.end());
+    EXPECT_EQ(text, u8"{\\blur0}A{\\i1\\blur0.9}\\Nb {\\blur1.9}c");
 }
 
 // T6-clip-scale-carry (compatibility-decisions.md): a vector clip's scale is

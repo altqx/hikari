@@ -437,6 +437,9 @@ std::optional<AllTagsEdition::Message> AllTagsEdition::save()
     if (m_selection < 0 || m_selection >= static_cast<int>(m_tags.size()))
         return Message{u"Selected tag is out of range of tagList.", u"Error"};
     m_tags[static_cast<std::size_t>(m_selection)] = m_current;
+    // The list takes a rename (T6-dialog-list-stale: legacy's kept the old
+    // name).
+    m_list[static_cast<std::size_t>(m_selection)] = m_current.name;
     return std::nullopt;
 }
 

@@ -202,10 +202,12 @@ void replaceAllByChar(TagFind &find, u16v pattern, u16v tag, u16 &text,
             i = static_cast<std::size_t>(static_cast<long>(i) + put(res));
             // Not taken as a normal character.
             i++;
-            // A \h after the block takes the next visible character too, as
-            // at the start (T6-gradient-hard-space: legacy stepped onto its
-            // "h" and put a tag inside it); a block or tag after it is read.
-            if (i + 1 < text.size() && text[i] == u'\\' && text[i + 1] == u'h') {
+            // A \h or \N after the block takes the next visible character
+            // too, as a \h at the start (T6-gradient-hard-space,
+            // T6-gradient-line-break: legacy stepped onto its letter and put
+            // a tag inside it); a block or tag after it is read.
+            if (i + 1 < text.size() && text[i] == u'\\' &&
+                (text[i + 1] == u'h' || text[i + 1] == u'N' || text[i + 1] == u'n')) {
                 i++;
                 if (i + 1 < text.size() && text[i + 1] != u'{' && text[i + 1] != u'\\')
                     i++;
