@@ -557,6 +557,17 @@ private slots:
         auto restore = qScopeGuard([] { theme::useSettings(nullptr); });
         theme::useSettings(&store);
         store.setValue(QStringLiteral("appearance.followSystem"), false);
+        // Digits in a bold test font, whose stems are wider than a pixel: a
+        // platform's thin default (Fedora's Noto Sans) is all antialiasing
+        // and never reaches the ink itself.
+        const int font = QFontDatabase::addApplicationFont(QStringLiteral(HIKARI_TEST_FONT));
+        QVERIFY(font >= 0);
+        const QFont before = QGuiApplication::font();
+        auto restoreFont = qScopeGuard([&] { QGuiApplication::setFont(before); });
+        QFont testFont(QFontDatabase::applicationFontFamilies(font).value(0));
+        testFont.setPixelSize(16);
+        testFont.setBold(true);
+        QGuiApplication::setFont(testFont);
         const auto distance = [](const QColor &a, const QColor &b) {
             return std::abs(a.red() - b.red()) + std::abs(a.green() - b.green()) + std::abs(a.blue() - b.blue());
         };
@@ -565,9 +576,9 @@ private slots:
             const auto &roles = theme::current().roles;
             const auto colours = LineTableModel::themeLabelColours(theme::isDark(code));
             LineGrid grid;
-            grid.setSize(QSizeF(720, 160));
+            grid.setSize(QSizeF(720, 240));
             grid.setModel(&model);
-            QImage image(720, 160, QImage::Format_ARGB32);
+            QImage image(720, 240, QImage::Format_ARGB32);
             QPainter painter(&image);
             grid.paint(&painter);
             painter.end();
