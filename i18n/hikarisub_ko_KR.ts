@@ -45,6 +45,125 @@
     </message>
 </context>
 <context>
+    <name>AllTagsEditionDialog</name>
+    <message>
+        <source>Tag editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edited tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New tag name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Tag:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimal value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimal value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximal value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximal value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where Insert puts the tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decimal places:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decimal places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Used only when tag have 2 values or more</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag change options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Additional values:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Restore default</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>AppearancePage</name>
     <message>
         <source>Theme</source>
@@ -329,6 +448,101 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Recent colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DirectShowPlayer</name>
+    <message>
+        <source>Failed to initialize DirectShow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create filters interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create search interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create audio interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Source filter not added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add video renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot create audio renderer instance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot add Direct Sound renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate source pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate renderer pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate Direct Sound pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get renderer pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get dsound pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No IMediaTypes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No track type info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to video renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to audio renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to audio1 renderer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot find connected source pin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot get splitter pin info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot enumerate splitter pins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot connect source pin to video2 renderer</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2784,6 +2998,70 @@ please save with different name or change file attribute.</source>
         <translation>닫기</translation>
     </message>
     <message>
+        <source>Converts to ASS format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to SRT format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to microDVD format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to MPL2 format</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Converts to TMPlayer format (not recommended)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by actor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by effect</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by layer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">모두</translation>
+    </message>
+    <message>
+        <source>Video and subs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio and subs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Move panel…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2793,6 +3071,202 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Close reference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open subtitle file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recently opened subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens video file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save current file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save all subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save translation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the selected autosave from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the temporary file removal window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads session from saved session file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves session to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Asks whether to load previously loaded files at program startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads previously loaded files at program startup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Program settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Exit the program</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sorts all lines in ASS file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sorts selected lines in ASS file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turns on multireplacer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Selects lines by expressions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrases and replaces them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searches for the specified text phrase</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Finds the next occurrence of the phrase in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load script</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to previous frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to next frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves video to start time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves video to end time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plays / Pauses video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens audio file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens audio from video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens blank audio 2 hour and 30 minutes long</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Closes audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable / Disable editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifting subtitle times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Is used to manage ASS styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS subtitle properties</source>
+        <translation type="unfinished">ASS 파일 정보</translation>
+    </message>
+    <message>
+        <source>Converts from one format to another</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub website in the default browser</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens the HikariSub issue tracker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checks whether a newer version is available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows program info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shows credits</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4728,6 +5202,18 @@ after switching from full screen</source>
         <translation>가장 빠름 (빨리 되감기)</translation>
     </message>
     <message>
+        <source>Subtitle display filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playback</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built-in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start video zoom in percent.</source>
         <translation type="unfinished">비디오 줌을 퍼센트로 시작합니다.</translation>
     </message>
@@ -5103,6 +5589,125 @@ removing audio cache files.</source>
     </message>
 </context>
 <context>
+    <name>ShapesEditionDialog</name>
+    <message>
+        <source>Vector shape editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A shape named &quot;%1&quot; already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edited shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New shape name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Editing</source>
+        <translation type="unfinished">갱신 정보</translation>
+    </message>
+    <message>
+        <source>Name:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Scaling relative to cursor:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed width and height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preserve aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed is only width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling relative to cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling mode:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing only drawing coordinates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changing scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaling mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Get shape from active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
+    </message>
+    <message>
+        <source>Restore default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Confirmation</source>
+        <translation type="unfinished">확인해주세요</translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">교체</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>SimpleColourPicker</name>
     <message>
         <source>Color picker</source>
@@ -5224,6 +5829,13 @@ in uppercase</source>
     <message>
         <source>Words added to dictionary</source>
         <translation>사전에 추가 된 단어</translation>
+    </message>
+</context>
+<context>
+    <name>StatusBar</name>
+    <message>
+        <source>Status bar</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5794,6 +6406,30 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished">멈춤</translation>
     </message>
     <message>
+        <source>Exit full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Escape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch full screen to monitor %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in full screen on monitor %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recently opened subtitles</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5831,6 +6467,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Copy frame to clipboard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filters</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5909,6 +6549,53 @@ Foreign language text will be deleted.</source>
     </message>
 </context>
 <context>
+    <name>VideoFullscreen</name>
+    <message>
+        <source>Full screen video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous video file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pause</source>
+        <translation type="unfinished">일시 정지</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation type="unfinished">재생</translation>
+    </message>
+    <message>
+        <source>Play / Pause</source>
+        <translation type="unfinished">재생 / 일시 정지</translation>
+    </message>
+    <message>
+        <source>Play the current line</source>
+        <translation type="unfinished">현재 줄 재생</translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">멈춤</translation>
+    </message>
+    <message>
+        <source>Next file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show toolbar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video times</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>VideoIndexingProgress</name>
     <message>
         <source>Indexing video</source>
@@ -5935,6 +6622,10 @@ Foreign language text will be deleted.</source>
 </context>
 <context>
     <name>VisualToolOptions</name>
+    <message>
+        <source>Shape: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Warning</source>
         <translation type="unfinished">경고</translation>
@@ -6150,6 +6841,10 @@ cause it was edited.</source>
     <message>
         <source>Text into translation</source>
         <translation>번역본</translation>
+    </message>
+    <message>
+        <source>Autosave</source>
+        <translation type="unfinished">자동 저장</translation>
     </message>
     <message>
         <source>%1 (recovered)</source>
@@ -6395,6 +7090,11 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Load from directory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file is not a valid video file or is corrupted,
+or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6678,6 +7378,11 @@ Will not be copied.</source>
     </message>
     <message>
         <source>Different fonts with the same file name: %1. Only one of them is kept in a folder.
+</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The video shows the subtitles through %1, whose output this check does not verify.
 </source>
         <translation type="unfinished"></translation>
     </message>
@@ -7129,6 +7834,45 @@ Styles deleted:
     </message>
     <message>
         <source> (%1 hidden)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time elapsed: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>hikari::ui::StatusBarController</name>
+    <message>
+        <source>Video scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles resolution</source>
+        <translation type="unfinished">자막 해상도</translation>
+    </message>
+    <message>
+        <source>Video file name</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
