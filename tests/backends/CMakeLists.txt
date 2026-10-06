@@ -59,6 +59,22 @@ foreach(kind subs onesub nosubs)
         COMMENT "Generating Matroska fixture ${kind}")
     list(APPEND _hikari_media_fixtures "${out}")
 endforeach()
+# W1: the cfr video in AVI and the vfr video as WMV2 in ASF, which stock
+# DirectShow plays (AVI splitter / WM ASF reader and the system's decoder
+# DMOs); the default players read them too. The MPEG-1 one brings a stock
+# filter with property pages into the graph (the MPEG video decoder).
+foreach(spec "dshow-cfr|avi" "dshow-vfr|wmv" "dshow-mpg|mpg")
+    string(REPLACE "|" ";" spec "${spec}")
+    list(GET spec 0 kind)
+    list(GET spec 1 extension)
+    set(out "${HIKARI_MEDIA_FIXTURE_DIR}/${kind}.${extension}")
+    add_custom_command(OUTPUT "${out}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${HIKARI_MEDIA_FIXTURE_DIR}"
+        COMMAND hikari_media_fixture "${out}" ${kind}
+        DEPENDS hikari_media_fixture
+        COMMENT "Generating media fixture ${kind}")
+    list(APPEND _hikari_media_fixtures "${out}")
+endforeach()
 add_custom_target(hikari_media_fixtures ALL DEPENDS ${_hikari_media_fixtures})
 hikari_add_gtest(hikari_backends_indexed_source_tests SOURCES indexed_source_tests.cpp
     LIBRARIES hikari_backends Qt6::Core LABELS backends)
@@ -310,3 +326,28 @@ if(WIN32 AND HIKARI_WITH_VSFILTER)
     target_compile_definitions(hikari_backends_vsfilter_tests PRIVATE HIKARI_VSFILTER_CSRI_DIR="${_w2_csri}"
         HIKARI_TEST_ARTIFACT_DIR="${CMAKE_CURRENT_BINARY_DIR}/artifacts/vsfilter")
 endif()
+# W1: the optional DirectShow adapter (Windows only). Its frame and seek
+# fixtures run against the default players on the same media; its manifest
+# names the libraries it loads.
+if(WIN32)
+    hikari_add_qttest(hikari_backends_directshow_tests SOURCES directshow_player_tests.cpp
+        LIBRARIES hikari_directshow hikari_backends Qt6::Gui Qt6::Multimedia)
+    target_include_directories(hikari_backends_directshow_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/backends/directshow")
+    target_link_libraries(hikari_backends_directshow_tests PRIVATE hikari_dshow_baseclasses)
+    target_compile_definitions(hikari_backends_directshow_tests PRIVATE
+        HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+        HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")
+    add_dependencies(hikari_backends_directshow_tests hikari_media_helper hikari_media_fixtures)
+    set_tests_properties(hikari_backends_directshow_tests.offscreen PROPERTIES TIMEOUT 300 RUN_SERIAL TRUE)
+    add_test(NAME directshow-manifest COMMAND "${CMAKE_COMMAND}"
+        "-DPROBE=$<TARGET_FILE:hikari_directshow_probe>"
+        "-DOUT=${CMAKE_BINARY_DIR}/provision-evidence/directshow-manifest.json"
+        -P "${PROJECT_SOURCE_DIR}/cmake/manifest/DirectShowManifest.cmake")
+    set_tests_properties(directshow-manifest PROPERTIES LABELS packaging TIMEOUT 120)
+endif()
+# W1: the adapter is in the Windows executable and absent from every other
+# build (its renderer's filter name, a UTF-16 literal on Windows).
+add_test(NAME directshow-adapter-presence COMMAND "${CMAKE_COMMAND}"
+    "-DEXECUTABLE=$<TARGET_FILE:hikarisub>" "-DEXPECT=$<IF:$<PLATFORM_ID:Windows>,present,absent>"
+    -P "${CMAKE_CURRENT_SOURCE_DIR}/directshow_presence.cmake")
+set_tests_properties(directshow-adapter-presence PROPERTIES LABELS packaging TIMEOUT 120)

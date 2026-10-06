@@ -19,9 +19,9 @@ import Hikari.Ui
 // `menu`: inside a delegate that name is the MenuItem's own `menu` property
 // (the submenu holding it), which shadows an id of the outer context.
 //
-// Left to its card: V3 adds "Remove video" as "Unload video"
-// (VIDEO_DELETE_FILE) after the separator, then the streams and the
-// chapters.
+// W1 adds DirectShow's "Filters" after the separator. Left to its card: V3
+// adds "Remove video" as "Unload video" (VIDEO_DELETE_FILE) after the
+// separator, then the streams and the chapters.
 ShellMenu {
     id: videoMenu
     objectName: "videoContextMenu"
@@ -40,9 +40,12 @@ ShellMenu {
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
 
+    // W1: the DirectShow graph's filters (empty unless DirectShow plays the video).
+    property var filters: []
     onAboutToShow: {
         recent = shell.videoView.recentFiles()
         monitors = shell.videoFullscreen.monitorCount()
+        filters = shell.app.playerFilters()
     }
 
     function keys(symbol) {
@@ -206,4 +209,39 @@ ShellMenu {
         onTriggered: if (!videoMenu.gesture("VIDEO_COPY_FRAME_TO_CLIPBOARD")) videoMenu.shell.videoView.snapshot("VIDEO_COPY_FRAME_TO_CLIPBOARD")
     }
     MenuSeparator {}
+    // W1: legacy "Filters" (VideoBox.cpp:981-990, 1049-1052): while
+    // DirectShow plays the loaded video, the graph's filters in order, each
+    // enabled when it has property pages; choosing one opens them where the
+    // menu opened (FilterConfig), once the menu has closed. No submenu
+    // without filters.
+    Instantiator {
+        model: videoMenu.filters.length > 0 ? 1 : 0
+        delegate: ShellMenu {
+            id: filtersMenu
+            objectName: "videoMenuFilters"
+            title: qsTr("Filters")
+            Instantiator {
+                model: videoMenu.filters
+                delegate: ShellMenuItem {
+                    required property var modelData
+                    required property int index
+                    objectName: "videoMenuFilter" + index
+                    text: modelData.name
+                    enabled: modelData.enabled
+                    onTriggered: {
+                        // Read now; the modal frame opens once the menu has closed.
+                        const app = videoMenu.shell.app
+                        const name = modelData.name
+                        const at = videoMenu.at
+                        const owner = videoMenu.parent
+                        Qt.callLater(() => app.showPlayerFilterProperties(name, owner, at.x, at.y))
+                    }
+                }
+                onObjectAdded: (index, object) => filtersMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => filtersMenu.removeItem(object)
+            }
+        }
+        onObjectAdded: (index, object) => videoMenu.addMenu(object)
+        onObjectRemoved: (index, object) => videoMenu.removeMenu(object)
+    }
 }

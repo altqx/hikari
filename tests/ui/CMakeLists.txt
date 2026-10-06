@@ -108,6 +108,13 @@ hikari_add_spix_test(hikari_ui_playback_workflow SOURCES playback_workflow.cpp L
     DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                 HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_playback_workflow hikari_media_helper hikari_media_fixtures)
+# W1: playing and stepping with the optional DirectShow adapter chosen (Windows only).
+if(WIN32)
+    hikari_add_spix_test(hikari_ui_directshow_workflow SOURCES directshow_workflow.cpp LIBRARIES hikari_composition
+        DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
+                    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+    add_dependencies(hikari_ui_directshow_workflow hikari_media_helper hikari_media_fixtures)
+endif()
 # G1: Grid range selection (Spix workflow).
 hikari_add_spix_test(hikari_ui_grid_workflow SOURCES grid_workflow.cpp LIBRARIES hikari_composition)
 hikari_add_spix_test(hikari_ui_clipboard_workflow SOURCES clipboard_workflow.cpp LIBRARIES hikari_composition)
@@ -117,6 +124,8 @@ hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIB
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 # P1: close review (L58-write-close).
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
+# K2 / W1: the popups take the theme's palette from the first engine's start.
+hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
 # S2: automation hotkeys with real Lua scripts.

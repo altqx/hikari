@@ -64,3 +64,8 @@ if(WIN32)
 endif()
 # Y8: the font collector's folder and zip output.
 target_sources(hikari_backends PRIVATE font_collector_output.cpp include/hikari/backends/font_collector_output.h)
+# W1: the optional DirectShow playback adapter (Windows only; Linux builds
+# never configure it).
+if(WIN32)
+    add_subdirectory(directshow)
+endif()

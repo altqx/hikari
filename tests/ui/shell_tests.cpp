@@ -7169,6 +7169,9 @@ private slots:
               {"video.acceptedAudioStream", nullptr},
               {"video.ffms2Seeking", nullptr},
               {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
+#ifdef _WIN32
+              {"video.playbackPlayer", nullptr}, // W1, Windows only
+#endif
               {"video.zoomPercent", nullptr}}},
             {"settingsPageAudio",
              {{"audio.drawTimeCursor", "Show time next to cursor"},
@@ -10514,6 +10517,46 @@ private slots:
             QTRY_VERIFY(ringed().size() == 1 && ringed().front().startsWith(QStringLiteral("Line editor")));
             QTRY_VERIFY(pixel(grid, currentRowRing) != roles.focus);
         }
+    }
+
+    // W1: video.playbackPlayer chooses the player that plays video. On
+    // Windows 1 is the optional DirectShow adapter and 0 the general player;
+    // elsewhere the adapter does not exist and the setting is ignored: the
+    // general player plays, there are no filters, and the Video page offers
+    // no choice.
+    void playbackPlayerFollowsTheSetting()
+    {
+        auto &settings = *application->settingsStore();
+        auto *general = static_cast<application::GeneralPlayerPort *>(&application->generalPlayer());
+        QCOMPARE(&application->activePlayer(), general);
+        QVERIFY(!application->directShowPlayback());
+        settings.setValue(QStringLiteral("video.playbackPlayer"), 1);
+#ifdef _WIN32
+        QVERIFY(application->directShowPlayback());
+        QVERIFY(application->directShowPlayer());
+        auto *directShow = static_cast<application::GeneralPlayerPort *>(application->directShowPlayer());
+        QCOMPARE(&application->activePlayer(), directShow);
+        QCOMPARE(application->video().session().generalPlayer(), directShow);
+#else
+        QVERIFY(!application->directShowPlayback());
+        QCOMPARE(&application->activePlayer(), general);
+        QCOMPARE(application->video().session().generalPlayer(), general);
+#endif
+        QVERIFY(application->playerFilters().isEmpty()); // no video
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const bool offered = dialogItem("settingsDialog", "videoPlaybackPlayerBox") != nullptr;
+#ifdef _WIN32
+        QVERIFY(offered);
+#else
+        QVERIFY(!offered);
+#endif
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        settings.setValue(QStringLiteral("video.playbackPlayer"), 0);
+        QVERIFY(!application->directShowPlayback());
+        QCOMPARE(&application->activePlayer(), general);
+        QCOMPARE(application->video().session().generalPlayer(), general);
     }
 
     // A4-wasapi-default: the audio box's output is made with the host API
@@ -14811,6 +14854,123 @@ private slots:
         QVERIFY(application->settingsStore()->boolean("video.progressBar"));
         QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_HIDE_PROGRESS_BAR"))));
         QVERIFY(!application->settingsStore()->boolean("video.progressBar"));
+    }
+
+    // W1: the menus draw on the theme's surface from the start. The theme
+    // shown when the window loads (here Dark, by following a dark system)
+    // reaches the popups too, not only after the theme next changes: the
+    // video's context menu (where DirectShow's Filters submenu opens) and
+    // the File menu; then Light and Dark by hand.
+    void menusFollowTheThemeFromTheStart()
+    {
+        ui::theme::forceSystemScheme(Qt::ColorScheme::Dark);
+        restartWithoutSound();
+        auto *root = engine->rootObjects().first();
+        auto *videoMenu = named("videoContextMenu");
+        auto *bar = root->findChild<QQuickItem *>(QStringLiteral("fileMenuBarItem"));
+        QVERIFY(videoMenu && bar);
+        auto *fileMenu = bar->property("menu").value<QObject *>();
+        QVERIFY(fileMenu);
+        const auto surface = [](QObject *menu) {
+            return menu->property("background").value<QQuickItem *>()->property("color").value<QColor>();
+        };
+        const auto check = [&](bool dark) {
+            const QColor field = ui::theme::current().roles.field;
+            QCOMPARE(field.lightness() < 128, dark);
+            QVERIFY(QMetaObject::invokeMethod(videoMenu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+            QTRY_VERIFY(videoMenu->property("opened").toBool());
+            QTRY_COMPARE(surface(videoMenu), field);
+            QVERIFY(QMetaObject::invokeMethod(videoMenu, "close"));
+            QTRY_VERIFY(!videoMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(fileMenu, "popup", Q_ARG(QQuickItem *, bar),
+                                              Q_ARG(QPointF, QPointF(0, bar->height()))));
+            QTRY_VERIFY(fileMenu->property("opened").toBool());
+            QTRY_COMPARE(surface(fileMenu), field);
+            QVERIFY(QMetaObject::invokeMethod(fileMenu, "close"));
+            QTRY_VERIFY(!fileMenu->property("visible").toBool());
+        };
+        check(true);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        check(false);
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
+        check(true);
+        ui::theme::forceSystemScheme(std::nullopt);
+    }
+
+    // W1: the video context menu's Filters submenu (legacy VideoBox.cpp:
+    // 981-990), shown with a DirectShow graph's filters as the adapter lists
+    // them on Windows: after the separator, each filter's whole name, the
+    // ones without property pages disabled. Without filters there is no
+    // submenu.
+    void videoFiltersSubmenuShowsWholeNames()
+    {
+        auto *menu = named("videoContextMenu");
+        QVERIFY(menu);
+        const auto filtersItem = [&]() -> QQuickItem * {
+            const int count = menu->property("count").toInt();
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *item = nullptr;
+                QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+                if (item && item->property("subMenu").value<QObject *>())
+                    if (item->property("subMenu").value<QObject *>()->objectName() == QLatin1String("videoMenuFilters"))
+                        return item;
+            }
+            return nullptr;
+        };
+        QVERIFY(QMetaObject::invokeMethod(menu, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(!filtersItem()); // no DirectShow graph (Linux: no adapter)
+        // The graphs the Windows evidence recorded (AVI, MPEG-1, WMV).
+        const QStringList names{QStringLiteral("Direct Sound Renderer"), QStringLiteral("HikariSub video Renderer"),
+                                QStringLiteral("MPEG Video Decoder"),    QStringLiteral("MPEG-I Stream Splitter"),
+                                QStringLiteral("Mpeg4s Decoder DMO"),    QStringLiteral("WMVideo Decoder DMO"),
+                                QStringLiteral("AVI Splitter"),          QStringLiteral("Source Filter")};
+        QVariantList filters;
+        for (const auto &name : names)
+            filters.push_back(QVariantMap{{QStringLiteral("name"), name},
+                                          {QStringLiteral("enabled"), name == QLatin1String("MPEG Video Decoder")}});
+        menu->setProperty("filters", filters);
+        QTRY_VERIFY(filtersItem());
+        QVERIFY(QMetaObject::invokeMethod(filtersItem(), "click"));
+        auto *submenu = named("videoMenuFilters");
+        QTRY_VERIFY(submenu->property("opened").toBool());
+        QCOMPARE(submenu->property("count").toInt(), names.size());
+        // With HIKARI_SURFACE_SHOT_DIR set, the open menus are saved in Dark
+        // and Light for review (filters-menu-<theme>.png).
+        if (const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR"); !out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            for (const char *code : {"dark", "light"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *back = submenu->property("background").value<QQuickItem *>();
+                QTRY_COMPARE(back->property("color").value<QColor>(), ui::theme::current().roles.field);
+                QTest::qWait(200);
+                QVERIFY(back->window()->grabWindow().save(out + QStringLiteral("/filters-menu-%1.png").arg(QLatin1String(code))));
+            }
+        }
+        for (int i = 0; i < names.size(); ++i) {
+            QQuickItem *item = nullptr;
+            QMetaObject::invokeMethod(submenu, "itemAt", Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, i));
+            QVERIFY(item);
+            QCOMPARE(item->property("text").toString(), names[i]);
+            QCOMPARE(item->property("enabled").toBool(), names[i] == QLatin1String("MPEG Video Decoder"));
+            // Whole: the label is not elided (the item is as wide as it asks).
+            // Not on Windows: offscreen there draws without the system's
+            // fonts (boxes), so the widths say nothing; the Windows desktop
+            // captures show the names whole.
+            auto *label = item->property("contentItem").value<QQuickItem *>();
+            QVERIFY(label);
+#ifndef Q_OS_WIN
+            QVERIFY2(label->implicitWidth() <= label->width() + 0.5,
+                     qPrintable(names[i] + QStringLiteral(": %1 > %2").arg(label->implicitWidth()).arg(label->width())));
+#endif
+        }
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        menu->setProperty("filters", QVariantList());
     }
 
     // The video's context menu (VideoBox::ContextMenu) on a right click and

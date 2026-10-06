@@ -256,6 +256,11 @@ const std::vector<SettingDefinition> &definitions()
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
         {"audio.outputHostApi", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // W1: the player that plays video (Windows): 0 the built-in general
+        // player, 1 the optional DirectShow adapter (legacy's player when
+        // indexing was off). Chosen here only, never as a fallback; other
+        // platforms ignore it.
+        {"video.playbackPlayer", "", Int, Profile, Mapped, false, std::int64_t{0}},
     };
     return table;
 }

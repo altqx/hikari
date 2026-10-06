@@ -1682,14 +1682,14 @@ ApplicationWindow {
             title: qsTr("&Subtitles")
             // D2: GLOBAL_EDITOR, SubsMenu's first item (HikariSubFrame.cpp:316-317),
             // enabled with a DirectShow video or none (OnMenuOpened,
-            // HikariSubFrame.cpp:2377-2379): the rewrite's videos are FFMS2's
-            // (W1 brings the DirectShow player).
+            // HikariSubFrame.cpp:2377-2379): W1's DirectShow player on
+            // Windows, otherwise no video.
             ShellMenuItem {
                 id: editorSwitchItem
                 iconRole: "editor"
                 objectName: "editorSwitchMenuItem"
                 text: qsTr("Enable / Disable editor")
-                enabled: !root.video.hasVideo
+                enabled: !root.video.hasVideo || root.app.directShowPlayback
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_EDITOR")) root.app.toggleEditor()
             }
             ShellMenuItem {
@@ -5328,6 +5328,25 @@ ApplicationWindow {
         modal: true // legacy HikariMessageBox is modal
         standardButtons: Dialog.Ok
         Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
+    }
+    // W1: DirectShow could not open the video (legacy VideoBox::LoadVideo's
+    // HikariMessageBox, titled "Warning").
+    Dialog {
+        id: playerNotice
+        objectName: "playerNotice"
+        property alias text: playerNoticeLabel.text
+        title: qsTr("Warning")
+        anchors.centerIn: parent
+        modal: true
+        standardButtons: Dialog.Ok
+        Label { id: playerNoticeLabel; Accessible.role: Accessible.AlertMessage }
+    }
+    Connections {
+        target: root.app
+        function onPlayerNotice(message) {
+            playerNotice.text = message
+            playerNotice.open()
+        }
     }
     Connections {
         target: root.app

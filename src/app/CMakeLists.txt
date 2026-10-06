@@ -54,3 +54,9 @@ if(HIKARI_WITH_VSFILTER)
             "$<TARGET_FILE_DIR:hikarisub>/Csri/xy-VSFilter_hikarisub.dll"
         VERBATIM)
 endif()
+# W1: the optional DirectShow playback adapter (Windows), chosen in the settings.
+target_sources(hikari_composition PRIVATE application_directshow.cpp)
+if(WIN32)
+    target_link_libraries(hikari_composition PUBLIC hikari_directshow)
+    set_property(TARGET hikari_composition APPEND PROPERTY HIKARI_ALLOWED_LINKS hikari_directshow)
+endif()

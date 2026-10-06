@@ -251,3 +251,19 @@ tasks:
     # built, no renderer is offered, and choosing one draws nothing.
     script: ./tools/winix/msvc.ps1 cmake --preset windows-x64-release; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 cmake --build --preset windows-x64-release --target hikari_backends_csri_tests hikari_ui_shell_tests; if ($LASTEXITCODE) { exit $LASTEXITCODE }; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^Csri[.]"; $code = $LASTEXITCODE; $env:QT_QPA_PLATFORM = 'offscreen'; $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $exe = Get-ChildItem -Recurse -Filter hikari_ui_shell_tests.exe out/build/windows-x64-release | Select-Object -First 1; Write-Output "csri folder $(Test-Path "$($exe.DirectoryName)/Csri")"; foreach ($f in 'subtitleDisplayFilterSwitchesOnTheLoadedVideo','settingsDialogAppliesChangedValuesLive','settingsDialogPagesBindTheLegacyOptions','aboutAndCreditsShowTheNotices') { $out = "$env:TEMP/vsfilter-default-$f.txt"; Remove-Item $out -ErrorAction SilentlyContinue; $p = Start-Process -FilePath $exe.FullName -ArgumentList "$f -o $out,txt" -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardError "$env:TEMP/vsfilter-default-err.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output "== $f TIMED OUT"; $code = 1 } else { Write-Output "== $f exit $($p.ExitCode)"; if ($p.ExitCode) { $code = 1 } }; if (Test-Path $out) { Get-Content $out | Select-String -Pattern 'FAIL|Loc:|Actual|Expected|Totals' } }; exit $code
     timeoutSeconds: 3600
+  w1-tests:
+    # W1: the DirectShow adapter's tests, its Spix workflow, manifest and
+    # presence checks and the options bindings, with failure output.
+    script: ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "directshow|OptionsDialog" --output-on-failure
+    timeoutSeconds: 1200
+  w1-desktop:
+    # W1: the DirectShow Spix workflow on the desktop (the windows platform,
+    # with the system's fonts) instead of offscreen; the open Filters submenu
+    # in Dark and Light is saved to C:/w1desktop.
+    script: $env:PATH = "$PWD/out/sdk/qt-6.11.2-windows/6.11.2/msvc2022_64/bin;$env:PATH"; $env:QT_QPA_PLATFORM = 'windows'; $env:HIKARI_SCREENSHOT_DIR = 'C:/w1desktop'; $exe = Get-ChildItem -Recurse -Filter hikari_ui_directshow_workflow.exe out/build/windows-x64-release | Select-Object -First 1; $p = Start-Process -FilePath $exe.FullName -WorkingDirectory $exe.DirectoryName -NoNewWindow -PassThru -RedirectStandardOutput "$env:TEMP/w1desktop.txt"; $null = $p.Handle; if (-not $p.WaitForExit(180000)) { $p.Kill(); Write-Output 'TIMED OUT' }; Get-Content "$env:TEMP/w1desktop.txt"; exit $p.ExitCode
+    timeoutSeconds: 300
+  w1-probe:
+    # W1: which encodings stock DirectShow plays: the graph DirectShow builds
+    # itself (--graph), then the adapter's open, seeks and one second of play.
+    script: $b = 'out/build/windows-x64-release'; $f = (Get-ChildItem -Recurse -Filter hikari_media_fixture.exe $b | Select-Object -First 1).FullName; $p = (Get-ChildItem -Recurse -Filter hikari_directshow_probe.exe $b | Select-Object -First 1).FullName; $d = "$env:TEMP/w1probe"; New-Item -ItemType Directory -Force $d | Out-Null; $ErrorActionPreference = 'Continue'; foreach ($k in 'dshow-cfr.avi', 'dshow-vfr.wmv', 'probe-avi-xvid.avi', 'probe-avi-fmp4.avi', 'probe-avi-m4s2.avi', 'probe-avi-mp4s.avi', 'probe-avi-div3.avi', 'probe-avi-mp43.avi', 'probe-avi-mjpeg.avi', 'probe-asf-wmv2.wmv', 'probe-asf-wmv2-vfr.wmv', 'probe-mpeg-mpeg1.mpg') { $n = $k.Substring(0, $k.LastIndexOf('.')); & $f "$d/$k" $n 2>&1 | Out-Null; Write-Output "== $k"; & $p --graph "$d/$k" 2>&1 | ForEach-Object { "$_" }; & $p "$d/$k" 1000 1500 200 1035 0 2>&1 | ForEach-Object { "$_" }; Write-Output "exit $LASTEXITCODE" }; exit 0
+    timeoutSeconds: 600
