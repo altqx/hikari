@@ -424,12 +424,23 @@ private slots:
     // background, text, accent (Light and Dark with the default preset) and
     // disabled colours from theme.cpp, as IconTheme takes them. (It read
     // K1's icon colour settings, which K2 withdrew, and exited.) Skipped
-    // without a Python 3 interpreter.
+    // without a Python 3 interpreter. Windows without Python has python.exe
+    // and python3.exe as App Installer aliases on the PATH, which only say
+    // "Python was not found" and fail: a candidate counts once it runs.
     void contactSheetToolTakesTheThemeColours()
     {
-        QString python = QStandardPaths::findExecutable(QStringLiteral("python3"));
-        if (python.isEmpty())
-            python = QStandardPaths::findExecutable(QStringLiteral("python"));
+        QString python;
+        for (const auto name : {QStringLiteral("python3"), QStringLiteral("python")}) {
+            const QString found = QStandardPaths::findExecutable(name);
+            if (found.isEmpty())
+                continue;
+            QProcess probe;
+            probe.start(found, {QStringLiteral("-c"), QStringLiteral("import sys; sys.exit(sys.version_info[0] != 3)")});
+            if (probe.waitForFinished(30000) && probe.exitStatus() == QProcess::NormalExit && probe.exitCode() == 0) {
+                python = found;
+                break;
+            }
+        }
         if (python.isEmpty())
             QSKIP("no Python 3 interpreter");
         QTemporaryDir dir;
