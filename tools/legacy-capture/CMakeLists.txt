@@ -265,6 +265,136 @@ target_compile_options(legacy_visual_t3_capture PRIVATE ${wx_cflags}
     -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
 target_link_libraries(legacy_visual_t3_capture PRIVATE ${wx_libs})
 
+# T6: the legacy Position shifter and all-tags tool (VisualMoveAll.cpp,
+# VisualAllTags.cpp, VisualAllTagsControls.cpp and Timebase.cpp, unchanged)
+# with the Visuals, TagFindReplace, Styles, ParseData, ClipPoint and
+# AllTagsSetting classes and the definitions they call, copied unchanged; the
+# GUI they touch is stood in for by visual_t6/standins.h. The Direct3D
+# stand-ins (the legacy tree's d3d9.h and d3dx9.h) are copied with
+# DrawPrimitiveUP and ID3DXLine::Draw recording what is drawn.
+set(t6_gen "${CMAKE_CURRENT_BINARY_DIR}/visual_t6")
+file(MAKE_DIRECTORY "${t6_gen}/d3d")
+foreach(copy VisualMoveAll.cpp VisualAllTags.cpp VisualAllTagsControls.cpp)
+    configure_file("${legacy_hs}/${copy}" "${t6_gen}/copy/${copy}" COPYONLY)
+endforeach()
+file(READ "${legacy_hs}/d3d9.h" d3d9_text)
+string(REPLACE "HRESULT DrawPrimitiveUP(int, UINT, const void*, UINT){return S_OK;}"
+    "HRESULT DrawPrimitiveUP(int t, UINT n, const void* v, UINT s){probeRecordPrimitive(t, n, v, s); return S_OK;}"
+    d3d9_recording "${d3d9_text}")
+if(d3d9_recording STREQUAL d3d9_text)
+    message(FATAL_ERROR "d3d9.h: DrawPrimitiveUP not found")
+endif()
+string(REPLACE "#pragma once" "#pragma once\nvoid probeRecordPrimitive(int, unsigned, const void*, unsigned);"
+    d3d9_recording "${d3d9_recording}")
+file(WRITE "${t6_gen}/d3d/d3d9.h" "${d3d9_recording}")
+file(READ "${legacy_hs}/d3dx9.h" d3dx9_text)
+string(REPLACE "HRESULT Draw(const D3DXVECTOR2*, DWORD, D3DCOLOR){return S_OK;}"
+    "HRESULT Draw(const D3DXVECTOR2* p, DWORD n, D3DCOLOR c){probeRecordLine(&p->x, sizeof(D3DXVECTOR2), n, c); return S_OK;}"
+    d3dx9_recording "${d3dx9_text}")
+if(d3dx9_recording STREQUAL d3dx9_text)
+    message(FATAL_ERROR "d3dx9.h: ID3DXLine::Draw not found")
+endif()
+string(REPLACE "#include \"d3d9.h\"" "#include \"d3d9.h\"\nvoid probeRecordLine(const float*, unsigned, unsigned, unsigned);"
+    d3dx9_recording "${d3dx9_recording}")
+file(WRITE "${t6_gen}/d3d/d3dx9.h" "${d3dx9_recording}")
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.h" "${t6_gen}/styles_classes.inc"
+    "class AssColor" "class Styles" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.h" "${t6_gen}/parse_classes.inc"
+    "class TagData" "class ParseData" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.h" "${t6_gen}/tagfind_classes.inc"
+    "class FindData" "class TagFindReplace" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualClipPoint.h" "${t6_gen}/clippoint_class.inc"
+    "class ClipPoint" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualAllTagsEdition.h" "${t6_gen}/alltags_classes.inc"
+    "enum TagType {" "enum TagPasteMode {" "class AllTagsSetting" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.h" "${t6_gen}/visuals_classes.inc"
+    "class Visuals : public TagFindReplace" "class moveElems" "class MoveAll : public Visuals"
+    "class AllTags : public Visuals" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/styles.cpp" "${t6_gen}/styles.inc"
+    "AssColor::AssColor()" "AssColor::~AssColor()" "AssColor::AssColor(const wxString &col)"
+    "void AssColor::SetAss(wxString color)" "void AssColor::SetAlphaString(wxString alpha)"
+    "wxString AssColor::GetAss(bool alpha, bool style) const" "wxString AssColor::GetAlpha() const"
+    "Styles::Styles()" "Styles::~Styles()"
+    "double Styles::GetOtlineDouble()" "double Styles::GetShadowDouble()" "double Styles::GetScaleXDouble()"
+    "double Styles::GetScaleYDouble()" "double Styles::GetFontSizeDouble()" "Styles *Styles::Copy()"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/SubsDialogue.cpp" "${t6_gen}/dialogue.inc"
+    "TagData::TagData(const wxString &name, unsigned int _startTextPos)"
+    "void TagData::PutValue(const wxString &_value, bool _multiValue)"
+    "void TagData::AppendValue(const wxString& _value)" "ParseData::ParseData()"
+    "void ParseData::AddData(TagData *data)" "ParseData::~ParseData()" "void Dialogue::ClearParse()"
+    "ParseData* Dialogue::ParseTags(wxString *tags, size_t ntags, bool plainText, const wxString& textToParse/* = L\"\"*/)"
+    "void Dialogue::GetDefaultPosition(Styles* lineStyle, int an, const wxSize& subsSize, float* posx, float* posy)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/TagFindReplace.cpp" "${t6_gen}/tagfind.inc"
+    "bool TagFindReplace::FindTag(const wxString& pattern, const wxString& text, int mode, bool toEndOfSelection)"
+    "int TagFindReplace::ReplaceAll(const wxString& pattern, const wxString& tag, wxString * text, std::function< void(const FindData&, wxString*)> func, bool returnPosWhenNoTags)"
+    "int TagFindReplace::ReplaceAllByChar(const wxString& pattern, const wxString& tag, wxString* text, std::function<void(const FindData&, wxString*, size_t numOfChars)> func)"
+    "int TagFindReplace::Replace(const wxString& replaceTxt, wxString* text)"
+    "bool TagFindReplace::TagValueFromStyle(Styles* style, const wxString& tag, wxString* value)"
+    "int TagFindReplace::ReplaceValue(wxString* txt, const wxString& what, const FindData& fdata)"
+    "bool TagFindReplace::TagValueToStyle(Styles* style, const wxString& tag, const wxString& value)"
+    "bool TagFindReplace::GetDouble(double* retval)"
+    "bool TagFindReplace::GetTwoValueDouble(double* retval, double* retval2)"
+    "int TagFindReplace::ChangeText(wxString* txt, const wxString& what, bool inbracket, const wxPoint& pos)"
+    "bool TagFindReplace::GetTextResult(wxString* rettext)"
+    "wxPoint TagFindReplace::GetPositionInText()"
+    "wxPoint FindBrackets(const wxString& text, long from)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualClips.cpp" "${t6_gen}/clippoint.inc"
+    "ClipPoint::ClipPoint()" "ClipPoint::ClipPoint(float _x, float _y, wxString _type, bool isstart)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/VisualAllTagsEdition.cpp" "${t6_gen}/alltags_settings.inc"
+    "void LoadSettings(std::vector<AllTagsSetting>* tags)"
+    "void GetNames(std::vector<AllTagsSetting>* tags, wxArrayString* nameList)"
+    "void SaveSettings(std::vector<AllTagsSetting>* tags)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/RendererVideo.cpp" "${t6_gen}/vertex.inc"
+    "void CreateVERTEX(VERTEX * v, float X, float Y, D3DCOLOR colour, float Z)" COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/config.cpp" "${t6_gen}/config.inc"
+    "wxString getfloat(float num, const wxString& format, bool Truncate)"
+    "size_t FindFromEnd(const wxString& text, const wxString& whatToFind, bool ignoreCase)"
+    COMMAND_ERROR_IS_FATAL ANY)
+execute_process(COMMAND "${Python3_EXECUTABLE}" "${extract}" "${legacy_hs}/Visuals.cpp" "${t6_gen}/visuals.inc"
+    "Visuals::Visuals()" "Visuals::~Visuals()"
+    "void Visuals::GetDialoguesWithoutPosition(Dialogue* dialogue)"
+    "D3DXVECTOR2 Visuals::GetDialogueAdditionalPosition(Dialogue* dialogue)"
+    "void Visuals::RenderSubs(wxString *subs, bool redraw /*= true*/)"
+    "void Visuals::SetVisual(Dialogue* dial, int tool, bool noRefresh)"
+    "void Visuals::SizeChanged(wxRect wsize, LPD3DXLINE _line, LPD3DXFONT _font, LPDIRECT3DDEVICE9 _device)"
+    "void Visuals::DrawCross(D3DXVECTOR2 position, D3DCOLOR color, bool useBegin)"
+    "void Visuals::DrawRect(D3DXVECTOR2 pos, bool sel, float rcsize)"
+    "void Visuals::DrawCircle(D3DXVECTOR2 pos, bool sel, float crsize)"
+    "void Visuals::Draw(int time)" "void Visuals::DrawWarning(bool comment)"
+    "D3DXVECTOR2 Visuals::CalcMovePos()"
+    "void Visuals::GetVectorPoints(const wxString& vector, std::vector<ClipPoint>* points)"
+    "void Visuals::GetMoveTimes(int *start, int *end)"
+    "D3DXVECTOR2 Visuals::GetPosnScale(D3DXVECTOR2 *scale, byte *AN, double *tbl)"
+    "void Visuals::SetVisual(bool dummy)"
+    "D3DXVECTOR2 Visuals::GetPosition(Dialogue *Dial, bool *putinBracket, wxPoint *TextPos, double* moveTable)"
+    "void Visuals::SetModified(int action, bool dummy)"
+    "void Visuals::RotateDrawing(ClipPoint* point, "
+    "D3DXVECTOR2 Visuals::CalcDrawingSize(int alignment, "
+    "void Visuals::GetRectFromSize(D3DXVECTOR2 size, int an, Dialogue* dial, Styles* style, D3DXVECTOR2* pos, D3DXVECTOR2* pos1)"
+    "bool Visuals::IsInRect(D3DXVECTOR2 pos, D3DXVECTOR2 pos1, D3DXVECTOR2 secondpos, D3DXVECTOR2 secondpos1)"
+    "D3DXVECTOR2 Visuals::GetTextSize(Dialogue* dial, D3DXVECTOR2* border, Styles* style, "
+    "D3DXVECTOR2 Visuals::GetDrawingSize(const wxString& drawing, D3DXVECTOR2* position)"
+    "void Visuals::Curve(int pos, std::vector<ClipPoint>* vectorPoints, "
+    COMMAND_ERROR_IS_FATAL ANY)
+file(WRITE "${t6_gen}/extracted_t6.inc"
+    "#include \"styles.inc\"\n#include \"dialogue.inc\"\n#include \"tagfind.inc\"\n#include \"clippoint.inc\"\n"
+    "#include \"alltags_settings.inc\"\n#include \"vertex.inc\"\n#include \"config.inc\"\n#include \"visuals.inc\"\n")
+add_executable(legacy_visual_t6_capture visual_t6_capture.cpp
+    "${t6_gen}/copy/VisualMoveAll.cpp" "${t6_gen}/copy/VisualAllTags.cpp" "${t6_gen}/copy/VisualAllTagsControls.cpp"
+    "${legacy_hs}/Timebase.cpp")
+target_include_directories(legacy_visual_t6_capture PRIVATE
+    "${t6_gen}/d3d" "${CMAKE_CURRENT_SOURCE_DIR}/visual_t6" "${t6_gen}" "${legacy_hs}" "${LEGACY_SOURCE}/cmake/linux-compat")
+target_compile_definitions(legacy_visual_t6_capture PRIVATE LINUX_BUILD HIKARISUB_LINUX_BUILD)
+target_compile_options(legacy_visual_t6_capture PRIVATE ${wx_cflags}
+    -include "${LEGACY_SOURCE}/HikariSub/platform.h"
+    -Wno-deprecated-declarations -Wno-narrowing -Wno-unused-result)
+target_link_libraries(legacy_visual_t6_capture PRIVATE ${wx_libs})
+
 # T4: the legacy rectangle and vector clips (VisualClipRect.cpp and
 # VisualClips.cpp, unchanged) with the real VisualClipPoint.h; the classes
 # (VisualClips.h's among them) and definitions they use are copied out of their files

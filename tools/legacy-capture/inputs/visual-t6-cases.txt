@@ -1,0 +1,928 @@
+# T6: the Position shifter and the all-tags tool (visual_t6_capture.cpp).
+# The video rectangle is a 1280x720 frame in a 640x400 client (40-pixel
+# panel): (0, 0, 640, 360), the script 1920x1080, so the tools' coefficients
+# are 3 and the Line at \pos(960,540) sits at (320, 180).
+#
+# "frame" (the decoded frame: width, height, SAR) and "viewzoom" (a wheel
+# zoom: percent, x, y) are the rewrite's (its VideoView makes the rectangle
+# and the zoom from them); the probe takes "rect" and "zoom" as legacy's
+# RendererVideo gave them for the same, as the T1 capture
+# (local-t1-visual-20261005) records.
+#
+# The all-tags sliders sit 30 pixels in from either side of the video
+# (30-610), the first with its top at 34 and bottom at 40, the next 70 lower.
+# A value v of a tag ranging min-max is at 30 + (v - min) * 580 / (max - min);
+# the thumb takes 4 pixels either side and 10 above and below the slider.
+
+# ---------------------------------------------------------------- Position shifter
+
+case shift-pos-drag
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Hello
+active 0
+tool moveall 1
+draw
+state
+press 322 183 left
+move 330 190 left
+state
+move 352 168 left
+draw
+state
+release 352 168 left
+state
+setvisual
+draw
+state
+end
+
+case shift-every-element
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\org(900,500)\clip(m 100 100 l 200 100 200 200 100 200)}Hello{\org(30,40)}
+line 1000 2000 Default 0 0 0 0|{\move(300,300,600,600,100,900)\iclip(30,60,90,120)}Second
+line 1000 2000 Default 0 0 0 0|{\an7\pos(100,100)\p1}m 0 0 l 100 0 100 100 0 100{\p0}
+active 0
+select 0 1 2
+tool moveall 63
+draw
+state
+press 100 100 left
+move 110 95 left
+state
+release 110 95 left
+state
+end
+
+case shift-move-points
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\move(300,300,600,600)}Moving
+active 0
+tool moveall 2
+draw
+state
+press 100 100 left
+move 103 104 left
+release 103 104 left
+state
+option 4
+draw
+state
+press 200 200 left
+move 190 180 left
+release 190 180 left
+state
+option 6
+draw
+state
+press 200 200 left
+move 210 200 left
+release 210 200 left
+state
+end
+
+case shift-clips
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\clip(2,m 200 200 l 400 200 b 450 250 450 350 400 400 s 300 450 250 450 200 400 c)}Scaled
+line 1000 2000 Default 0 0 0 0|{\clip(m 10 10 l 20 10 20 20){\iclip(1.5,2.5,30.25,40.75)}Two clips
+line 1000 2000 Default 0 0 0 0|{\clip(0,0,1920,1080)\clip(m 0 0 l 5 5)}Rect then vector
+active 0
+select 0 1 2
+tool moveall 8
+draw
+state
+press 50 50 left
+move 51 53 left
+state
+release 51 53 left
+state
+end
+
+case shift-drawing
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+style Rotated 40 150 50 20 2 2 5 20 20 20
+line 1000 2000 Default 0 0 0 0|{\an7\pos(300,300)\p1}m 0 0 l 300 0 300 300 0 300{\p0}
+line 1000 2000 Rotated 0 0 0 0|{\an5\pos(900,500)\fscx200\org(800,400)\frz30\p2}m 0 0 b 100 0 200 100 200 200 s 100 300 0 200 0 100 c{\p0}
+line 1000 2000 Default 0 0 0 0|{\an3\move(100,100,700,700)\p1}m 10 10 l 50 10 50 50{\p0}
+active 0
+tool moveall 16
+draw
+state
+press 100 100 left
+move 110 120 left
+state
+release 110 120 left
+state
+active 1
+setvisual
+draw
+state
+press 300 166 left
+move 290 150 left
+release 290 150 left
+state
+active 2
+setvisual
+draw
+state
+press 50 50 left
+move 60 60 left
+release 60 60 left
+state
+end
+
+case shift-drawing-with-position
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\an7\pos(300,300)\p1}m 0 0 l 300 0 300 300 0 300{\p0}
+active 0
+tool moveall 17
+draw
+state
+press 100 100 left
+move 110 120 left
+release 110 120 left
+state
+option 16
+draw
+state
+option 48
+draw
+state
+press 100 100 left
+move 104 100 left
+release 104 100 left
+state
+end
+
+case shift-batch-hidden
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}One
+line 1000 2000 Default 0 0 0 0|{\pos(100,100)}Two
+line 1000 2000 Default 0 0 0 0|{\pos(200,200)}Hidden
+line 5000 6000 Default 0 0 0 0|{\pos(300,300)}Later
+line 1000 2000 Default 0 0 0 0|No position
+line 1000 2000 Default 0 0 0 0|{\pos(400,400)}Not selected
+hidden 2
+active 0
+select 0 1 2 3 4
+tool moveall 1
+draw
+state
+press 320 180 left
+move 340 170 left
+state
+release 340 170 left
+state
+end
+
+case shift-axis-and-buttons
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\org(300,300)}Hello
+active 0
+tool moveall 33
+state
+press 320 180 left shift
+move 330 182 left shift
+state
+move 333 200 left shift
+state
+release 333 200 left shift
+state
+press 100 100 right
+move 90 90 right
+state
+release 90 90 right
+state
+press 500 300 middle
+move 510 310 middle
+release 510 310 middle
+state
+end
+
+case shift-keys
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)\clip(10,20,30,40)}Hello
+line 1000 2000 Default 0 0 0 0|{\pos(100,100)}Two
+active 0
+select 0 1
+tool moveall 9
+key D
+state
+key A shift
+state
+key W
+key S shift
+state
+key D alt
+state
+key D ctrl
+state
+key D alt ctrl
+state
+key Q
+state
+end
+
+case shift-no-move-click
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos( 960.50 , 540.125 )\clip(m 1.5 2 l 3 4)}Hello
+active 0
+tool moveall 9
+press 320 180 left
+release 320 180 left
+state
+end
+
+case shift-nothing
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|Plain text
+line 1000 2000 Default 0 0 0 0|{\pos(abc,2)\move(1,2)}Odd
+active 0
+tool moveall 63
+draw
+state
+press 320 180 left
+move 330 190 left
+release 330 190 left
+key D
+state
+active 1
+setvisual
+draw
+state
+press 1 1 left
+move 5 5 left
+release 5 5 left
+state
+end
+
+case shift-tlmode
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+tlmode
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(960,540)}Original|{\pos(900,500)}Translation
+line 1000 2000 Default 0 0 0 0|{\pos(30,30)}Only original|
+active 0
+select 0 1
+tool moveall 1
+draw
+state
+press 300 166 left
+move 310 176 left
+release 310 176 left
+state
+end
+
+case shift-zoomed
+client 640 400 40
+frame 1280 720 0 1
+viewzoom 2.5 200 120
+rect 0 0 640 360
+zoom 72 48 2.5 2.5
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(400,300)\clip(m 300 300 l 500 300 500 500)\an7\p1}m 0 0 l 10 10{\p0}
+active 0
+tool moveall 9
+draw
+state
+press 153 130 left
+move 163 140 left
+release 163 140 left
+state
+key D shift
+state
+option 16
+draw
+state
+end
+
+case shift-pillarbox
+client 800 400 40
+frame 640 360 1 1
+rect 80 0 720 360
+zoom -80 0 1 1
+script 640 360
+time 1500
+fps 23.976
+style Default 20 100 100 0 2 2 2 10 10 10
+line 1000 2000 Default 0 0 0 0|{\move(10,20,320,180)\org(100,100)}Small
+active 0
+tool moveall 38
+draw
+state
+press 400 180 left
+move 410 185 left
+release 410 185 left
+state
+end
+
+# ---------------------------------------------------------------- all-tags definitions
+
+case tags-defaults
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+loadtags
+state
+savetags
+state
+end
+
+case tags-file
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+config /cfg
+file /cfg/Config/AllTagsSettings.txt|HYDRA2.0\nTag: wide, fscx, 0, 400, 100, 2.5, 1, 2, 3, 7, 8, 9\nTag: bad, bord, x, 50, 0, 1, 1, 0, 0\nTag: short, shad\nTag: partial, fsp, -5, 5\nTag:  spaced ,  be ,  1 ,  9 ,  2 ,  0.25 ,  2 ,  1 ,  4 \nnot a tag\nTag: last, blur, 0, 10, 1, 1, 0, 0, 7, a, 4\n
+loadtags
+state
+tagset 0 value 12.5
+tagset 0 step 0.001
+tagset 1 count 1
+tagset 1 name renamed
+savetags
+loadtags
+state
+end
+
+case tags-old-file
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+config /cfg
+file /cfg/Config/AllTagsSettings.txt|Tag: old, blur, 0, 10, 1, 1, 0, 0, 0\n
+loadtags
+state
+end
+
+case tags-bom-file
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+config /cfg
+file /cfg/Config/AllTagsSettings.txt|﻿HYDRA2.0\nTag: one, blur, 0, 10, 1, 1, 0, 0, 0\n
+loadtags
+state
+end
+
+# ---------------------------------------------------------------- all-tags tool, one Line
+
+case tags-add-thumb
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur2}Hello {\blur5\bord1}world
+active 0
+caret 3 3
+tool alltags 0
+draw
+state
+move 41 30
+draw
+state
+press 41 30 left
+move 50 30 left
+state
+move 70 32 left
+draw
+state
+release 70 32 left
+state
+move 300 200
+draw
+state
+end
+
+case tags-add-track-click
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|Hello {\i1}world
+active 0
+caret 8 8
+tool alltags 0
+press 320 38 left
+state
+release 320 38 left
+state
+press 600 38 left
+release 600 38 left
+state
+end
+
+case tags-insert-at-caret
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur2}Hello {\i1}world
+active 0
+caret 15 15
+tool alltags 1048576
+draw
+state
+press 41 30 left
+move 60 30 left
+state
+move 90 30 left
+state
+release 90 30 left
+state
+end
+
+case tags-insert-at-start
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|Hello {\i1}world
+active 0
+caret 8 8
+tool alltags 1048586
+state
+press 320 38 left
+release 320 38 left
+state
+option 1048577
+state
+press 200 38 left
+release 200 38 left
+state
+end
+
+case tags-modes-one-line
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\bord2}Ab {\bord4}cd
+active 0
+caret 2 2
+tool alltags 2097153
+state
+press 30 38 left
+move 50 30 left
+release 50 30 left
+state
+option 3145729
+state
+press 100 38 left
+release 100 38 left
+state
+option 4194305
+state
+press 200 38 left
+release 200 38 left
+state
+option 5242881
+state
+press 300 38 left
+release 300 38 left
+state
+option 6291457
+state
+press 400 38 left
+release 400 38 left
+state
+option 7340033
+state
+press 450 38 left
+release 450 38 left
+state
+end
+
+case tags-gradient-text
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|\hAb c{\i1}d\Ne\h
+active 0
+tool alltags 4194304
+press 41 30 left
+move 100 30 left
+state
+release 100 30 left
+state
+option 5242880
+setvisual
+press 100 38 left
+release 100 38 left
+state
+end
+
+# ---------------------------------------------------------------- all-tags tool, several Lines
+
+case tags-several-modes
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur1}One
+line 1000 2000 Default 0 0 0 0|Two {\blur3}two
+line 1000 2000 Default 0 0 0 0|{\blur2}Hidden
+line 5000 6000 Default 0 0 0 0|Later
+line 1000 2000 Default 0 0 0 0|{\fs30}Four
+hidden 2
+active 0
+select 0 1 2 3 4
+tool alltags 0
+draw
+state
+press 35 30 left
+move 50 30 left
+state
+release 50 30 left
+state
+option 1048576
+press 100 38 left
+release 100 38 left
+state
+option 2097152
+press 41 30 left
+move 70 30 left
+release 70 30 left
+state
+option 3145728
+press 41 30 left
+move 70 30 left
+release 70 30 left
+state
+option 6291456
+press 200 38 left
+release 200 38 left
+state
+option 7340032
+press 200 38 left
+release 200 38 left
+state
+option 4194304
+press 300 38 left
+release 300 38 left
+state
+end
+
+case tags-several-tlmode
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+tlmode
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur1}Original|{\blur4}Translation
+line 1000 2000 Default 0 0 0 0|{\blur2}Only original|
+active 0
+select 0 1
+tool alltags 0
+press 300 38 left
+release 300 38 left
+state
+end
+
+# ---------------------------------------------------------------- all-tags tool, tag kinds
+
+case tags-colour
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+stylecolour &H00102030& &H000000FF& &H00000000& &H80000000&
+line 1000 2000 Default 0 0 0 0|{\1c&H0000FF&}Red {\3c&H123456&}x
+active 0
+caret 1 1
+tool alltags 7
+draw
+state
+press 640 38 left
+release 640 38 left
+state
+press 200 108 left
+move 150 108 left
+release 150 108 left
+state
+option 1048585
+draw
+state
+press 300 178 left
+release 300 178 left
+state
+end
+
+case tags-alpha
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+stylecolour &H00102030& &H000000FF& &H40000000& &H80000000&
+line 1000 2000 Default 0 0 0 0|{\alpha&H80&}A{\3a&HFF&}B
+active 0
+caret 1 1
+tool alltags 3
+draw
+state
+press 100 38 left
+move 200 38 left
+release 200 38 left
+state
+option 5
+state
+press 400 38 left
+release 400 38 left
+state
+option 1048581
+state
+press 50 38 left
+release 50 38 left
+state
+end
+
+case tags-position-and-fade
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\pos(30,40)\fad(100,200)}Moving
+line 1000 2000 Default 0 0 0 0|No tags
+active 0
+caret 1 1
+tool alltags 1048596
+draw
+state
+press 200 108 left
+release 200 108 left
+state
+option 1048586
+draw
+state
+press 300 38 left
+release 300 38 left
+state
+active 1
+caret 0 0
+setvisual
+state
+press 300 108 left
+release 300 108 left
+state
+end
+
+case tags-t-animation
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur3\t(0,500,\blur5)}Animated {\bord2}x
+active 0
+caret 9 13
+tool alltags 1048597
+draw
+state
+press 200 38 left
+release 200 38 left
+state
+end
+
+case tags-range-and-ints
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 25.5 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\fs500\shad-7}Big
+active 0
+caret 1 1
+tool alltags 13
+draw
+state
+press 320 38 left
+release 320 38 left
+state
+option 15
+draw
+state
+option 1048590
+state
+end
+
+# ---------------------------------------------------------------- all-tags tool, wheel, keys, sliders
+
+case tags-wheel
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur2}Hello
+active 0
+caret 1 1
+tool alltags 0
+wheel 300 200 1
+state
+wheel 300 200 -2
+state
+wheel 300 200 -100
+state
+wheel 300 200 1 shift
+state
+wheel 300 200 -1 shift
+state
+wheel 300 200 3 shift
+state
+end
+
+case tags-move-sliders
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\blur2}Hello
+active 0
+caret 1 1
+tool alltags 7
+press 300 200 right
+move 300 220 right
+state
+move 300 300 right
+draw
+state
+release 300 300 right
+state
+move 41 70
+draw
+state
+leave 700 70
+state
+setvisual
+state
+end
+
+case tags-keys
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\fad(100,200)\t(0,300,\blur2)}Hello
+active 0
+caret 1 1
+tool alltags 1048586
+key , ctrl
+state
+key . ctrl
+state
+key , ctrl shift
+state
+time 2500
+key , ctrl
+state
+time 1500
+state-video none
+key . ctrl
+state
+state-video paused
+option 1048597
+key . ctrl
+state
+option 1048576
+key , ctrl
+state
+end
+
+case tags-wheel-colour
+client 640 400 40
+frame 1280 720 0 1
+rect 0 0 640 360
+script 1920 1080
+time 1500
+fps 25
+style Default 40 100 100 0 2 2 2 20 20 20
+line 1000 2000 Default 0 0 0 0|{\1c&H102030&}Colour
+active 0
+caret 1 1
+tool alltags 1048583
+wheel 300 200 1
+state
+end
