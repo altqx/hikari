@@ -304,7 +304,8 @@ def uia(do=None, settle_ms=None, dpi=False):
     pressed = guest_uia(do, settle_ms) if do or dpi else {}
     st = {"frames": [], "windows": [], "elements": [], "panels": [], "focus": None, "focusPath": None,
           "texts": {}, "labels": [], "popupMenuItems": [], "videoLabels": [], "combos": {},
-          "actions": pressed.get("actions") or [], "cursor": None, "foreground": None}
+          "actions": pressed.get("actions") or [], "windowInfo": pressed.get("windowDpi") or [],
+          "cursor": None, "foreground": None}
     pid = APP["pid"]
     if not pid:
         st["error"] = "no app running"
@@ -822,7 +823,8 @@ def calibrate_pointer():
 
 
 def step_pointer():
-    """Float button, double-click on title bars and drag-to-dock with real pointer input (the VM's HID tablet)."""
+    """With real pointer input (the VM's HID tablet): the header's ⋯ menu, double-click on headers (a title
+    bar, a tab), drag-to-dock with the drop highlight, and a floating window's move and resize."""
     fresh()
     # The main window opens 1280x800, larger than the 1024x768 primary, and
     # the tablet reaches the primary only: maximized, its title bars are there.
@@ -838,22 +840,24 @@ def step_pointer():
             "(Windows maps the absolute HID pointer to the primary monitor) (pointer-calibration.json)",
             ["pointer-calibration.json"])
     st = uia()
-    btn = next((b for b in find(st, "Button", "Float Audio") if frame_id(b["win"]) == MAIN), None)
-    audio = panel(st, "Audio")
-    if btn:
-        tx, ty, aim = btn["x"] + btn["w"] // 2, btn["y"] + btn["h"] // 2, "UIA bounds of 'Float Audio'"
-    elif audio:
-        tx, ty, aim = audio["x"] + audio["w"] - 22, audio["y"] - 16, "30 px from the Audio panel's right edge"
-    else:
-        verdict("pointer-float-button", "not-observable", "neither the 'Float Audio' button nor the Audio panel found")
+    btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == MAIN), None)
+    if not btn:
+        verdict("pointer-menu-undock", "not-observable", "no 'Audio options' button (the header's ⋯) found")
         return
+    tx, ty = btn["x"] + btn["w"] // 2, btn["y"] + btn["h"] // 2
     pointer([(tx, ty)])
-    time.sleep(1.2)
+    st = wait_for(lambda s: "Undock" in s["popupMenuItems"], timeout=4)
+    ev0, st = snap("ptr-1-menu-open")
+    items = menu_items(st)
+    undock = next((e for e in find(st, "MenuItem", "Undock")), None)
+    if undock:
+        pointer([(undock["x"] + undock["w"] // 2, undock["y"] + undock["h"] // 2)])
+        time.sleep(1.2)
     st = wait_for(lambda s: "Audio" in frames(s))
-    ev, st = snap("ptr-1-float-button")
-    verdict("pointer-float-button", "observed" if "Audio" in frames(st) else "failed",
-            f"tablet click on Audio's float button at {tx},{ty} ({aim}): own window={'Audio' in frames(st)}",
-            ev + ["pointer-calibration.json"])
+    ev, st = snap("ptr-1-undocked")
+    verdict("pointer-menu-undock", "observed" if undock and "Audio" in frames(st) else "failed",
+            f"tablet click on the Audio header's ⋯ ('Audio options' at {tx},{ty}) opened {items}; a click on "
+            f"Undock: own window={'Audio' in frames(st)}", ev0 + ev + ["pointer-calibration.json"])
     # Double-click the docked Video title bar: floats; double-click its floating title bar: docks.
     pt = title_point(st, "Video", MAIN)
     dfloat, redock, ev1, ev2, how1, how2, gaps = False, False, [], [], None, None, []
@@ -901,7 +905,171 @@ def step_pointer():
     docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
     verdict("pointer-drag-dock", "observed" if docked else "failed",
             f"tablet drag of floating Audio by its title ({where}) from {sx},{sy} to the Grid centre {gx},{gy} and "
-            f"release: docked={docked}, windows {list(frames(st))} (drop indicators: ptr-4-drag-over-grid.png)", ev3 + ev4)
+            f"release: docked={docked}, windows {list(frames(st))} (drop highlight: ptr-4-drag-over-grid.png)", ev3 + ev4)
+    pointer_tab_dblclick()
+    pointer_floating_move_resize()
+
+
+def menu_items(st):
+    """The open menu's items with their enabled state ("Undock", "Close (disabled)", ...)."""
+    out = []
+    for e in st.get("elements") or []:
+        if e["t"] == "MenuItem" and not e["off"] and e["n"] in st["popupMenuItems"]:
+            out.append(e["n"] + ("" if e["en"] else " (disabled)"))
+    return out
+
+
+def pointer_tab_dblclick():
+    """D3: a double-click on a tab (the Grid's one-tab bar) floats the panel and one on its floating tab docks it."""
+    st = uia()
+    tab = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == MAIN), None)
+    if not tab:
+        verdict("pointer-dblclick-tab", "not-observable", "no 'Grid' tab in the main window")
+        return
+    x, y = tab["x"] + 18, tab["y"] + tab["h"] // 2
+    st, how1, g1 = double_click_until(x, y, lambda s: "Grid" in frames(s))
+    ev1, st = snap("ptr-6-dblclick-tab-float")
+    floated = "Grid" in frames(st)
+    how2, g2, docked, ev2 = None, [], False, []
+    if floated:
+        tab = next((t for t in find(st, "TabItem", "Grid") if frame_id(t["win"]) == "Grid"), None)
+        if tab:
+            st, how2, g2 = double_click_until(tab["x"] + 18, tab["y"] + tab["h"] // 2, lambda s: "Grid" not in frames(s))
+        ev2, st = snap("ptr-7-dblclick-tab-dock")
+        docked = "Grid" not in frames(st) and panel_frame(st, "Grid") == MAIN
+    verdict("pointer-dblclick-tab", "observed" if floated and docked else "failed",
+            f"double-click on the Grid's tab at {x},{y}: floated={floated} (by {how1}); on its floating tab: "
+            f"docked={docked} (by {how2}); tablet gaps {g1} {g2}", ev1 + ev2)
+
+
+def shadow_check(png, f, mons):
+    """The drawn shadow on screen: around the floating window's frame (its
+    window rectangle less 8 px), the outermost ring is the background
+    showing through (the window is transparent there), not black, and the
+    ring next to the frame is a little darker than the background."""
+    from PIL import Image
+    ox = min(m["x"] for m in mons)
+    oy = min(m["y"] for m in mons)
+    img = Image.open(EVID / png).convert("RGB")
+    x0, y0, x1, y1 = f["x"] - ox, f["y"] - oy, f["x"] - ox + f["w"] - 1, f["y"] - oy + f["h"] - 1
+
+    def mean(points):
+        px = [img.getpixel(p) for p in points if 0 <= p[0] < img.width and 0 <= p[1] < img.height]
+        return round(sum(sum(c) / 3 for c in px) / len(px), 1) if px else None
+    ys = range(y0 + 20, y1 - 20, 7)
+    outside = mean([(x0 - 3, y) for y in ys] + [(x1 + 3, y) for y in ys])
+    outer = mean([(x0, y) for y in ys] + [(x1, y) for y in ys])
+    inner = mean([(x0 + 7, y) for y in ys] + [(x1 - 7, y) for y in ys])
+    frame = mean([(x0 + 8, y) for y in ys] + [(x1 - 8, y) for y in ys])
+    crop = png.replace(".png", "-shadow.png")
+    img.crop((max(0, x0 - 24), max(0, y0 - 24), min(img.width, x1 + 25), min(img.height, y0 + 120))).save(EVID / crop)
+    ok = (outside is not None and outer is not None and abs(outer - outside) <= 12 and outer > 8
+          and inner is not None and inner <= outside)
+    return ok, {"background": outside, "outermost ring": outer, "ring by the frame": inner, "frame line": frame}, crop
+
+
+def pointer_floating_move_resize():
+    """D3: a floating panel is a borderless tool window (no caption or system
+    frame) with a drawn shadow; dragging its header moves it (the engine's
+    drag on Windows), dragging the shadow resizes it (startSystemResize)."""
+    placed = fullscreen("left", width=480)
+    log("main window on the left:", placed)
+    try:
+        time.sleep(1.0)
+        mons = monitors()
+        focus_main_compositor()
+        float_panel("Audio", "move")
+        st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+        st = uia(dpi=True)
+        fa = frames(st).get("Audio")
+        if not fa:
+            for item in ("floating-borderless", "floating-shadow", "floating-move", "floating-resize"):
+                verdict(item, "not-observable", "Audio did not float")
+            return
+        styles = next((w for w in st["windowInfo"] if w["hwnd"] == fa["hwnd"]), {})
+        style, ex = styles.get("style", 0), styles.get("exStyle", 0)
+        caption, thick, tool = (style & 0x00C00000) == 0x00C00000, bool(style & 0x00040000), bool(ex & 0x80)
+        system_bar = [e["path"] for e in st["elements"] if e["win"] == "Audio" and e["t"] == "TitleBar"
+                      and panel_id(e["n"]) != "Audio"]
+        ev0, st = snap("ptr-8-floating", extra="# window styles\n" + json.dumps(styles))
+        verdict("floating-borderless", "observed" if not caption and not thick and tool and not system_bar else "failed",
+                f"floating Audio window style {style:#x} (WS_CAPTION {caption}, WS_THICKFRAME {thick}), ex style "
+                f"{ex:#x} (WS_EX_TOOLWINDOW {tool}); system title bars in UIA: {system_bar}", ev0)
+        # Move: the header dragged over bare desktop, right of the main window.
+        src = title_point(st, "Audio", "Audio", dx=60)
+        main = frames(st).get(MAIN)
+        prim = next(m for m in mons if m["primary"])
+        left = (main["x"] + main["w"] if main else prim["x"] + 480) + 30
+        sx, sy, where = src
+        tx, ty = left + (sx - fa["x"]), prim["y"] + 40 + (sy - fa["y"])
+        try:
+            pointer([(sx, sy)], hold=True)
+            time.sleep(0.25)
+            pointer([(sx, sy), (tx + 3, ty + 3), (tx, ty)], button="none", steps=25, delayMs=40)
+            time.sleep(0.5)
+        finally:
+            release()
+            time.sleep(1.2)
+        st = uia()
+        fb = frames(st).get("Audio")
+        want = (fa["x"] + tx - sx, fa["y"] + ty - sy)
+        moved = bool(fb) and abs(fb["x"] - want[0]) <= 6 and abs(fb["y"] - want[1]) <= 6
+        ev1, st = snap("ptr-9-floating-moved")
+        if fb:
+            ok, shades, crop = shadow_check(ev1[0], fb, mons)
+            verdict("floating-shadow", "observed" if ok else "failed",
+                    f"over the desktop, mean grey left and right of the frame {shades}: the background shows "
+                    f"through the outer ring (not black) and the ring by the frame is darker ({crop})", ev1 + [crop])
+        verdict("floating-move", "observed" if moved else "failed",
+                f"tablet drag of the floating Audio header ({where}) from {sx},{sy} to {tx},{ty} over the desktop: "
+                f"window {fa['x']},{fa['y']} -> {fb and (fb['x'], fb['y'])} (expected {want}), still floating "
+                f"{bool(fb)}", ev1)
+        if not fb:
+            verdict("floating-resize", "not-observable", "the floating Audio window is gone after the move")
+            return
+        # The floating header's ⋯ by the tablet: its menu (Main.qml's, in the
+        # main window) opens under the button, in the floating panel's place.
+        btn = next((b for b in find(st, "Button", "Audio options") if frame_id(b["win"]) == "Audio"), None)
+        dock_item, ev2 = None, []
+        if btn:
+            pointer([(btn["x"] + btn["w"] // 2, btn["y"] + btn["h"] // 2)])
+            st = wait_for(lambda s: "Dock" in s["popupMenuItems"], timeout=4)
+            ev2, st = snap("ptr-9-floating-menu")
+            dock_item = next(iter(find(st, "MenuItem", "Dock")), None)
+            keys("escape", 0.5)
+        below = bool(btn and dock_item) and btn["y"] + btn["h"] - 4 <= dock_item["y"] <= btn["y"] + btn["h"] + 80 \
+            and abs(dock_item["x"] - btn["x"]) <= 320
+        verdict("floating-menu-position", "observed" if below else "failed",
+                f"tablet click on the floating Audio's ⋯ {btn and (btn['x'], btn['y'], btn['w'], btn['h'])}: its "
+                f"menu's Dock item at {dock_item and (dock_item['x'], dock_item['y'])} (expected just below the "
+                f"button); menu {menu_items(st) if btn else None}", ev2)
+        # Resize: the left edge (in the shadow) 90 px out, then the top edge 30 px up.
+        shots, out = [], []
+        top_x = max(fb["x"] + 30, min(fb["x"] + fb["w"] // 2, prim["x"] + prim["w"] - 20))
+        for edge, (px, py), (dx, dy) in (("left", (fb["x"] + 4, fb["y"] + fb["h"] // 2), (-90, 0)),
+                                         ("top", (top_x, fb["y"] + 4), (0, -30))):
+            before = frames(uia()).get("Audio")
+            try:
+                pointer([(px, py)], hold=True)
+                time.sleep(0.3)
+                pointer([(px, py), (px + dx, py + dy)], button="none", steps=15, delayMs=40)
+                time.sleep(0.4)
+            finally:
+                release()
+                time.sleep(1.2)
+            after = frames(uia()).get("Audio")
+            out.append({"edge": edge, "pressed": [px, py], "by": [dx, dy],
+                        "before": before and [before["x"], before["y"], before["w"], before["h"]],
+                        "after": after and [after["x"], after["y"], after["w"], after["h"]]})
+            ev, _ = snap(f"ptr-10-resized-{edge}")
+            shots += ev
+        grew = [abs((o["after"][2] - o["before"][2]) - abs(o["by"][0])) <= 6
+                and abs((o["after"][3] - o["before"][3]) - abs(o["by"][1])) <= 6 if o["before"] and o["after"] else False
+                for o in out]
+        verdict("floating-resize", "observed" if all(grew) else "failed",
+                f"tablet drags on the shadow edges of the floating Audio window: {out}", shots)
+    finally:
+        fullscreen("off")
 
 
 def step_video():
@@ -987,8 +1155,11 @@ def step_persistence():
             f"after restart Audio floating: {ok}", ev0 + ev1)
 
 
-def fullscreen(mode):
-    _, lines = W.task("gate-win-fullscreen", env={"GATE_FULLSCREEN": mode})
+def fullscreen(mode, width=None):
+    env = {"GATE_FULLSCREEN": mode}
+    if width:
+        env["GATE_LEFT_WIDTH"] = width
+    _, lines = W.task("gate-win-fullscreen", env=env)
     raw = line_value(lines, "FULLSCREEN_RESULT ")
     return json.loads(raw) if raw else {"error": lines[-10:]}
 
@@ -1071,6 +1242,7 @@ def step_nvda():
         "--minimal", "--replace", "--disable-addons", "--log-level=12", f"--log-file={nvda_log}",
         f"--config-path={LAYOUT['nvda_config']}"], cwd=LAYOUT["nvda_dir"])
     time.sleep(10)
+    header_how, ev, st = None, [], {"frames": []}
     try:
         focus_main_compositor()
         f6_walk(4)
@@ -1079,6 +1251,12 @@ def step_nvda():
         keys("down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, k, 0.6, "down", 0.6, "down", 0.6, "return", 2.0)
         f6_walk(3)
         ev, st = snap("nvda-0-after-float")
+        # D3: the Grid's tab, Right to its ⋯ button, Space opens the menu.
+        focus_main_compositor()
+        header_how, _ = focus_header_control("TabItem", "Grid", "Grid")
+        keys("right", 0.8, "space", 1.2)
+        ev += snap("nvda-1-header-menu")[0]
+        keys("escape", 0.8)
         time.sleep(2)
     finally:
         job, lines = W.task("nvda-output", env={"GATE_NVDA_LOG": nvda_log})
@@ -1090,11 +1268,17 @@ def step_nvda():
     got_log = (EVID / "nvda.log").exists()
     synth = s.get("synth", [])
     silent = any("silence" in l for l in synth)
-    spoke = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float") if any(p in l for l in speech)]
+    spoke = [p for p in ("Video", "Audio", "Line editor", "Grid", "Panels", "Float", "Grid options", "Move panel",
+                         "Undock") if any(p in l for l in speech)]
     evidence = ["nvda-speech.txt", "nvda-output.txt"] + (["nvda.log"] if got_log else []) + ev
-    verdict("nvda", "observed" if speech else "failed",
+    header_spoken = all(any(p in l for l in speech) for p in ("Grid options", "Move panel"))
+    verdict("nvda-header-menu", "observed" if header_spoken else "failed",
+            f"NVDA spoke the ⋯ button's name and the menu: {header_spoken} ('Grid options', 'Move panel')",
+            ["nvda-speech.txt"])
+    verdict("nvda", "observed" if speech and silent else "failed",
             f"{len(speech)} speech lines; panel/menu names spoken: {spoke}; synthesizer lines {synth[:3]} "
-            f"(silent: {silent}); floating windows after the menu {list(frames(st))} (nvda-speech.txt; full log nvda.log)",
+            f"(silent: {silent}); floating windows after the menu {list(frames(st))}; the Grid tab reached by "
+            f"{header_how}, then Right and Space on its ⋯ (nvda-speech.txt; full log nvda.log)",
             evidence)
     verdict("nvda-float-from-menu", "observed" if "Line editor" in frames(st) else "failed",
             f"with NVDA running, View > Panels > Line editor > Float from the keyboard: windows {list(frames(st))}", ev)
@@ -1263,51 +1447,140 @@ def step_a11y():
     in_grid = bool(table) and panel_of(table[0]["path"]) == "Grid"
     verdict("grid-accessible", "observed" if in_grid and grid_panel else "failed",
             f"table 'Subtitle lines': {[t['path'] for t in table[:1]]}; Grid panel: {grid_panel[:1]}", ["a11y-tree.txt"])
-    names = ["Float Audio", "Close Audio", "Float Video", "Close Video", "Float Line editor", "Close Line editor",
-             "Float Grid", "Close Grid"]
-    found = {n: bool(find(st, "Button", n)) for n in names}
-    press = find(st, "Button", "Float Audio")
-    st = uia(do=[{"action": "invoke", "name": "Float Audio", "type": "Button"}])
-    out = st["actions"]
-    by_invoke = bool(out) and out[0].get("done") == ["Invoke"]
+    # D3: one header per group. A lone panel's is a title bar named after it,
+    # tabs sit in a tab list ("Panels"), and the ⋯ button is "<panel> options".
+    headers = {n: [e["path"] for e in find(st, "TitleBar", n)] for n in ("Video", "Audio", "Line editor")}
+    grid_tab = [e["path"] for e in find(st, "TabItem", "Grid")]
+    buttons = {n: bool(find(st, "Button", f"{n} options")) for n in ("Video", "Audio", "Line editor", "Grid")}
+    old = [n for n in ("Float Audio", "Close Audio", "Float Grid", "Close Grid") if find(st, "Button", n)]
+    # The header's title is its name only once: no Text repeats it inside the header.
+    repeats = [el_path(els, e) for e in els if e["t"] == "Text" and e["n"] in ("Video", "Audio", "Line editor", "Grid")
+               and any(a["t"] in ("TitleBar", "Tab", "TabItem") for a in ancestors(els, e))]
+    (EVID / "a11y-headers.txt").write_text(json.dumps({"title bars": headers, "grid tab": grid_tab, "menu buttons": buttons,
+                                                       "old float/close buttons": old, "repeated titles": repeats},
+                                                      indent=1, ensure_ascii=False))
+    verdict("headers-accessible",
+            "observed" if all(headers.values()) and grid_tab and all(buttons.values()) and not old and not repeats
+            else "failed",
+            f"title bars { {n: bool(v) for n, v in headers.items()} }; Grid tab {grid_tab[:1]}; ⋯ buttons {buttons}; "
+            f"float/close buttons left over: {old}; titles repeated as text: {repeats}", ["a11y-headers.txt", "a11y-tree.txt"])
+    # The ⋯ button and the menu's items pressed through the Invoke pattern.
+    st = uia(do=[{"action": "invoke", "name": "Audio options", "type": "Button", "after": 1000}])
+    by_invoke = bool(st["actions"]) and st["actions"][0].get("done") == ["Invoke"]
+    items = menu_items(st)
+    ev0, _ = snap("a11y-0-audio-menu")
+    st = uia(do=[{"action": "invoke", "name": "Undock", "type": "MenuItem"}])
+    undock = st["actions"]
     st = wait_for(lambda s: "Audio" in frames(s))
     floated = "Audio" in frames(st)
-    ev0, st = snap("a11y-0-float-audio-by-uia")
-    dock_btn = find(st, "Button", "Dock Audio")
-    uia(do=[{"action": "invoke", "name": "Dock Audio", "type": "Button"}])
+    ev1, st = snap("a11y-1-undocked-by-uia")
+    st = uia(do=[{"action": "invoke", "name": "Audio options", "type": "Button", "window": "Audio", "after": 1000}])
+    items_floating = menu_items(st)
+    uia(do=[{"action": "invoke", "name": "Dock", "type": "MenuItem"}])
     st = wait_for(lambda s: "Audio" not in frames(s))
-    docked = "Audio" not in frames(st)
-    verdict("title-bar-buttons-accessible",
-            "observed" if all(found.values()) and press and by_invoke and floated and dock_btn and docked
-            else "failed",
-            f"named buttons {found}; pressed through the Invoke pattern: {by_invoke}; invoked -> "
-            f"own window={floated} ({out}); then 'Dock Audio' {[d['path'] for d in dock_btn[:1]]} -> docked={docked}",
-            ["a11y-tree.txt"] + ev0)
+    docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+    want = ["Move panel…", "Undock", "Close"]
+    verdict("panel-menu-accessible",
+            "observed" if by_invoke and items == want and floated and "Dock" in items_floating and docked else "failed",
+            f"'Audio options' pressed through Invoke: {by_invoke}; its menu {items} (expected {want}); 'Undock' "
+            f"invoked ({undock}) -> own window={floated}; the floating panel's menu {items_floating}; 'Dock' "
+            f"invoked -> docked={docked}", ev0 + ev1)
     focus_main()
     panel_menu("Timing", "Show")
     time.sleep(1)
     st = uia()
     tabs = {n: find(st, "TabItem", n) for n in ("Line editor", "Timing")}
-    tab_buttons = {n: bool(find(st, "Button", n)) for n in ("Float Timing", "Close Timing", "Float Line editor",
-                                                            "Close Line editor")}
-    ev1, st = snap("a11y-1-tabs")
-    uia(do=[{"action": "invoke", "name": "Float Timing", "type": "Button"}])
+    lists = [el_path(st["elements"], e) for e in st["elements"] if e["t"] == "Tab" and e["n"] == "Panels" and not e["off"]]
+    tab_button = bool(find(st, "Button", "Timing options"))
+    ev2, st = snap("a11y-2-tabs")
+    uia(do=[{"action": "invoke", "name": "Timing options", "type": "Button", "after": 1000},
+            {"action": "invoke", "name": "Undock", "type": "MenuItem"}])
     st = wait_for(lambda s: "Timing" in frames(s))
     tab_floated = "Timing" in frames(st)
-    ev2, st = snap("a11y-2-float-timing-tab")
+    ev3, st = snap("a11y-3-undock-timing-tab")
     (EVID / "a11y-tabs.txt").write_text(json.dumps(
-        {"tabs": {n: [h["path"] for h in hits] for n, hits in tabs.items()}, "buttons": tab_buttons,
-         }, indent=1, ensure_ascii=False))
+        {"tabs": {n: [h["path"] for h in hits] for n, hits in tabs.items()}, "tab lists": lists,
+         "menu button": tab_button}, indent=1, ensure_ascii=False))
     verdict("tabs-accessible",
-            "observed" if all(tabs.values()) and all(tab_buttons.values()) and tab_floated else "failed",
-            f"tab items { {n: bool(h) for n, h in tabs.items()} }; tab buttons {tab_buttons}; "
-            f"invoked 'Float Timing' -> own window={tab_floated}", ev1 + ev2 + ["a11y-tabs.txt"])
+            "observed" if all(tabs.values()) and lists and tab_button and tab_floated else "failed",
+            f"tab items { {n: bool(h) for n, h in tabs.items()} } in a tab list 'Panels' ({len(lists)}); the selected "
+            f"tab's 'Timing options': {tab_button}; its menu's Undock invoked -> own window={tab_floated}",
+            ev2 + ev3 + ["a11y-tabs.txt"])
+
+
+def focus_header_control(ctype, name, panel_name, tries=12):
+    """The keyboard focus onto a header control the way a keyboard user gets
+    there: F6 to the panel, then Shift+Tab (the header is the panel's first
+    stop). Returns how it got there (or UI Automation's SetFocus as a last
+    resort) and the focus path."""
+    for _ in range(6):
+        if panel_of(uia()["focusPath"]) == panel_name:
+            break
+        combo("f6")
+        time.sleep(0.6)
+    want = f"{ctype}:'{name}'"
+    for i in range(tries):
+        st = uia()
+        if (st["focusPath"] or "").endswith(want):
+            return f"F6, Shift+Tab x{i}", st["focusPath"]
+        combo("shift", "tab")
+        time.sleep(0.4)
+    uia(do=[{"action": "focus", "name": name, "type": ctype}])
+    st = uia()
+    return ("UIA SetFocus" if (st["focusPath"] or "").endswith(want) else None), st["focusPath"]
+
+
+def step_header():
+    """D3 from the keyboard: the ⋯ menu from a tab (Right, then Space), from
+    Shift+F10 on a tab and from a title bar's button (Return); Undock and Dock
+    from the menu."""
+    fresh(LAYOUT["episode"])
+    dismiss_notices()
+    park_pointer()
+    focus_main_compositor()
+    how, path = focus_header_control("TabItem", "Grid", "Grid")
+    keys("right", 0.4)
+    on_button = (uia()["focusPath"] or "").endswith("Button:'Grid options'")
+    keys("space", 0.8)
+    st = uia()
+    items = menu_items(st)
+    ev0, _ = snap("header-0-grid-menu-by-keys")
+    keys("escape", 0.5)
+    back = uia()["focusPath"]
+    keys("left", 0.3, "shift+f10", 0.8)
+    items_f10 = menu_items(uia())
+    ev1, _ = snap("header-1-shift-f10")
+    keys("escape", 0.5)
+    want = ["Move panel…", "Undock", "Close"]
+    verdict("header-menu-keyboard",
+            "observed" if how and on_button and [i.split(" (")[0] for i in items] == want and items_f10 else "failed",
+            f"the Grid tab focused by {how} ({path}); Right -> on 'Grid options'={on_button}; Space opened {items}; "
+            f"Escape left the focus at {back}; Left, Shift+F10 opened {items_f10}", ev0 + ev1)
+    # A lone panel: its title bar's ⋯ button, Return, Down to Undock, Return.
+    how2, path2 = focus_header_control("Button", "Audio options", "Audio")
+    keys("return", 0.8)
+    items_audio = menu_items(uia())
+    keys("down", "down", "return", 1.5)
+    st = wait_for(lambda s: "Audio" in frames(s), timeout=4)
+    floated = "Audio" in frames(st)
+    ev2, st = snap("header-2-audio-undocked-by-keys")
+    docked, how3 = False, None
+    if floated:
+        how3, _ = focus_header_control("Button", "Audio options", "Audio")
+        keys("return", 0.8, "down", "down", "return", 1.5)
+        st = wait_for(lambda s: "Audio" not in frames(s), timeout=4)
+        docked = "Audio" not in frames(st) and panel_frame(st, "Audio") == MAIN
+    ev3, st = snap("header-3-audio-docked-by-keys")
+    verdict("header-menu-undock-dock-keyboard", "observed" if how2 and floated and docked else "failed",
+            f"'Audio options' focused by {how2} ({path2}); Return opened {items_audio}; Down Down Return: own "
+            f"window={floated}; in the floating window ('Audio options' by {how3}) Return Down Down Return: "
+            f"docked={docked}; focus {st['focusPath']}", ev2 + ev3)
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
-         "tests": step_test_executables, "a11y": step_a11y, "dpi": step_dpi}
+         "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi}
 
 
 def main():

@@ -6,10 +6,13 @@
 #                 (`winix ui click` falls back to a mouse click, so it cannot
 #                 show that a screen reader can press a control):
 #                 {"action": "invoke", "name": "...", "type": "Button", "window": "<title>", "all": true, "repeat": 3}
-#                 invoke uses Invoke, else Toggle, else SelectionItem and reports which.
-#                 Elements off screen do not match; "all" acts on every match (else the first).
+#                 invoke uses Invoke, else Toggle, else SelectionItem and reports which;
+#                 focus uses SetFocus (where `winix ui setfocus` matches by name only).
+#                 Elements off screen do not match; "all" acts on every match (else the first);
+#                 "after" waits that many milliseconds before the next action (a menu opening).
 #   GATE_UIA_SETTLE_MS  wait after the actions (default 1000)
-# It also reports GetDpiForWindow for each window of the app.
+# It also reports GetDpiForWindow and the window styles (GWL_STYLE, GWL_EXSTYLE)
+# for each window of the app.
 $ErrorActionPreference = 'Stop'
 trap { Write-Output "UIA_ERROR $($_.Exception.Message) (line $($_.InvocationInfo.ScriptLineNumber): $($_.InvocationInfo.Line.Trim()))"; exit 1 }
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes
@@ -19,6 +22,7 @@ using System.Runtime.InteropServices;
 public static class GateUia {
     [DllImport("user32.dll")] public static extern bool SetProcessDpiAwarenessContext(IntPtr c);
     [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr h);
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] public static extern IntPtr GetWindowLongPtr(IntPtr h, int i);
 }
 '@
 [void][GateUia]::SetProcessDpiAwarenessContext([IntPtr]-4)
@@ -71,10 +75,14 @@ if ($env:GATE_UIA_DO) {
         if (-not $act.all) { $hits = @($hits | Select-Object -First 1) }
         $repeat = if ($act.repeat) { [int]$act.repeat } else { 1 }
         for ($k = 0; $k -lt $repeat; $k++) {
-            foreach ($h in $hits) { try { $res.done += (Press $h) } catch { $res.errors += $_.Exception.Message } }
+            foreach ($h in $hits) {
+                try { if ($act.action -eq 'focus') { $h.SetFocus(); $res.done += 'SetFocus' } else { $res.done += (Press $h) } }
+                catch { $res.errors += $_.Exception.Message }
+            }
             if ($k -lt $repeat - 1) { Start-Sleep -Milliseconds 500 }
         }
         $actions += $res
+        if ($act.after) { Start-Sleep -Milliseconds ([int]$act.after) }
     }
     $settle = if ($env:GATE_UIA_SETTLE_MS) { [int]$env:GATE_UIA_SETTLE_MS } else { 1000 }
     Start-Sleep -Milliseconds $settle
@@ -82,7 +90,10 @@ if ($env:GATE_UIA_DO) {
 
 $dpi = @(Windows | ForEach-Object {
         $h = [int64]$_.Current.NativeWindowHandle
-        if ($h) { [ordered]@{ hwnd = $h; name = $_.Current.Name; dpi = [int][GateUia]::GetDpiForWindow([IntPtr]$h) } }
+        if ($h) {
+            [ordered]@{ hwnd = $h; name = $_.Current.Name; dpi = [int][GateUia]::GetDpiForWindow([IntPtr]$h)
+                style = [GateUia]::GetWindowLongPtr([IntPtr]$h, -16).ToInt64(); exStyle = [GateUia]::GetWindowLongPtr([IntPtr]$h, -20).ToInt64() }
+        }
     })
 $json = [ordered]@{ pids = $appPids; actions = $actions; windowDpi = $dpi } | ConvertTo-Json -Depth 5 -Compress
 Write-Output ('UIA_JSON_B64 ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json)))
