@@ -11247,13 +11247,14 @@ private slots:
         QVERIFY(tools.setOption(QStringLiteral("tag"), 10));
         QCOMPARE(allTags->actualTag().tag, std::u16string(u"fad"));
         application->video().stepFrames(1);
-        QTRY_COMPARE(application->video().frame(), 25);
+        // The tool reads the shown frame's time (VideoBox::Tell).
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(25), 20000);
+        const int since = static_cast<int>(tools.videoTimeMs()) - 1000;
         const std::size_t keySteps = session->historySize();
         visualItem("videoPanel")->forceActiveFocus();
         QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
         QTRY_COMPARE(session->historySize(), keySteps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual Hydra tool"));
-        const int since = static_cast<int>(tools.videoTimeMs()) - 1000;
         QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\fad(%1,0)").arg(since)),
                  qPrintable(text(session->document().lines()[2])));
         QVERIFY(session->undo());
