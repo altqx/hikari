@@ -293,6 +293,14 @@ void AllTagsTool::reset(VisualHost &host)
         return;
     }
     m_currentLineText = ctx.editorText;
+    // A reset drops a held thumb (Esc, another active Line: the gesture
+    // rule); legacy reset the tool only outside a drag.
+    for (Slider &slider : m_slider) {
+        if (slider.holding) {
+            slider.holding = false;
+            slider.thumbState = 0;
+        }
+    }
     m_find.setSeveralLines(several(host));
     const auto [selFrom, selTo] = host.editorSelection();
     m_find.setSelection(selFrom, selTo);

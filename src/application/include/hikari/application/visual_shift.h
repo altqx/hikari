@@ -88,6 +88,7 @@ private:
     // MoveAll members (Visuals.h:328-360).
     std::vector<Element> m_elems;
     int m_numElem = -1;
+    bool m_dragging = false; // a button holds a handle
     int m_selectedTags = 1;
     int m_diffsX = 0, m_diffsY = 0; // wxPoint
     PointF m_beforeMove;

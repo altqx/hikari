@@ -622,6 +622,93 @@ TEST(AllTagsEdition, AddDeleteSaveAndRestoreFollowLegacy)
     EXPECT_EQ(one.removeTag()->text, u"Cannot remove all tags from list");
 }
 
+// Esc during a drag (the host cancels the gesture and resets the tool):
+// nothing is recorded, and moving on or releasing the button afterwards
+// writes nothing either. Legacy had no Esc for these tools.
+TEST(VisualShiftEdit, EscEndsTheDragWithoutAStep)
+{
+    TestHost host;
+    Case c;
+    c.clientW = 640;
+    c.clientH = 400;
+    c.panel = 40;
+    c.frame.width = 1280;
+    c.frame.height = 720;
+    c.frame.sarNum = 0;
+    c.frame.sarDen = 1;
+    c.scriptW = 1920;
+    c.scriptH = 1080;
+    c.time = 1500;
+    c.fps = 25;
+    c.styles.push_back("Style: Default,Garamond,40,&H00FFFFFF,&H00000000,&H00FF0000,&H00000000,0,0,0,0,100,100,0,0,0,2,"
+                       "2,2,20,20,20,1");
+    c.lines.push_back("Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(960,540)\\blur2}Hello");
+    c.translations.push_back({});
+    setUp(host, c);
+    const std::size_t steps = host.s->historySize();
+    const auto press = [&](VisualTool &tool, int x, int y) {
+        Pointer p;
+        p.kind = Pointer::Kind::Press;
+        p.button = Pointer::Button::Left;
+        p.leftDown = true;
+        p.x = x;
+        p.y = y;
+        tool.pointer(p, host);
+    };
+    const auto move = [&](VisualTool &tool, int x, int y) {
+        Pointer p;
+        p.kind = Pointer::Kind::Move;
+        p.leftDown = true;
+        p.x = x;
+        p.y = y;
+        tool.pointer(p, host);
+    };
+    const auto release = [&](VisualTool &tool, int x, int y) {
+        Pointer p;
+        p.kind = Pointer::Kind::Release;
+        p.button = Pointer::Button::Left;
+        p.x = x;
+        p.y = y;
+        tool.pointer(p, host);
+    };
+    const auto escape = [&](VisualTool &tool) {
+        host.cancelGesture();
+        tool.reset(host);
+    };
+    {
+        PositionShifterTool shifter;
+        shifter.selected(host);
+        shifter.reset(host);
+        press(shifter, 320, 180);
+        move(shifter, 340, 180);
+        ASSERT_TRUE(host.g);
+        escape(shifter);
+        EXPECT_FALSE(host.g);
+        move(shifter, 360, 180);
+        release(shifter, 360, 180);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps);
+        EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(960,540)\\blur2}Hello");
+    }
+    {
+        AllTagsTool tags;
+        tags.setToggled(0); // Add, blur
+        tags.selected(host);
+        tags.reset(host);
+        const float thumb = 30 + 2 * 5.8f;
+        press(tags, static_cast<int>(thumb), 30);
+        move(tags, 100, 30);
+        ASSERT_TRUE(host.g);
+        escape(tags);
+        EXPECT_FALSE(tags.sliders()[0].holding);
+        move(tags, 150, 30);
+        release(tags, 150, 30);
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps);
+        EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\pos(960,540)\\blur2}Hello");
+    }
+}
+
 TEST(VisualCapture, ReplaysTheLegacyT6Probe)
 {
     const auto observations = readObservations();

@@ -246,6 +246,11 @@ void PositionShifterTool::reset(VisualHost &host)
     m_find.setSeveralLines(severalLines(host.batchTargets(), host.activeLine()));
     const auto [selFrom, selTo] = host.editorSelection();
     m_find.setSelection(selFrom, selTo);
+    // A reset drops a drag (Esc, another active Line: the gesture rule);
+    // legacy's only resets came after its own release or key.
+    if (m_dragging)
+        m_numElem = -1;
+    m_dragging = false;
     changeTool(toggled(), host);
     setCurVisual(host);
     host.toolChanged();
@@ -439,6 +444,7 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
     const int x = event.x, y = event.y;
 
     if (event.kind == Pointer::Kind::Release) {
+        m_dragging = false;
         m_drawingOriginalPos = {0, 0};
         if (m_numElem >= 0) {
             if (beginEdit(host))
@@ -463,6 +469,7 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
         }
         m_firstmove = PointF{static_cast<float>(x), static_cast<float>(y)};
         m_axis = 0;
+        m_dragging = m_numElem >= 0;
         if (m_numElem >= 0)
             (void)beginEdit(host);
     } else if (rightDown) {
@@ -477,6 +484,7 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
         }
         m_firstmove = PointF{static_cast<float>(x), static_cast<float>(y)};
         m_axis = 0;
+        m_dragging = m_numElem >= 0;
         if (m_numElem >= 0)
             (void)beginEdit(host);
     } else if (holding && m_numElem >= 0) {
