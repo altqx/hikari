@@ -332,8 +332,9 @@ endif()
 if(WIN32)
     hikari_add_qttest(hikari_backends_directshow_tests SOURCES directshow_player_tests.cpp
         LIBRARIES hikari_directshow hikari_backends Qt6::Gui Qt6::Multimedia)
-    target_include_directories(hikari_backends_directshow_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/backends/directshow")
-    target_link_libraries(hikari_backends_directshow_tests PRIVATE hikari_dshow_baseclasses)
+    target_include_directories(hikari_backends_directshow_tests PRIVATE "${PROJECT_SOURCE_DIR}/src/backends/directshow"
+        "${PROJECT_SOURCE_DIR}/tests/support")
+    target_link_libraries(hikari_backends_directshow_tests PRIVATE hikari_dshow_baseclasses strmiids winmm ole32)
     target_compile_definitions(hikari_backends_directshow_tests PRIVATE
         HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
         HIKARI_MEDIA_FIXTURES="${HIKARI_MEDIA_FIXTURE_DIR}")

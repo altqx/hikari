@@ -121,6 +121,10 @@ if(WIN32)
         DEFINITIONS HIKARI_MEDIA_HELPER="$<TARGET_FILE:hikari_media_helper>"
                     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
     add_dependencies(hikari_ui_directshow_workflow hikari_media_helper hikari_media_fixtures)
+    # A host that cannot build legacy's graph skips (tests/support/directshow/directshow_host.h).
+    target_include_directories(hikari_ui_directshow_workflow PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+    target_link_libraries(hikari_ui_directshow_workflow PRIVATE strmiids winmm ole32)
+    set_tests_properties(hikari_ui_directshow_workflow.offscreen PROPERTIES SKIP_RETURN_CODE 77)
 endif()
 # G1: Grid range selection (Spix workflow).
 hikari_add_spix_test(hikari_ui_grid_workflow SOURCES grid_workflow.cpp LIBRARIES hikari_composition)

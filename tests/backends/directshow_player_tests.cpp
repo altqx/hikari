@@ -4,6 +4,7 @@
 // position, the delivered frame's reported start and which frame arrived,
 // and each is compared with the default players on the same media (the Qt
 // general player for playback, the media helper's index for frame identity).
+#include "directshow/directshow_host.h"
 #include "directshow_frames.h"
 #include "hikari/backends/directshow_player.h"
 #include "hikari/backends/ffms_indexed_source.h"
@@ -105,11 +106,18 @@ class DirectShowPlayerTests : public QObject {
     std::optional<MediaDescription> open(DirectShowPlayer &player, const char *name)
     {
         std::optional<std::expected<MediaDescription, PlayerError>> result;
+        // The failed step, as legacy logged it, on stderr.
+        player.setOpenFailed([name](const std::string &message) {
+            std::fprintf(stderr, "%s: open failed: %s\n", name, message.c_str());
+        });
         player.open(fixture(name), [&](auto r) { result = std::move(r); });
         if (!QTest::qWaitFor([&] { return result.has_value(); }, 10'000) || !*result)
             return std::nullopt;
         return **result;
     }
+
+    // What this host lacks for legacy's graph over the fixtures (empty: nothing).
+    std::string m_missing;
 
     void watch(DirectShowPlayer &player, Delivered &delivered)
     {
@@ -171,6 +179,23 @@ class DirectShowPlayerTests : public QObject {
     }
 
 private slots:
+    void initTestCase()
+    {
+        // XVID in dshow-cfr.avi, WMV2 in dshow-vfr.wmv (dshow-mpg.mpg's
+        // MPEG-1 decoder is DirectShow's own).
+        m_missing = hikari::testing::directShowGraphMissing(
+            {{hikari::testing::fourcc('X', 'V', 'I', 'D'), "XVID"}, {hikari::testing::fourcc('W', 'M', 'V', '2'), "WMV2"}});
+        if (!m_missing.empty())
+            std::fprintf(stderr, "DirectShow on this host: %s\n", m_missing.c_str());
+    }
+    // Every test but the frame conversion opens a fixture through the graph.
+    void init()
+    {
+        if (!m_missing.empty() && qstrcmp(QTest::currentTestFunction(), "framesConvertWithTheScriptsMatrix") != 0)
+            QSKIP(qPrintable(QStringLiteral("legacy's DirectShow graph cannot be built here: ") +
+                             QString::fromStdString(m_missing)));
+    }
+
     void opensWithTheLegacyGraph_data()
     {
         QTest::addColumn<QString>("name");

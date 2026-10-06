@@ -9,6 +9,7 @@
 // submenu, open beside the context menu, takes the Dark and Light themes'
 // colours (saved for review when HIKARI_SCREENSHOT_DIR is set).
 
+#include "directshow/directshow_host.h"
 #include "hikari/app/application.h"
 #include "docking.h"
 #include "theme.h"
@@ -242,6 +243,12 @@ protected:
             mouseClick("mainWindow/loadAssociated");
             observed.push_back(waitFor([](const Shown &s) { return s.frame == 0 && s.accepted; }) ? "frame 0" : "no frame 0"); // 0
             observed.push_back(shown().directShow ? "directshow" : "general player"); // 1
+            // Without the video through DirectShow no later step can pass:
+            // stop here (each would wait its 15 s, past ctest's timeout).
+            if (observed[0] != "frame 0" || observed[1] != "directshow") {
+                quit();
+                return;
+            }
             // The graph is built as the video loads (legacy), so the menu lists it.
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
             QStringList entries;
@@ -337,6 +344,9 @@ protected:
     }
 };
 
+// The exit code of a skipped run (ctest's SKIP_RETURN_CODE).
+constexpr int kSkipped = 77;
+
 constexpr char kSubtitles[] =
     "[Script Info]\r\n"
     "ScriptType: v4.00+\r\n"
@@ -359,6 +369,14 @@ constexpr char kSubtitles[] =
 int main(int argc, char **argv)
 {
     QGuiApplication app(argc, argv);
+    // A host where legacy's graph cannot be built (no audio output device,
+    // no XVID decoder) skips: ctest's SKIP_RETURN_CODE (CMakeLists.txt).
+    if (const std::string missing =
+            hikari::testing::directShowGraphMissing({{hikari::testing::fourcc('X', 'V', 'I', 'D'), "XVID"}});
+        !missing.empty()) {
+        std::printf("SKIP: legacy's DirectShow graph cannot be built here: %s\n", missing.c_str());
+        return kSkipped;
+    }
     QTemporaryDir dir;
     const QString subtitles = dir.filePath(QStringLiteral("ep1.ass"));
     QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/dshow-cfr.avi"), dir.filePath(QStringLiteral("ep1.avi")));
