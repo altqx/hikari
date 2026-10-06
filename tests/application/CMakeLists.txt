@@ -103,9 +103,13 @@ hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_test
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_session_file_tests PRIVATE
     HIKARI_SESSION_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/sessions")
-# R1: subtitle comparison criteria, text differences and the menu's state.
+# R1: subtitle comparison criteria, text differences and the menu's state,
+# with the legacy probe's observations.
 hikari_add_gtest(hikari_application_subtitle_comparison_tests SOURCES subtitle_comparison_tests.cpp
-    LIBRARIES hikari_application LABELS application)
+    LIBRARIES hikari_application Qt6::Core LABELS application)
+target_compile_definitions(hikari_application_subtitle_comparison_tests PRIVATE
+    HIKARI_COMPARISON_CASES="${PROJECT_SOURCE_DIR}/tools/legacy-capture/inputs/comparison-cases.txt"
+    HIKARI_COMPARISON_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-r1-comparison-20261005/observations.jsonl")
 # R2: the reference tray's linked matching (legacy SeekForOccurences).
 hikari_add_gtest(hikari_application_reference_navigation_tests SOURCES reference_navigation_tests.cpp
     LIBRARIES hikari_application LABELS application)

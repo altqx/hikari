@@ -2,14 +2,24 @@
 // CompareTexts, RemoveComparison and GetCommonStyles (SubsGridBase.cpp) and
 // the Notebook tab menu's handlers (Notebook.cpp) at 20d647c4. Expected
 // values are worked through the legacy code by hand; each case names the
-// lines it follows.
+// lines it follows. LegacyComparisonCapture replays the legacy probe's
+// observations (tools/legacy-capture/comparison_capture.cpp).
 
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/ass_load.h"
 
 #include <gtest/gtest.h>
 
+#include <QByteArray>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+
+#include <cstdio>
 #include <cstring>
+#include <fstream>
+#include <map>
 #include <random>
 #include <string_view>
 
@@ -97,11 +107,12 @@ std::u16string u(const char16_t *s)
     return s;
 }
 
-// SubsGridBase.cpp:1796-1884 transcribed line by line (wxString as UTF-16,
-// wxArrayInt as a vector, the size guards left out), to check the port
-// against on many texts.
-void legacyCompareTexts(LineComparison &firstCompare, LineComparison &secondCompare, const std::u16string &first,
-                        const std::u16string &second)
+// SubsGridBase.cpp:1796-1884 transcribed line by line (wxString as UTF-16 or
+// UTF-32, wxArrayInt as a vector, the size guards left out), to check the
+// port against on many texts.
+template <typename Text>
+void legacyCompareTexts(LineComparison &firstCompare, LineComparison &secondCompare, const Text &first,
+                        const Text &second)
 {
     if (first == second) {
         firstCompare.differences = false;
@@ -228,6 +239,62 @@ TEST(CompareTexts, OffsetsAreUtf16CodeUnits)
     compareTexts(x, y, u(u"a\U0001F600b"), u(u"ab"));
     EXPECT_EQ(x.marks, (std::vector<int>{1, 1, 2}));
     EXPECT_EQ(y.marks, (std::vector<int>{1}));
+    // U+1F600 and U+1F601 share their high surrogate: only the low one differs.
+    LineComparison p, q;
+    compareTexts(p, q, u(u"\U0001F600"), u(u"\U0001F601"));
+    EXPECT_EQ(p.marks, (std::vector<int>{1, 1, 1}));
+}
+
+// wxString compares code points on Linux (wxGTK): a character outside the BMP
+// is one position.
+TEST(CompareTexts, OffsetsAreCodePointsOnTheLinuxBuild)
+{
+    LineComparison x, y;
+    compareTexts(x, y, std::u32string_view(U"a\U0001F600b"), std::u32string_view(U"ab"));
+    EXPECT_EQ(x.marks, (std::vector<int>{1, 1, 1}));
+    EXPECT_EQ(y.marks, (std::vector<int>{1}));
+    LineComparison p, q;
+    compareTexts(p, q, std::u32string_view(U"\U0001F600"), std::u32string_view(U"\U0001F601"));
+    EXPECT_EQ(p.marks, (std::vector<int>{1, 0, 0}));
+}
+
+// R5-per-platform: each platform compares as its own legacy build did.
+TEST(CompareTexts, EachPlatformCountsAsItsLegacyBuild)
+{
+#ifdef _WIN32
+    EXPECT_EQ(kLegacyTextUnits, TextUnits::Utf16);
+#else
+    EXPECT_EQ(kLegacyTextUnits, TextUnits::CodePoints);
+#endif
+    const auto a = load("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\xF0\x9F\x98\x80y\n");
+    const auto b = load("[Events]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\xF0\x9F\x98\x81y\n");
+    const ComparedDocument first{&a, {}, false}, second{&b, {}, false};
+    EXPECT_EQ(compareSubtitles(first, second, 0, {}, TextUnits::Utf16).first[0].marks, (std::vector<int>{1, 2, 2}));
+    EXPECT_EQ(compareSubtitles(first, second, 0, {}, TextUnits::CodePoints).first[0].marks,
+              (std::vector<int>{1, 1, 1}));
+    EXPECT_EQ(compareSubtitles(first, second, 0, {}).first[0],
+              compareSubtitles(first, second, 0, {}, kLegacyTextUnits).first[0]);
+}
+
+// SubsGridWindow.cpp:510-525: a range is SubString(start, end) of the shown
+// text, in the platform's units, here as UTF-16 offsets for drawing; a run
+// starting past the text is empty and skipped, one running past it is cut.
+TEST(CompareTexts, MarkedRunsInTheShownText)
+{
+    const std::u16string_view shown = u"a\U0001F600b\U0001F601";
+    // Code points: a, U+1F600, b, U+1F601.
+    EXPECT_EQ(markedRun(shown, 1, 1, TextUnits::CodePoints), (MarkedRun{1, 2}));
+    EXPECT_EQ(markedRun(shown, 2, 3, TextUnits::CodePoints), (MarkedRun{3, 3}));
+    EXPECT_EQ(markedRun(shown, 0, 9, TextUnits::CodePoints), (MarkedRun{0, 6}));
+    EXPECT_EQ(markedRun(shown, 3, 3, TextUnits::CodePoints), (MarkedRun{4, 2}));
+    EXPECT_FALSE(markedRun(shown, 4, 4, TextUnits::CodePoints));
+    // UTF-16 units: the same offsets index the text directly.
+    EXPECT_EQ(markedRun(shown, 1, 1, TextUnits::Utf16), (MarkedRun{1, 1}));
+    EXPECT_EQ(markedRun(shown, 2, 3, TextUnits::Utf16), (MarkedRun{2, 2}));
+    EXPECT_EQ(markedRun(shown, 4, 9, TextUnits::Utf16), (MarkedRun{4, 2}));
+    EXPECT_FALSE(markedRun(shown, 6, 6, TextUnits::Utf16));
+    EXPECT_FALSE(markedRun(u"", 0, 0, TextUnits::CodePoints));
+    EXPECT_FALSE(markedRun(u"", 0, 0, TextUnits::Utf16));
 }
 
 // The port gives the transcription's tables on random texts over a small
@@ -245,6 +312,20 @@ TEST(CompareTexts, AgreesWithTheLegacyTranscription)
             b += alphabet[letter(random)];
         LineComparison x, y, lx, ly;
         compareTexts(x, y, a, b);
+        legacyCompareTexts(lx, ly, a, b);
+        ASSERT_EQ(x, lx) << n;
+        ASSERT_EQ(y, ly) << n;
+    }
+    // The Linux build's form, with characters outside the BMP.
+    const char32_t astral[] = U"a\U0001F600\U0001F601 ";
+    for (int n = 0; n < 4000; ++n) {
+        std::u32string a, b;
+        for (int i = length(random); i > 0; --i)
+            a += astral[letter(random)];
+        for (int i = length(random); i > 0; --i)
+            b += astral[letter(random)];
+        LineComparison x, y, lx, ly;
+        compareTexts(x, y, std::u32string_view(a), std::u32string_view(b));
         legacyCompareTexts(lx, ly, a, b);
         ASSERT_EQ(x, lx) << n;
         ASSERT_EQ(y, ly) << n;
@@ -483,4 +564,216 @@ TEST_F(ComparisonTest, TablesFollowCompareRemoveAndReplace)
     EXPECT_TRUE(c.active());
     c.recompare(first(), second(), 0);
     EXPECT_TRUE(c.table(three));
+}
+
+// ---- the legacy probe's observations -----------------------------------------
+
+namespace {
+
+// inputs/comparison-cases.txt (the format is comparison_capture.cpp's).
+struct CaseLine {
+    int start = 0, end = 0, visibility = 1;
+    bool selected = false;
+    std::string style, text, translation;
+};
+struct CaseRun {
+    int type = 0;
+    std::vector<std::u8string> styles;
+    bool tl1 = false, tl2 = false;
+};
+struct Case {
+    std::string name;
+    std::vector<CaseLine> first, second;
+    std::vector<CaseRun> runs;
+};
+
+std::vector<std::string> fields(const std::string &line, char separator)
+{
+    std::vector<std::string> out;
+    std::size_t from = 0;
+    for (;;) {
+        const auto at = line.find(separator, from);
+        out.push_back(line.substr(from, at == std::string::npos ? std::string::npos : at - from));
+        if (at == std::string::npos)
+            return out;
+        from = at + 1;
+    }
+}
+
+std::u8string u8(const std::string &s)
+{
+    return {s.begin(), s.end()};
+}
+
+std::vector<Case> readCases(const char *path)
+{
+    std::ifstream in(path, std::ios::binary);
+    std::vector<Case> cases;
+    std::string line;
+    bool tl1 = false, tl2 = false;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r')
+            line.pop_back();
+        if (line.empty() || line[0] == '#')
+            continue;
+        auto f = fields(line, '\t');
+        if (f.size() == 1 && line.find(' ') != std::string::npos)
+            f = {line.substr(0, line.find(' ')), line.substr(line.find(' ') + 1)};
+        if (f[0] == "case") {
+            cases.push_back({f.at(1), {}, {}, {}});
+            tl1 = tl2 = false;
+        } else if (f[0] == "first" || f[0] == "second") {
+            CaseLine l{std::stoi(f.at(1)), std::stoi(f.at(2)), std::stoi(f.at(4)), f.at(5) == "1", f.at(3), f.at(6),
+                       f.size() > 7 ? f[7] : std::string()};
+            (f[0] == "first" ? cases.back().first : cases.back().second).push_back(l);
+        } else if (f[0] == "tl") {
+            tl1 = f.at(1) == "1";
+            tl2 = f.at(2) == "1";
+        } else if (f[0] == "run") {
+            CaseRun r{std::stoi(f.at(1)), {}, tl1, tl2};
+            if (f.size() > 2 && !f[2].empty())
+                for (const auto &style : fields(f[2], ','))
+                    r.styles.push_back(u8(style));
+            cases.back().runs.push_back(r);
+        }
+    }
+    return cases;
+}
+
+std::string assTime(int ms)
+{
+    char buffer[32];
+    std::snprintf(buffer, sizeof buffer, "%d:%02d:%02d.%02d", ms / 3600000, ms / 60000 % 60, ms / 1000 % 60,
+                  ms % 1000 / 10);
+    return buffer;
+}
+
+// A Document with the case's Lines: times through the ASS loader (the cases
+// use whole centiseconds), the other fields set as the probe sets them on
+// legacy's Dialogue.
+core::Document caseDocument(const std::vector<CaseLine> &lines, std::set<core::LineId> &selected)
+{
+    std::string ass = "[Events]\n";
+    for (const auto &l : lines)
+        ass += "Dialogue: 0," + assTime(l.start) + "," + assTime(l.end) + ",Default,,0,0,0,,x\n";
+    core::Document d = load(ass);
+    EXPECT_EQ(d.lines().size(), lines.size());
+    for (std::size_t i = 0; i < lines.size(); ++i) {
+        const CaseLine &l = lines[i];
+        const auto id = d.lines()[i]->id;
+        d.editLine(id, [&](core::LineRecord &r) {
+            r.style = u8(l.style);
+            r.text = u8(l.text);
+            r.translation = u8(l.translation);
+            r.visibility = l.visibility == 0   ? core::LineVisibility::Hidden
+                           : l.visibility == 2 ? core::LineVisibility::VisibleBlock
+                                               : core::LineVisibility::Visible;
+        });
+        if (l.selected)
+            selected.insert(id);
+    }
+    return d;
+}
+
+// A table as the probe writes it: [secondComparedLine, differences, lineCompare...].
+QJsonArray observedForm(const std::vector<LineComparison> &rows)
+{
+    QJsonArray out;
+    for (const auto &row : rows) {
+        QJsonArray r{row.matchedRow ? static_cast<int>(*row.matchedRow) : -1, row.differences ? 1 : 0};
+        for (const int mark : row.marks)
+            r.append(mark);
+        out.append(r);
+    }
+    return out;
+}
+
+std::string compact(const QJsonValue &value)
+{
+    return QJsonDocument(value.toArray()).toJson(QJsonDocument::Compact).toStdString();
+}
+
+} // namespace
+
+// Every run of the probe (SubsComparison and CompareTexts compiled from the
+// legacy source unchanged) replayed through compareSubtitles: the pairs, the
+// match state and the ranges of both tables are legacy's. Each run is held to
+// both legacy builds' tables (R5-per-platform): counted in UTF-16 units it
+// gives the "windows" tables (wxMSW's wxString), counted in code points the
+// "linux" ones (wxGTK's); the default on each platform is that build's.
+TEST(LegacyComparisonCapture, ReplaysTheLegacyObservations)
+{
+    const auto cases = readCases(HIKARI_COMPARISON_CASES);
+    ASSERT_GE(cases.size(), 14u);
+    QFile file(QStringLiteral(HIKARI_COMPARISON_OBSERVATIONS));
+    ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+    std::map<std::string, QJsonArray> observed;
+    for (const QByteArray &line : file.readAll().split('\n'))
+        if (!line.trimmed().isEmpty()) {
+            const auto object = QJsonDocument::fromJson(line).object();
+            observed[object["case"].toString().toStdString()] = object["runs"].toArray();
+        }
+    ASSERT_EQ(observed.size(), cases.size());
+
+    int runs = 0, rows = 0;
+    std::set<std::string> widthsDiffer;
+    for (const auto &c : cases) {
+        SCOPED_TRACE(c.name);
+        const QJsonArray &legacyRuns = observed.at(c.name);
+        ASSERT_EQ(legacyRuns.size(), qsizetype(c.runs.size()));
+        std::set<core::LineId> selected1, selected2;
+        const core::Document a = caseDocument(c.first, selected1);
+        const core::Document b = caseDocument(c.second, selected2);
+        for (std::size_t n = 0; n < c.runs.size(); ++n) {
+            const CaseRun &run = c.runs[n];
+            const QJsonObject legacy = legacyRuns[qsizetype(n)].toObject();
+            SCOPED_TRACE("run " + std::to_string(n) + " type " + std::to_string(run.type));
+            ASSERT_EQ(legacy["type"].toInt(), run.type);
+            ASSERT_EQ(legacy["styles"].toArray().size(), qsizetype(run.styles.size()));
+            const QJsonObject onLinux = legacy["linux"].toObject();
+            const QJsonObject onWindows =
+                legacy["windows"].isString() ? onLinux : legacy["windows"].toObject();
+            if (!legacy["windows"].isString())
+                widthsDiffer.insert(c.name);
+
+            const ComparedDocument first{&a, selected1, run.tl1}, second{&b, selected2, run.tl2};
+            for (const auto &[units, build] :
+                 {std::pair{TextUnits::Utf16, onWindows}, std::pair{TextUnits::CodePoints, onLinux}}) {
+                SCOPED_TRACE(units == TextUnits::Utf16 ? "windows" : "linux");
+                // Comparing changed neither file, and a second SubsComparison
+                // (the tables cleared and refilled) gave the same tables.
+                EXPECT_TRUE(build["unchanged"].toBool());
+                EXPECT_TRUE(build["repeatable"].toBool());
+                const auto result = compareSubtitles(first, second, run.type, run.styles, units);
+                EXPECT_EQ(compact(observedForm(result.first)), compact(build["first"]));
+                EXPECT_EQ(compact(observedForm(result.second)), compact(build["second"]));
+                EXPECT_EQ(compareSubtitles(first, second, run.type, run.styles, units).first, result.first);
+                if (units == kLegacyTextUnits)
+                    EXPECT_EQ(compareSubtitles(first, second, run.type, run.styles).first, result.first);
+                // The Grid's colour per row (SubsGridWindow.cpp:419-426): the
+                // mismatch background when the legacy array is not empty, the
+                // match background when differences is false.
+                for (const auto &[rowsOf, table] : {std::pair{&result.first, build["first"].toArray()},
+                                                    std::pair{&result.second, build["second"].toArray()}}) {
+                    ASSERT_EQ(qsizetype(rowsOf->size()), table.size());
+                    for (std::size_t i = 0; i < rowsOf->size(); ++i) {
+                        const QJsonArray legacyRow = table[qsizetype(i)].toArray();
+                        EXPECT_EQ((*rowsOf)[i].mismatch(), legacyRow.size() > 2);
+                        EXPECT_EQ((*rowsOf)[i].match(), legacyRow[1].toInt() == 0);
+                    }
+                }
+                ++runs;
+                rows += static_cast<int>(result.first.size() + result.second.size());
+            }
+        }
+        for (std::size_t i = 0; i < c.first.size(); ++i)
+            EXPECT_EQ(a.lines()[i]->text, u8(c.first[i].text));
+        for (std::size_t i = 0; i < c.second.size(); ++i)
+            EXPECT_EQ(b.lines()[i]->text, u8(c.second[i].text));
+    }
+    EXPECT_EQ(runs, 2 * 207);
+    EXPECT_EQ(rows, 2 * 4239);
+    // Only the cases with characters outside the BMP count differently on
+    // the two legacy builds.
+    EXPECT_EQ(widthsDiffer, (std::set<std::string>{"rand-astral", "texts"}));
 }
