@@ -14809,7 +14809,11 @@ private slots:
         QCOMPARE(tools.sourceRect(), QRectF(0, 0, 320, 240));
         // The wheel over the video with the crosshair: a tenth a step, at the pointer.
         wheelAt(c, 5);
-        QCOMPARE(view.zoomPercent(), 150);
+        // 1.5 truncated as legacy does (below): 150, or 149 at panel widths
+        // where the zoom rectangle's float width comes out an ulp short
+        // (the Video panel's width on the Windows VM).
+        const int halfAgain = view.zoomPercent();
+        QVERIFY2(halfAgain == 150 || halfAgain == 149, qPrintable(QString::number(halfAgain)));
         QVERIFY(!view.zoomMode());
         wheelAt(c, -10); // never below 1
         QCOMPARE(view.zoomPercent(), 100);
