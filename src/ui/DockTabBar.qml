@@ -88,6 +88,22 @@ KDDWViews.TabBarBase {
         return -1
     }
 
+    // Windows turns Shift+F10 into a keyboard context menu request
+    // (WM_CONTEXTMENU), never a key press: it opens the menu of the focused
+    // tab, or of the panel whose "⋯" button has the focus. A right click on
+    // the header is headerArea's.
+    ContextMenu.onRequested: {
+        for (let i = 0; i < tabRepeater.count; ++i) {
+            const tab = tabRepeater.itemAt(i)
+            if (tab && tab.activeFocus) {
+                root.openMenu(root.nameAt(i), menuButton)
+                return
+            }
+        }
+        if (menuButton.activeFocus)
+            root.openMenu(root.currentName, menuButton)
+    }
+
     // The keys a header control takes itself: Left, Right, Space, Enter,
     // the menu key and Shift+F10.
     function headerKey(event): bool {

@@ -493,6 +493,12 @@ private slots:
         QCOMPARE(asked.at(4).at(0).toString(), QStringLiteral("Editor"));
         QTest::keyClick(window, Qt::Key_Menu);
         QTRY_COMPARE(asked.size(), 6);
+        // Windows delivers Shift+F10 as a keyboard context menu request, not
+        // a key press (WM_CONTEXTMENU; native gate, header-menu-keyboard).
+        QContextMenuEvent request(QContextMenuEvent::Keyboard, QPoint(), QPoint());
+        QGuiApplication::sendEvent(window, &request);
+        QTRY_COMPARE(asked.size(), 7);
+        QCOMPARE(asked.at(6).at(0).toString(), QStringLiteral("Editor"));
         // Left and Right on the tabs select the neighbouring panel.
         const int before = group->property("currentTabIndex").toInt();
         QTest::keyClick(window, before == 0 ? Qt::Key_Right : Qt::Key_Left);
